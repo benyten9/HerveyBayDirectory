@@ -1,0 +1,63 @@
+name: Deploy to production
+
+# Pushing to main deploys herveybaylocal.com.au.
+#
+# The server is a git checkout of this repository, so deploying is just a pull.
+# Nothing is copied or synced — which means the deploy can only ever move the
+# site to a commit that exists here.
+#
+# Requires four repository secrets (Settings → Secrets and variables → Actions):
+#   PROD_HOST     207.7.93.12
+#   PROD_USER     hbllcl
+#   PROD_PORT     2200
+#   PROD_SSH_KEY  private half of the key in the server's ~/.ssh/authorized_keys
+#
+# Plain ssh is used rather than a marketplace action so that no third-party
+# code ever handles the production key.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Never let two deploys run at once, and never cancel one midway — a half
+# applied pull on a live site is worse than a queued one.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Pull latest onto production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.PROD_PORT }}" -H "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.PROD_PORT }}" \
+              -o StrictHostKeyChecking=yes \
+              "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
+              'set -euo pipefail
+               cd ~/domains/herveybaylocal.com.au/public_html
+
+               echo "Before: $(git log --oneline -1)"
+
+               # --ff-only refuses to merge when production has drifted, rather
+               # than silently creating a merge commit or discarding a change
+               # made directly on the server. A deploy that stops and explains
+               # itself beats one that succeeds and eats something.
+               git fetch origin main
+               git pull --ff-only origin main
+
+               echo "After:  $(git log --oneline -1)"'
+
+      - name: Remove key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
