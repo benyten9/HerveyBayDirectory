@@ -1,0 +1,22 @@
+# Secrets
+wp-config.php
+.private/
+.env
+
+# Git metadata must never be served
+.git/
+
+# Backups & dumps
+wp-content/updraft/
+wp-content/ai1wm-backups/
+*.sql
+*.sql.gz
+
+# Media — too large for git, and not source
+wp-content/uploads/
+
+# Caches, logs, security scratch
+wp-content/cache/
+wp-content/wflogs/
+wp-content/debug.log
+*.log

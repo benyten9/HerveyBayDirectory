@@ -1,0 +1,34 @@
+Be concise and direct.
+
+Do not explain code unless asked.
+
+This is a WordPress project. Follow WordPress coding patterns.
+
+Do not introduce frameworks, build tools, or modern JS stacks unless requested.
+
+Do not rewrite entire template files for small changes.
+
+Modify only the necessary section of code.
+
+Preserve existing HTML structure and CSS class names.
+
+Do not rename ACF field names.
+
+Do not change WordPress hooks, template hierarchy, or function signatures unless required.
+
+Avoid adding comments unless logic is complex.
+
+Keep PHP procedural if the existing codebase is procedural.
+
+Do not add security, sanitization, or escaping functions unless requested.
+
+For styling tasks, modify CSS only — do not touch PHP/HTML.
+
+For ACF-related work:
+- Use existing field names
+- Do not add new fields unless asked
+- Follow current field structure
+
+Output no more than 120 lines of code.
+
+Assume the developer understands WordPress, PHP, and CSS.

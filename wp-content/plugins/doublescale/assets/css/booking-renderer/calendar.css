@@ -1,0 +1,130 @@
+/* Calendar listing page — calendar-specific styles
+   Layout classes (.doublescale-booking-meeting, .details-container, .title,
+   .calendar-info, .profile-picture) come from assets/css/booking-style.css. */
+
+.calendar-header {
+	padding: 20px 0;
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.featured-image {
+	margin-bottom: 24px;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	width: 100%;
+}
+
+.featured-image img {
+	width: 100%;
+	height: 200px;
+	object-fit: cover;
+	display: block;
+}
+
+.events-container {
+	padding: 20px 0;
+}
+
+.event-card {
+	background: white;
+	border-radius: 12px;
+	padding: 24px;
+	margin-bottom: 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	border: 1px solid #e2e8f0;
+	transition: all 0.2s ease;
+}
+
+.event-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.event-card:last-child {
+	margin-bottom: 0;
+}
+
+.event-content {
+	flex: 1;
+}
+
+.event-details {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.event-detail {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: #292D32;
+	font-size: 14px;
+}
+
+.detail-icon {
+	width: 16px;
+	height: 16px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.detail-icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.event-actions {
+	margin-left: 20px;
+}
+
+.book-now-btn {
+	background: #3A3A99;
+	color: white;
+	padding: 12px 24px;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.9rem;
+	transition: all 0.2s ease;
+	display: inline-block;
+	box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.25);
+}
+
+.book-now-btn:hover {
+	box-shadow: 0 6px 12px -2px rgba(139, 92, 246, 0.35);
+}
+
+.no-events {
+	padding: 24px;
+	text-align: center;
+	color: #4a5568;
+}
+
+@media (max-width: 640px) {
+	.event-card {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 16px;
+	}
+
+	.event-actions {
+		margin-left: 0;
+		width: 100%;
+	}
+
+	.book-now-btn {
+		width: 100%;
+		text-align: center;
+	}
+}

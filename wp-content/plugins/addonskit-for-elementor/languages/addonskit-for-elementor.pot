@@ -1,0 +1,2367 @@
+# Copyright (C) 2025 wpWax
+# This file is distributed under the GPL2.
+msgid ""
+msgstr ""
+"Project-Id-Version: Directorist AddonsKit for Elementor 1.3.0\n"
+"Report-Msgid-Bugs-To: "
+"https://wordpress.org/support/plugin/addonskit-for-elementor\n"
+"POT-Creation-Date: 2025-11-27 04:56:21+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: grunt-wp-i18n 1.0.3\n"
+
+#: addonskit-for-elementor.php:94
+#. translators: %1$s: opening strong tag, %2$s: closing strong tag
+msgid ""
+"%1$sDirectorist Addons Kit for Elementor%2$s requires %1$sDirectorist%2$s "
+"plugin to be installed and activated."
+msgstr ""
+
+#: addonskit-for-elementor.php:110
+#. translators: %1$s: opening strong tag, %2$s: closing strong tag
+msgid ""
+"The current version of your&nbsp;%1$sDirectorist is not compatible with "
+"Directorist Addons Kit for Elementor%2$s. To ensure compatibility and "
+"access new features,&nbsp;%1$s update Directorist to version 8.0 or "
+"later%2$s."
+msgstr ""
+
+#: addonskit-for-elementor.php:139
+msgid "An Error Occurred"
+msgstr ""
+
+#: addonskit-for-elementor.php:144
+#. translators: %s: PHP version number
+msgid "<h2>Your installed PHP Version is: "
+msgstr ""
+
+#: addonskit-for-elementor.php:151
+#. translators: %s: minimum required PHP version
+msgid "The Addonskit For Elementor plugin requires PHP version %s or greater."
+msgstr ""
+
+#: addonskit-for-elementor.php:158
+#. translators: %s: link to PHP supported versions
+msgid ""
+"The version of your PHP is %s. You should update your PHP software or "
+"contact your host regarding this matter."
+msgstr ""
+
+#: addonskit-for-elementor.php:161
+msgid "unsupported and old"
+msgstr ""
+
+#: addonskit-for-elementor.php:167
+msgid "Plugin Activation Error"
+msgstr ""
+
+#: app/Admin/AdminMenu.php:26
+msgid "AddonskitForElementor"
+msgstr ""
+
+#: app/Admin/AdminMenu.php:34 app/Admin/AdminMenu.php:35
+#: app/Elements/UserDashboard/UserDashboard.php:31
+msgid "Dashboard"
+msgstr ""
+
+#: app/DirectoristSupport.php:42
+msgid "Elementor Template"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:32
+msgid "Add Listing Form"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:62
+#: app/Elements/AllAuthors/AllAuthors.php:59
+#: app/Elements/AllCategories/AllCategories.php:61
+#: app/Elements/AllLocations/AllLocations.php:62
+#: app/Elements/AuthorProfile/AuthorProfile.php:60
+#: app/Elements/Checkout/Checkout.php:57
+#: app/Elements/PaymentReceipt/PaymentReceipt.php:45
+#: app/Elements/SearchListing/SearchListing.php:59
+#: app/Elements/TransactionFailure/TransactionFailure.php:52
+#: app/Elements/UserDashboard/UserDashboard.php:57
+msgid "General"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:69
+#: app/Elements/AllCategories/AllCategories.php:68
+#: app/Elements/AllLocations/AllLocations.php:69
+msgid "Directory Types"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:74
+#: app/Elements/SearchListing/SearchListing.php:143
+msgid "Leave it empty for showing all directory types"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:85
+msgid "Directory Type: Container"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:93
+msgid "Form: Title"
+msgstr ""
+
+#: app/Elements/AddListing/AddListing.php:94
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:100
+msgid "Form: Fields"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:29
+msgid "Directory Type: Settings"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:38 app/Elements/AllAuthors/Styles.php:127
+#: app/Elements/AllListings/Styles.php:206
+#: app/Elements/AllListings/Styles.php:301
+#: app/Elements/AllListings/Styles.php:759
+#: app/Elements/AuthorProfile/Styles.php:149
+#: app/Elements/AuthorProfile/Styles.php:437
+#: app/Elements/Common/DirectoryTypeStyles.php:39
+#: app/Elements/SearchListing/Styles.php:435
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:128
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:34
+msgid "Icon Size"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:71 app/Elements/AddListing/Styles.php:297
+#: app/Elements/AllCategories/Styles.php:54
+#: app/Elements/AllLocations/Styles.php:54 app/Elements/Common/Button.php:236
+#: app/Elements/Common/Container.php:30
+#: app/Elements/SearchListing/Styles.php:48
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:97
+#: app/Elements/UserDashboard/Styles.php:366
+msgid "Margin"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:84 app/Elements/AddListing/Styles.php:309
+#: app/Elements/AllAuthors/Styles.php:97 app/Elements/AllAuthors/Styles.php:267
+#: app/Elements/AllCategories/Styles.php:40
+#: app/Elements/AllCategories/Styles.php:233
+#: app/Elements/AllListings/Styles.php:452
+#: app/Elements/AllLocations/Styles.php:40
+#: app/Elements/AuthorProfile/Styles.php:101
+#: app/Elements/AuthorProfile/Styles.php:288 app/Elements/Common/Button.php:223
+#: app/Elements/Common/Button.php:399 app/Elements/Common/Container.php:42
+#: app/Elements/Common/DirectoryTypeStyles.php:300
+#: app/Elements/SearchListing/Styles.php:36
+#: app/Elements/SingleListingFields/Info/Styles.php:73
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:53
+#: app/Elements/UserDashboard/Styles.php:378
+#: app/Elements/UserDashboard/Styles.php:888
+#: app/Elements/UserLogin/Styles.php:435
+msgid "Padding"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:96 app/Elements/AddListing/Styles.php:385
+#: app/Elements/AddListing/Styles.php:823
+#: app/Elements/AllListings/Styles.php:50
+#: app/Elements/AllListings/Styles.php:327
+#: app/Elements/AllListings/Styles.php:486 app/Elements/Common/Button.php:44
+#: app/Elements/Common/Button.php:280
+#: app/Elements/Common/DirectoryTypeStyles.php:103
+#: app/Elements/Common/Pagination.php:30
+#: app/Elements/SingleListingFields/Review/Styles.php:33
+#: app/Elements/SingleListingFields/Review/Styles.php:106
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:65
+#: app/Elements/UserDashboard/Styles.php:66
+#: app/Elements/UserDashboard/Styles.php:505
+#: app/Elements/UserDashboard/Styles.php:762
+#: app/Elements/UserLogin/Styles.php:317
+msgid "Normal"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:109
+#: app/Elements/AddListing/Styles.php:186
+#: app/Elements/AddListing/Styles.php:341
+#: app/Elements/AddListing/Styles.php:421
+#: app/Elements/AddListing/Styles.php:482
+#: app/Elements/AddListing/Styles.php:539
+#: app/Elements/AddListing/Styles.php:858
+#: app/Elements/AddListing/Styles.php:913 app/Elements/AllAuthors/Styles.php:75
+#: app/Elements/AllAuthors/Styles.php:322
+#: app/Elements/AllCategories/Styles.php:89
+#: app/Elements/AllListings/Styles.php:94
+#: app/Elements/AllListings/Styles.php:157
+#: app/Elements/AllListings/Styles.php:366
+#: app/Elements/AllListings/Styles.php:428
+#: app/Elements/AllListings/Styles.php:524
+#: app/Elements/AllListings/Styles.php:582
+#: app/Elements/AllListings/Styles.php:640
+#: app/Elements/AllLocations/Styles.php:88
+#: app/Elements/AuthorProfile/Styles.php:81
+#: app/Elements/AuthorProfile/Styles.php:343 app/Elements/Common/Button.php:81
+#: app/Elements/Common/Button.php:141 app/Elements/Common/Button.php:199
+#: app/Elements/Common/Button.php:317 app/Elements/Common/Button.php:375
+#: app/Elements/Common/Container.php:72
+#: app/Elements/Common/DirectoryTypeStyles.php:143
+#: app/Elements/Common/DirectoryTypeStyles.php:216
+#: app/Elements/Common/DirectoryTypeStyles.php:276
+#: app/Elements/Common/Pagination.php:68 app/Elements/Common/Pagination.php:126
+#: app/Elements/Common/Pagination.php:184
+#: app/Elements/SearchListing/Styles.php:80
+#: app/Elements/SearchListing/Styles.php:216
+#: app/Elements/SearchListing/Styles.php:286
+#: app/Elements/SearchListing/Styles.php:368
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:77
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:99
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:153
+#: app/Elements/Team/Team.php:97 app/Elements/UserDashboard/Styles.php:329
+#: app/Elements/UserDashboard/Styles.php:408
+#: app/Elements/UserDashboard/Styles.php:543
+#: app/Elements/UserDashboard/Styles.php:601
+#: app/Elements/UserDashboard/Styles.php:660
+#: app/Elements/UserDashboard/Styles.php:802
+#: app/Elements/UserDashboard/Styles.php:864
+#: app/Elements/UserLogin/Styles.php:354 app/Elements/UserLogin/Styles.php:411
+msgid "Border Radius"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:129
+#: app/Elements/AddListing/Styles.php:206
+#: app/Elements/AddListing/Styles.php:389
+#: app/Elements/AddListing/Styles.php:445
+#: app/Elements/AddListing/Styles.php:506
+#: app/Elements/AddListing/Styles.php:581
+#: app/Elements/AddListing/Styles.php:680
+#: app/Elements/AddListing/Styles.php:827
+#: app/Elements/AddListing/Styles.php:882
+#: app/Elements/AllCategories/Styles.php:138
+#: app/Elements/AllListings/Styles.php:230
+#: app/Elements/AllListings/Styles.php:334
+#: app/Elements/AllListings/Styles.php:395
+#: app/Elements/AllListings/Styles.php:691
+#: app/Elements/AllListings/Styles.php:784
+#: app/Elements/AllListings/Styles.php:842
+#: app/Elements/AllLocations/Styles.php:122 app/Elements/Common/Button.php:51
+#: app/Elements/Common/Button.php:110 app/Elements/Common/Button.php:170
+#: app/Elements/Common/Button.php:287 app/Elements/Common/Button.php:346
+#: app/Elements/Common/DirectoryTypeStyles.php:110
+#: app/Elements/Common/DirectoryTypeStyles.php:173
+#: app/Elements/Common/DirectoryTypeStyles.php:246
+#: app/Elements/Common/TextControls.php:24
+#: app/Elements/Common/TextControls.php:73
+#: app/Elements/SearchListing/Styles.php:113
+#: app/Elements/SearchListing/Styles.php:166
+#: app/Elements/SearchListing/Styles.php:245
+#: app/Elements/SearchListing/Styles.php:332
+#: app/Elements/SearchListing/Styles.php:397
+#: app/Elements/SingleListingFields/Info/Styles.php:53
+#: app/Elements/SingleListingFields/Review/Styles.php:37
+#: app/Elements/SingleListingFields/Review/Styles.php:65
+#: app/Elements/SingleListingFields/Review/Styles.php:110
+#: app/Elements/SingleListingFields/Review/Styles.php:137
+#: app/Elements/UserDashboard/Styles.php:70
+#: app/Elements/UserDashboard/Styles.php:106
+#: app/Elements/UserDashboard/Styles.php:141
+#: app/Elements/UserDashboard/Styles.php:188
+#: app/Elements/UserDashboard/Styles.php:214
+#: app/Elements/UserDashboard/Styles.php:261
+#: app/Elements/UserDashboard/Styles.php:298
+#: app/Elements/UserDashboard/Styles.php:512
+#: app/Elements/UserDashboard/Styles.php:571
+#: app/Elements/UserDashboard/Styles.php:629
+#: app/Elements/UserDashboard/Styles.php:769
+#: app/Elements/UserDashboard/Styles.php:831
+#: app/Elements/UserLogin/Styles.php:324 app/Elements/UserLogin/Styles.php:383
+#: app/Elements/UserLogin/Styles.php:461
+msgid "Text Color"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:140
+#: app/Elements/AllAuthors/Styles.php:233
+#: app/Elements/AllAuthors/Styles.php:360
+#: app/Elements/AllCategories/Styles.php:67
+#: app/Elements/AllCategories/Styles.php:219
+#: app/Elements/AllListings/Styles.php:72
+#: app/Elements/AllListings/Styles.php:136
+#: app/Elements/AllListings/Styles.php:505
+#: app/Elements/AllListings/Styles.php:563
+#: app/Elements/AllListings/Styles.php:621
+#: app/Elements/AllLocations/Styles.php:67
+#: app/Elements/Common/Pagination.php:49 app/Elements/Common/Pagination.php:107
+#: app/Elements/Common/Pagination.php:165
+#: app/Elements/SearchListing/Styles.php:60
+#: app/Elements/UserDashboard/Styles.php:524
+#: app/Elements/UserDashboard/Styles.php:582
+#: app/Elements/UserDashboard/Styles.php:641
+#: app/Elements/UserDashboard/Styles.php:782
+#: app/Elements/UserDashboard/Styles.php:844
+msgid "Background Color"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:151
+#: app/Elements/AllAuthors/Styles.php:219
+#: app/Elements/AllAuthors/Styles.php:346
+#: app/Elements/AllListings/Styles.php:195
+#: app/Elements/AllListings/Styles.php:747
+#: app/Elements/AuthorProfile/Styles.php:426
+msgid "Icon Color"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:162
+#: app/Elements/AddListing/Styles.php:239
+msgid "Icon Background"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:173
+#: app/Elements/AddListing/Styles.php:502
+#: app/Elements/AddListing/Styles.php:878
+#: app/Elements/AllAuthors/Styles.php:334
+#: app/Elements/AllListings/Styles.php:388
+#: app/Elements/AllListings/Styles.php:603
+#: app/Elements/AuthorProfile/Styles.php:355 app/Elements/Common/Button.php:163
+#: app/Elements/Common/Button.php:339
+#: app/Elements/Common/DirectoryTypeStyles.php:239
+#: app/Elements/Common/Pagination.php:147
+#: app/Elements/SingleListingFields/Review/Styles.php:61
+#: app/Elements/SingleListingFields/Review/Styles.php:133
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:119
+#: app/Elements/UserDashboard/Styles.php:137
+#: app/Elements/UserDashboard/Styles.php:622
+#: app/Elements/UserDashboard/Styles.php:824
+#: app/Elements/UserLogin/Styles.php:376
+msgid "Hover"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:217
+#: app/Elements/AddListing/Styles.php:401
+#: app/Elements/AddListing/Styles.php:461
+#: app/Elements/AddListing/Styles.php:519
+#: app/Elements/AddListing/Styles.php:838
+#: app/Elements/AddListing/Styles.php:893
+#: app/Elements/AllListings/Styles.php:347
+#: app/Elements/AllListings/Styles.php:408 app/Elements/Checkout/Styles.php:214
+#: app/Elements/Checkout/Styles.php:241
+#: app/Elements/SearchListing/Styles.php:180
+#: app/Elements/SearchListing/Styles.php:256
+#: app/Elements/SearchListing/Styles.php:346
+#: app/Elements/SingleListingFields/Review/Styles.php:49
+#: app/Elements/SingleListingFields/Review/Styles.php:77
+#: app/Elements/SingleListingFields/Review/Styles.php:121
+#: app/Elements/SingleListingFields/Review/Styles.php:148
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:80
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:134
+#: app/Elements/UserDashboard/Styles.php:82
+#: app/Elements/UserDashboard/Styles.php:118
+#: app/Elements/UserDashboard/Styles.php:153
+#: app/Elements/UserDashboard/Styles.php:199
+#: app/Elements/UserDashboard/Styles.php:225
+#: app/Elements/UserDashboard/Styles.php:310
+msgid "Background"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:228
+#: app/Elements/AllCategories/Styles.php:174
+#: app/Elements/AuthorProfile/Styles.php:407
+#: app/Elements/SearchListing/Styles.php:194
+#: app/Elements/SearchListing/Styles.php:267
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:69
+#: app/Elements/SingleListingFields/SocialInfo/Styles.php:123
+msgid "Icon"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:259
+msgid "Listing Form: Settings"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:267
+msgid "Enable Settings"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:285
+msgid "Form: Container"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:366
+msgid "Form: Sidebar"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:441
+#: app/Elements/AllListings/Styles.php:116
+#: app/Elements/AllListings/Styles.php:545 app/Elements/Common/Button.php:103
+#: app/Elements/Common/DirectoryTypeStyles.php:165
+#: app/Elements/Common/Pagination.php:89
+#: app/Elements/UserDashboard/Styles.php:101
+#: app/Elements/UserDashboard/Styles.php:564
+msgid "Active"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:617
+#: app/Elements/AddListing/Styles.php:716
+msgid "Separator"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:626
+#: app/Elements/AddListing/Styles.php:725
+#: app/Elements/AddListing/Styles.php:793
+msgid "Height"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:645
+#: app/Elements/AddListing/Styles.php:746
+#: app/Elements/AllAuthors/Styles.php:151
+#: app/Elements/AllAuthors/Styles.php:206
+#: app/Elements/AllCategories/Styles.php:207
+#: app/Elements/AllListings/Styles.php:57
+#: app/Elements/AllListings/Styles.php:123
+#: app/Elements/AllListings/Styles.php:493
+#: app/Elements/AllListings/Styles.php:552
+#: app/Elements/AllListings/Styles.php:610
+#: app/Elements/AuthorProfile/Styles.php:173
+#: app/Elements/AuthorProfile/Styles.php:228
+#: app/Elements/Checkout/Styles.php:44 app/Elements/Checkout/Styles.php:114
+#: app/Elements/Checkout/Styles.php:142 app/Elements/Checkout/Styles.php:162
+#: app/Elements/Checkout/Styles.php:203 app/Elements/Checkout/Styles.php:230
+#: app/Elements/Common/Pagination.php:37 app/Elements/Common/Pagination.php:96
+#: app/Elements/Common/Pagination.php:154
+#: app/Elements/SearchListing/Styles.php:423
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:152
+#: app/Elements/UserDashboard/Styles.php:717
+#: app/Elements/UserLogin/Styles.php:47 app/Elements/UserLogin/Styles.php:91
+#: app/Elements/UserLogin/Styles.php:119 app/Elements/UserLogin/Styles.php:147
+#: app/Elements/UserLogin/Styles.php:175 app/Elements/UserLogin/Styles.php:211
+#: app/Elements/UserLogin/Styles.php:274 app/Elements/UserLogin/Styles.php:543
+msgid "Color"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:672
+msgid "Label"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:763
+msgid "Form: Progressbar"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:771
+msgid "Progressbar Color"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:782
+msgid "Progressbar Background"
+msgstr ""
+
+#: app/Elements/AddListing/Styles.php:812
+msgid "Form: Save & Preview Button"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:33
+msgid "All Authors"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:66
+msgid ""
+"This widget works only in All Authors page. It has no additional elementor "
+"settings."
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:77
+#: app/Elements/AuthorProfile/AuthorProfile.php:81
+msgid "Header: Container"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:78
+msgid "Header: Style"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:79
+msgid "Card: Container"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:81
+msgid "Card: Author Name"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:83
+msgid "Card: Author Bio"
+msgstr ""
+
+#: app/Elements/AllAuthors/AllAuthors.php:85
+msgid "Card: Button"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:33
+msgid "Card: Image"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:41
+#: app/Elements/AuthorProfile/Styles.php:49
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:45
+msgid "Image Size"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:119
+msgid "Card: Contact Info"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:198
+msgid "Card: Social Icons"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:210
+#: app/Elements/AuthorProfile/Styles.php:232
+msgid "Default Color"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:211
+#: app/Elements/AuthorProfile/Styles.php:233
+msgid "Custom"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:247
+#: app/Elements/AllCategories/Styles.php:182
+#: app/Elements/AuthorProfile/Styles.php:269
+msgid "Size"
+msgstr ""
+
+#: app/Elements/AllAuthors/Styles.php:293
+#: app/Elements/AuthorProfile/Styles.php:314
+msgid "Spacing"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:35
+#: app/Elements/Post/Post.php:70
+msgid "All Categories"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:80
+#: app/Elements/AllLocations/AllLocations.php:81
+#: app/Elements/SearchListing/SearchListing.php:154
+msgid "Active Directory"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:91
+#: app/Elements/AllListings/AllListings.php:257
+#: app/Elements/AllLocations/AllLocations.php:92
+#: app/Elements/SearchResult/SearchResult.php:252
+#: app/Elements/SingleCategory/SingleCategory.php:252
+#: app/Elements/SingleLocation/SingleLocation.php:252
+#: app/Elements/SingleTag/SingleTag.php:252
+msgid "View As"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:94
+#: app/Elements/AllLocations/AllLocations.php:95
+msgid "Grid View"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:95
+#: app/Elements/AllLocations/AllLocations.php:96
+msgid "List View"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:105
+msgid "Categories Per Row"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:107
+#: app/Elements/AllListings/AllListings.php:285
+#: app/Elements/AllLocations/AllLocations.php:108
+#: app/Elements/Post/Post.php:136 app/Elements/Post/Post.php:147
+#: app/Elements/Post/Post.php:158 app/Elements/Post/Post.php:169
+#: app/Elements/SearchResult/SearchResult.php:280
+#: app/Elements/SingleCategory/SingleCategory.php:280
+#: app/Elements/SingleLocation/SingleLocation.php:280
+#: app/Elements/SingleTag/SingleTag.php:280
+msgid "Show"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:108
+#: app/Elements/AllListings/AllListings.php:286
+#: app/Elements/AllLocations/AllLocations.php:109
+#: app/Elements/Post/Post.php:137 app/Elements/Post/Post.php:148
+#: app/Elements/Post/Post.php:159 app/Elements/Post/Post.php:170
+#: app/Elements/SearchResult/SearchResult.php:281
+#: app/Elements/SingleCategory/SingleCategory.php:281
+#: app/Elements/SingleLocation/SingleLocation.php:281
+#: app/Elements/SingleTag/SingleTag.php:281
+msgid "Hide"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:110
+#: app/Elements/AllLocations/AllLocations.php:111
+msgid "6 Items / Row"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:111
+msgid "5 Items / Row"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:112
+#: app/Elements/AllLocations/AllLocations.php:112
+msgid "4 Items / Row"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:113
+#: app/Elements/AllLocations/AllLocations.php:113
+msgid "3 Items / Row"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:114
+#: app/Elements/AllLocations/AllLocations.php:114
+msgid "2 Items / Row"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:124
+#: app/Elements/AllListings/AllListings.php:323
+#: app/Elements/AllLocations/AllLocations.php:124
+#: app/Elements/SearchResult/SearchResult.php:348
+#: app/Elements/SingleCategory/SingleCategory.php:318
+#: app/Elements/SingleLocation/SingleLocation.php:318
+#: app/Elements/SingleTag/SingleTag.php:318
+msgid "Order by"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:127
+#: app/Elements/AllLocations/AllLocations.php:127
+msgid "ID"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:128
+#: app/Elements/AllLocations/AllLocations.php:128
+msgid "Count"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:129
+#: app/Elements/AllLocations/AllLocations.php:129
+#: app/Elements/Team/Team.php:110
+msgid "Name"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:130
+#: app/Elements/AllLocations/AllLocations.php:130
+msgid "Slug"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:140
+#: app/Elements/AllListings/AllListings.php:374
+#: app/Elements/SearchResult/SearchResult.php:318
+#: app/Elements/SingleCategory/SingleCategory.php:369
+#: app/Elements/SingleLocation/SingleLocation.php:369
+#: app/Elements/SingleTag/SingleTag.php:369
+msgid "Specify Categories"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:152
+msgid "Categories Order"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:155
+#: app/Elements/AllListings/AllListings.php:340
+#: app/Elements/AllLocations/AllLocations.php:155
+#: app/Elements/SearchResult/SearchResult.php:365
+#: app/Elements/SingleCategory/SingleCategory.php:335
+#: app/Elements/SingleLocation/SingleLocation.php:335
+#: app/Elements/SingleTag/SingleTag.php:335
+msgid " ASC"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:156
+#: app/Elements/AllListings/AllListings.php:341
+#: app/Elements/AllLocations/AllLocations.php:156
+#: app/Elements/SearchResult/SearchResult.php:366
+#: app/Elements/SingleCategory/SingleCategory.php:336
+#: app/Elements/SingleLocation/SingleLocation.php:336
+#: app/Elements/SingleTag/SingleTag.php:336
+msgid " DESC"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:166
+msgid "Number of Categories to Show"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:173
+msgid "Set -1 to display all categories"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:180
+#: app/Elements/AllListings/AllListings.php:420
+#: app/Elements/AllLocations/AllLocations.php:180
+#: app/Elements/AuthorProfile/AuthorProfile.php:67
+#: app/Elements/SearchResult/SearchResult.php:387
+#: app/Elements/SingleCategory/SingleCategory.php:414
+#: app/Elements/SingleLocation/SingleLocation.php:414
+#: app/Elements/SingleTag/SingleTag.php:414
+msgid "Only For Logged In User?"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:182
+#: app/Elements/AllListings/AllListings.php:422
+#: app/Elements/AllLocations/AllLocations.php:182
+#: app/Elements/AuthorProfile/AuthorProfile.php:69
+#: app/Elements/SearchListing/SearchListing.php:362
+#: app/Elements/SearchResult/SearchResult.php:389
+#: app/Elements/SingleCategory/SingleCategory.php:416
+#: app/Elements/SingleLocation/SingleLocation.php:416
+#: app/Elements/SingleTag/SingleTag.php:416
+msgid "Yes"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:183
+#: app/Elements/AllListings/AllListings.php:423
+#: app/Elements/AllLocations/AllLocations.php:183
+#: app/Elements/AuthorProfile/AuthorProfile.php:70
+#: app/Elements/SearchListing/SearchListing.php:363
+#: app/Elements/SearchResult/SearchResult.php:390
+#: app/Elements/SingleCategory/SingleCategory.php:417
+#: app/Elements/SingleLocation/SingleLocation.php:417
+#: app/Elements/SingleTag/SingleTag.php:417
+msgid "No"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:197
+#: app/Elements/AllListings/AllListings.php:494
+#: app/Elements/AllLocations/AllLocations.php:197
+#: app/Elements/SearchResult/SearchResult.php:461
+#: app/Elements/SingleCategory/SingleCategory.php:488
+#: app/Elements/SingleLocation/SingleLocation.php:488
+#: app/Elements/SingleTag/SingleTag.php:488
+msgid "Type: Container"
+msgstr ""
+
+#: app/Elements/AllCategories/AllCategories.php:216
+msgid "Listing Count"
+msgstr ""
+
+#: app/Elements/AllCategories/Styles.php:24
+msgid "Category Card"
+msgstr ""
+
+#: app/Elements/AllCategories/Styles.php:68
+#: app/Elements/AllCategories/Styles.php:220
+msgid "For empty background image."
+msgstr ""
+
+#: app/Elements/AllCategories/Styles.php:112
+msgid "Category Title"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:39
+msgid "Listings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:70
+#: app/Elements/SearchResult/SearchResult.php:65
+#: app/Elements/SingleCategory/SingleCategory.php:65
+#: app/Elements/SingleLocation/SingleLocation.php:65
+#: app/Elements/SingleTag/SingleTag.php:65
+msgid "General Settings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:94
+#: app/Elements/SearchResult/SearchResult.php:89
+#: app/Elements/SingleCategory/SingleCategory.php:89
+#: app/Elements/SingleLocation/SingleLocation.php:89
+#: app/Elements/SingleTag/SingleTag.php:89
+msgid "Directory Type Settings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:103
+#: app/Elements/SearchResult/SearchResult.php:98
+#: app/Elements/SingleCategory/SingleCategory.php:98
+#: app/Elements/SingleLocation/SingleLocation.php:98
+#: app/Elements/SingleTag/SingleTag.php:98
+msgid "Select Types"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:108
+#: app/Elements/SearchResult/SearchResult.php:103
+#: app/Elements/SingleCategory/SingleCategory.php:103
+#: app/Elements/SingleLocation/SingleLocation.php:103
+#: app/Elements/SingleTag/SingleTag.php:103
+msgid "Leave empty to display all directory types"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:115
+#: app/Elements/SearchResult/SearchResult.php:110
+#: app/Elements/SingleCategory/SingleCategory.php:110
+#: app/Elements/SingleLocation/SingleLocation.php:110
+#: app/Elements/SingleTag/SingleTag.php:110
+msgid "Active Type"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:126
+#: app/Elements/SearchListing/SearchListing.php:165
+#: app/Elements/SearchResult/SearchResult.php:121
+#: app/Elements/SingleCategory/SingleCategory.php:121
+#: app/Elements/SingleLocation/SingleLocation.php:121
+#: app/Elements/SingleTag/SingleTag.php:121
+msgid "Type Alignment"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:130
+#: app/Elements/AllListings/AllListings.php:221
+#: app/Elements/AllListings/AllListings.php:457
+#: app/Elements/SearchListing/SearchListing.php:109
+#: app/Elements/SearchListing/SearchListing.php:169
+#: app/Elements/SearchListing/SearchListing.php:337
+#: app/Elements/SearchResult/SearchResult.php:125
+#: app/Elements/SearchResult/SearchResult.php:216
+#: app/Elements/SearchResult/SearchResult.php:424
+#: app/Elements/SingleCategory/SingleCategory.php:125
+#: app/Elements/SingleCategory/SingleCategory.php:216
+#: app/Elements/SingleCategory/SingleCategory.php:451
+#: app/Elements/SingleListingFields/Action/Action.php:82
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:97
+#: app/Elements/SingleListingFields/Info/Info.php:81
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:85
+#: app/Elements/SingleLocation/SingleLocation.php:125
+#: app/Elements/SingleLocation/SingleLocation.php:216
+#: app/Elements/SingleLocation/SingleLocation.php:451
+#: app/Elements/SingleTag/SingleTag.php:125
+#: app/Elements/SingleTag/SingleTag.php:216
+#: app/Elements/SingleTag/SingleTag.php:451 app/Elements/Team/Team.php:155
+msgid "Left"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:134
+#: app/Elements/AllListings/AllListings.php:461
+#: app/Elements/SearchListing/SearchListing.php:113
+#: app/Elements/SearchListing/SearchListing.php:173
+#: app/Elements/SearchListing/SearchListing.php:341
+#: app/Elements/SearchResult/SearchResult.php:129
+#: app/Elements/SearchResult/SearchResult.php:428
+#: app/Elements/SingleCategory/SingleCategory.php:129
+#: app/Elements/SingleCategory/SingleCategory.php:455
+#: app/Elements/SingleListingFields/Action/Action.php:86
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:101
+#: app/Elements/SingleListingFields/Info/Info.php:85
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:89
+#: app/Elements/SingleLocation/SingleLocation.php:129
+#: app/Elements/SingleLocation/SingleLocation.php:455
+#: app/Elements/SingleTag/SingleTag.php:129
+#: app/Elements/SingleTag/SingleTag.php:455 app/Elements/Team/Team.php:159
+msgid "Center"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:138
+#: app/Elements/AllListings/AllListings.php:222
+#: app/Elements/AllListings/AllListings.php:465
+#: app/Elements/SearchListing/SearchListing.php:117
+#: app/Elements/SearchListing/SearchListing.php:177
+#: app/Elements/SearchListing/SearchListing.php:345
+#: app/Elements/SearchResult/SearchResult.php:133
+#: app/Elements/SearchResult/SearchResult.php:217
+#: app/Elements/SearchResult/SearchResult.php:432
+#: app/Elements/SingleCategory/SingleCategory.php:133
+#: app/Elements/SingleCategory/SingleCategory.php:217
+#: app/Elements/SingleCategory/SingleCategory.php:459
+#: app/Elements/SingleListingFields/Action/Action.php:90
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:105
+#: app/Elements/SingleListingFields/Info/Info.php:89
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:93
+#: app/Elements/SingleLocation/SingleLocation.php:133
+#: app/Elements/SingleLocation/SingleLocation.php:217
+#: app/Elements/SingleLocation/SingleLocation.php:459
+#: app/Elements/SingleTag/SingleTag.php:133
+#: app/Elements/SingleTag/SingleTag.php:217
+#: app/Elements/SingleTag/SingleTag.php:459 app/Elements/Team/Team.php:163
+msgid "Right"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:153
+#: app/Elements/SearchListing/SearchListing.php:192
+#: app/Elements/SearchResult/SearchResult.php:148
+#: app/Elements/SingleCategory/SingleCategory.php:148
+#: app/Elements/SingleLocation/SingleLocation.php:148
+#: app/Elements/SingleTag/SingleTag.php:148
+msgid "Icon Position"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:157
+#: app/Elements/AllListings/AllListings.php:220
+#: app/Elements/SearchListing/SearchListing.php:196
+#: app/Elements/SearchResult/SearchResult.php:152
+#: app/Elements/SearchResult/SearchResult.php:215
+#: app/Elements/SingleCategory/SingleCategory.php:152
+#: app/Elements/SingleCategory/SingleCategory.php:215
+#: app/Elements/SingleLocation/SingleLocation.php:152
+#: app/Elements/SingleLocation/SingleLocation.php:215
+#: app/Elements/SingleTag/SingleTag.php:152
+#: app/Elements/SingleTag/SingleTag.php:215
+msgid "Default"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:161
+#: app/Elements/SearchListing/SearchListing.php:200
+#: app/Elements/SearchResult/SearchResult.php:156
+#: app/Elements/SingleCategory/SingleCategory.php:156
+#: app/Elements/SingleLocation/SingleLocation.php:156
+#: app/Elements/SingleTag/SingleTag.php:156
+msgid "Column Reverse"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:165
+#: app/Elements/SearchListing/SearchListing.php:204
+#: app/Elements/SearchResult/SearchResult.php:160
+#: app/Elements/SingleCategory/SingleCategory.php:160
+#: app/Elements/SingleLocation/SingleLocation.php:160
+#: app/Elements/SingleTag/SingleTag.php:160
+msgid "Row"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:169
+#: app/Elements/SearchListing/SearchListing.php:208
+#: app/Elements/SearchResult/SearchResult.php:164
+#: app/Elements/SingleCategory/SingleCategory.php:164
+#: app/Elements/SingleLocation/SingleLocation.php:164
+#: app/Elements/SingleTag/SingleTag.php:164
+msgid "Row Reverse"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:187
+#: app/Elements/SearchResult/SearchResult.php:182
+#: app/Elements/SingleCategory/SingleCategory.php:182
+#: app/Elements/SingleLocation/SingleLocation.php:182
+#: app/Elements/SingleTag/SingleTag.php:182
+msgid "Listing Configuration"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:196
+#: app/Elements/SearchListing/SearchListing.php:74
+#: app/Elements/SearchResult/SearchResult.php:191
+#: app/Elements/SingleCategory/SingleCategory.php:191
+#: app/Elements/SingleLocation/SingleLocation.php:191
+#: app/Elements/SingleTag/SingleTag.php:191
+msgid "Display Header Section"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:198
+#: app/Elements/AllListings/AllListings.php:234
+#: app/Elements/AllListings/AllListings.php:248
+#: app/Elements/AllListings/AllListings.php:303
+#: app/Elements/AllListings/AllListings.php:314
+#: app/Elements/AllListings/AllListings.php:444
+#: app/Elements/SearchListing/SearchListing.php:76
+#: app/Elements/SearchListing/SearchListing.php:244
+#: app/Elements/SearchListing/SearchListing.php:255
+#: app/Elements/SearchListing/SearchListing.php:267
+#: app/Elements/SearchListing/SearchListing.php:324
+#: app/Elements/SearchResult/SearchResult.php:193
+#: app/Elements/SearchResult/SearchResult.php:229
+#: app/Elements/SearchResult/SearchResult.php:243
+#: app/Elements/SearchResult/SearchResult.php:298
+#: app/Elements/SearchResult/SearchResult.php:309
+#: app/Elements/SearchResult/SearchResult.php:411
+#: app/Elements/SingleCategory/SingleCategory.php:193
+#: app/Elements/SingleCategory/SingleCategory.php:229
+#: app/Elements/SingleCategory/SingleCategory.php:243
+#: app/Elements/SingleCategory/SingleCategory.php:298
+#: app/Elements/SingleCategory/SingleCategory.php:309
+#: app/Elements/SingleCategory/SingleCategory.php:438
+#: app/Elements/SingleLocation/SingleLocation.php:193
+#: app/Elements/SingleLocation/SingleLocation.php:229
+#: app/Elements/SingleLocation/SingleLocation.php:243
+#: app/Elements/SingleLocation/SingleLocation.php:298
+#: app/Elements/SingleLocation/SingleLocation.php:309
+#: app/Elements/SingleLocation/SingleLocation.php:438
+#: app/Elements/SingleTag/SingleTag.php:193
+#: app/Elements/SingleTag/SingleTag.php:229
+#: app/Elements/SingleTag/SingleTag.php:243
+#: app/Elements/SingleTag/SingleTag.php:298
+#: app/Elements/SingleTag/SingleTag.php:309
+#: app/Elements/SingleTag/SingleTag.php:438
+msgid "Enable"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:199
+#: app/Elements/AllListings/AllListings.php:235
+#: app/Elements/AllListings/AllListings.php:249
+#: app/Elements/AllListings/AllListings.php:304
+#: app/Elements/AllListings/AllListings.php:315
+#: app/Elements/AllListings/AllListings.php:445
+#: app/Elements/SearchListing/SearchListing.php:77
+#: app/Elements/SearchListing/SearchListing.php:245
+#: app/Elements/SearchListing/SearchListing.php:256
+#: app/Elements/SearchListing/SearchListing.php:268
+#: app/Elements/SearchListing/SearchListing.php:325
+#: app/Elements/SearchResult/SearchResult.php:194
+#: app/Elements/SearchResult/SearchResult.php:230
+#: app/Elements/SearchResult/SearchResult.php:244
+#: app/Elements/SearchResult/SearchResult.php:299
+#: app/Elements/SearchResult/SearchResult.php:310
+#: app/Elements/SearchResult/SearchResult.php:412
+#: app/Elements/SingleCategory/SingleCategory.php:194
+#: app/Elements/SingleCategory/SingleCategory.php:230
+#: app/Elements/SingleCategory/SingleCategory.php:244
+#: app/Elements/SingleCategory/SingleCategory.php:299
+#: app/Elements/SingleCategory/SingleCategory.php:310
+#: app/Elements/SingleCategory/SingleCategory.php:439
+#: app/Elements/SingleLocation/SingleLocation.php:194
+#: app/Elements/SingleLocation/SingleLocation.php:230
+#: app/Elements/SingleLocation/SingleLocation.php:244
+#: app/Elements/SingleLocation/SingleLocation.php:299
+#: app/Elements/SingleLocation/SingleLocation.php:310
+#: app/Elements/SingleLocation/SingleLocation.php:439
+#: app/Elements/SingleTag/SingleTag.php:194
+#: app/Elements/SingleTag/SingleTag.php:230
+#: app/Elements/SingleTag/SingleTag.php:244
+#: app/Elements/SingleTag/SingleTag.php:299
+#: app/Elements/SingleTag/SingleTag.php:310
+#: app/Elements/SingleTag/SingleTag.php:439
+msgid "Disable"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:207
+#: app/Elements/SearchResult/SearchResult.php:202
+#: app/Elements/SingleCategory/SingleCategory.php:202
+#: app/Elements/SingleLocation/SingleLocation.php:202
+#: app/Elements/SingleTag/SingleTag.php:202
+msgid "Listings Found Text"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:209
+#: app/Elements/SearchResult/SearchResult.php:204
+#: app/Elements/SingleCategory/SingleCategory.php:204
+#: app/Elements/SingleLocation/SingleLocation.php:204
+#: app/Elements/SingleTag/SingleTag.php:204
+msgid "Listings Found"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:217
+#: app/Elements/SearchResult/SearchResult.php:212
+#: app/Elements/SingleCategory/SingleCategory.php:212
+#: app/Elements/SingleLocation/SingleLocation.php:212
+#: app/Elements/SingleTag/SingleTag.php:212
+msgid "Sidebar Options"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:223
+#: app/Elements/SearchResult/SearchResult.php:218
+#: app/Elements/SingleCategory/SingleCategory.php:218
+#: app/Elements/SingleLocation/SingleLocation.php:218
+#: app/Elements/SingleTag/SingleTag.php:218
+msgid "No Sidebar"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:232
+#: app/Elements/SearchResult/SearchResult.php:227
+#: app/Elements/SingleCategory/SingleCategory.php:227
+#: app/Elements/SingleLocation/SingleLocation.php:227
+#: app/Elements/SingleTag/SingleTag.php:227
+msgid "Enable Filter Button"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:246
+#: app/Elements/SearchResult/SearchResult.php:241
+#: app/Elements/SingleCategory/SingleCategory.php:241
+#: app/Elements/SingleLocation/SingleLocation.php:241
+#: app/Elements/SingleTag/SingleTag.php:241
+msgid "Display Preview Image"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:260
+#: app/Elements/SearchResult/SearchResult.php:255
+#: app/Elements/SingleCategory/SingleCategory.php:255
+#: app/Elements/SingleLocation/SingleLocation.php:255
+#: app/Elements/SingleTag/SingleTag.php:255
+msgid "Grid"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:261
+#: app/Elements/SearchResult/SearchResult.php:256
+#: app/Elements/SingleCategory/SingleCategory.php:256
+#: app/Elements/SingleLocation/SingleLocation.php:256
+#: app/Elements/SingleTag/SingleTag.php:256
+msgid "List"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:262
+#: app/Elements/SearchResult/SearchResult.php:257
+#: app/Elements/SingleCategory/SingleCategory.php:257
+#: app/Elements/SingleListingFields/Map/Map.php:66
+#: app/Elements/SingleLocation/SingleLocation.php:257
+#: app/Elements/SingleTag/SingleTag.php:257
+msgid "Map"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:271
+#: app/Elements/SearchResult/SearchResult.php:266
+#: app/Elements/SingleCategory/SingleCategory.php:266
+#: app/Elements/SingleLocation/SingleLocation.php:266
+#: app/Elements/SingleTag/SingleTag.php:266
+msgid "Map Height"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:283
+#: app/Elements/SearchResult/SearchResult.php:278
+#: app/Elements/SingleCategory/SingleCategory.php:278
+#: app/Elements/SingleLocation/SingleLocation.php:278
+#: app/Elements/SingleTag/SingleTag.php:278
+msgid "Grid Columns"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:288 app/Elements/Post/Post.php:98
+#: app/Elements/SearchResult/SearchResult.php:283
+#: app/Elements/SingleCategory/SingleCategory.php:283
+#: app/Elements/SingleLocation/SingleLocation.php:283
+#: app/Elements/SingleTag/SingleTag.php:283
+msgid "6 Columns"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:289 app/Elements/Post/Post.php:99
+#: app/Elements/SearchResult/SearchResult.php:284
+#: app/Elements/SingleCategory/SingleCategory.php:284
+#: app/Elements/SingleLocation/SingleLocation.php:284
+#: app/Elements/SingleTag/SingleTag.php:284
+msgid "4 Columns"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:290 app/Elements/Post/Post.php:100
+#: app/Elements/SearchResult/SearchResult.php:285
+#: app/Elements/SingleCategory/SingleCategory.php:285
+#: app/Elements/SingleLocation/SingleLocation.php:285
+#: app/Elements/SingleTag/SingleTag.php:285
+msgid "3 Columns"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:291 app/Elements/Post/Post.php:101
+#: app/Elements/SearchResult/SearchResult.php:286
+#: app/Elements/SingleCategory/SingleCategory.php:286
+#: app/Elements/SingleLocation/SingleLocation.php:286
+#: app/Elements/SingleTag/SingleTag.php:286
+msgid "2 Columns"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:301
+#: app/Elements/SearchResult/SearchResult.php:296
+#: app/Elements/SingleCategory/SingleCategory.php:296
+#: app/Elements/SingleLocation/SingleLocation.php:296
+#: app/Elements/SingleTag/SingleTag.php:296
+msgid "Show Featured Listings Only"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:312
+#: app/Elements/SearchResult/SearchResult.php:307
+#: app/Elements/SingleCategory/SingleCategory.php:307
+#: app/Elements/SingleLocation/SingleLocation.php:307
+#: app/Elements/SingleTag/SingleTag.php:307
+msgid "Show Popular Listings Only"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:326
+#: app/Elements/AllListings/Styles.php:678
+#: app/Elements/AuthorProfile/Styles.php:127
+#: app/Elements/Checkout/Styles.php:97 app/Elements/Post/Post.php:124
+#: app/Elements/SearchListing/SearchListing.php:85
+#: app/Elements/SearchListing/SearchListing.php:373
+#: app/Elements/SearchResult/SearchResult.php:351
+#: app/Elements/SingleCategory/SingleCategory.php:321
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:99
+#: app/Elements/SingleLocation/SingleLocation.php:321
+#: app/Elements/SingleTag/SingleTag.php:321
+msgid "Title"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:327
+#: app/Elements/SearchResult/SearchResult.php:352
+#: app/Elements/SingleCategory/SingleCategory.php:322
+#: app/Elements/SingleLocation/SingleLocation.php:322
+#: app/Elements/SingleTag/SingleTag.php:322
+msgid "Date"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:328
+#: app/Elements/SearchResult/SearchResult.php:353
+#: app/Elements/SingleCategory/SingleCategory.php:323
+#: app/Elements/SingleLocation/SingleLocation.php:323
+#: app/Elements/SingleTag/SingleTag.php:323
+msgid "Price"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:337
+#: app/Elements/SingleCategory/SingleCategory.php:332
+#: app/Elements/SingleLocation/SingleLocation.php:332
+#: app/Elements/SingleTag/SingleTag.php:332
+msgid "Order"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:385
+#: app/Elements/SearchResult/SearchResult.php:328
+#: app/Elements/SingleCategory/SingleCategory.php:380
+#: app/Elements/SingleLocation/SingleLocation.php:380
+#: app/Elements/SingleTag/SingleTag.php:380
+msgid "Specify Tags"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:396
+#: app/Elements/AllLocations/AllLocations.php:140
+#: app/Elements/SearchResult/SearchResult.php:338
+#: app/Elements/SingleCategory/SingleCategory.php:391
+#: app/Elements/SingleLocation/SingleLocation.php:391
+#: app/Elements/SingleTag/SingleTag.php:391
+msgid "Specify Locations"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:407
+#: app/Elements/SearchResult/SearchResult.php:375
+#: app/Elements/SingleCategory/SingleCategory.php:402
+#: app/Elements/SingleLocation/SingleLocation.php:402
+#: app/Elements/SingleTag/SingleTag.php:402
+msgid "Listings Per Page"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:413
+msgid "Set -1 to display all listings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:433
+#: app/Elements/SearchResult/SearchResult.php:400
+#: app/Elements/SingleCategory/SingleCategory.php:427
+#: app/Elements/SingleLocation/SingleLocation.php:427
+#: app/Elements/SingleTag/SingleTag.php:427
+msgid "Pagination Area"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:442
+#: app/Elements/SearchResult/SearchResult.php:409
+#: app/Elements/SingleCategory/SingleCategory.php:436
+#: app/Elements/SingleLocation/SingleLocation.php:436
+#: app/Elements/SingleTag/SingleTag.php:436
+msgid "Enable Pagination"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:453
+#: app/Elements/SearchResult/SearchResult.php:420
+#: app/Elements/SingleCategory/SingleCategory.php:447
+#: app/Elements/SingleListingFields/Action/Action.php:78
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:93
+#: app/Elements/SingleListingFields/Info/Info.php:77
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:81
+#: app/Elements/SingleLocation/SingleLocation.php:447
+#: app/Elements/SingleTag/SingleTag.php:447 app/Elements/Team/Team.php:152
+msgid "Alignment"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:507
+#: app/Elements/SearchResult/SearchResult.php:474
+#: app/Elements/SingleCategory/SingleCategory.php:500
+#: app/Elements/SingleLocation/SingleLocation.php:501
+#: app/Elements/SingleTag/SingleTag.php:501
+msgid "Search Form: Container"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:510
+#: app/Elements/SearchResult/SearchResult.php:477
+#: app/Elements/SingleCategory/SingleCategory.php:503
+#: app/Elements/SingleLocation/SingleLocation.php:504
+#: app/Elements/SingleTag/SingleTag.php:504
+msgid "Search Form: Field Settings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:519
+#: app/Elements/SearchResult/SearchResult.php:486
+#: app/Elements/SingleCategory/SingleCategory.php:512
+#: app/Elements/SingleLocation/SingleLocation.php:513
+#: app/Elements/SingleTag/SingleTag.php:513
+msgid "Listing Found Text"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:524
+#: app/Elements/SearchResult/SearchResult.php:491
+#: app/Elements/SingleCategory/SingleCategory.php:517
+#: app/Elements/SingleLocation/SingleLocation.php:518
+#: app/Elements/SingleTag/SingleTag.php:518
+#: app/Elements/UserDashboard/UserDashboard.php:74
+msgid "Sidebar: Container"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:526
+#: app/Elements/SearchResult/SearchResult.php:493
+#: app/Elements/SingleCategory/SingleCategory.php:519
+#: app/Elements/SingleLocation/SingleLocation.php:520
+#: app/Elements/SingleTag/SingleTag.php:520
+msgid "Sidebar: Title Settings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:528
+#: app/Elements/SearchResult/SearchResult.php:495
+#: app/Elements/SingleCategory/SingleCategory.php:521
+#: app/Elements/SingleLocation/SingleLocation.php:522
+#: app/Elements/SingleTag/SingleTag.php:522
+msgid "Sidebar: Field Settings"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:533
+#: app/Elements/SearchResult/SearchResult.php:500
+#: app/Elements/SingleCategory/SingleCategory.php:526
+#: app/Elements/SingleLocation/SingleLocation.php:527
+#: app/Elements/SingleTag/SingleTag.php:527
+msgid "Listing: Card Container"
+msgstr ""
+
+#: app/Elements/AllListings/AllListings.php:545
+#: app/Elements/SearchResult/SearchResult.php:512
+#: app/Elements/SingleCategory/SingleCategory.php:538
+#: app/Elements/SingleLocation/SingleLocation.php:539
+#: app/Elements/SingleTag/SingleTag.php:539
+msgid "Pagination: Container"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:31
+msgid "Listing View As & Sort Button"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:187
+msgid "Listing: Card Footer"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:275
+msgid "Filters Button"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:476
+msgid "Pagination"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:673
+msgid "Listing: Card Settings"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:683
+msgid "Top Info"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:739
+msgid "Bottom Info"
+msgstr ""
+
+#: app/Elements/AllListings/Styles.php:834
+msgid "Field Label"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:36
+msgid "All Locations"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:106
+msgid "Locations Per Row"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:152
+msgid "Locations Order"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:166
+msgid "Number of Locations to Show"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:173
+msgid "Set -1 to display all locations"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:212
+msgid "Location Text"
+msgstr ""
+
+#: app/Elements/AllLocations/AllLocations.php:218
+msgid "Listings Count Text"
+msgstr ""
+
+#: app/Elements/AllLocations/Styles.php:24
+msgid "Location Card Container"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:34
+msgid "Author Profile"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:85
+msgid "Header: Info Container"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:87
+msgid "Header: Info"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:89
+msgid "Contact Info: Container"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:91
+msgid "Contact Info: Title"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:96
+#: app/Elements/AuthorProfile/Styles.php:122
+msgid "About: Container"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:103
+msgid "Listings Section Title"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:105
+msgid "Type Container"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:109
+msgid "Listings: Filter"
+msgstr ""
+
+#: app/Elements/AuthorProfile/AuthorProfile.php:114
+msgid "Pagination Container"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:33
+msgid "Header: Image & Text"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:41
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:37
+#: app/Elements/Team/Team.php:60
+msgid "Image"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:110
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:106
+msgid "Profile: Name"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:112
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:108
+msgid "Profile: Registered"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:129
+msgid "Description"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:141
+msgid "Contact Info: Text"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:220
+msgid "Contact Info: Socials"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:241
+#: app/Elements/AuthorProfile/Styles.php:367
+msgid "Primary Color"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:255
+#: app/Elements/AuthorProfile/Styles.php:381
+msgid "Secondary Color"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:415
+msgid "Icon BG Color"
+msgstr ""
+
+#: app/Elements/AuthorProfile/Styles.php:453
+#: app/Elements/UserLogin/UserLogin.php:376
+msgid "Text"
+msgstr ""
+
+#: app/Elements/Checkout/Checkout.php:31
+msgid "Cart/Checkout"
+msgstr ""
+
+#: app/Elements/Checkout/Checkout.php:64
+msgid ""
+"This widget works only in Checkout page. It has no additional elementor "
+"settings."
+msgstr ""
+
+#: app/Elements/Checkout/Checkout.php:75
+msgid "Instruction"
+msgstr ""
+
+#: app/Elements/Checkout/Checkout.php:78
+msgid "Section Container"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:28
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:89
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:87
+msgid "Section Title"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:89
+msgid "Section Content"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:125
+msgid "Content"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:153
+msgid "Prices"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:174
+msgid "Border Color"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:191
+msgid "Action Buttons"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:199
+msgid "Pay Now"
+msgstr ""
+
+#: app/Elements/Checkout/Styles.php:226
+msgid "Not Now"
+msgstr ""
+
+#: app/Elements/Common/DirectoryTypeStyles.php:30
+msgid "Type: Settings"
+msgstr ""
+
+#: app/Elements/Common/DirectoryTypeStyles.php:63
+msgid "Icon Margin"
+msgstr ""
+
+#: app/Elements/Elements.php:65 app/Elements/Elements.php:175
+msgid "Directorist"
+msgstr ""
+
+#: app/Elements/PaymentReceipt/PaymentReceipt.php:24
+msgid "Payment Receipt"
+msgstr ""
+
+#: app/Elements/PaymentReceipt/PaymentReceipt.php:52
+msgid ""
+"This widget works only in Payment Receipt page. It has no additional "
+"elementor settings."
+msgstr ""
+
+#: app/Elements/Post/Post.php:25 app/Elements/Post/Post.php:79
+msgid "Posts"
+msgstr ""
+
+#: app/Elements/Post/Post.php:86
+msgid "Number of Posts"
+msgstr ""
+
+#: app/Elements/Post/Post.php:95
+msgid "Columns"
+msgstr ""
+
+#: app/Elements/Post/Post.php:111
+msgid "Categories"
+msgstr ""
+
+#: app/Elements/Post/Post.php:121
+msgid "Order By"
+msgstr ""
+
+#: app/Elements/Post/Post.php:123
+msgid "Date (Recents comes first)"
+msgstr ""
+
+#: app/Elements/Post/Post.php:125
+msgid "Custom Order (Available via Order field inside Page Attributes box)"
+msgstr ""
+
+#: app/Elements/Post/Post.php:135
+msgid "Show Excerpt"
+msgstr ""
+
+#: app/Elements/Post/Post.php:146
+msgid "Show Date"
+msgstr ""
+
+#: app/Elements/Post/Post.php:157
+msgid "Show Reading Time"
+msgstr ""
+
+#: app/Elements/Post/Post.php:168
+msgid "Show Categories"
+msgstr ""
+
+#: app/Elements/Post/view.php:17
+msgid "See all the guides"
+msgstr ""
+
+#: app/Elements/Post/view.php:93
+msgid "In"
+msgstr ""
+
+#: app/Elements/Post/view.php:139
+msgid "Currently there are no posts"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:32
+msgid "Directorist Search Form"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:66
+msgid "Heading Area"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:87
+msgid "Search here"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:95
+#: app/Elements/SearchListing/SearchListing.php:374
+msgid "Subtitle"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:97
+msgid "Find the best match of your interest"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:105
+msgid "Title & Subtitle Alignment"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:133
+msgid "Directory Type Area"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:142
+msgid "Choose Types"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:224
+msgid "Search Form"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:233
+msgid "Search Button Label"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:235
+msgid "Search Listing"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:242
+msgid "Enable Advanced Filters"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:253
+msgid "Enable Reset Button"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:265
+msgid "Enable Apply Button"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:277
+#: app/Elements/SearchListing/SearchListing.php:287
+#: app/Elements/SearchListing/SearchListing.php:300
+msgid "Button Label"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:279
+msgid "More Filters"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:289
+msgid "Reset Filters"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:302
+msgid "Apply Filters"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:313
+#: app/Elements/SearchListing/SearchListing.php:380
+msgid "Popular Category"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:322
+msgid "Enable Popular Categories"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:333
+msgid "Categories Alignment"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:360
+msgid "Enable Authentication"
+msgstr ""
+
+#: app/Elements/SearchListing/SearchListing.php:376
+#: app/Elements/UserLogin/UserLogin.php:367
+msgid "Form Container"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:105
+msgid "Search Form: Fields"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:149
+msgid "Search Form: Button"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:159
+msgid "Filters"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:238
+msgid "Search"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:315
+msgid "Advanced Filter: Buttons"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:325
+msgid "Apply"
+msgstr ""
+
+#: app/Elements/SearchListing/Styles.php:390
+msgid "Reset"
+msgstr ""
+
+#: app/Elements/SearchResult/SearchResult.php:40
+msgid "Search Result"
+msgstr ""
+
+#: app/Elements/SearchResult/SearchResult.php:362
+msgid "Listings Order"
+msgstr ""
+
+#: app/Elements/SingleCategory/SingleCategory.php:40
+msgid "Single Category"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Action/Action.php:28
+#: app/Elements/SingleListingFields/Action/Action.php:60
+msgid "Listing - Action"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Action/Action.php:67
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:78
+msgid "Select Action"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Action/Action.php:105
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:120
+#: app/Elements/SingleListingFields/Info/Styles.php:29
+msgid "Style"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:36
+msgid "Listing - Author Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:68
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:91
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:29
+msgid "Author Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:79
+msgid "This widget will show the listing author information's."
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:100
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:98
+msgid "Container"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:101
+msgid "Section label"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:104
+msgid "Author Social"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/AuthorInfo.php:105
+msgid "View Profile Button"
+msgstr ""
+
+#: app/Elements/SingleListingFields/AuthorInfo/Styles.php:120
+msgid "Author Contact"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Booking/Booking.php:22
+#: app/Elements/SingleListingFields/Booking/Booking.php:48
+msgid "Listing - Booking"
+msgstr ""
+
+#: app/Elements/SingleListingFields/BusinessHours/BusinessHours.php:22
+#: app/Elements/SingleListingFields/BusinessHours/BusinessHours.php:53
+msgid "Listing - Business Hours"
+msgstr ""
+
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:35
+msgid "Listing - Owner Contact Form"
+msgstr ""
+
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:67
+msgid "Form"
+msgstr ""
+
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:77
+msgid "This widget will display the listing owner's contact form."
+msgstr ""
+
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:89
+msgid "Contact Listings Owner Form"
+msgstr ""
+
+#: app/Elements/SingleListingFields/ContactListingsOwnerForm/ContactListingsOwnerForm.php:101
+msgid "Button Style"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/Address.php:19
+msgid "Listing Address"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/FieldColor.php:21
+msgid "Listing Color"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/FieldColor.php:38
+msgid "Select Color Field"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/Fields.php:21
+#: app/Elements/SingleListingFields/DynamicTags/FieldsUrl.php:21
+msgid "Listing Fields"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/Fields.php:38
+#: app/Elements/SingleListingFields/DynamicTags/FieldsUrl.php:38
+msgid "Select Field"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/SocialFields.php:20
+msgid "Listing Social Fields"
+msgstr ""
+
+#: app/Elements/SingleListingFields/DynamicTags/SocialFields.php:37
+msgid "Select Social"
+msgstr ""
+
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:28
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:57
+msgid "Listing - Edit Actions"
+msgstr ""
+
+#: app/Elements/SingleListingFields/EditAction/EditAction.php:68
+msgid ""
+"This widget will display <span style=\"color: green;\">Back, Edit, "
+"Continue</span> actions for the listing author on a single listing."
+msgstr ""
+
+#: app/Elements/SingleListingFields/EditAction/output.php:24
+msgid "Go Back"
+msgstr ""
+
+#: app/Elements/SingleListingFields/EditAction/output.php:32
+msgid "Continue"
+msgstr ""
+
+#: app/Elements/SingleListingFields/EditAction/output.php:39
+msgid "Edit"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Images/Images.php:26
+msgid "Listing - Images"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Images/Images.php:59
+msgid "Images"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Images/Images.php:70
+msgid "This widget will show the listing Images on a slider."
+msgstr ""
+
+#: app/Elements/SingleListingFields/Info/Info.php:27
+msgid "Listing - Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Info/Info.php:59
+msgid "Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Info/Info.php:66
+msgid "Select Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Map/Map.php:25
+msgid "Listing - Map"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Map/Map.php:77
+msgid "This widget will show the listing address on a map."
+msgstr ""
+
+#: app/Elements/SingleListingFields/RelatedListings/RelatedListings.php:34
+#: app/Elements/SingleListingFields/RelatedListings/RelatedListings.php:70
+msgid "Listing - Related Listings"
+msgstr ""
+
+#: app/Elements/SingleListingFields/RelatedListings/RelatedListings.php:81
+msgid "This widget will display similar listings on a slider."
+msgstr ""
+
+#: app/Elements/SingleListingFields/RelatedListings/RelatedListings.php:92
+msgid "Listing: Card"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:30
+msgid "Listing - Review"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:62
+msgid "Review Form"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:73
+msgid "This widget will show the listing review form."
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:86
+msgid "Review: Container"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:88
+msgid "Review: Section Title"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:93
+msgid "Review Form: Container"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Review.php:95
+msgid "Review Form: Section Title"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Styles.php:25
+msgid "Add Review: Button Style"
+msgstr ""
+
+#: app/Elements/SingleListingFields/Review/Styles.php:98
+msgid "Submit Review: Button Style"
+msgstr ""
+
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:28
+msgid "Listing - Social Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:60
+msgid "Social Info"
+msgstr ""
+
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:71
+msgid "This widget will show the listing social icons."
+msgstr ""
+
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:126
+msgid "Nothing to found!"
+msgstr ""
+
+#: app/Elements/SingleListingFields/SocialInfo/SocialInfo.php:127
+msgid "There is no social item in the current listing."
+msgstr ""
+
+#: app/Elements/SingleLocation/SingleLocation.php:40
+msgid "Single Location"
+msgstr ""
+
+#: app/Elements/SingleTag/SingleTag.php:40
+msgid "Single Tag"
+msgstr ""
+
+#: app/Elements/Team/Team.php:25 app/Elements/Team/Team.php:52
+msgid "Team Members"
+msgstr ""
+
+#: app/Elements/Team/Team.php:70
+msgid "Max Width"
+msgstr ""
+
+#: app/Elements/Team/Team.php:111
+msgid "John Doe"
+msgstr ""
+
+#: app/Elements/Team/Team.php:118
+msgid "Designation"
+msgstr ""
+
+#: app/Elements/Team/Team.php:119
+msgid "Founder & CEO"
+msgstr ""
+
+#: app/Elements/Team/Team.php:126
+msgid "Facebook"
+msgstr ""
+
+#: app/Elements/Team/Team.php:131
+msgid "Twitter"
+msgstr ""
+
+#: app/Elements/Team/Team.php:136
+msgid "Youtube"
+msgstr ""
+
+#: app/Elements/Team/Team.php:141
+msgid "Instagram"
+msgstr ""
+
+#: app/Elements/Team/Team.php:146
+msgid "Pinterest"
+msgstr ""
+
+#: app/Elements/TransactionFailure/TransactionFailure.php:27
+msgid "Transaction Failure"
+msgstr ""
+
+#: app/Elements/TransactionFailure/TransactionFailure.php:59
+msgid ""
+"This widget works only in Transaction Failure page. It has no additional "
+"elementor settings."
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:30
+msgid "Sidebar: Navigation"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:39
+msgid "Menu Item Gap"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:58
+msgid "Menu Items"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:176
+msgid "Buttons Style"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:184
+msgid "Submit Button"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:210
+msgid "Logout Button"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:244
+msgid "Listings: Header"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:272
+msgid "Active Text Color"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:289
+msgid "Listings: Header Search Form"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:357
+msgid "Listings: Container"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:433
+msgid "Listings: Info"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:442
+msgid "Info Color"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:463
+msgid "Edit Color"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:495
+msgid "Listings: Pagination"
+msgstr ""
+
+#: app/Elements/UserDashboard/Styles.php:698
+#: app/Elements/UserLogin/Styles.php:255 app/Elements/UserLogin/Styles.php:524
+msgid "Width"
+msgstr ""
+
+#: app/Elements/UserDashboard/UserDashboard.php:64
+msgid ""
+"This is directorist Dashboard widget. It has no additional elementor "
+"settings."
+msgstr ""
+
+#: app/Elements/UserDashboard/UserDashboard.php:78
+msgid "Listings: Header Container"
+msgstr ""
+
+#: app/Elements/UserDashboard/UserDashboard.php:86
+msgid "Listings: Statusbar"
+msgstr ""
+
+#: app/Elements/UserDashboard/UserDashboard.php:88
+msgid "Listings: Title"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:31
+msgid "Form Labels"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:74
+msgid "Remember Me"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:102
+msgid "Recover Password"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:130
+msgid "Don't have an account"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:158
+#: app/Elements/UserLogin/UserLogin.php:76
+msgid "Sign Up"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:194
+msgid "Form Fields"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:202
+msgid "Placeholder"
+msgstr ""
+
+#: app/Elements/UserLogin/Styles.php:246
+msgid "Field Separator"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:31
+msgid "Sign In & Sign Up"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:63
+msgid "Form Type"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:70
+msgid "Select Active Form"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:71
+msgid ""
+"Choose which form should be displayed when the page loads - Sign In or Sign "
+"Up form"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:75
+msgid "Sign In"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:91
+msgid "Sign In Form Fields"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:97
+msgid "Username Field Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:103
+msgid "Sign In Button Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:109
+msgid "Enable Password Recovery"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:115
+msgid "Recovery Link Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:122
+msgid "Recovery Description"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:129
+msgid "Recovery Email Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:136
+msgid "Recovery Email Placeholder"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:143
+msgid "Recovery Button Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:150
+msgid "Sign Up Prompt Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:156
+msgid "Sign Up Link Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:168
+msgid "Sign Up Form Fields"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:174
+msgid "Display User Role Field"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:180
+msgid "Author Role Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:187
+msgid "User Role Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:194
+msgid "Username Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:200
+msgid "Display Password Field"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:206
+msgid "Password Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:213
+msgid "Email Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:219
+msgid "Display Website Field"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:225
+msgid "Website Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:232
+msgid "Website Required?"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:239
+msgid "Display First Name Field"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:245
+msgid "First Name Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:252
+msgid "First Name Required?"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:259
+msgid "Display Last Name Field"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:265
+msgid "Last Name Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:272
+msgid "Last Name Required?"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:279
+msgid "Display Bio Field"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:285
+msgid "Bio Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:292
+msgid "Bio Required?"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:299
+msgid "Display Privacy Policy"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:305
+msgid "Privacy Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:312
+msgid "Privacy Link Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:319
+msgid "Display Terms & Conditions"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:325
+msgid "Terms Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:332
+msgid "Terms Link Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:339
+msgid "Sign Up Button Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:345
+msgid "Sign In Message"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:351
+msgid "Sign In Link Text"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:357
+msgid "Auto Sign In After Registration"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:372
+msgid "Fields Label"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:374
+msgid "Fields Separator"
+msgstr ""
+
+#: app/Elements/UserLogin/UserLogin.php:379
+msgid "Button"
+msgstr ""
+
+#: app/Utils/DirectoristTaxonomies.php:42
+msgid "All"
+msgstr ""
+
+#: app/Utils/Helper.php:44
+msgid "secs"
+msgstr ""
+
+#: app/Utils/Helper.php:47
+msgid "mins"
+msgstr ""
+
+#: app/Utils/Helper.php:50
+msgid "read"
+msgstr ""
+
+#: app/Utils/Singleton.php:14 app/Utils/Singleton.php:18
+msgid "Something wen't wrong."
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Directorist AddonsKit for Elementor"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid "Complete Elementor Widgets for Directorist."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "wpWax"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://wpwax.com"
+msgstr ""

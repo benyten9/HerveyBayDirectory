@@ -1,0 +1,28 @@
+<?php //phpcs:ignore
+/**
+ * SEOPress PRO License page.
+ *
+ * Thin React mount point. The page is rendered by the shared settings shell
+ * (registry.registerPage('license', LicensePage)) and talks to the
+ * /seopress/v1/license REST routes. The license activation/deactivation logic
+ * lives in inc/admin/callbacks/License.php.
+ *
+ * @package SEOPress PRO
+ * @subpackage Admin_Pages
+ */
+
+defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
+
+if ( is_plugin_active( 'wp-seopress/seopress.php' ) ) {
+	if ( function_exists( 'seopress_admin_header' ) ) {
+		echo seopress_admin_header();
+	}
+}
+?>
+<div class="seopress-option seopress-php-header">
+	<h1><?php esc_html_e( 'License', 'wp-seopress-pro' ); ?></h1>
+</div>
+
+<div id="seopress-admin-settings-root" class="seopress-option">
+	<?php seopress_settings_skeleton(); ?>
+</div>

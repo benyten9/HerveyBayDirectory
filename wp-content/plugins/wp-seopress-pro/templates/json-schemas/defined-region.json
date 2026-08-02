@@ -1,0 +1,6 @@
+{
+    "@type": "DefinedRegion",
+    "addressCountry": "[[addressCountry]]",
+    "addressRegion": "[[addressRegion]]",
+    "postalCode": "[[postalCode]]"
+}

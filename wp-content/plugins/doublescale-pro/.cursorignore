@@ -1,0 +1,13 @@
+# Large auto-generated directories — exclude from AI indexing & file watching
+node_modules/
+build/
+vendor/
+dependencies/vendor/
+
+# Build artifacts
+*.min.js
+*.min.css
+*.map
+
+# Git objects
+.git/

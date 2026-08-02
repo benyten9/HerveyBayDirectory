@@ -1,0 +1,502 @@
+.directorist-admin-claim {
+    margin-top: 10px;
+}
+
+.directorist-admin-claim>div {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.directorist-admin-claim>div label {
+    margin-right: 3px;
+}
+
+.directorist-claim-listing {
+    text-align: right;
+}
+
+.directorist-claim-listing__title {
+    margin-bottom: 10px !important;
+    margin-top: 0 !important;
+    font-size: 20px !important;
+    font-weight: 500;
+}
+
+.dcl_promo-item_group .dcl_login_notice {
+    margin-top: 15px;
+    line-height: 1.5;
+}
+
+.atbd_content_active #directorist.atbd_wrapper .dcl_promo-item_group a.directorist-btn.directorist-btn-primary {
+    background-color: #444752;
+    color: #fff;
+}
+
+#directorist.atbd_wrapper .dcl_promo-item_group .dcl_promo-item_title,
+.directorist .dcl_promo-item_group .dcl_promo-item_title {
+    font-size: 32px;
+    margin: 0 0 10px;
+}
+
+.directorist-claim-listing__description {
+    margin-bottom: 20px !important;
+    color: #7a82a6 !important;
+}
+
+.atbd_content_module+.directorist-claim-listing-wrapper {
+    margin-bottom: 35px;
+}
+
+.directorist-claim-listing__notice {
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
+.directorist-claimed {
+    display: inline-block;
+    position: relative;
+    top: -4px;
+}
+
+.directorist-listing-single .directorist-claimed,
+.atbd_single_listing .directorist-claimed {
+    top: 0;
+}
+
+.directorist-claim-listing .directorist-btn {
+    display: inline-block;
+    font-size: 15px;
+    font-weight: 500;
+    color: #202428;
+    vertical-align: middle;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    padding: 0 26px !important;
+    line-height: 2.95 !important;
+    border-radius: 5px !important;
+    text-decoration: none;
+    background-color: #444752 !important;
+    color: #fff !important;
+}
+
+.directorist-claimed .directorist-claimed--badge {
+    color: #32cc6f;
+    display: flex;
+    align-items: center;
+}
+
+.directorist-claimed .directorist-claimed--badge .directorist-icon-mask:after {
+    width: 9px;
+    height: 9px;
+    background-color: #fff;
+}
+
+.directorist-claimed .directorist-claimed--badge span {
+    color: #fff;
+    background: #32cc6f;
+    width: 17px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 300px;
+    margin: -1px 0 0 0;
+    margin-left: 5px;
+}
+
+.directorist-claimed .directorist-claimed--badge span .fa {
+    font-size: 8px !important;
+}
+
+.directorist-claimed .directorist-claimed--badge span .la {
+    font-size: 9px;
+}
+
+.directorist-claimed .directorist-claimed--tooltip {
+    position: absolute;
+    width: 140px;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #444752;
+    color: #fff;
+    padding: 7px;
+    font-size: 13px;
+    margin-right: 15px;
+    border-radius: 3px;
+    line-height: 20px;
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.3s ease;
+    text-align: center;
+    z-index: 1;
+}
+
+.directorist-claimed .directorist-claimed--tooltip::before {
+    content: '';
+    border-top: 7px solid transparent;
+    border-left: 10px solid #444752;
+    border-bottom: 7px solid transparent;
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.directorist-claimed:hover .directorist-claimed--tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.atbd_content_active #directorist.atbd_wrapper .atbd_listing_detail .atbd_listing_title {
+    padding-bottom: 10px;
+    padding-top: 14px;
+    font-size: 30px;
+    font-weight: 500;
+    display: inline-block;
+    margin: 0px 0 4px 0px;
+}
+
+#directorist__claim-modal .at-modal-xl {
+    max-width: 1140px;
+}
+
+#directorist__claim-modal .atm-contents-inner .modal-header {
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#directorist__claim-modal .atm-contents-inner .modal-body {
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.directorist-claim-listing-modal {
+    max-width: 100% !important;
+}
+
+.directorist-claim-listing-modal .directorist__plans {
+    display: inline-block;
+    margin-top: 0;
+    color: #e23636;
+    font-size: 12px;
+}
+
+.directorist-claim-listing-modal .directorist__plans:hover {
+    color: #DB3B30;
+}
+
+.directorist-claimer__form label {
+    color: #272b41 !important;
+    font-weight: 500;
+    margin-bottom: 8px !important;
+    display: block;
+    font-size: 16px;
+}
+
+.directorist-claim-listing-modal .directorist-modal__header {
+    padding: 25px !important;
+}
+
+.directorist-claim-listing-modal .directorist-modal__body {
+    padding: 30px;
+    position: relative;
+}
+
+.directorist-claim-listing-modal .directorist-modal__content {
+    max-height: 650px;
+    overflow-y: auto;
+}
+
+.directorist-claim-listing-modal .directorist-modal__content .directorist-modal__header .directorist-modal-close,
+#directorist__claim-modal .atm-contents-inner .at-modal-close {
+    width: 32px;
+    height: 32px;
+    top: 20px;
+    left: 20px;
+    position: absolute;
+    transform: none;
+    background: #444752 !important;
+    color: #fff !important;
+    border-radius: 300px;
+    opacity: 1;
+    font-weight: 300;
+    z-index: 2;
+    font-size: 16px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    line-height: 1.45;
+}
+
+.directorist-claim-listing-modal .directorist-modal__header .directorist-modal-close span {
+    font-size: 20px;
+    margin-top: 0;
+    line-height: 20px;
+    margin-right: 1px;
+    font-family: sans-serif;
+    font-weight: 300;
+}
+
+#directorist__claim-modal .atm-contents-inner .close span {
+    display: block;
+    line-height: 0;
+}
+
+.directorist-claim-listing-modal .directorist-modal__footer {
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+}
+
+.directorist-claim-listing-modal .directorist-modal__footer span {
+    display: block;
+    margin-top: 15px;
+    font-size: 13px;
+    margin-right: 0;
+}
+
+.directorist-claim-listing-modal .directorist-modal__footer span i {
+    display: inline-block;
+    margin-left: 5px;
+    color: #32cc6f;
+}
+
+.directorist-claim-listing-modal .directorist-modal__footer span .directorist-icon-mask:after {
+    width: 13px;
+    height: 13px;
+    background-color: #32cc6f;
+}
+
+#directorist__claim-modal .directorist-pricing-plan label {
+    display: block;
+}
+ 
+#directorist__claim-modal .directorist-pricing-plan select {
+    width: 100%;
+    cursor: pointer;
+}
+
+#directorist__claim-modal .directorist-pricing-plan select .directorist__active-plan {
+    color: #32cc6f;
+}
+
+.directorist-claimer__form #directorist__plan-allowances {
+    margin-top: 15px;
+}
+
+.directorist-claimer__form #directorist__plan-allowances .directorist-option-title {
+    font-size: 18px;
+    margin: 0 0 10px;
+}
+
+#directorist__plan-allowances .atbdp_radio_input {
+    min-height: auto;
+    padding: 0;
+}
+
+#directorist__plan-allowances .atbd_listing_type h4 {
+    margin-bottom: 10px;
+}
+
+#directorist__plan-allowances .atbd_listing_type label+label {
+    margin-right: 0;
+    margin-bottom: 0;
+}
+
+#directorist__plan-allowances .atbd_listing_type {
+    padding-bottom: 10px;
+}
+
+#directorist-claimer__submit-notification.text-success {
+    color: #32cc6f;
+}
+
+#directorist-claimer__warning-notification.text-warning {
+    color: #ffaf00;
+}
+
+#directorist__plan-allowances .atbd_listing_type label {
+    position: relative;
+    padding-right: 25px;
+}
+
+#directorist__plan-allowances .atbd_listing_type label input[type="radio"] {
+    visibility: hidden;
+}
+
+#directorist__plan-allowances .atbd_listing_type label .atbd-check-circle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid #e3e6ef;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0;
+    transition: 0.3s ease;
+}
+
+#directorist__plan-allowances .atbd_listing_type label input[type="radio"]:checked+.atbd-check-circle {
+    border: 5px solid #444752;
+}
+
+.atbd_content_active #directorist.atbd_wrapper .widget.atbd_widget .atbd_widget_title {
+    margin-bottom: 0;
+}
+
+.directorist-claim-listing-widget {
+    margin-top: 0 !important;
+}
+
+.directorist-claim-listing-widget .directorist-claim-listing {
+    padding: 25px 30px;
+}
+
+.directorist-claim-listing-widget .directorist-btn.directorist-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    color: white !important;
+}
+.directorist-claim-listing-widget .directorist-btn.directorist-btn-primary .directorist-icon-mask:after {
+    background-color: #fff;
+}
+
+.directorist-claim-listing__login-notice {
+    margin-top: 15px;
+}
+
+.directorist-claimer__star-red {
+    color: #EB3941;
+}
+
+@media (max-width:576px) {
+    #directorist__claim-modal .at-modal-content {
+        top: 10%;
+        transform: none;
+    }
+
+    .directorist-claim-listing-modal .directorist-modal__content {
+        max-height: 450px;
+    }
+
+    .directorist-claimed .directorist-claimed--tooltip {
+        right: 50%;
+        top: -10px;
+        transform: translate(50%, -100%);
+        margin-right: 0;
+    }
+
+    .directorist-claimed .directorist-claimed--tooltip::before {
+        border-left: 7px solid transparent;
+        border-top: 10px solid #444752;
+        border-right: 7px solid transparent;
+        right: 50%;
+        top: auto;
+        transform: translateX(50%);
+        bottom: -16px;
+    }
+}
+
+@media (max-width:767px) {
+    #directorist__claim-modal .at-modal-content {
+        top: 10%;
+        transform: none;
+    }
+
+    .directorist-claim-listing-modal .directorist-modal__content {
+        max-height: 580px;
+    }
+}
+
+#claim_activated .input label span {
+    background: #008EC2;
+    width: 133px;
+    position: relative;
+    border-radius: 3px;
+    margin-top: 0;
+}
+
+#claim_activated .input label span:before {
+    content: 'Activate';
+    position: absolute;
+    color: #fff;
+    right: 50%;
+    top: 48%;
+    transform: translate(50%, -50%);
+    border-radius: 3px;
+}
+
+#claim_activated+#success_msg {
+    color: #4caf50;
+    padding-right: 15px;
+}
+
+#claim_activated+#error_msg {
+    color: #DC143C;
+    padding-right: 15px;
+}
+
+#claim_deactivated .input label span {
+    background: #d05157;
+    width: 182px;
+    position: relative;
+    border-radius: 3px;
+    margin-top: 0;
+    padding: 18px;
+}
+
+#claim_deactivated .input label span:before {
+    content: 'Deactivate';
+    position: absolute;
+    color: #fff;
+    right: 50%;
+    top: 48%;
+    transform: translate(50%, -50%);
+    border-radius: 3px;
+}
+
+#claim_deactivated+#success_msg {
+    color: #4caf50;
+    padding-right: 15px;
+}
+
+#claim_deactivated+#error_msg {
+    color: #DC143C;
+    padding-right: 15px;
+}
+
+.directorist-claim-listing-modal .directorist-modal-title {
+    font-size: 18px !important;
+    margin: 0 !important;
+    font-weight: 500;
+}
+
+.directorist-claim-listing__login-notice a {
+    color: #7a82a6 !important;
+    background-color: transparent !important;
+}
+
+.directorist-claim-listing__login-notice a:hover {
+    opacity: 0.8;
+}
+
+.directorist-claim-listing-modal .directorist-form-group {
+    margin-bottom: 15px;
+}
+
+.directorist-claim-listing-modal .directorist-form-group label .atbdp_make_str_red {
+    color: #EB3941;
+}
+
+/* Legacy Support */
+
+.atbd_content_active #directorist.atbd_wrapper .atbd_listing_detail .atbd_listing_title {
+    display: inline-block;
+}

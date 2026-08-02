@@ -1,0 +1,35 @@
+# WordPress Core (never needed)
+wp-admin
+wp-includes
+
+# Uploads (huge + useless for AI)
+wp-content/uploads
+
+# Plugins (unless you're editing a specific one)
+wp-content/plugins
+
+# Caches
+.cache
+tmp
+logs
+*.log
+
+# Build / maps
+dist
+build
+*.map
+
+# Node (if theme uses it)
+node_modules
+
+# Environment
+.env
+.env.local
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore

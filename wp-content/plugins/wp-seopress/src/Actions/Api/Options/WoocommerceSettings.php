@@ -1,0 +1,78 @@
+<?php // phpcs:ignore
+
+namespace SEOPress\Actions\Api\Options;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+use SEOPress\Core\Hooks\ExecuteHooks;
+
+/**
+ * Woocommerce Settings
+ */
+class WoocommerceSettings implements ExecuteHooks {
+	/**
+	 * The Woocommerce Settings hooks.
+	 *
+	 * @since 5.0.0
+	 */
+	public function hooks() {
+		add_action( 'rest_api_init', array( $this, 'register' ) );
+	}
+
+	/**
+	 * The Woocommerce Settings permission check.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @since 7.10
+	 *
+	 * @return boolean
+	 */
+	public function permissionCheck( \WP_REST_Request $request ) {
+		return current_user_can( 'edit_posts' );
+	}
+
+	/**
+	 * The Woocommerce Settings register.
+	 *
+	 * @since 7.10
+	 *
+	 * @return void
+	 */
+	public function register() {
+		register_rest_route(
+			'seopress/v1',
+			'/options/woocommerce-settings',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'processGet' ),
+				'permission_callback' => array( $this, 'permissionCheck' ),
+			)
+		);
+	}
+
+	/**
+	 * The Woocommerce Settings process get.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @since 7.10
+	 */
+	public function processGet( \WP_REST_Request $request ) {
+
+		$data = array();
+
+		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			return new \WP_REST_Response( $data );
+		}
+
+		if ( function_exists( 'wc_get_page_id' ) ) {
+			$data['pages']['shop'] = wc_get_page_id( 'shop' );
+			$data['pages']['cart'] = wc_get_page_id( 'cart' );
+		}
+
+		return new \WP_REST_Response( $data );
+	}
+}

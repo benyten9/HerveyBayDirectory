@@ -1,0 +1,1 @@
+<?php return array('dependencies' => array('react', 'seopress-pro-chartjs', 'seopress-pro-dataviews-commons', 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n', 'wp-notices', 'wp-primitives'), 'version' => 'd5fe7d938912010f10c1');

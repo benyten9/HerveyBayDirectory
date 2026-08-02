@@ -1,0 +1,19 @@
+{
+    "name": "doublescale/doublescale-deps",
+    "require": {
+        "javanile/php-imap2": "^0.1",
+        "cweagans/composer-patches": "^1.7",
+        "stripe/stripe-php": "16.6.*",
+        "sabre/dav": "^4.6"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        },
+        "allow-plugins": {
+            "composer/installers": true,
+            "cweagans/composer-patches": true
+        }
+    },
+    "prefer-stable": true
+}

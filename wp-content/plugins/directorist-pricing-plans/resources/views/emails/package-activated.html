@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Activated</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #28a745;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content h2 {
+            color: #333333;
+            font-size: 22px;
+            margin: 0 0 20px 0;
+        }
+        .content p {
+            color: #555555;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0 0 15px 0;
+        }
+        .info-box {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .info-box p {
+            margin: 5px 0;
+            color: #333333;
+        }
+        .info-box strong {
+            color: #155724;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 30px;
+            background-color: #0073aa;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f9f9f9;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e5e5;
+        }
+        .footer p {
+            color: #999999;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #0073aa;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>{{site_name}}</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Your Package is Now Active!</h2>
+            
+            <p>Hi {{user_name}},</p>
+            
+            <p>Great news! Your <strong>{{plan_name}}</strong> package has been successfully activated.</p>
+            
+            <div class="info-box">
+                <p><strong>Package:</strong> {{plan_name}}</p>
+                <p><strong>Amount Paid:</strong> {{amount}}</p>
+                <p><strong>Activated Date:</strong> {{activated_date}}</p>
+                {{#expiry_date}}
+                <p><strong>Valid Until:</strong> {{expiry_date}}</p>
+                {{/expiry_date}}
+            </div>
+            
+            <p><strong>What's included?</strong></p>
+            <p>You now have full access to all the features and benefits included in your {{plan_name}} package. You can start using your package right away!</p>
+            
+            <p style="text-align: center;">
+                <a href="{{dashboard_url}}" class="button">Go to Dashboard</a>
+            </p>
+            
+            <p>If you have any questions or need assistance, our support team is here to help.</p>
+            
+            <p>Thank you for choosing {{site_name}}!</p>
+            
+            <p>Best regards,<br>The {{site_name}} Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{year}} {{site_name}}. All rights reserved.</p>
+            <p><a href="{{site_url}}">Visit our website</a></p>
+        </div>
+    </div>
+</body>
+</html>
+

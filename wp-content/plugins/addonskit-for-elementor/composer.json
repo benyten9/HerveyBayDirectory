@@ -1,0 +1,21 @@
+{
+    "name": "wpwax/akef",
+    "autoload": {
+        "psr-4": {
+            "AddonskitForElementor\\": "app"
+        }
+    },
+    "authors": [
+        {
+            "name": "yes"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"    
+    },
+    "scripts": {
+       "build": [
+			"composer --no-plugins --no-interaction install --no-scripts --no-dev"
+		]
+    }
+}

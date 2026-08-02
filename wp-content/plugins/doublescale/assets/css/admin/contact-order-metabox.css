@@ -1,0 +1,49 @@
+.doublescale-edd-order-metabox .inside {
+	padding: 20px;
+}
+
+.doublescale-avatar {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 20px;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.doublescale-avatar:active {
+	text-decoration: none;
+	outline: none;
+	box-shadow: none;
+}
+
+.doublescale-avatar img {
+	width: 80px;
+	height: 80px;
+	border: 6px solid #e6ebf0;
+	border-radius: 50%;
+	vertical-align: middle;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.doublescale-contact-name {
+	font-size: 20px;
+	font-weight: bold;
+	color: #434b8c;
+	margin: 0;
+}
+
+.doublescale-contact-emails {
+	display: flex;
+	justify-content: center;
+}
+
+.doublescale-contact-emails p {
+	margin: 0;
+	border: 1px solid #e6ebf0;
+	padding: 5px;
+	background-color: #97a2e6;
+	color: #434b8c;
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="DoubleScale">
+	<description>DoubleScale-specific PHP_CodeSniffer rules (loaded alongside WPCS).</description>
+
+	<!-- Parent directory lists this standard (folder name must match sniff namespace). -->
+	<config name="installed_paths" value=".."/>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/dependencies/*</exclude-pattern>
+
+	<rule ref="DoubleScale.Prefix.OptionAndMetaPrefix">
+		<type>warning</type>
+	</rule>
+</ruleset>

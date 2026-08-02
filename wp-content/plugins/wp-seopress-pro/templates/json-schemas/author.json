@@ -1,0 +1,9 @@
+{
+    "@type": "Person",
+    "@id": "[[personId]]",
+    "name": "[[name]]",
+    "url": "%%author_url%%",
+    "description": "[[description]]",
+    "image": "[[image]]",
+    "sameAs": "[[sameAs]]"
+}

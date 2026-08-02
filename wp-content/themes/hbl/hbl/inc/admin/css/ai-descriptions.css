@@ -1,0 +1,405 @@
+/**
+ * HBL AI Description Generator — Admin Styles
+ * Extends bulk-reassign.css (loaded as dependency).
+ */
+
+/* ─── Badges ─────────────────────────────────────────── */
+
+.hbl-aidesc-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 20px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.hbl-aidesc-badge--on {
+	background: rgba(16,185,129,0.12);
+	color: #065F46;
+}
+
+.hbl-aidesc-badge--warn {
+	background: rgba(239,68,68,0.12);
+	color: #991B1B;
+}
+
+/* ─── Form fields ────────────────────────────────────── */
+
+.hbl-aidesc-field {
+	margin-bottom: 20px;
+}
+
+.hbl-aidesc-field:last-of-type {
+	margin-bottom: 0;
+}
+
+.hbl-aidesc-field > label {
+	display: block;
+	font-weight: 600;
+	color: var(--hbl-text);
+	margin-bottom: 6px;
+	font-size: 13px;
+}
+
+.hbl-aidesc-field .description {
+	margin-top: 6px;
+	font-size: 12px;
+	color: var(--hbl-text-secondary);
+}
+
+.hbl-aidesc-field-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.hbl-aidesc-code {
+	font-family: monospace;
+	font-size: 12px;
+	letter-spacing: 0.02em;
+}
+
+.hbl-aidesc-textarea {
+	width: 100%;
+	max-width: 640px;
+	padding: 10px 12px;
+	border: 1px solid var(--hbl-border);
+	border-radius: var(--hbl-radius);
+	font-size: 13px;
+	color: var(--hbl-text);
+	background: #fff;
+	resize: none;
+	overflow: hidden;
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hbl-aidesc-textarea:focus {
+	outline: none;
+	border-color: var(--hbl-primary);
+	box-shadow: 0 0 0 3px rgba(0,128,128,0.1);
+}
+
+/* ─── Toggle switch ──────────────────────────────────── */
+
+.hbl-aidesc-toggle-row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 18px;
+	border: 1px solid var(--hbl-border);
+	border-radius: var(--hbl-radius);
+	margin-bottom: 20px;
+}
+
+.hbl-aidesc-toggle {
+	position: relative;
+	display: inline-block;
+	width: 42px;
+	height: 24px;
+	flex-shrink: 0;
+}
+
+.hbl-aidesc-toggle input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.hbl-aidesc-toggle-slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0; left: 0; right: 0; bottom: 0;
+	background-color: #D1D5DB;
+	border-radius: 24px;
+	transition: background-color 0.2s;
+}
+
+.hbl-aidesc-toggle-slider::before {
+	content: "";
+	position: absolute;
+	height: 18px;
+	width: 18px;
+	left: 3px;
+	bottom: 3px;
+	background: #fff;
+	border-radius: 50%;
+	transition: transform 0.2s;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.hbl-aidesc-toggle input:checked + .hbl-aidesc-toggle-slider {
+	background-color: var(--hbl-primary);
+}
+
+.hbl-aidesc-toggle input:checked + .hbl-aidesc-toggle-slider::before {
+	transform: translateX(18px);
+}
+
+.hbl-aidesc-toggle-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.hbl-aidesc-toggle-text strong {
+	font-size: 14px;
+	color: var(--hbl-text);
+}
+
+.hbl-aidesc-toggle-text span {
+	font-size: 12px;
+	color: var(--hbl-text-secondary);
+}
+
+/* ─── Run controls ───────────────────────────────────── */
+
+.hbl-aidesc-run-controls {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.hbl-aidesc-run-status {
+	font-size: 13px;
+	color: var(--hbl-text-secondary);
+}
+
+.hbl-aidesc-progress-track {
+	background: #E5E7EB;
+	border-radius: 4px;
+	height: 8px;
+	overflow: hidden;
+	margin-bottom: 10px;
+}
+
+.hbl-aidesc-progress-fill {
+	background: var(--hbl-primary);
+	height: 8px;
+	border-radius: 4px;
+	width: 0%;
+	transition: width 0.4s ease;
+}
+
+.hbl-aidesc-progress-msg {
+	margin: 0;
+	font-size: 13px;
+	color: var(--hbl-text);
+}
+
+.hbl-aidesc-no-key-notice {
+	background: rgba(239,68,68,0.06);
+	border: 1px solid rgba(239,68,68,0.2);
+	border-radius: var(--hbl-radius);
+	padding: 12px 16px;
+	color: #991B1B;
+}
+
+/* ─── Log table ──────────────────────────────────────── */
+
+.hbl-aidesc-log-table {
+	font-size: 13px;
+	width: 100%;
+	border-collapse: collapse;
+	background: #fff;
+}
+
+.hbl-aidesc-log-table thead th {
+	font-weight: 600;
+	background: var(--hbl-bg);
+}
+
+.hbl-aidesc-listing-id {
+	display: block;
+	font-size: 11px;
+	color: var(--hbl-text-secondary);
+	margin-top: 2px;
+}
+
+.hbl-aidesc-desc-cell {
+	max-width: 420px;
+	line-height: 1.5;
+}
+
+.hbl-aidesc-edit-textarea {
+	width: 100%;
+	min-width: 320px;
+	max-width: 100%;
+	min-height: 54px;
+	padding: 6px 8px;
+	border: 1px solid transparent;
+	border-radius: var(--hbl-radius);
+	background: transparent;
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--hbl-text);
+	resize: vertical;
+	transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hbl-aidesc-edit-textarea:hover {
+	border-color: var(--hbl-border);
+	background: #fff;
+}
+
+.hbl-aidesc-edit-textarea:focus {
+	outline: none;
+	border-color: var(--hbl-primary);
+	background: #fff;
+	box-shadow: var(--hbl-shadow-focus-primary);
+}
+
+.hbl-aidesc-ts {
+	font-size: 11px;
+	color: var(--hbl-text-secondary);
+}
+
+.hbl-aidesc-error-text {
+	color: var(--hbl-danger);
+	font-size: 12px;
+}
+
+/* Status pills */
+.hbl-aidesc-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 11px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.hbl-aidesc-status--written {
+	background: rgba(16,185,129,0.12);
+	color: #065F46;
+}
+
+.hbl-aidesc-status--dry {
+	background: rgba(107,114,128,0.12);
+	color: #374151;
+}
+
+.hbl-aidesc-status--error {
+	background: rgba(239,68,68,0.12);
+	color: #991B1B;
+}
+
+/* Checkbox column */
+.hbl-aidesc-log-table thead th:first-child,
+.hbl-aidesc-log-table tbody td:first-child {
+	text-align: center;
+	width: 36px;
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+.hbl-aidesc-log-table tbody tr[data-status="dry_run"]:hover {
+	background: rgba(0,128,128,0.05);
+	cursor: pointer;
+}
+
+.hbl-aidesc-log-table tbody tr[data-status="dry_run"]:has(.hbl-aidesc-row-cb:checked) {
+	background: rgba(0,128,128,0.08);
+	outline: 1px solid rgba(0,128,128,0.25);
+}
+
+/* Clear Log button */
+.hbl-aidesc-clear-btn {
+	color: var(--hbl-danger) !important;
+	border-color: rgba(239,68,68,0.4) !important;
+}
+
+.hbl-aidesc-clear-btn:hover {
+	background: rgba(239,68,68,0.06) !important;
+	border-color: var(--hbl-danger) !important;
+}
+
+/* ─── Responsive ─────────────────────────────────────── */
+
+@media (max-width: 782px) {
+	/* Stacked "card per row" layout — the same pattern WordPress core
+	   uses for the Posts/Pages list tables on mobile, instead of a
+	   horizontally-scrolling table. */
+	.hbl-aidesc-log-table,
+	.hbl-aidesc-log-table tbody,
+	.hbl-aidesc-log-table tbody tr,
+	.hbl-aidesc-log-table tbody td {
+		display: block;
+		width: 100%;
+	}
+
+	.hbl-aidesc-log-table {
+		table-layout: auto;
+	}
+
+	.hbl-aidesc-log-table thead {
+		display: none;
+	}
+
+	.hbl-aidesc-log-table tbody tr {
+		border: 1px solid var(--hbl-border);
+		border-radius: 5px;
+		padding: 12px;
+		margin-bottom: 10px;
+		background: #fff;
+	}
+
+	.hbl-aidesc-log-table tbody td {
+		padding: 4px 0;
+		border: none !important;
+		text-align: left !important;
+	}
+
+	/* Checkbox sits on its own row at the top of the card, everything
+	   else stacks below it in normal document order. */
+	.hbl-aidesc-log-table tbody td:first-child {
+		text-align: left !important;
+		padding-bottom: 8px;
+		margin-bottom: 4px;
+		border-bottom: 1px solid var(--hbl-border) !important;
+	}
+
+	/* Row number isn't worth its own labeled block on a small screen */
+	.hbl-aidesc-log-table tbody td:nth-child(2) {
+		display: none;
+	}
+
+	/* Business Name reads as the card title — no label prefix */
+	.hbl-aidesc-log-table tbody td:nth-child(3) {
+		font-weight: 600;
+		font-size: 14px;
+		padding-bottom: 8px;
+	}
+
+	/* Every other cell gets a small uppercase label above its value */
+	.hbl-aidesc-log-table tbody td:not(:first-child):not(:nth-child(3))::before {
+		content: attr(data-label);
+		display: block;
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--hbl-text-secondary);
+		margin-bottom: 2px;
+	}
+
+	.hbl-aidesc-desc-cell {
+		max-width: 100%;
+	}
+
+	.hbl-aidesc-edit-textarea {
+		min-width: 0;
+	}
+
+	.hbl-aidesc-run-controls {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.hbl-aidesc-field-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+}

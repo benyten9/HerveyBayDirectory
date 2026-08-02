@@ -1,0 +1,920 @@
+﻿=== Directorist: AI-Powered Business Directory, Listings & Classified Ads ===
+Contributors: wpwax
+Donate link: https://directorist.com/extensions/
+Tags: business directory, listings, classifieds, directory plugin, directory
+Requires at least: 4.6
+Tested up to: 7.0
+Requires PHP: 7.0
+Stable tag: 8.9.2
+License: GPLv3
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
+
+Build any type of directory website such as a business directory, job directory, classifieds directory, and more with this WordPress directory plugin.
+
+== Description ==
+
+>👉 __[See what users are saying about Directorist](https://wordpress.org/support/topic/directorist-is-the-best-directory-plugin-out-there/)__
+>⭐⭐⭐⭐⭐
+>*I’ve been using Directorist for my directory website for over a year now, and I can honestly say it’s one of the most reliable and feature-rich directory plugins I’ve worked with.*
+
+>*I currently manage over 19,000 listings, and the plugin has handled them efficiently without major performance issues.*
+
+>*The interface is clean, user-friendly, and easy to customize, even for large-scale directories like mine.*
+
+>👤 sammybabz (@sammybabz)
+
+
+[Try Demo](https://directorist.com/demos/) | [Extensions](https://directorist.com/extensions/) | [Themes](https://directorist.com/themes/) | [Documentation](https://directorist.com/documentation/directorist/) | [Roadmap](https://directorist.com/roadmap/)
+
+[youtube https://www.youtube.com/watch?v=HfZ3VGnDB9c]
+
+Create and grow your business directory, classified listings, job directory, event directory, membership directory, service marketplace, or real estate directory with ease using Directorist - Business Directory Plugin.
+
+Directorist is built for people who want control, freedom, and real income from their directory website. You are not just creating listings. You are building a platform where businesses get discovered, services are found, and communities connect. From submissions to payments and search to monetization, everything works together so you can launch your directory faster, manage less, and grow with confidence.
+
+==Turn your ideas into a profitable directory effortlessly.==
+
+Powered by AI, Directorist is the ultimate directory plugin that helps you create, manage, and monetize listings with ease. Built-in SEO optimization ensures your directories rank higher and attract organic traffic, while seamless payment integrations let you monetize effortlessly through paid listings, subscriptions, and premium features.
+
+
+With over 590+ five-star reviews and 20,000+ active directory owners. Plus, our outstanding support team and extensive documentation are always ready to guide you through every step.
+
+You're not just building a directory—you're creating a thriving community, connecting businesses with customers, and unlocking a sustainable income stream. Choose your niche, and let Directorist help your directory succeed!
+
+🎉 Try **[Onelisting](https://demo.directorist.com/theme/onelisting/)**, our free directory theme, to start your directory business journey.
+
+== Business Directory Plugin Trusted by Over 20,000 Businesses Worldwide ==
+
+Directorist proudly stands as the business directory plugin to surpass 20,000+ active users—a milestone that reflects our unwavering commitment to excellence. Trusted by directory business owners worldwide, it helps generate revenue, build communities, and seamlessly connect businesses with their audiences.
+
+We've carefully listened to the challenges faced by directory business owners and developed a comprehensive tool that simplifies every aspect of managing a directory site. From customizable features and seamless integrations to advanced monetization options, Directorist ensures your directory business runs effortlessly, whether you're launching a local business directory, real estate listings, job board, or niche-focused platform.
+
+⭐⭐⭐⭐⭐
+[Excellente plugin + themes](https://wordpress.org/support/topic/excellente-plugin-themes/)
+I had previously tried Directorist with the Director theme and was extremely pleased with what they offered. But when I learned they had specific themes for the businesses I was trying to address, I didn't hesitate and contacted them. There's really a lot of work behind these plugins and themes. The support is very good, and I hope to stay in touch with them for a long time. Regards from Argentina
+– malborarg
+
+⭐⭐⭐⭐⭐
+[Great support](https://wordpress.org/support/topic/best-plugin-great-support-7/)
+I already knew in advance (after testing a few plugins) that this would be the **** for listing. But there were country specific and beginner specific problems, so I asked them for help. I never dreamed that such a helpful team could exist. They were patient, always responded quickly and managed to find a solution to everything. In the end, I learned a lot from them. Thank you very much and I wish the Directorist team all the ****.
+– pecaadokveszek
+
+== What Makes Directorist the Go-To Choice for Thousands? ==
+
+**Your Success, Our Priority**
+We ensure you have everything you need to build and manage your directory effortlessly. Access our [Support Center](https://directorist.com/dashboard/?tab=support) for expert assistance whenever you need it, explore [YouTube tutorials](https://www.youtube.com/@wpwax) for step-by-step guides and tips, and stay connected through our [Facebook Community](https://www.facebook.com/groups/directorist) to learn from peers, get the latest updates, and share insights. For advanced configurations and in-depth learning, our [Comprehensive Documentation](https://directorist.com/documentation/) is always at your fingertips.
+
+**[Directorist Mobile App for Android & iOS](https://directorist.com/mobile-app/)**
+
+Extend your directory's reach with the powerful Directorist mobile app. Make your listings accessible on the go, enhance interactivity, and seamlessly convert visitors into paying customers.
+
+**AI-Generated Directory Creation**
+
+Effortlessly create niche directories with AI-powered tools. Launch a new directory within seconds, opening the doors to endless possibilities. Our commitment to continuous AI development ensures more features and capabilities are on their way.
+
+**Schema Markup Support**
+
+Maximize visibility and organic traffic with built-in Schema Markup support. This ensures your listings not only rank higher in search engines but also stand out with enhanced rich results.
+
+**Designed for Seamless Integration**
+
+Seamless integration with Gutenberg, Elementor, Bricks, Oxygen, BuddyBoss, [Formgent](https://formgent.com/) and more ensures that you can build the directory of your dreams without compromise. Plus, we're constantly improving these and actively working on adding support for even more popular tools to elevate your directory-building experience.
+
+**[30+ Powerful Extensions](https://directorist.com/extensions/)**
+
+Unlock advanced features and functionalities tailored to your needs. Universal Search, Booking, Pricing Plans or Paid Listings, Claim listings, Business Hours, Listings with Map, Live Chat, and more. Whatever your directory demands, Directorist delivers.
+
+**[14+ Professionally Designed Directory Themes](https://directorist.com/themes/)**
+
+Launch your business directory, classifieds, or listings website faster than ever with over 14 professionally designed themes. Simply select a theme, make your customizations, and your site is ready to go—no need to build everything from scratch.
+
+== Features That Empower Directory and Listings Creation ==
+
+👉 Multi-Directory Support: Create multiple directory types within one site to maximize your business potential.
+👉 Custom Form and Layout Builder: Use the intuitive drag-and-drop builder to design custom add listing and search forms effortlessly.
+👉 Listing CSV Import/Export: Import and export listings with custom fields via CSV files—completely free with Directorist.
+👉 Beginner-Friendly Interface: Enjoy a thoughtfully designed interface that requires no coding skills, making directory creation easy for everyone.
+👉 Monetization Features: Generate unlimited revenue with paid listing options, subscription plans, and premium features.
+👉 Extensibility & Page Builder Support: Customize your directory with powerful extensions and integrations with Elementor, Bricks, and Oxygen.
+👉 Booking System Support: Build service or event-oriented directories with advanced scheduling and booking functionality.
+👉 Live Chat Integration: Enable real-time conversations between users and business owners directly within your directory.
+👉 Gutenberg Blocks & Widgets: Take advantage of 16 custom blocks to build and design stunning listing pages with WordPress's default editor.
+👉 Sleek Checkout & Payment System: Ensure seamless transactions with a modern and user-friendly payment process.
+
+== Beyond Basics: More Features, Designed for Directory Business Success ==
+
+* Compatible with all themes including popular ones such as Avada, Divi, Astra, and OceanWP.
+* Highly optimized and rocket-fast performance to ensure scalability.
+* 25+ Elementor Page Builder widgets.
+* Gutenberg support and 16 Gutenberg blocks.
+* Advanced search filters with custom filters.
+* Front-end and Back-end listing submission.
+* Front-end user dashboard to manage listings.
+* Open Street Map and Google Map Integration.
+* Unlimited custom fields on the listing form.
+* 100% responsive and modern-day design.
+* WooCommerce multi-vendor plugin compatible.
+* Built-in SEO optimization system as well as Yoast SEO compatibility.
+* Personalize the directory using a wide range of shortcodes.
+* Ajax-powered listing and review submission.
+* Listing owner contact form.
+* Listing image slider.
+* Listing and Review submission without login (Guest Submission).
+* Listing reviews and ratings.
+* Google reCAPTCHA
+* New, Popular, Featured, and Open/Close badges.
+* Create an Unlimited listing based on location and category.
+* List and grid view for categories, locations, and listings pages.
+* Translate to any language effortlessly using the Loco Translate plugin.
+* Sustainable for long-term use.
+* Updated regularly for flawless operation.
+* Multiple directory templates within a single theme
+* Brand-new sidebar filter layout
+* Modern and improved form for Add listings
+
+**Beautiful Design, Fully Responsive**
+
+Enjoy sleek, modern layouts with responsive grid, list, and map views. Compatible with popular themes like Astra, Divi, and Avada, Directorist helps you launch a stunning directory effortlessly.
+
+**Translation-Friendly, SEO-Ready & RTL Support**
+
+Easily translate your directory into any language with tools like Loco Translate. Boost SEO with custom meta titles, descriptions, and Yoast SEO integration. It fully supports RTL languages like Arabic.
+
+👉 **Multilingual Support:** Translate your directory into multiple languages.
+👉 **Built-in SEO:** Optimize every page for search engines.
+👉 **RTL Ready:** Great for right-to-left languages.
+
+**Powerful Search & Filters**
+
+Find what you need instantly with advanced search and filtering options.
+
+👉 **Ajax-Powered Search:** Results load instantly.
+👉 **Custom Filters:** Filter by category, location, price, and custom fields.
+👉 **Geolocation:** Discover listings nearby with a radius search.
+
+**Effortless Data Migration with CSV**
+
+Easily import/export thousands of listings via CSV.
+
+* Complete directory migration in just a few clicks.
+* Map your data fields effortlessly.
+
+**Unlimited Custom Fields**
+
+Tailor your directory with custom fields for any requirement.
+
+* Add unlimited fields (checkboxes, URLs, files, etc.).
+* Use custom fields to refine search results.
+
+**Monetization Made Simple**
+
+Turn your directory into a revenue-generating platform.
+
+👉 **Featured Listings:** Highlight top listings for extra revenue.
+👉 **Paid Listings:** Charge users for submitting listings.
+👉 **Claim Listings:** Let business owners claim and pay for their listings.
+👉 **Pay Per Submit:** Charge users to create listings.
+
+**Frontend Listing & Management**
+
+Users can easily submit and manage listings without accessing the admin panel.
+
+* Add listings via a user-friendly form.
+* Manage and renew plans directly from the frontend.
+* User dashboards for seamless management.
+
+**Flexible Mapping Options**
+Help users find businesses with Google Maps or OpenStreetMap integration.
+
+**Robust Payment Gateways**
+Get paid effortlessly with built-in offline payments or expand with online gateways like [PayPal](https://directorist.com/product/directorist-paypal/) , [Stripe](https://directorist.com/product/directorist-stripe/) or [Authorize.Net](https://directorist.com/product/directorist-authorize-net/). Taxes and recurring payments are supported.
+
+**Developer-Friendly for Unlimited Customization**
+Directorist is a great choice for developers who want to customize or extend functionality.
+
+* Override templates without touching plugin code.
+* Use hooks and filters for endless possibilities.
+
+== Unlock the Full Potential of Your Directory with Premium Extensions ==
+
+**[Universal Search](https://directorist.com/product/directorist-universal-search/)** – Simplify the user experience with a powerful search feature that works across multiple directory types such as Places, Real Estate, Jobs, and Services. Organize search results intuitively, with listings grouped by directory and displayed in their native layouts for easy navigation.
+
+**[Search Alert](https://directorist.com/product/directorist-search-alert/)** – Keep users engaged by allowing them to create and manage alerts based on their search criteria. Users receive notifications whenever new listings match their interests, ensuring they never miss out on relevant opportunities.
+
+**[Pricing Plan](https://directorist.com/product/directorist-pricing-plans/)** - Grow your directory business by offering unlimited pricing packages with tailored features designed to meet diverse user demands and generate extra revenue.
+
+**[WooCommerce Integration for Payment Flexibility](https://directorist.com/product/directorist-woocommerce-pricing-plans/)** - Use WooCommerce gateways to accept payments seamlessly across multiple methods.
+
+**[Streamline Online Appointments with Booking](https://directorist.com/product/directorist-booking/)** - Add comprehensive booking capabilities for events, appointments, or services directly within your directory.
+
+**[PayPal Payment Gateway](https://directorist.com/product/directorist-paypal/)** – Securely accept payments on your directory website with PayPal, the world's most trusted payment solution, enabling seamless transactions for users globally.
+
+**[Stripe Payment Gateway](https://directorist.com/product/directorist-stripe/)** – Accept payments through a wide variety of methods, including Credit Cards, Debit Cards, Apple Pay, Google Pay, and AliPay. 
+
+**[Authorize.Net Payment Gateway](https://directorist.com/product/directorist-authorize-net/)** – Accept secure payments for your directory with Authorize.Net, supporting major payment methods
+
+**[Claim Listings for Verified Business Ownership](https://directorist.com/product/directorist-claim-listing/)** - Allow businesses to own and manage their listing through a secure claiming process.
+
+**[Showcase Listings with Maps](https://directorist.com/product/directorist-listings-with-map/)** - Combine listing views with side-by-side maps for a dynamic user experience.
+
+**[Live Chat](https://directorist.com/product/directorist-live-chat/)** - Integrate private messaging system on your directory listing website and make your business more credible by ensuring customer satisfaction.
+
+**[Create Visual Appeal with Image Gallery](https://directorist.com/product/directorist-gallery/)** - Highlight listings using eye-catching image galleries, sliders, or carousels.
+
+**[Mark as Sold](https://directorist.com/product/directorist-mark-as-sold/)** - Enable listing authors to mark items as sold, giving visitors real-time status updates on availability.
+
+**[Google reCAPTCHA](https://directorist.com/product/directorist-google-recaptcha/)** - Safeguard your directory from spam with bot detection during user sign-up, ensuring a secure platform.
+
+**[Listing Slider & Carousel](https://directorist.com/product/directorist-slider-carousel/)** – Showcase your listings beautifully with customizable sliders and carousels, using 18 slider and 28 carousel shortcode options.
+
+**[Business Hours](https://directorist.com/product/directorist-business-hours/)** – Display business opening and closing times with timezone settings and customizable live status badges.
+
+**[Listing FAQs](https://directorist.com/product/directorist-faqs/)** – Add a user-friendly FAQ section to boost visitor engagement and turn them into loyal customers.
+
+**[Social Login](https://directorist.com/product/directorist-social-login/)** – Simplify the sign-up process with quick registration and login options using popular social media platforms.
+
+**Rank Featured Listings** – Prioritize premium listings effortlessly to give them more visibility and generate additional revenue.
+
+**[Compare Listings](https://directorist.com/product/directorist-compare-listing/)** – Let users compare multiple listings side-by-side in an easy-to-read table for better decision-making.
+
+**[Oxygen Builder Integration](https://directorist.com/product/directorist-oxygen-integration/)** – Seamlessly combine all necessary directory functionalities using the Oxygen Builder for an advanced, intuitive design.
+
+**[BuddyBoss Integration](https://directorist.com/product/directorist-buddyboss-integration/)** – Create a dynamic community-driven directory by integrating Directorist with BuddyBoss.
+
+**[BuddyPress Integration](https://directorist.com/product/directorist-buddypress-integration/)** – Combine Directorist and BuddyPress to build hybrid directories enriched with social networking features.
+
+**[Multi-Directory Linking](https://directorist.com/product/directorist-directory-linking/)** – Allow users to connect multiple directories on your site, creating a seamless experience across niches.
+
+**[Mailchimp Integration](https://directorist.com/product/directorist-mailchimp/)** – Grow your email list and leads faster by integrating Mailchimp with your directory platform.
+
+**[GamiPress Integration](https://directorist.com/product/directorist-gamipress-integration/)** – Boost user engagement through gamification with points-based rewards for interactions on your site.
+
+**[WPML Integration](https://directorist.com/product/directorist-wpml-integration/)** – Build multilingual directories effortlessly and expand your reach to a global audience.
+
+**[Digital Marketplace](https://directorist.com/product/directorist-digital-marketplace/)** – Create a marketplace for digital downloads or fixed-price services and diversify your revenue streams.
+
+== Privacy Policy ==
+
+We use WordPress REST API to confirm the authenticity of a user attempting to gain access to directorist account to manage and install themes and extensions.
+
+Directorist – Business Directory Plugin uses Appsero SDK to collect some telemetry data upon user's confirmation. This helps us to troubleshoot problems faster & make product improvements.
+
+Integrating Appsero SDK **DOES NOT IMMEDIATELY** start gathering data, **without confirmation from users in any case.**
+
+== Installation ==
+
+1. Unzip the downloaded zip file and upload the plugin folder into the `wp-content/plugins/` directory. Alternatively, upload from Plugins >> Add New >> Upload Plugin.
+2. Activate the plugin from the Plugins page.
+
+= Usage =
+[Click here](https://directorist.com/documentation/directorist/) for the Documentation.
+
+== Frequently Asked Questions ==
+
+= Does Directorist work with Elementor and other popular page builders? =
+Yes! Directorist works seamlessly with **Elementor**, **Gutenberg** and other major page builders. You can easily design custom layouts for listing pages, and even use Directorist widgets inside your favorite builder.
+
+= Is Directorist compatible with any WordPress theme? =
+Directorist is compatible with any WordPress theme. It also provides layout flexibility and design settings to help you blend the directory with your theme style. You can also use Directorist themes to build your niche-based directory without any coding.
+
+= Can I use Directorist to build any type of directory? =
+Yes! Directorist is a highly flexible directory plugin. Whether you're building a business directory, classified ads site, real estate portal, service directory, or even a job board, Directorist provides all the features you need.
+
+= Is there a limit to how many listings I can add? =
+Nope! There’s no limit to the number of listings you can add. Directorist is built to handle thousands of entries efficiently
+
+= Does it support adding listings in bulk? =
+Yes you can import bulk listings in CSV format using the import/export feature under tools. To utilize the feature, download the CSV template first and format your list accordingly.
+
+= Does it allow users to manage listings from the front end? =
+Yes you can enable listing owners to add, manage their listings and content from the front end without accessing the WordPress admin panel.
+
+= Is Directorist translatable and multilingual-capable? =
+Yes. Directorist is translatable and multilingual-capable. Supports RTL (Right-to-Left) languages, and is compatible with popular multilingual plugins like WPML, Polylang, and Loco Translate.
+
+= Can I extend the plugin with custom features? =
+Directorist is developer-friendly with plenty of hooks and filters. You can extend it easily with custom development, or choose from a list of premium extensions.
+
+= What kind of AI features does it provide? =
+Directorist comes with an AI-powered directory builder. Use the Create with AI option, provide directory name, location and AI will build the directory for you.
+
+== Changelog ==
+
+= 8.9.2 - Jul 27, 2026 =
+
+**Fixed**
+ - Undefined array key warning in Directorist widget checkbox field rendering.
+
+= 8.9.1 - Jul 26, 2026 =
+
+**Improved**
+ - support new pricing plans API. (#2935)
+
+= 8.9 - Jul 26, 2026 =
+
+**Added**
+ - Introduced custom badges with configurable rules, styles, icons, colors, and tooltips. (#2920)
+ - Pending order cancellation flow from the user dashboard. (#2930)
+ - Business Hours always-open and timezone support in the v2 Listings API, including timezone options and validation. (#2903)
+ - Directorist map bridge lifecycle events for map ready, viewport changes, and marker clicks to support Listings With Map sync. (#2928)
+
+**Improved**
+ - Legacy orders API compatibility by moving current order, checkout, and payment endpoints to v2 while restoring v1 orders routes. (#2907)
+ - Extension settings empty state messaging when active extension settings are available elsewhere in the settings panel. (#2923)
+ - Dashboard listing action menu behavior for short listing tables. (#2922)
+
+**Fixed**
+ - Admin orders list and order details for guest, missing, or deleted customer accounts. (#2906)
+ - Required hidden conditional fields blocking listing submissions. (#2927)
+ - Multiple custom File Upload fields failing with invalid upload requests. (#2929)
+ - REST API password reset PIN validation and temp media upload authentication for Application Password requests. (#2903)
+
+= 8.8.7 - Jul 16, 2026 =
+
+**Improved**
+ - FormGent email notifications now include the Directorist listing owner as a recipient. (#2916)
+
+**Security**
+ - Hardened custom file uploads with capability checks, guest token validation, file field validation, and server-side file size enforcement. (#2914)
+
+**Fixed**
+ - PHP warnings in the archive basic search form when configured search fields are unavailable for the current directory type. (#2919)
+
+= 8.8.6 - Jul 13, 2026 =
+
+**Improved**
+ - Improved frontend performance by loading listing owner dashboard assets only on dashboard pages.
+
+= 8.8.5 - Jul 9, 2026 =
+
+**Improved**
+ - Settings panel search experience. (#2902)
+ - Web push notification controls in the settings panel. (#2902)
+
+**Fixed**
+ - Mobile dashboard sidebar and profile loader behavior. (#2904)
+ - Single listing back button tap behavior on mobile. (#2905)
+
+= 8.8.4 - Jul 8, 2026 =
+
+**Security**
+ - Fixed REST listing status update authorization to prevent unauthenticated status changes and restrict updates to permitted Directorist listings. (#2908)
+
+= 8.8.3 - Jul 2, 2026 =
+
+**Fixed**
+ - Security issue. (#2896)
+ - SEO term warnings on taxonomy archives. (#2895)
+
+= 8.8.2 - Jun 30, 2026 =
+
+**Improved**
+ - Redesigned settings panel UX with refined navigation, section layouts, field controls, and responsive styling. (#2878)
+
+**Fixed**
+ - PayPal extension download link in the setup wizard to install the latest compatible package. (#2890)
+ - PHP 8.4 compatibility issue. (#2891)
+
+= 8.8.1 - Jun 28, 2026 =
+
+**Fixed**
+ - Deprecated extension notice issue.
+
+= 8.8.0 - Jun 28, 2026 =
+
+**Improved**
+ - Payment system rewritten for better performance, flexibility, and a more reliable checkout experience.
+
+= 8.7.4 - Jun 9, 2026 =
+
+**Improved**
+ - Directory Builder initial setup with default icons, preselected layout widgets, Search Box defaults, avatar settings, and better create-from-scratch directory name focus flow. (#2611)
+ - Builder UI with updated close icon, draggable placeholder styles, preview mode placement, first group expansion, and improved top bar/modal z-index handling. (#2611)
+
+**Fixed**
+ - Builder layout data consistency to prevent empty selected widgets, missing widget metadata, duplicate widgets, and null widget errors in saved/imported layouts. (#2611)
+ - Tagline/title widget options showing when the Tagline field is unavailable in the Add Listing Form. (#2611)
+ - Zipcode radius search issue. (#2873)
+ - FormGent enquiry page compatibility. (#2871)
+
+= 8.7.3 - May 20, 2026 =
+
+**Improved**
+ - Listing import/export to include listing reviews and Advanced Review criteria data in the existing CSV flow. (#2862)
+
+= 8.7.2 - May 19, 2026 =
+
+**Improved**
+ - Dashboard tab navigation to prevent scroll jumps while preserving hash-based deep links. (#2850)
+
+**Fixed**
+ - Single listing map popup image. (#2857)
+ - Missing nonce in regenerate pages action. (#2856)
+ - HTML custom field editor initialization when switching listing types. (#2854)
+ - Listing Header Builder empty groups and preserved widget drag ordering. (#2853)
+ - Payment receipt grand total formatting when discounts are applied. (#2852)
+ - Radius search visibility for select-based address fields. (#2848)
+ - Formgent enquiry dashboard translation support. (#2847)
+ - MySQL query placeholders, invalid taxonomy handling, and empty background process batches. (#2846)
+ - Default preview image fallback for single listing sidebar widgets. (#2845)
+
+= 8.7.1 - Apr 30, 2026 =
+
+**Added**
+ - Rejected listing status flow with rejection reason, moderation history, owner notification email, and dashboard visibility. (#2785)
+ - Nearby sort option for location/radius-based listing results. (#2836)
+ - directorist_map_card_content filter to customize listing map card content.
+ (#2774)
+
+**Improved**
+ - Guest preview publish nonce flow now uses the authenticated session after account creation, with added edit capability check for post-review status updates. (#2828)
+ - Reset default tag style handling for single listing content. (#2834)
+
+**Fixed**
+ - "Go to Settings" button redirect now opens the correct settings page/tab and preserves subdirectory paths. (#2697)
+
+**Removed**
+ - Deprecated Elementor activation notice flow. (#2837)
+ - Help & Support admin menu and related functionality. (#2838)
+
+= 8.7 - Apr 22, 2026 =
+
+**Added**
+ - Button custom field. (#2822)
+ - HTML custom field editor. (#2779)
+ - Listing Type field in conditional logic available fields. (#2813)
+
+**Improved**
+ - Listings Columns setting changed from a number field to an image radio selector. (#2796)
+
+**Fixed**
+ - Unlimited email sending issue. (#2779)
+
+= 8.6.9 - Apr 15, 2026 =
+
+**Fixed**
+ - Email verified checkbox not rendering in admin user profile. (#2812)
+ - Fixed CSV import not downloading images from extension-less CDN URLs (e.g. logo.dev) (#2809)
+
+= 8.6.8 - Apr 8, 2026 =
+
+**Fixed**
+ - Custom number field range slider issue in search form. (#2799)
+ - Prevented .directorist-content-active CSS from overriding theme list styles (#2762)
+
+= 8.6.7 - Apr 7, 2026 =
+
+**Added**
+ - Filter hook `directorist_single_map_info_content` for customizing single listing map info window HTML. (#2786)
+
+**Fixed**
+ - Search form directory type issue. (#2784)
+ - Instant search not carrying the list view URL parameter. (#2783)
+ - PHP 8 type error in the search category location filter when the directory type is a string. (#2782)
+ - Contact listing form issue in the sidebar. (#2781)
+ - Sort-by dropdown using a placeholder href instead of the actual URL. (#2776)
+ - Number range slider custom field issue in the search form. (#2775)
+ - Renewal listing notice issue when logged out. (#2771)
+ - TinyMCE core link popover handlers broken by conditional logic. (#2765)
+ - CPT manager navigation and builder collapse state not persisting after reload. (#2726)
+ - Google Map marker pin icon not rendering in listing maps. (#2718)
+ - Security issue. (#2791)
+
+= 8.6.6 - Mar 30, 2026 =
+
+**Security**
+ - Fixed Broken Access Control (CVE-2025-68069) - Added missing capability checks on AJAX handlers accessible by low-privilege users
+ - Fixed Open Redirection (CVE-2025-64250) - Registration redirect URL now validated to prevent external host redirection
+
+**Fixed**
+ - PHP Warning for null array offset in single listing slider template
+
+= 8.6.5 - Mar 15, 2026 =
+
+**Fixed**
+ - Subscriber image upload issue in add listing form.
+ - "Remember Me" label not showing for new users. Added default value.
+
+= 8.6.4 - Mar 11, 2026 =
+
+**Fixed**
+ - Formgent enquiry modal in the user dashboard was not loading content properly when opened.
+ - Extension notice display
+
+= 8.6.3 - Mar 10, 2026 =
+
+**Improved**
+ - Excluded `.wordpress-org` folder from distribution package to prevent WordPress.org repository assets from appearing in user installations.
+
+= 8.6.1 - Mar 10, 2026 =
+
+**Improved**
+ - Nonce verification restructured to fail early and prevent CSRF bypasses across multiple files.
+ - Added capability checks for admin AJAX handlers (user type approve, deny, become author).
+ - All nonce inputs sanitized with sanitize_text_field() and wp_unslash() per WordPress coding standards.
+ - All dynamic output properly escaped in templates and style files.
+ - Replaced json_encode() with wp_json_encode() across the plugin.
+ - Updated filter_input() calls with proper FILTER parameter.
+
+**Fixed**
+ - Deprecated get_terms() and wp_count_terms() calls updated to modern single-argument syntax.
+ - Text domain mismatches and typos corrected across all translation functions.
+ - Variables and expressions used in gettext functions replaced with string literals.
+ - Missing singular placeholders in _n() for pricing plan validity periods.
+ - Empty translation string in settings panel.
+ - Interpolated variable in review email translation string.
+ - Ternary operator in _n() plural parameter for review counts.
+ - Incorrect esc_html() replaced with esc_html__() where translation was intended.
+
+**Removed**
+ - EDD Software Licensing update checker removed per WordPress.org guidelines.
+ - Disallowed compressed files and development artifacts removed from distribution.
+
+= 8.6 - Mar 3, 2026 =
+
+**Added**
+ - Conditional Logic support across all form fields in both Listing Form and Search Form. Fields can now dynamically show or hide based on other field values, allowing more advanced and flexible form configurations. (#2711)
+ - Expiration date and “Never Expires” option added to listings bulk edit for improved listing lifecycle management. (#2705)
+
+**Changed**
+ - Listings deleted from the user dashboard are now moved to Trash instead of being permanently removed. (#2703)
+
+**Improved**
+ - Search Form layout and responsiveness enhanced for mobile devices. (#2574)
+
+**Fixed**
+ - Broken access issue affecting user permissions. (#2710)
+ - Unlimited expiration email trigger issue. (#2700)
+ - Missing Font Awesome Regular SVG icons not rendering on the frontend. (#2708)
+ - Builder issue where the Section Name input lost focus on every keystroke. (#2698)
+ - Text alignment inconsistencies on the Single Listing page. (#2683)
+ - Formgent incorrect enquiry submission date & time (#2701)
+
+= 8.5.10 - Feb 9, 2026 =
+
+**Improved**
+ - Formgent integration enhanced with a new Formgent Enquiry table in the frontend user dashboard. (#2610)
+ - Builder-compatible components now use container-fluid for better responsiveness. (#2641)
+ - Select2 package updated to version 4.1.0-rc.0. (#2609)
+
+**Fixed**
+ - Instant search not working when an extra required input field is added. (#2652)
+ - Custom input labels now properly override default labels. (#2628)
+ - Back navigation issue on the single category page. (#2627)
+
+= 8.5.9 - Feb 5, 2026 =
+
+**Fixed**
+- Broken Access Control vulnerability in password reset endpoints. (#2678)
+
+= 8.5.8 - Jan 26, 2026 =
+
+**Improved**
+ - Dynamic field delete confirmation messages now adapt based on the current page context. (#2638)
+ - File upload field UI improved with dynamic icons, accurate file size display, and better accessibility support. (#2634)
+ - Default label and placeholder support for the review form. (#2586)
+
+**Fixed**
+ - OpenStreet location autocomplete issue on directory type change. (#2632)
+ - Custom input labels now properly override default labels. (#2628)
+ - Back navigation issue on the single category page. (#2627)
+
+= 8.5.7 - Jan 1, 2026 =
+
+Added
+ - Filter hook directorist_single_slider_template. (#2623)
+ - Filter hook for review avatar customization. (#2618)
+ - Filter hook on registration success email body. (#2617)
+ - Filter hook directorist_rest_listing_data for REST listing responses. (#2603)
+
+Improved
+ - Listing type handling and related logic. (#2626)
+ - Custom single listing page copy and toggle alignment. (#2619)
+ - Builder user experience improvements. (#2600)
+
+Changed
+ - Twitter label text updated to X. (#2585)
+ - Updated Directorist admin menu icon. (#2643)
+ - Adjusted admin menu position for better organization. (#2643)
+
+**Fixed**
+ - Widget field definitions not being preserved in the listing header builder. (#2614)
+ - Map view initialization and default zoom level issues. (#2613)
+ - Media playback issues in listing descriptions. (#2594)
+ - Radius search field visibility when the location selector is unavailable. (#2584)
+ - Featured option visibility when the Directorist Pricing Plans plugin is active. (#2583)
+ - Range slider triggering instant search while dragging. (#2582)
+ - Search pagination not working correctly. (#2580)
+ - Category icon not displaying correctly on the map. (#2554)
+ - Open redirect vulnerability by implementing proper URL validation for redirect parameters. (#2631)
+
+Refactored
+ - Removed duplicate CSS classes from `create-directory.scss` to reduce duplication and improve maintainability. Fixed broken icons in the settings panel after the refactor. (#2629)
+
+= 8.5.6 - Nov 30, 2025 =
+
+**Fixed**
+ - Gutenberg block rendering issue.
+
+= 8.5.5 - Nov 27, 2025 =
+
+**Fixed**
+ - Email body issue when editing a listing. (#2599)
+ - WordPress 6.9 beta compatibility issue with block template functions. (#2602)
+
+= 8.5.4 - Nov 18, 2025 =
+
+**Fixed**
+ - PHP 8 deprecated issue. (#2595)
+ - Duplicate social share icon issue. (#2593)
+ - Responsiveness of the single listing action button. (#2593)
+ - Tab spacing issue in the user dashboard. (#2593)
+
+= 8.5.3 - Nov 13, 2025 =
+
+**Changed**
+- Moved view count settings from Badges to General tab. (#2590)
+
+**Fixed**
+ - Security issue. (#2589)
+
+= 8.5.2 - Nov 6, 2025 =
+
+**Changed**
+- Added an action hook after completing the instant search. (#2573)
+
+**Fixed**
+ - Location hierarchical issue. (#2576)
+ - licensing checking issue. (#2575)
+
+= 8.5.1 - Oct 30, 2025 =
+
+- Added hooks to control dashboard and login page redirects. (#2521)
+
+**Fixed**
+ - Invalid directory issue with the Add Listing image field when using a single directory. (#2563)
+ - Section icon display issue in the Add Listing Form. (#2564)
+
+= 8.5 - Oct 28, 2025 =
+
+**New**
+- Migrated category, location, and tag pages to use default WordPress taxonomy archive pages, ensuring better SEO compatibility, cleaner URLs, and improved hierarchy handling. (#2514)
+- Added comprehensive REST API improvements: new v2 endpoints for listings (create/edit/delete), upgraded plan and order read endpoints, builder tab endpoint support and a temporary media upload endpoint. (#2529)
+
+**Changed**
+- Builder Enhancement: Improved Search Form, Add Listing Form, Single Listing Header, and Card Widget System for better customization and flexibility. (#2522)
+
+**Fixed**
+ - Taxonomy hierarchy issue. (#2548)
+ - Issue where the directory type was not applied correctly when performing a search without using the advanced search field. (#2544)
+ - About/Bio field required issue on the sign up page. (#2543)
+ - Undefined value issue in icon picker input field. (#2545)
+ - Dashboard single item position placement issue. (#2541)
+ - Viewport-aware dropdown system that auto-positions dropdowns up or down based on available space, preventing clipping. (#2537)
+ - Ensured directory_type parameter consistency in pagination across all screen sizes. (#2530)
+ - The instant search custom URL field didn't work after reloading the page. (#2553)
+
+= 8.4.9 - Oct 13, 2025 =
+
+**Security**
+- Fixed: Enhanced file upload security with improved filename sanitization to prevent potential file manipulation
+
+= 8.4.8 - Oct 8, 2025 =
+
+**Changed**
+- Added hooks to control dashboard and login page redirects. (#2521)
+- Added hooks to the contact owner form. (#2516)
+- Added “Recover Password” option in the guest login modal. (#2532)
+- Improved mobile experience by keeping the Add Listing accordion expanded. (#2517)
+- Improved thumbnail responsiveness for small screens. (#2526)
+
+**Fixed**
+ - Improved highlight for the select input list. (#2485)
+ - Fixed listing slider and carousel settings overlay issue. (#2482)
+ - Implemented intelligent Plus Code removal for Google Maps addresses. (#2478)
+ - Ensured independent functionality for multiple .bdas-category-search instances without conflicts. (#2473)
+ - Fixed carousel disappearing after scrolling past 20 photos. (#2472)
+ - Adjusted relevant listings transition speed from 1s to 3s. (#2468)
+ - Bricks Builder integration for custom single listing pages. (#2484)
+ - Fixed price range issue. (#2509)
+ - Fixed multiple JavaScript issues in the contact owner form, including form reset, alert colors, button re-enable, and correct callback response handling. (#2516)
+ - Fixed select item not clickable issue. (#2531)
+ - Fixed builder settings not working properly in the review template. (#2528)
+
+= 8.4.7 - Sep 9, 2025 =
+- Tweak JS and CSS
+
+= 8.4.6 - Sep 9, 2025 =
+
+**Fixed**
+- Map disable issue on single listing. (#2471)
+- Placeholder not fully displayed in Add Listing Form (Multi Select). (#2470)
+- Category field box resizing issue in Add Listing Form. (#2469)
+- Category icon not properly showing in map view. (#2465)
+- Custom field select value on listing card. (#2462)
+- Loading more translation issue. (#2459)
+- PHP 8 deprecated error issue. (#2458)
+- Schema error issue. (#2455)
+- Enter key press issue on instant search. (#2454)
+- Spelling issue in filter hooks. (#2452)
+- Account block styling issue. (#2467)
+- Layout issue when taxonomy title is too long. (#2442)
+
+**Changed**
+- Global columns optimization for responsive layout with clean CSS. (#2436)
+- Wrapped default CSS with `.directorist-content-active` selector. (#2419)
+- Added `directorist_is_multiple_review_enabled` hook to manage multiple reviews. (#2453)
+- Added filter hook to modify the find & replace contents in email. (#2450)
+- Added hooks for email notifications: `directorist_guest_submission_email_notification` and `directorist_after_user_registration_confirmation_email_sent`. (#2464)
+- Added Action hooks in Grid & List loop (before/after header & excerpt). (#2476)
+- Single listing slider thumb shows only when there are multiple items. (#2394)
+
+= 8.4.5 - July 22, 2025 =
+
+**Changed**
+ - Introduced show/hide password toggle on the login form. (#2415)
+ - Added new filter hooks in the listing form to support better customization. (#2378)
+ - Prevented the login modal from showing on login, registration, dashboard, and add listing pages to fix password reset issues. (#2421)
+ - Refactored account-related code for better performance and stability. (#2391)
+ - Optimized instant search to improve speed and reduce load. (#2353)
+
+**Fixed**
+ - Email notifications were not being sent to listing owners and admins. (#2398)
+ - Listing expiry date was calculated incorrectly. (#2396)
+ - Issue where shared media was being deleted unintentionally. (#2392)
+ - PayPal download issue in the setup wizard. (#2389)
+ - Resolved problem with user meta data not being deleted correctly. (#2375)
+ - Reduced unnecessary queries by fixing thumbnail caching. (#2373)
+ - Settings data restore issue. (#2358)
+ - Formatting and link options issue in TinyMCE editor. (#2346)
+ - Prevented infinite loop in the builder's assign-to-category field. (#2418)
+ - Zipcode radius search. (#2446)
+
+**Security**
+ - Applied WordPress coding standards using PHPCS across the entire codebase. Addressed numerous potential vulnerabilities by improving input validation, data sanitization, and output escaping to enhance overall plugin security and code quality. (#2379)
+
+= 8.4.4 - Jun 26, 2025 =
+
+**New**
+ - 🎉 **Formgent Integration** — You can now add a Formgent form to the Single Listing page via the Directorist builder. This allows visitors to submit forms (such as inquiries or feedback) directly from the listing page.
+
+= 8.4.3 - May 22, 2025 =
+
+**Changed**
+ - Refactored beta version detection logic to avoid dependency on `get_plugin_data()` and improve performance. (#2367)
+
+**Fixed**
+ - Nonce validation issue in guest listing submission fixed to improve security and form handling. (#2354)
+ - `preg_replace()` deprecation notice on the dashboard fixed for PHP 8.1+ compatibility. (#2351)
+
+= 8.4.2 - May 20, 2025 =
+ - Tweak JS and CSS
+
+= 8.4.1 - May 20, 2025 =
+
+**Changed**
+ - Hook to customize the email "From Name" and prevent forced values. (#2344)
+ - Filter hook to manipulate category term template redirection. (#2340)
+ - Polylang integration improved for better multilingual support. (#2328)
+ - Search form improved for enhanced usability. (#2335)
+ - Builder widget group drag-and-drop option updated. (#2342)
+
+**Fixed**
+ - Submit button in the "Contact Listing Owner" form disabled in preview mode. (#2343)
+ - console.error on listing edit with gallery extension fixed. (#2341)
+ - Deprecated warning from print_emoji_styles() removed in setup wizard. (#2338)
+ - "Remember me" display issue on the login form. (#2337)
+ - Listings importer issue. (#2336)
+ - Listing description visibility issue below the map fixed. (#2334)
+ - Builders and listings not imported from setup widget. (#2333)
+ - Swiper Slider loop issue fixed. (#2327)
+ - Schema php error when schema type empty. (#2352)
+
+8.4 - Apr 29, 2025
+
+**New**
+- Schema support for better search engine indexing. (#2298)
+- New filter hook to modify the default schema arguments. (#2310)
+
+**Changed**
+ - Replaced outdated Darken color with updated version for improved compatibility. (#2296)
+ - Improved styling for custom number field (prefix arrow, border, gap). (#2286)
+ - Listing default image. (#2314)
+ - Updated Swiper Slider JS and CSS to the latest version. (#2311)
+
+**Fixed**
+ - Add Listing sidebar layout cut-off issue and added scrollbar when necessary. (#2305)
+ - Registration redirection issue post-signup. (#2303)
+ - Listing view count logic fixed and refactored for better accuracy. (#2302)
+ - Fatal error when importing CSV with empty lines resolved. (#2301)
+ - Undefined variable issue in widget resolved. (#2300)
+ - Removed directorist-overlay-active class after filtering to prevent overlay lock. (#2299)
+ - Category custom field not appearing in add listing form resolved. (#2317)
+ - CSV importer application/csv MIME type issue. (#2318)
+ - Selector conflict between Gallery Extension and core plugin. (#2316)
+ - Responsive style issue for the single listing header button. (#2313)
+ - Translation notice issue in the admin panel. (#2309)
+ - Password recovery issue with WordPress 6.8. (#2322)
+
+ **Removed**
+ - Removed announcement-related code from the core plugin. (#2283)
+
+8.3.1 - Mar 26, 2025
+
+**Changed**
+ - Checkbox field usability in the search form for better user experience. (#2275)
+
+**Fixed**
+ - Listing preview title filter issue with too few arguments. (#2293)
+ - PHP fatal error caused by the missing ZipArchive extension. (#2292)
+ - Corrected missing location field position to ensure the arrow icon functions properly. (#2294)
+
+8.3 - Mar 24, 2025
+
+**Changed**
+ - Improved Listings Importer to efficiently handle large datasets.
+ - Replaced "Location" with "Address" on the All Listings map view. (#2266)
+ - Refactored default expiration date handling with a utility function. (#2253)
+ - Improved Google Maps performance and refactored code for better efficiency. (#2251)
+ - Improved the search modal for enhanced user experience. (#2289)
+
+**Fixed**
+ - view count was not updating due to caching. (#2285)
+ - Listing author and order author mismatch resolved by database migration. (#2276)
+ - Google Map loading issues resolved. (#2273)
+ - Listing queries issue when the directory navigation is hidden. (#2270)
+ - Search form responsive border issue corrected. (#2267)
+ - Text domain inconsistencies fixed for better translation support. (#2264)
+ - "Add Listing" map marker issue on Google Maps corrected. (#2263)
+ - Warnings on the Themes & Extensions page addressed. (#2260)
+ - File upload input type changed from button to file input. (#2258)
+ - Single listing gallery image now fits properly within the container. (#2257)
+ - Pagination display issues for version 7 users fixed. (#2256)
+ - Radius search pagination issue resolved. (#2255)
+ - "More Filter" button issue in the search form fixed. (#2254)
+ - Listing status issue corrected. (#2252)
+ - Script localization issues in certain classes resolved. (#2248)
+ - Field-specific query issue fixed to improve search accuracy. (#2184)
+ - Spacing issue when the location field is focused. (#2288)
+ - Corrected the "Continue to Publish" button link on listings. (#2287)
+
+
+8.2 - Feb 25, 2025
+
+**New**
+ - Category and location bulk edit actions to assign or reset directory (#2229)
+ - New filter hook directorist_user_profile_updated to modify user profile data when updated (#2235)
+ - Added pin code verification request limit (#2245)
+
+**Changed**
+ - Refactored and improved the category and location management screen (#2234)
+ - Improved button styling by adding a button[type="submit"] dependency with directorist-btn for better styling and consistency (#2227)
+
+**Fixed**
+ - Dashboard Status translation issue (#2215)
+ - Number custom field label issue in the search form (#2216)
+ - Filter disable issue on mobile view (#2219)
+ - Depth limitation issue in the taxonomy list view (#2220)
+ - Warning appearing on the Add Listing page (#2225)
+ - Responsive issues with the All Listings sidebar (#2209)
+ - Label alignment issue in the search form, which appeared for 0.5 – 2 seconds on slow networks (#2200)
+ - "Remember Me" field issue on the login form (#2223)
+ - Pagination style issue on mobile devices (#2226)
+ - Required field issue in the search form when changing the "View As" option (#2228)
+ - Description conflict issue with the single listing map (#2231)
+ - Zipcode Radius search issue (#2239)
+ - Advanced filter issue in the All Listings layout (#2240)
+ - Privacy Policy & Terms page issue (#2236)
+ - Removed Extra Ending Tag in Category Grid Template (#2242)
+ - Error with wp_generate_attachment_metadata() in background tasks by loading the required file (#2232)
+ - Clarified text for the price range to avoid confusion (#2230)
+ - Login and Registration Redirection Issue (#2218)
+ - Number custom field step issue (#2173)
+
+8.1 - Jan 29, 2025
+
+**Added**
+ - Infinite Scroll Pagination for listings archive pages, including all listings, search results, single category, and single location pages (#2210)
+ - AJAX Pagination for all taxonomy pages, including categories and locations (#2199)
+ - User Query Limit restricted to published listings owners for users accessing the `users` REST API endpoint (#2198)
+
+**Changed**
+ - Disabled the category dropdown search field on the single category page (#2203)
+ - Disabled the location dropdown search field on the single location page (#2203)
+
+**Fixed**
+ - Number custom field range issue (#2173)
+ - Title markup inconsistency issue (#2195)
+ - Pagination issue on single taxonomy pages (#2188)
+ - Category conflict with the number custom field (#2197)
+ - Badge display issue on the all listings page (#2189)
+ - Category custom field issue in the search form (#2190)
+ - Incorrect Twitter text in the social info section (#2191)
+ - Listing expired status handling issue (#2194)
+ - View count reset issue (#2207)
+ - Translation issue (#2192)
+ - Listing directory update on quick and bulk edit screens (#2201)
+ - Zipcode radius search issue with OpenStreetMap (#2208)
+ - Checkout Amount Format (#2214)
+
+[Full Changelog](https://github.com/sovware/directorist/wiki/Changelogs)

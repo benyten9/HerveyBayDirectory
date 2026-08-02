@@ -1,0 +1,139 @@
+<?php
+
+/**
+ * Class LastEmailSent
+ *
+ * This class is responsible for handling the last email sent rule
+ *
+ * @since 1.0.0
+ *
+ * @package DoubleScale\Pro\Pro
+ */
+
+namespace DoubleScale\Pro\Modules\Automations\Rules\Activity;
+
+use DoubleScale\Modules\Automations\Abstracts\Rule;
+use DoubleScale\Modules\Automations\Models\AutomationContactModel;
+use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
+use DoubleScale\Modules\Automations\Services\RulesManager;
+
+/**
+ * LastEmailSent class
+ */
+class LastEmailSent extends Rule {
+
+	/**
+	 * Name
+	 *
+	 * @var string
+	 *
+	 * @since 1.0.0
+	 */
+	public $name = 'Last Email Sent';
+
+	/**
+	 * Slug
+	 *
+	 * @var string
+	 *
+	 * @since 1.0.0
+	 */
+	public $slug = 'activity_last_email_sent';
+
+	/**
+	 * Group
+	 *
+	 * @var string
+	 *
+	 * @since 1.0.0
+	 */
+	public $group = 'activity';
+
+	/**
+	 * Type
+	 *
+	 * @var string
+	 *
+	 * @since 1.0.0
+	 */
+	public $type = 'date';
+
+	/**
+	 * Campaign / advanced contact filters use non-automation rule sets.
+	 *
+	 * @var bool
+	 */
+	public $is_automation = false;
+
+	/**
+	 * Get value
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param AutomationContactModel $automation_contact Contact Model.
+	 *
+	 * @return mixed
+	 */
+	public function get_value( $automation_contact ) {
+		$contact        = $automation_contact->contact;
+		$campaign_email = CommunicationTrackingModel::emails()->where( 'contact_id', $contact->id )
+			->orderBy( 'created_at', 'desc' )
+			->first();
+
+		if ( $campaign_email ) {
+			return $campaign_email->created_at;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get operators
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_operators() {
+		return array(
+			'before'  => __( 'Before', 'doublescale'),
+			'after'   => __( 'After', 'doublescale'),
+			'on'      => __( 'On', 'doublescale'),
+			'between' => __( 'Between', 'doublescale'),
+			'within'  => __( 'Within', 'doublescale'),
+		);
+	}
+
+	/**
+	 * Is met
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param AutomationContactModel $automation_contact Contact Model.
+	 * @param array                    $rule Rule.
+	 *
+	 * @return bool
+	 */
+	public function is_met( AutomationContactModel $automation_contact, $rule = array() ) {
+		$value      = $this->get_value( $automation_contact );
+		$operator   = $rule['operator'];
+		$rule_value = $rule['value'];
+
+		switch ( $operator ) {
+			case 'before':
+				return ( strtotime( $value ) < strtotime( $rule_value ) );
+			case 'after':
+				return ( strtotime( $value ) > strtotime( $rule_value ) );
+			case 'on':
+				return ( strtotime( $value ) == strtotime( $rule_value ) );
+			case 'between':
+				return ( strtotime( $value ) > strtotime( $rule_value[0] ) && strtotime( $value ) < strtotime( $rule_value[1] ) );
+			case 'within':
+				return ( strtotime( $value ) > strtotime( $rule_value[0] ) && strtotime( $value ) < strtotime( $rule_value[1] ) );
+			default:
+				return false;
+		}
+	}
+}
+
+RulesManager::instance()->register( new LastEmailSent() );

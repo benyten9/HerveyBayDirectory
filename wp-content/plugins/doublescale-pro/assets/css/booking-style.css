@@ -1,0 +1,259 @@
+/**
+ * Public booking page (confirm / cancel / reschedule / claim_waitlist) styles.
+ *
+ * Loaded via wp_enqueue_style( 'doublescale-booking-page' ) from
+ * BookingFrontendHandler::enqueue_scripts(). The wrapping element on every
+ * action template is `.doublescale-booking-meeting`; the inner classes match
+ * what `templates/{confirm,cancel,reschedule,claim-waitlist}.php` render.
+ */
+
+* {
+	padding: 0;
+	margin: 0;
+}
+
+.doublescale-booking-meeting,
+.doublescale-booking-body .doublescale-booking-meeting {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	width: 100%;
+	max-width: 856px;
+	margin: 0 auto;
+	margin-top: 2em;
+	padding: 0 16px;
+	box-sizing: border-box;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.doublescale-booking-meeting .details-container {
+	padding: 2rem;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	border: 1.05px solid #3333331f;
+}
+
+.doublescale-booking-meeting .profile-picture {
+	text-align: center;
+}
+
+.doublescale-booking-meeting .profile-picture img {
+	width: 50px;
+	height: 50px;
+	margin: auto;
+}
+
+.doublescale-booking-meeting .icons {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 20px;
+	margin-bottom: 10px;
+}
+
+.doublescale-booking-meeting .icon {
+	text-align: center;
+	margin-bottom: 1rem;
+}
+
+.doublescale-booking-meeting .title {
+	font-weight: 700;
+	font-size: 32px;
+	text-align: center;
+	color: #3A3A99;
+	padding: 16px 0 4px;
+}
+
+.doublescale-booking-meeting .calendar-info {
+	font-weight: 500;
+	font-size: 20px;
+	text-align: center;
+	color: #737373;
+	padding: 10px 0;
+}
+
+.doublescale-booking-meeting .booking-card {
+	border: 1px solid #eaeaea;
+	padding: 1rem;
+	border-radius: 8px;
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+}
+
+.doublescale-booking-meeting .booking-card p {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	font-weight: 400;
+	font-size: 16px;
+	margin: 10px 0;
+	text-transform: capitalize;
+}
+
+.doublescale-booking-meeting .booking-card .event-title {
+	font-weight: 700;
+	font-size: 18px;
+	color: #1a1a1a;
+	text-transform: capitalize;
+	padding: 10px 0;
+}
+
+.doublescale-booking-meeting .calendar-buttons {
+	text-align: center;
+	border: 1px solid #eaeaea;
+	padding: 1rem;
+	border-radius: 8px;
+}
+
+.doublescale-booking-meeting .calendar-buttons p {
+	font-weight: 500;
+	font-size: 20px;
+	text-align: center;
+}
+
+.doublescale-booking-meeting .calendar-buttons .icons img {
+	width: 32px;
+	margin: 0 8px;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.doublescale-booking-meeting .confirmation-footer {
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	border-radius: 16px;
+	padding: 40px 48px;
+	border: 1.05px solid #3333331f;
+}
+
+.doublescale-booking-meeting .change-options {
+	text-align: center;
+	font-weight: 500;
+	font-size: 16px;
+}
+
+.doublescale-booking-meeting .cancel-link {
+	font-weight: 700;
+	font-size: 16px;
+	color: #ef4444;
+	text-decoration: none;
+}
+
+.doublescale-booking-meeting .reschedule-link {
+	font-weight: 700;
+	font-size: 16px;
+	color: #0b69c7;
+	text-decoration: none;
+}
+
+.doublescale-booking-meeting .cancellation-policy {
+	margin-top: 2rem;
+	font-weight: 400;
+	font-size: 16px;
+}
+
+.doublescale-booking-meeting .cancellation-policy h3 {
+	font-weight: 700;
+	font-size: 16px;
+	margin: 10px 0 5px 0;
+}
+
+.doublescale-booking-meeting .cancellation-input-container {
+	width: 100%;
+	text-align: center;
+	font-weight: 500;
+	font-size: 20px;
+	color: #737373;
+	padding: 10px 0;
+}
+
+.doublescale-booking-meeting .cancellation-input-container textarea {
+	width: 100%;
+	height: 100px;
+	border-radius: 8px;
+	border: 1px solid #eaeaea;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.doublescale-booking-meeting .cancel-btn {
+	cursor: pointer;
+	color: #ffffff;
+	font-weight: 400;
+	font-size: 14px;
+	border-radius: 100px;
+	border: none;
+	padding: 12px 24px;
+	background-color: #3A3A99;
+	text-decoration: none;
+}
+
+.doublescale-booking-meeting .calendar-buttons-container {
+	display: flex;
+	gap: 10px;
+	justify-content: flex-end;
+	margin-top: 1rem;
+}
+
+.doublescale-booking-meeting .required {
+	color: #ef4444;
+}
+
+.doublescale-booking-meeting .validation-message {
+	color: #d93025;
+	font-size: 0.9rem;
+	margin-bottom: 0.5rem;
+	display: block;
+}
+
+.doublescale-booking-meeting .cancellation-reason.error {
+	border-color: #d93025;
+	background-color: #fce8e6;
+}
+
+.doublescale-booking-meeting .success-message {
+	padding: 1rem;
+	background-color: #e6f4ea;
+	border: 1px solid #34a853;
+	border-radius: 4px;
+	font-size: 1rem;
+	color: #202124;
+	margin-top: 1rem;
+}
+
+.doublescale-booking-meeting .already-cancelled-message {
+	padding: 1rem;
+	background-color: #f1f3f4;
+	border: 1px solid #dadce0;
+	border-radius: 4px;
+	font-size: 1rem;
+	color: #5f6368;
+}
+
+.doublescale-booking-meeting .help-text {
+	font-size: 16px;
+	color: #6b7280;
+}
+
+.doublescale-booking-meeting .link {
+	color: #0b69c7;
+	text-decoration: underline;
+	overflow: hidden;
+}
+
+.doublescale-booking-meeting .link:hover {
+	text-decoration: none;
+}
+
+.doublescale-booking-meeting .icons > a {
+	text-decoration: none !important;
+}
+
+/* Unavailable booking link page (BaseTemplateRenderer::render_unavailable). */
+.doublescale-booking-unavailable {
+	max-width: 560px;
+	margin: 80px auto;
+	padding: 32px;
+	text-align: center;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

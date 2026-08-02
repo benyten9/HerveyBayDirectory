@@ -1,0 +1,543 @@
+/**
+ * HBL Bulk Plan Reassign Styles
+ * Design tokens (--hbl-primary, --hbl-success, etc.) come from the shared
+ * :root in bulk-reassign.css, which this stylesheet always loads after.
+ */
+
+/* Page wrap */
+.hbl-bpr-wrap h1 {
+	display: flex;
+	align-items: center;
+	font-size: 23px;
+	font-weight: 600;
+	color: var(--hbl-text);
+	margin-bottom: 8px;
+}
+
+.hbl-bpr-wrap h1 svg {
+	color: var(--hbl-primary);
+}
+
+.hbl-bpr-wrap > .description {
+	color: var(--hbl-text-secondary);
+	margin-bottom: 24px;
+}
+
+/* Notice */
+.hbl-bpr-notice {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 18px;
+	border-radius: var(--hbl-radius);
+	font-size: 14px;
+	margin-bottom: 20px;
+}
+
+.hbl-bpr-notice--warning {
+	background: rgba(245, 158, 11, 0.1);
+	border: 1px solid rgba(245, 158, 11, 0.4);
+	color: #92400E;
+}
+
+.hbl-bpr-notice svg {
+	flex-shrink: 0;
+}
+
+/* Filters row */
+.hbl-bpr-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-end;
+	margin-bottom: 20px;
+}
+
+.hbl-bpr-filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.hbl-bpr-filter-group label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--hbl-text);
+}
+
+.hbl-bpr-filter-actions {
+	flex-direction: row;
+	padding-bottom: 0;
+}
+
+.hbl-select,
+.hbl-input {
+	min-width: 220px;
+	padding: 8px 12px;
+	border: 1px solid var(--hbl-border);
+	border-radius: var(--hbl-radius);
+	font-size: 14px;
+	color: var(--hbl-text);
+	background: #fff;
+	height: 36px;
+	line-height: 1.4;
+}
+
+.hbl-select:focus,
+.hbl-input:focus {
+	border-color: var(--hbl-primary);
+	outline: none;
+	box-shadow: 0 0 0 2px rgba(0, 128, 128, 0.15);
+}
+
+#hbl-bpr-load-listings,
+.hbl-bpr-filter-actions .button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 36px;
+	line-height: 1;
+}
+
+.hbl-bpr-filter-actions .button svg {
+	flex-shrink: 0;
+	display: block;
+}
+
+/* Listings wrap */
+.hbl-bpr-listings-wrap {
+	margin-top: 8px;
+}
+
+.hbl-bpr-table-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 14px;
+	background: var(--hbl-bg);
+	border: 1px solid var(--hbl-border);
+	border-bottom: none;
+	border-radius: 5px 5px 0 0;
+}
+
+/* Listings table */
+#hbl-bpr-listings-table {
+	border: 1px solid var(--hbl-border);
+	border-radius: 0 0 5px 5px;
+	overflow: hidden;
+}
+
+.hbl-bpr-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.hbl-bpr-table thead th {
+	background: var(--hbl-bg);
+	padding: 10px 14px;
+	text-align: left;
+	font-weight: 600;
+	color: var(--hbl-text-secondary);
+	border-bottom: 1px solid var(--hbl-border);
+	white-space: nowrap;
+}
+
+.hbl-bpr-table tbody tr {
+	border-bottom: 1px solid var(--hbl-border);
+	transition: background 0.15s;
+}
+
+.hbl-bpr-table tbody tr:last-child {
+	border-bottom: none;
+}
+
+.hbl-bpr-table tbody tr:hover {
+	background: rgba(0, 128, 128, 0.03);
+}
+
+.hbl-bpr-table tbody tr.hbl-bpr-selected {
+	background: rgba(0, 128, 128, 0.06);
+}
+
+.hbl-bpr-table td {
+	padding: 10px 14px;
+	vertical-align: middle;
+}
+
+.hbl-bpr-table td:first-child {
+	width: 36px;
+}
+
+.hbl-bpr-listing-title {
+	font-weight: 500;
+	color: var(--hbl-text);
+}
+
+.hbl-bpr-listing-title a {
+	color: var(--hbl-primary);
+	text-decoration: none;
+}
+
+.hbl-bpr-listing-title a:hover {
+	text-decoration: underline;
+}
+
+.hbl-bpr-plan-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 10px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 500;
+	background: rgba(0, 128, 128, 0.1);
+	color: var(--hbl-primary);
+	border: 1px solid rgba(0, 128, 128, 0.2);
+}
+
+.hbl-bpr-plan-badge--none {
+	background: rgba(107, 114, 128, 0.1);
+	color: var(--hbl-text-secondary);
+	border-color: var(--hbl-border);
+}
+
+.hbl-bpr-status-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 20px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.hbl-bpr-status-badge--publish {
+	background: rgba(16, 185, 129, 0.12);
+	color: #065F46;
+}
+
+.hbl-bpr-status-badge--pending {
+	background: rgba(245, 158, 11, 0.12);
+	color: #92400E;
+}
+
+.hbl-bpr-status-badge--draft {
+	background: rgba(107, 114, 128, 0.12);
+	color: var(--hbl-text-secondary);
+}
+
+/* Select-all-pages banner */
+.hbl-bpr-select-all-pages {
+	margin: 8px 0;
+	padding: 9px 14px;
+	background: rgba(0, 128, 128, 0.07);
+	border: 1px solid rgba(0, 128, 128, 0.22);
+	border-radius: var(--hbl-radius);
+	font-size: 13px;
+	color: var(--hbl-text);
+	text-align: center;
+}
+
+.hbl-bpr-select-all-pages a {
+	color: var(--hbl-primary);
+	text-decoration: underline;
+	font-weight: 600;
+	margin-left: 4px;
+}
+
+.hbl-bpr-select-all-pages a:hover {
+	color: var(--hbl-primary-hover);
+}
+
+/* Pagination */
+.hbl-bpr-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin-top: 14px;
+	flex-wrap: wrap;
+}
+
+.hbl-bpr-page-btn {
+	min-width: 32px;
+	height: 32px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid var(--hbl-border);
+	border-radius: 3px;
+	background: #fff;
+	color: var(--hbl-text);
+	font-size: 13px;
+	cursor: pointer;
+	padding: 0 8px;
+	transition: all 0.15s;
+}
+
+.hbl-bpr-page-btn:hover {
+	border-color: var(--hbl-primary);
+	color: var(--hbl-primary);
+}
+
+.hbl-bpr-page-btn.active {
+	background: var(--hbl-primary);
+	border-color: var(--hbl-primary);
+	color: #fff;
+	font-weight: 600;
+}
+
+.hbl-bpr-page-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Message area */
+.hbl-bpr-message {
+	padding: 14px 16px;
+	border-radius: var(--hbl-radius);
+	font-size: 14px;
+}
+
+.hbl-bpr-message--info {
+	background: rgba(0, 128, 128, 0.08);
+	border: 1px solid rgba(0, 128, 128, 0.25);
+	color: var(--hbl-primary);
+}
+
+.hbl-bpr-message--empty {
+	background: var(--hbl-bg);
+	border: 1px solid var(--hbl-border);
+	color: var(--hbl-text-secondary);
+	text-align: center;
+	padding: 28px;
+}
+
+/* Plan cards grid */
+.hbl-bpr-plan-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: 14px;
+}
+
+.hbl-bpr-plan-card {
+	border: 2px solid var(--hbl-border);
+	border-radius: 5px;
+	transition: all 0.2s ease;
+	cursor: pointer;
+	min-width: 0;
+}
+
+.hbl-bpr-plan-card:hover {
+	border-color: var(--hbl-primary);
+}
+
+.hbl-bpr-plan-card.hbl-bpr-plan-selected {
+	border-color: var(--hbl-primary);
+	background: rgba(0, 128, 128, 0.03);
+	box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.1);
+}
+
+.hbl-bpr-plan-label {
+	display: block;
+	cursor: pointer;
+	margin: 0;
+}
+
+.hbl-bpr-plan-label input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.hbl-bpr-plan-content {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 18px 20px;
+}
+
+.hbl-bpr-plan-icon {
+	width: 48px;
+	height: 48px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--hbl-bg);
+	border-radius: var(--hbl-radius-lg);
+	color: var(--hbl-primary);
+	flex-shrink: 0;
+}
+
+.hbl-bpr-plan-card.hbl-bpr-plan-selected .hbl-bpr-plan-icon {
+	background: rgba(0, 128, 128, 0.1);
+}
+
+.hbl-bpr-plan-info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.hbl-bpr-plan-name {
+	font-weight: 600;
+	font-size: 15px;
+	color: var(--hbl-text);
+}
+
+.hbl-bpr-plan-type {
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--hbl-text-secondary);
+}
+
+.hbl-bpr-plan-check {
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	border: 2px solid var(--hbl-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	color: transparent;
+	transition: all 0.2s;
+}
+
+.hbl-bpr-plan-card.hbl-bpr-plan-selected .hbl-bpr-plan-check {
+	background: var(--hbl-primary);
+	border-color: var(--hbl-primary);
+	color: #fff;
+}
+
+/* Loading spinner */
+.hbl-bpr-spinner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 28px;
+	color: var(--hbl-text-secondary);
+	font-size: 14px;
+}
+
+.hbl-bpr-spinner::before {
+	content: '';
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--hbl-border);
+	border-top-color: var(--hbl-primary);
+	border-radius: 50%;
+	animation: hbl-spin 0.7s linear infinite;
+	flex-shrink: 0;
+}
+
+@keyframes hbl-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* Result output */
+.hbl-result {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 18px;
+	border-radius: var(--hbl-radius);
+	margin-top: 16px;
+	font-size: 14px;
+}
+
+.hbl-result.success {
+	background: rgba(16, 185, 129, 0.1);
+	border: 1px solid rgba(16, 185, 129, 0.3);
+	color: #065F46;
+}
+
+.hbl-result.error {
+	background: rgba(239, 68, 68, 0.1);
+	border: 1px solid rgba(239, 68, 68, 0.3);
+	color: #991B1B;
+}
+
+/* ─── Responsive ─────────────────────────────────────── */
+/* .hbl-bpr-table is shared by Bulk Plan Reassign, Duplicate Listings,
+   and Missing Images — one stacked "card per row" layout (same
+   pattern WordPress core uses for Posts/Pages on mobile) covers all
+   three. Column count differs per tool (6 vs 9), but the checkbox is
+   always column 1 and the listing title is always column 2, so those
+   two get special treatment and everything else just gets a label. */
+@media (max-width: 782px) {
+	.hbl-bpr-table,
+	.hbl-bpr-table tbody,
+	.hbl-bpr-table tbody tr,
+	.hbl-bpr-table tbody td {
+		display: block;
+		width: 100%;
+	}
+
+	.hbl-bpr-table thead {
+		display: none;
+	}
+
+	.hbl-bpr-table tbody tr {
+		border: 1px solid var(--hbl-border);
+		border-radius: 5px;
+		padding: 12px;
+		margin-bottom: 10px;
+		background: #fff;
+	}
+
+	.hbl-bpr-table tbody tr:last-child {
+		border: 1px solid var(--hbl-border);
+	}
+
+	.hbl-bpr-table td {
+		padding: 4px 0;
+		border: none !important;
+		text-align: left !important;
+	}
+
+	/* Checkbox sits on its own row at the top of the card */
+	.hbl-bpr-table td:first-child {
+		width: auto;
+		text-align: left !important;
+		padding-bottom: 8px;
+		margin-bottom: 4px;
+		border-bottom: 1px solid var(--hbl-border) !important;
+	}
+
+	/* Listing title reads as the card heading — no label prefix */
+	.hbl-bpr-table td:nth-child(2) {
+		font-weight: 600;
+		font-size: 14px;
+		padding-bottom: 8px;
+	}
+
+	/* Every other cell gets a small uppercase label above its value */
+	.hbl-bpr-table td:not(:first-child):not(:nth-child(2))::before {
+		content: attr(data-label);
+		display: block;
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--hbl-text-secondary);
+		margin-bottom: 2px;
+	}
+
+	#hbl-bpr-listings-table,
+	#hbl-dup-table-body,
+	#hbl-mi-table-body {
+		border: none;
+		border-radius: 0;
+		box-shadow: none;
+		overflow: visible;
+	}
+
+	.hbl-bpr-table-header {
+		border-radius: 5px 5px 0 0;
+	}
+}

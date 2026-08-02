@@ -1,0 +1,21 @@
+diff --git a/src/Illuminate/container/Container.php b/src/Illuminate/container/Container.php
+--- a/src/Illuminate/container/Container.php
++++ b/src/Illuminate/container/Container.php
+@@ -166,7 +166,7 @@
+     /**
+      *  {@inheritdoc}
+      */
+-    public function has($id)
++    public function has(string $id)
+     {
+         return $this->bound($id);
+     }
+@@ -618,7 +618,7 @@
+     /**
+      *  {@inheritdoc}
+      */
+-    public function get($id)
++    public function get(string $id)
+     {
+         try {
+             return $this->resolve($id);

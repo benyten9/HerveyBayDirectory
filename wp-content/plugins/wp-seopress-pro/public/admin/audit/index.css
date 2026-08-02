@@ -1,0 +1,1275 @@
+/* ──────────────────────────────────────────────────────────────────
+ * SEOPress shared UI primitives
+ *
+ * Imported once by `ui/index.js`. Each shared admin page picks up the
+ * styles transitively through its `import` of any UI primitive.
+ *
+ * Conventions:
+ *   - all classes prefixed with `seopress-ui-`
+ *   - accent color follows --wp-admin-theme-color (user's WP scheme)
+ *   - semantic colors use the WP admin notice palette (#008a20 success,
+ *     #bd8600 warning, #d63638 error) for text-on-tint contrast
+ *   - state modifiers use `is-*` (e.g. `is-active`, `is-warning`)
+ * ────────────────────────────────────────────────────────────────── */
+
+/* ── Badge ── */
+
+.seopress-ui-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 28px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--wp-admin-theme-color);
+	white-space: nowrap;
+}
+
+.seopress-ui-badge--pill {
+	border-radius: 999px;
+	padding: 2px 10px;
+}
+
+.seopress-ui-badge--uppercase {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.seopress-ui-badge.is-success {
+	background: rgba( 74, 184, 102, 0.15 );
+	color: #008a20;
+}
+
+.seopress-ui-badge.is-warning {
+	background: rgba( 255, 186, 0, 0.15 );
+	color: #bd8600;
+}
+
+.seopress-ui-badge.is-low-alert {
+	background: rgba( 227, 159, 72, 0.18 );
+	color: var(--colorLowAlert, #e39f48);
+}
+
+.seopress-ui-badge.is-alert {
+	background: rgba( 235, 15, 0, 0.10 );
+	color: var(--colorAlert, #eb0f00);
+}
+
+.seopress-ui-badge.is-primary {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--wp-admin-theme-color);
+}
+
+.seopress-ui-badge.is-muted {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--color, #757575);
+}
+
+.seopress-ui-badge.is-neutral {
+	background: var(--borderColor, #E6E6E8);
+	color: var(--colorDark, #1e1e1e);
+}
+
+/* Solid variants used as full-color "tag" badges (white text on a solid
+ * background). Useful for "DEPRECATED", "REQUIRED", small status chips
+ * inside template/schema cards. */
+.seopress-ui-badge--solid.is-low-alert {
+	background: var(--colorLowAlert, #e39f48);
+	color: var(--colorWhite, #fff);
+}
+
+.seopress-ui-badge--solid.is-alert {
+	background: var(--colorAlert, #eb0f00);
+	color: var(--colorWhite, #fff);
+}
+
+.seopress-ui-badge--solid.is-warning {
+	background: var(--colorWarning, #ffba00);
+	color: var(--colorDark, #1e1e1e);
+}
+
+/* ── Link (cell title) ──
+ * Inline / cell-title links follow the WP admin theme color so they
+ * match the user's chosen scheme. */
+
+.seopress-ui-link {
+	color: var(--wp-admin-theme-color);
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.seopress-ui-link:hover,
+.seopress-ui-link:focus {
+	color: var(--wp-admin-theme-color);
+	text-decoration: underline;
+}
+
+.seopress-ui-link--truncate {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+.seopress-ui-link--muted {
+	color: var(--colorDark, #1e1e1e);
+	font-weight: 500;
+}
+
+.seopress-ui-link--muted:hover,
+.seopress-ui-link--muted:focus {
+	color: var(--wp-admin-theme-color);
+	text-decoration: underline;
+}
+
+/* ── Progress bar label & hint — render below native <ProgressBar> ── */
+
+.seopress-ui-progress__label {
+	margin: 8px 0 0;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--colorDark, #1e1e1e);
+}
+
+.seopress-ui-progress__hint {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--color, #757575);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Empty state ── */
+
+.seopress-ui-empty-state {
+	width: 100%;
+	margin: 16px 0;
+	padding: 48px 24px;
+	text-align: center;
+	background: #fff;
+	border: 1px solid var(--borderColor, #E6E6E8);
+	border-radius: 6px;
+}
+
+.seopress-ui-empty-state__title {
+	margin: 0 0 8px;
+	font-size: 18px;
+	color: var(--colorDark, #1e1e1e);
+}
+
+.seopress-ui-empty-state__desc {
+	margin: 0 auto 16px;
+	max-width: 480px;
+	color: var(--color, #757575);
+	font-size: 14px;
+}
+
+/* ── DataView page wrapper ── */
+
+.seopress-ui-dataview-wrapper {
+	margin: 20px 20px 20px 0;
+}
+
+/* ── Editor toggle field (header "enabled" toggle) ── */
+
+.seopress-ui-editor-toggle {
+	margin: 0 !important;
+	padding: 0 8px !important;
+	border-right: 1px solid var(--borderColor, #E6E6E8);
+}
+
+.seopress-ui-editor-toggle .components-toggle-control__label {
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+@media screen and ( max-width: 600px ) {
+	.seopress-ui-editor-toggle {
+		padding-left: 0 !important;
+	}
+}
+
+/* ── Dirty badge (modified state) ── */
+
+.seopress-ui-dirty-badge {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	padding: 3px 8px;
+	border-radius: 4px;
+	background: var(--colorWarning, #ffba00);
+	color: var(--colorDark, #1e1e1e);
+	letter-spacing: 0.3px;
+}
+
+/* ── Tabs (lightweight tablist) ──
+ * Visual parity with `@wordpress/components` `<TabPanel>` so the shared
+ * shell tabs (Site Audit) match the WP-native tabs used by other admin
+ * pages (Redirections, etc.). The underline lives on a `::after` ribbon
+ * that grows from 0 to 1.5px on the active tab — same mechanic as WP
+ * core, coloured with --wp-admin-theme-color. */
+
+.seopress-ui-tabs {
+	display: flex;
+	align-items: stretch;
+	flex-direction: row;
+	margin-bottom: 20px;
+}
+
+.seopress-ui-tabs__tab {
+	position: relative;
+	-webkit-appearance: none;
+	   -moz-appearance: none;
+	        appearance: none;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	height: 48px;
+	margin: 0;
+	padding: 3px 16px;
+	font: inherit;
+	font-weight: 400;
+	color: var(--colorDark, #1e1e1e);
+	cursor: pointer;
+	transition: color 0.1s linear;
+}
+
+.seopress-ui-tabs__tab:hover {
+	color: var(--wp-admin-theme-color);
+	background: transparent;
+}
+
+.seopress-ui-tabs__tab::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	pointer-events: none;
+	background: var(--wp-admin-theme-color);
+	height: 0;
+	transition: height 0.1s linear;
+}
+
+.seopress-ui-tabs__tab.is-active {
+	color: var(--wp-admin-theme-color);
+	font-weight: 500;
+}
+
+.seopress-ui-tabs__tab.is-active::after {
+	height: 1.5px;
+}
+
+.seopress-ui-tabs__tab:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: -2px;
+}
+
+/* ── Modal action footer (flex-end) ── */
+
+.seopress-ui-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Shared styles for SEOPress PRO DataViews admin pages
+ * (schemas, redirections, broken links).
+ *
+ * Each page imports this stylesheet at the top of its own styles.css.
+ * Page-specific styles (badges, sidebars, modals…) stay in the per-page
+ * file with the page-prefixed selectors.
+ * ──────────────────────────────────────────────────────────────────── */
+
+/* ── License notice positioning override ──
+ * `.seopress-notice` (rendered above the page wrap by Free) ships with
+ * `position: relative; top: 85px; left: 25px;` — a legacy offset designed
+ * to overlay the old jQuery admin header. On the React DataViews pages
+ * that offset pushes the notice down into the sticky page header, leaving
+ * the notice and the breadcrumb panel visually overlapping. Reset the
+ * offset whenever a DataViews page is on screen so the notice flows
+ * normally above the wrap. */
+
+.seopress-notice {
+	top: 0;
+	left: 0;
+	width: auto;
+	margin: 16px 20px;
+}
+
+/* ── Page Header (sticky) ── */
+
+.seopress-dataviews-page-header {
+	position: sticky;
+	top: 32px; /* WP admin bar height */
+	z-index: 50;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 16px;
+	padding: 12px 16px;
+	margin-bottom: 20px;
+	background: #fff;
+	border: 1px solid var(--borderColor, #E6E6E8);
+	border-radius: 6px;
+	box-shadow: 0 1px 3px rgba( 0, 0, 0, 0.04 );
+}
+
+@media screen and (max-width: 782px) {
+	.seopress-dataviews-page-header {
+		top: 46px; /* Mobile WP admin bar is taller */
+	}
+}
+
+body:not(.admin-bar) .seopress-dataviews-page-header {
+	top: 0;
+}
+
+/* ── Breadcrumb ── */
+
+.seopress-dataviews-breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	flex: 1 1 240px;
+	min-width: 0;
+	font-size: 14px;
+	color: var(--color, #757575);
+	overflow: hidden;
+}
+
+.seopress-dataviews-breadcrumb__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+}
+
+.seopress-dataviews-breadcrumb__item:not(:last-child) {
+	flex-shrink: 0;
+}
+
+.seopress-dataviews-breadcrumb__item:last-child {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.seopress-dataviews-breadcrumb__link {
+	color: var(--wp-admin-theme-color);
+	text-decoration: none;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.seopress-dataviews-breadcrumb__link:hover {
+	text-decoration: underline;
+}
+
+.seopress-dataviews-breadcrumb__current {
+	display: block;
+	color: var(--colorDark, #1e1e1e);
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.seopress-dataviews-breadcrumb__separator {
+	color: var(--borderColor, #E6E6E8);
+	margin: 0 2px;
+	flex-shrink: 0;
+}
+
+.seopress-dataviews-page-header__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	flex: 0 1 auto;
+	justify-content: flex-end;
+}
+
+@media screen and (max-width: 600px) {
+	.seopress-dataviews-breadcrumb {
+		flex: 1 1 100%;
+	}
+
+	.seopress-dataviews-page-header__actions {
+		flex: 1 1 100%;
+		justify-content: flex-start;
+	}
+}
+
+/* ── Snackbar list (portal to body, fixed bottom-right) ──
+ *
+ * WordPress core sets .components-snackbar-list { position: absolute; width: 100%; }
+ * which would otherwise stretch the container across the screen and push
+ * notices over the admin sidebar. Re-pin it bottom-right with explicit
+ * width: auto so the toast hugs its content.
+ *
+ * Bottom offset is exposed as a CSS variable so the value tracks any
+ * future change (taller chat widget, mobile breakpoint, etc.) from a
+ * single place. Default 100px clears a typical bottom-right chat
+ * widget (~60-80px tall when collapsed) while keeping the toast in the
+ * eye-line near the save action.
+ */
+:root {
+	--seopress-ui-snackbar-bottom-offset: 100px;
+}
+
+.components-snackbar-list.seopress-dataviews-snackbar-list {
+	position: fixed !important;
+	bottom: var( --seopress-ui-snackbar-bottom-offset, 100px ) !important;
+	right: 24px !important;
+	left: auto !important;
+	top: auto !important;
+	width: auto !important;
+	max-width: calc( 100vw - 48px );
+	z-index: 100000 !important;
+}
+
+.components-snackbar-list.seopress-dataviews-snackbar-list .components-snackbar {
+	box-shadow: 0 2px 8px rgba( 0, 0, 0, 0.15 );
+}
+
+/* ── Delete confirmation modal ── */
+
+.seopress-dataviews-delete-modal p {
+	margin: 0 0 16px;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.seopress-dataviews-delete-modal__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+/* ── Row actions dropdown cursor ──
+ *
+ * The DataViews row-actions dropdown renders Menu.Item elements whose
+ * styled component uses `all: unset`, which also wipes the cursor. Target
+ * the menu items by role (emotion class hashes are unstable) and force
+ * a pointer cursor so hovered rows feel clickable.
+ */
+[role="menuitem"]:not( [aria-disabled="true"] ),
+[role="menuitemradio"]:not( [aria-disabled="true"] ),
+[role="menuitemcheckbox"]:not( [aria-disabled="true"] ) {
+	cursor: pointer !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Site Audit — page-specific styles
+ *
+ * Frame primitives (PageHeader, Tabs, Badge, Link, ProgressBar,
+ * LoadingSpinner) live in `../components/shared/ui/`. Layout
+ * primitives (VStack / HStack / Card / Heading / Text) come from
+ * @wordpress/components. This file only keeps what is truly page-
+ * specific:
+ *   - shell + panel + DataViews width override
+ *   - subsection titles (mirror of the free Settings pattern)
+ *   - audit-specific cells, priority pills, recommendation chips,
+ *     KPI inline stats, charts, history / priority URL tables
+ *   - legacy SEOPress form primitives reproduced locally because
+ *     `window.seopressComponents` FieldRow is only loaded by the
+ *     Settings bundle
+ * ────────────────────────────────────────────────────────────────── */
+
+/* ── Shell ── */
+
+.seopress-site-audit {
+	margin: 20px 20px 20px 0;
+	font-family: var(--fontFamily);
+	box-sizing: border-box;
+}
+
+#seopress-site-audit-root {
+	display: block;
+	width: 100%;
+}
+
+.seopress-site-audit__panel {
+	background: #fff;
+	border-radius: 8px;
+	padding: 2rem;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* ── Subsection titles ──
+ * Mirrors the free plugin Settings pattern so sections read consistently:
+ * `<hr />` above, `<h3 class="seopress-subsection-title">` below. The first
+ * h3 has no HR and resets its top margin.
+ */
+.seopress-subsection-title {
+	margin: 2rem 0 1rem 0;
+}
+
+.seopress-subsection-title:first-child {
+	margin-top: 0;
+}
+
+/* ── DataViews wrapper override ──
+ * .dataviews-wrapper ships with height:100% which collapses inside a
+ * non-height-constrained parent; width:100% is also assumed. Force both.
+ */
+.seopress-site-audit__panel .dataviews-wrapper {
+	width: 100%;
+	height: auto;
+	min-height: 400px;
+}
+
+/* ── Scan progress bar: full width + primary color ──
+ * @wordpress/components ProgressBar (emotion-styled) renders:
+ *   <div class={className}>              ← Track (default width 160px, height ~1.5px)
+ *     <div style="--indicator-width">    ← Indicator (fill)
+ *     <progress style="opacity:0">       ← a11y only
+ *   </div>
+ * We wrap it in a .seopress-site-audit-progress-wrap div to neutralize the
+ * VStack auto-sizing, then force the Track to 100% of that wrapper. `!important`
+ * is needed because emotion's runtime styles land after our stylesheet and,
+ * although `:where()` gives them 0 specificity, we also want to beat any future
+ * version that drops `:where()`.
+ */
+.seopress-site-audit-progress-wrap {
+	width: 100%;
+}
+
+.seopress-site-audit-progress-wrap .seopress-site-audit-progress {
+	width: 100% !important;
+	max-width: none;
+	height: 6px;
+	border-radius: 999px;
+}
+
+.seopress-site-audit-progress-wrap .seopress-site-audit-progress > div {
+	background-color: var(--wp-admin-theme-color);
+}
+
+/* ── Inline KPI stats in the page header (right-aligned summary) ── */
+
+.seopress-site-audit-overview__header {
+	width: 100%;
+	row-gap: 12px;
+}
+
+.seopress-site-audit-overview__stats {
+	flex-shrink: 0;
+	/* Override the WP HStack spacing={5} (= 20px) — three KPI columns
+	 * read tighter than they should and the labels start to feel like
+	 * one big block. 36px gives each stat enough air to scan as its own
+	 * unit without breaking the row. */
+	gap: 36px !important;
+}
+
+.seopress-site-audit-inline-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	line-height: 1.2;
+}
+
+.seopress-site-audit-inline-stat__label {
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--color, #757575);
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+}
+
+.seopress-site-audit-inline-stat__value {
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--colorDark, #1e1e1e);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.3px;
+}
+
+.seopress-site-audit-inline-stat__unit {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--color, #757575);
+	margin-left: 1px;
+}
+
+/* ── Health score ── */
+
+.seopress-site-audit-health-info {
+	position: relative;
+	display: inline-flex;
+}
+
+.seopress-site-audit-health-info__button.components-button.is-tertiary {
+	min-width: 0;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	color: var(--color, #757575);
+}
+
+.seopress-site-audit-health-info__button.components-button.is-tertiary:hover:not(:disabled) {
+	color: var(--wp-admin-theme-color);
+	background: transparent;
+}
+
+.seopress-site-audit-health-info__popover .components-popover__content {
+	width: 320px;
+	max-width: calc(100vw - 24px);
+}
+
+.seopress-site-audit-health-info__content {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px 16px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--colorDark, #1e1e1e);
+}
+
+.seopress-site-audit-health-info__content > h4 {
+	margin: 0;
+}
+
+.seopress-site-audit-health-info__content p {
+	margin: 0;
+}
+
+.seopress-site-audit-health-info__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.seopress-site-audit-health-info__list li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 13px;
+	white-space: nowrap;
+}
+
+.seopress-site-audit-health-info__list .seopress-site-audit-priority {
+	flex: 0 0 auto;
+	min-width: 60px;
+}
+
+.seopress-site-audit-health-score {
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.5px;
+}
+
+.seopress-site-audit-health-score.is-ok {
+	color: var(--colorSuccess, #4ab866);
+}
+
+.seopress-site-audit-health-score.is-warning {
+	color: var(--colorWarning, #ffba00);
+}
+
+.seopress-site-audit-health-score.is-alert {
+	color: var(--colorAlert, #eb0f00);
+}
+
+/* ── Delta badge next to the health score ── */
+
+.seopress-site-audit-health-delta {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.4;
+}
+
+.seopress-site-audit-health-delta.is-up {
+	background: rgba(74, 184, 102, 0.15);
+	color: var(--colorSuccess, #4ab866);
+}
+
+.seopress-site-audit-health-delta.is-down {
+	background: rgba(235, 15, 0, 0.12);
+	color: var(--colorAlert, #eb0f00);
+}
+
+/* ── Next steps panel ── */
+
+.seopress-site-audit-next-steps__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 16px;
+	width: 100%;
+}
+
+.seopress-site-audit-next-step-card {
+	margin: 0;
+	border: 1px solid var(--borderColor, #E6E6E8);
+	transition: box-shadow 0.15s ease;
+}
+
+.seopress-site-audit-next-step-card:hover {
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.seopress-site-audit-next-step-card .components-card-body {
+	padding: 16px 18px;
+}
+
+/* ── Trends panel (collapsed by default) ── */
+
+.seopress-site-audit-trends-panel {
+	width: 100%;
+}
+
+.seopress-site-audit-trends-panel .components-panel__body-title {
+	font-size: 14px;
+}
+
+.seopress-site-audit-trends-panel .components-panel__body-title button {
+	font-weight: 600;
+}
+
+/* ── Priority URLs panel + table ── */
+
+.seopress-site-audit-priority-urls-panel {
+	width: 100%;
+}
+
+.seopress-site-audit-priority-urls-panel .components-panel__body-title {
+	font-size: 14px;
+}
+
+.seopress-site-audit-priority-urls-panel .components-panel__body-title button {
+	font-weight: 600;
+}
+
+.seopress-site-audit-priority-urls-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.seopress-site-audit-priority-urls-table th,
+.seopress-site-audit-priority-urls-table td {
+	padding: 8px 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--borderColor, #E6E6E8);
+	vertical-align: middle;
+}
+
+.seopress-site-audit-priority-urls-table th {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+	color: var(--color, #757575);
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+}
+
+.seopress-site-audit-priority-urls-table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.seopress-site-audit-priority-urls-table tbody tr:hover {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.03);
+}
+
+.seopress-site-audit-priority-urls-table td.is-numeric,
+.seopress-site-audit-priority-urls-table th.is-numeric {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Recommendation badges (Next action column) ──
+ * Four tonal variants that map to the SEO expert system: success = "stay
+ * out of the content, just polish", primary = "worth investing effort",
+ * warning = "urgent or risky situation", muted = "don't bother / consolidate".
+ */
+
+.seopress-site-audit-reco {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.6;
+	white-space: nowrap;
+	cursor: help;
+}
+
+.seopress-site-audit-reco.is-success {
+	background: rgba(74, 184, 102, 0.15);
+	color: #2b7a44;
+}
+
+.seopress-site-audit-reco.is-primary {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--wp-admin-theme-color);
+}
+
+.seopress-site-audit-reco.is-warning {
+	background: rgba(227, 159, 72, 0.18);
+	color: #8a5500;
+}
+
+.seopress-site-audit-reco.is-muted {
+	background: #f0f0f0;
+	color: var(--color, #757575);
+}
+
+/* WP Tooltip renders an Ariakit.Tooltip — a plain <div> with class
+ * `.components-tooltip` positioned absolutely by floating-ui, so without
+ * an explicit width it defaults to max-content and stretches one-liners
+ * across the viewport. Scope the fix to our advice tooltips via the
+ * className prop we pass. */
+.components-tooltip.seopress-site-audit-reco-tooltip {
+	max-width: 320px;
+	padding: 8px 12px;
+	white-space: normal;
+	word-break: normal;
+	overflow-wrap: anywhere;
+	text-align: left;
+	line-height: 1.45;
+}
+
+/* ── Charts ── */
+
+.seopress-site-audit-chart-card {
+	flex: 1 1 360px;
+	min-width: 320px;
+}
+
+.seopress-site-audit-chart {
+	width: 100%;
+	min-height: 220px;
+}
+
+/* ── "Issues by type" list item count coloring (ItemGroup + Item) ── */
+
+.seopress-site-audit-issue-count.is-warning {
+	color: var(--colorWarning, #ffba00);
+	font-weight: 600;
+}
+
+.seopress-site-audit-issue-count.is-ok {
+	color: var(--colorSuccess, #4ab866);
+	font-weight: 600;
+}
+
+/* ── Scan current-log: clamp to 1 line with ellipsis ── */
+
+.seopress-site-audit-scan__log {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+/* ── Audit history panel (collapsed by default) ── */
+
+.seopress-site-audit-history-panel {
+	width: 100%;
+}
+
+.seopress-site-audit-history-panel .components-panel__body-title {
+	font-size: 14px;
+}
+
+.seopress-site-audit-history-panel .components-panel__body-title button {
+	font-weight: 600;
+}
+
+.seopress-site-audit-history-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.seopress-site-audit-history-table th,
+.seopress-site-audit-history-table td {
+	padding: 8px 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--borderColor, #E6E6E8);
+	vertical-align: middle;
+}
+
+.seopress-site-audit-history-table th {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.4px;
+	color: var(--color, #757575);
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+}
+
+.seopress-site-audit-history-table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.seopress-site-audit-history-table tbody tr:hover {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.03);
+}
+
+.seopress-site-audit-history-table td.is-numeric,
+.seopress-site-audit-history-table th.is-numeric {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.seopress-site-audit-history-score {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.seopress-site-audit-history-score.is-ok {
+	color: var(--colorSuccess, #4ab866);
+}
+
+.seopress-site-audit-history-score.is-warning {
+	color: var(--colorWarning, #ffba00);
+}
+
+.seopress-site-audit-history-score.is-alert {
+	color: var(--colorAlert, #eb0f00);
+}
+
+/* ── DataViews cells ── */
+
+.seopress-site-audit-type-cell,
+.seopress-site-audit-post-cell,
+.seopress-site-audit-issue-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.seopress-site-audit-type-cell__title,
+.seopress-site-audit-issue-cell__name {
+	font-weight: 600;
+	color: var(--colorDark, #1e1e1e);
+}
+
+.seopress-site-audit-type-cell__desc {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--color, #757575);
+	line-height: 1.4;
+	cursor: help;
+}
+
+.seopress-site-audit-issue-cell__info {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+}
+
+.seopress-site-audit-issue-cell__info-popover {
+	display: block;
+	min-width: 260px;
+	max-width: 360px;
+	padding: 12px 16px;
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--colorDark, #1e1e1e);
+	white-space: normal;
+	word-break: normal;
+	overflow-wrap: anywhere;
+}
+
+.seopress-site-audit-issue-cell__info-popover ul {
+	margin: 0;
+	padding-left: 18px;
+	list-style: disc;
+}
+
+.seopress-site-audit-issue-cell__info-popover li {
+	margin: 0 0 4px;
+}
+
+.seopress-site-audit-issue-cell__info-popover li:last-child {
+	margin-bottom: 0;
+}
+
+.seopress-site-audit-issue-cell__info-popover a {
+	color: var(--primaryColor, #4E21E7);
+	text-decoration: underline;
+}
+
+.seopress-site-audit-issue-cell__info-popover a:hover,
+.seopress-site-audit-issue-cell__info-popover a:focus {
+	text-decoration: none;
+}
+
+.seopress-site-audit-muted {
+	color: var(--color, #757575);
+	font-style: italic;
+}
+
+/* ── Priority pill (audit-specific severity scale) ── */
+
+.seopress-site-audit-priority {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.seopress-site-audit-priority.is-high {
+	background: rgba(235, 15, 0, 0.12);
+	color: var(--colorAlert, #eb0f00);
+}
+
+.seopress-site-audit-priority.is-medium {
+	background: rgba(227, 159, 72, 0.16);
+	color: var(--colorLowAlert, #e39f48);
+}
+
+.seopress-site-audit-priority.is-low {
+	background: rgba(255, 186, 0, 0.16);
+	color: #8a6200;
+}
+
+.seopress-site-audit-priority.is-good {
+	background: rgba(74, 184, 102, 0.15);
+	color: var(--colorSuccess, #4ab866);
+}
+
+.seopress-site-audit-priority.is-unknown {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--color, #757575);
+}
+
+/* ── Settings form: reproduce the SEOPress FieldRow pattern locally ──
+ * (window.seopressComponents FieldRow is only loaded by the Settings
+ * bundle, so we inline the minimal styling here.)
+ */
+
+.seopress-site-audit-settings .seopress-field-row {
+	display: flex;
+	align-items: flex-start;
+	padding: 15px 0;
+	gap: 20px;
+}
+
+.seopress-site-audit-settings .seopress-field-label {
+	width: 240px;
+	min-width: 240px;
+	flex-shrink: 0;
+	padding-top: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--colorDark, #1D2327);
+	line-height: 1.6;
+}
+
+.seopress-site-audit-settings .seopress-field-control {
+	flex: 1;
+	min-width: 0;
+	max-width: 600px;
+}
+
+.seopress-site-audit-settings .seopress-field-help {
+	margin-top: 6px;
+	font-size: 12px;
+	color: var(--color, #757575);
+	line-height: 1.4;
+}
+
+.seopress-site-audit-settings__number-field {
+	max-width: 140px;
+}
+
+.seopress-site-audit-settings__cpt-list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 6px 16px;
+}
+
+@media (max-width: 782px) {
+	.seopress-site-audit-settings .seopress-field-row {
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.seopress-site-audit-settings .seopress-field-label {
+		width: 100%;
+		min-width: 0;
+		padding-top: 0;
+	}
+
+	.seopress-site-audit-settings__cpt-list {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Migrated to shared link primitive */
+.seopress-site-audit-priority-urls-title,
+.seopress-site-audit-post-cell__title {
+	display: inline-block;
+	max-width: 420px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+/* -------------------------------------------------------------------------
+ * Technical (homepage) checks tab
+ * ---------------------------------------------------------------------- */
+.seopress-site-audit-homepage__summary {
+	margin-top: 4px;
+}
+
+/* Beat the default heading margin the @wordpress/components Heading (h3)
+ * inherits from wp-admin, which otherwise leaves a stray gap above each
+ * section title. Higher specificity (0,2,0) wins over both the emotion
+ * class and the bare element rule. */
+.seopress-site-audit-homepage .seopress-site-audit-check-group__title {
+	margin: 0 0 12px;
+}
+
+.seopress-site-audit-check-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.seopress-site-audit-check {
+	display: flex;
+	gap: 12px;
+	padding: 12px 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.seopress-site-audit-check:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.seopress-site-audit-check__status {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	margin-top: 1px;
+}
+
+.seopress-site-audit-check__status svg {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+.seopress-site-audit-check__status.is-good {
+	color: var(--colorSuccess, #4ab866);
+	background: rgba(74, 184, 102, 0.12);
+}
+
+.seopress-site-audit-check__status.is-warning {
+	color: var(--colorWarning, #ffba00);
+	background: rgba(255, 186, 0, 0.14);
+}
+
+.seopress-site-audit-check__status.is-bad {
+	color: var(--colorAlert, #eb0f00);
+	background: rgba(235, 15, 0, 0.1);
+}
+
+.seopress-site-audit-check__body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.seopress-site-audit-check__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.seopress-site-audit-check__label {
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.seopress-site-audit-check__value {
+	font-size: 11px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	background: #f0f0f1;
+	color: #646970;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.seopress-site-audit-check__desc {
+	max-width: 720px;
+}
+
+.seopress-site-audit-check__fix {
+	margin-top: 2px;
+	font-size: 12px;
+}
+
+/* Overview recap of the technical checks */
+.seopress-site-audit-technical-summary__stat {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.seopress-site-audit-technical-summary__stat.is-good {
+	color: var(--colorSuccess, #4ab866);
+}
+
+.seopress-site-audit-technical-summary__stat.is-warning {
+	color: var(--colorWarning, #ffba00);
+}
+
+.seopress-site-audit-technical-summary__stat.is-bad {
+	color: var(--colorAlert, #eb0f00);
+}
+

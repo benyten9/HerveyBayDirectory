@@ -1,0 +1,846 @@
+/**
+ * HBL CRM Bridge — Admin Styles
+ * Matches the HBL admin tools design system (stat cards, numbered steps, badges).
+ */
+
+:root {
+	--hblcb-primary: #008080;
+	--hblcb-primary-hover: #006666;
+	--hblcb-accent: #F9532A;
+	--hblcb-success: #10B981;
+	--hblcb-warning: #F59E0B;
+	--hblcb-danger: #EF4444;
+	--hblcb-text: #1F2937;
+	--hblcb-text-secondary: #6B7280;
+	--hblcb-border: #E5E7EB;
+	--hblcb-bg: #F9FAFB;
+	--hblcb-radius: 6px;
+}
+
+.hbl-crmb-wrap {
+	max-width: 100%;
+}
+
+.hbl-crmb-wrap h1 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 23px;
+	font-weight: 600;
+	color: var(--hblcb-text);
+	margin-bottom: 8px;
+}
+
+.hbl-crmb-wrap h1 svg {
+	color: var(--hblcb-primary);
+	flex-shrink: 0;
+}
+
+.hbl-crmb-wrap > .description {
+	color: var(--hblcb-text-secondary);
+	font-size: 14px;
+	margin-bottom: 24px;
+}
+
+/* ─── Stats ─────────────────────────────────────────── */
+
+.hbl-crmb-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.hbl-crmb-stat {
+	background: #fff;
+	border: 1px solid var(--hblcb-border);
+	border-radius: var(--hblcb-radius);
+	padding: 18px 24px;
+	flex: 1 1 180px;
+}
+
+.hbl-crmb-stat-value {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 26px;
+	font-weight: 700;
+	color: var(--hblcb-primary);
+	line-height: 1.2;
+}
+
+.hbl-crmb-stat-label {
+	font-size: 13px;
+	color: var(--hblcb-text-secondary);
+	margin-top: 4px;
+}
+
+/* ─── Steps ─────────────────────────────────────────── */
+
+.hbl-crmb-step {
+	background: #fff;
+	border: 1px solid var(--hblcb-border);
+	border-radius: var(--hblcb-radius);
+	padding: 24px;
+	margin-bottom: 24px;
+}
+
+.hbl-crmb-step-header {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 18px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--hblcb-border);
+}
+
+.hbl-crmb-step-number {
+	width: 30px;
+	height: 30px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, var(--hblcb-primary) 0%, #00a0a0 100%);
+	color: #fff;
+	font-weight: 600;
+	font-size: 14px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.hbl-crmb-step-header h2 {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 600;
+	color: var(--hblcb-text);
+}
+
+.hbl-crmb-step-header .hbl-crmb-step-sub {
+	margin: 2px 0 0;
+	font-size: 13px;
+	color: var(--hblcb-text-secondary);
+}
+
+.hbl-crmb-step-header .hbl-badge {
+	margin-left: auto;
+}
+
+.hbl-crmb-step > .description {
+	color: var(--hblcb-text-secondary);
+	margin-top: 0;
+	margin-bottom: 16px;
+}
+
+/* ─── Badges ────────────────────────────────────────── */
+
+.hbl-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 12px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.hbl-badge-on {
+	background: rgba(16, 185, 129, 0.12);
+	color: #065F46;
+}
+
+.hbl-badge-off {
+	background: rgba(107, 114, 128, 0.12);
+	color: #374151;
+}
+
+.hbl-badge-warn {
+	background: rgba(239, 68, 68, 0.12);
+	color: #991B1B;
+}
+
+.hbl-badge-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+/* ─── Toggle switch ─────────────────────────────────── */
+
+.hbl-toggle {
+	position: relative;
+	display: inline-block;
+	width: 42px;
+	height: 24px;
+	flex-shrink: 0;
+}
+
+.hbl-toggle input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.hbl-toggle .hbl-toggle-slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #D1D5DB;
+	border-radius: 24px;
+	transition: background-color 0.2s ease;
+}
+
+.hbl-toggle .hbl-toggle-slider:before {
+	position: absolute;
+	content: "";
+	height: 18px;
+	width: 18px;
+	left: 3px;
+	bottom: 3px;
+	background-color: #fff;
+	border-radius: 50%;
+	transition: transform 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.hbl-toggle input:checked + .hbl-toggle-slider {
+	background-color: var(--hblcb-primary);
+}
+
+.hbl-toggle input:checked + .hbl-toggle-slider:before {
+	transform: translateX(18px);
+}
+
+.hbl-toggle input:focus-visible + .hbl-toggle-slider {
+	box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.2);
+}
+
+.hbl-toggle input:disabled + .hbl-toggle-slider {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ─── Events grid ───────────────────────────────────── */
+
+.hbl-crmb-events {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 14px;
+}
+
+.hbl-crmb-event {
+	border: 2px solid var(--hblcb-border);
+	border-radius: var(--hblcb-radius);
+	padding: 16px;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hbl-crmb-event:has(.hbl-toggle input:checked) {
+	border-color: var(--hblcb-primary);
+	box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.08);
+}
+
+.hbl-crmb-event-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.hbl-crmb-event-name {
+	display: block;
+	font-weight: 600;
+	color: var(--hblcb-text);
+	font-size: 14px;
+}
+
+.hbl-crmb-event-slug {
+	display: block;
+	font-size: 11px;
+	color: var(--hblcb-text-secondary);
+	margin-top: 2px;
+}
+
+.hbl-crmb-event-tag label {
+	display: block;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--hblcb-text-secondary);
+	margin-bottom: 6px;
+}
+
+/* ─── Inputs ────────────────────────────────────────── */
+
+.hbl-crmb-input,
+.hbl-crmb-textarea {
+	width: 100%;
+	max-width: 500px;
+	padding: 0 12px;
+	border: 1px solid var(--hblcb-border);
+	border-radius: var(--hblcb-radius);
+	font-size: 13px;
+	color: var(--hblcb-text);
+	background: #fff;
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hbl-crmb-input {
+	height: 38px;
+}
+
+.hbl-crmb-textarea {
+	height: auto;
+	padding: 10px 12px;
+	max-width: 100%;
+}
+
+.hbl-crmb-event-tag .hbl-crmb-input {
+	max-width: none;
+}
+
+.hbl-crmb-input:focus,
+.hbl-crmb-textarea:focus {
+	outline: none;
+	border-color: var(--hblcb-primary);
+	box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.1);
+}
+
+.hbl-crmb-field {
+	margin-bottom: 18px;
+}
+
+.hbl-crmb-field:last-child {
+	margin-bottom: 0;
+}
+
+.hbl-crmb-field > label {
+	display: block;
+	font-weight: 500;
+	color: var(--hblcb-text);
+	margin-bottom: 6px;
+}
+
+.hbl-crmb-field .description {
+	margin-top: 6px;
+	color: var(--hblcb-text-secondary);
+}
+
+/* Enable-sync row */
+
+.hbl-crmb-toggle-row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 18px;
+	border: 1px solid var(--hblcb-border);
+	border-radius: var(--hblcb-radius);
+	margin-bottom: 18px;
+}
+
+.hbl-crmb-toggle-row-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.hbl-crmb-toggle-row-text strong {
+	color: var(--hblcb-text);
+	font-size: 14px;
+}
+
+.hbl-crmb-toggle-row-text span {
+	color: var(--hblcb-text-secondary);
+	font-size: 12px;
+}
+
+/* ─── Misc ──────────────────────────────────────────── */
+
+.hbl-crmb-endpoint {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	background: var(--hblcb-bg);
+	border-radius: var(--hblcb-radius);
+	padding: 12px 16px;
+	font-size: 13px;
+}
+
+.hbl-crmb-endpoint code {
+	background: transparent;
+	font-size: 13px;
+	word-break: break-all;
+}
+
+.hbl-crmb-actions-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+	margin-top: 8px;
+}
+
+.hbl-crmb-actions-table th,
+.hbl-crmb-actions-table td {
+	padding: 8px 12px;
+	border: 1px solid var(--hblcb-border);
+	text-align: left;
+}
+
+.hbl-crmb-actions-table th {
+	background: var(--hblcb-bg);
+	font-weight: 600;
+	color: var(--hblcb-text);
+}
+
+.hbl-crmb-curl {
+	background: var(--hblcb-bg);
+	border: 1px solid var(--hblcb-border);
+	border-radius: var(--hblcb-radius);
+	padding: 14px 16px;
+	font-size: 12px;
+	overflow: auto;
+	margin-top: 10px;
+}
+
+.hbl-crmb-generate-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* ─── Responsive ────────────────────────────────────── */
+
+@media (max-width: 782px) {
+	/* Compact 2-up tiles instead of full-width stacked cards, which were
+	   very tall on small screens. */
+	.hbl-crmb-stats {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
+
+	.hbl-crmb-stat {
+		padding: 12px 14px;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.hbl-crmb-stat-value {
+		font-size: 18px;
+	}
+
+	.hbl-crmb-stat-label {
+		font-size: 11px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.hbl-crmb-events {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ─── Bulk Sync: selectable listing table ──────────────── */
+
+.hbl-crmb-sync-toolbar {
+	display: flex;
+	gap: 12px;
+	align-items: flex-end;
+	flex-wrap: wrap;
+	margin-bottom: 12px;
+}
+
+.hbl-crmb-sync-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.hbl-crmb-sync-field label {
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--hblcb-text);
+}
+
+.hbl-crmb-sync-search {
+	flex: 1 1 240px;
+	min-width: 200px;
+}
+
+.hbl-crmb-sync-search .hbl-crmb-input {
+	width: 100%;
+}
+
+/* "Only syncable" filter — a pill chip that tints teal when active, matching
+   the theme's brand accent. */
+.hbl-crmb-check-inline {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 38px;
+	padding: 0 16px;
+	border: 1px solid var(--hblcb-border);
+	border-radius: 9999px;
+	background: #fff;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--hblcb-text-secondary);
+	white-space: nowrap;
+	cursor: pointer;
+	user-select: none;
+	transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hbl-crmb-check-inline:hover {
+	border-color: var(--hblcb-primary);
+	color: var(--hblcb-text);
+}
+
+.hbl-crmb-check-inline input[type="checkbox"] {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--hblcb-primary);
+	cursor: pointer;
+}
+
+/* Active state — teal chip when "Only syncable" is on. */
+.hbl-crmb-check-inline:has(input:checked) {
+	border-color: var(--hblcb-primary);
+	background: rgba(0, 128, 128, 0.08);
+	color: var(--hblcb-primary);
+	font-weight: 600;
+	box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.08);
+}
+
+/* ─── Buttons (match Place ID Manager) ─────────────────── */
+
+/* Secondary — teal "ghost": tinted background that deepens on hover
+   (the Place ID Manager "Auto Find" outline style). */
+.hbl-crmb-wrap .button,
+.hbl-crmb-wrap .button-secondary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 38px;
+	padding: 0 16px;
+	border: 1.5px solid rgba(0, 128, 128, 0.35);
+	border-radius: 3px;
+	background: rgba(0, 128, 128, 0.10);
+	color: var(--hblcb-primary);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: none;
+	text-decoration: none;
+	transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.hbl-crmb-wrap .button:hover:not(:disabled):not([disabled]),
+.hbl-crmb-wrap .button-secondary:hover:not(:disabled):not([disabled]) {
+	border-color: var(--hblcb-primary);
+	color: var(--hblcb-primary);
+	background: rgba(0, 128, 128, 0.18);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 6px rgba(0, 128, 128, 0.15);
+}
+
+.hbl-crmb-wrap .button:active:not(:disabled):not([disabled]),
+.hbl-crmb-wrap .button-secondary:active:not(:disabled):not([disabled]) {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+.hbl-crmb-wrap .button:focus {
+	border-color: var(--hblcb-primary);
+	box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.15);
+	outline: none;
+}
+
+/* Primary — orange, teal on hover (the theme's button convention). */
+.hbl-crmb-wrap .button-primary {
+	border-color: transparent;
+	background: var(--hblcb-accent);
+	color: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+	text-shadow: none;
+}
+
+.hbl-crmb-wrap .button-primary:hover:not(:disabled):not([disabled]),
+.hbl-crmb-wrap .button-primary:focus:not(:disabled):not([disabled]) {
+	background: var(--hblcb-primary);
+	color: #fff;
+	border-color: transparent;
+	box-shadow: 0 3px 8px rgba(0, 128, 128, 0.3);
+	transform: translateY(-1px);
+}
+
+.hbl-crmb-wrap .button-primary:active:not(:disabled):not([disabled]) {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+/* Disabled */
+.hbl-crmb-wrap .button:disabled,
+.hbl-crmb-wrap .button[disabled],
+.hbl-crmb-wrap .button-primary:disabled,
+.hbl-crmb-wrap .button-primary[disabled] {
+	cursor: default;
+	opacity: 0.65;
+	transform: none;
+	box-shadow: none;
+}
+
+.hbl-crmb-wrap .button-primary:disabled,
+.hbl-crmb-wrap .button-primary[disabled] {
+	background: #E5E7EB;
+	color: var(--hblcb-text-secondary);
+	opacity: 1;
+}
+
+/* Link-style action (e.g. "Select all syncable") — teal text. */
+.hbl-crmb-wrap .button-link {
+	height: auto;
+	padding: 0;
+	border: none;
+	background: none;
+	box-shadow: none;
+	color: var(--hblcb-primary);
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.hbl-crmb-wrap .button-link:hover {
+	color: var(--hblcb-primary-hover);
+	text-decoration: underline;
+}
+
+.hbl-crmb-sync-hint {
+	color: var(--hblcb-text-secondary);
+	font-size: 13px;
+	margin: 0 0 12px;
+}
+
+/* Selection bar */
+.hbl-crmb-selbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding: 10px 14px;
+	background: var(--hblcb-bg);
+	border: 1px solid var(--hblcb-border);
+	border-radius: 5px;
+	margin-bottom: 12px;
+}
+
+.hbl-crmb-selcount {
+	font-weight: 700;
+	color: var(--hblcb-primary);
+	font-size: 13px;
+}
+
+.hbl-crmb-selbar-spacer {
+	flex: 1 1 auto;
+}
+
+.hbl-crmb-selbar .hbl-crmb-input {
+	min-width: 240px;
+}
+
+/* Table card — mirrors .hbl-table-card in the shared admin tools:
+   1px border, 5px radius, soft card shadow, horizontal scroll only. */
+.hbl-crmb-table-scroll {
+	border: 1px solid var(--hblcb-border);
+	border-radius: 5px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	overflow-x: auto;
+	overflow-y: hidden;
+	min-width: 0;
+	background: #fff;
+}
+
+.hbl-crmb-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.hbl-crmb-table thead th {
+	background: #f3f4f6;
+	text-align: left;
+	font-weight: 600;
+	color: var(--hblcb-text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	font-size: 11px;
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--hblcb-border);
+}
+
+.hbl-crmb-table tbody td {
+	padding: 10px 14px;
+	border-bottom: 1px solid #f1f3f5;
+	color: var(--hblcb-text);
+	vertical-align: middle;
+}
+
+.hbl-crmb-table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.hbl-crmb-table tbody tr:hover {
+	background: #f9fafb;
+}
+
+.hbl-crmb-table tbody tr.is-disabled {
+	background: #fcfcfd;
+	color: var(--hblcb-text-secondary);
+}
+
+/* Checkbox column — target th + td together so the header checkbox and the
+   row checkboxes share the same width/alignment/padding and line up exactly.
+   (Needed because ".hbl-crmb-table thead th" would otherwise left-align the
+   header cell while the body cells stay centered.) */
+.hbl-crmb-table th.hbl-crmb-col-chk,
+.hbl-crmb-table td.hbl-crmb-col-chk {
+	width: 42px;
+	text-align: center;
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+.hbl-crmb-col-chk input {
+	margin: 0;
+	vertical-align: middle;
+}
+
+.hbl-crmb-col-status {
+	width: 110px;
+}
+
+.hbl-crmb-biz {
+	font-weight: 600;
+}
+
+.hbl-crmb-muted {
+	color: var(--hblcb-text-secondary);
+}
+
+.hbl-crmb-empty {
+	text-align: center;
+	color: var(--hblcb-text-secondary);
+	padding: 24px 14px !important;
+}
+
+/* Status badges */
+.hbl-crmb-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 9999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.6;
+}
+
+.hbl-crmb-badge-ok {
+	background: rgba(16, 185, 129, 0.12);
+	color: #047857;
+}
+
+.hbl-crmb-badge-no {
+	background: rgba(107, 114, 128, 0.12);
+	color: var(--hblcb-text-secondary);
+}
+
+/* ─── Bulk Sync table: responsive (card-per-row) ───────── */
+
+@media (max-width: 782px) {
+	.hbl-crmb-selbar .hbl-crmb-input {
+		min-width: 0;
+		width: 100%;
+	}
+
+	/* Drop the outer card chrome — each row becomes its own card, so a
+	   bordered wrapper would read as a card wrapping cards. */
+	.hbl-crmb-table-scroll {
+		border: none;
+		border-radius: 0;
+		box-shadow: none;
+		overflow: visible;
+		background: transparent;
+	}
+
+	.hbl-crmb-table,
+	.hbl-crmb-table tbody,
+	.hbl-crmb-table tbody tr,
+	.hbl-crmb-table tbody td {
+		display: block;
+		width: 100%;
+	}
+
+	.hbl-crmb-table thead {
+		display: none;
+	}
+
+	.hbl-crmb-table tbody tr {
+		border: 1px solid var(--hblcb-border);
+		border-radius: 5px;
+		padding: 12px;
+		margin-bottom: 10px;
+		background: #fff;
+	}
+
+	.hbl-crmb-table tbody tr:hover {
+		background: #fff;
+	}
+
+	.hbl-crmb-table tbody td {
+		padding: 4px 0;
+		border: none !important;
+		text-align: left !important;
+		max-width: 100%;
+	}
+
+	/* Checkbox sits on its own row at the top of the card. */
+	.hbl-crmb-table tbody td.hbl-crmb-col-chk {
+		width: auto;
+		text-align: left;
+		padding-bottom: 8px;
+		margin-bottom: 4px;
+		border-bottom: 1px solid var(--hblcb-border) !important;
+	}
+
+	/* Business name reads as the card title. */
+	.hbl-crmb-table tbody td.hbl-crmb-cell-biz {
+		font-weight: 600;
+		font-size: 14px;
+		padding-bottom: 8px;
+	}
+
+	.hbl-crmb-table tbody td.hbl-crmb-col-status {
+		width: auto;
+	}
+
+	/* Every labelled cell gets a small uppercase label above its value. */
+	.hbl-crmb-table tbody td[data-label]::before {
+		content: attr(data-label);
+		display: block;
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--hblcb-text-secondary);
+		margin-bottom: 2px;
+	}
+}

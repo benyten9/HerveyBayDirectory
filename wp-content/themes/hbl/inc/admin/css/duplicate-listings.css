@@ -1,0 +1,64 @@
+/* =============================================
+   HBL Duplicate Listings — delta overrides
+   (bulk-reassign.css is loaded first)
+   ============================================= */
+
+/* Group block */
+.hbl-dup-group-block {
+	margin-bottom: 1.5rem;
+	border: 1px solid var(--hbl-border);
+	border-radius: 5px;
+	overflow: hidden;
+}
+
+.hbl-dup-group-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 9px 14px;
+	background: var(--hbl-bg);
+	border-bottom: 1px solid var(--hbl-border);
+	font-size: 13px;
+}
+
+.hbl-dup-group-label {
+	font-size: 13px;
+	color: var(--hbl-text);
+}
+
+/* Original row highlight */
+.hbl-dup-original-row {
+	background: rgba(16, 185, 129, 0.04) !important;
+}
+
+/* Badges for Original / Duplicate */
+.hbl-dup-badge-orig {
+	background: rgba(16, 185, 129, 0.12);
+	color: #065F46;
+	border-color: rgba(16, 185, 129, 0.3);
+}
+
+.hbl-dup-badge-dupe {
+	background: rgba(239, 68, 68, 0.1);
+	color: #991B1B;
+	border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Action cards: keep same width as plan grid */
+.hbl-dup-action-card {
+	cursor: pointer;
+}
+
+@media (max-width: 782px) {
+	/* Individual rows become their own stacked cards on mobile — let
+	   them breathe inside the group instead of being clipped/pressed
+	   edge-to-edge by the group block's own border. */
+	.hbl-dup-group-block {
+		overflow: visible;
+		padding: 0 10px 10px;
+	}
+
+	.hbl-dup-group-bar {
+		margin: 0 -10px 10px;
+	}
+}

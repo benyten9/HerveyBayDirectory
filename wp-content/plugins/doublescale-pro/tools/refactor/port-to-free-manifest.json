@@ -1,0 +1,21 @@
+{
+	"description": "Modules aligned with RestApi.php Free controllers plus Integrations/Analytics. Excludes Deals, Inbox, Notifications, Tasks, Tracking. Extend core_files when Free adopts more Core stack.",
+	"target_root_subdir": "includes",
+	"modules": [
+		"Activities",
+		"Analytics",
+		"Automations",
+		"Campaigns",
+		"Contacts",
+		"Forms",
+		"Integrations"
+	],
+	"core_files": [
+		"includes/Core/Container.php",
+		"includes/Core/ModuleInterface.php",
+		"includes/Core/AbstractModule.php",
+		"includes/Core/ModuleRegistry.php"
+	],
+	"namespace_from": "DoubleScale\\Pro\\",
+	"namespace_to": "DoubleScale\\"
+}

@@ -1,0 +1,24 @@
+diff --git a/src/Illuminate/contracts/Events/Dispatcher.php b/src/Illuminate/contracts/Events/Dispatcher.php
+--- a/src/Illuminate/contracts/Events/Dispatcher.php
++++ b/src/Illuminate/contracts/Events/Dispatcher.php
+@@ -11,7 +11,7 @@ interface Dispatcher
+      * @param  mixed  $listener
+      * @return void
+      */
+-    public function listen($events, $listener);
++    public function listen($events, $listener = null);
+ 
+     /**
+      * Determine if a given event has listeners.
+diff --git a/src/Illuminate/events/Dispatcher.php b/src/Illuminate/events/Dispatcher.php
+--- a/src/Illuminate/events/Dispatcher.php
++++ b/src/Illuminate/events/Dispatcher.php
+@@ -68,7 +68,7 @@ class Dispatcher implements DispatcherContract
+      * @param  mixed  $listener
+      * @return void
+      */
+-    public function listen($events, $listener)
++    public function listen($events, $listener = null)
+     {
+         foreach ((array) $events as $event) {
+             if (Str::contains($event, '*')) {

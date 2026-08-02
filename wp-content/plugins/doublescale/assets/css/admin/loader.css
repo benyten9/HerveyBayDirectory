@@ -1,0 +1,122 @@
+.doublescale-wrap {
+	width: 100%;
+	height: 100%;
+}
+
+/* Hide WP admin chrome while the splash is visible (main bundle CSS loads later). */
+body.js.is-fullscreen-mode #adminmenumain,
+body.js.is-fullscreen-mode #wpadminbar {
+	display: none;
+}
+
+body.js.is-fullscreen-mode #wpcontent,
+body.js.is-fullscreen-mode #wpfooter {
+	margin-left: 0;
+	padding-left: 0;
+}
+
+body.js.is-fullscreen-mode #wpfooter {
+	display: none;
+}
+
+body.js.is-fullscreen-mode div#wpbody-content {
+	padding-bottom: 0;
+}
+
+#doublescale-admin-root__loader-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 28px;
+	width: 100%;
+	height: 100vh;
+	background: linear-gradient(160deg, #1B1145 0%, #2D1B69 55%, #1B1145 100%);
+	position: relative;
+	overflow: hidden;
+}
+
+/* Subtle radial ambient behind the mark */
+#doublescale-admin-root__loader-container::before {
+	content: '';
+	position: absolute;
+	width: 320px;
+	height: 320px;
+	border-radius: 50%;
+	background: radial-gradient(circle, rgba(124, 111, 240, 0.22) 0%, transparent 70%);
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -58%);
+	animation: ds-ambient 4s ease-in-out infinite;
+	pointer-events: none;
+}
+
+@keyframes ds-ambient {
+	0%, 100% { opacity: 0.6; transform: translate(-50%, -58%) scale(1); }
+	50%      { opacity: 1;   transform: translate(-50%, -58%) scale(1.18); }
+}
+
+/* Logo mark */
+.ds-logo-mark {
+	position: relative;
+	z-index: 2;
+	animation: ds-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both,
+	           ds-glow  3.5s ease-in-out 0.7s infinite;
+}
+
+@keyframes ds-enter {
+	from { opacity: 0; transform: scale(0.82) translateY(10px); }
+	to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+@keyframes ds-glow {
+	0%, 100% { filter: drop-shadow(0 0 10px rgba(124, 111, 240, 0.28)); }
+	50%      { filter: drop-shadow(0 0 28px rgba(124, 111, 240, 0.62)); }
+}
+
+/* Wordmark */
+.ds-wordmark {
+	position: relative;
+	z-index: 2;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	font-size: 26px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	color: rgba(255, 255, 255, 0.92);
+	animation: ds-text-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+@keyframes ds-text-enter {
+	from { opacity: 0; transform: translateY(6px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer bar */
+.ds-bar {
+	position: relative;
+	z-index: 2;
+	width: 120px;
+	height: 2px;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 2px;
+	overflow: hidden;
+	animation: ds-bar-enter 0.4s ease 0.6s both;
+}
+
+@keyframes ds-bar-enter {
+	from { opacity: 0; }
+	to   { opacity: 1; }
+}
+
+.ds-bar::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg, transparent 0%, rgba(196, 181, 253, 0.9) 50%, transparent 100%);
+	animation: ds-shimmer 1.8s ease-in-out 1s infinite;
+}
+
+@keyframes ds-shimmer {
+	0%   { transform: translateX(-120px); }
+	100% { transform: translateX(240px); }
+}

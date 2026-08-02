@@ -1,0 +1,621 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Directorist - Claim Listing\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-11-17 08:38+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.5.4; wp-5.8.2\n"
+"X-Domain: directorist-claim-listing"
+
+#: directorist-claim-listing.php:215
+#, php-format
+msgid ""
+"\n"
+"                Dear ==NAME==,\n"
+"\n"
+"                Thank you very much for your claim.\n"
+"                This email is to notify you that your claim for "
+"(#==LISTING_TITLE==) has been received.\n"
+"\n"
+"                %s\n"
+"\n"
+"                Please wait for the confirmation by administrator.\n"
+"                Listing Details Page: ==LISTING_URL==\n"
+"\n"
+"\n"
+"                Thanks,\n"
+"                The Administrator of ==SITE_NAME==\n"
+"                "
+msgstr ""
+
+#: directorist-claim-listing.php:241
+msgid ""
+"\n"
+"                Dear ==NAME==,\n"
+"                Congratulations! Your Claim for '==LISTING_TITLE==' has been "
+"confirmed. You can now edit it from your Dashboard ==LISTING_URL==\n"
+"\n"
+"                Thanks,\n"
+"                The Administrator of ==SITE_NAME==\n"
+"                "
+msgstr ""
+
+#: directorist-claim-listing.php:259
+msgid ""
+"\n"
+"                Dear ==NAME==,\n"
+"                Your Claim for '==LISTING_TITLE==' has been declined. Please "
+"contact with administrator.\n"
+"\n"
+"                Thanks,\n"
+"                The Administrator of ==SITE_NAME==\n"
+"                "
+msgstr ""
+
+#: directorist-claim-listing.php:855 directorist-claim-listing.php:875
+msgid " (Unlimited)"
+msgstr ""
+
+#: directorist-claim-listing.php:552 templates/claim-listing-template.php:16
+msgid " Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:874 directorist-claim-listing.php:883
+msgid " Featured listing"
+msgstr ""
+
+#: directorist-claim-listing.php:854 directorist-claim-listing.php:861
+msgid " Regular listing"
+msgstr ""
+
+#: directorist-claim-listing.php:746 inc/class-claim-now.php:232
+#: templates/claim-listing-template.php:198
+msgid " Show plan details"
+msgstr ""
+
+#: directorist-claim-listing.php:1069 inc/directory_type.php:122
+msgid "\" target=\"_blank\">Pricing Plans</a>"
+msgstr ""
+
+#: directorist-claim-listing.php:677 directorist-claim-listing.php:738
+#: inc/class-claim-now.php:166 inc/class-claim-now.php:225
+#: templates/claim-listing-template.php:129
+#: templates/claim-listing-template.php:190
+msgid "- Active"
+msgstr ""
+
+#: templates/admin-meta-fields.php:21
+msgid "-Select a Listing-"
+msgstr ""
+
+#: templates/admin-meta-fields.php:49
+msgid "-Select user-"
+msgstr ""
+
+#: directorist-claim-listing.php:615 inc/class-claim-now.php:105
+#: templates/claim-listing-template.php:71
+msgid "111-111-235"
+msgstr ""
+
+#: directorist-claim-listing.php:235 directorist-claim-listing.php:253
+msgid "[==SITE_NAME==] : Claim Confirmation for Claim for (#==LISTING_TITLE==)"
+msgstr ""
+
+#: directorist-claim-listing.php:209
+msgid "[==SITE_NAME==] : Your Claim for (#==LISTING_TITLE==) Received."
+msgstr ""
+
+#: inc/helper-functions.php:337
+msgid "[{site_name}] Contact via \"{listing_title}\""
+msgstr ""
+
+#: directorist-claim-listing.php:1560 directorist-claim-listing.php:1567
+msgid "Action"
+msgstr ""
+
+#: directorist-claim-listing.php:816
+msgid "Active Orders"
+msgstr ""
+
+#: directorist-claim-listing.php:1459 directorist-claim-listing.php:1460
+msgid "Add New Claim"
+msgstr ""
+
+#: inc/helper-functions.php:16
+msgid "Administrator"
+msgstr ""
+
+#: directorist-claim-listing.php:365 directorist-claim-listing.php:419
+#: directorist-claim-listing.php:458 directorist-claim-listing.php:512
+msgid "An error occurred, please try again."
+msgstr ""
+
+#: inc/helper-functions.php:158
+msgid "Approved"
+msgstr ""
+
+#: directorist-claim-listing.php:126
+msgid "Approved Claim Confirmation"
+msgstr ""
+
+#: directorist-claim-listing.php:1369 inc/helper-functions.php:24
+msgid "Author"
+msgstr ""
+
+#: directorist-claim-listing.php:329 directorist-claim-listing.php:342
+msgid "Cheatin&#8217; huh?"
+msgstr ""
+
+#: directorist-claim-listing.php:847
+msgid "Choose Listing Type"
+msgstr ""
+
+#: directorist-claim-listing.php:1457
+msgid "Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:1503
+msgid "Claim Confirmation"
+msgstr ""
+
+#: directorist-claim-listing.php:1039 directorist-claim-listing.php:1395
+#: inc/directory_type.php:97
+msgid "Claim Details"
+msgstr ""
+
+#: directorist-claim-listing.php:181
+msgid "Claim Fee in "
+msgstr ""
+
+#: directorist-claim-listing.php:1252 directorist-claim-listing.php:1260
+msgid "Claim for "
+msgstr ""
+
+#: directorist-claim-listing.php:171 directorist-claim-listing.php:1074
+#: inc/directory_type.php:127
+msgid "Claim for Free"
+msgstr ""
+
+#: directorist-claim-listing.php:145 directorist-claim-listing.php:1456
+#: directorist-claim-listing.php:1458 directorist-claim-listing.php:1573
+msgid "Claim Listing"
+msgstr ""
+
+#: directorist-claim-listing.php:158 directorist-claim-listing.php:541
+#: inc/class-claim-now.php:36 templates/claim-listing-template.php:5
+msgid "Claim listing is the best way to manage and protect your business."
+msgstr ""
+
+#: inc/class-claim-now.php:267
+msgid "Claim Now"
+msgstr ""
+
+#: directorist-claim-listing.php:192
+msgid "Claim Now Button"
+msgstr ""
+
+#: directorist-claim-listing.php:193 directorist-claim-listing.php:542
+#: inc/class-claim-now.php:37 templates/claim-listing-template.php:6
+msgid "Claim Now!"
+msgstr ""
+
+#: directorist-claim-listing.php:281
+msgid "Claim Settings"
+msgstr ""
+
+#: directorist-claim-listing.php:599 inc/class-claim-now.php:92
+#: templates/claim-listing-template.php:61
+msgid "Claim This Listing"
+msgstr ""
+
+#: directorist-claim-listing.php:152
+msgid "Claim Widget Title"
+msgstr ""
+
+#: directorist-claim-listing.php:203 directorist-claim-listing.php:986
+#: inc/directory_type.php:30
+msgid "Claimed"
+msgstr ""
+
+#: templates/admin-meta-fields.php:42
+msgid "Claimed by"
+msgstr ""
+
+#: directorist-claim-listing.php:1371 templates/admin-meta-fields.php:75
+msgid "Claimer Details"
+msgstr ""
+
+#: directorist-claim-listing.php:1372 templates/admin-meta-fields.php:86
+msgid "Claimer Phone"
+msgstr ""
+
+#: directorist-claim-listing.php:1126 directorist-claim-listing.php:1160
+msgid "Claiming charge for this listing"
+msgstr ""
+
+#: directorist-claim-listing.php:1261
+msgid "Claiming charge for this listing "
+msgstr ""
+
+#: inc/helper-functions.php:28
+msgid "Contributor"
+msgstr ""
+
+#: directorist-claim-listing.php:1373
+msgid "Date"
+msgstr ""
+
+#: inc/helper-functions.php:340
+msgid ""
+"Dear Administrator,<br /><br />An user on your website {site_name} submit a "
+"claim for this listing .<br /><br />Listing URL: {listing_url}<br /><br />"
+"Name: {sender_name}<br />Email: {sender_email}<br />Claim Details: {message}"
+"<br />Time: {now}"
+msgstr ""
+
+#: inc/helper-functions.php:159
+msgid "Decline"
+msgstr ""
+
+#: directorist-claim-listing.php:133
+msgid "Declined Claim Confirmation"
+msgstr ""
+
+#: directorist-claim-listing.php:157
+msgid "Description"
+msgstr ""
+
+#: directorist-claim-listing.php:623 inc/class-claim-now.php:112
+#: templates/claim-listing-template.php:75
+msgid "Details description about your business"
+msgstr ""
+
+#. Base ID, must be unique
+#. Name of the plugin
+#: inc/class-claim-now.php:17
+msgid "Directorist - Claim Listing"
+msgstr ""
+
+#: directorist-claim-listing.php:196
+msgid "Display Claimed Badge"
+msgstr ""
+
+#: directorist-claim-listing.php:1462
+msgid "Edit Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:214
+msgid ""
+"Edit the email template for sending to the user when a claim is submitted."
+msgstr ""
+
+#: directorist-claim-listing.php:240
+msgid ""
+"Edit the email template of approved claim notification for user. HTML "
+"content is allowed too."
+msgstr ""
+
+#: directorist-claim-listing.php:258
+msgid ""
+"Edit the email template of declined claim notification for user. HTML "
+"content is allowed too."
+msgstr ""
+
+#: directorist-claim-listing.php:208
+msgid "Edit the subject for sending to the user when a claim is submitted."
+msgstr ""
+
+#: directorist-claim-listing.php:234
+msgid "Edit the subject of approved claim notification for user."
+msgstr ""
+
+#: directorist-claim-listing.php:252
+msgid "Edit the subject of declined claim notification for user."
+msgstr ""
+
+#: inc/helper-functions.php:20
+msgid "Editor"
+msgstr ""
+
+#: directorist-claim-listing.php:213 directorist-claim-listing.php:239
+#: directorist-claim-listing.php:257
+msgid "Email Body"
+msgstr ""
+
+#: directorist-claim-listing.php:207 directorist-claim-listing.php:233
+#: directorist-claim-listing.php:251
+msgid "Email Subject"
+msgstr ""
+
+#: directorist-claim-listing.php:1580
+msgid "Enter your Claim Listing extension license"
+msgstr ""
+
+#: directorist-claim-listing.php:818
+msgid "Featured"
+msgstr ""
+
+#: directorist-claim-listing.php:119
+msgid "For New Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:605 directorist-claim-listing.php:608
+#: inc/class-claim-now.php:98 inc/class-claim-now.php:100
+#: templates/claim-listing-template.php:66
+#: templates/claim-listing-template.php:67
+msgid "Full Name"
+msgstr ""
+
+#: directorist-claim-listing.php:818
+msgid "General"
+msgstr ""
+
+#. URI of the plugin
+msgid "https://directorist.com/product/directorist-claim-listing"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://wpwax.com"
+msgstr ""
+
+#: directorist-claim-listing.php:395 directorist-claim-listing.php:488
+msgid "Invalid license."
+msgstr ""
+
+#: directorist-claim-listing.php:153 directorist-claim-listing.php:540
+#: inc/class-claim-now.php:35 templates/claim-listing-template.php:4
+msgid "Is this your business?"
+msgstr ""
+
+#: directorist-claim-listing.php:1579
+msgid "License"
+msgstr ""
+
+#: directorist-claim-listing.php:519
+msgid "License activated successfully!"
+msgstr ""
+
+#: directorist-claim-listing.php:426
+msgid "License deactivated successfully!"
+msgstr ""
+
+#: directorist-claim-listing.php:432 directorist-claim-listing.php:525
+msgid "License not found!"
+msgstr ""
+
+#: directorist-claim-listing.php:579 inc/class-claim-now.php:71
+#: templates/claim-listing-template.php:44
+msgid "Login"
+msgstr ""
+
+#: directorist-claim-listing.php:1063 inc/directory_type.php:116
+msgid "Mark as Claimed"
+msgstr ""
+
+#: directorist-claim-listing.php:161
+msgid "Method of Charging"
+msgstr ""
+
+#: directorist-claim-listing.php:1461
+msgid "New Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:1542
+msgid "New Claim Submitted"
+msgstr ""
+
+#: directorist-claim-listing.php:1466
+msgid "No Claim found"
+msgstr ""
+
+#: directorist-claim-listing.php:1467
+msgid "No Claim found in Trash"
+msgstr ""
+
+#: inc/helper-functions.php:157
+msgid "Pending"
+msgstr ""
+
+#: directorist-claim-listing.php:612 inc/class-claim-now.php:103
+#: templates/claim-listing-template.php:70
+msgid "Phone"
+msgstr ""
+
+#: directorist-claim-listing.php:1454
+msgctxt "Post Type General Name"
+msgid "Claim Listing"
+msgstr ""
+
+#: directorist-claim-listing.php:1455
+msgctxt "Post Type Singular Name"
+msgid "Claim Listing"
+msgstr ""
+
+#: directorist-claim-listing.php:167
+msgid "Pricing Plans"
+msgstr ""
+
+#: directorist-claim-listing.php:580 inc/class-claim-now.php:72
+#: templates/claim-listing-template.php:45
+msgid "Register"
+msgstr ""
+
+#: directorist-claim-listing.php:863 directorist-claim-listing.php:885
+msgid "Remaining"
+msgstr ""
+
+#: directorist-claim-listing.php:373 directorist-claim-listing.php:466
+msgid "Response not found!"
+msgstr ""
+
+#: directorist-claim-listing.php:1465
+msgid "Search Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:760 inc/class-claim-now.php:246
+#: templates/claim-listing-template.php:211
+msgid "Secure Claim Process"
+msgstr ""
+
+#: directorist-claim-listing.php:818
+msgid "Select active order"
+msgstr ""
+
+#: directorist-claim-listing.php:819
+msgid "Select an order"
+msgstr ""
+
+#: templates/admin-meta-fields.php:15
+msgid "Select Listing for Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:671 directorist-claim-listing.php:673
+#: directorist-claim-listing.php:732 directorist-claim-listing.php:734
+#: inc/class-claim-now.php:160 inc/class-claim-now.php:162
+#: inc/class-claim-now.php:219 inc/class-claim-now.php:221
+#: templates/claim-listing-template.php:123
+#: templates/claim-listing-template.php:125
+#: templates/claim-listing-template.php:184
+#: templates/claim-listing-template.php:186
+msgid "Select Plan"
+msgstr ""
+
+#: directorist-claim-listing.php:175
+msgid "Set a Claim Fee"
+msgstr ""
+
+#: directorist-claim-listing.php:1079 inc/directory_type.php:132
+msgid "Set a claim fee"
+msgstr ""
+
+#: directorist-claim-listing.php:687 inc/class-claim-now.php:175
+#: templates/claim-listing-template.php:139
+msgid "Show plan details"
+msgstr ""
+
+#: directorist-claim-listing.php:906
+msgid "Sorry! Invalid nonce"
+msgstr ""
+
+#: directorist-claim-listing.php:919
+msgid "Sorry! You have already requested for claim."
+msgstr ""
+
+#: directorist-claim-listing.php:1370 templates/admin-meta-fields.php:59
+msgid "Status"
+msgstr ""
+
+#: directorist-claim-listing.php:759 inc/class-claim-now.php:245
+#: templates/claim-listing-template.php:210
+msgid "Submit"
+msgstr ""
+
+#: inc/helper-functions.php:32
+msgid "Subscriber"
+msgstr ""
+
+#: directorist-claim-listing.php:408 directorist-claim-listing.php:501
+#, php-format
+msgid "This appears to be an invalid license key for %s."
+msgstr ""
+
+#. Description of the plugin
+msgid ""
+"This is an extension for Directorist plugin. It allows you to monetize your "
+"directory by verifying an author."
+msgstr ""
+
+#: directorist-claim-listing.php:1472
+msgid "This order post type will keep track of admin fee plans"
+msgstr ""
+
+#: directorist-claim-listing.php:1368 inc/class-claim-now.php:42
+msgid "Title"
+msgstr ""
+
+#: inc/class-claim-now.php:270
+msgid "Title:"
+msgstr ""
+
+#: directorist-claim-listing.php:1463
+msgid "Update Claim"
+msgstr ""
+
+#: directorist-claim-listing.php:619 inc/class-claim-now.php:108
+#: templates/claim-listing-template.php:74
+msgid "Verification Details"
+msgstr ""
+
+#: directorist-claim-listing.php:990 inc/directory_type.php:37
+msgid "Verified by it's Owner"
+msgstr ""
+
+#: directorist-claim-listing.php:202
+msgid "Verified Text"
+msgstr ""
+
+#: directorist-claim-listing.php:1464
+msgid "View Claim"
+msgstr ""
+
+#. Author of the plugin
+msgid "wpWax"
+msgstr ""
+
+#: directorist-claim-listing.php:1574
+msgid "You can active your Claim Listing extension here."
+msgstr ""
+
+#: directorist-claim-listing.php:282
+msgid "You can Customize all the settings of Claim Listing Extension here"
+msgstr ""
+
+#: directorist-claim-listing.php:148
+msgid "You can disable it for users."
+msgstr ""
+
+#: inc/class-claim-now.php:13
+msgid ""
+"You can show Claim Now button on the sidebar of every single listing ( "
+"listing details page ) by this widget "
+msgstr ""
+
+#: config.php:25
+msgid "You do not have the right to access this file directly"
+msgstr ""
+
+#: directorist-claim-listing.php:582 inc/class-claim-now.php:74
+#: templates/claim-listing-template.php:47
+#, php-format
+msgid "You need to %s or %s to claim this listing"
+msgstr ""
+
+#: directorist-claim-listing.php:948
+msgid "Your claim submitted successfully."
+msgstr ""
+
+#: directorist-claim-listing.php:402 directorist-claim-listing.php:495
+msgid "Your license is not active for this URL."
+msgstr ""
+
+#: directorist-claim-listing.php:382 directorist-claim-listing.php:475
+#, php-format
+msgid "Your license key expired on %s."
+msgstr ""
+
+#: directorist-claim-listing.php:390 directorist-claim-listing.php:483
+msgid "Your license key has been disabled."
+msgstr ""
+
+#: directorist-claim-listing.php:414 directorist-claim-listing.php:507
+msgid "Your license key has reached its activation limit."
+msgstr ""

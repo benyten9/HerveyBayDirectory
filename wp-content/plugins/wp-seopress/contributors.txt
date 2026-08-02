@@ -1,0 +1,60 @@
+Great people who contributed to this plugin:
+
+Developers:
+- Benjamin Denis: @wp_seopress
+- Rémi Corson: @corsonr
+- Thomas Deneulin: @tdeneulin
+- Julio Potier: @juliobox
+- Mickael Gris: @mgris
+- Vincent Dubroeucq @vincentdubroeucq
+
+SEO consultant:
+- Alan Cladx: @cladxxx
+- Neil McCarthy: @GoodnessNeil
+
+A11Y:
+- Thierry Pigot: @thierrypigot
+- Claire Bizingre: @accesbilis
+
+Beta testers / feedbacks:
+- Maxime Bernard Jacquet: @maximebj
+- Mickael Gris: @mickaelgris
+- Aurélien Denis: @wpchannel
+- Thomas Piron: @crash_47
+- Sébastien Serre: @sebastienserre
+- Ludovic Riaudel: @lriaudel
+- Philippe Fronzes: @novaldi64
+- Déborah Donnier: @deborahdonnier
+- Jérémy Herve: @jeherve
+
+Integrations (https://www.seopress.org/integrations/):
+- The Admin Columns PRO team
+- The Polylang team
+- The WPML team
+- The Weglot team
+- The TranslatePress team
+- The Elementor team
+- The Oxygen Team
+
+Translators (help us translate the plugin here: https://translate.wordpress.org/projects/wp-plugins/wp-seopress/):
+- 🇺🇸 English (UK) (English (UK)) - professional translation
+- 🇫🇷 Français (French (France)) - professional translation
+- 🇪🇸 Español (Spanish (Spain)) - professional translation
+- 🇩🇪 Deutsch (German) - professional translation
+- 🇳🇱 Nederlands (Dutch) - professional translation
+- 🇷🇺 Русский (Russian) - professional translation
+- 🇯🇵 日本語 (Japanese) - professional translation
+- 🇮🇹 Italiano (Italian) - professional translation
+- 🇮🇳 हिन्दी (Hindi) - professional translation
+- 🇨🇳 中文 (Chinese (China)) - professional translation
+- 🇧🇷 Português do Brasil (Portuguese (Brazil)) - professional translation
+- 🇵🇱 Polskie (Polish) - professional translation
+- 🇬🇷 Ελληνικά (Greek)
+- 🇧🇬 Български (Bulgarian)
+- 🇮🇩 Bahasa Indonesia (Indonesian)
+- 🇻🇳 Loki Web (Vietnamese)
+- 🇷🇴 Română (Romanian)
+- 🇸🇦 العربية (Arabic)
+- 🇮🇷 فارسی (Persian)
+- 🇹🇷 Türkçe (Turkish)
+- ...

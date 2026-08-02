@@ -1,0 +1,610 @@
+<?php // phpcs:ignore
+
+namespace SEOPress\Actions\Admin;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+use SEOPress\Core\Hooks\ExecuteHooksBackend;
+use SEOPress\Services\TagsToString;
+
+/**
+ * Manage column
+ */
+class ManageColumn implements ExecuteHooksBackend {
+
+	/**
+	 * The TagsToString service.
+	 *
+	 * @var TagsToString
+	 */
+	protected $tags_to_string_service;
+
+	/**
+	 * The ManageColumn constructor.
+	 *
+	 * @since 4.4.0
+	 */
+	public function __construct() {
+		$this->tags_to_string_service = seopress_get_service( 'TagsToString' );
+	}
+
+	/**
+	 * The ManageColumn hooks.
+	 *
+	 * @since 4.4.0
+	 *
+	 * @return void
+	 */
+	public function hooks() {
+		global $pagenow;
+
+		$is_edit_page        = in_array( $pagenow, array( 'edit.php', 'upload.php' ), true );
+		$is_advanced_enabled = '1' === seopress_get_toggle_option( 'advanced' );
+
+		if ( ( $is_edit_page && $is_advanced_enabled ) || wp_doing_ajax() ) {
+			// Priority is important for plugins compatibility like Toolset.
+			add_action( 'init', array( $this, 'setup' ), 20 );
+		}
+	}
+
+	/**
+	 * Setup the ManageColumn.
+	 *
+	 * @since 4.4.0
+	 *
+	 * @return void
+	 */
+	public function setup() {
+		$list_post_types = seopress_get_service( 'WordPressData' )->getPostTypes();
+
+		if ( empty( $list_post_types ) ) {
+			return;
+		}
+
+		foreach ( $list_post_types as $key => $value ) {
+			// Skip only when "Disable SEO metabox" is explicitly on; an empty stored value still means enabled.
+			if ( '1' !== seopress_get_service( 'TitleOption' )->getSingleCptEnable( $key ) && '' !== $key ) {
+				add_filter( 'manage_' . $key . '_posts_columns', array( $this, 'addColumn' ) );
+				add_action( 'manage_' . $key . '_posts_custom_column', array( $this, 'displayColumn' ), 10, 2 );
+				add_filter( 'manage_edit-' . $key . '_sortable_columns', array( $this, 'sortableColumn' ) );
+				add_filter( 'pre_get_posts', array( $this, 'sortColumnsBy' ) );
+			}
+		}
+
+		add_filter( 'manage_media_columns', array( $this, 'addMediaColumn' ) );
+		add_action( 'manage_media_custom_column', array( $this, 'displayMediaColumn' ), 10, 2 );
+		add_filter( 'manage_upload_sortable_columns', array( $this, 'sortableMediaColumn' ) );
+		add_filter( 'pre_get_posts', array( $this, 'sortMediaColumnsBy' ) );
+
+		add_filter( 'manage_edit-download_columns', array( $this, 'addColumn' ), 10, 2 );
+	}
+
+	/**
+	 * Add column.
+	 *
+	 * @since 4.4.0
+	 *
+	 * @param array $columns The columns.
+	 *
+	 * @return array
+	 */
+	public function addColumn( $columns ) {
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceTitleCol() === '1' ) {
+			$columns['seopress_title'] = __( 'Title tag', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceMetaDescriptionCol() === '1' ) {
+			$columns['seopress_desc'] = __( 'Meta Desc.', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceRedirectEnableCol() === '1' ) {
+			$columns['seopress_redirect_enable'] = __( 'Redirect?', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceRedirectUrlCol() === '1' ) {
+			$columns['seopress_redirect_url'] = __( 'Redirect URL', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceCanonical() === '1' ) {
+			$columns['seopress_canonical'] = __( 'Canonical', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceTargetKwCol() === '1' ) {
+			$columns['seopress_tkw'] = __( 'Target Kw', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceNoIndexCol() === '1' ) {
+			$columns['seopress_noindex'] = __( 'noindex?', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceNoFollowCol() === '1' ) {
+			$columns['seopress_nofollow'] = __( 'nofollow?', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceInboundCol() === '1' ) {
+			$columns['seopress_inbound'] = __( 'Inbound links', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceOutboundCol() === '1' ) {
+			$columns['seopress_outbound'] = __( 'Outbound links', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceScoreCol() === '1' ) {
+			$columns['seopress_score'] = __( 'Score', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceSchemaCol() === '1' ) {
+			$columns['seopress_schema'] = __( 'Schema', 'wp-seopress' );
+		}
+		if ( seopress_get_service( 'AdvancedOption' )->getAppearanceFreezeModifiedDateCol() === '1' ) {
+			$columns['seopress_freeze_date'] = __( 'Freeze date', 'wp-seopress' );
+		}
+
+		return $columns;
+	}
+
+	/**
+	 * Add media column.
+	 *
+	 * @since 7.2.0
+	 * @see manage_media_columns
+	 *
+	 * @param array $columns The columns.
+	 *
+	 * @return array
+	 */
+	public function addMediaColumn( $columns ) {
+		$columns['seopress_alt_text'] = __( 'Alt text', 'wp-seopress' );
+
+		return $columns;
+	}
+
+	/**
+	 * Display column.
+	 *
+	 * @since 4.4.0
+	 * @see manage_' . $postType . '_posts_custom_column
+	 *
+	 * @param string $column   The column.
+	 * @param int    $post_id  The post ID.
+	 *
+	 * @return void
+	 */
+	public function displayColumn( $column, $post_id ) {
+		switch ( $column ) {
+			case 'seopress_title':
+				$meta_post_title = get_post_meta( $post_id, '_seopress_titles_title', true );
+
+				// Fall back to the global Single Post Type title template when no per-post value is set, so the column reflects the effective front-end title.
+				$value = $meta_post_title;
+				if ( empty( $value ) ) {
+					$value = (string) seopress_get_service( 'TitleOption' )->getTitleFromSingle( get_post_type( $post_id ) );
+				}
+
+				$context = seopress_get_service( 'ContextPage' )->buildContextWithCurrentId( $post_id )->getContext();
+				$title   = $this->tags_to_string_service->replace( $value, $context );
+				if ( empty( $title ) ) {
+					$title = $meta_post_title;
+				}
+				printf( '<div id="seopress_title-%s">%s</div>', esc_attr( $post_id ), esc_html( $title ) );
+				printf( '<div id="seopress_title_raw-%s" class="hidden">%s</div>', esc_attr( $post_id ), esc_html( $meta_post_title ) );
+				break;
+
+			case 'seopress_desc':
+				$meta_description = get_post_meta( $post_id, '_seopress_titles_desc', true );
+
+				// Fall back to the global Single Post Type meta description template when no per-post value is set, mirroring the front end.
+				$value = $meta_description;
+				if ( empty( $value ) ) {
+					$value = (string) seopress_get_service( 'TitleOption' )->getSingleCptDesc( $post_id );
+				}
+
+				$context     = seopress_get_service( 'ContextPage' )->buildContextWithCurrentId( $post_id )->getContext();
+				$description = $this->tags_to_string_service->replace( $value, $context );
+				if ( empty( $description ) ) {
+					$description = $meta_description;
+				}
+				printf( '<div id="seopress_desc-%s">%s</div>', esc_attr( $post_id ), esc_html( $description ) );
+				printf( '<div id="seopress_desc_raw-%s" class="hidden">%s</div>', esc_attr( $post_id ), esc_html( $meta_description ) );
+				break;
+
+			case 'seopress_redirect_enable':
+				if ( 'yes' === get_post_meta( $post_id, '_seopress_redirections_enabled', true ) ) {
+					echo '<span class="dashicons dashicons-yes-alt"></span>';
+				}
+				break;
+			case 'seopress_redirect_url':
+				echo '<div id="seopress_redirect_url-' . esc_attr( $post_id ) . '">' . esc_html( get_post_meta( $post_id, '_seopress_redirections_value', true ) ) . '</div>';
+				break;
+
+			case 'seopress_canonical':
+				echo '<div id="seopress_canonical-' . esc_attr( $post_id ) . '">' . esc_html( get_post_meta( $post_id, '_seopress_robots_canonical', true ) ) . '</div>';
+				break;
+
+			case 'seopress_tkw':
+				echo '<div id="seopress_tkw-' . esc_attr( $post_id ) . '">' . esc_html( get_post_meta( $post_id, '_seopress_analysis_target_kw', true ) ) . '</div>';
+				break;
+
+			case 'seopress_noindex':
+				if ( 'yes' === get_post_meta( $post_id, '_seopress_robots_index', true ) ) {
+					echo '<span class="dashicons dashicons-hidden"></span><span class="screen-reader-text">' . esc_html__( 'noindex is on!', 'wp-seopress' ) . '</span>';
+				}
+				break;
+
+			case 'seopress_nofollow':
+				if ( 'yes' === get_post_meta( $post_id, '_seopress_robots_follow', true ) ) {
+					echo '<span class="dashicons dashicons-yes"></span><span class="screen-reader-text">' . esc_html__( 'nofollow is on!', 'wp-seopress' ) . '</span>';
+				}
+				break;
+
+			case 'seopress_inbound':
+				$internal_links = seopress_get_service( 'ContentAnalysisDatabase' )->getData( $post_id, array( 'internal_links' ) );
+
+				if ( ! empty( $internal_links ) ) {
+					$count = count( $internal_links );
+					echo '<div id="seopress_inbound-' . esc_attr( $post_id ) . '">' . esc_html( $count ) . '</div>';
+					return;
+				}
+
+				/**
+				 * This is deprecated
+				 *
+				 * @deprecated
+				 * @since 7.3.0
+				 * We don't use this anymore because we use the new table to get the data
+				 */
+				$data_api_analysis = get_post_meta( $post_id, '_seopress_content_analysis_api', true );
+
+				if ( isset( $data_api_analysis['internal_links'] ) && null !== $data_api_analysis['internal_links'] ) {
+					$count = $data_api_analysis['internal_links'];
+					echo '<div id="seopress_inbound-' . esc_attr( $post_id ) . '">' . esc_html( $count ) . '</div>';
+				} elseif ( get_post_meta( $post_id, '_seopress_analysis_data' ) ) {
+					$data = get_post_meta( $post_id, '_seopress_analysis_data', true );
+
+					if ( ! empty( $data['internal_links'] ) ) {
+						$count = $data['internal_links']['count'];
+						echo '<div id="seopress_inbound-' . esc_attr( $post_id ) . '">' . esc_html( $count ) . '</div>';
+					}
+				}
+				break;
+
+			case 'seopress_outbound':
+				$internal_links = seopress_get_service( 'ContentAnalysisDatabase' )->getData( $post_id, array( 'outbound_links' ) );
+
+				if ( ! empty( $internal_links ) ) {
+					$count = count( $internal_links );
+					echo '<div id="seopress_inbound-' . esc_attr( $post_id ) . '">' . esc_html( $count ) . '</div>';
+					return;
+				}
+
+				/**
+				 * This is deprecated
+				 *
+				 * @deprecated
+				 * @since 7.3.0
+				 * We don't use this anymore because we use the new table to get the data
+				 */
+				$data_api_analysis = get_post_meta( $post_id, '_seopress_content_analysis_api', true );
+
+				if ( isset( $data_api_analysis['outbound_links'] ) && null !== $data_api_analysis['outbound_links'] ) {
+					$count = $data_api_analysis['outbound_links'];
+					echo '<div id="seopress_outbound-' . esc_attr( $post_id ) . '">' . esc_html( $count ) . '</div>';
+				} elseif ( get_post_meta( $post_id, '_seopress_analysis_data' ) ) {
+					$data = get_post_meta( $post_id, '_seopress_analysis_data', true );
+
+					if ( ! empty( $data['outbound_links'] ) ) {
+						$count = count( $data['outbound_links'] );
+						echo '<div id="seopress_outbound-' . esc_attr( $post_id ) . '">' . esc_html( $count ) . '</div>';
+					}
+				}
+				break;
+
+			case 'seopress_score':
+				$score = seopress_get_service( 'ContentAnalysisDatabase' )->getData( $post_id, array( 'score' ) );
+
+				if ( ! isset( $score ) ) {
+					return;
+				}
+
+				if ( ! empty( $score ) && is_array( $score ) ) {
+					$score = array_shift( $score );
+
+					// Validate that $score contains the expected values.
+					if ( ! is_array( $score ) ) {
+						return;
+					}
+
+					echo '<div class="analysis-score">';
+					if ( in_array( 'medium', $score, true ) || in_array( 'high', $score, true ) ) {
+						echo '<p><svg role="img" aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                        <circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+                        <circle id="bar" class="notgood" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0" style="stroke-dashoffset: 101.788px;"></circle>
+                    </svg><span class="screen-reader-text">' . esc_html__( 'Should be improved', 'wp-seopress' ) . '</span></p>';
+					} else {
+						echo '<p><svg role="img" aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                        <circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+                        <circle id="bar" class="good" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+                    </svg><span class="screen-reader-text">' . esc_html__( 'Good', 'wp-seopress' ) . '</span></p>';
+					}
+					echo '</div>';
+					return;
+				}
+
+				/**
+				 * This is deprecated
+				 *
+				 * @deprecated
+				 * @since 7.3.0
+				 * We don't use this anymore because we use the new table to get the data
+				 */
+				$data_api_analysis = get_post_meta( $post_id, '_seopress_content_analysis_api', true );
+				if ( isset( $data_api_analysis['score'] ) && null !== $data_api_analysis['score'] ) {
+					echo '<div class="analysis-score">';
+					if ( 'good' === $data_api_analysis['score'] ) {
+						echo '<p><svg role="img" aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                        <circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+                        <circle id="bar" class="good" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+                    </svg><span class="screen-reader-text">' . esc_html__( 'Good', 'wp-seopress' ) . '</span></p>';
+					} else {
+						echo '<p><svg role="img" aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                        <circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+                        <circle id="bar" class="notgood" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0" style="stroke-dashoffset: 101.788px;"></circle>
+                    </svg><span class="screen-reader-text">' . esc_html__( 'Should be improved', 'wp-seopress' ) . '</span></p>';
+					}
+					echo '</div>';
+				} elseif ( get_post_meta( $post_id, '_seopress_analysis_data' ) ) {
+						$ca = get_post_meta( $post_id, '_seopress_analysis_data' );
+						echo '<div class="analysis-score">';
+					if ( isset( $ca[0]['score'] ) && 1 === $ca[0]['score'] ) {
+						echo '<p><svg role="img" aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+							<circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+							<circle id="bar" class="good" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+						</svg><span class="screen-reader-text">' . esc_html__( 'Good', 'wp-seopress' ) . '</span></p>';
+					} elseif ( isset( $ca[0]['score'] ) && '' === $ca[0]['score'] ) {
+						echo '<p><svg role="img" aria-hidden="true" focusable="false" width="100%" height="100%" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+							<circle r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
+							<circle id="bar" class="notgood" r="90" cx="100" cy="100" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="0" style="stroke-dashoffset: 101.788px;"></circle>
+						</svg><span class="screen-reader-text">' . esc_html__( 'Should be improved', 'wp-seopress' ) . '</span></p>';
+					}
+						echo '</div>';
+				}
+				break;
+
+			case 'seopress_freeze_date':
+				$freeze = get_post_meta( $post_id, '_seopress_robots_freeze_modified_date', true );
+				$global = '1' === seopress_get_service( 'AdvancedOption' )->getAppearanceFreezeModifiedDate();
+				if ( 'yes' === $freeze || ( '' === $freeze && $global ) ) {
+					echo '<span class="dashicons dashicons-lock"></span>';
+					echo '<span class="screen-reader-text">' . esc_html__( 'Modified date is frozen', 'wp-seopress' ) . '</span>';
+				}
+				break;
+
+			case 'seopress_schema':
+				$schema_types = array();
+
+				// Get manual schemas.
+				$manual_schemas = get_post_meta( $post_id, '_seopress_pro_schemas_manual', true );
+				if ( ! empty( $manual_schemas ) && is_array( $manual_schemas ) ) {
+					foreach ( $manual_schemas as $schema ) {
+						if ( ! empty( $schema['_seopress_pro_rich_snippets_type'] ) ) {
+							$schema_types[] = ucfirst( $schema['_seopress_pro_rich_snippets_type'] );
+						}
+					}
+				}
+
+				// Get automatic schemas (from PRO).
+				$automatic_schema_ids = $this->getAutomaticSchemasForPost( $post_id );
+				if ( ! empty( $automatic_schema_ids ) ) {
+					foreach ( $automatic_schema_ids as $schema_id ) {
+						$type = get_post_meta( $schema_id, '_seopress_pro_rich_snippets_type', true );
+						if ( ! empty( $type ) ) {
+							$schema_types[] = ucfirst( $type );
+						}
+					}
+				}
+
+				if ( ! empty( $schema_types ) ) {
+					echo '<div id="seopress_schema-' . esc_attr( $post_id ) . '">';
+					echo esc_html( implode( ', ', array_unique( $schema_types ) ) );
+					echo '</div>';
+				}
+				break;
+		}
+	}
+
+		/**
+		 * Display media column.
+		 *
+		 * @since 7.2.0
+		 * @see manage_media_custom_column
+		 *
+		 * @param string $column   The column.
+		 * @param int    $post_id  The post ID.
+		 *
+		 * @return void
+		 */
+	public function displayMediaColumn( $column, $post_id ) {
+		switch ( $column ) {
+			case 'seopress_alt_text':
+				echo esc_html( get_post_meta( $post_id, '_wp_attachment_image_alt', true ) );
+		}
+	}
+
+	/**
+	 * Sortable column.
+	 *
+	 * @since 6.5.0
+	 * @see manage_edit' . $postType . '_sortable_columns
+	 *
+	 * @param string $columns The columns.
+	 *
+	 * @return array $columns
+	 */
+	public function sortableColumn( $columns ) {
+		$columns['seopress_noindex']  = 'seopress_noindex';
+		$columns['seopress_nofollow'] = 'seopress_nofollow';
+
+		return $columns;
+	}
+
+	/**
+	 * Sortable media column.
+	 *
+	 * @since 7.2.0
+	 * @see manage_edit-media_sortable_columns
+	 *
+	 * @param string $columns The columns.
+	 *
+	 * @return array $columns
+	 */
+	public function sortableMediaColumn( $columns ) {
+		$columns['seopress_alt_text'] = 'seopress_alt_text';
+
+		return $columns;
+	}
+
+	/**
+	 * Sort columns by.
+	 *
+	 * @since 6.5.0
+	 * @see pre_get_posts
+	 *
+	 * @param string $query The query.
+	 *
+	 * @return void
+	 */
+	public function sortColumnsBy( $query ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$orderby = $query->get( 'orderby' );
+		if ( 'seopress_noindex' === $orderby ) {
+			$query->set( 'meta_key', '_seopress_robots_index' );
+			$query->set( 'orderby', 'meta_value' );
+		}
+		if ( 'seopress_nofollow' === $orderby ) {
+			$query->set( 'meta_key', '_seopress_robots_follow' );
+			$query->set( 'orderby', 'meta_value' );
+		}
+	}
+
+	/**
+	 * Sort media columns by.
+	 *
+	 * @since 7.2.0
+	 * @see pre_get_posts
+	 *
+	 * @param string $query The query.
+	 *
+	 * @return void
+	 */
+	public function sortMediaColumnsBy( $query ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$orderby = $query->get( 'orderby' );
+		if ( 'seopress_alt_text' === $orderby ) {
+			$query->set( 'meta_key', '_wp_attachment_image_alt' );
+			$query->set( 'orderby', 'meta_value' );
+		}
+	}
+
+	/**
+	 * Get automatic schemas that apply to a specific post.
+	 *
+	 * @since 9.6
+	 *
+	 * @param int $post_id The post ID.
+	 *
+	 * @return array Array of schema post IDs that apply to this post.
+	 */
+	protected function getAutomaticSchemasForPost( $post_id ) {
+		// Check if the seopress_schemas post type exists (PRO feature).
+		if ( ! post_type_exists( 'seopress_schemas' ) ) {
+			return array();
+		}
+
+		// Check if schemas are disabled for this post.
+		$disable_all = get_post_meta( $post_id, '_seopress_pro_rich_snippets_disable_all', true );
+		if ( '1' === $disable_all ) {
+			return array();
+		}
+
+		$post      = get_post( $post_id );
+		$post_type = get_post_type( $post_id );
+		$terms     = array();
+
+		// Get post terms.
+		$taxonomies = get_object_taxonomies( $post_type );
+		if ( ! empty( $taxonomies ) ) {
+			$post_terms = wp_get_post_terms( $post_id, $taxonomies, array( 'fields' => 'ids' ) );
+			if ( ! is_wp_error( $post_terms ) ) {
+				$terms = array_flip( $post_terms );
+			}
+		}
+
+		// Get individually disabled schemas for this post.
+		$disabled_schemas = get_post_meta( $post_id, '_seopress_pro_rich_snippets_disable', true );
+		if ( ! is_array( $disabled_schemas ) ) {
+			$disabled_schemas = array();
+		}
+
+		// Query all automatic schemas.
+		$args = array(
+			'post_type'      => 'seopress_schemas',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+
+		$schema_ids         = get_posts( $args );
+		$matching_schema_ids = array();
+
+		foreach ( $schema_ids as $schema_id ) {
+			// Skip if this schema is individually disabled for this post.
+			if ( isset( $disabled_schemas[ $schema_id ] ) && '1' === $disabled_schemas[ $schema_id ] ) {
+				continue;
+			}
+
+			$rules = get_post_meta( $schema_id, '_seopress_pro_rich_snippets_rules', true );
+
+			if ( ! is_array( $rules ) ) {
+				continue;
+			}
+
+			// Evaluate rules (OR groups).
+			foreach ( $rules as $or_group ) {
+				if ( ! is_array( $or_group ) ) {
+					continue;
+				}
+
+				$and_match_count = 0;
+				$and_total       = count( $or_group );
+
+				// Evaluate AND conditions within the OR group.
+				foreach ( $or_group as $condition ) {
+					if ( ! isset( $condition['filter'], $condition['cond'] ) ) {
+						continue;
+					}
+
+					$matches = false;
+
+					if ( 'post_type' === $condition['filter'] && isset( $condition['cpt'] ) ) {
+						$type_matches = ( $condition['cpt'] === $post_type );
+						$matches      = ( 'equal' === $condition['cond'] ) ? $type_matches : ! $type_matches;
+					} elseif ( 'taxonomy' === $condition['filter'] && isset( $condition['taxo'] ) ) {
+						$term_exists = isset( $terms[ (int) $condition['taxo'] ] );
+						$matches     = ( 'equal' === $condition['cond'] ) ? $term_exists : ! $term_exists;
+					} elseif ( 'postId' === $condition['filter'] && isset( $condition['postId'] ) ) {
+						$id_matches = ( (int) $condition['postId'] === $post_id );
+						$matches    = ( 'equal' === $condition['cond'] ) ? $id_matches : ! $id_matches;
+					}
+
+					if ( $matches ) {
+						++$and_match_count;
+					}
+				}
+
+				// If all AND conditions matched, this OR group passes.
+				if ( $and_match_count === $and_total && $and_total > 0 ) {
+					$matching_schema_ids[] = $schema_id;
+					break; // No need to check other OR groups.
+				}
+			}
+		}
+
+		return $matching_schema_ids;
+	}
+}

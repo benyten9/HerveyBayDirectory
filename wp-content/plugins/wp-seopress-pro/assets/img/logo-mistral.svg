@@ -1,0 +1,19 @@
+<svg width="500" height="127" viewBox="0 0 500 127" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#FF7000">
+    <rect x="0" y="0" width="25" height="25"/>
+    <rect x="50" y="0" width="25" height="25"/>
+    <rect x="100" y="0" width="25" height="25"/>
+    <rect x="0" y="25" width="25" height="25" fill="#FFAF00"/>
+    <rect x="25" y="25" width="25" height="25"/>
+    <rect x="75" y="25" width="25" height="25"/>
+    <rect x="100" y="25" width="25" height="25" fill="#FFAF00"/>
+    <rect x="0" y="50" width="25" height="25"/>
+    <rect x="50" y="50" width="25" height="25"/>
+    <rect x="100" y="50" width="25" height="25"/>
+    <rect x="0" y="75" width="25" height="25"/>
+    <rect x="100" y="75" width="25" height="25"/>
+    <rect x="0" y="100" width="25" height="25"/>
+    <rect x="100" y="100" width="25" height="25"/>
+  </g>
+  <text x="140" y="95" font-family="Arial, Helvetica, sans-serif" font-size="85" font-weight="600" fill="#1A1A1A">mistral</text>
+</svg>

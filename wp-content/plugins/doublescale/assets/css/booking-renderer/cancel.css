@@ -1,0 +1,24 @@
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+#cancel_booking_button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+#loading_spinner {
+	display: inline-flex;
+	align-items: center;
+}
+
+.cancellation-denied-message {
+	background-color: #fef2f2;
+	border: 1px solid #fecaca;
+	color: #dc2626;
+	padding: 15px;
+	border-radius: 6px;
+	margin: 20px 0;
+	text-align: center;
+}

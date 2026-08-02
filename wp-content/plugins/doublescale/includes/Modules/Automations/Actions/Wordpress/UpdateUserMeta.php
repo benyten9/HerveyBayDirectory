@@ -1,0 +1,68 @@
+<?php
+/**
+ * Pro automation action (free plugin): definition only. Implementation ships in DoubleScale Pro.
+ *
+ * @package DoubleScale\Pro
+ */
+
+namespace DoubleScale\Modules\Automations\Actions\Wordpress;
+
+defined( 'ABSPATH' ) || exit;
+
+use DoubleScale\Modules\Automations\Abstracts\ProAutomationStubAction;
+
+/**
+ * UpdateUserMeta action stub.
+ */
+class UpdateUserMeta extends ProAutomationStubAction {
+
+	/**
+	 * Action Name
+	 *
+	 * @var string
+	 */
+	public $name = 'Update User Meta';
+
+	/**
+	 * Action Slug
+	 *
+	 * @var string
+	 */
+	public $slug = 'update_user_meta';
+
+	/**
+	 * Action Description
+	 *
+	 * @var string
+	 */
+	public $description = 'This action will update the user meta.';
+
+
+	/**
+	 * Source
+	 *
+	 * @var string
+	 */
+	public $source = 'wp';
+
+	/**
+	 * Tigger Group
+	 *
+	 * @var string
+	 */
+	public $group = 'user';
+
+	/**
+	 * Process Action
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param AutomationModel         $automation Automation Model.
+	 * @param AutomationStepModel    $step Automation Step Model.
+	 * @param AutomationContactModel $contact Contact Model.
+	 *
+	 * @return bool
+	 */
+}
+
+UpdateUserMeta::instance();

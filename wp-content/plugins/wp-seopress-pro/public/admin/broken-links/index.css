@@ -1,0 +1,519 @@
+/* ──────────────────────────────────────────────────────────────────
+ * SEOPress shared UI primitives
+ *
+ * Imported once by `ui/index.js`. Each shared admin page picks up the
+ * styles transitively through its `import` of any UI primitive.
+ *
+ * Conventions:
+ *   - all classes prefixed with `seopress-ui-`
+ *   - accent color follows --wp-admin-theme-color (user's WP scheme)
+ *   - semantic colors use the WP admin notice palette (#008a20 success,
+ *     #bd8600 warning, #d63638 error) for text-on-tint contrast
+ *   - state modifiers use `is-*` (e.g. `is-active`, `is-warning`)
+ * ────────────────────────────────────────────────────────────────── */
+
+/* ── Badge ── */
+
+.seopress-ui-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 28px;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--wp-admin-theme-color);
+	white-space: nowrap;
+}
+
+.seopress-ui-badge--pill {
+	border-radius: 999px;
+	padding: 2px 10px;
+}
+
+.seopress-ui-badge--uppercase {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+.seopress-ui-badge.is-success {
+	background: rgba( 74, 184, 102, 0.15 );
+	color: #008a20;
+}
+
+.seopress-ui-badge.is-warning {
+	background: rgba( 255, 186, 0, 0.15 );
+	color: #bd8600;
+}
+
+.seopress-ui-badge.is-low-alert {
+	background: rgba( 227, 159, 72, 0.18 );
+	color: var(--colorLowAlert, #e39f48);
+}
+
+.seopress-ui-badge.is-alert {
+	background: rgba( 235, 15, 0, 0.10 );
+	color: var(--colorAlert, #eb0f00);
+}
+
+.seopress-ui-badge.is-primary {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--wp-admin-theme-color);
+}
+
+.seopress-ui-badge.is-muted {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+	color: var(--color, #757575);
+}
+
+.seopress-ui-badge.is-neutral {
+	background: var(--borderColor, #E6E6E8);
+	color: var(--colorDark, #1e1e1e);
+}
+
+/* Solid variants used as full-color "tag" badges (white text on a solid
+ * background). Useful for "DEPRECATED", "REQUIRED", small status chips
+ * inside template/schema cards. */
+.seopress-ui-badge--solid.is-low-alert {
+	background: var(--colorLowAlert, #e39f48);
+	color: var(--colorWhite, #fff);
+}
+
+.seopress-ui-badge--solid.is-alert {
+	background: var(--colorAlert, #eb0f00);
+	color: var(--colorWhite, #fff);
+}
+
+.seopress-ui-badge--solid.is-warning {
+	background: var(--colorWarning, #ffba00);
+	color: var(--colorDark, #1e1e1e);
+}
+
+/* ── Link (cell title) ──
+ * Inline / cell-title links follow the WP admin theme color so they
+ * match the user's chosen scheme. */
+
+.seopress-ui-link {
+	color: var(--wp-admin-theme-color);
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.seopress-ui-link:hover,
+.seopress-ui-link:focus {
+	color: var(--wp-admin-theme-color);
+	text-decoration: underline;
+}
+
+.seopress-ui-link--truncate {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+.seopress-ui-link--muted {
+	color: var(--colorDark, #1e1e1e);
+	font-weight: 500;
+}
+
+.seopress-ui-link--muted:hover,
+.seopress-ui-link--muted:focus {
+	color: var(--wp-admin-theme-color);
+	text-decoration: underline;
+}
+
+/* ── Progress bar label & hint — render below native <ProgressBar> ── */
+
+.seopress-ui-progress__label {
+	margin: 8px 0 0;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--colorDark, #1e1e1e);
+}
+
+.seopress-ui-progress__hint {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--color, #757575);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Empty state ── */
+
+.seopress-ui-empty-state {
+	width: 100%;
+	margin: 16px 0;
+	padding: 48px 24px;
+	text-align: center;
+	background: #fff;
+	border: 1px solid var(--borderColor, #E6E6E8);
+	border-radius: 6px;
+}
+
+.seopress-ui-empty-state__title {
+	margin: 0 0 8px;
+	font-size: 18px;
+	color: var(--colorDark, #1e1e1e);
+}
+
+.seopress-ui-empty-state__desc {
+	margin: 0 auto 16px;
+	max-width: 480px;
+	color: var(--color, #757575);
+	font-size: 14px;
+}
+
+/* ── DataView page wrapper ── */
+
+.seopress-ui-dataview-wrapper {
+	margin: 20px 20px 20px 0;
+}
+
+/* ── Editor toggle field (header "enabled" toggle) ── */
+
+.seopress-ui-editor-toggle {
+	margin: 0 !important;
+	padding: 0 8px !important;
+	border-right: 1px solid var(--borderColor, #E6E6E8);
+}
+
+.seopress-ui-editor-toggle .components-toggle-control__label {
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+}
+
+@media screen and ( max-width: 600px ) {
+	.seopress-ui-editor-toggle {
+		padding-left: 0 !important;
+	}
+}
+
+/* ── Dirty badge (modified state) ── */
+
+.seopress-ui-dirty-badge {
+	display: inline-block;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	padding: 3px 8px;
+	border-radius: 4px;
+	background: var(--colorWarning, #ffba00);
+	color: var(--colorDark, #1e1e1e);
+	letter-spacing: 0.3px;
+}
+
+/* ── Tabs (lightweight tablist) ──
+ * Visual parity with `@wordpress/components` `<TabPanel>` so the shared
+ * shell tabs (Site Audit) match the WP-native tabs used by other admin
+ * pages (Redirections, etc.). The underline lives on a `::after` ribbon
+ * that grows from 0 to 1.5px on the active tab — same mechanic as WP
+ * core, coloured with --wp-admin-theme-color. */
+
+.seopress-ui-tabs {
+	display: flex;
+	align-items: stretch;
+	flex-direction: row;
+	margin-bottom: 20px;
+}
+
+.seopress-ui-tabs__tab {
+	position: relative;
+	-webkit-appearance: none;
+	   -moz-appearance: none;
+	        appearance: none;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	height: 48px;
+	margin: 0;
+	padding: 3px 16px;
+	font: inherit;
+	font-weight: 400;
+	color: var(--colorDark, #1e1e1e);
+	cursor: pointer;
+	transition: color 0.1s linear;
+}
+
+.seopress-ui-tabs__tab:hover {
+	color: var(--wp-admin-theme-color);
+	background: transparent;
+}
+
+.seopress-ui-tabs__tab::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	pointer-events: none;
+	background: var(--wp-admin-theme-color);
+	height: 0;
+	transition: height 0.1s linear;
+}
+
+.seopress-ui-tabs__tab.is-active {
+	color: var(--wp-admin-theme-color);
+	font-weight: 500;
+}
+
+.seopress-ui-tabs__tab.is-active::after {
+	height: 1.5px;
+}
+
+.seopress-ui-tabs__tab:focus-visible {
+	outline: 2px solid var(--wp-admin-theme-color);
+	outline-offset: -2px;
+}
+
+/* ── Modal action footer (flex-end) ── */
+
+.seopress-ui-modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+ * Shared styles for SEOPress PRO DataViews admin pages
+ * (schemas, redirections, broken links).
+ *
+ * Each page imports this stylesheet at the top of its own styles.css.
+ * Page-specific styles (badges, sidebars, modals…) stay in the per-page
+ * file with the page-prefixed selectors.
+ * ──────────────────────────────────────────────────────────────────── */
+
+/* ── License notice positioning override ──
+ * `.seopress-notice` (rendered above the page wrap by Free) ships with
+ * `position: relative; top: 85px; left: 25px;` — a legacy offset designed
+ * to overlay the old jQuery admin header. On the React DataViews pages
+ * that offset pushes the notice down into the sticky page header, leaving
+ * the notice and the breadcrumb panel visually overlapping. Reset the
+ * offset whenever a DataViews page is on screen so the notice flows
+ * normally above the wrap. */
+
+.seopress-notice {
+	top: 0;
+	left: 0;
+	width: auto;
+	margin: 16px 20px;
+}
+
+/* ── Page Header (sticky) ── */
+
+.seopress-dataviews-page-header {
+	position: sticky;
+	top: 32px; /* WP admin bar height */
+	z-index: 50;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px 16px;
+	padding: 12px 16px;
+	margin-bottom: 20px;
+	background: #fff;
+	border: 1px solid var(--borderColor, #E6E6E8);
+	border-radius: 6px;
+	box-shadow: 0 1px 3px rgba( 0, 0, 0, 0.04 );
+}
+
+@media screen and (max-width: 782px) {
+	.seopress-dataviews-page-header {
+		top: 46px; /* Mobile WP admin bar is taller */
+	}
+}
+
+body:not(.admin-bar) .seopress-dataviews-page-header {
+	top: 0;
+}
+
+/* ── Breadcrumb ── */
+
+.seopress-dataviews-breadcrumb {
+	display: flex;
+	align-items: center;
+	flex-wrap: nowrap;
+	flex: 1 1 240px;
+	min-width: 0;
+	font-size: 14px;
+	color: var(--color, #757575);
+	overflow: hidden;
+}
+
+.seopress-dataviews-breadcrumb__item {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+}
+
+.seopress-dataviews-breadcrumb__item:not(:last-child) {
+	flex-shrink: 0;
+}
+
+.seopress-dataviews-breadcrumb__item:last-child {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.seopress-dataviews-breadcrumb__link {
+	color: var(--wp-admin-theme-color);
+	text-decoration: none;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.seopress-dataviews-breadcrumb__link:hover {
+	text-decoration: underline;
+}
+
+.seopress-dataviews-breadcrumb__current {
+	display: block;
+	color: var(--colorDark, #1e1e1e);
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.seopress-dataviews-breadcrumb__separator {
+	color: var(--borderColor, #E6E6E8);
+	margin: 0 2px;
+	flex-shrink: 0;
+}
+
+.seopress-dataviews-page-header__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	flex: 0 1 auto;
+	justify-content: flex-end;
+}
+
+@media screen and (max-width: 600px) {
+	.seopress-dataviews-breadcrumb {
+		flex: 1 1 100%;
+	}
+
+	.seopress-dataviews-page-header__actions {
+		flex: 1 1 100%;
+		justify-content: flex-start;
+	}
+}
+
+/* ── Snackbar list (portal to body, fixed bottom-right) ──
+ *
+ * WordPress core sets .components-snackbar-list { position: absolute; width: 100%; }
+ * which would otherwise stretch the container across the screen and push
+ * notices over the admin sidebar. Re-pin it bottom-right with explicit
+ * width: auto so the toast hugs its content.
+ *
+ * Bottom offset is exposed as a CSS variable so the value tracks any
+ * future change (taller chat widget, mobile breakpoint, etc.) from a
+ * single place. Default 100px clears a typical bottom-right chat
+ * widget (~60-80px tall when collapsed) while keeping the toast in the
+ * eye-line near the save action.
+ */
+:root {
+	--seopress-ui-snackbar-bottom-offset: 100px;
+}
+
+.components-snackbar-list.seopress-dataviews-snackbar-list {
+	position: fixed !important;
+	bottom: var( --seopress-ui-snackbar-bottom-offset, 100px ) !important;
+	right: 24px !important;
+	left: auto !important;
+	top: auto !important;
+	width: auto !important;
+	max-width: calc( 100vw - 48px );
+	z-index: 100000 !important;
+}
+
+.components-snackbar-list.seopress-dataviews-snackbar-list .components-snackbar {
+	box-shadow: 0 2px 8px rgba( 0, 0, 0, 0.15 );
+}
+
+/* ── Delete confirmation modal ── */
+
+.seopress-dataviews-delete-modal p {
+	margin: 0 0 16px;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.seopress-dataviews-delete-modal__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+/* ── Row actions dropdown cursor ──
+ *
+ * The DataViews row-actions dropdown renders Menu.Item elements whose
+ * styled component uses `all: unset`, which also wipes the cursor. Target
+ * the menu items by role (emotion class hashes are unstable) and force
+ * a pointer cursor so hovered rows feel clickable.
+ */
+[role="menuitem"]:not( [aria-disabled="true"] ),
+[role="menuitemradio"]:not( [aria-disabled="true"] ),
+[role="menuitemcheckbox"]:not( [aria-disabled="true"] ) {
+	cursor: pointer !important;
+}
+
+/* ── Layout ── */
+
+.seopress-broken-links-dataview-wrapper {
+	margin: 20px 20px 20px 0;
+}
+
+/* ── Scan Progress wrapper ── */
+
+.seopress-broken-links-scan-progress {
+	margin-bottom: 20px;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid var(--borderColor, #E6E6E8);
+	border-radius: 6px;
+}
+
+/* Native <ProgressBar> Track defaults to a fixed 160px width and a hairline
+   height. Force it full width and to the admin theme accent color. !important
+   beats emotion's runtime styles, which load after this stylesheet. */
+.seopress-broken-links-scan-progress-bar {
+	width: 100% !important;
+	max-width: none;
+	height: 6px;
+	border-radius: 999px;
+}
+
+.seopress-broken-links-scan-progress-bar > div {
+	background-color: var(--wp-admin-theme-color);
+}
+
+/* ── Last scan info ── */
+
+.seopress-broken-links-last-scan {
+	margin: 0 0 12px;
+	font-size: 13px;
+	color: var(--color, #757575);
+}
+

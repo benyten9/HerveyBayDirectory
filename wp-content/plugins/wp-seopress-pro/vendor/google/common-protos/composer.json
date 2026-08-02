@@ -1,0 +1,32 @@
+{
+    "name": "google\/common-protos",
+    "type": "library",
+    "description": "Google API Common Protos for PHP",
+    "keywords": [
+        "google"
+    ],
+    "homepage": "https:\/\/github.com\/googleapis\/common-protos-php",
+    "license": "Apache-2.0",
+    "require": {
+        "php": ">=7.4",
+        "google\/protobuf": "^3.6.1"
+    },
+    "require-dev": {
+        "phpunit\/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SEOPressPro\\Vendor\\Google\\Api\\": "src\/Api",
+            "SEOPressPro\\Vendor\\Google\\Cloud\\": "src\/Cloud",
+            "SEOPressPro\\Vendor\\Google\\Iam\\": "src\/Iam",
+            "SEOPressPro\\Vendor\\Google\\Rpc\\": "src\/Rpc",
+            "SEOPressPro\\Vendor\\Google\\Type\\": "src\/Type",
+            "SEOPressPro\\Vendor\\GPBMetadata\\Google\\Api\\": "metadata\/Api",
+            "SEOPressPro\\Vendor\\GPBMetadata\\Google\\Cloud\\": "metadata\/Cloud",
+            "SEOPressPro\\Vendor\\GPBMetadata\\Google\\Iam\\": "metadata\/Iam",
+            "SEOPressPro\\Vendor\\GPBMetadata\\Google\\Logging\\": "metadata\/Logging",
+            "SEOPressPro\\Vendor\\GPBMetadata\\Google\\Rpc\\": "metadata\/Rpc",
+            "SEOPressPro\\Vendor\\GPBMetadata\\Google\\Type\\": "metadata\/Type"
+        }
+    }
+}

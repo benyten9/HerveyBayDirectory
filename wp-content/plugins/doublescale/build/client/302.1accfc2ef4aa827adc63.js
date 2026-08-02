@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdoublescale=self.webpackChunkdoublescale||[]).push([[302],{82302:(e,l,a)=>{a.r(l),a.d(l,{default:()=>u});var s=a(51609),c=a(3040);const u=()=>(0,s.createElement)(c.A,{mode:"dialog"})}}]);

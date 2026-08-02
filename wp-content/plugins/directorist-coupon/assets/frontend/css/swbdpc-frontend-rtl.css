@@ -1,0 +1,230 @@
+
+/**
+ * @package  Directorist - Coupon
+ */
+
+ .directorist-coupon-redeem {
+    border: none;
+    background: #fff;
+    margin-bottom: 15px;
+    padding:30px 40px 30px;
+    border-radius: 16px;
+    -webkit-box-shadow: var(--directorist-box-shadow);
+            box-shadow: var(--directorist-box-shadow);
+}
+
+.directorist-coupon-redeem__input-wrapper{
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    gap: 15px 25px;
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+}
+
+#directorist .directorist-coupon-redeem h4,
+.directorist-coupon-redeem h4 {
+    font-size: 16px;
+    margin: 0 0 15px;
+    padding-bottom: 0;
+}
+
+#directorist .directorist-coupon-redeem .directorist-coupon-redeem__form {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    gap: 10px;
+}
+
+#directorist .directorist-coupon-redeem .directorist-coupon-redeem__form input {
+    max-width: 300px;
+    width: auto;
+    min-height: 39px;
+    max-height: 39px;
+    border: 1px solid #e6ebf1;
+    border-radius: 6px;
+    padding: 0 20px;
+    -o-text-overflow: ellipsis;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+}
+
+#directorist .directorist-coupon-redeem .directorist-coupon-redeem__form button {
+    width: auto;
+    height: 39px;
+    border: 0 none;
+    background: var(--directorist-color-primary, #444752);
+    color: #fff;
+    border-radius: 5px;
+    padding: 0 15px;
+    cursor: pointer;
+    -webkit-transition: 0.3s;
+    -o-transition: 0.3s;
+    transition: 0.3s;
+}
+
+#directorist .directorist-coupon-redeem .directorist-coupon-redeem__form button:hover{
+    opacity: 0.85;
+}
+
+/* Coupon shortcode card style */
+.directorist-coupon--card {
+    border-radius: 5px;
+    padding: 30px;
+    max-width: 400px;
+    margin: 0 auto 30px;
+    -webkit-box-shadow: 0 5px 10px rgba(139, 142, 171, 0.15);
+            box-shadow: 0 5px 10px rgba(139, 142, 171, 0.15);
+    background: #fff;
+}
+
+.directorist-coupon__thumb {
+    margin-bottom: 15px;
+}
+
+.directorist-coupon__thumb img {
+    border-radius: 5px;
+}
+
+.directorist-coupon__content .directorist-coupon__title {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.23;
+}
+
+.directorist-coupon__description {
+    display: block;
+}
+
+.directorist-coupon__code {
+    margin-top: 10px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+    gap: 15px 20px;
+}
+
+.directorist-coupon__code-input {
+    max-width: 260px;
+    width: 100%;
+    border: 1px solid #4353FF;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    overflow: hidden;
+    gap: 10px 30px;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.directorist-coupon__code .directorist-coupon__code__text {
+    width: 100%;
+    height: 100%;
+    border: none !important;
+    outline: none !important;
+    -webkit-box-shadow: none !important;
+            box-shadow: none !important;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    padding: 15px 20px 15px 95px !important;
+    margin: 0 !important;
+    font-size: 16px;
+    font-weight: 500;
+    -o-text-overflow: ellipsis;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+}
+
+.directorist-coupon__code .directorist-coupon__code__copy-btn {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: #4353FF;
+    color: #fff;
+    padding: 0 20px;
+    border-radius: 5px 0 0 5px;
+    border: 0 none;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.directorist-coupon__code .directorist-coupon__code__copy-notice {
+    display: none;
+    color: #32cc6f;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.directorist-coupon-redeem__disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.directorist-coupon-redeem__message__error {
+    color: var(--directorist-color-danger, #e23636);
+    font-size: 15px;
+}
+
+.directorist-coupon-redeem__message__success {
+    color: var(--directorist-color-success, #32cc6f);
+    font-size: 15px;
+}
+
+.directorist-coupon__timer {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    margin: 5px 0 15px !important;
+    padding: 0 !important;
+}
+
+.directorist-coupon__timer li {
+    text-align: center;
+    list-style-type: none;
+    font-size: 17px;
+    font-weight: 500;
+    color: #fff;
+    background: #00C7BD;
+    border-radius: 4px;
+    padding: 3px 8px 5px;
+    line-height: 1.2;
+    margin-left: 5px;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+}
+
+.directorist-coupon__timer li span {
+    display: inline-block;
+    margin-right: 3px;
+}
+
+.directorist-coupon__countdown__data {
+    display: none;
+}

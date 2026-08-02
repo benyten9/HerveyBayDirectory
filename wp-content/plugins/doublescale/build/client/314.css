@@ -1,0 +1,92 @@
+.doublescale-booking-calendar-events{display:flex;flex-wrap:wrap;gap:20px}.doublescale-booking-calendar-events .doublescale-booking-calendar-event{cursor:pointer;transition:all .3s}.doublescale-booking-calendar-events .doublescale-booking-calendar-event:hover{box-shadow:0 0 10px rgba(0,0,0,.1);transform:translateY(-5px)}.doublescale-booking-calendar-no-events{display:flex;justify-content:center;align-items:center;min-height:200px;width:100%;color:#999}.doublescale-booking-calendars-action{margin-bottom:20px}
+.custom-steps .ant-steps-item-title{font-weight:500;color:#333}.custom-steps .ant-steps-item-icon{background-color:#e8e2fb;color:#3a3a99}.custom-steps .ant-steps-item-process .ant-steps-item-icon{background-color:#3a3a99;border-color:#3a3a99}.custom-steps .ant-steps-item-finish .ant-steps-item-icon{background-color:#3a3a99;border-color:#3a3a99}.custom-steps .ant-steps-item-tail{background-color:#3a3a99;height:2px;top:50%}
+.search-filter .ant-input-affix-wrapper{padding:0 10px}
+
+
+.doublescale-booking-field-badge{display:inline-block;padding:0 10px;border-radius:5px;background-color:#f1f1f1;color:#333;font-size:12px;margin-right:5px;cursor:pointer;transition:all .3s}
+.custom-checkbox .ant-checkbox-inner{width:22px;height:22px;border-color:#3a3a99 !important}.custom-checkbox .ant-checkbox-inner:hover{background-color:#e8e2fb !important;border-color:#3a3a99 !important}.custom-checkbox .ant-checkbox-checked .ant-checkbox-inner{background-color:#3a3a99 !important;border-color:#3a3a99 !important}.custom-checkbox .ant-checkbox-checked .ant-checkbox-inner::after{inset-inline-start:33%}
+.react-multi-email {
+  margin: 0;
+  max-width: 100%;
+  flex: 1 0 auto;
+  outline: 0;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+  text-align: left;
+  line-height: 1.21428571em;
+  padding: 0.4em 0.5em;
+  background: #fff;
+  border: 1px solid rgba(34, 36, 38, 0.15);
+  color: rgba(0, 0, 0, 0.87);
+  border-radius: 0.28571429rem;
+  transition: box-shadow 0.1s ease, border-color 0.1s ease;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: flex-start;
+}
+.react-multi-email > span[data-placeholder] {
+  display: none;
+  position: absolute;
+  left: 0.5em;
+  top: 0.4em;
+  padding: 0.4em;
+  line-height: 1.21428571em;
+}
+.react-multi-email.focused {
+  border-color: #85b7d9;
+  background: #fff;
+}
+
+.react-multi-email.empty > span[data-placeholder] {
+  display: inline;
+  color: #ccc;
+}
+.react-multi-email.fill > span[data-placeholder] {
+  display: none;
+}
+
+.react-multi-email > input {
+  flex: 1;
+  width: auto !important;
+  outline: none !important;
+  border: 0 none !important;
+  display: inline-block !important;
+  line-height: 1;
+  vertical-align: baseline !important;
+  padding: 0.4em 0.1em !important;
+}
+
+.react-multi-email [data-tag] {
+  line-height: 1;
+  vertical-align: baseline;
+  margin: 0.14285714em;
+  background-color: #f3f3f3;
+  background-image: none;
+  padding: 0.4em 0.8em;
+  color: rgba(0, 0, 0, 0.6);
+  text-transform: none;
+  font-weight: 600;
+  border: 0 solid transparent;
+  border-radius: 0.28571429rem;
+  transition: background 0.1s ease;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: 100%;
+}
+
+.react-multi-email [data-tag] [data-tag-item] {
+  max-width: 100%;
+  overflow: hidden;
+}
+.react-multi-email [data-tag]:first-child {
+  margin-left: 0;
+}
+.react-multi-email [data-tag] [data-tag-handle] {
+  margin-left: 0.833em;
+  cursor: pointer;
+}
+
+.booking-react-multi-email.react-multi-email{margin:0;max-width:100%;border:1px solid hsl(var(--border));border-radius:.5rem;box-shadow:none;background:hsl(var(--card));color:hsl(var(--foreground));padding:.35rem .5rem;min-height:3rem;transition:border-color .15s ease,box-shadow .15s ease}.booking-react-multi-email.react-multi-email.focused{border-color:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--ring)/0.2);background:hsl(var(--card))}.booking-react-multi-email.react-multi-email>input{background:rgba(0,0,0,0);color:inherit}.booking-react-multi-email.react-multi-email>span[data-placeholder]{color:hsl(var(--muted-foreground));opacity:.8}
