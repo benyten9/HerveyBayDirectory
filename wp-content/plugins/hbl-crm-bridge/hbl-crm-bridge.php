@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.39
+ * Version:      1.0.40
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -130,7 +130,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.39' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.40' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -1039,6 +1039,74 @@ function hbl_crm_bridge_scope_meta_query( string $scope ): array {
 }
 
 /**
+ * Directorist's own listing categories (the ATBDP_CATEGORY taxonomy — the same
+ * categories used on the listing submission form), flattened parent-first with
+ * a depth so a dropdown can indent children under their parent.
+ *
+ * @return array<int,array{id:int,name:string,depth:int}>
+ */
+function hbl_crm_bridge_get_directorist_categories(): array {
+	if ( ! defined( 'ATBDP_CATEGORY' ) ) {
+		return [];
+	}
+
+	$terms = get_terms( [
+		'taxonomy'   => ATBDP_CATEGORY,
+		'hide_empty' => false,
+	] );
+
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return [];
+	}
+
+	// Group by parent so the tree can be walked root-first, children indented,
+	// rather than however get_terms() happened to order the flat list.
+	$by_parent = [];
+	foreach ( $terms as $term ) {
+		$by_parent[ (int) $term->parent ][] = $term;
+	}
+	foreach ( $by_parent as &$group ) {
+		usort( $group, static function ( $a, $b ) {
+			return strcasecmp( $a->name, $b->name );
+		} );
+	}
+	unset( $group );
+
+	$flat = [];
+	$walk = static function ( int $parent_id, int $depth ) use ( &$walk, &$flat, $by_parent ) {
+		foreach ( $by_parent[ $parent_id ] ?? [] as $term ) {
+			$flat[] = [ 'id' => (int) $term->term_id, 'name' => $term->name, 'depth' => $depth ];
+			$walk( (int) $term->term_id, $depth + 1 );
+		}
+	};
+	$walk( 0, 0 );
+
+	return $flat;
+}
+
+/**
+ * Builds the WP_Query tax_query clause for a Bulk Sync category filter.
+ *
+ * WP_Query's tax_query includes child terms of the given term by default, so
+ * picking a parent category also picks up everything filed under it.
+ *
+ * @param int $term_id Directorist category term ID, or 0 for no filter.
+ * @return array Empty array when no filter should apply.
+ */
+function hbl_crm_bridge_category_tax_query( int $term_id ): array {
+	if ( ! $term_id || ! defined( 'ATBDP_CATEGORY' ) ) {
+		return [];
+	}
+	return [
+		[
+			'taxonomy' => ATBDP_CATEGORY,
+			'field'    => 'term_id',
+			'terms'    => [ $term_id ],
+		],
+	];
+}
+
+/**
  * AJAX: list the listings for a scope so the admin can pick which to sync.
  *
  * Each row reports the email the sync would actually use (via the resolver) and
@@ -1052,7 +1120,8 @@ function hbl_crm_bridge_ajax_list_listings(): void {
 		wp_send_json_error( 'Unauthorized.' );
 	}
 
-	$scope = sanitize_key( $_POST['scope'] ?? 'unclaimed' );
+	$scope    = sanitize_key( $_POST['scope'] ?? 'unclaimed' );
+	$category = absint( $_POST['category'] ?? 0 );
 
 	$args = [
 		'post_type'      => 'at_biz_dir',
@@ -1066,6 +1135,10 @@ function hbl_crm_bridge_ajax_list_listings(): void {
 	$meta_query = hbl_crm_bridge_scope_meta_query( $scope );
 	if ( ! empty( $meta_query ) ) {
 		$args['meta_query'] = $meta_query;
+	}
+	$tax_query = hbl_crm_bridge_category_tax_query( $category );
+	if ( ! empty( $tax_query ) ) {
+		$args['tax_query'] = $tax_query;
 	}
 
 	$rows = [];
@@ -1094,7 +1167,8 @@ function hbl_crm_bridge_export_noemail_csv(): void {
 	}
 	check_admin_referer( 'hbl_crm_bridge_export_noemail' );
 
-	$scope = sanitize_key( $_GET['scope'] ?? 'unclaimed' );
+	$scope    = sanitize_key( $_GET['scope'] ?? 'unclaimed' );
+	$category = absint( $_GET['category'] ?? 0 );
 
 	$args = [
 		'post_type'      => 'at_biz_dir',
@@ -1108,6 +1182,10 @@ function hbl_crm_bridge_export_noemail_csv(): void {
 	$meta_query = hbl_crm_bridge_scope_meta_query( $scope );
 	if ( ! empty( $meta_query ) ) {
 		$args['meta_query'] = $meta_query;
+	}
+	$tax_query = hbl_crm_bridge_category_tax_query( $category );
+	if ( ! empty( $tax_query ) ) {
+		$args['tax_query'] = $tax_query;
 	}
 
 	$rows = [];
@@ -1650,6 +1728,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 	$doublescale_tags   = $settings['doublescale_tags'];
 	$doublescale_active = hbl_crm_bridge_doublescale_available();
 	$rest_url           = rest_url( HBL_CRM_BRIDGE_REST_NS . HBL_CRM_BRIDGE_REST_ROUTE );
+	$categories         = hbl_crm_bridge_get_directorist_categories();
 
 	$all_events = [
 		'listing_claimed'   => [
@@ -1901,7 +1980,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 					<div class="hbl-crmb-step-number">4</div>
 					<div>
 						<h2>Bulk Sync — Push Listing Owners to DoubleScale</h2>
-						<p class="hbl-crmb-step-sub">Load listings by scope, tick the ones you want, and sync them into DoubleScale as contacts. Rows without a usable email are flagged as <em>No email</em> and can't be selected. Each synced contact also gets its listing URL and business name stored as contact meta (<code>listing_url</code>, <code>listing_title</code>, <code>business_name</code>).</p>
+						<p class="hbl-crmb-step-sub">Listings for the selected scope load automatically — tick the ones you want and sync them into DoubleScale as contacts. Rows without a usable email are flagged as <em>No email</em> and can't be selected. Each synced contact also gets its listing URL and business name stored as contact meta (<code>listing_url</code>, <code>listing_title</code>, <code>business_name</code>).</p>
 					</div>
 				</div>
 
@@ -1917,6 +1996,17 @@ function hbl_crm_bridge_settings_page_html(): void {
 								<option value="all">All listings</option>
 							</select>
 						</div>
+						<div class="hbl-crmb-sync-field">
+							<label for="hbl_bulk_sync_category">Category</label>
+							<select id="hbl_bulk_sync_category" class="hbl-crmb-input" <?php disabled( empty( $categories ) ); ?>>
+								<option value="0">All categories</option>
+								<?php foreach ( $categories as $cat ) : ?>
+									<option value="<?php echo esc_attr( $cat['id'] ); ?>">
+										<?php echo esc_html( str_repeat( '— ', $cat['depth'] ) . $cat['name'] ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</div>
 						<div class="hbl-crmb-sync-field hbl-crmb-sync-search">
 							<label for="hbl_bulk_sync_search">Search</label>
 							<input type="search" id="hbl_bulk_sync_search" class="hbl-crmb-input" placeholder="Filter by business name or email…">
@@ -1924,11 +2014,10 @@ function hbl_crm_bridge_settings_page_html(): void {
 						<label class="hbl-crmb-check-inline">
 							<input type="checkbox" id="hbl_bulk_only_syncable"> Only syncable
 						</label>
-						<button type="button" id="hbl-bulk-load-btn" class="button">Load listings</button>
 						<button type="button" id="hbl-bulk-export-btn" class="button" title="Download the listings in this scope that have no usable email (can't become contacts)">Export no-email (CSV)</button>
 					</div>
 
-					<p id="hbl-bulk-load-msg" class="hbl-crmb-sync-hint">Pick a scope and choose <strong>Load listings</strong> to select which businesses to push into DoubleScale.</p>
+					<p id="hbl-bulk-load-msg" class="hbl-crmb-sync-hint">Loading listings…</p>
 
 					<div id="hbl-bulk-table-wrap" style="display:none">
 						<div class="hbl-crmb-selbar">
@@ -1985,9 +2074,12 @@ function hbl_crm_bridge_settings_page_html(): void {
 					<script>
 					(function(){
 						var scopeEl    = document.getElementById('hbl_bulk_sync_scope');
+						var categoryEl = document.getElementById('hbl_bulk_sync_category');
+						// Stays disabled throughout when there are no Directorist categories
+						// to filter by — don't let the load/sync busy-state toggles re-enable it.
+						var categoryUsable = !categoryEl.disabled;
 						var searchEl   = document.getElementById('hbl_bulk_sync_search');
 						var onlySyncEl = document.getElementById('hbl_bulk_only_syncable');
-						var loadBtn    = document.getElementById('hbl-bulk-load-btn');
 						var loadMsg    = document.getElementById('hbl-bulk-load-msg');
 						var tableWrap  = document.getElementById('hbl-bulk-table-wrap');
 						var tbody      = document.getElementById('hbl-bulk-tbody');
@@ -2116,8 +2208,12 @@ function hbl_crm_bridge_settings_page_html(): void {
 						}
 
 						// ---- Load listings ----
-						loadBtn.addEventListener('click', function(){
-							loadBtn.disabled = true;
+						// Loads automatically on page load and whenever the scope or category
+						// changes — there is no manual "Load listings" button.
+						function loadListings(){
+							scopeEl.disabled = true;
+							categoryEl.disabled = true;
+							tableWrap.style.display = 'none';
 							loadMsg.style.display = 'block';
 							loadMsg.textContent = 'Loading listings…';
 
@@ -2125,11 +2221,13 @@ function hbl_crm_bridge_settings_page_html(): void {
 							data.append('action', 'hbl_crm_bridge_list_listings');
 							data.append('nonce', NONCE);
 							data.append('scope', scopeEl.value);
+							data.append('category', categoryEl.value);
 
 							fetch(ajaxurl, { method: 'POST', body: data })
 								.then(function(r){ return r.json(); })
 								.then(function(res){
-									loadBtn.disabled = false;
+									scopeEl.disabled = false;
+									categoryEl.disabled = !categoryUsable;
 									if (!res.success) { loadMsg.textContent = 'Error: ' + (res.data || 'Could not load listings.'); return; }
 									rows = res.data.rows || [];
 									selected = {};
@@ -2140,8 +2238,12 @@ function hbl_crm_bridge_settings_page_html(): void {
 									updateCount();
 									status.style.display = 'none';
 								})
-								.catch(function(e){ loadBtn.disabled = false; loadMsg.textContent = 'Network error: ' + e.message; });
-						});
+								.catch(function(e){ scopeEl.disabled = false; categoryEl.disabled = !categoryUsable; loadMsg.textContent = 'Network error: ' + e.message; });
+						}
+
+						scopeEl.addEventListener('change', loadListings);
+						categoryEl.addEventListener('change', loadListings);
+						loadListings();
 
 						// ---- Export no-email listings (CSV) ----
 						var exportBtn = document.getElementById('hbl-bulk-export-btn');
@@ -2150,7 +2252,8 @@ function hbl_crm_bridge_settings_page_html(): void {
 								window.location.href = '<?php echo esc_js( admin_url( 'admin-post.php' ) ); ?>'
 									+ '?action=hbl_crm_bridge_export_noemail'
 									+ '&_wpnonce=<?php echo esc_js( wp_create_nonce( 'hbl_crm_bridge_export_noemail' ) ); ?>'
-									+ '&scope=' + encodeURIComponent(scopeEl.value);
+									+ '&scope=' + encodeURIComponent(scopeEl.value)
+									+ '&category=' + encodeURIComponent(categoryEl.value);
 							});
 						}
 
@@ -2179,7 +2282,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 							var done = 0, synced = 0, failed = 0;
 							seen = {}; uniqueCount = 0; reasonCounts = {}; samples = [];
 
-							syncBtn.disabled = true; loadBtn.disabled = true;
+							syncBtn.disabled = true; scopeEl.disabled = true; categoryEl.disabled = true;
 							status.style.display = 'block';
 							errBox.innerHTML = ''; linkBox.style.display = 'none';
 							elTotal.textContent = totalSel;
@@ -2190,7 +2293,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 									msg.textContent = 'Done! ' + synced + ' listing(s) synced → ' + uniqueCount + ' unique contact(s) in DoubleScale, ' + failed + ' unsynced.';
 									bar.style.width = '100%';
 									linkBox.style.display = 'block';
-									syncBtn.disabled = false; loadBtn.disabled = false;
+									syncBtn.disabled = false; scopeEl.disabled = false; categoryEl.disabled = !categoryUsable;
 									return;
 								}
 								msg.textContent = 'Syncing ' + done + '/' + totalSel + '…';
@@ -2204,7 +2307,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 								fetch(ajaxurl, { method: 'POST', body: data })
 									.then(function(r){ return r.json(); })
 									.then(function(res){
-										if (!res.success) { msg.textContent = 'Error: ' + (res.data || 'Unknown error.'); syncBtn.disabled = false; loadBtn.disabled = false; return; }
+										if (!res.success) { msg.textContent = 'Error: ' + (res.data || 'Unknown error.'); syncBtn.disabled = false; scopeEl.disabled = false; categoryEl.disabled = !categoryUsable; return; }
 										var d = res.data;
 										synced += d.synced; failed += d.failed; done += chunks[i].length;
 										if (d.emails) { for (var e = 0; e < d.emails.length; e++) { if (!seen[d.emails[e]]) { seen[d.emails[e]] = 1; uniqueCount++; } } }
@@ -2215,7 +2318,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 										bar.style.width = Math.round((done / totalSel) * 100) + '%';
 										processChunk(i + 1);
 									})
-									.catch(function(err){ msg.textContent = 'Network error: ' + err.message; syncBtn.disabled = false; loadBtn.disabled = false; });
+									.catch(function(err){ msg.textContent = 'Network error: ' + err.message; syncBtn.disabled = false; scopeEl.disabled = false; categoryEl.disabled = !categoryUsable; });
 							}
 							processChunk(0);
 						});
