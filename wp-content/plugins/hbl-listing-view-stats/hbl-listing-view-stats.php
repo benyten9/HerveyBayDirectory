@@ -16,7 +16,7 @@
  *               Applies to Bronze, Silver and Gold listings alike; the plan
  *               tier is published as its own field so campaigns can segment.
  *
- * Version:      1.1.107
+ * Version:      1.1.108
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_LVS_VERSION', '1.1.107' );
+define( 'HBL_LVS_VERSION', '1.1.108' );
 
 /** Schema version — bump to trigger dbDelta on the next load. */
 define( 'HBL_LVS_DB_VERSION', 1 );
@@ -1932,7 +1932,24 @@ function hbl_lvs_selected_quarter(): string {
 		}
 	}
 
-	return $quarters ? $quarters[0] : hbl_lvs_current_quarter_key();
+	if ( ! $quarters ) {
+		return hbl_lvs_current_quarter_key();
+	}
+
+	// hbl_lvs_available_quarters() always offers the next-to-run quarter at the
+	// front of the list so it can be previewed, even though it may not have any
+	// rows yet — sometimes for as long as it takes that quarter to finish. Skip
+	// past it here so the default view is the most recent quarter that has
+	// actually been rolled up, per this function's contract above, rather than
+	// an empty preview.
+	$due = hbl_lvs_next_rollup_target();
+	foreach ( $quarters as $quarter ) {
+		if ( $quarter !== $due ) {
+			return $quarter;
+		}
+	}
+
+	return $quarters[0];
 }
 
 /**

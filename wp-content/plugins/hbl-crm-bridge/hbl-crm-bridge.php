@@ -83,6 +83,25 @@
  * hook, so any DoubleScale automation listening for that tag will run.
  *
  * ──────────────────────────────────────────────────────────────────────────────
+ * MERGE TAGS PRODUCED
+ * ──────────────────────────────────────────────────────────────────────────────
+ *
+ * These custom fields are written on the listing owner's DoubleScale contact
+ * and are therefore usable as email merge tags. Field definitions this plugin
+ * owns (currently just expiration-date) are created in DoubleScale
+ * automatically on the first admin page load; the rest are written on the
+ * assumption that a matching field already exists (created by hand in
+ * DoubleScale → Custom Fields) — writes no-op harmlessly until it does.
+ *
+ *   {{contact:contact_field:expiration-date}}     27 July 2027 / Never / ''
+ *     When the listing's current plan expires (e.g. a Silver membership).
+ *     Refreshed on every synced listing event and on plan-upgrade completion.
+ *   {{contact:contact_field:business-name}}       Acme Plumbing
+ *   {{contact:contact_field:listing-url}}         https://example.com/listing/acme-plumbing/
+ *   {{contact:contact_field:edited-since-claim}}  Yes — 2026-08-03
+ *   {{contact:contact_field:plan-upgrade-status}} Completed: Gold — 2026-08-03
+ *
+ * ──────────────────────────────────────────────────────────────────────────────
  * DEVELOPER HOOKS
  * ──────────────────────────────────────────────────────────────────────────────
  *
@@ -159,6 +178,13 @@ function hbl_crm_bridge_boot(): void {
 	add_action( 'admin_menu',           'hbl_crm_bridge_add_settings_page' );
 	add_action( 'admin_init',           'hbl_crm_bridge_register_settings' );
 	add_action( 'admin_enqueue_scripts', 'hbl_crm_bridge_enqueue_admin_assets' );
+
+	// Create this plugin's DoubleScale custom field definitions (e.g.
+	// "expiration-date") once Pro's models are available. Deferred to
+	// admin_init, same as Listing Views, because DoubleScale Pro is not
+	// guaranteed to be loaded at plugins_loaded time, and because creating
+	// fields must never happen on a front-end request.
+	add_action( 'admin_init', 'hbl_crm_bridge_maybe_ensure_custom_fields' );
 
 	// ── Bulk sync AJAX ────────────────────────────────────────────────────────
 
@@ -710,6 +736,123 @@ function hbl_crm_bridge_get_listing_expiry( int $listing_id ): string {
 	}
 	$ts = strtotime( $raw );
 	return $ts ? gmdate( 'j F Y', $ts ) : $raw;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DOUBLESCALE CUSTOM FIELD DEFINITIONS
+//
+// hbl_crm_bridge_set_custom_field() no-ops silently when a slug has no matching
+// field in DoubleScale, so without this, "expiration-date" would never actually
+// appear as a merge tag unless someone created it by hand in DoubleScale's
+// Custom Fields admin screen. This creates it automatically instead, mirroring
+// the same self-healing pattern used by the Listing Views plugin.
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The field set this plugin publishes.
+ *
+ * @return array<string,array{name:string,type:string}>
+ */
+function hbl_crm_bridge_field_definitions(): array {
+	return [
+		'expiration-date' => [ 'name' => 'Expiration Date', 'type' => 'text' ],
+	];
+}
+
+/**
+ * Creates any missing custom field definitions in DoubleScale.
+ *
+ * @return array{created:int,existing:int,error:string}
+ */
+function hbl_crm_bridge_ensure_custom_fields(): array {
+	$result = [ 'created' => 0, 'existing' => 0, 'error' => '' ];
+
+	if ( ! class_exists( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class ) ) {
+		$result['error'] = 'DoubleScale Pro custom fields are not available.';
+		return $result;
+	}
+
+	try {
+		$group_id = hbl_crm_bridge_ensure_field_group();
+
+		foreach ( hbl_crm_bridge_field_definitions() as $slug => $definition ) {
+			if ( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::get_id( $slug ) ) {
+				++$result['existing'];
+				continue;
+			}
+
+			\DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::create(
+				[
+					'name'     => $definition['name'],
+					'slug'     => $slug,
+					'type'     => $definition['type'],
+					'group_id' => $group_id,
+					'scope'    => 'contact',
+				]
+			);
+
+			++$result['created'];
+		}
+	} catch ( \Throwable $e ) {
+		$result['error'] = $e->getMessage();
+	}
+
+	return $result;
+}
+
+/**
+ * Creates the field definitions once, then stops trying.
+ *
+ * Retries on each admin load until it actually succeeds, so an install where
+ * DoubleScale Pro was activated after this plugin still self-heals rather than
+ * silently never publishing anything.
+ */
+function hbl_crm_bridge_maybe_ensure_custom_fields(): void {
+	if ( get_option( 'hbl_crm_bridge_fields_ready' ) ) {
+		return;
+	}
+
+	if ( ! class_exists( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class ) ) {
+		return;
+	}
+
+	$result = hbl_crm_bridge_ensure_custom_fields();
+
+	if ( ! $result['error'] ) {
+		update_option( 'hbl_crm_bridge_fields_ready', 1, false );
+	}
+}
+
+/**
+ * Finds or creates the contact-scoped group this plugin's fields live in.
+ *
+ * @return int Group ID (0 is accepted by DoubleScale as "ungrouped").
+ */
+function hbl_crm_bridge_ensure_field_group(): int {
+	if ( ! class_exists( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldsGroupModel::class ) ) {
+		return 0;
+	}
+
+	try {
+		$group = \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldsGroupModel::where( 'scope', 'contact' )
+			->where( 'name', 'CRM Bridge' )
+			->first();
+
+		if ( $group ) {
+			return (int) $group->id;
+		}
+
+		$group = \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldsGroupModel::create(
+			[
+				'name'  => 'CRM Bridge',
+				'scope' => 'contact',
+			]
+		);
+
+		return $group ? (int) $group->id : 0;
+	} catch ( \Throwable $e ) {
+		return 0;
+	}
 }
 
 /**
