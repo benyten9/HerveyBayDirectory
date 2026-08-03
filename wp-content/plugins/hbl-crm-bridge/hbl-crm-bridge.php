@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.43
+ * Version:      1.0.44
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -138,7 +138,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.43' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.44' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -999,33 +999,49 @@ function hbl_crm_bridge_register_automation_tags_metabox(): void {
  * @param \WP_Post $post
  */
 function hbl_crm_bridge_render_automation_tags_metabox( $post ): void {
-	$tags = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+	$stored = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+	$tags   = is_array( $stored ) ? array_values( array_filter( array_map( 'trim', $stored ) ) ) : [];
 
-	// Self-heal: the stored snapshot only exists once a sync has touched this
-	// exact listing/contact pairing since this feature shipped (or since the
-	// contact's tags last changed). Rather than leave anything tagged before
-	// that permanently blank, backfill on first view — but only against an
-	// EXISTING contact (get_by_email, never createOrUpdate); a mere page view
-	// should never be what spawns a new DoubleScale contact.
-	if ( '' === $tags && hbl_crm_bridge_doublescale_available() ) {
-		$resolved = hbl_crm_bridge_resolve_listing_contact( $post->ID );
-		if ( $resolved && ! empty( $resolved['email'] ) ) {
-			try {
-				$contact = \DoubleScale\Modules\Contacts\Models\ContactModel::get_by_email( $resolved['email'] );
-			} catch ( \Throwable $e ) {
-				$contact = null;
-			}
-			if ( $contact ) {
-				hbl_crm_bridge_update_listing_automation_tags( $post->ID, $contact );
-				$tags = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+	// Self-heal whenever there is nothing to show yet — covers both "never
+	// synced" and "synced once with zero tags at the time" — so a tag applied
+	// in DoubleScale after either of those still surfaces on the next view,
+	// without needing a listing event or a DoubleScale hook to fire first.
+	// Reason strings below are surfaced in the empty state so a mismatch (e.g.
+	// tagging the wrong test contact) is visible in wp-admin, not just guessed at.
+	$empty_reason = '';
+	if ( ! $tags ) {
+		if ( ! hbl_crm_bridge_doublescale_available() ) {
+			$empty_reason = 'DoubleScale Pro is not active on this site.';
+		} else {
+			$resolved = hbl_crm_bridge_resolve_listing_contact( $post->ID );
+			if ( ! $resolved || empty( $resolved['email'] ) ) {
+				$empty_reason = 'Could not determine an owner email for this listing (no claimed owner and no _email meta set).';
+			} else {
+				$email = $resolved['email'];
+				try {
+					$contact = \DoubleScale\Modules\Contacts\Models\ContactModel::get_by_email( $email );
+				} catch ( \Throwable $e ) {
+					$contact = null;
+				}
+				if ( ! $contact ) {
+					$empty_reason = sprintf( 'No DoubleScale contact found for %s yet.', $email );
+				} else {
+					hbl_crm_bridge_update_listing_automation_tags( $post->ID, $contact );
+					$stored = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+					$tags   = is_array( $stored ) ? array_values( array_filter( array_map( 'trim', $stored ) ) ) : [];
+					if ( ! $tags ) {
+						$empty_reason = sprintf( 'Contact %s exists in DoubleScale but currently has no tags.', $email );
+					}
+				}
 			}
 		}
 	}
 
-	$tags = is_array( $tags ) ? array_values( array_filter( array_map( 'trim', $tags ) ) ) : [];
-
 	if ( ! $tags ) {
-		echo '<p style="color:#6b7280;font-size:12px;margin:0">No automation tags yet. Populated automatically once the listing owner is synced to DoubleScale and has a tag applied.</p>';
+		echo '<p style="color:#6b7280;font-size:12px;margin:0 0 6px">No automation tags yet.</p>';
+		if ( $empty_reason ) {
+			echo '<p style="color:#9ca3af;font-size:11px;margin:0">' . esc_html( $empty_reason ) . '</p>';
+		}
 		return;
 	}
 
