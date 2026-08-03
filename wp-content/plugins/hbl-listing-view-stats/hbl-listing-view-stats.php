@@ -16,7 +16,7 @@
  *               Applies to Bronze, Silver and Gold listings alike; the plan
  *               tier is published as its own field so campaigns can segment.
  *
- * Version:      1.2.0
+ * Version:      1.1.106
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_LVS_VERSION', '1.1.105' );
+define( 'HBL_LVS_VERSION', '1.1.106' );
 
 /** Schema version — bump to trigger dbDelta on the next load. */
 define( 'HBL_LVS_DB_VERSION', 1 );
@@ -700,7 +700,40 @@ function hbl_lvs_effective_start_ts( string $key ): int {
 		return $bounds['start_ts'];
 	}
 
-	return max( $bounds['start_ts'], (int) strtotime( $started . ' UTC' ) );
+	$effective = max( $bounds['start_ts'], (int) strtotime( $started . ' UTC' ) );
+
+	// Clamp inside the quarter itself. A logger that only started after this
+	// quarter had already finished has no data for it at all — callers must
+	// never be handed a "start" that lands after the quarter's own end.
+	return min( $effective, $bounds['end_ts'] - 1 );
+}
+
+/**
+ * The quarter that the next rollup should cover.
+ *
+ * Ordinarily this is simply the previous calendar quarter. But if the event
+ * logger did not exist for any part of that quarter (activation happened
+ * after it had already ended), there is no data for it and never will be —
+ * advance forward to the first quarter that ends after logging started, the
+ * earliest quarter that can ever produce a real number.
+ *
+ * @return string Quarter key.
+ */
+function hbl_lvs_next_rollup_target(): string {
+	$target  = hbl_lvs_previous_quarter_key( hbl_lvs_current_quarter_key() );
+	$started = get_option( HBL_LVS_OPT_LOGGER_START );
+
+	if ( ! $started ) {
+		return $target;
+	}
+
+	$started_ts = (int) strtotime( $started . ' UTC' );
+
+	while ( hbl_lvs_quarter_bounds_gmt( $target )['end_ts'] <= $started_ts ) {
+		$target = hbl_lvs_next_quarter_key( $target );
+	}
+
+	return $target;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -791,14 +824,18 @@ function hbl_lvs_run_daily(): void {
 }
 
 /**
- * Starts a rollup for the previous calendar quarter when one is due.
+ * Starts a rollup for the next reportable quarter when one is due.
  *
  * Idempotent: safe to call on every daily cron and every fallback nudge.
  *
  * @return bool True if a run was started.
  */
 function hbl_lvs_maybe_start_rollup(): bool {
-	$target = hbl_lvs_previous_quarter_key( hbl_lvs_current_quarter_key() );
+	$target = hbl_lvs_next_rollup_target();
+
+	if ( ! hbl_lvs_quarter_has_ended( $target ) ) {
+		return false; // The next reportable quarter hasn't finished yet.
+	}
 
 	if ( get_option( HBL_LVS_OPT_LAST_ROLLUP ) === $target ) {
 		return false; // Already done.
@@ -1866,7 +1903,7 @@ function hbl_lvs_available_quarters(): array {
 	$found = array_map( 'strval', (array) $found );
 
 	// Always offer the quarter that would be reported next, even before it runs.
-	$due = hbl_lvs_previous_quarter_key( hbl_lvs_current_quarter_key() );
+	$due = hbl_lvs_next_rollup_target();
 	if ( ! in_array( $due, $found, true ) ) {
 		array_unshift( $found, $due );
 	}
@@ -1907,7 +1944,7 @@ function hbl_lvs_render_admin_page(): void {
 
 	$events  = hbl_lvs_table( 'events' );
 	$current = hbl_lvs_current_quarter_key();
-	$due     = hbl_lvs_previous_quarter_key( $current );
+	$due     = hbl_lvs_next_rollup_target();
 	$started = get_option( HBL_LVS_OPT_LOGGER_START );
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -2110,7 +2147,7 @@ function hbl_lvs_tab_overview(): void {
 
 	$events  = hbl_lvs_table( 'events' );
 	$current = hbl_lvs_current_quarter_key();
-	$due     = hbl_lvs_previous_quarter_key( $current );
+	$due     = hbl_lvs_next_rollup_target();
 	$run     = get_option( HBL_LVS_OPT_RUN );
 	$summary = get_option( 'hbl_lvs_last_summary' );
 	$started = get_option( HBL_LVS_OPT_LOGGER_START );
@@ -2816,7 +2853,7 @@ function hbl_lvs_tab_tools(): void {
 	global $wpdb;
 
 	$current = hbl_lvs_current_quarter_key();
-	$due     = hbl_lvs_previous_quarter_key( $current );
+	$due     = hbl_lvs_next_rollup_target();
 
 	hbl_lvs_step_open(
 		1,
@@ -3002,7 +3039,7 @@ function hbl_lvs_handle_admin_action(): void {
 		case 'run_rollup':
 			$tab     = 'results';
 			$quarter = isset( $_POST['quarter'] ) ? sanitize_text_field( wp_unslash( $_POST['quarter'] ) ) : '';
-			$quarter = $quarter ? $quarter : hbl_lvs_previous_quarter_key( hbl_lvs_current_quarter_key() );
+			$quarter = $quarter ? $quarter : hbl_lvs_next_rollup_target();
 			hbl_lvs_start_rollup( $quarter );
 			$notice = sprintf(
 				/* translators: %s: quarter */
