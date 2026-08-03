@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.42
+ * Version:      1.0.43
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -138,7 +138,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.42' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.43' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -1000,6 +1000,28 @@ function hbl_crm_bridge_register_automation_tags_metabox(): void {
  */
 function hbl_crm_bridge_render_automation_tags_metabox( $post ): void {
 	$tags = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+
+	// Self-heal: the stored snapshot only exists once a sync has touched this
+	// exact listing/contact pairing since this feature shipped (or since the
+	// contact's tags last changed). Rather than leave anything tagged before
+	// that permanently blank, backfill on first view — but only against an
+	// EXISTING contact (get_by_email, never createOrUpdate); a mere page view
+	// should never be what spawns a new DoubleScale contact.
+	if ( '' === $tags && hbl_crm_bridge_doublescale_available() ) {
+		$resolved = hbl_crm_bridge_resolve_listing_contact( $post->ID );
+		if ( $resolved && ! empty( $resolved['email'] ) ) {
+			try {
+				$contact = \DoubleScale\Modules\Contacts\Models\ContactModel::get_by_email( $resolved['email'] );
+			} catch ( \Throwable $e ) {
+				$contact = null;
+			}
+			if ( $contact ) {
+				hbl_crm_bridge_update_listing_automation_tags( $post->ID, $contact );
+				$tags = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+			}
+		}
+	}
+
 	$tags = is_array( $tags ) ? array_values( array_filter( array_map( 'trim', $tags ) ) ) : [];
 
 	if ( ! $tags ) {
