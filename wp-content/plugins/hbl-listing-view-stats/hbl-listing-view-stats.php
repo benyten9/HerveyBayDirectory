@@ -16,7 +16,7 @@
  *               Applies to Bronze, Silver and Gold listings alike; the plan
  *               tier is published as its own field so campaigns can segment.
  *
- * Version:      1.1.106
+ * Version:      1.1.107
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_LVS_VERSION', '1.1.106' );
+define( 'HBL_LVS_VERSION', '1.1.107' );
 
 /** Schema version — bump to trigger dbDelta on the next load. */
 define( 'HBL_LVS_DB_VERSION', 1 );
@@ -624,10 +624,16 @@ function hbl_lvs_quarter_bounds_gmt( string $key ): array {
  * ("1 Aug – 30 Sep 2026") when it was not. Never presents a partial period as a
  * complete quarter — owners compare these numbers year on year.
  *
- * @param string $key Quarter key.
+ * @param string $key  Quarter key.
+ * @param bool   $live When true (default) and the quarter is still in progress,
+ *                     the end of the range is truncated to today — appropriate
+ *                     for "here is what's been measured so far". Callers
+ *                     describing a report that has not run yet (e.g. "next
+ *                     report covers") should pass false to see the period's
+ *                     true, final range instead of a range that grows daily.
  * @return string
  */
-function hbl_lvs_period_label( string $key ): string {
+function hbl_lvs_period_label( string $key, bool $live = true ): string {
 	$bounds = hbl_lvs_quarter_bounds_gmt( $key );
 	$tz     = wp_timezone();
 
@@ -635,7 +641,7 @@ function hbl_lvs_period_label( string $key ): string {
 
 	// A quarter still in progress is only measured up to now, not to its calendar
 	// end — otherwise a preview run would label today's numbers with a future date.
-	$last_ts = min( $bounds['end_ts'] - 1, time() );
+	$last_ts = $live ? min( $bounds['end_ts'] - 1, time() ) : $bounds['end_ts'] - 1;
 	$last    = ( new DateTimeImmutable( '@' . $last_ts ) )->setTimezone( $tz );
 
 	if ( hbl_lvs_period_is_complete( $key ) ) {
@@ -2004,7 +2010,7 @@ function hbl_lvs_render_admin_page(): void {
 			<div class="hbl-lvs-stat">
 				<div class="hbl-lvs-stat-value"><?php echo esc_html( $due ); ?></div>
 				<div class="hbl-lvs-stat-label"><?php esc_html_e( 'Next Report Covers', 'hbl-lvs' ); ?></div>
-				<div class="hbl-lvs-stat-sub"><?php echo esc_html( hbl_lvs_period_label( $due ) ); ?></div>
+				<div class="hbl-lvs-stat-sub"><?php echo esc_html( hbl_lvs_period_label( $due, false ) ); ?></div>
 			</div>
 			<div class="hbl-lvs-stat">
 				<div class="hbl-lvs-stat-value"><?php echo esc_html( $defined . ' / ' . $total ); ?></div>
@@ -2260,7 +2266,7 @@ function hbl_lvs_tab_overview(): void {
 			<tr>
 				<th><?php esc_html_e( 'Next report covers', 'hbl-lvs' ); ?></th>
 				<td>
-					<?php echo esc_html( $due . ' — ' . hbl_lvs_period_label( $due ) ); ?>
+					<?php echo esc_html( $due . ' — ' . hbl_lvs_period_label( $due, false ) ); ?>
 					<?php if ( ! hbl_lvs_period_is_complete( $due ) ) : ?>
 						<br><span class="hbl-lvs-muted"><?php esc_html_e( 'Partial: view logging began part-way through this quarter, so it is labelled with its true date range rather than presented as a whole quarter.', 'hbl-lvs' ); ?></span>
 					<?php endif; ?>
