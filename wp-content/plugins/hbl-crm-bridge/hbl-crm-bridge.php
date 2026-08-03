@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.41
+ * Version:      1.0.42
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -82,6 +82,14 @@
  * Applying a tag fires DoubleScale's own `doublescale_contact_tag_apply`
  * hook, so any DoubleScale automation listening for that tag will run.
  *
+ * The reverse direction is also covered: an "Automation Tags" box on the
+ * listing edit screen (below the native Listing Attributes box) shows the
+ * owner contact's current DoubleScale tags — including ones applied later by
+ * a DoubleScale Automation, not just the per-event tag above. It's a stored
+ * snapshot (post meta `_hbl_automation_tags`), refreshed on every listing sync
+ * and whenever DoubleScale fires doublescale_contact_tag_apply/_remove for
+ * that contact.
+ *
  * ──────────────────────────────────────────────────────────────────────────────
  * MERGE TAGS PRODUCED
  * ──────────────────────────────────────────────────────────────────────────────
@@ -130,7 +138,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.41' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.42' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -191,6 +199,11 @@ function hbl_crm_bridge_boot(): void {
 	add_action( 'wp_ajax_hbl_crm_bridge_list_listings', 'hbl_crm_bridge_ajax_list_listings' );
 	add_action( 'wp_ajax_hbl_crm_bridge_bulk_sync', 'hbl_crm_bridge_ajax_bulk_sync' );
 	add_action( 'admin_post_hbl_crm_bridge_export_noemail', 'hbl_crm_bridge_export_noemail_csv' );
+
+	// ── Automation Tags: listing edit-screen box + keep-in-sync hooks ────────
+	add_action( 'add_meta_boxes_at_biz_dir', 'hbl_crm_bridge_register_automation_tags_metabox' );
+	add_action( 'doublescale_contact_tag_apply', 'hbl_crm_bridge_on_contact_tags_changed', 10, 1 );
+	add_action( 'doublescale_contact_tag_remove', 'hbl_crm_bridge_on_contact_tags_changed', 10, 1 );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -578,6 +591,14 @@ function hbl_crm_bridge_doublescale_sync( string $event, int $listing_id, int $u
 			hbl_crm_bridge_doublescale_switch_workflow_tags( $contact, $remove_tag, $add_tag );
 		}
 
+		// Refresh the Automation Tags snapshot for this listing now that any
+		// tag changes above have been applied. (Tag changes elsewhere — e.g. a
+		// DoubleScale Automation acting on this contact later — are handled by
+		// hbl_crm_bridge_on_contact_tags_changed() instead.)
+		if ( $listing_id ) {
+			hbl_crm_bridge_update_listing_automation_tags( $listing_id, $contact );
+		}
+
 		do_action( 'hbl_crm_bridge_doublescale_synced', $event, $listing_id, $contact );
 
 		if ( $debug ) {
@@ -853,6 +874,144 @@ function hbl_crm_bridge_ensure_field_group(): int {
 	} catch ( \Throwable $e ) {
 		return 0;
 	}
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AUTOMATION TAGS — listing-side reflection of the owner contact's DoubleScale tags
+//
+// Stored as real listing post meta (rather than looked up live) so the "Automation
+// Tags" box on the listing edit screen is cheap to render and the value stays
+// usable even if DoubleScale is briefly unreachable. Kept in sync two ways:
+//   1. Every normal listing sync (claim/publish/insert/update/expire) refreshes
+//      the one listing involved directly — see hbl_crm_bridge_doublescale_sync().
+//   2. Any tag applied to or removed from a contact in DoubleScale — including
+//      from an Automation, and regardless of which listing event (if any)
+//      triggered it — refreshes every listing that contact owns, via
+//      DoubleScale's own doublescale_contact_tag_apply/_remove hooks.
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Recomputes and stores a listing's current DoubleScale tags.
+ *
+ * @param int                                                $listing_id
+ * @param \DoubleScale\Modules\Contacts\Models\ContactModel   $contact
+ */
+function hbl_crm_bridge_update_listing_automation_tags( int $listing_id, $contact ): void {
+	if ( ! $listing_id || ! $contact ) {
+		return;
+	}
+	try {
+		// Query fresh rather than reading any pre-loaded ->tags relation — the
+		// caller may be reacting to a tag change that just happened.
+		$tags = $contact->tags()->pluck( 'name' )->all();
+		update_post_meta( $listing_id, '_hbl_automation_tags', array_values( $tags ) );
+	} catch ( \Throwable $e ) {
+		// Non-fatal — never let this break the listing/contact flow it's attached to.
+	}
+}
+
+/**
+ * Finds every listing that resolves to a given contact email, mirroring (in
+ * the opposite direction) the same rules hbl_crm_bridge_resolve_listing_contact()
+ * uses: the listing's own `_email` meta (imported/unclaimed businesses), or a
+ * non-admin author account with this email (claimed listings).
+ *
+ * @param string $email
+ * @return array<int,int> Listing IDs.
+ */
+function hbl_crm_bridge_find_listings_by_email( string $email ): array {
+	if ( ! is_email( $email ) ) {
+		return [];
+	}
+
+	$by_meta = get_posts( [
+		'post_type'      => 'at_biz_dir',
+		'post_status'    => 'any',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => true,
+		'meta_query'     => [
+			[ 'key' => '_email', 'value' => $email ],
+		],
+	] );
+	$ids = array_map( 'absint', $by_meta );
+
+	// A listing's real (non-admin) author is only ever the resolved contact
+	// when there's no _email meta to take precedence — matches the resolver's
+	// own precedence order.
+	$user = get_user_by( 'email', $email );
+	if ( $user && ! user_can( $user, 'manage_options' ) ) {
+		$by_author = get_posts( [
+			'post_type'      => 'at_biz_dir',
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'author'         => $user->ID,
+		] );
+		$ids = array_merge( $ids, array_map( 'absint', $by_author ) );
+	}
+
+	return array_values( array_unique( $ids ) );
+}
+
+/**
+ * Fires on DoubleScale's own doublescale_contact_tag_apply / _remove actions.
+ * Refreshes the Automation Tags meta for every listing the affected contact
+ * owns, so the edit-screen box can't drift out of date.
+ *
+ * @param \DoubleScale\Modules\Contacts\Models\ContactModel $contact
+ */
+function hbl_crm_bridge_on_contact_tags_changed( $contact ): void {
+	if ( ! $contact || empty( $contact->email ) ) {
+		return;
+	}
+	foreach ( hbl_crm_bridge_find_listings_by_email( $contact->email ) as $listing_id ) {
+		hbl_crm_bridge_update_listing_automation_tags( $listing_id, $contact );
+	}
+}
+
+/**
+ * Registers the "Automation Tags" box on the listing edit screen.
+ *
+ * 'side' context + 'default' priority renders it after every 'core'-priority
+ * side box — which is what WordPress uses for the native "Listing Attributes"
+ * (Page Attributes) box on a post type that supports page-attributes, as
+ * Directorist's listing post type does — so this reliably appears below it
+ * without needing to guess at exact registration order.
+ */
+function hbl_crm_bridge_register_automation_tags_metabox(): void {
+	add_meta_box(
+		'hbl_crm_bridge_automation_tags',
+		'Automation Tags',
+		'hbl_crm_bridge_render_automation_tags_metabox',
+		'at_biz_dir',
+		'side',
+		'default'
+	);
+}
+
+/**
+ * Renders the "Automation Tags" box: the stored snapshot of the listing
+ * owner's current DoubleScale tags. Read-only — DoubleScale is the source of
+ * truth, editing here would not propagate back.
+ *
+ * @param \WP_Post $post
+ */
+function hbl_crm_bridge_render_automation_tags_metabox( $post ): void {
+	$tags = get_post_meta( $post->ID, '_hbl_automation_tags', true );
+	$tags = is_array( $tags ) ? array_values( array_filter( array_map( 'trim', $tags ) ) ) : [];
+
+	if ( ! $tags ) {
+		echo '<p style="color:#6b7280;font-size:12px;margin:0">No automation tags yet. Populated automatically once the listing owner is synced to DoubleScale and has a tag applied.</p>';
+		return;
+	}
+
+	echo '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+	foreach ( $tags as $tag ) {
+		echo '<span style="display:inline-block;background:#eef2ff;color:#3730a3;border-radius:999px;padding:2px 10px;font-size:12px;line-height:1.7;white-space:nowrap">' . esc_html( $tag ) . '</span>';
+	}
+	echo '</div>';
 }
 
 /**
