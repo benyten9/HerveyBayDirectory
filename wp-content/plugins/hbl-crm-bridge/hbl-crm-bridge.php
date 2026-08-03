@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.40
+ * Version:      1.0.41
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -130,7 +130,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.40' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.41' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -1107,6 +1107,41 @@ function hbl_crm_bridge_category_tax_query( int $term_id ): array {
 }
 
 /**
+ * Bulk-primes the post and author caches for a batch of listing IDs.
+ *
+ * Without this, each listing in the loop below triggers its own DB round trips
+ * — get_the_title()/get_post_meta() for the post row (the initial WP_Query used
+ * 'fields' => 'ids', which does not prime post/meta caches), plus, for any
+ * listing that falls through to the "real author" branch in
+ * hbl_crm_bridge_resolve_listing_contact(), a separate get_userdata() query.
+ * For a few thousand listings that's a few thousand extra queries — the actual
+ * cause of "Loading listings" taking multiple seconds. Priming both caches
+ * up front turns that into a small, fixed number of WHERE...IN queries.
+ *
+ * @param array<int,int> $ids
+ */
+function hbl_crm_bridge_prime_listing_caches( array $ids ): void {
+	if ( ! $ids ) {
+		return;
+	}
+
+	// Post objects + all their postmeta (covers _phone, _email, etc. used below).
+	// No term cache needed — this loop never reads taxonomy terms.
+	_prime_post_caches( $ids, false, true );
+
+	$author_ids = [];
+	foreach ( $ids as $id ) {
+		$post = get_post( $id );
+		if ( $post && $post->post_author ) {
+			$author_ids[ (int) $post->post_author ] = true;
+		}
+	}
+	if ( $author_ids ) {
+		cache_users( array_keys( $author_ids ) );
+	}
+}
+
+/**
  * AJAX: list the listings for a scope so the admin can pick which to sync.
  *
  * Each row reports the email the sync would actually use (via the resolver) and
@@ -1141,11 +1176,14 @@ function hbl_crm_bridge_ajax_list_listings(): void {
 		$args['tax_query'] = $tax_query;
 	}
 
+	$ids = array_map( 'absint', ( new WP_Query( $args ) )->posts );
+	hbl_crm_bridge_prime_listing_caches( $ids );
+
 	$rows = [];
-	foreach ( ( new WP_Query( $args ) )->posts as $id ) {
-		$resolved = hbl_crm_bridge_resolve_listing_contact( (int) $id );
+	foreach ( $ids as $id ) {
+		$resolved = hbl_crm_bridge_resolve_listing_contact( $id );
 		$rows[]   = [
-			'id'       => (int) $id,
+			'id'       => $id,
 			'title'    => html_entity_decode( get_the_title( $id ), ENT_QUOTES ),
 			'email'    => $resolved ? $resolved['email'] : '',
 			'phone'    => (string) get_post_meta( $id, '_phone', true ),
@@ -1188,10 +1226,13 @@ function hbl_crm_bridge_export_noemail_csv(): void {
 		$args['tax_query'] = $tax_query;
 	}
 
+	$ids = array_map( 'absint', ( new WP_Query( $args ) )->posts );
+	hbl_crm_bridge_prime_listing_caches( $ids );
+
 	$rows = [];
-	foreach ( ( new WP_Query( $args ) )->posts as $id ) {
+	foreach ( $ids as $id ) {
 		// Only export listings that are NOT syncable (no usable email).
-		if ( hbl_crm_bridge_resolve_listing_contact( (int) $id ) ) {
+		if ( hbl_crm_bridge_resolve_listing_contact( $id ) ) {
 			continue;
 		}
 		$rows[] = [
