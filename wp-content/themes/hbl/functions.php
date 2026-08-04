@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Define theme constants
  */
-define( 'HBL_VERSION', '1.2.693' );
+define( 'HBL_VERSION', '1.2.694' );
 define( 'HBL_THEME_DIR', get_template_directory() );
 define( 'HBL_THEME_URI', get_template_directory_uri() );
 define( 'HBL_THEME_PATH', get_template_directory() );
@@ -3382,6 +3382,24 @@ function hbl_process_checkout() {
 add_action( 'wp_ajax_hbl_process_checkout', 'hbl_process_checkout' );
 
 /**
+ * Human label for a plan's tax line (e.g. "GST (10%)"), built from
+ * Directorist's own plan-level tax configuration (see HBL_Pricing_Plans::get_plan())
+ * rather than a rate this theme assumes or hardcodes independently — so the
+ * label always matches whatever was actually charged.
+ *
+ * @param string $tax_type 'percent' | 'flat' | ''.
+ * @param float  $tax_rate Rate (percent) or amount (flat).
+ * @return string
+ */
+function hbl_format_plan_tax_label( $tax_type, $tax_rate ) {
+	if ( 'percent' === $tax_type && $tax_rate > 0 ) {
+		$rate = rtrim( rtrim( number_format( (float) $tax_rate, 2 ), '0' ), '.' );
+		return sprintf( __( 'GST (%s%%)', 'hbl' ), $rate );
+	}
+	return __( 'GST', 'hbl' );
+}
+
+/**
  * AJAX handler for creating Stripe Checkout Session
  */
 function hbl_create_stripe_session() {
@@ -3414,10 +3432,16 @@ function hbl_create_stripe_session() {
 		wp_send_json_error( array( 'message' => 'Invalid pricing plan.' ) );
 	}
 
-	// Get plan price
-	$plan_price = 0;
-	if ( function_exists( 'atpp_total_price' ) ) {
-		$plan_price = atpp_total_price( $plan_id );
+	// Get plan price + tax via the theme's central pricing-plans provider — it
+	// already resolves legacy vs 4.0+ plan storage correctly, so tax here always
+	// matches what this plan actually charges in Directorist, not a fixed rate
+	// this handler used to assume for every plan.
+	$plan_data = class_exists( 'HBL_Pricing_Plans' ) ? HBL_Pricing_Plans::get_plan( $plan_id ) : null;
+
+	if ( $plan_data ) {
+		$plan_price = (float) $plan_data['price'];
+	} elseif ( function_exists( 'atpp_total_price' ) ) {
+		$plan_price = (float) atpp_total_price( $plan_id );
 	} else {
 		$plan_price = floatval( get_post_meta( $plan_id, 'fm_price', true ) );
 	}
@@ -3476,9 +3500,11 @@ function hbl_create_stripe_session() {
 	// Currency - default to AUD for Australian site
 	$currency = get_option( 'hbl_stripe_currency', 'AUD' );
 
-	// Calculate tax (10% GST for Australia)
-	$tax_rate = 0.10;
-	$tax_amount = $plan_price * $tax_rate;
+	// Tax comes from Directorist's own plan-level configuration (flat or
+	// percentage) via HBL_Pricing_Plans, instead of a fixed rate this handler
+	// used to assume for every plan.
+	$tax_amount     = $plan_data ? (float) $plan_data['tax_amount'] : 0.0;
+	$tax_label      = $plan_data ? hbl_format_plan_tax_label( $plan_data['tax_type'], $plan_data['tax_rate'] ) : __( 'GST', 'hbl' );
 	$total_with_tax = $plan_price + $tax_amount;
 
 	// Save tax info to order
@@ -3487,6 +3513,38 @@ function hbl_create_stripe_session() {
 	update_post_meta( $order_id, '_order_total', $total_with_tax );
 
 	// Create Stripe Checkout Session with line items including tax
+	$line_items = array(
+		// Main product
+		array(
+			'price_data' => array(
+				'currency'     => strtolower( $currency ),
+				'unit_amount'  => intval( $plan_price * 100 ), // Stripe expects cents
+				'product_data' => array(
+					'name'        => $plan->post_title,
+					'description' => get_post_meta( $plan_id, 'fm_description', true ) ?: 'Listing Package',
+				),
+			),
+			'quantity' => 1,
+		),
+	);
+
+	// Only add a tax line when this plan actually has tax configured in
+	// Directorist — a zero-amount "GST" line on a tax-exempt plan would be
+	// misleading on the Stripe checkout page.
+	if ( $tax_amount > 0 ) {
+		$line_items[] = array(
+			'price_data' => array(
+				'currency'     => strtolower( $currency ),
+				'unit_amount'  => intval( $tax_amount * 100 ), // Tax in cents
+				'product_data' => array(
+					'name'        => $tax_label,
+					'description' => __( 'Goods and Services Tax', 'hbl' ),
+				),
+			),
+			'quantity' => 1,
+		);
+	}
+
 	$stripe_body = array(
 		'payment_method_types' => array( 'card' ),
 		'mode'                 => 'payment',
@@ -3494,32 +3552,7 @@ function hbl_create_stripe_session() {
 		'cancel_url'           => $cancel_url,
 		'customer_email'       => $billing_email,
 		'client_reference_id'  => strval( $order_id ),
-		'line_items'           => array(
-			// Main product
-			array(
-				'price_data' => array(
-					'currency'     => strtolower( $currency ),
-					'unit_amount'  => intval( $plan_price * 100 ), // Stripe expects cents
-					'product_data' => array(
-						'name'        => $plan->post_title,
-						'description' => get_post_meta( $plan_id, 'fm_description', true ) ?: 'Listing Package',
-					),
-				),
-				'quantity' => 1,
-			),
-			// GST Tax
-			array(
-				'price_data' => array(
-					'currency'     => strtolower( $currency ),
-					'unit_amount'  => intval( $tax_amount * 100 ), // Tax in cents
-					'product_data' => array(
-						'name'        => __( 'GST (10%)', 'hbl' ),
-						'description' => __( 'Goods and Services Tax', 'hbl' ),
-					),
-				),
-				'quantity' => 1,
-			),
-		),
+		'line_items'           => $line_items,
 		'metadata' => array(
 			'order_id'   => strval( $order_id ),
 			'listing_id' => strval( $listing_id ),
@@ -4043,24 +4076,30 @@ function hbl_apply_directorist_coupon() {
 	$_SESSION['hbl_coupon_discount'] = $discount_amount;
 	$_SESSION['hbl_coupon_type'] = $discount_type;
 	
-	// Calculate new total for response (get current plan price)
+	// Calculate new total for response (get current plan price + tax)
 	$plan_id = isset( $_POST['plan_id'] ) ? absint( $_POST['plan_id'] ) : 0;
 	$subtotal = 99.00; // Default fallback
-	
-	if ( $plan_id ) {
+	$tax = 0.0;
+
+	$plan_data = ( $plan_id && class_exists( 'HBL_Pricing_Plans' ) ) ? HBL_Pricing_Plans::get_plan( $plan_id ) : null;
+
+	if ( $plan_data ) {
+		$subtotal = (float) $plan_data['price'];
+		$tax      = (float) $plan_data['tax_amount'];
+	} elseif ( $plan_id ) {
 		if ( function_exists( 'atpp_total_price' ) ) {
 			$subtotal = floatval( atpp_total_price( $plan_id ) );
 		} else {
 			$subtotal = floatval( get_post_meta( $plan_id, 'fm_price', true ) );
 		}
 	}
-	
+
 	// Calculate discount amount
 	$actual_discount = $discount_type === 'percentage' ? ( $subtotal * $discount_amount ) / 100 : $discount_amount;
 	$actual_discount = min( $actual_discount, $subtotal ); // Don't exceed subtotal
-	
-	// Calculate new total (subtotal + tax - discount)
-	$tax = $subtotal * 0.10; // 10% GST
+
+	// Calculate new total (subtotal + tax - discount) — tax comes from
+	// Directorist's own plan-level configuration, not a fixed rate.
 	$new_total = $subtotal + $tax - $actual_discount;
 
 	wp_send_json_success( array(

@@ -55,14 +55,18 @@ class HBL_Pricing_Plans {
 	 * Get the normalised list of pricing plans for the widgets.
 	 *
 	 * Returns an ordered array of plans. Each plan is:
-	 *   id           (int)
-	 *   title        (string)
-	 *   price        (float)
-	 *   is_free      (bool)
-	 *   type         (string)
-	 *   description  (string)
-	 *   recommended  (bool)
-	 *   restrictions (array)  // only when $args['with_restrictions'] is true
+	 *   id             (int)
+	 *   title          (string)
+	 *   price          (float)  Pre-tax price.
+	 *   is_free        (bool)
+	 *   type           (string)
+	 *   description    (string)
+	 *   recommended    (bool)
+	 *   tax_rate       (float)  Rate (percent) or amount (flat); 0 when untaxed.
+	 *   tax_type       (string) 'percent' | 'flat' | ''.
+	 *   tax_amount     (float)  Computed tax for `price`, via Directorist's own calculator.
+	 *   price_with_tax (float)  price + tax_amount.
+	 *   restrictions   (array)  // only when $args['with_restrictions'] is true
 	 *
 	 * @param array $args {
 	 *     @type bool $with_restrictions Whether to compute per-plan field restrictions. Default false.
@@ -98,7 +102,7 @@ class HBL_Pricing_Plans {
 	 * plan cannot be found.
 	 *
 	 * @param int $plan_id Plan ID.
-	 * @return array{id:int,title:string,price:float,is_free:bool}|null
+	 * @return array{id:int,title:string,price:float,is_free:bool,tax_rate:float,tax_type:string,tax_amount:float,price_with_tax:float}|null
 	 */
 	public static function get_plan( $plan_id ) {
 		$plan_id = absint( $plan_id );
@@ -120,11 +124,20 @@ class HBL_Pricing_Plans {
 			}
 
 			if ( $plan && ! empty( $plan->id ) ) {
+				$price    = isset( $plan->price ) ? (float) $plan->price : 0.0;
+				$tax_type = isset( $plan->tax_type ) ? (string) $plan->tax_type : '';
+				$tax_rate = isset( $plan->tax_rate ) ? (float) $plan->tax_rate : 0.0;
+				$tax      = self::compute_tax( $price, $tax_type, $tax_rate );
+
 				return array(
-					'id'      => (int) $plan->id,
-					'title'   => isset( $plan->title ) ? (string) $plan->title : '',
-					'price'   => isset( $plan->price ) ? (float) $plan->price : 0.0,
-					'is_free' => isset( $plan->fee_type ) && 'free' === $plan->fee_type,
+					'id'             => (int) $plan->id,
+					'title'          => isset( $plan->title ) ? (string) $plan->title : '',
+					'price'          => $price,
+					'is_free'        => isset( $plan->fee_type ) && 'free' === $plan->fee_type,
+					'tax_rate'       => $tax_rate,
+					'tax_type'       => $tax_type,
+					'tax_amount'     => $tax,
+					'price_with_tax' => round( $price + $tax, 2 ),
 				);
 			}
 		}
@@ -132,18 +145,51 @@ class HBL_Pricing_Plans {
 		// Legacy post-type fallback.
 		$post = get_post( $plan_id );
 		if ( $post && 'atbdp_pricing_plans' === $post->post_type ) {
-			$is_free = get_post_meta( $plan_id, 'free_plan', true );
-			$price   = get_post_meta( $plan_id, 'fm_price', true );
+			$is_free    = get_post_meta( $plan_id, 'free_plan', true );
+			$price      = $is_free ? 0.0 : floatval( get_post_meta( $plan_id, 'fm_price', true ) );
+			$is_taxable = (bool) get_post_meta( $plan_id, 'plan_tax', true );
+			$tax_type   = (string) get_post_meta( $plan_id, 'plan_tax_type', true );
+			$tax_rate   = floatval( get_post_meta( $plan_id, 'fm_tax', true ) );
+			$tax        = $is_taxable ? self::compute_tax( $price, $tax_type, $tax_rate ) : 0.0;
 
 			return array(
-				'id'      => (int) $plan_id,
-				'title'   => $post->post_title,
-				'price'   => $is_free ? 0.0 : floatval( $price ),
-				'is_free' => (bool) $is_free,
+				'id'             => (int) $plan_id,
+				'title'          => $post->post_title,
+				'price'          => $price,
+				'is_free'        => (bool) $is_free,
+				'tax_rate'       => $tax_rate,
+				'tax_type'       => $tax_type,
+				'tax_amount'     => $tax,
+				'price_with_tax' => round( $price + $tax, 2 ),
 			);
 		}
 
 		return null;
+	}
+
+	/**
+	 * Computes a plan's tax amount using Directorist core's own fixed/percent
+	 * calculator (the same function Directorist uses for its own order totals),
+	 * so tax here always matches what Directorist itself would charge — never a
+	 * rate this theme assumes or hardcodes independently.
+	 *
+	 * @param float       $price    Pre-tax price.
+	 * @param string|null $tax_type 'flat' | 'percent' | '' (no tax).
+	 * @param float       $tax_rate Rate (percent) or amount (flat).
+	 * @return float
+	 */
+	protected static function compute_tax( $price, $tax_type, $tax_rate ) {
+		if ( ! $tax_type || $tax_rate <= 0 || $price <= 0 ) {
+			return 0.0;
+		}
+
+		if ( function_exists( 'directorist_compute_fixed_or_percent_amount' ) ) {
+			return (float) directorist_compute_fixed_or_percent_amount( $tax_type, $tax_rate, $price );
+		}
+
+		// Minimal inline fallback matching Directorist core's own semantics,
+		// only used if Directorist core is somehow unavailable.
+		return 'percent' === $tax_type ? round( ( $price * $tax_rate ) / 100, 2 ) : round( $tax_rate, 2 );
 	}
 
 	/**
@@ -218,17 +264,24 @@ class HBL_Pricing_Plans {
 				continue;
 			}
 
-			$is_free = isset( $plan->fee_type ) && 'free' === $plan->fee_type;
-			$price   = isset( $plan->price ) ? (float) $plan->price : 0.0;
+			$is_free  = isset( $plan->fee_type ) && 'free' === $plan->fee_type;
+			$price    = isset( $plan->price ) ? (float) $plan->price : 0.0;
+			$tax_type = isset( $plan->tax_type ) ? (string) $plan->tax_type : '';
+			$tax_rate = isset( $plan->tax_rate ) ? (float) $plan->tax_rate : 0.0;
+			$tax      = self::compute_tax( $price, $tax_type, $tax_rate );
 
 			$normalised = array(
-				'id'          => (int) $plan->id,
-				'title'       => isset( $plan->title ) ? (string) $plan->title : '',
-				'price'       => $price,
-				'is_free'     => (bool) $is_free,
-				'type'        => isset( $plan->type ) ? (string) $plan->type : 'package',
-				'description' => isset( $plan->description ) ? (string) $plan->description : '',
-				'recommended' => ! empty( $plan->is_marked_as_recommended ),
+				'id'             => (int) $plan->id,
+				'title'          => isset( $plan->title ) ? (string) $plan->title : '',
+				'price'          => $price,
+				'is_free'        => (bool) $is_free,
+				'type'           => isset( $plan->type ) ? (string) $plan->type : 'package',
+				'description'    => isset( $plan->description ) ? (string) $plan->description : '',
+				'recommended'    => ! empty( $plan->is_marked_as_recommended ),
+				'tax_rate'       => $tax_rate,
+				'tax_type'       => $tax_type,
+				'tax_amount'     => $tax,
+				'price_with_tax' => round( $price + $tax, 2 ),
 			);
 
 			if ( $with_restrictions ) {
@@ -406,14 +459,23 @@ class HBL_Pricing_Plans {
 
 			$final_price = ( ! $is_free && $plan_price ) ? floatval( $plan_price ) : 0.0;
 
+			$is_taxable = (bool) get_post_meta( $plan_id, 'plan_tax', true );
+			$tax_type   = (string) get_post_meta( $plan_id, 'plan_tax_type', true );
+			$tax_rate   = floatval( get_post_meta( $plan_id, 'fm_tax', true ) );
+			$tax        = $is_taxable ? self::compute_tax( $final_price, $tax_type, $tax_rate ) : 0.0;
+
 			$normalised = array(
-				'id'          => (int) $plan_id,
-				'title'       => get_the_title(),
-				'price'       => $final_price,
-				'is_free'     => (bool) $is_free,
-				'type'        => get_post_meta( $plan_id, 'plan_type', true ),
-				'description' => get_post_meta( $plan_id, 'fm_description', true ),
-				'recommended' => (bool) get_post_meta( $plan_id, 'default_pln', true ),
+				'id'             => (int) $plan_id,
+				'title'          => get_the_title(),
+				'price'          => $final_price,
+				'is_free'        => (bool) $is_free,
+				'type'           => get_post_meta( $plan_id, 'plan_type', true ),
+				'description'    => get_post_meta( $plan_id, 'fm_description', true ),
+				'recommended'    => (bool) get_post_meta( $plan_id, 'default_pln', true ),
+				'tax_rate'       => $tax_rate,
+				'tax_type'       => $tax_type,
+				'tax_amount'     => $tax,
+				'price_with_tax' => round( $final_price + $tax, 2 ),
 			);
 
 			if ( $with_restrictions ) {

@@ -399,7 +399,10 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 													<?php if ( $package['is_free'] || $package['price'] <= 0 ) : ?>
 														<span class="hbl-price-free"><?php esc_html_e( 'Free', 'hbl' ); ?></span>
 													<?php else : ?>
-														<span class="hbl-price-currency">$</span><?php echo esc_html( number_format( $package['price'], 2 ) ); ?>
+														<span class="hbl-price-currency">$</span><?php echo esc_html( number_format( $package['price_with_tax'], 2 ) ); ?>
+														<?php if ( ! empty( $package['tax_amount'] ) ) : ?>
+															<span style="display:block;font-size:10px;font-weight:400;color:#9ca3af;line-height:1.4;"><?php esc_html_e( 'inc. tax', 'hbl' ); ?></span>
+														<?php endif; ?>
 													<?php endif; ?>
 												</span>
 											</div>

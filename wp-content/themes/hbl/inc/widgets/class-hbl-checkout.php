@@ -550,7 +550,7 @@ class HBL_Checkout extends Widget_Base {
 							</div>
 							<?php if ( $order_data['tax'] > 0 ) : ?>
 							<div class="hbl-order-tax">
-								<span><?php esc_html_e( 'GST (10%)', 'hbl' ); ?></span>
+								<span><?php echo esc_html( $order_data['tax_label'] ); ?></span>
 								<span>$<?php echo esc_html( number_format( $order_data['tax'], 2 ) ); ?></span>
 							</div>
 							<?php endif; ?>
@@ -822,80 +822,63 @@ class HBL_Checkout extends Widget_Base {
 	 * Get order data from plan and listing
 	 */
 	private function get_order_data( $order_id, $plan_id, $listing_id ) {
-		$items = array();
-		$subtotal = 0;
-		
-		// If plan_id is provided, get plan details from Directorist
-		if ( $plan_id ) {
-			$plan = get_post( $plan_id );
-			if ( $plan && $plan->post_type === 'atbdp_pricing_plans' ) {
-				// Use Directorist's price function if available
-				$price = 0;
-				if ( function_exists( 'atpp_total_price' ) ) {
-					$price = floatval( atpp_total_price( $plan_id ) );
-				} else {
-					// Fallback to direct meta
-					$price = floatval( get_post_meta( $plan_id, 'fm_price', true ) );
-				}
-				
-				// Check if it's a free plan
-				$is_free = get_post_meta( $plan_id, 'free_plan', true );
-				if ( $is_free ) {
-					$price = 0;
-				}
-				
+		$items     = array();
+		$subtotal  = 0;
+		$tax       = 0;
+		$tax_label = __( 'Tax', 'hbl' );
+
+		$pricing_available = class_exists( 'HBL_Pricing_Plans' );
+
+		// If plan_id is provided, get plan details (price + tax) from Directorist
+		// via the theme's central pricing-plans provider — it already resolves
+		// legacy vs 4.0+ plan storage correctly, so tax here always matches what
+		// this plan actually charges, not a fixed rate assumed for every plan.
+		if ( $plan_id && $pricing_available ) {
+			$plan = \HBL_Pricing_Plans::get_plan( $plan_id );
+			if ( $plan && ! $plan['is_free'] && $plan['price'] > 0 ) {
 				$items[] = array(
-					'name'        => $plan->post_title,
+					'name'        => $plan['title'],
 					'description' => get_post_meta( $plan_id, 'fm_description', true ) ?: __( 'Business Listing Package', 'hbl' ),
-					'price'       => $price,
+					'price'       => $plan['price'],
 				);
-				$subtotal = $price;
+				$subtotal  = $plan['price'];
+				$tax       = $plan['tax_amount'];
+				$tax_label = hbl_format_plan_tax_label( $plan['tax_type'], $plan['tax_rate'] );
 			}
 		}
-		
-		// Fallback sample data if no items found
-		if ( empty( $items ) || $subtotal <= 0 ) {
-			// Try to get price from listing's assigned plan
-			if ( $listing_id ) {
-				$listing_plan_id = get_post_meta( $listing_id, '_fm_plans', true );
-				if ( $listing_plan_id && $listing_plan_id != $plan_id ) {
-					$listing_plan = get_post( $listing_plan_id );
-					if ( $listing_plan && $listing_plan->post_type === 'atbdp_pricing_plans' ) {
-						$price = 0;
-						if ( function_exists( 'atpp_total_price' ) ) {
-							$price = floatval( atpp_total_price( $listing_plan_id ) );
-						} else {
-							$price = floatval( get_post_meta( $listing_plan_id, 'fm_price', true ) );
-						}
-						
-						if ( $price > 0 ) {
-							$items = array(
-								array(
-									'name'        => $listing_plan->post_title,
-									'description' => get_post_meta( $listing_plan_id, 'fm_description', true ) ?: __( 'Business Listing Package', 'hbl' ),
-									'price'       => $price,
-								)
-							);
-							$subtotal = $price;
-						}
-					}
+
+		// Fallback: price from the listing's currently assigned plan.
+		if ( ( empty( $items ) || $subtotal <= 0 ) && $listing_id && $pricing_available ) {
+			$listing_plan_id = \HBL_Pricing_Plans::get_listing_plan_id( $listing_id );
+			if ( $listing_plan_id && $listing_plan_id != $plan_id ) {
+				$listing_plan = \HBL_Pricing_Plans::get_plan( $listing_plan_id );
+				if ( $listing_plan && ! $listing_plan['is_free'] && $listing_plan['price'] > 0 ) {
+					$items = array(
+						array(
+							'name'        => $listing_plan['title'],
+							'description' => get_post_meta( $listing_plan_id, 'fm_description', true ) ?: __( 'Business Listing Package', 'hbl' ),
+							'price'       => $listing_plan['price'],
+						),
+					);
+					$subtotal  = $listing_plan['price'];
+					$tax       = $listing_plan['tax_amount'];
+					$tax_label = hbl_format_plan_tax_label( $listing_plan['tax_type'], $listing_plan['tax_rate'] );
 				}
 			}
 		}
-		
-		// Final fallback if still no items
+
+		// Final fallback if still no items — no real plan to derive tax from.
 		if ( empty( $items ) || $subtotal <= 0 ) {
 			$items[] = array(
 				'name'        => __( 'Business Listing Package', 'hbl' ),
 				'description' => __( 'Premium listing package', 'hbl' ),
 				'price'       => 99.00,
 			);
-			$subtotal = 99.00;
+			$subtotal  = 99.00;
+			$tax       = 0;
+			$tax_label = __( 'Tax', 'hbl' );
 		}
-		
-		// Calculate tax (10% GST for Australia)
-		$tax = $subtotal * 0.10;
-		
+
 		// Check for applied coupon discount from session
 		$discount = 0;
 		if ( isset( $_SESSION['hbl_coupon_discount'] ) && $_SESSION['hbl_coupon_discount'] > 0 ) {
@@ -915,13 +898,14 @@ class HBL_Checkout extends Widget_Base {
 		}
 		
 		$total = $subtotal + $tax - $discount;
-		
+
 		return array(
-			'items'    => $items,
-			'subtotal' => $subtotal,
-			'tax'      => $tax,
-			'discount' => $discount,
-			'total'    => $total,
+			'items'     => $items,
+			'subtotal'  => $subtotal,
+			'tax'       => $tax,
+			'tax_label' => $tax_label,
+			'discount'  => $discount,
+			'total'     => $total,
 		);
 	}
 }
