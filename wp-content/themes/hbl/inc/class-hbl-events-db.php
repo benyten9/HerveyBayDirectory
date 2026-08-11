@@ -664,6 +664,44 @@ class HBL_Events_DB {
 	}
 
 	/**
+	 * Get event counts grouped by category
+	 *
+	 * Events are stored in this custom table, not as WordPress posts, so the
+	 * event_category taxonomy's native term count (which only reflects real
+	 * `post` objects) doesn't apply to them. Widgets that display or sort by
+	 * "events per category" should use this instead of $term->count.
+	 *
+	 * @param string|null $status Optional status filter (e.g. 'publish'). Null for all statuses.
+	 * @return array Associative array of category_id => count
+	 */
+	public function count_by_category( $status = null ) {
+		global $wpdb;
+
+		$where  = 'category_id IS NOT NULL';
+		$values = array();
+
+		if ( null !== $status ) {
+			$where   .= ' AND status = %s';
+			$values[] = $status;
+		}
+
+		$sql = "SELECT category_id, COUNT(*) as count FROM {$this->table} WHERE {$where} GROUP BY category_id";
+
+		if ( ! empty( $values ) ) {
+			$sql = $wpdb->prepare( $sql, $values );
+		}
+
+		$results = $wpdb->get_results( $sql );
+
+		$counts = array();
+		foreach ( $results as $row ) {
+			$counts[ (int) $row->category_id ] = (int) $row->count;
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Count events with optional filters
 	 *
 	 * @param array $args Query arguments
@@ -671,7 +709,7 @@ class HBL_Events_DB {
 	 */
 	public function count_events( $args = array() ) {
 		global $wpdb;
-		
+
 		$defaults = array(
 			'user_id'        => null,
 			'status'         => null,

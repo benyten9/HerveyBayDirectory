@@ -442,11 +442,16 @@ class HBL_Event_Category_Archive extends Widget_Base {
 		$settings = $this->get_settings_for_display();
 		$taxonomy = $this->get_event_taxonomy();
 
-		// Get categories
+		// Get categories. Always fetch with hide_empty => false and skip the
+		// native 'count' orderby here: WordPress's term count only reflects
+		// real `post` objects tagged with this taxonomy, but events live in
+		// the custom events table, so that count is unreliable for both
+		// filtering and sorting. Real per-category counts are computed from
+		// the events table below instead.
 		$args = array(
 			'taxonomy'   => $taxonomy,
-			'hide_empty' => 'yes' === $settings['hide_empty'],
-			'orderby'    => $settings['orderby'],
+			'hide_empty' => false,
+			'orderby'    => 'count' === $settings['orderby'] ? 'name' : $settings['orderby'],
 			'order'      => $settings['order'],
 		);
 
@@ -459,13 +464,44 @@ class HBL_Event_Category_Archive extends Widget_Base {
 			$args['parent'] = 0;
 		}
 
-		if ( intval( $settings['limit'] ) > 0 ) {
-			$args['number'] = intval( $settings['limit'] );
-		}
-
 		$categories = get_terms( $args );
 
 		if ( empty( $categories ) || is_wp_error( $categories ) ) {
+			if ( current_user_can( 'edit_posts' ) ) {
+				echo '<div class="hbl-evcatgrid-notice"><p>' . esc_html__( 'No event categories found.', 'hbl' ) . '</p></div>';
+			}
+			return;
+		}
+
+		// Real event counts, from the events table (not the taxonomy's
+		// native term count).
+		$real_counts = function_exists( 'hbl_events_db' ) ? hbl_events_db()->count_by_category( 'publish' ) : array();
+
+		foreach ( $categories as $category ) {
+			$category->real_count = isset( $real_counts[ $category->term_id ] ) ? $real_counts[ $category->term_id ] : 0;
+		}
+
+		// Hide categories with no published events, if requested.
+		if ( 'yes' === $settings['hide_empty'] ) {
+			$categories = array_values( array_filter( $categories, function( $category ) {
+				return $category->real_count > 0;
+			} ) );
+		}
+
+		// Sort by real event count, if requested (get_terms() can't do this for us).
+		if ( 'count' === $settings['orderby'] ) {
+			usort( $categories, function( $a, $b ) use ( $settings ) {
+				$diff = $a->real_count - $b->real_count;
+				return 'DESC' === $settings['order'] ? -$diff : $diff;
+			} );
+		}
+
+		// Apply the "Number of Categories" limit after filtering/sorting.
+		if ( intval( $settings['limit'] ) > 0 ) {
+			$categories = array_slice( $categories, 0, intval( $settings['limit'] ) );
+		}
+
+		if ( empty( $categories ) ) {
 			if ( current_user_can( 'edit_posts' ) ) {
 				echo '<div class="hbl-evcatgrid-notice"><p>' . esc_html__( 'No event categories found.', 'hbl' ) . '</p></div>';
 			}
@@ -607,7 +643,7 @@ class HBL_Event_Category_Archive extends Widget_Base {
 						<?php endif; ?>
 						<h3 class="hbl-evcatgrid-name"><?php echo esc_html( $category->name ); ?></h3>
 						<?php if ( 'yes' === $settings['show_count'] ) : ?>
-							<span class="hbl-evcatgrid-count"><?php echo esc_html( sprintf( _n( '%s event', '%s events', $category->count, 'hbl' ), $category->count ) ); ?></span>
+							<span class="hbl-evcatgrid-count"><?php echo esc_html( sprintf( _n( '%s event', '%s events', $category->real_count, 'hbl' ), $category->real_count ) ); ?></span>
 						<?php endif; ?>
 					</a>
 				<?php endforeach; ?>
