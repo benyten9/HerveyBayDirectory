@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Noticeboard Widget
- *
- * Displays noticeboard items in a grid layout with images and buttons
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.2.510
- */
 
 namespace HBL\Widgets;
 
@@ -18,12 +9,9 @@ use Elementor\Group_Control_Background;
 use Elementor\Repeater;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL Noticeboard Widget Class
- */
 class HBL_Noticeboard extends Widget_Base {
 
 	public function get_name() {
@@ -48,7 +36,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT SECTION: TITLE ==========
 		$this->start_controls_section(
 			'section_title',
 			array(
@@ -84,7 +71,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT SECTION: ITEMS ==========
 		$this->start_controls_section(
 			'section_items',
 			array(
@@ -179,7 +165,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TITLE ==========
 		$this->start_controls_section(
 			'section_style_title',
 			array(
@@ -273,7 +258,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'section_style_container',
 			array(
@@ -306,7 +290,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: GRID ==========
 		$this->start_controls_section(
 			'section_style_grid',
 			array(
@@ -339,7 +322,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CARD ==========
 		$this->start_controls_section(
 			'section_style_card',
 			array(
@@ -350,7 +332,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: IMAGE ==========
 		$this->start_controls_section(
 			'section_style_image',
 			array(
@@ -383,7 +364,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTON ==========
 		$this->start_controls_section(
 			'section_style_button',
 			array(
@@ -512,7 +492,6 @@ class HBL_Noticeboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: DESCRIPTION ==========
 		$this->start_controls_section(
 			'section_style_description',
 			array(
@@ -561,9 +540,6 @@ class HBL_Noticeboard extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 

@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Static Grid Widget
- *
- * Displays static content items in a responsive grid layout with slider on mobile/tablet
- *
- * @package HBL
- * @since 1.0.0
- */
 
 namespace HBL\Widgets;
 
@@ -16,52 +8,31 @@ use Elementor\Group_Control_Typography;
 use Elementor\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL Static Grid Widget Class
- */
 class HBL_Static_Grid extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-static-grid';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'Grid of Listing', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-posts-grid';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'hbl', 'static', 'grid', 'listing', 'items', 'cards' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		$this->start_controls_section(
 			'content_section',
@@ -71,7 +42,6 @@ class HBL_Static_Grid extends Widget_Base {
 			)
 		);
 
-		// Repeater for items
 		$repeater = new \Elementor\Repeater();
 
 		$repeater->add_control(
@@ -167,7 +137,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Grid
 		$this->start_controls_section(
 			'style_grid',
 			array(
@@ -242,7 +211,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Card
 		$this->start_controls_section(
 			'style_card',
 			array(
@@ -253,7 +221,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Image
 		$this->start_controls_section(
 			'style_image',
 			array(
@@ -286,7 +253,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Title
 		$this->start_controls_section(
 			'style_title',
 			array(
@@ -348,7 +314,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Description
 		$this->start_controls_section(
 			'style_description',
 			array(
@@ -397,7 +362,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Icon
 		$this->start_controls_section(
 			'style_icon',
 			array(
@@ -479,9 +443,6 @@ class HBL_Static_Grid extends Widget_Base {
 
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		$items    = $settings['items_list'];

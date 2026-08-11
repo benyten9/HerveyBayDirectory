@@ -1,8 +1,4 @@
-/**
- * HBL Events Admin Styles
- */
 
-/* ─── Variables ──────────────────────────────────────── */
 :root {
 	--hbl-blue:       #2563eb;
 	--hbl-blue-lt:    #eff6ff;
@@ -46,7 +42,6 @@
 	--sh-md: 0 4px 8px rgba(0,0,0,.08);
 	--sh-lg: 0 10px 20px rgba(0,0,0,.12);
 
-	/* legacy aliases – Categories page still works */
 	--hbl-admin-primary:      var(--hbl-blue);
 	--hbl-admin-primary-dark: #1d4ed8;
 	--hbl-admin-success:      var(--hbl-green);
@@ -72,14 +67,12 @@
 	--hbl-admin-shadow-lg:    var(--sh-lg);
 }
 
-/* ─── Page wrapper ───────────────────────────────────── */
 .hbl-events-admin {
 	padding: 16px 20px 40px 0;
 	font-size: 13px;
 	color: var(--g700);
 }
 
-/* ─── Page heading ───────────────────────────────────── */
 .hbl-events-admin h1.wp-heading-inline {
 	display: flex;
 	align-items: center;
@@ -98,7 +91,6 @@
 	color: var(--hbl-blue);
 }
 
-/* ─── Stats strip ────────────────────────────────────── */
 .hbl-admin-stats {
 	display: flex;
 	gap: 0;
@@ -165,7 +157,6 @@
 }
 
 
-/* ─── Filters ───────────────────────────────────────── */
 .hbl-admin-filters {
 	background: #fff;
 	border: 1px solid var(--g200);
@@ -189,7 +180,6 @@
 	min-width: 110px;
 }
 
-/* Hide labels — placeholder / default option serves as label */
 .hbl-filter-group label { display: none; }
 
 .hbl-filter-group input[type="text"],
@@ -241,7 +231,6 @@
 }
 
 
-/* ─── Toolbar (bulk actions + results) ──────────────────── */
 .hbl-bulk-actions {
 	display: flex;
 	align-items: center;
@@ -300,7 +289,6 @@
 .hbl-selected-count-number { font-weight: 700; }
 
 
-/* ─── Results bar ─────────────────────────────────────── */
 .hbl-results-bar {
 	display: flex;
 	align-items: center;
@@ -330,7 +318,6 @@
 	font-weight: 500;
 }
 
-/* ─── Table wrap ──────────────────────────────────────── */
 .hbl-events-table-wrap {
 	position: relative;
 	overflow-x: auto;
@@ -358,7 +345,6 @@
 	background-size: 32px;
 }
 
-/* ─── Table ──────────────────────────────────────────── */
 .hbl-events-table {
 	width: 100%;
 	min-width: 860px;
@@ -390,7 +376,6 @@
 .hbl-events-table tbody tr:last-child td { border-bottom: none; }
 .hbl-events-table tbody tr:hover td { background: var(--g50); }
 
-/* Upcoming: teal accent on the checkbox cell */
 .hbl-events-table tbody tr.is-upcoming .check-column {
 	border-left: 3px solid var(--hbl-teal);
 }
@@ -412,7 +397,6 @@
 	color: var(--g500);
 }
 
-/* ─── Column widths ─────────────────────────────────────── */
 .hbl-events-table .column-cb,
 .hbl-events-table .check-column {
 	width: 36px;
@@ -450,7 +434,6 @@
 .hbl-events-table tbody tr.is-upcoming td.column-actions                     { background: var(--hbl-teal-lt); }
 .hbl-events-table tbody tr:has(.hbl-event-checkbox:checked) td.column-actions { background: var(--hbl-blue-lt) !important; }
 
-/* Column widths - percentage-based for responsiveness */
 .hbl-events-table .column-cb,
 .hbl-events-table .check-column { 
 	width: 36px; 
@@ -479,7 +462,6 @@
 	box-shadow: -3px 0 6px -2px rgba(0,0,0,0.08);
 }
 
-/* Sticky actions column background matches row state */
 .hbl-events-table thead th.column-actions {
 	background: var(--g50);
 	z-index: 4;
@@ -503,7 +485,6 @@
 }
 
 
-/* ─── Checkbox ────────────────────────────────────────── */
 .hbl-events-table input[type="checkbox"] {
 	width: 14px;
 	height: 14px;
@@ -512,7 +493,6 @@
 	display: block;
 }
 
-/* ─── Thumbnail ──────────────────────────────────────── */
 .hbl-event-thumb {
 	width: 44px;
 	height: 44px;
@@ -541,7 +521,6 @@
 	color: rgba(255,255,255,0.85);
 }
 
-/* ─── Title cell ─────────────────────────────────────── */
 .hbl-event-title-wrap {
 	display: flex;
 	flex-direction: column;
@@ -577,7 +556,6 @@
 	height: 12px;
 }
 
-/* ─── Date cell ──────────────────────────────────────── */
 .hbl-event-date {
 	display: flex;
 	flex-direction: column;
@@ -603,7 +581,6 @@
 }
 
 
-/* ─── Badges ─────────────────────────────────────────── */
 .hbl-badge {
 	display: inline-flex;
 	align-items: center;
@@ -624,7 +601,6 @@
 	font-weight: 400;
 }
 
-/* Category badges */
 .hbl-badge-type                        { background: var(--g100); color: var(--g600); }
 .hbl-badge-community                   { background: #dbeafe; color: #1d4ed8; }
 .hbl-badge-workshop                    { background: #fef3c7; color: #92400e; }
@@ -646,11 +622,9 @@
 	font-size: 10px;
 }
 
-/* Cost */
 .hbl-badge-cost.hbl-badge-free { background: #d1fae5; color: #065f46; }
 .hbl-badge-cost.hbl-badge-paid { background: #ede9fe; color: #5b21b6; }
 
-/* Frequency */
 .hbl-badge-frequency { background: var(--hbl-sky-lt); color: var(--hbl-sky); }
 
 .hbl-recurrence-detail {
@@ -667,7 +641,6 @@
 
 .hbl-badge-program { background: #fef3c7; color: #92400e; margin-top: 3px; }
 
-/* Organiser */
 .hbl-badge-organiser                       { background: var(--g100); color: var(--g600); }
 .hbl-badge-organiser.hbl-badge-individual  { background: var(--g100); color: var(--g600); }
 .hbl-badge-organiser.hbl-badge-community   { background: #dbeafe; color: #1d4ed8; }
@@ -675,7 +648,6 @@
 .hbl-badge-community-nfp                   { background: #dbeafe; color: #1d4ed8; }
 
 
-/* ─── Author ─────────────────────────────────────────── */
 .hbl-author-info {
 	display: flex;
 	align-items: center;
@@ -694,7 +666,6 @@
 	color: var(--g600);
 }
 
-/* ─── Action buttons ─────────────────────────────────── */
 .hbl-action-buttons {
 	display: flex;
 	gap: 4px;
@@ -741,7 +712,6 @@
 	background: var(--hbl-red-lt) !important;
 }
 
-/* ─── Empty state ────────────────────────────────────── */
 .hbl-no-events { text-align: center; padding: 60px 20px !important; }
 
 .hbl-no-events-message {
@@ -760,7 +730,6 @@
 	color: var(--g400);
 }
 
-/* ─── Pagination ─────────────────────────────────────── */
 .hbl-admin-pagination {
 	display: flex;
 	justify-content: center;
@@ -809,7 +778,6 @@
 }
 
 
-/* ─── Analytics page ──────────────────────────────────── */
 .hbl-events-analytics h1 { margin-bottom: 24px; }
 
 .hbl-analytics-grid {
@@ -950,7 +918,6 @@
 }
 
 
-/* ─── Responsive — progressive column hide ─────────────── */
 @media (max-width: 1600px) {
 	.hbl-events-table { min-width: 760px; }
 }
@@ -1012,7 +979,6 @@
 	.hbl-bulk-actions .hbl-bulk-action-select { flex: 1; }
 }
 
-/* ─── Mobile card layout ──────────────────────────────── */
 @media (max-width: 1100px) {
 	.hbl-events-table {
 		display: block;
@@ -1055,7 +1021,6 @@
 		background: transparent !important;
 	}
 	
-	/* Grid placement */
 	.hbl-events-table tbody .check-column {
 		grid-column: 1;
 		grid-row: 1 / 3;
@@ -1097,7 +1062,6 @@
 		text-overflow: ellipsis;
 	}
 
-	/* Date column - compact inline */
 	.hbl-events-table tbody .column-date {
 		grid-column: 4;
 		grid-row: 1 / 3;
@@ -1115,7 +1079,6 @@
 	.hbl-events-table tbody .column-date .hbl-date-time    { font-size: 11px; }
 	.hbl-events-table tbody .column-date .hbl-date-end     { display: none; }
 
-	/* Actions - compact buttons */
 	.hbl-events-table tbody .column-actions {
 		grid-column: 5;
 		grid-row: 1 / 3;
@@ -1136,7 +1099,6 @@
 }
 
 
-/* Mobile - show badges below title */
 @media (max-width: 768px) {
 	.hbl-events-table tbody tr {
 		grid-template-columns: 28px 40px 1fr auto;
@@ -1170,7 +1132,6 @@
 }
 
 
-/* Very small screens */
 @media (max-width: 480px) {
 	.hbl-events-table tbody tr {
 		grid-template-columns: 24px 1fr auto;
@@ -1208,7 +1169,6 @@
 }
 
 
-/* ─── Animations ──────────────────────────────────────── */
 @keyframes hbl-fade-in {
 	from { opacity: 0; transform: translateY(6px); }
 	to   { opacity: 1; transform: translateY(0); }
@@ -1222,7 +1182,6 @@
 .hbl-stat-card:nth-child(3) { animation-delay: 0.1s; }
 .hbl-stat-card:nth-child(4) { animation-delay: 0.15s; }
 
-/* ─── Delete confirm modal ─────────────────────────────── */
 .hbl-delete-confirm {
 	position: fixed;
 	inset: 0;
@@ -1261,9 +1220,6 @@
 	justify-content: center;
 }
 
-/* ===================== */
-/* Categories Page */
-/* ===================== */
 
 .hbl-events-categories h1 .dashicons {
 	color: var(--hbl-admin-purple);
@@ -1276,7 +1232,6 @@
 	align-items: start;
 }
 
-/* Add Category Form Card */
 .hbl-category-form-card {
 	background: #fff;
 	padding: 24px;
@@ -1381,7 +1336,6 @@
 	height: 18px;
 }
 
-/* Categories List Card */
 .hbl-categories-list-card {
 	background: #fff;
 	padding: 24px;
@@ -1403,7 +1357,6 @@
 	color: var(--hbl-admin-gray-500);
 }
 
-/* Categories Table */
 .hbl-categories-table {
 	border: none;
 }
@@ -1507,7 +1460,6 @@
 	color: #fff !important;
 }
 
-/* No Categories */
 .hbl-no-categories {
 	text-align: center;
 	padding: 60px 20px;
@@ -1526,7 +1478,6 @@
 	font-size: 15px;
 }
 
-/* Modal */
 .hbl-modal {
 	position: fixed;
 	top: 0;
@@ -1617,7 +1568,6 @@
 	min-width: 100px;
 }
 
-/* Responsive Categories */
 @media (max-width: 1024px) {
 	.hbl-categories-layout {
 		grid-template-columns: 1fr;

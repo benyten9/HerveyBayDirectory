@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Row Search Widget
- *
- * Displays a horizontal search bar with keyword, category, and location filters
- *
- * @package HBL
- * @since 1.0.0
- */
 
 namespace HBL\Widgets;
 
@@ -15,55 +7,33 @@ use Elementor\Controls_Manager;
 use Elementor\Group_Control_Typography;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL Row Search Widget Class
- */
 class HBL_Row_Search extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-row-search';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL Row Search', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-search';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'hbl', 'search', 'row', 'filter', 'category', 'location' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// ========== CONTENT SECTION ==========
 		$this->start_controls_section(
 			'content_section',
 			array(
@@ -146,7 +116,6 @@ class HBL_Row_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'style_container',
 			array(
@@ -205,7 +174,6 @@ class HBL_Row_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: SEARCH INPUT ==========
 		$this->start_controls_section(
 			'style_search_input',
 			array(
@@ -285,7 +253,6 @@ class HBL_Row_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: DROPDOWNS ==========
 		$this->start_controls_section(
 			'style_dropdowns',
 			array(
@@ -388,7 +355,6 @@ class HBL_Row_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTON ==========
 		$this->start_controls_section(
 			'style_button',
 			array(
@@ -407,7 +373,6 @@ class HBL_Row_Search extends Widget_Base {
 
 		$this->start_controls_tabs( 'button_style_tabs' );
 
-		// Normal State
 		$this->start_controls_tab(
 			'button_normal',
 			array(
@@ -441,7 +406,6 @@ class HBL_Row_Search extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Hover State
 		$this->start_controls_tab(
 			'button_hover',
 			array(
@@ -478,13 +442,9 @@ class HBL_Row_Search extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get categories for dropdown
 		$categories = array();
 		if ( taxonomy_exists( 'at_biz_dir-category' ) ) {
 			$terms = get_terms( array(
@@ -497,7 +457,6 @@ class HBL_Row_Search extends Widget_Base {
 			}
 		}
 
-		// Get locations for dropdown
 		$locations = array();
 		if ( taxonomy_exists( 'at_biz_dir-location' ) ) {
 			$terms = get_terms( array(
@@ -510,7 +469,6 @@ class HBL_Row_Search extends Widget_Base {
 			}
 		}
 
-		// Build search URL
 		$search_url = ! empty( $settings['search_results_page'] ) ? home_url( $settings['search_results_page'] ) : home_url( '/search-result/' );
 		
 		$current_keyword = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
@@ -521,7 +479,6 @@ class HBL_Row_Search extends Widget_Base {
 		<div class="hbl-row-search-wrapper">
 			<form class="hbl-row-search-container" action="<?php echo esc_url( $search_url ); ?>" method="get">
 				
-				<!-- Search Input -->
 				<div class="hbl-row-search-field">
 					<input 
 						type="text" 
@@ -532,7 +489,6 @@ class HBL_Row_Search extends Widget_Base {
 					/>
 				</div>
 
-				<!-- Category Dropdown -->
 				<div class="hbl-row-search-dropdown" data-dropdown="category">
 					<span class="hbl-row-search-dropdown-label" data-default="<?php echo esc_attr( $settings['category_label'] ); ?>">
 						<?php 
@@ -552,7 +508,6 @@ class HBL_Row_Search extends Widget_Base {
 						<path d="M1 1L5 4L9 1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 					</svg>
 					
-					<!-- Hidden dropdown menu -->
 					<div class="hbl-row-search-dropdown-menu">
 						<div class="hbl-row-search-dropdown-option" data-value="">
 							<?php esc_html_e( 'All Categories', 'hbl' ); ?>
@@ -567,7 +522,6 @@ class HBL_Row_Search extends Widget_Base {
 					<input type="hidden" name="category" class="hbl-row-search-dropdown-value" value="<?php echo esc_attr( $current_category ); ?>" />
 				</div>
 
-				<!-- Location Dropdown -->
 				<div class="hbl-row-search-dropdown" data-dropdown="location">
 					<span class="hbl-row-search-dropdown-label" data-default="<?php echo esc_attr( $settings['location_label'] ); ?>">
 						<?php 
@@ -587,7 +541,6 @@ class HBL_Row_Search extends Widget_Base {
 						<path d="M1 1L5 4L9 1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 					</svg>
 					
-					<!-- Hidden dropdown menu -->
 					<div class="hbl-row-search-dropdown-menu">
 						<div class="hbl-row-search-dropdown-option" data-value="">
 							<?php esc_html_e( 'All Locations', 'hbl' ); ?>
@@ -602,7 +555,6 @@ class HBL_Row_Search extends Widget_Base {
 					<input type="hidden" name="location" class="hbl-row-search-dropdown-value" value="<?php echo esc_attr( $current_location ); ?>" />
 				</div>
 
-				<!-- Search Button -->
 				<button type="submit" class="hbl-row-search-button">
 					<?php echo esc_html( $settings['button_text'] ); ?>
 				</button>

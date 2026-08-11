@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Location Archive Widget (All Locations)
- *
- * Beautiful location grid display with clean card design
- *
- * @package HBL
- * @since 1.2.697
- */
 
 namespace HBL\Widgets;
 
@@ -40,9 +32,6 @@ class HBL_Location_Archive extends Widget_Base {
 		return array( 'location', 'locations', 'archive', 'directory', 'grid', 'map', 'hbl' );
 	}
 
-	/**
-	 * Get location image from term meta
-	 */
 	private function get_location_image( $term_id ) {
 		$image = get_term_meta( $term_id, 'image', true );
 		if ( ! empty( $image ) ) {
@@ -52,7 +41,6 @@ class HBL_Location_Archive extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -96,7 +84,6 @@ class HBL_Location_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: LOCATIONS ==========
 		$this->start_controls_section(
 			'section_locations',
 			array(
@@ -170,7 +157,6 @@ class HBL_Location_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: LAYOUT ==========
 		$this->start_controls_section(
 			'section_layout',
 			array(
@@ -234,7 +220,6 @@ class HBL_Location_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -264,7 +249,6 @@ class HBL_Location_Archive extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Check if taxonomy exists
 		if ( ! taxonomy_exists( 'at_biz_dir-location' ) ) {
 			if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 				echo '<div class="hbl-locgrid-notice"><p>' . esc_html__( 'Location taxonomy not found. Please ensure Directorist is active.', 'hbl' ) . '</p></div>';
@@ -272,7 +256,6 @@ class HBL_Location_Archive extends Widget_Base {
 			return;
 		}
 
-		// Get locations
 		$term_args = array(
 			'taxonomy'   => 'at_biz_dir-location',
 			'hide_empty' => 'yes' === $settings['hide_empty'],

@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Listing Search Results Widget
- *
- * Display search results for listings
- *
- * @package HBL
- * @since 1.2.697
- */
 
 namespace HBL\Widgets;
 
@@ -41,7 +33,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -100,7 +91,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: LISTINGS ==========
 		$this->start_controls_section(
 			'section_listings',
 			array(
@@ -210,7 +200,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: NO RESULTS ==========
 		$this->start_controls_section(
 			'section_no_results',
 			array(
@@ -238,7 +227,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -270,13 +258,11 @@ class HBL_Listing_Search_Results extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get search parameters
 		$keyword = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 		$category_slug = isset( $_GET['category'] ) ? sanitize_text_field( wp_unslash( $_GET['category'] ) ) : '';
 		$location_slug = isset( $_GET['location'] ) ? sanitize_text_field( wp_unslash( $_GET['location'] ) ) : '';
 		$paged = get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1;
 
-		// Build query args
 		$args = array(
 			'post_type'      => ATBDP_POST_TYPE,
 			'posts_per_page' => absint( $settings['posts_per_page'] ),
@@ -284,7 +270,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 			'post_status'    => 'publish',
 		);
 
-		// Search by keyword
 		if ( ! empty( $keyword ) ) {
 			$args['s'] = $keyword;
 			if ( 'relevance' === $settings['default_orderby'] ) {
@@ -295,7 +280,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 			$args['order'] = 'DESC';
 		}
 
-		// Filter by category
 		$category_term = null;
 		if ( ! empty( $category_slug ) && taxonomy_exists( 'at_biz_dir-category' ) ) {
 			$category_term = get_term_by( 'slug', $category_slug, 'at_biz_dir-category' );
@@ -308,7 +292,6 @@ class HBL_Listing_Search_Results extends Widget_Base {
 			}
 		}
 
-		// Filter by location
 		$location_term = null;
 		if ( ! empty( $location_slug ) && taxonomy_exists( 'at_biz_dir-location' ) ) {
 			$location_term = get_term_by( 'slug', $location_slug, 'at_biz_dir-location' );
@@ -321,14 +304,12 @@ class HBL_Listing_Search_Results extends Widget_Base {
 			}
 		}
 
-		// Set tax_query relation if multiple taxonomies
 		if ( isset( $args['tax_query'] ) && count( $args['tax_query'] ) > 1 ) {
 			$args['tax_query']['relation'] = 'AND';
 		}
 
 		$listings = new \WP_Query( $args );
 
-		// Check if search has been performed
 		$has_search = ! empty( $keyword ) || ! empty( $category_slug ) || ! empty( $location_slug );
 		$widget_id = $this->get_id();
 		?>
@@ -414,17 +395,14 @@ class HBL_Listing_Search_Results extends Widget_Base {
 						$listings->the_post();
 						$listing_id = get_the_ID();
 						
-						// Get featured image, fallback to Directorist preview image
 						$image = get_the_post_thumbnail_url( $listing_id, 'medium_large' );
 						if ( ! $image ) {
-							// Try Directorist preview image
 							$preview_img_id = get_post_meta( $listing_id, '_listing_prv_img', true );
 							if ( $preview_img_id ) {
 								$image = wp_get_attachment_image_url( $preview_img_id, 'medium_large' );
 							}
 						}
 						if ( ! $image ) {
-							// Try first gallery image
 							$gallery_ids = get_post_meta( $listing_id, '_listing_img', true );
 							if ( ! empty( $gallery_ids ) ) {
 								$first_id = is_array( $gallery_ids ) ? reset( $gallery_ids ) : explode( ',', $gallery_ids )[0];
@@ -558,17 +536,14 @@ class HBL_Listing_Search_Results extends Widget_Base {
 					if (isMatch) visibleCount++;
 				});
 
-				// Toggle clear button visibility
 				if (clearBtn) {
 					clearBtn.style.display = searchTerm ? 'flex' : 'none';
 				}
 
-				// Show/hide no results message
 				if (noResults) {
 					noResults.style.display = visibleCount === 0 ? 'block' : 'none';
 				}
 
-				// Hide/show grid based on results
 				if (grid) {
 					grid.style.display = visibleCount === 0 ? 'none' : '';
 				}

@@ -1,26 +1,12 @@
 <?php
-/**
- * HBL Directorist V2 AJAX Handlers
- * 
- * Handles dynamic filtering for the V2 widget
- *
- * @package HBL
- * @since 2.0.0
- */
 
-// Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * AJAX Handler for V2 Widget Filtering
- */
 function hbl_directorist_v2_filter_listings() {
-	// Verify nonce
 	check_ajax_referer( 'hbl_v2_filter_nonce', 'nonce' );
 	
-	// Get filter parameters
 	$keyword = isset( $_POST['keyword'] ) ? sanitize_text_field( $_POST['keyword'] ) : '';
 	$category = isset( $_POST['category'] ) ? absint( $_POST['category'] ) : 0;
 	$tag = isset( $_POST['tag'] ) ? absint( $_POST['tag'] ) : 0;
@@ -30,10 +16,8 @@ function hbl_directorist_v2_filter_listings() {
 	$widget_id = isset( $_POST['widget_id'] ) ? sanitize_text_field( $_POST['widget_id'] ) : '';
 	$per_page = isset( $_POST['per_page'] ) ? absint( $_POST['per_page'] ) : 10;
 	
-	// Get widget settings early so we can apply Elementor-configured filters
 	$widget_settings = isset( $_POST['widget_settings'] ) ? json_decode( stripslashes( $_POST['widget_settings'] ), true ) : array();
 	
-	// Build query args
 	$args = array(
 		'post_type' => 'at_biz_dir',
 		'post_status' => 'publish',
@@ -41,23 +25,16 @@ function hbl_directorist_v2_filter_listings() {
 		'paged' => $paged,
 	);
 
-	// Disable object cache for AJAX filter queries so posts_where changes are always
-	// reflected — without this, WP caches results keyed only on $args, meaning
-	// letter=A and letter='' share the same cache entry and clearing the filter
-	// returns stale filtered results.
 	$args['cache_results']          = false;
 	$args['update_post_meta_cache'] = false;
 	$args['update_post_term_cache'] = false;
 
-	// Add keyword search
 	if ( ! empty( $keyword ) ) {
 		$args['s'] = $keyword;
 	}
 	
-	// Initialize tax_query
 	$args['tax_query'] = array();
 	
-	// Apply Elementor widget's configured category restriction (base filter)
 	if ( isset( $widget_settings['category_filter_type'] ) && 'specific' === $widget_settings['category_filter_type'] ) {
 		if ( ! empty( $widget_settings['category'] ) ) {
 			$widget_categories = is_array( $widget_settings['category'] ) ? $widget_settings['category'] : array( $widget_settings['category'] );
@@ -75,7 +52,6 @@ function hbl_directorist_v2_filter_listings() {
 		}
 	}
 	
-	// Apply Elementor widget's configured location restriction (base filter)
 	if ( isset( $widget_settings['location_filter_type'] ) && 'specific' === $widget_settings['location_filter_type'] ) {
 		if ( ! empty( $widget_settings['location'] ) ) {
 			$widget_locations = is_array( $widget_settings['location'] ) ? $widget_settings['location'] : array( $widget_settings['location'] );
@@ -93,7 +69,6 @@ function hbl_directorist_v2_filter_listings() {
 		}
 	}
 	
-	// Add user-selected category filter (from front-end dropdown)
 	if ( $category > 0 ) {
 		$args['tax_query'][] = array(
 			'taxonomy' => 'at_biz_dir-category',
@@ -102,7 +77,6 @@ function hbl_directorist_v2_filter_listings() {
 		);
 	}
 
-	// Add tag filter
 	if ( $tag > 0 ) {
 		$args['tax_query'][] = array(
 			'taxonomy' => 'at_biz_dir-tags',
@@ -115,7 +89,6 @@ function hbl_directorist_v2_filter_listings() {
 		$args['tax_query']['relation'] = 'AND';
 	}
 	
-	// Add alphabetical filter
 	if ( ! empty( $letter ) ) {
 		$hbl_letter_filter_cb = function( $where ) use ( $letter ) {
 			global $wpdb;
@@ -125,7 +98,6 @@ function hbl_directorist_v2_filter_listings() {
 		add_filter( 'posts_where', $hbl_letter_filter_cb );
 	}
 	
-	// Add sorting
 	switch ( $sort ) {
 		case 'a-z':
 			$args['orderby'] = 'title';
@@ -140,7 +112,6 @@ function hbl_directorist_v2_filter_listings() {
 			$args['order'] = 'DESC';
 			break;
 		default:
-			// Recommended - featured first, then by date
 			$args['meta_query'] = array(
 				'relation' => 'OR',
 				array(
@@ -159,16 +130,12 @@ function hbl_directorist_v2_filter_listings() {
 			break;
 	}
 	
-	// Execute query
 	$query = new WP_Query( $args );
 
-	// Remove the letter filter immediately after query so it cannot bleed into
-	// any subsequent queries within the same request.
 	if ( ! empty( $letter ) ) {
 		remove_filter( 'posts_where', $hbl_letter_filter_cb );
 	}
 	
-	// Prepare response
 	$response = array(
 		'success' => true,
 		'listings' => array(),
@@ -181,7 +148,6 @@ function hbl_directorist_v2_filter_listings() {
 		'active_filters' => array(),
 	);
 	
-	// Build active filters array
 	if ( ! empty( $keyword ) ) {
 		$response['active_filters'][] = array(
 			'type' => 'keyword',
@@ -236,9 +202,7 @@ function hbl_directorist_v2_filter_listings() {
 	}
 
 	
-	// Get listings HTML
 	if ( $query->have_posts() ) {
-		// Separate into columns
 		$listings = array();
 		while ( $query->have_posts() ) {
 			$query->the_post();
@@ -252,26 +216,22 @@ function hbl_directorist_v2_filter_listings() {
 		
 		
 		
-		// Render left column HTML
 		ob_start();
 		foreach ( $left_column as $listing_id ) {
 			global $post;
 			$post = get_post( $listing_id );
 			setup_postdata( $post );
 			
-			// Render actual card HTML
 			hbl_v2_render_listing_card( $listing_id, $widget_settings );
 		}
 		$left_html = ob_get_clean();
 		
-		// Render right column HTML
 		ob_start();
 		foreach ( $right_column as $listing_id ) {
 			global $post;
 			$post = get_post( $listing_id );
 			setup_postdata( $post );
 			
-			// Render actual card HTML
 			hbl_v2_render_listing_card( $listing_id, $widget_settings );
 		}
 		$right_html = ob_get_clean();
@@ -289,7 +249,6 @@ function hbl_directorist_v2_filter_listings() {
 		);
 	}
 	
-	// Always generate pagination HTML so the count updates after every filter.
 	ob_start();
 	if ( $query->found_posts > 0 ) {
 		$start_item = ( ( $paged - 1 ) * $per_page ) + 1;
@@ -367,12 +326,7 @@ function hbl_directorist_v2_filter_listings() {
 add_action( 'wp_ajax_hbl_v2_filter_listings', 'hbl_directorist_v2_filter_listings' );
 add_action( 'wp_ajax_nopriv_hbl_v2_filter_listings', 'hbl_directorist_v2_filter_listings' );
 
-/**
- * Helper function to render a listing card
- * This is a standalone version of the widget's render_listing_card method
- */
 function hbl_v2_render_listing_card( $listing_id, $settings = array() ) {
-	// Load the card renderer trait if not already loaded
 	static $trait_loaded = false;
 	if ( ! $trait_loaded ) {
 		require_once get_template_directory() . '/inc/widgets/v2/traits/trait-card-renderer.php';
@@ -380,7 +334,6 @@ function hbl_v2_render_listing_card( $listing_id, $settings = array() ) {
 		$trait_loaded = true;
 	}
 	
-	// Create a temporary class to use the trait
 	static $renderer = null;
 	if ( null === $renderer ) {
 		$renderer = new class {
@@ -396,11 +349,7 @@ function hbl_v2_render_listing_card( $listing_id, $settings = array() ) {
 	$renderer->render_card( $listing_id, $settings );
 }
 
-/**
- * Enqueue V2 Widget Scripts
- */
 function hbl_directorist_v2_enqueue_scripts() {
-	// Only enqueue on pages with the widget
 	if ( ! is_admin() ) {
 		wp_localize_script( 'hbl-script', 'hblV2Ajax', array(
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),

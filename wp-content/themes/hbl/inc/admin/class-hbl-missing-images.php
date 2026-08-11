@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Missing Listing Images Tool
- *
- * Finds listings with no logo or the fallback placeholder image.
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -47,7 +39,6 @@ class HBL_Missing_Images {
 			return;
 		}
 
-		// Base layout styles (stats, steps, filters, table, confirm section).
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style(
 			'hbl-bulk-reassign',
@@ -56,7 +47,6 @@ class HBL_Missing_Images {
 			HBL_VERSION
 		);
 
-		// Action-card grid styles (hbl-bpr-plan-grid, hbl-bpr-plan-card, etc.).
 		wp_enqueue_style(
 			'hbl-bulk-plan-reassign',
 			HBL_THEME_URI . '/inc/admin/css/bulk-plan-reassign.css',
@@ -64,7 +54,6 @@ class HBL_Missing_Images {
 			HBL_VERSION
 		);
 
-		// Small overrides (badges, group bar).
 		wp_enqueue_style(
 			'hbl-duplicate-listings',
 			HBL_THEME_URI . '/inc/admin/css/duplicate-listings.css',
@@ -73,15 +62,7 @@ class HBL_Missing_Images {
 		);
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* Counts                                                                */
-	/* ------------------------------------------------------------------ */
 
-	/**
-	 * A listing has NO image when all three image sources are empty/zero.
-	 * Sources: _custom-file (Directorist logo), _listing_prv_img (preview),
-	 * _thumbnail_id (WP featured image).
-	 */
 	private function count_no_image() {
 		global $wpdb;
 		return (int) $wpdb->get_var(
@@ -111,9 +92,6 @@ class HBL_Missing_Images {
 		) );
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* AJAX: Load listings                                                   */
-	/* ------------------------------------------------------------------ */
 
 	public function ajax_load_listings() {
 		check_ajax_referer( 'hbl_missing_images_nonce', 'nonce' );
@@ -127,12 +105,10 @@ class HBL_Missing_Images {
 		$filter = isset( $_POST['filter'] ) ? sanitize_key( $_POST['filter'] ) : 'all';
 		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		// Shared JOIN — check all three image sources.
 		$base_joins = "LEFT JOIN {$wpdb->postmeta} pm_logo  ON pm_logo.post_id  = p.ID AND pm_logo.meta_key  = '_custom-file'
 					   LEFT JOIN {$wpdb->postmeta} pm_prv   ON pm_prv.post_id   = p.ID AND pm_prv.meta_key   = '_listing_prv_img'
 					   LEFT JOIN {$wpdb->postmeta} pm_thumb ON pm_thumb.post_id = p.ID AND pm_thumb.meta_key = '_thumbnail_id'";
 
-		// "Truly no image" condition: all three sources are absent/empty.
 		$no_image_where = "( pm_logo.meta_value  IS NULL OR pm_logo.meta_value  = '' )
 						   AND ( pm_prv.meta_value   IS NULL OR pm_prv.meta_value   = '' OR pm_prv.meta_value   = '0' )
 						   AND ( pm_thumb.meta_value IS NULL OR pm_thumb.meta_value = '' OR pm_thumb.meta_value = '0' )";
@@ -146,7 +122,6 @@ class HBL_Missing_Images {
 					AND p.post_status IN ('publish','draft','pending','private')
 					AND {$no_image_where}";
 		} elseif ( 'placeholder' === $filter ) {
-			// Has fallback placeholder in the logo field (regardless of other images).
 			$sql = $wpdb->prepare(
 				"SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
 				        pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
@@ -158,7 +133,6 @@ class HBL_Missing_Images {
 				$wpdb->esc_like( self::FALLBACK_URL ) . '%'
 			);
 		} else {
-			// All: truly no image anywhere, OR logo is the placeholder.
 			$sql = $wpdb->prepare(
 				"SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
 				        pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
@@ -180,23 +154,21 @@ class HBL_Missing_Images {
 
 		$sql .= ' ORDER BY p.post_title ASC';
 
-		$rows     = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows     = $wpdb->get_results( $sql );
 		$listings = array();
 
 		foreach ( $rows as $row ) {
 			$plan_id   = get_post_meta( $row->ID, '_fm_plans', true );
 			$plan_name = $plan_id ? ( get_post( (int) $plan_id ) ? get_post( (int) $plan_id )->post_title : __( 'No Plan', 'hbl' ) ) : __( 'No Plan', 'hbl' );
 
-			// Determine image status badge.
 			if ( ! empty( $row->logo_val ) && strpos( $row->logo_val, self::FALLBACK_URL ) === 0 ) {
 				$image_type = 'placeholder';
 			} elseif ( empty( $row->logo_val ) && empty( $row->prv_val ) && empty( $row->thumb_val ) ) {
 				$image_type = 'none';
 			} else {
-				$image_type = 'none'; // fallback (shouldn't reach here in practice)
+				$image_type = 'none';
 			}
 
-			// Build admin edit URL directly — get_edit_post_link() can return NULL in AJAX context.
 			$edit_url = admin_url( 'post.php?post=' . $row->ID . '&action=edit' );
 
 			$listings[] = array(
@@ -218,9 +190,6 @@ class HBL_Missing_Images {
 		) );
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* Render                                                                */
-	/* ------------------------------------------------------------------ */
 
 	public function render_page() {
 		$no_image    = $this->count_no_image();
@@ -240,7 +209,6 @@ class HBL_Missing_Images {
 			</h1>
 			<p class="description"><?php esc_html_e( 'Find listings with no logo or the fallback placeholder image, then open them for editing.', 'hbl' ); ?></p>
 
-			<!-- Stats -->
 			<div class="hbl-reassign-stats">
 				<div class="hbl-stat-card hbl-stat-card--warning">
 					<div class="hbl-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -267,7 +235,6 @@ class HBL_Missing_Images {
 
 			<div class="hbl-reassign-container">
 
-				<!-- Step 1: Filter & Find -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">1</span>
@@ -298,7 +265,6 @@ class HBL_Missing_Images {
 						</div>
 					</div>
 
-					<!-- Table -->
 					<div id="hbl-mi-listings-wrap" class="hbl-bpr-listings-wrap" style="display:none;">
 						<div class="hbl-bpr-table-header">
 							<label class="hbl-select-all-wrap">
@@ -315,7 +281,6 @@ class HBL_Missing_Images {
 					<div id="hbl-mi-message" class="hbl-bpr-message" style="display:none;"></div>
 				</div>
 
-				<!-- Step 2: Action -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">2</span>
@@ -350,7 +315,6 @@ class HBL_Missing_Images {
 					</div>
 				</div>
 
-				<!-- Step 3: Execute -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">3</span>
@@ -374,7 +338,7 @@ class HBL_Missing_Images {
 					</div>
 				</div>
 
-			</div><!-- .hbl-reassign-container -->
+			</div>
 		</div>
 
 		<script>
@@ -478,7 +442,6 @@ class HBL_Missing_Images {
 				updateSummary();
 			}
 
-			/* Load */
 			$('#hbl-mi-load').on('click', function() {
 				var $btn = $(this);
 				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Loading…', 'hbl' ) ); ?>');
@@ -501,7 +464,6 @@ class HBL_Missing_Images {
 				});
 			});
 
-			/* Select all */
 			$('#hbl-mi-select-all').on('change', function() {
 				$('.hbl-mi-row-cb').prop('checked', this.checked);
 				$('.hbl-bpr-row').toggleClass('hbl-bpr-selected', this.checked);
@@ -513,7 +475,6 @@ class HBL_Missing_Images {
 				updateSelectedCount();
 			});
 
-			/* Action cards */
 			$(document).on('change', 'input[name="hbl_mi_action"]', function() {
 				selectedAction = $(this).val();
 				$('.hbl-dup-action-card').removeClass('hbl-bpr-plan-selected');
@@ -525,7 +486,6 @@ class HBL_Missing_Images {
 				$(this).find('input[name="hbl_mi_action"]').prop('checked', true).trigger('change');
 			});
 
-			/* Execute */
 			$('#hbl-mi-execute').on('click', function() {
 				var urls = getSelectedEditUrls();
 				if ( ! urls.length ) { return; }

@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Events Database Handler
- * 
- * Manages custom database table for events storage
- * Events are stored separately from WordPress posts
- *
- * @package HBL
- * @since 1.3.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -15,29 +6,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class HBL_Events_DB {
 
-	/**
-	 * Instance
-	 */
 	private static $instance = null;
 
-	/**
-	 * Table name (without prefix)
-	 */
 	private $table_name = 'hbl_events';
 
-	/**
-	 * Full table name with prefix
-	 */
 	private $table;
 
-	/**
-	 * Database version
-	 */
 	private $db_version = '1.4.0';
 
-	/**
-	 * Get instance
-	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -45,28 +21,18 @@ class HBL_Events_DB {
 		return self::$instance;
 	}
 
-	/**
-	 * Constructor
-	 */
 	private function __construct() {
 		global $wpdb;
 		$this->table = $wpdb->prefix . $this->table_name;
 		
-		// Create table on theme activation or if not exists
 		add_action( 'after_switch_theme', array( $this, 'create_table' ) );
 		add_action( 'init', array( $this, 'maybe_create_table' ) );
 	}
 
-	/**
-	 * Get table name
-	 */
 	public function get_table_name() {
 		return $this->table;
 	}
 
-	/**
-	 * Check if table needs to be created/updated
-	 */
 	public function maybe_create_table() {
 		$installed_version = get_option( 'hbl_events_db_version', '0' );
 		
@@ -75,22 +41,14 @@ class HBL_Events_DB {
 			$this->upgrade_database( $installed_version );
 			update_option( 'hbl_events_db_version', $this->db_version );
 			
-			// Flush rewrite rules when database is upgraded (for pretty URLs)
 			flush_rewrite_rules();
 		}
 	}
 
-	/**
-	 * Upgrade database from older versions
-	 *
-	 * @param string $from_version Previous version
-	 */
 	private function upgrade_database( $from_version ) {
 		global $wpdb;
 		
-		// If upgrading to 1.1.0 (slug support)
 		if ( version_compare( $from_version, '1.1.0', '<' ) ) {
-			// Add slug column if it doesn't exist
 			$column_exists = $wpdb->get_results( 
 				"SHOW COLUMNS FROM {$this->table} LIKE 'slug'" 
 			);
@@ -104,7 +62,6 @@ class HBL_Events_DB {
 				);
 			}
 			
-			// Generate slugs for existing events without slugs
 			$events = $wpdb->get_results( 
 				"SELECT id, title FROM {$this->table} WHERE slug = '' OR slug IS NULL" 
 			);
@@ -121,9 +78,7 @@ class HBL_Events_DB {
 			}
 		}
 
-		// If upgrading to 1.2.0 (recurrence support)
 		if ( version_compare( $from_version, '1.2.0', '<' ) ) {
-			// Add recurrence columns if they don't exist
 			$columns_to_add = array(
 				'recurrence_type'     => "varchar(50) DEFAULT NULL AFTER event_frequency",
 				'recurrence_interval' => "int(11) DEFAULT 1 AFTER recurrence_type",
@@ -144,9 +99,7 @@ class HBL_Events_DB {
 			}
 		}
 
-		// If upgrading to 1.3.0 (address support)
 		if ( version_compare( $from_version, '1.3.0', '<' ) ) {
-			// Add address column if it doesn't exist
 			$column_exists = $wpdb->get_results( 
 				"SHOW COLUMNS FROM {$this->table} LIKE 'address'" 
 			);
@@ -158,9 +111,7 @@ class HBL_Events_DB {
 			}
 		}
 
-		// If upgrading to 1.3.1 (multi-day support)
 		if ( version_compare( $from_version, '1.3.1', '<' ) ) {
-			// Add scheduling columns
 			$columns_to_add = array(
 				'scheduling_type'  => "varchar(20) DEFAULT 'single' AFTER event_cost",
 				'daily_start_time' => "time DEFAULT NULL AFTER end_date",
@@ -180,9 +131,7 @@ class HBL_Events_DB {
 			}
 		}
 
-		// If upgrading to 1.3.2 (ensure columns exist - fix for potentially missed upgrades)
 		if ( version_compare( $from_version, '1.3.2', '<' ) ) {
-			// Re-check scheduling columns
 			$columns_to_add = array(
 				'scheduling_type'  => "varchar(20) DEFAULT 'single' AFTER event_cost",
 				'daily_start_time' => "time DEFAULT NULL AFTER end_date",
@@ -202,7 +151,6 @@ class HBL_Events_DB {
 			}
 		}
 
-		// If upgrading to 1.4.0 (tags support)
 		if ( version_compare( $from_version, '1.4.0', '<' ) ) {
 			$column_exists = $wpdb->get_results(
 				$wpdb->prepare( "SHOW COLUMNS FROM {$this->table} LIKE %s", 'tags' )
@@ -216,9 +164,6 @@ class HBL_Events_DB {
 		}
 	}
 
-	/**
-	 * Create the events table
-	 */
 	public function create_table() {
 		global $wpdb;
 		
@@ -272,13 +217,6 @@ class HBL_Events_DB {
 		dbDelta( $sql );
 	}
 
-	/**
-	 * Generate a unique slug from title
-	 *
-	 * @param string $title Event title
-	 * @param int    $exclude_id Event ID to exclude (for updates)
-	 * @return string Unique slug
-	 */
 	public function generate_slug( $title, $exclude_id = 0 ) {
 		global $wpdb;
 		
@@ -286,7 +224,6 @@ class HBL_Events_DB {
 		$original_slug = $slug;
 		$counter = 1;
 		
-		// Check if slug exists and make it unique
 		while ( true ) {
 			$sql = $wpdb->prepare(
 				"SELECT id FROM {$this->table} WHERE slug = %s AND id != %d LIMIT 1",
@@ -307,12 +244,6 @@ class HBL_Events_DB {
 		return $slug;
 	}
 
-	/**
-	 * Get event by slug
-	 *
-	 * @param string $slug Event slug
-	 * @return object|null Event object or null
-	 */
 	public function get_by_slug( $slug ) {
 		global $wpdb;
 		
@@ -330,12 +261,6 @@ class HBL_Events_DB {
 		return $event;
 	}
 
-	/**
-	 * Insert a new event
-	 *
-	 * @param array $data Event data
-	 * @return int|false Event ID on success, false on failure
-	 */
 	public function insert( $data ) {
 		global $wpdb;
 		
@@ -374,22 +299,18 @@ class HBL_Events_DB {
 		
 		$data = wp_parse_args( $data, $defaults );
 		
-		// Generate slug if not provided
 		if ( empty( $data['slug'] ) && ! empty( $data['title'] ) ) {
 			$data['slug'] = $this->generate_slug( $data['title'] );
 		}
 		
-		// Serialize internal tags if array
 		if ( is_array( $data['internal_tags'] ) ) {
 			$data['internal_tags'] = maybe_serialize( $data['internal_tags'] );
 		}
 
-		// Serialize recurrence_days if array
 		if ( is_array( $data['recurrence_days'] ) ) {
 			$data['recurrence_days'] = implode( ',', $data['recurrence_days'] );
 		}
 
-		// Serialize recurrence_week if array
 		if ( is_array( $data['recurrence_week'] ) ) {
 			$data['recurrence_week'] = implode( ',', $data['recurrence_week'] );
 		}
@@ -398,36 +319,36 @@ class HBL_Events_DB {
 			$this->table,
 			$data,
 			array(
-				'%d', // user_id
-				'%s', // title
-				'%s', // slug
-				'%s', // description
-				'%s', // start_date
-				'%s', // end_date
-				'%s', // daily_start_time
-				'%s', // daily_end_time
-				'%d', // is_allday
-				'%s', // venue
-				'%s', // address
-				'%s', // event_url
-				'%s', // contact_email
-				'%s', // event_type
-				'%s', // event_cost
-				'%s', // scheduling_type
-				'%s', // event_frequency
-				'%s', // recurrence_type
-				'%d', // recurrence_interval
-				'%s', // recurrence_days
-				'%s', // recurrence_week
-				'%d', // is_program
-				'%s', // organiser_type
-				'%d', // category_id
-				'%d', // featured_image
-				'%s', // event_color
-				'%s', // internal_tags
-				'%s', // status
-				'%s', // created_at
-				'%s', // updated_at
+				'%d',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%d',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%d',
+				'%s',
+				'%s',
+				'%d',
+				'%s',
+				'%d',
+				'%d',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
+				'%s',
 			)
 		);
 		
@@ -438,32 +359,21 @@ class HBL_Events_DB {
 		return false;
 	}
 
-	/**
-	 * Update an event
-	 *
-	 * @param int   $id   Event ID
-	 * @param array $data Event data to update
-	 * @return bool True on success, false on failure
-	 */
 	public function update( $id, $data ) {
 		global $wpdb;
 		
-		// Regenerate slug if title changed
 		if ( isset( $data['title'] ) && ! empty( $data['title'] ) ) {
 			$data['slug'] = $this->generate_slug( $data['title'], $id );
 		}
 		
-		// Serialize internal tags if array
 		if ( isset( $data['internal_tags'] ) && is_array( $data['internal_tags'] ) ) {
 			$data['internal_tags'] = maybe_serialize( $data['internal_tags'] );
 		}
 
-		// Serialize recurrence_days if array
 		if ( isset( $data['recurrence_days'] ) && is_array( $data['recurrence_days'] ) ) {
 			$data['recurrence_days'] = implode( ',', $data['recurrence_days'] );
 		}
 
-		// Serialize recurrence_week if array
 		if ( isset( $data['recurrence_week'] ) && is_array( $data['recurrence_week'] ) ) {
 			$data['recurrence_week'] = implode( ',', $data['recurrence_week'] );
 		}
@@ -481,12 +391,6 @@ class HBL_Events_DB {
 		return $result !== false;
 	}
 
-	/**
-	 * Get the URL for an event
-	 *
-	 * @param int|object $event Event ID or event object
-	 * @return string Event URL
-	 */
 	public function get_event_url( $event ) {
 		if ( is_numeric( $event ) ) {
 			$event = $this->get( $event );
@@ -499,12 +403,6 @@ class HBL_Events_DB {
 		return home_url( '/events/' . $event->slug . '/' );
 	}
 
-	/**
-	 * Delete an event
-	 *
-	 * @param int $id Event ID
-	 * @return bool True on success, false on failure
-	 */
 	public function delete( $id ) {
 		global $wpdb;
 		
@@ -517,12 +415,6 @@ class HBL_Events_DB {
 		return $result !== false;
 	}
 
-	/**
-	 * Get a single event by ID
-	 *
-	 * @param int $id Event ID
-	 * @return object|null Event object or null
-	 */
 	public function get( $id ) {
 		global $wpdb;
 		
@@ -540,12 +432,6 @@ class HBL_Events_DB {
 		return $event;
 	}
 
-	/**
-	 * Get events with optional filters
-	 *
-	 * @param array $args Query arguments
-	 * @return array Array of event objects
-	 */
 	public function get_events( $args = array() ) {
 		global $wpdb;
 		
@@ -558,7 +444,7 @@ class HBL_Events_DB {
 			'organiser_type' => null,
 			'category_id'    => null,
 			'search'         => null,
-			'upcoming'       => null, // true for upcoming, false for past
+			'upcoming'       => null,
 			'orderby'        => 'start_date',
 			'order'          => 'DESC',
 			'limit'          => 20,
@@ -570,49 +456,41 @@ class HBL_Events_DB {
 		$where = array( '1=1' );
 		$values = array();
 		
-		// User filter
 		if ( $args['user_id'] !== null ) {
 			$where[] = 'user_id = %d';
 			$values[] = $args['user_id'];
 		}
 		
-		// Status filter
 		if ( $args['status'] !== null ) {
 			$where[] = 'status = %s';
 			$values[] = $args['status'];
 		}
 		
-		// Event type filter
 		if ( $args['event_type'] !== null ) {
 			$where[] = 'event_type = %s';
 			$values[] = $args['event_type'];
 		}
 		
-		// Cost filter
 		if ( $args['event_cost'] !== null ) {
 			$where[] = 'event_cost = %s';
 			$values[] = $args['event_cost'];
 		}
 		
-		// Frequency filter
 		if ( $args['event_frequency'] !== null ) {
 			$where[] = 'event_frequency = %s';
 			$values[] = $args['event_frequency'];
 		}
 		
-		// Organiser filter
 		if ( $args['organiser_type'] !== null ) {
 			$where[] = 'organiser_type = %s';
 			$values[] = $args['organiser_type'];
 		}
 		
-		// Category filter
 		if ( $args['category_id'] !== null ) {
 			$where[] = 'category_id = %d';
 			$values[] = $args['category_id'];
 		}
 		
-		// Upcoming/Past filter
 		if ( $args['upcoming'] === true ) {
 			$where[] = 'start_date >= %s';
 			$values[] = current_time( 'mysql' );
@@ -621,7 +499,6 @@ class HBL_Events_DB {
 			$values[] = current_time( 'mysql' );
 		}
 		
-		// Search filter
 		if ( $args['search'] !== null && ! empty( $args['search'] ) ) {
 			$search_term = '%' . $wpdb->esc_like( $args['search'] ) . '%';
 			$where[] = '(title LIKE %s OR description LIKE %s OR venue LIKE %s)';
@@ -630,30 +507,24 @@ class HBL_Events_DB {
 			$values[] = $search_term;
 		}
 		
-		// Build WHERE clause
 		$where_clause = implode( ' AND ', $where );
 		
-		// Sanitize orderby
 		$allowed_orderby = array( 'id', 'title', 'start_date', 'end_date', 'created_at', 'updated_at', 'status' );
 		$orderby = in_array( $args['orderby'], $allowed_orderby ) ? $args['orderby'] : 'start_date';
 		$order = strtoupper( $args['order'] ) === 'ASC' ? 'ASC' : 'DESC';
 		
-		// Build query
 		$sql = "SELECT * FROM {$this->table} WHERE {$where_clause} ORDER BY {$orderby} {$order}";
 		
-		// Add limit
 		if ( $args['limit'] > 0 ) {
 			$sql .= $wpdb->prepare( " LIMIT %d OFFSET %d", $args['limit'], $args['offset'] );
 		}
 		
-		// Prepare if we have values
 		if ( ! empty( $values ) ) {
 			$sql = $wpdb->prepare( $sql, $values );
 		}
 		
 		$events = $wpdb->get_results( $sql );
 		
-		// Unserialize internal tags
 		foreach ( $events as &$event ) {
 			if ( $event->internal_tags ) {
 				$event->internal_tags = maybe_unserialize( $event->internal_tags );
@@ -663,17 +534,6 @@ class HBL_Events_DB {
 		return $events;
 	}
 
-	/**
-	 * Get event counts grouped by category
-	 *
-	 * Events are stored in this custom table, not as WordPress posts, so the
-	 * event_category taxonomy's native term count (which only reflects real
-	 * `post` objects) doesn't apply to them. Widgets that display or sort by
-	 * "events per category" should use this instead of $term->count.
-	 *
-	 * @param string|null $status Optional status filter (e.g. 'publish'). Null for all statuses.
-	 * @return array Associative array of category_id => count
-	 */
 	public function count_by_category( $status = null ) {
 		global $wpdb;
 
@@ -701,12 +561,6 @@ class HBL_Events_DB {
 		return $counts;
 	}
 
-	/**
-	 * Count events with optional filters
-	 *
-	 * @param array $args Query arguments
-	 * @return int Number of events
-	 */
 	public function count_events( $args = array() ) {
 		global $wpdb;
 
@@ -780,24 +634,11 @@ class HBL_Events_DB {
 		return (int) $wpdb->get_var( $sql );
 	}
 
-	/**
-	 * Get events by user ID
-	 *
-	 * @param int   $user_id User ID
-	 * @param array $args    Additional arguments
-	 * @return array Array of event objects
-	 */
 	public function get_user_events( $user_id, $args = array() ) {
 		$args['user_id'] = $user_id;
 		return $this->get_events( $args );
 	}
 
-	/**
-	 * Get upcoming events
-	 *
-	 * @param array $args Additional arguments
-	 * @return array Array of event objects
-	 */
 	public function get_upcoming_events( $args = array() ) {
 		$args['upcoming'] = true;
 		$args['status'] = 'publish';
@@ -806,11 +647,6 @@ class HBL_Events_DB {
 		return $this->get_events( $args );
 	}
 
-	/**
-	 * Get event statistics
-	 *
-	 * @return array Statistics array
-	 */
 	public function get_stats() {
 		global $wpdb;
 		
@@ -826,10 +662,8 @@ class HBL_Events_DB {
 			'by_status'    => array(),
 		);
 		
-		// Total count
 		$stats['total'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$this->table}" );
 		
-		// Upcoming vs Past
 		$now = current_time( 'mysql' );
 		$stats['upcoming'] = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(*) FROM {$this->table} WHERE start_date >= %s",
@@ -837,7 +671,6 @@ class HBL_Events_DB {
 		) );
 		$stats['past'] = $stats['total'] - $stats['upcoming'];
 		
-		// Free vs Paid
 		$stats['free'] = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$this->table} WHERE event_cost = 'free' OR event_cost = '' OR event_cost IS NULL"
 		);
@@ -845,7 +678,6 @@ class HBL_Events_DB {
 			"SELECT COUNT(*) FROM {$this->table} WHERE event_cost = 'paid'"
 		);
 		
-		// By type
 		$types = $wpdb->get_results(
 			"SELECT event_type, COUNT(*) as count FROM {$this->table} WHERE event_type != '' AND event_type IS NOT NULL GROUP BY event_type"
 		);
@@ -853,7 +685,6 @@ class HBL_Events_DB {
 			$stats['by_type'][ $type->event_type ] = (int) $type->count;
 		}
 		
-		// By frequency
 		$frequencies = $wpdb->get_results(
 			"SELECT event_frequency, COUNT(*) as count FROM {$this->table} WHERE event_frequency != '' AND event_frequency IS NOT NULL GROUP BY event_frequency"
 		);
@@ -861,7 +692,6 @@ class HBL_Events_DB {
 			$stats['by_frequency'][ $freq->event_frequency ] = (int) $freq->count;
 		}
 		
-		// By organiser
 		$organisers = $wpdb->get_results(
 			"SELECT organiser_type, COUNT(*) as count FROM {$this->table} WHERE organiser_type != '' AND organiser_type IS NOT NULL GROUP BY organiser_type"
 		);
@@ -869,7 +699,6 @@ class HBL_Events_DB {
 			$stats['by_organiser'][ $org->organiser_type ] = (int) $org->count;
 		}
 		
-		// By status
 		$statuses = $wpdb->get_results(
 			"SELECT status, COUNT(*) as count FROM {$this->table} GROUP BY status"
 		);
@@ -880,13 +709,6 @@ class HBL_Events_DB {
 		return $stats;
 	}
 
-	/**
-	 * Check if user owns an event
-	 *
-	 * @param int $event_id Event ID
-	 * @param int $user_id  User ID (optional, defaults to current user)
-	 * @return bool True if user owns the event
-	 */
 	public function user_owns_event( $event_id, $user_id = null ) {
 		if ( $user_id === null ) {
 			$user_id = get_current_user_id();
@@ -902,14 +724,8 @@ class HBL_Events_DB {
 	}
 }
 
-// Initialize
 HBL_Events_DB::get_instance();
 
-/**
- * Helper function to get the events DB instance
- *
- * @return HBL_Events_DB
- */
 function hbl_events_db() {
 	return HBL_Events_DB::get_instance();
 }

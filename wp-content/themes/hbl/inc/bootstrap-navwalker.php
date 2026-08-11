@@ -1,10 +1,4 @@
 <?php
-/**
- * Bootstrap 5 Nav Walker
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! class_exists( 'Bootstrap_NavWalker' ) ) {
 

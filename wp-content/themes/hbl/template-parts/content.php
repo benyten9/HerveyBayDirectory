@@ -1,10 +1,4 @@
 <?php
-/**
- * Template part for displaying posts
- *
- * @package HBL
- * @since 1.0.0
- */
 ?>
 
 <article id="post-<?php the_ID(); ?>" <?php post_class( 'mb-5 card' ); ?>>

@@ -1,14 +1,4 @@
 <?php
-/**
- * HBL Listing Search Results V2 Widget
- *
- * Displays search results for listings using V2 design.
- * Initial render reads keyword / category / location from URL query params.
- * AJAX filtering uses hbl_v2_filter_listings action (same as Directorist V2).
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -51,7 +41,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 		$categories = $this->get_listing_categories();
 		$tags       = $this->get_listing_tags();
 
-		// ── Query Settings ───────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_query',
 			array( 'label' => esc_html__( 'Query Settings', 'hbl' ) )
@@ -112,7 +101,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Plan Tier Mapping ────────────────────────────────────────────────
 		$pricing_plans = $this->get_pricing_plans();
 
 		$this->start_controls_section(
@@ -145,7 +133,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Plan Badges ──────────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_plan_badges',
 			array( 'label' => esc_html__( 'Plan Badges', 'hbl' ) )
@@ -210,7 +197,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Display Options ──────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_display',
 			array( 'label' => esc_html__( 'Display Options', 'hbl' ) )
@@ -252,7 +238,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 			)
 		);
 
-		// Featured Tags Repeater
 		$popular_searches_repeater = new \Elementor\Repeater();
 		$popular_searches_repeater->add_control( 'search_text', array(
 			'label'       => esc_html__( 'Tag Text', 'hbl' ),
@@ -280,7 +265,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 			)
 		);
 
-		// Search Categories
 		$this->add_control(
 			'show_popular_categories',
 			array(
@@ -390,7 +374,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Fallback Logo ────────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_fallback_logo',
 			array( 'label' => esc_html__( 'Fallback Logo', 'hbl' ) )
@@ -416,7 +399,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 		$settings  = $this->get_settings_for_display();
 		$widget_id = $this->get_id();
 
-		// Search params from URL (initial server-side render only)
 		$keyword       = isset( $_GET['q'] )        ? sanitize_text_field( wp_unslash( $_GET['q'] ) )        : '';
 		$category_slug = isset( $_GET['category'] ) ? sanitize_text_field( wp_unslash( $_GET['category'] ) ) : '';
 		$location_slug = isset( $_GET['location'] ) ? sanitize_text_field( wp_unslash( $_GET['location'] ) ) : '';
@@ -425,7 +407,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 
 		$per_page = absint( $settings['listings_per_page'] );
 
-		// Build initial WP_Query
 		$args = array(
 			'post_type'      => ATBDP_POST_TYPE,
 			'posts_per_page' => $per_page,
@@ -471,7 +452,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 
 		$query = new \WP_Query( $args );
 
-		// Display settings
 		$has_search              = ! empty( $keyword ) || ! empty( $category_slug ) || ! empty( $location_slug );
 		$default_view            = ! empty( $settings['default_view'] ) ? $settings['default_view'] : 'grid';
 		$show_alpha              = isset( $settings['show_alphabetical_filter'] ) && 'yes' === $settings['show_alphabetical_filter'];
@@ -481,7 +461,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 		$show_sort               = isset( $settings['show_sort_dropdown'] ) && 'yes' === $settings['show_sort_dropdown'];
 		$show_toggle             = isset( $settings['show_view_toggle'] ) && 'yes' === $settings['show_view_toggle'];
 
-		// Popular searches
 		$popular_searches = array();
 		if ( $show_popular_search ) {
 			if ( ! empty( $settings['popular_searches'] ) && is_array( $settings['popular_searches'] ) ) {
@@ -502,13 +481,11 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 			}
 		}
 
-		// Popular categories
 		$popular_categories = array();
 		if ( $show_popular_categories && ! empty( $settings['popular_categories'] ) && is_array( $settings['popular_categories'] ) ) {
 			$popular_categories = $settings['popular_categories'];
 		}
 
-		// Query settings passed to AJAX
 		$query_settings = array(
 			'listings_per_page' => $per_page,
 			'enable_pagination' => $settings['enable_pagination'] ?? 'yes',
@@ -519,7 +496,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 		     data-default-view="<?php echo esc_attr( $default_view ); ?>"
 		     data-widget-settings="<?php echo esc_attr( wp_json_encode( $settings ) ); ?>">
 
-			<?php // ── URL Search Active Filters ──────────────────────────── ?>
+			<?php ?>
 			<?php if ( $has_search && isset( $settings['show_results_count'] ) && 'yes' === $settings['show_results_count'] ) : ?>
 				<div class="hbl-v2-lresults-header">
 					<div class="hbl-v2-lresults-count">
@@ -555,7 +532,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				</div>
 			<?php endif; ?>
 
-			<?php // ── Featured Tags ─────────────────────────────────────── ?>
+			<?php ?>
 			<?php if ( $show_popular_search && ! empty( $popular_searches ) ) : ?>
 				<div class="hbl-v2-popular-searches-section">
 					<div class="hbl-v2-popular-searches-buttons">
@@ -571,7 +548,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				</div>
 			<?php endif; ?>
 
-			<?php // ── A-Z Alphabetical Filter ───────────────────────────── ?>
+			<?php ?>
 			<?php if ( $show_alpha ) : ?>
 				<div class="hbl-v2-alphabetical-filter">
 					<div class="hbl-v2-filter-buttons">
@@ -589,7 +566,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				</div>
 			<?php endif; ?>
 
-			<?php // ── Filters Bar ───────────────────────────────────────── ?>
+			<?php ?>
 			<?php if ( $show_keyword || $show_popular_categories || $show_sort || $show_toggle ) : ?>
 				<div class="hbl-v2-filters-bar">
 
@@ -658,7 +635,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 								</div>
 							</div>
 						<?php endif; ?>
-					</div><!-- .hbl-v2-filters-left -->
+					</div>
 
 					<?php if ( $show_toggle ) : ?>
 						<div class="hbl-v2-filters-right">
@@ -684,15 +661,15 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-				</div><!-- .hbl-v2-filters-bar -->
+				</div>
 			<?php endif; ?>
 
-			<?php // ── Active AJAX Filters Display ───────────────────────── ?>
+			<?php ?>
 			<div class="hbl-v2-active-filters" style="display:none;">
 				<div class="hbl-v2-active-filters-container"></div>
 			</div>
 
-			<?php // ── Results Grid ──────────────────────────────────────── ?>
+			<?php ?>
 			<?php if ( $query->have_posts() ) : ?>
 
 				<?php
@@ -790,7 +767,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				</div>
 			<?php endif; ?>
 
-		</div><!-- .hbl-v2-lresults-widget -->
+		</div>
 
 		<script>
 		jQuery(document).ready(function($) {
@@ -806,7 +783,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				paged   : 1
 			};
 
-			// ── View toggle ──────────────────────────────────────────────────
 			$widget.find('.hbl-v2-view-btn').on('click', function() {
 				var view   = $(this).data('view');
 				var $grid  = $widget.find('.hbl-v2-listings-grid');
@@ -814,7 +790,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				$grid.toggleClass('list-view', view === 'list');
 			});
 
-			// ── Keyword search ───────────────────────────────────────────────
 			var searchTimeout;
 			$widget.find('.hbl-v2-keyword-search-input').on('input', function() {
 				var keyword = $(this).val().trim();
@@ -835,7 +810,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// ── Featured Tags (popular search buttons) ───────────────────────
 			$widget.find('.hbl-v2-popular-search-btn').on('click', function() {
 				$widget.find('.hbl-v2-popular-search-btn').removeClass('active');
 				$(this).addClass('active');
@@ -844,7 +818,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// ── Search Categories dropdown ────────────────────────────────────
 			$widget.find('.hbl-v2-popular-categories-trigger').on('click', function() {
 				var $dropdown = $widget.find('.hbl-v2-popular-categories-dropdown');
 				var isOpen    = $(this).attr('aria-expanded') === 'true';
@@ -877,7 +850,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				}
 			});
 
-			// ── Sort dropdown ────────────────────────────────────────────────
 			$widget.find('.hbl-v2-sort-trigger').on('click', function() {
 				var $dropdown = $widget.find('.hbl-v2-sort-dropdown');
 				var isOpen    = $(this).attr('aria-expanded') === 'true';
@@ -913,7 +885,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				}
 			});
 
-			// ── A-Z Letter filter ────────────────────────────────────────────
 			$widget.find('.hbl-v2-letter-btn').on('click', function(e) {
 				e.preventDefault();
 				var ltr = $(this).data('letter');
@@ -929,7 +900,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// ── Pagination ───────────────────────────────────────────────────
 			$widget.on('click', '.hbl-v2-page-link', function(e) {
 				e.preventDefault();
 				currentFilters.paged = parseInt($(this).data('page')) || 1;
@@ -937,7 +907,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				$('html, body').animate({ scrollTop: $widget.offset().top - 100 }, 300);
 			});
 
-			// ── AJAX filter call ─────────────────────────────────────────────
 			function applyFilters() {
 				$.ajax({
 					url : hblV2Ajax.ajaxurl,
@@ -974,7 +943,6 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 				});
 			}
 
-			// ── Active filters display ───────────────────────────────────────
 			function updateActiveFilters(filters) {
 				var $container = $widget.find('.hbl-v2-active-filters-container');
 				$container.empty();

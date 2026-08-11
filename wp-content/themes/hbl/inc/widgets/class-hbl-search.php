@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Search Widget
- *
- * Universal search widget for WordPress posts and Directorist listings
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.2.30
- */
 
 namespace HBL\Widgets;
 
@@ -16,45 +7,29 @@ use Elementor\Controls_Manager;
 use Elementor\Group_Control_Typography;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
 class HBL_Search extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-search';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL Search', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-search';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// ========== CONTENT SECTION ==========
 		$this->start_controls_section(
 			'section_content',
 			array(
@@ -156,7 +131,6 @@ class HBL_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: SEARCH INPUT ==========
 		$this->start_controls_section(
 			'section_input_style',
 			array(
@@ -202,7 +176,6 @@ class HBL_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: SEARCH BUTTON ==========
 		$this->start_controls_section(
 			'section_button_style',
 			array(
@@ -258,7 +231,6 @@ class HBL_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HELPER TEXT ==========
 		$this->start_controls_section(
 			'section_helper_style',
 			array(
@@ -289,7 +261,6 @@ class HBL_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: FILTERS ==========
 		$this->start_controls_section(
 			'section_filters_style',
 			array(
@@ -321,7 +292,6 @@ class HBL_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: RESULTS ==========
 		$this->start_controls_section(
 			'section_results_style',
 			array(
@@ -493,9 +463,6 @@ class HBL_Search extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		$search_results_url = ! empty( $settings['search_results_page'] ) ? home_url( $settings['search_results_page'] ) : home_url( '/search-result/' );
@@ -503,17 +470,13 @@ class HBL_Search extends Widget_Base {
 		<div class="hbl-search-widget">
 			<form class="hbl-search-form" id="hbl-search-form" method="get" action="<?php echo esc_url( $search_results_url ); ?>">
 				
-				<!-- First Row: Search Button + Input Field -->
 				<div class="hbl-search-form-row-1">
-					<!-- Search Button (Left Side) -->
 					<div class="hbl-search-button-wrapper">
 						<button type="submit" class="hbl-search-button">
 							<?php echo esc_html( $settings['search_button_text'] ); ?>
 						</button>
 					</div>
 
-					<!-- Search Input Field (Right Side - expands to fill) -->
-					<!-- Helper text is the placeholder for the input field -->
 					<div class="hbl-search-input-container">
 						<input 
 							type="text" 
@@ -526,11 +489,9 @@ class HBL_Search extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- Second Row: Category and Location Filters (if enabled) -->
 				<?php if ( 'yes' === $settings['show_category_filter'] || 'yes' === $settings['show_location_filter'] ) : ?>
 					<div class="hbl-search-form-row-2">
 						
-						<!-- Category Filter -->
 						<?php if ( 'yes' === $settings['show_category_filter'] ) : ?>
 							<?php
 							$current_category = isset( $_GET['category'] ) ? sanitize_text_field( wp_unslash( $_GET['category'] ) ) : '';
@@ -539,7 +500,6 @@ class HBL_Search extends Widget_Base {
 								<select class="hbl-search-filter hbl-category-filter" name="category">
 									<option value=""><?php esc_html_e( 'Category', 'hbl' ); ?></option>
 									<?php
-									// Get Directorist categories
 									if ( taxonomy_exists( 'at_biz_dir-category' ) ) {
 										$listing_categories = get_terms( array(
 											'taxonomy'   => 'at_biz_dir-category',
@@ -559,7 +519,6 @@ class HBL_Search extends Widget_Base {
 							</div>
 						<?php endif; ?>
 
-						<!-- Location Filter -->
 						<?php if ( 'yes' === $settings['show_location_filter'] && taxonomy_exists( 'at_biz_dir-location' ) ) : ?>
 							<?php
 							$current_location = isset( $_GET['location'] ) ? sanitize_text_field( wp_unslash( $_GET['location'] ) ) : '';
@@ -593,9 +552,6 @@ class HBL_Search extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Display search results
-	 */
 	private function display_search_results( $settings ) {
 		$search_query = get_search_query();
 		$category = isset( $_GET['search_category'] ) ? sanitize_text_field( $_GET['search_category'] ) : '';
@@ -603,7 +559,6 @@ class HBL_Search extends Widget_Base {
 		
 		$results = array();
 
-		// Search in WordPress posts
 		if ( 'yes' === $settings['search_in_posts'] && isset( $_GET['search_posts'] ) ) {
 			$post_args = array(
 				'post_type'      => 'post',
@@ -612,7 +567,6 @@ class HBL_Search extends Widget_Base {
 				'post_status'    => 'publish',
 			);
 
-			// Add category filter for posts
 			if ( ! empty( $category ) && strpos( $category, 'post_cat_' ) === 0 ) {
 				$cat_id = str_replace( 'post_cat_', '', $category );
 				$post_args['cat'] = intval( $cat_id );
@@ -636,7 +590,6 @@ class HBL_Search extends Widget_Base {
 			}
 		}
 
-		// Search in Directorist listings
 		if ( 'yes' === $settings['search_in_listings'] && isset( $_GET['search_listings'] ) ) {
 			$listing_args = array(
 				'post_type'      => 'at_biz_dir',
@@ -645,7 +598,6 @@ class HBL_Search extends Widget_Base {
 				'post_status'    => 'publish',
 			);
 
-			// Add category filter for listings
 			if ( ! empty( $category ) && strpos( $category, 'listing_cat_' ) === 0 ) {
 				$cat_id = str_replace( 'listing_cat_', '', $category );
 				$listing_args['tax_query'] = array(
@@ -657,7 +609,6 @@ class HBL_Search extends Widget_Base {
 				);
 			}
 
-			// Add location filter
 			if ( ! empty( $location ) ) {
 				if ( ! isset( $listing_args['tax_query'] ) ) {
 					$listing_args['tax_query'] = array();
@@ -687,7 +638,6 @@ class HBL_Search extends Widget_Base {
 			}
 		}
 
-		// Display results
 		if ( ! empty( $results ) ) {
 			echo '<div class="hbl-search-results-list">';
 			echo '<h3 class="hbl-results-title">' . sprintf( esc_html__( 'Search Results for "%s"', 'hbl' ), esc_html( $search_query ) ) . '</h3>';
@@ -704,9 +654,6 @@ class HBL_Search extends Widget_Base {
 		}
 	}
 
-	/**
-	 * Render individual search result item
-	 */
 	private function render_result_item( $result ) {
 		?>
 		<div class="hbl-result-item hbl-result-type-<?php echo esc_attr( $result['type'] ); ?>">

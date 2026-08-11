@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Listing Search Widget
- *
- * A beautiful search form for listings
- *
- * @package HBL
- * @since 1.2.697
- */
 
 namespace HBL\Widgets;
 
@@ -41,7 +33,6 @@ class HBL_Listing_Search extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -76,7 +67,6 @@ class HBL_Listing_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: FIELDS ==========
 		$this->start_controls_section(
 			'section_fields',
 			array(
@@ -167,7 +157,6 @@ class HBL_Listing_Search extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -258,7 +247,6 @@ class HBL_Listing_Search extends Widget_Base {
 
 		$action_url = ! empty( $settings['search_results_page'] ) ? home_url( $settings['search_results_page'] ) : home_url( '/search-result/' );
 
-		// Get categories
 		$categories = array();
 		if ( taxonomy_exists( 'at_biz_dir-category' ) ) {
 			$categories = get_terms( array(
@@ -268,7 +256,6 @@ class HBL_Listing_Search extends Widget_Base {
 			) );
 		}
 
-		// Get locations
 		$locations = array();
 		if ( taxonomy_exists( 'at_biz_dir-location' ) ) {
 			$locations = get_terms( array(
@@ -278,7 +265,6 @@ class HBL_Listing_Search extends Widget_Base {
 			) );
 		}
 
-		// Get current values from URL
 		$current_keyword = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
 		$current_category = isset( $_GET['category'] ) ? sanitize_text_field( wp_unslash( $_GET['category'] ) ) : '';
 		$current_location = isset( $_GET['location'] ) ? sanitize_text_field( wp_unslash( $_GET['location'] ) ) : '';

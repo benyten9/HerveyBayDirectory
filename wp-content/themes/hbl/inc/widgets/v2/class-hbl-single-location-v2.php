@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Single Location V2 Widget
- *
- * Displays listings from a location (auto-detected from URL) using V2 design.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -44,9 +36,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 		return array( 'location', 'archive', 'listings', 'directory', 'v2' );
 	}
 
-	/**
-	 * Detect current location term from URL / query vars.
-	 */
 	private function get_current_term() {
 		$atbdp_loc = get_query_var( 'atbdp_location' );
 		if ( $atbdp_loc ) {
@@ -63,7 +52,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 			}
 		}
 
-		// URL path detection
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$url_path    = trim( wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
 		$path_parts  = explode( '/', $url_path );
@@ -200,7 +188,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Tier Mapping
 		$this->start_controls_section(
 			'section_plan_tiers',
 			array( 'label' => esc_html__( 'Plan Tier Mapping', 'hbl' ) )
@@ -232,7 +219,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Badges
 		$this->start_controls_section(
 			'section_plan_badges',
 			array( 'label' => esc_html__( 'Plan Badges', 'hbl' ) )
@@ -287,7 +273,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 		);
 		$this->end_controls_section();
 
-		// Featured Tags (Popular Searches).
 		$this->start_controls_section(
 			'section_featured_tags',
 			array( 'label' => esc_html__( 'Featured Tags', 'hbl' ) )
@@ -335,7 +320,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// More Filters.
 		$this->start_controls_section(
 			'section_more_filters',
 			array( 'label' => esc_html__( 'More Filters', 'hbl' ) )
@@ -449,12 +433,10 @@ class HBL_Single_Location_V2 extends Widget_Base {
 			<?php endif; ?>
 
 			<?php
-		// Featured Tags (Popular Searches).
 		$show_popular = isset( $settings['show_popular_search'] ) && 'yes' === $settings['show_popular_search'];
 		if ( $show_popular ) :
 			$popular_items = ! empty( $settings['popular_searches'] ) ? $settings['popular_searches'] : array();
 
-			// Auto-generate from most popular tags if none configured.
 			if ( empty( $popular_items ) ) {
 				$auto_tags = get_terms( array(
 					'taxonomy'   => 'at_biz_dir-tags',
@@ -496,7 +478,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 		?>
 
 		<?php
-		// More Filters.
 		$show_more_filters = isset( $settings['show_more_filters'] ) && 'yes' === $settings['show_more_filters'];
 		$more_filter_items = ! empty( $settings['more_filters'] ) ? $settings['more_filters'] : array();
 		?>
@@ -655,7 +636,7 @@ class HBL_Single_Location_V2 extends Widget_Base {
 					</div>
 				</div>
 			<?php endif; ?>
-			<?php endif; // current_term check ?>
+			<?php endif; ?>
 		</div>
 
 		<script>
@@ -802,7 +783,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 				}
 			});
 
-			// Featured Tags.
 			$widget.find('.hbl-v2-popular-search-btn').on('click', function() {
 				var tagId = $(this).data('tag');
 				if ($(this).hasClass('active')) {
@@ -820,7 +800,6 @@ class HBL_Single_Location_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// More Filters.
 			$widget.find('.hbl-v2-more-filters-trigger').on('click', function() {
 				var $dd = $widget.find('.hbl-v2-more-filters-dropdown');
 				var open = $(this).attr('aria-expanded') === 'true';

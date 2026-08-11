@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Single Post Widget
- *
- * Single post layout: 700px reading column, sticky sidebar with categories,
- * and AJAX load-more related posts.
- *
- * @package HBL
- * @since 1.2.963
- */
 
 namespace HBL\Widgets;
 
@@ -26,7 +17,6 @@ class HBL_Single_Post extends Widget_Base {
 	public function get_icon()       { return 'eicon-single-post'; }
 	public function get_categories() { return array( 'hbl' ); }
 
-	// ── AJAX: related posts load-more ─────────────────────────────────────────
 
 	public static function ajax_related() {
 		check_ajax_referer( 'hbl_related_nonce', 'nonce' );
@@ -82,7 +72,6 @@ class HBL_Single_Post extends Widget_Base {
 		) );
 	}
 
-	// ── Related card renderer ─────────────────────────────────────────────────
 
 	public static function render_related_card() {
 		$cats    = get_the_category();
@@ -121,11 +110,9 @@ class HBL_Single_Post extends Widget_Base {
 		<?php
 	}
 
-	// ── Controls ──────────────────────────────────────────────────────────────
 
 	protected function register_controls() {
 
-		// Post Settings
 		$this->start_controls_section( 'section_post_settings', array( 'label' => esc_html__( 'Post Settings', 'hbl' ) ) );
 		$this->add_control( 'post_id', array( 'label' => esc_html__( 'Post ID', 'hbl' ), 'type' => Controls_Manager::NUMBER, 'description' => esc_html__( 'Leave empty to use current post', 'hbl' ), 'default' => '' ) );
 		$this->add_control( 'show_featured_image', array( 'label' => esc_html__( 'Show Featured Image', 'hbl' ), 'type' => Controls_Manager::SWITCHER, 'default' => 'yes' ) );
@@ -138,7 +125,6 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		$this->add_control( 'show_sidebar',        array( 'label' => esc_html__( 'Show Sidebar', 'hbl' ),        'type' => Controls_Manager::SWITCHER, 'default' => 'yes' ) );
 		$this->end_controls_section();
 
-		// Related Posts
 		$this->start_controls_section( 'section_related_posts', array( 'label' => esc_html__( 'Related Posts', 'hbl' ) ) );
 		$this->add_control( 'show_related_posts',   array( 'label' => esc_html__( 'Show Related Posts', 'hbl' ),      'type' => Controls_Manager::SWITCHER, 'default' => 'yes' ) );
 		$this->add_control( 'related_posts_title',  array( 'label' => esc_html__( 'Section Title', 'hbl' ),           'type' => Controls_Manager::TEXT, 'default' => 'Related Articles', 'label_block' => true, 'condition' => array( 'show_related_posts' => 'yes' ) ) );
@@ -147,7 +133,6 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		$this->add_control( 'load_more_text',       array( 'label' => esc_html__( 'Load More Text', 'hbl' ),          'type' => Controls_Manager::TEXT, 'default' => 'Load More Articles', 'condition' => array( 'show_related_posts' => 'yes' ) ) );
 		$this->end_controls_section();
 
-		// Style: Colors
 		$this->start_controls_section( 'section_style', array( 'label' => esc_html__( 'Colors', 'hbl' ), 'tab' => Controls_Manager::TAB_STYLE ) );
 		$this->add_control( 'accent_color', array(
 			'label'     => esc_html__( 'Accent Color', 'hbl' ),
@@ -167,7 +152,6 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		$this->add_control( 'post_content_color', array( 'label' => esc_html__( 'Content Color', 'hbl' ), 'type' => Controls_Manager::COLOR, 'default' => '#333333', 'selectors' => array( '{{WRAPPER}} .hbl-single-post-content' => 'color: {{VALUE}};' ) ) );
 		$this->end_controls_section();
 
-		// Style: Typography
 		$this->start_controls_section( 'section_typography', array( 'label' => esc_html__( 'Typography', 'hbl' ), 'tab' => Controls_Manager::TAB_STYLE ) );
 		$this->add_group_control( Group_Control_Typography::get_type(), array(
 			'name'           => 'post_title_typography',
@@ -184,13 +168,11 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		$this->end_controls_section();
 	}
 
-	// ── Helpers ───────────────────────────────────────────────────────────────
 
 	private function reading_time( $content ) {
 		return max( 1, (int) ceil( str_word_count( strip_tags( $content ) ) / 200 ) );
 	}
 
-	// ── Render ────────────────────────────────────────────────────────────────
 
 	protected function render() {
 		static $styles_printed = false;
@@ -218,7 +200,6 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		$lm_text       = ! empty( $s['load_more_text'] )      ? $s['load_more_text']                : 'Load More Articles';
 		$show_sidebar  = ! empty( $s['show_sidebar'] ) && 'yes' === $s['show_sidebar'];
 
-		// Initial related posts query
 		$rel_args = array(
 			'post_type'      => 'post',
 			'posts_per_page' => $rel_count,
@@ -243,14 +224,14 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		?>
 		<div class="hbl-single-post-widget">
 
-			<?php // ── Featured image ────────────────────────────────────────── ?>
+			<?php ?>
 			<?php if ( 'yes' === $s['show_featured_image'] && has_post_thumbnail( $post_id ) ) : ?>
 				<div class="hbl-post-hero">
 					<?php echo get_the_post_thumbnail( $post_id, 'full', array( 'class' => 'hbl-post-hero-img' ) ); ?>
 				</div>
 			<?php endif; ?>
 
-			<?php // ── Article header ────────────────────────────────────────── ?>
+			<?php ?>
 			<header class="hbl-post-header">
 				<?php if ( $primary_cat ) : ?>
 					<a href="<?php echo esc_url( get_category_link( $primary_cat->term_id ) ); ?>"
@@ -276,16 +257,16 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 				<?php endif; ?>
 			</header>
 
-			<?php // ── Article + Sidebar layout ──────────────────────────────── ?>
+			<?php ?>
 			<div class="hbl-post-layout<?php echo $show_sidebar ? ' hbl-post-has-sidebar' : ''; ?>">
 
-				<?php // Article column ?>
+				<?php ?>
 				<article class="hbl-post-main">
 					<div class="hbl-single-post-content">
 						<?php echo apply_filters( 'the_content', $post->post_content ); ?>
 					</div>
 
-					<?php // Tags + Share ?>
+					<?php ?>
 					<footer class="hbl-post-footer">
 						<?php if ( 'yes' === $s['show_tags'] && ! empty( $tags ) ) : ?>
 							<div class="hbl-post-tags">
@@ -322,7 +303,7 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 				<aside class="hbl-post-sidebar">
 					<div class="hbl-post-sidebar-sticky">
 
-<?php // Categories ?>
+<?php ?>
 						<?php if ( ! empty( $all_cats ) ) : ?>
 							<div class="hbl-sidebar-section">
 								<p class="hbl-sidebar-heading"><?php esc_html_e( 'Categories', 'hbl' ); ?></p>
@@ -342,7 +323,7 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 							</div>
 						<?php endif; ?>
 
-						<?php // Tags ?>
+						<?php ?>
 						<?php if ( 'yes' === $s['show_tags'] && ! empty( $tags ) ) : ?>
 							<div class="hbl-sidebar-section">
 								<p class="hbl-sidebar-heading"><?php esc_html_e( 'Tags', 'hbl' ); ?></p>
@@ -360,9 +341,9 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 				</aside>
 				<?php endif; ?>
 
-			</div><!-- .hbl-post-layout -->
+			</div>
 
-			<?php // ── Related posts ─────────────────────────────────────────── ?>
+			<?php ?>
 			<?php if ( 'yes' === $s['show_related_posts'] && $rel_query->have_posts() ) : ?>
 				<section class="hbl-related-section">
 					<?php if ( ! empty( $s['related_posts_title'] ) ) : ?>
@@ -394,7 +375,7 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 				</section>
 			<?php endif; ?>
 
-		</div><!-- .hbl-single-post-widget -->
+		</div>
 
 		<script>
 		(function() {
@@ -405,7 +386,6 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 			var ajaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 			var lmText  = <?php echo wp_json_encode( $lm_text ); ?>;
 
-			// Load more related posts
 			if (btn) {
 				btn.addEventListener('click', function() {
 					var grid = document.getElementById(btn.dataset.grid);
@@ -437,7 +417,6 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 				function restore() { btn.disabled = false; btn.textContent = lmText; }
 			}
 
-			// Copy link button
 			if (copyBtn) {
 				copyBtn.addEventListener('click', function() {
 					navigator.clipboard.writeText(copyBtn.dataset.url).then(function() {
@@ -453,15 +432,12 @@ $this->add_control( 'show_date',           array( 'label' => esc_html__( 'Show D
 		wp_reset_postdata();
 	}
 
-	// ── Styles ────────────────────────────────────────────────────────────────
 
 	private function print_styles() {
-		// Styles moved to style.css
 	}
 
 }
 
-// ── Register AJAX hooks ───────────────────────────────────────────────────────
 if ( ! has_action( 'wp_ajax_hbl_related_posts_load' ) ) {
 	add_action( 'wp_ajax_hbl_related_posts_load',        array( 'HBL\Widgets\HBL_Single_Post', 'ajax_related' ) );
 	add_action( 'wp_ajax_nopriv_hbl_related_posts_load', array( 'HBL\Widgets\HBL_Single_Post', 'ajax_related' ) );

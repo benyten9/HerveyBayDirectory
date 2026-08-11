@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Single Listing V2 Widget
- *
- * Displays a full single listing detail page using V2 design.
- * Auto-detects the listing from the current post/page context.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -45,16 +36,11 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 		return array( 'listing', 'single', 'business', 'directory', 'v2' );
 	}
 
-	/**
-	 * Get the current listing post ID from context.
-	 */
 	private function get_current_listing_id() {
-		// Check if currently viewing a Directorist listing
 		if ( is_singular( 'at_biz_dir' ) ) {
 			return get_the_ID();
 		}
 
-		// Check query var
 		$atbdp_listing = get_query_var( 'atbdp_listing' );
 		if ( $atbdp_listing ) {
 			$post = get_page_by_path( $atbdp_listing, OBJECT, 'at_biz_dir' );
@@ -63,7 +49,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 			}
 		}
 
-		// Check URL path for listing slug
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$url_path    = trim( wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
 		$path_parts  = explode( '/', $url_path );
@@ -77,7 +62,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 			}
 		}
 
-		// Fallback: check global $post
 		global $post;
 		if ( $post && $post->post_type === 'at_biz_dir' ) {
 			return $post->ID;
@@ -165,7 +149,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Tier Mapping
 		$this->start_controls_section(
 			'section_plan_tiers',
 			array( 'label' => esc_html__( 'Plan Tier Mapping', 'hbl' ) )
@@ -185,7 +168,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Badges
 		$this->start_controls_section(
 			'section_plan_badges',
 			array( 'label' => esc_html__( 'Plan Badges', 'hbl' ) )
@@ -271,10 +253,8 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 			return;
 		}
 
-		// Get all meta at once
 		$all_meta = get_post_meta( $listing_id );
 
-		// Core fields
 		$address  = isset( $all_meta['_address'][0] ) ? $all_meta['_address'][0] : '';
 		$phone    = isset( $all_meta['_phone'][0] ) ? $all_meta['_phone'][0] : '';
 		$website  = isset( $all_meta['_website'][0] ) ? $all_meta['_website'][0] : '';
@@ -282,7 +262,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 		$lat      = isset( $all_meta['_manual_lat'][0] ) ? $all_meta['_manual_lat'][0] : ( isset( $all_meta['_lat'][0] ) ? $all_meta['_lat'][0] : '' );
 		$lng      = isset( $all_meta['_manual_lng'][0] ) ? $all_meta['_manual_lng'][0] : ( isset( $all_meta['_lng'][0] ) ? $all_meta['_lng'][0] : '' );
 
-		// Plan / tier
 		$plan_id  = isset( $all_meta['_fm_plans'][0] ) ? absint( $all_meta['_fm_plans'][0] ) : 0;
 		if ( $plan_id > 0 ) {
 			$plan_post = get_post( $plan_id );
@@ -293,22 +272,18 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 		$plan_tier  = $this->get_plan_tier( $plan_id, $settings );
 		$is_claimed = isset( $all_meta['_claimed_by_admin'][0] ) && ! empty( $all_meta['_claimed_by_admin'][0] );
 
-		// Logo
 		$logo_url = $this->get_listing_logo( $listing_id, $all_meta );
 		if ( empty( $logo_url ) && ! empty( $settings['fallback_logo']['url'] ) ) {
 			$logo_url = $settings['fallback_logo']['url'];
 		}
 
-		// Gallery
 		$gallery_ids = isset( $all_meta['_images'][0] ) ? maybe_unserialize( $all_meta['_images'][0] ) : array();
 		if ( ! is_array( $gallery_ids ) ) {
 			$gallery_ids = array();
 		}
 
-		// Featured image
 		$featured_img = get_the_post_thumbnail_url( $listing_id, 'full' );
 
-		// Rating
 		$average_rating = 0;
 		$rating_count   = 0;
 		if ( function_exists( 'directorist_get_listing_rating' ) ) {
@@ -318,7 +293,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 			$rating_count = intval( directorist_get_listing_review_count( $listing_id ) );
 		}
 
-		// Categories and tags
 		$categories     = wp_get_post_terms( $listing_id, 'at_biz_dir-category' );
 		$tags           = wp_get_post_terms( $listing_id, 'at_biz_dir-tags' );
 		$location_terms = wp_get_post_terms( $listing_id, 'at_biz_dir-location' );
@@ -327,7 +301,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 		if ( is_wp_error( $tags ) ) { $tags = array(); }
 		if ( is_wp_error( $location_terms ) ) { $location_terms = array(); }
 
-		// Social
 		$social = isset( $all_meta['social'][0] ) ? maybe_unserialize( $all_meta['social'][0] ) : '';
 		if ( empty( $social ) && isset( $all_meta['_social'][0] ) ) {
 			$social = maybe_unserialize( $all_meta['_social'][0] );
@@ -346,7 +319,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 			}
 		}
 
-		// Plan badge
 		$plan_badge = null;
 		if ( isset( $settings['show_plan_badges'] ) && 'yes' === $settings['show_plan_badges'] && ! empty( $settings['plan_badges'] ) ) {
 			foreach ( $settings['plan_badges'] as $badge ) {
@@ -357,13 +329,11 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 			}
 		}
 
-		// Reviews (if Directorist supports them)
 		$reviews = array();
 		if ( function_exists( 'atbdp_get_listing_reviews' ) ) {
 			$reviews = atbdp_get_listing_reviews( $listing_id );
 		}
 
-		// Related listings (same category)
 		$related_listings = array();
 		if ( isset( $settings['show_related'] ) && 'yes' === $settings['show_related'] && ! empty( $categories ) ) {
 			$related_count = isset( $settings['related_count'] ) ? absint( $settings['related_count'] ) : 4;
@@ -402,7 +372,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 		?>
 		<div class="hbl-v2-widget hbl-v2-single-listing" data-widget-id="<?php echo esc_attr( $widget_id ); ?>" data-listing-id="<?php echo esc_attr( $listing_id ); ?>">
 
-			<?php /* Hero Image */ ?>
+			<?php  ?>
 			<?php if ( $show_hero && ( $featured_img || ! empty( $gallery_ids[0] ) ) ) :
 				$hero_url = $featured_img ?: wp_get_attachment_image_url( $gallery_ids[0], 'full' );
 			?>
@@ -415,13 +385,13 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 				</div>
 			<?php endif; ?>
 
-			<?php /* Main layout: content + sidebar */ ?>
+			<?php  ?>
 			<div class="hbl-v2-sl-layout">
 
-				<?php /* Main Content Column */ ?>
+				<?php  ?>
 				<div class="hbl-v2-sl-main">
 
-					<?php /* Title & meta header */ ?>
+					<?php  ?>
 					<div class="hbl-v2-sl-header">
 						<?php if ( $logo_url ) : ?>
 							<div class="hbl-v2-sl-logo">
@@ -453,7 +423,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					</div>
 
-					<?php /* Categories & Tags */ ?>
+					<?php  ?>
 					<?php if ( $show_cat_tags && ( ! empty( $categories ) || ! empty( $tags ) ) ) : ?>
 						<div class="hbl-v2-sl-terms">
 							<?php foreach ( $categories as $cat ) : ?>
@@ -469,7 +439,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-					<?php /* Description */ ?>
+					<?php  ?>
 					<?php if ( $show_desc && ! empty( $listing->post_content ) ) : ?>
 						<div class="hbl-v2-sl-section">
 							<h3 class="hbl-v2-sl-section-title"><?php esc_html_e( 'About', 'hbl' ); ?></h3>
@@ -479,7 +449,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-					<?php /* Gallery */ ?>
+					<?php  ?>
 					<?php if ( $show_gallery && ! empty( $gallery_ids ) ) : ?>
 						<div class="hbl-v2-sl-section">
 							<h3 class="hbl-v2-sl-section-title"><?php esc_html_e( 'Gallery', 'hbl' ); ?></h3>
@@ -496,7 +466,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-					<?php /* Reviews */ ?>
+					<?php  ?>
 					<?php if ( $show_reviews && ! empty( $reviews ) ) : ?>
 						<div class="hbl-v2-sl-section">
 							<h3 class="hbl-v2-sl-section-title"><?php esc_html_e( 'Reviews', 'hbl' ); ?></h3>
@@ -523,7 +493,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-					<?php /* Related Listings */ ?>
+					<?php  ?>
 					<?php if ( $show_related && ! empty( $related_listings ) ) : ?>
 						<div class="hbl-v2-sl-section">
 							<h3 class="hbl-v2-sl-section-title"><?php esc_html_e( 'Related Listings', 'hbl' ); ?></h3>
@@ -557,17 +527,17 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 
 				</div>
 
-				<?php /* Sidebar */ ?>
+				<?php  ?>
 				<div class="hbl-v2-sl-sidebar">
 
-					<?php /* Plan badge (if no hero) */ ?>
+					<?php  ?>
 					<?php if ( $plan_badge && ! ( $show_hero && $featured_img ) ) : ?>
 						<div class="hbl-v2-sl-sidebar-badge" style="background-color: <?php echo esc_attr( $plan_badge['badge_bg_color'] ); ?>; color: <?php echo esc_attr( $plan_badge['badge_text_color'] ); ?>;">
 							<?php echo esc_html( $plan_badge['badge_text'] ); ?>
 						</div>
 					<?php endif; ?>
 
-					<?php /* Contact Info */ ?>
+					<?php  ?>
 					<?php if ( $show_contact && ( $phone || $email || $website || $address ) ) : ?>
 						<div class="hbl-v2-sl-sidebar-card">
 							<h4 class="hbl-v2-sl-sidebar-card-title"><?php esc_html_e( 'Contact Info', 'hbl' ); ?></h4>
@@ -600,7 +570,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-					<?php /* Social Links */ ?>
+					<?php  ?>
 					<?php if ( $show_social && ! empty( $social ) ) :
 						$social_icons = array(
 							'facebook'  => array( 'icon' => 'bi-facebook',  'label' => 'Facebook'  ),
@@ -632,7 +602,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 					<?php endif; ?>
 					<?php endif; ?>
 
-					<?php /* Map */ ?>
+					<?php  ?>
 					<?php if ( $show_map && $lat && $lng ) : ?>
 						<div class="hbl-v2-sl-sidebar-card hbl-v2-sl-map-card">
 							<h4 class="hbl-v2-sl-sidebar-card-title"><?php esc_html_e( 'Location', 'hbl' ); ?></h4>
@@ -645,7 +615,7 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-					<?php /* Claim Listing */ ?>
+					<?php  ?>
 					<?php if ( $show_claim && ! $is_claimed ) :
 						$claim_url  = ! empty( $settings['claim_listing_link']['url'] ) ? $settings['claim_listing_link']['url'] : '';
 						$claim_text = ! empty( $settings['claim_button_text'] ) ? $settings['claim_button_text'] : esc_html__( 'Claim Now', 'hbl' );
@@ -673,7 +643,6 @@ class HBL_Single_Listing_V2 extends Widget_Base {
 
 		<script>
 		jQuery(document).ready(function($) {
-			// Initialize map
 			var $mapEl = document.getElementById('hbl-sl-map-<?php echo esc_js( $widget_id ); ?>');
 			if ($mapEl && typeof L !== 'undefined') {
 				var lat = parseFloat($mapEl.dataset.lat);

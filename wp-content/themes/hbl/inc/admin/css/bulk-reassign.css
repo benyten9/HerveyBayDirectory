@@ -1,27 +1,16 @@
-/**
- * HBL Admin Tools — Shared Design System
- * Loaded by every "Step 1/2/3" style admin tool (Bulk Category Reassign,
- * Bulk Plan Reassign, Duplicate Listings, Missing Images, AI Description
- * Generator, Place ID Manager). Tokens below are mirrored from the theme's
- * own :root in style.css so admin tools match the public site exactly.
- */
 
 :root {
 	--hbl-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-	/* Brand */
-	--hbl-primary: #008080;       /* theme --hbl-primary / --hbl-teal */
-	--hbl-primary-hover: #006666; /* theme --hbl-primary-dark */
-	--hbl-secondary: #F9532A;     /* theme --hbl-secondary */
-	--hbl-secondary-hover: #E04520; /* theme --hbl-secondary-dark */
-	--hbl-accent: #F9532A;        /* alias kept for existing rules */
+	--hbl-primary: #008080;
+	--hbl-primary-hover: #006666;
+	--hbl-secondary: #F9532A;
+	--hbl-secondary-hover: #E04520;
+	--hbl-accent: #F9532A;
 
-	/* Buttons — the theme's real .btn-primary is orange by default,
-	   teal on hover (see --hbl-button-bg / --hbl-button-hover-bg). */
 	--hbl-button-bg: #F9532A;
 	--hbl-button-hover-bg: #008080;
 
-	/* Status colors — match theme's Bootstrap-derived palette */
 	--hbl-success: #28A745;
 	--hbl-success-dark: #059669;
 	--hbl-warning: #FFC107;
@@ -29,18 +18,11 @@
 	--hbl-danger: #DC3545;
 	--hbl-danger-dark: #DC2626;
 
-	/* Neutrals */
 	--hbl-text: #1F2937;
 	--hbl-text-secondary: #6B7280;
 	--hbl-border: #E5E7EB;
 	--hbl-bg: #F9FAFB;
 
-	/* Shape + elevation — matches theme radius/shadow scale.
-	   --hbl-radius is the standard component radius (inputs, chips,
-	   small containers); --hbl-radius-xl is reserved for the big
-	   top-level cards (stat tiles, step cards, table wrappers).
-	   Cards are 5px and buttons are 3px throughout — see the explicit
-	   overrides on individual card/button selectors in each file. */
 	--hbl-radius: 8px;
 	--hbl-radius-lg: 8px;
 	--hbl-radius-xl: 5px;
@@ -58,11 +40,6 @@
 	font-family: var(--hbl-font);
 }
 
-/* Global box-sizing reset scoped to our tools — without this, padding
-   and border get added ON TOP of a declared width:100% instead of
-   being included within it, which is exactly what causes an element
-   to end up a few pixels wider than its container and visually touch
-   or hide behind the scrollbar edge on mobile. */
 .hbl-bulk-reassign-wrap,
 .hbl-bulk-reassign-wrap *,
 .hbl-bulk-reassign-wrap *::before,
@@ -88,7 +65,6 @@
 	margin-bottom: 24px;
 }
 
-/* Stats Overview — icon-forward tiles */
 .hbl-reassign-stats {
 	display: flex;
 	gap: 16px;
@@ -157,7 +133,6 @@
 	text-overflow: ellipsis;
 }
 
-/* Container */
 .hbl-reassign-container {
 	display: flex;
 	flex-direction: column;
@@ -165,9 +140,6 @@
 	min-width: 0;
 }
 
-/* Steps — cards connected by a vertical progress line running through
-   each step-number circle, evoking a wizard/timeline even though the
-   cards stack vertically. */
 .hbl-reassign-step {
 	position: relative;
 	background: #fff;
@@ -188,10 +160,6 @@
 	background: linear-gradient(to bottom, var(--hbl-primary), rgba(0, 128, 128, 0.15));
 }
 
-/* Place ID Manager's Import tab reveals its steps one at a time via JS
-   (upload -> map columns -> review) rather than showing them all
-   permanently like other tools — a "connects to the next step" line
-   doesn't make sense when that next step isn't on screen yet. */
 #hbl-pid-tab-import .hbl-reassign-step::after {
 	display: none;
 }
@@ -229,7 +197,6 @@
 	color: var(--hbl-text);
 }
 
-/* Categories Section */
 .hbl-categories-section {
 	border-radius: var(--hbl-radius);
 	padding: 16px;
@@ -268,7 +235,6 @@
 	border: 1px solid var(--hbl-border);
 }
 
-/* Categories Grid */
 .hbl-categories-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -379,7 +345,6 @@
 	grid-column: 1 / -1;
 }
 
-/* Target Section */
 .hbl-target-section {
 	display: flex;
 	flex-direction: column;
@@ -426,7 +391,6 @@
 	max-width: 500px;
 }
 
-/* Reassign Options */
 .hbl-reassign-options {
 	display: flex;
 	flex-direction: column;
@@ -486,7 +450,6 @@
 	margin-left: 28px;
 }
 
-/* Confirm Section */
 .hbl-confirm-section {
 	display: flex;
 	flex-direction: column;
@@ -553,9 +516,6 @@
 	opacity: 0.6;
 }
 
-/* ─── Primary buttons — brand teal (overrides WP admin blue) ───
-   Applies to every "Save / Apply / Generate / Run" style button
-   across all tools sharing this stylesheet.                    */
 
 .hbl-bulk-reassign-wrap .button-primary {
 	background: var(--hbl-button-bg);
@@ -590,17 +550,11 @@
 	transform: none !important;
 }
 
-/* Secondary buttons — teal outline on hover for consistency */
 .hbl-bulk-reassign-wrap .button-secondary:hover:not(:disabled) {
 	border-color: var(--hbl-primary);
 	color: var(--hbl-primary);
 }
 
-/* ─── Tables — shared "data card" treatment ─────────────────────
-   Applies to every table in every tool (widefat listing tables,
-   JS-rendered .hbl-bpr-table grids, etc.) so they all read as the
-   same component. More specific per-tool rules still win where
-   they exist — this just sets the common baseline.               */
 
 .hbl-bulk-reassign-wrap table thead th {
 	background: var(--hbl-bg);
@@ -639,8 +593,6 @@
 	background-color: rgba(0, 128, 128, 0.045);
 }
 
-/* Undo WP core's .widefat th/td input margin (margin: 0 0 0 8px on RTL-ish
-   selectors) which otherwise nudges header/row checkboxes off-center. */
 .hbl-bulk-reassign-wrap .widefat th input[type="checkbox"],
 .hbl-bulk-reassign-wrap .widefat td input[type="checkbox"],
 .hbl-bulk-reassign-wrap .widefat thead td input[type="checkbox"],
@@ -650,7 +602,6 @@
 	vertical-align: middle;
 }
 
-/* Rounded "card" wrapper for tables that sit in a plain scroll div */
 .hbl-table-card {
 	border: 1px solid var(--hbl-border);
 	border-radius: var(--hbl-radius-xl);
@@ -678,7 +629,6 @@
 	box-shadow: none;
 }
 
-/* Result Messages */
 .hbl-result {
 	padding: 16px 20px;
 	border-radius: var(--hbl-radius);
@@ -704,7 +654,6 @@
 	flex-shrink: 0;
 }
 
-/* Responsive */
 .hbl-bulk-reassign-wrap {
 	max-width: 100%;
 	overflow-x: hidden;
@@ -789,7 +738,6 @@
 		max-width: 100%;
 	}
 
-	/* Data tables: scroll instead of squish, with a smaller footprint */
 	.hbl-bulk-reassign-wrap table {
 		font-size: 12px;
 	}
@@ -799,10 +747,6 @@
 		padding: 8px 10px;
 	}
 
-	/* Tables that switch to a stacked card-per-row layout on mobile
-	   (.hbl-pid-log-table, .hbl-aidesc-log-table) already look like a
-	   list of cards — drop the outer card chrome so it doesn't read as
-	   a card wrapping more cards. */
 	.hbl-table-card {
 		border: none;
 		border-radius: 0;

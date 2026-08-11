@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Listings Grid Widget
- *
- * Displays Directorist listings in a responsive grid layout
- *
- * @package HBL
- * @since 1.0.0
- */
 
 namespace HBL\Widgets;
 
@@ -15,66 +7,39 @@ use Elementor\Controls_Manager;
 use Elementor\Group_Control_Typography;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL Listings Grid Widget Class
- */
 class HBL_Listings_Grid extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-listings-grid';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL Listings Grid', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-gallery-grid';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'hbl', 'listings', 'grid', 'directorist', 'directory', 'business' );
 	}
 
-	/**
-	 * Get script dependencies
-	 */
 	public function get_script_depends() {
 		return array( 'swiper' );
 	}
 
-	/**
-	 * Get style dependencies
-	 */
 	public function get_style_depends() {
 		return array( 'swiper' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		$this->start_controls_section(
 			'content_section',
@@ -84,7 +49,6 @@ class HBL_Listings_Grid extends Widget_Base {
 			)
 		);
 
-		// Number of listings
 		$this->add_control(
 			'number_of_listings',
 			array(
@@ -96,7 +60,6 @@ class HBL_Listings_Grid extends Widget_Base {
 			)
 		);
 
-		// Get available categories for dynamic selection with event counts
 		$categories = array();
 		if ( taxonomy_exists( 'event_category' ) ) {
 			$terms = get_terms( array(
@@ -105,7 +68,6 @@ class HBL_Listings_Grid extends Widget_Base {
 			) );
 			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term ) {
-					// Count published events in this category
 					$event_count = 0;
 					if ( function_exists( 'hbl_events_db' ) ) {
 						$event_count = hbl_events_db()->count_events( array(
@@ -116,7 +78,6 @@ class HBL_Listings_Grid extends Widget_Base {
 						$event_count = $term->count;
 					}
 					
-					// Add category with count
 					$categories[ $term->term_id ] = $term->name . ' (' . $event_count . ' events)';
 				}
 			}
@@ -126,7 +87,6 @@ class HBL_Listings_Grid extends Widget_Base {
 			$categories[''] = esc_html__( 'No categories found', 'hbl' );
 		}
 
-		// Repeater for individual listing categories
 		$repeater = new \Elementor\Repeater();
 
 		$repeater->add_control(
@@ -236,7 +196,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Grid
 		$this->start_controls_section(
 			'style_grid',
 			array(
@@ -311,7 +270,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Slider Settings
 		$this->start_controls_section(
 			'slider_section',
 			array(
@@ -386,7 +344,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Card
 		$this->start_controls_section(
 			'style_card',
 			array(
@@ -397,7 +354,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Image
 		$this->start_controls_section(
 			'style_image',
 			array(
@@ -433,7 +389,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Title
 		$this->start_controls_section(
 			'style_title',
 			array(
@@ -495,7 +450,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Excerpt
 		$this->start_controls_section(
 			'style_excerpt',
 			array(
@@ -547,7 +501,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Category Icon
 		$this->start_controls_section(
 			'style_category_icon',
 			array(
@@ -630,7 +583,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Slider Navigation
 		$this->start_controls_section(
 			'style_slider_navigation',
 			array(
@@ -746,7 +698,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Pagination Colors
 		$this->start_controls_section(
 			'style_pagination_colors',
 			array(
@@ -786,45 +737,36 @@ class HBL_Listings_Grid extends Widget_Base {
 
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Collect all events from different categories (1 per category)
 		$all_events = array();
 		$listing_categories = $settings['listing_categories'];
 		$max_events = isset( $settings['number_of_listings'] ) ? intval( $settings['number_of_listings'] ) : 9;
 
-		$used_categories = array(); // Track how many events we've taken from each category
+		$used_categories = array();
 
 		if ( ! empty( $listing_categories ) && function_exists( 'hbl_events_db' ) ) {
 			foreach ( $listing_categories as $index => $cat_item ) {
-				// Stop if we've reached the maximum number of events
 				if ( count( $all_events ) >= $max_events ) {
 					break;
 				}
 
-				// Skip if category is not set or empty
 				if ( ! isset( $cat_item['listing_category'] ) || empty( $cat_item['listing_category'] ) ) {
 					continue;
 				}
 
 				$category_id = intval( $cat_item['listing_category'] );
 				
-				// Skip invalid category IDs
 				if ( $category_id <= 0 ) {
 					continue;
 				}
 
-				// Track offset for this category (to get next event if category repeats)
 				if ( ! isset( $used_categories[ $category_id ] ) ) {
 					$used_categories[ $category_id ] = 0;
 				}
 				$offset = $used_categories[ $category_id ];
 
-				// Map orderby
 				$orderby = 'start_date';
 				if ( $settings['order_by'] === 'title' ) {
 					$orderby = 'title';
@@ -832,7 +774,6 @@ class HBL_Listings_Grid extends Widget_Base {
 					$orderby = 'updated_at';
 				}
 
-				// Get 1 event from this category (with offset for duplicates)
 				$args = array(
 					'category_id' => $category_id,
 					'status'      => 'publish',
@@ -859,7 +800,6 @@ class HBL_Listings_Grid extends Widget_Base {
 			return;
 		}
 
-		// Prepare slider settings
 		$slider_settings = array(
 			'autoplay'      => $settings['slider_autoplay'] === 'yes',
 			'autoplaySpeed' => isset( $settings['slider_autoplay_speed'] ) ? intval( $settings['slider_autoplay_speed'] ) : 3000,
@@ -870,7 +810,6 @@ class HBL_Listings_Grid extends Widget_Base {
 
 		?>
 		<div class="hbl-grid-wrapper" data-slider-settings='<?php echo esc_attr( wp_json_encode( $slider_settings ) ); ?>'>
-			<!-- Desktop Grid Container -->
 			<div class="hbl-grid-container hbl-desktop-grid">
 				<?php
 				foreach ( $all_events as $event ) :
@@ -879,7 +818,6 @@ class HBL_Listings_Grid extends Widget_Base {
 					$url = hbl_events_db()->get_event_url( $event );
 					$image_url = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'large' ) : '';
 					
-					// Description/Excerpt
 					$excerpt = $event->description;
 					$excerpt = wp_trim_words( $excerpt, $settings['excerpt_length'], '...' );
 					?>
@@ -936,7 +874,6 @@ class HBL_Listings_Grid extends Widget_Base {
 				?>
 			</div>
 
-			<!-- Mobile/Tablet Slider Container -->
 			<div class="hbl-mobile-slider swiper">
 				<div class="swiper-wrapper">
 					<?php
@@ -945,7 +882,6 @@ class HBL_Listings_Grid extends Widget_Base {
 						$url = hbl_events_db()->get_event_url( $event );
 						$image_url = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'large' ) : '';
 						
-						// Description/Excerpt
 						$excerpt = $event->description;
 						$excerpt = wp_trim_words( $excerpt, $settings['excerpt_length'], '...' );
 						?>
@@ -1004,7 +940,6 @@ class HBL_Listings_Grid extends Widget_Base {
 					?>
 				</div>
 
-				<!-- Navigation Arrows -->
 				<?php if ( 'yes' === $settings['show_navigation'] ) : ?>
 					<div class="swiper-button-next"></div>
 					<div class="swiper-button-prev"></div>

@@ -1,10 +1,4 @@
 <?php
-/**
- * The header for our theme
- *
- * @package HBL
- * @since 1.0.0
- */
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -23,11 +17,8 @@
 <div id="page" class="site">
 	
 	<?php
-	// Check if Elementor header exists
 	if ( function_exists( 'elementor_theme_do_location' ) && elementor_theme_do_location( 'header' ) ) {
-		// Elementor header is being used
 	} else {
-		// Default header
 		?>
 		<header id="masthead" class="site-header">
 			<nav class="navbar navbar-expand-lg navbar-light bg-light">

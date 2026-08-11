@@ -1,15 +1,6 @@
 <?php
-/**
- * Custom template tags for this theme
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! function_exists( 'hbl_posted_on' ) ) :
-	/**
-	 * Prints HTML with meta information for the current post-date/time.
-	 */
 	function hbl_posted_on() {
 		$time_string = '<time class="entry-date published updated" datetime="%1$s">%2$s</time>';
 		if ( get_the_time( 'U' ) !== get_the_modified_time( 'U' ) ) {
@@ -35,9 +26,6 @@ if ( ! function_exists( 'hbl_posted_on' ) ) :
 endif;
 
 if ( ! function_exists( 'hbl_posted_by' ) ) :
-	/**
-	 * Prints HTML with meta information for the current author.
-	 */
 	function hbl_posted_by() {
 		$byline = sprintf(
 			'<span class="author vcard"><a class="url fn n" href="%s">%s</a></span>',
@@ -50,11 +38,7 @@ if ( ! function_exists( 'hbl_posted_by' ) ) :
 endif;
 
 if ( ! function_exists( 'hbl_entry_footer' ) ) :
-	/**
-	 * Prints HTML with meta information for the categories, tags and comments.
-	 */
 	function hbl_entry_footer() {
-		// Hide category and tag text for pages.
 		if ( 'post' === get_post_type() ) {
 			$categories_list = get_the_category_list( esc_html__( ', ', 'hbl' ) );
 			if ( $categories_list ) {
@@ -104,9 +88,6 @@ if ( ! function_exists( 'hbl_entry_footer' ) ) :
 endif;
 
 if ( ! function_exists( 'hbl_post_thumbnail' ) ) :
-	/**
-	 * Displays an optional post thumbnail.
-	 */
 	function hbl_post_thumbnail() {
 		if ( post_password_required() || is_attachment() || ! has_post_thumbnail() ) {
 			return;

@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Event Single Tag V2 Widget
- *
- * Displays events from a tag (auto-detected from URL) using V2 design.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -39,18 +31,12 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		return array( 'event', 'tag', 'archive', 'v2' );
 	}
 
-	/**
-	 * Detect current event tag from URL / query vars.
-	 */
 	private function get_current_term() {
-		// 1. Queried object — works when WP correctly routes the taxonomy archive
-		//    (including Elementor Theme Builder archive templates)
 		$queried = get_queried_object();
 		if ( $queried instanceof \WP_Term && $queried->taxonomy === 'event_tag' ) {
 			return $queried;
 		}
 
-		// 2. WP query var — set whenever 'query_var' => true and URL is matched
 		$tag_slug = get_query_var( 'event_tag' );
 		if ( $tag_slug ) {
 			$term = get_term_by( 'slug', $tag_slug, 'event_tag' );
@@ -59,12 +45,10 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			}
 		}
 
-		// 3. URL path detection — /events/tag/{slug}/
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$url_path    = trim( wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
 		$path_parts  = explode( '/', $url_path );
 
-		// Check for /events/tag/{slug}/ pattern
 		$events_index = array_search( 'events', $path_parts, true );
 		if ( $events_index !== false && isset( $path_parts[ $events_index + 1 ] ) && $path_parts[ $events_index + 1 ] === 'tag' ) {
 			if ( isset( $path_parts[ $events_index + 2 ] ) ) {
@@ -75,7 +59,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			}
 		}
 
-		// 4. Generic 'tag' segment anywhere in path
 		foreach ( $path_parts as $index => $part ) {
 			if ( $part === 'tag' && isset( $path_parts[ $index + 1 ] ) ) {
 				$term = get_term_by( 'slug', $path_parts[ $index + 1 ], 'event_tag' );
@@ -85,7 +68,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			}
 		}
 
-		// 5. Last segment fallback
 		$last_segment = end( $path_parts );
 		if ( ! empty( $last_segment ) ) {
 			$term = get_term_by( 'slug', $last_segment, 'event_tag' );
@@ -94,7 +76,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			}
 		}
 
-		// 6. GET param fallback
 		if ( isset( $_GET['event_tag'] ) ) {
 			$term = get_term_by( 'slug', sanitize_text_field( $_GET['event_tag'] ), 'event_tag' );
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -102,7 +83,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			}
 		}
 
-		// Editor preview — show first available tag
 		if ( \Elementor\Plugin::$instance->preview->is_preview_mode() || \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			$terms = get_terms( array(
 				'taxonomy'   => 'event_tag',
@@ -117,12 +97,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		return null;
 	}
 
-	/**
-	 * Get events that have the given tag ID in their tags column.
-	 *
-	 * @param int $tag_id WP term ID for the event_tag.
-	 * @return array Raw event objects.
-	 */
 	private function get_raw_events_by_tag( $tag_id ) {
 		global $wpdb;
 
@@ -150,9 +124,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		);
 	}
 
-	/**
-	 * Get the next occurrence date of an event.
-	 */
 	private function get_next_occurrence( $event ) {
 		$frequency   = $event->event_frequency ?? 'once';
 		$start_date  = $event->start_date;
@@ -239,16 +210,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		return $start_date;
 	}
 
-	/**
-	 * Query events for the given tag term.
-	 *
-	 * @param int    $tag_id       Event tag term ID.
-	 * @param string $keyword      Keyword filter.
-	 * @param string $letter       A–Z letter filter.
-	 * @param string $sort         Sort value.
-	 * @param bool   $upcoming_only Only show upcoming events.
-	 * @return array Processed event objects with computed_start_date.
-	 */
 	private function get_events_for_term( $tag_id, $keyword = '', $letter = '', $sort = 'recommended', $upcoming_only = false ) {
 		$raw_events  = $this->get_raw_events_by_tag( $tag_id );
 		$now         = current_time( 'timestamp' );
@@ -256,7 +217,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		$processed   = array();
 
 		foreach ( $raw_events as $event ) {
-			// Keyword filter
 			if ( ! empty( $keyword ) ) {
 				$haystack = strtolower( $event->title . ' ' . ( $event->venue ?? '' ) );
 				if ( strpos( $haystack, strtolower( $keyword ) ) === false ) {
@@ -271,7 +231,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 				continue;
 			}
 
-			// A–Z letter filter on title
 			if ( ! empty( $letter ) ) {
 				if ( strtoupper( substr( $event->title, 0, 1 ) ) !== $letter ) {
 					continue;
@@ -283,7 +242,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			$processed[]               = $item;
 		}
 
-		// Sort
 		if ( 'a-z' === $sort ) {
 			usort( $processed, function( $a, $b ) { return strcasecmp( $a->title, $b->title ); } );
 		} elseif ( 'z-a' === $sort ) {
@@ -293,7 +251,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 				return strtotime( $b->computed_start_date ) - strtotime( $a->computed_start_date );
 			} );
 		} else {
-			// Default: upcoming (soonest first)
 			usort( $processed, function( $a, $b ) {
 				return strtotime( $a->computed_start_date ) - strtotime( $b->computed_start_date );
 			} );
@@ -302,9 +259,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		return $processed;
 	}
 
-	/**
-	 * Render a single event card.
-	 */
 	private function render_event_card( $event, $settings ) {
 		$start_date    = $event->computed_start_date ?? $event->start_date;
 		$event_url     = function_exists( 'hbl_events_db' ) ? hbl_events_db()->get_event_url( $event ) : '#';
@@ -361,7 +315,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 
 	protected function register_controls() {
 
-		// Display Options
 		$this->start_controls_section(
 			'section_display',
 			array( 'label' => esc_html__( 'Display Options', 'hbl' ) )
@@ -483,7 +436,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Fallback Image
 		$this->start_controls_section(
 			'section_fallback_logo',
 			array( 'label' => esc_html__( 'Fallback Image', 'hbl' ) )
@@ -513,7 +465,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 		$upcoming_only = isset( $settings['show_upcoming_only'] ) && 'yes' === $settings['show_upcoming_only'];
 		$per_page      = isset( $settings['listings_per_page'] ) ? absint( $settings['listings_per_page'] ) : 20;
 
-		// Initial server-side render
 		$all_events = array();
 		if ( $current_term ) {
 			$all_events = $this->get_events_for_term( $current_term->term_id, '', $letter, 'recommended', $upcoming_only );
@@ -691,7 +642,7 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 					</div>
 				</div>
 			<?php endif; ?>
-			<?php endif; // current_term check ?>
+			<?php endif; ?>
 		</div>
 
 		<script>
@@ -703,7 +654,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 			var sortLabels = { 'recommended': '<?php esc_html_e( 'Upcoming', 'hbl' ); ?>', 'a-z': 'A\u2013Z', 'z-a': 'Z\u2013A', 'newest': '<?php esc_html_e( 'Newest', 'hbl' ); ?>' };
 			var currentFilters = { keyword: '', letter: '<?php echo esc_js( $letter ); ?>', sort: 'recommended', paged: 1 };
 
-			// ---- Active filters UI ----
 			function updateActiveFilters() {
 				var tags = [];
 				if (currentFilters.keyword) {
@@ -733,7 +683,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 					$container.append($tag);
 				});
 
-				// Clear all button
 				if (tags.length > 1) {
 					var $clearAll = $('<button type="button" class="hbl-v2-active-filter-tag hbl-v2-clear-all-filters"><?php esc_html_e( 'Clear All', 'hbl' ); ?></button>');
 					$clearAll.on('click', function() { clearFilter('all'); });
@@ -770,17 +719,14 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 				applyFilters();
 			}
 
-			// Show any pre-set filters from URL on load
 			updateActiveFilters();
 
-			// View toggle
 			$widget.find('.hbl-v2-view-btn').on('click', function() {
 				var view = $(this).data('view');
 				$(this).addClass('active').siblings().removeClass('active');
 				$widget.find('.hbl-v2-listings-grid').toggleClass('list-view', view === 'list');
 			});
 
-			// Keyword search
 			var searchTimeout;
 			$widget.find('.hbl-v2-keyword-search-input').on('input', function() {
 				var keyword = $(this).val().trim();
@@ -802,7 +748,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// Letter filter
 			$widget.find('.hbl-v2-letter-btn').on('click', function(e) {
 				e.preventDefault();
 				var ltr = $(this).data('letter');
@@ -819,7 +764,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// Sort dropdown
 			$widget.find('.hbl-v2-sort-trigger').on('click', function() {
 				var $dd = $widget.find('.hbl-v2-sort-dropdown');
 				var open = $(this).attr('aria-expanded') === 'true';
@@ -845,7 +789,6 @@ class HBL_Event_Single_Tag_V2 extends Widget_Base {
 				}
 			});
 
-			// Pagination
 			$widget.on('click', '.hbl-v2-page-link', function(e) {
 				e.preventDefault();
 				currentFilters.paged = parseInt($(this).data('page')) || 1;

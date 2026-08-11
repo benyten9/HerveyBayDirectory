@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL All About HB Widget
- *
- * Displays a grid of category cards with images, icons, and titles
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.2.531
- */
 
 namespace HBL\Widgets;
 
@@ -17,7 +8,7 @@ use Elementor\Group_Control_Typography;
 use Elementor\Repeater;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
 class HBL_All_About_HB extends Widget_Base {
@@ -44,7 +35,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT SECTION: HEADER ==========
 		$this->start_controls_section(
 			'section_header',
 			array(
@@ -76,7 +66,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT SECTION: CARDS ==========
 		$this->start_controls_section(
 			'section_cards',
 			array(
@@ -166,7 +155,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADER ==========
 		$this->start_controls_section(
 			'section_style_header',
 			array(
@@ -239,7 +227,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'section_style_container',
 			array(
@@ -272,7 +259,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: GRID ==========
 		$this->start_controls_section(
 			'section_style_grid',
 			array(
@@ -305,7 +291,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CARD ==========
 		$this->start_controls_section(
 			'section_style_card',
 			array(
@@ -386,7 +371,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: IMAGE ==========
 		$this->start_controls_section(
 			'section_style_image',
 			array(
@@ -457,7 +441,6 @@ class HBL_All_About_HB extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTENT ==========
 		$this->start_controls_section(
 			'section_style_content',
 			array(
@@ -566,9 +549,6 @@ class HBL_All_About_HB extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 

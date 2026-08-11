@@ -1,34 +1,13 @@
 <?php
-/**
- * HBL Bulk Plan Reassign Tool
- *
- * Allows admins to bulk or individually reassign listing plans.
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Class HBL_Bulk_Plan_Reassign
- */
 class HBL_Bulk_Plan_Reassign {
 
-	/**
-	 * Instance of this class.
-	 *
-	 * @var HBL_Bulk_Plan_Reassign
-	 */
 	private static $instance = null;
 
-	/**
-	 * Get single instance of this class.
-	 *
-	 * @return HBL_Bulk_Plan_Reassign
-	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -36,9 +15,6 @@ class HBL_Bulk_Plan_Reassign {
 		return self::$instance;
 	}
 
-	/**
-	 * Constructor.
-	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ), 31 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -47,9 +23,6 @@ class HBL_Bulk_Plan_Reassign {
 		add_action( 'wp_ajax_hbl_bulk_change_plan', array( $this, 'ajax_bulk_change_plan' ) );
 	}
 
-	/**
-	 * Add admin menu item.
-	 */
 	public function add_admin_menu() {
 		add_submenu_page(
 			'hbl-directorist-tools',
@@ -61,17 +34,11 @@ class HBL_Bulk_Plan_Reassign {
 		);
 	}
 
-	/**
-	 * Enqueue admin scripts and styles.
-	 *
-	 * @param string $hook The current admin page.
-	 */
 	public function enqueue_scripts( $hook ) {
 		if ( 'directorist-tools_page_hbl-bulk-plan-reassign' !== $hook ) {
 			return;
 		}
 
-		// Load the same base styles used by the existing Bulk Reassign tool.
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style(
 			'hbl-bulk-reassign',
@@ -125,16 +92,7 @@ class HBL_Bulk_Plan_Reassign {
 		);
 	}
 
-	/**
-	 * Get all available pricing plans.
-	 *
-	 * @return array
-	 */
 	private function get_plans() {
-		// Prefer the HBL_Pricing_Plans provider — it resolves plans from both
-		// Directorist Pricing Plans 4.0+ (custom table) and legacy CPT installs.
-		// Querying the atbdp_pricing_plans post type directly returns nothing on
-		// v4, which is why the tool reported "No pricing plans found".
 		if ( class_exists( 'HBL_Pricing_Plans' ) ) {
 			$plans = array();
 			foreach ( \HBL_Pricing_Plans::get_plans() as $plan ) {
@@ -152,8 +110,6 @@ class HBL_Bulk_Plan_Reassign {
 			}
 		}
 
-		// Legacy fallback: pricing-plan CPT (pre-v4 installs, or if the provider
-		// class is unavailable for any reason).
 		if ( ! post_type_exists( 'atbdp_pricing_plans' ) ) {
 			return array();
 		}
@@ -182,13 +138,6 @@ class HBL_Bulk_Plan_Reassign {
 		return $plans;
 	}
 
-	/**
-	 * Resolve a map of plan_id => plan name via HBL_Pricing_Plans (works on both
-	 * v4 custom-table and legacy CPT installs), falling back to the CPT.
-	 *
-	 * @param array $ids Plan IDs.
-	 * @return array<int,string>
-	 */
 	private function plan_names_for( array $ids ) {
 		$names = array();
 		$ids   = array_unique( array_filter( array_map( 'intval', $ids ) ) );
@@ -208,7 +157,6 @@ class HBL_Bulk_Plan_Reassign {
 			}
 		}
 
-		// Legacy CPT fallback.
 		$plan_posts = get_posts( array(
 			'post__in'       => $ids,
 			'post_type'      => 'atbdp_pricing_plans',
@@ -222,12 +170,6 @@ class HBL_Bulk_Plan_Reassign {
 		return $names;
 	}
 
-	/**
-	 * Whether a plan ID refers to a real, usable pricing plan.
-	 *
-	 * @param int $plan_id
-	 * @return bool
-	 */
 	private function plan_exists( $plan_id ) {
 		$plan_id = (int) $plan_id;
 		if ( $plan_id <= 0 ) {
@@ -240,31 +182,14 @@ class HBL_Bulk_Plan_Reassign {
 		return $post && 'atbdp_pricing_plans' === $post->post_type && 'publish' === $post->post_status;
 	}
 
-	/**
-	 * The post-meta key Directorist reads for a listing's assigned plan.
-	 *
-	 * Pricing Plans 4.0+ stores it under directorist_plan_key() (`_plan_id`),
-	 * which get_listings_package() consults; legacy installs used `_fm_plans`.
-	 * Reading/writing the wrong key is why this tool showed — and reassigned —
-	 * the wrong plan on v4.
-	 *
-	 * @return string
-	 */
 	private function plan_meta_key() {
 		return function_exists( 'directorist_plan_key' ) ? directorist_plan_key() : '_fm_plans';
 	}
 
-	/**
-	 * Get listing count per plan.
-	 *
-	 * @param int $plan_id The plan post ID (0 = no plan).
-	 * @return int
-	 */
 	private function get_plan_listing_count( $plan_id ) {
 		$key = $this->plan_meta_key();
 
 		if ( 0 === $plan_id ) {
-			// Listings with no plan assigned.
 			$args = array(
 				'post_type'      => 'at_biz_dir',
 				'post_status'    => 'any',
@@ -302,11 +227,6 @@ class HBL_Bulk_Plan_Reassign {
 		return $query->found_posts;
 	}
 
-	/**
-	 * Get total listing count.
-	 *
-	 * @return int
-	 */
 	private function get_total_listings() {
 		$args = array(
 			'post_type'      => 'at_biz_dir',
@@ -318,9 +238,6 @@ class HBL_Bulk_Plan_Reassign {
 		return $query->found_posts;
 	}
 
-	/**
-	 * Render the admin page.
-	 */
 	public function render_page() {
 		$plans          = $this->get_plans();
 		$total_listings = $this->get_total_listings();
@@ -338,7 +255,6 @@ class HBL_Bulk_Plan_Reassign {
 			</h1>
 			<p class="description"><?php esc_html_e( 'Filter listings by their current plan, select one or more, then assign a new plan.', 'hbl' ); ?></p>
 
-			<!-- Stats Overview -->
 			<div class="hbl-reassign-stats">
 				<div class="hbl-stat-card hbl-stat-card--info">
 					<div class="hbl-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M2 7l10 5 10-5-10-5-10 5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -376,7 +292,6 @@ class HBL_Bulk_Plan_Reassign {
 
 			<div class="hbl-reassign-container">
 
-				<!-- Step 1: Filter & Select Listings -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">1</span>
@@ -411,7 +326,6 @@ class HBL_Bulk_Plan_Reassign {
 						</div>
 					</div>
 
-					<!-- Listings Table -->
 					<div id="hbl-bpr-listings-wrap" class="hbl-bpr-listings-wrap" style="display:none;">
 						<div class="hbl-bpr-table-header">
 							<label class="hbl-select-all-wrap">
@@ -424,7 +338,6 @@ class HBL_Bulk_Plan_Reassign {
 						</div>
 
 						<div id="hbl-bpr-listings-table">
-							<!-- Populated via AJAX -->
 						</div>
 
 						<div id="hbl-bpr-select-all-pages" class="hbl-bpr-select-all-pages" style="display:none;"></div>
@@ -435,7 +348,6 @@ class HBL_Bulk_Plan_Reassign {
 					<div id="hbl-bpr-listings-message" class="hbl-bpr-message" style="display:none;"></div>
 				</div>
 
-				<!-- Step 2: Select Target Plan -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">2</span>
@@ -473,7 +385,6 @@ class HBL_Bulk_Plan_Reassign {
 					</div>
 				</div>
 
-				<!-- Step 3: Confirm & Execute -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">3</span>
@@ -499,15 +410,12 @@ class HBL_Bulk_Plan_Reassign {
 					</div>
 				</div>
 
-			</div><!-- .hbl-reassign-container -->
+			</div>
 			<?php endif; ?>
-		</div><!-- .hbl-bpr-wrap -->
+		</div>
 		<?php
 	}
 
-	/**
-	 * AJAX: Load listings for the given filters.
-	 */
 	public function ajax_get_listings() {
 		check_ajax_referer( 'hbl_bulk_plan_reassign_nonce', 'nonce' );
 
@@ -537,7 +445,6 @@ class HBL_Bulk_Plan_Reassign {
 
 		if ( '' !== $filter_plan ) {
 			if ( '0' === $filter_plan ) {
-				// No plan assigned.
 				$args['meta_query'] = array(
 					'relation' => 'OR',
 					array(
@@ -562,7 +469,6 @@ class HBL_Bulk_Plan_Reassign {
 
 		$query = new WP_Query( $args );
 
-		// Batch-fetch plan names for this page's listings in one query.
 		$page_plan_ids = array();
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post ) {
@@ -604,10 +510,6 @@ class HBL_Bulk_Plan_Reassign {
 		) );
 	}
 
-	/**
-	 * AJAX: Get ALL listing IDs + minimal data for the given filters (no pagination).
-	 * Used by the "Select all N listings" across-pages feature.
-	 */
 	public function ajax_get_all_listing_ids() {
 		check_ajax_referer( 'hbl_bulk_plan_reassign_nonce', 'nonce' );
 
@@ -615,15 +517,13 @@ class HBL_Bulk_Plan_Reassign {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
 		}
 
-		// Extend PHP time limit for large datasets.
-		@set_time_limit( 120 ); // phpcs:ignore
+		@set_time_limit( 120 );
 
 		global $wpdb;
 
 		$filter_plan = isset( $_POST['filter_plan'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_plan'] ) ) : '';
 		$search      = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		// Single SQL JOIN — fetches IDs + plan meta in one query.
 		$where = "p.post_type = 'at_biz_dir' AND p.post_status IN ('publish','draft','pending','private')";
 		$args  = array();
 		$key   = esc_sql( $this->plan_meta_key() );
@@ -633,7 +533,6 @@ class HBL_Bulk_Plan_Reassign {
 		}
 
 		if ( '0' === $filter_plan ) {
-			// No plan: LEFT JOIN and filter for NULL/empty plan.
 			$sql = "SELECT p.ID, p.post_title, pm.meta_value AS plan_id
 					FROM {$wpdb->posts} p
 					LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
@@ -657,9 +556,8 @@ class HBL_Bulk_Plan_Reassign {
 					ORDER BY p.post_title ASC";
 		}
 
-		$rows = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = $wpdb->get_results( $sql );
 
-		// Batch-fetch plan names with a single query for all unique plan IDs.
 		$plan_ids   = array_unique( array_filter( array_map( 'intval', array_column( $rows, 'plan_id' ) ) ) );
 		$plan_names = $this->plan_names_for( $plan_ids );
 
@@ -679,9 +577,6 @@ class HBL_Bulk_Plan_Reassign {
 		) );
 	}
 
-	/**
-	 * AJAX: Change plan for selected listings.
-	 */
 	public function ajax_bulk_change_plan() {
 		check_ajax_referer( 'hbl_bulk_plan_reassign_nonce', 'nonce' );
 
@@ -700,40 +595,31 @@ class HBL_Bulk_Plan_Reassign {
 			wp_send_json_error( array( 'message' => __( 'No target plan selected.', 'hbl' ) ) );
 		}
 
-		// Verify the target plan exists (resolves via HBL_Pricing_Plans on v4).
 		if ( ! $this->plan_exists( $plan_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Target plan not found or not published.', 'hbl' ) ) );
 		}
 
-		// Resolve the target plan's title (v4 has no plan post to read).
 		$target_names = $this->plan_names_for( array( $plan_id ) );
 		$plan_title   = isset( $target_names[ $plan_id ] ) ? $target_names[ $plan_id ] : __( 'selected', 'hbl' );
 
-		// The meta key Directorist reads for a listing's plan (v4: _plan_id).
 		$plan_key = $this->plan_meta_key();
 
 		$success_count = 0;
 		$failed_ids    = array();
 
 		foreach ( $listing_ids as $listing_id ) {
-			// Verify post is an at_biz_dir listing.
 			if ( 'at_biz_dir' !== get_post_type( $listing_id ) ) {
 				$failed_ids[] = $listing_id;
 				continue;
 			}
 
-			// Write the plan under the key Directorist actually reads (v4: _plan_id,
-			// consulted by get_listings_package()), and mirror _fm_plans for any
-			// legacy consumers so both stay consistent.
 			$updated = update_post_meta( $listing_id, $plan_key, $plan_id );
 			if ( '_fm_plans' !== $plan_key ) {
 				update_post_meta( $listing_id, '_fm_plans', $plan_id );
 			}
 
-			// Mark as assigned by admin so plan restrictions are bypassed.
 			update_post_meta( $listing_id, '_fm_plans_by_admin', 1 );
 
-			// Update plan sorting order meta if it exists in the pricing plans plugin.
 			if ( defined( 'DPP_META_KEY_PLAN_SORTING_ORDER' ) ) {
 				$plan_sort_order = get_post_meta( $plan_id, DPP_META_KEY_PLAN_SORTING_ORDER, true );
 				update_post_meta( $listing_id, DPP_META_KEY_PLAN_SORTING_ORDER, $plan_sort_order );
@@ -742,7 +628,6 @@ class HBL_Bulk_Plan_Reassign {
 			if ( false !== $updated ) {
 				$success_count++;
 			} else {
-				// update_post_meta returns false if nothing changed (same value), still count as success.
 				$existing = get_post_meta( $listing_id, $plan_key, true );
 				if ( (int) $existing === $plan_id ) {
 					$success_count++;
@@ -755,7 +640,6 @@ class HBL_Bulk_Plan_Reassign {
 		if ( $success_count > 0 ) {
 			wp_send_json_success( array(
 				'message'       => sprintf(
-					/* translators: 1: success count, 2: plan name */
 					_n(
 						'Successfully assigned %1$d listing to the "%2$s" plan.',
 						'Successfully assigned %1$d listings to the "%2$s" plan.',
@@ -774,5 +658,4 @@ class HBL_Bulk_Plan_Reassign {
 	}
 }
 
-// Initialize the class.
 HBL_Bulk_Plan_Reassign::get_instance();

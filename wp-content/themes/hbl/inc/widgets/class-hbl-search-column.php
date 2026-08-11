@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Search Column Widget
- *
- * A vertical search form widget for searching directory listings
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.2.36
- */
 
 namespace HBL\Widgets;
 
@@ -15,55 +6,33 @@ use Elementor\Widget_Base;
 use Elementor\Controls_Manager;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL Search Column Widget Class
- */
 class HBL_Search_Column extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-search-column';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL Search Column', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-search';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'search', 'directory', 'column', 'hbl', 'filter' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 
-		// ========== CONTENT SECTION ==========
 		$this->start_controls_section(
 			'section_content',
 			array(
@@ -160,7 +129,6 @@ class HBL_Search_Column extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: LABELS ==========
 		$this->start_controls_section(
 			'section_style_labels',
 			array(
@@ -192,7 +160,6 @@ class HBL_Search_Column extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: SELECT FIELDS ==========
 		$this->start_controls_section(
 			'section_style_selects',
 			array(
@@ -248,7 +215,6 @@ class HBL_Search_Column extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTON ==========
 		$this->start_controls_section(
 			'section_style_button',
 			array(
@@ -305,9 +271,6 @@ class HBL_Search_Column extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		$search_results_url = ! empty( $settings['search_results_page'] ) ? home_url( $settings['search_results_page'] ) : home_url( '/search-result/' );
@@ -319,7 +282,6 @@ class HBL_Search_Column extends Widget_Base {
 		<div class="hbl-search-column-widget">
 			<form class="hbl-search-column-form" id="hbl-search-column-form" action="<?php echo esc_url( $search_results_url ); ?>" method="get">
 				
-				<!-- Keyword Field -->
 				<?php if ( 'yes' === $settings['show_keyword'] ) : ?>
 					<div class="hbl-search-column-field">
 						<label class="hbl-search-column-label"><?php esc_html_e( 'Search', 'hbl' ); ?></label>
@@ -329,7 +291,6 @@ class HBL_Search_Column extends Widget_Base {
 					</div>
 				<?php endif; ?>
 
-				<!-- Category Field -->
 				<div class="hbl-search-column-field">
 					<?php if ( ! empty( $settings['category_label'] ) ) : ?>
 						<label class="hbl-search-column-label"><?php echo esc_html( $settings['category_label'] ); ?></label>
@@ -344,7 +305,6 @@ class HBL_Search_Column extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- Location Field -->
 				<div class="hbl-search-column-field">
 					<?php if ( ! empty( $settings['location_label'] ) ) : ?>
 						<label class="hbl-search-column-label"><?php echo esc_html( $settings['location_label'] ); ?></label>
@@ -360,7 +320,6 @@ class HBL_Search_Column extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- Search Button -->
 				<button type="submit" class="hbl-search-column-button">
 					<?php echo esc_html( $settings['search_button_text'] ); ?>
 				</button>
@@ -370,13 +329,9 @@ class HBL_Search_Column extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get listing categories
-	 */
 	private function get_listing_categories() {
 		$categories = array();
 		
-		// Get Directorist categories
 		$terms = get_terms(
 			array(
 				'taxonomy'   => 'at_biz_dir-category',
@@ -394,13 +349,9 @@ class HBL_Search_Column extends Widget_Base {
 		return $categories;
 	}
 
-	/**
-	 * Get listing locations
-	 */
 	private function get_listing_locations() {
 		$locations = array();
 		
-		// Get Directorist locations
 		$terms = get_terms(
 			array(
 				'taxonomy'   => 'at_biz_dir-location',

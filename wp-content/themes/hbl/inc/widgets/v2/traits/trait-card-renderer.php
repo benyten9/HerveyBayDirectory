@@ -1,12 +1,4 @@
 <?php
-/**
- * Card Renderer Trait for HBL Directorist V2
- * 
- * Handles rendering of listing cards with expandable content (like V1)
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2\Traits;
 
@@ -16,20 +8,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait Card_Renderer {
 
-	/**
-	 * Render individual listing card (expandable like V1)
-	 *
-	 * @param int $listing_id Listing post ID
-	 * @param array|null $external_settings Optional settings for AJAX rendering
-	 */
 	protected function render_listing_card( $listing_id, $external_settings = null ) {
-		// Batch get all meta data in one call for performance
 		$all_meta = get_post_meta( $listing_id );
 		
-		// Get pricing plan info
 		$plan_id = isset( $all_meta['_fm_plans'][0] ) ? absint( $all_meta['_fm_plans'][0] ) : 0;
 		
-		// Verify plan exists and is published
 		if ( $plan_id > 0 ) {
 			$plan_post = get_post( $plan_id );
 			if ( ! $plan_post || $plan_post->post_status !== 'publish' || $plan_post->post_type !== 'atbdp_pricing_plans' ) {
@@ -37,23 +20,18 @@ trait Card_Renderer {
 			}
 		}
 		
-		// Get settings
 		$settings = $external_settings !== null ? $external_settings : $this->get_settings_for_display();
 		
-		// Determine plan tier
 		$plan_tier = $this->get_plan_tier( $plan_id, $settings );
 		
-		// Get listing data
 		$address = isset( $all_meta['_address'][0] ) ? $all_meta['_address'][0] : '';
 		$phone = isset( $all_meta['_phone'][0] ) ? $all_meta['_phone'][0] : '';
 		$website = isset( $all_meta['_website'][0] ) ? $all_meta['_website'][0] : '';
 		$email = isset( $all_meta['_email'][0] ) ? $all_meta['_email'][0] : '';
 		$is_claimed = isset( $all_meta['_claimed_by_admin'][0] ) && ! empty( $all_meta['_claimed_by_admin'][0] );
 		
-		// Get logo
 		$logo_url = $this->get_listing_logo( $listing_id, $all_meta );
 
-		// If no logo, try the first gallery image
 		if ( empty( $logo_url ) ) {
 			$gallery_ids = array();
 			if ( function_exists( 'atbdp_get_listing_attachment_ids' ) ) {
@@ -74,12 +52,10 @@ trait Card_Renderer {
 			}
 		}
 
-		// If still nothing, use the widget-configured fallback logo
 		if ( empty( $logo_url ) && ! empty( $settings['fallback_logo']['url'] ) ) {
 			$logo_url = $settings['fallback_logo']['url'];
 		}
 		
-		// Get rating
 		$average_rating = 0;
 		$rating_count = 0;
 		if ( function_exists( 'directorist_get_listing_rating' ) ) {
@@ -89,12 +65,10 @@ trait Card_Renderer {
 			$rating_count = intval( directorist_get_listing_review_count( $listing_id ) );
 		}
 		
-		// Get categories and tags
 		$all_categories = wp_get_post_terms( $listing_id, 'at_biz_dir-category' );
 		$all_tags = wp_get_post_terms( $listing_id, 'at_biz_dir-tags' );
 		$location_terms = wp_get_post_terms( $listing_id, 'at_biz_dir-location' );
 		
-		// Limit based on tier
 		$max_categories = $plan_tier === 'gold' ? 3 : ( $plan_tier === 'silver' ? 2 : 1 );
 		$max_tags = $plan_tier === 'gold' ? 5 : ( $plan_tier === 'silver' ? 5 : 3 );
 		
@@ -106,13 +80,11 @@ trait Card_Renderer {
 			? array_slice( $all_tags, 0, $max_tags ) 
 			: array();
 		
-		// Get social media
 		$social = isset( $all_meta['social'][0] ) ? maybe_unserialize( $all_meta['social'][0] ) : '';
 		if ( empty( $social ) && isset( $all_meta['_social'][0] ) ) {
 			$social = maybe_unserialize( $all_meta['_social'][0] );
 		}
 		
-		// Build social array from individual fields if needed
 		if ( empty( $social ) || ! is_array( $social ) ) {
 			$social = array();
 			$social_fields = array(
@@ -137,35 +109,28 @@ trait Card_Renderer {
 			}
 		}
 		
-		// Get listing URL
 		$listing_url = get_permalink( $listing_id );
 		
-		// Clean title (remove "Preview:" prefix)
 		$title = $this->get_clean_title( get_the_title( $listing_id ) );
 		
-		// Get description
 		$content = get_the_content( null, false, $listing_id );
 		$description_words = 30;
 		$description_preview = wp_trim_words( strip_shortcodes( wp_strip_all_tags( $content ) ), $description_words, '...' );
 		
-		// Format review text
 		if ( $rating_count > 0 ) {
 			$review_text = sprintf( _n( '%s Review', '%s Reviews', $rating_count, 'hbl' ), number_format_i18n( $rating_count ) );
 		} else {
 			$review_text = __( '(0 Reviews)', 'hbl' );
 		}
 		
-		// Store category and location IDs for filtering
 		$category_id = ! empty( $categories ) ? $categories[0]->term_id : '';
 		$location_id = ! empty( $location_terms ) ? $location_terms[0]->term_id : '';
 		
-		// Determine if card should be expandable
 		$is_expandable = ( 'bronze' !== $plan_tier );
 		
-		// Map for click handling
 		$card_link_attr = '';
 		if ( ! $is_expandable ) {
-			$card_link_attr = 'onclick="window.open(\'' . esc_url( $listing_url ) . '\', \'_blank\'); return false;"'; // Bronze card click action
+			$card_link_attr = 'onclick="window.open(\'' . esc_url( $listing_url ) . '\', \'_blank\'); return false;"';
 		}
 		
 		?>
@@ -180,7 +145,6 @@ trait Card_Renderer {
 
 
 			<?php
-			// Show plan badge if enabled
 			if ( isset( $settings['show_plan_badges'] ) && 'yes' === $settings['show_plan_badges'] && ! empty( $settings['plan_badges'] ) ) :
 				foreach ( $settings['plan_badges'] as $badge ) :
 					if ( isset( $badge['plan_tier'] ) && $badge['plan_tier'] === $plan_tier ) :
@@ -199,12 +163,9 @@ trait Card_Renderer {
 			?>
 			
 			
-			<!-- Card Header (Always Visible) -->
 			<div class="hbl-v2-card-header">
 				
-				<!-- Left Section: Logo only -->
 				<div class="hbl-v2-card-header-left">
-					<!-- Logo -->
 					<div class="hbl-v2-listing-logo">
 						<?php if ( $logo_url ) : ?>
 							<img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( $title ); ?>">
@@ -216,9 +177,7 @@ trait Card_Renderer {
 					</div>
 				</div>
 
-				<!-- Center Section: Business Details -->
 				<div class="hbl-v2-card-header-center">
-					<!-- Business Name -->
 					<div class="hbl-v2-listing-title-row">
 						<h3 class="hbl-v2-listing-title"><?php echo esc_html( $title ); ?></h3>
 						<?php if ( $is_claimed ) : ?>
@@ -243,7 +202,6 @@ trait Card_Renderer {
 						<?php endif; ?>
 					</div>
 
-					<!-- Categories and Tags -->
 					<?php if ( ! empty( $categories ) || ! empty( $tags ) ) : ?>
 						<div class="hbl-v2-listing-taxonomies">
 							<?php if ( ! empty( $categories ) ) : ?>
@@ -276,14 +234,12 @@ trait Card_Renderer {
 						</div>
 					<?php endif; ?>
 
-					<!-- Description Preview -->
 					<?php if ( ! empty( $description_preview ) ) : ?>
 						<div class="hbl-v2-listing-description-preview">
 							<p><?php echo esc_html( $description_preview ); ?></p>
 						</div>
 					<?php endif; ?>
 
-					<!-- Meta Info -->
 					<div class="hbl-v2-listing-meta">
 						<div class="hbl-v2-meta-row">
 							<?php 
@@ -301,11 +257,9 @@ trait Card_Renderer {
 						</div>
 					</div>
 
-					<!-- Action Buttons -->
 					<div class="hbl-v2-card-actions">
 						<?php if ( $phone ) : 
 							$call_href = 'tel:' . esc_attr( $phone );
-							// For bronze tiers, the call button should redirect to the single listing page
 							if ( 'bronze' === $plan_tier ) {
 								$call_href = esc_url( $listing_url );
 							}
@@ -322,29 +276,24 @@ trait Card_Renderer {
 				</div>
 			</div>
 
-			<!-- Expandable Content (Silver/Gold only) -->
 			<?php if ( 'bronze' !== $plan_tier ) : ?>
 				<div class="hbl-v2-card-expandable" onclick="event.stopPropagation();" style="cursor: auto;">
 					<div class="hbl-v2-card-expandable-content">
 						
 						<?php
-						// Get gallery images
 						$gallery = array();
 						if ( function_exists( 'atbdp_get_listing_attachment_ids' ) ) {
 							$gallery = atbdp_get_listing_attachment_ids( $listing_id );
 						}
 						
-						// Tier limits
 						$max_images_gallery = $plan_tier === 'gold' ? 10 : 5;
 						$max_reviews = $plan_tier === 'gold' ? 10 : 5;
 						
-						// Limit gallery
 						if ( ! empty( $gallery ) && is_array( $gallery ) ) {
 							$gallery = array_slice( $gallery, 0, $max_images_gallery );
 						}
 						?>
 						
-						<!-- Photo Gallery -->
 						<?php if ( ! empty( $gallery ) && is_array( $gallery ) ) : ?>
 							<div class="hbl-v2-expandable-section hbl-v2-gallery-section">
 								<h4><?php esc_html_e( 'Photo Gallery', 'hbl' ); ?></h4>
@@ -375,7 +324,6 @@ trait Card_Renderer {
 			<div class="hbl-v2-expandable-divider"></div>
 						<?php endif; ?>
 						
-						<!-- Services -->
 						<div class="hbl-v2-expandable-section hbl-v2-services-section">
 							<h4><?php esc_html_e( 'Services', 'hbl' ); ?></h4>
 							<?php
@@ -407,7 +355,6 @@ trait Card_Renderer {
 						
 						<div class="hbl-v2-expandable-divider"></div>
 						
-						<!-- Contact & Location (Silver & Gold) -->
 						<div class="hbl-v2-expandable-section hbl-v2-contact-section">
 							<h4><?php esc_html_e( 'Contact & Location', 'hbl' ); ?></h4>
 							
@@ -448,7 +395,6 @@ trait Card_Renderer {
 							</div>
 							
 							<?php 
-							// Map for quick view
 							$lat = get_post_meta( $listing_id, '_manual_lat', true );
 							$lng = get_post_meta( $listing_id, '_manual_lng', true );
 							
@@ -472,12 +418,10 @@ trait Card_Renderer {
 						<?php if ( 'gold' === $plan_tier ) : ?>
 						<div class="hbl-v2-expandable-divider"></div>
 						
-						<!-- Reviews Section -->
 						<div class="hbl-v2-expandable-section hbl-v2-reviews-section-full">
 							<h4><?php esc_html_e( 'Reviews', 'hbl' ); ?></h4>
 							
 							<?php
-							// Get reviews for this listing
 							$reviews = array();
 							if ( function_exists( 'get_comments' ) ) {
 								$reviews = get_comments( array(
@@ -490,7 +434,6 @@ trait Card_Renderer {
 							?>
 							
 							<?php if ( $rating_count > 0 && ! empty( $reviews ) ) : ?>
-								<!-- Overall Rating -->
 								<div class="hbl-v2-reviews-rating">
 									<div class="hbl-v2-rating-point">
 										<span class="hbl-v2-rating-number"><?php echo number_format( $average_rating, 1 ); ?></span>
@@ -505,7 +448,6 @@ trait Card_Renderer {
 									</div>
 								</div>
 								
-								<!-- Latest Review -->
 								<?php 
 								$latest_review = $reviews[0];
 								$reviewer_name = ! empty( $latest_review->comment_author ) ? $latest_review->comment_author : __( 'Anonymous', 'hbl' );
@@ -540,15 +482,12 @@ trait Card_Renderer {
 						
 						<div class="hbl-v2-expandable-divider"></div>
 						
-						<!-- Review Form - Using Directorist Native Review System -->
 						<div class="hbl-v2-expandable-section hbl-v2-review-form-section">
 							<?php
-							// Check if reviews are enabled
 							$reviews_enabled = function_exists( 'directorist_is_review_enabled' ) && directorist_is_review_enabled();
 							$guest_review_enabled = function_exists( 'directorist_is_guest_review_enabled' ) && directorist_is_guest_review_enabled();
 							$can_user_review = is_user_logged_in() || $guest_review_enabled;
 							
-							// Check if current user has already reviewed
 							$user_already_reviewed = false;
 							if ( is_user_logged_in() && function_exists( 'directorist_user_review_exists' ) ) {
 								$current_user = wp_get_current_user();
@@ -557,7 +496,6 @@ trait Card_Renderer {
 							
 							if ( $reviews_enabled ) :
 								if ( $can_user_review && ! $user_already_reviewed ) :
-									// Get current user data if logged in
 									$current_user = wp_get_current_user();
 									$user_name = is_user_logged_in() ? $current_user->display_name : '';
 									$user_email = is_user_logged_in() ? $current_user->user_email : '';
@@ -568,7 +506,6 @@ trait Card_Renderer {
 									<?php wp_nonce_field( 'hbl_submit_review', 'hbl_review_nonce' ); ?>
 									<input type="hidden" name="listing_id" value="<?php echo esc_attr( $listing_id ); ?>">
 									
-									<!-- Rating -->
 									<div class="hbl-v2-form-group hbl-v2-rating-group">
 										<label><?php esc_html_e( 'Rating', 'hbl' ); ?> <span class="required">*</span></label>
 										<div class="hbl-v2-star-rating" data-rating="0">
@@ -582,13 +519,11 @@ trait Card_Renderer {
 									</div>
 									
 									<?php if ( ! is_user_logged_in() ) : ?>
-									<!-- Name (for guests) -->
 									<div class="hbl-v2-form-group">
 										<label><?php esc_html_e( 'Name', 'hbl' ); ?> <span class="required">*</span></label>
 										<input type="text" name="reviewer_name" class="form-control" placeholder="<?php esc_attr_e( 'Your name', 'hbl' ); ?>" required>
 									</div>
 									
-									<!-- Email (for guests) -->
 									<div class="hbl-v2-form-group">
 										<label><?php esc_html_e( 'Email', 'hbl' ); ?> <span class="required">*</span></label>
 										<input type="email" name="reviewer_email" class="form-control" placeholder="<?php esc_attr_e( 'Your email', 'hbl' ); ?>" required>
@@ -598,7 +533,6 @@ trait Card_Renderer {
 									<input type="hidden" name="reviewer_email" value="<?php echo esc_attr( $user_email ); ?>">
 									<?php endif; ?>
 									
-									<!-- Review Content -->
 									<div class="hbl-v2-form-group">
 										<label><?php esc_html_e( 'Your Review', 'hbl' ); ?> <span class="required">*</span></label>
 										<textarea name="review_content" class="form-control" rows="4" placeholder="<?php esc_attr_e( 'Share your experience and help others make better choices...', 'hbl' ); ?>" required></textarea>
@@ -624,7 +558,6 @@ trait Card_Renderer {
 								</div>
 							<?php 
 								else :
-									// Show login message
 							?>
 								<h4><?php echo sprintf( esc_html__( 'Would you like to leave "%s" a review?', 'hbl' ), esc_html( $this->get_clean_title( get_the_title( $listing_id ) ) ) ); ?></h4>
 								<div class="hbl-v2-login-message">
@@ -653,7 +586,6 @@ trait Card_Renderer {
 					</div>
 				</div>
 				
-				<!-- Expand/Collapse Button at Bottom -->
 				<div class="hbl-v2-expand-trigger" onclick="event.stopPropagation(); this.closest('.hbl-v2-listing-card').classList.toggle('expanded');">
 					<span class="hbl-v2-expand-text"><?php esc_html_e( 'Quick View', 'hbl' ); ?></span>
 					<span class="hbl-v2-expand-icon"></span>
@@ -663,18 +595,9 @@ trait Card_Renderer {
 		<?php
 	}
 
-	/**
-	 * Get listing logo URL
-	 *
-	 * @param int $listing_id Listing ID
-	 * @param array $all_meta All meta data
-	 * @return string Logo URL or empty string
-	 */
 	protected function get_listing_logo( $listing_id, $all_meta ) {
 		$logo_url = '';
 		
-		// Try custom-file field (Directorist plupload format)
-		// Users upload "Preview Image" or "Logo" here usually
 		$custom_file_variations = array( 'custom-file', '_custom-file' );
 		
 		foreach ( $custom_file_variations as $field_name ) {
@@ -703,20 +626,11 @@ trait Card_Renderer {
 			}
 		}
 
-		// REMOVED: Fallback to featured image (get_the_post_thumbnail_url)
-		// This ensures we don't show random listing images as the logo if no logo is uploaded.
 		
 		return $logo_url;
 	}
 
-	/**
-	 * Clean listing title by removing prefixes like "Preview:", "Draft:", etc.
-	 * 
-	 * @param string $title The original title
-	 * @return string The cleaned title
-	 */
 	protected function get_clean_title( $title ) {
-		// Remove common Directorist prefixes
 		$prefixes = array(
 			'Preview: ',
 			'Preview:',

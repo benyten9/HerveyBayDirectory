@@ -1,20 +1,11 @@
 <?php
-/**
- * The template for displaying the footer
- *
- * @package HBL
- * @since 1.0.0
- */
 ?>
 
-	</div><!-- #content -->
+	</div>
 
 	<?php
-	// Check if Elementor footer exists
 	if ( function_exists( 'elementor_theme_do_location' ) && elementor_theme_do_location( 'footer' ) ) {
-		// Elementor footer is being used
 	} else {
-		// Default footer
 		?>
 		<footer id="colophon" class="site-footer">
 			<div class="container">
@@ -63,7 +54,7 @@
 	}
 	?>
 
-</div><!-- #page -->
+</div>
 
 <?php wp_footer(); ?>
 

@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Blogs Section Widget
- *
- * Displays blog posts from WordPress in a responsive grid layout
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.2.362
- */
 
 namespace HBL\Widgets;
 
@@ -16,45 +7,29 @@ use Elementor\Controls_Manager;
 use Elementor\Group_Control_Typography;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
 class HBL_Blogs_Section extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-blogs-section';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HB Blogs', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-posts-grid';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// ========== CONTENT: HEADER SECTION ==========
 		$this->start_controls_section(
 			'section_header',
 			array(
@@ -106,7 +81,6 @@ class HBL_Blogs_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: BLOG SETTINGS ==========
 		$this->start_controls_section(
 			'section_blog_settings',
 			array(
@@ -167,7 +141,6 @@ class HBL_Blogs_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: SECTION ==========
 		$this->start_controls_section(
 			'section_style',
 			array(
@@ -220,7 +193,6 @@ class HBL_Blogs_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADER ==========
 		$this->start_controls_section(
 			'section_header_style',
 			array(
@@ -405,7 +377,6 @@ class HBL_Blogs_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BLOG CARDS ==========
 		$this->start_controls_section(
 			'section_cards_style',
 			array(
@@ -709,9 +680,6 @@ class HBL_Blogs_Section extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Get categories for dropdown
-	 */
 	private function get_post_categories() {
 		$categories = get_categories();
 		$options    = array();
@@ -723,13 +691,9 @@ class HBL_Blogs_Section extends Widget_Base {
 		return $options;
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		
-		// Query args
 		$args = array(
 			'post_type'      => 'post',
 			'posts_per_page' => $settings['posts_count'],
@@ -738,7 +702,6 @@ class HBL_Blogs_Section extends Widget_Base {
 			'post_status'    => 'publish',
 		);
 		
-		// Add category filter if set
 		if ( ! empty( $settings['category'] ) ) {
 			$args['cat'] = implode( ',', $settings['category'] );
 		}
@@ -750,7 +713,6 @@ class HBL_Blogs_Section extends Widget_Base {
 		}
 		?>
 		<div class="hbl-blogs-section">
-			<!-- Header -->
 			<div class="hbl-blogs-header">
 				<div class="hbl-blogs-header-text">
 					<?php if ( ! empty( $settings['subtitle'] ) ) : ?>
@@ -774,7 +736,6 @@ class HBL_Blogs_Section extends Widget_Base {
 				<?php endif; ?>
 			</div>
 
-			<!-- Blog Grid -->
 			<div class="hbl-blogs-grid">
 				<?php
 				$posts_array = array();
@@ -789,7 +750,6 @@ class HBL_Blogs_Section extends Widget_Base {
 				endwhile;
 				wp_reset_postdata();
 				
-				// Featured Blog (First Post)
 				if ( ! empty( $posts_array[0] ) ) :
 					$featured = $posts_array[0];
 					?>
@@ -809,10 +769,8 @@ class HBL_Blogs_Section extends Widget_Base {
 					</div>
 				<?php endif; ?>
 
-				<!-- Right Column: Standard Blogs -->
 				<div class="hbl-blogs-right-column">
 					<?php
-					// Show remaining posts (2nd and 3rd)
 					for ( $i = 1; $i < count( $posts_array ); $i++ ) :
 						$post_data = $posts_array[ $i ];
 						?>
@@ -837,7 +795,6 @@ class HBL_Blogs_Section extends Widget_Base {
 				</div>
 			</div>
 
-			<!-- Mobile/Tablet Button (Hidden on Desktop) -->
 			<?php if ( ! empty( $settings['button_text'] ) ) : 
 				$mobile_button_link = 'mobile_link_button';
 				if ( ! empty( $settings['button_link']['url'] ) ) {

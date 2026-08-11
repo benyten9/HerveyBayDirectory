@@ -1,9 +1,4 @@
-/**
- * HBL Place ID Manager — Admin Styles
- * Extends bulk-reassign.css (loaded as dependency).
- */
 
-/* ─── Tabs ───────────────────────────────────────────── */
 
 .hbl-pid-tabs {
 	display: flex;
@@ -33,7 +28,6 @@
 	font-weight: 600;
 }
 
-/* ─── Settings inline row ────────────────────────────── */
 
 .hbl-pid-field-inline {
 	display: flex;
@@ -65,7 +59,6 @@
 	font-size: 12px;
 }
 
-/* ─── How-to ─────────────────────────────────────────── */
 
 .hbl-pid-howto-list {
 	margin: 0 0 12px 20px;
@@ -86,7 +79,6 @@
 	font-size: 12px;
 }
 
-/* ─── Manual — toolbar ───────────────────────────────── */
 
 .hbl-pid-toolbar {
 	display: flex;
@@ -112,8 +104,6 @@
 	min-width: 200px;
 }
 
-/* Mobile-only "Select All" — the header checkbox lives in the table head,
-   which is hidden on the stacked card layout, so surface it above the cards. */
 .hbl-pid-mobile-selectall {
 	display: none;
 }
@@ -137,7 +127,6 @@
 
 .hbl-pid-page-info { font-size: 13px; color: var(--hbl-text); white-space: nowrap; }
 
-/* ─── Shared table styles ────────────────────────────── */
 
 .hbl-pid-log-table {
 	font-size: 13px;
@@ -174,7 +163,6 @@
 	max-width: 200px;
 }
 
-/* ─── Manual — Place ID input ────────────────────────── */
 
 .hbl-pid-input-wrap {
 	display: flex;
@@ -245,9 +233,6 @@
 
 .hbl-pid-maps-btn:hover { background: rgba(0,128,128,0.06) !important; border-color: var(--hbl-primary) !important; }
 
-/* ─── Auto Find / Save action buttons ───────────────────
-   Shared pill-shaped icon buttons used for row-level and
-   toolbar-level "Auto Find" / "Save" / "Apply" actions.  */
 
 .hbl-pid-btn {
 	position: relative;
@@ -308,7 +293,6 @@
 	to { transform: rotate(360deg); }
 }
 
-/* Auto Find (magnifier) — teal outline */
 .hbl-pid-btn--find {
 	border-color: rgba(0, 128, 128, 0.35);
 	color: var(--hbl-primary);
@@ -337,8 +321,6 @@
 	color: #fff;
 }
 
-/* Save / Apply — brand button (orange default, teal hover — matches
-   the theme's own .btn-primary / --hbl-button-bg convention). */
 .hbl-pid-btn--save,
 .hbl-pid-btn--apply,
 .hbl-pid-btn--find-all {
@@ -364,8 +346,6 @@
 	border-radius: 3px;
 }
 
-/* Toolbar buttons (Search / Clear / Auto Find All) sit next to a 40px-tall
-   search input — bump them up so the row reads as one aligned control set. */
 .hbl-pid-search-wrap .hbl-pid-btn {
 	height: 36px;
 	padding: 0 14px;
@@ -386,7 +366,6 @@
 	box-shadow: none;
 }
 
-/* ─── Import — dropzone ──────────────────────────────── */
 
 .hbl-pid-dropzone {
 	display: flex;
@@ -413,7 +392,6 @@
 
 .hbl-pid-file-label { cursor: pointer; }
 
-/* ─── Import — column mapping ────────────────────────── */
 
 .hbl-pid-mapping-grid {
 	display: flex;
@@ -436,7 +414,6 @@
 
 .hbl-pid-required { color: var(--hbl-danger); }
 
-/* ─── Import — preview table ─────────────────────────── */
 
 .hbl-pid-preview-table {
 	font-size: 12px;
@@ -464,7 +441,6 @@
 	text-align: left;
 }
 
-/* ─── Import — filter chips ──────────────────────────── */
 
 .hbl-pid-filter-chips {
 	display: flex;
@@ -493,7 +469,6 @@
 	color: #fff;
 }
 
-/* ─── Import — result table cells ───────────────────── */
 
 .hbl-pid-code-cell {
 	display: block;
@@ -529,14 +504,8 @@
 	flex-wrap: wrap;
 }
 
-/* ─── Responsive ─────────────────────────────────────── */
 
 @media (max-width: 782px) {
-	/* Stacked "card per row" layout — the same pattern WordPress core
-	   uses for the Posts/Pages list tables on mobile, instead of a
-	   horizontally-scrolling table. Works for both the manual-entry
-	   table and the import-preview table (different column counts,
-	   both driven by each cell's own data-label attribute). */
 	.hbl-pid-log-table,
 	.hbl-pid-log-table tbody,
 	.hbl-pid-log-table tbody tr,
@@ -568,8 +537,6 @@
 		max-width: 100%;
 	}
 
-	/* Checkbox sits on its own row at the top of the card, everything
-	   else stacks below it in normal document order. */
 	.hbl-pid-log-table tbody td:first-child {
 		text-align: left !important;
 		padding-bottom: 8px;
@@ -577,19 +544,16 @@
 		border-bottom: 1px solid var(--hbl-border) !important;
 	}
 
-	/* Row number isn't worth its own labeled block on a small screen */
 	.hbl-pid-log-table tbody td:nth-child(2) {
 		display: none;
 	}
 
-	/* Name column reads as the card title — no label prefix */
 	.hbl-pid-log-table tbody td:nth-child(3) {
 		font-weight: 600;
 		font-size: 14px;
 		padding-bottom: 8px;
 	}
 
-	/* Every other cell gets a small uppercase label above its value */
 	.hbl-pid-log-table tbody td:not(:first-child):not(:nth-child(3))::before {
 		content: attr(data-label);
 		display: block;

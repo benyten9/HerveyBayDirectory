@@ -1,36 +1,4 @@
 <?php
-/**
- * HBL Place ID Manager Tool
- *
- * Site tool under Directorist Tools. Two modes:
- *
- * MODE A — Manual entry
- *   Lists all Directorist listings that are missing a Place ID.
- *   Each row has a "Find on Google Maps" link (free, no API key) and an
- *   inline input. Admin pastes the Place ID, clicks Save Row or selects
- *   several and clicks Apply Selected.
- *
- * MODE B — Import from Excel / CSV
- *   Admin uploads an XLSX or CSV file that already contains Place IDs
- *   (columns: Business Name, Category, Place ID).  The tool matches each
- *   row to a Directorist listing by name (with category as a tiebreaker)
- *   and shows a review table before writing anything.
- *
- *   Matching levels:
- *     1. Exact      – name matches exactly (case-insensitive)
- *     2. Normalised – matches after stripping punctuation / common suffixes
- *     3. Partial    – one name contains the other
- *     4. No match   – nothing found (row shown but not selectable)
- *
- *   Parsing is done with built-in PHP extensions only (ZipArchive +
- *   SimpleXML for XLSX, fgetcsv for CSV).  No third-party libraries needed.
- *
- * Place ID meta key defaults to `_place_id`. Change it in Settings to match
- * the field key you defined in the Directorist directory builder.
- *
- * @package HBL
- * @since   1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -39,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class HBL_Place_ID {
 
 	const OPTION_KEY    = 'hbl_place_id_settings';
-	const IMPORT_EXPIRY = 7200; // 2 hours
+	const IMPORT_EXPIRY = 7200;
 
 	private static $instance = null;
 
@@ -55,21 +23,17 @@ class HBL_Place_ID {
 		add_action( 'admin_init',            array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-		// Mode A: manual
 		add_action( 'wp_ajax_hbl_place_id_count_missing',  array( $this, 'ajax_count_missing' ) );
 		add_action( 'wp_ajax_hbl_place_id_load_page',      array( $this, 'ajax_load_page' ) );
 		add_action( 'wp_ajax_hbl_place_id_save_selected',  array( $this, 'ajax_save_selected' ) );
 
-		// Mode B: import
 		add_action( 'wp_ajax_hbl_place_id_upload',         array( $this, 'ajax_upload' ) );
 		add_action( 'wp_ajax_hbl_place_id_match_all',      array( $this, 'ajax_match_all' ) );
 		add_action( 'wp_ajax_hbl_place_id_import_apply',   array( $this, 'ajax_import_apply' ) );
 
-		// Auto-find (Google Maps scrape)
 		add_action( 'wp_ajax_hbl_pid_auto_find',           array( $this, 'ajax_auto_find' ) );
 	}
 
-	// ── Menu & assets ─────────────────────────────────────────────────────────
 
 	public function add_admin_menu() {
 		add_submenu_page(
@@ -98,7 +62,6 @@ class HBL_Place_ID {
 		register_setting( 'hbl_place_id', self::OPTION_KEY, array( 'sanitize_callback' => array( $this, 'sanitize_settings' ) ) );
 	}
 
-	// ── Settings ──────────────────────────────────────────────────────────────
 
 	private function get_settings(): array {
 		return array_merge(
@@ -114,13 +77,9 @@ class HBL_Place_ID {
 		);
 	}
 
-	// ══════════════════════════════════════════════════════════════════════════
-	// MODE A — MANUAL ENTRY HELPERS
-	// ══════════════════════════════════════════════════════════════════════════
 
 	private function count_missing( string $meta_key ): int {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		return (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(p.ID) FROM {$wpdb->posts} p
 			 LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
@@ -135,7 +94,6 @@ class HBL_Place_ID {
 		$offset = ( $page - 1 ) * $per_page;
 
 		if ( $search ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$rows = $wpdb->get_results( $wpdb->prepare(
 				"SELECT p.ID, p.post_title FROM {$wpdb->posts} p
 				 LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
@@ -150,7 +108,6 @@ class HBL_Place_ID {
 				$offset
 			) );
 		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$rows = $wpdb->get_results( $wpdb->prepare(
 				"SELECT p.ID, p.post_title FROM {$wpdb->posts} p
 				 LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
@@ -187,7 +144,6 @@ class HBL_Place_ID {
 		if ( ! $search ) {
 			return $this->count_missing( $meta_key );
 		}
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		return (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(p.ID) FROM {$wpdb->posts} p
 			 LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
@@ -198,16 +154,7 @@ class HBL_Place_ID {
 		) );
 	}
 
-	// ══════════════════════════════════════════════════════════════════════════
-	// MODE B — FILE PARSING HELPERS
-	// ══════════════════════════════════════════════════════════════════════════
 
-	/**
-	 * Parses an XLSX file into a 2-D array of strings.
-	 * Uses only built-in PHP extensions: ZipArchive + SimpleXML.
-	 *
-	 * @return array{rows: array[]|null, error: string}
-	 */
 	private function parse_xlsx( string $path ): array {
 		if ( ! class_exists( 'ZipArchive' ) ) {
 			return array( 'rows' => null, 'error' => 'The ZipArchive PHP extension is not available on this server.' );
@@ -218,11 +165,9 @@ class HBL_Place_ID {
 			return array( 'rows' => null, 'error' => 'Could not open the XLSX file (is it a valid Excel file?).' );
 		}
 
-		// ── Shared strings ──
 		$shared = array();
 		$raw    = $zip->getFromName( 'xl/sharedStrings.xml' );
 		if ( $raw ) {
-			// Suppress namespace warnings common in some XLSX exports.
 			$doc = @simplexml_load_string( $raw );
 			if ( $doc ) {
 				foreach ( $doc->si as $si ) {
@@ -241,7 +186,6 @@ class HBL_Place_ID {
 			}
 		}
 
-		// ── First sheet ──
 		$sheet_raw = $zip->getFromName( 'xl/worksheets/sheet1.xml' );
 		$zip->close();
 
@@ -296,7 +240,6 @@ class HBL_Place_ID {
 		return array( 'rows' => $rows, 'error' => '' );
 	}
 
-	/** Converts a spreadsheet column letter (A, B, … Z, AA, AB …) to a 0-based index. */
 	private function col_letter_to_index( string $col ): int {
 		$col    = strtoupper( $col );
 		$result = 0;
@@ -306,7 +249,6 @@ class HBL_Place_ID {
 		return max( 0, $result - 1 );
 	}
 
-	/** Parses a CSV file into a 2-D array of strings. */
 	private function parse_csv( string $path ): array {
 		$handle = @fopen( $path, 'r' );
 		if ( ! $handle ) {
@@ -322,30 +264,17 @@ class HBL_Place_ID {
 		return array( 'rows' => $rows, 'error' => '' );
 	}
 
-	// ── Matching ──────────────────────────────────────────────────────────────
 
-	/** Normalise a business name for fuzzy matching. */
 	private function normalise( string $name ): string {
 		$name = strtolower( trim( $name ) );
-		// Remove punctuation.
 		$name = preg_replace( '/[^\w\s]/', ' ', $name );
-		// Strip common legal suffixes.
 		$name = preg_replace( '/\b(pty\s*ltd|pty|ltd|limited|inc|llc|co|and|the|&|group|australia|aus)\b/', ' ', $name );
 		return trim( (string) preg_replace( '/\s+/', ' ', $name ) );
 	}
 
-	/**
-	 * Loads all published listings with their categories into a lookup structure:
-	 *   [
-	 *     'by_exact'  => [ 'lowercase title' => [ {ID, post_title, categories}, … ] ],
-	 *     'by_norm'   => [ 'normalised title' => [ … ] ],
-	 *     'all'       => [ {ID, post_title, categories}, … ],
-	 *   ]
-	 */
 	private function build_listing_index(): array {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$rows = $wpdb->get_results(
 			"SELECT p.ID, p.post_title,
 			        GROUP_CONCAT(DISTINCT LOWER(t.name) ORDER BY t.name SEPARATOR '|') AS categories
@@ -380,11 +309,6 @@ class HBL_Place_ID {
 		);
 	}
 
-	/**
-	 * Finds the best Directorist listing match for a given business name + category.
-	 *
-	 * @return array{listing_id: int, listing_title: string, match_type: string}|null
-	 */
 	private function find_match( array $index, string $name, string $category ): ?array {
 		$exact_key    = strtolower( trim( $name ) );
 		$norm_key     = $this->normalise( $name );
@@ -392,19 +316,16 @@ class HBL_Place_ID {
 		$candidates   = null;
 		$match_type   = '';
 
-		// 1. Exact.
 		if ( isset( $index['by_exact'][ $exact_key ] ) ) {
 			$candidates = $index['by_exact'][ $exact_key ];
 			$match_type = 'exact';
 		}
 
-		// 2. Normalised.
 		if ( ! $candidates && $norm_key && isset( $index['by_norm'][ $norm_key ] ) ) {
 			$candidates = $index['by_norm'][ $norm_key ];
 			$match_type = 'normalised';
 		}
 
-		// 3. Partial: one name contains the other.
 		if ( ! $candidates ) {
 			foreach ( $index['all'] as $r ) {
 				$listing_lower = strtolower( $r->post_title );
@@ -421,8 +342,6 @@ class HBL_Place_ID {
 			return null;
 		}
 
-		// If multiple candidates and we have a category, prefer the one whose
-		// category list contains the filter category.
 		if ( count( $candidates ) > 1 && $cat_filter ) {
 			$filtered = array_filter( $candidates, function ( $r ) use ( $cat_filter ) {
 				return false !== strpos( (string) $r->categories, $cat_filter );
@@ -442,9 +361,6 @@ class HBL_Place_ID {
 		);
 	}
 
-	// ══════════════════════════════════════════════════════════════════════════
-	// AJAX HANDLERS — MODE A
-	// ══════════════════════════════════════════════════════════════════════════
 
 	public function ajax_count_missing(): void {
 		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
@@ -499,14 +415,7 @@ class HBL_Place_ID {
 		wp_send_json_success( array( 'saved' => $saved, 'failed' => $failed, 'saved_ids' => $saved_ids ) );
 	}
 
-	// ══════════════════════════════════════════════════════════════════════════
-	// AJAX HANDLERS — MODE B
-	// ══════════════════════════════════════════════════════════════════════════
 
-	/**
-	 * Receives the uploaded file, parses it, stores rows in a transient,
-	 * and returns column headers + a preview of the first 5 rows.
-	 */
 	public function ajax_upload(): void {
 		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
@@ -543,39 +452,32 @@ class HBL_Place_ID {
 
 		$rows = $result['rows'];
 
-		// Limit to 20 000 rows to keep memory sensible.
 		if ( count( $rows ) > 20000 ) {
 			wp_send_json_error( 'File contains more than 20,000 rows. Please split it into smaller batches.' ); return;
 		}
 
-		// Generate a unique token for this upload session.
 		$token = wp_generate_password( 16, false );
 
 		set_transient( 'hbl_pid_rows_' . $token, $rows, self::IMPORT_EXPIRY );
 
 		$headers = $rows[0] ?? array();
-		$preview = array_slice( $rows, 0, 6 ); // header + first 5 data rows
+		$preview = array_slice( $rows, 0, 6 );
 
 		wp_send_json_success( array(
 			'token'      => $token,
-			'total_rows' => count( $rows ) - 1, // subtract header row
+			'total_rows' => count( $rows ) - 1,
 			'headers'    => $headers,
 			'preview'    => $preview,
 		) );
 	}
 
-	/**
-	 * Matches all uploaded rows against Directorist listings and returns
-	 * the results. Runs in a single AJAX call (loads all listings once into
-	 * memory, then matches in PHP — fast even at 10k+ rows).
-	 */
 	public function ajax_match_all(): void {
 		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
 
 		$token      = sanitize_text_field( $_POST['token']        ?? '' );
 		$name_col   = (int) ( $_POST['name_col']   ?? 0 );
-		$cat_col    = (int) ( $_POST['cat_col']    ?? -1 ); // -1 = not mapped
+		$cat_col    = (int) ( $_POST['cat_col']    ?? -1 );
 		$pid_col    = (int) ( $_POST['pid_col']    ?? 0 );
 		$has_header = ! empty( $_POST['has_header'] ) && 'true' === $_POST['has_header'];
 
@@ -592,7 +494,6 @@ class HBL_Place_ID {
 			$rows = array_slice( $rows, 1 );
 		}
 
-		// Build listing index (loaded once).
 		$index = $this->build_listing_index();
 
 		$results   = array();
@@ -605,7 +506,7 @@ class HBL_Place_ID {
 			$place_id = trim( (string) ( $row[ $pid_col ] ?? '' ) );
 
 			if ( ! $name || ! $place_id ) {
-				continue; // Skip blank rows.
+				continue;
 			}
 
 			$match = $this->find_match( $index, $name, $category );
@@ -639,18 +540,16 @@ class HBL_Place_ID {
 			}
 		}
 
-		// Store results so the client can page through them.
 		set_transient( 'hbl_pid_results_' . $token, $results, self::IMPORT_EXPIRY );
 
 		wp_send_json_success( array(
 			'total'     => count( $results ),
 			'found'     => $found,
 			'not_found' => $not_found,
-			'results'   => $results,     // all rows — client paginates in JS
+			'results'   => $results,
 		) );
 	}
 
-	/** Writes approved Place IDs from the import to their matched listings. */
 	public function ajax_import_apply(): void {
 		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
@@ -679,7 +578,6 @@ class HBL_Place_ID {
 		wp_send_json_success( array( 'applied' => $applied, 'failed' => $failed, 'applied_ids' => $applied_ids ) );
 	}
 
-	// ── Auto-find Place ID (Google Maps scrape) ──────────────────────────────
 
 	public function ajax_auto_find(): void {
 		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
@@ -709,25 +607,15 @@ class HBL_Place_ID {
 		wp_send_json_success( array( 'pid' => $result['pid'], 'title' => $title ) );
 	}
 
-	/**
-	 * Finds a Google Place ID for a business by querying Google's internal
-	 * map-search endpoint (the one Maps itself uses), falling back to the
-	 * public Maps search page. Tries progressively broader queries: full
-	 * address first, then city/state, then business name alone.
-	 *
-	 * @return array{ok: bool, pid: string, error: string}
-	 */
 	private function scrape_place_id( string $title, string $address ): array {
 		$title = trim( $title );
 		if ( '' === $title ) {
 			return array( 'ok' => false, 'pid' => '', 'error' => 'Listing has no title.' );
 		}
 
-		// Progressively broader query variants.
 		$queries = array();
 		if ( $address ) {
 			$queries[] = $title . ', ' . $address;
-			// City/state only (drop the street address — often mismatched).
 			$parts = array_map( 'trim', explode( ',', $address ) );
 			if ( count( $parts ) > 1 ) {
 				$queries[] = $title . ', ' . implode( ', ', array_slice( $parts, -2 ) );
@@ -741,9 +629,6 @@ class HBL_Place_ID {
 		foreach ( $queries as $query ) {
 			$encoded = rawurlencode( $query );
 
-			// Endpoint 1: Google's internal map-search endpoint. Returns the
-			// raw result payload (no JS rendering) containing ChIJ Place IDs.
-			// Endpoint 2: public Maps search page as fallback.
 			$urls = array(
 				'https://www.google.com/search?tbm=map&tch=1&hl=en&gl=au&q=' . $encoded,
 				'https://www.google.com/maps/search/' . $encoded . '?hl=en&gl=au',
@@ -757,8 +642,6 @@ class HBL_Place_ID {
 						'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
 						'Accept-Language' => 'en-US,en;q=0.9',
 						'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-						// Pre-set consent cookies so Google doesn't serve the
-						// EU consent interstitial instead of results.
 						'Cookie'          => 'CONSENT=YES+cb.20210720-07-p0.en+FX+410; SOCS=CAI',
 					),
 				) );
@@ -781,8 +664,6 @@ class HBL_Place_ID {
 					continue;
 				}
 
-				// Prefer the !1s-prefixed match (the selected place), then any
-				// ChIJ token in the payload (first result).
 				if ( preg_match( '/!1s(ChIJ[A-Za-z0-9_\-]{20,})/', $body, $m )
 					|| preg_match( '/(ChIJ[A-Za-z0-9_\-]{20,})/', $body, $m ) ) {
 					return array( 'ok' => true, 'pid' => $m[1], 'error' => '' );
@@ -793,9 +674,6 @@ class HBL_Place_ID {
 		return array( 'ok' => false, 'pid' => '', 'error' => $last_error );
 	}
 
-	// ══════════════════════════════════════════════════════════════════════════
-	// ADMIN PAGE
-	// ══════════════════════════════════════════════════════════════════════════
 
 	public function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -817,7 +695,6 @@ class HBL_Place_ID {
 				<?php esc_html_e( 'Assign Google Place IDs to listings — manually or by importing an Excel / CSV file.', 'hbl' ); ?>
 			</p>
 
-			<!-- Stats -->
 			<div class="hbl-reassign-stats">
 				<div class="hbl-stat-card hbl-stat-card--warning">
 					<div class="hbl-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -844,7 +721,6 @@ class HBL_Place_ID {
 				</div>
 			</div>
 
-			<!-- Mode tabs -->
 			<div class="hbl-pid-tabs">
 				<button type="button" class="hbl-pid-tab hbl-pid-tab--active" data-tab="manual">
 					<?php esc_html_e( 'Manual Entry', 'hbl' ); ?>
@@ -856,12 +732,8 @@ class HBL_Place_ID {
 
 			<div class="hbl-reassign-container">
 
-				<!-- ════════════════════════════════════════════
-				     TAB: MANUAL ENTRY
-				     ════════════════════════════════════════════ -->
 				<div id="hbl-pid-tab-manual">
 
-					<!-- Settings -->
 					<form method="post" action="options.php">
 						<?php settings_fields( 'hbl_place_id' ); ?>
 						<div class="hbl-reassign-step">
@@ -890,7 +762,6 @@ class HBL_Place_ID {
 						</div>
 					</form>
 
-					<!-- Listings table -->
 					<div class="hbl-reassign-step">
 						<div class="hbl-step-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
 							<div style="display:flex;align-items:center;gap:14px">
@@ -939,14 +810,10 @@ class HBL_Place_ID {
 							</table>
 						</div>
 					</div>
-				</div><!-- #hbl-pid-tab-manual -->
+				</div>
 
-				<!-- ════════════════════════════════════════════
-				     TAB: IMPORT
-				     ════════════════════════════════════════════ -->
 				<div id="hbl-pid-tab-import" style="display:none">
 
-					<!-- Upload -->
 					<div class="hbl-reassign-step">
 						<div class="hbl-step-header">
 							<span class="hbl-step-number">1</span>
@@ -969,7 +836,6 @@ class HBL_Place_ID {
 						<div id="hbl-pid-upload-status" style="display:none;margin-top:12px"></div>
 					</div>
 
-					<!-- Column mapping (shown after upload) -->
 					<div class="hbl-reassign-step" id="hbl-pid-mapping-step" style="display:none">
 						<div class="hbl-step-header">
 							<span class="hbl-step-number">2</span>
@@ -977,11 +843,9 @@ class HBL_Place_ID {
 						</div>
 
 						<div class="hbl-pid-mapping-grid" id="hbl-pid-mapping-grid">
-							<!-- Populated by JS -->
 						</div>
 
 						<div id="hbl-pid-preview-table-wrap" style="overflow-x:auto;margin-top:16px">
-							<!-- Preview table populated by JS -->
 						</div>
 
 						<div style="margin-top:16px;display:flex;align-items:center;gap:12px">
@@ -996,7 +860,6 @@ class HBL_Place_ID {
 						</div>
 					</div>
 
-					<!-- Match results -->
 					<div class="hbl-reassign-step" id="hbl-pid-results-step" style="display:none">
 						<div class="hbl-step-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
 							<div style="display:flex;align-items:center;gap:14px">
@@ -1011,7 +874,6 @@ class HBL_Place_ID {
 							</div>
 						</div>
 
-						<!-- Filter chips -->
 						<div class="hbl-pid-filter-chips" id="hbl-pid-filter-chips">
 							<button type="button" class="hbl-pid-chip hbl-pid-chip--active" data-filter="all"><?php esc_html_e( 'All', 'hbl' ); ?></button>
 							<button type="button" class="hbl-pid-chip" data-filter="exact"><?php esc_html_e( 'Exact', 'hbl' ); ?></button>
@@ -1039,9 +901,9 @@ class HBL_Place_ID {
 
 						<div class="hbl-pid-import-pagination" id="hbl-pid-import-pagination"></div>
 					</div>
-				</div><!-- #hbl-pid-tab-import -->
+				</div>
 
-			</div><!-- .hbl-reassign-container -->
+			</div>
 		</div>
 
 		<script>
@@ -1059,7 +921,6 @@ class HBL_Place_ID {
 
 			function isValidPID( v ) { return /^Ch[A-Za-z0-9_-]{10,}$/.test( v ); }
 
-				// ── Tabs ───────────────────────────────────────────────────────────
 			document.querySelectorAll( '.hbl-pid-tab' ).forEach( function (tab) {
 				tab.addEventListener( 'click', function () {
 					document.querySelectorAll( '.hbl-pid-tab' ).forEach( function (t) { t.classList.remove( 'hbl-pid-tab--active' ); } );
@@ -1069,9 +930,6 @@ class HBL_Place_ID {
 				} );
 			} );
 
-			// ══════════════════════════════════════════════════════
-			// MODE A — MANUAL ENTRY
-			// ══════════════════════════════════════════════════════
 
 			var tbody       = document.getElementById( 'hbl-pid-tbody' );
 			var applyBtn    = document.getElementById( 'hbl-pid-apply-btn' );
@@ -1108,9 +966,6 @@ class HBL_Place_ID {
 				var n = checked.length;
 				if ( applyBtn ) { applyBtn.style.display = n > 0 ? '' : 'none'; applyBtn.disabled = n === 0; }
 				if ( applyCount ) applyCount.textContent = n;
-				// Sync every select-all control (header + mobile) against ALL rows on
-				// the page (not just filled ones) so they reflect reality instead of
-				// silently resetting to unchecked whenever no row has a Place ID yet.
 				var allCbs = getAllRowCbs();
 				var total  = allCbs.length;
 				var allChecked = total > 0 && allCbs.every( function (cb) { return cb.checked; } );
@@ -1204,7 +1059,6 @@ class HBL_Place_ID {
 				} );
 				tbody.innerHTML = html;
 
-				// Wire Auto Find per-row buttons
 				tbody.querySelectorAll( '.hbl-pid-claude-btn' ).forEach( function (btn) {
 					btn.addEventListener( 'click', function () {
 						var row = btn.closest( 'tr' );
@@ -1214,7 +1068,6 @@ class HBL_Place_ID {
 					} );
 				} );
 
-				// Wire save-row buttons
 				tbody.querySelectorAll( '.hbl-pid-save-row-btn' ).forEach( function (btn) {
 					btn.addEventListener( 'click', function () {
 						var row = btn.closest( 'tr' );
@@ -1338,14 +1191,11 @@ class HBL_Place_ID {
 			refreshMissingCount();
 			loadManualPage(1);
 
-			// ══════════════════════════════════════════════════════
-			// MODE B — IMPORT
-			// ══════════════════════════════════════════════════════
 
 			var importState = {
 				token     : '',
-				results   : [],   // all rows
-				filtered  : [],   // after filter chip
+				results   : [],
+				filtered  : [],
 				page      : 1,
 				perPage   : 50,
 				filter    : 'all',
@@ -1375,7 +1225,6 @@ class HBL_Place_ID {
 				none       : '<span class="hbl-pid-match-badge hbl-pid-match--none">No Match</span>',
 			};
 
-			// Drag & drop
 			if ( dropzone ) {
 				dropzone.addEventListener( 'dragover', function (e) { e.preventDefault(); dropzone.classList.add( 'hbl-pid-dropzone--over' ); } );
 				dropzone.addEventListener( 'dragleave', function () { dropzone.classList.remove( 'hbl-pid-dropzone--over' ); } );
@@ -1425,7 +1274,6 @@ class HBL_Place_ID {
 
 				var noneOpt = '<option value="-1">— Not in file —</option>';
 
-				// Guess columns by name.
 				function guessCol( keywords ) {
 					for ( var k = 0; k < keywords.length; k++ ) {
 						for ( var i = 0; i < headers.length; i++ ) {
@@ -1453,7 +1301,6 @@ class HBL_Place_ID {
 				document.getElementById( 'hbl-pid-col-cat'  ).value = catIdx >= 0 ? catIdx : -1;
 				document.getElementById( 'hbl-pid-col-pid'  ).value = pidIdx;
 
-				// Preview table
 				var tHead = '<thead><tr>' + headers.map( function (h, i) { return '<th>' + htmlEsc( h || 'Col ' + (i+1) ) + '</th>'; } ).join('') + '</tr></thead>';
 				var tBody = '<tbody>' + preview.slice(1, 6).map( function (row) {
 					return '<tr>' + row.map( function (cell) { return '<td>' + htmlEsc( cell ) + '</td>'; } ).join('') + '</tr>';
@@ -1498,7 +1345,6 @@ class HBL_Place_ID {
 				} );
 			}
 
-			// Filter chips
 			document.querySelectorAll( '.hbl-pid-chip' ).forEach( function (chip) {
 				chip.addEventListener( 'click', function () {
 					document.querySelectorAll( '.hbl-pid-chip' ).forEach( function (c) { c.classList.remove( 'hbl-pid-chip--active' ); } );
@@ -1637,7 +1483,6 @@ class HBL_Place_ID {
 							manualState.savedCount += d.applied;
 							if ( statSaved ) statSaved.textContent = manualState.savedCount;
 							refreshMissingCount();
-							// Mark applied rows in the table
 							rows.forEach( function (row) {
 								var lid = parseInt( row.dataset.listingId, 10 );
 								if ( d.applied_ids.indexOf( lid ) !== -1 ) {
@@ -1655,7 +1500,6 @@ class HBL_Place_ID {
 				} );
 			}
 
-		// ── Auto Find (Google Maps scrape) ────────────────────────────────────
 
 		function autoFindPID( listingId, btn, inp ) {
 			btn.disabled = true;

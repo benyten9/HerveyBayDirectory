@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Listing Search V2 Widget
- *
- * Modern search form for listings, V2 design.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -41,7 +33,6 @@ class HBL_Listing_Search_V2 extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ── General ─────────────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_general',
 			array( 'label' => esc_html__( 'General Settings', 'hbl' ) )
@@ -74,7 +65,6 @@ class HBL_Listing_Search_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Fields ───────────────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_fields',
 			array( 'label' => esc_html__( 'Search Fields', 'hbl' ) )
@@ -157,7 +147,6 @@ class HBL_Listing_Search_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Style ────────────────────────────────────────────────────────────
 		$this->start_controls_section(
 			'section_style',
 			array(
@@ -303,7 +292,7 @@ class HBL_Listing_Search_V2 extends Widget_Base {
 						</div>
 					<?php endif; ?>
 
-				</div><!-- .hbl-v2-lsearch-fields -->
+				</div>
 
 				<button type="submit" class="hbl-v2-lsearch-btn">
 					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

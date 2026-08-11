@@ -1,11 +1,4 @@
 <?php
-/**
- * HBL Single Listing Widget for Elementor
- * 
- * A beautiful, modern single listing display widget
- *
- * @package HBL
- */
 
 namespace HBL\Widgets;
 
@@ -40,7 +33,6 @@ class HBL_Single_Listing extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// Content Section
 		$this->start_controls_section(
 			'section_content',
 			array(
@@ -226,7 +218,6 @@ class HBL_Single_Listing extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Tier Mapping
 		$this->start_controls_section(
 			'section_plan_tiers',
 			array(
@@ -328,7 +319,6 @@ class HBL_Single_Listing extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get the current listing
 		global $post;
 		
 		if ( ! $post || ! defined( 'ATBDP_POST_TYPE' ) || $post->post_type !== ATBDP_POST_TYPE ) {
@@ -340,15 +330,13 @@ class HBL_Single_Listing extends Widget_Base {
 
 		$listing_id = $post->ID;
 		
-		// Get listing data
 		$title = get_the_title( $listing_id );
 		$content = get_the_content( null, false, $listing_id );
 
-		// Get plan tier and truncate content
 		$plan_id = get_post_meta( $listing_id, '_fm_plans', true );
 		$plan_tier = $this->get_plan_tier( intval( $plan_id ), $settings );
 		
-		$word_limit = 50; // Bronze default
+		$word_limit = 50;
 		if ( 'gold' === $plan_tier ) {
 			$word_limit = 500;
 		} elseif ( 'silver' === $plan_tier ) {
@@ -362,7 +350,6 @@ class HBL_Single_Listing extends Widget_Base {
 		$tagline = get_post_meta( $listing_id, '_tagline', true );
 		$featured_image = get_the_post_thumbnail_url( $listing_id, 'large' );
 		
-		// Get logo (check multiple possible meta fields)
 		$logo_url = '';
 		$custom_file_variations = array(
 			'custom-file',
@@ -375,32 +362,25 @@ class HBL_Single_Listing extends Widget_Base {
 			$custom_file = get_post_meta( $listing_id, $field_name, true );
 			
 			if ( ! empty( $custom_file ) ) {
-				// Directorist plupload stores in format: "URL|ID|TITLE|CAPTION"
-				// Also check for "URL|||" format or just "URL"
 				if ( strpos( $custom_file, '|' ) !== false ) {
-					// Has pipe separators - extract the URL (first part)
 					$parts = explode( '|', $custom_file );
 					$logo_url = trim( $parts[0] );
 				} else {
-					// No pipes - might be just a URL or attachment ID
 					$logo_url = trim( $custom_file );
 				}
 				
-				// If it's a numeric attachment ID, get the URL
 				if ( is_numeric( $logo_url ) ) {
 					$logo_url = wp_get_attachment_image_url( intval( $logo_url ), 'medium' );
 				}
 				
-				// Validate that we have a proper URL
 				if ( ! empty( $logo_url ) && filter_var( $logo_url, FILTER_VALIDATE_URL ) ) {
-					break; // Found valid logo URL, stop searching
+					break;
 				} else {
-					$logo_url = ''; // Reset if not a valid URL
+					$logo_url = '';
 				}
 			}
 		}
 		
-		// If custom-file didn't work, try explicit logo field names
 		if ( empty( $logo_url ) ) {
 			$logo_fields = array(
 				'_manual_logo_image',
@@ -412,21 +392,18 @@ class HBL_Single_Listing extends Widget_Base {
 				$logo_data = get_post_meta( $listing_id, $field, true );
 				
 				if ( ! empty( $logo_data ) ) {
-					// Handle if it's an array
 					if ( is_array( $logo_data ) ) {
 						$logo_id = isset( $logo_data[0] ) ? $logo_data[0] : false;
 					} else {
 						$logo_id = $logo_data;
 					}
 					
-					// If it's a numeric attachment ID, get the URL
 					if ( $logo_id && is_numeric( $logo_id ) ) {
 						$logo_url = wp_get_attachment_image_url( $logo_id, 'medium' );
 						if ( $logo_url ) {
 							break;
 						}
 					}
-					// If it's already a URL string
 					elseif ( $logo_id && is_string( $logo_id ) && filter_var( $logo_id, FILTER_VALIDATE_URL ) ) {
 						$logo_url = $logo_id;
 						break;
@@ -435,19 +412,16 @@ class HBL_Single_Listing extends Widget_Base {
 			}
 		}
 		
-		// Fallback: Use featured image as logo if no logo found
 		if ( empty( $logo_url ) && $featured_image ) {
 			$logo_url = $featured_image;
 		}
 		
-		// Contact info
 		$phone = get_post_meta( $listing_id, '_phone', true );
 		$phone2 = get_post_meta( $listing_id, '_phone2', true );
 		$email = get_post_meta( $listing_id, '_email', true );
 		$website = get_post_meta( $listing_id, '_website', true );
 		$address = get_post_meta( $listing_id, '_address', true );
 		
-		// Social links
 		$facebook = get_post_meta( $listing_id, '_facebook', true );
 		$twitter = get_post_meta( $listing_id, '_twitter', true );
 		$instagram = get_post_meta( $listing_id, '_instagram', true );
@@ -455,25 +429,19 @@ class HBL_Single_Listing extends Widget_Base {
 		$youtube = get_post_meta( $listing_id, '_youtube', true );
 		$tiktok = get_post_meta( $listing_id, '_tiktok', true );
 		
-		// Map data
 		$lat = get_post_meta( $listing_id, '_manual_lat', true );
 		$lng = get_post_meta( $listing_id, '_manual_lng', true );
 		
-		// Categories
 		$categories = get_the_terms( $listing_id, ATBDP_CATEGORY );
 		$locations = get_the_terms( $listing_id, ATBDP_LOCATION );
 		
-		// Gallery
 		$gallery_images = get_post_meta( $listing_id, '_listing_prv_img', true );
 		$gallery_ids = get_post_meta( $listing_id, '_listing_img', true );
 		
-		// Video
 		$video_url = get_post_meta( $listing_id, '_videourl', true );
 		
-		// Business hours
 		$business_hours = get_post_meta( $listing_id, '_bdbh', true );
 		
-		// Rating
 		$average_rating = 0;
 		$review_count = 0;
 		if ( function_exists( 'JERC_DEVELOPER_Review' ) || function_exists( 'directorist_get_listing_rating' ) ) {
@@ -485,22 +453,18 @@ class HBL_Single_Listing extends Widget_Base {
 
 		$is_claimed = get_post_meta( $listing_id, '_claimed', true );
 
-		// Enqueue Leaflet for map
 		if ( 'yes' === $settings['show_map'] && $lat && $lng ) {
 			wp_enqueue_style( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', array(), '1.9.4' );
 			wp_enqueue_script( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', array(), '1.9.4', true );
 		}
 
-		// Dashboard URL for back button
 		$dashboard_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/dashboard/' );
 		$all_listings_url = home_url( '/all-listings/' );
 		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 		
-		// Get the referrer URL for the back button
 		$referrer = wp_get_referer();
-		$back_url = $all_listings_url; // Default fallback
+		$back_url = $all_listings_url;
 		
-		// Check if referrer is from our site
 		if ( $referrer ) {
 			$referrer_host = wp_parse_url( $referrer, PHP_URL_HOST );
 			if ( $referrer_host === $site_host ) {
@@ -509,12 +473,10 @@ class HBL_Single_Listing extends Widget_Base {
 		}
 		?>
 		<div class="hbl-single-listing-widget">
-			<!-- Hero Section -->
 			<div class="hbl-single-listing-hero no-image">
 				<div class="hbl-single-listing-hero-overlay"></div>
 				
 				<div class="hbl-single-listing-hero-content">
-					<!-- Top Navigation -->
 					<div class="hbl-single-listing-nav">
 						<a href="<?php echo esc_url( $back_url ); ?>" class="hbl-single-listing-back-btn">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -548,7 +510,6 @@ class HBL_Single_Listing extends Widget_Base {
 						</div>
 					</div>
 					
-					<!-- Hero Info -->
 					<div class="hbl-single-listing-hero-info">
 						<?php if ( $logo_url ) : ?>
 							<div class="hbl-single-listing-logo">
@@ -595,7 +556,6 @@ class HBL_Single_Listing extends Widget_Base {
 							<p class="hbl-single-listing-tagline"><?php echo esc_html( $tagline ); ?></p>
 						<?php endif; ?>
 						
-						<!-- Quick Info Bar -->
 						<div class="hbl-single-listing-quick-info">
 
 							
@@ -615,12 +575,9 @@ class HBL_Single_Listing extends Widget_Base {
 				</div>
 			</div>
 			
-			<!-- Main Content Area -->
 			<div class="hbl-single-listing-content">
 				<div class="hbl-single-listing-grid">
-					<!-- Left Column - Main Content -->
 					<div class="hbl-single-listing-main">
-						<!-- About Section -->
 						<div class="hbl-single-listing-section">
 							<div class="hbl-single-listing-section-header">
 								<div class="hbl-single-listing-section-icon">
@@ -645,7 +602,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php 
-						// Get Services and Pricing data
 						$services_text = '';
 						$service_fields = array(
 							'custom-textarea',
@@ -685,13 +641,11 @@ class HBL_Single_Listing extends Widget_Base {
 							}
 						}
 
-                        // Get structured pricing data
                         $pricing_type = get_post_meta( $listing_id, '_atbd_listing_pricing', true );
                         $price = get_post_meta( $listing_id, '_price', true );
                         $price_range = get_post_meta( $listing_id, '_price_range', true );
 
                         $has_structured_price = ( 'price' === $pricing_type && ! empty( $price ) ) || ( 'range' === $pricing_type && ! empty( $price_range ) );
-                        // Default to price if type is missing but price exists
                         if ( empty( $pricing_type ) && ! empty( $price ) ) {
                             $has_structured_price = true;
                             $pricing_type = 'price';
@@ -702,7 +656,6 @@ class HBL_Single_Listing extends Widget_Base {
 						
 						if ( $show_services || $show_pricing ) : 
 						?>
-						<!-- Services & Pricing Section -->
 						<div class="hbl-single-listing-section">
 							<div class="hbl-single-listing-section-header">
 								<div class="hbl-single-listing-section-icon">
@@ -715,7 +668,6 @@ class HBL_Single_Listing extends Widget_Base {
 							<div class="hbl-single-listing-section-content">
 								<div class="hbl-two-column-section">
 									<?php if ( $show_services ) : ?>
-									<!-- Services -->
 									<div class="hbl-services-section">
 										<h4><?php esc_html_e( 'Services', 'hbl' ); ?></h4>
 										<?php
@@ -738,7 +690,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( 'yes' === $settings['show_gallery'] && ! empty( $gallery_ids ) ) : ?>
-						<!-- Gallery Section -->
 						<div class="hbl-single-listing-section">
 							<div class="hbl-single-listing-section-header">
 								<div class="hbl-single-listing-section-icon">
@@ -753,7 +704,6 @@ class HBL_Single_Listing extends Widget_Base {
 							<div class="hbl-single-listing-section-content">
 								<div class="hbl-single-listing-gallery">
 									<?php 
-									// Handle gallery IDs - can be array or comma-separated string
 									if ( is_array( $gallery_ids ) ) {
 										$gallery_array = array_filter( array_map( 'absint', $gallery_ids ) );
 									} else {
@@ -792,7 +742,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( $video_url ) : ?>
-						<!-- Video Section -->
 						<div class="hbl-single-listing-section">
 							<div class="hbl-single-listing-section-header">
 								<div class="hbl-single-listing-section-icon">
@@ -811,7 +760,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( 'yes' === $settings['show_map'] && $lat && $lng && 'bronze' !== $plan_tier ) : ?>
-						<!-- Location Section -->
 						<div class="hbl-single-listing-section">
 							<div class="hbl-single-listing-section-header">
 								<div class="hbl-single-listing-section-icon">
@@ -838,7 +786,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( 'yes' === $settings['show_reviews'] && 'gold' === $plan_tier ) : ?>
-						<!-- Reviews Section -->
 						<div class="hbl-single-listing-section">
 							<div class="hbl-single-listing-section-header">
 								<div class="hbl-single-listing-section-icon">
@@ -935,10 +882,8 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 					</div>
 					
-					<!-- Right Column - Sidebar -->
 					<div class="hbl-single-listing-sidebar">
 						<?php if ( 'yes' === $settings['show_contact_info'] ) : ?>
-						<!-- Contact Card -->
 						<div class="hbl-single-listing-card">
 							<div class="hbl-single-listing-card-header">
 								<h3 class="hbl-single-listing-card-title">
@@ -1042,13 +987,12 @@ class HBL_Single_Listing extends Widget_Base {
 								$display_address = $address;
 								$address_label = __( 'Address', 'hbl' );
 								
-								// For Bronze plan, show only suburb (Location) instead of full address
 								if ( 'bronze' === $plan_tier ) {
 									if ( $locations && ! is_wp_error( $locations ) && ! empty( $locations ) ) {
 										$display_address = $locations[0]->name;
-										$address_label = __( 'Location', 'hbl' ); // Optional: Change label to Location
+										$address_label = __( 'Location', 'hbl' );
 									} else {
-										$display_address = ''; // Don't show anything if no location available
+										$display_address = '';
 									}
 								}
 								
@@ -1093,7 +1037,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( 'yes' === $settings['show_social_links'] && ( $facebook || $twitter || $instagram || $linkedin || $youtube || $tiktok ) ) : ?>
-						<!-- Social Links Card -->
 						<div class="hbl-single-listing-card">
 							<div class="hbl-single-listing-card-header">
 								<h3 class="hbl-single-listing-card-title">
@@ -1160,7 +1103,6 @@ class HBL_Single_Listing extends Widget_Base {
 						</div>
 						<?php endif; ?>
 						
-						<!-- Business Hours Card (if available) -->
 						<?php if ( $business_hours && is_array( $business_hours ) ) : ?>
 						<div class="hbl-single-listing-card">
 							<div class="hbl-single-listing-card-header">
@@ -1201,7 +1143,6 @@ class HBL_Single_Listing extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php 
-						// Claim Listing Card - only show if listing is not claimed and enabled in settings
 						$claimed_by_admin = get_post_meta( $listing_id, '_claimed_by_admin', true );
 						$claim_fee = get_post_meta( $listing_id, '_claim_fee', true );
 						$is_claimed = $claimed_by_admin || ( 'claim_approved' === $claim_fee );
@@ -1214,11 +1155,9 @@ class HBL_Single_Listing extends Widget_Base {
 							$claim_link = $settings['claim_listing_link'];
 							$has_custom_link = ! empty( $claim_link['url'] );
 							
-							// Build link attributes - add listing_id to URL
 							$link_attrs = '';
 							if ( $has_custom_link ) {
 								$claim_url = $claim_link['url'];
-								// Add listing_id parameter to the URL
 								$claim_url = add_query_arg( array(
 									'listing_id' => $listing_id,
 									'listing_title' => urlencode( get_the_title( $listing_id ) ),
@@ -1304,7 +1243,6 @@ class HBL_Single_Listing extends Widget_Base {
 				</div>
 				
 				<?php if ( 'yes' === $settings['show_related'] ) : ?>
-				<!-- Related Listings -->
 				<div class="hbl-single-listing-related">
 					<div class="hbl-single-listing-related-header">
 						<h2 class="hbl-single-listing-related-title">
@@ -1343,17 +1281,14 @@ class HBL_Single_Listing extends Widget_Base {
 							while ( $related_query->have_posts() ) : $related_query->the_post();
 								$related_id = get_the_ID();
 								
-								// Get featured image, fallback to Directorist preview image
 								$related_image = get_the_post_thumbnail_url( $related_id, 'medium' );
 								if ( ! $related_image ) {
-									// Try Directorist preview image
 									$preview_img_id = get_post_meta( $related_id, '_listing_prv_img', true );
 									if ( $preview_img_id ) {
 										$related_image = wp_get_attachment_image_url( $preview_img_id, 'medium' );
 									}
 								}
 								if ( ! $related_image ) {
-									// Try first gallery image
 									$gallery_ids = get_post_meta( $related_id, '_listing_img', true );
 									if ( ! empty( $gallery_ids ) ) {
 										$first_id = is_array( $gallery_ids ) ? reset( $gallery_ids ) : explode( ',', $gallery_ids )[0];
@@ -1443,7 +1378,6 @@ class HBL_Single_Listing extends Widget_Base {
 		</script>
 		<?php endif; ?>
 		
-		<!-- Share Button Script -->
 		<script>
 		document.addEventListener('DOMContentLoaded', function() {
 			var shareBtn = document.querySelector('.hbl-share-btn');
@@ -1457,10 +1391,8 @@ class HBL_Single_Listing extends Widget_Base {
 					
 					if (navigator.share) {
 						navigator.share(shareData).catch(function(err) {
-							// Share cancelled or failed
 						});
 					} else {
-						// Fallback: copy link to clipboard
 						var tempInput = document.createElement('input');
 						tempInput.value = shareData.url;
 						document.body.appendChild(tempInput);
@@ -1468,7 +1400,6 @@ class HBL_Single_Listing extends Widget_Base {
 						document.execCommand('copy');
 						document.body.removeChild(tempInput);
 						
-						// Show feedback
 						var originalTitle = shareBtn.getAttribute('title');
 						shareBtn.setAttribute('title', '<?php echo esc_attr__( 'Link copied!', 'hbl' ); ?>');
 						shareBtn.style.background = '#008080';
@@ -1487,9 +1418,6 @@ class HBL_Single_Listing extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get pricing plans
-	 */
 	protected function get_pricing_plans() {
 		$plans = get_posts( array(
 			'post_type'      => 'atbdp_pricing_plans',
@@ -1509,9 +1437,6 @@ class HBL_Single_Listing extends Widget_Base {
 		return $options;
 	}
 
-	/**
-	 * Get plan tier based on settings
-	 */
 	protected function get_plan_tier( $plan_id, $settings ) {
 		$gold_plan_ids = isset( $settings['gold_plan_ids'] ) ? (array) $settings['gold_plan_ids'] : array();
 		$silver_plan_ids = isset( $settings['silver_plan_ids'] ) ? (array) $settings['silver_plan_ids'] : array();
@@ -1525,7 +1450,6 @@ class HBL_Single_Listing extends Widget_Base {
 			return 'silver';
 		}
 
-		// Fallback: Check plan title if settings not configured
 		if ( $plan_id > 0 ) {
 			$plan = get_post( $plan_id );
 			if ( $plan ) {

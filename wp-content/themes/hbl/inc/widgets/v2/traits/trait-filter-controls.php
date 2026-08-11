@@ -1,12 +1,4 @@
 <?php
-/**
- * Filter Controls Trait for HBL Directorist V2
- * 
- * Handles Elementor control registration for filters and display options
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2\Traits;
 
@@ -18,11 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 trait Filter_Controls {
 
-	/**
-	 * Register filter-related controls
-	 */
 	protected function register_filter_controls() {
-		// Display Options Section
 		$this->start_controls_section(
 			'section_v2_display',
 			array(
@@ -223,7 +211,6 @@ trait Filter_Controls {
 
 		$this->end_controls_section();
 
-		// Style Section
 		$this->start_controls_section(
 			'section_v2_style',
 			array(

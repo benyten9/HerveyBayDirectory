@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Transaction Failure Widget
- * 
- * Displays a user-friendly error message when a payment transaction fails.
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -42,7 +34,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -95,7 +86,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: TROUBLESHOOTING ==========
 		$this->start_controls_section(
 			'section_troubleshooting',
 			array(
@@ -144,7 +134,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: BUTTONS ==========
 		$this->start_controls_section(
 			'section_buttons',
 			array(
@@ -209,7 +198,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: SUPPORT ==========
 		$this->start_controls_section(
 			'section_support',
 			array(
@@ -255,7 +243,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -302,7 +289,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -331,7 +317,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -382,7 +367,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get error information from URL parameters
 		$error_code = isset( $_GET['error_code'] ) ? sanitize_text_field( $_GET['error_code'] ) : '';
 		$error_message = isset( $_GET['error_message'] ) ? sanitize_text_field( urldecode( $_GET['error_message'] ) ) : '';
 		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
@@ -390,20 +374,16 @@ class HBL_Transaction_Failure extends Widget_Base {
 		$plan_id = isset( $_GET['plan_id'] ) ? absint( $_GET['plan_id'] ) : 0;
 		$cancelled = isset( $_GET['cancelled'] ) ? sanitize_text_field( $_GET['cancelled'] ) : '';
 		
-		// Get friendly error message
 		$friendly_error = $this->get_friendly_error_message( $error_code );
 		
-		// If this is a cancelled payment from Stripe, set appropriate message
 		if ( $cancelled === '1' && empty( $error_code ) ) {
 			$friendly_error = __( 'You cancelled the payment. Please try again if you wish to complete your purchase.', 'hbl' );
 		}
 		
-		// Get button URLs - construct checkout URL with all necessary params
 		$retry_url = ! empty( $settings['retry_button_url']['url'] ) 
 			? $settings['retry_button_url']['url'] 
 			: home_url( '/checkout/' );
 		
-		// Add all relevant parameters to retry URL
 		$retry_params = array();
 		if ( $order_id ) {
 			$retry_params['order_id'] = $order_id;
@@ -428,7 +408,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 		?>
 		<div class="hbl-transaction-failure-widget">
 			<div class="hbl-failure-container">
-				<!-- Error Header -->
 				<div class="hbl-failure-header">
 					<div class="hbl-failure-icon">
 						<svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -441,7 +420,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 				</div>
 
 				<?php if ( 'yes' === $settings['show_error_code'] && ( $error_code || $friendly_error ) ) : ?>
-				<!-- Error Details -->
 				<div class="hbl-failure-error-box">
 					<div class="hbl-failure-error-header">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -471,7 +449,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['show_troubleshooting'] ) : ?>
-				<!-- Troubleshooting Tips -->
 				<div class="hbl-failure-tips">
 					<h3 class="hbl-failure-tips-title">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -518,7 +495,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Action Buttons -->
 				<div class="hbl-failure-actions">
 					<a href="<?php echo esc_url( $retry_url ); ?>" class="hbl-form-btn hbl-form-btn-primary hbl-form-btn-large">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -537,7 +513,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 				</div>
 
 				<?php if ( 'yes' === $settings['show_dashboard_link'] ) : ?>
-				<!-- Dashboard Link -->
 				<div class="hbl-failure-dashboard-link">
 					<a href="<?php echo esc_url( $dashboard_url ); ?>">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -549,7 +524,6 @@ class HBL_Transaction_Failure extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['show_support'] ) : ?>
-				<!-- Support Section -->
 				<div class="hbl-failure-support">
 					<div class="hbl-failure-support-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -587,12 +561,8 @@ class HBL_Transaction_Failure extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get a user-friendly error message based on error code
-	 */
 	private function get_friendly_error_message( $error_code ) {
 		$error_messages = array(
-			// Stripe error codes
 			'card_declined'                => __( 'Your card was declined. Please try a different card or contact your bank.', 'hbl' ),
 			'insufficient_funds'           => __( 'Your card has insufficient funds. Please try a different card.', 'hbl' ),
 			'expired_card'                 => __( 'Your card has expired. Please use a different card.', 'hbl' ),
@@ -601,11 +571,9 @@ class HBL_Transaction_Failure extends Widget_Base {
 			'processing_error'             => __( 'An error occurred while processing your card. Please try again.', 'hbl' ),
 			'rate_limit'                   => __( 'Too many requests. Please wait a moment and try again.', 'hbl' ),
 			
-			// PayPal error codes
 			'paypal_declined'              => __( 'Your PayPal payment was declined. Please try again or use a different payment method.', 'hbl' ),
 			'paypal_cancelled'             => __( 'You cancelled the PayPal payment. Please try again if you wish to complete your purchase.', 'hbl' ),
 			
-			// General errors
 			'invalid_request'              => __( 'The payment request was invalid. Please try again.', 'hbl' ),
 			'authentication_required'      => __( 'Additional authentication is required. Please complete the verification.', 'hbl' ),
 			'timeout'                      => __( 'The payment request timed out. Please try again.', 'hbl' ),

@@ -1,16 +1,5 @@
 <?php
-/**
- * HBL Theme Customizer
- *
- * @package HBL
- * @since 1.0.0
- */
 
-/**
- * Add postMessage support for site title and description for the Theme Customizer.
- *
- * @param WP_Customize_Manager $wp_customize Theme Customizer object.
- */
 function hbl_customize_register( $wp_customize ) {
 	$wp_customize->get_setting( 'blogname' )->transport         = 'postMessage';
 	$wp_customize->get_setting( 'blogdescription' )->transport  = 'postMessage';
@@ -33,7 +22,6 @@ function hbl_customize_register( $wp_customize ) {
 		);
 	}
 
-	// Theme Settings Section
 	$wp_customize->add_section(
 		'hbl_theme_settings',
 		array(
@@ -42,7 +30,6 @@ function hbl_customize_register( $wp_customize ) {
 		)
 	);
 
-	// Page Title Display
 	$wp_customize->add_setting(
 		'hbl_page_title',
 		array(
@@ -64,7 +51,6 @@ function hbl_customize_register( $wp_customize ) {
 		)
 	);
 
-	// Theme Colors Section
 	$wp_customize->add_section(
 		'hbl_colors',
 		array(
@@ -73,7 +59,6 @@ function hbl_customize_register( $wp_customize ) {
 		)
 	);
 
-	// Primary Color
 	$wp_customize->add_setting(
 		'hbl_primary_color',
 		array(
@@ -95,7 +80,6 @@ function hbl_customize_register( $wp_customize ) {
 		)
 	);
 
-	// Secondary Color
 	$wp_customize->add_setting(
 		'hbl_secondary_color',
 		array(
@@ -119,22 +103,10 @@ function hbl_customize_register( $wp_customize ) {
 }
 add_action( 'customize_register', 'hbl_customize_register' );
 
-/**
- * Get HBL theme setting
- *
- * @param string $setting_name The setting name.
- * @return mixed The setting value.
- */
 function hbl_get_setting( $setting_name ) {
 	return get_theme_mod( $setting_name, hbl_get_default_setting_value( $setting_name ) );
 }
 
-/**
- * Get default setting value
- *
- * @param string $setting_name The setting name.
- * @return mixed The default value.
- */
 function hbl_get_default_setting_value( $setting_name ) {
 	$defaults = array(
 		'hbl_page_title' => true,
@@ -143,27 +115,14 @@ function hbl_get_default_setting_value( $setting_name ) {
 	return isset( $defaults[ $setting_name ] ) ? $defaults[ $setting_name ] : '';
 }
 
-/**
- * Render the site title for the selective refresh partial.
- *
- * @return void
- */
 function hbl_customize_partial_blogname() {
 	bloginfo( 'name' );
 }
 
-/**
- * Render the site tagline for the selective refresh partial.
- *
- * @return void
- */
 function hbl_customize_partial_blogdescription() {
 	bloginfo( 'description' );
 }
 
-/**
- * Binds JS handlers to make Theme Customizer preview reload changes asynchronously.
- */
 function hbl_customize_preview_js() {
 	wp_enqueue_script( 'hbl-customizer', get_template_directory_uri() . '/assets/js/customizer.js', array( 'customize-preview' ), HBL_VERSION, true );
 }

@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Single Event Widget for Elementor
- * 
- * A beautiful, modern single event display widget
- * Reads event data from custom hbl_events database table
- *
- * @package HBL
- */
 
 namespace HBL\Widgets;
 
@@ -41,7 +33,6 @@ class HBL_Single_Event extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// Content Section
 		$this->start_controls_section(
 			'section_content',
 			array(
@@ -114,7 +105,6 @@ class HBL_Single_Event extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Header
 		$this->start_controls_section(
 			'section_style_header',
 			array(
@@ -172,7 +162,6 @@ class HBL_Single_Event extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Style Section - Content
 		$this->start_controls_section(
 			'section_style_content',
 			array(
@@ -233,9 +222,6 @@ class HBL_Single_Event extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Get event from custom database table
-	 */
 	private function get_event_from_db( $event_id ) {
 		if ( function_exists( 'hbl_events_db' ) ) {
 			return hbl_events_db()->get( $event_id );
@@ -243,9 +229,6 @@ class HBL_Single_Event extends Widget_Base {
 		return null;
 	}
 
-	/**
-	 * Day labels for recurrence display
-	 */
 	private $day_labels = array(
 		'mon' => 'Monday',
 		'tue' => 'Tuesday',
@@ -256,9 +239,6 @@ class HBL_Single_Event extends Widget_Base {
 		'sun' => 'Sunday',
 	);
 
-	/**
-	 * Week ordinal labels for recurrence display
-	 */
 	private $week_labels = array(
 		'1' => '1st',
 		'2' => '2nd',
@@ -267,15 +247,6 @@ class HBL_Single_Event extends Widget_Base {
 		'5' => '5th',
 	);
 
-	/**
-	 * Generate human-readable recurrence description
-	 *
-	 * @param string $frequency Event frequency (once, weekly, monthly, recurring)
-	 * @param int    $interval Recurrence interval
-	 * @param string $days Comma-separated days
-	 * @param string $weeks Comma-separated weeks (for monthly)
-	 * @return string Human-readable description
-	 */
 	private function get_recurrence_description( $frequency, $interval, $days, $weeks ) {
 		if ( empty( $frequency ) || $frequency === 'once' ) {
 			return __( 'One-off event', 'hbl' );
@@ -285,7 +256,6 @@ class HBL_Single_Event extends Widget_Base {
 			return __( 'Ongoing / recurring event', 'hbl' );
 		}
 
-		// Multi-day event with open days
 		if ( $frequency === 'multi_day' ) {
 			if ( ! empty( $days ) ) {
 				$day_list = explode( ',', $days );
@@ -309,7 +279,6 @@ class HBL_Single_Event extends Widget_Base {
 		$parts = array();
 
 		if ( $frequency === 'weekly' ) {
-			// Weekly recurrence
 			if ( $interval == 2 ) {
 				$prefix = __( 'Every second', 'hbl' );
 			} else {
@@ -335,11 +304,9 @@ class HBL_Single_Event extends Widget_Base {
 			return __( 'Weekly', 'hbl' );
 
 		} elseif ( $frequency === 'monthly' ) {
-			// Monthly recurrence
 			$week_parts = array();
 			$day_name = '';
 
-			// Get weeks
 			if ( ! empty( $weeks ) ) {
 				$week_list = explode( ',', $weeks );
 				foreach ( $week_list as $week ) {
@@ -350,7 +317,6 @@ class HBL_Single_Event extends Widget_Base {
 				}
 			}
 
-			// Get day
 			if ( ! empty( $days ) ) {
 				$day = trim( $days );
 				if ( isset( $this->day_labels[ $day ] ) ) {
@@ -379,9 +345,6 @@ class HBL_Single_Event extends Widget_Base {
 		return '';
 	}
 
-	/**
-	 * Get related events from custom database
-	 */
 	private function get_related_events( $event_id, $category_id, $limit = 3 ) {
 		if ( ! function_exists( 'hbl_events_db' ) ) {
 			return array();
@@ -392,17 +355,15 @@ class HBL_Single_Event extends Widget_Base {
 			'upcoming' => true,
 			'orderby'  => 'start_date',
 			'order'    => 'ASC',
-			'limit'    => $limit + 1, // Get one extra to exclude current event
+			'limit'    => $limit + 1,
 		);
 
-		// Filter by category if available
 		if ( $category_id ) {
 			$args['category_id'] = $category_id;
 		}
 
 		$events = hbl_events_db()->get_events( $args );
 
-		// Remove current event from results
 		$events = array_filter( $events, function( $e ) use ( $event_id ) {
 			return $e->id != $event_id;
 		} );
@@ -413,16 +374,13 @@ class HBL_Single_Event extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get event from slug (pretty URL) or ID (legacy)
 		$event = null;
 		$event_slug = get_query_var( 'hbl_event_slug' );
 		$event_id = isset( $_GET['event_id'] ) ? absint( $_GET['event_id'] ) : 0;
 
 		if ( $event_slug ) {
-			// Get event by slug (pretty URL)
 			$event = hbl_events_db()->get_by_slug( sanitize_title( $event_slug ) );
 		} elseif ( $event_id ) {
-			// Get event by ID (legacy support)
 			$event = $this->get_event_from_db( $event_id );
 		}
 		
@@ -433,15 +391,12 @@ class HBL_Single_Event extends Widget_Base {
 			return;
 		}
 		
-		// Always get the event ID from the event object (works for both slug and ID access)
 		$event_id = $event->id;
 		
-		// Get event data
 		$title = $event->title;
 		$content = $event->description;
 		$featured_image = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'large' ) : '';
 		
-		// Get event details
 		$start_date = $event->start_date;
 		$end_date = $event->end_date;
 		$is_allday = $event->is_allday;
@@ -461,10 +416,8 @@ class HBL_Single_Event extends Widget_Base {
 		$organiser_type = $event->organiser_type;
 		$category_id = $event->category_id;
 		
-		// Generate human-readable recurrence description
 		$recurrence_description = $this->get_recurrence_description( $event_frequency, $recurrence_interval, $recurrence_days, $recurrence_week );
 		
-		// Get category name if available
 		$category_name = '';
 		$category_link = '';
 		if ( $category_id ) {
@@ -475,7 +428,6 @@ class HBL_Single_Event extends Widget_Base {
 			}
 		}
 
-		// Get tags if available
 		$event_tags_list = array();
 		if ( ! empty( $event->tags ) ) {
 			$tag_ids = array_filter( array_map( 'absint', explode( ',', $event->tags ) ) );
@@ -490,11 +442,9 @@ class HBL_Single_Event extends Widget_Base {
 			}
 		}
 		
-		// Get organizer (author)
 		$author_id = $event->user_id;
 		$author_name = get_the_author_meta( 'display_name', $author_id );
 		
-		// Check for custom profile image first, then fall back to Gravatar
 		$custom_profile_image_id = get_user_meta( $author_id, 'hbl_profile_image', true );
 		if ( $custom_profile_image_id ) {
 			$author_avatar = wp_get_attachment_image_url( $custom_profile_image_id, 'thumbnail' );
@@ -503,37 +453,29 @@ class HBL_Single_Event extends Widget_Base {
 			$author_avatar = get_avatar_url( $author_id, array( 'size' => 60 ) );
 		}
 		
-		// Format dates
 		$original_start = strtotime( $start_date );
 		$original_end = $end_date ? strtotime( $end_date ) : $original_start;
 		$duration = $original_end - $original_start;
 
-		// Check for specific date override from URL (e.g. from calendar click)
 		$selected_date_param = isset($_GET['date']) ? sanitize_text_field( wp_unslash( $_GET['date'] ) ) : '';
 		if ( empty( $selected_date_param ) && isset($_GET['event_date']) ) {
 			$selected_date_param = sanitize_text_field( wp_unslash( $_GET['event_date'] ) );
 		}
 		
-		if ( ! empty( $selected_date_param ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $selected_date_param ) ) { // YYYY-MM-DD
-			// Combine selected date with original time
+		if ( ! empty( $selected_date_param ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $selected_date_param ) ) {
 			$time_part = date( 'H:i:s', $original_start );
 			$start_timestamp = strtotime( $selected_date_param . ' ' . $time_part );
 			
-			// For multi-day events, the end date is fixed (the event ends when it ends)
-			// We don't want to shift the end date by duration when viewing an intermediate date
 			if ( $event_frequency === 'multi_day' ) {
 				$end_timestamp = $original_end;
 				
-				// Optional: Ensure start doesn't exceed end (though calendar shouldn't link invalid dates)
 				if ( $start_timestamp > $end_timestamp ) {
-					$end_timestamp = $start_timestamp; // Fallback to single day display if out of bounds
+					$end_timestamp = $start_timestamp;
 				}
 			} else {
-				// For recurring/repeating events, adjust end timestamp to maintain duration relative to new start
 				$end_timestamp = $start_timestamp + $duration;
 			}
 		} else {
-			// For recurring events, show the next upcoming occurrence instead of the original start date.
 			$is_recurring = ! empty( $event_frequency ) && ! in_array( $event_frequency, array( 'once', '' ), true );
 
 			if ( $is_recurring && function_exists( 'hbl_get_next_occurrence' ) ) {
@@ -545,12 +487,10 @@ class HBL_Single_Event extends Widget_Base {
 					$time_part       = date( 'H:i:s', $original_start );
 					$start_timestamp = strtotime( $next_date_only . ' ' . $time_part );
 
-					// Multi-day events keep their fixed end date; all other recurring types shift by duration.
 					$end_timestamp = ( $event_frequency === 'multi_day' )
 						? $original_end
 						: $start_timestamp + $duration;
 				} else {
-					// No future occurrence — fall back to original dates.
 					$start_timestamp = $original_start;
 					$end_timestamp   = $original_end;
 				}
@@ -565,25 +505,20 @@ class HBL_Single_Event extends Widget_Base {
 		$start_year = date_i18n( 'Y', $start_timestamp );
 		$start_weekday = date_i18n( 'l', $start_timestamp );
 		
-		// Determine Time Display
 		if ( $scheduling_type === 'multi' && $daily_start_time ) {
-			// multi-day daily hours
 			$start_time = date_i18n( 'g:i A', strtotime( $daily_start_time ) );
 			$end_time = $daily_end_time ? date_i18n( 'g:i A', strtotime( $daily_end_time ) ) : '';
 		} else {
-			// standard single/recurring
 			$start_time = date_i18n( 'g:i A', $start_timestamp );
 			$end_time = date_i18n( 'g:i A', $end_timestamp );
 		}
 
-		// Determine Date Display
 		if ( $scheduling_type === 'multi' && $end_date && $start_timestamp != $end_timestamp ) {
 			$full_date = date_i18n( 'M j', $start_timestamp ) . ' - ' . date_i18n( 'M j, Y', $end_timestamp );
 		} else {
 			$full_date = date_i18n( 'F j, Y', $start_timestamp );
 		}
 		
-		// Check if event is upcoming, ongoing, or past
 		$now = current_time( 'timestamp' );
 		$event_status = 'upcoming';
 		if ( $now > $end_timestamp ) {
@@ -592,10 +527,8 @@ class HBL_Single_Event extends Widget_Base {
 			$event_status = 'ongoing';
 		}
 
-		// Generate event page URL for sharing
 		$event_page_url = add_query_arg( 'event_id', $event_id, get_permalink() );
 
-		// Event type labels
 		$type_labels = array(
 			'community'     => __( 'Community Event', 'hbl' ),
 			'workshop'      => __( 'Workshop or Class', 'hbl' ),
@@ -607,7 +540,6 @@ class HBL_Single_Event extends Widget_Base {
 		$event_type_label = isset( $type_labels[ $event_type ] ) ? $type_labels[ $event_type ] : '';
 		?>
 		<div class="hbl-single-event-widget" data-event-color="<?php echo esc_attr( $event_color ); ?>">
-			<!-- Header Section -->
 			<div class="hbl-single-event-header">
 				<?php if ( $featured_image && 'yes' === $settings['show_featured_image'] ) : ?>
 					<div class="hbl-single-event-header-bg" style="background-image: url('<?php echo esc_url( $featured_image ); ?>');"></div>
@@ -617,15 +549,13 @@ class HBL_Single_Event extends Widget_Base {
 				<div class="hbl-single-event-header-content">
 					<div class="hbl-single-event-header-top">
 						<?php
-						// Determine the back URL - use referrer if from same site, otherwise fallback to events page
-						$back_url = home_url( '/whats-on/' ); // Default fallback
+						$back_url = home_url( '/whats-on/' );
 						$referrer = wp_get_referer();
 						
 						if ( $referrer ) {
 							$referrer_host = wp_parse_url( $referrer, PHP_URL_HOST );
 							$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 							
-							// Only use referrer if it's from the same site
 							if ( $referrer_host === $site_host ) {
 								$back_url = $referrer;
 							}
@@ -666,7 +596,6 @@ class HBL_Single_Event extends Widget_Base {
 					</div>
 					
 					<div class="hbl-single-event-header-main">
-						<!-- Date Badge -->
 						<div class="hbl-single-event-date-badge">
 							<span class="hbl-single-event-date-day"><?php echo esc_html( $start_day ); ?></span>
 							<span class="hbl-single-event-date-month"><?php echo esc_html( $start_month ); ?></span>
@@ -743,10 +672,8 @@ class HBL_Single_Event extends Widget_Base {
 				</div>
 			</div>
 			
-			<!-- Main Content -->
 			<div class="hbl-single-event-body">
 				<div class="hbl-single-event-main">
-					<!-- Description Section -->
 					<div class="hbl-single-event-section hbl-single-event-description-section">
 						<div class="hbl-single-event-section-header">
 							<div class="hbl-single-event-section-icon">
@@ -765,7 +692,6 @@ class HBL_Single_Event extends Widget_Base {
 					</div>
 					
 					<?php if ( $featured_image ) : ?>
-					<!-- Gallery Section -->
 					<div class="hbl-single-event-section hbl-single-event-image-section">
 						<div class="hbl-single-event-section-header">
 							<div class="hbl-single-event-section-icon">
@@ -786,9 +712,7 @@ class HBL_Single_Event extends Widget_Base {
 					<?php endif; ?>
 				</div>
 				
-				<!-- Sidebar -->
 				<div class="hbl-single-event-sidebar">
-					<!-- Event Details Card -->
 					<div class="hbl-single-event-card hbl-single-event-details-card">
 						<h3 class="hbl-single-event-card-title">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -799,7 +723,6 @@ class HBL_Single_Event extends Widget_Base {
 						</h3>
 						
 						<div class="hbl-single-event-details-list">
-							<!-- Date -->
 							<div class="hbl-single-event-detail-item">
 								<div class="hbl-single-event-detail-icon">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -813,7 +736,6 @@ class HBL_Single_Event extends Widget_Base {
 								</div>
 							</div>
 							
-							<!-- Time -->
 							<div class="hbl-single-event-detail-item">
 								<div class="hbl-single-event-detail-icon">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -836,7 +758,6 @@ class HBL_Single_Event extends Widget_Base {
 							</div>
 							
 							<?php if ( $event_location ) : ?>
-							<!-- Location -->
 							<div class="hbl-single-event-detail-item">
 								<div class="hbl-single-event-detail-icon">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -851,7 +772,6 @@ class HBL_Single_Event extends Widget_Base {
 							</div>
 							<?php endif; ?>
 							
-							<!-- Cost -->
 							<div class="hbl-single-event-detail-item">
 								<div class="hbl-single-event-detail-icon">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -866,7 +786,6 @@ class HBL_Single_Event extends Widget_Base {
 							</div>
 							
 							<?php if ( ! empty( $recurrence_description ) ) : ?>
-							<!-- Frequency / Recurrence -->
 							<div class="hbl-single-event-detail-item">
 								<div class="hbl-single-event-detail-icon">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -884,7 +803,6 @@ class HBL_Single_Event extends Widget_Base {
 							<?php endif; ?>
 							
 							<?php if ( $category_name ) : ?>
-							<!-- Category -->
 							<div class="hbl-single-event-detail-item">
 								<div class="hbl-single-event-detail-icon">
 									<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -900,7 +818,6 @@ class HBL_Single_Event extends Widget_Base {
 							<?php endif; ?>
 
 						<?php if ( ! empty( $event_tags_list ) ) : ?>
-						<!-- Tags -->
 						<div class="hbl-single-event-detail-item">
 							<div class="hbl-single-event-detail-icon">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -932,7 +849,6 @@ class HBL_Single_Event extends Widget_Base {
 						</div>
 						<?php endif; ?>
 						
-						<!-- Add to Calendar -->
 						<div class="hbl-single-event-add-calendar">
 							<button class="hbl-single-event-calendar-btn" onclick="hblAddToCalendar()">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -945,7 +861,6 @@ class HBL_Single_Event extends Widget_Base {
 					</div>
 					
 					<?php if ( 'yes' === $settings['show_organizer'] ) : ?>
-					<!-- Organizer Card -->
 					<div class="hbl-single-event-card hbl-single-event-organizer-card">
 						<h3 class="hbl-single-event-card-title">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -967,7 +882,6 @@ class HBL_Single_Event extends Widget_Base {
 					</div>
 					<?php endif; ?>
 					
-					<!-- Share Card -->
 					<?php if ( 'yes' === $settings['show_share_buttons'] ) : ?>
 					<div class="hbl-single-event-card hbl-single-event-share-card">
 						<h3 class="hbl-single-event-card-title">
@@ -1011,7 +925,6 @@ class HBL_Single_Event extends Widget_Base {
 			</div>
 			
 			<?php if ( 'yes' === $settings['show_related'] ) : ?>
-			<!-- Related Events -->
 			<div class="hbl-single-event-related">
 				<div class="hbl-single-event-related-header">
 					<h2 class="hbl-single-event-related-title">
@@ -1036,7 +949,6 @@ class HBL_Single_Event extends Widget_Base {
 							$related_timestamp = strtotime( $related_start );
 							$related_url = add_query_arg( 'event_id', $related_id, get_permalink() );
 							
-							// Get category name
 							$related_cat_name = '';
 							if ( $related->category_id ) {
 								$related_cat = get_term( $related->category_id, 'event_category' );
@@ -1109,11 +1021,10 @@ class HBL_Single_Event extends Widget_Base {
 			try {
 				var selectedDateStr = sessionStorage.getItem('hbl_event_selected_date');
 				if (selectedDateStr) {
-					// Validate format YYYY-MM-DD
 					if (/^\d{4}-\d{2}-\d{2}$/.test(selectedDateStr)) {
 						var dateParts = selectedDateStr.split('-');
 						var year = parseInt(dateParts[0]);
-						var month = parseInt(dateParts[1]) - 1; // Months are 0-indexed in JS
+						var month = parseInt(dateParts[1]) - 1;
 						var day = parseInt(dateParts[2]);
 						
 						var date = new Date(year, month, day);
@@ -1121,23 +1032,18 @@ class HBL_Single_Event extends Widget_Base {
 						var fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 						var dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 						
-						// Update date badge
 						var badgeDay = document.querySelector('.hbl-single-event-date-day');
 						var badgeMonth = document.querySelector('.hbl-single-event-date-month');
 						
 						if (badgeDay) badgeDay.textContent = day;
 						if (badgeMonth) badgeMonth.textContent = monthNames[month];
 						
-						// Update meta date (e.g. "Monday, February 10, 2025")
 						var metaDate = document.querySelector('.hbl-single-event-meta-item:first-child');
 						if (metaDate && metaDate.innerHTML.includes('<svg')) {
-							// Keep the icon
 							var iconHtml = metaDate.innerHTML.split('</svg>')[0] + '</svg>';
-							// Update text
 							metaDate.innerHTML = iconHtml + ' ' + dayNames[date.getDay()] + ', ' + fullMonthNames[month] + ' ' + day + ', ' + year;
 						}
 						
-						// Update sidebar date details
 						var detailsLabel = Array.from(document.querySelectorAll('.hbl-single-event-detail-label')).find(el => el.textContent.trim() === 'Date');
 						if (detailsLabel) {
 							var detailsValue = detailsLabel.nextElementSibling;
@@ -1146,14 +1052,9 @@ class HBL_Single_Event extends Widget_Base {
 							}
 						}
 
-						// Update related events date highlighting if any match
 						var relatedDates = document.querySelectorAll('.hbl-single-event-related-card');
-						// Logic for related events can remain as is or be updated if needed
 					}
 					
-					// Clear the storage so it doesn't persist if they navigate elsewhere
-					// sessionStorage.removeItem('hbl_event_selected_date'); 
-					// Commented out: we might want to keep it if they refresh
 				}
 			} catch (e) {
 				console.error('Error updating event date from storage', e);

@@ -1,14 +1,4 @@
 <?php
-/**
- * HBL CTA Section Widget
- *
- * Call-to-action section with customizable CTA items using Elementor Icon Library
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.2.357
- * @version 1.2.361 - Simplified to use only Elementor Icon Library
- */
 
 namespace HBL\Widgets;
 
@@ -19,45 +9,29 @@ use Elementor\Group_Control_Background;
 use Elementor\Repeater;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
 class HBL_CTA_Section extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-cta-section';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'CTA Section', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-call-to-action';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// ========== CONTENT SECTION ==========
 		$this->start_controls_section(
 			'section_cta_items',
 			array(
@@ -148,7 +122,6 @@ class HBL_CTA_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'section_container_style',
 			array(
@@ -239,7 +212,6 @@ class HBL_CTA_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CTA ITEMS ==========
 		$this->start_controls_section(
 			'section_items_style',
 			array(
@@ -425,7 +397,6 @@ class HBL_CTA_Section extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: DIVIDERS ==========
 		$this->start_controls_section(
 			'section_dividers_style',
 			array(
@@ -490,9 +461,6 @@ class HBL_CTA_Section extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		$cta_items = $settings['cta_items'];
@@ -527,7 +495,6 @@ class HBL_CTA_Section extends Widget_Base {
 				</a>
 				
 				<?php 
-				// Add divider after each item except the last one
 				if ( $show_dividers && $index < $total_items - 1 ) : 
 				?>
 					<div class="hbl-cta-divider vertical"></div>

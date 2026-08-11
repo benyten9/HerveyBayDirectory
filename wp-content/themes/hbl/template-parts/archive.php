@@ -1,11 +1,6 @@
 <?php
-/**
- * The template for displaying archive pages.
- *
- * @package HBL
- */
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
+	exit;
 }
 
 ?>
@@ -46,11 +41,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 		?>
 		<nav class="pagination">
 			<div class="nav-previous"><?php
-				/* translators: %s: HTML entity for arrow character. */
 				previous_posts_link( sprintf( esc_html__( '%s Previous', 'hbl' ), sprintf( '<span class="meta-nav">%s</span>', $prev_arrow ) ) );
 			?></div>
 			<div class="nav-next"><?php
-				/* translators: %s: HTML entity for arrow character. */
 				next_posts_link( sprintf( esc_html__( 'Next %s', 'hbl' ), sprintf( '<span class="meta-nav">%s</span>', $next_arrow ) ) );
 			?></div>
 		</nav>

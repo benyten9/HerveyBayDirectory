@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Payment Receipt Widget
- * 
- * Displays a beautiful payment confirmation/receipt after successful transaction.
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -42,7 +34,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -118,7 +109,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: BUTTONS ==========
 		$this->start_controls_section(
 			'section_buttons',
 			array(
@@ -170,7 +160,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: SUPPORT ==========
 		$this->start_controls_section(
 			'section_support',
 			array(
@@ -216,7 +205,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -263,7 +251,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -292,7 +279,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -343,56 +329,44 @@ class HBL_Payment_Receipt extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get transaction data from URL parameters
 		$transaction_id = isset( $_GET['transaction_id'] ) ? sanitize_text_field( $_GET['transaction_id'] ) : '';
 		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
 		$session_id = isset( $_GET['session_id'] ) ? sanitize_text_field( $_GET['session_id'] ) : '';
 		$listing_id = isset( $_GET['listing_id'] ) ? absint( $_GET['listing_id'] ) : 0;
 		
-		// Verify Stripe payment if session_id is present
 		if ( $session_id && $order_id ) {
-			// Call the global function (defined in functions.php)
 			if ( function_exists( 'hbl_verify_stripe_payment' ) ) {
 				$verified = hbl_verify_stripe_payment();
 				if ( $verified && ! $transaction_id ) {
-					// Get the payment intent as transaction ID
 					$transaction_id = get_post_meta( $order_id, '_stripe_payment_intent', true );
 				}
 			}
 		}
 		
-		// Get receipt data
 		$receipt_data = $this->get_receipt_data( $transaction_id, $order_id );
 		
-		// Get the actual listing URL from the order for the View Listing button
 		$actual_listing_url = '';
 		
-		// Try to get listing_id from URL first
 		if ( $listing_id ) {
 			$actual_listing_url = get_permalink( $listing_id );
 		}
 		
-		// If not in URL, try to get from order meta
 		if ( ! $actual_listing_url && $order_id ) {
 			$order_listing_id = get_post_meta( $order_id, '_listing_id', true );
 			if ( $order_listing_id ) {
 				$actual_listing_url = get_permalink( $order_listing_id );
-				// Also update listing_id for other uses
 				if ( ! $listing_id ) {
 					$listing_id = $order_listing_id;
 				}
 			}
 		}
 		
-		// Get button URLs
 		$primary_url = ! empty( $settings['primary_button_url']['url'] ) 
 			? $settings['primary_button_url']['url'] 
 			: ( class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/dashboard/' ) );
 		
-		// Secondary button: Use actual listing URL if available, otherwise fall back to settings or all-listings
 		$secondary_url = '';
 		if ( $actual_listing_url ) {
-			// Dynamically use the approved listing URL
 			$secondary_url = $actual_listing_url;
 		} elseif ( ! empty( $settings['secondary_button_url']['url'] ) ) {
 			$secondary_url = $settings['secondary_button_url']['url'];
@@ -406,7 +380,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 			<?php endif; ?>
 			
 			<div class="hbl-receipt-container">
-				<!-- Success Header -->
 				<div class="hbl-receipt-header">
 					<div class="hbl-receipt-success-icon">
 						<svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -419,7 +392,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 				</div>
 
 				<?php if ( 'yes' === $settings['show_receipt_details'] ) : ?>
-				<!-- Receipt Details -->
 				<div class="hbl-receipt-card" id="hbl-receipt-printable">
 					<div class="hbl-receipt-card-header">
 						<div class="hbl-receipt-logo">
@@ -439,7 +411,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 					</div>
 
 					<div class="hbl-receipt-card-body">
-						<!-- Transaction Info -->
 						<div class="hbl-receipt-info-grid">
 							<div class="hbl-receipt-info-item">
 								<span class="hbl-receipt-info-label"><?php esc_html_e( 'Transaction ID', 'hbl' ); ?></span>
@@ -465,7 +436,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Billing Details -->
 						<div class="hbl-receipt-section">
 							<h4 class="hbl-receipt-section-title"><?php esc_html_e( 'Bill To', 'hbl' ); ?></h4>
 							<div class="hbl-receipt-billing">
@@ -474,7 +444,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Items -->
 						<div class="hbl-receipt-section">
 							<h4 class="hbl-receipt-section-title"><?php esc_html_e( 'Items', 'hbl' ); ?></h4>
 							<div class="hbl-receipt-items">
@@ -492,7 +461,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Totals -->
 						<div class="hbl-receipt-totals">
 							<div class="hbl-receipt-total-row">
 								<span><?php esc_html_e( 'Subtotal', 'hbl' ); ?></span>
@@ -517,7 +485,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 						</div>
 					</div>
 
-					<!-- Receipt Actions -->
 					<div class="hbl-receipt-card-footer">
 						<?php if ( 'yes' === $settings['show_print_button'] ) : ?>
 						<button type="button" class="hbl-form-btn hbl-form-btn-secondary hbl-form-btn-icon" id="hbl-print-receipt">
@@ -543,7 +510,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Action Buttons -->
 				<div class="hbl-receipt-actions">
 					<a href="<?php echo esc_url( $primary_url ); ?>" class="hbl-form-btn hbl-form-btn-primary hbl-form-btn-large">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -564,7 +530,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 				</div>
 
 				<?php if ( 'yes' === $settings['show_support'] ) : ?>
-				<!-- Support Section -->
 				<div class="hbl-receipt-support">
 					<div class="hbl-receipt-support-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -590,7 +555,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 		<script>
 		jQuery(document).ready(function($) {
 			<?php if ( 'yes' === $settings['show_confetti'] ) : ?>
-			// Simple confetti animation
 			function createConfetti() {
 				var colors = ['#008080', '#F9532A', '#10B981', '#F59E0B', '#8B5CF6'];
 				var $container = $('#hbl-receipt-confetti');
@@ -606,7 +570,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 					$container.append($confetti);
 				}
 				
-				// Remove after animation
 				setTimeout(function() {
 					$container.fadeOut(1000);
 				}, 4000);
@@ -614,7 +577,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 			createConfetti();
 			<?php endif; ?>
 			
-			// Print receipt
 			$('#hbl-print-receipt').on('click', function() {
 				var printContent = document.getElementById('hbl-receipt-printable').innerHTML;
 				var printWindow = window.open('', '', 'width=800,height=600');
@@ -627,7 +589,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 				printWindow.print();
 			});
 			
-			// Download as PDF (placeholder - would need a PDF library)
 			$('#hbl-download-receipt').on('click', function() {
 				alert('<?php esc_html_e( 'PDF download functionality will be available once payment integration is complete.', 'hbl' ); ?>');
 			});
@@ -636,14 +597,9 @@ class HBL_Payment_Receipt extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get receipt data from order
-	 */
 	private function get_receipt_data( $transaction_id, $order_id ) {
-		// Get current user
 		$current_user = wp_get_current_user();
 		
-		// Default values
 		$receipt_data = array(
 			'receipt_number'  => $order_id ? sprintf( 'HBL-%06d', $order_id ) : 'HBL-' . strtoupper( substr( md5( time() ), 0, 8 ) ),
 			'transaction_id'  => $transaction_id ?: 'TXN-' . strtoupper( substr( md5( time() . wp_rand() ), 0, 12 ) ),
@@ -658,11 +614,9 @@ class HBL_Payment_Receipt extends Widget_Base {
 			'total'           => 0,
 		);
 		
-		// If we have an order ID, get real data
 		if ( $order_id ) {
 			$order = get_post( $order_id );
 			if ( $order && $order->post_type === 'atbdp_orders' ) {
-				// Get order meta
 				$billing_name = get_post_meta( $order_id, '_billing_name', true );
 				$billing_email = get_post_meta( $order_id, '_billing_email', true );
 				$plan_id = get_post_meta( $order_id, '_fm_plan_ordered', true );
@@ -670,7 +624,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 				$payment_intent = get_post_meta( $order_id, '_stripe_payment_intent', true );
 				$listing_id = get_post_meta( $order_id, '_listing_id', true );
 				
-				// Update receipt data with real values
 				if ( $billing_name ) {
 					$receipt_data['billing_name'] = $billing_name;
 				}
@@ -681,7 +634,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 					$receipt_data['transaction_id'] = $payment_intent;
 				}
 				
-				// Get plan details
 				if ( $plan_id ) {
 					$plan = get_post( $plan_id );
 					if ( $plan ) {
@@ -702,7 +654,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 						
 						$receipt_data['subtotal'] = $plan_price;
 						
-						// Calculate tax if applicable
 						if ( function_exists( 'atpp_total_tax' ) ) {
 							$receipt_data['tax'] = atpp_total_tax( $plan_id );
 						}
@@ -711,7 +662,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 					}
 				}
 				
-				// If no plan but we have order amount
 				if ( empty( $receipt_data['items'] ) && $order_amount ) {
 					$receipt_data['items'][] = array(
 						'name'        => __( 'Business Listing', 'hbl' ),
@@ -722,7 +672,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 					$receipt_data['total'] = floatval( $order_amount );
 				}
 				
-				// Get order date
 				$receipt_data['date'] = date_i18n( 
 					get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), 
 					strtotime( $order->post_date ) 
@@ -730,7 +679,6 @@ class HBL_Payment_Receipt extends Widget_Base {
 			}
 		}
 		
-		// Fallback if no items
 		if ( empty( $receipt_data['items'] ) ) {
 			$receipt_data['items'][] = array(
 				'name'        => __( 'Business Listing', 'hbl' ),

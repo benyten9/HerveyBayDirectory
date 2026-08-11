@@ -1,6 +1,3 @@
-/**
- * HBL Partner Agencies JavaScript
- */
 
 (function($) {
 	'use strict';
@@ -25,7 +22,6 @@
 			var $result = $('#hbl-partner-result');
 			var originalText = $submitBtn.html();
 
-			// Validate required fields
 			var username = $form.find('#partner_username').val().trim();
 			var email = $form.find('#partner_email').val().trim();
 			var agencyName = $form.find('#partner_agency_name').val().trim();
@@ -36,7 +32,6 @@
 				return;
 			}
 
-			// Disable button and show loading state
 			$submitBtn.prop('disabled', true).html(
 				'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="hbl-spin">' +
 				'<path d="M12 2V6M12 18V22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
@@ -44,7 +39,6 @@
 			);
 			$result.hide();
 
-			// Collect form data
 			var formData = {
 				action: 'hbl_create_partner_user',
 				nonce: hblPartnerAgencies.nonce,
@@ -68,10 +62,8 @@
 						$result.removeClass('error').addClass('success')
 							.html(response.data.message).show();
 						
-						// Reset form
 						$form[0].reset();
 
-						// Reload page after 2 seconds to show new partner
 						setTimeout(function() {
 							window.location.reload();
 						}, 2000);
@@ -90,7 +82,6 @@
 		}
 	};
 
-	// Spinner animation
 	$('<style>.hbl-spin { animation: hbl-spin 1s linear infinite; } @keyframes hbl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>').appendTo('head');
 
 	$(document).ready(function() {

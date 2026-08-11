@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Event Category Archive Widget
- *
- * Beautiful event category grid display with clean card design
- *
- * @package HBL
- * @since 1.2.690
- */
 
 namespace HBL\Widgets;
 
@@ -40,17 +32,11 @@ class HBL_Event_Category_Archive extends Widget_Base {
 		return array( 'event', 'category', 'archive', 'categories', 'grid', 'hbl' );
 	}
 
-	/**
-	 * Get event taxonomy
-	 * Prioritizes event_category (HBL's custom taxonomy)
-	 */
 	private function get_event_taxonomy() {
-		// Prioritize HBL's event_category taxonomy
 		if ( taxonomy_exists( 'event_category' ) ) {
 			return 'event_category';
 		}
 		
-		// Fallback to other event taxonomies
 		$taxonomies = array( 'tribe_events_cat', 'event-category', 'at_event-category' );
 		
 		foreach ( $taxonomies as $tax ) {
@@ -62,9 +48,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 		return 'event_category';
 	}
 
-	/**
-	 * Get category icon from term meta
-	 */
 	private function get_category_icon( $term_id ) {
 		$icon = get_term_meta( $term_id, 'category_icon', true );
 		if ( ! empty( $icon ) ) {
@@ -74,7 +57,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -130,7 +112,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: CATEGORIES ==========
 		$this->start_controls_section(
 			'section_categories',
 			array(
@@ -216,7 +197,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: LAYOUT ==========
 		$this->start_controls_section(
 			'section_layout',
 			array(
@@ -311,7 +291,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE ==========
 		$this->start_controls_section(
 			'section_style',
 			array(
@@ -442,12 +421,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 		$settings = $this->get_settings_for_display();
 		$taxonomy = $this->get_event_taxonomy();
 
-		// Get categories. Always fetch with hide_empty => false and skip the
-		// native 'count' orderby here: WordPress's term count only reflects
-		// real `post` objects tagged with this taxonomy, but events live in
-		// the custom events table, so that count is unreliable for both
-		// filtering and sorting. Real per-category counts are computed from
-		// the events table below instead.
 		$args = array(
 			'taxonomy'   => $taxonomy,
 			'hide_empty' => false,
@@ -455,7 +428,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 			'order'      => $settings['order'],
 		);
 
-		// Handle Search
 		if ( ! empty( $_GET['hbl_cat_search'] ) ) {
 			$args['search'] = sanitize_text_field( $_GET['hbl_cat_search'] );
 		}
@@ -473,22 +445,18 @@ class HBL_Event_Category_Archive extends Widget_Base {
 			return;
 		}
 
-		// Real event counts, from the events table (not the taxonomy's
-		// native term count).
 		$real_counts = function_exists( 'hbl_events_db' ) ? hbl_events_db()->count_by_category( 'publish' ) : array();
 
 		foreach ( $categories as $category ) {
 			$category->real_count = isset( $real_counts[ $category->term_id ] ) ? $real_counts[ $category->term_id ] : 0;
 		}
 
-		// Hide categories with no published events, if requested.
 		if ( 'yes' === $settings['hide_empty'] ) {
 			$categories = array_values( array_filter( $categories, function( $category ) {
 				return $category->real_count > 0;
 			} ) );
 		}
 
-		// Sort by real event count, if requested (get_terms() can't do this for us).
 		if ( 'count' === $settings['orderby'] ) {
 			usort( $categories, function( $a, $b ) use ( $settings ) {
 				$diff = $a->real_count - $b->real_count;
@@ -496,7 +464,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 			} );
 		}
 
-		// Apply the "Number of Categories" limit after filtering/sorting.
 		if ( intval( $settings['limit'] ) > 0 ) {
 			$categories = array_slice( $categories, 0, intval( $settings['limit'] ) );
 		}
@@ -510,17 +477,14 @@ class HBL_Event_Category_Archive extends Widget_Base {
 
 		$card_style = $settings['card_style'];
 		
-		// View mode
 		$default_view = isset( $settings['default_view'] ) ? $settings['default_view'] : 'grid';
 		$current_view = isset( $_GET['hbl_view'] ) ? sanitize_text_field( $_GET['hbl_view'] ) : $default_view;
 		if ( ! in_array( $current_view, array( 'grid', 'list' ), true ) ) {
 			$current_view = 'grid';
 		}
 		
-		// Current sort value for dropdown
 		$current_sort = isset( $_GET['hbl_evcat_sort'] ) ? sanitize_text_field( $_GET['hbl_evcat_sort'] ) : '';
 		
-		// Build base URL for view/sort links
 		$base_url = strtok( $_SERVER['REQUEST_URI'], '?' );
 		$query_params = $_GET;
 		?>
@@ -538,7 +502,6 @@ class HBL_Event_Category_Archive extends Widget_Base {
 				<div class="hbl-widget-search-wrap">
 					<form role="search" method="get" class="hbl-widget-search-form" action="">
 						<?php 
-						// Preserve existing query params
 						foreach ( $_GET as $key => $val ) {
 							if ( 'hbl_cat_search' === $key ) continue;
 							if ( is_array( $val ) ) {

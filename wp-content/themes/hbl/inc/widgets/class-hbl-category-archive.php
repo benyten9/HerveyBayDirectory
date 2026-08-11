@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Category Archive Widget
- *
- * Beautiful category grid display with clean card design
- *
- * @package HBL
- * @since 1.2.676
- */
 
 namespace HBL\Widgets;
 
@@ -40,9 +32,6 @@ class HBL_Category_Archive extends Widget_Base {
 		return array( 'category', 'archive', 'categories', 'directory', 'grid', 'hbl' );
 	}
 
-	/**
-	 * Get category icon from term meta
-	 */
 	private function get_category_icon( $term_id ) {
 		$icon = get_term_meta( $term_id, 'category_icon', true );
 		if ( ! empty( $icon ) ) {
@@ -52,7 +41,6 @@ class HBL_Category_Archive extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -121,7 +109,6 @@ class HBL_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: CATEGORIES ==========
 		$this->start_controls_section(
 			'section_categories',
 			array(
@@ -224,7 +211,6 @@ class HBL_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: LAYOUT ==========
 		$this->start_controls_section(
 			'section_layout',
 			array(
@@ -319,7 +305,6 @@ class HBL_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADER ==========
 		$this->start_controls_section(
 			'section_style_header',
 			array(
@@ -376,7 +361,6 @@ class HBL_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CARDS ==========
 		$this->start_controls_section(
 			'section_style_cards',
 			array(
@@ -419,7 +403,6 @@ class HBL_Category_Archive extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: ICON ==========
 		$this->start_controls_section(
 			'section_style_icon',
 			array(
@@ -473,7 +456,6 @@ class HBL_Category_Archive extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get categories
 		$args = array(
 			'taxonomy'   => 'at_biz_dir-category',
 			'hide_empty' => 'yes' === $settings['hide_empty'],
@@ -498,7 +480,6 @@ class HBL_Category_Archive extends Widget_Base {
 			return;
 		}
 
-		// Build child count map for parent categories
 		$child_counts = array();
 		if ( 'parent' === $settings['category_type'] && 'yes' === $settings['show_subcategory_count'] ) {
 			$all_terms = get_terms( array(
@@ -519,17 +500,14 @@ class HBL_Category_Archive extends Widget_Base {
 		$card_style = $settings['card_style'];
 		$widget_id = $this->get_id();
 		
-		// View mode
 		$default_view = isset( $settings['default_view'] ) ? $settings['default_view'] : 'grid';
 		$current_view = isset( $_GET['hbl_view'] ) ? sanitize_text_field( $_GET['hbl_view'] ) : $default_view;
 		if ( ! in_array( $current_view, array( 'grid', 'list' ), true ) ) {
 			$current_view = 'grid';
 		}
 		
-		// Current sort value for dropdown
 		$current_sort = isset( $_GET['hbl_cat_sort'] ) ? sanitize_text_field( $_GET['hbl_cat_sort'] ) : '';
 		
-		// Build base URL for view/sort links
 		$base_url = strtok( $_SERVER['REQUEST_URI'], '?' );
 		$query_params = $_GET;
 		?>
@@ -626,7 +604,6 @@ class HBL_Category_Archive extends Widget_Base {
 					$cat_link = get_term_link( $category );
 					$cat_icon = $this->get_category_icon( $category->term_id );
 					
-					// Calculate total count
 					$total_count = $category->count;
 					if ( isset( $child_counts[ $category->term_id ] ) ) {
 						$total_count += $child_counts[ $category->term_id ];
@@ -678,12 +655,10 @@ class HBL_Category_Archive extends Widget_Base {
 					if (isMatch) visibleCount++;
 				});
 
-				// Toggle clear button visibility
 				if (clearBtn) {
 					clearBtn.style.display = searchTerm ? 'flex' : 'none';
 				}
 
-				// Show/hide no results message
 				if (noResults) {
 					noResults.style.display = visibleCount === 0 ? 'block' : 'none';
 				}

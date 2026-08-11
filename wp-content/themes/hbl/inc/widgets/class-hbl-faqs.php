@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL FAQs Widget
- *
- * Beautiful FAQ accordion widget with expand/collapse functionality
- *
- * @package HBL
- * @since 1.2.400
- */
 
 namespace HBL\Widgets;
 
@@ -16,55 +8,33 @@ use Elementor\Group_Control_Typography;
 use Elementor\Repeater;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL FAQs Widget Class
- */
 class HBL_FAQs extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-faqs';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL FAQs', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-accordion';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'hbl', 'faq', 'accordion', 'question', 'answer', 'toggle', 'collapse' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// ========== CONTENT SECTION: FAQ ITEMS ==========
 		$this->start_controls_section(
 			'section_faq_items',
 			array(
@@ -140,7 +110,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT SECTION: SETTINGS ==========
 		$this->start_controls_section(
 			'section_settings',
 			array(
@@ -228,7 +197,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'section_style_container',
 			array(
@@ -261,7 +229,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: FAQ ITEM ==========
 		$this->start_controls_section(
 			'section_style_item',
 			array(
@@ -284,7 +251,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: QUESTION ==========
 		$this->start_controls_section(
 			'section_style_question',
 			array(
@@ -303,7 +269,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->start_controls_tabs( 'question_style_tabs' );
 
-		// Normal State
 		$this->start_controls_tab(
 			'question_normal',
 			array(
@@ -337,7 +302,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Hover State
 		$this->start_controls_tab(
 			'question_hover',
 			array(
@@ -370,7 +334,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Active State
 		$this->start_controls_tab(
 			'question_active',
 			array(
@@ -408,7 +371,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: ANSWER ==========
 		$this->start_controls_section(
 			'section_style_answer',
 			array(
@@ -473,7 +435,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: ICON ==========
 		$this->start_controls_section(
 			'section_style_icon',
 			array(
@@ -509,7 +470,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->start_controls_tabs( 'icon_style_tabs' );
 
-		// Normal State
 		$this->start_controls_tab(
 			'icon_normal',
 			array(
@@ -531,7 +491,6 @@ class HBL_FAQs extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Active State
 		$this->start_controls_tab(
 			'icon_active',
 			array(
@@ -582,9 +541,6 @@ class HBL_FAQs extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
@@ -598,13 +554,11 @@ class HBL_FAQs extends Widget_Base {
 		$icon_type = isset( $settings['icon_type'] ) ? $settings['icon_type'] : 'chevron';
 		$question_html_tag = isset( $settings['question_html_tag'] ) ? $settings['question_html_tag'] : 'span';
 		
-		// Validate HTML tag to prevent XSS
 		$allowed_tags = array( 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span', 'p' );
 		if ( ! in_array( $question_html_tag, $allowed_tags, true ) ) {
 			$question_html_tag = 'span';
 		}
 
-		// Get icon classes based on type
 		$icon_collapsed = $this->get_icon_class( $icon_type, false );
 		$icon_expanded = $this->get_icon_class( $icon_type, true );
 		?>
@@ -617,7 +571,6 @@ class HBL_FAQs extends Widget_Base {
 				
 				<div class="hbl-faq-item <?php echo $is_open ? 'active' : ''; ?>" data-index="<?php echo esc_attr( $index ); ?>">
 					
-					<!-- Question -->
 					<div class="hbl-faq-question icon-<?php echo esc_attr( $icon_position ); ?>">
 						
 						<?php if ( $show_icon && 'left' === $icon_position ) : ?>
@@ -638,7 +591,6 @@ class HBL_FAQs extends Widget_Base {
 						
 					</div>
 
-					<!-- Answer -->
 					<div class="hbl-faq-answer-wrapper" style="<?php echo $is_open ? '' : 'display: none;'; ?>">
 						<div class="hbl-faq-answer">
 							<?php echo wp_kses_post( $item['answer'] ); ?>
@@ -653,9 +605,6 @@ class HBL_FAQs extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get icon class based on type and state
-	 */
 	private function get_icon_class( $type, $expanded = false ) {
 		$icons = array(
 			'chevron' => array(

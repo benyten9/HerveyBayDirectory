@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Static Grid V2 Widget
- *
- * Displays latest events from the HBL Events DB in the same static grid card design
- *
- * @package HBL
- * @since 1.0.0
- */
 
 namespace HBL\Widgets;
 
@@ -18,52 +10,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * HBL Static Grid V2 Widget Class
- */
 class HBL_Static_Grid_V2 extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-static-grid-v2';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'Grid of Events', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-posts-grid';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'hbl', 'events', 'grid', 'listing', 'cards', 'dynamic' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 
-		// ========== CONTENT: Query ==========
 		$this->start_controls_section(
 			'content_query',
 			array(
@@ -122,7 +92,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 			)
 		);
 
-		// Category filter
 		$category_options = array( '' => esc_html__( 'All Categories', 'hbl' ) );
 		$categories       = get_terms(
 			array(
@@ -163,7 +132,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: Card Display ==========
 		$this->start_controls_section(
 			'content_display',
 			array(
@@ -233,7 +201,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: Grid Layout ==========
 		$this->start_controls_section(
 			'style_grid',
 			array(
@@ -308,7 +275,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: Image ==========
 		$this->start_controls_section(
 			'style_image',
 			array(
@@ -341,7 +307,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: Date Badge ==========
 		$this->start_controls_section(
 			'style_date_badge',
 			array(
@@ -379,7 +344,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: Title ==========
 		$this->start_controls_section(
 			'style_title',
 			array(
@@ -441,7 +405,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: Description ==========
 		$this->start_controls_section(
 			'style_description',
 			array(
@@ -493,7 +456,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: Arrow Icon ==========
 		$this->start_controls_section(
 			'style_icon',
 			array(
@@ -576,7 +538,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== RESPONSIVE VISIBILITY ==========
 		$this->start_controls_section(
 			'section_responsive_visibility',
 			array(
@@ -658,9 +619,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Get events from the HBL Events DB
-	 */
 	private function get_events( $settings ) {
 		if ( ! function_exists( 'hbl_events_db' ) ) {
 			return array();
@@ -696,7 +654,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 			$next_date = $this->get_next_occurrence( $event );
 			$next_ts   = strtotime( $next_date );
 
-			// Filter upcoming only
 			if ( 'yes' === $settings['show_upcoming_only'] && $next_ts < $today_start ) {
 				continue;
 			}
@@ -705,7 +662,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 			$processed[]                = $event;
 		}
 
-		// Sort by computed date
 		$order = $settings['order'];
 		if ( $settings['orderby'] === 'start_date' ) {
 			usort(
@@ -731,9 +687,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 		return array_slice( $processed, 0, $limit );
 	}
 
-	/**
-	 * Calculate next occurrence for recurring events
-	 */
 	private function get_next_occurrence( $event ) {
 		$frequency  = $event->event_frequency ?? 'once';
 		$start_date = $event->start_date;
@@ -831,9 +784,6 @@ class HBL_Static_Grid_V2 extends Widget_Base {
 		return $start_date;
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		$events   = $this->get_events( $settings );

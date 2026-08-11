@@ -1,11 +1,4 @@
 <?php
-/**
- * HBL Sign In/Signup Form Widget
- * 
- * A beautiful Elementor widget for login and registration
- *
- * @package HBL
- */
 
 namespace HBL\Widgets;
 
@@ -41,7 +34,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -125,7 +117,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: LABELS ==========
 		$this->start_controls_section(
 			'section_labels',
 			array(
@@ -207,7 +198,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TABS ==========
 		$this->start_controls_section(
 			'section_style_tabs',
 			array(
@@ -275,7 +265,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: FORM FIELDS ==========
 		$this->start_controls_section(
 			'section_style_fields',
 			array(
@@ -331,7 +320,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -391,12 +379,10 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Enqueue reCAPTCHA script if enabled
 		if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) && ! \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			wp_enqueue_script( 'google-recaptcha' );
 		}
 
-		// Check if user is already logged in
 		if ( is_user_logged_in() ) {
 			$current_user = wp_get_current_user();
 			$logout_url = wp_logout_url( home_url() );
@@ -421,9 +407,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 
 		$default_tab = $settings['default_tab'];
 
-		// Allow a URL param to force the starting tab, e.g. links that should
-		// land on the Create Account form use ?tab=signup (also accepts
-		// register / signin / login).
 		if ( isset( $_GET['tab'] ) ) {
 			$requested_tab = sanitize_key( wp_unslash( $_GET['tab'] ) );
 			if ( in_array( $requested_tab, array( 'signup', 'register' ), true ) ) {
@@ -433,7 +416,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 			}
 		}
 
-		// If registration is disabled, never force the signup tab.
 		if ( 'signup' === $default_tab && 'yes' !== $settings['show_registration'] ) {
 			$default_tab = 'signin';
 		}
@@ -455,7 +437,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 			</div>
 
 			<div class="hbl-auth-content">
-				<!-- Sign In Form -->
 				<form class="hbl-auth-form hbl-signin-form <?php echo 'signin' === $default_tab ? 'active' : ''; ?>" method="post" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>">
 					<input type="hidden" name="redirect_to" value="<?php echo esc_url( $redirect_url ); ?>">
 					
@@ -518,7 +499,6 @@ class HBL_Signin_Signup_Form extends Widget_Base {
 					<?php wp_nonce_field( 'ajax-login-nonce', 'security', false ); ?>
 				</form>
 
-				<!-- Sign Up Form -->
 				<?php if ( 'yes' === $settings['show_registration'] ) : ?>
 				<form class="hbl-auth-form hbl-signup-form <?php echo 'signup' === $default_tab ? 'active' : ''; ?>" method="post" action="<?php echo esc_url( wp_registration_url() ); ?>">
 					<div class="hbl-form-group">

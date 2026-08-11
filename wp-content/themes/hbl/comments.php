@@ -1,20 +1,9 @@
 <?php
-/**
- * The template for displaying comments
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
+	exit;
 }
 
-/*
- * If the current post is protected by a password and
- * the visitor has not yet entered the password we will
- * return early without loading the comments.
- */
 if ( post_password_required() ) {
 	return;
 }
@@ -27,11 +16,9 @@ if ( post_password_required() ) {
 			<?php
 			$comments_number = get_comments_number();
 			if ( 1 === $comments_number ) {
-				/* translators: %s: post title */
 				printf( _x( 'One thought on &ldquo;%s&rdquo;', 'comments title', 'hbl' ), '<span>' . wp_kses_post( get_the_title() ) . '</span>' );
 			} else {
 				printf(
-					/* translators: 1: number of comments, 2: post title */
 					_nx(
 						'%1$s thought on &ldquo;%2$s&rdquo;',
 						'%1$s thoughts on &ldquo;%2$s&rdquo;',
@@ -59,7 +46,6 @@ if ( post_password_required() ) {
 		<?php
 		the_comments_navigation();
 
-		// If comments are closed and there are comments, let's leave a little note, shall we?
 		if ( ! comments_open() && get_comments_number() && post_type_supports( get_post_type(), 'comments' ) ) :
 			?>
 			<p class="no-comments"><?php esc_html_e( 'Comments are closed.', 'hbl' ); ?></p>
@@ -74,5 +60,5 @@ if ( post_password_required() ) {
 	) );
 	?>
 
-</div><!-- #comments -->
+</div>
 

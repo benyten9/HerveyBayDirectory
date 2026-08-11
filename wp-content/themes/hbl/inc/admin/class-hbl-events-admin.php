@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Events Admin Page
- * 
- * Beautiful admin interface for managing events with internal tag analytics
- *
- * @package HBL
- * @since 1.3.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -14,14 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class HBL_Events_Admin {
 
-	/**
-	 * Instance
-	 */
 	private static $instance = null;
 
-	/**
-	 * Event type labels
-	 */
 	private $event_types = array(
 		'community'     => 'Community Event',
 		'workshop'      => 'Workshop or Class',
@@ -31,9 +17,6 @@ class HBL_Events_Admin {
 		'other'         => 'Other',
 	);
 
-	/**
-	 * Frequency labels
-	 */
 	private $frequencies = array(
 		'once'      => 'One-off',
 		'weekly'    => 'Weekly',
@@ -41,9 +24,6 @@ class HBL_Events_Admin {
 		'recurring' => 'Recurring',
 	);
 
-	/**
-	 * Day labels for recurrence
-	 */
 	private $day_labels = array(
 		'mon' => 'Mon',
 		'tue' => 'Tue',
@@ -54,9 +34,6 @@ class HBL_Events_Admin {
 		'sun' => 'Sun',
 	);
 
-	/**
-	 * Week ordinal labels for recurrence
-	 */
 	private $week_labels = array(
 		'1' => '1st',
 		'2' => '2nd',
@@ -64,18 +41,12 @@ class HBL_Events_Admin {
 		'4' => '4th',
 	);
 
-	/**
-	 * Organiser type labels
-	 */
 	private $organiser_types = array(
 		'individual' => 'Individual',
 		'community'  => 'Community/NFP',
 		'business'   => 'Business',
 	);
 
-	/**
-	 * Get instance
-	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -83,9 +54,6 @@ class HBL_Events_Admin {
 		return self::$instance;
 	}
 
-	/**
-	 * Constructor
-	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ), 9 );
 		add_action( 'admin_menu', array( $this, 'remove_directorist_event_menus' ), 999 );
@@ -103,9 +71,6 @@ class HBL_Events_Admin {
 		add_action( 'wp_ajax_hbl_admin_filter_events', array( $this, 'ajax_filter_events' ) );
 	}
 
-	/**
-	 * Add admin menu
-	 */
 	public function add_admin_menu() {
 		add_menu_page(
 			__( 'HBL Events', 'hbl' ),
@@ -114,7 +79,7 @@ class HBL_Events_Admin {
 			'hbl-events',
 			array( $this, 'render_events_page' ),
 			'dashicons-calendar-alt',
-			'9' // Position: below Directory Listings (5), above Media (10)
+			'9'
 		);
 
 		add_submenu_page(
@@ -126,7 +91,6 @@ class HBL_Events_Admin {
 			array( $this, 'render_events_page' )
 		);
 
-		// Add Event link (opens frontend form)
 		global $submenu;
 		$submenu['hbl-events'][] = array(
 			__( 'Add Event', 'hbl' ),
@@ -162,27 +126,20 @@ class HBL_Events_Admin {
 		);
 	}
 
-	/**
-	 * Remove event-related submenus from Directorist
-	 */
 	public function remove_directorist_event_menus() {
 		global $submenu;
 
-		// Remove "All Events" and "Event Categories" from Directorist (at_biz_dir) menu
 		if ( isset( $submenu['edit.php?post_type=at_biz_dir'] ) ) {
 			foreach ( $submenu['edit.php?post_type=at_biz_dir'] as $key => $item ) {
-				// Remove "All Events" (dpci-all-events)
 				if ( isset( $item[2] ) && strpos( $item[2], 'dpci-all-events' ) !== false ) {
 					unset( $submenu['edit.php?post_type=at_biz_dir'][ $key ] );
 				}
-				// Remove "Event Categories" taxonomy page
 				if ( isset( $item[2] ) && $item[2] === 'edit-tags.php?taxonomy=event_category' ) {
 					unset( $submenu['edit.php?post_type=at_biz_dir'][ $key ] );
 				}
 			}
 		}
 
-		// Remove event taxonomies from Posts menu (edit.php)
 		if ( isset( $submenu['edit.php'] ) ) {
 			foreach ( $submenu['edit.php'] as $key => $item ) {
 				if ( isset( $item[2] ) && (
@@ -195,9 +152,6 @@ class HBL_Events_Admin {
 		}
 	}
 
-	/**
-	 * Enqueue admin styles
-	 */
 	public function enqueue_admin_styles( $hook ) {
 		if ( strpos( $hook, 'hbl-events' ) === false ) {
 			return;
@@ -224,9 +178,6 @@ class HBL_Events_Admin {
 		) );
 	}
 
-	/**
-	 * Extract filter args from any request source array
-	 */
 	private function extract_filter_args( $source ) {
 		$args = array();
 		if ( ! empty( $source['category_id'] ) ) {
@@ -250,9 +201,6 @@ class HBL_Events_Admin {
 		return $args;
 	}
 
-	/**
-	 * Get events from custom database table
-	 */
 	private function get_events( $args = array(), $source = null ) {
 		$db = hbl_events_db();
 		$defaults = array( 'limit' => 20, 'offset' => 0 );
@@ -262,9 +210,6 @@ class HBL_Events_Admin {
 		return $db->get_events( $args );
 	}
 
-	/**
-	 * Count total events for pagination
-	 */
 	private function count_events( $args = array(), $source = null ) {
 		$db = hbl_events_db();
 		$filter_args = $this->extract_filter_args( $source ?? $_GET );
@@ -272,9 +217,6 @@ class HBL_Events_Admin {
 		return $db->count_events( $args );
 	}
 
-	/**
-	 * Render event table rows into a string (reused by page render + AJAX)
-	 */
 	private function get_event_rows_html( $events ) {
 		ob_start();
 		if ( ! empty( $events ) ) :
@@ -462,9 +404,6 @@ class HBL_Events_Admin {
 		return ob_get_clean();
 	}
 
-	/**
-	 * Get pagination HTML for dynamic rendering
-	 */
 	private function get_pagination_html( $total_events, $per_page, $paged, $filter_params = array() ) {
 		if ( $total_events <= $per_page ) {
 			return '';
@@ -484,9 +423,6 @@ class HBL_Events_Admin {
 		) ) ?? '';
 	}
 
-	/**
-	 * AJAX: Dynamic event filtering
-	 */
 	public function ajax_filter_events() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'edit_posts' ) ) {
@@ -519,17 +455,11 @@ class HBL_Events_Admin {
 		) );
 	}
 
-	/**
-	 * Get event statistics from custom database table
-	 */
 	private function get_event_stats() {
 		$db = hbl_events_db();
 		return $db->get_stats();
 	}
 
-	/**
-	 * Render events page
-	 */
 	public function render_events_page() {
 		$paged = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
 		$per_page = 20;
@@ -543,13 +473,11 @@ class HBL_Events_Admin {
 		$total_pages = ceil( $total_events / $per_page );
 		$stats = $this->get_event_stats();
 		
-		// Get categories for filter
 		$categories = get_terms( array(
 			'taxonomy'   => 'event_category',
 			'hide_empty' => false,
 		) );
 
-		// Get users who have submitted events
 		$db_instance = hbl_events_db();
 		global $wpdb;
 		$event_user_ids = $wpdb->get_col( $wpdb->prepare(
@@ -570,7 +498,6 @@ class HBL_Events_Admin {
 				<?php esc_html_e( 'HBL Events', 'hbl' ); ?>
 			</h1>
 
-			<!-- Stats Cards -->
 			<div class="hbl-admin-stats">
 				<div class="hbl-stat-card hbl-stat-total">
 					<div class="hbl-stat-icon">
@@ -610,7 +537,6 @@ class HBL_Events_Admin {
 				</div>
 			</div>
 
-			<!-- Filters -->
 			<div class="hbl-admin-filters">
 				<form method="get" class="hbl-filter-form">
 					<input type="hidden" name="page" value="hbl-events">
@@ -680,7 +606,6 @@ class HBL_Events_Admin {
 				</form>
 			</div>
 
-			<!-- Bulk Actions (Top) -->
 			<div class="hbl-bulk-actions tablenav top">
 				<div class="alignleft actions bulkactions">
 					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'hbl' ); ?></label>
@@ -698,12 +623,10 @@ class HBL_Events_Admin {
 				</div>
 			</div>
 
-			<!-- Results count bar -->
 			<div class="hbl-results-bar">
 				<span id="hbl-results-count"><?php echo esc_html( sprintf( _n( '%d event', '%d events', $total_events, 'hbl' ), $total_events ) ); ?></span>
 			</div>
 
-			<!-- Events Table -->
 			<div class="hbl-events-table-wrap" id="hbl-table-wrap">
 				<div class="hbl-table-loading" id="hbl-table-loading" style="display:none;">
 					<span class="spinner is-active"></span>
@@ -727,7 +650,7 @@ class HBL_Events_Admin {
 						</tr>
 					</thead>
 					<tbody id="hbl-events-tbody">
-						<?php echo $this->get_event_rows_html( $events ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php echo $this->get_event_rows_html( $events ); ?>
 					</tbody>
 					<tfoot>
 						<tr>
@@ -749,7 +672,6 @@ class HBL_Events_Admin {
 				</table>
 			</div>
 
-			<!-- Bulk Actions (Bottom) -->
 			<div class="hbl-bulk-actions tablenav bottom">
 				<div class="alignleft actions bulkactions">
 					<label for="bulk-action-selector-bottom" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'hbl' ); ?></label>
@@ -767,7 +689,6 @@ class HBL_Events_Admin {
 				</div>
 			</div>
 
-			<!-- Pagination -->
 			<div class="hbl-admin-pagination" id="hbl-events-pagination">
 				<?php
 				$filter_params = array_filter( array(
@@ -778,16 +699,13 @@ class HBL_Events_Admin {
 					'organiser_type'  => $_GET['organiser_type'] ?? '',
 					'author_id'       => $_GET['author_id'] ?? '',
 				) );
-				echo $this->get_pagination_html( $total_events, $per_page, $paged, $filter_params ); // phpcs:ignore WordPress.Security.EscapeOutput
+				echo $this->get_pagination_html( $total_events, $per_page, $paged, $filter_params );
 				?>
 			</div>
 		</div>
 		<?php
 	}
 
-	/**
-	 * Render analytics page
-	 */
 	public function render_analytics_page() {
 		$stats = $this->get_event_stats();
 		?>
@@ -798,7 +716,6 @@ class HBL_Events_Admin {
 			</h1>
 
 			<div class="hbl-analytics-grid">
-				<!-- Overview Card -->
 				<div class="hbl-analytics-card hbl-analytics-overview">
 					<h2><?php esc_html_e( 'Overview', 'hbl' ); ?></h2>
 					<div class="hbl-overview-stats">
@@ -817,7 +734,6 @@ class HBL_Events_Admin {
 					</div>
 				</div>
 
-				<!-- Cost Breakdown -->
 				<div class="hbl-analytics-card">
 					<h2><?php esc_html_e( 'Cost Breakdown', 'hbl' ); ?></h2>
 					<div class="hbl-chart-bars">
@@ -846,39 +762,32 @@ class HBL_Events_Admin {
 					</div>
 				</div>
 
-				<!-- By Event Category -->
 				<div class="hbl-analytics-card">
 					<h2><?php esc_html_e( 'By Event Category', 'hbl' ); ?></h2>
 					<div class="hbl-chart-bars">
 						<?php 
-                        // Calculate stats by category
                         $categories = get_terms( array(
                             'taxonomy'   => 'event_category',
                             'hide_empty' => false,
                         ) );
                         
                         if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) {
-                            // Get all events to count categories
                             $events = $this->get_events( array( 'limit' => -1 ) );
                             $category_counts = array();
                             
-                            // Initialize counts
                             foreach ( $categories as $category ) {
                                 $category_counts[ $category->term_id ] = 0;
                             }
                             
-                            // Count events per category
                             foreach ( $events as $event ) {
                                 if ( ! empty( $event->category_id ) && isset( $category_counts[ $event->category_id ] ) ) {
                                     $category_counts[ $event->category_id ]++;
                                 }
                             }
                             
-                            // Display bars
                             foreach ( $categories as $category ) {
                                 $count = $category_counts[ $category->term_id ];
                                 $pct = $stats['total'] > 0 ? round( ( $count / $stats['total'] ) * 100 ) : 0;
-                                // Generate a color based on ID or use term meta color
                                 $color = get_term_meta( $category->term_id, '_hbl_category_color', true ) ?: '#008080';
                                 ?>
                                 <div class="hbl-chart-bar-item">
@@ -899,7 +808,6 @@ class HBL_Events_Admin {
 					</div>
 				</div>
 
-				<!-- By Frequency -->
 				<div class="hbl-analytics-card">
 					<h2><?php esc_html_e( 'By Frequency', 'hbl' ); ?></h2>
 					<div class="hbl-chart-bars">
@@ -920,7 +828,6 @@ class HBL_Events_Admin {
 					</div>
 				</div>
 
-				<!-- By Organiser Type -->
 				<div class="hbl-analytics-card">
 					<h2><?php esc_html_e( 'By Organiser Type', 'hbl' ); ?></h2>
 					<div class="hbl-chart-bars">
@@ -941,12 +848,10 @@ class HBL_Events_Admin {
 					</div>
 				</div>
 
-				<!-- Quick Insights -->
 				<div class="hbl-analytics-card hbl-analytics-insights">
 					<h2><?php esc_html_e( 'Quick Insights', 'hbl' ); ?></h2>
 					<ul class="hbl-insights-list">
 						<?php
-						// Most common event type
 						if ( ! empty( $stats['by_type'] ) ) {
 							arsort( $stats['by_type'] );
 							$top_type = array_key_first( $stats['by_type'] );
@@ -959,7 +864,6 @@ class HBL_Events_Admin {
 							}
 						}
 
-						// Most common organiser
 						if ( ! empty( $stats['by_organiser'] ) ) {
 							arsort( $stats['by_organiser'] );
 							$top_organiser = array_key_first( $stats['by_organiser'] );
@@ -972,7 +876,6 @@ class HBL_Events_Admin {
 							}
 						}
 
-						// Free vs paid ratio
 						if ( $stats['total'] > 0 ) {
 							$free_ratio = round( ( $stats['free'] / $stats['total'] ) * 100 );
 							echo '<li><span class="dashicons dashicons-chart-pie"></span> ' . sprintf( 
@@ -981,7 +884,6 @@ class HBL_Events_Admin {
 							) . '</li>';
 						}
 
-						// Recurring events
 						$recurring_count = ( $stats['by_frequency']['weekly'] ?? 0 ) + ( $stats['by_frequency']['monthly'] ?? 0 ) + ( $stats['by_frequency']['recurring'] ?? 0 );
 						if ( $recurring_count > 0 ) {
 							echo '<li><span class="dashicons dashicons-update"></span> ' . sprintf( 
@@ -997,12 +899,6 @@ class HBL_Events_Admin {
 		<?php
 	}
 
-	/**
-	 * Get human-readable recurrence display
-	 *
-	 * @param object $event Event object
-	 * @return string Recurrence description
-	 */
 	private function get_recurrence_display( $event ) {
 		if ( empty( $event->event_frequency ) || $event->event_frequency === 'once' || $event->event_frequency === 'recurring' ) {
 			return '';
@@ -1011,14 +907,12 @@ class HBL_Events_Admin {
 		$parts = array();
 
 		if ( $event->event_frequency === 'weekly' ) {
-			// Weekly recurrence
 			$interval = ! empty( $event->recurrence_interval ) ? (int) $event->recurrence_interval : 1;
 			
 			if ( $interval === 2 ) {
 				$parts[] = __( 'Every 2nd week', 'hbl' );
 			}
 
-			// Days
 			if ( ! empty( $event->recurrence_days ) ) {
 				$days = explode( ',', $event->recurrence_days );
 				$day_names = array();
@@ -1032,10 +926,8 @@ class HBL_Events_Admin {
 				}
 			}
 		} elseif ( $event->event_frequency === 'monthly' ) {
-			// Monthly recurrence
 			$week_parts = array();
 			
-			// Weeks
 			if ( ! empty( $event->recurrence_week ) ) {
 				$weeks = explode( ',', $event->recurrence_week );
 				foreach ( $weeks as $week ) {
@@ -1045,7 +937,6 @@ class HBL_Events_Admin {
 				}
 			}
 
-			// Day
 			if ( ! empty( $event->recurrence_days ) ) {
 				$day = $event->recurrence_days;
 				if ( isset( $this->day_labels[ $day ] ) ) {
@@ -1063,9 +954,6 @@ class HBL_Events_Admin {
 		return implode( ' · ', $parts );
 	}
 
-	/**
-	 * AJAX: Delete event
-	 */
 	public function ajax_delete_event() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1079,7 +967,6 @@ class HBL_Events_Admin {
 			wp_send_json_error( array( 'message' => 'Invalid event ID' ) );
 		}
 
-		// Use custom database to delete event
 		$db = hbl_events_db();
 		$result = $db->delete( $event_id );
 
@@ -1090,9 +977,6 @@ class HBL_Events_Admin {
 		}
 	}
 
-	/**
-	 * AJAX handler for bulk delete events
-	 */
 	public function ajax_bulk_delete_events() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1132,9 +1016,6 @@ class HBL_Events_Admin {
 		}
 	}
 
-	/**
-	 * AJAX handler for bulk update events (change status)
-	 */
 	public function ajax_bulk_update_events() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1187,15 +1068,10 @@ class HBL_Events_Admin {
 		}
 	}
 
-	/**
-	 * Render categories management page
-	 */
 	public function render_categories_page() {
-		// Handle form submissions
 		$message = '';
 		$message_type = '';
 
-		// Get all categories
 		$categories = get_terms( array(
 			'taxonomy'   => 'event_category',
 			'hide_empty' => false,
@@ -1207,7 +1083,6 @@ class HBL_Events_Admin {
 			$categories = array();
 		}
 
-		// Get parent categories for dropdown
 		$parent_categories = array_filter( $categories, function( $cat ) {
 			return $cat->parent == 0;
 		});
@@ -1225,7 +1100,6 @@ class HBL_Events_Admin {
 			<?php endif; ?>
 
 			<div class="hbl-categories-layout">
-				<!-- Add New Category Form -->
 				<div class="hbl-category-form-card">
 					<h2><?php esc_html_e( 'Add New Category', 'hbl' ); ?></h2>
 					<form id="hbl-add-category-form" class="hbl-category-form">
@@ -1275,7 +1149,6 @@ class HBL_Events_Admin {
 					</form>
 				</div>
 
-				<!-- Categories List -->
 				<div class="hbl-categories-list-card">
 					<h2><?php esc_html_e( 'All Categories', 'hbl' ); ?> <span class="hbl-count">(<?php echo count( $categories ); ?>)</span></h2>
 					
@@ -1292,7 +1165,6 @@ class HBL_Events_Admin {
 							</thead>
 							<tbody>
 								<?php
-						// Pre-calculate counts from custom DB
 						$db = hbl_events_db();
 						$events_all = $db->get_events( array( 'limit' => -1 ) );
 						$category_real_counts = array();
@@ -1317,7 +1189,6 @@ class HBL_Events_Admin {
 										$parent_name = $parent ? $parent->name : '';
 									}
 									
-									// Use custom count
 									$real_count = isset( $category_real_counts[ $category->term_id ] ) ? $category_real_counts[ $category->term_id ] : 0;
 								?>
 								<tr data-category-id="<?php echo esc_attr( $category->term_id ); ?>" class="<?php echo $is_child ? 'is-child' : 'is-parent'; ?>">
@@ -1388,7 +1259,6 @@ class HBL_Events_Admin {
 				</div>
 			</div>
 
-			<!-- Edit Category Modal -->
 			<div id="hbl-edit-category-modal" class="hbl-modal" style="display: none;">
 				<div class="hbl-modal-overlay"></div>
 				<div class="hbl-modal-content">
@@ -1448,9 +1318,6 @@ class HBL_Events_Admin {
 		<?php
 	}
 
-	/**
-	 * AJAX: Add category
-	 */
 	public function ajax_add_category() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1486,7 +1353,6 @@ class HBL_Events_Admin {
 
 		$term_id = $result['term_id'];
 
-		// Save custom meta
 		update_term_meta( $term_id, '_hbl_category_color', $color );
 		update_term_meta( $term_id, '_hbl_category_icon', $icon );
 
@@ -1496,9 +1362,6 @@ class HBL_Events_Admin {
 		) );
 	}
 
-	/**
-	 * AJAX: Edit category
-	 */
 	public function ajax_edit_category() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1522,7 +1385,6 @@ class HBL_Events_Admin {
 			wp_send_json_error( array( 'message' => 'Category name is required' ) );
 		}
 
-		// Prevent setting self as parent
 		if ( $parent === $term_id ) {
 			$parent = 0;
 		}
@@ -1538,16 +1400,12 @@ class HBL_Events_Admin {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
-		// Save custom meta
 		update_term_meta( $term_id, '_hbl_category_color', $color );
 		update_term_meta( $term_id, '_hbl_category_icon', $icon );
 
 		wp_send_json_success( array( 'message' => 'Category updated successfully' ) );
 	}
 
-	/**
-	 * AJAX: Delete category
-	 */
 	public function ajax_delete_category() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1574,9 +1432,6 @@ class HBL_Events_Admin {
 		wp_send_json_success( array( 'message' => 'Category deleted successfully' ) );
 	}
 
-	/**
-	 * Render tags management page
-	 */
 	public function render_tags_page() {
 		$tags = get_terms( array(
 			'taxonomy'   => 'event_tag',
@@ -1589,7 +1444,6 @@ class HBL_Events_Admin {
 			$tags = array();
 		}
 
-		// Pre-calculate tag counts from custom DB
 		$db = hbl_events_db();
 		$events_all = $db->get_events( array( 'limit' => -1 ) );
 		$tag_counts = array();
@@ -1611,7 +1465,6 @@ class HBL_Events_Admin {
 			</h1>
 
 			<div class="hbl-categories-layout">
-				<!-- Add New Tag Form -->
 				<div class="hbl-category-form-card">
 					<h2><?php esc_html_e( 'Add New Tag', 'hbl' ); ?></h2>
 					<form id="hbl-add-tag-form" class="hbl-category-form">
@@ -1637,7 +1490,6 @@ class HBL_Events_Admin {
 					</form>
 				</div>
 
-				<!-- Tags List -->
 				<div class="hbl-categories-list-card">
 					<h2><?php esc_html_e( 'All Tags', 'hbl' ); ?> <span class="hbl-count">(<?php echo count( $tags ); ?>)</span></h2>
 
@@ -1706,7 +1558,6 @@ class HBL_Events_Admin {
 				</div>
 			</div>
 
-			<!-- Edit Tag Modal -->
 			<div id="hbl-edit-tag-modal" class="hbl-modal" style="display: none;">
 				<div class="hbl-modal-overlay"></div>
 				<div class="hbl-modal-content">
@@ -1743,9 +1594,6 @@ class HBL_Events_Admin {
 		<?php
 	}
 
-	/**
-	 * AJAX: Add tag
-	 */
 	public function ajax_add_tag() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1778,9 +1626,6 @@ class HBL_Events_Admin {
 		) );
 	}
 
-	/**
-	 * AJAX: Edit tag
-	 */
 	public function ajax_edit_tag() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1813,9 +1658,6 @@ class HBL_Events_Admin {
 		wp_send_json_success( array( 'message' => 'Tag updated successfully' ) );
 	}
 
-	/**
-	 * AJAX: Delete tag
-	 */
 	public function ajax_delete_tag() {
 		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
 
@@ -1843,5 +1685,4 @@ class HBL_Events_Admin {
 	}
 }
 
-// Initialize
 HBL_Events_Admin::get_instance();

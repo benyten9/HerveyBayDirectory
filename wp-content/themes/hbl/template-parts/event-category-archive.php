@@ -1,25 +1,14 @@
 <?php
-/**
- * Template part for displaying event category archives
- * 
- * Fallback template when no Elementor template is assigned.
- * Shows events from the HBL custom events database.
- *
- * @package HBL
- * @since 1.3.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Get the current category
 $term = get_queried_object();
 $category_name = $term ? $term->name : __( 'Event Category', 'hbl' );
 $category_description = $term ? $term->description : '';
 $category_id = $term ? $term->term_id : 0;
 
-// Get events from the custom database
 $events = array();
 if ( function_exists( 'hbl_events_db' ) && $category_id ) {
 	$db = hbl_events_db();
@@ -36,7 +25,6 @@ if ( function_exists( 'hbl_events_db' ) && $category_id ) {
 
 <main id="content" class="site-main">
 	<div class="container py-5">
-		<!-- Category Header -->
 		<header class="page-header mb-5 text-center">
 			<h1 class="entry-title mb-3"><?php echo esc_html( $category_name ); ?></h1>
 			<?php if ( $category_description ) : ?>
@@ -47,7 +35,6 @@ if ( function_exists( 'hbl_events_db' ) && $category_id ) {
 			<?php endif; ?>
 		</header>
 
-		<!-- Events Grid -->
 		<div class="page-content">
 			<?php if ( ! empty( $events ) ) : ?>
 				<div class="row g-4">
@@ -118,7 +105,6 @@ if ( function_exists( 'hbl_events_db' ) && $category_id ) {
 			<?php endif; ?>
 		</div>
 
-		<!-- Admin Notice -->
 		<?php if ( current_user_can( 'edit_theme_options' ) ) : ?>
 			<div class="alert alert-info mt-5">
 				<strong><?php esc_html_e( 'Admin Notice:', 'hbl' ); ?></strong>

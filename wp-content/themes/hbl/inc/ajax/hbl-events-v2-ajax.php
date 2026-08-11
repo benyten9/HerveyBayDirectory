@@ -1,20 +1,9 @@
 <?php
-/**
- * HBL Events V2 AJAX Handlers
- *
- * Handles dynamic filtering for the V2 Event Single Category widget.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * AJAX Handler for V2 Event Single Category Widget Filtering
- */
 function hbl_events_v2_filter_events() {
 	check_ajax_referer( 'hbl_v2_filter_nonce', 'nonce' );
 
@@ -37,7 +26,6 @@ function hbl_events_v2_filter_events() {
 	$upcoming_only = ! empty( $widget_settings['show_upcoming_only'] ) && 'yes' === $widget_settings['show_upcoming_only'];
 	$fallback_logo = ! empty( $widget_settings['fallback_logo'] ) ? $widget_settings['fallback_logo'] : array();
 
-	// ---- Query events ----
 	$db         = hbl_events_db();
 	$query_args = array(
 		'category_id' => $term_id,
@@ -70,7 +58,6 @@ function hbl_events_v2_filter_events() {
 		$processed[]               = $item;
 	}
 
-	// Sort
 	if ( 'a-z' === $sort ) {
 		usort( $processed, function( $a, $b ) { return strcasecmp( $a->title, $b->title ); } );
 	} elseif ( 'z-a' === $sort ) {
@@ -90,7 +77,6 @@ function hbl_events_v2_filter_events() {
 	$offset       = ( $paged - 1 ) * $per_page;
 	$events       = array_slice( $processed, $offset, $per_page );
 
-	// ---- Render cards ----
 	$half         = $events ? ceil( count( $events ) / 2 ) : 0;
 	$left_column  = array_slice( $events, 0, $half );
 	$right_column = array_slice( $events, $half );
@@ -111,7 +97,6 @@ function hbl_events_v2_filter_events() {
 		$left_html = '<div class="hbl-v2-no-results"><i class="bi bi-search"></i><p>' . esc_html__( 'No events found.', 'hbl' ) . '</p></div>';
 	}
 
-	// ---- Render pagination ----
 	$pagination_html = '';
 	if ( $max_pages > 1 ) {
 		ob_start();
@@ -165,9 +150,6 @@ function hbl_events_v2_filter_events() {
 add_action( 'wp_ajax_hbl_v2_filter_events', 'hbl_events_v2_filter_events' );
 add_action( 'wp_ajax_nopriv_hbl_v2_filter_events', 'hbl_events_v2_filter_events' );
 
-/**
- * AJAX Handler for V2 Event Single Tag Widget Filtering
- */
 function hbl_events_v2_filter_events_by_tag() {
 	check_ajax_referer( 'hbl_v2_filter_nonce', 'nonce' );
 
@@ -190,7 +172,6 @@ function hbl_events_v2_filter_events_by_tag() {
 	$upcoming_only = ! empty( $widget_settings['show_upcoming_only'] ) && 'yes' === $widget_settings['show_upcoming_only'];
 	$fallback_logo = ! empty( $widget_settings['fallback_logo'] ) ? $widget_settings['fallback_logo'] : array();
 
-	// ---- Query events by tag ----
 	global $wpdb;
 	$table = hbl_events_db()->get_table_name();
 
@@ -216,7 +197,6 @@ function hbl_events_v2_filter_events_by_tag() {
 	$processed   = array();
 
 	foreach ( $raw_events as $event ) {
-		// Keyword filter
 		if ( ! empty( $keyword ) ) {
 			$haystack = strtolower( $event->title . ' ' . ( $event->venue ?? '' ) );
 			if ( strpos( $haystack, strtolower( $keyword ) ) === false ) {
@@ -240,7 +220,6 @@ function hbl_events_v2_filter_events_by_tag() {
 		$processed[]               = $item;
 	}
 
-	// Sort
 	if ( 'a-z' === $sort ) {
 		usort( $processed, function( $a, $b ) { return strcasecmp( $a->title, $b->title ); } );
 	} elseif ( 'z-a' === $sort ) {
@@ -260,7 +239,6 @@ function hbl_events_v2_filter_events_by_tag() {
 	$offset       = ( $paged - 1 ) * $per_page;
 	$events       = array_slice( $processed, $offset, $per_page );
 
-	// ---- Render cards ----
 	$half         = $events ? ceil( count( $events ) / 2 ) : 0;
 	$left_column  = array_slice( $events, 0, $half );
 	$right_column = array_slice( $events, $half );
@@ -281,7 +259,6 @@ function hbl_events_v2_filter_events_by_tag() {
 		$left_html = '<div class="hbl-v2-no-results"><i class="bi bi-search"></i><p>' . esc_html__( 'No events found.', 'hbl' ) . '</p></div>';
 	}
 
-	// ---- Render pagination ----
 	$pagination_html = '';
 	if ( $max_pages > 1 ) {
 		ob_start();
@@ -335,9 +312,6 @@ function hbl_events_v2_filter_events_by_tag() {
 add_action( 'wp_ajax_hbl_v2_filter_events_by_tag', 'hbl_events_v2_filter_events_by_tag' );
 add_action( 'wp_ajax_nopriv_hbl_v2_filter_events_by_tag', 'hbl_events_v2_filter_events_by_tag' );
 
-/**
- * Get next occurrence date for an event (standalone for AJAX context).
- */
 function hbl_events_v2_get_next_occurrence( $event ) {
 	$frequency   = $event->event_frequency ?? 'once';
 	$start_date  = $event->start_date;
@@ -424,12 +398,6 @@ function hbl_events_v2_get_next_occurrence( $event ) {
 	return $start_date;
 }
 
-/**
- * Render a single event card for AJAX responses.
- *
- * @param object $event        Event object with computed_start_date.
- * @param array  $fallback_logo Fallback logo array with 'url' key.
- */
 function hbl_events_v2_render_event_card( $event, $fallback_logo = array() ) {
 	$start_date    = $event->computed_start_date ?? $event->start_date;
 	$event_url     = function_exists( 'hbl_events_db' ) ? hbl_events_db()->get_event_url( $event ) : '#';

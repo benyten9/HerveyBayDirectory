@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Single Tag V2 Widget
- *
- * Displays listings from a tag (auto-detected from URL) using V2 design.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -44,9 +36,6 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 		return array( 'tag', 'archive', 'listings', 'directory', 'v2' );
 	}
 
-	/**
-	 * Detect current tag term from URL / query vars.
-	 */
 	private function get_current_term() {
 		if ( is_tax( 'at_biz_dir-tags' ) ) {
 			$term = get_queried_object();
@@ -63,7 +52,6 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 			}
 		}
 
-		// URL path detection
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$url_path    = trim( wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
 		$path_parts  = explode( '/', $url_path );
@@ -197,7 +185,6 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Tier Mapping
 		$this->start_controls_section(
 			'section_plan_tiers',
 			array( 'label' => esc_html__( 'Plan Tier Mapping', 'hbl' ) )
@@ -217,7 +204,6 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Badges
 		$this->start_controls_section(
 			'section_plan_badges',
 			array( 'label' => esc_html__( 'Plan Badges', 'hbl' ) )
@@ -268,15 +254,12 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 		$paged  = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 		$letter = isset( $_GET['letter'] ) ? strtoupper( sanitize_text_field( $_GET['letter'] ) ) : '';
 
-		// Build query with forced tag filter
 		$query_settings = $settings;
 		if ( $current_term ) {
 			$query_settings['number_of_listings'] = -1;
-			// Use the tag param directly - add to tax_query via settings key 'forced_tag_id'
 			$query_settings['forced_tag_id'] = $current_term->term_id;
 		}
 
-		// Build initial query directly (tag can't go through get_listings_query settings)
 		$listings_per_page = isset( $settings['listings_per_page'] ) ? absint( $settings['listings_per_page'] ) : 20;
 		$enable_pagination = isset( $settings['enable_pagination'] ) && 'yes' === $settings['enable_pagination'];
 
@@ -483,7 +466,7 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 					</div>
 				</div>
 			<?php endif; ?>
-			<?php endif; // current_term check ?>
+			<?php endif; ?>
 		</div>
 
 		<script>
@@ -654,7 +637,6 @@ class HBL_Single_Tag_V2 extends Widget_Base {
 					complete: function() { $widget.removeClass('loading'); }
 				});
 			}
-		// Map initialization — only register once globally
 		if (!window.hblV2MapListenerAdded) {
 			window.hblV2MapListenerAdded = true;
 

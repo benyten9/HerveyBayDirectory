@@ -1,11 +1,4 @@
 <?php
-/**
- * HBL Add Listing Form Widget
- * 
- * A beautiful custom Elementor widget for adding listings
- *
- * @package HBL
- */
 
 namespace HBL\Widgets;
 
@@ -41,7 +34,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -219,7 +211,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -263,7 +254,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -323,12 +313,10 @@ class HBL_Add_Listing_Form extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Enqueue WordPress media uploader for image upload
 		if ( ! did_action( 'wp_enqueue_media' ) ) {
 			wp_enqueue_media();
 		}
 
-		// Enqueue Leaflet CSS and JS for map
 		wp_enqueue_style(
 			'leaflet',
 			'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -343,45 +331,37 @@ class HBL_Add_Listing_Form extends Widget_Base {
 			true
 		);
 
-		// Enqueue reCAPTCHA if enabled
 		if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) && ! \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			wp_enqueue_script( 'google-recaptcha' );
 		}
 		$editing_listing_id = 0;
 		$listing_data = array();
 		
-		// Check URL for edit mode: /add-listing/edit/{id}/
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		if ( preg_match( '/\/edit\/(\d+)\/?/', $request_uri, $matches ) ) {
 			$editing_listing_id = absint( $matches[1] );
 		}
-		// Also check query params for non-pretty permalinks
 		if ( ! $editing_listing_id && isset( $_GET['atbdp_listing_id'] ) ) {
 			$editing_listing_id = absint( $_GET['atbdp_listing_id'] );
 		}
 		
-		// Load listing data if editing
 		if ( $editing_listing_id && defined( 'ATBDP_POST_TYPE' ) ) {
 			$listing_post = get_post( $editing_listing_id );
 			$current_user_id = get_current_user_id();
 			
-			// Verify the listing exists and user owns it
 			if ( $listing_post && get_post_type( $listing_post ) === ATBDP_POST_TYPE && 
 			     ( (int) $listing_post->post_author === $current_user_id || current_user_can( 'edit_others_posts' ) ) ) {
 				
-				// Get categories (ALL categories, not just first one)
 				$listing_categories_terms = get_the_terms( $editing_listing_id, ATBDP_CATEGORY );
 				$listing_category_ids = array();
 				if ( $listing_categories_terms && ! is_wp_error( $listing_categories_terms ) ) {
 					$listing_category_ids = wp_list_pluck( $listing_categories_terms, 'term_id' );
 				}
-				$listing_category_id = ! empty( $listing_category_ids ) ? $listing_category_ids[0] : 0; // Keep first for backward compatibility
+				$listing_category_id = ! empty( $listing_category_ids ) ? $listing_category_ids[0] : 0;
 				
-				// Get locations
 				$listing_locations_terms = defined( 'ATBDP_LOCATION' ) ? get_the_terms( $editing_listing_id, ATBDP_LOCATION ) : array();
 				$listing_location_id = ( $listing_locations_terms && ! is_wp_error( $listing_locations_terms ) ) ? $listing_locations_terms[0]->term_id : 0;
 				
-				// Get services
 				$services_text = get_post_meta( $editing_listing_id, '_services', true );
 				if ( empty( $services_text ) ) {
 					$services_text = get_post_meta( $editing_listing_id, 'services', true );
@@ -391,22 +371,17 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					$services_list = array_filter( array_map( 'trim', explode( "\n", $services_text ) ) );
 				}
 				
-				// Get tags from taxonomy
 				$listing_tags_terms = get_the_terms( $editing_listing_id, 'at_biz_dir-tags' );
 				$listing_tags_names = array();
 				if ( $listing_tags_terms && ! is_wp_error( $listing_tags_terms ) ) {
 					$listing_tags_names = wp_list_pluck( $listing_tags_terms, 'name' );
 				}
-				// Store tags as comma-separated string (same format as tagline field)
 				$tags_string = ! empty( $listing_tags_names ) ? implode( ',', $listing_tags_names ) : '';
 				
-				// Get selected package/plan
 				$selected_plan_id = get_post_meta( $editing_listing_id, '_fm_plans', true );
 				
-				// Get gallery images
 				$gallery_ids = get_post_meta( $editing_listing_id, '_listing_img', true );
 				
-				// Get logo (check custom-file first, then featured image)
 				$logo_url = '';
 				$custom_file = get_post_meta( $editing_listing_id, 'custom-file', true );
 				if ( ! empty( $custom_file ) ) {
@@ -420,8 +395,8 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					'title'          => $listing_post->post_title,
 					'content'        => $listing_post->post_content,
 					'tagline'        => ! empty( $tags_string ) ? $tags_string : get_post_meta( $editing_listing_id, '_tagline', true ),
-					'category'       => implode( ',', $listing_category_ids ), // All categories as comma-separated
-					'categories'     => $listing_category_ids, // Array of all category IDs
+					'category'       => implode( ',', $listing_category_ids ),
+					'categories'     => $listing_category_ids,
 					'location'       => $listing_location_id,
 					'phone'          => get_post_meta( $editing_listing_id, '_phone', true ),
 					'email'          => get_post_meta( $editing_listing_id, '_email', true ),
@@ -448,14 +423,12 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					'pricing_list'   => get_post_meta( $editing_listing_id, '_pricing', true ),
 				);
 			} else {
-				// User doesn't own this listing or it doesn't exist
 				$editing_listing_id = 0;
 			}
 		}
 		
 		$is_editing = ! empty( $listing_data );
 
-		// Check if user is logged in
 		if ( 'yes' === $settings['require_login'] && ! is_user_logged_in() ) {
 			$login_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_login_page_link() : wp_login_url();
 			$register_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_registration_page_link() : wp_registration_url();
@@ -488,7 +461,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 			return;
 		}
 
-		// Get listing categories from Directorist
 		$listing_categories = array();
 		if ( taxonomy_exists( ATBDP_CATEGORY ) ) {
 			$listing_categories = get_terms( array(
@@ -497,7 +469,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 			) );
 		}
 
-		// Get listing locations from Directorist
 		$listing_locations = array();
 		if ( taxonomy_exists( ATBDP_LOCATION ) ) {
 			$listing_locations = get_terms( array(
@@ -506,7 +477,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 			) );
 		}
 
-		// Get listing tags from Directorist
 		$listing_tags = array();
 		if ( taxonomy_exists( 'at_biz_dir-tags' ) ) {
 			$listing_tags = get_terms( array(
@@ -515,22 +485,15 @@ class HBL_Add_Listing_Form extends Widget_Base {
 			) );
 		}
 
-		// Get current user ID
 		$user_id = get_current_user_id();
 
-		// Get listing packages/pricing plans from Directorist with all restrictions.
-		// All Directorist coupling lives in HBL_Pricing_Plans so future plugin
-		// changes only need handling there. Requires per-plan field restrictions
-		// to drive the show/hide behaviour of the submission form fields.
 		$listing_packages = class_exists( 'HBL_Pricing_Plans' )
 			? \HBL_Pricing_Plans::get_plans( array( 'with_restrictions' => true ) )
 			: array();
-		// Get the all listings page URL for back button
 		$all_listings_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/all-listings/' );
 		?>
 		<div class="hbl-add-listing-form-widget">
 			<?php 
-			// Debug mode - show plan settings when ?debug=plans is in URL
 			if ( isset( $_GET['debug'] ) && $_GET['debug'] === 'plans' && current_user_can( 'manage_options' ) ) :
 			?>
 			<div class="hbl-debug-plans" style="background: #1F2937; color: #F3F4F6; padding: 24px; border-radius: 3px; margin-bottom: 24px; font-family: monospace; font-size: 13px;">
@@ -593,14 +556,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 								</tr>
 								<?php 
 								$meta_keys = array(
-									// Form field restrictions (with underscore prefix)
 									'_phone', '_email', '_website', '_social',
 									'_listing_img', '_max_listing_img', '_unlimited_listing_img', '_videourl',
 									'_category', '_max_category', '_tag', '_max_tag', '_pricing',
 									'_tagline', '_listing_content', '_address', '_map', '_location',
-									// Feature settings (legacy format)
 									'fm_cs_review', '_faqs', '_bdbh', 'cf_owner', 'is_featured_listing',
-									// Plan settings
 									'fm_price', 'free_plan', 'fm_description', 'default_pln'
 								);
 								foreach ( $meta_keys as $meta_key ) :
@@ -670,7 +630,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						$package_section_class .= ' hbl-section-not-launched';
 					}
 				?>
-				<!-- Listing Package Section -->
 				<div class="<?php echo esc_attr( $package_section_class ); ?>">
 					<?php if ( ! $show_packages ) : ?>
 						<div class="hbl-not-launched-overlay">
@@ -710,7 +669,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 									$coming_soon_ids = array_map( 'trim', explode( ',', $settings['coming_soon_plans'] ) );
 								}
 								
-								// Find first available plan for default selection
 								$first_available_index = -1;
 								foreach ( $listing_packages as $idx => $pkg ) {
 									if ( ! in_array( (string) $pkg['id'], $coming_soon_ids ) ) {
@@ -784,7 +742,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_business_info'] ) : ?>
-				<!-- Business Info Section -->
 				<div class="hbl-form-section" id="hbl-section-business">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -800,7 +757,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Business Name -->
 						<div class="hbl-form-group">
 							<label for="listing_title" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -814,7 +770,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Tags -->
 						<?php if ( ! empty( $listing_tags ) && ! is_wp_error( $listing_tags ) ) : ?>
 						<div class="hbl-form-group" id="hbl-field-tags">
 							<label for="listing_tagline" class="hbl-form-label">
@@ -843,7 +798,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						</div>
 						<?php endif; ?>
 
-						<!-- Description -->
 						<div class="hbl-form-group">
 							<label for="listing_content" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -859,7 +813,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							<p class="hbl-form-help-text hbl-plan-helper" data-plan-bronze="<?php esc_attr_e( 'Add a short description here (up to 50 words).', 'hbl' ); ?>" data-plan-silver="<?php esc_attr_e( 'Add a short description here (up to 50 words).', 'hbl' ); ?>" data-plan-gold="<?php esc_attr_e( 'Add a comprehensive description of up to 500 words for maximum visibility and detail.', 'hbl' ); ?>"><?php esc_html_e( 'Add a short description here (up to 50 words).', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Category -->
 						<?php if ( ! empty( $listing_categories ) && ! is_wp_error( $listing_categories ) ) : ?>
 						<div class="hbl-form-group" id="hbl-field-category">
 							<label for="listing_category" class="hbl-form-label">
@@ -892,7 +845,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_pricing_info'] ) : ?>
-				<!-- Pricing Section -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -951,7 +903,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_services'] ) : ?>
-				<!-- Services Section -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1017,7 +968,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_contact_info'] ) : ?>
-				<!-- Contact Info Section -->
 				<div class="hbl-form-section" id="hbl-section-contact">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1031,7 +981,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Phone & Email Row -->
 						<div class="hbl-form-row">
 							<div class="hbl-form-group hbl-form-group-half">
 								<label for="listing_phone" class="hbl-form-label">
@@ -1059,7 +1008,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Website -->
 						<div class="hbl-form-group">
 							<label for="listing_website" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1074,7 +1022,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							<p class="hbl-form-help-text hbl-plan-helper hbl-plan-helper-gold-only" data-plan-bronze="" data-plan-silver="" data-plan-gold="<?php esc_attr_e( 'Add your website, email, socials and directions to make it easy for customers to find and visit you.', 'hbl' ); ?>"></p>
 						</div>
 
-						<!-- Address -->
 						<div class="hbl-form-group">
 							<label for="listing_address" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1089,7 +1036,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							<p class="hbl-form-help-text hbl-plan-helper" data-plan-bronze="<?php esc_attr_e( 'Add your business address so customers know where you\'re located.', 'hbl' ); ?>" data-plan-silver="<?php esc_attr_e( 'Add your business address so customers know where you\'re located.', 'hbl' ); ?>" data-plan-gold="<?php esc_attr_e( 'Add your business address so customers can find you and get directions.', 'hbl' ); ?>"><?php esc_html_e( 'Add your business address so customers know where you\'re located.', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Location -->
 						<?php if ( ! empty( $listing_locations ) && ! is_wp_error( $listing_locations ) ) : ?>
 						<div class="hbl-form-group">
 							<label for="listing_location" class="hbl-form-label">
@@ -1116,7 +1062,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_map'] ) : ?>
-				<!-- Map/Location Section -->
 				<div class="hbl-form-section" id="hbl-section-map">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1132,7 +1077,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Search Address for Map -->
 						<div class="hbl-form-group">
 							<label for="listing_map_address" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1153,7 +1097,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							<p class="hbl-form-help-text"><?php esc_html_e( 'Type an address and press Enter or click search to locate it on the map', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Map Container -->
 						<div class="hbl-form-group">
 							<label class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1168,7 +1111,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Manual Coordinates -->
 						<div class="hbl-form-group">
 							<label class="hbl-form-label">
 								<input type="checkbox" id="manual_coordinate" name="manual_coordinate" value="1" class="hbl-form-checkbox-inline">
@@ -1203,7 +1145,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</button>
 						</div>
 
-						<!-- Hide Map Option -->
 						<div class="hbl-form-group">
 							<label class="hbl-form-label">
 								<input type="checkbox" id="hide_map" name="hide_map" value="1" class="hbl-form-checkbox-inline">
@@ -1215,7 +1156,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_social'] ) : ?>
-				<!-- Social Media Section -->
 				<div class="hbl-form-section" id="hbl-section-social">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1229,7 +1169,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Facebook -->
 						<div class="hbl-form-group">
 							<label for="listing_facebook" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1242,7 +1181,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Instagram -->
 						<div class="hbl-form-group">
 							<label for="listing_instagram" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1257,7 +1195,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Twitter/X -->
 						<div class="hbl-form-group">
 							<label for="listing_twitter" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1270,7 +1207,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- LinkedIn -->
 						<div class="hbl-form-group">
 							<label for="listing_linkedin" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1285,7 +1221,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- YouTube -->
 						<div class="hbl-form-group">
 							<label for="listing_youtube" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1299,7 +1234,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- TikTok -->
 						<div class="hbl-form-group">
 							<label for="listing_tiktok" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1318,7 +1252,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['enable_media'] ) : ?>
-				<!-- Media Section -->
 				<div class="hbl-form-section" id="hbl-section-media">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1334,7 +1267,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Logo/Featured Image -->
 						<div class="hbl-form-group">
 							<label class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1392,7 +1324,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Gallery Images -->
 						<div class="hbl-form-group" id="hbl-field-gallery">
 							<label class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1407,7 +1338,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							<div class="hbl-field-limit-badge" id="hbl-limit-gallery"></div>
 							<div class="hbl-form-gallery-upload">
 								<?php 
-								// Handle gallery IDs - can be array or comma-separated string
 								$gallery_value = '';
 								if ( $is_editing && ! empty( $listing_data['gallery'] ) ) {
 									$gallery_ids_raw = $listing_data['gallery'];
@@ -1452,7 +1382,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Video URL -->
 						<div class="hbl-form-group">
 							<label for="listing_video" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1470,7 +1399,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Promotions & Invitations Section (Gold Only) -->
 				<div class="hbl-form-section hbl-form-section-info hbl-gold-only-section" id="hbl-section-promotions" style="display: none;">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1509,7 +1437,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Submit Button -->
 				<div class="hbl-form-actions">
 					<?php if ( $is_editing ) : ?>
 						<a href="<?php echo esc_url( $all_listings_url ); ?>" class="hbl-form-btn hbl-form-btn-secondary hbl-form-btn-large">
@@ -1539,14 +1466,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				var $form = $('#hbl-listing-form');
 				var $packageInputs = $form.find('input[name="listing_package"]');
 				
-				// Track current restrictions
 				var currentRestrictions = {};
 				
-				// Track selected tags and categories
 				var selectedTags = [];
 				var selectedCategories = [];
 				
-				// Field mapping: restriction key => form field selectors
 				var fieldMap = {
 					'phone': '#listing_phone',
 					'email': '#listing_email',
@@ -1557,13 +1481,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					'location': '#listing_location',
 				};
 				
-				// Section mapping: restriction key => section ID to control
 				var sectionMap = {
 					'social_networks': '#hbl-section-social',
 					'map': '#hbl-section-map',
 				};
 				
-				// Create limit badge HTML
 				function createLimitBadge(type, current, max, unlimited, allowed) {
 					if (!allowed) {
 						return '<span class="hbl-limit-badge hbl-limit-disabled">' +
@@ -1588,9 +1510,7 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						current + '/' + max + ' ' + type + '</span>';
 				}
 				
-				// Update individual field limit badges
 				function updateFieldLimits(restrictions) {
-					// Tags limit badge
 					var tagsMax = restrictions.unlimited_tags ? 999 : (parseInt(restrictions.max_tags) || 1);
 					var tagsBadge = createLimitBadge(
 						'<?php echo esc_js( __( 'tags', 'hbl' ) ); ?>',
@@ -1601,7 +1521,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					);
 					$('#hbl-limit-tags').html(tagsBadge);
 					
-					// Categories limit badge
 					var catsMax = restrictions.unlimited_categories ? 999 : (parseInt(restrictions.max_categories) || 1);
 					var catsBadge = createLimitBadge(
 						'<?php echo esc_js( __( 'categories', 'hbl' ) ); ?>',
@@ -1612,7 +1531,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					);
 					$('#hbl-limit-category').html(catsBadge);
 					
-					// Gallery images limit badge
 					var galleryCount = $('#hbl-listing-gallery-preview .hbl-form-gallery-item').length;
 					var imagesMax = restrictions.unlimited_images ? 999 : (parseInt(restrictions.max_images) || 10);
 					var galleryBadge = createLimitBadge(
@@ -1625,23 +1543,19 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					$('#hbl-limit-gallery').html(galleryBadge);
 				}
 				
-				// Apply plan restrictions to form
 				function applyPlanRestrictions(restrictions) {
 					if (!restrictions) return;
 					
 					currentRestrictions = restrictions;
 					console.log('Applying restrictions:', restrictions);
 					
-					// Update field limit badges
 					updateFieldLimits(restrictions);
 					
-					// Reset all fields and sections first
 					$form.find('.hbl-form-section').removeClass('hbl-section-restricted').show();
 					$form.find('.hbl-form-group').removeClass('hbl-field-restricted');
 					$form.find('.hbl-upgrade-notice').remove();
 					$form.find('input, textarea, select').prop('disabled', false);
 					
-					// Apply field-level restrictions
 					$.each(fieldMap, function(key, selector) {
 						var isAllowed = restrictions[key];
 						var $fields = $(selector);
@@ -1663,7 +1577,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						}
 					});
 					
-					// Handle sections
 					$.each(sectionMap, function(key, selector) {
 						var isAllowed = restrictions[key];
 						var $section = $(selector);
@@ -1674,19 +1587,16 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						}
 					});
 					
-					// Handle tags field
 					if (!restrictions.tags) {
 						$('#hbl-field-tags').addClass('hbl-field-restricted');
 						$('#listing_tagline').prop('disabled', true);
 					}
 					
-					// Handle category field
 					if (!restrictions.category) {
 						$('#hbl-field-category').addClass('hbl-field-restricted');
 						$('#listing_category').prop('disabled', true);
 					}
 					
-					// Handle gallery field
 					if (!restrictions.gallery) {
 						$('#hbl-field-gallery').addClass('hbl-field-restricted');
 						$('#hbl-gallery-add-btn').addClass('hbl-btn-disabled');
@@ -1694,12 +1604,10 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						$('#hbl-gallery-add-btn').removeClass('hbl-btn-disabled');
 					}
 					
-					// Store limits in form data
 					$form.data('max-images', restrictions.unlimited_images ? 0 : (parseInt(restrictions.max_images) || 10));
 					$form.data('max-tags', restrictions.unlimited_tags ? 0 : (parseInt(restrictions.max_tags) || 1));
 					$form.data('max-categories', restrictions.unlimited_categories ? 0 : (parseInt(restrictions.max_categories) || 1));
 					
-					// Trigger map reinitialization if map is allowed
 					if (restrictions.map) {
 						setTimeout(function() {
 							$(window).trigger('hbl-reinit-map');
@@ -1707,7 +1615,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					}
 				}
 				
-				// Update helper text based on selected plan
 				function updatePlanHelperText(planType) {
 					var dataKey = 'data-plan-' + planType;
 					
@@ -1715,34 +1622,28 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						var $elem = $(this);
 						var newText = $elem.attr(dataKey);
 						
-						// If there's text for this plan, show it
 						if (newText && newText.trim() !== '') {
 							$elem.text(newText).show();
 						} else {
-							// Hide if no text for this plan (e.g., empty for bronze)
 							$elem.hide();
 						}
 					});
 					
-					// Update Reviews info box visibility
 					$('#hbl-reviews-info-box .hbl-info-box-bronze').hide();
 					$('#hbl-reviews-info-box .hbl-info-box-silver').hide();
 					$('#hbl-reviews-info-box .hbl-info-box-gold').hide();
 					$('#hbl-reviews-info-box .hbl-info-box-' + planType).show();
 					
-					// Show/hide Gold-only sections
 					if (planType === 'gold') {
 						$('.hbl-gold-only-section').show();
 					} else {
 						$('.hbl-gold-only-section').hide();
 					}
 					
-					// Update section styling based on plan
 					$('#hbl-section-reviews').removeClass('hbl-section-bronze hbl-section-silver hbl-section-gold')
 						.addClass('hbl-section-' + planType);
 				}
 				
-				// Determine plan type from plan title/ID
 				function getPlanType($checkedPackage) {
 					var planTitle = $checkedPackage.closest('.hbl-form-package-option')
 						.find('.hbl-form-package-name').text().toLowerCase().trim();
@@ -1755,7 +1656,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					return 'bronze';
 				}
 				
-				// Tags selection handling (using select dropdown like categories)
 				var $tagSelect = $('#listing_tagline');
 				var $tagsHidden = $('#listing_tagline_hidden');
 				var $tagsSelected = $('#hbl-tags-selected');
@@ -1764,10 +1664,8 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					tagName = $.trim(tagName);
 					if (!tagName) return false;
 					
-					// Check if already selected
 					if (selectedTags.indexOf(tagName) !== -1) return false;
 					
-					// Check limit
 					var maxTags = $form.data('max-tags');
 					if (maxTags > 0 && selectedTags.length >= maxTags) {
 						alert('<?php echo esc_js( __( 'You have reached the maximum number of tags allowed for your plan.', 'hbl' ) ); ?>');
@@ -1782,7 +1680,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						'</span>');
 					$tagsSelected.append($tag);
 					
-					// Hide option from dropdown
 					$tagSelect.find('option[value="' + tagName + '"]').hide();
 					
 					updateTagsHidden();
@@ -1805,12 +1702,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					$tagsHidden.val(selectedTags.join(','));
 				}
 				
-				// Tag select events
 				$tagSelect.on('change', function() {
 					var $selected = $(this).find('option:selected');
 					if ($selected.val()) {
 						addTag($selected.val());
-						$(this).val(''); // Reset dropdown
+						$(this).val('');
 					}
 				});
 				
@@ -1818,7 +1714,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					removeTag($(this).data('tag'));
 				});
 				
-				// Initialize tags from hidden field value
 				var initialTags = $tagsHidden.val();
 				if (initialTags) {
 					initialTags.split(',').forEach(function(tag) {
@@ -1829,13 +1724,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 								'<button type="button" class="hbl-tag-remove" data-tag="' + $('<div>').text(tag.trim()).html() + '">&times;</button>' +
 								'</span>');
 							$tagsSelected.append($tag);
-							// Hide the option from dropdown
 							$tagSelect.find('option[value="' + tag.trim() + '"]').hide();
 						}
 					});
 				}
 				
-				// Category selection handling
 				var $categorySelect = $('#listing_category');
 				var $categoryHidden = $('#listing_category_hidden');
 				var $categoriesSelected = $('#hbl-categories-selected');
@@ -1843,12 +1736,10 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				function addCategory(catId, catName) {
 					if (!catId) return false;
 					
-					// Check if already selected
 					for (var i = 0; i < selectedCategories.length; i++) {
 						if (selectedCategories[i].id == catId) return false;
 					}
 					
-					// Check limit
 					var maxCats = $form.data('max-categories');
 					if (maxCats > 0 && selectedCategories.length >= maxCats) {
 						alert('<?php echo esc_js( __( 'You have reached the maximum number of categories allowed for your plan.', 'hbl' ) ); ?>');
@@ -1863,7 +1754,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						'</span>');
 					$categoriesSelected.append($cat);
 					
-					// Hide option from dropdown
 					$categorySelect.find('option[value="' + catId + '"]').hide();
 					
 					updateCategoriesHidden();
@@ -1886,12 +1776,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					$categoryHidden.val(ids.join(','));
 				}
 				
-				// Category select events
 				$categorySelect.on('change', function() {
 					var $selected = $(this).find('option:selected');
 					if ($selected.val()) {
 						addCategory($selected.val(), $selected.data('name') || $selected.text());
-						$(this).val(''); // Reset dropdown
+						$(this).val('');
 					}
 				});
 				
@@ -1899,7 +1788,6 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					removeCategory($(this).data('id'));
 				});
 				
-				// Initialize categories from hidden field value
 				var initialCategory = $categoryHidden.val();
 				if (initialCategory) {
 					initialCategory.split(',').forEach(function(catId) {
@@ -1918,12 +1806,10 @@ class HBL_Add_Listing_Form extends Widget_Base {
 					});
 				}
 				
-				// Listen for gallery changes to update limit
 				$(document).on('hbl-gallery-updated', function() {
 					updateFieldLimits(currentRestrictions);
 				});
 				
-				// Package selection changes
 				$packageInputs.on('change', function() {
 					var $this = $(this);
 					var restrictions = $this.data('restrictions');
@@ -1931,19 +1817,16 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						applyPlanRestrictions(restrictions);
 					}
 					
-					// Update helper text based on plan type
 					var planType = getPlanType($this);
 					updatePlanHelperText(planType);
 				});
 
-				// Prevent clicks on coming soon plans (extra safety)
 				$form.on('click', '.hbl-plan-coming-soon', function(e) {
 					e.preventDefault();
 					e.stopPropagation();
 					return false;
 				});
 				
-				// Apply restrictions on page load
 				setTimeout(function() {
 					var $checkedPackage = $packageInputs.filter(':checked');
 					if ($checkedPackage.length) {
@@ -1952,13 +1835,11 @@ class HBL_Add_Listing_Form extends Widget_Base {
 							applyPlanRestrictions(restrictions);
 						}
 						
-						// Update helper text based on plan type
 						var planType = getPlanType($checkedPackage);
 						updatePlanHelperText(planType);
 					}
 				}, 100);
 				
-				// Initialize logo/image if editing
 				<?php if ( $is_editing && ! empty( $listing_data['thumbnail_id'] ) ) : ?>
 				var thumbnailId = <?php echo absint( $listing_data['thumbnail_id'] ); ?>;
 				var thumbnailUrl = '<?php echo esc_js( wp_get_attachment_image_url( $listing_data['thumbnail_id'], 'medium' ) ); ?>';
@@ -1973,9 +1854,7 @@ class HBL_Add_Listing_Form extends Widget_Base {
 				}
 				<?php endif; ?>
 				
-				// Initialize gallery images array if editing
 				<?php if ( $is_editing && ! empty( $listing_data['gallery'] ) ) : 
-					// Convert gallery to comma-separated string for JS
 					$gallery_for_js = $listing_data['gallery'];
 					if ( is_array( $gallery_for_js ) ) {
 						$gallery_for_js = implode( ',', array_filter( array_map( 'absint', $gallery_for_js ) ) );
@@ -1989,12 +1868,9 @@ class HBL_Add_Listing_Form extends Widget_Base {
 						return id > 0; 
 					});
 					
-					// Initialize galleryImages array with existing IDs
-					// This will be used by the gallery management code in theme.js
 					if (typeof galleryImages !== 'undefined') {
 						galleryImages = galleryArray;
 					} else {
-						// If galleryImages is not yet defined, store it for later initialization
 						window.hblExistingGalleryIds = galleryArray;
 					}
 				}

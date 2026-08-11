@@ -1,34 +1,13 @@
 <?php
-/**
- * HBL Bulk Category Reassign Tool
- *
- * Allows admins to bulk reassign listings from one category to another.
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Class HBL_Bulk_Category_Reassign
- */
 class HBL_Bulk_Category_Reassign {
 
-	/**
-	 * Instance of this class.
-	 *
-	 * @var HBL_Bulk_Category_Reassign
-	 */
 	private static $instance = null;
 
-	/**
-	 * Get single instance of this class.
-	 *
-	 * @return HBL_Bulk_Category_Reassign
-	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -36,9 +15,6 @@ class HBL_Bulk_Category_Reassign {
 		return self::$instance;
 	}
 
-	/**
-	 * Constructor.
-	 */
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'register_parent_menu' ), 29 );
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ), 30 );
@@ -46,10 +22,6 @@ class HBL_Bulk_Category_Reassign {
 		add_action( 'wp_ajax_hbl_bulk_reassign_categories', array( $this, 'ajax_bulk_reassign' ) );
 	}
 
-	/**
-	 * Register the top-level "Directorist Tools" parent menu.
-	 * Runs before all three sub-tools so the parent exists when they attach.
-	 */
 	public function register_parent_menu() {
 		add_menu_page(
 			__( 'Directorist Tools', 'hbl' ),
@@ -61,13 +33,9 @@ class HBL_Bulk_Category_Reassign {
 			8
 		);
 
-		// Remove the auto-generated duplicate first submenu entry.
 		remove_submenu_page( 'hbl-directorist-tools', 'hbl-directorist-tools' );
 	}
 
-	/**
-	 * Render the parent "Directorist Tools" landing page.
-	 */
 	public function render_parent_page() {
 		$tools = array(
 			array(
@@ -125,7 +93,7 @@ class HBL_Bulk_Category_Reassign {
 						<div class="hbl-dt-card-arrow">
 							<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
 						</div>
-						<div class="hbl-dt-card-icon"><?php echo $tool['icon']; // phpcs:ignore ?></div>
+						<div class="hbl-dt-card-icon"><?php echo $tool['icon']; ?></div>
 						<h2 class="hbl-dt-card-title"><?php echo esc_html( $tool['title'] ); ?></h2>
 						<p class="hbl-dt-card-desc"><?php echo esc_html( $tool['description'] ); ?></p>
 					</a>
@@ -203,9 +171,6 @@ class HBL_Bulk_Category_Reassign {
 		<?php
 	}
 
-	/**
-	 * Add admin menu item.
-	 */
 	public function add_admin_menu() {
 		add_submenu_page(
 			'hbl-directorist-tools',
@@ -217,15 +182,9 @@ class HBL_Bulk_Category_Reassign {
 		);
 	}
 
-	/**
-	 * Enqueue admin scripts and styles.
-	 *
-	 * @param string $hook The current admin page.
-	 */
 	public function enqueue_scripts( $hook ) {
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 
-		// Load base styles on the parent landing page too.
 		if ( 'toplevel_page_hbl-directorist-tools' === $hook ) {
 			wp_enqueue_style(
 				'hbl-bulk-reassign',
@@ -274,11 +233,6 @@ class HBL_Bulk_Category_Reassign {
 		);
 	}
 
-	/**
-	 * Get all categories with listing counts.
-	 *
-	 * @return array
-	 */
 	private function get_categories() {
 		$categories = array();
 
@@ -297,7 +251,6 @@ class HBL_Bulk_Category_Reassign {
 
 		if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 			foreach ( $terms as $term ) {
-				// Get actual published listing count
 				$count = $this->get_category_listing_count( $term->term_id );
 				
 				$categories[] = array(
@@ -312,12 +265,6 @@ class HBL_Bulk_Category_Reassign {
 		return $categories;
 	}
 
-	/**
-	 * Get listing count for a category.
-	 *
-	 * @param int $term_id The term ID.
-	 * @return int
-	 */
 	private function get_category_listing_count( $term_id ) {
 		$args = array(
 			'post_type'      => 'at_biz_dir',
@@ -336,11 +283,6 @@ class HBL_Bulk_Category_Reassign {
 		return $query->found_posts;
 	}
 
-	/**
-	 * Get total listing count.
-	 *
-	 * @return int
-	 */
 	private function get_total_listings() {
 		$args = array(
 			'post_type'      => 'at_biz_dir',
@@ -352,9 +294,6 @@ class HBL_Bulk_Category_Reassign {
 		return $query->found_posts;
 	}
 
-	/**
-	 * Render the admin page.
-	 */
 	public function render_page() {
 		$categories     = $this->get_categories();
 		$total_listings = $this->get_total_listings();
@@ -372,7 +311,6 @@ class HBL_Bulk_Category_Reassign {
 			</h1>
 			<p class="description"><?php esc_html_e( 'Select source categories and reassign all their listings to a target category.', 'hbl' ); ?></p>
 
-			<!-- Stats Overview -->
 			<div class="hbl-reassign-stats">
 				<div class="hbl-stat-card">
 					<div class="hbl-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -391,7 +329,6 @@ class HBL_Bulk_Category_Reassign {
 			</div>
 
 			<div class="hbl-reassign-container">
-				<!-- Step 1: Select Source Categories -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">1</span>
@@ -424,7 +361,6 @@ class HBL_Bulk_Category_Reassign {
 													<span class="hbl-category-count">
 														<?php 
 														printf( 
-															/* translators: %d: number of listings */
 															esc_html( _n( '%d listing', '%d listings', $cat['count'], 'hbl' ) ), 
 															esc_html( $cat['count'] ) 
 														); 
@@ -449,7 +385,6 @@ class HBL_Bulk_Category_Reassign {
 					</div>
 				</div>
 
-				<!-- Step 2: Select Target Category -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">2</span>
@@ -484,7 +419,6 @@ class HBL_Bulk_Category_Reassign {
 					</div>
 				</div>
 
-				<!-- Step 3: Confirm & Execute -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">3</span>
@@ -514,9 +448,6 @@ class HBL_Bulk_Category_Reassign {
 		<?php
 	}
 
-	/**
-	 * AJAX handler to bulk reassign categories.
-	 */
 	public function ajax_bulk_reassign() {
 		check_ajax_referer( 'hbl_bulk_reassign_nonce', 'nonce' );
 
@@ -536,13 +467,11 @@ class HBL_Bulk_Category_Reassign {
 			wp_send_json_error( array( 'message' => __( 'No target category selected.', 'hbl' ) ) );
 		}
 
-		// Verify the target category exists
 		$target_term = get_term( $target_category, 'at_biz_dir-category' );
 		if ( ! $target_term || is_wp_error( $target_term ) ) {
 			wp_send_json_error( array( 'message' => __( 'Target category not found.', 'hbl' ) ) );
 		}
 
-		// Get all listings from source categories
 		$args = array(
 			'post_type'      => 'at_biz_dir',
 			'post_status'    => 'any',
@@ -569,10 +498,8 @@ class HBL_Bulk_Category_Reassign {
 
 		foreach ( $listing_ids as $listing_id ) {
 			if ( 'replace' === $mode ) {
-				// Replace all existing categories with the new one
 				$result = wp_set_object_terms( $listing_id, array( $target_category ), 'at_biz_dir-category' );
 			} else {
-				// Add to existing categories
 				$result = wp_set_object_terms( $listing_id, array( $target_category ), 'at_biz_dir-category', true );
 			}
 
@@ -584,7 +511,6 @@ class HBL_Bulk_Category_Reassign {
 		}
 
 		if ( $success_count > 0 ) {
-			// Get source category names for the message
 			$source_names = array();
 			foreach ( $source_categories as $cat_id ) {
 				$term = get_term( $cat_id, 'at_biz_dir-category' );
@@ -596,7 +522,6 @@ class HBL_Bulk_Category_Reassign {
 			wp_send_json_success(
 				array(
 					'message'       => sprintf(
-						/* translators: 1: success count, 2: source categories, 3: target category name */
 						__( 'Successfully reassigned %1$d listing(s) from "%2$s" to "%3$s".', 'hbl' ),
 						$success_count,
 						implode( ', ', $source_names ),
@@ -612,5 +537,4 @@ class HBL_Bulk_Category_Reassign {
 	}
 }
 
-// Initialize the class.
 HBL_Bulk_Category_Reassign::get_instance();

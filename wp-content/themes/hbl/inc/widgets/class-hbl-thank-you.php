@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Thank You Widget
- * 
- * A beautiful thank you page widget for form submissions, registrations, etc.
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -42,7 +34,6 @@ class HBL_Thank_You extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -99,7 +90,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: DETAILS BOX ==========
 		$this->start_controls_section(
 			'section_details',
 			array(
@@ -181,7 +171,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: REFERENCE INFO ==========
 		$this->start_controls_section(
 			'section_reference',
 			array(
@@ -228,7 +217,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: BUTTONS ==========
 		$this->start_controls_section(
 			'section_buttons',
 			array(
@@ -304,7 +292,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: SUPPORT ==========
 		$this->start_controls_section(
 			'section_support',
 			array(
@@ -362,7 +349,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -421,7 +407,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -459,7 +444,6 @@ class HBL_Thank_You extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -510,7 +494,6 @@ class HBL_Thank_You extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get reference from URL parameters
 		$reference = isset( $_GET['ref'] ) ? sanitize_text_field( $_GET['ref'] ) : '';
 		if ( empty( $reference ) && isset( $_GET['order_id'] ) ) {
 			$reference = 'HBL-' . absint( $_GET['order_id'] );
@@ -519,7 +502,6 @@ class HBL_Thank_You extends Widget_Base {
 			$reference = sanitize_text_field( $_GET['id'] );
 		}
 		
-		// Get button URLs
 		$primary_url = ! empty( $settings['primary_button_url']['url'] ) 
 			? $settings['primary_button_url']['url'] 
 			: ( class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/dashboard/' ) );
@@ -528,7 +510,6 @@ class HBL_Thank_You extends Widget_Base {
 			? $settings['secondary_button_url']['url'] 
 			: home_url( '/' );
 
-		// Get icon SVG
 		$icon_svg = $this->get_icon_svg( $settings['icon_type'] );
 		?>
 		<div class="hbl-thank-you-widget">
@@ -537,17 +518,15 @@ class HBL_Thank_You extends Widget_Base {
 			<?php endif; ?>
 			
 			<div class="hbl-thankyou-container">
-				<!-- Success Header -->
 				<div class="hbl-thankyou-header">
 					<div class="hbl-thankyou-icon">
-						<?php echo $icon_svg; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<?php echo $icon_svg; ?>
 					</div>
 					<h1 class="hbl-thankyou-title"><?php echo esc_html( $settings['thank_you_title'] ); ?></h1>
 					<p class="hbl-thankyou-message"><?php echo esc_html( $settings['thank_you_message'] ); ?></p>
 				</div>
 
 				<?php if ( 'yes' === $settings['show_reference'] && $reference ) : ?>
-				<!-- Reference Info -->
 				<div class="hbl-thankyou-reference">
 					<div class="hbl-thankyou-reference-label"><?php echo esc_html( $settings['reference_label'] ); ?></div>
 					<div class="hbl-thankyou-reference-value"><?php echo esc_html( $reference ); ?></div>
@@ -564,7 +543,6 @@ class HBL_Thank_You extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['show_details_box'] ) : ?>
-				<!-- What Happens Next -->
 				<div class="hbl-thankyou-details">
 					<h3 class="hbl-thankyou-details-title">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -602,7 +580,6 @@ class HBL_Thank_You extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Action Buttons -->
 				<div class="hbl-thankyou-actions">
 					<?php if ( ! empty( $settings['primary_button_text'] ) ) : ?>
 					<a href="<?php echo esc_url( $primary_url ); ?>" class="hbl-form-btn hbl-form-btn-primary hbl-form-btn-large">
@@ -627,7 +604,6 @@ class HBL_Thank_You extends Widget_Base {
 				</div>
 
 				<?php if ( 'yes' === $settings['show_social_share'] ) : ?>
-				<!-- Social Share -->
 				<div class="hbl-thankyou-share">
 					<span class="hbl-thankyou-share-label"><?php esc_html_e( 'Share with friends:', 'hbl' ); ?></span>
 					<div class="hbl-thankyou-share-buttons">
@@ -659,7 +635,6 @@ class HBL_Thank_You extends Widget_Base {
 				<?php endif; ?>
 
 				<?php if ( 'yes' === $settings['show_support'] ) : ?>
-				<!-- Support Section -->
 				<div class="hbl-thankyou-support">
 					<div class="hbl-thankyou-support-icon">
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -687,7 +662,6 @@ class HBL_Thank_You extends Widget_Base {
 		<script>
 		jQuery(document).ready(function($) {
 			<?php if ( 'yes' === $settings['show_animation'] ) : ?>
-			// Confetti animation
 			function createConfetti() {
 				var colors = ['#008080', '#F9532A', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 				var $container = $('#hbl-thankyou-confetti');
@@ -713,7 +687,6 @@ class HBL_Thank_You extends Widget_Base {
 			createConfetti();
 			<?php endif; ?>
 			
-			// Copy link button
 			$('#hbl-copy-link').on('click', function() {
 				var url = $(this).data('url');
 				var $btn = $(this);
@@ -726,7 +699,6 @@ class HBL_Thank_You extends Widget_Base {
 						}, 2000);
 					});
 				} else {
-					// Fallback
 					var $temp = $('<input>');
 					$('body').append($temp);
 					$temp.val(url).select();
@@ -743,9 +715,6 @@ class HBL_Thank_You extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get icon SVG based on type
-	 */
 	private function get_icon_svg( $type ) {
 		$icons = array(
 			'checkmark' => '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

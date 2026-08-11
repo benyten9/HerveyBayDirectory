@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Calendar Widget
- *
- * Calendar widget that displays events from custom HBL Events database
- * Matches Figma design specifications for Hervey Bay Directory
- *
- * @package HBL
- * @since 1.0.0
- */
 
 namespace HBL\Widgets;
 
@@ -17,14 +8,11 @@ use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Background;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
 class HBL_Calendar extends Widget_Base {
 
-	/**
-	 * Day labels for recurrence display
-	 */
 	private $day_labels = array(
 		'mon' => 'Monday',
 		'tue' => 'Tuesday',
@@ -35,9 +23,6 @@ class HBL_Calendar extends Widget_Base {
 		'sun' => 'Sunday',
 	);
 
-	/**
-	 * Week ordinal labels for recurrence display
-	 */
 	private $week_labels = array(
 		'1' => '1st',
 		'2' => '2nd',
@@ -45,47 +30,28 @@ class HBL_Calendar extends Widget_Base {
 		'4' => '4th',
 	);
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-calendar';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'Calendar', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-calendar';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Check if HBL Events DB is available
-	 */
 	private function is_events_db_active() {
 		return function_exists( 'hbl_events_db' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 
-		// Build event tag options (slug => name) for SELECT2 / SELECT controls
 		$_tag_opts = array();
 		$_raw_tags = get_terms( array(
 			'taxonomy'   => 'event_tag',
@@ -100,7 +66,6 @@ class HBL_Calendar extends Widget_Base {
 			}
 		}
 
-		// ========== CONTENT SECTION ==========
 		$this->start_controls_section(
 			'section_content',
 			array(
@@ -293,7 +258,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== FILTERS SECTION ==========
 		$this->start_controls_section(
 			'section_filters',
 			array(
@@ -463,7 +427,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'section_container_style',
 			array(
@@ -474,7 +437,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADINGS ==========
 		$this->start_controls_section(
 			'section_headings_style',
 			array(
@@ -676,7 +638,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CALENDAR ==========
 		$this->start_controls_section(
 			'section_calendar_style',
 			array(
@@ -853,7 +814,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: EVENTS ==========
 		$this->start_controls_section(
 			'section_events_style',
 			array(
@@ -991,7 +951,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: DIVIDER ==========
 		$this->start_controls_section(
 			'section_divider_style',
 			array(
@@ -1036,7 +995,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: FEATURED EVENTS ==========
 		$this->start_controls_section(
 			'section_featured_events_style',
 			array(
@@ -1191,7 +1149,6 @@ class HBL_Calendar extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== RESPONSIVE VISIBILITY ==========
 		$this->start_controls_section(
 			'section_responsive_visibility',
 			array(
@@ -1560,45 +1517,33 @@ class HBL_Calendar extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 		
-		// Check if HBL Events DB is available
 		if ( ! $this->is_events_db_active() ) {
 			echo '<div class="hbl-calendar-widget"><p>' . esc_html__( 'HBL Events system is required for this widget to work.', 'hbl' ) . '</p></div>';
 			return;
 		}
 
-		// Get current date (today)
 		$today = current_time( 'Y-m-d' );
 		$selected_date = $today;
 		
-		// Use today's month/year for the calendar display
 		$display_month = absint( date( 'n', strtotime( $today ) ) );
 		$display_year = absint( date( 'Y', strtotime( $today ) ) );
 
-		// Get events for the display month
 		$events = $this->get_month_events( $display_year, $display_month );
 
-		// Get calendar data for the display month
 		$calendar_data = $this->get_calendar_data( $display_year, $display_month, $events );
 
-		// Get events for today
 		$events_result = $this->get_events_for_date( $today, $settings['events_per_date'] );
 		$events_for_date = $events_result['events'];
 		$total_events = $events_result['total'];
 		$total_pages = ceil( $total_events / $settings['events_per_date'] );
 
-		// Keep current_date for "today" checks in templates
 		$current_date = $today;
 		$current_month = $display_month;
 		$current_year = $display_year;
 
-		// Event page URL - not needed anymore as we use hbl_events_db()->get_event_url()
-		// Keeping for backwards compatibility but it won't be used
 		$event_page_url = home_url( '/events/' );
 
 		?>
@@ -1662,7 +1607,6 @@ class HBL_Calendar extends Widget_Base {
 						</div>
 						
 						<div class="hbl-calendar-navigation">
-							<!-- Row 1: Prev month | Current month | Next month -->
 							<div class="hbl-calendar-month-nav-row">
 								<button type="button" class="hbl-calendar-nav-btn hbl-calendar-prev" data-direction="prev">
 									<svg width="8" height="11" viewBox="0 0 8 11" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1683,9 +1627,7 @@ class HBL_Calendar extends Widget_Base {
 								</button>
 							</div>
 
-							<!-- Row 2: Helper label | < Today > | Helper label -->
 							<?php
-							// Calculate previous and next day dates for day navigation
 							$prev_day = date( 'Y-m-d', strtotime( $selected_date . ' -1 day' ) );
 							$next_day = date( 'Y-m-d', strtotime( $selected_date . ' +1 day' ) );
 							?>
@@ -1726,7 +1668,6 @@ class HBL_Calendar extends Widget_Base {
 					
 					<div class="hbl-calendar-featured-events">
 						<?php
-						// Display Featured Event 1
 						if ( ! empty( $settings['featured_event_1'] ) ) {
 							$featured_event_1 = hbl_events_db()->get( absint( $settings['featured_event_1'] ) );
 							if ( $featured_event_1 ) {
@@ -1734,7 +1675,6 @@ class HBL_Calendar extends Widget_Base {
 							}
 						}
 						
-						// Display Featured Event 2
 						if ( ! empty( $settings['featured_event_2'] ) ) {
 							$featured_event_2 = hbl_events_db()->get( absint( $settings['featured_event_2'] ) );
 							if ( $featured_event_2 ) {
@@ -1890,7 +1830,6 @@ class HBL_Calendar extends Widget_Base {
 				</div>
 			</div>
 			
-			<!-- Active Filters Display -->
 			<div class="hbl-v2-active-filters" style="display: none;">
 				<div class="hbl-v2-active-filters-container"></div>
 			</div>
@@ -1917,7 +1856,6 @@ class HBL_Calendar extends Widget_Base {
 							$event_id = $event->id;
 						$event_title = $event->title;
 						$event_excerpt = wp_trim_words( $event->description, $settings['event_excerpt_length'] );
-						// Get event URL
 				$event_url = hbl_events_db()->get_event_url( $event );
 							$event_image = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'large' ) : '';
 							if ( ! $event_image ) {
@@ -1943,7 +1881,6 @@ class HBL_Calendar extends Widget_Base {
 										</p>
 									<?php endif; ?>
 									<?php
-									// Show event category
 									$event_category = '';
 									$event_category_link = '';
 									if ( ! empty( $event->category_id ) ) {
@@ -1997,21 +1934,16 @@ class HBL_Calendar extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get formatted event time display
-	 */
 	private function get_event_time_display( $event ) {
 		if ( $event->is_allday ) {
 			return esc_html__( 'All Day', 'hbl' );
 		}
 
-		// Check for multi-day events with specific daily hours
 		$scheduling_type = isset( $event->scheduling_type ) ? $event->scheduling_type : 'single';
 		$event_frequency = isset( $event->event_frequency ) ? $event->event_frequency : '';
 		
 		if ( ( $scheduling_type === 'multi' || $event_frequency === 'multi_day' ) 
 			&& ! empty( $event->daily_start_time ) ) {
-			// Use the daily opening hours for multi-day events
 			$start_time = date( get_option( 'time_format' ), strtotime( $event->daily_start_time ) );
 			
 			if ( ! empty( $event->daily_end_time ) ) {
@@ -2022,7 +1954,6 @@ class HBL_Calendar extends Widget_Base {
 			return $start_time;
 		}
 
-		// Standard time display for single/recurring events
 		$start_date = $event->start_date;
 		$end_date = $event->end_date;
 
@@ -2040,12 +1971,6 @@ class HBL_Calendar extends Widget_Base {
 		return $start_time;
 	}
 
-	/**
-	 * Generate human-readable recurrence description
-	 *
-	 * @param object $event Event object
-	 * @return string Human-readable description
-	 */
 	private function get_recurrence_description( $event ) {
 		$frequency = $event->event_frequency ?? '';
 		$interval = $event->recurrence_interval ?? 1;
@@ -2060,7 +1985,6 @@ class HBL_Calendar extends Widget_Base {
 			return __( 'Ongoing / recurring', 'hbl' );
 		}
 
-		// Multi-day event with open days
 		if ( $frequency === 'multi_day' ) {
 			if ( ! empty( $days ) ) {
 				$day_list = explode( ',', $days );
@@ -2082,7 +2006,6 @@ class HBL_Calendar extends Widget_Base {
 		}
 
 		if ( $frequency === 'weekly' ) {
-			// Weekly recurrence
 			if ( $interval == 2 ) {
 				$prefix = __( 'Every second', 'hbl' );
 			} else {
@@ -2108,11 +2031,9 @@ class HBL_Calendar extends Widget_Base {
 			return __( 'Weekly', 'hbl' );
 
 		} elseif ( $frequency === 'monthly' ) {
-			// Monthly recurrence
 			$week_parts = array();
 			$day_name = '';
 
-			// Get weeks
 			if ( ! empty( $weeks ) ) {
 				$week_list = explode( ',', $weeks );
 				foreach ( $week_list as $week ) {
@@ -2123,7 +2044,6 @@ class HBL_Calendar extends Widget_Base {
 				}
 			}
 
-			// Get day
 			if ( ! empty( $days ) ) {
 				$day = strtolower( trim( $days ) );
 				if ( isset( $this->day_labels[ $day ] ) ) {
@@ -2152,15 +2072,6 @@ class HBL_Calendar extends Widget_Base {
 		return '';
 	}
 
-	/**
-	 * Add recurring event dates to the events_by_date array
-	 *
-	 * @param array  $events_by_date Reference to events by date array
-	 * @param object $event Event object
-	 * @param int    $year Year
-	 * @param int    $month Month
-	 * @param array  $day_to_num Day name to number mapping
-	 */
 	private function add_recurring_event_dates( &$events_by_date, $event, $year, $month, $day_to_num ) {
 		$event_frequency = $event->event_frequency ?? 'once';
 		$recurrence_days = $event->recurrence_days ?? '';
@@ -2172,27 +2083,23 @@ class HBL_Calendar extends Widget_Base {
 		$days_in_month = date( 't', strtotime( "{$year}-{$month_padded}-01" ) );
 
 		if ( $event_frequency === 'weekly' && ! empty( $recurrence_days ) ) {
-			// Weekly recurrence - event occurs on specific days each week
 			$days = array_map( function( $d ) { return strtolower( trim( $d ) ); }, explode( ',', $recurrence_days ) );
 			
 			for ( $day = 1; $day <= $days_in_month; $day++ ) {
 				$date_string = "{$year}-{$month_padded}-" . str_pad( $day, 2, '0', STR_PAD_LEFT );
 				$date_timestamp = strtotime( $date_string );
 				
-				// Skip if date is before event start
 				if ( $date_timestamp < strtotime( date( 'Y-m-d', $event_start ) ) ) {
 					continue;
 				}
 
-				$day_of_week = strtolower( date( 'D', $date_timestamp ) ); // mon, tue, wed, etc.
+				$day_of_week = strtolower( date( 'D', $date_timestamp ) );
 				
-				// Check if this day matches recurrence days
 				if ( in_array( $day_of_week, $days, true ) ) {
-					// For bi-weekly, check if this is the right week
 					if ( $recurrence_interval == 2 ) {
 						$weeks_since_start = floor( ( $date_timestamp - $event_start ) / ( 7 * 24 * 60 * 60 ) );
 						if ( $weeks_since_start % 2 !== 0 ) {
-							continue; // Skip odd weeks for bi-weekly
+							continue;
 						}
 					}
 
@@ -2203,7 +2110,6 @@ class HBL_Calendar extends Widget_Base {
 				}
 			}
 		} elseif ( $event_frequency === 'monthly' && ! empty( $recurrence_days ) ) {
-			// Monthly recurrence - event occurs on specific week(s) and day
 			$day_name = strtolower( trim( $recurrence_days ) );
 			$weeks = ! empty( $recurrence_week ) ? array_map( 'trim', explode( ',', $recurrence_week ) ) : array();
 			
@@ -2216,7 +2122,6 @@ class HBL_Calendar extends Widget_Base {
 						continue;
 					}
 					
-					// Find the nth occurrence of the day in this month
 					$occurrence = 0;
 					for ( $day = 1; $day <= $days_in_month; $day++ ) {
 						$date_string = "{$year}-{$month_padded}-" . str_pad( $day, 2, '0', STR_PAD_LEFT );
@@ -2225,7 +2130,6 @@ class HBL_Calendar extends Widget_Base {
 						if ( date( 'w', $date_timestamp ) == $target_day_num ) {
 							$occurrence++;
 							if ( $occurrence == $week_num ) {
-								// Skip if date is before event start
 								if ( $date_timestamp < strtotime( date( 'Y-m-d', $event_start ) ) ) {
 									break;
 								}
@@ -2241,7 +2145,6 @@ class HBL_Calendar extends Widget_Base {
 				}
 			}
 		} elseif ( $event_frequency === 'recurring' ) {
-			// Ongoing/recurring - show on the original start date only (within month)
 			$start_date_string = date( 'Y-m-d', $event_start );
 			$start_month = date( 'n', $event_start );
 			$start_year = date( 'Y', $event_start );
@@ -2255,10 +2158,6 @@ class HBL_Calendar extends Widget_Base {
 		}
 	}
 
-	/**
-	 * Get events for a specific month from custom database
-	 * Includes one-off events and recurring events
-	 */
 	private function get_month_events( $year, $month ) {
 		if ( ! $this->is_events_db_active() ) {
 			return array();
@@ -2274,11 +2173,6 @@ class HBL_Calendar extends Widget_Base {
 		$start_date = "{$first_day} 00:00:00";
 		$end_date = "{$last_day} 23:59:59";
 
-		// Query events that fall within this month:
-		// 1. Events that START within this month
-		// 2. OR multi-day events that span into this month
-		// 3. OR recurring events (weekly/monthly) that started before or during this month
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
 			"SELECT * FROM `{$table}` 
 			WHERE status = %s
@@ -2301,17 +2195,13 @@ class HBL_Calendar extends Widget_Base {
 		return $results ? $results : array();
 	}
 
-	/**
-	 * Get calendar data for a month
-	 */
 	private function get_calendar_data( $year, $month, $events = array() ) {
 		$first_day = mktime( 0, 0, 0, $month, 1, $year );
 		$first_day_of_week = date( 'w', $first_day );
-		$first_day_of_week = $first_day_of_week == 0 ? 7 : $first_day_of_week; // Convert Sunday from 0 to 7
+		$first_day_of_week = $first_day_of_week == 0 ? 7 : $first_day_of_week;
 		$days_in_month = date( 't', $first_day );
 		$current_date = current_time( 'Y-m-d' );
 
-		// Day name to number mapping (for recurrence)
 		$day_to_num = array(
 			'sun' => 0,
 			'mon' => 1,
@@ -2322,7 +2212,6 @@ class HBL_Calendar extends Widget_Base {
 			'sat' => 6,
 		);
 
-		// Create events lookup by date
 		$events_by_date = array();
 		foreach ( $events as $event ) {
 			$event_start = $event->start_date;
@@ -2333,29 +2222,20 @@ class HBL_Calendar extends Widget_Base {
 				continue;
 			}
 
-			// Handle recurring events
 			if ( in_array( $event_frequency, array( 'weekly', 'monthly', 'recurring' ), true ) ) {
 				$this->add_recurring_event_dates( $events_by_date, $event, $year, $month, $day_to_num );
 				continue;
 			}
 
-			// Handle Multi-day events with specific open days
-			// Check both scheduling_type AND event_frequency for legacy/migration robustness
 			if ( ( isset( $event->scheduling_type ) && $event->scheduling_type === 'multi' ) || ( isset( $event->event_frequency ) && $event->event_frequency === 'multi_day' ) ) {
 				$start = strtotime( date( 'Y-m-d', strtotime( $event_start ) ) );
 				$end = ! empty( $event_end ) ? strtotime( date( 'Y-m-d', strtotime( $event_end ) ) ) : $start;
 				$recurrence_days = isset($event->recurrence_days) ? $event->recurrence_days : ''; 
 				$open_days_array = ! empty( $recurrence_days ) ? array_map('strtolower', array_map('trim', explode( ',', $recurrence_days ))) : array();
 
-				// Get all dates this event spans
 				for ( $date = $start; $date <= $end; $date = strtotime( '+1 day', $date ) ) {
-					// Check if valid day of week
-					// We always filter if we are in this block, assuming default is 'all open' only if input was missing/malformed,
-					// but here we trust the array. If array is empty, it means closed all days.
-					// Use date() instead of date_i18n() for consistent English abbreviations (mon, tue, etc.)
-					$day_name = strtolower( date( 'D', $date ) ); // mon, tue...
+					$day_name = strtolower( date( 'D', $date ) );
 					
-					// DEBUG
 					error_log( sprintf(
 						'🔴 Calendar Filter - Event #%d: Date %s (day: %s) vs open_days [%s] - %s',
 						$event->id,
@@ -2365,10 +2245,8 @@ class HBL_Calendar extends Widget_Base {
 						in_array( $day_name, $open_days_array, true ) ? 'SHOW' : 'SKIP'
 					) );
 					
-					// If we have explicit open days, and this day isn't one of them, skip.
-					// If open_days_array is empty, we skip everything (closed).
 					if ( ! in_array( $day_name, $open_days_array, true ) ) {
-						continue; // Skip closed days
+						continue;
 					}
 
 					$date_key = date( 'Y-m-d', $date );
@@ -2380,11 +2258,9 @@ class HBL_Calendar extends Widget_Base {
 				continue;
 			}
 
-			// Handle legacy one-off and standard multi-day events
 			$start = strtotime( date( 'Y-m-d', strtotime( $event_start ) ) );
 			$end = ! empty( $event_end ) ? strtotime( date( 'Y-m-d', strtotime( $event_end ) ) ) : $start;
 			
-			// Get all dates this event spans
 			for ( $date = $start; $date <= $end; $date = strtotime( '+1 day', $date ) ) {
 				$date_key = date( 'Y-m-d', $date );
 				if ( ! isset( $events_by_date[ $date_key ] ) ) {
@@ -2397,7 +2273,6 @@ class HBL_Calendar extends Widget_Base {
 		$weeks = array();
 		$week = array();
 		
-		// Add empty cells for days before the first day of the month
 		for ( $i = 1; $i < $first_day_of_week; $i++ ) {
 			$prev_month = $month - 1;
 			$prev_year = $year;
@@ -2420,7 +2295,6 @@ class HBL_Calendar extends Widget_Base {
 			);
 		}
 		
-		// Add days of the current month
 		for ( $day = 1; $day <= $days_in_month; $day++ ) {
 			$date_string = $year . '-' . str_pad( $month, 2, '0', STR_PAD_LEFT ) . '-' . str_pad( $day, 2, '0', STR_PAD_LEFT );
 			$is_today = ( $date_string === $current_date );
@@ -2435,14 +2309,12 @@ class HBL_Calendar extends Widget_Base {
 				'month'         => $month,
 			);
 			
-			// Start a new week if we've reached 7 days
 			if ( count( $week ) == 7 ) {
 				$weeks[] = $week;
 				$week = array();
 			}
 		}
 		
-		// Add empty cells for days after the last day of the month
 		$next_month = $month + 1;
 		$next_year = $year;
 		if ( $next_month > 12 ) {
@@ -2475,10 +2347,6 @@ class HBL_Calendar extends Widget_Base {
 		);
 	}
 
-	/**
-	 * Get events for a specific date from custom database
-	 * Includes one-off events and recurring events that match this date
-	 */
 	private function get_events_for_date( $date, $limit = 12 ) {
 		if ( ! $this->is_events_db_active() ) {
 			return array();
@@ -2489,13 +2357,8 @@ class HBL_Calendar extends Widget_Base {
 		
 		$date_start = $date . ' 00:00:00';
 		$date_timestamp = strtotime( $date );
-		$day_of_week = strtolower( date( 'D', $date_timestamp ) ); // mon, tue, wed, etc.
+		$day_of_week = strtolower( date( 'D', $date_timestamp ) );
 
-		// Query events that fall on this date:
-		// 1. Events that START on this date
-		// 2. OR multi-day events where the date falls between start and end
-		// 3. OR recurring events that started before or on this date
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
 			"SELECT * FROM `{$table}` 
 			WHERE status = %s
@@ -2518,10 +2381,8 @@ class HBL_Calendar extends Widget_Base {
 			return array();
 		}
 
-		// Filter recurring events to only include those that match this specific date
 		$filtered_events = array();
 		
-		// Day name to number mapping
 		$day_to_num = array(
 			'sun' => 0,
 			'mon' => 1,
@@ -2537,32 +2398,27 @@ class HBL_Calendar extends Widget_Base {
 			$event_start = strtotime( $event->start_date );
 			$scheduling_type = $event->scheduling_type ?? 'single';
 			
-			// Handle Multi-day events with specific open days
 			if ( $scheduling_type === 'multi' || $event_frequency === 'multi_day' ) {
 				$recurrence_days = isset($event->recurrence_days) ? $event->recurrence_days : '';
 				$open_days_array = ! empty( $recurrence_days ) ? array_map('strtolower', array_map('trim', explode( ',', $recurrence_days ))) : array();
 				
-				// If open_days_array is empty, this day is closed
 				if ( empty( $open_days_array ) || ! in_array( $day_of_week, $open_days_array, true ) ) {
-					continue; // Skip - this day is not open
+					continue;
 				}
 				
 				$filtered_events[] = $event;
 				continue;
 			}
 			
-			// One-off and legacy multi-day events - include if they match the date
 			if ( ! in_array( $event_frequency, array( 'weekly', 'monthly', 'recurring' ), true ) ) {
 				$filtered_events[] = $event;
 				continue;
 			}
 
-			// Skip if date is before event start
 			if ( $date_timestamp < strtotime( date( 'Y-m-d', $event_start ) ) ) {
 				continue;
 			}
 
-			// Weekly recurring events
 			if ( $event_frequency === 'weekly' ) {
 				$recurrence_days = $event->recurrence_days ?? '';
 				$recurrence_interval = $event->recurrence_interval ?? 1;
@@ -2571,11 +2427,10 @@ class HBL_Calendar extends Widget_Base {
 					$days = array_map( function( $d ) { return strtolower( trim( $d ) ); }, explode( ',', $recurrence_days ) );
 					
 					if ( in_array( $day_of_week, $days, true ) ) {
-						// For bi-weekly, check if this is the right week
 						if ( $recurrence_interval == 2 ) {
 							$weeks_since_start = floor( ( $date_timestamp - $event_start ) / ( 7 * 24 * 60 * 60 ) );
 							if ( $weeks_since_start % 2 !== 0 ) {
-								continue; // Skip odd weeks for bi-weekly
+								continue;
 							}
 						}
 						$filtered_events[] = $event;
@@ -2584,7 +2439,6 @@ class HBL_Calendar extends Widget_Base {
 				continue;
 			}
 
-			// Monthly recurring events
 			if ( $event_frequency === 'monthly' ) {
 				$recurrence_days = $event->recurrence_days ?? '';
 				$recurrence_week = $event->recurrence_week ?? '';
@@ -2596,15 +2450,11 @@ class HBL_Calendar extends Widget_Base {
 					if ( isset( $day_to_num[ $day_name ] ) ) {
 						$target_day_num = $day_to_num[ $day_name ];
 						
-						// Check if today's day of week matches
 						if ( date( 'w', $date_timestamp ) == $target_day_num ) {
-							// Calculate which occurrence of this day in the month
-							// by counting how many times this day has occurred so far
 							$day_of_month = (int) date( 'j', $date_timestamp );
 							$current_month = date( 'n', $date_timestamp );
 							$current_year = date( 'Y', $date_timestamp );
 							
-							// Count occurrences of this day up to and including today
 							$occurrence = 0;
 							for ( $d = 1; $d <= $day_of_month; $d++ ) {
 								$check_date = strtotime( "{$current_year}-{$current_month}-{$d}" );
@@ -2622,7 +2472,6 @@ class HBL_Calendar extends Widget_Base {
 				continue;
 			}
 
-			// Ongoing/recurring - only show on original start date
 			if ( $event_frequency === 'recurring' ) {
 				if ( date( 'Y-m-d', $event_start ) === $date ) {
 					$filtered_events[] = $event;
@@ -2630,7 +2479,6 @@ class HBL_Calendar extends Widget_Base {
 			}
 		}
 
-		// Apply limit
 		$total_events = count( $filtered_events );
 		$events_slice = array_slice( $filtered_events, 0, $limit );
 		
@@ -2640,9 +2488,6 @@ class HBL_Calendar extends Widget_Base {
 		);
 	}
 
-	/**
-	 * Render featured event card
-	 */
 	private function render_featured_event( $event, $cta_text = 'Learn More', $description_length = 25, $placeholder_image = array(), $event_page_url = '' ) {
 		$event_id = $event->id;
 		$event_title = $event->title;
@@ -2650,7 +2495,6 @@ class HBL_Calendar extends Widget_Base {
 		$event_url = hbl_events_db()->get_event_url( $event );
 		$event_image = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'large' ) : '';
 		
-		// Don't render if no image - no placeholder for featured events
 		if ( ! $event_image ) {
 			$event_image = ! empty( $placeholder_image['url'] ) ? $placeholder_image['url'] : '';
 		}
@@ -2659,7 +2503,6 @@ class HBL_Calendar extends Widget_Base {
 			return;
 		}
 
-		// Event cost badge
 		$cost_badge = $event->event_cost === 'paid' ? __( 'Paid', 'hbl' ) : __( 'Free', 'hbl' );
 		
 		?>
@@ -2670,14 +2513,12 @@ class HBL_Calendar extends Widget_Base {
 					<span class="hbl-calendar-ticket-badge"><?php echo esc_html( $cost_badge ); ?></span>
 					<h4 class="hbl-calendar-featured-event-title"><?php echo esc_html( $event_title ); ?></h4>
 					<?php 
-					// Show event time
 					$event_time = $this->get_event_time_display( $event );
 					if ( ! empty( $event_time ) ) : 
 					?>
 						<p class="hbl-calendar-featured-event-time"><?php echo esc_html( $event_time ); ?></p>
 					<?php endif; ?>
 					<?php
-					// Show recurrence info
 					$recurrence_desc = $this->get_recurrence_description( $event );
 					if ( ! empty( $recurrence_desc ) ) :
 					?>

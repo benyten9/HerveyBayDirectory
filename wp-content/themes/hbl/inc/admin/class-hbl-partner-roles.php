@@ -1,43 +1,15 @@
 <?php
-/**
- * HBL Partner Roles System
- *
- * Creates custom user roles for partner agencies:
- * - Founding Partner: Special launch pricing, transitions to Partner Agency in 2027
- * - Partner Agency: Standard partner pricing with ongoing discounts
- *
- * @package HBL
- * @since 1.3.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Class HBL_Partner_Roles
- */
 class HBL_Partner_Roles {
 
-	/**
-	 * Date when Founding Partners become Partner Agencies.
-	 *
-	 * @var string
-	 */
 	const TRANSITION_DATE = '2027-01-01';
 
-	/**
-	 * Instance of this class.
-	 *
-	 * @var HBL_Partner_Roles
-	 */
 	private static $instance = null;
 
-	/**
-	 * Get single instance of this class.
-	 *
-	 * @return HBL_Partner_Roles
-	 */
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -45,71 +17,51 @@ class HBL_Partner_Roles {
 		return self::$instance;
 	}
 
-	/**
-	 * Constructor.
-	 */
 	private function __construct() {
-		// Register roles on theme activation
 		add_action( 'after_switch_theme', array( $this, 'register_roles' ) );
 		
-		// Initialize roles if they don't exist
 		add_action( 'init', array( $this, 'maybe_register_roles' ) );
 		
-		// Add user profile fields
 		add_action( 'show_user_profile', array( $this, 'add_partner_fields' ) );
 		add_action( 'edit_user_profile', array( $this, 'add_partner_fields' ) );
 		add_action( 'personal_options_update', array( $this, 'save_partner_fields' ) );
 		add_action( 'edit_user_profile_update', array( $this, 'save_partner_fields' ) );
 		
-		// Add admin columns to users list
 		add_filter( 'manage_users_columns', array( $this, 'add_user_columns' ) );
 		add_filter( 'manage_users_custom_column', array( $this, 'render_user_columns' ), 10, 3 );
 		
-		// Add admin menu for Partner Management
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		
-		// Enqueue admin scripts
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		
-		// Daily cron to check for role transitions
 		add_action( 'hbl_check_partner_transitions', array( $this, 'check_role_transitions' ) );
 		
-		// Schedule cron if not scheduled
 		if ( ! wp_next_scheduled( 'hbl_check_partner_transitions' ) ) {
 			wp_schedule_event( time(), 'daily', 'hbl_check_partner_transitions' );
 		}
 
-		// AJAX handlers
 		add_action( 'wp_ajax_hbl_create_partner_user', array( $this, 'ajax_create_partner_user' ) );
 	}
 
-	/**
-	 * Register custom roles.
-	 */
 	public function register_roles() {
-		// Get subscriber capabilities as base
 		$subscriber = get_role( 'subscriber' );
 		$base_caps  = $subscriber ? $subscriber->capabilities : array( 'read' => true );
 
-		// Add partner-specific capabilities
 		$partner_caps = array_merge( $base_caps, array(
 			'hbl_manage_client_listings' => true,
 			'hbl_view_partner_dashboard' => true,
 			'hbl_submit_listings'        => true,
 		) );
 
-		// Remove existing roles first to update capabilities
 		remove_role( 'founding_partner' );
 		remove_role( 'partner_agency' );
 
-		// Founding Partner role
 		add_role(
 			'founding_partner',
 			__( 'Founding Partner', 'hbl' ),
 			$partner_caps
 		);
 
-		// Partner Agency role
 		add_role(
 			'partner_agency',
 			__( 'Partner Agency', 'hbl' ),
@@ -117,20 +69,12 @@ class HBL_Partner_Roles {
 		);
 	}
 
-	/**
-	 * Maybe register roles if they don't exist.
-	 */
 	public function maybe_register_roles() {
 		if ( ! get_role( 'founding_partner' ) || ! get_role( 'partner_agency' ) ) {
 			$this->register_roles();
 		}
 	}
 
-	/**
-	 * Add partner fields to user profile.
-	 *
-	 * @param WP_User $user The user object.
-	 */
 	public function add_partner_fields( $user ) {
 		if ( ! current_user_can( 'edit_users' ) ) {
 			return;
@@ -208,7 +152,6 @@ class HBL_Partner_Roles {
 			<p style="margin: 8px 0 0; color: #78350F;">
 				<?php 
 				printf(
-					/* translators: %s: transition date */
 					esc_html__( 'This user has Founding Partner status with special launch pricing. On %s, their role will automatically transition to Partner Agency with ongoing partner discounts.', 'hbl' ),
 					esc_html( date_i18n( get_option( 'date_format' ), strtotime( self::TRANSITION_DATE ) ) )
 				);
@@ -219,11 +162,6 @@ class HBL_Partner_Roles {
 		<?php
 	}
 
-	/**
-	 * Save partner fields.
-	 *
-	 * @param int $user_id The user ID.
-	 */
 	public function save_partner_fields( $user_id ) {
 		if ( ! current_user_can( 'edit_user', $user_id ) ) {
 			return;
@@ -246,26 +184,12 @@ class HBL_Partner_Roles {
 		}
 	}
 
-	/**
-	 * Add user columns.
-	 *
-	 * @param array $columns Existing columns.
-	 * @return array
-	 */
 	public function add_user_columns( $columns ) {
 		$columns['hbl_agency']  = __( 'Agency', 'hbl' );
 		$columns['hbl_partner'] = __( 'Partner Status', 'hbl' );
 		return $columns;
 	}
 
-	/**
-	 * Render user columns.
-	 *
-	 * @param string $value       Column value.
-	 * @param string $column_name Column name.
-	 * @param int    $user_id     User ID.
-	 * @return string
-	 */
 	public function render_user_columns( $value, $column_name, $user_id ) {
 		$user = get_userdata( $user_id );
 
@@ -286,9 +210,6 @@ class HBL_Partner_Roles {
 		return $value;
 	}
 
-	/**
-	 * Add admin menu.
-	 */
 	public function add_admin_menu() {
 		add_users_page(
 			__( 'Partner Agencies', 'hbl' ),
@@ -299,11 +220,6 @@ class HBL_Partner_Roles {
 		);
 	}
 
-	/**
-	 * Enqueue scripts.
-	 *
-	 * @param string $hook The current admin page.
-	 */
 	public function enqueue_scripts( $hook ) {
 		if ( 'users_page_hbl-partner-agencies' !== $hook ) {
 			return;
@@ -340,9 +256,6 @@ class HBL_Partner_Roles {
 		);
 	}
 
-	/**
-	 * Render admin page.
-	 */
 	public function render_admin_page() {
 		$partners = $this->get_all_partners();
 		$stats    = $this->get_partner_stats();
@@ -359,7 +272,6 @@ class HBL_Partner_Roles {
 			</h1>
 			<p class="description"><?php esc_html_e( 'Manage partner agencies who can submit listings for their clients at special rates.', 'hbl' ); ?></p>
 
-			<!-- Stats -->
 			<div class="hbl-partner-stats">
 				<div class="hbl-stat-card hbl-stat-founding">
 					<span class="hbl-stat-number"><?php echo esc_html( $stats['founding_partners'] ); ?></span>
@@ -375,7 +287,6 @@ class HBL_Partner_Roles {
 				</div>
 			</div>
 
-			<!-- Transition Notice -->
 			<div class="hbl-transition-notice">
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
@@ -384,7 +295,6 @@ class HBL_Partner_Roles {
 				<span>
 					<?php 
 					printf(
-						/* translators: %s: transition date */
 						esc_html__( 'Founding Partners will automatically transition to Partner Agency status on %s.', 'hbl' ),
 						'<strong>' . esc_html( date_i18n( 'F j, Y', strtotime( self::TRANSITION_DATE ) ) ) . '</strong>'
 					);
@@ -392,7 +302,6 @@ class HBL_Partner_Roles {
 				</span>
 			</div>
 
-			<!-- Add New Partner Form -->
 			<div class="hbl-add-partner-section">
 				<h2><?php esc_html_e( 'Add New Partner', 'hbl' ); ?></h2>
 				<form id="hbl-add-partner-form" class="hbl-partner-form">
@@ -457,7 +366,6 @@ class HBL_Partner_Roles {
 				</form>
 			</div>
 
-			<!-- Partners List -->
 			<div class="hbl-partners-list-section">
 				<h2><?php esc_html_e( 'Current Partners', 'hbl' ); ?></h2>
 				<?php if ( ! empty( $partners ) ) : ?>
@@ -519,11 +427,6 @@ class HBL_Partner_Roles {
 		<?php
 	}
 
-	/**
-	 * Get all partners.
-	 *
-	 * @return array
-	 */
 	private function get_all_partners() {
 		$users = get_users( array(
 			'role__in' => array( 'founding_partner', 'partner_agency' ),
@@ -549,11 +452,6 @@ class HBL_Partner_Roles {
 		return $partners;
 	}
 
-	/**
-	 * Get partner stats.
-	 *
-	 * @return array
-	 */
 	private function get_partner_stats() {
 		$founding = get_users( array( 'role' => 'founding_partner', 'fields' => 'ID' ) );
 		$agencies = get_users( array( 'role' => 'partner_agency', 'fields' => 'ID' ) );
@@ -571,11 +469,7 @@ class HBL_Partner_Roles {
 		);
 	}
 
-	/**
-	 * Check and perform role transitions.
-	 */
 	public function check_role_transitions() {
-		// Only transition if we've passed the transition date
 		if ( strtotime( 'now' ) < strtotime( self::TRANSITION_DATE ) ) {
 			return;
 		}
@@ -583,15 +477,11 @@ class HBL_Partner_Roles {
 		$founding_partners = get_users( array( 'role' => 'founding_partner' ) );
 
 		foreach ( $founding_partners as $user ) {
-			// Remove founding partner role
 			$user->remove_role( 'founding_partner' );
-			// Add partner agency role
 			$user->add_role( 'partner_agency' );
 			
-			// Log the transition
 			update_user_meta( $user->ID, '_hbl_role_transition_date', current_time( 'mysql' ) );
 			
-			// Update discount rate to 25% if not already set
 			$current_discount = get_user_meta( $user->ID, '_hbl_discount_rate', true );
 			if ( empty( $current_discount ) ) {
 				update_user_meta( $user->ID, '_hbl_discount_rate', 25 );
@@ -599,9 +489,6 @@ class HBL_Partner_Roles {
 		}
 	}
 
-	/**
-	 * AJAX handler to create partner user.
-	 */
 	public function ajax_create_partner_user() {
 		check_ajax_referer( 'hbl_partner_agencies_nonce', 'nonce' );
 
@@ -619,37 +506,30 @@ class HBL_Partner_Roles {
 		$discount     = isset( $_POST['discount_rate'] ) ? absint( $_POST['discount_rate'] ) : 25;
 		$notes        = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
 
-		// Validate required fields
 		if ( empty( $username ) || empty( $email ) || empty( $agency_name ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'hbl' ) ) );
 		}
 
-		// Check if username exists
 		if ( username_exists( $username ) ) {
 			wp_send_json_error( array( 'message' => __( 'Username already exists.', 'hbl' ) ) );
 		}
 
-		// Check if email exists
 		if ( email_exists( $email ) ) {
 			wp_send_json_error( array( 'message' => __( 'Email already exists.', 'hbl' ) ) );
 		}
 
-		// Validate role
 		if ( ! in_array( $role, array( 'founding_partner', 'partner_agency' ), true ) ) {
 			$role = 'partner_agency';
 		}
 
-		// Generate password
 		$password = wp_generate_password( 12, true, true );
 
-		// Create user
 		$user_id = wp_create_user( $username, $password, $email );
 
 		if ( is_wp_error( $user_id ) ) {
 			wp_send_json_error( array( 'message' => $user_id->get_error_message() ) );
 		}
 
-		// Update user data
 		wp_update_user( array(
 			'ID'           => $user_id,
 			'first_name'   => $first_name,
@@ -657,11 +537,9 @@ class HBL_Partner_Roles {
 			'display_name' => $first_name ? $first_name . ' ' . $last_name : $username,
 		) );
 
-		// Set role
 		$user = get_user_by( 'ID', $user_id );
 		$user->set_role( $role );
 
-		// Save partner meta
 		update_user_meta( $user_id, '_hbl_agency_name', $agency_name );
 		update_user_meta( $user_id, '_hbl_agency_website', $agency_website );
 		update_user_meta( $user_id, '_hbl_discount_rate', $discount );
@@ -669,14 +547,12 @@ class HBL_Partner_Roles {
 		update_user_meta( $user_id, '_hbl_partner_notes', $notes );
 		update_user_meta( $user_id, '_hbl_client_count', 0 );
 
-		// Send password reset email
 		wp_new_user_notification( $user_id, null, 'user' );
 
 		$role_label = 'founding_partner' === $role ? __( 'Founding Partner', 'hbl' ) : __( 'Partner Agency', 'hbl' );
 
 		wp_send_json_success( array(
 			'message' => sprintf(
-				/* translators: 1: agency name, 2: role label */
 				__( 'Partner user "%1$s" created successfully as %2$s! A password reset email has been sent.', 'hbl' ),
 				$agency_name,
 				$role_label
@@ -686,6 +562,5 @@ class HBL_Partner_Roles {
 	}
 }
 
-// Initialize the class.
 HBL_Partner_Roles::get_instance();
 

@@ -1,15 +1,4 @@
 <?php
-/**
- * HBL AI Description Generator Tool
- *
- * Site tool under Directorist Tools. Finds all Directorist listings with
- * empty descriptions, calls the Claude AI API using business name and primary
- * subcategory as inputs, and writes the result back. Also outputs a log of
- * generated descriptions for Gabrielle to spot-check.
- *
- * @package HBL
- * @since   1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -41,7 +30,6 @@ class HBL_AI_Descriptions {
 		add_action( 'wp_ajax_hbl_ai_desc_apply_selected', array( $this, 'ajax_apply_selected' ) );
 	}
 
-	// ── Menu & assets ─────────────────────────────────────────────────────────
 
 	public function add_admin_menu() {
 		add_submenu_page(
@@ -86,7 +74,6 @@ class HBL_AI_Descriptions {
 		);
 	}
 
-	// ── Settings helpers ──────────────────────────────────────────────────────
 
 	private function get_settings(): array {
 		$defaults = array(
@@ -118,12 +105,7 @@ class HBL_AI_Descriptions {
 		);
 	}
 
-	// ── Listing helpers ───────────────────────────────────────────────────────
 
-	/**
-	 * Returns the primary subcategory name for a listing.
-	 * Prefers child terms (true subcategories); falls back to top-level term.
-	 */
 	private function get_primary_subcategory( int $listing_id ): string {
 		$terms = get_the_terms( $listing_id, 'at_biz_dir-category' );
 		if ( ! $terms || is_wp_error( $terms ) ) {
@@ -137,22 +119,13 @@ class HBL_AI_Descriptions {
 		return $terms[0]->name ?? '';
 	}
 
-	/**
-	 * True when a listing's post_content is blank after stripping HTML/whitespace.
-	 */
 	private function has_empty_description( int $listing_id ): bool {
 		$post = get_post( $listing_id );
 		return $post && '' === trim( wp_strip_all_tags( $post->post_content ) );
 	}
 
-	/**
-	 * Returns IDs of published listings with empty post_content.
-	 *
-	 * @return int[]
-	 */
 	private function query_empty_listings( int $offset = 0, int $per_page = 10 ): array {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare(
 			"SELECT ID FROM {$wpdb->posts}
 			 WHERE post_type   = %s
@@ -168,7 +141,6 @@ class HBL_AI_Descriptions {
 
 	private function count_empty_listings(): int {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		return (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->posts}
 			 WHERE post_type   = 'at_biz_dir'
@@ -177,11 +149,7 @@ class HBL_AI_Descriptions {
 		);
 	}
 
-	// ── Claude API ────────────────────────────────────────────────────────────
 
-	/**
-	 * @return array{ok: bool, text: string, error: string}
-	 */
 	private function call_claude( int $listing_id, string $business_name, string $subcategory, array $settings ): array {
 		$api_key = trim( $settings['api_key'] ?? '' );
 		if ( ! $api_key ) {
@@ -229,7 +197,6 @@ class HBL_AI_Descriptions {
 		return array( 'ok' => true, 'text' => $text, 'error' => '' );
 	}
 
-	// ── Log helpers ───────────────────────────────────────────────────────────
 
 	private function append_log( array $entries ): void {
 		$log = (array) get_option( self::LOG_KEY, array() );
@@ -240,7 +207,6 @@ class HBL_AI_Descriptions {
 		update_option( self::LOG_KEY, $log, false );
 	}
 
-	// ── AJAX handlers ─────────────────────────────────────────────────────────
 
 	public function ajax_count_empty(): void {
 		check_ajax_referer( 'hbl_ai_desc_nonce', 'nonce' );
@@ -259,10 +225,6 @@ class HBL_AI_Descriptions {
 		wp_send_json_success();
 	}
 
-	/**
-	 * Writes selected dry-run descriptions to their listings and marks them as written in the log.
-	 * Receives: items = JSON-encoded [{listing_id: int, description: string}, ...]
-	 */
 	public function ajax_apply_selected(): void {
 		check_ajax_referer( 'hbl_ai_desc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -308,7 +270,6 @@ class HBL_AI_Descriptions {
 			}
 		}
 
-		// Flip the most-recent dry_run log entry to 'written' for each applied listing.
 		if ( ! empty( $written_ids ) ) {
 			$log     = (array) get_option( self::LOG_KEY, array() );
 			$pending = array_flip( $written_ids );
@@ -350,7 +311,6 @@ class HBL_AI_Descriptions {
 		$log_batch = array();
 
 		foreach ( $ids as $listing_id ) {
-			// PHP-level guard catches <p></p> etc. that slip past the SQL TRIM.
 			if ( ! $this->has_empty_description( $listing_id ) ) {
 				continue;
 			}
@@ -410,7 +370,6 @@ class HBL_AI_Descriptions {
 		) );
 	}
 
-	// ── Admin page HTML ───────────────────────────────────────────────────────
 
 	public function render_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -420,7 +379,7 @@ class HBL_AI_Descriptions {
 		$settings    = $this->get_settings();
 		$has_api_key = ! empty( $settings['api_key'] );
 		$is_dry_run  = ! empty( $settings['dry_run'] );
-		$log         = array_reverse( (array) get_option( self::LOG_KEY, array() ) ); // newest first
+		$log         = array_reverse( (array) get_option( self::LOG_KEY, array() ) );
 		$log_count   = count( $log );
 
 		$nonce = wp_create_nonce( 'hbl_ai_desc_nonce' );
@@ -440,7 +399,6 @@ class HBL_AI_Descriptions {
 			</h1>
 			<p class="description"><?php esc_html_e( 'Generate descriptions for Directorist listings that have no content. Uses Claude AI with each listing\'s business name and primary subcategory as inputs.', 'hbl' ); ?></p>
 
-			<!-- Stats -->
 			<div class="hbl-reassign-stats">
 				<div class="hbl-stat-card hbl-stat-card--warning">
 					<div class="hbl-stat-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -482,7 +440,6 @@ class HBL_AI_Descriptions {
 
 			<div class="hbl-reassign-container">
 
-				<!-- ── Step 1: Settings ──────────────────────────────────────── -->
 				<form method="post" action="options.php">
 					<?php settings_fields( 'hbl_ai_desc' ); ?>
 					<div class="hbl-reassign-step">
@@ -571,7 +528,6 @@ class HBL_AI_Descriptions {
 					</div>
 				</form>
 
-				<!-- ── Step 2: Run Generator ─────────────────────────────────── -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">2</span>
@@ -607,7 +563,6 @@ class HBL_AI_Descriptions {
 					<?php endif; ?>
 				</div>
 
-				<!-- ── Step 3: Spot-Check Log ────────────────────────────────── -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
 						<div style="display:flex;align-items:center;gap:14px">
@@ -688,7 +643,7 @@ class HBL_AI_Descriptions {
 													<?php echo esc_html( $entry['description'] ); ?>
 												<?php endif; ?>
 											</td>
-											<td data-label="<?php esc_attr_e( 'Status', 'hbl' ); ?>"><?php echo $status_map[ $entry['status'] ] ?? esc_html( $entry['status'] ); // phpcs:ignore ?></td>
+											<td data-label="<?php esc_attr_e( 'Status', 'hbl' ); ?>"><?php echo $status_map[ $entry['status'] ] ?? esc_html( $entry['status'] ); ?></td>
 											<td class="hbl-aidesc-ts" data-label="<?php esc_attr_e( 'Time', 'hbl' ); ?>"><?php echo esc_html( $entry['timestamp'] ); ?></td>
 										</tr>
 									<?php endforeach; ?>
@@ -698,7 +653,7 @@ class HBL_AI_Descriptions {
 					<?php endif; ?>
 				</div>
 
-			</div><!-- .hbl-reassign-container -->
+			</div>
 		</div>
 
 		<script>
@@ -710,15 +665,12 @@ class HBL_AI_Descriptions {
 			var AJAX      = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 			var EDIT_BASE = <?php echo wp_json_encode( admin_url( 'post.php?action=edit&post=' ) ); ?>;
 
-			// ── Utility ────────────────────────────────────────────────────────
 			function htmlEsc( str ) {
 				var d = document.createElement( 'div' );
 				d.textContent = str || '';
 				return d.innerHTML;
 			}
 
-			// ── Auto-growing textarea (Prompt Template) ──────────────────────────
-			// Grows to fit its content instead of showing an internal scrollbar.
 			(function () {
 				var ta = document.getElementById( 'hbl-ai-prompt' );
 				if ( ! ta ) return;
@@ -731,7 +683,6 @@ class HBL_AI_Descriptions {
 				grow();
 			})();
 
-			// ── Load empty count on page load ──────────────────────────────────
 			(function () {
 				var el = document.getElementById( 'hbl-aidesc-stat-empty' );
 				if ( ! el ) return;
@@ -744,7 +695,6 @@ class HBL_AI_Descriptions {
 					.catch( function () { el.textContent = '?'; } );
 			})();
 
-			// ── Selection helpers ──────────────────────────────────────────────
 			var applyBtn     = document.getElementById( 'hbl-aidesc-apply-btn' );
 			var applyCount   = document.getElementById( 'hbl-aidesc-apply-count' );
 			var selectAllCb  = document.getElementById( 'hbl-aidesc-select-all' );
@@ -764,7 +714,6 @@ class HBL_AI_Descriptions {
 				}
 				if ( applyCount ) applyCount.textContent = n;
 
-				// Sync select-all indeterminate state
 				if ( selectAllCb ) {
 					var all = getRowCheckboxes();
 					selectAllCb.disabled = all.length === 0;
@@ -781,7 +730,6 @@ class HBL_AI_Descriptions {
 				}
 			}
 
-			// Delegate checkbox clicks inside the tbody
 			if ( tbodyEl ) {
 				tbodyEl.addEventListener( 'change', function (e) {
 					if ( e.target && e.target.classList.contains( 'hbl-aidesc-row-cb' ) ) {
@@ -790,7 +738,6 @@ class HBL_AI_Descriptions {
 				} );
 			}
 
-			// Select / deselect all
 			if ( selectAllCb ) {
 				selectAllCb.addEventListener( 'change', function () {
 					getRowCheckboxes().forEach( function (cb) {
@@ -800,7 +747,6 @@ class HBL_AI_Descriptions {
 				} );
 			}
 
-			// ── Apply Selected ─────────────────────────────────────────────────
 			if ( applyBtn ) {
 				applyBtn.addEventListener( 'click', function () {
 					var checked = getRowCheckboxes().filter( function (cb) { return cb.checked; } );
@@ -837,12 +783,10 @@ class HBL_AI_Descriptions {
 
 							var d = res.data;
 
-							// Update each applied row in the table
 							d.written_ids.forEach( function ( lid ) {
 								var row = tbodyEl.querySelector( 'tr[data-listing-id="' + lid + '"]' );
 								if ( ! row ) return;
 
-								// Uncheck and disable the checkbox
 								var cb = row.querySelector( '.hbl-aidesc-row-cb' );
 								if ( cb ) {
 									cb.checked  = false;
@@ -851,17 +795,14 @@ class HBL_AI_Descriptions {
 									cb.style.opacity = '0.3';
 								}
 
-								// Flip status badge
-								var statusCell = row.cells[ row.cells.length - 2 ]; // 2nd-to-last cell
+								var statusCell = row.cells[ row.cells.length - 2 ];
 								if ( statusCell ) {
 									statusCell.innerHTML = '<span class="hbl-aidesc-status hbl-aidesc-status--written">Written</span>';
 								}
 
-								// Update data attribute so future refreshes reflect reality
 								row.dataset.status = 'written';
 							} );
 
-							// Show result summary
 							var msg = d.written + ' description(s) written to listings.';
 							if ( d.failed ) msg += ' ' + d.failed + ' failed.';
 							alert( msg );
@@ -869,7 +810,6 @@ class HBL_AI_Descriptions {
 							applyBtn.style.display = 'none';
 							if ( selectAllCb ) { selectAllCb.checked = false; selectAllCb.indeterminate = false; }
 
-							// Refresh empty-count stat
 							var cfd = new FormData();
 							cfd.append( 'action', 'hbl_ai_desc_count_empty' );
 							cfd.append( 'nonce',  NONCE );
@@ -888,7 +828,6 @@ class HBL_AI_Descriptions {
 				} );
 			}
 
-			// ── Run generator ──────────────────────────────────────────────────
 			var runBtn     = document.getElementById( 'hbl-aidesc-run-btn' );
 			var stopBtn    = document.getElementById( 'hbl-aidesc-stop-btn' );
 			var statusEl   = document.getElementById( 'hbl-aidesc-run-status' );
@@ -916,7 +855,6 @@ class HBL_AI_Descriptions {
 			function prependLogRows( entries ) {
 				if ( ! tbodyEl || ! entries || ! entries.length ) return;
 
-				// Renumber existing row index cells (column 2, index 1)
 				var existingRows = tbodyEl.querySelectorAll( 'tr' );
 				for ( var x = 0; x < existingRows.length; x++ ) {
 					existingRows[ x ].cells[1].textContent = entries.length + x + 1;
@@ -1039,7 +977,6 @@ class HBL_AI_Descriptions {
 				statusEl.textContent = 'Stopping after this batch…';
 			} );
 
-			// ── Clear log ──────────────────────────────────────────────────────
 			var clearBtn = document.getElementById( 'hbl-aidesc-clear-log-btn' );
 			if ( clearBtn ) {
 				clearBtn.addEventListener( 'click', function () {

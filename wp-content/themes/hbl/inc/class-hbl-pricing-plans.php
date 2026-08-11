@@ -1,21 +1,4 @@
 <?php
-/**
- * HBL Pricing Plans data provider.
- *
- * Central abstraction over Directorist Pricing Plans. Directorist Pricing
- * Plans 4.0 moved plans out of the `atbdp_pricing_plans` custom post type and
- * into a dedicated database table exposed through
- * `directorist_pricing_plan_repository()`. Because our widgets used to query
- * the old post type directly, the upgrade made every plan disappear.
- *
- * All coupling to Directorist internals lives here so the Add Listing and
- * Claim Listing widgets never touch Directorist storage directly. The provider
- * prefers the modern 4.0+ API and transparently falls back to the legacy
- * post-type query for older installs, so a future Directorist change only ever
- * needs to be handled in this one file.
- *
- * @package HBL
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -23,14 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class HBL_Pricing_Plans {
 
-	/**
-	 * Maps our internal restriction keys to the Directorist 4.0 submission
-	 * form "feature" keys. Features are ENABLED by default in Directorist 4.0
-	 * (a plan only restricts a field when the feature exists AND is explicitly
-	 * disabled), so unknown/absent keys always resolve to "allowed".
-	 *
-	 * @var array<string,string>
-	 */
 	const FEATURE_KEY_MAP = array(
 		'phone'           => 'phone',
 		'email'           => 'email',
@@ -51,28 +26,6 @@ class HBL_Pricing_Plans {
 		'business_hours'  => 'bdbh',
 	);
 
-	/**
-	 * Get the normalised list of pricing plans for the widgets.
-	 *
-	 * Returns an ordered array of plans. Each plan is:
-	 *   id             (int)
-	 *   title          (string)
-	 *   price          (float)  Pre-tax price.
-	 *   is_free        (bool)
-	 *   type           (string)
-	 *   description    (string)
-	 *   recommended    (bool)
-	 *   tax_rate       (float)  Rate (percent) or amount (flat); 0 when untaxed.
-	 *   tax_type       (string) 'percent' | 'flat' | ''.
-	 *   tax_amount     (float)  Computed tax for `price`, via Directorist's own calculator.
-	 *   price_with_tax (float)  price + tax_amount.
-	 *   restrictions   (array)  // only when $args['with_restrictions'] is true
-	 *
-	 * @param array $args {
-	 *     @type bool $with_restrictions Whether to compute per-plan field restrictions. Default false.
-	 * }
-	 * @return array
-	 */
 	public static function get_plans( $args = array() ) {
 		$args              = wp_parse_args( $args, array( 'with_restrictions' => false ) );
 		$with_restrictions = (bool) $args['with_restrictions'];
@@ -85,25 +38,9 @@ class HBL_Pricing_Plans {
 
 		self::sort_plans( $plans );
 
-		/**
-		 * Filter the normalised HBL pricing plans before they are rendered.
-		 *
-		 * @param array $plans             Normalised plans.
-		 * @param bool  $with_restrictions Whether restrictions were requested.
-		 */
 		return apply_filters( 'hbl_pricing_plans', $plans, $with_restrictions );
 	}
 
-	/**
-	 * Get a single normalised plan by ID.
-	 *
-	 * Accepts either a modern 4.0+ plan ID or a legacy post ID (legacy IDs are
-	 * transparently mapped to their migrated equivalent). Returns null when the
-	 * plan cannot be found.
-	 *
-	 * @param int $plan_id Plan ID.
-	 * @return array{id:int,title:string,price:float,is_free:bool,tax_rate:float,tax_type:string,tax_amount:float,price_with_tax:float}|null
-	 */
 	public static function get_plan( $plan_id ) {
 		$plan_id = absint( $plan_id );
 
@@ -111,7 +48,6 @@ class HBL_Pricing_Plans {
 			return null;
 		}
 
-		// Modern Directorist Pricing Plans 4.0+.
 		if ( function_exists( 'directorist_get_pricing_plan_by_id' ) ) {
 			$resolved_id = function_exists( 'directorist_pricing_plans_legacy_plan_id' )
 				? (int) directorist_pricing_plans_legacy_plan_id( $plan_id )
@@ -142,7 +78,6 @@ class HBL_Pricing_Plans {
 			}
 		}
 
-		// Legacy post-type fallback.
 		$post = get_post( $plan_id );
 		if ( $post && 'atbdp_pricing_plans' === $post->post_type ) {
 			$is_free    = get_post_meta( $plan_id, 'free_plan', true );
@@ -167,17 +102,6 @@ class HBL_Pricing_Plans {
 		return null;
 	}
 
-	/**
-	 * Computes a plan's tax amount using Directorist core's own fixed/percent
-	 * calculator (the same function Directorist uses for its own order totals),
-	 * so tax here always matches what Directorist itself would charge — never a
-	 * rate this theme assumes or hardcodes independently.
-	 *
-	 * @param float       $price    Pre-tax price.
-	 * @param string|null $tax_type 'flat' | 'percent' | '' (no tax).
-	 * @param float       $tax_rate Rate (percent) or amount (flat).
-	 * @return float
-	 */
 	protected static function compute_tax( $price, $tax_type, $tax_rate ) {
 		if ( ! $tax_type || $tax_rate <= 0 || $price <= 0 ) {
 			return 0.0;
@@ -187,23 +111,9 @@ class HBL_Pricing_Plans {
 			return (float) directorist_compute_fixed_or_percent_amount( $tax_type, $tax_rate, $price );
 		}
 
-		// Minimal inline fallback matching Directorist core's own semantics,
-		// only used if Directorist core is somehow unavailable.
 		return 'percent' === $tax_type ? round( ( $price * $tax_rate ) / 100, 2 ) : round( $tax_rate, 2 );
 	}
 
-	/**
-	 * The plan ID currently assigned to a listing.
-	 *
-	 * On Directorist Pricing Plans 4.0+ the assignment lives in the packages
-	 * table (directorist_get_listing_package), NOT the legacy `_fm_plans` post
-	 * meta — reading `_fm_plans` on a v4 install returns a stale/incorrect value,
-	 * which is why tier lookups were wrong. Falls back to `_fm_plans` for legacy
-	 * installs or listings not yet migrated.
-	 *
-	 * @param int $listing_id
-	 * @return int Plan ID, or 0 when none is assigned.
-	 */
 	public static function get_listing_plan_id( $listing_id ) {
 		$listing_id = absint( $listing_id );
 		if ( ! $listing_id ) {
@@ -224,22 +134,11 @@ class HBL_Pricing_Plans {
 		return (int) get_post_meta( $listing_id, '_fm_plans', true );
 	}
 
-	/**
-	 * Whether the modern Directorist Pricing Plans 4.0+ API is available.
-	 *
-	 * @return bool
-	 */
 	protected static function supports_v4() {
 		return function_exists( 'directorist_pricing_plan_repository' )
 			&& function_exists( 'default_directory_type' );
 	}
 
-	/**
-	 * Fetch plans using the Directorist Pricing Plans 4.0+ repository API.
-	 *
-	 * @param bool $with_restrictions Whether to compute restrictions.
-	 * @return array
-	 */
 	protected static function get_plans_v4( $with_restrictions ) {
 		$plans        = array();
 		$directory_id = (int) default_directory_type();
@@ -249,7 +148,6 @@ class HBL_Pricing_Plans {
 		}
 
 		try {
-			// Already filtered to published, non-hidden plans and ordered by sort order.
 			$raw_plans = directorist_pricing_plan_repository()->get_by_directory_type( $directory_id );
 		} catch ( \Throwable $e ) {
 			return $plans;
@@ -294,15 +192,6 @@ class HBL_Pricing_Plans {
 		return $plans;
 	}
 
-	/**
-	 * Build the restriction map for a 4.0+ plan from its enabled features.
-	 *
-	 * Directorist treats every feature as enabled unless a plan explicitly
-	 * disables it, so any feature we cannot resolve defaults to "allowed".
-	 *
-	 * @param object $plan Raw plan row from the repository.
-	 * @return array
-	 */
 	protected static function build_v4_restrictions( $plan ) {
 		$features = self::get_feature_map( $plan );
 
@@ -311,7 +200,6 @@ class HBL_Pricing_Plans {
 				? self::FEATURE_KEY_MAP[ $restriction_key ]
 				: $restriction_key;
 
-			// Feature absent => enabled by default (Directorist 4.0 semantics).
 			if ( ! isset( $features[ $feature_key ] ) ) {
 				return true;
 			}
@@ -328,19 +216,16 @@ class HBL_Pricing_Plans {
 		};
 
 		return array(
-			// Media.
 			'gallery'              => $is_enabled( 'gallery' ),
 			'max_images'           => $limit( 'listing_img' ),
 			'unlimited_images'     => $is_unlimited( 'listing_img' ),
 			'video'                => $is_enabled( 'video' ),
 
-			// Contact.
 			'phone'                => $is_enabled( 'phone' ),
 			'email'                => $is_enabled( 'email' ),
 			'website'              => $is_enabled( 'website' ),
 			'social_networks'      => $is_enabled( 'social_networks' ),
 
-			// Content.
 			'category'             => $is_enabled( 'category' ),
 			'max_categories'      => $limit( 'admin_category_select[]' ),
 			'unlimited_categories' => $is_unlimited( 'admin_category_select[]' ),
@@ -354,23 +239,12 @@ class HBL_Pricing_Plans {
 			'map'                  => $is_enabled( 'map' ),
 			'location'             => $is_enabled( 'location' ),
 
-			// Features.
 			'reviews'              => $is_enabled( 'reviews' ),
 			'faqs'                 => $is_enabled( 'faqs' ),
 			'business_hours'       => $is_enabled( 'business_hours' ),
 		);
 	}
 
-	/**
-	 * Resolve a plan's features into a `feature_key => data` lookup.
-	 *
-	 * Uses the Directorist 4.0 PlanFeatureRepository when available. If it
-	 * cannot be reached the map is empty, which makes every field default to
-	 * enabled — the safe outcome (nothing is hidden by mistake).
-	 *
-	 * @param object $plan Raw plan row.
-	 * @return array<string,array{is_enabled:bool,limit:int,is_unlimited:bool}>
-	 */
 	protected static function get_feature_map( $plan ) {
 		$map                = array();
 		$repository_class   = '\DirectoristPricingPlan\App\Repositories\Admin\PlanFeatureRepository';
@@ -409,14 +283,6 @@ class HBL_Pricing_Plans {
 		return $map;
 	}
 
-	/**
-	 * Legacy fallback: query the deprecated `atbdp_pricing_plans` post type.
-	 *
-	 * Retained so the widgets keep working on Directorist Pricing Plans < 4.0.
-	 *
-	 * @param bool $with_restrictions Whether to compute restrictions.
-	 * @return array
-	 */
 	protected static function get_plans_legacy( $with_restrictions ) {
 		$plans = array();
 
@@ -489,12 +355,6 @@ class HBL_Pricing_Plans {
 		return $plans;
 	}
 
-	/**
-	 * Build the restriction map for a legacy (< 4.0) plan from its post meta.
-	 *
-	 * @param int $plan_id Legacy plan post ID.
-	 * @return array
-	 */
 	protected static function build_legacy_restrictions( $plan_id ) {
 		return array(
 			'gallery'              => (bool) ( get_post_meta( $plan_id, '_listing_img', true ) || get_post_meta( $plan_id, 'fm_allow_slider', true ) ),
@@ -526,12 +386,6 @@ class HBL_Pricing_Plans {
 		);
 	}
 
-	/**
-	 * Order plans by our marketing tiers: Bronze, Silver, Gold/Listing, then rest.
-	 *
-	 * @param array $plans Plans array, sorted in place.
-	 * @return void
-	 */
 	protected static function sort_plans( &$plans ) {
 		$package_order = array(
 			'bronze'  => 1,

@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Event Single Category Widget
- *
- * Displays events from a category with beautiful card design
- * Auto-detects category from URL for single category pages
- *
- * @package HBL
- * @since 1.2.690
- */
 
 namespace HBL\Widgets;
 
@@ -41,9 +32,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 		return array( 'event', 'category', 'single', 'calendar', 'hbl' );
 	}
 
-	/**
-	 * Day labels for recurrence display
-	 */
 	private $day_labels = array(
 		'mon' => 'Monday',
 		'tue' => 'Tuesday',
@@ -54,9 +42,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 		'sun' => 'Sunday',
 	);
 
-	/**
-	 * Week ordinal labels for recurrence display
-	 */
 	private $week_labels = array(
 		'1' => '1st',
 		'2' => '2nd',
@@ -64,26 +49,18 @@ class HBL_Event_Single_Category extends Widget_Base {
 		'4' => '4th',
 	);
 
-	/**
-	 * Calculate the next occurrence of an event
-	 *
-	 * @param object $event Event object
-	 * @return string Occurrence date (Y-m-d H:i:s)
-	 */
 	private function get_next_occurrence( $event ) {
 		$frequency = $event->event_frequency ?? 'once';
 		$start_date = $event->start_date;
 		$now = current_time( 'timestamp' );
-		$today_start = strtotime( 'today', $now ); // Midnight today
+		$today_start = strtotime( 'today', $now );
 		$event_start = strtotime( $start_date );
 		$event_time = date( 'H:i:s', $event_start );
 
-		// If event is in the future, return original date
 		if ( $event_start >= $now ) {
 			return $start_date;
 		}
 
-		// If it's a one-off event and it's past, return original
 		if ( ! in_array( $frequency, array( 'weekly', 'monthly', 'recurring', 'multi_day' ), true ) ) {
 			return $start_date;
 		}
@@ -93,7 +70,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 		$recurrence_interval = isset( $event->recurrence_interval ) ? intval( $event->recurrence_interval ) : 1;
 		if ( $recurrence_interval < 1 ) $recurrence_interval = 1;
 
-		// Helper to normalize day names to 3 chars
 		$normalize_day = function( $d ) {
 			$d = strtolower( trim( $d ) );
 			$map = array(
@@ -106,15 +82,11 @@ class HBL_Event_Single_Category extends Widget_Base {
 		if ( $frequency === 'weekly' && ! empty( $recurrence_days ) ) {
 			$days = array_map( $normalize_day, explode( ',', $recurrence_days ) );
 			
-			// Check next 60 days
 			for ( $i = 0; $i < 60; $i++ ) {
 				$check_ts = strtotime( "+$i days", $today_start );
 				$day_of_week = strtolower( date( 'D', $check_ts ) );
 
 				if ( in_array( $day_of_week, $days, true ) ) {
-					// Check interval
-					// Calculate weeks difference from the original start date
-					// We align to the start of the week (Monday) to ensure consistent interval calculation
 					$orig_week_start = strtotime( 'last monday', $event_start + 86400 );
 					$curr_week_start = strtotime( 'last monday', $check_ts + 86400 );
 					$weeks_diff = round( ( $curr_week_start - $orig_week_start ) / ( 7 * 24 * 60 * 60 ) );
@@ -132,7 +104,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 				$target_day_num = $day_map[$day_name];
 				$weeks = ! empty( $recurrence_week ) ? array_map( 'trim', explode( ',', $recurrence_week ) ) : array();
 
-				// Check next 12 months
 				for ( $i = 0; $i < 12; $i++ ) {
 					$check_month_ts = strtotime( "+$i month", $today_start );
 					$year = date('Y', $check_month_ts);
@@ -146,7 +117,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 						
 						if ( date('w', $date_ts) == $target_day_num ) {
 							$occurrence++;
-							// Handle "Last" (often mapped as 5 or -1?) Assuming DB uses 1,2,3,4.
 							if ( in_array( $occurrence, $weeks ) ) {
 								if ( $date_ts >= $today_start ) {
 									return date( 'Y-m-d', $date_ts ) . ' ' . $event_time;
@@ -159,14 +129,11 @@ class HBL_Event_Single_Category extends Widget_Base {
 		} elseif ( $frequency === 'multi_day' ) {
 			$end_date_ts = ! empty( $event->end_date ) ? strtotime( $event->end_date ) : $event_start;
 			
-			// If event period is past, return original (or end?)
 			if ( $end_date_ts < $today_start ) {
 				return $start_date; 
 			}
 			
-			// Check if today is a valid open day
 			$check_ts = $today_start;
-			// Limit loop to end of event or 60 days
 			for ( $i = 0; $i < 60; $i++ ) {
 				$curr_ts = strtotime( "+$i days", $check_ts );
 				if ( $curr_ts > $end_date_ts ) break;
@@ -184,17 +151,12 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Fallback to original
 		return $start_date;
 	}
 
-	/**
-	 * Get available event categories
-	 */
 	private function get_category_options() {
 		$options = array( '' => esc_html__( '— Select Category —', 'hbl' ) );
 		
-		// Try common event category taxonomies
 		$taxonomies = array( 'tribe_events_cat', 'event_category', 'event-category', 'at_event-category' );
 		
 		foreach ( $taxonomies as $tax ) {
@@ -215,17 +177,11 @@ class HBL_Event_Single_Category extends Widget_Base {
 		return $options;
 	}
 
-	/**
-	 * Get event taxonomy
-	 * Prioritizes event_category (HBL's custom taxonomy)
-	 */
 	private function get_event_taxonomy() {
-		// Prioritize HBL's event_category taxonomy
 		if ( taxonomy_exists( 'event_category' ) ) {
 			return 'event_category';
 		}
 		
-		// Fallback to other event taxonomies
 		$taxonomies = array( 'tribe_events_cat', 'event-category', 'at_event-category' );
 		
 		foreach ( $taxonomies as $tax ) {
@@ -237,9 +193,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 		return 'event_category';
 	}
 
-	/**
-	 * Get event post type
-	 */
 	private function get_event_post_type() {
 		$post_types = array( 'tribe_events', 'event', 'events', 'at_event' );
 		
@@ -252,17 +205,9 @@ class HBL_Event_Single_Category extends Widget_Base {
 		return 'tribe_events';
 	}
 
-	/**
-	 * Get current category from URL
-	 * Supports URL patterns:
-	 * - /whats-on/category/{term-slug}/
-	 * - /event-category/{term-slug}/
-	 * - Any taxonomy archive for event_category
-	 */
 	private function get_current_category() {
 		$taxonomy = $this->get_event_taxonomy();
 		
-		// Check if we're on a taxonomy archive (primary method)
 		if ( is_tax( $taxonomy ) ) {
 			$term = get_queried_object();
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -270,7 +215,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Also check event_category specifically
 		if ( is_tax( 'event_category' ) ) {
 			$term = get_queried_object();
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -278,12 +222,10 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Extract from URL
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$url_path = trim( parse_url( $request_uri, PHP_URL_PATH ), '/' );
 		$path_parts = explode( '/', $url_path );
 		
-		// Check for /whats-on/category/{slug}/ pattern
 		$whats_on_index = array_search( 'whats-on', $path_parts, true );
 		if ( $whats_on_index !== false && isset( $path_parts[ $whats_on_index + 1 ] ) && $path_parts[ $whats_on_index + 1 ] === 'category' ) {
 			if ( isset( $path_parts[ $whats_on_index + 2 ] ) ) {
@@ -295,7 +237,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 		
-		// Check for other category indicators
 		$category_indicators = array( 'event-category', 'events-category', 'single-event-category', 'category' );
 		
 		foreach ( $path_parts as $index => $part ) {
@@ -305,7 +246,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 				if ( $term && ! is_wp_error( $term ) ) {
 					return $term;
 				}
-				// Also try the default taxonomy
 				$term = get_term_by( 'slug', $potential_slug, $taxonomy );
 				if ( $term && ! is_wp_error( $term ) ) {
 					return $term;
@@ -313,16 +253,13 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Last segment fallback
 		if ( ! empty( $path_parts ) ) {
 			$last_segment = end( $path_parts );
 			if ( ! empty( $last_segment ) ) {
-				// Try event_category first
 				$term = get_term_by( 'slug', $last_segment, 'event_category' );
 				if ( $term && ! is_wp_error( $term ) ) {
 					return $term;
 				}
-				// Fallback to detected taxonomy
 				$term = get_term_by( 'slug', $last_segment, $taxonomy );
 				if ( $term && ! is_wp_error( $term ) ) {
 					return $term;
@@ -330,7 +267,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Editor preview - get first available category for preview
 		if ( \Elementor\Plugin::$instance->preview->is_preview_mode() || \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			$terms = get_terms( array(
 				'taxonomy'   => 'event_category',
@@ -347,7 +283,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -422,7 +357,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: EVENTS ==========
 		$this->start_controls_section(
 			'section_events',
 			array(
@@ -565,7 +499,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE ==========
 		$this->start_controls_section(
 			'section_style',
 			array(
@@ -619,7 +552,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Get category
 		$category = null;
 
 		if ( 'auto' === $settings['category_source'] ) {
@@ -650,12 +582,10 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Pagination
 		$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
 		$per_page = intval( $settings['posts_per_page'] );
 		$offset = ( $paged - 1 ) * $per_page;
 
-		// Handle sort from URL
 		$orderby = 'start_date';
 		$order = 'ASC';
 		
@@ -681,68 +611,49 @@ class HBL_Event_Single_Category extends Widget_Base {
 			}
 		}
 
-		// Query HBL Events from custom database
 		$events = array();
 		$total_events = 0;
 		
 		if ( function_exists( 'hbl_events_db' ) ) {
 			$db = hbl_events_db();
 			
-			// Fetch larger set of potential events to process recurrence logic in PHP
-			// We cannot simply rely on SQL ORDER BY for recurring events where the 'next date' is computed
-			$limit_mult = 5; // Fetch more to handle filtering
+			$limit_mult = 5;
 			$processing_limit = $per_page * $limit_mult;
 			if ( $processing_limit < 50 ) $processing_limit = 50;
 			
-			// Initial query - get upcoming and recurring
 			$query_args = array(
 				'category_id' => $category->term_id,
 				'status'      => 'publish',
-				// We need custom ordering logic, so just get them all first?
-				// Getting too many events might be slow.
-				// Strategy: Get events that started in future OR are recurring
-				'limit'       => -1, // We must fetch all to sort correctly by computed date :(
+				'limit'       => -1,
 			);
 
-			// Search Filter
 			if ( ! empty( $_GET['hbl_event_search'] ) ) {
 				$query_args['search'] = sanitize_text_field( $_GET['hbl_event_search'] );
 			}
 			
 			$raw_events = $db->get_events( $query_args );
-			$total_events_count = 0; // Will count after processing
+			$total_events_count = 0;
 			
-			// Process events to find next occurrence
 			$processed_events = array();
 			$now = current_time( 'timestamp' );
 			$today_start = strtotime( 'today', $now );
 
 			foreach ( $raw_events as $event ) {
-				// Calculate next occurrence
 				$next_date = $this->get_next_occurrence( $event );
 				
-				// Apply "Show Upcoming Only" filter strictly
-				// get_next_occurrence returns original start date if no future one found.
-				// So we check if the result is >= today
 				$next_ts = strtotime( $next_date );
 				
 				if ( 'yes' === $settings['show_upcoming_only'] ) {
-					// We only want events where the *next occurence* is in future
-					// Note: get_next_occurrence falls back to start_date.
-					// If that fallback is in past, we skip.
 					if ( $next_ts < $today_start ) {
 						continue;
 					}
 				}
 
-				// Create a shallow copy or decorate the object
 				$event_item = clone $event;
 				$event_item->computed_start_date = $next_date;
 				$processed_events[] = $event_item;
 			}
 			
-			// Sort processed events
-			// Default sort: Upcoming (nearest computed date first)
 			if ( empty( $orderby ) || $orderby === 'start_date' ) {
 				usort( $processed_events, function( $a, $b ) use ( $order ) {
 					$t1 = strtotime( $a->computed_start_date );
@@ -758,27 +669,23 @@ class HBL_Event_Single_Category extends Widget_Base {
 				});
 			}
 
-			// Pagination in PHP
 			$total_events = count( $processed_events );
 			$events = array_slice( $processed_events, $offset, $per_page );
 		}
 		
 		$max_pages = $per_page > 0 ? ceil( $total_events / $per_page ) : 1;
 		
-		// View mode
 		$default_view = isset( $settings['default_view'] ) ? $settings['default_view'] : 'grid';
 		$current_view = isset( $_GET['hbl_view'] ) ? sanitize_text_field( $_GET['hbl_view'] ) : $default_view;
 		if ( ! in_array( $current_view, array( 'grid', 'list' ), true ) ) {
 			$current_view = 'grid';
 		}
 		
-		// Current sort value for dropdown
 		$current_sort = isset( $_GET['hbl_sort'] ) ? sanitize_text_field( $_GET['hbl_sort'] ) : '';
 		
-		// Build base URL for view/sort links
 		$base_url = strtok( $_SERVER['REQUEST_URI'], '?' );
 		$query_params = $_GET;
-		unset( $query_params['paged'] ); // Reset pagination on view/sort change
+		unset( $query_params['paged'] );
 		?>
 		<div class="hbl-events-widget">
 			<?php if ( 'yes' === $settings['show_header'] ) : ?>
@@ -799,7 +706,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 				<div class="hbl-widget-search-wrap">
 					<form role="search" method="get" class="hbl-widget-search-form" action="">
 						<?php 
-						// Preserve existing query params
 						foreach ( $_GET as $key => $val ) {
 							if ( 'hbl_event_search' === $key ) continue;
 							if ( 'paged' === $key ) continue;
@@ -888,7 +794,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 				<div class="hbl-events-grid hbl-view-<?php echo esc_attr( $current_view ); ?>">
 					<?php foreach ( $events as $event ) :
 						$event_id = $event->id;
-						// Use computed start date from sorting logic
 						$original_start_date = $event->start_date;
 						$start_date = isset( $event->computed_start_date ) ? $event->computed_start_date : $this->get_next_occurrence( $event );
 						$venue_name = $event->venue;
@@ -972,7 +877,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 			<?php endif; ?>
 		</div>
 		
-		<!-- AJAX Handler Script -->
 		<script>
 		jQuery(document).ready(function($) {
 			var widgetId = '<?php echo esc_js( $this->get_id() ); ?>';
@@ -983,23 +887,15 @@ class HBL_Event_Single_Category extends Widget_Base {
 				action: 'hbl_get_events'
 			};
 			
-			// Helper to fetch events
 			function fetchEvents(params) {
 				$container.css('opacity', '0.5');
 				
 				$.post('<?php echo admin_url( 'admin-ajax.php' ); ?>', params, function(response) {
 					$container.css('opacity', '1');
 					if (response.success) {
-						// We need to replace the grid and pagination.
-						// Since the AJAX returns just the grid/pagination part html, 
-						// we need to be careful with the selector.
-						// Our PHP ajax returns <div class="hbl-events-grid ..."> ... </div> <div class="hbl-events-pagination">...</div>
 						
-						// Remove existing grid and pagination
 						$container.find('.hbl-events-grid, .hbl-events-pagination, .hbl-events-empty').remove();
 						
-						// Append new content after header/search/toolbar
-						// Identifying insertion point: after toolbar if exists, else search, else header
 						var $insertAfter = $container.find('.hbl-widget-toolbar');
 						if ($insertAfter.length === 0) $insertAfter = $container.find('.hbl-widget-search-wrap');
 						if ($insertAfter.length === 0) $insertAfter = $container.find('.hbl-events-header');
@@ -1010,19 +906,15 @@ class HBL_Event_Single_Category extends Widget_Base {
 							$container.append(response.data.html);
 						}
 						
-						// Re-bind events (simple recursive way or delegated)
-						// Since we use delegated events below, no re-bind needed.
 					} else {
 						console.error('Error loading events');
 					}
 				});
 			}
 
-			// Handle Pagination
 			$container.on('click', '.hbl-events-pagination a', function(e) {
 				e.preventDefault();
 				var url = $(this).attr('href');
-				// Extract paged arg
 				var paged = 1;
 				var match = url.match(/page\/(\d+)/);
 				if (match) {
@@ -1042,10 +934,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 				fetchEvents(params);
 			});
 			
-			// Handle Sort
-			// Note: Existing onchange="hblSortChange(this)" might conflict. 
-			// We should override or prevent it.
-			// Let's remove the inline onchange via JS to be safe
 			$('#hbl-sort-select-' + widgetId).removeAttr('onchange').off('change').on('change', function(e) {
 				var params = $.extend({}, $contentParams, {
 					paged: 1,
@@ -1056,7 +944,6 @@ class HBL_Event_Single_Category extends Widget_Base {
 				fetchEvents(params);
 			});
 			
-			// Handle Search
 			$container.on('submit', '.hbl-widget-search-form', function(e) {
 				e.preventDefault();
 				var params = $.extend({}, $contentParams, {

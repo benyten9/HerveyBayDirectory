@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Pricing Plan Widget
- *
- * Feature comparison table widget for pricing plans
- *
- * @package HBL
- * @since 1.0.0
- */
 
 namespace HBL\Widgets;
 
@@ -17,55 +9,33 @@ use Elementor\Group_Control_Background;
 use Elementor\Repeater;
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit;
 }
 
-/**
- * HBL Pricing Plan Widget Class
- */
 class HBL_Pricing_Plan extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-pricing-plan';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'Pricing Plan', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-price-table';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'hbl', 'pricing', 'plan', 'comparison', 'table', 'features' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// ========== CONTENT SECTION: TITLE ==========
 		$this->start_controls_section(
 			'section_title',
 			array(
@@ -88,7 +58,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT SECTION: PLANS ==========
 		$this->start_controls_section(
 			'section_plans',
 			array(
@@ -217,7 +186,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT SECTION: FEATURES ==========
 		$this->start_controls_section(
 			'section_features',
 			array(
@@ -240,7 +208,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 			)
 		);
 
-		// Add nested repeater for plan values
 		$repeater_plan_values = new Repeater();
 		
 		$repeater_plan_values->add_control(
@@ -354,7 +321,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TITLE ==========
 		$this->start_controls_section(
 			'section_style_title',
 			array(
@@ -402,7 +368,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: CONTAINER ==========
 		$this->start_controls_section(
 			'section_style_container',
 			array(
@@ -435,7 +400,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TABLE ==========
 		$this->start_controls_section(
 			'section_style_table',
 			array(
@@ -446,7 +410,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADER ROW ==========
 		$this->start_controls_section(
 			'section_style_header',
 			array(
@@ -603,7 +566,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: FEATURE ROW ==========
 		$this->start_controls_section(
 			'section_style_feature_row',
 			array(
@@ -739,7 +701,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: ICONS ==========
 		$this->start_controls_section(
 			'section_style_icons',
 			array(
@@ -750,7 +711,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->start_controls_tabs( 'icon_style_tabs' );
 
-		// Normal State
 		$this->start_controls_tab(
 			'icon_normal',
 			array(
@@ -766,9 +726,7 @@ class HBL_Pricing_Plan extends Widget_Base {
 				'selectors' => array(
 					'{{WRAPPER}} .hbl-pricing-icon' => 'color: {{VALUE}};',
 					'{{WRAPPER}} .hbl-pricing-icon i' => 'color: {{VALUE}};',
-					// Target SVG directly (it has the class hbl-pricing-icon)
 					'{{WRAPPER}} svg.hbl-pricing-icon' => 'color: {{VALUE}}; stroke: {{VALUE}};',
-					// Target inner elements of the SVG
 					'{{WRAPPER}} .hbl-pricing-icon path' => 'stroke: {{VALUE}}; fill: currentColor;',
 					'{{WRAPPER}} .hbl-pricing-icon circle' => 'stroke: {{VALUE}};',
 					'{{WRAPPER}} .hbl-pricing-icon line' => 'stroke: {{VALUE}};',
@@ -791,7 +749,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Hover State
 		$this->start_controls_tab(
 			'icon_hover',
 			array(
@@ -901,7 +858,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -920,7 +876,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->start_controls_tabs( 'button_style_tabs' );
 
-		// Normal State
 		$this->start_controls_tab(
 			'button_normal',
 			array(
@@ -950,7 +905,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 		$this->end_controls_tab();
 
-		// Hover State
 		$this->start_controls_tab(
 			'button_hover',
 			array(
@@ -1042,9 +996,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on the frontend
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
@@ -1078,7 +1029,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 
 			<div class="hbl-pricing-plan-table" data-plans="<?php echo esc_attr( $num_plans ); ?>">
 				
-				<!-- Header Row with Plan Cards -->
 				<div class="hbl-pricing-plan-cards-row">
 					<div class="hbl-pricing-plan-feature-label">
 						<span class="hbl-pricing-plan-feature-label-text"><?php echo esc_html__( 'Feature / Benefit', 'hbl' ); ?></span>
@@ -1129,7 +1079,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 					<?php endforeach; ?>
 				</div>
 
-				<!-- Feature Rows -->
 				<div class="hbl-pricing-plan-features">
 					<?php foreach ( $features as $feature_index => $feature ) : 
 						$plan_values = isset( $feature['plan_values'] ) ? $feature['plan_values'] : array();
@@ -1180,14 +1129,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render icon based on type
-	 *
-	 * @param string $icon_type The type of icon to render.
-	 * @param array  $custom_icon Custom icon data from Elementor Icons control.
-	 * @param array  $custom_image Custom image data from Elementor Media control.
-	 * @return string The rendered icon HTML.
-	 */
 	private function render_icon( $icon_type, $custom_icon = array(), $custom_image = array() ) {
 		switch ( $icon_type ) {
 			case 'tick':
@@ -1208,7 +1149,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 				</svg>';
 			
 			case 'custom':
-				// Render custom icon from Elementor Icons control
 				if ( ! empty( $custom_icon ) && ! empty( $custom_icon['value'] ) ) {
 					ob_start();
 					\Elementor\Icons_Manager::render_icon( $custom_icon, array( 
@@ -1217,11 +1157,9 @@ class HBL_Pricing_Plan extends Widget_Base {
 					) );
 					return ob_get_clean();
 				}
-				// Fallback to tick if no custom icon set
 				return $this->render_icon( 'tick' );
 			
 			case 'image':
-				// Render custom image from Elementor Media control
 				if ( ! empty( $custom_image ) && ! empty( $custom_image['url'] ) ) {
 					$image_id = ! empty( $custom_image['id'] ) ? $custom_image['id'] : 0;
 					$image_alt = $image_id ? get_post_meta( $image_id, '_wp_attachment_image_alt', true ) : '';
@@ -1231,7 +1169,6 @@ class HBL_Pricing_Plan extends Widget_Base {
 						esc_attr( $image_alt )
 					);
 				}
-				// Fallback to tick if no image set
 				return $this->render_icon( 'tick' );
 				
 			case 'none':

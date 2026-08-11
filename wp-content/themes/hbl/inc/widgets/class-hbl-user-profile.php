@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL User Profile Widget
- *
- * Display user profile information with modern design
- *
- * @package HBL
- * @since 1.2.697
- */
 
 namespace HBL\Widgets;
 
@@ -41,7 +33,6 @@ class HBL_User_Profile extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -76,7 +67,6 @@ class HBL_User_Profile extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: DISPLAY ==========
 		$this->start_controls_section(
 			'section_display',
 			array(
@@ -206,7 +196,6 @@ class HBL_User_Profile extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: USER LISTINGS ==========
 		$this->start_controls_section(
 			'section_listings',
 			array(
@@ -259,7 +248,6 @@ class HBL_User_Profile extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: COLORS ==========
 		$this->start_controls_section(
 			'section_style_colors',
 			array(
@@ -313,9 +301,6 @@ class HBL_User_Profile extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Get user to display
-	 */
 	private function get_profile_user( $settings ) {
 		$user = null;
 
@@ -327,7 +312,6 @@ class HBL_User_Profile extends Widget_Base {
 				break;
 
 			case 'author':
-				// Get author from URL
 				$author_slug = get_query_var( 'author_name' );
 				if ( $author_slug ) {
 					$user = get_user_by( 'slug', $author_slug );
@@ -337,7 +321,6 @@ class HBL_User_Profile extends Widget_Base {
 						$user = get_user_by( 'id', $author_id );
 					}
 				}
-				// Fallback to URL parameter
 				if ( ! $user && isset( $_GET['author_id'] ) ) {
 					$user = get_user_by( 'id', absint( $_GET['author_id'] ) );
 				}
@@ -371,13 +354,11 @@ class HBL_User_Profile extends Widget_Base {
 		$website = $user->user_url;
 		$registered = $user->user_registered;
 
-		// Social links (common user meta)
 		$facebook = get_user_meta( $user_id, 'facebook', true );
 		$twitter = get_user_meta( $user_id, 'twitter', true );
 		$instagram = get_user_meta( $user_id, 'instagram', true );
 		$linkedin = get_user_meta( $user_id, 'linkedin', true );
 
-		// Count user listings
 		$listings_count = 0;
 		if ( defined( 'ATBDP_POST_TYPE' ) ) {
 			$listings_count = count_user_posts( $user_id, ATBDP_POST_TYPE );

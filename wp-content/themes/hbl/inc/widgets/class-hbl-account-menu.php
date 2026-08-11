@@ -1,17 +1,4 @@
 <?php
-/**
- * HBL Account Menu Widget
- *
- * A compact "logged in" account menu meant to live in the site header
- * (Elementor Theme Builder header template). Shows the user's avatar/name
- * with a dropdown linking into every section of the standalone Account
- * Dashboard page (see page-templates/template-account-dashboard.php), and
- * falls back to Login/Register buttons for guests. Visual language matches
- * the HBL Dashboard widget so the two feel like one system.
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -45,9 +32,6 @@ class HBL_Account_Menu extends Widget_Base {
 		return array( 'account', 'dashboard', 'login', 'user', 'header', 'menu' );
 	}
 
-	/**
-	 * Small inline icon set shared by the dropdown links.
-	 */
 	private function icon( $name ) {
 		$icons = array(
 			'dashboard' => '<path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 9H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -68,18 +52,12 @@ class HBL_Account_Menu extends Widget_Base {
 		return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' . $icons[ $name ] . '</svg>';
 	}
 
-	/**
-	 * Control-panel (dashboard) glyph used on the logged-in trigger. Kept
-	 * separate from icon() because it is a solid-fill icon on a 0 0 50 50
-	 * viewBox, unlike the stroked 24x24 set above.
-	 */
 	private function control_panel_icon() {
 		return '<svg width="20" height="20" viewBox="0 0 50 50" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M 2 7 A 1.0001 1.0001 0 0 0 1 8 L 1 42 A 1.0001 1.0001 0 0 0 2 43 L 48 43 A 1.0001 1.0001 0 0 0 49 42 L 49 8 A 1.0001 1.0001 0 0 0 48 7 L 2 7 z M 3 9 L 47 9 L 47 41 L 3 41 L 3 9 z M 16 11 A 1.0001 1.0001 0 0 0 15 12 L 15 13.058594 C 10.509992 13.558947 7 17.379829 7 22 C 7 26.958516 11.041484 31 16 31 C 20.620171 31 24.441053 27.490008 24.941406 23 L 26 23 A 1.0001 1.0001 0 0 0 27 22 C 26.9989 19.083284 25.838874 16.284187 23.777344 14.222656 C 21.715813 12.161126 18.916716 11.0011 16 11 z M 17 13.199219 C 19.007669 13.431398 20.921571 14.195009 22.363281 15.636719 C 23.804991 17.078429 24.568602 18.992331 24.800781 21 L 17 21 L 17 13.199219 z M 33 15 A 1.0001 1.0001 0 1 0 33 17 L 41 17 A 1.0001 1.0001 0 1 0 41 15 L 33 15 z M 15 15.078125 L 15 22 A 1.0001 1.0001 0 0 0 16 23 L 22.921875 23 C 22.437987 26.399042 19.536745 29 16 29 C 12.122516 29 9 25.877484 9 22 C 9 18.463255 11.600958 15.562013 15 15.078125 z M 33 21 A 1.0001 1.0001 0 1 0 33 23 L 41 23 A 1.0001 1.0001 0 1 0 41 21 L 33 21 z M 33 27 A 1.0001 1.0001 0 1 0 33 29 L 41 29 A 1.0001 1.0001 0 1 0 41 27 L 33 27 z M 23.984375 33.486328 A 1.0001 1.0001 0 0 0 23 34.5 L 23 35 L 9 35 A 1.0001 1.0001 0 1 0 9 37 L 23 37 L 23 37.5 A 1.0001 1.0001 0 1 0 25 37.5 L 25 36.167969 A 1.0001 1.0001 0 0 0 25 35.841797 L 25 34.5 A 1.0001 1.0001 0 0 0 23.984375 33.486328 z M 27 35 L 27 37 L 41 37 C 41.553 37 42 36.552 42 36 C 42 35.448 41.553 35 41 35 L 27 35 z"/></svg>';
 	}
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -111,7 +89,6 @@ class HBL_Account_Menu extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: MENU LINKS ==========
 		$this->start_controls_section(
 			'section_links',
 			array(
@@ -170,7 +147,6 @@ class HBL_Account_Menu extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: GUEST BUTTONS ==========
 		$this->start_controls_section(
 			'section_guest',
 			array(
@@ -213,7 +189,6 @@ class HBL_Account_Menu extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TRIGGER ==========
 		$this->start_controls_section(
 			'section_style_trigger',
 			array(
@@ -279,7 +254,6 @@ class HBL_Account_Menu extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: DROPDOWN ==========
 		$this->start_controls_section(
 			'section_style_dropdown',
 			array(
@@ -371,7 +345,6 @@ class HBL_Account_Menu extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: GUEST BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_guest',
 			array(
@@ -436,9 +409,6 @@ class HBL_Account_Menu extends Widget_Base {
 		$dashboard_url = ! empty( $settings['dashboard_url']['url'] ) ? $settings['dashboard_url']['url'] : hbl_get_dashboard_page_url();
 
 		if ( ! is_user_logged_in() ) {
-			// Single merged Login/Register button - defaults to the Register
-			// (create account) form. The sign-in/sign-up form reads ?tab=signup
-			// to open the Create Account tab instead of Sign In.
 			$register_base = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_registration_page_link() : wp_registration_url();
 			$register_url  = add_query_arg( 'tab', 'signup', $register_base );
 			?>
@@ -470,9 +440,9 @@ class HBL_Account_Menu extends Widget_Base {
 		?>
 		<div class="hbl-account-menu" data-hbl-account-menu>
 			<button type="button" class="hbl-account-menu-trigger" aria-haspopup="true" aria-expanded="false">
-				<span class="hbl-account-menu-icon"><?php echo $this->control_panel_icon(); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+				<span class="hbl-account-menu-icon"><?php echo $this->control_panel_icon(); ?></span>
 				<span class="hbl-account-menu-name"><?php echo esc_html( $settings['trigger_text'] ); ?></span>
-				<span class="hbl-account-menu-chevron"><?php echo $this->icon( 'chevron' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+				<span class="hbl-account-menu-chevron"><?php echo $this->icon( 'chevron' ); ?></span>
 			</button>
 
 			<div class="hbl-account-menu-overlay" data-hbl-account-menu-close></div>
@@ -499,7 +469,7 @@ class HBL_Account_Menu extends Widget_Base {
 						<?php if ( 'yes' === $settings[ 'show_' . $key ] ) : ?>
 							<li>
 								<a href="<?php echo esc_url( $item['url'] ); ?>">
-									<?php echo $this->icon( $item['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+									<?php echo $this->icon( $item['icon'] ); ?>
 									<?php echo esc_html( $settings[ $key . '_label' ] ); ?>
 								</a>
 							</li>
@@ -509,7 +479,7 @@ class HBL_Account_Menu extends Widget_Base {
 						<li class="hbl-account-menu-divider"></li>
 						<li>
 							<a href="<?php echo esc_url( $logout_url ); ?>" class="hbl-account-menu-logout">
-								<?php echo $this->icon( 'logout' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+								<?php echo $this->icon( 'logout' ); ?>
 								<?php esc_html_e( 'Logout', 'hbl' ); ?>
 							</a>
 						</li>

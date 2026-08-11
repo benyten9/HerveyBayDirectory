@@ -1,9 +1,4 @@
-/* =============================================
-   HBL Duplicate Listings — delta overrides
-   (bulk-reassign.css is loaded first)
-   ============================================= */
 
-/* Group block */
 .hbl-dup-group-block {
 	margin-bottom: 1.5rem;
 	border: 1px solid var(--hbl-border);
@@ -26,12 +21,10 @@
 	color: var(--hbl-text);
 }
 
-/* Original row highlight */
 .hbl-dup-original-row {
 	background: rgba(16, 185, 129, 0.04) !important;
 }
 
-/* Badges for Original / Duplicate */
 .hbl-dup-badge-orig {
 	background: rgba(16, 185, 129, 0.12);
 	color: #065F46;
@@ -44,15 +37,11 @@
 	border-color: rgba(239, 68, 68, 0.25);
 }
 
-/* Action cards: keep same width as plan grid */
 .hbl-dup-action-card {
 	cursor: pointer;
 }
 
 @media (max-width: 782px) {
-	/* Individual rows become their own stacked cards on mobile — let
-	   them breathe inside the group instead of being clipped/pressed
-	   edge-to-edge by the group block's own border. */
 	.hbl-dup-group-block {
 		overflow: visible;
 		padding: 0 10px 10px;

@@ -1,6 +1,3 @@
-/**
- * HBL Bulk Category Reassign JavaScript
- */
 
 (function($) {
 	'use strict';
@@ -17,7 +14,6 @@
 		bindEvents: function() {
 			var self = this;
 
-			// Select all categories checkbox
 			$('#hbl-select-all-categories').on('change', function() {
 				var isChecked = $(this).is(':checked');
 				$('.hbl-source-category-checkbox').each(function() {
@@ -25,7 +21,6 @@
 				});
 			});
 
-			// Individual category checkbox change
 			$(document).on('change', '.hbl-source-category-checkbox', function() {
 				var $card = $(this).closest('.hbl-category-card');
 				var categoryId = parseInt($card.data('category-id'));
@@ -52,20 +47,15 @@
 				self.updateSummary();
 			});
 
-			// Note: Clicking on category card is handled by the label element
-			// which naturally toggles the checkbox
 
-			// Target category change
 			$('#hbl-target-category').on('change', function() {
 				self.updateSummary();
 			});
 
-			// Reassign mode change
 			$('input[name="hbl-reassign-mode"]').on('change', function() {
 				self.updateSummary();
 			});
 
-			// Execute reassign
 			$('#hbl-execute-reassign').on('click', function() {
 				self.executeReassign();
 			});
@@ -91,7 +81,6 @@
 			var targetCategoryId = parseInt(targetCategory.val()) || 0;
 			var mode = $('input[name="hbl-reassign-mode"]:checked').val();
 
-			// Check if target is in selected source categories
 			var targetInSource = this.selectedCategories.indexOf(targetCategoryId) > -1;
 
 			if (this.selectedCategories.length === 0 || !targetCategory.val()) {
@@ -101,7 +90,6 @@
 				return;
 			}
 
-			// Get selected category names
 			var sourceNames = [];
 			$('.hbl-category-card.selected').each(function() {
 				sourceNames.push($(this).find('.hbl-category-name').text());
@@ -129,7 +117,6 @@
 
 			$summary.addClass('hbl-summary-active').html(html);
 			
-			// Enable button if valid selection
 			$executeBtn.prop('disabled', targetInSource);
 			
 			if (targetInSource) {
@@ -193,7 +180,6 @@
 							'<span>' + response.data.message + '</span>'
 						).show();
 						
-						// Reload page after 2 seconds to show updated counts
 						setTimeout(function() {
 							window.location.reload();
 						}, 2000);

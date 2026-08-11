@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Checkout Widget
- * 
- * A beautiful checkout widget with payment method selection.
- * Integrated with Stripe for payment processing.
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -19,8 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Note: Stripe AJAX handlers (hbl_create_stripe_session, hbl_verify_stripe_payment, hbl_build_stripe_body) 
-// are registered in functions.php for global availability
 
 class HBL_Checkout extends Widget_Base {
 
@@ -46,7 +35,6 @@ class HBL_Checkout extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -140,7 +128,6 @@ class HBL_Checkout extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: PAYMENT METHODS ==========
 		$this->start_controls_section(
 			'section_payment_methods',
 			array(
@@ -215,7 +202,6 @@ class HBL_Checkout extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: SECURE BADGE ==========
 		$this->start_controls_section(
 			'section_security',
 			array(
@@ -249,7 +235,6 @@ class HBL_Checkout extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -293,7 +278,6 @@ class HBL_Checkout extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -351,14 +335,12 @@ class HBL_Checkout extends Widget_Base {
 	}
 
 	protected function render() {
-		// Start session for coupon data
 		if ( ! session_id() ) {
 			session_start();
 		}
 		
 		$settings = $this->get_settings_for_display();
 
-		// Enqueue reCAPTCHA if enabled
 		if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) && ! \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			wp_enqueue_script( 'google-recaptcha' );
 		}
@@ -366,28 +348,23 @@ class HBL_Checkout extends Widget_Base {
 		$plan_id = isset( $_GET['plan_id'] ) ? absint( $_GET['plan_id'] ) : 0;
 		$listing_id = isset( $_GET['listing_id'] ) ? absint( $_GET['listing_id'] ) : 0;
 		
-		// Sample order data - in production, fetch from database
 		$order_data = $this->get_order_data( $order_id, $plan_id, $listing_id );
 
-		// Check if user needs to login
 		if ( 'yes' === $settings['require_login'] && ! is_user_logged_in() ) {
 			$this->render_login_required( $settings );
 			return;
 		}
 
-		// Check if there's anything to checkout
 		if ( empty( $order_data['items'] ) ) {
 			$this->render_empty_cart( $settings );
 			return;
 		}
 
-		// Get current user info
 		$current_user = wp_get_current_user();
 		$user_name = $current_user->display_name;
 		$user_email = $current_user->user_email;
 		$user_phone = get_user_meta( $current_user->ID, 'phone', true );
 
-		// Dashboard URL for back button
 		$dashboard_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/dashboard/' );
 		?>
 		<div class="hbl-checkout-widget">
@@ -409,7 +386,6 @@ class HBL_Checkout extends Widget_Base {
 			<?php endif; ?>
 
 			<div class="hbl-checkout-layout">
-				<!-- Main Checkout Form -->
 				<div class="hbl-checkout-main">
 					<form id="hbl-checkout-form" class="hbl-checkout-form" method="post">
 						<?php wp_nonce_field( 'hbl_checkout_nonce', 'checkout_nonce' ); ?>
@@ -418,7 +394,6 @@ class HBL_Checkout extends Widget_Base {
 						<input type="hidden" name="plan_id" value="<?php echo esc_attr( $plan_id ); ?>">
 						<input type="hidden" name="listing_id" value="<?php echo esc_attr( $listing_id ); ?>">
 
-						<!-- Billing Information Section -->
 						<div class="hbl-form-section">
 							<div class="hbl-form-section-header">
 								<div class="hbl-form-section-icon">
@@ -433,7 +408,6 @@ class HBL_Checkout extends Widget_Base {
 								</div>
 							</div>
 							<div class="hbl-form-section-content">
-								<!-- Full Name -->
 								<div class="hbl-form-group">
 									<label for="billing_name" class="hbl-form-label">
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -448,7 +422,6 @@ class HBL_Checkout extends Widget_Base {
 									</div>
 								</div>
 
-								<!-- Email & Phone Row -->
 								<div class="hbl-form-row">
 									<div class="hbl-form-group hbl-form-group-half">
 										<label for="billing_email" class="hbl-form-label">
@@ -478,10 +451,8 @@ class HBL_Checkout extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Hidden payment method - always Stripe -->
 						<input type="hidden" name="payment_method" value="stripe">
 
-						<!-- Form Message -->
 						<div id="hbl-checkout-message" class="hbl-form-message" style="display: none;"></div>
 					<?php if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) ) : ?>
 					<div class="hbl-recaptcha-wrapper" style="margin-bottom:16px;">
@@ -493,7 +464,6 @@ class HBL_Checkout extends Widget_Base {
 						<span class="hbl-recaptcha-error" style="display:none;color:#dc3545;font-size:13px;margin-top:4px;"><?php esc_html_e( 'Please complete the CAPTCHA.', 'hbl' ); ?></span>
 					</div>
 					<?php endif; ?>
-						<!-- Submit Button -->
 						<div class="hbl-form-actions">
 							<button type="submit" class="hbl-form-btn hbl-form-btn-primary hbl-form-btn-large hbl-form-btn-block" id="hbl-checkout-submit-btn">
 								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -505,7 +475,6 @@ class HBL_Checkout extends Widget_Base {
 						</div>
 
 						<?php if ( 'yes' === $settings['show_security_badge'] ) : ?>
-						<!-- Security Notice -->
 						<div class="hbl-form-secure-notice">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M12 22S20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -517,7 +486,6 @@ class HBL_Checkout extends Widget_Base {
 					</form>
 				</div>
 
-				<!-- Order Summary Sidebar -->
 				<div class="hbl-checkout-sidebar">
 					<div class="hbl-order-summary">
 						<div class="hbl-order-summary-header">
@@ -567,7 +535,6 @@ class HBL_Checkout extends Widget_Base {
 						</div>
 					</div>
 
-					<!-- Coupon Code (Directorist Coupon Extension) -->
 					<div class="hbl-coupon-section">
 						
 						<div class="hbl-coupon-toggle-wrapper">
@@ -597,7 +564,6 @@ class HBL_Checkout extends Widget_Base {
 
 		<script>
 		jQuery(document).ready(function($) {
-			// Coupon toggle - prevent multiple bindings and conflicts
 			$('#hbl-coupon-toggle').off('click').on('click', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -614,10 +580,8 @@ class HBL_Checkout extends Widget_Base {
 				return false;
 			});
 			
-			// Prevent any other click handlers from interfering
 			$('.hbl-coupon-section').off('click', '**');
 			
-			// Coupon application functionality
 			$('#hbl-apply-coupon').on('click', function() {
 				var $btn = $(this);
 				var $input = $('#coupon_code');
@@ -634,7 +598,6 @@ class HBL_Checkout extends Widget_Base {
 				$btn.prop('disabled', true).text('<?php esc_html_e( 'Applying...', 'hbl' ); ?>');
 				$message.hide();
 				
-				// Apply coupon via AJAX
 				$.ajax({
 					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
 					type: 'POST',
@@ -653,28 +616,21 @@ class HBL_Checkout extends Widget_Base {
 							$input.prop('disabled', true);
 							$btn.text('<?php esc_html_e( 'Applied', 'hbl' ); ?>').prop('disabled', true);
 							
-							// Note: Removed checkout message display to avoid duplicate notifications
 							
-							// Update order totals if discount info is provided
 							if (response.data.discount_amount && response.data.new_total) {
-								// Update discount line (show it if hidden)
 								var $discountRow = $('.hbl-order-discount');
 								if ($discountRow.length === 0) {
-									// Create discount row if it doesn't exist
 									$('.hbl-order-tax').after('<div class="hbl-order-discount"><span><?php esc_html_e( 'Discount', 'hbl' ); ?></span><span class="discount-amount">-$0.00</span></div>');
 									$discountRow = $('.hbl-order-discount');
 								}
 								$discountRow.find('.discount-amount').text('-$' + parseFloat(response.data.discount_amount).toFixed(2));
 								$discountRow.show();
 								
-								// Update total
 								$('.hbl-order-total span:last-child').text('$' + parseFloat(response.data.new_total).toFixed(2));
 								
-								// Update payment button
 								$('#hbl-checkout-submit-btn span').text('<?php esc_html_e( 'Pay', 'hbl' ); ?> $' + parseFloat(response.data.new_total).toFixed(2));
 							}
 							
-							// Optionally reload to update order summary
 							if (response.data.reload) {
 								setTimeout(function() {
 									window.location.reload();
@@ -691,7 +647,6 @@ class HBL_Checkout extends Widget_Base {
 				});
 			});
 			
-			// Form submission - always use Stripe
 			$('#hbl-checkout-form').on('submit', function(e) {
 				e.preventDefault();
 				
@@ -699,7 +654,6 @@ class HBL_Checkout extends Widget_Base {
 				var $message = $('#hbl-checkout-message');
 				var originalBtnHtml = $btn.html();
 				
-				// Validate required fields
 				var billingName = $('#billing_name').val();
 				var billingEmail = $('#billing_email').val();
 				
@@ -708,7 +662,6 @@ class HBL_Checkout extends Widget_Base {
 					return;
 				}
 
-				// reCAPTCHA validation
 				if (typeof grecaptcha !== 'undefined' && $('#hbl-checkout-form').find('.g-recaptcha').length) {
 					if (!grecaptcha.getResponse()) {
 						$('#hbl-checkout-form').find('.hbl-recaptcha-error').show();
@@ -717,11 +670,9 @@ class HBL_Checkout extends Widget_Base {
 					$('#hbl-checkout-form').find('.hbl-recaptcha-error').hide();
 				}
 				
-				// Show loading - only one spinner on the left
 				$btn.prop('disabled', true).html('<span class="hbl-spinner hbl-spinner-btn"></span><span><?php esc_html_e( 'Processing...', 'hbl' ); ?></span>');
 				$message.hide();
 				
-				// Create Stripe Checkout Session
 				$.ajax({
 					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
 					type: 'POST',
@@ -738,7 +689,6 @@ class HBL_Checkout extends Widget_Base {
 					success: function(response) {
 						if (response.success && response.data.checkout_url) {
 							$message.removeClass('error').addClass('success').html('<?php esc_html_e( 'Redirecting to secure payment...', 'hbl' ); ?>').show();
-							// Redirect to Stripe Checkout
 							window.location.href = response.data.checkout_url;
 						} else {
 							$btn.prop('disabled', false).html(originalBtnHtml);
@@ -758,9 +708,6 @@ class HBL_Checkout extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render login required message
-	 */
 	private function render_login_required( $settings ) {
 		$login_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_login_page_link() : wp_login_url();
 		$register_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_registration_page_link() : wp_registration_url();
@@ -790,9 +737,6 @@ class HBL_Checkout extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render empty cart message
-	 */
 	private function render_empty_cart( $settings ) {
 		$dashboard_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/dashboard/' );
 		?>
@@ -818,9 +762,6 @@ class HBL_Checkout extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get order data from plan and listing
-	 */
 	private function get_order_data( $order_id, $plan_id, $listing_id ) {
 		$items     = array();
 		$subtotal  = 0;
@@ -829,10 +770,6 @@ class HBL_Checkout extends Widget_Base {
 
 		$pricing_available = class_exists( 'HBL_Pricing_Plans' );
 
-		// If plan_id is provided, get plan details (price + tax) from Directorist
-		// via the theme's central pricing-plans provider — it already resolves
-		// legacy vs 4.0+ plan storage correctly, so tax here always matches what
-		// this plan actually charges, not a fixed rate assumed for every plan.
 		if ( $plan_id && $pricing_available ) {
 			$plan = \HBL_Pricing_Plans::get_plan( $plan_id );
 			if ( $plan && ! $plan['is_free'] && $plan['price'] > 0 ) {
@@ -847,7 +784,6 @@ class HBL_Checkout extends Widget_Base {
 			}
 		}
 
-		// Fallback: price from the listing's currently assigned plan.
 		if ( ( empty( $items ) || $subtotal <= 0 ) && $listing_id && $pricing_available ) {
 			$listing_plan_id = \HBL_Pricing_Plans::get_listing_plan_id( $listing_id );
 			if ( $listing_plan_id && $listing_plan_id != $plan_id ) {
@@ -867,7 +803,6 @@ class HBL_Checkout extends Widget_Base {
 			}
 		}
 
-		// Final fallback if still no items — no real plan to derive tax from.
 		if ( empty( $items ) || $subtotal <= 0 ) {
 			$items[] = array(
 				'name'        => __( 'Business Listing Package', 'hbl' ),
@@ -879,21 +814,17 @@ class HBL_Checkout extends Widget_Base {
 			$tax_label = __( 'Tax', 'hbl' );
 		}
 
-		// Check for applied coupon discount from session
 		$discount = 0;
 		if ( isset( $_SESSION['hbl_coupon_discount'] ) && $_SESSION['hbl_coupon_discount'] > 0 ) {
 			$coupon_discount = floatval( $_SESSION['hbl_coupon_discount'] );
 			$coupon_type = isset( $_SESSION['hbl_coupon_type'] ) ? $_SESSION['hbl_coupon_type'] : 'fixed';
 			
 			if ( $coupon_type === 'percentage' ) {
-				// Apply percentage discount to subtotal
 				$discount = ( $subtotal * $coupon_discount ) / 100;
 			} else {
-				// Apply fixed discount
 				$discount = $coupon_discount;
 			}
 			
-			// Make sure discount doesn't exceed subtotal
 			$discount = min( $discount, $subtotal );
 		}
 		

@@ -1,15 +1,4 @@
 <?php
-/**
- * HBL Add Event Form Widget
- * 
- * Launch-ready event submission form with internal tag-mapping layer
- * for tracking data and future paid promotion features.
- * 
- * All events are free at launch - no friction, no upsells, build trust!
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -23,9 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class HBL_Add_Event_Form extends Widget_Base {
 
-	/**
-	 * Internal tag mappings for analytics and future features
-	 */
 	private static $event_type_tags = array(
 		'community'     => 'event-type-community',
 		'workshop'      => 'event-type-workshop',
@@ -75,7 +61,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -154,7 +139,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -198,7 +182,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -266,29 +249,24 @@ class HBL_Add_Event_Form extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Enqueue WordPress media uploader for image upload
 		if ( ! did_action( 'wp_enqueue_media' ) ) {
 			wp_enqueue_media();
 		}
 
-		// Enqueue reCAPTCHA if enabled
 		if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) && ! \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			wp_enqueue_script( 'google-recaptcha' );
 		}
 		$editing_event_id = 0;
 		$event_data = array();
 		
-		// Check query var set by rewrite rule
 		$editing_event_id = absint( get_query_var( 'hbl_edit_event', 0 ) );
 		
-		// Fallback: Check URL for edit mode: /add-event/edit/{id}/
 		if ( ! $editing_event_id ) {
 			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 			if ( preg_match( '/\/edit\/(\d+)\/?/', $request_uri, $matches ) ) {
 				$editing_event_id = absint( $matches[1] );
 			}
 		}
-		// Also check query params for non-pretty permalinks or event_id param
 		if ( ! $editing_event_id && isset( $_GET['edit_event'] ) ) {
 			$editing_event_id = absint( $_GET['edit_event'] );
 		}
@@ -296,20 +274,16 @@ class HBL_Add_Event_Form extends Widget_Base {
 			$editing_event_id = absint( $_GET['event_id'] );
 		}
 		
-		// Load event data if editing - using custom database
 		if ( $editing_event_id && function_exists( 'hbl_events_db' ) ) {
 			$db = hbl_events_db();
 			$event = $db->get( $editing_event_id );
 			$current_user_id = get_current_user_id();
 			
-			// Verify the event exists and user owns it (or is admin)
 			if ( $event && ( (int) $event->user_id === $current_user_id || current_user_can( 'edit_others_posts' ) ) ) {
 					
-					// Format dates for datetime-local input
 				$start_date_formatted = $event->start_date ? date( 'Y-m-d\TH:i', strtotime( $event->start_date ) ) : '';
 				$end_date_formatted = $event->end_date ? date( 'Y-m-d\TH:i', strtotime( $event->end_date ) ) : '';
 					
-				// Build event data array
 				$event_data = array(
 					'id'                  => $event->id,
 					'title'               => wp_unslash( $event->title ),
@@ -328,8 +302,8 @@ class HBL_Add_Event_Form extends Widget_Base {
 					'event_type'          => $event->event_type,
 					'event_cost'          => $event->event_cost,
 					'scheduling_type'     => isset($event->scheduling_type) ? $event->scheduling_type : 'single',
-					'daily_start_time'    => isset($event->daily_start_time) ? substr($event->daily_start_time, 0, 5) : '', // Format HH:MM
-					'daily_end_time'      => isset($event->daily_end_time)   ? substr($event->daily_end_time, 0, 5)   : '', // Format HH:MM
+					'daily_start_time'    => isset($event->daily_start_time) ? substr($event->daily_start_time, 0, 5) : '',
+					'daily_end_time'      => isset($event->daily_end_time)   ? substr($event->daily_end_time, 0, 5)   : '',
 					'event_frequency'     => $event->event_frequency,
 					'recurrence_type'     => $event->recurrence_type,
 					'recurrence_interval' => $event->recurrence_interval,
@@ -339,18 +313,15 @@ class HBL_Add_Event_Form extends Widget_Base {
 					'organiser_type'      => $event->organiser_type,
 				);
 			} else {
-				// User doesn't own this event or it doesn't exist
 				$editing_event_id = 0;
 			}
 		}
 		
 		$is_editing = ! empty( $event_data );
 		
-		// Get the dashboard URL for back button (with events tab)
 		$dashboard_base = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/dashboard/' );
 		$dashboard_url = add_query_arg( 'tab', 'events', $dashboard_base );
 
-		// Check if user is logged in
 		if ( 'yes' === $settings['require_login'] && ! is_user_logged_in() ) {
 			$login_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_login_page_link() : wp_login_url();
 			$register_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_registration_page_link() : wp_registration_url();
@@ -381,19 +352,16 @@ class HBL_Add_Event_Form extends Widget_Base {
 			return;
 		}
 
-		// Get event categories
 		$event_categories = get_terms( array(
 			'taxonomy'   => 'event_category',
 			'hide_empty' => false,
 		) );
 
-		// Get event tags
 		$event_tags = get_terms( array(
 			'taxonomy'   => 'event_tag',
 			'hide_empty' => false,
 		) );
 
-		// Get current user ID
 		$user_id = get_current_user_id();
 		$user = get_userdata( $user_id );
 		$user_email = $user ? $user->user_email : '';
@@ -435,7 +403,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 				<input type="hidden" name="is_event" value="1">
 				<input type="hidden" name="event_id" value="<?php echo esc_attr( $editing_event_id ); ?>">
 
-				<!-- ==================== SECTION 1: EVENT BASICS ==================== -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -450,7 +417,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Event Name -->
 						<div class="hbl-form-group">
 							<label for="event_title" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -466,7 +432,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							<p class="hbl-form-field-hint"><?php esc_html_e( 'Use the public name of the event and the day (if relevant). Eg Torquay Beachside Markets (Saturday) … or … Howard Country Markets (First Sunday)', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Short Description -->
 						<div class="hbl-form-group">
 							<label for="event_content" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -484,7 +449,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							<p class="hbl-form-field-hint"><?php esc_html_e( 'Describe what the event is, who it’s for, and what visitors can expect (in up to 120 words).', 'hbl' ); ?></p>
 						</div>
 						
-						<!-- NEW: Scheduling Type (Event Type) -->
 						<div class="hbl-form-group">
 							<label class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -514,7 +478,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Block A: Next Occurrence (Single/Regular) -->
 						<div id="date-block-single" class="hbl-date-block">
 							<div class="hbl-form-section-title" style="margin-bottom: 15px;">
 								<h3><?php esc_html_e( 'Next occurrence', 'hbl' ); ?></h3>
@@ -522,7 +485,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 
 							<div class="hbl-form-row">
-								<!-- Single Date -->
 								<div class="hbl-form-group hbl-form-group-third">
 									<label for="start_date_single" class="hbl-form-label">
 										<span><?php esc_html_e( 'Date', 'hbl' ); ?></span>
@@ -532,7 +494,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 										<input type="date" id="start_date_single" name="start_date_single" class="hbl-form-input" value="<?php echo !empty($event_data['start_date']) ? date('Y-m-d', strtotime($event_data['start_date'])) : ''; ?>">
 									</div>
 								</div>
-								<!-- Start Time -->
 								<div class="hbl-form-group hbl-form-group-third">
 									<label for="start_time_single" class="hbl-form-label">
 										<span><?php esc_html_e( 'Start Time', 'hbl' ); ?></span>
@@ -542,7 +503,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 										<input type="time" id="start_time_single" name="start_time_single" class="hbl-form-input" value="<?php echo !empty($event_data['start_date']) ? date('H:i', strtotime($event_data['start_date'])) : ''; ?>">
 									</div>
 								</div>
-								<!-- End Time -->
 								<div class="hbl-form-group hbl-form-group-third">
 									<label for="end_time_single" class="hbl-form-label">
 										<span><?php esc_html_e( 'End Time', 'hbl' ); ?></span>
@@ -555,14 +515,12 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Block B: Event Dates (Multi-day) -->
 						<div id="date-block-multi" class="hbl-date-block" style="display: none;">
 							<div class="hbl-form-section-title" style="margin-bottom: 15px;">
 								<h3><?php esc_html_e( 'Event dates', 'hbl' ); ?></h3>
 								<p><?php esc_html_e( 'Select the start and end dates of the event and the regular opening hours.', 'hbl' ); ?></p>
 							</div>
 
-							<!-- Date Range -->
 							<div class="hbl-form-group">
 								<label class="hbl-form-label"><?php esc_html_e( 'Event runs from', 'hbl' ); ?></label>
 								<div class="hbl-form-row">
@@ -587,7 +545,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 								</div>
 							</div>
 
-							<!-- Daily Opening Hours -->
 							<div class="hbl-form-group">
 								<label class="hbl-form-label"><?php esc_html_e( 'Daily opening hours', 'hbl' ); ?></label>
 								<div class="hbl-form-row">
@@ -612,7 +569,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 								</div>
 							</div>
 
-							<!-- Open Days -->
 							<div class="hbl-form-group">
 								<label class="hbl-form-label">
 									<span><?php esc_html_e( 'Open days', 'hbl' ); ?></span>
@@ -622,7 +578,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 								<div class="hbl-form-days-grid hbl-form-days-grid-multi">
 									<?php
 									$days = array( 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' );
-									// Default to all days selected if new, or check saved recurrence_days (using recurrence_days field for this)
 									$saved_days = !empty($event_data['recurrence_days']) ? explode(',', $event_data['recurrence_days']) : $days;
 									
 									foreach ( $days as $day ) :
@@ -641,7 +596,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Venue / Location -->
 						<div class="hbl-form-group">
 							<label for="event_venue" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -657,7 +611,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							<p class="hbl-form-field-hint"><?php esc_html_e( 'Name of the park, hall, venue, or location.', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Venue Address -->
 						<div class="hbl-form-group">
 							<label for="event_address" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -672,7 +625,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							<p class="hbl-form-field-hint"><?php esc_html_e( 'Street address if known. You can leave this blank for well-known public locations.', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Event Website / Booking Link -->
 						<div class="hbl-form-group">
 							<label for="event_url" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -688,7 +640,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							<p class="hbl-form-field-hint"><?php esc_html_e( 'Link to the official website or Facebook page where updates are posted.', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Contact Email (not public) -->
 						<div class="hbl-form-group">
 							<label for="contact_email" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -706,7 +657,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- ==================== SECTION 2: EVENT TYPE ==================== -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -722,7 +672,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Event Category -->
 						<?php if ( ! empty( $event_categories ) && ! is_wp_error( $event_categories ) ) : ?>
 						<div class="hbl-form-group">
 							<label for="event_category" class="hbl-form-label">
@@ -746,7 +695,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 						</div>
 						<?php endif; ?>
 
-						<!-- Event Tags -->
 						<?php if ( ! empty( $event_tags ) && ! is_wp_error( $event_tags ) ) : ?>
 						<div class="hbl-form-group">
 							<label for="event_tags" class="hbl-form-label">
@@ -774,7 +722,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- ==================== SECTION 3: COST TO ATTEND ==================== -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -821,7 +768,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- ==================== SECTION 4: FREQUENCY & RECURRENCE ==================== -->
 				<div class="hbl-form-section" id="frequency-block-single">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -857,7 +803,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Weekly Recurrence Options -->
 						<?php 
 						$recurrence_days_raw = $event_data['recurrence_days'] ?? '';
 						$recurrence_days_array = ! empty( $recurrence_days_raw ) ? explode( ',', $recurrence_days_raw ) : array();
@@ -912,7 +857,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Monthly Recurrence Options -->
 						<?php 
 						$recurrence_week = ! empty( $event_data['recurrence_week'] ) ? explode( ',', $event_data['recurrence_week'] ) : array();
 						$recurrence_type = $event_data['recurrence_type'] ?? 'day_of_week';
@@ -972,10 +916,8 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Hidden field to store recurrence type -->
 						<input type="hidden" name="recurrence_type" id="recurrence_type" value="<?php echo esc_attr( $recurrence_type ); ?>">
 
-						<!-- Is this part of a program/series? -->
 						<div class="hbl-form-group hbl-form-group-checkbox">
 							<label class="hbl-form-checkbox-label">
 								<input type="checkbox" name="is_program" value="1" class="hbl-form-checkbox" id="is_program" <?php checked( ! empty( $event_data['is_program'] ) ); ?>>
@@ -987,7 +929,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- ==================== SECTION 5: ORGANISER TYPE ==================== -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1025,7 +966,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-				<!-- ==================== VISUAL SETTINGS (OPTIONAL) ==================== -->
 				<div class="hbl-form-section">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -1041,7 +981,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Featured Image -->
 						<?php 
 						$thumbnail_id = $event_data['thumbnail_id'] ?? '';
 						$thumbnail_url = $thumbnail_id ? wp_get_attachment_image_url( $thumbnail_id, 'medium' ) : '';
@@ -1082,7 +1021,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 							</div>
 						</div>
 
-						<!-- Event Color (for calendar) -->
 						<?php $current_color = $event_data['color'] ?? '#008080'; ?>
 						<div class="hbl-form-group">
 							<label for="event_color" class="hbl-form-label">
@@ -1102,7 +1040,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- ==================== SECTION 6: TRANSPARENCY NOTE ==================== -->
 				<?php if ( ! empty( $settings['transparency_note'] ) ) : ?>
 				<div class="hbl-form-transparency-note">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1124,7 +1061,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Submit Button -->
 				<div class="hbl-form-actions">
 					<?php if ( $is_editing ) : ?>
 						<a href="<?php echo esc_url( $dashboard_url ); ?>" class="hbl-form-btn hbl-form-btn-secondary hbl-form-btn-large">
@@ -1147,40 +1083,29 @@ class HBL_Add_Event_Form extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get internal tags for an event based on its meta values
-	 * 
-	 * @param int $event_id The event post ID
-	 * @return array Array of internal tags
-	 */
 	public static function get_event_internal_tags( $event_id ) {
 		$tags = array();
 
-		// Event Type tag
 		$event_type = get_post_meta( $event_id, '_hbl_event_type', true );
 		if ( $event_type && isset( self::$event_type_tags[ $event_type ] ) ) {
 			$tags[] = self::$event_type_tags[ $event_type ];
 		}
 
-		// Cost tag
 		$event_cost = get_post_meta( $event_id, '_hbl_event_cost', true );
 		if ( $event_cost && isset( self::$cost_tags[ $event_cost ] ) ) {
 			$tags[] = self::$cost_tags[ $event_cost ];
 		}
 
-		// Frequency tag
 		$event_frequency = get_post_meta( $event_id, '_hbl_event_frequency', true );
 		if ( $event_frequency && isset( self::$frequency_tags[ $event_frequency ] ) ) {
 			$tags[] = self::$frequency_tags[ $event_frequency ];
 		}
 
-		// Program tag
 		$is_program = get_post_meta( $event_id, '_hbl_event_is_program', true );
 		if ( $is_program ) {
 			$tags[] = 'event-program';
 		}
 
-		// Organiser type tag
 		$organiser_type = get_post_meta( $event_id, '_hbl_event_organiser_type', true );
 		if ( $organiser_type && isset( self::$organiser_tags[ $organiser_type ] ) ) {
 			$tags[] = self::$organiser_tags[ $organiser_type ];
@@ -1189,9 +1114,6 @@ class HBL_Add_Event_Form extends Widget_Base {
 		return $tags;
 	}
 
-	/**
-	 * Get tag mappings for reference
-	 */
 	public static function get_tag_mappings() {
 		return array(
 			'event_type'     => self::$event_type_tags,

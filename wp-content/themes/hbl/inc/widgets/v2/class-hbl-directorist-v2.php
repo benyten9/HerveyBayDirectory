@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Directorist V2 Widget
- *
- * Modern redesign with same functionality as V1 but cleaner code
- * Uses trait-based architecture for better maintainability
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -27,47 +18,28 @@ class HBL_Directorist_V2 extends Widget_Base {
 	use Filter_Controls;
 	use Card_Renderer;
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-directorist-v2';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL Directorist V2 (Modern)', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-gallery-grid';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'directory', 'listing', 'business', 'directorist', 'v2', 'modern' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 		
-		// Query Settings Section
 		$this->start_controls_section(
 			'section_query',
 			array(
@@ -151,7 +123,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			)
 		);
 
-		// Category Filter
 		$this->add_control(
 			'category_filter_type',
 			array(
@@ -183,7 +154,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			);
 		}
 
-		// Location Filter
 		$this->add_control(
 			'location_filter_type',
 			array(
@@ -214,7 +184,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			);
 		}
 
-		// Pricing Plans Filter
 		$this->add_control(
 			'pricing_plans_filter_type',
 			array(
@@ -247,7 +216,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Tier Mapping
 		$this->start_controls_section(
 			'section_plan_tiers',
 			array(
@@ -281,7 +249,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Badges Section
 		$this->start_controls_section(
 			'section_plan_badges',
 			array(
@@ -381,7 +348,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Display Options
 		$this->start_controls_section(
 			'section_display',
 			array(
@@ -428,7 +394,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			)
 		);
 		
-		// Popular Searches Repeater
 		$popular_searches_repeater = new \Elementor\Repeater();
 		
 		$popular_searches_repeater->add_control(
@@ -468,7 +433,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			)
 		);
 
-		// Popular Categories Control
 		$this->add_control(
 			'show_popular_categories',
 			array(
@@ -482,7 +446,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			)
 		);
 		
-		// Popular Categories Repeater
 		$popular_categories_repeater = new \Elementor\Repeater();
 		
 		$popular_categories_repeater->add_control(
@@ -551,7 +514,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			)
 		);
 
-		// More Filters Repeater
 		$more_filters_repeater = new \Elementor\Repeater();
 		
 		$more_filters_repeater->add_control(
@@ -659,7 +621,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Fallback Logo Section
 		$this->start_controls_section(
 			'section_fallback_logo',
 			array(
@@ -681,7 +642,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== RESPONSIVE VISIBILITY ==========
 		$this->start_controls_section(
 			'section_responsive_visibility',
 			array(
@@ -864,25 +824,18 @@ class HBL_Directorist_V2 extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Render widget output on frontend
-	 */
 	protected function render() {
-		// Enqueue Leaflet for map
 		wp_enqueue_style( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', array(), '1.9.4' );
 		wp_enqueue_script( 'leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', array(), '1.9.4', true );
 
 		$settings = $this->get_settings_for_display();
 		$widget_id = $this->get_id();
 		
-		// Get current page and letter filter
 		$paged = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 		$letter = isset( $_GET['letter'] ) ? strtoupper( sanitize_text_field( $_GET['letter'] ) ) : '';
 		
-		// Get listings
 		$query = $this->get_listings_query( $settings, $paged, $letter );
 		
-		// Get display settings
 		$show_keyword_search = isset( $settings['show_keyword_search'] ) && 'yes' === $settings['show_keyword_search'];
 		$show_popular_search = isset( $settings['show_popular_search'] ) && 'yes' === $settings['show_popular_search'];
 		$show_more_filters = isset( $settings['show_more_filters'] ) && 'yes' === $settings['show_more_filters'];
@@ -890,15 +843,11 @@ class HBL_Directorist_V2 extends Widget_Base {
 		$show_view_toggle = isset( $settings['show_view_toggle'] ) && 'yes' === $settings['show_view_toggle'];
 		$default_view = isset( $settings['default_view'] ) ? $settings['default_view'] : 'grid';
 		
-		// Get popular tags for popular search
 		$popular_searches = array();
 		if ( $show_popular_search ) {
-			// Check if custom popular searches are defined
 			if ( ! empty( $settings['popular_searches'] ) && is_array( $settings['popular_searches'] ) ) {
-				// Use custom popular searches from Elementor
 				$popular_searches = $settings['popular_searches'];
 			} else {
-				// Fall back to automatic popular tags
 				$popular_tags = get_terms( array(
 					'taxonomy'   => 'at_biz_dir-tags',
 					'hide_empty' => true,
@@ -907,7 +856,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 					'number'     => 6,
 				) );
 				if ( ! is_wp_error( $popular_tags ) ) {
-					// Convert to format compatible with custom searches
 					foreach ( $popular_tags as $tag ) {
 						$popular_searches[] = array(
 							'search_text' => $tag->name,
@@ -918,18 +866,14 @@ class HBL_Directorist_V2 extends Widget_Base {
 			}
 		}
 
-		// Get popular categories
 		$show_popular_categories = isset( $settings['show_popular_categories'] ) && 'yes' === $settings['show_popular_categories'];
 		$popular_categories = array();
 		if ( $show_popular_categories ) {
-			// Check if custom popular categories are defined
 			if ( ! empty( $settings['popular_categories'] ) && is_array( $settings['popular_categories'] ) ) {
-				// Use custom popular categories from Elementor
 				$popular_categories = $settings['popular_categories'];
 			}
 		}
 
-		// Get more filters items
 		$more_filters_items = array();
 		if ( $show_more_filters && ! empty( $settings['more_filters'] ) ) {
 			$more_filters_items = $settings['more_filters'];
@@ -943,7 +887,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 		     data-widget-settings="<?php echo esc_attr( json_encode( $settings ) ); ?>">
 			
 			<?php if ( $show_popular_search && ! empty( $popular_searches ) ) : ?>
-				<!-- Popular Searches as Buttons (Above A-Z Filter) -->
 				<div class="hbl-v2-popular-searches-section">
 					<div class="hbl-v2-popular-searches-buttons">
 						<?php foreach ( $popular_searches as $item ) : 
@@ -961,7 +904,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 
 			
 			<?php if ( isset( $settings['show_alphabetical_filter'] ) && 'yes' === $settings['show_alphabetical_filter'] ) : ?>
-				<!-- A-Z Alphabetical Filter -->
 				<div class="hbl-v2-alphabetical-filter">
 					<div class="hbl-v2-filter-buttons">
 						<?php foreach ( range( 'A', 'Z' ) as $alpha_letter ) : 
@@ -979,14 +921,12 @@ class HBL_Directorist_V2 extends Widget_Base {
 			<?php endif; ?>
 			
 			<?php if ( $show_keyword_search || $show_popular_search || $show_popular_categories || $show_more_filters || $show_sort || $show_view_toggle ) : ?>
-				<!-- Filters Bar -->
 				<div class="hbl-v2-filters-bar">
 					
 					<div class="hbl-v2-filters-left">
 						<span class="hbl-v2-filters-label"><?php esc_html_e( 'Filters', 'hbl' ); ?></span>
 						
 						<?php if ( $show_keyword_search ) : ?>
-							<!-- Search Business -->
 							<div class="hbl-v2-keyword-search">
 								<i class="bi bi-search hbl-v2-keyword-search-icon"></i>
 								<input type="text" class="hbl-v2-keyword-search-input" placeholder="<?php esc_attr_e( 'Search by Keyword...', 'hbl' ); ?>" autocomplete="off">
@@ -997,7 +937,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( $show_popular_categories && ! empty( $popular_categories ) ) : ?>
-							<!-- Popular Categories Dropdown -->
 							<div class="hbl-v2-popular-categories-wrapper">
 								<div class="hbl-v2-popular-categories-container">
 									<button type="button" class="hbl-v2-popular-categories-trigger" aria-expanded="false" aria-haspopup="listbox">
@@ -1041,7 +980,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( $show_more_filters && ! empty( $more_filters_items ) ) : ?>
-							<!-- More Filters Dropdown (stays in filters bar) -->
 							<div class="hbl-v2-more-filters-wrapper">
 								<div class="hbl-v2-more-filters-container">
 									<button type="button" class="hbl-v2-more-filters-trigger" aria-expanded="false" aria-haspopup="listbox">
@@ -1069,8 +1007,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 						<?php endif; ?>
 						
 						<?php if ( $show_sort ) : ?>
-							<!-- Sort By -->
-							<!-- Sort By -->
 							<div class="hbl-v2-sort-wrapper hbl-v2-filter-dropdown">
 								<div class="hbl-v2-sort-container">
 									<button type="button" class="hbl-v2-sort-trigger" aria-expanded="false" aria-haspopup="listbox">
@@ -1097,7 +1033,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 					
 					<?php if ( $show_view_toggle ) : ?>
 						<div class="hbl-v2-filters-right">
-							<!-- View Toggle -->
 							<div class="hbl-v2-view-toggle">
 								<span class="hbl-v2-view-label"><?php esc_html_e( 'View as:', 'hbl' ); ?></span>
 								<div class="hbl-v2-view-buttons">
@@ -1122,16 +1057,13 @@ class HBL_Directorist_V2 extends Widget_Base {
 				</div>
 			<?php endif; ?>
 			
-			<!-- Active Filters Display -->
 			<div class="hbl-v2-active-filters" style="display: none;">
 				<div class="hbl-v2-active-filters-container"></div>
 			</div>
 			
-			<!-- Listings Grid -->
 			<div class="hbl-v2-listings-grid <?php echo 'list' === $default_view ? 'list-view' : ''; ?>">
 				<?php
 				if ( $query->have_posts() ) :
-					// Separate listings into left and right columns
 					$listings = array();
 					while ( $query->have_posts() ) :
 						$query->the_post();
@@ -1144,7 +1076,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 					$right_column = array_slice( $listings, $half );
 					?>
 					
-					<!-- Left Column -->
 					<div class="hbl-v2-left-column">
 						<?php foreach ( $left_column as $listing_id ) : 
 							global $post;
@@ -1154,7 +1085,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 						endforeach; ?>
 					</div>
 					
-					<!-- Right Column -->
 					<div class="hbl-v2-right-column">
 						<?php foreach ( $right_column as $listing_id ) : 
 							global $post;
@@ -1174,7 +1104,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 			</div>
 			
 			<?php if ( isset( $settings['enable_pagination'] ) && 'yes' === $settings['enable_pagination'] && $query->max_num_pages > 1 ) : ?>
-				<!-- Pagination -->
 				<div class="hbl-v2-pagination">
 					<div class="hbl-v2-pagination-info">
 						<?php
@@ -1190,7 +1119,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 					</div>
 					<div class="hbl-v2-pagination-controls">
 						<?php
-						// Previous button
 						if ( $paged > 1 ) :
 						?>
 							<a href="#" data-page="<?php echo esc_attr( $paged - 1 ); ?>" class="hbl-v2-page-btn hbl-v2-prev-btn hbl-v2-page-link">
@@ -1204,7 +1132,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 							</span>
 						<?php endif; ?>
 						
-						<!-- Page Numbers -->
 						<div class="hbl-v2-page-numbers">
 							<?php
 							$range = 2;
@@ -1231,7 +1158,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 						</div>
 						
 						<?php
-						// Next button
 						if ( $paged < $query->max_num_pages ) :
 						?>
 							<a href="#" data-page="<?php echo esc_attr( $paged + 1 ); ?>" class="hbl-v2-page-btn hbl-v2-next-btn hbl-v2-page-link">
@@ -1263,7 +1189,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				paged: 1
 			};
 			
-			// If page loaded with a letter filter in URL, show the active tag immediately
 			if (currentFilters.letter !== '') {
 				var $container = $widget.find('.hbl-v2-active-filters-container');
 				var $tag = $('<div class="hbl-v2-active-filter-tag" data-filter-type="letter"></div>');
@@ -1274,11 +1199,9 @@ class HBL_Directorist_V2 extends Widget_Base {
 				$widget.find('.hbl-v2-active-filters').show();
 			}
 
-			// A-Z Letter filter click
 			$widget.find('.hbl-v2-alphabetical-filter').on('click', '.hbl-v2-letter-btn', function(e) {
 				e.preventDefault();
 				var letter = $(this).data('letter');
-				// Toggle: clicking active letter deselects it
 				if ($(this).hasClass('active')) {
 					$widget.find('.hbl-v2-letter-btn').removeClass('active');
 					currentFilters.letter = '';
@@ -1291,7 +1214,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// View toggle functionality
 			$widget.find('.hbl-v2-view-btn').on('click', function() {
 				var view = $(this).data('view');
 				var $grid = $widget.find('.hbl-v2-listings-grid');
@@ -1305,7 +1227,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 			
-			// Keyword search
 			var searchTimeout;
 			$widget.find('.hbl-v2-keyword-search-input').on('input', function() {
 				var $input = $(this);
@@ -1326,7 +1247,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}, 500);
 			});
 			
-			// Clear keyword search
 			$widget.find('.hbl-v2-keyword-clear').on('click', function() {
 				$widget.find('.hbl-v2-keyword-search-input').val('');
 				currentFilters.keyword = '';
@@ -1335,22 +1255,15 @@ class HBL_Directorist_V2 extends Widget_Base {
 				applyFilters();
 			});
 			
-			// Popular search buttons click (visible ones)
 			$widget.find('.hbl-v2-popular-search-btn').on('click', function() {
-				// Remove active from all buttons
 				$widget.find('.hbl-v2-popular-search-btn').removeClass('active');
-				// Add active to clicked button
 				$(this).addClass('active');
 				
-				// Reset category when tag is selected to avoid conflict if needed, or allow both
-				// For this requirement, popular searches are tags
 				currentFilters.tag = parseInt($(this).data('tag')) || 0;
-				// currentFilters.category = 0; // Uncomment if tags and categories are mutually exclusive main filters
 				currentFilters.paged = 1;
 				applyFilters();
 			});
 			
-			// More Filters dropdown toggle
 			$widget.find('.hbl-v2-more-filters-trigger').on('click', function() {
 				var $dropdown = $widget.find('.hbl-v2-more-filters-dropdown');
 				var isOpen = $(this).attr('aria-expanded') === 'true';
@@ -1366,27 +1279,21 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 			
-			// More Filters item click (hidden searches - now tags)
 			$widget.find('.hbl-v2-more-filter-item').on('click', function() {
-				// We don't remove active from tag buttons since they are separate filters now
-				// $widget.find('.hbl-v2-popular-search-btn').removeClass('active');
 				
 				currentFilters.tag = parseInt($(this).data('tag')) || 0;
 				currentFilters.paged = 1;
 				
-				// Close dropdown
 				$widget.find('.hbl-v2-more-filters-dropdown').slideUp(200);
 				$widget.find('.hbl-v2-more-filters-trigger').attr('aria-expanded', 'false');
 				$widget.find('.hbl-v2-more-filters-dropdown').attr('aria-hidden', 'true');
 				
-				// Update trigger label to show selected filter
 				var selectedText = $(this).text().trim();
 				$widget.find('.hbl-v2-more-filters-label').text(selectedText);
 				
 				applyFilters();
 			});
 			
-			// Close More Filters dropdown when clicking outside
 			$(document).on('click', function(e) {
 				if (!$(e.target).closest('.hbl-v2-more-filters-wrapper').length) {
 					$widget.find('.hbl-v2-more-filters-dropdown').slideUp(200);
@@ -1395,7 +1302,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 			
-			// Popular Categories dropdown toggle
 			$widget.find('.hbl-v2-popular-categories-trigger').on('click', function() {
 				var $dropdown = $widget.find('.hbl-v2-popular-categories-dropdown');
 				var isOpen = $(this).attr('aria-expanded') === 'true';
@@ -1411,24 +1317,20 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 			
-			// Popular Categories item click
 			$widget.find('.hbl-v2-popular-category-item').on('click', function() {
 				currentFilters.category = parseInt($(this).data('category')) || 0;
 				currentFilters.paged = 1;
 				
-				// Close dropdown
 				$widget.find('.hbl-v2-popular-categories-dropdown').slideUp(200);
 				$widget.find('.hbl-v2-popular-categories-trigger').attr('aria-expanded', 'false');
 				$widget.find('.hbl-v2-popular-categories-dropdown').attr('aria-hidden', 'true');
 				
-				// Update trigger label to show selected filter
 				var selectedText = $(this).text().trim();
 				$widget.find('.hbl-v2-popular-categories-label').text(selectedText);
 				
 				applyFilters();
 			});
 			
-			// Close Popular Categories dropdown when clicking outside
 			$(document).on('click', function(e) {
 				if (!$(e.target).closest('.hbl-v2-popular-categories-wrapper').length) {
 					$widget.find('.hbl-v2-popular-categories-dropdown').slideUp(200);
@@ -1437,7 +1339,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 			
-			// Sort dropdown toggle
 			$widget.find('.hbl-v2-sort-trigger').on('click', function() {
 				var $dropdown = $widget.find('.hbl-v2-sort-dropdown');
 				var isOpen = $(this).attr('aria-expanded') === 'true';
@@ -1453,31 +1354,26 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 			
-			// Sort item click
 			$widget.find('.hbl-v2-sort-item').on('click', function() {
 				currentFilters.sort = $(this).data('value');
 				currentFilters.paged = 1;
 				
-				// Update label
 				var selectedText = $(this).text().trim();
 				if (currentFilters.sort === 'recommended') {
 					selectedText = '<?php esc_html_e( 'Sort By', 'hbl' ); ?>';
 				}
 				$widget.find('.hbl-v2-sort-label').text(selectedText);
 				
-				// Close dropdown
 				$widget.find('.hbl-v2-sort-dropdown').slideUp(200);
 				$widget.find('.hbl-v2-sort-trigger').attr('aria-expanded', 'false');
 				$widget.find('.hbl-v2-sort-dropdown').attr('aria-hidden', 'true');
 				
-				// Update active state
 				$widget.find('.hbl-v2-sort-item').removeClass('selected');
 				$(this).addClass('selected');
 				
 				applyFilters();
 			});
 			
-			// Close Sort dropdown when clicking outside
 			$(document).on('click', function(e) {
 				if (!$(e.target).closest('.hbl-v2-sort-wrapper').length) {
 					$widget.find('.hbl-v2-sort-dropdown').slideUp(200);
@@ -1486,20 +1382,17 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			});
 
-			// Pagination click handler
 			$widget.on('click', '.hbl-v2-page-link', function(e) {
 				e.preventDefault();
 				var page = parseInt($(this).data('page')) || 1;
 				currentFilters.paged = page;
 				applyFilters();
 				
-				// Scroll to top of widget
 				$('html, body').animate({
 					scrollTop: $widget.offset().top - 100
 				}, 300);
 			});
 			
-			// Apply filters function
 			function applyFilters() {
 				$.ajax({
 					url: hblV2Ajax.ajaxurl,
@@ -1522,16 +1415,13 @@ class HBL_Directorist_V2 extends Widget_Base {
 					},
 					success: function(response) {
 						if (response.success) {
-							// Update active filters display
 							updateActiveFilters(response.active_filters);
 							
-							// Update listings HTML
 							if (response.html) {
 								$widget.find('.hbl-v2-left-column').html(response.html.left);
 								$widget.find('.hbl-v2-right-column').html(response.html.right);
 							}
 							
-							// Always sync pagination so the count reflects the current filter
 							if ( typeof response.pagination_html !== 'undefined' ) {
 								var $paginationContainer = $widget.find('.hbl-v2-pagination');
 								if ( response.pagination_html ) {
@@ -1556,7 +1446,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				});
 			}
 			
-			// Update active filters display
 			function updateActiveFilters(filters) {
 				var $container = $widget.find('.hbl-v2-active-filters-container');
 				$container.empty();
@@ -1576,14 +1465,12 @@ class HBL_Directorist_V2 extends Widget_Base {
 				}
 			}
 
-			// Event delegation for active filter tag X buttons — survives container rebuilds
 			$widget.on('click', '.hbl-v2-active-filter-tag-clear', function(e) {
 				e.preventDefault();
 				var type = $(this).closest('.hbl-v2-active-filter-tag').data('filter-type');
 				clearFilter(type);
 			});
 			
-			// Clear individual filter
 			function clearFilter(type) {
 				switch(type) {
 					case 'keyword':
@@ -1613,16 +1500,13 @@ class HBL_Directorist_V2 extends Widget_Base {
 				applyFilters();
 			}
 			
-			// Star Rating Click Handler for Review Forms
 			$(document).on('click', '.hbl-v2-star-rating i', function() {
 				var $starRating = $(this).closest('.hbl-v2-star-rating');
 				var rating = parseInt($(this).data('value')) || 0;
 				
-				// Update hidden input value
 				$starRating.find('input[name="review_rating"]').val(rating);
 				$starRating.attr('data-rating', rating);
 				
-				// Update star visuals
 				$starRating.find('i').each(function() {
 					var starValue = parseInt($(this).data('value')) || 0;
 					if (starValue <= rating) {
@@ -1633,7 +1517,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				});
 			});
 			
-			// Star Rating Hover Effect
 			$(document).on('mouseenter', '.hbl-v2-star-rating i', function() {
 				var $starRating = $(this).closest('.hbl-v2-star-rating');
 				var hoverValue = parseInt($(this).data('value')) || 0;
@@ -1648,7 +1531,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				});
 			});
 			
-			// Star Rating Mouse Leave - Restore to selected rating
 			$(document).on('mouseleave', '.hbl-v2-star-rating', function() {
 				var $starRating = $(this);
 				var currentRating = parseInt($starRating.attr('data-rating')) || 0;
@@ -1663,7 +1545,6 @@ class HBL_Directorist_V2 extends Widget_Base {
 				});
 			});
 			
-			// Robust Native Event Listener for Card Interaction (Capture Phase)
 			function hblInitMap(mapContainer) {
 			if (!mapContainer || mapContainer.dataset.initialized) return;
 			var lat = mapContainer.dataset.lat;

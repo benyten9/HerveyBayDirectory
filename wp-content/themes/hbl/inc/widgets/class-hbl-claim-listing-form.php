@@ -1,11 +1,4 @@
 <?php
-/**
- * HBL Claim Listing Form Widget for Elementor
- * 
- * A widget to display the claim listing form with business search functionality
- *
- * @package HBL
- */
 
 namespace HBL\Widgets;
 
@@ -40,7 +33,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 	}
 
 	protected function register_controls() {
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -138,7 +130,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TYPOGRAPHY ==========
 		$this->start_controls_section(
 			'section_style_typography',
 			array(
@@ -182,7 +173,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -242,7 +232,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Enqueue reCAPTCHA if enabled
 		if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) && ! \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
 			wp_enqueue_script( 'google-recaptcha' );
 		}
@@ -261,10 +250,8 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 			$listing_title = get_the_title( $listing_id );
 		}
 
-		// Get dashboard/listings page URL for back button
 		$dashboard_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_dashboard_page_link() : home_url( '/all-listings/' );
 
-		// Check if user is logged in
 		if ( ! is_user_logged_in() ) {
 			$login_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_login_page_link() : wp_login_url();
 			$register_url = class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_registration_page_link() : wp_registration_url();
@@ -297,24 +284,17 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 			return;
 		}
 
-		// Get current user info
 		$current_user = wp_get_current_user();
 		$user_name = $current_user->display_name;
 		$user_email = $current_user->user_email;
 		$user_phone = get_user_meta( $current_user->ID, 'phone', true );
 
-		// Get listing title if not already set
 		if ( empty( $listing_title ) && $listing_id ) {
 			$listing_title = get_the_title( $listing_id );
 		}
 
-		// Determine if we have a pre-selected listing
 		$has_preselected = ! empty( $listing_id ) && ! empty( $listing_title );
 		
-		// Get listing packages/pricing plans from Directorist. All Directorist
-		// coupling lives in HBL_Pricing_Plans so future plugin changes only need
-		// handling there. The claim form only shows the plan cards, so it does
-		// not need the per-plan field restrictions.
 		$listing_packages = class_exists( 'HBL_Pricing_Plans' )
 			? \HBL_Pricing_Plans::get_plans()
 			: array();
@@ -344,7 +324,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'directorist_claim_nonce' ) ); ?>">
 
 				<?php if ( ! empty( $listing_packages ) ) : ?>
-				<!-- Listing Package Section -->
 				<div class="hbl-form-section hbl-form-section-highlight">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -424,7 +403,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Business Search Section -->
 				<div class="hbl-form-section hbl-form-section-highlight" id="hbl-section-search">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -439,7 +417,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Business Search -->
 						<div class="hbl-form-group">
 							<label for="hbl-business-search" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -456,7 +433,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 							<p class="hbl-form-help-text" id="hbl-search-help" <?php echo $has_preselected ? 'style="display:none;"' : ''; ?>><?php esc_html_e( 'Start typing to find your business in our directory', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Selected Business Display -->
 						<div class="hbl-form-group hbl-selected-business-wrapper" id="hbl-selected-business" <?php echo ! $has_preselected ? 'style="display:none;"' : ''; ?>>
 							<label class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -490,7 +466,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- Your Information Section -->
 				<div class="hbl-form-section" id="hbl-section-info">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -506,7 +481,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					</div>
 					<div class="hbl-form-section-content">
 						<?php if ( 'yes' === $settings['show_name_field'] ) : ?>
-						<!-- Full Name -->
 						<div class="hbl-form-group">
 							<label for="hbl-claim-name" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -522,7 +496,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 						</div>
 						<?php endif; ?>
 
-						<!-- Email & Phone Row -->
 						<div class="hbl-form-row">
 							<div class="hbl-form-group hbl-form-group-half">
 								<label for="hbl-claim-email" class="hbl-form-label">
@@ -555,7 +528,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- Verification Details Section -->
 				<div class="hbl-form-section" id="hbl-section-verification">
 					<div class="hbl-form-section-header">
 						<div class="hbl-form-section-icon">
@@ -569,7 +541,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 						</div>
 					</div>
 					<div class="hbl-form-section-content">
-						<!-- Verification Details -->
 						<div class="hbl-form-group">
 							<label for="hbl-claim-details" class="hbl-form-label">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -585,7 +556,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 							<p class="hbl-form-help-text"><?php esc_html_e( 'Provide as much detail as possible to help us verify your claim quickly.', 'hbl' ); ?></p>
 						</div>
 
-						<!-- Notice -->
 						<div class="hbl-form-notice">
 							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
@@ -599,7 +569,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					</div>
 				</div>
 
-				<!-- Form Message -->
 				<div id="hbl-claim-form-message" class="hbl-form-message" style="display: none;"></div>
 
 				<?php if ( 'yes' === $settings['enable_recaptcha'] && get_option( 'elementor_pro_recaptcha_site_key' ) ) : ?>
@@ -613,7 +582,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				</div>
 				<?php endif; ?>
 
-				<!-- Submit Button -->
 				<div class="hbl-form-actions">
 					<a href="<?php echo esc_url( $dashboard_url ); ?>" class="hbl-form-btn hbl-form-btn-secondary hbl-form-btn-large">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -629,7 +597,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					</button>
 				</div>
 
-				<!-- Secure Notice -->
 				<div class="hbl-form-secure-notice">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 						<rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
@@ -651,13 +618,11 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 			var $businessIdDisplay = $('#hbl-selected-business-id-display');
 			var $searchHelp = $('#hbl-search-help');
 			
-			// Function to get URL parameter
 			function getUrlParam(param) {
 				var urlParams = new URLSearchParams(window.location.search);
 				return urlParams.get(param);
 			}
 			
-			// Check for listing_id in URL on load
 			function checkUrlParams() {
 				var listingId = getUrlParam('listing_id');
 				var listingTitle = getUrlParam('listing_title');
@@ -668,12 +633,10 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					if (listingTitle) {
 						selectBusiness(listingId, decodeURIComponent(listingTitle));
 					} else {
-						// Fetch title via AJAX if not provided
 						fetchBusinessTitle(listingId);
 					}
 				}
 				
-				// Also check localStorage
 				var storedId = localStorage.getItem('hbl_claim_listing_id');
 				var storedTitle = localStorage.getItem('hbl_claim_listing_title');
 				
@@ -686,7 +649,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				}
 			}
 			
-			// Fetch business title by ID
 			function fetchBusinessTitle(listingId) {
 				$.ajax({
 					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
@@ -704,7 +666,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				});
 			}
 			
-			// Business search
 			$searchInput.on('input', function() {
 				var query = $(this).val().trim();
 				
@@ -722,7 +683,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				}, 300);
 			});
 			
-			// Search businesses via AJAX
 			function searchBusinesses(query) {
 				$searchResults.html('<div class="hbl-search-loading"><span class="hbl-spinner"></span> <?php esc_html_e( 'Searching...', 'hbl' ); ?></div>').show();
 				
@@ -761,14 +721,12 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				});
 			}
 			
-			// Select a business from search results
 			$(document).on('click', '.hbl-search-result-item', function() {
 				var id = $(this).data('id');
 				var title = $(this).data('title');
 				selectBusiness(id, title);
 			});
 			
-			// Select business function
 			function selectBusiness(id, title) {
 				$listingIdInput.val(id);
 				$businessNameDisplay.text(title);
@@ -780,7 +738,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				$selectedBusiness.show();
 			}
 			
-			// Change business button
 			$('#hbl-change-business').on('click', function() {
 				$listingIdInput.val('');
 				$businessNameDisplay.text('');
@@ -789,26 +746,22 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				$searchInput.val('').show().focus();
 				$searchHelp.show();
 				
-				// Clear localStorage
 				localStorage.removeItem('hbl_claim_listing_id');
 				localStorage.removeItem('hbl_claim_listing_title');
 			});
 			
-			// Close search results when clicking outside
 			$(document).on('click', function(e) {
 				if (!$(e.target).closest('.hbl-form-search-wrapper').length) {
 					$searchResults.hide();
 				}
 			});
 			
-			// Helper function to escape HTML
 			function escapeHtml(text) {
 				var div = document.createElement('div');
 				div.textContent = text;
 				return div.innerHTML;
 			}
 			
-			// Form submission
 			$('#hbl-claim-listing-form').on('submit', function(e) {
 				e.preventDefault();
 				
@@ -817,7 +770,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				var $message = $('#hbl-claim-form-message');
 				var originalBtnHtml = $btn.html();
 				
-				// Get listing ID
 				var listingId = $listingIdInput.val();
 				
 				if (!listingId || listingId === '0') {
@@ -826,7 +778,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					return;
 				}
 
-				// reCAPTCHA validation
 				if (typeof grecaptcha !== 'undefined' && $form.find('.g-recaptcha').length) {
 					if (!grecaptcha.getResponse()) {
 						$form.find('.hbl-recaptcha-error').show();
@@ -835,11 +786,9 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 					$form.find('.hbl-recaptcha-error').hide();
 				}
 				
-				// Show loading state - spinner on left only
 				$btn.prop('disabled', true).html('<span class="hbl-spinner hbl-spinner-btn"></span><span><?php esc_html_e( 'Submitting...', 'hbl' ); ?></span>');
 				$message.hide();
 				
-				// Get selected package
 				var planId = $('input[name="claim_listing_package"]:checked').val();
 				
 				$.ajax({
@@ -860,22 +809,18 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 						if (typeof grecaptcha !== 'undefined') { grecaptcha.reset(); }
 						
 						if (response.success) {
-							// Clear localStorage
 							localStorage.removeItem('hbl_claim_listing_id');
 							localStorage.removeItem('hbl_claim_listing_title');
 							
-							// Handle checkout redirect for paid packages
 							if (response.data.requires_payment && response.data.checkout_url) {
 								$message.removeClass('error').addClass('success').html(response.data.message + ' <?php esc_html_e( 'Redirecting to checkout...', 'hbl' ); ?>').show();
 								setTimeout(function() {
 									window.location.href = response.data.checkout_url;
 								}, 1500);
 							} else {
-								// Free claim submitted successfully
 								$message.removeClass('error').addClass('success').html(response.data.message).show();
 								$form.find('textarea').val('');
 								
-								// Optionally redirect to dashboard after a delay
 								if (response.data.redirect_url) {
 									setTimeout(function() {
 										window.location.href = response.data.redirect_url;
@@ -897,7 +842,6 @@ class HBL_Claim_Listing_Form extends Widget_Base {
 				});
 			});
 			
-			// Initialize
 			checkUrlParams();
 		});
 		</script>

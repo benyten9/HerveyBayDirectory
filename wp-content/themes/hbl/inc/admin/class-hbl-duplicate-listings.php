@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Duplicate Listings Tool
- *
- * Shows duplicate listings grouped by title or phone and allows bulk trash/edit.
- *
- * @package HBL
- * @since 1.0.0
- */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -46,7 +38,6 @@ class HBL_Duplicate_Listings {
 			return;
 		}
 
-		// Base styles shared across all tools.
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style(
 			'hbl-bulk-reassign',
@@ -55,7 +46,6 @@ class HBL_Duplicate_Listings {
 			HBL_VERSION
 		);
 
-		// Layout styles (stats cards, steps, confirm section, etc.) from Plan Reassign.
 		wp_enqueue_style(
 			'hbl-bulk-plan-reassign',
 			HBL_THEME_URI . '/inc/admin/css/bulk-plan-reassign.css',
@@ -63,7 +53,6 @@ class HBL_Duplicate_Listings {
 			HBL_VERSION
 		);
 
-		// Small overrides specific to duplicate listings.
 		wp_enqueue_style(
 			'hbl-duplicate-listings',
 			HBL_THEME_URI . '/inc/admin/css/duplicate-listings.css',
@@ -72,9 +61,6 @@ class HBL_Duplicate_Listings {
 		);
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* Summary counts                                                        */
-	/* ------------------------------------------------------------------ */
 
 	private function count_duplicate_groups( $type ) {
 		global $wpdb;
@@ -148,9 +134,6 @@ class HBL_Duplicate_Listings {
 		);
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* AJAX: Load duplicates                                                 */
-	/* ------------------------------------------------------------------ */
 
 	public function ajax_load_duplicates() {
 		check_ajax_referer( 'hbl_duplicate_listings_nonce', 'nonce' );
@@ -189,7 +172,7 @@ class HBL_Duplicate_Listings {
 			$sql .= " GROUP BY LOWER(TRIM(post_title)) HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC, post_title ASC";
 		}
 
-		$rows   = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows   = $wpdb->get_results( $sql );
 		$groups = array();
 
 		foreach ( $rows as $row ) {
@@ -238,9 +221,6 @@ class HBL_Duplicate_Listings {
 		return $plan ? $plan->post_title : __( 'No Plan', 'hbl' );
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* AJAX: Bulk trash                                                      */
-	/* ------------------------------------------------------------------ */
 
 	public function ajax_bulk_trash() {
 		check_ajax_referer( 'hbl_duplicate_listings_nonce', 'nonce' );
@@ -280,9 +260,6 @@ class HBL_Duplicate_Listings {
 		) );
 	}
 
-	/* ------------------------------------------------------------------ */
-	/* Render page                                                           */
-	/* ------------------------------------------------------------------ */
 
 	public function render_page() {
 		$title_groups   = $this->count_duplicate_groups( 'title' );
@@ -304,7 +281,6 @@ class HBL_Duplicate_Listings {
 			</h1>
 			<p class="description"><?php esc_html_e( 'Find listings that share the same title or phone number, select duplicates, then bulk trash or edit them.', 'hbl' ); ?></p>
 
-			<!-- Stats -->
 			<div class="hbl-reassign-stats">
 				<div class="hbl-stat-card hbl-stat-card--warning">
 					<div class="hbl-stat-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 16V6a2 2 0 012-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
@@ -331,7 +307,6 @@ class HBL_Duplicate_Listings {
 
 			<div class="hbl-reassign-container">
 
-				<!-- Step 1: Filter & Select -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">1</span>
@@ -361,7 +336,6 @@ class HBL_Duplicate_Listings {
 						</div>
 					</div>
 
-					<!-- Table -->
 					<div id="hbl-dup-listings-wrap" class="hbl-bpr-listings-wrap" style="display:none;">
 						<div class="hbl-bpr-table-header">
 							<label class="hbl-select-all-wrap">
@@ -374,14 +348,12 @@ class HBL_Duplicate_Listings {
 						</div>
 
 						<div id="hbl-dup-table-body">
-							<!-- Populated via AJAX -->
 						</div>
 					</div>
 
 					<div id="hbl-dup-message" class="hbl-bpr-message" style="display:none;"></div>
 				</div>
 
-				<!-- Step 2: Choose Action -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">2</span>
@@ -439,7 +411,6 @@ class HBL_Duplicate_Listings {
 					</div>
 				</div>
 
-				<!-- Step 3: Confirm & Execute -->
 				<div class="hbl-reassign-step">
 					<div class="hbl-step-header">
 						<span class="hbl-step-number">3</span>
@@ -465,8 +436,8 @@ class HBL_Duplicate_Listings {
 					</div>
 				</div>
 
-			</div><!-- .hbl-reassign-container -->
-		</div><!-- .hbl-dup-wrap -->
+			</div>
+		</div>
 
 		<script>
 		(function($) {
@@ -475,7 +446,6 @@ class HBL_Duplicate_Listings {
 			var groups     = [];
 			var selectedAction = '';
 
-			/* ---- Helpers ---- */
 			function getSelectedIds() {
 				return $('.hbl-dup-row-cb:checked').map(function(){ return $(this).val(); }).get();
 			}
@@ -517,7 +487,6 @@ class HBL_Duplicate_Listings {
 				return '<span class="hbl-bpr-status-badge ' + cls + '">' + label + '</span>';
 			}
 
-			/* ---- Render table ---- */
 			function renderTable( data ) {
 				groups = data.groups;
 
@@ -592,7 +561,6 @@ class HBL_Duplicate_Listings {
 				updateSummary();
 			}
 
-			/* ---- Load button ---- */
 			$('#hbl-dup-load').on('click', function() {
 				var $btn = $(this);
 				$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Loading…', 'hbl' ) ); ?>');
@@ -619,7 +587,6 @@ class HBL_Duplicate_Listings {
 				});
 			});
 
-			/* ---- Select all ---- */
 			$('#hbl-dup-select-all').on('change', function() {
 				$('.hbl-dup-row-cb').prop('checked', this.checked);
 				$('.hbl-bpr-row').toggleClass('hbl-bpr-selected', this.checked);
@@ -631,7 +598,6 @@ class HBL_Duplicate_Listings {
 				updateSelectedCount();
 			});
 
-			/* ---- Action cards ---- */
 			$(document).on('change', 'input[name="hbl_dup_action"]', function() {
 				selectedAction = $(this).val();
 				$('.hbl-dup-action-card').removeClass('hbl-bpr-plan-selected');
@@ -643,13 +609,11 @@ class HBL_Duplicate_Listings {
 				$(this).find('input[name="hbl_dup_action"]').prop('checked', true).trigger('change');
 			});
 
-			/* ---- Execute ---- */
 			$('#hbl-dup-execute').on('click', function() {
 				var ids = getSelectedIds();
 				if ( ! ids.length ) { return; }
 
 				if ( selectedAction === 'edit' ) {
-					// Open each listing's edit page in a new tab.
 					$('.hbl-dup-row-cb:checked').each(function() {
 						window.open($(this).data('edit-url'), '_blank');
 					});
@@ -676,7 +640,6 @@ class HBL_Duplicate_Listings {
 							.html('<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> ' + res.data.message)
 							.show();
 
-						// Visually remove trashed rows.
 						$('.hbl-dup-row-cb:checked').each(function() {
 							$(this).closest('tr').fadeOut(400, function(){ $(this).remove(); });
 						});

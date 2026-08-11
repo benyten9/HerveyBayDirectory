@@ -1,12 +1,4 @@
 <?php
-/**
- * HBL Single Category V2 Widget
- *
- * Displays listings from a category (auto-detected from URL) using V2 design.
- *
- * @package HBL
- * @since 2.0.0
- */
 
 namespace HBL\Widgets\V2;
 
@@ -44,9 +36,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 		return array( 'category', 'archive', 'listings', 'directory', 'v2' );
 	}
 
-	/**
-	 * Detect current category from URL / query vars.
-	 */
 	private function get_current_term() {
 		$atbdp_cat = get_query_var( 'atbdp_category' );
 		if ( $atbdp_cat ) {
@@ -63,7 +52,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 			}
 		}
 
-		// URL path detection
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		$url_path    = trim( wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
 		$path_parts  = explode( '/', $url_path );
@@ -77,7 +65,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 			}
 		}
 
-		// GET param fallback
 		if ( isset( $_GET['category'] ) ) {
 			$term = get_term_by( 'slug', sanitize_text_field( $_GET['category'] ), 'at_biz_dir-category' );
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -90,7 +77,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 
 	protected function register_controls() {
 
-		// Display Options
 		$this->start_controls_section(
 			'section_display',
 			array( 'label' => esc_html__( 'Display Options', 'hbl' ) )
@@ -200,7 +186,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 			)
 		);
 
-		// Build tag options for repeaters
 		$_tag_opts = array();
 		$_raw_tags = get_terms( array(
 			'taxonomy'   => 'at_biz_dir-tags',
@@ -215,7 +200,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 			}
 		}
 
-		// Featured Tags
 		$this->add_control(
 			'show_popular_search',
 			array(
@@ -259,7 +243,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 			);
 		}
 
-		// More Filters
 		$this->add_control(
 			'show_more_filters',
 			array(
@@ -305,7 +288,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Tier Mapping
 		$this->start_controls_section(
 			'section_plan_tiers',
 			array( 'label' => esc_html__( 'Plan Tier Mapping', 'hbl' ) )
@@ -337,7 +319,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Plan Badges
 		$this->start_controls_section(
 			'section_plan_badges',
 			array( 'label' => esc_html__( 'Plan Badges', 'hbl' ) )
@@ -398,7 +379,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// Fallback Logo
 		$this->start_controls_section(
 			'section_fallback_logo',
 			array( 'label' => esc_html__( 'Fallback Logo', 'hbl' ) )
@@ -424,7 +404,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 		$paged  = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
 		$letter = isset( $_GET['letter'] ) ? strtoupper( sanitize_text_field( $_GET['letter'] ) ) : '';
 
-		// Inject forced category into settings for initial query and AJAX
 		$query_settings = $settings;
 		if ( $current_term ) {
 			$query_settings['category_filter_type'] = 'specific';
@@ -658,7 +637,7 @@ class HBL_Single_Category_V2 extends Widget_Base {
 					</div>
 				</div>
 			<?php endif; ?>
-			<?php endif; // current_term check ?>
+			<?php endif; ?>
 		</div>
 
 		<script>
@@ -693,7 +672,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 				$bar.slideDown(200);
 			}
 
-			// Featured tag buttons
 			$widget.find('.hbl-v2-popular-search-btn').on('click', function() {
 				$widget.find('.hbl-v2-popular-search-btn').removeClass('active');
 				$(this).addClass('active');
@@ -703,7 +681,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// More Filters dropdown toggle
 			$widget.find('.hbl-v2-more-filters-trigger').on('click', function() {
 				var $dd = $widget.find('.hbl-v2-more-filters-dropdown');
 				var open = $(this).attr('aria-expanded') === 'true';
@@ -712,7 +689,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 				$dd.attr('aria-hidden', open);
 			});
 
-			// More Filters item click
 			$widget.find('.hbl-v2-more-filter-item').on('click', function() {
 				currentFilters.tag = parseInt($(this).data('tag')) || 0;
 				currentFilters.paged = 1;
@@ -766,14 +742,12 @@ class HBL_Single_Category_V2 extends Widget_Base {
 
 			updateActiveFilters();
 
-			// View toggle
 			$widget.find('.hbl-v2-view-btn').on('click', function() {
 				var view = $(this).data('view');
 				$(this).addClass('active').siblings().removeClass('active');
 				$widget.find('.hbl-v2-listings-grid').toggleClass('list-view', view === 'list');
 			});
 
-			// Keyword search
 			var searchTimeout;
 			$widget.find('.hbl-v2-keyword-search-input').on('input', function() {
 				var keyword = $(this).val().trim();
@@ -795,7 +769,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// Letter filter
 			$widget.find('.hbl-v2-letter-btn').on('click', function(e) {
 				e.preventDefault();
 				var ltr = $(this).data('letter');
@@ -812,7 +785,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 				applyFilters();
 			});
 
-			// Sort dropdown
 			$widget.find('.hbl-v2-sort-trigger').on('click', function() {
 				var $dd = $widget.find('.hbl-v2-sort-dropdown');
 				var open = $(this).attr('aria-expanded') === 'true';
@@ -838,7 +810,6 @@ class HBL_Single_Category_V2 extends Widget_Base {
 				}
 			});
 
-			// Pagination
 			$widget.on('click', '.hbl-v2-page-link', function(e) {
 				e.preventDefault();
 				currentFilters.paged = parseInt($(this).data('page')) || 1;

@@ -1,11 +1,6 @@
 <?php
-/**
- * The template for displaying singular post-types: posts, pages and user-defined custom post types.
- *
- * @package HBL
- */
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
+	exit;
 }
 
 while ( have_posts() ) :

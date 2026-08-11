@@ -1,10 +1,6 @@
-/**
- * HBL Events Admin JavaScript
- */
 (function($) {
     'use strict';
 
-    // Delete event handler
     $(document).on('click', '.hbl-delete-event', function(e) {
         e.preventDefault();
         
@@ -13,7 +9,6 @@
         var $row = $button.closest('tr');
         var eventTitle = $row.find('.hbl-event-title a').text();
 
-        // Create confirmation modal
         var confirmHtml = `
             <div class="hbl-delete-confirm">
                 <div class="hbl-delete-confirm-box">
@@ -29,14 +24,12 @@
 
         var $modal = $(confirmHtml).appendTo('body');
 
-        // Cancel handler
         $modal.on('click', '.hbl-confirm-cancel, .hbl-delete-confirm', function(e) {
             if (e.target === this) {
                 $modal.remove();
             }
         });
 
-        // Delete handler
         $modal.on('click', '.hbl-confirm-delete', function() {
             var $deleteBtn = $(this);
             $deleteBtn.prop('disabled', true).text('Deleting...');
@@ -55,7 +48,6 @@
                         $row.fadeOut(300, function() {
                             $(this).remove();
                             
-                            // Check if table is empty
                             if ($('.hbl-events-table tbody tr').length === 0) {
                                 var emptyHtml = `
                                     <tr>
@@ -70,7 +62,6 @@
                                 $('.hbl-events-table tbody').html(emptyHtml);
                             }
 
-                            // Update stats
                             updateStats();
                         });
                     } else {
@@ -86,31 +77,23 @@
         });
     });
 
-    // Update stats after deletion
     function updateStats() {
-        // Recalculate total from visible rows
         var totalEvents = $('.hbl-events-table tbody tr.hbl-event-row').length;
         var upcomingEvents = $('.hbl-events-table tbody tr.is-upcoming').length;
         var freeEvents = $('.hbl-events-table tbody .hbl-badge-free').length;
-        var paidEvents = $('.hbl-events-table tbody .hbl-badge-paid').length - freeEvents; // Subtract because free is also counted
+        var paidEvents = $('.hbl-events-table tbody .hbl-badge-paid').length - freeEvents;
 
-        // Update stat cards
         $('.hbl-stat-total .hbl-stat-number').text(totalEvents);
         $('.hbl-stat-upcoming .hbl-stat-number').text(upcomingEvents);
-        // Note: Free/Paid counts are per-page only, full reload needed for accurate counts
     }
 
-    // Keyboard shortcuts
     $(document).on('keydown', function(e) {
-        // ESC to close modals
         if (e.keyCode === 27) {
             $('.hbl-delete-confirm').remove();
         }
     });
 
-    // Initialize on page load
     $(document).ready(function() {
-        // Animate chart bars only (keep stats static for accuracy)
         $('.hbl-chart-bar-fill').each(function() {
             var $this = $(this);
             var width = $this.css('width');
@@ -121,11 +104,7 @@
         });
     });
 
-    // =====================
-    // Bulk Actions
-    // =====================
 
-    // Select all checkboxes
     $(document).on('change', '.hbl-select-all', function() {
         var isChecked = $(this).prop('checked');
         $('.hbl-event-checkbox').prop('checked', isChecked);
@@ -133,22 +112,18 @@
         updateSelectedCount();
     });
 
-    // Individual checkbox change
     $(document).on('change', '.hbl-event-checkbox', function() {
         var totalCheckboxes = $('.hbl-event-checkbox').length;
         var checkedCheckboxes = $('.hbl-event-checkbox:checked').length;
         
-        // Update select all checkbox
         $('.hbl-select-all').prop('checked', totalCheckboxes === checkedCheckboxes && totalCheckboxes > 0);
         updateSelectedCount();
     });
 
-    // Update selected count display
     function updateSelectedCount() {
         var count = $('.hbl-event-checkbox:checked').length;
         $('.hbl-selected-count-number').text(count);
         
-        // Toggle visibility of selected count
         if (count > 0) {
             $('.hbl-selected-count').addClass('has-selection');
         } else {
@@ -156,7 +131,6 @@
         }
     }
 
-    // Get selected event IDs
     function getSelectedEventIds() {
         var ids = [];
         $('.hbl-event-checkbox:checked').each(function() {
@@ -165,7 +139,6 @@
         return ids;
     }
 
-    // Apply bulk action
     $(document).on('click', '.hbl-apply-bulk-action', function() {
         var position = $(this).data('position');
         var action = $('#bulk-action-selector-' + position).val();
@@ -188,7 +161,6 @@
         }
     });
 
-    // Handle bulk delete
     function handleBulkDelete(eventIds) {
         var confirmHtml = `
             <div class="hbl-delete-confirm hbl-bulk-confirm">
@@ -205,14 +177,12 @@
 
         var $modal = $(confirmHtml).appendTo('body');
 
-        // Cancel handler
         $modal.on('click', '.hbl-confirm-cancel, .hbl-bulk-confirm', function(e) {
             if (e.target === this) {
                 $modal.remove();
             }
         });
 
-        // Delete handler
         $modal.on('click', '.hbl-confirm-bulk-delete', function() {
             var $deleteBtn = $(this);
             $deleteBtn.prop('disabled', true).text('Deleting...');
@@ -229,28 +199,23 @@
                     if (response.success) {
                         $modal.remove();
                         
-                        // Remove deleted rows
                         eventIds.forEach(function(id) {
                             $('tr[data-event-id="' + id + '"]').fadeOut(300, function() {
                                 $(this).remove();
                             });
                         });
 
-                        // Show success notice
                         showNotice('success', response.data.message);
 
-                        // Reset checkboxes
                         setTimeout(function() {
                             $('.hbl-select-all').prop('checked', false);
                             updateSelectedCount();
                             
-                            // Check if table is empty
                             if ($('.hbl-events-table tbody tr.hbl-event-row').length === 0) {
                                 location.reload();
                             }
                         }, 350);
 
-                        // Update stats
                         updateStats();
                     } else {
                         alert(response.data.message || 'Failed to delete events');
@@ -265,7 +230,6 @@
         });
     }
 
-    // Handle bulk status update
     function handleBulkStatusUpdate(eventIds, status) {
         var statusLabels = {
             'publish': 'Published',
@@ -288,14 +252,12 @@
 
         var $modal = $(confirmHtml).appendTo('body');
 
-        // Cancel handler
         $modal.on('click', '.hbl-confirm-cancel, .hbl-bulk-confirm', function(e) {
             if (e.target === this) {
                 $modal.remove();
             }
         });
 
-        // Update handler
         $modal.on('click', '.hbl-confirm-bulk-update', function() {
             var $updateBtn = $(this);
             $updateBtn.prop('disabled', true).text('Updating...');
@@ -313,10 +275,8 @@
                     if (response.success) {
                         $modal.remove();
                         
-                        // Show success notice and reload
                         showNotice('success', response.data.message);
 
-                        // Reload page after a short delay to show updated data
                         setTimeout(function() {
                             location.reload();
                         }, 1000);
@@ -333,7 +293,6 @@
         });
     }
 
-    // Show admin notice
     function showNotice(type, message) {
         var noticeClass = type === 'success' ? 'notice-success' : 'notice-error';
         var noticeHtml = `
@@ -345,7 +304,6 @@
         
         $('.hbl-events-admin h1').after(noticeHtml);
         
-        // Auto dismiss after 5 seconds
         setTimeout(function() {
             $('.hbl-admin-notice').fadeOut(300, function() {
                 $(this).remove();
@@ -353,16 +311,12 @@
         }, 5000);
     }
 
-    // Notice dismiss handler
     $(document).on('click', '.hbl-admin-notice .notice-dismiss', function() {
         $(this).closest('.notice').fadeOut(300, function() {
             $(this).remove();
         });
     });
 
-    // =====================
-    // Dynamic Filters (AJAX)
-    // =====================
 
     var filterXhr = null;
     var searchTimer = null;
@@ -404,7 +358,6 @@
                 $tbody.html( response.data.rows );
                 $tbody.css('opacity', 1);
 
-                // Pagination
                 var $pager = $('#hbl-events-pagination');
                 if ( response.data.pagination ) {
                     $pager.html( response.data.pagination ).show();
@@ -412,12 +365,10 @@
                     $pager.html('').hide();
                 }
 
-                // Results count
                 var total = parseInt( response.data.total, 10 );
                 var label = total === 1 ? '1 event' : total + ' events';
                 $('#hbl-results-count').text( label );
 
-                // Reset select-all checkbox
                 $('.hbl-select-all').prop('checked', false);
                 updateSelectedCount();
             },
@@ -433,12 +384,10 @@
         });
     }
 
-    // Select/dropdown filters — fire immediately on change
     $(document).on('change', '.hbl-filter-form select', function() {
         doFilterRequest(1);
     });
 
-    // Search input — debounce 350ms
     $(document).on('input', '.hbl-filter-form input[name="s"]', function() {
         clearTimeout( searchTimer );
         searchTimer = setTimeout(function() {
@@ -446,13 +395,11 @@
         }, 350);
     });
 
-    // Prevent normal form submit (filters are now handled via AJAX)
     $(document).on('submit', '.hbl-filter-form', function(e) {
         e.preventDefault();
         doFilterRequest(1);
     });
 
-    // Reset button
     $(document).on('click', '.hbl-filter-form a.button', function(e) {
         e.preventDefault();
         var $form = $('.hbl-filter-form');
@@ -461,30 +408,22 @@
         doFilterRequest(1);
     });
 
-    // Pagination clicks — AJAX instead of page reload
     $(document).on('click', '#hbl-events-pagination .page-numbers', function(e) {
         e.preventDefault();
         var href   = $(this).attr('href') || '';
         var match  = href.match(/[?&]paged=(\d+)/);
         var paged  = match ? parseInt( match[1], 10 ) : 1;
         doFilterRequest( paged );
-        // Scroll to table top smoothly
         $('html, body').animate({ scrollTop: $('#hbl-table-wrap').offset().top - 40 }, 200);
     });
 
-    // Filter form enhancement (legacy: search input hint)
 
-    // =====================
-    // Category Management
-    // =====================
 
-    // Color picker preview
     $(document).on('input', 'input[type="color"]', function() {
         var color = $(this).val();
         $(this).siblings('.hbl-color-value').text(color);
     });
 
-    // Add category form submission
     $('#hbl-add-category-form').on('submit', function(e) {
         e.preventDefault();
         
@@ -509,7 +448,6 @@
             },
             success: function(response) {
                 if (response.success) {
-                    // Reload page to show new category
                     window.location.reload();
                 } else {
                     alert(response.data.message || 'Failed to add category');
@@ -523,12 +461,10 @@
         });
     });
 
-    // Edit category - open modal
     $(document).on('click', '.hbl-edit-category', function() {
         var $button = $(this);
         var $modal = $('#hbl-edit-category-modal');
         
-        // Populate form
         $modal.find('#edit_category_id').val($button.data('id'));
         $modal.find('#edit_category_name').val($button.data('name'));
         $modal.find('#edit_category_slug').val($button.data('slug'));
@@ -538,16 +474,13 @@
         $modal.find('#edit_category_color').siblings('.hbl-color-value').text($button.data('color'));
         $modal.find('#edit_category_icon').val($button.data('icon'));
         
-        // Show modal
         $modal.show();
     });
 
-    // Close modal
     $(document).on('click', '.hbl-modal-close, .hbl-modal-cancel, .hbl-modal-overlay', function() {
         $('#hbl-edit-category-modal').hide();
     });
 
-    // Edit category form submission
     $('#hbl-edit-category-form').on('submit', function(e) {
         e.preventDefault();
         
@@ -586,7 +519,6 @@
         });
     });
 
-    // Delete category
     $(document).on('click', '.hbl-delete-category', function(e) {
         e.preventDefault();
         
@@ -634,12 +566,10 @@
                         $row.fadeOut(300, function() {
                             $(this).remove();
                             
-                            // Update count
                             var $countSpan = $('.hbl-categories-list-card h2 .hbl-count');
                             var currentCount = parseInt($countSpan.text().replace(/[()]/g, ''), 10);
                             $countSpan.text('(' + Math.max(0, currentCount - 1) + ')');
                             
-                            // Show empty state if no categories
                             if ($('.hbl-categories-table tbody tr').length === 0) {
                                 $('.hbl-categories-table').replaceWith(`
                                     <div class="hbl-no-categories">
@@ -662,7 +592,6 @@
         });
     });
 
-    // ESC to close modals
     $(document).on('keydown', function(e) {
         if (e.keyCode === 27) {
             $('.hbl-delete-confirm').remove();
@@ -671,11 +600,7 @@
         }
     });
 
-    // =========================================================
-    // EVENT TAGS
-    // =========================================================
 
-    // Add new tag
     $('#hbl-add-tag-form').on('submit', function(e) {
         e.preventDefault();
         var $form = $(this);
@@ -707,7 +632,6 @@
         });
     });
 
-    // Edit tag - open modal
     $(document).on('click', '.hbl-edit-tag', function() {
         var $button = $(this);
         var $modal = $('#hbl-edit-tag-modal');
@@ -720,12 +644,10 @@
         $modal.show();
     });
 
-    // Close tag modal
     $(document).on('click', '#hbl-edit-tag-modal .hbl-modal-close, #hbl-edit-tag-modal .hbl-modal-cancel, #hbl-edit-tag-modal .hbl-modal-overlay', function() {
         $('#hbl-edit-tag-modal').hide();
     });
 
-    // Submit edit tag
     $('#hbl-edit-tag-form').on('submit', function(e) {
         e.preventDefault();
         var $form = $(this);
@@ -758,7 +680,6 @@
         });
     });
 
-    // Delete tag
     $(document).on('click', '.hbl-delete-tag', function() {
         var $button = $(this);
         var tagId = $button.data('id');

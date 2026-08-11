@@ -17,51 +17,29 @@ This theme, like WordPress, is licensed under the GPL.
 Use it to make something cool, have fun, and share what you've learned.
 */
 
-/* =====================================================
-   Theme Foundation - Bootstrap 5.3
-   ===================================================== */
 
-/* Bootstrap is loaded via functions.php for proper dependency management */
 
-/* =====================================================
-   SMOOTH SCROLLING
-   ===================================================== */
 
 html {
   scroll-behavior: smooth;
 }
 
-/* =====================================================
-   Theme Variables
-   ===================================================== */
 
 :root {
-  /* Height of whichever header is actually fixed/sticky, kept in sync at
-     runtime by theme.js (updateHeaderOffset). Defaults to 0 so nothing
-     shifts before JS runs. */
   --hbl-header-offset: 0px;
 
-  /* ===========================================
-       FONTS
-       =========================================== */
   --hbl-font-primary: "Poppins", sans-serif;
   --hbl-font-heading: "Poppins", sans-serif;
 
-  /* ===========================================
-       COLORS
-       =========================================== */
 
-  /* Primary Colors */
   --hbl-primary: #008080;
   --hbl-primary-dark: #006666;
   --hbl-secondary: #f9532a;
   --hbl-secondary-dark: #e04520;
   --hbl-teal: #008080;
-  /* Accent Colors */
   --hbl-accent: #ffffff;
   --hbl-sand: #e9c46a;
   --hbl-peach: #f4a261;
-  /* Neutral Colors */
   --hbl-white: #ffffff;
   --hbl-black: #000000;
   --hbl-dark: #1a1a1a;
@@ -75,14 +53,12 @@ html {
   --hbl-gray-200: #e9ecef;
   --hbl-gray-100: #f8f9fa;
   --hbl-gray-50: #eeeeee;
-  /* Semantic Colors */
   --hbl-text-primary: #000000;
   --hbl-text-secondary: #6c757d;
   --hbl-text-muted: #9ca3af;
   --hbl-bg-primary: #ffffff;
   --hbl-bg-secondary: #eeeeee;
   --hbl-bg-tertiary: #f8f9fa;
-  /* Status Colors */
   --hbl-success: #28a745;
   --hbl-success-light: #34ce57;
   --hbl-success-dark: #059669;
@@ -96,26 +72,21 @@ html {
   --hbl-danger-dark: #dc2626;
   --hbl-danger-bg: rgba(220, 38, 38, 0.08);
   --hbl-info: #17a2b8;
-  /* Button Colors */
   --hbl-button-bg: #f9532a;
   --hbl-button-hover-bg: #008080;
   --hbl-underline-color: #000000;
-  /* Overlay & Transparency */
   --hbl-overlay: rgba(0, 0, 0, 0.3);
   --hbl-overlay-light: rgba(0, 0, 0, 0.1);
   --hbl-overlay-dark: rgba(0, 0, 0, 0.5);
   --hbl-overlay-white: rgba(255, 255, 255, 0.8);
   --hbl-overlay-white-light: rgba(255, 255, 255, 0.2);
-  /* Primary with opacity */
   --hbl-primary-10: rgba(0, 128, 128, 0.1);
   --hbl-primary-20: rgba(0, 128, 128, 0.2);
   --hbl-primary-30: rgba(0, 128, 128, 0.3);
   --hbl-primary-50: rgba(0, 128, 128, 0.5);
-  /* Secondary with opacity */
   --hbl-secondary-10: rgba(249, 83, 42, 0.1);
   --hbl-secondary-20: rgba(249, 83, 42, 0.2);
   --hbl-secondary-50: rgba(249, 83, 42, 0.5);
-  /* Black with opacity */
   --hbl-black-05: rgba(0, 0, 0, 0.05);
   --hbl-black-10: rgba(0, 0, 0, 0.1);
   --hbl-black-15: rgba(0, 0, 0, 0.15);
@@ -128,7 +99,6 @@ html {
   --hbl-black-60: rgba(0, 0, 0, 0.6);
   --hbl-black-70: rgba(0, 0, 0, 0.7);
   --hbl-black-80: rgba(0, 0, 0, 0.8);
-  /* White with opacity */
   --hbl-white-10: rgba(255, 255, 255, 0.1);
   --hbl-white-20: rgba(255, 255, 255, 0.2);
   --hbl-white-25: rgba(255, 255, 255, 0.25);
@@ -136,48 +106,25 @@ html {
   --hbl-white-50: rgba(255, 255, 255, 0.5);
   --hbl-white-80: rgba(255, 255, 255, 0.8);
   --hbl-white-90: rgba(255, 255, 255, 0.9);
-  /* ===========================================
-       FLUID TYPOGRAPHY (clamp-based)
-       min: mobile, preferred: scaled, max: desktop
-       =========================================== */
 
-  /* Display & Hero Sizes */
   --hbl-text-display: clamp(2rem, 4vw + 1rem, 3rem);
-  /* 32px - 48px */
   --hbl-text-hero: clamp(1.75rem, 3vw + 0.75rem, 2.5rem);
-  /* 28px - 40px */
   --hbl-text-title: clamp(1.5rem, 2.5vw + 0.5rem, 2.25rem);
-  /* 24px - 36px */
 
-  /* Heading Sizes */
   --hbl-text-h1: clamp(1.5rem, 2vw + 0.5rem, 2rem);
-  /* 24px - 32px */
   --hbl-text-h2: clamp(1.375rem, 1.5vw + 0.5rem, 1.75rem);
-  /* 22px - 28px */
   --hbl-text-h3: clamp(1.125rem, 1vw + 0.5rem, 1.375rem);
-  /* 18px - 22px */
   --hbl-text-h4: clamp(1rem, 0.5vw + 0.75rem, 1.25rem);
-  /* 16px - 20px */
   --hbl-text-h5: clamp(0.9375rem, 0.25vw + 0.75rem, 1.125rem);
-  /* 15px - 18px */
 
-  /* Body Sizes */
   --hbl-text-xl: clamp(1.0625rem, 0.5vw + 0.75rem, 1.125rem);
-  /* 17px - 18px */
   --hbl-text-lg: clamp(0.9375rem, 0.25vw + 0.75rem, 1rem);
-  /* 15px - 16px */
   --hbl-text-base: clamp(0.875rem, 0.25vw + 0.625rem, 1rem);
-  /* 14px - 16px */
   --hbl-text-md: clamp(0.8125rem, 0.25vw + 0.5rem, 0.9375rem);
-  /* 13px - 15px */
   --hbl-text-sm: clamp(0.75rem, 0.125vw + 0.625rem, 0.875rem);
-  /* 12px - 14px */
   --hbl-text-xs: clamp(0.6875rem, 0.125vw + 0.5rem, 0.75rem);
-  /* 11px - 12px */
   --hbl-text-xxs: clamp(0.625rem, 0.1vw + 0.5rem, 0.6875rem);
-  /* 10px - 11px */
 
-  /* Icon Sizes */
   --hbl-icon-xs: 12px;
   --hbl-icon-sm: 14px;
   --hbl-icon-md: 16px;
@@ -186,9 +133,6 @@ html {
   --hbl-icon-2xl: 24px;
   --hbl-icon-3xl: 28px;
   --hbl-icon-4xl: 32px;
-  /* ===========================================
-       SPACING
-       =========================================== */
   --hbl-spacing-0: 0;
   --hbl-spacing-1: 4px;
   --hbl-spacing-2: 5px;
@@ -214,9 +158,6 @@ html {
   --hbl-spacing-3xl: 96px;
   --hbl-spacing-100: 100px;
   --hbl-spacing-4xl: 128px;
-  /* ===========================================
-       FLUID SPACING (clamp-based)
-       =========================================== */
   --hbl-gap-xs: clamp(8px, 1.5vw, 12px);
   --hbl-gap-sm: clamp(12px, 2vw, 20px);
   --hbl-gap-md: clamp(20px, 3vw, 30px);
@@ -228,15 +169,9 @@ html {
   --hbl-padding-md: clamp(16px, 3vw, 24px);
   --hbl-padding-lg: clamp(20px, 4vw, 40px);
   --hbl-padding-xl: clamp(30px, 5vw, 60px);
-  /* ===========================================
-       GRID CARD SIZES (minmax values)
-       =========================================== */
   --hbl-card-min-sm: 200px;
   --hbl-card-min-md: 280px;
   --hbl-card-min-lg: 320px;
-  /* ===========================================
-       BORDERS & RADIUS
-       =========================================== */
   --hbl-radius-none: 0;
   --hbl-radius-sm: 3px;
   --hbl-radius-md: 6px;
@@ -245,14 +180,10 @@ html {
   --hbl-radius-2xl: 16px;
   --hbl-radius-full: 50%;
   --hbl-radius-pill: 9999px;
-  /* Border widths */
   --hbl-border-1: 1px;
   --hbl-border-1-5: 1.5px;
   --hbl-border-2: 2px;
   --hbl-border-3: 3px;
-  /* ===========================================
-       TRANSITIONS
-       =========================================== */
   --hbl-transition-fast: 0.15s ease;
   --hbl-transition-base: 0.3s ease;
   --hbl-transition-slow: 0.5s ease;
@@ -262,9 +193,6 @@ html {
   --hbl-transition-transform: transform 0.3s ease;
   --hbl-transition-opacity: opacity 0.3s ease;
   --hbl-transition-all: all 0.3s ease;
-  /* ===========================================
-       SHADOWS
-       =========================================== */
   --hbl-shadow-none: none;
   --hbl-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
   --hbl-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -276,9 +204,6 @@ html {
   --hbl-shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
   --hbl-shadow-focus: 0 0 0 3px rgba(249, 83, 42, 0.1);
   --hbl-shadow-focus-primary: 0 0 0 3px rgba(0, 128, 128, 0.2);
-  /* ===========================================
-       Z-INDEX
-       =========================================== */
   --hbl-z-dropdown: 100;
   --hbl-z-sticky: 200;
   --hbl-z-fixed: 300;
@@ -286,19 +211,12 @@ html {
   --hbl-z-modal: 500;
   --hbl-z-popover: 600;
   --hbl-z-tooltip: 700;
-  /* ===========================================
-       LAYOUT
-       =========================================== */
   --hbl-container-max-width: 1320px;
   --hbl-content-max-width: 800px;
   --hbl-sidebar-width: 320px;
 }
 
-/* =====================================================
-   UTILITY CLASSES (Auto-generated)
-   ===================================================== */
 
-/* Flexbox Utilities */
 
 .u-flex {
   display: flex;
@@ -335,13 +253,11 @@ html {
   flex-wrap: wrap;
 }
 
-/* Grid Utilities */
 
 .u-grid {
   display: grid;
 }
 
-/* Position Utilities */
 
 .u-relative {
   position: relative;
@@ -355,7 +271,6 @@ html {
   position: fixed;
 }
 
-/* Display Utilities */
 
 .u-block {
   display: block;
@@ -369,7 +284,6 @@ html {
   display: none;
 }
 
-/* Text Utilities */
 
 .u-text-center {
   text-align: center;
@@ -383,7 +297,6 @@ html {
   text-align: right;
 }
 
-/* Common Resets */
 
 .u-reset-btn {
   border: none;
@@ -412,13 +325,11 @@ html {
   overflow: auto;
 }
 
-/* Cursor */
 
 .u-pointer {
   cursor: pointer;
 }
 
-/* Width/Height */
 
 .u-w-full {
   width: 100%;
@@ -428,7 +339,6 @@ html {
   height: 100%;
 }
 
-/* Common Gaps */
 
 .u-gap-xs {
   gap: var(--hbl-gap-xs, 8px);
@@ -446,9 +356,6 @@ html {
   gap: var(--hbl-gap-lg, 30px);
 }
 
-/* =====================================================
-   Bootstrap Override for Theme Consistency
-   ===================================================== */
 
 .btn-primary {
   background-color: var(--hbl-button-bg);
@@ -473,7 +380,6 @@ html {
   max-width: var(--hbl-container-max-width);
 }
 
-/* Remove Bootstrap container horizontal padding */
 
 .container,
 .container-fluid,
@@ -486,17 +392,8 @@ html {
   padding-left: 0;
 }
 
-/* =====================================================
-   Utility Classes
-   ===================================================== */
 
-/* =====================================================
-   Custom Elementor Widgets Styles
-   ===================================================== */
 
-/* ==========================================================================
-   HBL Search Widget Styles
-   ========================================================================== */
 
 .hbl-search-widget {
   background: transparent;
@@ -513,14 +410,12 @@ html {
   overflow: hidden;
 }
 
-/* First Row: Button + Input */
 
 .hbl-search-form-row-1 {
   display: flex;
   flex-direction: row;
 }
 
-/* Second Row: Filters (if enabled) */
 
 .hbl-search-form-row-2 {
   display: flex;
@@ -528,14 +423,12 @@ html {
   border-top: 1px solid rgba(65, 64, 66, 0.1);
 }
 
-/* Search Button Wrapper (Left Side) */
 
 .hbl-search-button-wrapper {
   position: relative;
   flex-shrink: 0;
 }
 
-/* Search Button */
 
 .hbl-search-button {
   padding: 20px 25px;
@@ -549,7 +442,6 @@ html {
   min-height: 52px;
 }
 
-/* Loading Indicator */
 
 .hbl-search-loading {
   padding: 40px 20px;
@@ -577,7 +469,6 @@ html {
   }
 }
 
-/* Search Input Container (Right Side - fills available space) */
 
 .hbl-search-input-container {
   flex: 1;
@@ -592,7 +483,6 @@ html {
   background: rgba(249, 83, 42, 0.05);
 }
 
-/* Search Input Field */
 
 .hbl-search-input {
   width: 100%;
@@ -607,14 +497,11 @@ html {
   transition: var(--hbl-transition-all);
 }
 
-/* Filter Wrappers in Second Row */
 
 .hbl-search-filter-wrapper {
   position: relative;
   flex: 1;
-  /* Filters share equal width in second row */
   min-width: 0;
-  /* Allow flex shrinking */
   border-radius: var(--hbl-radius-sm);
   transition: var(--hbl-transition-all);
   display: flex;
@@ -660,7 +547,6 @@ html {
   z-index: 1;
 }
 
-/* Search Results */
 
 .hbl-search-results {
   margin-top: 40px;
@@ -719,9 +605,6 @@ html {
   margin: 0;
 }
 
-/* ==========================================================================
-   HBL Search Results Page Styles
-   ========================================================================== */
 
 .hbl-search-results-page {
   padding: 60px 0;
@@ -772,7 +655,6 @@ html {
   text-decoration-color: var(--hbl-underline-color);
 }
 
-/* No Results Message */
 
 .no-results.not-found {
   padding: 60px 20px;
@@ -787,10 +669,6 @@ html {
   margin-top: 20px;
 }
 
-/* ==========================================================================
-   HBL Static Grid Widget (Grid of Listing)
-   Uses .static-grid- prefix to avoid conflicts
-   ========================================================================== */
 
 .static-grid-wrapper {
   width: 100%;
@@ -806,7 +684,6 @@ html {
   width: 100%;
 }
 
-/* Grid Card */
 
 .static-grid-card {
   display: flex;
@@ -827,7 +704,6 @@ html {
   transform: translateY(-5px);
 }
 
-/* Image Wrapper */
 
 .static-grid-image-wrapper {
   width: 100%;
@@ -868,7 +744,6 @@ html {
   opacity: 0.5;
 }
 
-/* Date Badge */
 .static-grid-date-badge {
   position: absolute;
   top: 12px;
@@ -898,7 +773,6 @@ html {
   letter-spacing: 0.5px;
 }
 
-/* Title */
 
 .static-grid-title {
   margin: 0;
@@ -914,7 +788,6 @@ html {
   opacity: 0.8;
 }
 
-/* Content Area */
 
 .static-grid-content {
   width: 100%;
@@ -925,13 +798,11 @@ html {
   align-self: stretch;
 }
 
-/* Description */
 
 .static-grid-description {
   margin: 0;
 }
 
-/* Arrow Icon */
 
 .static-grid-icon {
   display: inline-flex;
@@ -964,7 +835,6 @@ html {
   transform: translate(2px, -2px);
 }
 
-/* No Items Message */
 
 .static-grid-no-items {
   width: 100%;
@@ -974,9 +844,6 @@ html {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* ==========================================================================
-   HBL CTA Section Widget
-   ========================================================================== */
 
 .hbl-cta-section {
   display: flex;
@@ -989,7 +856,6 @@ html {
   gap: 65px;
 }
 
-/* CTA Item */
 
 .hbl-cta-item {
   display: flex;
@@ -1005,7 +871,6 @@ html {
   padding: 25px 0;
 }
 
-/* CTA Item Inner Container */
 
 .hbl-cta-item-inner {
   display: flex;
@@ -1014,7 +879,6 @@ html {
   gap: var(--hbl-gap-sm);
 }
 
-/* CTA Icon */
 
 .hbl-cta-icon {
   display: flex;
@@ -1033,14 +897,12 @@ html {
   transform: scale(1.1);
 }
 
-/* CTA Text */
 
 .hbl-cta-text {
   white-space: nowrap;
   transition: color 0.3s ease;
 }
 
-/* Vertical Dividers (Desktop) */
 
 .hbl-cta-divider.vertical {
   width: 1px;
@@ -1049,7 +911,6 @@ html {
   flex-shrink: 0;
 }
 
-/* Horizontal Dividers (Mobile) */
 
 .hbl-cta-divider.horizontal {
   display: none;
@@ -1057,9 +918,6 @@ html {
   height: 1px;
 }
 
-/* =================================================================
-   HBL BLOGS SECTION
-   ================================================================= */
 
 .hbl-blogs-section {
   display: flex;
@@ -1070,7 +928,6 @@ html {
   width: 100%;
 }
 
-/* Header Section */
 
 .hbl-blogs-header {
   display: flex;
@@ -1119,7 +976,6 @@ html {
   box-shadow: 0 4px 8px rgba(249, 83, 42, 0.3);
 }
 
-/* Blog Grid */
 
 .hbl-blogs-grid {
   display: flex;
@@ -1131,7 +987,6 @@ html {
   flex-wrap: wrap;
 }
 
-/* Right Column Container */
 
 .hbl-blogs-right-column {
   display: flex;
@@ -1142,7 +997,6 @@ html {
   min-width: 0;
 }
 
-/* Featured Blog Card (Large Card) */
 
 .hbl-blog-featured {
   display: flex;
@@ -1218,7 +1072,6 @@ html {
   transform: translateX(5px);
 }
 
-/* Standard Blog Card (Right Column Cards) */
 
 .hbl-blog-standard {
   display: flex;
@@ -1276,9 +1129,6 @@ html {
   justify-content: center;
 }
 
-/* ============================================
-   HBL ROW SEARCH WIDGET STYLES
-   ============================================ */
 
 .hbl-row-search-wrapper {
   display: flex;
@@ -1293,7 +1143,6 @@ html {
   width: 100%;
 }
 
-/* Search Input Field */
 
 .hbl-row-search-field {
   display: flex;
@@ -1311,7 +1160,6 @@ html {
   background: transparent;
 }
 
-/* Dropdowns */
 
 .hbl-row-search-dropdown {
   display: flex;
@@ -1339,7 +1187,6 @@ html {
   transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
 
 .hbl-row-search-dropdown-menu {
   position: absolute;
@@ -1381,7 +1228,6 @@ html {
   background-color: rgba(249, 83, 42, 0.15);
 }
 
-/* Search Button */
 
 .hbl-row-search-button {
   display: flex;
@@ -1400,15 +1246,11 @@ html {
   transform: translateY(-2px);
 }
 
-/* ========================================
-   HBL FAQs Widget Styles
-   ======================================== */
 
 .hbl-faqs-wrapper {
   width: 100%;
 }
 
-/* FAQ Item */
 
 .hbl-faq-item {
   overflow: hidden;
@@ -1416,7 +1258,6 @@ html {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* Question */
 
 .hbl-faq-question {
   display: flex;
@@ -1443,7 +1284,6 @@ html {
   transition: color 0.3s ease;
 }
 
-/* FAQ Icon */
 
 .hbl-faq-icon {
   display: inline-flex;
@@ -1457,7 +1297,6 @@ html {
   transform: rotate(0deg);
 }
 
-/* Answer Wrapper */
 
 .hbl-faq-answer-wrapper {
   overflow: hidden;
@@ -1500,7 +1339,6 @@ html {
   text-decoration-color: var(--hbl-underline-color);
 }
 
-/* Animation Classes */
 
 .hbl-faq-answer-wrapper.expanding {
   animation: expandAnswer 0.3s ease forwards;
@@ -1532,9 +1370,6 @@ html {
   }
 }
 
-/* =====================================================
-   HBL Search Column Widget
-   ===================================================== */
 
 .hbl-search-column-widget {
   width: 100%;
@@ -1637,9 +1472,6 @@ html {
   background: var(--hbl-button-hover-bg);
 }
 
-/* =====================================================
-   HBL Calendar Widget Styles
-   ===================================================== */
 
 .hbl-calendar-widget {
   display: flex;
@@ -1717,7 +1549,6 @@ html {
   gap: 6px;
 }
 
-/* Row 1: < February   March   April > */
 .hbl-calendar-month-nav-row {
   display: flex;
   flex-direction: row;
@@ -1748,7 +1579,6 @@ html {
   pointer-events: none;
 }
 
-/* Row 2: SEE PREVIOUS MONTH   < Today >   SEE NEXT MONTH */
 .hbl-calendar-day-nav-row {
   display: flex;
   flex-direction: row;
@@ -1777,7 +1607,6 @@ html {
   color: #777777 !important;
 }
 
-/* Today Button - Beautiful styling */
 .hbl-calendar-today-btn {
   display: inline-flex;
   align-items: center;
@@ -2198,11 +2027,7 @@ html {
   padding: 40px;
 }
 
-/* ============================================
-   HBL PRICING PLAN WIDGET - Modern Card Design
-   ============================================ */
 
-/* Wrapper */
 .hbl-pricing-plan-wrapper {
   display: flex;
   flex-direction: column;
@@ -2220,7 +2045,6 @@ html {
   box-shadow: 0 4px 20px rgba(0, 128, 128, 0.08);
 }
 
-/* Header Section */
 .hbl-pricing-plan-header {
   display: flex;
   align-items: center;
@@ -2261,13 +2085,11 @@ html {
   line-height: 1.4;
 }
 
-/* Table Container */
 .hbl-pricing-plan-table {
   width: 100%;
   overflow-x: auto;
 }
 
-/* Plan Cards Row (Header) */
 .hbl-pricing-plan-cards-row {
   display: grid;
   grid-template-columns: minmax(200px, 280px) repeat(
@@ -2294,7 +2116,6 @@ html {
   grid-template-columns: minmax(180px, 240px) repeat(4, 1fr);
 }
 
-/* Feature Label (First Column Header) */
 .hbl-pricing-plan-feature-label {
   display: flex;
   align-items: center;
@@ -2311,7 +2132,6 @@ html {
   letter-spacing: 0.5px;
 }
 
-/* Plan Cards */
 .hbl-pricing-plan-card {
   display: flex;
   flex-direction: column;
@@ -2333,7 +2153,6 @@ html {
   background: var(--hbl-gray-50);
 }
 
-/* Highlighted Plan Card */
 .hbl-pricing-plan-card.hbl-plan-highlighted {
   background: linear-gradient(
     135deg,
@@ -2352,7 +2171,6 @@ html {
   );
 }
 
-/* Recommended Badge */
 .hbl-pricing-plan-badge {
   position: absolute;
   top: -1px;
@@ -2369,7 +2187,6 @@ html {
   box-shadow: 0 2px 8px rgba(249, 83, 42, 0.3);
 }
 
-/* Plan Card Content */
 .hbl-pricing-plan-card-content {
   display: flex;
   flex-direction: column;
@@ -2391,7 +2208,6 @@ html {
   line-height: 1.4;
 }
 
-/* Plan Buttons */
 .hbl-pricing-plan-button {
   display: inline-flex;
   align-items: center;
@@ -2431,13 +2247,11 @@ html {
   background: var(--hbl-primary);
 }
 
-/* Feature Rows Container */
 .hbl-pricing-plan-features {
   display: flex;
   flex-direction: column;
 }
 
-/* Feature Row */
 .hbl-pricing-plan-row {
   display: grid;
   grid-template-columns: minmax(200px, 280px) repeat(
@@ -2470,7 +2284,6 @@ html {
   background: rgba(0, 128, 128, 0.05);
 }
 
-/* Feature Cells */
 .hbl-pricing-plan-feature-cell {
   display: flex;
   align-items: center;
@@ -2483,7 +2296,6 @@ html {
   border-right: none;
 }
 
-/* Feature Name Cell */
 .hbl-pricing-plan-feature-name-cell {
   background: var(--hbl-gray-50);
 }
@@ -2495,7 +2307,6 @@ html {
   line-height: 1.4;
 }
 
-/* Value Cells */
 .hbl-pricing-plan-value-cell {
   justify-content: center;
   text-align: center;
@@ -2505,7 +2316,6 @@ html {
   background: rgba(0, 128, 128, 0.04);
 }
 
-/* Value Content */
 .hbl-pricing-plan-value-content {
   display: flex;
   flex-direction: column;
@@ -2513,7 +2323,6 @@ html {
   gap: 6px;
 }
 
-/* Icon Wrapper */
 .hbl-pricing-plan-icon-wrap {
   display: flex;
   align-items: center;
@@ -2535,7 +2344,6 @@ html {
   color: var(--hbl-black-30);
 }
 
-/* Icons */
 .hbl-pricing-icon {
   width: 20px;
   height: 20px;
@@ -2554,7 +2362,6 @@ html {
   color: var(--hbl-black-30);
 }
 
-/* Custom Icon (from Elementor Icons) */
 .hbl-pricing-icon-custom {
   width: 20px;
   height: 20px;
@@ -2567,7 +2374,6 @@ html {
   height: 20px;
 }
 
-/* Custom Image Icon */
 .hbl-pricing-icon-image {
   width: 24px;
   height: 24px;
@@ -2575,7 +2381,6 @@ html {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* Feature Value Text */
 .hbl-pricing-plan-feature-value {
   font-size: var(--hbl-text-sm);
   color: var(--hbl-black-70);
@@ -2583,7 +2388,6 @@ html {
   text-align: center;
 }
 
-/* Legacy classes for backwards compatibility */
 .hbl-pricing-plan-icon,
 .hbl-pricing-plan-checkmark,
 .hbl-pricing-plan-cross,
@@ -2602,17 +2406,11 @@ html {
   width: 100%;
 }
 
-/* Legacy button styles */
 .hbl-pricing-plan-buttons-wrapper {
   display: none;
-  /* Hidden in new design - buttons are in cards */
 }
 
-/* ============================================
-   HBL NOTICEBOARD WIDGET
-   ============================================ */
 
-/* Noticeboard Wrapper */
 
 .hbl-noticeboard-wrapper {
   display: flex;
@@ -2621,7 +2419,6 @@ html {
   width: 100%;
 }
 
-/* Noticeboard Header */
 
 .hbl-noticeboard-header,
 .hbl-all-about-hb-header {
@@ -2641,7 +2438,6 @@ html {
   margin: 0;
 }
 
-/* Noticeboard Grid */
 
 .hbl-noticeboard-grid {
   display: flex;
@@ -2653,7 +2449,6 @@ html {
   justify-content: center;
 }
 
-/* Noticeboard Card */
 
 .hbl-noticeboard-card {
   display: flex;
@@ -2663,7 +2458,6 @@ html {
   overflow: hidden;
 }
 
-/* Card Image */
 
 .hbl-noticeboard-card-image {
   width: 100%;
@@ -2684,7 +2478,6 @@ html {
   object-fit: cover;
 }
 
-/* Card Button */
 
 .hbl-noticeboard-card-button {
   display: flex;
@@ -2725,7 +2518,6 @@ html {
   stroke-width: 2;
 }
 
-/* Card Description */
 
 .hbl-noticeboard-card-description {
   margin-top: 0;
@@ -2734,10 +2526,7 @@ html {
   text-align: center;
 }
 
-/* HBL ALL ABOUT HB WIDGET
-   ============================================ */
 
-/* All About HB Wrapper */
 
 .hbl-all-about-hb-wrapper {
   display: flex;
@@ -2749,7 +2538,6 @@ html {
   margin: 0 auto;
 }
 
-/* Header */
 
 .hbl-all-about-hb-subtitle {
   margin: 0;
@@ -2767,7 +2555,6 @@ html {
   color: var(--hbl-primary);
 }
 
-/* Grid */
 
 .hbl-all-about-hb-grid {
   display: flex;
@@ -2778,7 +2565,6 @@ html {
   justify-content: center;
 }
 
-/* Card */
 
 .hbl-all-about-hb-card {
   display: flex;
@@ -2845,7 +2631,6 @@ html {
   pointer-events: none;
 }
 
-/* Review Snippet on Card (Gold tier) */
 
 .hbl-review-snippet {
   margin-top: 8px;
@@ -2863,7 +2648,6 @@ html {
   line-height: 1.4;
 }
 
-/* Category chip for Bronze */
 
 .hbl-category-chip {
   display: inline-block;
@@ -2874,7 +2658,6 @@ html {
   color: var(--hbl-primary);
 }
 
-/* Open Now indicator */
 
 .hbl-open-now {
   color: var(--hbl-success);
@@ -2884,24 +2667,17 @@ html {
   color: var(--hbl-success);
 }
 
-/* Hide rating section on Bronze */
 
 .hbl-plan-bronze .hbl-rating {
   display: none;
 }
 
-/* Hide social icons on Bronze */
 
 .hbl-plan-bronze .hbl-social-icons {
   display: none;
 }
 
-/* ================================================================
-   HBL DASHBOARD WIDGET STYLES
-   Clean, modern dashboard for Directorist
-   ================================================================ */
 
-/* Reset and Box Sizing */
 
 .hbl-dashboard-widget,
 .hbl-dashboard-widget *,
@@ -2910,7 +2686,6 @@ html {
   box-sizing: border-box;
 }
 
-/* Dashboard Widget Container */
 
 .hbl-dashboard-widget {
   background: var(--hbl-white);
@@ -2930,7 +2705,6 @@ html {
   min-width: 0;
 }
 
-/* Dashboard Buttons */
 
 .hbl-dashboard-widget .hbl-dashboard-btn {
   display: inline-flex;
@@ -3007,7 +2781,6 @@ html {
   font-size: var(--hbl-text-md);
 }
 
-/* Listings Header */
 
 .hbl-dashboard-widget .hbl-dashboard-listings-header {
   display: flex;
@@ -3081,7 +2854,6 @@ html {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-/* Section Titles */
 
 .hbl-dashboard-widget .hbl-dashboard-section-header {
   display: flex;
@@ -3110,7 +2882,6 @@ html {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* Listings Grid */
 
 .hbl-dashboard-widget .hbl-dashboard-listings-grid {
   display: grid;
@@ -3324,7 +3095,6 @@ html {
   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
-/* Empty State */
 
 .hbl-dashboard-widget .hbl-dashboard-empty {
   text-align: center;
@@ -3332,8 +3102,6 @@ html {
   background: linear-gradient(145deg, var(--hbl-white) 0%, #f8fffe 100%);
   border-radius: var(--hbl-radius-sm);
   border: 1px dashed var(--hbl-primary-20);
-  /* Grow into whatever vertical space the view has left and centre in it,
-     so an empty view fills the shell instead of leaving dead space below. */
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -3367,7 +3135,6 @@ html {
   line-height: 1.6;
 }
 
-/* Pagination */
 
 .hbl-dashboard-widget .hbl-dashboard-pagination {
   display: flex;
@@ -3400,7 +3167,6 @@ html {
   color: var(--hbl-white);
 }
 
-/* Profile Tab */
 
 .hbl-dashboard-widget .hbl-dashboard-profile {
   max-width: 100%;
@@ -3483,7 +3249,6 @@ html {
   padding: 12px 40px;
 }
 
-/* Profile Image Section */
 
 .hbl-dashboard-widget .hbl-dashboard-profile-image-section {
   text-align: left;
@@ -3596,7 +3361,6 @@ html {
   flex-shrink: 0;
 }
 
-/* Favorites Tab */
 
 .hbl-dashboard-favorites-section {
   margin-bottom: 32px;
@@ -3763,7 +3527,6 @@ html {
   letter-spacing: 0.5px;
 }
 
-/* ========== Claims Tab ========== */
 
 .hbl-dashboard-claims-section {
   margin-bottom: 32px;
@@ -3777,7 +3540,6 @@ html {
   color: var(--hbl-primary);
 }
 
-/* Claims Grid (for claimed listings) */
 
 .hbl-dashboard-claims-grid {
   display: grid;
@@ -3785,7 +3547,6 @@ html {
   gap: var(--hbl-gap-sm);
 }
 
-/* Claim Card (for claimed businesses) */
 
 .hbl-dashboard-claim-card,
 .hbl-single-cat-card {
@@ -3889,7 +3650,6 @@ html {
   background: #f9fafb;
 }
 
-/* Claim Request Card */
 
 .hbl-dashboard-claim-request-card {
   background: var(--hbl-white);
@@ -4050,7 +3810,6 @@ html {
   margin-top: 2px;
 }
 
-/* Login Required State */
 
 .hbl-dashboard-widget .hbl-dashboard-login-required,
 .hbl-dashboard-login-required {
@@ -4121,7 +3880,6 @@ html {
   color: var(--hbl-white);
 }
 
-/* Notice */
 
 .hbl-dashboard-widget .hbl-dashboard-notice,
 .hbl-dashboard-notice {
@@ -4134,11 +3892,7 @@ html {
   font-weight: 500;
 }
 
-/* ================================================================
-   HBL DASHBOARD - EVENTS TAB STYLES
-   ================================================================ */
 
-/* Events Tab Container */
 
 .hbl-dashboard-widget .hbl-dashboard-events,
 
@@ -4148,7 +3902,6 @@ html {
   gap: 24px;
 }
 
-/* Events Header */
 
 .hbl-dashboard-widget .hbl-dashboard-events-header {
   display: flex;
@@ -4167,7 +3920,6 @@ html {
   margin: 0;
 }
 
-/* Events Grid */
 
 .hbl-dashboard-widget .hbl-dashboard-events-grid {
   display: grid;
@@ -4175,7 +3927,6 @@ html {
   gap: 20px;
 }
 
-/* Event Card */
 
 .hbl-dashboard-widget .hbl-dashboard-event-card {
   display: flex;
@@ -4193,7 +3944,6 @@ html {
   box-shadow: 0 8px 24px var(--hbl-black-10);
 }
 
-/* Event Image */
 
 .hbl-dashboard-widget .hbl-dashboard-event-image {
   position: relative;
@@ -4239,7 +3989,6 @@ html {
   color: #383d41;
 }
 
-/* Event Content */
 
 .hbl-dashboard-widget .hbl-dashboard-event-content {
   padding: 16px;
@@ -4285,7 +4034,6 @@ html {
   letter-spacing: 0.3px;
 }
 
-/* Event Actions */
 
 .hbl-dashboard-widget .hbl-dashboard-event-actions {
   display: flex;
@@ -4296,7 +4044,6 @@ html {
   border-top: 1px solid var(--hbl-gray-200);
 }
 
-/* Event Form */
 
 .hbl-dashboard-widget .hbl-dashboard-event-form {
   display: flex;
@@ -4352,7 +4099,6 @@ html {
   border: 1px solid #dee2e6;
 }
 
-/* Notice Messages */
 
 .hbl-dashboard-widget .hbl-dashboard-notice {
   display: flex;
@@ -4378,9 +4124,6 @@ html {
   border: 1px solid #f5c6cb;
 }
 
-/* ================================================================
-   HBL ADD LISTING FORM WIDGET STYLES
-   ================================================================ */
 
 .hbl-add-listing-form-widget {
   max-width: 100%;
@@ -4484,9 +4227,6 @@ html {
   padding: 40px 24px;
 }
 
-/* ================================================================
-   HBL ADD EVENT FORM WIDGET STYLES
-   ================================================================ */
 
 .hbl-add-event-form-widget {
   max-width: 100%;
@@ -4502,7 +4242,6 @@ html {
   display: flex;
 }
 
-/* Form Sections */
 
 .hbl-form-section {
   background: var(--hbl-white);
@@ -4517,7 +4256,6 @@ html {
   margin-top: 10px;
 }
 
-/* Allow overflow for search section dropdown */
 
 #hbl-section-search {
   overflow: visible;
@@ -4709,7 +4447,6 @@ html {
   background-color: var(--hbl-white);
 }
 
-/* Remove browser autofill background */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -4807,7 +4544,6 @@ input:-webkit-autofill:active {
   font-style: italic;
 }
 
-/* Recurrence Options */
 
 .hbl-form-recurrence-options {
   margin-top: 24px;
@@ -4851,7 +4587,6 @@ input:-webkit-autofill:active {
   height: 0;
 }
 
-/* Monthly day options (div-based, no input) */
 .hbl-form-day-option-monthly {
   cursor: pointer;
 }
@@ -4899,7 +4634,6 @@ input:-webkit-autofill:active {
   margin-top: 12px;
 }
 
-/* Radio Buttons */
 
 .hbl-form-radio-group,
 
@@ -4979,7 +4713,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-primary);
 }
 
-/* Stacked Radio Options (Two-line layout for Event Type buttons) */
 
 .hbl-form-radio-option-stacked {
   flex-direction: row;
@@ -5021,7 +4754,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-gray-700);
 }
 
-/* Optional and Hint Labels */
 
 .hbl-form-optional {
   font-size: var(--hbl-text-md);
@@ -5037,7 +4769,6 @@ input:-webkit-autofill:active {
   margin-left: 4px;
 }
 
-/* Transparency Note */
 
 .hbl-form-transparency-note {
   display: flex;
@@ -5243,7 +4974,6 @@ input:-webkit-autofill:active {
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
 }
 
-/* Button Spinner */
 
 .hbl-btn-spinner {
   display: inline-block;
@@ -5262,7 +4992,6 @@ input:-webkit-autofill:active {
   }
 }
 
-/* Success Overlay */
 
 .hbl-form-success-overlay {
   position: relative;
@@ -5330,7 +5059,6 @@ input:-webkit-autofill:active {
   height: 40px;
 }
 
-/* Payment redirect icon - different color scheme */
 .hbl-form-payment-icon {
   background: linear-gradient(135deg, var(--hbl-primary) 0%, #00a0a0 100%);
   box-shadow: 0 8px 32px var(--hbl-primary-30);
@@ -5441,7 +5169,6 @@ input:-webkit-autofill:active {
   font-size: var(--hbl-text-xl);
 }
 
-/* Package Selection Styles */
 
 .hbl-form-section-highlight {
   border: 1px solid var(--hbl-primary);
@@ -5463,7 +5190,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-white);
 }
 
-/* Package Options - Redesigned */
 
 .hbl-form-package-options {
   display: grid;
@@ -5523,7 +5249,6 @@ input:-webkit-autofill:active {
   gap: var(--hbl-gap-xs);
   margin-bottom: 16px;
   padding-right: 48px;
-  /* Account for absolute-positioned check element */
 }
 
 .hbl-form-package-name {
@@ -5574,7 +5299,6 @@ input:-webkit-autofill:active {
   box-shadow: 0 2px 8px rgba(0, 128, 128, 0.4);
 }
 
-/* Package Recommended Badge */
 
 .hbl-form-package-recommended .hbl-form-package-card {
   border-color: var(--hbl-secondary);
@@ -5640,7 +5364,6 @@ input:-webkit-autofill:active {
   color: #10b981;
 }
 
-/* Plan Restricted Fields */
 
 .hbl-field-restricted {
   position: relative;
@@ -5677,7 +5400,6 @@ input:-webkit-autofill:active {
   gap: 6px;
 }
 
-/* Plan Limits Badges */
 
 .hbl-plan-limits {
   display: flex;
@@ -5754,7 +5476,6 @@ input:-webkit-autofill:active {
   gap: 6px;
 }
 
-/* Tags Input Styles */
 
 .hbl-tags-input-container {
   display: flex;
@@ -5837,7 +5558,6 @@ input:-webkit-autofill:active {
   background: var(--hbl-white-40);
 }
 
-/* Categories Input Styles */
 
 .hbl-category-item {
   display: inline-flex;
@@ -5866,7 +5586,6 @@ input:-webkit-autofill:active {
   width: 100%;
 }
 
-/* Tags Container Styles (select dropdown like categories) */
 
 .hbl-tags-container {
   display: flex;
@@ -5882,7 +5601,6 @@ input:-webkit-autofill:active {
   width: 100%;
 }
 
-/* Disabled button style for gallery */
 
 .hbl-btn-disabled {
   opacity: 0.5;
@@ -5894,7 +5612,6 @@ input:-webkit-autofill:active {
   display: none !important;
 }
 
-/* Map/Location Section Styles */
 
 .hbl-form-search-wrapper,
 .hbl-form-input-with-prefix,
@@ -5952,7 +5669,6 @@ input:-webkit-autofill:active {
   line-height: 1.5;
 }
 
-/* Plan Helper Text Styles */
 
 .hbl-plan-helper {
   transition:
@@ -5964,7 +5680,6 @@ input:-webkit-autofill:active {
   display: none;
 }
 
-/* Info Box Styles (for Reviews & Ratings, etc.) */
 
 .hbl-form-section-info {
   background: var(--hbl-white);
@@ -6021,7 +5736,6 @@ input:-webkit-autofill:active {
   padding-top: 12px;
 }
 
-/* Bronze info box - locked state */
 .hbl-info-box-bronze {
   background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   border: 1px solid #fecaca;
@@ -6031,7 +5745,6 @@ input:-webkit-autofill:active {
   color: #991b1b;
 }
 
-/* Silver info box - enabled state */
 .hbl-info-box-silver {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   border: 1px solid #a7f3d0;
@@ -6041,7 +5754,6 @@ input:-webkit-autofill:active {
   color: #065f46;
 }
 
-/* Gold info box - premium state */
 .hbl-info-box-gold,
 .hbl-info-box-premium {
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
@@ -6053,7 +5765,6 @@ input:-webkit-autofill:active {
   color: #92400e;
 }
 
-/* Section styling based on plan */
 .hbl-section-bronze .hbl-form-section-header {
   background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
 }
@@ -6078,7 +5789,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-warning-dark);
 }
 
-/* Gold-only section styling */
 .hbl-gold-only-section {
   border: 1px solid #fde68a;
   background: linear-gradient(180deg, #fffdf7 0%, var(--hbl-white) 100%);
@@ -6117,7 +5827,6 @@ input:-webkit-autofill:active {
   border: 1px solid var(--hbl-gray-200);
 }
 
-/* Pricing Section Styles */
 
 .hbl-form-input-prefix {
   position: absolute;
@@ -6190,7 +5899,6 @@ input:-webkit-autofill:active {
   font-weight: 500;
 }
 
-/* Services Section Styles */
 
 .hbl-service-item {
   display: flex;
@@ -6241,7 +5949,6 @@ input:-webkit-autofill:active {
   margin-top: 12px;
 }
 
-/* Gallery Section Styles */
 
 .hbl-form-gallery-upload {
   border: 1px dashed #dee2e6;
@@ -6340,7 +6047,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-primary);
 }
 
-/* Responsive Styles for Event Form */
 
 .hbl-form-link {
   color: var(--hbl-primary);
@@ -6369,9 +6075,6 @@ input:-webkit-autofill:active {
   margin-top: 16px;
 }
 
-/* ================================================================
-   HBL SIGN IN/SIGNUP FORM WIDGET STYLES
-   ================================================================ */
 
 .hbl-signin-signup-form-widget {
   max-width: 500px;
@@ -6491,16 +6194,11 @@ input:-webkit-autofill:active {
   margin-bottom: 0;
 }
 
-/* ================================================================
-   HBL SINGLE LISTING WIDGET STYLES
-   Modern, clean design following theme aesthetics
-   ================================================================ */
 
 .hbl-single-listing-widget {
   font-family: var(--hbl-font-primary);
 }
 
-/* Hero Section */
 
 .hbl-single-listing-hero {
   position: relative;
@@ -6549,7 +6247,6 @@ input:-webkit-autofill:active {
   padding: 32px 40px 40px;
 }
 
-/* Navigation */
 
 .hbl-single-listing-nav,
 .hbl-single-event-header-top {
@@ -6622,7 +6319,6 @@ input:-webkit-autofill:active {
   border-color: #e04a25;
 }
 
-/* Hero Info */
 
 .hbl-single-listing-hero-info {
   max-width: 800px;
@@ -6683,7 +6379,6 @@ input:-webkit-autofill:active {
   font-weight: 400;
 }
 
-/* Quick Info Bar */
 
 .hbl-single-listing-quick-item,
 .hbl-sloc-title-wrap,
@@ -6710,7 +6405,6 @@ input:-webkit-autofill:active {
   font-weight: 500;
 }
 
-/* Content Area */
 
 .hbl-single-listing-content {
   background: linear-gradient(
@@ -6737,7 +6431,6 @@ input:-webkit-autofill:active {
   gap: 32px;
 }
 
-/* Sections */
 
 .hbl-single-listing-section,
 .hbl-single-event-section {
@@ -6808,7 +6501,6 @@ input:-webkit-autofill:active {
   padding: 24px;
 }
 
-/* Services & Pricing within Single Listing */
 .hbl-single-listing-section-content .hbl-two-column-section {
   border-top: none;
   padding: 0;
@@ -6818,7 +6510,6 @@ input:-webkit-autofill:active {
   grid-column: 1 / -1;
 }
 
-/* Services List Styling */
 .hbl-services-list {
   list-style: none;
   padding: 0;
@@ -6873,7 +6564,6 @@ input:-webkit-autofill:active {
   flex: 1;
 }
 
-/* Remove h4 heading styling if shown */
 .hbl-services-section h4,
 .hbl-pricing-section h4 {
   display: none;
@@ -6894,7 +6584,6 @@ input:-webkit-autofill:active {
   margin-bottom: 0;
 }
 
-/* Gallery */
 
 .hbl-single-listing-gallery {
   display: grid;
@@ -6944,7 +6633,6 @@ input:-webkit-autofill:active {
   opacity: 1;
 }
 
-/* Video */
 
 .hbl-single-listing-video {
   position: relative;
@@ -6959,7 +6647,6 @@ input:-webkit-autofill:active {
   height: 100%;
 }
 
-/* Map */
 
 .hbl-single-listing-map {
   height: 280px;
@@ -6967,13 +6654,10 @@ input:-webkit-autofill:active {
   overflow: hidden;
   border: 1px solid var(--hbl-gray-200);
   margin-bottom: 16px;
-  /* Contain Leaflet's own stacking (panes/controls/popups use z-index up
-     to 1000 internally). Without a stacking context of its own, those
-     values compete directly against page-level fixed/sticky elements
-     like the site header instead of staying scoped to the map. */
   position: relative;
   z-index: 0;
   isolation: isolate;
+  scroll-margin-top: var(--hbl-header-offset);
 }
 
 .hbl-single-listing-address-box {
@@ -6994,7 +6678,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-primary);
 }
 
-/* Reviews */
 
 .hbl-single-listing-review {
   padding: 20px;
@@ -7066,7 +6749,6 @@ input:-webkit-autofill:active {
   margin: 0 0 6px 0;
 }
 
-/* Review Form */
 
 .hbl-single-listing-review-form {
   margin-top: 28px;
@@ -7159,9 +6841,7 @@ input:-webkit-autofill:active {
   text-decoration: underline;
 }
 
-/* Sidebar */
 
-/* Cards */
 
 .hbl-single-listing-card,
 .hbl-single-event-card {
@@ -7204,7 +6884,6 @@ input:-webkit-autofill:active {
   color: var(--hbl-primary);
 }
 
-/* Contact List */
 
 .hbl-single-listing-contact-item {
   display: flex;
@@ -7261,7 +6940,6 @@ a.hbl-single-listing-contact-item:hover {
   word-break: break-word;
 }
 
-/* CTA Buttons */
 
 .hbl-single-listing-cta-buttons {
   display: flex;
@@ -7315,7 +6993,6 @@ a.hbl-single-listing-contact-item:hover {
   border-color: var(--hbl-primary);
 }
 
-/* Social Links */
 
 .hbl-single-listing-social-link,
 .hbl-single-event-share-link {
@@ -7380,7 +7057,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-white);
 }
 
-/* Business Hours */
 
 .hbl-single-listing-hours-list {
   display: flex;
@@ -7408,7 +7084,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-gray-600);
 }
 
-/* Claim Listing Card */
 
 .hbl-single-listing-claim-card {
   background: linear-gradient(
@@ -7418,10 +7093,6 @@ a.hbl-single-listing-contact-item:hover {
   );
   border: 1px solid var(--hbl-gray-200);
   margin-top: 1rem;
-}
-
-.hbl-single-listing-claim-content {
-  padding: 0 20px 20px;
 }
 
 .hbl-single-listing-claim-title {
@@ -7468,7 +7139,6 @@ a.hbl-single-listing-contact-item:hover {
   text-align: center;
 }
 
-/* Related Listings */
 
 .hbl-single-listing-related,
 .hbl-single-event-related {
@@ -7597,7 +7267,6 @@ a.hbl-single-listing-contact-item:hover {
   font-size: var(--hbl-text-base);
 }
 
-/* Notice */
 
 .hbl-single-listing-notice,
 .hbl-single-event-notice {
@@ -7608,16 +7277,11 @@ a.hbl-single-listing-contact-item:hover {
 }
 
 
-/* ================================================================
-   HBL SINGLE EVENT WIDGET STYLES
-   Modern, clean design following theme aesthetics
-   ================================================================ */
 
 .hbl-single-event-widget {
   font-family: var(--hbl-font-primary);
 }
 
-/* Hero Section - Simple Clean Design */
 
 .hbl-single-event-header {
   position: relative;
@@ -7719,7 +7383,6 @@ a.hbl-single-listing-contact-item:hover {
   gap: 28px;
 }
 
-/* Date Badge - Simple Design */
 
 .hbl-single-event-date-badge {
   width: 90px;
@@ -7906,7 +7569,6 @@ a.hbl-single-listing-contact-item:hover {
   }
 }
 
-/* Content Area */
 
 .hbl-single-event-body {
   background: linear-gradient(
@@ -7923,7 +7585,6 @@ a.hbl-single-listing-contact-item:hover {
   padding: 40px;
 }
 
-/* Sections */
 
 .hbl-single-event-section:hover {
   border-color: var(--hbl-primary);
@@ -7942,7 +7603,6 @@ a.hbl-single-listing-contact-item:hover {
   margin-bottom: 0;
 }
 
-/* Featured Image */
 
 .hbl-single-event-featured-image {
   border-radius: var(--hbl-radius-sm);
@@ -7956,7 +7616,6 @@ a.hbl-single-listing-contact-item:hover {
   display: block;
 }
 
-/* Cards */
 
 .hbl-single-event-card:hover {
   border-color: var(--hbl-primary);
@@ -7979,7 +7638,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-primary);
 }
 
-/* Details List */
 
 .hbl-single-event-detail-item {
   display: flex;
@@ -7996,7 +7654,6 @@ a.hbl-single-listing-contact-item:hover {
   font-weight: 500;
 }
 
-/* CTA */
 
 .hbl-single-event-cta {
   margin-top: 20px;
@@ -8027,7 +7684,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-white);
 }
 
-/* Add to Calendar */
 
 .hbl-single-event-add-calendar {
   margin-top: 12px;
@@ -8056,7 +7712,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-white);
 }
 
-/* Organizer */
 
 .hbl-single-event-organizer-card {
   display: none !important;
@@ -8088,7 +7743,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-gray-600);
 }
 
-/* Share Links */
 
 .hbl-single-event-share-link:hover {
   transform: translateY(-3px);
@@ -8119,7 +7773,6 @@ a.hbl-single-listing-contact-item:hover {
   color: var(--hbl-white);
 }
 
-/* Related Events */
 
 .hbl-single-event-related-header {
   margin-bottom: 24px;
@@ -8186,9 +7839,6 @@ a.hbl-single-listing-contact-item:hover {
   padding: 18px;
 }
 
-/* ================================================================
-   FAVORITE BUTTON STYLES
-   ================================================================ */
 
 .hbl-favorite-btn {
   position: relative;
@@ -8223,9 +7873,6 @@ a.hbl-single-listing-contact-item:hover {
   border-color: #e04a25;
 }
 
-/* ================================================================
-   LIGHTBOX STYLES
-   ================================================================ */
 
 .hbl-lightbox {
   position: fixed;
@@ -8353,9 +8000,6 @@ body.hbl-lightbox-open {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* ================================================================
-   HBL CLAIM LISTING FORM WIDGET STYLES
-   ================================================================ */
 
 .hbl-claim-form-widget {
   font-family: inherit;
@@ -8375,7 +8019,6 @@ body.hbl-lightbox-open {
   line-height: 1.6;
 }
 
-/* Claim Form Business Search Dropdown */
 
 .hbl-claim-form-widget .hbl-search-results {
   position: absolute;
@@ -8452,7 +8095,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-danger);
 }
 
-/* Selected Business Card */
 
 .hbl-selected-business-wrapper {
   margin-bottom: 0;
@@ -8525,7 +8167,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-dark);
 }
 
-/* Form Notice */
 
 .hbl-form-notice svg {
   flex-shrink: 0;
@@ -8552,7 +8193,6 @@ body.hbl-lightbox-open {
   line-height: 1.5;
 }
 
-/* Form Message */
 
 .hbl-form-message {
   padding: 16px;
@@ -8573,7 +8213,6 @@ body.hbl-lightbox-open {
   border: 1px solid #f5c6cb;
 }
 
-/* Secure Notice */
 
 .hbl-form-secure-notice {
   display: flex;
@@ -8589,7 +8228,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-success);
 }
 
-/* Spinner in buttons */
 
 .hbl-form-btn .hbl-spinner {
   width: 18px;
@@ -8612,7 +8250,6 @@ body.hbl-lightbox-open {
   flex-shrink: 0;
 }
 
-/* Ensure button doesn't show ::before pseudo-element when loading */
 .hbl-form-btn:disabled::before {
   display: none;
 }
@@ -8623,9 +8260,6 @@ body.hbl-lightbox-open {
   }
 }
 
-/* ================================================================
-   HBL SINGLE CATEGORY WIDGET STYLES
-   ================================================================ */
 
 .hbl-single-cat-widget {
   font-family: inherit;
@@ -8829,7 +8463,6 @@ body.hbl-lightbox-open {
   line-height: 1.6;
 }
 
-/* Directorist Coupon Integration Styles */
 .hbl-coupon-section {
   margin-top: 20px;
 }
@@ -8910,17 +8543,12 @@ body.hbl-lightbox-open {
   border: 1px solid #f5c6cb;
 }
 
-/* Single Category Responsive */
 
-/* ================================================================
-   HBL CATEGORY GRID WIDGET - BEAUTIFUL CARD DESIGN
-   ================================================================ */
 
 .hbl-catgrid-widget {
   font-family: inherit;
 }
 
-/* Header */
 
 .hbl-catgrid-header {
   margin-bottom: 40px;
@@ -8943,7 +8571,6 @@ body.hbl-lightbox-open {
   line-height: 1.6;
 }
 
-/* Search */
 
 .hbl-catgrid-search {
   margin-bottom: 32px;
@@ -9020,7 +8647,6 @@ body.hbl-lightbox-open {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* Grid */
 
 .hbl-catgrid,
 .hbl-evcatgrid {
@@ -9029,7 +8655,6 @@ body.hbl-lightbox-open {
   gap: var(--hbl-gap-sm);
 }
 
-/* Base Card */
 
 .hbl-catgrid-card,
 .hbl-evcatgrid-card {
@@ -9044,7 +8669,6 @@ body.hbl-lightbox-open {
   overflow: hidden;
 }
 
-/* Icon */
 
 .hbl-catgrid-icon,
 .hbl-evcatgrid-icon {
@@ -9067,7 +8691,6 @@ body.hbl-lightbox-open {
   font-size: var(--hbl-text-h2);
 }
 
-/* Name */
 
 .hbl-catgrid-name,
 .hbl-evcatgrid-name {
@@ -9078,7 +8701,6 @@ body.hbl-lightbox-open {
   transition: color 0.3s ease;
 }
 
-/* Count */
 
 .hbl-catgrid-count,
 .hbl-evcatgrid-count {
@@ -9087,7 +8709,6 @@ body.hbl-lightbox-open {
   transition: var(--hbl-transition-all);
 }
 
-/* ==================== CLEAN WHITE STYLE ==================== */
 
 .hbl-catgrid-card-clean,
 .hbl-evcatgrid-card-clean,
@@ -9129,7 +8750,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-primary);
 }
 
-/* ==================== GRADIENT STYLE ==================== */
 
 .hbl-catgrid-card-gradient,
 .hbl-locgrid-card-gradient {
@@ -9170,7 +8790,6 @@ body.hbl-lightbox-open {
   margin-top: 4px;
 }
 
-/* ==================== BORDERED STYLE ==================== */
 
 .hbl-catgrid-card-bordered,
 .hbl-locgrid-card-bordered {
@@ -9211,7 +8830,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-white-90);
 }
 
-/* Notice */
 
 .hbl-catgrid-notice,
 .hbl-evcatgrid-notice {
@@ -9227,11 +8845,7 @@ body.hbl-lightbox-open {
   margin: 0;
 }
 
-/* ================================================================
-   HBL EVENT WIDGETS - SHARED STYLES
-   ================================================================ */
 
-/* Event Category Grid - Same structure as category grid */
 
 .hbl-evcatgrid-widget {
   font-family: inherit;
@@ -9251,7 +8865,6 @@ body.hbl-lightbox-open {
   font-size: var(--hbl-text-h2);
 }
 
-/* Event Card Clean Style */
 
 .hbl-evcatgrid-card-clean:hover {
   border-color: #e85d04;
@@ -9284,7 +8897,6 @@ body.hbl-lightbox-open {
   color: #e85d04;
 }
 
-/* Event Card Gradient Style */
 
 .hbl-evcatgrid-card-gradient {
   background: linear-gradient(135deg, #e85d04 0%, #c74c03 100%);
@@ -9311,7 +8923,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-white);
 }
 
-/* Event Card Bordered Style */
 
 .hbl-evcatgrid-card-bordered {
   background: var(--hbl-white);
@@ -9356,12 +8967,7 @@ body.hbl-lightbox-open {
   margin: 0;
 }
 
-/* ================================================================
-   HBL SINGLE CATEGORY WIDGET (AUTO-DETECT VERSION)
-   For Theme Builder category archive templates
-   ================================================================ */
 
-/* Header */
 
 .hbl-single-cat-header-right {
   flex-shrink: 0;
@@ -9375,7 +8981,6 @@ body.hbl-lightbox-open {
   transform: translateX(4px);
 }
 
-/* Card Image */
 
 .hbl-single-cat-badge {
   position: absolute;
@@ -9391,13 +8996,11 @@ body.hbl-lightbox-open {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* Card Content */
 
 .hbl-single-cat-address span {
   line-height: 1.4;
 }
 
-/* Pagination */
 
 .hbl-single-cat-pagination {
   display: flex;
@@ -9435,16 +9038,12 @@ body.hbl-lightbox-open {
   padding: 0 10px;
 }
 
-/* No Listings */
 
 .hbl-single-cat-no-listings svg {
   color: #cbd5e1;
   margin-bottom: 16px;
 }
 
-/* =====================================================
-   HBL USER PROFILE WIDGET
-   ===================================================== */
 
 .hbl-profile-widget {
   max-width: 1500px;
@@ -9712,9 +9311,6 @@ body.hbl-lightbox-open {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* =====================================================
-   HBL LOCATION ARCHIVE WIDGET (All Locations)
-   ===================================================== */
 
 .hbl-locgrid-widget {
   max-width: 1500px;
@@ -9854,9 +9450,6 @@ body.hbl-lightbox-open {
 }
 
 
-/* =====================================================
-   HBL LISTING SEARCH V2 WIDGET
-   ===================================================== */
 
 .hbl-v2-lsearch-widget {
   max-width: 1500px;
@@ -9967,9 +9560,6 @@ body.hbl-lightbox-open {
   background: var(--hbl-primary-dark);
 }
 
-/* =====================================================
-   HBL LISTING SEARCH RESULTS V2 WIDGET
-   ===================================================== */
 
 .hbl-v2-lresults-widget {
   max-width: 1500px;
@@ -10055,9 +9645,6 @@ body.hbl-lightbox-open {
   border-radius: var(--hbl-radius-sm);
 }
 
-/* ============================================
-   HBL CHECKOUT WIDGET STYLES
-   ============================================ */
 
 .hbl-checkout-widget,
 .hbl-transaction-failure-widget {
@@ -10100,7 +9687,6 @@ body.hbl-lightbox-open {
   top: 100px;
 }
 
-/* Order Summary */
 
 .hbl-order-summary {
   background: var(--hbl-white);
@@ -10205,7 +9791,6 @@ body.hbl-lightbox-open {
   color: #1f2937;
 }
 
-/* Coupon Section */
 
 .hbl-coupon-section {
   margin-top: 16px;
@@ -10246,7 +9831,6 @@ body.hbl-lightbox-open {
   flex: 1;
 }
 
-/* Payment Methods */
 
 .hbl-payment-method-option {
   display: block;
@@ -10335,7 +9919,6 @@ body.hbl-lightbox-open {
   transition: all 0.2s ease;
 }
 
-/* Stripe Fields */
 
 .hbl-stripe-fields {
   margin-top: 20px;
@@ -10356,7 +9939,6 @@ body.hbl-lightbox-open {
   color: #10b981;
 }
 
-/* PayPal Notice */
 
 .hbl-paypal-notice,
 .hbl-bank-details {
@@ -10374,7 +9956,6 @@ body.hbl-lightbox-open {
   margin: 12px 0;
 }
 
-/* Empty Cart */
 
 .hbl-empty-cart {
   text-align: center;
@@ -10401,11 +9982,7 @@ body.hbl-lightbox-open {
   margin: 0 0 24px 0;
 }
 
-/* Checkout Responsive */
 
-/* ============================================
-   HBL PAYMENT RECEIPT WIDGET STYLES
-   ============================================ */
 
 .hbl-payment-receipt-widget,
 .hbl-thank-you-widget {
@@ -10495,7 +10072,6 @@ body.hbl-lightbox-open {
   animation: hbl-thankyou-bounce 0.6s ease-out;
 }
 
-/* Uses hbl-thankyou-bounce animation defined in thank you section */
 
 .hbl-receipt-title {
   font-size: var(--hbl-text-title);
@@ -10516,7 +10092,6 @@ body.hbl-lightbox-open {
   animation: hbl-thankyou-fade-in 0.5s ease-out 0.3s both;
 }
 
-/* Receipt Card */
 
 .hbl-receipt-card {
   background: linear-gradient(
@@ -10696,7 +10271,6 @@ body.hbl-lightbox-open {
   border-top: 1px solid rgba(16, 185, 129, 0.15);
 }
 
-/* Receipt Actions */
 
 .hbl-receipt-actions {
   display: flex;
@@ -10705,7 +10279,6 @@ body.hbl-lightbox-open {
   margin-bottom: 32px;
 }
 
-/* Receipt Support */
 
 .hbl-receipt-support {
   display: flex;
@@ -10764,11 +10337,7 @@ body.hbl-lightbox-open {
   color: var(--hbl-secondary);
 }
 
-/* Receipt Responsive */
 
-/* ============================================
-   HBL TRANSACTION FAILURE WIDGET STYLES
-   ============================================ */
 
 .hbl-failure-container {
   background: var(--hbl-white);
@@ -10846,7 +10415,6 @@ body.hbl-lightbox-open {
   margin-right: auto;
 }
 
-/* Error Box */
 
 .hbl-failure-error-box {
   background: linear-gradient(
@@ -10899,7 +10467,6 @@ body.hbl-lightbox-open {
   color: #1f2937;
 }
 
-/* Troubleshooting Tips */
 
 .hbl-failure-tips,
 .hbl-thankyou-details {
@@ -10945,7 +10512,6 @@ body.hbl-lightbox-open {
   margin-top: 2px;
 }
 
-/* Failure Actions */
 
 .hbl-failure-actions,
 .hbl-thankyou-actions {
@@ -10975,7 +10541,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-primary);
 }
 
-/* Failure Support */
 
 .hbl-failure-support,
 .hbl-thankyou-support {
@@ -10995,11 +10560,7 @@ body.hbl-lightbox-open {
   color: var(--hbl-secondary);
 }
 
-/* Failure Responsive */
 
-/* ============================================
-   HBL THANK YOU WIDGET STYLES
-   ============================================ */
 
 .hbl-thankyou-confetti {
   position: fixed;
@@ -11052,7 +10613,6 @@ body.hbl-lightbox-open {
   }
 }
 
-/* Thank You Header */
 
 .hbl-thankyou-header {
   text-align: center;
@@ -11120,7 +10680,6 @@ body.hbl-lightbox-open {
   animation: hbl-thankyou-fade-in 0.5s ease-out 0.3s both;
 }
 
-/* Reference Info */
 
 .hbl-thankyou-reference {
   background: linear-gradient(
@@ -11161,7 +10720,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-gray-400);
 }
 
-/* Details Section */
 
 .hbl-thankyou-details-title {
   display: flex;
@@ -11214,7 +10772,6 @@ body.hbl-lightbox-open {
   padding-top: 3px;
 }
 
-/* Social Share */
 
 .hbl-thankyou-share {
   display: flex;
@@ -11262,7 +10819,6 @@ body.hbl-lightbox-open {
   background: rgba(16, 185, 129, 0.1);
 }
 
-/* Support Section */
 
 .hbl-thankyou-support-icon {
   width: 52px;
@@ -11299,7 +10855,6 @@ body.hbl-lightbox-open {
   color: var(--hbl-secondary);
 }
 
-/* Thank You Responsive */
 
 @media (max-width: 1600px) {
   .hbl-calendar-left-section {
@@ -11528,7 +11083,6 @@ body.hbl-lightbox-open {
     flex-shrink: 0;
   }
 
-  /* Pricing Plan - Tablet */
   .hbl-pricing-plan-header {
     padding: 20px 24px;
   }
@@ -11968,7 +11522,6 @@ body.hbl-lightbox-open {
     padding: 14px 20px;
   }
 
-  /* Mobile responsive for selected tag */
   .hbl-popular-search-selected-tag {
     gap: 6px;
     font-size: var(--hbl-text-sm);
@@ -11988,7 +11541,6 @@ body.hbl-lightbox-open {
     height: 12px;
   }
 
-  /* Stack popular searches container on mobile */
   .hbl-popular-searches-container {
     flex-wrap: wrap;
     gap: 8px;
@@ -11999,7 +11551,6 @@ body.hbl-lightbox-open {
     flex: 1;
   }
 
-  /* Sort dropdown mobile styles */
   .hbl-sort-wrapper {
     width: 100%;
   }
@@ -12026,7 +11577,6 @@ body.hbl-lightbox-open {
     padding: 14px 20px;
   }
 
-  /* Stack sort container on mobile */
   .hbl-sort-container {
     flex-wrap: wrap;
     gap: 8px;
@@ -12037,7 +11587,6 @@ body.hbl-lightbox-open {
     flex: 1;
   }
 
-  /* Active filters mobile styles */
   .hbl-active-filters-container {
     width: 100%;
     margin-top: var(--hbl-gap-sm);
@@ -12538,7 +12087,6 @@ body.hbl-lightbox-open {
     flex-shrink: 0;
   }
 
-  /* Pricing Plan - Mobile */
   .hbl-pricing-plan-header {
     padding: 16px 20px;
     flex-direction: column;
@@ -13104,7 +12652,6 @@ body.hbl-lightbox-open {
     text-align: center;
   }
 
-  /* Further reduce spacing on small mobile */
   .hbl-filters-section {
     gap: var(--hbl-gap-xs);
     margin-bottom: var(--hbl-spacing-xs);
@@ -13770,7 +13317,6 @@ body.hbl-lightbox-open {
     max-width: 100%;
   }
 
-  /* Pricing Plan - Small Mobile */
   .hbl-pricing-plan-header {
     padding: 14px 16px;
   }
@@ -14184,7 +13730,6 @@ body.hbl-lightbox-open {
     .hbl-card-header {
     position: relative;
     overflow: visible;
-    /* Allow overlay to cover header */
     isolation: isolate;
   }
 
@@ -14237,7 +13782,6 @@ body.hbl-lightbox-open {
   }
 }
 
-/* Not Launched Overlay Styles */
 .hbl-section-not-launched {
   position: relative;
   overflow: hidden;
@@ -14319,7 +13863,6 @@ body.hbl-lightbox-open {
   }
 }
 
-/* Blur underlying content */
 .hbl-section-not-launched > *:not(.hbl-not-launched-overlay) {
   filter: blur(3px);
   opacity: 0.4;
@@ -14327,7 +13870,6 @@ body.hbl-lightbox-open {
   user-select: none;
 }
 
-/* Individual Plan Coming Soon */
 .hbl-plan-coming-soon {
   cursor: not-allowed !important;
 }
@@ -14340,7 +13882,6 @@ body.hbl-lightbox-open {
   position: relative;
 }
 
-/* Blur content inside card except overlay */
 .hbl-plan-coming-soon
   .hbl-form-package-card
   > *:not(.hbl-plan-coming-soon-overlay) {
@@ -14390,7 +13931,6 @@ body.hbl-lightbox-open {
   justify-content: center;
 }
 
-/* Feature Cells for Coming Soon Plan */
 .hbl-pricing-plan-feature-cell.hbl-cell-coming-soon {
   opacity: 0.4;
   background-color: rgba(0, 0, 0, 0.02);
@@ -14399,7 +13939,6 @@ body.hbl-lightbox-open {
   position: relative;
 }
 
-/* Not Launched Overlay Styles */
 .hbl-section-not-launched {
   position: relative;
   overflow: hidden;
@@ -14481,7 +14020,6 @@ body.hbl-lightbox-open {
   }
 }
 
-/* Blur underlying content */
 .hbl-section-not-launched > *:not(.hbl-not-launched-overlay) {
   filter: blur(3px);
   opacity: 0.4;
@@ -14489,7 +14027,6 @@ body.hbl-lightbox-open {
   user-select: none;
 }
 
-/* Individual Plan Coming Soon */
 .hbl-plan-coming-soon {
   cursor: not-allowed !important;
 }
@@ -14502,7 +14039,6 @@ body.hbl-lightbox-open {
   position: relative;
 }
 
-/* Blur content inside card except overlay */
 .hbl-plan-coming-soon
   .hbl-form-package-card
   > *:not(.hbl-plan-coming-soon-overlay) {
@@ -14566,7 +14102,6 @@ body.hbl-lightbox-open {
   gap: 20px;
 }
 
-/* Browse More Categories Link */
 .hbl-v2-browse-more {
   padding: 12px 15px !important;
   border-top: 1px solid var(--hbl-gray-200);
@@ -14595,7 +14130,6 @@ body.hbl-lightbox-open {
   transform: translateX(4px);
 }
 
-/* Widget Search Fields */
 .hbl-widget-search-wrap {
   margin: 0 0 20px;
   width: 100%;
@@ -14618,7 +14152,6 @@ body.hbl-lightbox-open {
   padding: 12px 16px;
   padding-right: 48px;
   border: 1px solid #e5e7eb;
-  /* hbl-gray-300 */
   border-radius: var(--hbl-radius-sm);
   font-size: 14px;
   outline: none;
@@ -14629,7 +14162,6 @@ body.hbl-lightbox-open {
 
 .hbl-widget-search-input:focus {
   border-color: var(--hbl-primary);
-  /* hbl-primary */
   box-shadow: 0 0 0 3px var(--hbl-primary-10);
 }
 
@@ -14641,7 +14173,6 @@ body.hbl-lightbox-open {
   background: none;
   border: none;
   color: var(--hbl-gray-600);
-  /* hbl-text-secondary */
   padding: 8px;
   cursor: pointer;
   display: flex;
@@ -14652,12 +14183,8 @@ body.hbl-lightbox-open {
 
 .hbl-widget-search-submit:hover {
   color: var(--hbl-primary);
-  /* hbl-primary */
 }
 
-/* ==========================================================================
-   HBL Calendar Pagination
-   ========================================================================== */
 .hbl-calendar-pagination {
   display: flex;
   align-items: center;
@@ -14697,9 +14224,6 @@ body.hbl-lightbox-open {
   font-weight: 500;
 }
 
-/* ==========================================================================
-   HBL Widget Toolbar - View Toggle & Sort Dropdown
-   ========================================================================== */
 .hbl-widget-toolbar {
   display: flex;
   align-items: center;
@@ -14790,9 +14314,6 @@ body.hbl-lightbox-open {
   border-color: var(--hbl-primary);
 }
 
-/* ==========================================================================
-   HBL List View Styles - Responsive adjustments
-   ========================================================================== */
 @media (max-width: 768px) {
   .hbl-widget-toolbar {
     flex-direction: column;
@@ -14814,11 +14335,7 @@ body.hbl-lightbox-open {
   }
 }
 
-/* ==========================================================================
-   HBL Category Grid List View
-   ========================================================================== */
 
-/* Category Archive List View */
 .hbl-catgrid.hbl-view-list {
   display: flex;
   flex-direction: column;
@@ -14850,7 +14367,6 @@ body.hbl-lightbox-open {
   margin-left: auto;
 }
 
-/* Event Category Archive List View */
 .hbl-evcatgrid.hbl-view-list {
   display: flex;
   flex-direction: column;
@@ -14882,7 +14398,6 @@ body.hbl-lightbox-open {
   margin-left: auto;
 }
 
-/* Responsive adjustments for category list views */
 @media (max-width: 768px) {
   .hbl-catgrid.hbl-view-list .hbl-catgrid-card,
   .hbl-evcatgrid.hbl-view-list .hbl-evcatgrid-card {
@@ -14896,9 +14411,6 @@ body.hbl-lightbox-open {
   }
 }
 
-/* =====================================================
-   Hide Bootstrap Spinner in Elementor Forms
-   ===================================================== */
 
 .elementor-form .spinner-border,
 .elementor-form-fields-wrapper .spinner-border,
@@ -14906,9 +14418,6 @@ form .spinner-border.spinner-border-sm {
   display: none !important;
 }
 
-/* =====================================================
-   Calendar Day Navigation
-   ===================================================== */
 
 .hbl-calendar-day-navigation {
   display: flex;
@@ -14948,7 +14457,6 @@ form .spinner-border.spinner-border-sm {
   height: 12px;
 }
 
-/* Responsive adjustments for day navigation */
 @media (max-width: 768px) {
   .hbl-calendar-day-nav-btn {
     width: 28px;
@@ -14967,9 +14475,6 @@ form .spinner-border.spinner-border-sm {
   }
 }
 
-/* =====================================================
-   Calendar Responsive Fix for Laptop Screens
-   ===================================================== */
 @media (min-width: 1025px) and (max-width: 1680px) {
   .hbl-calendar-weekday {
     padding: 8px 5px !important;
@@ -14989,9 +14494,6 @@ form .spinner-border.spinner-border-sm {
   }
 }
 
-/* ==========================================================================
-   HBL Claimed Badge
-   ========================================================================== */
 
 .hbl-claimed-badge {
   display: inline-flex;
@@ -15016,9 +14518,6 @@ form .spinner-border.spinner-border-sm {
   flex-shrink: 0;
 }
 
-/* ==========================================================================
-   HBL Calendar Filters Section
-   ========================================================================== */
 .hbl-calendar-filters-bar {
   display: flex;
   align-items: center;
@@ -15081,18 +14580,15 @@ form .spinner-border.spinner-border-sm {
   color: var(--hbl-primary);
 }
 
-/* Mobile CTA - hidden on desktop */
 .hbl-calendar-mobile-cta {
   display: none;
 }
 
 @media (max-width: 767px) {
-  /* Hide the filter-row CTA on mobile */
   .hbl-calendar-filters-section .hbl-v2-filters-right {
     display: none !important;
   }
 
-  /* Show the mobile CTA below events */
   .hbl-calendar-mobile-cta {
     display: flex;
     flex-direction: column;
@@ -15116,7 +14612,6 @@ form .spinner-border.spinner-border-sm {
   }
 }
 
-/* Calendar Filters - Responsive: Below 1135px */
 @media (max-width: 1135px) {
   .hbl-calendar-filters-left {
     flex-wrap: wrap;
@@ -15149,9 +14644,6 @@ form .spinner-border.spinner-border-sm {
   }
 }
 
-/* ========================================
-   HBL V2 Single Widgets - Term Header
-   ======================================== */
 
 .hbl-v2-term-header {
   padding: 32px 0 24px;
@@ -15189,14 +14681,12 @@ form .spinner-border.spinner-border-sm {
   font-size: 1rem;
 }
 
-/* ── Single Post Widget ─────────────────────────────────────────────────── */
 .hbl-single-post-widget {
 	display: flex;
 	flex-direction: column;
 	gap: 0;
 }
 
-/* Hero */
 .hbl-post-hero {
 	width: 100%;
 	max-height: 520px;
@@ -15211,7 +14701,6 @@ form .spinner-border.spinner-border-sm {
 	display: block;
 }
 
-/* Header */
 .hbl-post-header {
 	max-width: 700px;
 	margin-bottom: 48px;
@@ -15255,7 +14744,6 @@ form .spinner-border.spinner-border-sm {
 .hbl-post-date        { color: #888; }
 .hbl-post-reading-time{ color: #888; }
 
-/* Layout */
 .hbl-post-layout {
 	display: block;
 }
@@ -15265,7 +14753,6 @@ form .spinner-border.spinner-border-sm {
 	align-items: flex-start;
 }
 
-/* Article main */
 .hbl-post-main {
 	flex: 1;
 	min-width: 0;
@@ -15294,7 +14781,6 @@ form .spinner-border.spinner-border-sm {
 }
 .hbl-single-post-content a    { color: var(--hbl-primary); text-decoration: underline; }
 
-/* Footer */
 .hbl-post-footer {
 	max-width: 700px;
 	margin-top: 48px;
@@ -15343,7 +14829,6 @@ form .spinner-border.spinner-border-sm {
 }
 .hbl-share-btn:hover { background: var(--hbl-primary); border-color: var(--hbl-primary); color: var(--hbl-white); }
 
-/* Sidebar */
 .hbl-post-sidebar {
 	width: 240px;
 	flex-shrink: 0;
@@ -15413,7 +14898,6 @@ form .spinner-border.spinner-border-sm {
 }
 .hbl-sidebar-tag:hover { background: var(--hbl-gray-50); }
 
-/* Related posts */
 .hbl-related-section {
 	margin-top: 72px;
 	padding-top: 48px;
@@ -15480,7 +14964,6 @@ form .spinner-border.spinner-border-sm {
 .hbl-related-card-link:hover { text-decoration: underline; }
 .hbl-related-card-link svg { flex-shrink: 0; }
 
-/* Load more */
 .hbl-post-load-more-wrap { margin-top: 40px; text-align: center; }
 .hbl-post-load-more-btn {
 	padding: 11px 44px;
@@ -15496,7 +14979,6 @@ form .spinner-border.spinner-border-sm {
 .hbl-post-load-more-btn:hover    { background: var(--hbl-primary); color: var(--hbl-white); }
 .hbl-post-load-more-btn:disabled { opacity: .55; cursor: not-allowed; }
 
-/* Responsive */
 @media (max-width: 1100px) {
 	.hbl-related-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -15512,20 +14994,12 @@ form .spinner-border.spinner-border-sm {
 	.hbl-single-post-content { font-size: 16px; }
 }
 
-/* ================================================================
-   HBL ACCOUNT DASHBOARD PAGE
-   Standalone, chrome-free full-page wrapper for the Dashboard widget
-   (no site header/footer - see page-templates/template-account-dashboard.php)
-   ================================================================ */
 
 body.hbl-dashboard-fullscreen {
   margin: 0;
   background: var(--hbl-gray-100);
 }
 
-/* The standalone page is a true app shell: always at least viewport tall,
-   so the sidebar and content column have one predictable height on every
-   view instead of each view sizing to its own content. */
 
 .hbl-dashboard-page {
   display: flex;
@@ -15538,12 +15012,6 @@ body.hbl-dashboard-fullscreen {
   display: flex;
 }
 
-/* Elementor's render_content() wraps widget output in its own
-   .elementor-widget-container div. That wrapper sits between this container
-   and the dashboard, and if left unstyled it breaks the flex chain: it
-   shrink-wraps to its content instead of filling the width, and the widget
-   inside it keeps height:auto instead of filling the viewport. Pass the
-   sizing straight through whatever wrapper is present. */
 
 .hbl-dashboard-page-container > * {
   flex: 1;
@@ -15557,9 +15025,6 @@ body.hbl-dashboard-fullscreen {
   box-shadow: 0 4px 24px var(--hbl-black-10);
 }
 
-/* ================================================================
-   HBL ACCOUNT MENU (header "logged in" dropdown)
-   ================================================================ */
 
 .hbl-account-menu,
 .hbl-account-menu *,
@@ -15575,7 +15040,6 @@ body.hbl-dashboard-fullscreen {
   font-family: var(--hbl-font-primary);
 }
 
-/* Guest state */
 
 .hbl-account-menu-guest {
   display: inline-flex;
@@ -15618,7 +15082,6 @@ body.hbl-dashboard-fullscreen {
   color: var(--hbl-primary);
 }
 
-/* Logged-in trigger */
 
 .hbl-account-menu-trigger {
   display: inline-flex;
@@ -15639,9 +15102,6 @@ body.hbl-dashboard-fullscreen {
   padding: 13px 20px;
 }
 
-/* Keep the icon, label and chevron colour unchanged on hover - only the
-   bottom line reacts. !important overrides any saved per-widget Elementor
-   "Hover Color" value, whose selector specificity is otherwise higher. */
 .hbl-account-menu-trigger:hover,
 .hbl-account-menu-trigger:focus,
 .hbl-account-menu-trigger:hover .hbl-account-menu-icon,
@@ -15671,9 +15131,6 @@ body.hbl-dashboard-fullscreen {
   white-space: nowrap;
 }
 
-/* Logged-in trigger: on hover draw an orange bottom line across the whole
-   account-menu (like the site menu items) instead of recolouring the text.
-   The transparent border is always present so hovering causes no shift. */
 .hbl-account-menu[data-hbl-account-menu] {
   border-bottom: 2px solid transparent;
 }
@@ -15691,7 +15148,6 @@ body.hbl-dashboard-fullscreen {
   transform: rotate(180deg);
 }
 
-/* Off-canvas drawer (slides in from the right of the screen) */
 
 .hbl-account-menu-overlay {
   position: fixed;
@@ -15834,7 +15290,6 @@ body.hbl-dashboard-fullscreen {
   color: var(--hbl-danger) !important;
 }
 
-/* Lock background scroll while the account drawer is open */
 body.hbl-account-menu-open {
   overflow: hidden;
 }
@@ -15852,17 +15307,12 @@ body.hbl-account-menu-open {
   }
 }
 
-/* ================================================================
-   HBL DASHBOARD APP SHELL
-   Sidebar-navigation redesign of the Dashboard widget/page
-   ================================================================ */
 
 .hbl-dashboard-widget.hbl-dash {
   display: flex;
   align-items: stretch;
 }
 
-/* Sidebar */
 
 .hbl-dash-sidebar {
   width: 272px;
@@ -15893,7 +15343,6 @@ body.hbl-account-menu-open {
   width: auto;
 }
 
-/* Hamburger toggle - hidden on desktop, shown below the shell breakpoint */
 .hbl-dash-menu-toggle {
   display: none;
   align-items: center;
@@ -15927,8 +15376,6 @@ body.hbl-account-menu-open {
   display: block;
 }
 
-/* Collapsible body wrapper - a plain flex column on desktop so the nav's
-   flex:1 still pushes the footer to the bottom of the sidebar. */
 .hbl-dash-sidebar-body {
   display: flex;
   flex-direction: column;
@@ -15936,12 +15383,10 @@ body.hbl-account-menu-open {
   min-height: 0;
 }
 
-/* Backdrop behind the mobile off-canvas drawer - desktop hides it entirely */
 .hbl-dash-overlay {
   display: none;
 }
 
-/* Lock background scroll while the off-canvas drawer is open */
 body.hbl-dash-menu-open {
   overflow: hidden;
 }
@@ -16120,7 +15565,6 @@ body.hbl-dash-menu-open {
   color: var(--hbl-danger);
 }
 
-/* Main column */
 
 .hbl-dash-main {
   flex: 1;
@@ -16139,7 +15583,6 @@ body.hbl-dash-menu-open {
   flex-wrap: wrap;
 }
 
-/* Action buttons duplicated into the mobile drawer - hidden on desktop */
 .hbl-dash-drawer-actions {
   display: none;
 }
@@ -16195,9 +15638,6 @@ body.hbl-dash-menu-open {
   min-height: 0;
 }
 
-/* Views whose body is a single wrapper still need to pass the available
-   height down, so their empty state can centre in it rather than sit at
-   the top with a void underneath. */
 
 .hbl-dash-content > .hbl-dashboard-events {
   display: flex;
@@ -16206,7 +15646,6 @@ body.hbl-dash-menu-open {
   min-height: 0;
 }
 
-/* Overview: welcome header */
 
 .hbl-dash-welcome h2 {
   font-size: var(--hbl-text-h2);
@@ -16221,7 +15660,6 @@ body.hbl-dash-menu-open {
   margin: 0;
 }
 
-/* Overview: quota bar / upgrade */
 
 .hbl-dash-quota-bar {
   background: var(--hbl-gray-100);
@@ -16253,7 +15691,6 @@ body.hbl-dash-menu-open {
   transition: width 0.4s ease;
 }
 
-/* Overview: stat cards */
 
 .hbl-dash-stats {
   display: grid;
@@ -16319,7 +15756,6 @@ body.hbl-dash-menu-open {
   font-weight: 600;
 }
 
-/* Overview: panels (Recent Activity / Quick Access) */
 
 .hbl-dash-panel {
   background: var(--hbl-white);
@@ -16423,7 +15859,6 @@ body.hbl-dash-menu-open {
   color: var(--hbl-text-secondary);
 }
 
-/* Overview: quick access grid */
 
 .hbl-dash-quick-grid {
   display: grid;
@@ -16464,9 +15899,6 @@ body.hbl-dash-menu-open {
   transform: translateX(3px);
 }
 
-/* Responsive: below 1024px the logo row becomes a top bar with a hamburger
-   toggle on the right, and the nav/user/footer slide in from the left of
-   the screen as an off-canvas drawer over a dimmed backdrop. */
 
 @media (max-width: 1024px) {
   .hbl-dashboard-widget.hbl-dash {
@@ -16483,7 +15915,6 @@ body.hbl-dash-menu-open {
     display: inline-flex;
   }
 
-  /* Off-canvas drawer: parked off the left edge, slides in when open */
   .hbl-dash-sidebar-body {
     position: fixed;
     top: 0;
@@ -16504,7 +15935,6 @@ body.hbl-dash-menu-open {
     transform: translateX(0);
   }
 
-  /* Dimmed backdrop */
   .hbl-dash-overlay {
     display: block;
     position: fixed;
@@ -16525,7 +15955,6 @@ body.hbl-dash-menu-open {
     flex: none;
   }
 
-  /* Move the action buttons into the drawer, below the nav */
   .hbl-dash-topbar-actions {
     display: none;
   }

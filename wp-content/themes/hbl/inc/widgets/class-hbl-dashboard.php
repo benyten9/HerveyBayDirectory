@@ -1,13 +1,4 @@
 <?php
-/**
- * HBL Dashboard Widget
- *
- * A clean, modern dashboard widget for Directorist
- * Provides user dashboard functionality with attractive UI
- *
- * @package HBL
- * @since 1.3.0
- */
 
 namespace HBL\Widgets;
 
@@ -21,47 +12,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class HBL_Dashboard extends Widget_Base {
 
-	/**
-	 * Get widget name
-	 */
 	public function get_name() {
 		return 'hbl-dashboard';
 	}
 
-	/**
-	 * Get widget title
-	 */
 	public function get_title() {
 		return esc_html__( 'HBL Dashboard', 'hbl' );
 	}
 
-	/**
-	 * Get widget icon
-	 */
 	public function get_icon() {
 		return 'eicon-dashboard';
 	}
 
-	/**
-	 * Get widget categories
-	 */
 	public function get_categories() {
 		return array( 'hbl' );
 	}
 
-	/**
-	 * Get widget keywords
-	 */
 	public function get_keywords() {
 		return array( 'dashboard', 'user', 'profile', 'listings', 'account', 'directorist' );
 	}
 
-	/**
-	 * Register widget controls
-	 */
 	protected function register_controls() {
 
-		// ========== CONTENT: GENERAL ==========
 		$this->start_controls_section(
 			'section_general',
 			array(
@@ -118,7 +90,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: TABS ==========
 		$this->start_controls_section(
 			'section_tabs',
 			array(
@@ -248,7 +219,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== CONTENT: BUTTONS ==========
 		$this->start_controls_section(
 			'section_buttons',
 			array(
@@ -400,7 +370,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: GENERAL ==========
 		$this->start_controls_section(
 			'section_style_general',
 			array(
@@ -463,7 +432,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADER ==========
 		$this->start_controls_section(
 			'section_style_header',
 			array(
@@ -513,7 +481,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: STATS ==========
 		$this->start_controls_section(
 			'section_style_stats',
 			array(
@@ -554,7 +521,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: TABS ==========
 		$this->start_controls_section(
 			'section_style_tabs',
 			array(
@@ -598,7 +564,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: LISTINGS ==========
 		$this->start_controls_section(
 			'section_style_listings',
 			array(
@@ -642,7 +607,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: BUTTONS ==========
 		$this->start_controls_section(
 			'section_style_buttons',
 			array(
@@ -660,7 +624,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Primary Button (Add Listing)
 		$this->add_control(
 			'heading_btn_primary',
 			array(
@@ -718,7 +681,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Secondary Button (Add Event)
 		$this->add_control(
 			'heading_btn_secondary',
 			array(
@@ -776,7 +738,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Outline Button (Logout)
 		$this->add_control(
 			'heading_btn_outline',
 			array(
@@ -846,7 +807,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Action Buttons (View, Edit, Delete)
 		$this->add_control(
 			'heading_btn_action',
 			array(
@@ -916,7 +876,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Login Required Buttons
 		$this->add_control(
 			'heading_btn_login',
 			array(
@@ -962,7 +921,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Profile Image Upload Button
 		$this->add_control(
 			'heading_btn_profile_upload',
 			array(
@@ -1044,7 +1002,6 @@ class HBL_Dashboard extends Widget_Base {
 			)
 		);
 
-		// Profile Image Save Button
 		$this->add_control(
 			'heading_btn_profile_save',
 			array(
@@ -1104,7 +1061,6 @@ class HBL_Dashboard extends Widget_Base {
 
 		$this->end_controls_section();
 
-		// ========== STYLE: HEADER COLORS ==========
 		$this->start_controls_section(
 			'section_style_header_colors',
 			array(
@@ -1143,9 +1099,6 @@ class HBL_Dashboard extends Widget_Base {
 		$this->end_controls_section();
 	}
 
-	/**
-	 * Shared icon set for sidebar nav, stat cards, quick access, etc.
-	 */
 	private function icon( $name ) {
 		$icons = array(
 			'dashboard' => '<path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 9H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -1169,13 +1122,6 @@ class HBL_Dashboard extends Widget_Base {
 		return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' . $icons[ $name ] . '</svg>';
 	}
 
-	/**
-	 * Get the user's current listing package usage from Directorist Pricing
-	 * Plans, if that add-on is active and the user has an active package
-	 * with a listing quota. Returns null when there's nothing meaningful to
-	 * show (no pricing plans add-on, no active package, or a plan without a
-	 * listing cap to report).
-	 */
 	private function get_listing_quota( $user_id ) {
 		if ( ! function_exists( 'directorist_get_current_package' )
 			|| ! function_exists( 'directorist_get_pricing_plan_by_id' )
@@ -1211,10 +1157,6 @@ class HBL_Dashboard extends Widget_Base {
 		);
 	}
 
-	/**
-	 * Get the user's most recently added/updated listings and events,
-	 * merged and sorted by recency, for the Overview "Recent Activity" feed.
-	 */
 	private function get_recent_activity( $user_id, $limit = 6 ) {
 		$items = array();
 
@@ -1266,24 +1208,18 @@ class HBL_Dashboard extends Widget_Base {
 		return array_slice( $items, 0, $limit );
 	}
 
-	/**
-	 * Render widget output
-	 */
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
-		// Enqueue WordPress media uploader for profile image upload
 		if ( ! did_action( 'wp_enqueue_media' ) ) {
 			wp_enqueue_media();
 		}
 
-		// Check if user is logged in
 		if ( ! is_user_logged_in() ) {
 			$this->render_login_required();
 			return;
 		}
 
-		// Check if Directorist is active
 		if ( ! defined( 'ATBDP_VERSION' ) ) {
 			echo '<div class="hbl-dashboard-widget"><div class="hbl-dashboard-notice">Directorist plugin is required for this widget.</div></div>';
 			return;
@@ -1292,10 +1228,8 @@ class HBL_Dashboard extends Widget_Base {
 		$current_user = wp_get_current_user();
 		$user_id      = $current_user->ID;
 
-		// Get user stats
 		$stats = $this->get_user_stats( $user_id );
 
-		// Get custom profile image
 		$profile_image_id   = get_user_meta( $user_id, 'hbl_profile_image', true );
 		$profile_avatar_url = $profile_image_id ? wp_get_attachment_image_url( $profile_image_id, 'thumbnail' ) : '';
 
@@ -1338,8 +1272,6 @@ class HBL_Dashboard extends Widget_Base {
 			),
 		);
 
-		// Determine which "page" is active based on the URL - each sidebar
-		// link is a real, bookmarkable link (?view=...), not a JS tab.
 		$requested_view = isset( $_GET['view'] ) ? sanitize_text_field( wp_unslash( $_GET['view'] ) ) : 'overview';
 		$view           = ( isset( $nav_items[ $requested_view ] ) && $nav_items[ $requested_view ]['enabled'] ) ? $requested_view : 'overview';
 
@@ -1351,9 +1283,6 @@ class HBL_Dashboard extends Widget_Base {
 		$logout_url = wp_logout_url( home_url() );
 		$quota      = $this->get_listing_quota( $user_id );
 
-		// Build the top-bar action buttons once, so the same markup can be
-		// printed in the desktop top bar and (below 1024px) inside the mobile
-		// drawer under the nav, without maintaining two copies.
 		ob_start();
 		if ( 'yes' === $settings['show_claim_listing_btn'] ) :
 			$claim_listing_url = ! empty( $settings['claim_listing_url']['url'] )
@@ -1361,7 +1290,7 @@ class HBL_Dashboard extends Widget_Base {
 				: home_url( '/claim-listing/' );
 			?>
 			<a href="<?php echo esc_url( $claim_listing_url ); ?>" class="hbl-dashboard-btn hbl-dashboard-btn-outline-solid" <?php echo ! empty( $settings['claim_listing_url']['is_external'] ) ? 'target="_blank"' : ''; ?>>
-				<?php echo $this->icon( 'claims' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php echo $this->icon( 'claims' ); ?>
 				<?php echo esc_html( $settings['claim_listing_text'] ); ?>
 			</a>
 		<?php endif; ?>
@@ -1371,7 +1300,7 @@ class HBL_Dashboard extends Widget_Base {
 				: home_url( '/add-event/' );
 			?>
 			<a href="<?php echo esc_url( $add_event_url ); ?>" class="hbl-dashboard-btn hbl-dashboard-btn-secondary" <?php echo ! empty( $settings['add_event_url']['is_external'] ) ? 'target="_blank"' : ''; ?>>
-				<?php echo $this->icon( 'event' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php echo $this->icon( 'event' ); ?>
 				<?php echo esc_html( $settings['add_event_text'] ); ?>
 			</a>
 		<?php endif; ?>
@@ -1381,12 +1310,12 @@ class HBL_Dashboard extends Widget_Base {
 				: ( class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_add_listing_page_link() : '#' );
 			?>
 			<a href="<?php echo esc_url( $add_listing_url ); ?>" class="hbl-dashboard-btn hbl-dashboard-btn-primary" <?php echo ! empty( $settings['add_listing_url']['is_external'] ) ? 'target="_blank"' : ''; ?>>
-				<?php echo $this->icon( 'plus' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+				<?php echo $this->icon( 'plus' ); ?>
 				<?php echo esc_html( $settings['add_listing_text'] ); ?>
 			</a>
 		<?php endif; ?>
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="hbl-dash-back-link">
-			<?php echo $this->icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+			<?php echo $this->icon( 'arrow' ); ?>
 			<span><?php esc_html_e( 'Back to site', 'hbl' ); ?></span>
 		</a>
 		<?php
@@ -1432,7 +1361,7 @@ class HBL_Dashboard extends Widget_Base {
 						<?php foreach ( $nav_items as $key => $item ) : ?>
 							<?php if ( ! $item['enabled'] ) { continue; } ?>
 							<a href="<?php echo esc_url( 'overview' === $key ? $base_url : add_query_arg( 'view', $key, $base_url ) ); ?>" class="hbl-dash-nav-link <?php echo $view === $key ? 'active' : ''; ?>" data-view="<?php echo esc_attr( $key ); ?>">
-								<?php echo $this->icon( $item['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+								<?php echo $this->icon( $item['icon'] ); ?>
 								<span><?php echo esc_html( $item['label'] ); ?></span>
 								<?php if ( null !== $item['count'] ) : ?>
 									<span class="hbl-dash-nav-count"><?php echo esc_html( $item['count'] ); ?></span>
@@ -1442,7 +1371,7 @@ class HBL_Dashboard extends Widget_Base {
 					</nav>
 
 					<div class="hbl-dash-drawer-actions">
-						<?php echo $actions_html; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php echo $actions_html; ?>
 					</div>
 
 					<div class="hbl-dash-sidebar-footer">
@@ -1458,7 +1387,7 @@ class HBL_Dashboard extends Widget_Base {
 
 						<?php if ( 'yes' === $settings['show_logout_btn'] ) : ?>
 						<a href="<?php echo esc_url( $logout_url ); ?>" class="hbl-dash-logout">
-							<?php echo $this->icon( 'logout' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+							<?php echo $this->icon( 'logout' ); ?>
 							<span><?php esc_html_e( 'Logout', 'hbl' ); ?></span>
 						</a>
 						<?php endif; ?>
@@ -1472,7 +1401,7 @@ class HBL_Dashboard extends Widget_Base {
 				<header class="hbl-dash-topbar">
 					<h1 class="hbl-dash-topbar-title"><?php echo esc_html( $nav_items[ $view ]['label'] ); ?></h1>
 					<div class="hbl-dash-topbar-actions">
-						<?php echo $actions_html; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php echo $actions_html; ?>
 					</div>
 				</header>
 
@@ -1505,11 +1434,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render the Overview "page": welcome header, listing quota / upgrade
-	 * nudge, stat cards, recent activity feed, and a quick-access grid of
-	 * dashboard actions.
-	 */
 	private function render_overview( $user_id, $settings, $stats, $current_user, $base_url, $quota ) {
 		$activity = $this->get_recent_activity( $user_id, 6 );
 		?>
@@ -1554,7 +1478,7 @@ class HBL_Dashboard extends Widget_Base {
 			foreach ( $stat_cards as $card ) :
 			?>
 			<div class="hbl-dash-stat-card hbl-dash-stat-card-<?php echo esc_attr( $card['variant'] ); ?>">
-				<span class="hbl-dash-stat-icon"><?php echo $this->icon( $card['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+				<span class="hbl-dash-stat-icon"><?php echo $this->icon( $card['icon'] ); ?></span>
 				<span class="hbl-dash-stat-value"><?php echo esc_html( $card['value'] ); ?></span>
 				<span class="hbl-dash-stat-label"><?php echo esc_html( $card['label'] ); ?></span>
 			</div>
@@ -1574,7 +1498,7 @@ class HBL_Dashboard extends Widget_Base {
 				<?php foreach ( $activity as $item ) : ?>
 				<li class="hbl-dash-activity-item">
 					<span class="hbl-dash-activity-icon hbl-dash-activity-icon-<?php echo esc_attr( $item['type'] ); ?>">
-						<?php echo $this->icon( 'listing' === $item['type'] ? 'listings' : 'event' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php echo $this->icon( 'listing' === $item['type'] ? 'listings' : 'event' ); ?>
 					</span>
 					<div class="hbl-dash-activity-body">
 						<a href="<?php echo esc_url( $item['url'] ); ?>" class="hbl-dash-activity-title"><?php echo esc_html( $item['title'] ); ?></a>
@@ -1630,7 +1554,7 @@ class HBL_Dashboard extends Widget_Base {
 				?>
 				<a href="<?php echo esc_url( $link['url'] ); ?>" class="hbl-dash-quick-link">
 					<span><?php echo esc_html( $link['label'] ); ?></span>
-					<?php echo $this->icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+					<?php echo $this->icon( 'arrow' ); ?>
 				</a>
 				<?php endforeach; ?>
 			</div>
@@ -1638,9 +1562,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render login required message
-	 */
 	private function render_login_required() {
 		$login_url = function_exists( 'ATBDP_Permalink' ) && class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_login_page_link() : wp_login_url();
 		$register_url = function_exists( 'ATBDP_Permalink' ) && class_exists( 'ATBDP_Permalink' ) ? \ATBDP_Permalink::get_registration_page_link() : wp_registration_url();
@@ -1664,9 +1585,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Get user statistics
-	 */
 	private function get_user_stats( $user_id ) {
 		$stats = array(
 			'total'     => 0,
@@ -1682,7 +1600,6 @@ class HBL_Dashboard extends Widget_Base {
 			return $stats;
 		}
 
-		// Total listings
 		$total_query = new \WP_Query( array(
 			'author'         => $user_id,
 			'post_type'      => ATBDP_POST_TYPE,
@@ -1692,7 +1609,6 @@ class HBL_Dashboard extends Widget_Base {
 		) );
 		$stats['total'] = $total_query->found_posts;
 
-		// Published
 		$published_query = new \WP_Query( array(
 			'author'         => $user_id,
 			'post_type'      => ATBDP_POST_TYPE,
@@ -1702,7 +1618,6 @@ class HBL_Dashboard extends Widget_Base {
 		) );
 		$stats['published'] = $published_query->found_posts;
 
-		// Pending
 		$pending_query = new \WP_Query( array(
 			'author'         => $user_id,
 			'post_type'      => ATBDP_POST_TYPE,
@@ -1712,7 +1627,6 @@ class HBL_Dashboard extends Widget_Base {
 		) );
 		$stats['pending'] = $pending_query->found_posts;
 
-		// Expired
 		$expired_query = new \WP_Query( array(
 			'author'         => $user_id,
 			'post_type'      => ATBDP_POST_TYPE,
@@ -1722,7 +1636,6 @@ class HBL_Dashboard extends Widget_Base {
 		) );
 		$stats['expired'] = $expired_query->found_posts;
 
-		// Favorites (listings + events) - count only those that actually exist and have valid status
 		$listing_favorites = get_user_meta( $user_id, 'atbdp_favourites', true );
 		$listing_favorite_ids = is_array( $listing_favorites ) ? $listing_favorites : array();
 		$listing_count = 0;
@@ -1753,7 +1666,6 @@ class HBL_Dashboard extends Widget_Base {
 		
 		$stats['favorites'] = $listing_count + $event_count;
 
-		// Events from custom hbl_events database
 		if ( function_exists( 'hbl_events_db' ) ) {
 			global $wpdb;
 			$table = hbl_events_db()->get_table_name();
@@ -1763,7 +1675,6 @@ class HBL_Dashboard extends Widget_Base {
 			) );
 		}
 
-		// Claims (dcl_claim_listing post type where user is the claimer)
 		if ( post_type_exists( 'dcl_claim_listing' ) ) {
 			$claims_query = new \WP_Query( array(
 				'post_type'      => 'dcl_claim_listing',
@@ -1784,9 +1695,6 @@ class HBL_Dashboard extends Widget_Base {
 		return $stats;
 	}
 
-	/**
-	 * Render listings tab
-	 */
 	private function render_listings_tab( $user_id, $settings ) {
 		if ( ! defined( 'ATBDP_POST_TYPE' ) ) {
 			return;
@@ -1866,9 +1774,6 @@ class HBL_Dashboard extends Widget_Base {
 		wp_reset_postdata();
 	}
 
-	/**
-	 * Render single listing card
-	 */
 	private function render_listing_card( $listing_id ) {
 		$thumbnail  = get_the_post_thumbnail_url( $listing_id, 'medium' );
 		$status     = get_post_status( $listing_id );
@@ -1944,9 +1849,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render profile tab
-	 */
 	private function render_profile_tab( $user_id ) {
 		$user = get_userdata( $user_id );
 		$phone = get_user_meta( $user_id, 'atbdp_phone', true );
@@ -1957,7 +1859,6 @@ class HBL_Dashboard extends Widget_Base {
 		$twitter = get_user_meta( $user_id, 'atbdp_twitter', true );
 		$linkedin = get_user_meta( $user_id, 'atbdp_linkedin', true );
 		
-		// Get profile image
 		$profile_image_id = get_user_meta( $user_id, 'hbl_profile_image', true );
 		$profile_image_url = $profile_image_id ? wp_get_attachment_image_url( $profile_image_id, 'thumbnail' ) : '';
 		$avatar_url = $profile_image_url ? $profile_image_url : get_avatar_url( $user_id, array( 'size' => 150 ) );
@@ -1966,7 +1867,6 @@ class HBL_Dashboard extends Widget_Base {
 			<form class="hbl-dashboard-profile-form" method="post">
 				<?php wp_nonce_field( 'hbl_update_profile', 'hbl_profile_nonce' ); ?>
 				
-				<!-- Profile Image Section -->
 				<div class="hbl-dashboard-form-section hbl-dashboard-profile-image-section">
 					<h4 class="hbl-dashboard-form-title"><?php esc_html_e( 'Profile Photo', 'hbl' ); ?></h4>
 					
@@ -2097,9 +1997,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render favorites tab
-	 */
 	private function render_favorites_tab( $user_id ) {
 		$listing_favorites = get_user_meta( $user_id, 'atbdp_favourites', true );
 		$listing_favorite_ids = is_array( $listing_favorites ) ? array_filter( array_map( 'absint', $listing_favorites ) ) : array();
@@ -2107,10 +2004,6 @@ class HBL_Dashboard extends Widget_Base {
 		$event_favorites = get_user_meta( $user_id, 'hbl_favorite_events', true );
 		$event_favorite_ids = is_array( $event_favorites ) ? array_filter( array_map( 'absint', $event_favorites ) ) : array();
 
-		// Resolve the saved favourite IDs to items that actually still exist
-		// before deciding what to render. The stored meta can point at
-		// listings/events that have since been deleted, so it is not on its
-		// own a reliable signal that there is anything left to show.
 		$listings_query = null;
 		if ( ! empty( $listing_favorite_ids ) && defined( 'ATBDP_POST_TYPE' ) ) {
 			$listings_query = new \WP_Query( array(
@@ -2126,7 +2019,6 @@ class HBL_Dashboard extends Widget_Base {
 		if ( ! empty( $event_favorite_ids ) && function_exists( 'hbl_events_db' ) ) {
 			foreach ( $event_favorite_ids as $event_id ) {
 				$event = hbl_events_db()->get( $event_id );
-				// Include all events with valid statuses (not just publish)
 				if ( $event && in_array( $event->status, array( 'publish', 'pending', 'private', 'expired' ), true ) ) {
 					$favorite_events[] = $event;
 				}
@@ -2151,7 +2043,6 @@ class HBL_Dashboard extends Widget_Base {
 			return;
 		}
 
-		// Favorite Listings Section
 		if ( $has_listings ) :
 			?>
 			<div class="hbl-dashboard-favorites-section">
@@ -2173,7 +2064,6 @@ class HBL_Dashboard extends Widget_Base {
 			wp_reset_postdata();
 		endif;
 
-		// Favorite Events Section (from custom database)
 		if ( $has_events ) :
 			?>
 			<div class="hbl-dashboard-favorites-section">
@@ -2197,9 +2087,6 @@ class HBL_Dashboard extends Widget_Base {
 		endif;
 	}
 
-	/**
-	 * Render single favorite card
-	 */
 	private function render_favorite_card( $item_id, $type = 'listing' ) {
 		$thumbnail  = get_the_post_thumbnail_url( $item_id, 'medium' );
 		$view_url   = get_permalink( $item_id );
@@ -2214,7 +2101,6 @@ class HBL_Dashboard extends Widget_Base {
 		
 		$category = $categories && ! is_wp_error( $categories ) && ! empty( $categories ) ? $categories[0]->name : '';
 		
-		// Get date - event date for events, publish date for listings
 		$display_date = '';
 		if ( $type === 'event' ) {
 			$start_date = get_post_meta( $item_id, '_piecal_start_date', true );
@@ -2222,7 +2108,6 @@ class HBL_Dashboard extends Widget_Base {
 				$display_date = date_i18n( 'M j, Y', strtotime( $start_date ) );
 			}
 		} else {
-			// For listings, show publish date
 			$display_date = get_the_date( 'M j, Y', $item_id );
 		}
 		?>
@@ -2269,15 +2154,11 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render single favorite event card (from custom database)
-	 */
 	private function render_favorite_event_card( $event ) {
 		$event_id = $event->id;
 		$thumbnail = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'medium' ) : '';
 		$event_url = function_exists( 'hbl_events_db' ) ? hbl_events_db()->get_event_url( $event ) : '#';
 		
-		// Get category name
 		$category_name = '';
 		if ( $event->category_id ) {
 			$category = get_term( $event->category_id, 'event_category' );
@@ -2286,7 +2167,6 @@ class HBL_Dashboard extends Widget_Base {
 			}
 		}
 		
-		// Format date
 		$display_date = '';
 		if ( $event->start_date ) {
 			$display_date = date_i18n( 'M j, Y', strtotime( $event->start_date ) );
@@ -2327,11 +2207,7 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render claims tab
-	 */
 	private function render_claims_tab( $user_id ) {
-		// Check if Directorist Claim Listing plugin is active
 		if ( ! post_type_exists( 'dcl_claim_listing' ) ) {
 			?>
 			<div class="hbl-dashboard-empty">
@@ -2345,7 +2221,6 @@ class HBL_Dashboard extends Widget_Base {
 			return;
 		}
 
-		// Get user's claim requests
 		$claims_query = new \WP_Query( array(
 			'post_type'      => 'dcl_claim_listing',
 			'post_status'    => 'publish',
@@ -2361,7 +2236,6 @@ class HBL_Dashboard extends Widget_Base {
 			'order'          => 'DESC',
 		) );
 
-		// Get claimed listings (listings where user is owner and listing is claimed)
 		$claimed_listings_query = new \WP_Query( array(
 			'author'         => $user_id,
 			'post_type'      => defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir',
@@ -2395,7 +2269,6 @@ class HBL_Dashboard extends Widget_Base {
 			return;
 		}
 
-		// Claimed Businesses Section
 		if ( $has_claimed_listings ) :
 			?>
 			<div class="hbl-dashboard-claims-section">
@@ -2417,7 +2290,6 @@ class HBL_Dashboard extends Widget_Base {
 			wp_reset_postdata();
 		endif;
 
-		// Claim Requests Section
 		if ( $has_claims ) :
 			?>
 			<div class="hbl-dashboard-claims-section">
@@ -2440,9 +2312,6 @@ class HBL_Dashboard extends Widget_Base {
 		endif;
 	}
 
-	/**
-	 * Render claimed listing card
-	 */
 	private function render_claimed_listing_card( $listing_id ) {
 		$thumbnail  = get_the_post_thumbnail_url( $listing_id, 'medium' );
 		$view_url   = get_permalink( $listing_id );
@@ -2506,21 +2375,16 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render claim request card
-	 */
 	private function render_claim_request_card( $claim_id ) {
 		$listing_id     = get_post_meta( $claim_id, '_claimed_listing', true );
 		$claim_status   = get_post_meta( $claim_id, '_claim_status', true );
 		$claimer_details = get_post_meta( $claim_id, '_claimer_details', true );
 		$claim_date     = get_the_date( '', $claim_id );
 		
-		// Get listing info
 		$listing_title  = $listing_id ? get_the_title( $listing_id ) : __( 'Unknown Listing', 'hbl' );
 		$listing_url    = $listing_id ? get_permalink( $listing_id ) : '#';
 		$listing_thumb  = $listing_id ? get_the_post_thumbnail_url( $listing_id, 'thumbnail' ) : '';
 
-		// Status labels and colors
 		$status_labels = array(
 			'pending'  => __( 'Pending Review', 'hbl' ),
 			'approved' => __( 'Approved', 'hbl' ),
@@ -2600,15 +2464,10 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render events tab
-	 */
 	private function render_events_tab( $user_id, $settings ) {
-		// Check if we're adding/editing an event
 		$editing   = isset( $_GET['edit_event'] ) ? absint( $_GET['edit_event'] ) : 0;
 		$show_form = isset( $_GET['add_event'] ) || $editing;
 
-		// Get user's events from custom database
 		$events = array();
 		if ( function_exists( 'hbl_events_db' ) ) {
 			global $wpdb;
@@ -2619,7 +2478,6 @@ class HBL_Dashboard extends Widget_Base {
 			) );
 		}
 
-		// Get event categories from taxonomy
 		$event_categories = get_terms( array(
 			'taxonomy'   => 'event_category',
 			'hide_empty' => false,
@@ -2628,7 +2486,6 @@ class HBL_Dashboard extends Widget_Base {
 			$event_categories = array();
 		}
 
-		// Get event data if editing
 		$event_data = array();
 		if ( $editing && function_exists( 'hbl_events_db' ) ) {
 			$event = hbl_events_db()->get( $editing );
@@ -2711,9 +2568,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render event form
-	 */
 	private function render_event_form( $event_data, $event_categories, $editing ) {
 		?>
 		<form id="hbl-event-form" class="hbl-dashboard-event-form" method="post">
@@ -2780,9 +2634,6 @@ class HBL_Dashboard extends Widget_Base {
 		<?php
 	}
 
-	/**
-	 * Render events list
-	 */
 	private function render_events_list( $events ) {
 		if ( empty( $events ) ) :
 			?>
@@ -2813,7 +2664,6 @@ class HBL_Dashboard extends Widget_Base {
 				$status      = $event->status;
 				$thumbnail   = $event->featured_image ? wp_get_attachment_image_url( $event->featured_image, 'medium' ) : '';
 				
-				// Get category name
 				$category_name = '';
 				if ( $event->category_id ) {
 					$category = get_term( $event->category_id, 'event_category' );
@@ -2822,7 +2672,6 @@ class HBL_Dashboard extends Widget_Base {
 					}
 				}
 				
-				// Get event URL
 				$event_url = function_exists( 'hbl_events_db' ) ? hbl_events_db()->get_event_url( $event ) : '#';
 				
 				$status_labels = array(
