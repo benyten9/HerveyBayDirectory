@@ -135,6 +135,32 @@
             }
         });
 
+        // ==========================================
+        // Reserve space for whichever header is actually fixed/sticky
+        // ==========================================
+        // The live header can be the theme's own `.site-header` fallback,
+        // or an Elementor Theme Builder header template (markup unknown
+        // ahead of time). Either way, once it's fixed/sticky it's out of
+        // normal document flow, so page content has no reserved space for
+        // it and can end up tucked behind it. Measure whatever is actually
+        // fixed/sticky at the top of the page and expose its height as a
+        // CSS variable so templates can compensate (e.g. scroll-margin-top).
+        function updateHeaderOffset() {
+            var $fixedHeader = $('header, #masthead, [data-elementor-type="header"]').filter(function () {
+                var $el = $(this);
+                var position = $el.css('position');
+                return (position === 'fixed' || position === 'sticky') && $el.offset().top <= 0;
+            }).first();
+
+            var offset = $fixedHeader.length ? $fixedHeader.outerHeight() : 0;
+            document.documentElement.style.setProperty('--hbl-header-offset', offset + 'px');
+        }
+
+        updateHeaderOffset();
+        $window.on('resize', debounce(updateHeaderOffset, 200));
+        // Elementor's sticky effect can attach slightly after DOM ready.
+        setTimeout(updateHeaderOffset, 1000);
+
         // Back to top button
         if ($('#back-to-top').length) {
             var scrollTrigger = 300;

@@ -36,6 +36,11 @@ html {
    ===================================================== */
 
 :root {
+  /* Height of whichever header is actually fixed/sticky, kept in sync at
+     runtime by theme.js (updateHeaderOffset). Defaults to 0 so nothing
+     shifts before JS runs. */
+  --hbl-header-offset: 0px;
+
   /* ===========================================
        FONTS
        =========================================== */
@@ -6962,6 +6967,13 @@ input:-webkit-autofill:active {
   overflow: hidden;
   border: 1px solid var(--hbl-gray-200);
   margin-bottom: 16px;
+  /* Contain Leaflet's own stacking (panes/controls/popups use z-index up
+     to 1000 internally). Without a stacking context of its own, those
+     values compete directly against page-level fixed/sticky elements
+     like the site header instead of staying scoped to the map. */
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
 .hbl-single-listing-address-box {
