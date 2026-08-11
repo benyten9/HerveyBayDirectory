@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Define theme constants
  */
-define( 'HBL_VERSION', '1.2.694' );
+define( 'HBL_VERSION', '1.2.695' );
 define( 'HBL_THEME_DIR', get_template_directory() );
 define( 'HBL_THEME_URI', get_template_directory_uri() );
 define( 'HBL_THEME_PATH', get_template_directory() );

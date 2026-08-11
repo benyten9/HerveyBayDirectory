@@ -75,13 +75,26 @@ class Single_Event_Condition extends Condition_Base {
 	 * @return bool
 	 */
 	public function check( $args ) {
-		// Must be a singular post page
+		// Current (v1.3.0+) events system: events live in the custom
+		// wp_hbl_events table and are served through /events/{slug}/,
+		// which routes to the "events" page (pagename=events) with the
+		// hbl_event_slug query var set. That request is a singular PAGE,
+		// not a singular POST, so it never matched the legacy check below.
+		if ( get_query_var( 'hbl_event_slug' ) ) {
+			// The "specific event" selector only lists legacy posts
+			// (see get_events_options()), which don't apply to custom-table
+			// events, so a specific-id restriction can't be honoured here.
+			return true;
+		}
+
+		// Legacy events system: real WP posts flagged with _piecal_is_event.
+		// Kept for backward compatibility with any content still using it.
 		if ( ! is_singular( 'post' ) ) {
 			return false;
 		}
 
 		$post_id = get_queried_object_id();
-		
+
 		// Check if specific event ID is requested
 		if ( isset( $args['id'] ) && ! empty( $args['id'] ) ) {
 			$id = (int) $args['id'];
@@ -92,7 +105,7 @@ class Single_Event_Condition extends Condition_Base {
 
 		// Check if the post is an event (has _piecal_is_event = 1)
 		$is_event = get_post_meta( $post_id, '_piecal_is_event', true );
-		
+
 		return $is_event === '1';
 	}
 
