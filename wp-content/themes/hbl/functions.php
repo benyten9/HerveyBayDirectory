@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HBL_VERSION', '1.2.696' );
+define( 'HBL_VERSION', '1.2.697' );
 define( 'HBL_THEME_DIR', get_template_directory() );
 define( 'HBL_THEME_URI', get_template_directory_uri() );
 define( 'HBL_THEME_PATH', get_template_directory() );
