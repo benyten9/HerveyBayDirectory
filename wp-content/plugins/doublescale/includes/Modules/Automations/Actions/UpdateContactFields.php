@@ -321,7 +321,8 @@ class UpdateContactFields extends Action {
 				return is_email( $value ) ? $value : null;
 
 			case 'zip':
-				return is_numeric( $value ) ? $value : null;
+				$zip = is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
+				return '' !== $zip && strlen( $zip ) <= 150 ? $zip : null;
 
 			default:
 				return $value;

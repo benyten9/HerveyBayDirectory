@@ -1,15 +1,23 @@
 <?php
 /**
- * Fluent Forms — form submitted automation trigger (Pro).
+ * Free automation trigger: Fluent Forms.
  *
- * @package DoubleScale\Pro
+ * Ships in the free plugin — not locked behind Pro.
+ * The actual submission hook is handled by {@see \DoubleScale\Modules\Forms\Fluentforms\Form}.
+ *
+ * @package DoubleScale
  */
 
 namespace DoubleScale\Pro\Modules\Automations\Triggers\Forms;
 
+use DoubleScale\Modules\Automations\Abstracts\Trigger;
+use DoubleScale\Modules\Automations\Services\TriggersManager;
+
 defined( 'ABSPATH' ) || exit;
 
-final class FluentformsFormSubmitted extends AbstractFormIntegrationTrigger {
+final class FluentformsFormSubmitted extends Trigger {
+
+	public $source = 'forms';
 
 	public $name = 'Fluent Forms';
 
@@ -20,4 +28,10 @@ final class FluentformsFormSubmitted extends AbstractFormIntegrationTrigger {
 	public $attributes = array();
 
 	public $group = 'fluentforms';
+
+	public function load_hooks() {}
+
+	public function get_fields() {
+		return array();
+	}
 }

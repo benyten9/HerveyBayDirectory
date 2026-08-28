@@ -114,11 +114,11 @@ class OrderReceived extends GoalPro {
 			return null;
 		}
 
-		if ( ! class_exists( '\Surecart\Models\Order' ) ) {
+		if ( ! class_exists( '\SureCart\Models\Order' ) ) {
 			return null;
 		}
 
-		$order = \Surecart\Models\Order::with( array( 'checkout', 'checkout.purchases' ) )->find( $initial_order_id );
+		$order = \SureCart\Models\Order::with( array( 'checkout', 'checkout.purchases' ) )->find( $initial_order_id );
 
 		if ( ! $order || is_wp_error( $order ) ) {
 			return null;
@@ -197,12 +197,12 @@ class OrderReceived extends GoalPro {
 	 * @return array
 	 */
 	private function get_product_options() {
-		if ( ! class_exists( '\Surecart\Models\Product' ) ) {
+		if ( ! class_exists( '\SureCart\Models\Product' ) ) {
 			return array();
 		}
 
 		try {
-			$products = \Surecart\Models\Product::where( array( 'archived' => false ) )->get();
+			$products = \SureCart\Models\Product::where( array( 'archived' => false ) )->get();
 
 			$options = array();
 			if ( is_array( $products ) ) {

@@ -242,7 +242,7 @@ class RestLinkTriggerController extends RestController {
 
 	public function create_item( $request ) {
 		try {
-			$link_trigger_data = $this->prepare_link_trigger( $request );
+			$link_trigger_data = $this->prepare_link_trigger( $request, true );
 			$link_trigger      = LinkTriggerModel::create( $link_trigger_data );
 
 			return new WP_REST_Response( $link_trigger, 201 );
@@ -261,7 +261,7 @@ class RestLinkTriggerController extends RestController {
 				return new WP_Error( 'doublescale_link_trigger_not_found', __( 'Link trigger not found.', 'doublescale' ), array( 'status' => 404 ) );
 			}
 
-			$link_trigger_data = $this->prepare_link_trigger( $request );
+			$link_trigger_data = $this->prepare_link_trigger( $request, false );
 			$link_trigger->update( $link_trigger_data );
 
 			return new WP_REST_Response( $link_trigger, 200 );
@@ -288,16 +288,23 @@ class RestLinkTriggerController extends RestController {
 		}
 	}
 
-	protected function prepare_link_trigger( $request ) {
+	/**
+	 * @param WP_REST_Request $request    Request object.
+	 * @param bool            $for_create When true, generate a new hash. Updates must keep the existing hash so tracking URLs stay valid.
+	 */
+	protected function prepare_link_trigger( $request, $for_create = false ) {
 		$link_trigger_data = array(
 			'name'     => $request->get_param( 'name' ),
-			'hash'     => wp_generate_password( 32, false ),
 			'status'   => $request->get_param( 'status' ),
 			'settings' => $request->get_param( 'settings' ),
 		);
 
+		if ( $for_create ) {
+			$link_trigger_data['hash'] = wp_generate_password( 32, false );
+		}
+
 		foreach ( $link_trigger_data as $key => $value ) {
-			if ( empty( $value ) ) {
+			if ( empty( $value ) && $value !== '0' && $value !== 0 && $value !== false ) {
 				unset( $link_trigger_data[ $key ] );
 			}
 		}

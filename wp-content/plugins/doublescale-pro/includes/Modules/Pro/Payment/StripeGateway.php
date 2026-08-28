@@ -18,6 +18,7 @@ use DoubleScale\Pro\Modules\Integrations\Stripe\Customers;
 use DoubleScale\Pro\Modules\Integrations\Stripe\Integration as StripeIntegration;
 use DoubleScale\Pro\Modules\Integrations\Stripe\PaymentIntentFlow;
 use DoubleScale\Pro\Modules\Integrations\Stripe\PaymentService;
+use DoubleScale\Pro\Modules\Pro\Payment\PaymentCurrency;
 use DoubleScale\Pro\Modules\Sales\PaymentGateways\InvoicePayableSubject;
 use WP_Error;
 
@@ -47,6 +48,27 @@ class StripeGateway extends Gateway {
 
 	public function is_configured(): bool {
 		return StripeIntegration::instance()->is_configured();
+	}
+
+	/**
+	 * Stripe reports charge amounts in minor units (cents).
+	 *
+	 * @return bool
+	 */
+	public function uses_major_units(): bool {
+		return false;
+	}
+
+	/**
+	 * @param string $invoice_number Invoice number.
+	 * @return string
+	 */
+	public function payment_note( string $invoice_number ): string {
+		return sprintf(
+			/* translators: %s: invoice number */
+			__( 'Stripe payment for invoice %s', 'doublescale' ),
+			$invoice_number
+		);
 	}
 
 	/**
@@ -91,6 +113,11 @@ class StripeGateway extends Gateway {
 			);
 
 			unset( $created );
+
+			$mismatch = PaymentCurrency::guard( $currency, $intent->currency ?? '', 'Stripe' );
+			if ( is_wp_error( $mismatch ) ) {
+				return $mismatch;
+			}
 
 			$status = (string) ( $intent->status ?? '' );
 			if ( in_array( $status, array( 'succeeded', 'processing' ), true ) ) {

@@ -21,8 +21,38 @@ use DoubleScale\Modules\Tracking\Models\TrackingTemplateModel;
  */
 class AutomationStepModel extends Model {
 
+	/**
+	 * Status of a step that runs normally.
+	 *
+	 * @var string
+	 */
+	const STATUS_ACTIVE = 'active';
 
+	/**
+	 * Status of a step the user has switched off.
+	 *
+	 * A disabled step is kept in the workflow — it stays visible in the builder,
+	 * is versioned, duplicated and exported like any other step — but the engine
+	 * skips over it, so contacts flow straight to the next active step. This lets
+	 * users park an action while iterating instead of deleting it.
+	 *
+	 * @var string
+	 */
+	const STATUS_DISABLED = 'disabled';
 
+	/**
+	 * Status of a soft-deleted step. Excluded from the builder and the engine.
+	 *
+	 * @var string
+	 */
+	const STATUS_DELETED = 'deleted';
+
+	/**
+	 * Statuses that make up the workflow as the user sees it in the builder.
+	 *
+	 * @var string[]
+	 */
+	const EDITABLE_STATUSES = array( self::STATUS_ACTIVE, self::STATUS_DISABLED );
 
 	/**
 	 * Table name
@@ -192,7 +222,7 @@ class AutomationStepModel extends Model {
 				$query = $step->newQuery()
 					->where( 'automation_id', $step->automation_id )
 					->where( 'parent_id', $parent_id )
-					->where( 'status', '!=', 'deleted' )
+					->where( 'status', '!=', self::STATUS_DELETED )
 					->where( 'type', 'end_automation' );
 
 				if ( $parent_id ) {

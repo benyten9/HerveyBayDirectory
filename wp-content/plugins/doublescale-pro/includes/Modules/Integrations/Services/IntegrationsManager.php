@@ -94,13 +94,20 @@ final class IntegrationsManager {
 		}
 
 		$this->options[ $integration->slug ] = array(
-			'label'         => $integration->name,
-			'description'   => $integration->description,
-			'fields'        => $properties,
-			'is_connected'  => $integration->is_connected(),
-			'settings'      => $frontend_settings,
-			'is_pro'        => $integration->is_pro ?? false,
-			'required_plan' => $integration->required_plan,
+			'label'           => $integration->name,
+			'description'     => $integration->get_description(),
+			'fields'          => $properties,
+			'is_connected'    => $integration->is_connected(),
+			'settings'        => $frontend_settings,
+			'is_pro'          => $integration->is_pro ?? false,
+			'required_plan'   => $integration->required_plan,
+			'show_in_catalog'  => ! empty( $integration->show_in_catalog ),
+			'catalog_category' => method_exists( $integration, 'get_catalog_category' )
+				? $integration->get_catalog_category()
+				: 'other',
+			'icon_url'         => method_exists( $integration, 'get_icon_url' )
+				? (string) $integration->get_icon_url()
+				: '',
 		);
 	}
 

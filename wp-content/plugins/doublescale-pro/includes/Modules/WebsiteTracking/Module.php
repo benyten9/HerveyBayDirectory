@@ -14,7 +14,20 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
 use DoubleScale\Modules\Tracking\Services\TrackingService;
+use DoubleScale\Pro\Modules\WebsiteTracking\Abilities\PageVisitAbilities;
+
 final class Module extends AbstractModule {
+
+	/**
+	 * Read-only page-visit abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return PageVisitAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'websitetracking';

@@ -180,20 +180,46 @@ final class PvInvPdfHtml {
 				),
 			);
 
-		$sections = array();
-		if ( $is_invoice ) {
-			if ( ! empty( $document['client_note'] ) ) {
-				$sections[] = array(
-					'title' => __( 'Client Note', 'doublescale' ),
-					'body'  => (string) $document['client_note'],
-				);
+		$sections_before = array();
+		$sections_after  = array();
+
+		$raw_sections = is_array( $document['sections'] ?? null ) ? $document['sections'] : array();
+		foreach ( $raw_sections as $section ) {
+			if ( ! is_array( $section ) ) {
+				continue;
 			}
-			if ( ! empty( $document['terms'] ) ) {
-				$sections[] = array(
-					'title' => __( 'Terms', 'doublescale' ),
+
+			$row = array(
+				'title' => isset( $section['title'] ) ? (string) $section['title'] : '',
+				'body'  => isset( $section['body'] ) ? (string) $section['body'] : '',
+			);
+
+			$position = isset( $section['position'] ) ? (string) $section['position'] : 'after_totals';
+			if ( 'before_items' === $position ) {
+				$sections_before[] = $row;
+			} else {
+				$sections_after[] = $row;
+			}
+		}
+
+		if ( $is_invoice && ! empty( $document['client_note'] ) ) {
+			$sections_after[] = array(
+				'title' => __( 'Client Note', 'doublescale' ),
+				'body'  => (string) $document['client_note'],
+			);
+		}
+
+		if ( ! empty( $document['terms'] ) ) {
+			$terms_title = $is_invoice
+				? __( 'Terms', 'doublescale' )
+				: __( 'Terms & Conditions', 'doublescale' );
+			array_unshift(
+				$sections_after,
+				array(
+					'title' => $terms_title,
 					'body'  => (string) $document['terms'],
-				);
-			}
+				)
+			);
 		}
 
 		// Mirror TotalsCalculator::compute so the displayed discount matches the
@@ -232,7 +258,8 @@ final class PvInvPdfHtml {
 			'from_lines',
 			'to_lines',
 			'dates',
-			'sections',
+			'sections_before',
+			'sections_after',
 			'design'
 		);
 	}
@@ -278,9 +305,10 @@ final class PvInvPdfHtml {
 <div class="pv-inv pv-inv-one">
 	<div class="pv-inv-body">
 		<?php self::render_classic_header( $ctx, true ); ?>
+		<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
 		<?php self::render_items( $ctx, 'colored' ); ?>
 		<?php self::render_account_row( $ctx, 'colored' ); ?>
-		<?php self::render_sections( $ctx ); ?>
+		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
 	</div>
 </div>
 		<?php
@@ -296,9 +324,10 @@ final class PvInvPdfHtml {
 		<?php self::render_svg_top_two( $ctx['primary'] ); ?>
 		<div class="pv-inv-body">
 			<?php self::render_classic_header( $ctx, true ); ?>
+			<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
 			<?php self::render_items( $ctx, 'colored' ); ?>
 			<?php self::render_account_row( $ctx, 'colored' ); ?>
-			<?php self::render_sections( $ctx ); ?>
+			<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
 		</div>
 		<?php self::render_svg_footer_two( $ctx['primary'] ); ?>
 	</div>
@@ -317,9 +346,10 @@ final class PvInvPdfHtml {
 			<?php self::render_corner_shape( $ctx['primary'], false ); ?>
 			<div class="pv-inv-title centered"><h2><?php echo esc_html( strtoupper( $ctx['doc_title'] ) ); ?></h2></div>
 			<?php self::render_classic_header( $ctx, false ); ?>
+			<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
 			<?php self::render_items( $ctx, 'colored' ); ?>
 			<?php self::render_account_row( $ctx, 'colored' ); ?>
-			<?php self::render_sections( $ctx ); ?>
+			<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
 			<?php self::render_corner_shape( $ctx['primary'], true ); ?>
 		</div>
 	</div>
@@ -349,19 +379,19 @@ final class PvInvPdfHtml {
 					</td>
 				</tr>
 			</table>
+			<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
 			<?php self::render_items( $ctx, 'colored' ); ?>
 			<table class="pv-four-bottom" width="100%" cellspacing="0" cellpadding="0">
 				<tr>
 					<td width="58%" valign="top">
 						<?php self::render_bank_placeholder(); ?>
-						<?php self::render_sections( $ctx ); ?>
 					</td>
 					<td width="42%" valign="top" align="right">
 						<?php self::render_totals( $ctx, 'four' ); ?>
 					</td>
 				</tr>
 			</table>
-			<div class="pv-inv-sign"><div class="pv-inv-sign__line"></div></div>
+			<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
 		</div>
 		<?php self::render_svg_footer_four( $ctx['primary'] ); ?>
 	</div>
@@ -409,9 +439,10 @@ final class PvInvPdfHtml {
 				<td width="50%" valign="top"><?php self::render_to_block( $ctx ); ?></td>
 			</tr>
 		</table>
+		<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
 		<?php self::render_items( $ctx, 'neutral' ); ?>
 		<?php self::render_account_row( $ctx, 'neutral' ); ?>
-		<?php self::render_sections( $ctx ); ?>
+		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
 	</div>
 </div>
 		<?php
@@ -438,9 +469,10 @@ final class PvInvPdfHtml {
 				</td>
 			</tr>
 		</table>
+		<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
 		<?php self::render_items( $ctx, 'neutral' ); ?>
 		<?php self::render_account_row( $ctx, 'neutral' ); ?>
-		<?php self::render_sections( $ctx ); ?>
+		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
 	</div>
 </div>
 		<?php
@@ -694,18 +726,19 @@ final class PvInvPdfHtml {
 	/**
 	 * @param array<string, mixed> $ctx Context.
 	 */
-	private static function render_sections( array $ctx ): void {
-		if ( empty( $ctx['sections'] ) ) {
+	private static function render_sections( array $sections ): void {
+		if ( empty( $sections ) ) {
 			return;
 		}
 		?>
 <div class="pv-inv-sections">
-		<?php foreach ( $ctx['sections'] as $section ) : ?>
+		<?php foreach ( $sections as $section ) : ?>
 	<div class="pv-inv-section">
 		<?php if ( ! empty( $section['title'] ) ) : ?>
 			<h4 class="pv-inv-section-title"><?php echo esc_html( (string) $section['title'] ); ?></h4>
 		<?php endif; ?>
-		<div class="pv-inv-section-content"><p><?php echo esc_html( (string) ( $section['body'] ?? '' ) ); ?></p></div>
+		<?php // Bodies are rich text sanitized with wp_kses_post() on save. ?>
+		<div class="pv-inv-section-content"><?php echo wp_kses_post( (string) ( $section['body'] ?? '' ) ); ?></div>
 	</div>
 		<?php endforeach; ?>
 </div>
@@ -777,7 +810,8 @@ final class PvInvPdfHtml {
 		.pv-inv-top-shape, .pv-inv-footer-shape { line-height: 0; width: 100%; }
 		.pv-inv-top-shape svg, .pv-inv-footer-shape svg { width: 100%; height: auto; display: block; }
 		.pv-inv-footer-shape { position: absolute; left: 0; bottom: 0; width: 100%; z-index: 0; }
-		.pv-four-bottom { margin-top: 16px; margin-bottom: 24px; }
+		.pv-four-bottom { margin-top: 16px; margin-bottom: 12px; }
+		.pv-inv-four .pv-inv-sections { margin-top: 12px; }
 		.pv-inv-four .pv-inv-sign { position: absolute; right: 50px; bottom: 120px; width: 180px; z-index: 2; text-align: center; }
 		.pv-inv-sign__line { border-bottom: 1px solid #a0aec0; height: 48px; }
 		.pv-inv-three .pv-inv-body { padding-top: 20px; padding-bottom: 40px; }

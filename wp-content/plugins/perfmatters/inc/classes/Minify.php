@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use WP_Admin_Bar;
 
 class Minify 
@@ -174,6 +178,10 @@ class Minify
 
     //clear minified JS/CSS from admin bar
     public static function admin_bar_clear_minified() {
+
+        if(!current_user_can('manage_options') || !perfmatters_network_access()) {
+            wp_die(__('Sorry, you are not allowed to do that.'), 403);
+        }
 
         if(!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key($_GET['_wpnonce']), 'perfmatters_clear_minified')) {
             wp_nonce_ays('');

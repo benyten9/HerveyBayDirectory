@@ -41,11 +41,27 @@ class Integration extends Integration_Abstract {
 	public $description = 'Connect WhatsApp Business via Meta Cloud Api for sending messages and receiving webhooks.';
 
 	/**
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'Connect WhatsApp Business via Meta Cloud Api for sending messages and receiving webhooks.', 'doublescale' );
+	}
+
+	/**
 	 * Is this a Pro feature?
 	 *
 	 * @var bool
 	 */
 	public $is_pro = true;
+
+	/**
+	 * Show on Integrations catalog.
+	 *
+	 * @var bool
+	 */
+	public $show_in_catalog = true;
+
+	public $catalog_category = 'messaging';
 
 	/**
 	 * Option name for storing settings
@@ -273,6 +289,15 @@ class Integration extends Integration_Abstract {
 	 */
 	public function get_webhook_url() {
 		return admin_url( 'admin-ajax.php?action=doublescale_whatsapp_webhook' );
+	}
+
+	/**
+	 * Catalog icon.
+	 *
+	 * @return string
+	 */
+	public function get_icon_url(): string {
+		return $this->plugin_asset_url( 'assets/images/meta-whatsapp/meta-whatsapp.svg' );
 	}
 
 	/**

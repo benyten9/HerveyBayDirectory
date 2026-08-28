@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\PMCS;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class Conditions
 {
     //check for a condition match

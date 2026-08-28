@@ -47,6 +47,13 @@ class Integration extends Integration_Abstract {
 	public $description = 'Twilio lets apps send and receive messages, make and receive phone calls, and verify users, essentially adding communication features to digital tools.';
 
 	/**
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'Twilio lets apps send and receive messages, make and receive phone calls, and verify users, essentially adding communication features to digital tools.', 'doublescale' );
+	}
+
+	/**
 	 * Is Pro feature
 	 *
 	 * @var bool
@@ -54,6 +61,15 @@ class Integration extends Integration_Abstract {
 	 * @since 1.0.0
 	 */
 	public $is_pro = false;
+
+	/**
+	 * Show on Integrations catalog.
+	 *
+	 * @var bool
+	 */
+	public $show_in_catalog = true;
+
+	public $catalog_category = 'messaging';
 
 	/**
 	 * Option name
@@ -195,6 +211,15 @@ class Integration extends Integration_Abstract {
 
 			return new \WP_Error( 'twilio_connection_failed', $error_message );
 		}
+	}
+
+	/**
+	 * Catalog icon.
+	 *
+	 * @return string
+	 */
+	public function get_icon_url(): string {
+		return $this->plugin_asset_url( 'assets/images/twilio/twilio.png' );
 	}
 }
 

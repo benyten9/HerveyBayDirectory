@@ -134,7 +134,7 @@ final class CreditNoteNotifications {
 		$formatted_total = sprintf(
 			'%1$s %2$s',
 			\number_format_i18n( (float) $credit_note->total, 2 ),
-			\DoubleScale\Core\Settings\Settings::document_currency( $credit_note->currency, $credit_note->sent_at )
+			\DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $credit_note->currency, $credit_note->sent_at )
 		);
 
 		$html  = '<div style="font-family:Helvetica,Arial,sans-serif;color:#1a202c;">';

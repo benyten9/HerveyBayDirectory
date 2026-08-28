@@ -623,7 +623,6 @@ final class ProjectManager {
 					'total'           => (float) $proposal->total,
 					'invoice_id'      => ProposalShaper::get_linked_invoice_id( $proposal ),
 				);
-				$total += (float) $proposal->total;
 			}
 		}
 

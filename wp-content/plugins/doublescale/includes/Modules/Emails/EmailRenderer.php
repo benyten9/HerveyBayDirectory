@@ -216,6 +216,14 @@ class EmailRenderer {
 		// Store canvas width for use in render_section
 		$this->canvas_width = $canvas_width;
 
+		if ( ! empty( $background_image ) && false !== strpos( $background_image, '{{ASSETS_URL}}' ) && defined( 'DOUBLESCALE_PLUGIN_URL' ) ) {
+			$background_image = str_replace(
+				'{{ASSETS_URL}}',
+				trailingslashit( DOUBLESCALE_PLUGIN_URL ) . 'assets/images/',
+				$background_image
+			);
+		}
+
 		// Process background image through merge tags if present
 		if ( ! empty( $background_image ) && $contact ) {
 			$background_image = MergeTagsManager::instance()->process_merge_tags( $background_image, $contact );
@@ -491,6 +499,13 @@ class EmailRenderer {
 		$section_margin = '';
 		if ( isset( $section['styles'] ) ) {
 			foreach ( $section['styles'] as $property => $value ) {
+				if ( is_string( $value ) && false !== strpos( $value, '{{ASSETS_URL}}' ) && defined( 'DOUBLESCALE_PLUGIN_URL' ) ) {
+					$value = str_replace(
+						'{{ASSETS_URL}}',
+						trailingslashit( DOUBLESCALE_PLUGIN_URL ) . 'assets/images/',
+						$value
+					);
+				}
 				$css_property = $this->convert_camel_to_kebab( $property );
 				if ( 'margin' === $css_property ) {
 					$section_margin = $value;

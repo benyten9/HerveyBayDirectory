@@ -6,7 +6,7 @@ Tags: seo, ai seo, schema, xml sitemap, google search console
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 10.1
+Stable tag: 10.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -312,6 +312,9 @@ By using our contact form (select Misc as subject), or directly from <a href="ht
 12. Schema metabox
 
 == Changelog ==
+= 10.1.1 =
+* FIX OpenAI models
+
 = 10.1 <a href="https://www.seopress.org/newsroom/product-news/seopress-10-1/">Read the blog post update</a> =
 NEW Automatically generate your meta title and description with AI when you publish a post (PRO)
 NEW Generate meta title and description with AI for your taxonomy terms (categories, tags...) (PRO)

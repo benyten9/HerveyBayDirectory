@@ -24,6 +24,12 @@ use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Modules\Automations\Services\ActionsManager;
 use DoubleScale\Modules\Automations\Services\VersionManager;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Emails\EmailAttachmentResolver;
+use DoubleScale\Modules\Emails\EmailRenderer;
+use DoubleScale\Modules\Emails\EmailTrackingHelper;
+use DoubleScale\Modules\Emails\Emails;
+use DoubleScale\Core\MergeTags\MergeTagsManager;
 
 /**
  * RestAutomationStepController class
@@ -126,6 +132,94 @@ class RestAutomationStepController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'duplicate_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+				),
+			)
+		);
+
+		// Send a test email for a "Send Email" action. Content-based (no step id)
+		// so it also works while the step is still unsaved in the builder.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/send-test-email',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_test_email' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'emails'     => array(
+							'description' => __( 'Array of email addresses to send test emails to', 'doublescale' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'string' ),
+							'required'    => true,
+						),
+						'subject'    => array(
+							'description' => __( 'Email subject', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+						'body'       => array(
+							'description' => __( 'Email body: builder JSON or raw HTML', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+						'from_name'  => array(
+							'description' => __( 'From name', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+						'from_email' => array(
+							'description' => __( 'From email address', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+						'reply_to'   => array(
+							'description' => __( 'Reply-to address', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+					),
+				),
+			)
+		);
+
+		// Renders builder content straight from the request, so the device
+		// preview works for steps that are still unsaved in the builder (the
+		// template render endpoint can only read already-saved templates).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/preview-email',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'preview_email' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'body' => array(
+							'description' => __( 'Email body: builder JSON or raw HTML', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/toggle',
+			array(
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'toggle_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'enabled' => array(
+							'description' => __( 'Whether the step should run. False disables it without deleting it.', 'doublescale' ),
+							'type'        => 'boolean',
+							'required'    => true,
+						),
+					),
 				),
 			)
 		);
@@ -403,7 +497,7 @@ class RestAutomationStepController extends RestController {
 			if ( 'draft' === $automation_step->status ) {
 				$automation_step->delete();
 			} else {
-				$automation_step->status = 'deleted';
+				$automation_step->status = AutomationStepModel::STATUS_DELETED;
 				$automation_step->save();
 			}
 
@@ -416,6 +510,57 @@ class RestAutomationStepController extends RestController {
 			return new WP_REST_Response( null, 204 );
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'rest_automation_step_delete_error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Enable or disable an Automation Step.
+	 *
+	 * A disabled step stays in the workflow and keeps its settings, but the
+	 * engine skips it, so contacts flow straight through to the next active
+	 * step. Trigger and end_automation steps cannot be toggled.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function toggle_item( $request ) {
+		try {
+			$automation_step = AutomationStepModel::find( $request->get_param( 'id' ) );
+
+			if ( ! $automation_step ) {
+				return new WP_Error( 'rest_automation_step_not_found', __( 'Automation Step not found', 'doublescale' ), array( 'status' => 404 ) );
+			}
+
+			if ( in_array( $automation_step->type, array( 'trigger', 'end_automation' ), true ) ) {
+				return new WP_Error(
+					'rest_automation_step_not_toggleable',
+					__( 'This step cannot be enabled or disabled.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			if ( AutomationStepModel::STATUS_DELETED === $automation_step->status ) {
+				return new WP_Error( 'rest_automation_step_not_found', __( 'Automation Step not found', 'doublescale' ), array( 'status' => 404 ) );
+			}
+
+			$enabled = (bool) $request->get_param( 'enabled' );
+
+			$automation_step->status = $enabled
+				? AutomationStepModel::STATUS_ACTIVE
+				: AutomationStepModel::STATUS_DISABLED;
+			$automation_step->save();
+
+			$this->snapshot_version(
+				$automation_step,
+				$enabled ? __( 'Enabled step', 'doublescale' ) : __( 'Disabled step', 'doublescale' )
+			);
+
+			return new WP_REST_Response( $automation_step, 200 );
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'rest_automation_step_toggle_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
 
@@ -575,7 +720,7 @@ class RestAutomationStepController extends RestController {
 
 		$query = AutomationStepModel::where( 'automation_id', $reference->automation_id )
 			->where( 'parent_id', $parent_id )
-			->where( 'status', '!=', 'deleted' )
+			->where( 'status', '!=', AutomationStepModel::STATUS_DELETED )
 			->where( 'order', '>=', $insert_order );
 
 		if ( $parent_id > 0 ) {
@@ -603,7 +748,7 @@ class RestAutomationStepController extends RestController {
 
 		if ( 'condition' === $step->type ) {
 			$children = AutomationStepModel::where( 'parent_id', $step->id )
-				->where( 'status', 'active' )
+				->whereIn( 'status', AutomationStepModel::EDITABLE_STATUSES )
 				->orderBy( 'order' )
 				->get();
 
@@ -834,6 +979,241 @@ class RestAutomationStepController extends RestController {
 		}
 
 		return $step_data;
+	}
+
+	/**
+	 * Send a test email for a "Send Email" automation action.
+	 *
+	 * Mirrors the campaign builder's test send, but takes the content from the
+	 * request instead of a saved template: an automation step's body lives in
+	 * the builder's local state and may not be persisted yet.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+
+	/**
+	 * Render builder content to email HTML for the device preview.
+	 *
+	 * Takes the body from the request for the same reason send_test_email()
+	 * does: the step's content may still be unsaved. Rendering goes through the
+	 * same EmailRenderer the real send uses, so the preview shows the actual
+	 * email markup — including the responsive CSS — rather than an approximation.
+	 *
+	 * No contact is passed, so merge tags stay unresolved; this is a layout
+	 * preview, not a per-recipient one.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function preview_email( $request ) {
+		try {
+			$body = $request->get_param( 'body' );
+
+			if ( empty( $body ) ) {
+				return new WP_Error(
+					'missing_body',
+					__( 'Email body is empty. Add content in the builder before previewing.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// The body arrives either as builder JSON ({"type":"builder","value":{...}})
+			// or as raw HTML. Only the former needs rendering.
+			$builder_data = null;
+			$decoded      = json_decode( $body, true );
+			if ( is_array( $decoded ) ) {
+				if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
+					$builder_data = $decoded['value'];
+				} elseif ( isset( $decoded['sections'] ) ) {
+					$builder_data = $decoded;
+				}
+			}
+
+			if ( null !== $builder_data ) {
+				$renderer = new EmailRenderer();
+				$html     = $renderer->render_from_builder_data( $builder_data );
+			} else {
+				// Raw HTML body — preview it as-is.
+				$html = $body;
+			}
+
+			return new WP_REST_Response( array( 'html' => $html ), 200 );
+		} catch ( \Throwable $e ) {
+			return new WP_Error(
+				'preview_failed',
+				__( 'Failed to render the preview.', 'doublescale' ),
+				array( 'status' => 500 )
+			);
+		}
+	}
+
+	/**
+	 * Send a test email for an automation step.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_test_email( $request ) {
+		try {
+			$emails = $request->get_param( 'emails' );
+
+			if ( empty( $emails ) || ! is_array( $emails ) ) {
+				return new WP_Error( 'invalid_emails', __( 'Please provide an array of email addresses', 'doublescale' ), array( 'status' => 400 ) );
+			}
+
+			$invalid_emails = array();
+			foreach ( $emails as $email ) {
+				if ( ! is_email( $email ) ) {
+					$invalid_emails[] = $email;
+				}
+			}
+
+			if ( ! empty( $invalid_emails ) ) {
+				return new WP_Error(
+					'invalid_emails',
+					sprintf(
+						/* translators: %s: comma-separated list of invalid email addresses */
+						__( 'Invalid email address(es): %s', 'doublescale' ),
+						implode( ', ', $invalid_emails )
+					),
+					array( 'status' => 400 )
+				);
+			}
+
+			$body = $request->get_param( 'body' );
+
+			if ( empty( $body ) ) {
+				return new WP_Error( 'missing_body', __( 'Email body is empty. Add content in the builder before sending a test.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+
+			$subject    = $request->get_param( 'subject' );
+			$subject    = ! empty( $subject ) ? $subject : __( 'Test Email', 'doublescale' );
+			$from_name  = $request->get_param( 'from_name' ) ?: get_option( 'blogname' );
+			$from_email = $request->get_param( 'from_email' ) ?: get_option( 'admin_email' );
+			$reply_to   = $request->get_param( 'reply_to' );
+
+			// The body arrives either as builder JSON ({"type":"builder","value":{...}})
+			// or as raw HTML. Only the former needs rendering.
+			$builder_data = null;
+			$decoded      = json_decode( $body, true );
+			if ( is_array( $decoded ) ) {
+				if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
+					$builder_data = $decoded['value'];
+				} elseif ( isset( $decoded['sections'] ) ) {
+					$builder_data = $decoded;
+				}
+			}
+
+			$sent_count    = 0;
+			$failed_count  = 0;
+			$failed_emails = array();
+			$last_detail   = '';
+
+			$attachment_paths = array();
+			if ( null !== $builder_data && ! empty( $builder_data['attachments'] ) ) {
+				$attachment_paths = EmailAttachmentResolver::resolve_paths( $builder_data['attachments'] );
+			} elseif ( $request->get_param( 'attachments' ) ) {
+				$attachment_paths = EmailAttachmentResolver::resolve_paths(
+					(array) $request->get_param( 'attachments' )
+				);
+			}
+
+			foreach ( $emails as $recipient_email ) {
+				$email_sender               = new Emails();
+				$email_sender->from_address = $from_email;
+				$email_sender->from_name    = $from_name;
+				if ( ! empty( $reply_to ) && is_email( $reply_to ) ) {
+					$email_sender->reply_to = $reply_to;
+				}
+
+				// Merge tags resolve against the recipient when they are a known contact.
+				$contact = ContactModel::get_by_email( $recipient_email ) ?? null;
+
+				if ( null !== $builder_data ) {
+					$renderer     = new EmailRenderer();
+					$body_content = $renderer->render_from_builder_data( $builder_data, $contact );
+				} else {
+					$body_content = MergeTagsManager::instance()->process_merge_tags( $body, $contact );
+				}
+
+				if ( empty( $body_content ) ) {
+					++$failed_count;
+					$failed_emails[] = $recipient_email;
+					continue;
+				}
+
+				$processed_subject = MergeTagsManager::instance()->process_merge_tags( $subject, $contact );
+				$body_content      = EmailTrackingHelper::prepare_test_email_body( $body_content, $recipient_email, $contact );
+
+				if ( $email_sender->send( $recipient_email, $processed_subject, $body_content, $attachment_paths ) ) {
+					++$sent_count;
+				} else {
+					++$failed_count;
+					$failed_emails[] = $recipient_email;
+					$detail          = Emails::get_last_send_failure_detail();
+					if ( '' !== $detail ) {
+						$last_detail = $detail;
+					}
+				}
+			}
+
+			if ( $sent_count > 0 && 0 === $failed_count ) {
+				return new WP_REST_Response(
+					array(
+						'success'    => true,
+						'message'    => sprintf(
+							/* translators: %d: number of emails sent */
+							_n(
+								'Test email sent successfully to %d recipient',
+								'Test emails sent successfully to %d recipients',
+								$sent_count,
+								'doublescale'
+							),
+							$sent_count
+						),
+						'sent_count' => $sent_count,
+					),
+					200
+				);
+			}
+
+			if ( $sent_count > 0 ) {
+				return new WP_REST_Response(
+					array(
+						'success'       => true,
+						'message'       => sprintf(
+							/* translators: 1: number of successful sends, 2: number of failures */
+							__( 'Test emails sent: %1$d succeeded, %2$d failed', 'doublescale' ),
+							$sent_count,
+							$failed_count
+						),
+						'sent_count'    => $sent_count,
+						'failed_count'  => $failed_count,
+						'failed_emails' => $failed_emails,
+					),
+					200
+				);
+			}
+
+			$message = __( 'Failed to send test email', 'doublescale' );
+			if ( '' !== $last_detail ) {
+				$message .= ' ' . $last_detail;
+			}
+
+			return new WP_Error( 'send_failed', $message, array( 'status' => 500 ) );
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+		}
 	}
 
 	/**

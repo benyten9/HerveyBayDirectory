@@ -70,6 +70,8 @@ class ProposalModel extends Model {
 		'signed_name',
 		'signature',
 		'signed_ip',
+		'sections',
+		'terms',
 	);
 
 	/**
@@ -77,6 +79,7 @@ class ProposalModel extends Model {
 	 */
 	protected $casts = array(
 		'template'        => 'int',
+		'sections'        => 'array',
 		'line_items'      => 'array',
 		'discount_value'  => 'float',
 		'subtotal'        => 'float',

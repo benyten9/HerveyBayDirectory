@@ -71,11 +71,11 @@ class Store {
 				'name'        => 'Zapier',
 				'slug'        => 'zapier',
 				'description' => __( 'Connect Plugin with Zapier to automate your CRM with 5000+ apps.', 'doublescale' ),
-				'plugin_file' => file_exists( $plugins_dir . 'doublescale-zapier/doublescale-zapier.php' )
+				'plugin_file' => file_exists( $plugins_dir . 'DoubleScale-Zapier/doublescale-zapier.php' )
 					? 'doublescale-zapier/doublescale-zapier.php'
 					: ( file_exists( $plugins_dir . 'DoubleScale-Zapier/doublescale-zapier.php' )
 						? 'DoubleScale-Zapier/doublescale-zapier.php'
-						: 'DS-Zapier/ds-zapier.php' ),
+						: 'DoubleScale-Zapier/doublescale-zapier.php' ),
 				'image'       => 'zapier/zapier.svg',
 				'plan'        => 'plus',
 			),
@@ -88,29 +88,29 @@ class Store {
 			// 'plan'        => 'basic',
 			// ),
 			'white-label'   => array(
-				'name'        => 'White Labeling',
+				'name'        => __( 'White Labeling', 'doublescale' ),
 				'slug'        => 'white-label',
 				'description' => __( 'Remove Plugin branding and replace with your own plugin name, logo, menu icon, and brand colors.', 'doublescale' ),
 				'plugin_file' => self::resolve_white_label_plugin_file( $plugins_dir ),
 				'image'       => 'white-label/white-label.svg',
 				'plan'        => 'enterprise',
 			),
-			'ai-assistant'  => array(
-				'name'        => 'AI Assistant',
-				'slug'        => 'ai-assistant',
-				'description' => __( 'AI-powered CRM assistant with chat panel, tool calling, conversation history, and MCP tools for managing contacts, deals, campaigns, and more.', 'doublescale' ),
-				'plugin_file' => self::resolve_ai_assistant_plugin_file( $plugins_dir ),
-				'image'       => 'ai-assistant/ai-assistant.svg',
-				'plan'        => 'plus',
-			),
-			'subscriptions' => array(
-				'name'        => 'Subscriptions',
-				'slug'        => 'subscriptions',
-				'description' => __( 'Recurring Stripe billing — subscribe customers to a plan, auto-charge each cycle, and record a child invoice per charge.', 'doublescale' ),
-				'plugin_file' => self::resolve_subscriptions_plugin_file( $plugins_dir ),
-				'image'       => 'subscriptions/subscriptions.svg',
-				'plan'        => 'enterprise',
-			),
+			// 'ai-assistant'  => array(
+			// 	'name'        => __( 'AI Assistant', 'doublescale' ),
+			// 	'slug'        => 'ai-assistant',
+			// 	'description' => __( 'AI-powered CRM assistant with chat panel, tool calling, conversation history, and MCP tools for managing contacts, deals, campaigns, and more.', 'doublescale' ),
+			// 	'plugin_file' => self::resolve_ai_assistant_plugin_file( $plugins_dir ),
+			// 	'image'       => 'ai-assistant/ai-assistant.svg',
+			// 	'plan'        => 'plus',
+			// ),
+			// 'subscriptions' => array(
+			// 	'name'        => __( 'Subscriptions', 'doublescale' ),
+			// 	'slug'        => 'subscriptions',
+			// 	'description' => __( 'Recurring Stripe billing — subscribe customers to a plan, auto-charge each cycle, and record a child invoice per charge.', 'doublescale' ),
+			// 	'plugin_file' => self::resolve_subscriptions_plugin_file( $plugins_dir ),
+			// 	'image'       => 'subscriptions/subscriptions.svg',
+			// 	'plan'        => 'enterprise',
+			// ),
 		);
 
 		$this->addons = apply_filters( 'doublescale_store_addons', $addons );

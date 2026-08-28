@@ -10,6 +10,7 @@ namespace DoubleScale\Modules\Documents\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Sales\Capabilities;
@@ -20,12 +21,11 @@ use DoubleScale\Modules\Documents\Constants\InvoiceStatus;
 use DoubleScale\Modules\Documents\Constants\PaymentMode;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Rest\InvoiceShaper;
+use DoubleScale\Modules\Documents\Services\DocumentSectionsSanitizer;
 use DoubleScale\Modules\Documents\Services\DocumentPdf;
-use DoubleScale\Modules\Documents\Services\DocumentCustomerDetails;
-use DoubleScale\Modules\Documents\Services\DocumentIssuerSnapshot;
 use DoubleScale\Modules\Documents\Services\DuplicateInvoice;
-use DoubleScale\Modules\Documents\Services\InvoiceNotifications;
-use DoubleScale\Modules\Documents\Services\InvoiceUrl;
+use DoubleScale\Modules\Documents\Services\SendInvoice;
+use DoubleScale\Modules\Sales\Rest\SendsDocumentViaWhatsapp;
 use DoubleScale\Modules\Sales\Services\SalesNumbering;
 use DoubleScale\Modules\Sales\Services\SalesSettings;
 use WP_Error;
@@ -37,6 +37,8 @@ use WP_REST_Server;
  * RestInvoiceController class.
  */
 class RestInvoiceController extends RestController {
+
+	use SendsDocumentViaWhatsapp;
 
 	/**
 	 * @var string
@@ -72,6 +74,18 @@ class RestInvoiceController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/send-whatsapp',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_item_whatsapp' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
@@ -255,12 +269,13 @@ class RestInvoiceController extends RestController {
 		$by_status   = array();
 
 		foreach ( $statuses as $status ) {
-			$count = (int) ( clone $query )->where( 'status', $status )->count();
-			$sum   = (float) ( clone $query )->where( 'status', $status )->sum( 'total' );
+			$count  = (int) ( clone $query )->where( 'status', $status )->count();
+			$totals = $this->sum_by_currency( clone $query, array( $status ) );
 			$by_status[ $status ] = array(
-				'count'  => $count,
-				'amount' => round( $sum, 2 ),
-				'percent' => $total_count > 0 ? round( ( $count / $total_count ) * 100, 2 ) : 0,
+				'count'              => $count,
+				'amount'             => $totals['total'],
+				'amount_by_currency' => $totals['by_currency'],
+				'percent'            => $total_count > 0 ? round( ( $count / $total_count ) * 100, 2 ) : 0,
 			);
 		}
 
@@ -294,7 +309,6 @@ class RestInvoiceController extends RestController {
 	 * @return array{total: float, by_currency: array<string, float>}
 	 */
 	private function sum_by_currency( $query, array $statuses ): array {
-		$total       = 0.0;
 		$by_currency = array();
 
 		foreach ( $query->whereIn( 'status', $statuses )->get() as $invoice ) {
@@ -303,7 +317,6 @@ class RestInvoiceController extends RestController {
 				continue;
 			}
 			$currency = \DoubleScale\Core\Settings\Settings::document_currency( $invoice->currency, $invoice->sent_at );
-			$total   += $amount;
 			if ( ! isset( $by_currency[ $currency ] ) ) {
 				$by_currency[ $currency ] = 0.0;
 			}
@@ -314,8 +327,11 @@ class RestInvoiceController extends RestController {
 			$by_currency[ $code ] = round( (float) $value, 2 );
 		}
 
+		$global = \DoubleScale\Core\Services\CurrencyResolver::global_currency();
+
 		return array(
-			'total'       => round( $total, 2 ),
+			// Scalar is the global bucket only — never add EUR to USD.
+			'total'       => $by_currency[ $global ] ?? 0.0,
 			'by_currency' => $by_currency,
 		);
 	}
@@ -408,6 +424,13 @@ class RestInvoiceController extends RestController {
 		$payload = $this->sanitize_payload( $request, false );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
+		}
+
+		if ( array_key_exists( 'currency', $payload ) ) {
+			$locked = DocumentCurrency::reject_if_locked( $invoice, $payload['currency'], true );
+			if ( is_wp_error( $locked ) ) {
+				return $locked;
+			}
 		}
 
 		$discount_check = DiscountType::validate_payload( $payload, $invoice );
@@ -598,16 +621,64 @@ class RestInvoiceController extends RestController {
 			return $forbidden;
 		}
 
+		$params = $request->get_json_params();
+		if ( ! is_array( $params ) ) {
+			$params = $request->get_params();
+		}
+		$message = isset( $params['message'] ) ? sanitize_textarea_field( (string) $params['message'] ) : '';
+
+		$channel = isset( $params['channel'] ) ? sanitize_key( (string) $params['channel'] ) : 'email';
+
+		// Preconditions, delivery, status advance, snapshot freezes, activity
+		// row, and hook all live in SendInvoice so the MCP ability performs an
+		// identical send. See SendInvoice for why this is not just "send mail".
+		$sent = SendInvoice::send( $invoice, $message, $channel );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'sent'    => true,
+				'invoice' => InvoiceShaper::shape( $sent->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Prepare or perform a WhatsApp share for an invoice.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_item_whatsapp( $request ) {
+		$disabled = $this->require_module( 'documents' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
+		$invoice = InvoiceModel::with( array( 'contact', 'sale_agent', 'proposal' ) )->find( (int) $request->get_param( 'id' ) );
+		if ( ! $invoice ) {
+			return new WP_Error( 'not_found', __( 'Invoice not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$forbidden = $this->require_ownership( $invoice );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
+
 		if ( InvoiceStatus::PAID === (string) $invoice->status ) {
 			return new WP_Error( 'invalid_status', __( 'Paid invoices cannot be sent.', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
-		if ( '' === InvoiceUrl::get_page_url() ) {
-			return new WP_Error(
-				'no_invoice_page',
-				__( 'Create a WordPress page with the [doublescale_invoice] shortcode before sending invoices.', 'doublescale' ),
-				array( 'status' => 400 )
-			);
+		$no_page = $this->require_public_page(
+			'invoice',
+			'no_invoice_page',
+			__( 'Create a WordPress page with the [doublescale_invoice] shortcode before sending invoices.', 'doublescale' )
+		);
+		if ( $no_page ) {
+			return $no_page;
 		}
 
 		$gate = apply_filters( 'doublescale_sales_send_gate', null, 'invoice', $invoice );
@@ -615,37 +686,29 @@ class RestInvoiceController extends RestController {
 			return $gate;
 		}
 
-		$params = $request->get_json_params();
-		if ( ! is_array( $params ) ) {
-			$params = $request->get_params();
-		}
-		$message = isset( $params['message'] ) ? sanitize_textarea_field( (string) $params['message'] ) : '';
+		$params  = $this->read_whatsapp_params( $request );
+		$payload = $this->build_whatsapp_payload( $invoice, 'invoice', $params );
 
-		$notifier = new InvoiceNotifications();
-		if ( ! $notifier->send_invoice( $invoice, $message ) ) {
-			return new WP_Error(
-				'email_failed',
-				__( 'Failed to send the invoice email. Check the customer email and SMTP settings.', 'doublescale' ),
-				array( 'status' => 500 )
-			);
+		if ( 'auto' !== $params['mode'] ) {
+			return new WP_REST_Response( $this->whatsapp_link_response( $payload ), 200 );
 		}
 
-		if ( InvoiceStatus::DRAFT === (string) $invoice->status ) {
-			$invoice->status = InvoiceStatus::UNPAID;
+		$sent = $this->dispatch_whatsapp_auto( $invoice, 'invoice', $payload );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
 		}
-		DocumentCustomerDetails::snapshot_billing_from_contact( $invoice );
-		DocumentIssuerSnapshot::freeze_if_needed( $invoice );
-		$invoice->sent_at = current_time( 'mysql' );
-		$invoice->save();
 
-		$this->log_invoice_sent( $invoice, $message );
-
-		do_action( 'doublescale_sales_invoice_sent', $invoice, $message );
+		// The message is already delivered by this point; the 'whatsapp' channel
+		// tells SendInvoice to record the send without dispatching mail.
+		$recorded = SendInvoice::send( $invoice, $params['message'], 'whatsapp' );
+		if ( is_wp_error( $recorded ) ) {
+			return $recorded;
+		}
 
 		return new WP_REST_Response(
 			array(
 				'sent'    => true,
-				'invoice' => InvoiceShaper::shape( $invoice->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ),
+				'invoice' => InvoiceShaper::shape( $recorded->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ),
 			),
 			200
 		);
@@ -671,7 +734,7 @@ class RestInvoiceController extends RestController {
 			return $forbidden;
 		}
 
-		return $this->stream_pdf_response( InvoiceShaper::shape( $invoice, true ), 'invoice', (string) $invoice->invoice_number );
+		return $this->stream_pdf_response( InvoiceShaper::shape_for_render( $invoice ), 'invoice', (string) $invoice->invoice_number );
 	}
 
 	/**
@@ -682,41 +745,6 @@ class RestInvoiceController extends RestController {
 	 */
 	private function stream_pdf_response( array $shaped, string $type, string $filename ) {
 		return DocumentPdf::rest_response( $shaped, $type, $filename );
-	}
-
-	/**
-	 * @param InvoiceModel $invoice Invoice.
-	 * @param string       $message Optional custom message.
-	 * @return void
-	 */
-	private function log_invoice_sent( InvoiceModel $invoice, string $message = '' ): void {
-		if ( ! class_exists( ActivityModel::class ) ) {
-			return;
-		}
-
-		$note = sprintf(
-			/* translators: %s: invoice number */
-			__( 'Invoice %s sent to customer.', 'doublescale' ),
-			(string) $invoice->invoice_number
-		);
-		if ( '' !== trim( $message ) ) {
-			$note .= ' — ' . $message;
-		}
-
-		ActivityModel::create(
-			array(
-				'contact_id'    => (int) $invoice->contact_id,
-				'activity_type' => ActivityTypes::EMAIL_SENT,
-				'data'          => array(
-					'title'      => __( 'Invoice sent', 'doublescale' ),
-					'type'       => 'system',
-					'note'       => $note,
-					'invoice_id' => (int) $invoice->id,
-				),
-				'user_id'       => get_current_user_id() ?: null,
-			)
-		);
-		// TODO(morph): wire proposal/invoice associations (ENTITY_TYPE_INVOICE).
 	}
 
 	/**
@@ -786,7 +814,6 @@ class RestInvoiceController extends RestController {
 
 		$string_fields = array(
 			'status',
-			'currency',
 			'discount_type',
 			'invoice_date',
 			'due_date',
@@ -798,12 +825,22 @@ class RestInvoiceController extends RestController {
 
 		foreach ( $string_fields as $field ) {
 			if ( array_key_exists( $field, $params ) ) {
-				if ( in_array( $field, array( 'billing_address', 'shipping_address', 'client_note', 'terms' ), true ) ) {
+				if ( in_array( $field, array( 'billing_address', 'shipping_address' ), true ) ) {
 					$payload[ $field ] = sanitize_textarea_field( (string) $params[ $field ] );
+				} elseif ( in_array( $field, array( 'client_note', 'terms' ), true ) ) {
+					$payload[ $field ] = wp_kses_post( (string) $params[ $field ] );
 				} else {
 					$payload[ $field ] = sanitize_text_field( (string) $params[ $field ] );
 				}
 			}
+		}
+
+		if ( array_key_exists( 'currency', $params ) ) {
+			$currency = DocumentCurrency::sanitize_input( $params['currency'] );
+			if ( is_wp_error( $currency ) ) {
+				return $currency;
+			}
+			$payload['currency'] = $currency;
 		}
 
 		if ( array_key_exists( 'contact_id', $params ) ) {
@@ -827,6 +864,10 @@ class RestInvoiceController extends RestController {
 		}
 		if ( array_key_exists( 'line_items', $params ) && is_array( $params['line_items'] ) ) {
 			$payload['line_items'] = $params['line_items'];
+		}
+
+		if ( array_key_exists( 'sections', $params ) && is_array( $params['sections'] ) ) {
+			$payload['sections'] = DocumentSectionsSanitizer::sanitize( $params['sections'] );
 		}
 
 		if ( array_key_exists( 'template', $params ) ) {

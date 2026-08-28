@@ -39,7 +39,7 @@ class WorkflowRunsTable extends Migration {
 		next_retry_at datetime NULL,
 		created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		PRIMARY KEY  (id),
-		UNIQUE KEY uq_idempotency (idempotency_key),
+		UNIQUE KEY uq_idempotency (idempotency_key(191)),
 		KEY idx_booking_event (booking_id, event_name),
 		KEY idx_status (status),
 		KEY idx_retry (status, next_retry_at)';

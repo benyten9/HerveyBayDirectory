@@ -255,6 +255,7 @@ class RestAbandonedCartController extends RestController {
 			}
 
 			$total_cart    = AbandonedCartModel::count();
+			// WooCommerce carts share one store currency — summing `total` is safe.
 			$total_revenue = AbandonedCartModel::where( 'order_id', '>', 0 )->sum( 'total' );
 
 			$analytics = array(

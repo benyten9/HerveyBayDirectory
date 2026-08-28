@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 if(isset($_POST['perfmatters_apply_defaults'])) {
 	check_admin_referer('perfmatters-network-apply');
 	if(isset($_POST['perfmatters_network_apply_blog']) && is_numeric($_POST['perfmatters_network_apply_blog'])) {

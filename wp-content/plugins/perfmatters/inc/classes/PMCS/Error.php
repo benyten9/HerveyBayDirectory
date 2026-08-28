@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\PMCS;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class Error
 {
     private static $previous_handler = null;

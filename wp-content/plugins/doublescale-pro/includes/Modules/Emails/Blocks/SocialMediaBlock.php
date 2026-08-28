@@ -111,7 +111,12 @@ class SocialMediaBlock extends EmailBlock {
 					'enabled' => false,
 					'link'    => '',
 				),
+				'whatsapp'   => array(
+					'enabled' => false,
+					'link'    => '',
+				),
 			),
+			'customIcons'   => array(),
 			'platformOrder' => array(
 				'facebook',
 				'x',
@@ -129,6 +134,7 @@ class SocialMediaBlock extends EmailBlock {
 				'medium',
 				'discord',
 				'linkedin',
+				'whatsapp',
 			),
 			'iconSize'  => 'medium',
 			'align'     => 'center',
@@ -154,6 +160,15 @@ class SocialMediaBlock extends EmailBlock {
 	public function render( array $props, $contact = null ): string {
 		// Merge with default props
 		$props = wp_parse_args( $props, $this->get_default_props() );
+		$props['platforms'] = wp_parse_args(
+			isset( $props['platforms'] ) && is_array( $props['platforms'] ) ? $props['platforms'] : array(),
+			$this->get_default_props()['platforms']
+		);
+		if ( ! isset( $props['customIcons'] ) || ! is_array( $props['customIcons'] ) ) {
+			$props['customIcons'] = array();
+		}
+
+		$props = $this->normalize_social_block_props( $props );
 
 		// Container styles (matching frontend)
 		$container_style = $this->build_style_string(
@@ -181,12 +196,22 @@ class SocialMediaBlock extends EmailBlock {
 		}
 
 		// Find enabled platforms (matching frontend)
-		// Frontend only checks enabled, not link (uses '#' as fallback)
 		$enabled_platforms = array();
 		foreach ( $props['platforms'] as $platform => $data ) {
-			if ( ! empty( $data['enabled'] ) ) {
-				$enabled_platforms[ $platform ] = $data;
+			if ( 'custom' === $platform ) {
+				continue;
 			}
+			if ( empty( $data['enabled'] ) ) {
+				continue;
+			}
+			$enabled_platforms[ $platform ] = $data;
+		}
+
+		foreach ( $props['customIcons'] as $custom_icon ) {
+			if ( empty( $custom_icon['id'] ) || empty( $custom_icon['enabled'] ) || empty( $custom_icon['iconUrl'] ) ) {
+				continue;
+			}
+			$enabled_platforms[ 'custom:' . $custom_icon['id'] ] = $custom_icon;
 		}
 
 		if ( empty( $enabled_platforms ) ) {
@@ -234,13 +259,21 @@ class SocialMediaBlock extends EmailBlock {
 			// Use link if provided, otherwise use '#' as fallback (matching frontend)
 			$link = ! empty( $data['link'] ) ? $this->process_merge_tags( $data['link'], $contact ) : '#';
 
-			$icon_url = $this->get_social_icon_url(
-				$platform,
-				$icon_size,
-				$props['shape'],
-				$props['colorMode'] === 'original',
-				$props['color']
-			);
+			if ( 0 === strpos( $platform, 'custom:' ) ) {
+				$icon_url = $this->escape_image_src( $data['iconUrl'] ?? '' );
+				$alt      = esc_attr__( 'Custom', 'doublescale' );
+			} else {
+				$icon_url = $this->escape_image_src(
+					$this->get_social_icon_url(
+						$platform,
+						$icon_size,
+						$props['shape'],
+						$props['colorMode'] === 'original',
+						$props['color']
+					)
+				);
+				$alt = esc_attr( $platform );
+			}
 
 			// Calculate padding: 8px on each side for 16px gap, but no padding on outer edges
 			$is_first = ( $platform_index === 0 );
@@ -253,7 +286,7 @@ class SocialMediaBlock extends EmailBlock {
 
 			$html .= "<td align=\"center\" valign=\"middle\" style=\"{$cell_style}\">
 				<a href=\"{$link}\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"display:inline-block;text-decoration:none;line-height:0;\">
-					<img src=\"{$icon_url}\" alt=\"{$platform}\" width=\"{$icon_size}\" height=\"{$icon_size}\" style=\"border-radius:{$border_radius};border:0;display:block;\" />
+					<img src=\"{$icon_url}\" alt=\"{$alt}\" width=\"{$icon_size}\" height=\"{$icon_size}\" style=\"border-radius:{$border_radius};border:0;display:block;\" />
 				</a>
 			</td>";
 
@@ -297,5 +330,100 @@ class SocialMediaBlock extends EmailBlock {
 
 		$filename = "{$platform}-{$shape}-{$size}.png";
 		return DOUBLESCALE_PRO_PLUGIN_URL . 'assets/social-icons/' . $filename;
+	}
+
+	/**
+	 * Normalize custom icons and migrate legacy single-custom data.
+	 *
+	 * @param array $props Block properties.
+	 * @return array
+	 */
+	private function normalize_social_block_props( array $props ) {
+		$custom_icons = array();
+		$seen_ids     = array();
+
+		foreach ( $props['customIcons'] as $icon ) {
+			if ( empty( $icon['id'] ) || isset( $seen_ids[ $icon['id'] ] ) ) {
+				continue;
+			}
+			$seen_ids[ $icon['id'] ] = true;
+			$custom_icons[]          = array(
+				'id'      => (string) $icon['id'],
+				'enabled' => ! empty( $icon['enabled'] ),
+				'link'    => isset( $icon['link'] ) ? (string) $icon['link'] : '',
+				'iconUrl' => isset( $icon['iconUrl'] ) ? (string) $icon['iconUrl'] : '',
+			);
+		}
+
+		$legacy_custom = $props['platforms']['custom'] ?? null;
+		if (
+			is_array( $legacy_custom )
+			&& (
+				! empty( $legacy_custom['enabled'] )
+				|| ! empty( $legacy_custom['link'] )
+				|| ! empty( $legacy_custom['iconUrl'] )
+			)
+			&& ! isset( $seen_ids['legacy-custom'] )
+		) {
+			$custom_icons[] = array(
+				'id'      => 'legacy-custom',
+				'enabled' => ! empty( $legacy_custom['enabled'] ),
+				'link'    => isset( $legacy_custom['link'] ) ? (string) $legacy_custom['link'] : '',
+				'iconUrl' => isset( $legacy_custom['iconUrl'] ) ? (string) $legacy_custom['iconUrl'] : '',
+			);
+			$seen_ids['legacy-custom'] = true;
+
+			if ( is_array( $props['platformOrder'] ) ) {
+				$props['platformOrder'] = array_map(
+					static function ( $key ) {
+						return 'custom' === $key ? 'custom:legacy-custom' : $key;
+					},
+					$props['platformOrder']
+				);
+			}
+		}
+
+		$props['customIcons'] = $custom_icons;
+
+		if ( ! is_array( $props['platformOrder'] ) ) {
+			$props['platformOrder'] = $this->get_default_props()['platformOrder'];
+		}
+
+		$order          = array();
+		$seen_order     = array();
+		$allowed_custom = array();
+		foreach ( $custom_icons as $icon ) {
+			$allowed_custom[ 'custom:' . $icon['id'] ] = true;
+		}
+
+		foreach ( $props['platformOrder'] as $key ) {
+			if ( isset( $seen_order[ $key ] ) ) {
+				continue;
+			}
+			if ( isset( $props['platforms'][ $key ] ) || isset( $allowed_custom[ $key ] ) || 'custom' === $key ) {
+				$seen_order[ $key ] = true;
+				$order[]              = $key;
+			}
+		}
+
+		foreach ( array_keys( $props['platforms'] ) as $key ) {
+			if ( 'custom' === $key || isset( $seen_order[ $key ] ) ) {
+				continue;
+			}
+			$order[]              = $key;
+			$seen_order[ $key ] = true;
+		}
+
+		foreach ( array_keys( $allowed_custom ) as $key ) {
+			if ( isset( $seen_order[ $key ] ) ) {
+				continue;
+			}
+			$order[]            = $key;
+			$seen_order[ $key ] = true;
+		}
+
+		$props['platformOrder'] = $order;
+
+		return $props;
 	}
 }

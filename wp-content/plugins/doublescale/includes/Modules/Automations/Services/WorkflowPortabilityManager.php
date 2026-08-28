@@ -46,6 +46,14 @@ final class WorkflowPortabilityManager {
 	const ENVELOPE_KEY = '_doublescale_workflow';
 
 	/**
+	 * Bulk envelope marker key. Its presence identifies a file as a DoubleScale
+	 * multi-workflow export produced by {@see self::export_bulk()}.
+	 *
+	 * @var string
+	 */
+	const BULK_ENVELOPE_KEY = '_doublescale_workflows';
+
+	/**
 	 * Current export format version. Bumped when the envelope / workflow shape
 	 * changes in a backward-incompatible way so import can refuse newer files.
 	 *
@@ -165,6 +173,14 @@ final class WorkflowPortabilityManager {
 	 */
 	public function import( $payload ) {
 		if ( ! is_array( $payload ) || empty( $payload[ self::ENVELOPE_KEY ] ) || ! isset( $payload['workflow'] ) || ! is_array( $payload['workflow'] ) ) {
+			if ( is_array( $payload ) && ! empty( $payload[ self::BULK_ENVELOPE_KEY ] ) ) {
+				return new WP_Error(
+					'invalid_workflow_file',
+					__( 'This is a bulk workflow export. Please use the Import button and select the bulk export file.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+
 			return new WP_Error(
 				'invalid_workflow_file',
 				__( 'This file is not a valid DoubleScale workflow export.', 'doublescale' ),
@@ -223,6 +239,185 @@ final class WorkflowPortabilityManager {
 		$this->import_steps( (int) $automation->id, $steps );
 
 		return $automation;
+	}
+
+	/**
+	 * Export multiple workflows to a portable bulk envelope.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int[] $ids Automation IDs.
+	 *
+	 * @return array|WP_Error The bulk envelope, or WP_Error when no workflows could be exported.
+	 */
+	public function export_bulk( array $ids ) {
+		$workflows = array();
+		$errors    = array();
+
+		foreach ( $ids as $id ) {
+			$id     = (int) $id;
+			$result = $this->export( $id );
+
+			if ( is_wp_error( $result ) ) {
+				$errors[] = array(
+					'id'      => $id,
+					'message' => $result->get_error_message(),
+				);
+				continue;
+			}
+
+			$workflows[] = $result;
+		}
+
+		if ( empty( $workflows ) ) {
+			return new WP_Error(
+				'workflow_export_failed',
+				__( 'No workflows could be exported.', 'doublescale' ),
+				array(
+					'status' => 400,
+					'errors' => $errors,
+				)
+			);
+		}
+
+		return array(
+			self::BULK_ENVELOPE_KEY => true,
+			'format_version'        => self::FORMAT_VERSION,
+			'exported_from'         => get_site_url(),
+			'exported_at'           => gmdate( 'c' ),
+			'workflows'             => $workflows,
+			'errors'                => $errors,
+		);
+	}
+
+	/**
+	 * Import one or more workflows from a bulk envelope or a list of envelopes.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $payload Decoded bulk envelope, list of envelopes, or single envelope.
+	 *
+	 * @return array{results: array<int, AutomationModel>, errors: array<int, array{name?: string, message: string}>}
+	 */
+	public function import_bulk( $payload ) {
+		$envelopes = $this->normalize_bulk_payload( $payload );
+
+		if ( empty( $envelopes ) ) {
+			return array(
+				'results' => array(),
+				'errors'  => array(
+					array(
+						'message' => __( 'This file is not a valid DoubleScale workflow export.', 'doublescale' ),
+					),
+				),
+			);
+		}
+
+		$results = array();
+		$errors  = array();
+
+		foreach ( $envelopes as $envelope ) {
+			$name = $this->get_workflow_name_from_envelope( $envelope );
+			$result = $this->import( $envelope );
+
+			if ( is_wp_error( $result ) ) {
+				$errors[] = array(
+					'name'    => $name,
+					'message' => $result->get_error_message(),
+				);
+				continue;
+			}
+
+			$results[] = $result;
+		}
+
+		return array(
+			'results' => $results,
+			'errors'  => $errors,
+		);
+	}
+
+	/**
+	 * Normalize a bulk import payload into a list of single-workflow envelopes.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed $payload Import payload.
+	 *
+	 * @return array<int, array>
+	 */
+	private function normalize_bulk_payload( $payload ) {
+		if ( ! is_array( $payload ) ) {
+			return array();
+		}
+
+		if ( ! empty( $payload[ self::BULK_ENVELOPE_KEY ] ) && isset( $payload['workflows'] ) && is_array( $payload['workflows'] ) ) {
+			return array_values(
+				array_filter(
+					$payload['workflows'],
+					static function ( $envelope ) {
+						return is_array( $envelope );
+					}
+				)
+			);
+		}
+
+		if ( isset( $payload['workflows'] ) && is_array( $payload['workflows'] ) && ! $this->is_single_workflow_envelope( $payload ) ) {
+			return array_values(
+				array_filter(
+					$payload['workflows'],
+					array( $this, 'is_single_workflow_envelope' )
+				)
+			);
+		}
+
+		if ( $this->is_single_workflow_envelope( $payload ) ) {
+			return array( $payload );
+		}
+
+		$envelopes = array();
+
+		foreach ( $payload as $item ) {
+			if ( is_array( $item ) && $this->is_single_workflow_envelope( $item ) ) {
+				$envelopes[] = $item;
+			}
+		}
+
+		return $envelopes;
+	}
+
+	/**
+	 * Whether a payload is a single-workflow export envelope.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $payload Payload to inspect.
+	 *
+	 * @return bool
+	 */
+	private function is_single_workflow_envelope( array $payload ) {
+		return ! empty( $payload[ self::ENVELOPE_KEY ] )
+			&& isset( $payload['workflow'] )
+			&& is_array( $payload['workflow'] );
+	}
+
+	/**
+	 * Best-effort workflow name from an export envelope (for error reporting).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $envelope Single-workflow envelope.
+	 *
+	 * @return string|null
+	 */
+	private function get_workflow_name_from_envelope( array $envelope ) {
+		if ( ! isset( $envelope['workflow']['automation']['name'] ) ) {
+			return null;
+		}
+
+		$name = trim( (string) $envelope['workflow']['automation']['name'] );
+
+		return '' !== $name ? $name : null;
 	}
 
 	/**
@@ -302,7 +497,11 @@ final class WorkflowPortabilityManager {
 				'action'        => isset( $step['action'] ) ? (string) $step['action'] : '',
 				'type'          => isset( $step['type'] ) ? (string) $step['type'] : '',
 				'condition'     => isset( $step['condition'] ) ? (string) $step['condition'] : '',
-				'status'        => 'active',
+				// Preserve a disabled step's off state across export/import; any
+				// other incoming status falls back to active.
+				'status'        => ( isset( $step['status'] ) && AutomationStepModel::STATUS_DISABLED === $step['status'] )
+					? AutomationStepModel::STATUS_DISABLED
+					: AutomationStepModel::STATUS_ACTIVE,
 				'settings'      => $settings,
 				'order'         => (int) ( $step['order'] ?? 1 ),
 			)

@@ -187,8 +187,13 @@ class Email {
 
 			// Skip click tracking for failed outbound emails — redirect to original URL if valid, otherwise home.
 			if ( $this->is_failed_outbound( $tracking_entry ) ) {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- public click redirect; urldecode must run before sanitize_text_field, and the URL is validated via preg_match below.
-				$fallback = isset( $_GET['original'] ) ? esc_url_raw( sanitize_text_field( urldecode( wp_unslash( $_GET['original'] ) ) ) ) : '';
+				// NOTE: esc_url_raw() is the sanitizer here, NOT sanitize_text_field().
+				// sanitize_text_field() strips percent-encoded octets, which silently
+				// corrupts legitimate destinations (e.g. %20 in a path, %25 in a query).
+				// esc_url_raw() preserves them, and the https?:// check below is what
+				// actually blocks javascript:/data: open redirects.
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- public click redirect; sanitized via esc_url_raw() and validated via preg_match below.
+				$fallback = isset( $_GET['original'] ) ? esc_url_raw( urldecode( wp_unslash( $_GET['original'] ) ) ) : '';
 				if ( empty( $fallback ) || ! preg_match( '#^https?://#i', $fallback ) ) {
 					$fallback = home_url();
 				}
@@ -226,8 +231,11 @@ class Email {
 				}
 			}
 
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- urldecode must happen before sanitize_text_field; public click-redirect handler.
-			$original_url = sanitize_text_field( urldecode( wp_unslash( $_GET['original'] ) ) );
+			// Decode only; esc_url_raw() below is the sanitizer. sanitize_text_field()
+			// must NOT be used on a URL — it strips percent-encoded octets and would
+			// turn https://x/a%20b into https://x/ab.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- public click-redirect handler; sanitized via esc_url_raw() and validated via preg_match below.
+			$original_url = urldecode( wp_unslash( $_GET['original'] ) );
 
 			// Handle broken unsubscribe merge tags (e.g., "unsubscribe_link}}" from unprocessed {{contact:unsubscribe_link}})
 			if ( strpos( $original_url, 'unsubscribe_link' ) !== false || strpos( $original_url, '{{contact:' ) !== false ) {
@@ -249,6 +257,17 @@ class Email {
 			$original_url = esc_url_raw( $original_url );
 			if ( empty( $original_url ) || ! preg_match( '#^https?://#i', $original_url ) ) {
 				$original_url = home_url();
+			}
+
+			// Link triggers need track-id to identify the contact; carry it through when
+			// the original URL was wrapped by generic email click tracking.
+			if ( false !== strpos( $original_url, 'doublescale-link-trigger' ) ) {
+				$original_url = add_query_arg(
+					array(
+						'track-id' => $hash_key,
+					),
+					$original_url
+				);
 			}
 
 			\doublescale_safe_redirect( $original_url );

@@ -51,7 +51,7 @@ final class VersionManager {
 	 *
 	 * @var array
 	 */
-	private static $live_statuses = array( 'active', 'draft' );
+	private static $live_statuses = array( 'active', 'draft', 'disabled' );
 
 	/**
 	 * When true, snapshotting is suppressed. Set while a restore is in

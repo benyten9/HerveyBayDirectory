@@ -18,8 +18,10 @@ use DoubleScale\Modules\Automations\Engine\StepNavigator;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Automations\Services\ActionsManager;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
+use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Core\PluginKernel;
 use DoubleScale\Modules\Automations\Conditions\Process as Process_Conditions;
+use DoubleScale\Modules\Automations\Support\ConditionSettings;
 
 /**
  * Process Automation
@@ -41,6 +43,13 @@ class ProcessAutomation {
 	public $args = array();
 
 	/**
+	 * Whether this run is a manual test (skips delays, bypasses single-run guard).
+	 *
+	 * @var bool
+	 */
+	private $test_mode = false;
+
+	/**
 	 * Start time of automation processing
 	 *
 	 * @var float|null
@@ -56,8 +65,9 @@ class ProcessAutomation {
 	 * @param array           $args
 	 */
 	public function __construct( AutomationModel $automation, $args = array() ) {
-		$this->automation = $automation;
-		$this->args       = $args;
+		$this->automation  = $automation;
+		$this->args        = $args;
+		$this->test_mode   = ! empty( $args['test_mode'] );
 	}
 
 	/**
@@ -65,12 +75,12 @@ class ProcessAutomation {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return void
+	 * @return AutomationContactModel|false
 	 */
 	public function start() {
 		$automation_contact = $this->add_contact();
 		if ( ! $automation_contact ) {
-			return;
+			return false;
 		}
 
 		$first_step = $this->automation->get_first_step();
@@ -78,6 +88,33 @@ class ProcessAutomation {
 		if ( $first_step ) {
 			$this->enqueue_step( $first_step->id, $automation_contact->id );
 		}
+
+		return $automation_contact;
+	}
+
+	/**
+	 * Whether the current or given automation-contact run is a manual test.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param AutomationContactModel|null $automation_contact Automation contact row.
+	 *
+	 * @return bool
+	 */
+	private function is_test_mode( $automation_contact = null ) {
+		if ( $this->test_mode ) {
+			return true;
+		}
+
+		if ( $automation_contact ) {
+			$data = $automation_contact->data ?? array();
+			if ( ! is_array( $data ) ) {
+				$data = array();
+			}
+			return ! empty( $data['_test_run'] );
+		}
+
+		return false;
 	}
 
 	/**
@@ -113,6 +150,14 @@ class ProcessAutomation {
 	 * @return void
 	 */
 	public function process_step( $step, $automation_contact_id ) {
+
+		// The step may have been disabled after this contact was enqueued on it.
+		// Skip it and move the contact along rather than running an action the
+		// user has switched off, or stalling the contact here forever.
+		if ( AutomationStepModel::STATUS_DISABLED === $step->status ) {
+			$this->skip_disabled_step( $step, $automation_contact_id );
+			return;
+		}
 
 		// If this step has a parent_id > 0, it's a child of a condition step
 		// We need to verify that the parent condition has been processed first
@@ -194,6 +239,21 @@ class ProcessAutomation {
 		try {
 			$automation_contact = AutomationContactModel::findOrFail( $automation_contact_id );
 			$action             = ActionsManager::instance()->get_action( $step->action );
+			$test_mode          = $this->is_test_mode( $automation_contact );
+			$is_delay           = 'delay' === $step->type || ( isset( $action->group ) && 'delay' === $action->group );
+
+			if ( $test_mode && $is_delay ) {
+				$next_step = $this->get_next_step( $step );
+				$this->add_automation_contact_process( $step, $automation_contact->contact_id, $automation_contact->id, 'completed' );
+
+				if ( $next_step ) {
+					$this->enqueue_step( $next_step->id, $automation_contact->id );
+				} else {
+					$this->update_automation_contact_status( $automation_contact, 'completed', $step->id, 0 );
+				}
+				return;
+			}
+
 			if ( $action->is_pro ) {
 				$result = true;
 			} else {
@@ -248,6 +308,46 @@ class ProcessAutomation {
 	}
 
 	/**
+	 * Advance a contact past a step that was disabled while the contact sat on it.
+	 *
+	 * No process record is written and no action runs: the step is treated as if
+	 * it were not part of the workflow. StepNavigator already skips disabled
+	 * steps, so the contact lands on the next active step, or completes the
+	 * automation when none remains.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object $step                  Automation Step.
+	 * @param int    $automation_contact_id Automation Contact ID.
+	 *
+	 * @return void
+	 */
+	private function skip_disabled_step( $step, $automation_contact_id ) {
+		try {
+			$automation_contact = AutomationContactModel::findOrFail( $automation_contact_id );
+			$next_step          = $this->get_next_step( $step );
+
+			if ( $next_step ) {
+				$this->enqueue_step( $next_step->id, $automation_contact->id );
+			} else {
+				$this->update_automation_contact_status( $automation_contact, 'completed', $step->id, 0 );
+			}
+		} catch ( Exception $e ) {
+			doublescale_get_logger()->error(
+				\__( 'Skip Disabled Step Error', 'doublescale' ),
+				array(
+					'code'  => 'skip_disabled_step',
+					'error' => array(
+						'message' => $e->getMessage(),
+						'code'    => $e->getCode(),
+						'data'    => $e->getTrace(),
+					),
+				)
+			);
+		}
+	}
+
+	/**
 	 * Process Condition
 	 *
 	 * @since 1.0.0
@@ -260,7 +360,7 @@ class ProcessAutomation {
 	public function process_condition( $step, $automation_contact_id ) {
 		try {
 			$automation_contact = AutomationContactModel::findOrFail( $automation_contact_id );
-			$conditions         = $step->settings;
+			$conditions         = ConditionSettings::get_rule_groups( $step->settings );
 			$result             = new Process_Conditions( $automation_contact, $conditions );
 			$check              = $result->check();
 
@@ -303,7 +403,7 @@ class ProcessAutomation {
 	 */
 	public function process_yes_steps( $step, $automation_contact ) {
 		$first_yes_step = $automation_contact->automation->steps()
-			->where( 'status', 'active' )
+			->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 			->where( 'parent_id', $step->id )
 			->where( 'condition', 'yes' )
 			->orderBy( 'order', 'asc' )
@@ -334,7 +434,7 @@ class ProcessAutomation {
 	 */
 	public function process_no_steps( $step, $automation_contact ) {
 		$first_no_step = $automation_contact->automation->steps()
-			->where( 'status', 'active' )
+			->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 			->where( 'parent_id', $step->id )
 			->where( 'condition', 'no' )
 			->orderBy( 'order', 'asc' )

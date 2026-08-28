@@ -218,7 +218,7 @@ class VideoBlock extends EmailBlock {
 
 		// Escape URLs for HTML attributes
 		$video_url_escaped = esc_url( $video_url );
-		$image_url_escaped = esc_url( $image_url );
+		$image_url_escaped = $this->escape_image_src( $image_url );
 		$alt_text_escaped  = esc_attr( $alt_text );
 
 		// Use a table-based approach for email compatibility

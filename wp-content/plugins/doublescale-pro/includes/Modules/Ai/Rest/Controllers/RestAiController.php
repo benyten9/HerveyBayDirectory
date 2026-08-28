@@ -1904,7 +1904,9 @@ PROMPT;
 					'medium'     => array( 'enabled' => false, 'link' => '' ),
 					'spotify'    => array( 'enabled' => false, 'link' => '' ),
 					'discord'    => array( 'enabled' => false, 'link' => '' ),
+					'whatsapp'   => array( 'enabled' => false, 'link' => '' ),
 				),
+				'customIcons' => array(),
 				'iconSize'  => 'medium',
 				'align'     => 'center',
 				'shape'     => 'rounded',
@@ -1996,6 +1998,9 @@ PROMPT;
 					}
 				} else {
 					$block['props']['platforms'] = $default_platforms;
+				}
+				if ( ! isset( $block['props']['customIcons'] ) || ! is_array( $block['props']['customIcons'] ) ) {
+					$block['props']['customIcons'] = array();
 				}
 				$valid_sizes = array( 'small', 'medium', 'large' );
 				if ( ! in_array( $block['props']['iconSize'] ?? '', $valid_sizes, true ) ) {

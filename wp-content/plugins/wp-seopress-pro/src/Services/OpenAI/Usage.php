@@ -739,7 +739,7 @@ class Usage {
 
 		switch ( $provider ) {
 			case 'openai':
-				return 'gpt-5.2-chat-latest';
+				return 'gpt-5.6-terra';
 			case 'deepseek':
 				return 'deepseek-v4-flash';
 			case 'gemini':
@@ -751,7 +751,7 @@ class Usage {
 			case 'seopress':
 				return 'openai/gpt-4.1';
 			default:
-				return 'gpt-5.2-chat-latest';
+				return 'gpt-5.6-terra';
 		}
 	}
 }

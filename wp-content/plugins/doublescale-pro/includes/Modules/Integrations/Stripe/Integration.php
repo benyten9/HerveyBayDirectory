@@ -36,7 +36,18 @@ class Integration extends Integration_Abstract {
 
 	public $description = 'Accept credit-card payments through Stripe. Used by the booking module for paid events; available CRM-wide for future deal/invoice flows.';
 
+	/**
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'Accept credit-card payments through Stripe. Used by the booking module for paid events; available CRM-wide for future deal/invoice flows.', 'doublescale' );
+	}
+
 	public $is_pro = false;
+
+	public $show_in_catalog = true;
+
+	public $catalog_category = 'payment';
 
 	public $option_name = 'stripe';
 
@@ -166,5 +177,14 @@ class Integration extends Integration_Abstract {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Catalog icon.
+	 *
+	 * @return string
+	 */
+	public function get_icon_url(): string {
+		return $this->plugin_asset_url( 'assets/images/stripe/stripe.png' );
 	}
 }

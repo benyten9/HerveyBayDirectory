@@ -177,7 +177,7 @@ class AutomationModel extends Model {
 	 */
 	public function get_first_step() {
 		return $this->steps()
-			->where( 'status', 'active' )
+			->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 			->where( 'parent_id', 0 )
 			->orderBy( 'order', 'asc' )
 			->first();
@@ -192,7 +192,7 @@ class AutomationModel extends Model {
 	 */
 	public function get_last_step() {
 		return $this->steps()
-			->where( 'status', 'active' )
+			->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 			->orderBy( 'order', 'desc' )
 			->first();
 	}
@@ -208,7 +208,7 @@ class AutomationModel extends Model {
 	 */
 	public function get_step_by_order( $order ) {
 		return $this->steps()
-			->where( 'status', 'active' )
+			->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 			->where( 'order', $order )
 			->first();
 	}
@@ -226,7 +226,7 @@ class AutomationModel extends Model {
 		// For root level steps, get the next root level step
 		if ( 0 == $step->parent_id ) {
 			return $this->steps()
-				->where( 'status', 'active' )
+				->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 				->where( 'parent_id', 0 )
 				->where( 'order', '>', $step->order )
 				->orderBy( 'order', 'asc' )
@@ -235,7 +235,7 @@ class AutomationModel extends Model {
 
 		// For branch steps, first look for next step in the same branch
 		$next_step = $this->steps()
-			->where( 'status', 'active' )
+			->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 			->where( 'parent_id', $step->parent_id )
 			->where( 'condition', $step->condition )
 			->where( 'order', '>', $step->order )
@@ -253,7 +253,7 @@ class AutomationModel extends Model {
 				// If parent condition is also nested, find next step in its parent context
 				if ( $parent_step->parent_id > 0 ) {
 					$next_step = $this->steps()
-						->where( 'status', 'active' )
+						->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 						->where( 'parent_id', $parent_step->parent_id )
 						->where( 'condition', $parent_step->condition )
 						->where( 'order', '>', $parent_step->order )
@@ -262,7 +262,7 @@ class AutomationModel extends Model {
 				} else {
 					// Parent condition is at root level, find next root level step
 					$next_step = $this->steps()
-						->where( 'status', 'active' )
+						->where( 'status', AutomationStepModel::STATUS_ACTIVE )
 						->where( 'parent_id', 0 )
 						->where( 'order', '>', $parent_step->order )
 						->orderBy( 'order', 'asc' )

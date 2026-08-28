@@ -59,7 +59,7 @@ abstract class AbstractContractSalesMergeTag extends AbstractSalesMergeTag {
 	 */
 	protected function format_contract_money( ContractModel $contract ): string {
 		$total    = number_format( (float) $contract->contract_value, 2, '.', '' );
-		$currency = \DoubleScale\Core\Settings\Settings::document_currency( $contract->currency, $contract->sent_at );
+		$currency = \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $contract->currency, $contract->sent_at );
 		return trim( $currency . ' ' . $total );
 	}
 

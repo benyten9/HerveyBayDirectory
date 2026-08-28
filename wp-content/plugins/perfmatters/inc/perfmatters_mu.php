@@ -3,7 +3,7 @@
 Plugin Name: Perfmatters MU
 Plugin URI: https://perfmatters.io/
 Description: Perfmatters is a lightweight performance plugin developed to speed up your WordPress site.
-Version: 2.6.6
+Version: 2.6.7
 Author: forgemedia
 Author URI: https://forgemedia.io/
 License: GPLv2 or later
@@ -12,7 +12,12 @@ Text Domain: perfmatters
 Domain Path: /languages
 */
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 add_filter('option_active_plugins', 'perfmatters_mu_disable_plugins', 1);
+add_filter('pre_update_option_active_plugins', 'perfmatters_mu_protect_write', PHP_INT_MAX);
 
 function perfmatters_mu_disable_plugins($plugins) {
 
@@ -84,13 +89,9 @@ function perfmatters_mu_disable_plugins($plugins) {
         return $plugins;
     }
 
-    //testing mode check
-    if(!empty($pmsm_settings['testing_mode'])) {
-        wp_cookie_constants();
-        require_once(wp_normalize_path(ABSPATH) . 'wp-includes/pluggable.php');
-        if(!function_exists('wp_get_current_user') || !current_user_can('manage_options')) {
-            return $plugins;
-        }
+    //testing mode check (cookie-based — do not load pluggable early)
+    if(!empty($pmsm_settings['testing_mode']) && !perfmatters_mu_current_user_can_manage_options()) {
+        return $plugins;
     }
 
     //check for manual override
@@ -111,10 +112,12 @@ function perfmatters_mu_disable_plugins($plugins) {
     //we have some plugins that are disabled
     if(!empty($pmsm['disabled']['plugins'])) {
 
+        //track plugins removed for this request so a write cannot persist the filtered list
+        global $pmsm_hidden_plugins;
+        $pmsm_hidden_plugins = array();
+
         //attempt to get post id
         $currentID = perfmatters_mu_get_current_ID();
-
-        //echo $currentID;
 
         //assign disable/enable arrays
         $disabled = $pmsm['disabled']['plugins'];
@@ -170,10 +173,14 @@ function perfmatters_mu_disable_plugins($plugins) {
                         $single_array = preg_grep('/' . $handle . '\.php/', $m_array);
                     }
                     if(!empty($single_array)) {
-                        unset($plugins[key($single_array)]);
+                        $remove_key = key($single_array);
                     }
                     else {
-                        unset($plugins[key($m_array)]);
+                        $remove_key = key($m_array);
+                    }
+                    if(isset($plugins[$remove_key])) {
+                        $pmsm_hidden_plugins[] = $plugins[$remove_key];
+                        unset($plugins[$remove_key]);
                     }
                 }
             }
@@ -186,9 +193,29 @@ function perfmatters_mu_disable_plugins($plugins) {
     return $plugins;
 }
 
-//remove our filter after plugins have loaded
+/**
+ * Prevent filtered active_plugins lists from being written to the database.
+ *
+ * Plugins like Freemius call get_option( 'active_plugins' ) at include time
+ * (while our read filter is still active), reorder the list, and update_option()
+ * the result. Without this guard, MU-hidden plugins are permanently deactivated.
+ */
+function perfmatters_mu_protect_write($value) {
+    global $pmsm_hidden_plugins;
+
+    if(!is_array($value) || empty($pmsm_hidden_plugins) || !is_array($pmsm_hidden_plugins)) {
+        return $value;
+    }
+
+    // Nothing on the front end can legitimately deactivate a plugin we hid from
+    // the reader, so put them back and keep the caller's ordering.
+    return array_values(array_merge($value, array_diff($pmsm_hidden_plugins, $value)));
+}
+
+//remove our filters after plugins have loaded
 function perfmatters_mu_remove_filters() {
     remove_filter('option_active_plugins', 'perfmatters_mu_disable_plugins', 1, 1);
+    remove_filter('pre_update_option_active_plugins', 'perfmatters_mu_protect_write', PHP_INT_MAX);
 }
 add_action('plugins_loaded', 'perfmatters_mu_remove_filters', 1);
 
@@ -196,8 +223,6 @@ add_action('plugins_loaded', 'perfmatters_mu_remove_filters', 1);
 function perfmatters_mu_get_current_ID() {
 
     //load necessary parts for url_to_postid
-    wp_cookie_constants();
-    require_once(wp_normalize_path(ABSPATH) . 'wp-includes/pluggable.php');
     global $wp_rewrite;
     global $wp;
     $wp_rewrite = new WP_Rewrite();
@@ -247,12 +272,108 @@ function pmsm_mu_check_post_types($option, $currentID = '') {
 //check if current user status is set
 function pmsm_mu_check_user_status($option) {
     if(!empty($option['user_status'])) {
-        $status = is_user_logged_in();
+        $status = perfmatters_mu_is_user_logged_in();
         if(($status && $option['user_status'] == 'loggedin') || (!$status && $option['user_status'] == 'loggedout')) {
             return true;
         }
     }
     return false;
+}
+
+/**
+ * Parse the logged-in auth cookie without loading pluggable.php.
+ *
+ * @return array{username: string, expiration: int, token: string, hmac: string}|false
+ */
+function perfmatters_mu_parse_logged_in_cookie() {
+    if(!defined('LOGGED_IN_COOKIE')) {
+        wp_cookie_constants();
+    }
+
+    if(empty($_COOKIE[LOGGED_IN_COOKIE]) || !is_string($_COOKIE[LOGGED_IN_COOKIE])) {
+        return false;
+    }
+
+    $cookie_elements = explode('|', $_COOKIE[LOGGED_IN_COOKIE]);
+    if(count($cookie_elements) !== 4) {
+        return false;
+    }
+
+    return array(
+        'username'   => $cookie_elements[0],
+        'expiration' => (int) $cookie_elements[1],
+        'token'      => $cookie_elements[2],
+        'hmac'       => $cookie_elements[3],
+    );
+}
+
+/**
+ * Lightweight logged-in check for MU Mode (no pluggable.php).
+ * Cookie presence + unexpired is enough for Script Manager user_status rules.
+ */
+function perfmatters_mu_is_user_logged_in() {
+    static $logged_in = null;
+
+    if($logged_in !== null) {
+        return $logged_in;
+    }
+
+    $cookie = perfmatters_mu_parse_logged_in_cookie();
+    if(!$cookie || $cookie['expiration'] < time()) {
+        $logged_in = false;
+        return $logged_in;
+    }
+
+    $logged_in = true;
+    return $logged_in;
+}
+
+/**
+ * Lightweight manage_options check for Testing Mode (no pluggable.php).
+ * Validates the logged-in cookie HMAC when salts are available, then checks caps.
+ */
+function perfmatters_mu_current_user_can_manage_options() {
+    static $can_manage = null;
+
+    if($can_manage !== null) {
+        return $can_manage;
+    }
+
+    $can_manage = false;
+
+    $cookie = perfmatters_mu_parse_logged_in_cookie();
+    if(!$cookie || $cookie['expiration'] < time() || $cookie['username'] === '') {
+        return $can_manage;
+    }
+
+    // WP_User::get_data_by avoids get_user_by() from pluggable.php.
+    $userdata = WP_User::get_data_by('login', $cookie['username']);
+    if(!$userdata) {
+        return $can_manage;
+    }
+
+    // Validate cookie hash when logged-in salts are defined (normal wp-config).
+    if(defined('LOGGED_IN_KEY') && LOGGED_IN_KEY && defined('LOGGED_IN_SALT') && LOGGED_IN_SALT) {
+        if(str_starts_with($userdata->user_pass, '$P$') || str_starts_with($userdata->user_pass, '$2y$')) {
+            $pass_frag = substr($userdata->user_pass, 8, 4);
+        }
+        else {
+            $pass_frag = substr($userdata->user_pass, -4);
+        }
+
+        $salt = LOGGED_IN_KEY . LOGGED_IN_SALT;
+        $key  = hash_hmac('md5', $cookie['username'] . '|' . $pass_frag . '|' . $cookie['expiration'] . '|' . $cookie['token'], $salt);
+        $hash = hash_hmac('sha256', $cookie['username'] . '|' . $cookie['expiration'] . '|' . $cookie['token'], $key);
+
+        if(!hash_equals($hash, $cookie['hmac'])) {
+            return $can_manage;
+        }
+    }
+
+    $user = new WP_User($userdata);
+    $can_manage = $user->exists() && $user->has_cap('manage_options');
+
+    return $can_manage;
 }
 
 //check if current device type is set
@@ -508,6 +629,11 @@ function perfmatters_url_to_postid($url) {
             parse_str( $query, $query_vars );
             $query = array();
             foreach ( (array) $query_vars as $key => $value ) {
+                // Skip empty mapped vars (ex: page= from optional rewrite groups).
+                // Empty page alone makes WP_Query resolve to the front page.
+                if ( $value === '' || $value === null ) {
+                    continue;
+                }
                 if ( in_array( $key, $wp->public_query_vars ) ) {
                     $query[ $key ] = $value;
                 }
@@ -550,7 +676,31 @@ function perfmatters_url_to_postid($url) {
             * END ADD
             *************************************************************************/
 
+            // MU Mode runs before CPTs register, so custom query vars (ex: ht_kb)
+            // are not in public_query_vars / wp_post_types yet. Default WP pattern
+            // is query_var name === post type name — try those directly.
+            $reserved_query_vars = array_flip( $wp->public_query_vars );
+            foreach ( (array) $query_vars as $key => $value ) {
+                if ( isset( $reserved_query_vars[ $key ] ) || ! is_string( $value ) || $value === '' ) {
+                    continue;
+                }
+
+                $posts = get_posts( array(
+                    'name'           => $value,
+                    'post_type'      => $key,
+                    'post_status'    => 'publish',
+                    'posts_per_page' => 1,
+                    'fields'         => 'ids',
+                    'no_found_rows'  => true,
+                ) );
+
+                if ( ! empty( $posts ) ) {
+                    return (int) $posts[0];
+                }
+            }
+
             // Taken from class-wp.php
+            $post_type_query_vars = array();
             if(!empty($GLOBALS['wp_post_types'])) {
                 foreach ( $GLOBALS['wp_post_types'] as $post_type => $t ) {
                     if ( $t->query_var ) {
@@ -566,7 +716,7 @@ function perfmatters_url_to_postid($url) {
                     $query[ $wpvar ] = $_POST[ $wpvar ];
                 } elseif ( isset( $_GET[ $wpvar ] ) ) {
                     $query[ $wpvar ] = $_GET[ $wpvar ];
-                } elseif ( isset( $query_vars[ $wpvar ] ) ) {
+                } elseif ( ! empty( $query_vars[ $wpvar ] ) ) {
                     $query[ $wpvar ] = $query_vars[ $wpvar ];
                 }
 
@@ -601,7 +751,43 @@ function perfmatters_url_to_postid($url) {
                 }
             }
 
-            $query = new WP_Query( $query );
+            // Script Manager only needs a singular post/page ID. Archive matches
+            // (author, date, tax, search, etc.) never provide one — and WP_Query
+            // calls pluggable APIs for some of them (ex: get_user_by for author_name)
+            // before pluggable.php has loaded.
+            $singular_vars = array( 'p', 'page_id', 'attachment_id', 'name', 'pagename', 'postname' );
+            $is_singular_query = false;
+            foreach ( $singular_vars as $singular_var ) {
+                if ( ! empty( $query[ $singular_var ] ) ) {
+                    $is_singular_query = true;
+                    break;
+                }
+            }
+            if ( ! $is_singular_query ) {
+                return 0;
+            }
+
+            // Whitelist only singular identity vars. Passing the full rewrite/GET
+            // query can pull in author_name, s, preview, etc. — those call
+            // pluggable APIs (get_user_by, is_user_logged_in, current_user_can)
+            // before pluggable.php has loaded.
+            $wp_query_args = array(
+                'post_status'    => 'publish',
+                'posts_per_page' => 1,
+                'no_found_rows'  => true,
+            );
+
+            foreach ( array( 'p', 'page_id', 'attachment_id', 'name', 'pagename', 'post_type' ) as $var ) {
+                if ( ! empty( $query[ $var ] ) ) {
+                    $wp_query_args[ $var ] = $query[ $var ];
+                }
+            }
+
+            if ( ! empty( $query['postname'] ) && empty( $wp_query_args['name'] ) ) {
+                $wp_query_args['name'] = $query['postname'];
+            }
+
+            $query = new WP_Query( $wp_query_args );
 
             if ( ! empty( $query->posts ) && $query->is_singular ) {
                 return $query->post->ID;

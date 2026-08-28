@@ -66,12 +66,7 @@ class Api {
 	 * @return int
 	 */
 	public static function currency_decimals( string $currency ): int {
-		$zero_decimal = array(
-			'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG',
-			'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
-		);
-
-		return in_array( strtoupper( $currency ), $zero_decimal, true ) ? 0 : 2;
+		return \DoubleScale\Core\Constants\Currencies::zero_decimal( $currency ) ? 0 : 2;
 	}
 
 	/**

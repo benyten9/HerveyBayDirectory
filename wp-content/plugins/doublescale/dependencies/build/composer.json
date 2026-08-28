@@ -14,7 +14,8 @@
         "league/csv": "9.7.4",
         "guzzlehttp/guzzle": "^7.0",
         "doctrine/cache": "^1.10",
-        "dompdf/dompdf": "^2.0"
+        "dompdf/dompdf": "^2.0",
+        "khaled.alshamaa/ar-php": "^7.0"
     },
     "config": {
         "allow-plugins": {

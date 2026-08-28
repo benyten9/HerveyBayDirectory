@@ -85,7 +85,6 @@ final class Module extends AbstractModule {
 
 		$dir = $this->module_dir() . '/Migrations';
 		$shared = array(
-			$dir . '/SalesTagIdsColumn.php',
 			$dir . '/SalesTaxesTable.php',
 		);
 

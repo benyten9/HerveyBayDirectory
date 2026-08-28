@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use Perfmatters\Admin\CodeMirror;
 
 class Ajax

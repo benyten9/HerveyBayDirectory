@@ -899,11 +899,15 @@ class AbandonedCart {
 	/**
 	 * Whether checkout cart capture (JS / AJAX / blocks) should run.
 	 *
-	 * Tracking stays on when:
-	 * - Enable Cart Tracking is on, or
-	 * - an active Abandoned Cart automation needs checkout capture.
+	 * The Enable Cart Tracking switch is the single source of truth: when it is
+	 * off, no checkout capture runs at all. Neither a stale "Create contacts in
+	 * CRM" opt-in nor an active Abandoned Cart automation may keep capture
+	 * alive behind the switch — an off toggle that still collects checkout data
+	 * is indistinguishable from a bug to the site owner.
 	 *
-	 * "Create contacts in CRM" alone must not keep capture running after tracking is turned off.
+	 * Active abandoned-cart automations therefore stop receiving carts while
+	 * tracking is off; that is surfaced in the admin rather than worked around
+	 * here.
 	 *
 	 * @since 1.0.0
 	 *
@@ -912,11 +916,7 @@ class AbandonedCart {
 	public function is_cart_tracking_enabled( ?array $settings = null ): bool {
 		$settings = null === $settings ? $this->settings : $settings;
 
-		if ( ! empty( $settings['enable_cart_tracking'] ) ) {
-			return true;
-		}
-
-		return self::has_active_abandoned_cart_automations();
+		return ! empty( $settings['enable_cart_tracking'] );
 	}
 
 	/**
@@ -941,6 +941,11 @@ class AbandonedCart {
 
 	/**
 	 * Whether at least one active automation listens for abandoned carts.
+	 *
+	 * Reporting only — this must not gate capture. It previously kept tracking
+	 * alive while Enable Cart Tracking was off, which made the switch look
+	 * broken; the switch is now the only gate. Use this to tell the site owner
+	 * that active automations are idle because tracking is off.
 	 *
 	 * @since 1.0.0
 	 */

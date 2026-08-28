@@ -13,6 +13,8 @@ namespace DoubleScale\Pro\Modules\Integrations\Stripe;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Constants\Currencies;
+
 class Utils {
 
 	/**
@@ -42,14 +44,17 @@ class Utils {
 	);
 
 	public static function to_stripe_amount( $value, string $currency ): int {
-		if ( in_array( strtoupper( $currency ), self::ZERO_DECIMAL_CURRENCIES, true ) ) {
+		$code = strtoupper( $currency );
+		// UGX is in Currencies::ZERO_DECIMAL but Stripe still multiplies by 100.
+		if ( Currencies::zero_decimal( $code ) && 'UGX' !== $code ) {
 			return (int) $value;
 		}
 		return (int) round( ( (float) $value ) * 100 );
 	}
 
 	public static function from_stripe_amount( $value, string $currency ) {
-		if ( in_array( strtoupper( $currency ), self::ZERO_DECIMAL_CURRENCIES, true ) ) {
+		$code = strtoupper( $currency );
+		if ( Currencies::zero_decimal( $code ) && 'UGX' !== $code ) {
 			return (int) $value;
 		}
 		return ( (float) $value ) / 100;

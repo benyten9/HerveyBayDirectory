@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="White Labeling">
+  <defs>
+    <linearGradient id="wl-bg" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#274C77"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="url(#wl-bg)"/>
+  <!-- ghost layer (original branding) -->
+  <rect x="15" y="17" width="26" height="20" rx="4" fill="#fff" opacity="0.22"/>
+  <!-- active layer (your branding) -->
+  <rect x="21" y="23" width="26" height="20" rx="4" fill="#fff"/>
+  <!-- custom logo mark -->
+  <circle cx="29" cy="33" r="5" fill="#4F9EF9"/>
+  <rect x="37" y="30" width="8" height="2.5" rx="1.25" fill="#274C77" opacity="0.28"/>
+  <rect x="37" y="35" width="5.5" height="2" rx="1" fill="#274C77" opacity="0.18"/>
+  <!-- paintbrush accent -->
+  <path d="M43 41.5 51.5 33 54 35.5 45.5 44Z" fill="#C4B5FD"/>
+  <path d="M41.5 43 43 41.5 45.5 44 44 45.5Z" fill="#7C3AED"/>
+  <rect x="39.5" y="43.5" width="7.5" height="2.8" rx="1.2" transform="rotate(-45 43.25 44.9)" fill="#fff" opacity="0.92"/>
+</svg>

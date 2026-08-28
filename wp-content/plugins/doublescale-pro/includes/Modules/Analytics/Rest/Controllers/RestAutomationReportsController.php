@@ -167,12 +167,15 @@ class RestAutomationReportsController extends RestController {
 			$steps_ids = AutomationContactProcessesModel::where( 'automation_id', $automation_id )
 				->orderBy( 'created_at' )
 				->distinct()
-				->pluck( 'step_id' );
+				->pluck( 'step_id' )
+				->all();
 
 			// Get all steps for this automation
-			$steps = AutomationStepModel::whereIn( 'id', $steps_ids )
-				->where( 'status', '!=', 'deleted' )
-				->get();
+			$steps = empty( $steps_ids )
+				? collect( array() )
+				: AutomationStepModel::whereIn( 'id', $steps_ids )
+					->where( 'status', '!=', 'deleted' )
+					->get();
 
 			// Base query for automation contacts
 			$automation_contacts = AutomationContactModel::where( 'automation_id', $automation_id );
@@ -296,12 +299,15 @@ class RestAutomationReportsController extends RestController {
 			$steps_ids = AutomationContactProcessesModel::where( 'automation_id', $automation_id )
 				->orderBy( 'created_at' )
 				->distinct()
-				->pluck( 'step_id' );
+				->pluck( 'step_id' )
+				->all();
 
 			// Get all steps for this automation
-			$steps = AutomationStepModel::whereIn( 'id', $steps_ids )
-				->where( 'status', '!=', 'deleted' )
-				->get();
+			$steps = empty( $steps_ids )
+				? collect( array() )
+				: AutomationStepModel::whereIn( 'id', $steps_ids )
+					->where( 'status', '!=', 'deleted' )
+					->get();
 
 			$step_reports = array();
 

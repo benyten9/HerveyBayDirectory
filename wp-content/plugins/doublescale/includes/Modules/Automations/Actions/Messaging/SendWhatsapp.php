@@ -20,7 +20,7 @@ class SendWhatsapp extends ProAutomationStubAction {
 
 	public $slug = 'send_whatsapp';
 
-	public $description = 'Send a WhatsApp message using a pre-approved Meta WhatsApp business template.';
+	public $description = 'Send a WhatsApp message using a pre-approved Meta template, or a free-form auto-reply when the trigger is WhatsApp Message Received.';
 
 	public $source = 'message';
 

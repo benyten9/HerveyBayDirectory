@@ -40,7 +40,7 @@ class SmtpEmailLogTable extends Migration {
 			response longtext NOT NULL,
 			resend_count int(11) NOT NULL,
 			PRIMARY KEY  (log_id),
-			KEY status (status),
+			KEY status (status(191)),
 			KEY timestamp (timestamp)';
 	}
 }

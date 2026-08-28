@@ -109,4 +109,42 @@ abstract class Gateway {
 	public function payment_mode_slug(): string {
 		return (string) $this->slug;
 	}
+
+	/**
+	 * Whether charge amounts arrive in major units (12.50) rather than minor (1250).
+	 *
+	 * Stripe is the exception and overrides this to false.
+	 *
+	 * @return bool
+	 */
+	public function uses_major_units(): bool {
+		return true;
+	}
+
+	/**
+	 * Query arg appended to the invoice return URL after a hosted checkout.
+	 *
+	 * Returns '' for gateways that pay in-page rather than redirecting; a
+	 * non-empty value marks this gateway as redirect-based.
+	 *
+	 * @return string
+	 */
+	public function return_query_arg(): string {
+		return '';
+	}
+
+	/**
+	 * Note stored on the recorded payment row.
+	 *
+	 * @param string $invoice_number Invoice number.
+	 * @return string
+	 */
+	public function payment_note( string $invoice_number ): string {
+		return sprintf(
+			/* translators: 1: payment gateway name, 2: invoice number */
+			__( '%1$s payment for invoice %2$s', 'doublescale' ),
+			(string) $this->name,
+			$invoice_number
+		);
+	}
 }

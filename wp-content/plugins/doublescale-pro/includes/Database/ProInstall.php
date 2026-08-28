@@ -41,9 +41,32 @@ final class ProInstall {
 	}
 
 	/**
+	 * Whether free's shared runtime is loaded.
+	 *
+	 * Pro's migrations are written against classes that live in free's
+	 * namespace (`MigrationRunner`, `ModuleRegistry`, and the migration classes
+	 * themselves). Every Pro entry point that can run *before* the
+	 * `doublescale_ready` boundary — activation hooks in particular, which
+	 * WordPress fires from the main plugin file before free's kernel has
+	 * booted — must check this first, otherwise instantiating one of those
+	 * classes is a fatal error rather than a no-op.
+	 *
+	 * Code that already runs on `doublescale_ready` (or any action fired by
+	 * free) does not need this guard: free is loaded by definition there.
+	 */
+	private static function free_runtime_available(): bool {
+		return class_exists( ModuleRegistry::class )
+			&& class_exists( MigrationRunner::class );
+	}
+
+	/**
 	 * Extra critical tables beyond free {@see Install::ensure_db_ready()}.
 	 */
 	public static function ensure_db_ready(): void {
+		if ( ! self::free_runtime_available() ) {
+			return;
+		}
+
 		if ( class_exists( Install::class ) ) {
 			Install::ensure_db_ready();
 		}
@@ -66,7 +89,8 @@ final class ProInstall {
 
 		$smtp_log_table = $wpdb->prefix . 'doublescale_smtp_email_log';
 		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPlaceholder -- SHOW TABLES LIKE.
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $smtp_log_table ) ) !== $smtp_log_table ) {
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $smtp_log_table ) ) !== $smtp_log_table
+			&& class_exists( SmtpEmailLogTable::class ) ) {
 			$migration = new SmtpEmailLogTable();
 			$migration->run();
 		}
@@ -149,7 +173,7 @@ final class ProInstall {
 	}
 
 	public static function install(): void {
-		if ( ! class_exists( \DoubleScale\Core\ModuleRegistry::class ) ) {
+		if ( ! self::free_runtime_available() ) {
 			return;
 		}
 

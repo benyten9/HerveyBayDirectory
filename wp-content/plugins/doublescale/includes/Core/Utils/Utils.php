@@ -181,6 +181,18 @@ class Utils {
 						'label' => __( 'Last Name', 'doublescale' ),
 						'type'  => 'text',
 					),
+					'company_name'   => array(
+						'label' => __( 'Company Name', 'doublescale' ),
+						'type'  => 'text',
+					),
+					'company_registration_number' => array(
+						'label' => __( 'Company Registration Number', 'doublescale' ),
+						'type'  => 'text',
+					),
+					'tax_vat_number' => array(
+						'label' => __( 'Tax / VAT Number', 'doublescale' ),
+						'type'  => 'text',
+					),
 					'email'          => array(
 						'label' => __( 'Email', 'doublescale' ),
 						'type'  => 'email',

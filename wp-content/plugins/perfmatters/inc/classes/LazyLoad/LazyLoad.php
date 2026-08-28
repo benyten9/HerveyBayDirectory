@@ -2,6 +2,10 @@
 
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use Perfmatters\LazyLoad\Assets;
 use Perfmatters\LazyLoad\Iframes;
 use Perfmatters\LazyLoad\Images;

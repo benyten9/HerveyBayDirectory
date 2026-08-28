@@ -40,6 +40,7 @@ return array(
     'DoubleScale\\Vendor\\FontLib\\' => array($vendorDir . '/phenx/php-font-lib/src/FontLib'),
     'DoubleScale\\Vendor\\Egulias\\EmailValidator\\' => array($vendorDir . '/egulias/email-validator/src'),
     'DoubleScale\\Vendor\\Dompdf\\' => array($vendorDir . '/dompdf/dompdf/src'),
+    'DoubleScale\\Vendor\\ArPHP\\I18N\\' => array($vendorDir . '/khaled.alshamaa/ar-php/src'),
     'Doctrine\\Inflector\\' => array($vendorDir . '/doctrine/inflector/lib/Doctrine/Inflector'),
     'Doctrine\\Common\\Lexer\\' => array($vendorDir . '/doctrine/lexer/lib/Doctrine/Common/Lexer'),
     'Doctrine\\Common\\Inflector\\' => array($vendorDir . '/doctrine/inflector/lib/Doctrine/Common/Inflector'),

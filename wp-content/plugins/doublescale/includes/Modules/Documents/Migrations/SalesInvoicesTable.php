@@ -34,6 +34,7 @@ class SalesInvoicesTable extends Migration {
 			contact_id BIGINT(20) UNSIGNED NOT NULL,
 			proposal_id BIGINT(20) UNSIGNED NULL,
 			subscription_id BIGINT(20) UNSIGNED NULL,
+			recurrence_id BIGINT(20) UNSIGNED NULL,
 			sale_agent_user_id BIGINT(20) UNSIGNED NULL,
 			invoice_date DATE NULL,
 			due_date DATE NULL,

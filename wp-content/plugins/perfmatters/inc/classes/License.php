@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class License {
 
     //init
@@ -32,6 +36,9 @@ class License {
 
             //decode the license data
             $license_data = json_decode(wp_remote_retrieve_body($response));
+
+            //always clear cached check data after an activation attempt
+            self::clear_check_cache($license, $network);
 
             //license is valid
             if(!empty($license_data->license) && $license_data->license == 'valid') {
@@ -76,6 +83,9 @@ class License {
             //decode the license data
             $license_data = json_decode(wp_remote_retrieve_body($response));
 
+            //always clear cached check data after a deactivation attempt
+            self::clear_check_cache($license, $network);
+
             //license is deactivated
             if($license_data->license == 'deactivated') {
 
@@ -95,12 +105,20 @@ class License {
     }
 
     //check license
-    public static function check($license_key = null, $network = false) {
+    public static function check($license_key = null, $network = false, $force = false) {
 
         //grab existing license data
         $license = $license_key ?? (self::get_key_constant() ?? (is_multisite() || $network ? get_site_option('perfmatters_edd_license_key') : get_option('perfmatters_edd_license_key')));
 
         if(!empty($license)) {
+
+            //return cached license data when available
+            if(!$force) {
+                $cached = self::get_cached_check($license, $network);
+                if($cached !== false) {
+                    return $cached;
+                }
+            }
 
             $api_params = array(
                 'edd_action' => 'check_license',
@@ -126,6 +144,11 @@ class License {
             }
             else {
                 update_option('perfmatters_edd_license_status', $license_data->license, false);
+            }
+
+            //cache successful check responses for 24 hours
+            if(!empty($license_data)) {
+                self::set_cached_check($license, $license_data, $network);
             }
             
             //return license data for use
@@ -192,6 +215,53 @@ class License {
     public static function get_key_constant() {
         if(defined('PERFMATTERS_LICENSE_KEY')) {
             return trim(PERFMATTERS_LICENSE_KEY);
+        }
+    }
+
+    //build cache key for license check responses
+    private static function get_check_cache_key($license) {
+        return 'perfmatters_license_check_' . md5($license . '|' . home_url());
+    }
+
+    //get cached license check response
+    private static function get_cached_check($license, $network = false) {
+        $cache_key = self::get_check_cache_key($license);
+        $cached = (is_multisite() || $network) ? get_site_transient($cache_key) : get_transient($cache_key);
+
+        if(empty($cached) || !is_object($cached)) {
+            return false;
+        }
+
+        return $cached;
+    }
+
+    //store license check response
+    private static function set_cached_check($license, $license_data, $network = false) {
+        $cache_key = self::get_check_cache_key($license);
+
+        if(is_multisite() || $network) {
+            set_site_transient($cache_key, $license_data, DAY_IN_SECONDS);
+        }
+        else {
+            set_transient($cache_key, $license_data, DAY_IN_SECONDS);
+        }
+    }
+
+    //clear cached license check response
+    private static function clear_check_cache($license = null, $network = false) {
+        $license = $license ?? (self::get_key_constant() ?? (is_multisite() || $network ? get_site_option('perfmatters_edd_license_key') : get_option('perfmatters_edd_license_key')));
+
+        if(empty($license)) {
+            return;
+        }
+
+        $cache_key = self::get_check_cache_key($license);
+
+        if(is_multisite() || $network) {
+            delete_site_transient($cache_key);
+        }
+        else {
+            delete_transient($cache_key);
         }
     }
 }

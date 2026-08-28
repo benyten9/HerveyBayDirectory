@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use WP_CLI;
 
 class CLI {
@@ -26,7 +30,7 @@ class CLI {
 
 		if(is_multisite()) {
 
-			$license_info = License::check(null, $network);
+			$license_info = License::check(null, $network, true);
 
 			if(empty($license_info->activations_left) || $license_info->activations_left !== 'unlimited') {
 				WP_CLI::error(__('Unlimited site license required.', 'perfmatters'));

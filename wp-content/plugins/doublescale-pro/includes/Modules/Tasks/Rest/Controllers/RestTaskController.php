@@ -2740,6 +2740,8 @@ class RestTaskController extends RestController {
 		foreach ( $activities as $activity ) {
 			$rows[] = array(
 				'sort_at' => (string) $activity->created_at,
+				// Tiebreaker for entries sharing a second — see the usort below.
+				'sort_id' => (int) $activity->id,
 				'entry'   => $this->prepare_activity_for_response( $activity, $task->id ),
 			);
 
@@ -2750,6 +2752,7 @@ class RestTaskController extends RestController {
 			foreach ( $activity->comments as $reply ) {
 				$rows[] = array(
 					'sort_at' => (string) $reply->created_at,
+					'sort_id' => (int) $reply->id,
 					'entry'   => $this->prepare_activity_reply_for_response( $reply, $activity, $task->id ),
 				);
 			}
@@ -2759,6 +2762,15 @@ class RestTaskController extends RestController {
 			$rows,
 			function ( $left, $right ) use ( $feed ) {
 				$compare = strcmp( $left['sort_at'], $right['sort_at'] );
+
+				// `sort_at` only has second resolution, so several comments posted
+				// in the same second compared equal and usort left their relative
+				// order undefined — paging through the feed could repeat or skip
+				// entries. Fall back to insertion order, which is monotonic.
+				if ( 0 === $compare ) {
+					$compare = (int) ( $left['sort_id'] ?? 0 ) <=> (int) ( $right['sort_id'] ?? 0 );
+				}
+
 				return 'asc' === $feed['sort_order'] ? $compare : -$compare;
 			}
 		);

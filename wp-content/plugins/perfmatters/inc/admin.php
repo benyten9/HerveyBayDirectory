@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 //accessibility mode styles
 $tools = get_option('perfmatters_tools');
 if(!empty($tools['accessibility_mode'])) {

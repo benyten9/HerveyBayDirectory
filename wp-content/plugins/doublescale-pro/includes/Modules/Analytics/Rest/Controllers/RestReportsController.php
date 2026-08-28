@@ -290,7 +290,7 @@ class RestReportsController extends RestController
 			$deals_leaderboard['total_value']          += $deal->value;
 			$deals_leaderboard['total_weighted_value'] += $deal->weighted_value;
 
-			$currency = \DoubleScale\Core\Settings\Settings::deal_currency(
+			$currency = \DoubleScale\Pro\Compat\SettingsCurrency::deal_currency(
 				isset($deal->getAttributes()['currency']) ? $deal->getAttributes()['currency'] : null
 			);
 			if (! isset($deals_leaderboard['value_by_currency'][$currency])) {
@@ -323,7 +323,7 @@ class RestReportsController extends RestController
 			$lost_data['total_deals']++;
 			$lost_data['total_value'] += $deal->value;
 
-			$currency = \DoubleScale\Core\Settings\Settings::deal_currency(
+			$currency = \DoubleScale\Pro\Compat\SettingsCurrency::deal_currency(
 				isset($deal->getAttributes()['currency']) ? $deal->getAttributes()['currency'] : null
 			);
 			if (! isset($lost_data['value_by_currency'][$currency])) {
@@ -437,7 +437,7 @@ class RestReportsController extends RestController
 		foreach ($deals as $deal) {
 			$activity       = $deal->activities()->first();
 			$timeInStage    = $this->get_days_in_stage($deal);
-			$deal_currency  = \DoubleScale\Core\Settings\Settings::deal_currency(
+			$deal_currency  = \DoubleScale\Pro\Compat\SettingsCurrency::deal_currency(
 				isset($deal->getAttributes()['currency']) ? $deal->getAttributes()['currency'] : null
 			);
 			$active_deals[] = array(
@@ -1570,6 +1570,8 @@ class RestReportsController extends RestController
 	 */
 	private function get_deals_by_status_price($start_date, $end_date, $status, $filters = array())
 	{
+		// Scalar kept for percentage math. Cards render the by-currency sibling
+		// so mixed EUR+USD never appear as one blended figure.
 		return $this->get_deals_by_status($start_date, $end_date, $status, $filters)->sum('value');
 	}
 
@@ -1609,7 +1611,7 @@ class RestReportsController extends RestController
 				continue;
 			}
 			$stored   = isset($deal->getAttributes()['currency']) ? $deal->getAttributes()['currency'] : null;
-			$currency = \DoubleScale\Core\Settings\Settings::deal_currency($stored);
+			$currency = \DoubleScale\Pro\Compat\SettingsCurrency::deal_currency($stored);
 			$total   += $amount;
 			if (! isset($by_currency[$currency])) {
 				$by_currency[$currency] = 0.0;

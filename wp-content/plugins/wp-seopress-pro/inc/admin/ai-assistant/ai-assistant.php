@@ -164,8 +164,16 @@ function seopress_ai_get_models_list() {
 	return array(
 		'openai'   => array(
 			array(
-				'label' => 'GPT-5.2 Chat',
-				'value' => 'gpt-5.2-chat-latest',
+				'label' => 'GPT-5.6 Terra',
+				'value' => 'gpt-5.6-terra',
+			),
+			array(
+				'label' => 'GPT-5.6 Sol',
+				'value' => 'gpt-5.6-sol',
+			),
+			array(
+				'label' => 'GPT-5.6 Luna',
+				'value' => 'gpt-5.6-luna',
 			),
 		),
 		'deepseek' => array(

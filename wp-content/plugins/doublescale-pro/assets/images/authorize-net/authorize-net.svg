@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Authorize.Net">
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#1B3A5C"/>
+  <path d="M32 16 44 46h-7l-2.2-6h-9.6L23 46h-7z" fill="#fff"/>
+  <path d="M29.4 34h5.2L32 26.6z" fill="#1B3A5C"/>
+</svg>

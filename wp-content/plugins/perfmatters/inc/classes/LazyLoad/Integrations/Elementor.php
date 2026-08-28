@@ -2,6 +2,10 @@
 
 namespace Perfmatters\LazyLoad\Integrations;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use Perfmatters\HTML;
 use Perfmatters\Utilities;
 use Perfmatters\LazyLoad\Iframes;

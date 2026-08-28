@@ -10,9 +10,12 @@ namespace DoubleScale\Pro\Modules\CreditNotes\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Services\CurrencyResolver;
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Sales\Capabilities;
+use DoubleScale\Modules\Sales\Rest\SendsDocumentViaWhatsapp;
 use DoubleScale\Modules\Sales\Services\SalesNumbering;
 use DoubleScale\Modules\Documents\Constants\DiscountType;
 use DoubleScale\Modules\Documents\Services\DocumentCustomerDetails;
@@ -33,6 +36,8 @@ use WP_REST_Server;
  * RestCreditNoteController class.
  */
 class RestCreditNoteController extends RestController {
+
+	use SendsDocumentViaWhatsapp;
 
 	/**
 	 * @var string
@@ -68,6 +73,18 @@ class RestCreditNoteController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/send-whatsapp',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_item_whatsapp' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
@@ -227,36 +244,69 @@ class RestCreditNoteController extends RestController {
 		$by_status   = array();
 
 		foreach ( CreditNoteStatus::all() as $status ) {
-			$count = (int) ( clone $query )->where( 'status', $status )->count();
-			$sum   = (float) ( clone $query )->where( 'status', $status )->sum( 'total' );
+			$count  = (int) ( clone $query )->where( 'status', $status )->count();
+			$totals = $this->sum_by_currency( clone $query, array( $status ) );
 			$by_status[ $status ] = array(
-				'count'   => $count,
-				'amount'  => round( $sum, 2 ),
-				'percent' => $total_count > 0 ? round( ( $count / $total_count ) * 100, 2 ) : 0,
+				'count'              => $count,
+				'amount'             => $totals['total'],
+				'amount_by_currency' => $totals['by_currency'],
+				'percent'            => $total_count > 0 ? round( ( $count / $total_count ) * 100, 2 ) : 0,
 			);
 		}
 
-		$total_credited = (float) ( clone $query )
-			->where( 'status', '!=', CreditNoteStatus::DRAFT )
-			->where( 'status', '!=', CreditNoteStatus::VOID )
-			->sum( 'total' );
+		$credited = $this->sum_by_currency(
+			clone $query,
+			array_values(
+				array_diff(
+					CreditNoteStatus::all(),
+					array( CreditNoteStatus::DRAFT, CreditNoteStatus::VOID )
+				)
+			)
+		);
 
-		$open_credit = 0.0;
-		$open_rows   = ( clone $query )
+		$open_by_currency = array();
+		$open_rows        = ( clone $query )
 			->whereIn( 'status', array( CreditNoteStatus::OPEN, CreditNoteStatus::PARTIALLY_APPLIED ) )
-			->get( array( 'total', 'amount_applied' ) );
+			->get();
 		foreach ( $open_rows as $row ) {
-			$open_credit += max( 0, (float) $row->total - (float) $row->amount_applied );
+			$remaining = max( 0, (float) $row->total - (float) $row->amount_applied );
+			if ( 0.0 === $remaining ) {
+				continue;
+			}
+			$code = CurrencyResolver::resolve( $row );
+			if ( ! isset( $open_by_currency[ $code ] ) ) {
+				$open_by_currency[ $code ] = 0.0;
+			}
+			$open_by_currency[ $code ] += $remaining;
 		}
+		$open_by_currency = CurrencyResolver::round_map( $open_by_currency );
+		$global           = CurrencyResolver::global_currency();
 
 		return new WP_REST_Response(
 			array(
-				'total_credited' => round( $total_credited, 2 ),
-				'open_credit'    => round( max( 0, $open_credit ), 2 ),
-				'by_status'      => $by_status,
-				'total_count'    => $total_count,
+				'total_credited'             => $credited['total'],
+				'total_credited_by_currency' => $credited['by_currency'],
+				'open_credit'                => $open_by_currency[ $global ] ?? 0.0,
+				'open_credit_by_currency'    => $open_by_currency,
+				'by_status'                  => $by_status,
+				'total_count'                => $total_count,
 			),
 			200
+		);
+	}
+
+	/**
+	 * @param mixed    $query    Credit-note query (already scoped).
+	 * @param string[] $statuses Statuses to include.
+	 * @return array{total: float, by_currency: array<string, float>}
+	 */
+	private function sum_by_currency( $query, array $statuses ): array {
+		$by_currency = CurrencyResolver::sum_by_currency( $query->whereIn( 'status', $statuses )->get(), 'total' );
+		$global      = CurrencyResolver::global_currency();
+
+		return array(
+			'total'       => $by_currency[ $global ] ?? 0.0,
+			'by_currency' => $by_currency,
 		);
 	}
 
@@ -348,6 +398,15 @@ class RestCreditNoteController extends RestController {
 			return $payload;
 		}
 
+		if ( array_key_exists( 'currency', $payload ) ) {
+			// Applied credit is settled value, so it locks the currency just as a
+			// recorded payment locks an invoice's.
+			$locked = DocumentCurrency::reject_if_locked( $credit_note, $payload['currency'], true );
+			if ( is_wp_error( $locked ) ) {
+				return $locked;
+			}
+		}
+
 		$discount_check = DiscountType::validate_payload( $payload, $credit_note );
 		if ( is_wp_error( $discount_check ) ) {
 			return $discount_check;
@@ -436,24 +495,94 @@ class RestCreditNoteController extends RestController {
 		}
 		$message = isset( $params['message'] ) ? sanitize_textarea_field( (string) $params['message'] ) : '';
 
-		$notifier = new CreditNoteNotifications();
-		if ( ! $notifier->send_credit_note( $credit_note, $message ) ) {
-			return new WP_Error(
-				'email_failed',
-				__( 'Failed to send the credit note email. Check the customer email and SMTP settings.', 'doublescale' ),
-				array( 'status' => 500 )
-			);
+		$channel = isset( $params['channel'] ) ? sanitize_key( (string) $params['channel'] ) : 'email';
+
+		// WhatsApp shares are delivered by the client opening wa.me; this call
+		// only records that the send happened.
+		if ( 'whatsapp' !== $channel ) {
+			$notifier = new CreditNoteNotifications();
+			if ( ! $notifier->send_credit_note( $credit_note, $message ) ) {
+				return new WP_Error(
+					'email_failed',
+					__( 'Failed to send the credit note email. Check the customer email and SMTP settings.', 'doublescale' ),
+					array( 'status' => 500 )
+				);
+			}
 		}
 
+		return $this->finish_credit_note_send( $credit_note, $message, $channel );
+	}
+
+	/**
+	 * Prepare or perform a WhatsApp share for a credit note.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_item_whatsapp( $request ) {
+		$disabled = $this->require_module( 'credit_notes' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
+		$credit_note = CreditNoteModel::with( array( 'contact', 'sale_agent', 'invoice' ) )->find( (int) $request->get_param( 'id' ) );
+		if ( ! $credit_note ) {
+			return new WP_Error( 'not_found', __( 'Credit note not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$forbidden = $this->require_ownership( $credit_note );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
+
+		$no_page = $this->require_public_page(
+			'credit_note',
+			'no_credit_note_page',
+			__( 'Create a WordPress page with the [doublescale_credit_note] shortcode before sending credit notes.', 'doublescale' )
+		);
+		if ( $no_page ) {
+			return $no_page;
+		}
+
+		$gate = apply_filters( 'doublescale_sales_send_gate', null, 'credit_note', $credit_note );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
+		$params  = $this->read_whatsapp_params( $request );
+		$payload = $this->build_whatsapp_payload( $credit_note, 'credit_note', $params );
+
+		if ( 'auto' !== $params['mode'] ) {
+			return new WP_REST_Response( $this->whatsapp_link_response( $payload ), 200 );
+		}
+
+		$sent = $this->dispatch_whatsapp_auto( $credit_note, 'credit_note', $payload );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
+		}
+
+		return $this->finish_credit_note_send( $credit_note, $params['message'], 'whatsapp' );
+	}
+
+	/**
+	 * Advance status and record the send, once a channel has delivered.
+	 *
+	 * @param CreditNoteModel $credit_note Credit note.
+	 * @param string          $message     Custom message.
+	 * @param string          $channel     Delivery channel.
+	 * @return WP_REST_Response
+	 */
+	private function finish_credit_note_send( CreditNoteModel $credit_note, string $message, string $channel ): WP_REST_Response {
 		if ( CreditNoteStatus::DRAFT === (string) $credit_note->status ) {
 			$credit_note->status = CreditNoteStatus::OPEN;
 		}
 		DocumentCustomerDetails::snapshot_billing_from_contact( $credit_note );
 		DocumentIssuerSnapshot::freeze_if_needed( $credit_note );
+		DocumentCurrency::freeze_on_send( $credit_note );
 		$credit_note->sent_at = current_time( 'mysql' );
 		$credit_note->save();
 
-		do_action( 'doublescale_sales_credit_note_sent', $credit_note, $message );
+		do_action( 'doublescale_sales_credit_note_sent', $credit_note, $message, $channel );
 
 		return new WP_REST_Response(
 			array(
@@ -554,7 +683,6 @@ class RestCreditNoteController extends RestController {
 
 		$string_fields = array(
 			'status',
-			'currency',
 			'discount_type',
 			'credit_note_date',
 			'reason',
@@ -571,6 +699,14 @@ class RestCreditNoteController extends RestController {
 					$payload[ $field ] = sanitize_text_field( (string) $params[ $field ] );
 				}
 			}
+		}
+
+		if ( array_key_exists( 'currency', $params ) ) {
+			$currency = DocumentCurrency::sanitize_input( $params['currency'] );
+			if ( is_wp_error( $currency ) ) {
+				return $currency;
+			}
+			$payload['currency'] = $currency;
 		}
 
 		if ( array_key_exists( 'contact_id', $params ) ) {

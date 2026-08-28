@@ -34,6 +34,11 @@ class MWP_Updater_TraceableUpdaterSkin
      */
     public $plugin_active;
 
+    /**
+     * @var array Plugin information set by WordPress core during updates
+     */
+    public $plugin_info;
+
     protected $messages = array();
 
     private $startedImplicit = false;

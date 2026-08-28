@@ -47,6 +47,11 @@ final class Module extends AbstractModule {
 	public function boot( Container $container ): void {
 		parent::boot( $container );
 
+		// Order → contact sync is contact data, not a Sales feature, so it lives on
+		// this always-on module. Booting it from Sales meant disabling the Sales
+		// module silently stopped WooCommerce contact syncing.
+		WooCommerce\Settings::instance();
+
 		if ( class_exists( Gohighlevel\GohighlevelOauth::class ) ) {
 			Gohighlevel\GohighlevelOauth::init();
 		}
@@ -87,6 +92,10 @@ final class Module extends AbstractModule {
 		$manager->register( new Twilio\Integration(), true );
 		$manager->register( Stripe\Integration::instance(), true );
 		$manager->register( PayPal\Integration::instance(), true );
+		$manager->register( Square\Integration::instance(), true );
+		$manager->register( Mollie\Integration::instance(), true );
+		$manager->register( Razorpay\Integration::instance(), true );
+		$manager->register( AuthorizeNet\Integration::instance(), true );
 		$manager->register( new Slack\Integration(), true );
 		$manager->register( new MetaWhatsapp\Integration() );
 

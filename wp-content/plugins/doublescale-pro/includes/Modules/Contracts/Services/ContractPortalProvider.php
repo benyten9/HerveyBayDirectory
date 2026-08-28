@@ -26,6 +26,51 @@ final class ContractPortalProvider {
 		add_filter( 'doublescale_portal_timeline_items', array( $this, 'add_timeline_items' ), 10, 2 );
 		add_filter( 'doublescale_portal_documents_rows', array( $this, 'add_document_rows' ), 10, 3 );
 		add_filter( 'doublescale_portal_visible_document_count', array( $this, 'add_visible_document_count' ), 10, 2 );
+		add_filter( 'doublescale_portal_calendar_events', array( $this, 'add_calendar_events' ), 10, 4 );
+	}
+
+	/**
+	 * Project the contact's contract end dates onto the portal calendar.
+	 *
+	 * Mirrors {@see add_document_rows()} scoping exactly — same status/visibility
+	 * gate — so a contract the customer cannot see in Documents can never surface
+	 * as a calendar chip either. `end_date` is a DATE column, so the window's
+	 * end-of-day bound is trimmed to its civil date before comparing.
+	 *
+	 * @param array<int, array<string, mixed>> $events        Calendar events.
+	 * @param ContactModel|null                $contact       Resolved contact.
+	 * @param string                           $start         Window start (Y-m-d).
+	 * @param string                           $end_inclusive Window end (Y-m-d H:i:s).
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function add_calendar_events( array $events, $contact, string $start, string $end_inclusive ): array {
+		if ( ! $this->is_active() || ! $contact instanceof ContactModel ) {
+			return $events;
+		}
+
+		$contracts = ContractModel::where( 'contact_id', (int) $contact->id )
+			->where( 'status', '!=', ContractStatus::DRAFT )
+			->where( 'hide_from_customer', false )
+			->where( 'is_trash', false )
+			->whereNotNull( 'end_date' )
+			->whereBetween( 'end_date', array( $start, substr( $end_inclusive, 0, 10 ) ) )
+			->get();
+
+		foreach ( $contracts as $contract ) {
+			$events[] = array(
+				'id'       => 'contract-' . (int) $contract->id,
+				'kind'     => 'contract',
+				'title'    => (string) $contract->subject,
+				'start'    => (string) $contract->end_date,
+				'end'      => null,
+				'all_day'  => true,
+				'timezone' => null,
+				'status'   => (string) $contract->status,
+				'route'    => '/documents',
+			);
+		}
+
+		return $events;
 	}
 
 	/**
@@ -96,7 +141,7 @@ final class ContractPortalProvider {
 				'date'        => $contract->start_date,
 				'due_date'    => null,
 				'open_till'   => $contract->end_date,
-				'currency'    => \DoubleScale\Core\Settings\Settings::document_currency( $contract->currency, $contract->sent_at ),
+				'currency'    => \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $contract->currency, $contract->sent_at ),
 				'total'       => (float) $contract->contract_value,
 				'amount_paid' => null,
 				'balance'     => null,

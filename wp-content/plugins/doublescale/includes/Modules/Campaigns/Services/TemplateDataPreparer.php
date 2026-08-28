@@ -11,6 +11,8 @@
 
 namespace DoubleScale\Modules\Campaigns\Services;
 
+use DoubleScale\Modules\Emails\EmailAttachmentResolver;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -42,17 +44,37 @@ class TemplateDataPreparer {
 			$admin_email = 'wordpress@' . ( wp_parse_url( home_url(), PHP_URL_HOST ) ?: 'localhost' );
 		}
 
+		$attachments = array();
+		if ( ! empty( $settings['attachments'] ) ) {
+			$attachments = EmailAttachmentResolver::sanitize_attachments( $settings['attachments'] );
+		} elseif ( ! empty( $body ) ) {
+			$attachments = EmailAttachmentResolver::extract_from_builder_body( $body );
+		}
+
+		$template_settings = array(
+			'from_name'       => $site_name,
+			'from_email'      => $admin_email,
+			'reply_to'        => $settings['reply_to'] ?? $settings['reply_to_email'] ?? $admin_email,
+			'add_unsubscribe' => $settings['add_unsubscribe'] ?? true,
+			'enable_utm'      => $settings['enable_utm'] ?? false,
+		);
+
+		if ( ! empty( $attachments ) ) {
+			$template_settings['attachments'] = $attachments;
+		}
+
+		// Preserve other email settings when present (preview_text, UTM fields, etc.).
+		foreach ( array( 'preview_text', 'utm_source', 'utm_medium', 'utm_name', 'utm_term', 'utm_content' ) as $key ) {
+			if ( isset( $settings[ $key ] ) ) {
+				$template_settings[ $key ] = $settings[ $key ];
+			}
+		}
+
 		return array(
 			'name'     => $subject,
 			'subject'  => $subject,
 			'body'     => $body,
-			'settings' => array(
-				'from_name'       => $site_name,
-				'from_email'      => $admin_email,
-				'reply_to'        => $settings['reply_to'] ?? $settings['reply_to_email'] ?? $admin_email,
-				'add_unsubscribe' => $settings['add_unsubscribe'] ?? true,
-				'enable_utm'      => $settings['enable_utm'] ?? false,
-			),
+			'settings' => $template_settings,
 		);
 	}
 

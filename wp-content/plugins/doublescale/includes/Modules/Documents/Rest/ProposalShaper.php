@@ -15,7 +15,9 @@ use DoubleScale\Modules\Documents\Constants\ProposalStatus;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Models\ProposalModel;
 use DoubleScale\Modules\Documents\Services\ProposalUrl;
+use DoubleScale\Modules\Sales\Services\SalesEmailMergeTags;
 use DoubleScale\Modules\Sales\Services\SalesSettings;
+use DoubleScale\Core\Constants\Currencies;
 use DoubleScale\Core\Settings\Settings;
 
 /**
@@ -42,6 +44,7 @@ final class ProposalShaper {
 			'date'             => $proposal->date,
 			'open_till'        => $proposal->open_till,
 			'currency'         => Settings::document_currency( $proposal->currency, $proposal->sent_at ),
+			'currency_stored'  => Currencies::stored_or_null( $proposal->currency ),
 			'discount_type'    => (string) $proposal->discount_type,
 			'discount_value'   => (float) $proposal->discount_value,
 			'line_items'       => is_array( $proposal->line_items ) ? $proposal->line_items : array(),
@@ -56,6 +59,8 @@ final class ProposalShaper {
 			'zip'              => $proposal->zip,
 			'email'            => $proposal->email,
 			'phone'            => $proposal->phone,
+			'sections'         => is_array( $proposal->sections ) ? $proposal->sections : array(),
+			'terms'            => $proposal->terms ? (string) $proposal->terms : null,
 			'sent_at'          => $proposal->sent_at ? (string) $proposal->sent_at : null,
 			'viewed_at'        => $proposal->viewed_at ? (string) $proposal->viewed_at : null,
 			'accepted_at'      => $proposal->accepted_at ? (string) $proposal->accepted_at : null,
@@ -95,12 +100,42 @@ final class ProposalShaper {
 	}
 
 	/**
+	 * Admin shape with merge tags resolved, for rendering (PDF, print).
+	 *
+	 * shape_admin() deliberately returns the raw stored text because it also
+	 * feeds the edit form, where resolving tags would save the resolved value
+	 * back and destroy them. Rendering paths must use this instead.
+	 *
+	 * @param ProposalModel $proposal Proposal.
+	 * @return array
+	 */
+	public static function shape_for_render( ProposalModel $proposal ): array {
+		$data          = self::shape_admin( $proposal, true );
+		$merge_context = SalesEmailMergeTags::for_proposal( $proposal );
+
+		$data['sections'] = SalesEmailMergeTags::resolve_sections(
+			is_array( $proposal->sections ) ? $proposal->sections : array(),
+			$merge_context
+		);
+		$data['terms']    = $proposal->terms
+			? SalesEmailMergeTags::resolve_rich_text( (string) $proposal->terms, $merge_context )
+			: null;
+
+		return $data;
+	}
+
+	/**
 	 * @param ProposalModel $proposal Proposal.
 	 * @return array
 	 */
 	public static function shape_public( ProposalModel $proposal ): array {
 		$is_expired = self::is_expired( $proposal );
 		$can_respond = self::can_respond( $proposal, $is_expired );
+		$merge_context = SalesEmailMergeTags::for_proposal( $proposal );
+		$sections      = is_array( $proposal->sections ) ? $proposal->sections : array();
+		$terms         = $proposal->terms
+			? SalesEmailMergeTags::resolve_rich_text( (string) $proposal->terms, $merge_context )
+			: null;
 
 		return array(
 			'proposal_number' => (string) $proposal->proposal_number,
@@ -111,6 +146,7 @@ final class ProposalShaper {
 			'date'            => $proposal->date,
 			'open_till'       => $proposal->open_till,
 			'currency'        => Settings::document_currency( $proposal->currency, $proposal->sent_at ),
+			'currency_stored' => Currencies::stored_or_null( $proposal->currency ),
 			'discount_type'   => (string) $proposal->discount_type,
 			'discount_value'  => (float) $proposal->discount_value,
 			'line_items'      => is_array( $proposal->line_items ) ? $proposal->line_items : array(),
@@ -125,6 +161,8 @@ final class ProposalShaper {
 			'zip'             => $proposal->zip,
 			'email'           => $proposal->email,
 			'phone'           => $proposal->phone,
+			'sections'        => SalesEmailMergeTags::resolve_sections( $sections, $merge_context ),
+			'terms'           => $terms,
 			'is_expired'      => $is_expired,
 			'can_accept'      => $can_respond,
 			'can_decline'     => $can_respond,

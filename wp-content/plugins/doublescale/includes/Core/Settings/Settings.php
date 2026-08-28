@@ -207,20 +207,20 @@ class Settings {
 	/**
 	 * Resolve the currency to display for a sales document.
 	 *
-	 * Currency is a single global setting (like deals), but once a document has
-	 * been sent to the customer its currency is frozen to whatever was stored at
-	 * that time — changing the global currency afterwards must not retroactively
-	 * relabel money the customer has already seen or paid. Documents that have
-	 * not been sent yet (drafts) always follow the current global currency.
+	 * A non-empty stored code is an explicit choice (or a value frozen on send).
+	 * NULL/empty means inherit the current global setting. Freeze happens on the
+	 * write path (send), so `$sent_at` is unused for resolution — kept in the
+	 * signature because ~25 call sites pass it.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $stored_currency Currency stored on the record.
-	 * @param mixed       $sent_at         Truthy once the document was sent (e.g. `sent_at` timestamp).
+	 * @param string|null $stored_currency Currency stored on the record (NULL = inherit).
+	 * @param mixed       $sent_at         Unused; freeze is on the write path.
 	 * @return string Currency code (e.g., 'USD', 'EUR').
 	 */
 	public static function document_currency( $stored_currency, $sent_at ) {
-		if ( ! empty( $sent_at ) && ! empty( $stored_currency ) ) {
+		unset( $sent_at );
+		if ( ! empty( $stored_currency ) ) {
 			return (string) $stored_currency;
 		}
 		return self::get_currency();
@@ -307,5 +307,24 @@ class Settings {
 		);
 
 		return false === $decrypted ? $value : $decrypted;
+	}
+
+	/**
+	 * Whether incoming WhatsApp STOP-style keywords should auto-unsubscribe contacts.
+	 *
+	 * When disabled, use the Unsubscribe WhatsApp automation action instead.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return bool
+	 */
+	public static function is_whatsapp_auto_keyword_unsubscribe_enabled() {
+		$whatsapp = self::get( 'whatsapp', array() );
+
+		if ( ! is_array( $whatsapp ) || ! array_key_exists( 'auto_keyword_unsubscribe', $whatsapp ) ) {
+			return true;
+		}
+
+		return (bool) $whatsapp['auto_keyword_unsubscribe'];
 	}
 }

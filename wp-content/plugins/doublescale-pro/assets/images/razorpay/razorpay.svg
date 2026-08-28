@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Razorpay">
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#0C2451"/>
+  <path d="M40 16 22 34h10l-4 14 18-20H36z" fill="#fff"/>
+</svg>

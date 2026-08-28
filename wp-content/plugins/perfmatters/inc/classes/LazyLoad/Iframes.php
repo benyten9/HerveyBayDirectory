@@ -2,6 +2,10 @@
 
 namespace Perfmatters\LazyLoad;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use Perfmatters\Config;
 use Perfmatters\Utilities;
 use Perfmatters\LazyLoad\Attributes;

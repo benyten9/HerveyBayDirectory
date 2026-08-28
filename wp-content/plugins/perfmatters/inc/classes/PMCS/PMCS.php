@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\PMCS;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use WP_Admin_Bar;
 
 class PMCS

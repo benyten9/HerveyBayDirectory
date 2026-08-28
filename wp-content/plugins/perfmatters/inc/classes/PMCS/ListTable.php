@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\PMCS;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 //load WP_List_Table class file
 if(!class_exists('WP_List_Table')) {
 	require_once(ABSPATH . 'wp-admin/includes/class-wp-list-table.php');

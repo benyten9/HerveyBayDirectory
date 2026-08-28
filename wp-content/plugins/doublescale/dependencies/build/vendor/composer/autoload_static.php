@@ -71,6 +71,7 @@ class ComposerStaticInitc76ffa71df276f67f33e39a1d22da86d
             'DoubleScale\\Vendor\\FontLib\\' => 27,
             'DoubleScale\\Vendor\\Egulias\\EmailValidator\\' => 42,
             'DoubleScale\\Vendor\\Dompdf\\' => 26,
+            'DoubleScale\\Vendor\\ArPHP\\I18N\\' => 30,
             'Doctrine\\Inflector\\' => 19,
             'Doctrine\\Common\\Lexer\\' => 22,
             'Doctrine\\Common\\Inflector\\' => 26,
@@ -220,6 +221,10 @@ class ComposerStaticInitc76ffa71df276f67f33e39a1d22da86d
         'DoubleScale\\Vendor\\Dompdf\\' => 
         array (
             0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
+        ),
+        'DoubleScale\\Vendor\\ArPHP\\I18N\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/khaled.alshamaa/ar-php/src',
         ),
         'Doctrine\\Inflector\\' => 
         array (
@@ -411,6 +416,7 @@ class ComposerStaticInitc76ffa71df276f67f33e39a1d22da86d
         'Doctrine\\Inflector\\Rules\\Word' => __DIR__ . '/..' . '/doctrine/inflector/lib/Doctrine/Inflector/Rules/Word.php',
         'Doctrine\\Inflector\\RulesetInflector' => __DIR__ . '/..' . '/doctrine/inflector/lib/Doctrine/Inflector/RulesetInflector.php',
         'Doctrine\\Inflector\\WordInflector' => __DIR__ . '/..' . '/doctrine/inflector/lib/Doctrine/Inflector/WordInflector.php',
+        'DoubleScale\\Vendor\\ArPHP\\I18N\\Arabic' => __DIR__ . '/..' . '/khaled.alshamaa/ar-php/src/Arabic.php',
         'DoubleScale\\Vendor\\Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'DoubleScale\\Vendor\\Dompdf\\Adapter\\CPDF' => __DIR__ . '/..' . '/dompdf/dompdf/src/Adapter/CPDF.php',
         'DoubleScale\\Vendor\\Dompdf\\Adapter\\GD' => __DIR__ . '/..' . '/dompdf/dompdf/src/Adapter/GD.php',

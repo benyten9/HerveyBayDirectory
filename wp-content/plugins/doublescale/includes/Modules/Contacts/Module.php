@@ -13,12 +13,25 @@ namespace DoubleScale\Modules\Contacts;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Core\Container;
+use DoubleScale\Modules\Contacts\Abilities\ContactAbilities;
 
-final class Module extends AbstractModule {
+final class Module extends AbstractModule implements ProvidesAbilities {
 
 	public function slug(): string {
 		return 'contacts';
+	}
+
+	/**
+	 * Read-only contact abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return ContactAbilities::definitions();
 	}
 
 	public function label(): string {

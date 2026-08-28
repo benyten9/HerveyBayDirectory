@@ -33,7 +33,7 @@ class EventsTable extends Migration {
 		KEY calendar_id (calendar_id),
 		KEY availability_id (availability_id),
 		KEY user_id (user_id),
-		KEY hash_id (hash_id),
-		KEY slug (slug)";
+		KEY hash_id (hash_id(191)),
+		KEY slug (slug(191))";
 	}
 }

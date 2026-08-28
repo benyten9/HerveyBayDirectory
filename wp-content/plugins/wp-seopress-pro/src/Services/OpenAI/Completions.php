@@ -94,7 +94,7 @@ class Completions {
 	private function getDefaultModel( $provider = 'openai' ) {
 		switch ( strtolower( $provider ) ) {
 			case 'openai':
-				return 'gpt-5.2-chat-latest';
+				return 'gpt-5.6-terra';
 			case 'deepseek':
 				return 'deepseek-v4-flash';
 			case 'gemini':
@@ -106,7 +106,7 @@ class Completions {
 			case 'seopress':
 				return 'openai/gpt-5.1';
 			default:
-				return 'gpt-5.2-chat-latest';
+				return 'gpt-5.6-terra';
 		}
 	}
 
@@ -115,8 +115,15 @@ class Completions {
 	 *
 	 * Used to detect stale model values saved in the options from previous
 	 * SEOPress versions (e.g. "gpt-4" after the OpenAI dropdown was reduced
-	 * to "gpt-5.2-chat-latest"). This list must stay in sync with the React
+	 * to "gpt-5.6-sol"). This list must stay in sync with the React
 	 * dropdown options in app/react/admin/settings/tabs/pro/AITab.jsx.
+	 *
+	 * Dropping a model from this list is what migrates the sites that still
+	 * have it saved: getModel() falls back to the default as soon as the
+	 * stored value is no longer listed, so a provider retiring a model does
+	 * not require the user to touch their settings. Keeping a retired model
+	 * here would leave every one of those installs sending requests that the
+	 * API answers with a 404.
 	 *
 	 * @param string $provider The provider name.
 	 * @return array List of supported model identifiers.
@@ -124,7 +131,12 @@ class Completions {
 	private function getSupportedModels( $provider = 'openai' ) {
 		switch ( strtolower( $provider ) ) {
 			case 'openai':
-				return array( 'gpt-5.2-chat-latest' );
+				// Terra first: it is the default. Sol is the frontier model
+				// and costs 30$/MTok of output against Terra's 12$ and Luna's
+				// 1.20$, which matters on a feature whose whole point is
+				// generating a title and a description for every post on the
+				// site. Sol stays available for anyone who wants it.
+				return array( 'gpt-5.6-terra', 'gpt-5.6-sol', 'gpt-5.6-luna' );
 			case 'deepseek':
 				return array( 'deepseek-v4-flash', 'deepseek-v4-pro' );
 			case 'gemini':
@@ -478,7 +490,9 @@ class Completions {
 		// Reasoning tokens + actual output tokens both count against max_output_tokens.
 		$gpt5_body['max_output_tokens'] = 2000;
 
-		// Set reasoning effort to 'medium' (gpt-5.2-chat-latest only supports 'medium').
+		// Reasoning effort kept at 'medium', the setting the metabox prompts
+		// were tuned against; 'high' spends most of max_output_tokens on
+		// internal reasoning and leaves the answer truncated.
 		$gpt5_body['reasoning'] = array(
 			'effort' => 'medium',
 		);
@@ -759,7 +773,7 @@ class Completions {
 		$model   = isset( $options[ 'seopress_ai_' . $provider . '_model' ] ) ? $options[ 'seopress_ai_' . $provider . '_model' ] : $this->getDefaultModel( $provider );
 
 		// Guard against stale values saved by previous SEOPress versions
-		// (e.g. "gpt-4" after the OpenAI dropdown was reduced to "gpt-5.2-chat-latest").
+		// (e.g. "gpt-4" after the OpenAI dropdown was reduced to "gpt-5.6-sol").
 		// Without this, requests would still be sent with the obsolete model and fail.
 		$supported = $this->getSupportedModels( $provider );
 		if ( ! empty( $supported ) && ! in_array( $model, $supported, true ) ) {

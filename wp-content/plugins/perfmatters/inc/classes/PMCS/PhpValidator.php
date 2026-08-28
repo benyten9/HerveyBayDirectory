@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\PMCS;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 /**
  * Validates PHP code
  * Forked from https://github.com/codesnippetspro/code-snippets/

@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Pro\Modules\CreditNotes\Models\CreditNoteApplicationModel;
 use DoubleScale\Pro\Modules\CreditNotes\Models\CreditNoteModel;
 use DoubleScale\Pro\Modules\CreditNotes\Services\CreditNoteUrl;
+use DoubleScale\Core\Constants\Currencies;
 use DoubleScale\Core\Settings\Settings;
 
 /**
@@ -35,7 +36,8 @@ class CreditNoteShaper {
 			'sale_agent_user_id' => $credit_note->sale_agent_user_id ? (int) $credit_note->sale_agent_user_id : null,
 			'credit_note_date'   => $credit_note->credit_note_date,
 			'reason'             => $credit_note->reason,
-			'currency'           => Settings::document_currency( $credit_note->currency, $credit_note->sent_at ),
+			'currency'           => \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $credit_note->currency, $credit_note->sent_at ),
+			'currency_stored'    => Currencies::stored_or_null( $credit_note->currency ),
 			'discount_type'      => (string) $credit_note->discount_type,
 			'discount_value'     => (float) $credit_note->discount_value,
 			'line_items'         => is_array( $credit_note->line_items ) ? $credit_note->line_items : array(),
@@ -110,7 +112,7 @@ class CreditNoteShaper {
 			'status'             => (string) $credit_note->status,
 			'credit_note_date'   => $credit_note->credit_note_date,
 			'reason'             => $credit_note->reason,
-			'currency'           => Settings::document_currency( $credit_note->currency, $credit_note->sent_at ),
+			'currency'           => \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $credit_note->currency, $credit_note->sent_at ),
 			'discount_type'      => (string) $credit_note->discount_type,
 			'discount_value'     => (float) $credit_note->discount_value,
 			'line_items'         => is_array( $credit_note->line_items ) ? $credit_note->line_items : array(),

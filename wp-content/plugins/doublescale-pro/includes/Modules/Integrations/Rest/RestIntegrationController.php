@@ -64,6 +64,31 @@ class RestIntegrationController extends RestController {
 			)
 		);
 
+		register_rest_route(
+			$this->namespace,
+			"/{$this->rest_base}/whatsapp-default-provider",
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_whatsapp_default_provider' ),
+					'permission_callback' => array( $this, 'get_permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_whatsapp_default_provider' ),
+					'permission_callback' => array( $this, 'update_permissions_check' ),
+					'args'                => array(
+						'provider' => array(
+							'description'       => __( 'WhatsApp provider slug', 'doublescale' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
 		// Dynamic integration slug route (catches /integrations/{slug})
 		register_rest_route(
 			$this->namespace,
@@ -294,35 +319,63 @@ class RestIntegrationController extends RestController {
 	 * @return array Provider status information
 	 */
 	private function get_channel_provider_status( $channel ) {
-		$provider = MessageProviderRegistry::instance()->get_provider( $channel );
+		$registry     = MessageProviderRegistry::instance();
+		$provider     = $registry->get_provider( $channel );
+		$default_slug = $registry->get_default_provider_slug( $channel );
 
 		if ( ! $provider ) {
-			$default_provider_slug = MessageProviderRegistry::instance()->get_default_provider_slug( $channel );
 			return array(
-				'connected'     => false,
-				'provider_name' => $this->get_default_provider_name( $channel ),
-				'provider_slug' => $default_provider_slug,
-				'error'         => sprintf(
+				'connected'         => false,
+				'provider_name'     => $this->get_default_provider_name( $channel ),
+				'provider_slug'     => $default_slug,
+				'selected_slug'     => $default_slug,
+				'using_fallback'    => false,
+				'requires_template' => CampaignChannel::STR_WHATSAPP === $channel,
+				'error'             => sprintf(
 					/* translators: %s: Provider name */
 					__( '%s provider is not configured', 'doublescale'),
 					$this->get_default_provider_name( $channel )
 				),
-				'help_link'     => admin_url( 'admin.php?page=doublescale#/integrations' ),
+				'help_link'         => admin_url( 'admin.php?page=doublescale#/integrations' ),
 			);
 		}
 
 		$is_configured = $provider->is_configured();
+		$resolved_slug = $provider->get_provider_slug();
+
+		// The registry falls back to any configured provider when the selected
+		// one is unusable. Surface that, otherwise messages silently leave
+		// through a channel the user did not choose.
+		$using_fallback = ( $default_slug && $resolved_slug !== $default_slug );
+		$fallback_notice = null;
+
+		if ( $using_fallback ) {
+			$fallback_notice = sprintf(
+				/* translators: 1: Selected provider name, 2: Provider actually used */
+				__( '%1$s is selected but not connected, so messages are being sent through %2$s instead. Connect %1$s or change the default provider.', 'doublescale' ),
+				$this->get_default_provider_name( $channel ),
+				$provider->get_provider_name()
+			);
+		}
+
+		$requires_template = method_exists( $provider, 'requires_template' )
+			? (bool) $provider->requires_template( $channel )
+			: true;
 
 		return array(
-			'connected'     => $is_configured,
-			'provider_name' => $provider->get_provider_name(),
-			'provider_slug' => $provider->get_provider_slug(),
-			'error'         => $is_configured ? null : sprintf(
+			'connected'         => $is_configured,
+			'provider_name'     => $provider->get_provider_name(),
+			'provider_slug'     => $resolved_slug,
+			'selected_slug'     => $default_slug,
+			'using_fallback'    => $using_fallback,
+			'fallback_notice'   => $fallback_notice,
+			'requires_template' => $requires_template,
+			'error'             => $is_configured ? null : sprintf(
 				/* translators: %s: Provider name */
 				__( '%s provider is not connected', 'doublescale'),
 				$provider->get_provider_name()
 			),
-			'help_link'     => admin_url( 'admin.php?page=doublescale#/integrations' ),
+			'help_link'         => admin_url( 'admin.php?page=doublescale#/integrations' ),
 		);
 	}
 
@@ -337,12 +390,72 @@ class RestIntegrationController extends RestController {
 	 */
 	private function get_default_provider_name( $channel ) {
 		$default_slug = MessageProviderRegistry::instance()->get_default_provider_slug( $channel );
+		if ( ! $default_slug ) {
+			return '';
+		}
 
-		// Map common provider slugs to friendly names
-		$provider_names = array(
-			'twilio' => 'Twilio',
+		$instance = MessageProviderRegistry::instance()->get_provider_by_slug( $default_slug );
+		if ( $instance ) {
+			return $instance->get_provider_name();
+		}
+
+		return ucfirst( str_replace( '-', ' ', (string) $default_slug ) );
+	}
+
+	/**
+	 * Get default WhatsApp provider slug and available registered providers.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_whatsapp_default_provider( $request ) {
+		unset( $request );
+
+		$registry = MessageProviderRegistry::instance();
+		$slug     = $registry->get_default_provider_slug( CampaignChannel::STR_WHATSAPP );
+		$choices  = $registry->get_providers_for_channel( CampaignChannel::STR_WHATSAPP );
+
+		return new WP_REST_Response(
+			array(
+				'provider'             => $slug,
+				'provider_name'        => $this->get_default_provider_name( CampaignChannel::STR_WHATSAPP ),
+				'available_providers'  => $choices,
+			),
+			200
 		);
+	}
 
-		return $provider_names[ $default_slug ] ?? ucfirst( $default_slug );
+	/**
+	 * Update default WhatsApp provider slug.
+	 *
+	 * Accepts any provider registered in MessageProviderRegistry that supports WhatsApp.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_whatsapp_default_provider( $request ) {
+		$provider = sanitize_text_field( (string) $request->get_param( 'provider' ) );
+		$registry = MessageProviderRegistry::instance();
+		$instance = $registry->get_provider_by_slug( $provider );
+
+		if ( ! $instance || ! $instance->supports_channel( CampaignChannel::STR_WHATSAPP ) ) {
+			return new WP_Error(
+				'invalid_provider',
+				__( 'Selected provider is not a registered WhatsApp provider.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$registry->set_default_provider( CampaignChannel::STR_WHATSAPP, $provider );
+
+		return new WP_REST_Response(
+			array(
+				'success'              => true,
+				'provider'             => $provider,
+				'provider_name'        => $instance->get_provider_name(),
+				'available_providers'  => $registry->get_providers_for_channel( CampaignChannel::STR_WHATSAPP ),
+			),
+			200
+		);
 	}
 }

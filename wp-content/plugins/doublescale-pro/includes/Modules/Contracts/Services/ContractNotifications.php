@@ -205,7 +205,7 @@ final class ContractNotifications {
 		$formatted_value = sprintf(
 			'%1$s %2$s',
 			number_format_i18n( (float) $contract->contract_value, 2 ),
-			\DoubleScale\Core\Settings\Settings::document_currency( $contract->currency, $contract->sent_at )
+			\DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $contract->currency, $contract->sent_at )
 		);
 
 		$summary_rows = array(

@@ -20,6 +20,10 @@ use DoubleScale\Pro\Modules\Sales\Approvals\Rest\Controllers\RestApprovalControl
 use DoubleScale\Pro\Modules\Sales\Approvals\Services\ApprovalWorkflow;
 use DoubleScale\Pro\Modules\Sales\PaymentGateways\Loader;
 use DoubleScale\Pro\Modules\Sales\PaymentGateways\StripeInvoiceWebhookHandler;
+use DoubleScale\Pro\Modules\Sales\Rest\Controllers\RestSureCartProductController;
+use DoubleScale\Pro\Modules\Sales\Rest\Controllers\RestWooCommerceSettingsController;
+use DoubleScale\Pro\Modules\Sales\Rest\Controllers\RestWooProductController;
+use DoubleScale\Pro\Modules\Sales\Services\WhatsappDocumentSender;
 
 /**
  * Sales Pro module.
@@ -86,6 +90,9 @@ final class Module extends AbstractModule {
 	public function restControllers(): array {
 		return array(
 			RestApprovalController::class,
+			RestWooProductController::class,
+			RestSureCartProductController::class,
+			RestWooCommerceSettingsController::class,
 		);
 	}
 
@@ -109,6 +116,14 @@ final class Module extends AbstractModule {
 		if ( ! $this->free_sales_present() ) {
 			return;
 		}
+
+		// WooCommerce picker config must ship even when the documents release
+		// gate is closed — credit notes share the same line-items slot.
+		add_filter( 'doublescale_admin_config', array( __CLASS__, 'inject_admin_config' ) );
+
+		// Credit notes are not behind the documents gate either, so automatic
+		// WhatsApp sending registers before the gate check below.
+		WhatsappDocumentSender::register();
 
 		// Invoice payments only exist once free's Sales documents feature is
 		// released — see doublescale_sales_documents_ready() (free).
@@ -146,6 +161,21 @@ final class Module extends AbstractModule {
 	}
 
 	/**
+	 * Expose WooCommerce store currency for the line-item picker's mismatch warning.
+	 * Availability itself is already on the payload as `isWoocommerceActive`.
+	 *
+	 * @param array<string, mixed> $config Admin config payload.
+	 * @return array<string, mixed>
+	 */
+	public static function inject_admin_config( array $config ): array {
+		$config['wooCurrency'] = function_exists( 'get_woocommerce_currency' )
+			? (string) get_woocommerce_currency()
+			: '';
+
+		return $config;
+	}
+
+	/**
 	 * @param Container $container DI container.
 	 * @return void
 	 */
@@ -154,11 +184,15 @@ final class Module extends AbstractModule {
 			return;
 		}
 
+		// Always register REST controllers (approvals + WooCommerce products).
+		// The WooCommerce picker is shared with credit notes, which are not
+		// gated on the documents release flag — so parent::boot must run even
+		// when invoices/proposals are still behind the gate.
+		parent::boot( $container );
+
 		if ( function_exists( 'doublescale_sales_documents_ready' ) && ! doublescale_sales_documents_ready() ) {
 			return;
 		}
-
-		parent::boot( $container );
 
 		if ( ! (bool) SalesSettings::get( 'approval_workflow_enabled', false ) ) {
 			return;

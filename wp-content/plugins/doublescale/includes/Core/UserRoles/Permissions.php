@@ -71,6 +71,58 @@ final class Permissions {
 	}
 
 	/**
+	 * Whether the user may see and change the MCP settings screen.
+	 *
+	 * CRM Manager is not enough: MCP publishes a site-wide HTTP endpoint and
+	 * issues keys that let an external AI client read CRM data. That is a
+	 * WordPress-administrator decision, not a CRM-role one. Connecting clients
+	 * still run as the user the key belongs to — this gate is only for the
+	 * Settings → MCP page.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_manage_mcp( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		return user_can( $user_id, 'manage_options' );
+	}
+
+	/**
+	 * Whether the user may issue and revoke MCP keys for THEMSELVES.
+	 *
+	 * Distinct from {@see can_manage_mcp()}, which governs the MCP surface as a
+	 * whole — enabling the endpoint, and seeing or revoking everyone's keys.
+	 * That stays an administrator decision.
+	 *
+	 * This weaker gate exists because the previous admin-only rule made the
+	 * feature unusable for the people it was built for: a sales rep has dozens
+	 * of callable abilities and no way to obtain a key, so every key had to be
+	 * minted by an administrator on their behalf. A self-issued key grants its
+	 * owner nothing they do not already have — every ability re-checks the role
+	 * and the owner scope at call time, so a rep's key sees a rep's records.
+	 *
+	 * Requires a DoubleScale role: a key for a user with none authenticates and
+	 * then exposes zero tools, which reads as a broken connection.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_manage_own_mcp_key( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		if ( self::can_manage_mcp( $user_id ) ) {
+			return true;
+		}
+
+		return UserRoles::NONE !== self::get_user_role( $user_id );
+	}
+
+	/**
 	 * Check if user is a Sales Manager
 	 *
 	 * @since 1.0.0
@@ -697,6 +749,34 @@ final class Permissions {
 
 
 	/**
+	 * Whether the user may permanently delete contacts (single or bulk).
+	 *
+	 * Sales Reps must never delete contacts — including when they also hold the
+	 * WordPress `administrator` role but are scoped to Sales Rep in Team settings.
+	 * CRM Managers and Sales Managers retain delete access.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_delete_contacts( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		if (
+			self::user_has_role( UserRoles::SALES_REP, $user_id )
+			&& ! self::user_has_role( UserRoles::SALES_MANAGER, $user_id )
+			&& ! self::user_has_role( UserRoles::CRM_MANAGER, $user_id )
+		) {
+			return false;
+		}
+
+		if ( self::is_crm_manager( $user_id ) ) {
+			return true;
+		}
+
+		return self::user_has_role( UserRoles::SALES_MANAGER, $user_id );
+	}
+
+	/**
 	 * Check if user has basic CRM access
 	 *
 	 * @since 1.0.0
@@ -782,12 +862,41 @@ final class Permissions {
 	 */
 	public static function has_ai_access( $user_id = null ) {
 		$ai_settings = Settings::get( 'ai', array() );
-		$access      = $ai_settings['access'] ?? self::default_ai_access();
 
-		// Provider must be configured (hard requirement for everyone).
+		// Provider must be configured for features that CALL a provider.
+		// Deliberately not part of has_ai_role_access(): see that method.
 		if ( empty( $ai_settings['provider'] ) ) {
 			return new \WP_Error( 'ai_not_configured', __( 'AI provider not configured.', 'doublescale' ), array( 'status' => 400 ) );
 		}
+
+		return self::has_ai_role_access( $user_id );
+	}
+
+	/**
+	 * Whether this user's ROLE may use AI-facing features.
+	 *
+	 * The role half of {@see has_ai_access()}, without the provider check.
+	 *
+	 * Those are two unrelated questions, and merging them broke MCP. Outbound
+	 * features (writing an email, summarising a ticket) genuinely need a
+	 * configured provider — DoubleScale is the one making the API call. MCP is
+	 * the opposite direction: an external agent connects IN and reads CRM data
+	 * through the abilities layer, and nothing on this site calls a provider at
+	 * all. Requiring an OpenAI key before Claude may read an invoice is a
+	 * condition with no mechanism behind it.
+	 *
+	 * The role gate still applies to both, because "who may reach CRM data
+	 * through an AI tool" is a real question the administrator answers in
+	 * Settings → AI.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return true|\WP_Error
+	 */
+	public static function has_ai_role_access( $user_id = null ) {
+		$ai_settings = Settings::get( 'ai', array() );
+		$access      = $ai_settings['access'] ?? self::default_ai_access();
 
 		$user_role = self::get_user_role( $user_id );
 

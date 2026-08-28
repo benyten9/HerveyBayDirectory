@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv3 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: SEOPress 10.1\n"
+"Project-Id-Version: SEOPress 10.1.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-seopress-pro\n"
 "Last-Translator: SEOPress Team <contact@seopress.org>\n"
 "Language-Team: SEOPress Team <contact@seopress.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-29T07:50:13+00:00\n"
+"POT-Creation-Date: 2026-08-11T11:59:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: wp-seopress-pro\n"
@@ -221,79 +221,79 @@ msgstr ""
 msgid "Hi! Ask me anything about SEO or %s."
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:280
-#: inc/admin/ai-assistant/ai-assistant.php:290
-#: inc/admin/ai-assistant/ai-assistant.php:344
-#: inc/admin/ai-assistant/ai-assistant.php:353
-#: inc/admin/ai-assistant/ai-assistant.php:387
-#: inc/admin/ai-assistant/ai-assistant.php:421
+#: inc/admin/ai-assistant/ai-assistant.php:288
+#: inc/admin/ai-assistant/ai-assistant.php:298
+#: inc/admin/ai-assistant/ai-assistant.php:352
+#: inc/admin/ai-assistant/ai-assistant.php:361
+#: inc/admin/ai-assistant/ai-assistant.php:395
+#: inc/admin/ai-assistant/ai-assistant.php:429
 #: app/editor/ai-assistant/index.js:827
 #: app/editor/ai-assistant/index.js:950
-#: app/react/admin/settings/tabs/pro/AITab.jsx:677
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:679
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 #: public/editor/ai-assistant/ai-assistant.js:21
 #: public/editor/ai-assistant/ai-assistant.js:22
 msgid "AI Assistant"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:281
-#: inc/admin/ai-assistant/ai-assistant.php:345
+#: inc/admin/ai-assistant/ai-assistant.php:289
+#: inc/admin/ai-assistant/ai-assistant.php:353
 msgid "Ask about SEO..."
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:282
-#: inc/admin/ai-assistant/ai-assistant.php:346
+#: inc/admin/ai-assistant/ai-assistant.php:290
+#: inc/admin/ai-assistant/ai-assistant.php:354
 #: app/editor/ai-assistant/components/ChatInput.js:580
 #: public/editor/ai-assistant/ai-assistant.js:4
 msgid "Send"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:283
-#: inc/admin/ai-assistant/ai-assistant.php:347
+#: inc/admin/ai-assistant/ai-assistant.php:291
+#: inc/admin/ai-assistant/ai-assistant.php:355
 msgid "Clear"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:284
-#: inc/admin/ai-assistant/ai-assistant.php:348
+#: inc/admin/ai-assistant/ai-assistant.php:292
+#: inc/admin/ai-assistant/ai-assistant.php:356
 #: inc/admin/metaboxes/admin-metaboxes.php:1006
 #: app/editor/ai-assistant/index.js:900
 #: public/editor/ai-assistant/ai-assistant.js:21
 msgid "Close"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:286
-#: inc/admin/ai-assistant/ai-assistant.php:350
+#: inc/admin/ai-assistant/ai-assistant.php:294
+#: inc/admin/ai-assistant/ai-assistant.php:358
 #: app/editor/ai-assistant/components/ChatPanel.js:1201
 #: public/editor/ai-assistant/ai-assistant.js:11
 msgid "Sorry, an error occurred. Please try again."
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:287
+#: inc/admin/ai-assistant/ai-assistant.php:295
 msgid "Include post context"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:288
-#: inc/admin/ai-assistant/ai-assistant.php:351
+#: inc/admin/ai-assistant/ai-assistant.php:296
+#: inc/admin/ai-assistant/ai-assistant.php:359
 #: app/editor/ai-assistant/components/ChatMessage.js:138
 #: public/editor/ai-assistant/ai-assistant.js:1
 msgid "Thinking..."
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:289
-#: inc/admin/ai-assistant/ai-assistant.php:352
+#: inc/admin/ai-assistant/ai-assistant.php:297
+#: inc/admin/ai-assistant/ai-assistant.php:360
 msgid "You"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:291
-#: inc/admin/ai-assistant/ai-assistant.php:354
+#: inc/admin/ai-assistant/ai-assistant.php:299
+#: inc/admin/ai-assistant/ai-assistant.php:362
 #: app/editor/ai-assistant/components/ChatMessage.js:654
 #: app/react/admin/schemas/components/JsonLdPreview.js:57
 #: app/react/admin/settings/components/License/LicensePage.jsx:339
 #: app/react/admin/settings/components/ProGADashboard.js:220
-#: app/react/admin/settings/tabs/pro/AITab.jsx:539
+#: app/react/admin/settings/tabs/pro/AITab.jsx:541
 #: app/react/admin/settings/tabs/pro/PageSpeedTab.jsx:972
 #: public/admin/schemas/schema-editor.c01f73ce7f98f2ad2b65.js:9
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 #: public/admin/settings/905.391b521260e22d4db6d2.js:1
 #: public/admin/settings/index.js:5
 #: public/admin/settings/index.js:11
@@ -301,25 +301,25 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:292
+#: inc/admin/ai-assistant/ai-assistant.php:300
 msgid "Quick actions:"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:293
+#: inc/admin/ai-assistant/ai-assistant.php:301
 msgid "Write an article outline"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:294
+#: inc/admin/ai-assistant/ai-assistant.php:302
 #: app/editor/ai-assistant/components/ChatPanel.js:370
 #: public/editor/ai-assistant/ai-assistant.js:5
 msgid "Suggest titles"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:295
+#: inc/admin/ai-assistant/ai-assistant.php:303
 msgid "Analyze my post"
 msgstr ""
 
-#: inc/admin/ai-assistant/ai-assistant.php:391
+#: inc/admin/ai-assistant/ai-assistant.php:399
 #: app/editor/ai-assistant/index.js:982
 #: public/editor/ai-assistant/ai-assistant.js:23
 msgid "Open AI Assistant"
@@ -356,7 +356,7 @@ msgid "Your .htaccess is not writable."
 msgstr ""
 
 #: inc/admin/ajax.php:361
-#: src/Services/OpenAI/Completions.php:1271
+#: src/Services/OpenAI/Completions.php:1285
 msgid "Invalid term provided."
 msgstr ""
 
@@ -1404,8 +1404,8 @@ msgstr ""
 #: inc/admin/import/class-csv-controller.php:847
 #: inc/admin/import/class-csv-controller.php:901
 #: src/Helpers/Audit/SEOIssues.php:37
-#: app/react/admin/settings/tabs/pro/AITab.jsx:611
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:613
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Meta description"
 msgstr ""
 
@@ -1927,10 +1927,10 @@ msgstr ""
 #: app/react/admin/schemas/config/schemaTypes.js:283
 #: app/react/admin/schemas/config/schemaTypes.js:372
 #: app/react/admin/schemas/config/schemaTypes.js:400
-#: app/react/admin/settings/tabs/pro/AITab.jsx:664
+#: app/react/admin/settings/tabs/pro/AITab.jsx:666
 #: app/react/admin/settings/tabs/pro/LlmsTab.jsx:154
 #: public/admin/schemas/index.js:3
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 #: public/admin/settings/833.067a81a70b9a7e0c960e.js:1
 #: public/editor/ai-assistant/ai-assistant.js:4
 #: public/editor/blocks/local-business/index.js:1
@@ -8007,10 +8007,10 @@ msgid "Translations"
 msgstr ""
 
 #: inc/admin/sections/Pro.php:20
-#: app/react/admin/settings/tabs/pro/AITab.jsx:639
+#: app/react/admin/settings/tabs/pro/AITab.jsx:641
 #: app/react/admin/settings/tabs/pro/BreadcrumbsTab.jsx:425
 #: public/admin/settings/109.c031a74073cb30ea2ee7.js:1
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Misc"
 msgstr ""
 
@@ -10950,15 +10950,15 @@ msgid "Google PageSpeed API key"
 msgstr ""
 
 #: src/Data/CommandPaletteIndex.php:306
-#: app/react/admin/settings/tabs/pro/AITab.jsx:584
 #: app/react/admin/settings/tabs/pro/AITab.jsx:586
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:588
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "AI provider"
 msgstr ""
 
 #: src/Data/CommandPaletteIndex.php:307
-#: app/react/admin/settings/tabs/pro/AITab.jsx:641
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:643
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Auto Alt Text"
 msgstr ""
 
@@ -11701,8 +11701,8 @@ msgid "Headings"
 msgstr ""
 
 #: src/Helpers/Audit/SEOIssues.php:33
-#: app/react/admin/settings/tabs/pro/AITab.jsx:620
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:622
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Meta title"
 msgstr ""
 
@@ -12548,14 +12548,14 @@ msgstr ""
 #: app/react/admin/components/shared/dataview/DeleteConfirmModal.js:95
 #: app/react/admin/redirections/components/CategoriesSidebar.js:330
 #: app/react/admin/redirections/components/CategoriesSidebar.js:360
-#: app/react/admin/settings/tabs/pro/AITab.jsx:372
-#: app/react/admin/settings/tabs/pro/AITab.jsx:398
+#: app/react/admin/settings/tabs/pro/AITab.jsx:374
+#: app/react/admin/settings/tabs/pro/AITab.jsx:400
 #: public/admin/broken-links/index.js:1
 #: public/admin/redirections/index.js:2
 #: public/admin/redirections/index.js:5
 #: public/admin/redirections/index.js:10
 #: public/admin/schemas/index.js:3
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 #: public/editor/ai-assistant/ai-assistant.js:21
 msgid "Delete"
 msgstr ""
@@ -12568,122 +12568,122 @@ msgstr ""
 msgid "No nonce provided!"
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:840
-#: src/Services/OpenAI/Completions.php:1510
-#: src/Services/OpenAI/Completions.php:1811
+#: src/Services/OpenAI/Completions.php:854
+#: src/Services/OpenAI/Completions.php:1524
+#: src/Services/OpenAI/Completions.php:1825
 msgid "Invalid post ID provided."
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:849
+#: src/Services/OpenAI/Completions.php:863
 msgid "Security check failed."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:955
+#: src/Services/OpenAI/Completions.php:969
 msgid "Generate, in this language %1$s, an engaging SEO title metadata in one sentence of sixty characters maximum, with at least one of these keywords in the prompt response: \"%2$s\", based on this content: %3$s."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:973
+#: src/Services/OpenAI/Completions.php:987
 msgid "Generate, in this language %1$s, an engaging SEO meta description in less than 160 characters, with at least one of these keywords in the prompt response: \"%2$s\", based on this content: %3$s."
 msgstr ""
 
 #. translators: 1: provider name, 2: response code, 3: error details
-#: src/Services/OpenAI/Completions.php:1104
-#: src/Services/OpenAI/Completions.php:1441
+#: src/Services/OpenAI/Completions.php:1118
+#: src/Services/OpenAI/Completions.php:1455
 msgid "An error occurred with %1$s API. Response code: %2$s. Details: %3$s"
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:1331
+#: src/Services/OpenAI/Completions.php:1345
 msgid "Generate, in this language %1$s, an engaging SEO title in one sentence of sixty characters maximum for a taxonomy archive page (a page that lists several articles, not a single article). Include at least one of these keywords in the response: \"%2$s\". Use the context below only to understand the overall theme of the archive; the article titles it lists are only examples of its content, so do not copy, quote, or build the title around any single one of them. Context: %3$s."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:1344
+#: src/Services/OpenAI/Completions.php:1358
 msgid "Generate, in this language %1$s, an engaging SEO meta description in less than 160 characters for a taxonomy archive page (a page that lists several articles, not a single article). Include at least one of these keywords in the response: \"%2$s\". Use the context below only to understand the overall theme of the archive; the article titles it lists are only examples of its content, so do not copy, quote, or build the description around any single one of them. Context: %3$s."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:1613
+#: src/Services/OpenAI/Completions.php:1627
 msgid "Generate, in this language %1$s, an engaging and emotional Facebook/Open Graph title in one sentence of sixty characters maximum, optimized for social sharing with at least one of these keywords: \"%2$s\", based on this content: %3$s. Make it catchy and clickable for social media."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:1621
+#: src/Services/OpenAI/Completions.php:1635
 msgid "Generate, in this language %1$s, an engaging and compelling Facebook/Open Graph description in less than 160 characters, optimized for social sharing with at least one of these keywords: \"%2$s\", based on this content: %3$s. Make it emotional and encourage clicks."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:1632
+#: src/Services/OpenAI/Completions.php:1646
 msgid "Generate, in this language %1$s, a punchy and concise X/Twitter title in one sentence of sixty characters maximum, with at least one of these keywords: \"%2$s\", based on this content: %3$s. Make it short, impactful and suitable for X."
 msgstr ""
 
 #. translators: 1: language, 2: target keywords, 3: content
-#: src/Services/OpenAI/Completions.php:1640
+#: src/Services/OpenAI/Completions.php:1654
 msgid "Generate, in this language %1$s, a concise and impactful X/Twitter description in less than 160 characters, with at least one of these keywords: \"%2$s\", based on this content: %3$s. Keep it brief and punchy for X."
 msgstr ""
 
 #. translators: 1: provider name, 2: response code
-#: src/Services/OpenAI/Completions.php:1742
-#: src/Services/OpenAI/Completions.php:2105
+#: src/Services/OpenAI/Completions.php:1756
+#: src/Services/OpenAI/Completions.php:2119
 msgid "An error occurred with %1$s API, please try again. Response code: %2$s"
 msgstr ""
 
 #. translators: 1: provider name
-#: src/Services/OpenAI/Completions.php:1826
+#: src/Services/OpenAI/Completions.php:1840
 msgid "Image alt text generation is not supported by %1$s. Please use OpenAI or another provider that supports multimodal content."
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:1864
+#: src/Services/OpenAI/Completions.php:1878
 msgid "Alt text, caption, and description already exist, no need to generate them."
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:1902
+#: src/Services/OpenAI/Completions.php:1916
 msgid "SVG files are not supported for AI image analysis. Please use JPG, PNG, GIF, or WebP images."
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:1915
+#: src/Services/OpenAI/Completions.php:1929
 msgid "Could not fetch the image. Please check if the image URL is accessible."
 msgstr ""
 
 #. translators: %s: language
-#: src/Services/OpenAI/Completions.php:1926
+#: src/Services/OpenAI/Completions.php:1940
 msgid "Analyze this image and generate the following in %s:"
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:1932
+#: src/Services/OpenAI/Completions.php:1946
 msgid "alt_text: A concise alternative text (max 10 words) for accessibility and SEO"
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:1936
+#: src/Services/OpenAI/Completions.php:1950
 msgid "caption: A short, engaging caption suitable for display below the image (1-2 sentences)"
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:1940
+#: src/Services/OpenAI/Completions.php:1954
 msgid "description: A detailed description of the image content (2-3 sentences)"
 msgstr ""
 
 #. translators: %s: comma-separated list of JSON keys
-#: src/Services/OpenAI/Completions.php:1951
+#: src/Services/OpenAI/Completions.php:1965
 msgid "Return the answer as a JSON object with keys: %s."
 msgstr ""
 
 #. translators: %s: JSON object example
-#: src/Services/OpenAI/Completions.php:1958
+#: src/Services/OpenAI/Completions.php:1972
 msgid "You must respond with ONLY a valid JSON object. Format: {%s}"
 msgstr ""
 
 #. translators: 1: provider name, 2: error message
-#: src/Services/OpenAI/Completions.php:2131
+#: src/Services/OpenAI/Completions.php:2145
 msgid "Invalid JSON response from %1$s API: %2$s"
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:2153
+#: src/Services/OpenAI/Completions.php:2167
 msgid "AI refused to describe this image."
 msgstr ""
 
-#: src/Services/OpenAI/Completions.php:2173
+#: src/Services/OpenAI/Completions.php:2187
 msgid "Unable to extract content from AI response."
 msgstr ""
 
@@ -13052,10 +13052,10 @@ msgstr ""
 #: app/react/admin/schemas/components/JsonLdPreview.js:57
 #: app/react/admin/settings/components/License/LicensePage.jsx:339
 #: app/react/admin/settings/components/ProGADashboard.js:220
-#: app/react/admin/settings/tabs/pro/AITab.jsx:539
+#: app/react/admin/settings/tabs/pro/AITab.jsx:541
 #: app/react/admin/settings/tabs/pro/PageSpeedTab.jsx:972
 #: public/admin/schemas/schema-editor.c01f73ce7f98f2ad2b65.js:9
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 #: public/admin/settings/905.391b521260e22d4db6d2.js:1
 #: public/admin/settings/index.js:5
 #: public/admin/settings/index.js:11
@@ -13859,8 +13859,8 @@ msgstr ""
 #: app/react/admin/settings/components/ProToolsRedirections.js:206
 #: app/react/admin/settings/components/ProToolsRedirections.js:371
 #: app/react/admin/settings/components/RobotsRevisions.jsx:251
-#: app/react/admin/settings/tabs/pro/AITab.jsx:390
-#: app/react/admin/settings/tabs/pro/AITab.jsx:413
+#: app/react/admin/settings/tabs/pro/AITab.jsx:392
+#: app/react/admin/settings/tabs/pro/AITab.jsx:415
 #: public/admin/audit/audit-overview.fab6d99e39e489bafe21.js:5
 #: public/admin/broken-links/index.js:1
 #: public/admin/redirections/index.js:1
@@ -13868,7 +13868,7 @@ msgstr ""
 #: public/admin/redirections/redirection-editor.167be92b8f5ec44cd147.js:1
 #: public/admin/schemas/index.js:3
 #: public/admin/schemas/schema-editor.c01f73ce7f98f2ad2b65.js:9
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 #: public/admin/settings/278.fe238de6d55476a4f3b7.js:1
 #: public/admin/settings/index.js:5
 #: public/admin/settings/index.js:9
@@ -16951,9 +16951,9 @@ msgid "Details"
 msgstr ""
 
 #: app/react/admin/schemas/config/schemaTypes.js:243
-#: app/react/admin/settings/tabs/pro/AITab.jsx:510
+#: app/react/admin/settings/tabs/pro/AITab.jsx:512
 #: public/admin/schemas/index.js:3
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Provider"
 msgstr ""
 
@@ -18933,264 +18933,264 @@ msgstr ""
 msgid "These two revisions are identical."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:178
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:180
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Failed to retrieve balance."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:181
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:183
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Network error."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:194
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:196
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Loading credit balance..."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:225
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:227
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Your subscription is not active, so AI credits are no longer available. Credits don't carry over from one month to the next: renewing your subscription starts a new monthly allowance."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:233
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:235
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Renew my subscription"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:242
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:244
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Credit Balance"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:244
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:246
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "credits"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:251
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:253
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Used this cycle:"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:252
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:254
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "remaining"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:323
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:325
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Connection failed."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:326
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:328
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Network error. Please try again."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:338
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:340
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "How to connect with"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:354
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:356
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "API token"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:362
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:364
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Testing..."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:362
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:364
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Test connection"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:368
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:370
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Replace"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:383
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:385
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Delete API key"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:387
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:389
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Are you sure you want to delete this API key? You will need to enter it again to use AI features with this provider."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:409
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:411
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Enter your Credits API token"
 msgstr ""
 
 #. translators: %s: AI provider name
-#: app/react/admin/settings/tabs/pro/AITab.jsx:409
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:1
+#: app/react/admin/settings/tabs/pro/AITab.jsx:411
+#: public/admin/settings/223.c944a139c97149f6920f.js:1
 msgid "Enter your %s API key"
 msgstr ""
 
 #. translators: 1: provider name (e.g. OpenAI), 2: link to the WordPress Connectors settings page.
-#: app/react/admin/settings/tabs/pro/AITab.jsx:436
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:438
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "No %1$s key is set here, so the key from your WordPress Connectors (%2$s) will be used automatically. Enter a key above to override it."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:438
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:440
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Settings, Connectors"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:462
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:464
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Usage"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:478
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:480
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Currently no errors logged."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:513
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:515
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Status code"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:516
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:518
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Timestamp"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:529
+#: app/react/admin/settings/tabs/pro/AITab.jsx:531
 #: app/react/admin/settings/tabs/pro/PageSpeedTab.jsx:962
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 #: public/admin/settings/905.391b521260e22d4db6d2.js:1
 msgid "Hide log"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:529
+#: app/react/admin/settings/tabs/pro/AITab.jsx:531
 #: app/react/admin/settings/tabs/pro/PageSpeedTab.jsx:962
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 #: public/admin/settings/905.391b521260e22d4db6d2.js:1
 msgid "View log"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:557
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:559
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "How AI generation works"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:563
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:565
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Enter your <strong>API key</strong>, select an <strong>AI model</strong>, and start generating your <strong>title and meta description tags</strong>, as well as <strong>alt texts for images</strong>."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:569
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:571
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "You can generate content from the SEO metabox or use bulk actions from your posts list."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:573
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:575
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "We send your <strong>post content</strong>, <strong>language</strong>, and <strong>target keywords</strong> to the AI for better results. We request that at least one target keyword is included, but <strong>AI responses cannot be fully controlled</strong>."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:582
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:584
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "General settings"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:608
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:610
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Automatic generation on publish"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:609
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:611
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Generate missing metadata with your selected AI provider the moment a post is published. This may slightly slow down publishing."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:613
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:615
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Automatically generate the meta description with AI when publishing, if it is empty"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:616
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:618
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Never overwrites a meta description you already wrote."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:622
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:624
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Automatically generate the meta title with AI when publishing, if it is empty"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:625
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:627
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Never overwrites a meta title you already wrote."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:629
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:631
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Custom AI instructions"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:633
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:635
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "e.g. Use a friendly, concise tone and always mention our brand name."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:634
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:636
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Optional. These instructions (voice, tone, style) are added to every AI title and meta description generation, including the metabox and bulk actions."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:643
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:645
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "When uploading an image file, automatically generate metadata using AI"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:646
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:648
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "This may slow down the image upload."
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:651
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:653
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Fields to generate on upload:"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:654
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:656
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Alt text"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:659
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:661
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Caption"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:673
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:675
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "AI Logs"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:674
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:676
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Below is the latest error message obtained from the AI API:"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:679
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:681
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "Display an AI chat assistant on settings pages and editors to get help with SEO"
 msgstr ""
 
-#: app/react/admin/settings/tabs/pro/AITab.jsx:682
-#: public/admin/settings/223.b443399e1a6f5ce1e51e.js:2
+#: app/react/admin/settings/tabs/pro/AITab.jsx:684
+#: public/admin/settings/223.c944a139c97149f6920f.js:2
 msgid "The AI Assistant uses your configured AI provider to answer questions about SEO. It appears as a sidebar in Gutenberg, in the admin bar for Classic Editor, and in the header of the settings pages."
 msgstr ""
 

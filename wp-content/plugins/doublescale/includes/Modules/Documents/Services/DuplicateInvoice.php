@@ -51,7 +51,10 @@ final class DuplicateInvoice {
 				'sale_agent_user_id'    => $source->sale_agent_user_id ? (int) $source->sale_agent_user_id : null,
 				'invoice_date'          => $invoice_date,
 				'due_date'              => $this->next_due_date( $source, $invoice_date ),
-				'currency'              => (string) $source->currency,
+				// Copy the raw column. Do not resolve via document_currency() and
+				// do not add a getCurrencyAttribute() accessor — NULL must stay
+				// NULL (inherit) and an explicit EUR must stay EUR.
+				'currency'              => ( null === $source->currency || '' === $source->currency ) ? null : $source->currency,
 				'allowed_payment_modes' => is_array( $source->allowed_payment_modes ) ? $source->allowed_payment_modes : array(),
 				'discount_type'         => (string) $source->discount_type,
 				'discount_value'        => (float) $source->discount_value,
@@ -61,6 +64,7 @@ final class DuplicateInvoice {
 				'shipping_address'      => $source->shipping_address,
 				'client_note'           => $source->client_note,
 				'terms'                 => $source->terms,
+				'sections'              => is_array( $source->sections ) ? $source->sections : array(),
 			)
 		);
 		SalesNumbering::save_with_retry( $copy );

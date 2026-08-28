@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class General {
     
     //init

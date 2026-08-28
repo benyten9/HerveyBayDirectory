@@ -13,6 +13,7 @@ use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\Container;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
+use DoubleScale\Pro\Modules\Contracts\Abilities\ContractAbilities;
 use DoubleScale\Pro\Modules\Contracts\Renderer\ContractFrontendHandler;
 use DoubleScale\Pro\Modules\Contracts\Rest\Controllers\RestContractController;
 use DoubleScale\Pro\Modules\Contracts\Rest\Controllers\RestContractTypeController;
@@ -25,6 +26,17 @@ use DoubleScale\Pro\Modules\Contracts\Services\ExpiringContracts;
  * Contracts module.
  */
 final class Module extends AbstractSalesChildModule {
+
+	/**
+	 * Read-only contract abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return ContractAbilities::definitions();
+	}
 
 	public function version(): string {
 		return '1.0.0';
@@ -58,11 +70,14 @@ final class Module extends AbstractSalesChildModule {
 			$this->sales_migration_path( 'SalesContractsTable.php' ),
 			$this->sales_migration_path( 'SalesContractTypesTable.php' ),
 			$this->sales_migration_path( 'SalesContractTableIssuerSnapshotColumn.php' ),
+			$this->sales_migration_path( 'SalesContractTableCurrencyNullable.php' ),
 		);
 	}
 
 	protected function boot_child( Container $container ): void {
 		unset( $container );
+
+		Migrations\SalesContractTableCurrencyNullable::ensure();
 
 		$this->loadModuleMergeTagFiles();
 

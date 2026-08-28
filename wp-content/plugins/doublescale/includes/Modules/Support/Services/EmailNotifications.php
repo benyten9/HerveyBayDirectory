@@ -533,7 +533,7 @@ final class EmailNotifications {
 				'body'    => '<p>Hi <strong>{customer_full_name}</strong>,</p>'
 					. '<p>Your request (<a href="{ticket_public_url}">#{ticket_id}</a>) has been received, and is being reviewed by our support staff.</p>'
 					. '<p>To add additional comments, follow the link below:</p>'
-					. '<h4><a href="{ticket_public_url}">View Ticket</a></h4>'
+					. '<p><a href="{ticket_public_url}">View Ticket</a></p>'
 					. '<p>&nbsp;</p>'
 					. '<p>or follow this link: {ticket_public_url}</p>'
 					. '<hr />'
@@ -543,7 +543,7 @@ final class EmailNotifications {
 				'subject' => __( 'Re: {ticket_title}', 'doublescale' ),
 				'body'    => '<p>Hi <strong>{customer_full_name}</strong>,</p>'
 					. '<p>An agent just replied to your ticket "<strong>{ticket_title}</strong>" (<a href="{ticket_public_url}">#{ticket_id}</a>). To view his reply or add additional comments, click the button below:</p>'
-					. '<h4><a href="{ticket_public_url}">View Ticket</a></h4>'
+					. '<p><a href="{ticket_public_url}">View Ticket</a></p>'
 					. '<p>or follow this link: {ticket_public_url}</p>'
 					. '<hr />'
 					. '<p>Regards,<br />{site_name}</p>',

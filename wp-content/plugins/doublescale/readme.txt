@@ -1,21 +1,22 @@
-=== DoubleScale | Self-Hosted CRM & Business Platform (Alternative to HubSpot & GoHighLevel) ===
+=== DoubleScale | Self-Hosted CRM – Sales, Marketing, Booking, Helpdesk, Automation, MCP & More ===
 Contributors: samuelgallegos, vixgrowy
-Tags:  crm, marketing automation, email campaigns, booking, pipelines
+Tags:  crm, marketing automation, email campaigns, mcp, pipelines
 Requires at least: 5.8
 Tested up to: 7.0.2
 Requires PHP: 7.4
-Stable tag: 1.2.19
+Stable tag: 1.3.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-All-in-one CRM with sales pipeline, projects, email/SMS/WhatsApp campaigns, booking, helpdesk, tasks, SMTP, proposals, invoices and automations — one plugin. Enable or disable any module.
+Self-hosted CRM with sales, marketing, booking, helpdesk, tasks & projects, automations plus a built-in MCP server for AI clients. One plugin.
 
 
 == Description ==
 
-**DoubleScale is the operating system for a WordPress-native business.** It replaces the stack most teams cobble together — CRM + Mailchimp + Calendly + ClickUp + a transactional email provider + a helpdesk + a reporting dashboard — with **one plugin** that lives inside wp-admin and stores everything in your own database.
+**DoubleScale is a self-hosted CRM for WordPress** covering sales, marketing, booking, helpdesk, and task & project management — in **one plugin**, on your own database. A built-in **MCP server** lets AI clients (Claude, Cursor, and compatible tools) operate DoubleScale with API keys, using the same module and permission gates as the rest of the product.
 
-You shouldn't need eight separate logins, eight billing relationships, and eight half-broken integrations to run a small business. DoubleScale unifies them around a single contact record, so a form submit can fire an automation, book a meeting, open a support thread, score the lead, alert the assigned rep, and send the receipt — all from the same data model.
+You get one contact record, one activity timeline, and one automation engine instead of stitching together a CRM, email tool, calendar, helpdesk, and task app. Enable or disable optional modules under **Settings → Modules** so the admin stays lean.
+
 **Live demo:** [try.doublescale.io](https://try.doublescale.io) · **Website:** [doublescale.io](https://doublescale.io) · **Documentation:** [doublescale.io/docs](https://doublescale.io/docs/)
 
 = Modular architecture — enable or disable any module =
@@ -68,7 +69,10 @@ A complete helpdesk built into your CRM. Customers open tickets via a self-servi
 **9. Analytics — dashboards & reports**
 A built-in reporting layer covering revenue, pipeline forecasts, campaign performance (opens, clicks, conversions per send), contact growth, automation execution, and email deliverability. Visual charts, KPI cards, custom date ranges, CSV exports. The numbers your founder, marketer, and ops lead all need — without exporting to a BI tool.
 
-**10. User roles — scoped access for sales, support, booking, and project teams**
+**10. MCP — AI clients that can operate your CRM**
+DoubleScale ships a built-in **Model Context Protocol (MCP)** server. Enable it under MCP settings, issue API keys for eligible users, and connect Claude, Cursor, or other MCP-compatible clients. Tools cover contacts, documents, marketing, booking, forms, and more — gated by modules and roles, with validation on writes. Setup includes Application Password auth, Windows connection notes, and emailable instructions so teammates can connect without guessing.
+
+**11. User roles — scoped access for sales, support, booking, and project teams**
 DoubleScale ships dedicated roles (plus site administrators). Assign them under **Settings → Team**. Users can hold **multiple roles** — capabilities merge across roles.
 
 **Sales (Pro)**
@@ -120,6 +124,7 @@ Underneath every module is one workflow builder. **100+ triggers** across contac
 
 = Key capabilities =
 
+* **MCP for AI clients** — Built-in MCP server so Claude, Cursor, and compatible tools can list, create, and update CRM data via API keys, with the same module and role gates as wp-admin.
 * **AI-powered writing and assistance** — Connect your own API key from OpenAI, Google Gemini, Groq, OpenRouter, or any OpenAI-compatible provider. AI-assisted email composition, smart template generation, subject line suggestions, and content rewriting are built right into the campaign builder and email editor. Bring your own key, pick your provider, and keep full control over cost and data.
 * Modular architecture — enable or disable optional modules (Sales, Campaigns, Booking, Tasks, Projects, SMTP, Helpdesk, Forms, Automations, and more) from **Settings → Modules**.
 * One contact record shared across every module — campaigns, bookings, tasks, projects, helpdesk threads, and deals all attach to the same contact.
@@ -132,7 +137,7 @@ Underneath every module is one workflow builder. **100+ triggers** across contac
 
 = Who DoubleScale is for =
 
-Founders, agencies, marketers, course creators, e-commerce operators, and revenue teams who want **one WordPress-native operations platform** instead of stitching together eight SaaS subscriptions. From solo operators to organizations running 100k+ contacts — DoubleScale is built to scale with your business, not punish it with row-count surcharges.
+Founders, agencies, marketers, course creators, e-commerce operators, and revenue teams who want a **self-hosted WordPress CRM** for sales, marketing, booking, helpdesk, and delivery — plus MCP so AI tools can work inside that same stack — instead of stitching together eight SaaS subscriptions. From solo operators to organizations running 100k+ contacts — DoubleScale is built to scale with your business, not punish it with row-count surcharges.
 
 Learn more at [doublescale.io](https://doublescale.io/).
 
@@ -270,6 +275,158 @@ Yes. Multiple users can work simultaneously, with role-based access, ownership-a
 Documentation and setup guides: [doublescale.io](https://doublescale.io). Community support via WordPress.org. Pro tiers include email and priority support.
 
 == Changelog ==
+= 1.3.21 = 26 Aug 2026
+- Render the client portal shortcode on the page instead of replacing the whole canvas, and isolate layout from the host theme
+- Escape email image sources with esc_attr so merge tags and data URIs survive rendering
+
+= 1.3.20 = 26 Aug 2026
+- Keep email text-block list alignment in line with the block setting (strip leftover inline text-align on lists)
+- Resolve {{ASSETS_URL}} and image sources when rendering emails so plugin assets load in sent mail
+
+= 1.3.19 = 26 Aug 2026
+- Revamp the client portal: document status filters, projects Kanban, helpdesk inbox, dashboard calendar, and mobile tab navigation
+- Group outstanding portal balances by currency instead of mixing amounts
+- Use only the email text-block color and font size (strip leftover inline styles)
+- Add Zapier integration setup instructions
+- Embed contract, invoice, and proposal views inside the portal
+
+= 1.3.18 = 26 Aug 2026
+- Fix IMAP inbox polling crash on PHP 8.1+ hosts that have the IMAP PHP extension installed
+
+= 1.3.17 = 26 Aug 2026
+- Stop blocking IMAP mailbox save on SMTP ports (587/465/25) so the port you enter is stored as-is
+- Keep IMAP SINCE search fallback when a server returns no results for date-filtered unseen mail
+
+= 1.3.16 = 26 Aug 2026
+- Reject SMTP sending ports (587/465/25) in IMAP mailbox settings and recover when IMAP SINCE searches return empty
+- Always offer Custom IMAP for the shared inbox, even when Gmail or Outlook is used for sending
+- Add WhatsApp automatic keyword unsubscribe (STOP-style opt-out)
+- Restrict contact deletion by role so Sales Reps cannot delete contacts
+- Track campaign contact eligibility by channel (email, SMS, WhatsApp)
+- Improve sales line-item product selection, email builder overlays, and automation canvas clicks
+
+= 1.3.15 = 24 Aug 2026
+- Ship a committed SMTP includes classmap so mailer classes load on WordPress.org / Linux installs without root vendor/
+
+= 1.3.14 = 24 Aug 2026
+- Fix SMTP provider autoloading on case-sensitive hosts (SendLayer and other mailers fatal when root Composer vendor is absent)
+
+= 1.3.13 = 24 Aug 2026
+- Allow alphanumeric zip / postal codes (string up to 150 characters) on contacts and automation field updates
+- Fix SureCart integration namespace casing so product rules and contact purchase history load correctly
+- Clean up contact and sales schema migrations (rename contact migration classes; remove unused SalesTagIdsColumn migration)
+- Update translation catalog
+
+= 1.3.12 = 24 Aug 2026
+- Update Extensions catalog: ship White Labeling icon, resolve addon images from free assets, and hide unreleased AI Assistant / Subscriptions cards
+- Fix Zapier add-on plugin path resolution across folder naming conventions
+- Refresh plugin title and short description branding
+
+= 1.3.11 = 24 Aug 2026
+- Ship Integrations catalog icon assets with the WordPress.org package (Slack, Stripe, PayPal, Twilio, Square, Mollie, Razorpay, Authorize.Net, Meta WhatsApp, Zapier)
+- Keep typeform/jotform icons included as before
+
+= 1.3.10 = 24 Aug 2026
+- Fix schema indexes for utf8mb4 hosts with the 1000-byte key length limit (migrations tracker, task_meta, contacts phone/WhatsApp uniques, and related tables)
+- Log failed table creation after dbDelta instead of failing silently
+- Skip task_meta scheduling when the table is missing to avoid flooding error logs on broken installs
+- Update translation catalogs and improve string handling
+- Improve Integrations card layout and Slack integration instructions/icons
+
+= 1.3.9 = 20 Aug 2026
+- Fix WordPress.org release packaging for the 1.3.8 tag (remove accidental nested trunk directory)
+
+= 1.3.8 = 20 Aug 2026
+- Add multi-currency support for sales documents, including Egyptian Pound (EGP) and settled-value locking on proposals/invoices
+- Add payment gateway integrations: Square, Mollie, Razorpay, and Authorize.Net (alongside existing gateways)
+- Split the Integrations catalog into Payments, Messaging, Forms, and Automation tabs
+- Expand MCP / Abilities: bulk contact and activity writes with dry-run validation, richer tools, and stronger API key permissions
+- Add Link Trigger controls in the rich text editor and toolbar for automation-ready tracked links
+- Improve invoice and proposal status management
+- Improve automation workflow interactions, condition settings, and email builder / automation editor dialogs
+- Improve test-email click/open tracking
+- Polish settings and notification preferences layout, icons, and shared UI components
+
+= 1.3.7 = 17 Aug 2026
+- Ship a complete Brazilian Portuguese (pt_BR) translation catalog for the free plugin
+- Rebuild script translation JSON when Loco saves a catalog so React admin strings update without a manual make-json
+- Improve internationalization coverage across admin UI components
+- Resolve merge tags correctly when rendering invoice/proposal PDFs and print output
+- Improve sales dialogs and dropdown menus (focus/outside-click handling, InfiniteScrollSelect accessibility)
+- Improve lead scoring layout/RTL direction handling and advanced-filter clear action
+- Polish react-select menus in contact field mapping and rule-builder connectors
+
+= 1.3.6 = 15 Aug 2026
+- Add built-in MCP server so AI clients (Claude, Cursor, and compatible tools) can operate DoubleScale via API keys
+- Add MCP settings: enable/disable endpoint, issue keys for eligible users, Application Password auth, Windows setup, and emailable connection instructions
+- Expand WordPress Abilities API tools across contacts, documents, marketing, booking, and forms, with module/role gates and input validation on writes
+- Improve inactive-module tool errors and MCP tool-name mapping for external clients
+- Add bulk email click tracking and fix click-redirect URL sanitization (preserve percent-encoded destinations)
+- Open duplicated invoices/proposals in the edit dialog instead of navigating away
+- UI polish: select menu overlays/z-index, react-select focus styles, calendar button spacing, and shared alert icons
+
+= 1.3.5 = 12 Aug 2026
+- Add company fields to contacts: Company Name, Company Registration Number, and Tax / VAT Number
+- Improve contact information and dialog UI consistency (shared icons and CustomDialogHeader)
+- Improve dialog layout and z-index stacking across automation, booking, and contact screens
+
+= 1.3.4 = 11 Aug 2026
+- Add email preview for automation steps so you can review builder content before sending
+- Add file attachments in the Email Builder (lead magnets) with clearer validation and error feedback
+- Improve merge-tag resolution reliability in outbound emails
+- Show the Link Trigger selector on Link Trigger Clicked automations
+- Add WooCommerce “Orders Purchased From Brands” automation rule
+- Add content sections and terms fields for invoices and proposals
+- Add invoice recurrence support (links to Pro Recurring Invoices)
+- Enhance WhatsApp automation messaging UX (free-form steps, trigger switch confirmations)
+- Fix dialog/alert centering and z-index stacking, including RTL-friendly layout
+- Fix Switch thumb travel in RTL layouts
+- UI polish: export modal checkboxes and admin content overflow handling
+
+= 1.3.3 = 09 Aug 2026
+- Fix Link Trigger tag/list updates on click for bulk and curl-multi campaign emails by injecting per-recipient track-id into tracked links
+- Ensure bulk/curl-multi recipient variables include hash_key, open-tracking pixel, and unsubscribe URL
+- Add Send Test Email for automation email actions so you can preview content before saving
+- Add Product Catalog module (Pro) for reusable products/services on invoices, proposals, and credit notes
+- Reorganize automation trigger/action categories (Email, Messaging, Booking, Projects) with clearer icons and grouping
+- Standardize SMS labeling and prune empty automation source categories for a cleaner picker
+- Revamp document Template Gallery and Style Editor layout, including a clearer color picker
+- Improve elevated invoice/proposal dialogs and nested select menus (z-index / overflow)
+- Show Advanced Filters in Free as a discoverable disabled control (Pro-gated)
+- UI polish: shared icons, DatePicker chrome, modal button styles, and support inbox empty states
+
+= 1.3.2 = 04 Aug 2026
+- Add Projects automation triggers and actions (create/update/complete projects, owner/status/custom field changes, comments, due/overdue, and deal conversion)
+- Improve automation trigger/action picker: prune inactive integrations, clearer source categories (modules/messaging/webhooks), and better grouping UI
+- Bump automations manifest cache key so project automation stubs load cleanly
+- Rebuild support inbox with a DataTable for ticket management; polish mailboxes UI and Pro feature indicators
+- Improve support email notification HTML formatting
+- Show proposal totals (total/accepted/open) on the contact Sales tab
+- Fix invoice and proposal dialogs appearing under fullscreen shells (elevated z-index)
+- Improve Integrations catalog icons and visibility handling; remove unused Evolution API integration stubs
+
+= 1.3.1 = 03 Aug 2026
+- Add automation enrollment history endpoint and show prior-enrollment hints when running a workflow manually
+- Rename automation “Run test” to “Run manually” for clearer UX
+- Add a dedicated Import Workflows modal for automation management
+- Add new project/status icons and refine checkbox styling
+- Small UI polish for page tabs, activity timeline filters, and progress styling
+
+= 1.3.0 = 02 Aug 2026
+- Hide Pro-only tabs, pages, and actions entirely in the free version instead of showing locked cards or upgrade prompts (automations, booking, helpdesk, sales, mailbox, integrations, extensions, dashboard, and more)
+- Add a new "Discover Pro" page cataloging every Pro feature by category, with links to the live demo and pricing
+- Add automation test run: preview a workflow without enrolling real contacts
+- Add sticky canvas notes on the automation workflow builder
+- Add bulk export and import for automations/workflows
+- Improve bulk import error handling and UI feedback for automations
+- Add server-side sorting for contacts, lists, tags, forms, campaigns, and automations
+- Add per-user CRM landing path and improved role-aware navigation after login
+- Enhance user role management and capability checks in the admin shell
+- Add email tracking track-id support for more reliable open/click attribution
+- Add text direction (LTR/RTL) support in the email builder TextBlock
+- Add Send Test Email popover in the email builder
+- Improve localization and translation handling across admin components
+
 = 1.2.19 = 31 Jul 2026
 - Add timezone configuration for more accurate date/time handling
 - Add duplicate and status-update actions for invoices and proposals

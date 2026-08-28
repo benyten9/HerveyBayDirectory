@@ -29,9 +29,11 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\AbstractModule;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Core\Container;
 use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Modules\Support\Abilities\SupportAbilities;
 use DoubleScale\Modules\Support\Renderer\PortalFrontendHandler;
 use DoubleScale\Modules\Support\Services\ActivityLogger;
 use DoubleScale\Modules\Support\Services\AttachmentService;
@@ -43,10 +45,21 @@ use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 
-final class Module extends AbstractModule {
+final class Module extends AbstractModule implements ProvidesAbilities {
 
 	public function slug(): string {
 		return 'support';
+	}
+
+	/**
+	 * Read-only support abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return SupportAbilities::definitions();
 	}
 
 	public function label(): string {

@@ -41,9 +41,25 @@ class Integration extends Integration_Abstract {
 	public $description = 'Connect your Typeform account with a personal access token.';
 
 	/**
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'Connect your Typeform account with a personal access token.', 'doublescale' );
+	}
+
+	/**
 	 * @var bool
 	 */
 	public $is_pro = true;
+
+	/**
+	 * Show on Integrations catalog.
+	 *
+	 * @var bool
+	 */
+	public $show_in_catalog = true;
+
+	public $catalog_category = 'forms';
 
 	/**
 	 * @var array
@@ -105,6 +121,15 @@ class Integration extends Integration_Abstract {
 		}
 
 		return rest_url( 'doublescale/v1/integrations/typeform/webhook' );
+	}
+
+	/**
+	 * Catalog icon.
+	 *
+	 * @return string
+	 */
+	public function get_icon_url(): string {
+		return $this->plugin_asset_url( 'assets/images/typeform/typeform.svg' );
 	}
 }
 

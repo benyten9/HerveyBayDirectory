@@ -55,7 +55,7 @@ abstract class AbstractCreditNoteSalesMergeTag extends AbstractSalesMergeTag {
 			? max( 0, (float) $credit_note->total - (float) $credit_note->amount_applied )
 			: (float) $credit_note->total;
 		$total  = number_format( $amount, 2, '.', '' );
-		$currency = \DoubleScale\Core\Settings\Settings::document_currency( $credit_note->currency, $credit_note->sent_at );
+		$currency = \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $credit_note->currency, $credit_note->sent_at );
 		return trim( $currency . ' ' . $total );
 	}
 }

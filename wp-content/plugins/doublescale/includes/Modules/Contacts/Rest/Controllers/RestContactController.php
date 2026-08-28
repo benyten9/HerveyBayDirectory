@@ -62,6 +62,18 @@ class RestContactController extends RestController {
 	protected $rest_base = 'contacts';
 
 	/**
+	 * Columns the contacts list may be sorted by.
+	 *
+	 * Note the status columns are channel-specific (email_status / sms_status);
+	 * there is no single `status` column on this table.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string[]
+	 */
+	const SORTABLE_COLUMNS = array( 'first_name', 'last_name', 'email', 'phone', 'city', 'country', 'email_status', 'sms_status', 'created_at', 'updated_at' );
+
+	/**
 	 * Polymorphic attachable_type for contact file attachments.
 	 */
 	private const CONTACT_ATTACHABLE_TYPE = 'contact';
@@ -120,7 +132,7 @@ class RestContactController extends RestController {
 							'description' => __( 'Filter contacts by WhatsApp phone presence.', 'doublescale' ),
 							'type'        => 'boolean',
 						),
-					),
+					) + $this->get_sorting_collection_params( self::SORTABLE_COLUMNS ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -1766,17 +1778,17 @@ class RestContactController extends RestController {
 	private function get_surecart_purchase_history( $contact, $request ) {
 		$result = $this->get_default_purchase_history();
 
-		if ( ! defined( 'SURECART_PLUGIN_FILE' ) || ! class_exists( '\Surecart\Models\Customer' ) ) {
+		if ( ! defined( 'SURECART_PLUGIN_FILE' ) || ! class_exists( '\SureCart\Models\Customer' ) ) {
 			return $result;
 		}
 
-		$customer = \Surecart\Models\Customer::byEmail( $contact->email );
+		$customer = \SureCart\Models\Customer::byEmail( $contact->email );
 		if ( ! $customer || is_wp_error( $customer ) ) {
 			return $result;
 		}
 
 		// SureCart's Model::get() returns an array of model objects directly
-		$sc_orders = \Surecart\Models\Order::where(
+		$sc_orders = \SureCart\Models\Order::where(
 			array(
 				'customer_ids' => array( $customer->id ),
 			)
@@ -2273,7 +2285,9 @@ class RestContactController extends RestController {
 
 			// Paginate and get results (pagination automatically handles total count)
 			// Note: paginate() returns total in the response, so filtered_total comes from pagination
-			$contacts = $contacts->orderBy( 'created_at', 'desc' )->paginate( $per_page, array( '*' ), 'page', $page );
+			$this->apply_sorting( $contacts, $request, self::SORTABLE_COLUMNS );
+
+			$contacts = $contacts->paginate( $per_page, array( '*' ), 'page', $page );
 
 			$this->attach_wc_orders_to_contacts( $contacts );
 
@@ -3881,7 +3895,7 @@ class RestContactController extends RestController {
 	 * @return bool $response Permission check result.
 	 */
 	public function delete_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return Permissions::can_delete_contacts();
 	}
 
 	/**
@@ -3907,7 +3921,7 @@ class RestContactController extends RestController {
 	 * @return bool $response Permission check result.
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return Permissions::can_delete_contacts();
 	}
 
 	/**

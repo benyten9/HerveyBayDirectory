@@ -50,7 +50,7 @@ class WebhookReceived extends TriggerPro {
 	 *
 	 * @var string
 	 */
-	public $source = 'crm';
+	public $source = 'webhooks';
 
 	/**
 	 * Group

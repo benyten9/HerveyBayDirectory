@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\CreditNotes\Services;
 
 defined( 'ABSPATH' ) || exit;
 
-use DoubleScale\Pro\Modules\CreditNotes\Services\CreditNotePdf;
+use DoubleScale\Modules\Documents\Services\DocumentIssuerSnapshot;
 use WP_Error;
 
 /**

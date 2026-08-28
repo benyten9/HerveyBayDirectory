@@ -191,6 +191,20 @@ class RestIncomingWebhookController extends RestController {
 		if ( Permissions::can_access_support_settings() ) {
 			return true;
 		}
+
+		// 401 when nobody is logged in, 403 when they are but lack the
+		// capability. Returning 403 for both told an anonymous caller their
+		// credentials were rejected when none were ever sent, and clients keying
+		// off the status could not tell "log in" from "ask an admin". Matches
+		// RestPortalController's permissions_check.
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You must be logged in to manage support settings.', 'doublescale' ),
+				array( 'status' => 401 )
+			);
+		}
+
 		return new WP_Error( 'not_allowed', __( 'You do not have permission to manage support settings.', 'doublescale' ), array( 'status' => 403 ) );
 	}
 

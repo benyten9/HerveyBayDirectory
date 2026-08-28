@@ -146,6 +146,12 @@ class RestPublicProposalController extends RestController {
 
 		$signed_name = isset( $params['signed_name'] ) ? sanitize_text_field( (string) $params['signed_name'] ) : '';
 		$signature   = isset( $params['signature'] ) ? (string) $params['signature'] : '';
+		$agreed_terms = ! empty( $params['agreed_terms'] );
+
+		$terms = trim( wp_strip_all_tags( (string) $proposal->terms ) );
+		if ( '' !== $terms && ! $agreed_terms ) {
+			return new WP_Error( 'invalid_data', __( 'You must agree to the Terms & Conditions to accept.', 'doublescale' ), array( 'status' => 400 ) );
+		}
 
 		if ( SalesSettings::get( 'require_signature_on_accept', true ) ) {
 			if ( '' === trim( $signed_name ) ) {

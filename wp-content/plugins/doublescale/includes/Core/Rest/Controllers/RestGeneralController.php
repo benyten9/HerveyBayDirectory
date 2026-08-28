@@ -25,6 +25,7 @@ use DoubleScale\Modules\Contacts\Models\TagModel;
 use DoubleScale\Modules\Contacts\Models\ListModel;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Core\Constants\CampaignChannel;
+use DoubleScale\Core\Services\CurrencyResolver;
 
 /**
  * RestGeneralController is REST api controller class for log
@@ -163,9 +164,10 @@ class RestGeneralController extends RestController {
 			$top_automations   = AutomationModel::orderBy( 'id', 'desc' )->limit( 5 )->get();
 		}
 
-		$deals            = 0;
-		$deals_closed_won = 0;
-		$deals_won_value  = 0;
+		$deals                         = 0;
+		$deals_closed_won              = 0;
+		$deals_won_value               = 0;
+		$deals_won_value_by_currency   = array();
 
 		$deal_model = $this->resolve_deal_model_class();
 		if (
@@ -179,11 +181,17 @@ class RestGeneralController extends RestController {
 			try {
 				$deals            = $deal_model::count();
 				$deals_closed_won = $deal_model::where( 'status', 'won' )->count();
-				$deals_won_value  = (float) $deal_model::where( 'status', 'won' )->sum( 'value' );
+				$won              = $deal_model::where( 'status', 'won' )->get();
+				$deals_won_value_by_currency = CurrencyResolver::sum_by_currency( $won, 'value' );
+				$global                      = CurrencyResolver::global_currency();
+				// @deprecated Keep the scalar as the global-currency bucket only
+				// so mixed EUR+USD never become a fake total.
+				$deals_won_value = $deals_won_value_by_currency[ $global ] ?? 0;
 			} catch ( \Throwable $e ) {
-				$deals            = 0;
-				$deals_closed_won = 0;
-				$deals_won_value  = 0;
+				$deals                         = 0;
+				$deals_closed_won              = 0;
+				$deals_won_value               = 0;
+				$deals_won_value_by_currency   = array();
 			}
 		}
 
@@ -214,6 +222,7 @@ class RestGeneralController extends RestController {
 			'deals'                        => $deals,
 			'deals_closed_won'             => $deals_closed_won,
 			'deals_won_value'              => $deals_won_value,
+			'deals_won_value_by_currency'  => $deals_won_value_by_currency,
 			'projects'                     => $projects,
 			'recent_contacts'              => $recent_contacts,
 			'recent_unsubscribed_contacts' => $recent_unsubscribed_contacts,
@@ -228,6 +237,7 @@ class RestGeneralController extends RestController {
 			&& class_exists( AbandonedCartModel::class )
 		) {
 			$total_orders           = AbandonedCartModel::where( 'order_id', '>', 0 )->count();
+			// WooCommerce carts are one store currency — summing `total` is safe.
 			$total_revenue          = AbandonedCartModel::where( 'order_id', '>', 0 )->sum( 'total' );
 			$recent_abandoned_carts = AbandonedCartModel::orderBy( 'id', 'desc' )->limit( 5 )->get();
 			$recent_recoverd_carts  = AbandonedCartModel::where( 'status', 'recovered' )->orderBy( 'id', 'desc' )->limit( 5 )->get();

@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\PMCS;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class Transfer
 {
     private const EXPORT_VERSION = 2; //added base64 encoding to code fields

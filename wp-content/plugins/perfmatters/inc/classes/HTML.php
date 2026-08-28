@@ -2,6 +2,10 @@
 
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class HTML
 {
     private static $offsets = [];

@@ -55,7 +55,7 @@ class WebhookReceived extends Trigger {
 	 *
 	 * @var string
 	 */
-	public $source = 'crm';
+	public $source = 'webhooks';
 
 	/**
 	 * Group

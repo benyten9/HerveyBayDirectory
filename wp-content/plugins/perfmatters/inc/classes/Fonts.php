@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 if(!defined('REQUESTS_SILENCE_PSR0_DEPRECATIONS')) {
     define('REQUESTS_SILENCE_PSR0_DEPRECATIONS', true);
 }

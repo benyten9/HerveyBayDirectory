@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class DatabaseOptimizationProcess extends \WP_Background_Process {
 
 	//prefix for process

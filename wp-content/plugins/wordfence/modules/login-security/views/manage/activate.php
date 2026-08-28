@@ -101,6 +101,7 @@ $recovery = $initializationData->get_recovery_codes();
 						}
 						else {
 							$('#wfls-activation-controls').crossfade($('#wfls-deactivation-controls'));
+							$('#wfls-grace-period-controls').toggle(!!response.grace_period_visible);
 							$('#wfls-recovery-code-count').text(response.text);
 							$('#wfls-activate-field').val('');
 

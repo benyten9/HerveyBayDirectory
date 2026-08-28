@@ -46,6 +46,18 @@ class PayPalGateway extends Gateway {
 	}
 
 	/**
+	 * @param string $invoice_number Invoice number.
+	 * @return string
+	 */
+	public function payment_note( string $invoice_number ): string {
+		return sprintf(
+			/* translators: %s: invoice number */
+			__( 'PayPal payment for invoice %s', 'doublescale' ),
+			$invoice_number
+		);
+	}
+
+	/**
 	 * @param PayableSubject $subject Payable subject.
 	 * @return array|WP_Error
 	 */
@@ -68,6 +80,12 @@ class PayPalGateway extends Gateway {
 
 			$order_data = $order_result['data'];
 			$status     = strtoupper( (string) ( $order_data['status'] ?? '' ) );
+
+			$order_currency = (string) ( $order_data['purchase_units'][0]['amount']['currency_code'] ?? $currency );
+			$mismatch       = PaymentCurrency::guard( $currency, $order_currency, 'PayPal' );
+			if ( is_wp_error( $mismatch ) ) {
+				return $mismatch;
+			}
 
 			if ( 'COMPLETED' === $status ) {
 				$capture = $this->extract_capture( $order_data );

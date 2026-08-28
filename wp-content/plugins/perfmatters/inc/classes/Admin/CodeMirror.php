@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters\Admin;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class CodeMirror
 {
 	//Bundled CodeMirror CSS (under plugin directory).

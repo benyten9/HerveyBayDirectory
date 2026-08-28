@@ -1468,6 +1468,7 @@ class RestBookingController extends RestController {
 			$this->apply_date_filter( $query, $date_range );
 
 			// Calculate revenue totals
+			// Booking payments share the booking-module currency — summing is safe.
 			$total_revenue = (float) $query->sum( 'total' );
 			$order_count   = (int) $query->count();
 

@@ -14,9 +14,22 @@ namespace DoubleScale\Modules\Automations;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
+use DoubleScale\Modules\Automations\Abilities\AutomationAbilities;
 use DoubleScale\Core\Container;
 
-final class Module extends AbstractModule {
+final class Module extends AbstractModule implements ProvidesAbilities {
+
+	/**
+	 * Read-only abilities for this module.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return AutomationAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'automations';
@@ -104,6 +117,7 @@ final class Module extends AbstractModule {
 				'includes/Modules/Automations/Triggers/Pmpro/*.php',
 				'includes/Modules/Automations/Triggers/Deal/*.php',
 				'includes/Modules/Automations/Triggers/Task/*.php',
+				'includes/Modules/Automations/Triggers/Project/*.php',
 				'includes/Modules/Automations/Triggers/Link/*.php',
 				'includes/Modules/Automations/Triggers/Forms/*.php',
 				'includes/Modules/Automations/Triggers/Booking/*.php',
@@ -125,6 +139,7 @@ final class Module extends AbstractModule {
 				'includes/Modules/Automations/Actions/Pmpro/*.php',
 				'includes/Modules/Automations/Actions/Deal/*.php',
 				'includes/Modules/Automations/Actions/Task/*.php',
+				'includes/Modules/Automations/Actions/Project/*.php',
 				'includes/Modules/Automations/Actions/Support/*.php',
 				'includes/Modules/Automations/Actions/Messaging/*.php',
 				'includes/Modules/Automations/Actions/Email/*.php',
@@ -133,7 +148,7 @@ final class Module extends AbstractModule {
 				'includes/Modules/Automations/Goals/Woocommerce/*.php',
 				'includes/Modules/Automations/Rules/*/*.php',
 			),
-			'automations_v3'
+			'automations_v4'
 		);
 
 		$this->load_pro_automation_rule_files_if_available();
@@ -189,12 +204,19 @@ final class Module extends AbstractModule {
 			'triggers'  => array( 'whatsapp_received', 'sms_received', 'email_received' ),
 		);
 
-		// Restrict WordPress User tags to WP user-lifecycle triggers only.
+		// Restrict WordPress User tags to WP user-related triggers.
 		// Without `triggers`, the selector shows the group for every automation.
+		$wp_user_triggers = array(
+			'user_login',
+			'user_register',
+			'user_role_update',
+			'contact_information_updated',
+		);
+
 		$groups['wordpress_user'] = array(
 			'name'      => __( 'WordPress User', 'doublescale' ),
 			'mergeTags' => isset( $groups['wordpress_user']['mergeTags'] ) ? $groups['wordpress_user']['mergeTags'] : array(),
-			'triggers'  => array( 'user_login', 'user_register', 'user_role_update' ),
+			'triggers'  => $wp_user_triggers,
 		);
 
 		$acf_disabled = ! doublescale_is_plugin_active( 'advanced-custom-fields/acf.php' )
@@ -203,7 +225,7 @@ final class Module extends AbstractModule {
 		$groups['acf_user'] = array(
 			'name'        => __( 'ACF User Fields', 'doublescale' ),
 			'mergeTags'   => isset( $groups['acf_user']['mergeTags'] ) ? $groups['acf_user']['mergeTags'] : array(),
-			'triggers'    => array( 'user_login', 'user_register', 'user_role_update' ),
+			'triggers'    => $wp_user_triggers,
 			'is_disabled' => $acf_disabled,
 		);
 

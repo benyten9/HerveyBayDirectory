@@ -47,6 +47,13 @@ class Integration extends Integration_Abstract {
 	public $description = 'Slack is a digital headquarters that brings all your work communication and tools together in one place, like a shared workspace for your team.';
 
 	/**
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'Slack is a digital headquarters that brings all your work communication and tools together in one place, like a shared workspace for your team.', 'doublescale' );
+	}
+
+	/**
 	 * Is Pro feature
 	 *
 	 * @var bool
@@ -54,6 +61,15 @@ class Integration extends Integration_Abstract {
 	 * @since 1.0.0
 	 */
 	public $is_pro = false;
+
+	/**
+	 * Show on Integrations catalog.
+	 *
+	 * @var bool
+	 */
+	public $show_in_catalog = true;
+
+	public $catalog_category = 'messaging';
 
 	/**
 	 * Option name
@@ -138,6 +154,15 @@ class Integration extends Integration_Abstract {
 		// For OAuth integrations, we can't fully validate without user authorization
 		// So we just validate that credentials are present
 		return true;
+	}
+
+	/**
+	 * Catalog icon.
+	 *
+	 * @return string
+	 */
+	public function get_icon_url(): string {
+		return $this->plugin_asset_url( 'assets/images/slack/slack.png' );
 	}
 }
 

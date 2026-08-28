@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\Automations\Triggers\Sales;
 
 use DoubleScale\Modules\Automations\Abstracts\Trigger;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
-use DoubleScale\Modules\Contracts\Models\ContractModel;
+use DoubleScale\Pro\Modules\Contracts\Models\ContractModel;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Models\ProposalModel;
 use DoubleScale\Pro\Modules\CreditNotes\Models\CreditNoteModel;

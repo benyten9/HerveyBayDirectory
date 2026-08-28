@@ -13,8 +13,20 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
+use DoubleScale\Pro\Modules\Analytics\Abilities\ReportAbilities;
 
 final class Module extends AbstractModule {
+
+	/**
+	 * Read-only reporting abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return ReportAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'analytics';

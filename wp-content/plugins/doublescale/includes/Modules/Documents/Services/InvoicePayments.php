@@ -9,6 +9,7 @@ namespace DoubleScale\Modules\Documents\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Modules\Documents\Constants\InvoiceStatus;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Models\PaymentModel;
@@ -28,6 +29,18 @@ class InvoicePayments {
 		$amount_paid = (float) PaymentModel::query()
 			->where( 'invoice_id', (int) $invoice->id )
 			->sum( 'amount' );
+		// Payments have no currency column — they inherit the parent invoice's.
+		// Summing here is safe because every row belongs to this one invoice.
+
+		// Money has changed hands, so the currency the customer paid in must be
+		// pinned even if the invoice was never "sent" (recorded manually, paid
+		// via the portal, or charged by a gateway). Without this an inheriting
+		// invoice keeps following the global setting, and changing it later
+		// relabels a settled USD payment as EUR. Payments inherit the parent's
+		// currency, so this also protects every historical payment row.
+		if ( $amount_paid > 0 ) {
+			DocumentCurrency::freeze_on_send( $invoice );
+		}
 
 		$invoice->amount_paid = round( $amount_paid, 2 );
 		$previous_status      = (string) $invoice->status;

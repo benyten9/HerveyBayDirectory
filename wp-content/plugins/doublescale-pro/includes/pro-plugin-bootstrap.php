@@ -59,6 +59,8 @@ add_action(
 
 add_filter( 'doublescale_forms', 'doublescale_pro_register_form_integrations', 10 );
 
+add_action( 'loco_file_written', array( \DoubleScale\Pro\I18n\LocoJsonSync::class, 'on_file_written' ) );
+
 add_action(
 	'doublescale_register_modules',
 	static function ( \DoubleScale\Core\ModuleRegistry $registry ): void {
@@ -348,6 +350,15 @@ if ( ! function_exists( 'doublescale_pro_is_tasks_automation_available' ) ) {
 	}
 }
 
+if ( ! function_exists( 'doublescale_pro_is_projects_automation_available' ) ) {
+	function doublescale_pro_is_projects_automation_available(): bool {
+		return doublescale_pro_is_module_automation_storage_ready(
+			'projects',
+			\DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class
+		);
+	}
+}
+
 if ( ! function_exists( 'doublescale_pro_is_booking_automation_available' ) ) {
 	function doublescale_pro_is_booking_automation_available(): bool {
 		return doublescale_pro_is_module_automation_storage_ready(
@@ -427,6 +438,16 @@ if ( ! function_exists( 'doublescale_pro_automation_class_is_task' ) ) {
 /**
  * @param string $class FQCN from {@see doublescale_pro_get_automation_catalog()}.
  */
+if ( ! function_exists( 'doublescale_pro_automation_class_is_project' ) ) {
+	function doublescale_pro_automation_class_is_project( string $class ): bool {
+		return false !== strpos( $class, '\\Automations\\Actions\\Project\\' )
+			|| false !== strpos( $class, '\\Automations\\Triggers\\Project\\' );
+	}
+}
+
+/**
+ * @param string $class FQCN from {@see doublescale_pro_get_automation_catalog()}.
+ */
 if ( ! function_exists( 'doublescale_pro_automation_class_is_booking' ) ) {
 	function doublescale_pro_automation_class_is_booking( string $class ): bool {
 		return false !== strpos( $class, '\\Automations\\Actions\\Booking\\' )
@@ -454,6 +475,7 @@ add_filter(
 		$credit_notes_enabled = doublescale_pro_is_credit_notes_automation_available();
 		$deals_enabled     = doublescale_pro_is_deals_automation_available();
 		$tasks_enabled     = doublescale_pro_is_tasks_automation_available();
+		$projects_enabled  = doublescale_pro_is_projects_automation_available();
 		$booking_enabled = doublescale_pro_is_booking_automation_available();
 		$forms_enabled   = doublescale_pro_is_forms_automation_available();
 		foreach ( $catalog['triggers'] ?? array() as $class ) {
@@ -478,6 +500,9 @@ add_filter(
 				continue;
 			}
 			if ( ! $tasks_enabled && doublescale_pro_automation_class_is_task( $class ) ) {
+				continue;
+			}
+			if ( ! $projects_enabled && doublescale_pro_automation_class_is_project( $class ) ) {
 				continue;
 			}
 			if ( ! $booking_enabled && doublescale_pro_automation_class_is_booking( $class ) ) {
@@ -506,6 +531,7 @@ add_filter(
 		$credit_notes_enabled = doublescale_pro_is_credit_notes_automation_available();
 		$deals_enabled     = doublescale_pro_is_deals_automation_available();
 		$tasks_enabled     = doublescale_pro_is_tasks_automation_available();
+		$projects_enabled  = doublescale_pro_is_projects_automation_available();
 		$booking_enabled = doublescale_pro_is_booking_automation_available();
 		$forms_enabled   = doublescale_pro_is_forms_automation_available();
 		foreach ( $catalog['actions'] ?? array() as $class ) {
@@ -530,6 +556,9 @@ add_filter(
 				continue;
 			}
 			if ( ! $tasks_enabled && doublescale_pro_automation_class_is_task( $class ) ) {
+				continue;
+			}
+			if ( ! $projects_enabled && doublescale_pro_automation_class_is_project( $class ) ) {
 				continue;
 			}
 			if ( ! $booking_enabled && doublescale_pro_automation_class_is_booking( $class ) ) {
@@ -566,25 +595,21 @@ add_filter(
 
 /**
  * Expose the "Helpdesk" trigger source/group so the support lifecycle triggers
- * (registered via the automation catalog) render under their own heading in the
- * automation builder. Gated on the support module being active.
+ * (registered via the automation catalog) render under DoubleScale → Helpdesk.
+ * Gated on the support module being active.
  */
 add_filter(
 	'doublescale_automation_trigger_sources',
 	static function ( array $sources ): array {
+		if ( ! isset( $sources['modules']['tabs']['support']['groups']['support'] ) ) {
+			return $sources;
+		}
+
 		$disabled = ! function_exists( 'doublescale_is_module_active' )
 			|| ! doublescale_is_module_active( 'support' );
 
-		$sources['support'] = array(
-			'label'  => __( 'Helpdesk', 'doublescale' ),
-			'groups' => array(
-				'support' => array(
-					'label'       => __( 'Helpdesk', 'doublescale' ),
-					'triggers'    => array(),
-					'is_disabled' => $disabled,
-				),
-			),
-		);
+		$sources['modules']['tabs']['support']['groups']['support']['is_disabled'] = $disabled;
+
 		return $sources;
 	},
 	10,
@@ -754,6 +779,14 @@ add_action(
 		if ( function_exists( 'doublescale_pro_is_tasks_automation_available' )
 			&& doublescale_pro_is_tasks_automation_available() ) {
 			foreach ( glob( $base . 'Rules/Task/*.php' ) ?: array() as $file ) {
+				require_once $file;
+			}
+		}
+
+		// Project automation conditions.
+		if ( function_exists( 'doublescale_pro_is_projects_automation_available' )
+			&& doublescale_pro_is_projects_automation_available() ) {
+			foreach ( glob( $base . 'Rules/Project/*.php' ) ?: array() as $file ) {
 				require_once $file;
 			}
 		}

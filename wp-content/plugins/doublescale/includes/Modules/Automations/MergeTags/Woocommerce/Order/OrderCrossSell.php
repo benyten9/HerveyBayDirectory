@@ -59,20 +59,86 @@ class OrderCrossSell extends MergeTag {
 	 * @return string
 	 */
 	public function get_value( $contact, $merge_tag = '' ) {
-		$order_id = $contact->get_data( 'order_id' );
+		if ( ! function_exists( 'wc_get_order' ) ) {
+			return '';
+		}
 
+		$order_id = is_object( $contact ) && method_exists( $contact, 'get_data' )
+			? (int) $contact->get_data( 'order_id' )
+			: 0;
+
+		if ( $order_id <= 0 ) {
+			return '';
+		}
+
+		// wc_get_order() returns false for a missing or trashed order.
 		$order = wc_get_order( $order_id );
-
-		$cross_sell = $order->get_items( 'cross_sell' );
+		if ( ! $order instanceof \WC_Order ) {
+			return '';
+		}
 
 		$cross_sell_items = array();
 
-		foreach ( $cross_sell as $item ) {
-			$product            = $item->get_product();
+		foreach ( $this->get_cross_sell_products( $order ) as $product ) {
 			$cross_sell_items[] = $product->get_name();
 		}
 
 		return implode( ', ', $cross_sell_items );
+	}
+
+	/**
+	 * Resolve the cross-sell products linked to an order's line items.
+	 *
+	 * WooCommerce has no 'cross_sell' line-item type — cross-sells are a
+	 * property of each purchased product, so they are collected from the order's
+	 * products rather than read off the order directly.
+	 *
+	 * @param \WC_Order $order Order.
+	 *
+	 * @return \WC_Product[] Unique cross-sell products, purchased ones excluded.
+	 */
+	protected function get_cross_sell_products( $order ) {
+		$purchased_ids  = array();
+		$cross_sell_ids = array();
+
+		foreach ( $order->get_items() as $item ) {
+			if ( ! method_exists( $item, 'get_product' ) ) {
+				continue;
+			}
+
+			$product = $item->get_product();
+
+			// Deleted products yield null here — the original crash.
+			if ( ! $product instanceof \WC_Product ) {
+				continue;
+			}
+
+			$purchased_ids[] = (int) $product->get_id();
+
+			foreach ( (array) $product->get_cross_sell_ids() as $cross_sell_id ) {
+				$cross_sell_ids[] = (int) $cross_sell_id;
+			}
+		}
+
+		$cross_sell_ids = array_diff(
+			array_unique( array_filter( $cross_sell_ids ) ),
+			$purchased_ids
+		);
+
+		$products = array();
+
+		foreach ( $cross_sell_ids as $cross_sell_id ) {
+			$product = wc_get_product( $cross_sell_id );
+
+			// Skip anything deleted, draft, or otherwise not purchasable.
+			if ( ! $product instanceof \WC_Product || ! $product->is_visible() ) {
+				continue;
+			}
+
+			$products[] = $product;
+		}
+
+		return $products;
 	}
 }
 

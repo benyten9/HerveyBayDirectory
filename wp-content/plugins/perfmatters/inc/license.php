@@ -1,6 +1,12 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 //save license key
-if(isset($_POST['perfmatters_save_license']) && isset($_POST['perfmatters_edd_license_key']) && wp_verify_nonce($_POST['perfmatters_license_nonce'], 'perfmatters_license')) {
+if(isset($_POST['perfmatters_save_license']) && isset($_POST['perfmatters_edd_license_key'])) {
+
+	check_admin_referer('perfmatters_license');
 
 	//save license option
 	if(is_multisite()) {
@@ -12,8 +18,8 @@ if(isset($_POST['perfmatters_save_license']) && isset($_POST['perfmatters_edd_li
 
 	if(is_multisite()) {
 
-		//check license info
-		$license_info = Perfmatters\License::check();
+		//check license info (force fresh after save)
+		$license_info = Perfmatters\License::check(null, false, true);
 
 		if(!empty($license_info->activations_left) && $license_info->activations_left == 'unlimited') {
 			
@@ -28,17 +34,21 @@ if(isset($_POST['perfmatters_save_license']) && isset($_POST['perfmatters_edd_li
 }
 
 //activate license
-if(isset($_POST['perfmatters_edd_license_activate']) && wp_verify_nonce($_POST['perfmatters_license_nonce'], 'perfmatters_license')) {
+if(isset($_POST['perfmatters_edd_license_activate'])) {
+	check_admin_referer('perfmatters_license');
 	Perfmatters\License::activate();
 }
 
 //deactivate license
-if(isset($_POST['perfmatters_edd_license_deactivate']) && wp_verify_nonce($_POST['perfmatters_license_nonce'], 'perfmatters_license')) {
+if(isset($_POST['perfmatters_edd_license_deactivate'])) {
+	check_admin_referer('perfmatters_license');
 	Perfmatters\License::deactivate();
 }
 
 //remove license
-if(isset($_POST['perfmatters_remove_license']) && wp_verify_nonce($_POST['perfmatters_license_nonce'], 'perfmatters_license')) {
+if(isset($_POST['perfmatters_remove_license'])) {
+
+	check_admin_referer('perfmatters_license');
 
 	//deactivate before removing
 	Perfmatters\License::deactivate();
@@ -60,7 +70,7 @@ perfmatters_settings_header(__('License', 'perfmatters'), 'dashicons-admin-netwo
 //start custom license form
 echo "<form method='post' action=''>";
 	
-	wp_nonce_field('perfmatters_license', 'perfmatters_license_nonce');
+	wp_nonce_field('perfmatters_license');
 
 	echo '<div class="perfmatters-settings-section">';
 

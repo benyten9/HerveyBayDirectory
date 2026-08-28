@@ -169,6 +169,7 @@ return array(
     'Doctrine\\Inflector\\Rules\\Word' => $vendorDir . '/doctrine/inflector/lib/Doctrine/Inflector/Rules/Word.php',
     'Doctrine\\Inflector\\RulesetInflector' => $vendorDir . '/doctrine/inflector/lib/Doctrine/Inflector/RulesetInflector.php',
     'Doctrine\\Inflector\\WordInflector' => $vendorDir . '/doctrine/inflector/lib/Doctrine/Inflector/WordInflector.php',
+    'DoubleScale\\Vendor\\ArPHP\\I18N\\Arabic' => $vendorDir . '/khaled.alshamaa/ar-php/src/Arabic.php',
     'DoubleScale\\Vendor\\Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'DoubleScale\\Vendor\\Dompdf\\Adapter\\CPDF' => $vendorDir . '/dompdf/dompdf/src/Adapter/CPDF.php',
     'DoubleScale\\Vendor\\Dompdf\\Adapter\\GD' => $vendorDir . '/dompdf/dompdf/src/Adapter/GD.php',

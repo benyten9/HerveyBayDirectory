@@ -11,12 +11,24 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
+use DoubleScale\Pro\Modules\Projects\Abilities\ProjectAbilities;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\UserRoles\UserRoles;
 
 final class Module extends AbstractModule {
+
+	/**
+	 * Read-only project abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return ProjectAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'projects';
@@ -77,9 +89,9 @@ final class Module extends AbstractModule {
 
 	public function boot( Container $container ): void {
 		parent::boot( $container );
-		Migrations\AddIsProtectedToProjectStatuses::ensure();
-		Migrations\AddHashToProjects::ensure();
-		Migrations\AddProgressToProjects::ensure();
+		Migrations\ProjectStatusesTableProtectedColumn::ensure();
+		Migrations\ProjectsTableHashColumn::ensure();
+		Migrations\ProjectsTableProgressColumn::ensure();
 		// Roles may have been provisioned before Pro Projects loaded (shell caps
 		// only). Re-provision + sync so project_* caps land on Project Manager /
 		// Member and are stripped from Sales roles.
@@ -154,6 +166,9 @@ final class Module extends AbstractModule {
 				'requires_module' => 'projects',
 			)
 		);
+
+		$this->loadModuleMergeTagFiles();
+		Reminders\ProjectAutomationSweeper::instance();
 	}
 
 	/**

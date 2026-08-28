@@ -344,12 +344,11 @@ final class SalesPortalProvider {
 	/**
 	 * Formatted outstanding-balance string for the summary card.
 	 *
-	 * Sales has no global store currency (currency is per-document), so we sum
-	 * outstanding balances grouped by currency and present the dominant one. A
-	 * mixed-currency account is rare; this is a documented MVP simplification.
+	 * Currency is per-document, so totals stay grouped and are never added
+	 * across currencies — same pattern as the invoices list summary cards.
 	 *
 	 * @param ContactModel $contact Resolved contact.
-	 * @return string e.g. "1,250.00 USD", or "0" when nothing is outstanding.
+	 * @return string e.g. "1,250.00 USD · 800.00 EGP", or "0" when nothing is outstanding.
 	 */
 	private static function outstanding_balance_value( ContactModel $contact ): string {
 		if ( ! doublescale_sales_child_module_active( 'documents' ) ) {
@@ -362,21 +361,26 @@ final class SalesPortalProvider {
 
 		$by_currency = array();
 		foreach ( $invoices as $invoice ) {
-			$currency                 = (string) $invoice->currency;
-			$by_currency[ $currency ] = ( $by_currency[ $currency ] ?? 0.0 ) + InvoiceShaper::balance( $invoice );
+			$balance = InvoiceShaper::balance( $invoice );
+			if ( $balance <= 0 ) {
+				continue;
+			}
+
+			$currency                 = \DoubleScale\Core\Services\CurrencyResolver::resolve( $invoice );
+			$by_currency[ $currency ] = ( $by_currency[ $currency ] ?? 0.0 ) + $balance;
 		}
 
 		if ( array() === $by_currency ) {
 			return '0';
 		}
 
-		arsort( $by_currency );
-		$currency = (string) array_key_first( $by_currency );
-		$sum      = (float) $by_currency[ $currency ];
+		$parts = array();
+		foreach ( $by_currency as $currency => $sum ) {
+			$amount  = function_exists( 'number_format_i18n' ) ? number_format_i18n( $sum, 2 ) : number_format( $sum, 2 );
+			$parts[] = '' !== $currency ? $amount . ' ' . $currency : $amount;
+		}
 
-		$amount = function_exists( 'number_format_i18n' ) ? number_format_i18n( $sum, 2 ) : number_format( $sum, 2 );
-
-		return '' !== $currency ? $amount . ' ' . $currency : $amount;
+		return implode( ' · ', $parts );
 	}
 
 	/**

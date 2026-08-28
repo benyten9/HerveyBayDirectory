@@ -267,7 +267,7 @@ class DealModel extends Model
 			$stored = $this->attributes['currency'];
 		}
 
-		return \DoubleScale\Core\Settings\Settings::deal_currency( $stored );
+		return \DoubleScale\Pro\Compat\SettingsCurrency::deal_currency( $stored );
 	}
 
 	/**

@@ -141,7 +141,7 @@ return array (
   'DoubleScale\\Automations\\Triggers\\Lifterlms\\CourseEnrolled' => 'DoubleScale\\Modules\\Automations\\Triggers\\Lifterlms\\CourseEnrolled',
   'DoubleScale\\Automations\\Triggers\\Lifterlms\\LessonCompleted' => 'DoubleScale\\Modules\\Automations\\Triggers\\Lifterlms\\LessonCompleted',
   'DoubleScale\\Automations\\Triggers\\Lifterlms\\MembershipEnrolled' => 'DoubleScale\\Modules\\Automations\\Triggers\\Lifterlms\\MembershipEnrolled',
-  'DoubleScale\\Automations\\Triggers\\LinkTriggerClicked' => 'DoubleScale\\Pro\\Modules\\Automations\\Triggers\\LinkTriggerClicked',
+  'DoubleScale\\Automations\\Triggers\\LinkTriggerClicked' => 'DoubleScale\\Pro\\Modules\\Automations\\Triggers\\Link\\LinkTriggerClicked',
   'DoubleScale\\Automations\\Triggers\\ListsApplied' => 'DoubleScale\\Modules\\Automations\\Triggers\\ListsApplied',
   'DoubleScale\\Automations\\Triggers\\ListsRemoved' => 'DoubleScale\\Modules\\Automations\\Triggers\\ListsRemoved',
   'DoubleScale\\Automations\\Triggers\\Memberpress\\MembershipEnrolled' => 'DoubleScale\\Modules\\Automations\\Triggers\\Memberpress\\MembershipEnrolled',

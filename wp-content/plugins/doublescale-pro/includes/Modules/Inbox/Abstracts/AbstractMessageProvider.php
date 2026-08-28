@@ -109,6 +109,29 @@ abstract class AbstractMessageProvider implements MessageProviderInterface {
 	}
 
 	/**
+	 * Whether the provider requires approved templates for outbound messages.
+	 *
+	 * Defaults to true (Meta-safe). Custom providers may override to false for free-form messaging.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $channel Channel type.
+	 * @return bool
+	 */
+	public function requires_template( string $channel ): bool {
+		return true;
+	}
+
+	/**
+	 * Optional bootstrap for provider-specific hooks (e.g. inbound webhooks).
+	 * Called after the provider is registered.
+	 *
+	 * @return void
+	 */
+	public function boot(): void {
+	}
+
+	/**
 	 * Get integration instance for this provider
 	 * Uses provider_slug to lookup and cache the integration
 	 *

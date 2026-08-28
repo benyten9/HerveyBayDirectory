@@ -190,6 +190,10 @@ class RestSettingsController extends RestController {
 							'type'    => 'integer',
 							'default' => 10,
 						),
+						'auto_keyword_unsubscribe' => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
 					),
 				),
 				'double_optin'     => array(
@@ -808,6 +812,10 @@ class RestSettingsController extends RestController {
 		// 24h), so strip the field rather than persist a value we never check.
 		if ( isset( $whatsapp['max_in_day'] ) ) {
 			unset( $whatsapp['max_in_day'] );
+		}
+
+		if ( isset( $whatsapp['auto_keyword_unsubscribe'] ) ) {
+			$whatsapp['auto_keyword_unsubscribe'] = (bool) $whatsapp['auto_keyword_unsubscribe'];
 		}
 
 		// Validate max_in_second is within acceptable range (1-10)

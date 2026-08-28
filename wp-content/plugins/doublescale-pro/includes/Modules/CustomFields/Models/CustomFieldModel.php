@@ -399,9 +399,19 @@ class CustomFieldModel extends Model {
 
 		static::deleting(
 			function ( $field ) {
-				\Illuminate\Support\Facades\DB::table( 'doublescale_custom_field_relationship' )
-					->where( 'custom_field_id', $field->id )
-					->delete();
+				// Not the DB facade: wp-eloquent never boots Laravel's container,
+				// so Facades\DB::table() throws "A facade root has not been set"
+				// and deleting a custom field fatals. It also skipped the WP table
+				// prefix. Go through $wpdb, which is what the rest of the plugin
+				// uses for raw pivot writes.
+				global $wpdb;
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->delete(
+					$wpdb->prefix . 'doublescale_custom_field_relationship',
+					array( 'custom_field_id' => (int) $field->id ),
+					array( '%d' )
+				);
 			}
 		);
 	}

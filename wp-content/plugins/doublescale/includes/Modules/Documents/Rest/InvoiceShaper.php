@@ -18,6 +18,8 @@ use DoubleScale\Modules\Documents\Models\PaymentModel;
 use DoubleScale\Core\Payment\GatewayManager;
 use DoubleScale\Modules\Documents\Services\InvoicePayable;
 use DoubleScale\Modules\Documents\Services\InvoiceUrl;
+use DoubleScale\Modules\Sales\Services\SalesEmailMergeTags;
+use DoubleScale\Core\Constants\Currencies;
 use DoubleScale\Core\Settings\Settings;
 
 /**
@@ -43,9 +45,9 @@ class InvoiceShaper {
 			'sale_agent_user_id'    => $invoice->sale_agent_user_id ? (int) $invoice->sale_agent_user_id : null,
 			'invoice_date'          => $invoice->invoice_date,
 			'due_date'              => $invoice->due_date,
-			// Currency follows the global setting (like deals); once the invoice has
-			// been sent its currency is frozen to what the customer saw.
+			// Resolved display code. Round-trip inherit via currency_stored (null).
 			'currency'              => Settings::document_currency( $invoice->currency, $invoice->sent_at ),
+			'currency_stored'       => Currencies::stored_or_null( $invoice->currency ),
 			'allowed_payment_modes' => PaymentMode::normalize_list( $invoice->allowed_payment_modes ),
 			'discount_type'         => (string) $invoice->discount_type,
 			'discount_value'        => (float) $invoice->discount_value,
@@ -63,6 +65,7 @@ class InvoiceShaper {
 			'shipping_address'      => $invoice->shipping_address,
 			'client_note'           => $invoice->client_note,
 			'terms'                 => $invoice->terms,
+			'sections'              => is_array( $invoice->sections ) ? $invoice->sections : array(),
 			'issuer_snapshot_raw'   => $invoice->issuer_snapshot ? (string) $invoice->issuer_snapshot : null,
 			'public_url'            => InvoiceUrl::get_public_url( $invoice ),
 			'created_at'            => $invoice->created_at,
@@ -99,8 +102,42 @@ class InvoiceShaper {
 
 		return apply_filters( 'doublescale_sales_invoice_admin_shape', $data, $invoice );
 	}
+
+	/**
+	 * Admin shape with merge tags resolved, for rendering (PDF, print).
+	 *
+	 * shape() deliberately returns the raw stored text because it also feeds
+	 * the edit form, where resolving tags would save the resolved value back
+	 * and destroy them. Rendering paths must use this instead.
+	 *
+	 * @param InvoiceModel $invoice Invoice.
+	 * @return array
+	 */
+	public static function shape_for_render( InvoiceModel $invoice ): array {
+		$data          = self::shape( $invoice, true );
+		$merge_context = SalesEmailMergeTags::for_invoice( $invoice );
+
+		$data['sections']    = SalesEmailMergeTags::resolve_sections(
+			is_array( $invoice->sections ) ? $invoice->sections : array(),
+			$merge_context
+		);
+		$data['client_note'] = SalesEmailMergeTags::resolve_rich_text(
+			$invoice->client_note ? (string) $invoice->client_note : null,
+			$merge_context
+		);
+		$data['terms']       = SalesEmailMergeTags::resolve_rich_text(
+			$invoice->terms ? (string) $invoice->terms : null,
+			$merge_context
+		);
+
+		return $data;
+	}
+
 	public static function shape_public( InvoiceModel $invoice ): array {
+		SalesEmailMergeTags::ensure_document_contact_loaded( $invoice );
 		$contact = $invoice->relationLoaded( 'contact' ) ? $invoice->contact : null;
+		$merge_context = SalesEmailMergeTags::for_invoice( $invoice );
+		$sections      = is_array( $invoice->sections ) ? $invoice->sections : array();
 
 		return array(
 			'invoice_number'        => (string) $invoice->invoice_number,
@@ -109,9 +146,9 @@ class InvoiceShaper {
 			'template_color'        => DocumentTemplateColor::normalize( $invoice->template_color ?? null ),
 			'invoice_date'          => $invoice->invoice_date,
 			'due_date'              => $invoice->due_date,
-			// Currency follows the global setting (like deals); once the invoice has
-			// been sent its currency is frozen to what the customer saw.
+			// Resolved display code. Round-trip inherit via currency_stored (null).
 			'currency'              => Settings::document_currency( $invoice->currency, $invoice->sent_at ),
+			'currency_stored'       => Currencies::stored_or_null( $invoice->currency ),
 			'allowed_payment_modes' => PaymentMode::normalize_list( $invoice->allowed_payment_modes ),
 			'discount_type'         => (string) $invoice->discount_type,
 			'discount_value'        => (float) $invoice->discount_value,
@@ -127,8 +164,15 @@ class InvoiceShaper {
 			'online_payment_gateways' => GatewayManager::instance()->shape_for_invoice( $invoice ),
 			'billing_address'       => $invoice->billing_address,
 			'shipping_address'      => $invoice->shipping_address,
-			'client_note'           => $invoice->client_note,
-			'terms'                 => $invoice->terms,
+			'client_note'           => SalesEmailMergeTags::resolve_rich_text(
+				$invoice->client_note ? (string) $invoice->client_note : null,
+				$merge_context
+			),
+			'terms'                 => SalesEmailMergeTags::resolve_rich_text(
+				$invoice->terms ? (string) $invoice->terms : null,
+				$merge_context
+			),
+			'sections'              => SalesEmailMergeTags::resolve_sections( $sections, $merge_context ),
 			'contact'               => $contact ? array(
 				'first_name' => $contact->first_name,
 				'last_name'  => $contact->last_name,

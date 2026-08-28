@@ -196,10 +196,16 @@ class AdminLoader {
 		);
 
 		if ( function_exists( 'wp_set_script_translations' ) ) {
+			// Resolve translations from whichever plugin actually supplied the
+			// bundle above. Both plugins register the script under the same
+			// relative path (`build/client/index.js`), so the md5 WordPress
+			// derives for the JSON filename is identical either way — pointing
+			// at the free directory while serving the Pro bundle silently loads
+			// the free string table and leaves every Pro string untranslated.
 			wp_set_script_translations(
 				'doublescale-admin',
 				'doublescale',
-				DOUBLESCALE_PLUGIN_DIR . 'languages'
+				$bundle_dir . 'languages'
 			);
 		}
 

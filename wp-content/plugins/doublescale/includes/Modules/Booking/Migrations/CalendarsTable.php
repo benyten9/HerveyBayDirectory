@@ -22,8 +22,8 @@ class CalendarsTable extends Migration {
 		created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY  (id),
-		KEY hash_id (hash_id),
-		KEY slug (slug),
+		KEY hash_id (hash_id(191)),
+		KEY slug (slug(191)),
 		KEY user_id (user_id)";
 	}
 }

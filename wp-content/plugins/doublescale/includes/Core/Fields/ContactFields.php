@@ -106,6 +106,18 @@ class ContactFields {
 				'type'     => $this->types['text'],
 				'required' => true,
 			),
+			'company_name' => array(
+				'name' => __( 'Company Name', 'doublescale' ),
+				'type' => $this->types['text'],
+			),
+			'company_registration_number' => array(
+				'name' => __( 'Company Registration Number', 'doublescale' ),
+				'type' => $this->types['text'],
+			),
+			'tax_vat_number' => array(
+				'name' => __( 'Tax / VAT Number', 'doublescale' ),
+				'type' => $this->types['text'],
+			),
 			'email'      => array(
 				'name'     => __( 'Email', 'doublescale' ),
 				'type'     => $this->types['email'],

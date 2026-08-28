@@ -11,6 +11,10 @@ namespace DoubleScale\Modules\Emails;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Constants\MessageDirection;
+use DoubleScale\Core\Constants\MessageSourceTypes;
+use DoubleScale\Core\Constants\TrackingStatus;
+use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Campaigns\Models\TemplateModel;
@@ -92,10 +96,12 @@ class EmailTrackingHelper {
 		}
 
 		foreach ( $matches['href'] as $key => $href ) {
+			$href = html_entity_decode( $href, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
 			if ( false !== strpos( $href, 'doublescale-link-trigger' ) ) {
 				// Get query string
 				$query_string = wp_parse_url( $href, PHP_URL_QUERY );
-				parse_str( $query_string, $query_args );
+				parse_str( (string) $query_string, $query_args );
 
 				// Get link trigger hash
 				$hash = $query_args['doublescale-link-trigger'] ?? '';
@@ -117,7 +123,7 @@ class EmailTrackingHelper {
 
 				// Replace original link with click tracking link
 				$to_replace = $matches[0][ $key ];
-				$message    = str_replace( $to_replace, str_replace( $href, $link_trigger_url, $to_replace ), $message );
+				$message    = str_replace( $to_replace, str_replace( $matches['href'][ $key ], $link_trigger_url, $to_replace ), $message );
 				continue;
 			}
 
@@ -245,5 +251,238 @@ class EmailTrackingHelper {
 		$link_trigger_url = add_query_arg( $args, home_url() );
 
 		return $link_trigger_url;
+	}
+
+	/**
+	 * Append a per-recipient track-id placeholder to Link Trigger URLs in shared HTML.
+	 *
+	 * Bulk / curl-multi campaigns send one HTML body to many recipients, so the
+	 * concrete hash_key cannot be baked in at render time. Inject
+	 * `track-id={{tracking:hash_key}}` instead; mailers substitute it from
+	 * recipient_variables (same pattern as the open-tracking pixel).
+	 *
+	 * Skips URLs that already carry track-id or hash_key. Does not urlencode the
+	 * placeholder braces — add_query_arg would break merge-tag substitution.
+	 *
+	 * @since 1.3.3
+	 *
+	 * @param string $html Email HTML body.
+	 * @return string HTML with track-id placeholders on link-trigger hrefs.
+	 */
+	public static function inject_link_trigger_track_id_placeholder( $html ) {
+		if ( ! is_string( $html ) || '' === $html || false === strpos( $html, 'doublescale-link-trigger' ) ) {
+			return $html;
+		}
+
+		return preg_replace_callback(
+			'/<a\b[^>]*\bhref=([\'"])(?<href>[^\'"]*doublescale-link-trigger[^\'"]*)\1[^>]*>/i',
+			static function ( $matches ) {
+				$href = html_entity_decode( $matches['href'], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+				if ( false !== strpos( $href, 'track-id=' ) || false !== strpos( $href, 'hash_key=' ) ) {
+					return $matches[0];
+				}
+
+				$separator = false === strpos( $href, '?' ) ? '?' : '&';
+				$updated   = $href . $separator . 'track-id={{tracking:hash_key}}';
+
+				return str_replace( $matches['href'], $updated, $matches[0] );
+			},
+			$html
+		);
+	}
+
+	/**
+	 * Wrap ordinary links in click tracking for bulk / curl-multi sends.
+	 *
+	 * Bulk campaigns render ONE HTML body for many recipients, so the concrete
+	 * hash_key cannot be baked in. We emit `hash_key={{tracking:hash_key}}` and let
+	 * each mailer's convert_merge_tags() rewrite it to that provider's
+	 * recipient-variable syntax (%recipient.hash_key%, {{hash_key}}, {hash_key}, …),
+	 * exactly like the open-tracking pixel already does.
+	 *
+	 * Mirrors the skip rules of add_click_tracking(): link triggers (handled by
+	 * inject_link_trigger_track_id_placeholder()), already-tracked URLs, unsubscribe
+	 * links, and unprocessed merge-tag hrefs are all left alone.
+	 *
+	 * The tracker URL is assembled by concatenation rather than add_query_arg(),
+	 * because add_query_arg() percent-encodes the placeholder braces to %7B%7B and
+	 * the mailers' merge-tag regex would then never match it.
+	 *
+	 * @since 1.3.4
+	 *
+	 * @param string             $html     Shared email HTML body.
+	 * @param TemplateModel|null $template Optional template, for UTM parameters.
+	 * @return string HTML with ordinary links wrapped in click tracking.
+	 */
+	public static function inject_bulk_click_tracking( $html, $template = null ) {
+		if ( ! is_string( $html ) || '' === $html || false === stripos( $html, '<a' ) ) {
+			return $html;
+		}
+
+		$base = home_url();
+
+		return preg_replace_callback(
+			'/<a\b[^>]*\bhref=([\'"])(?<href>[^\'"]*)\1[^>]*>/i',
+			static function ( $matches ) use ( $base, $template ) {
+				$href = html_entity_decode( $matches['href'], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+				// Link triggers get their own track-id placeholder elsewhere.
+				if ( false !== strpos( $href, 'doublescale-link-trigger' ) ) {
+					return $matches[0];
+				}
+
+				// Already tracked, unsubscribe, or an unexpanded merge tag.
+				if ( false !== strpos( $href, 'doublescale=' )
+					|| false !== strpos( $href, 'doublescale-unsubscribe' )
+					|| false !== strpos( $href, '{{' ) ) {
+					return $matches[0];
+				}
+
+				// Only http(s) destinations are trackable — skip mailto:, tel:, #anchors.
+				if ( ! preg_match( '#^https?://#i', $href ) ) {
+					return $matches[0];
+				}
+
+				$original_url = $href;
+				if ( $template && $template->get_setting( 'enable_utm', false ) ) {
+					$original_url = self::add_utm_parameters( $original_url, $template );
+				}
+
+				// Double-encode to match the non-bulk path: add_click_tracking() urlencodes
+				// the destination and add_query_arg() encodes the whole arg again. The
+				// click handler mirrors that (PHP decodes $_GET once, then it urldecodes
+				// once more), so a single encode here would corrupt destinations that
+				// contain literal percent-escapes (e.g. %20) or "+".
+				$separator = false === strpos( $base, '?' ) ? '?' : '&';
+				$click_url = $base . $separator
+					. 'doublescale=email_click'
+					. '&hash_key={{tracking:hash_key}}'
+					. '&original=' . urlencode( urlencode( $original_url ) );
+
+				return str_replace( $matches['href'], $click_url, $matches[0] );
+			},
+			$html
+		);
+	}
+
+	/**
+	 * Tracking vars every bulk/curl-multi recipient needs for open + link-trigger clicks.
+	 *
+	 * @since 1.3.3
+	 *
+	 * @param CommunicationTrackingModel $tracking Per-recipient tracking row.
+	 * @return array{hash_key: string, tracking_pixel: string, unsubscribe_url: string}
+	 */
+	public static function bulk_tracking_recipient_variables( CommunicationTrackingModel $tracking ) {
+		return array(
+			'hash_key'         => $tracking->hash_key,
+			'tracking_pixel'   => home_url( '?doublescale=email_open&hash_key=' . $tracking->hash_key ),
+			'unsubscribe_url'  => add_query_arg(
+				array(
+					'doublescale' => 'email_unsubscribe',
+					'hash_key'    => $tracking->hash_key,
+				),
+				home_url()
+			),
+		);
+	}
+
+	/**
+	 * Apply per-recipient open/click tracking to a test email body.
+	 *
+	 * Test sends previously shipped link triggers without a track-id, so clicks
+	 * fell back to the logged-in WP user instead of the intended recipient.
+	 *
+	 * @since 1.3.5
+	 *
+	 * @param string           $body            Rendered HTML body.
+	 * @param string           $recipient_email Test recipient address.
+	 * @param ContactModel|null $contact        Optional known contact for merge-tag context.
+	 * @return string Body with tracking pixel and tracked links when applicable.
+	 */
+	public static function prepare_test_email_body( $body, $recipient_email, $contact = null ) {
+		if ( ! is_string( $body ) || '' === $body ) {
+			return $body;
+		}
+
+		$has_trackable_links = false !== stripos( $body, '<a' );
+		if ( ! $has_trackable_links ) {
+			return $body;
+		}
+
+		if ( ! $contact instanceof ContactModel ) {
+			$contact = ContactModel::get_by_email( $recipient_email );
+		}
+
+		if ( ! $contact && false !== strpos( $body, 'doublescale-link-trigger' ) ) {
+			$contact = self::resolve_test_recipient_contact( $recipient_email );
+		}
+
+		if ( ! $contact ) {
+			return $body;
+		}
+
+		$tracking_entry = CommunicationTrackingModel::create(
+			array(
+				'contact_id'  => $contact->id,
+				'template_id' => null,
+				'hash_key'    => Utils::generate_hash_key(),
+				'mode'        => CommunicationTrackingModel::MODE_EMAIL,
+				'direction'   => MessageDirection::OUTBOUND,
+				'source_type' => MessageSourceTypes::INDIVIDUAL,
+				'source_id'   => null,
+				'author_id'   => get_current_user_id(),
+				'recipient'   => $recipient_email,
+				'status'      => TrackingStatus::PENDING,
+			)
+		);
+
+		$body = self::add_tracking_pixel( $body, $tracking_entry );
+		$body = self::add_click_tracking( $body, $tracking_entry->hash_key, $contact );
+
+		$tracking_entry->update(
+			array(
+				'status'  => TrackingStatus::SENT,
+				'sent_at' => current_time( 'mysql', true ),
+			)
+		);
+
+		return $body;
+	}
+
+	/**
+	 * Ensure a CRM contact exists for a test-email recipient.
+	 *
+	 * @param string $recipient_email Recipient email address.
+	 * @return ContactModel|null
+	 */
+	protected static function resolve_test_recipient_contact( $recipient_email ) {
+		$email = strtolower( trim( (string) $recipient_email ) );
+		if ( '' === $email || ! is_email( $email ) ) {
+			return null;
+		}
+
+		$existing = ContactModel::get_by_email( $email );
+		if ( $existing ) {
+			return $existing;
+		}
+
+		$wp_user    = get_user_by( 'email', $email );
+		$first_name = ( $wp_user && ! empty( $wp_user->first_name ) ) ? $wp_user->first_name : null;
+		$last_name  = ( $wp_user && ! empty( $wp_user->last_name ) ) ? $wp_user->last_name : null;
+
+		try {
+			return ContactModel::create(
+				array(
+					'email'      => $email,
+					'first_name' => $first_name,
+					'last_name'  => $last_name,
+					'source'     => 'test_email',
+				)
+			);
+		} catch ( \Illuminate\Database\QueryException $e ) {
+			return ContactModel::get_by_email( $email );
+		}
 	}
 }

@@ -337,17 +337,18 @@ class RestUserManagementController extends RestController {
 			return new WP_Error( 'user_already_has_crm_role', 'User already has a CRM role.', array( 'status' => 400 ) );
 		}
 
-		$known_roles      = UserRoles::get_known_role_slugs();
-		$assignable_roles = UserRoles::get_assignable_role_slugs();
-		$requested_roles  = array_values( array_intersect( (array) $roles, $known_roles ) );
+		$known_roles     = UserRoles::get_known_role_slugs();
+		$requested_roles = array_values( array_intersect( (array) $roles, $known_roles ) );
+		$prepared_roles  = $this->prepare_role_assignment( $requested_roles );
+		if ( is_wp_error( $prepared_roles ) ) {
+			return $prepared_roles;
+		}
+		$requested_roles = $prepared_roles;
 
 		// Add new CRM roles FIRST so listeners on doublescale_user_role_revoked
 		// don't observe a transient zero-roles state if any of the existing roles
 		// need to be removed afterward. (Same race as assign_crm_role.)
 		foreach ( $requested_roles as $role ) {
-			if ( ! in_array( $role, $assignable_roles, true ) ) {
-				continue;
-			}
 			if ( ! in_array( $role, (array) $user->roles, true ) ) {
 				$user->add_role( $role );
 				do_action( 'doublescale_user_role_assigned', $user->ID, $role );
@@ -407,12 +408,12 @@ class RestUserManagementController extends RestController {
 		}
 
 		$known_roles      = UserRoles::get_known_role_slugs();
-		$assignable_roles = UserRoles::get_assignable_role_slugs();
 		$requested_roles  = array_values( array_intersect( (array) $roles, $known_roles ) );
-
-		if ( empty( $requested_roles ) ) {
-			return new WP_Error( 'invalid_roles', 'Invalid roles provided.', array( 'status' => 400 ) );
+		$prepared_roles   = $this->prepare_role_assignment( $requested_roles );
+		if ( is_wp_error( $prepared_roles ) ) {
+			return $prepared_roles;
 		}
+		$requested_roles = $prepared_roles;
 
 		// Add the new CRM roles FIRST so listeners on `doublescale_user_role_revoked`
 		// observing "user still has a booking-eligible role" don't see a transient
@@ -420,9 +421,6 @@ class RestUserManagementController extends RestController {
 		// purge_host_data() listener triggers mid-swap and deletes the host's
 		// calendar+availability before the new role is added.
 		foreach ( $requested_roles as $role ) {
-			if ( ! in_array( $role, $assignable_roles, true ) ) {
-				continue;
-			}
 			if ( ! in_array( $role, (array) $user->roles, true ) ) {
 				$user->add_role( $role );
 				do_action( 'doublescale_user_role_assigned', $user->ID, $role );
@@ -487,6 +485,48 @@ class RestUserManagementController extends RestController {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Resolve requested roles into assignable slugs, provisioning definitions when needed.
+	 *
+	 * @param array<int, string> $requested_roles Known DoubleScale role slugs.
+	 * @return array<int, string>|WP_Error
+	 */
+	private function prepare_role_assignment( array $requested_roles ) {
+		if ( empty( $requested_roles ) ) {
+			return new WP_Error(
+				'invalid_roles',
+				__( 'Invalid roles provided.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$assignable = array();
+
+		foreach ( $requested_roles as $role ) {
+			if ( ! UserRoles::is_role_module_enabled( $role ) ) {
+				continue;
+			}
+
+			if ( null === get_role( $role ) ) {
+				UserRoles::provision_role( $role );
+			}
+
+			if ( UserRoles::is_role_assignable( $role ) ) {
+				$assignable[] = $role;
+			}
+		}
+
+		if ( empty( $assignable ) ) {
+			return new WP_Error(
+				'roles_not_assignable',
+				__( 'None of the selected roles could be assigned. Check that DoubleScale Pro is active and the required module is enabled.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return $assignable;
 	}
 
 	/**

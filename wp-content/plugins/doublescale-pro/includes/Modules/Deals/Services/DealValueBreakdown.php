@@ -38,7 +38,7 @@ class DealValueBreakdown {
 			}
 
 			$stored   = isset( $deal->getAttributes()['currency'] ) ? $deal->getAttributes()['currency'] : null;
-			$currency = Settings::deal_currency( $stored );
+			$currency = \DoubleScale\Pro\Compat\SettingsCurrency::deal_currency( $stored );
 
 			$total += $amount;
 			if ( ! isset( $by_currency[ $currency ] ) ) {

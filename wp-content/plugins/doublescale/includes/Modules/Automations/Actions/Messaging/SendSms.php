@@ -16,11 +16,11 @@ use DoubleScale\Modules\Automations\Abstracts\ProAutomationStubAction;
  */
 class SendSms extends ProAutomationStubAction {
 
-	public $name = 'Send Sms';
+	public $name = 'Send SMS';
 
 	public $slug = 'send_sms';
 
-	public $description = 'This action will send an Sms to the user with full tracking and analytics.';
+	public $description = 'This action will send an SMS to the user with full tracking and analytics.';
 
 	public $source = 'message';
 

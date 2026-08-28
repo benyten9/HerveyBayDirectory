@@ -75,7 +75,7 @@ class AbandonedCartsTable extends Migration {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-			KEY hash_key (hash_key),
+			KEY hash_key (hash_key(191)),
             KEY user_id (user_id),
             KEY order_id (order_id)';
 

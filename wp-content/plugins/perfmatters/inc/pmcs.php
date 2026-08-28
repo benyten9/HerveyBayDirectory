@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 perfmatters_settings_header(__('Code', 'perfmatters'), 'dashicons-editor-code');
 
 echo '<div class="perfmatters-settings-section">';

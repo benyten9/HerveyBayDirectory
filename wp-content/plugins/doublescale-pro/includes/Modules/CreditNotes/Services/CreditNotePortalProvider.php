@@ -107,7 +107,7 @@ final class CreditNotePortalProvider {
 				'date'        => $credit_note->credit_note_date,
 				'due_date'    => null,
 				'open_till'   => null,
-				'currency'    => \DoubleScale\Core\Settings\Settings::document_currency( $credit_note->currency, $credit_note->sent_at ),
+				'currency'    => \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $credit_note->currency, $credit_note->sent_at ),
 				'total'       => (float) $credit_note->total,
 				'amount_paid' => (float) $credit_note->amount_applied,
 				'balance'     => max( 0, round( (float) $credit_note->total - (float) $credit_note->amount_applied, 2 ) ),

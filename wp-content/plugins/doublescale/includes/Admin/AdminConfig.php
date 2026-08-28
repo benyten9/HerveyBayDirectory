@@ -69,10 +69,18 @@ final class AdminConfig {
 			'doublescale_crm_manager'             => Permissions::is_crm_manager(),
 			'doublescale_sales_manager'           => Permissions::user_has_role( UserRoles::SALES_MANAGER ),
 			'doublescale_sales_rep'               => Permissions::user_has_role( UserRoles::SALES_REP ),
+			'doublescale_can_delete_contacts'     => Permissions::can_delete_contacts(),
 			// Server-computed Settings gate — prefer this in the SPA so
 			// CRM Manager + Sales Rep multi-role users never get locked to
 			// Mailbox/Notifications by composing membership flags in JS.
 			'doublescale_limited_settings'        => Permissions::has_limited_settings_access(),
+			// The MCP surface — enabling the endpoint, and seeing or revoking
+			// every key on the site. WordPress administrators, not CRM Manager.
+			'doublescale_manage_mcp'              => Permissions::can_manage_mcp(),
+			// Weaker: may open the MCP tab to issue and revoke their OWN key.
+			// Any DoubleScale role, because a rep with callable abilities and no
+			// way to get a key cannot use the feature at all.
+			'doublescale_manage_own_mcp_key'      => Permissions::can_manage_own_mcp_key(),
 			'doublescale_support_manager'         => Permissions::user_has_role( UserRoles::SUPPORT_MANAGER ),
 			'doublescale_support_agent'           => Permissions::user_has_role( UserRoles::SUPPORT_AGENT ),
 			'doublescale_booking_manager'         => Permissions::user_has_role( UserRoles::BOOKING_MANAGER ),
@@ -80,6 +88,8 @@ final class AdminConfig {
 			'doublescale_project_manager'         => Permissions::user_has_role( UserRoles::PROJECT_MANAGER ),
 			'doublescale_project_member'          => Permissions::user_has_role( UserRoles::PROJECT_MEMBER ),
 			'doublescale_is_project_only'         => Permissions::is_project_only(),
+			'doublescale_is_booking_only'         => Permissions::is_booking_only(),
+			'doublescale_is_support_only'         => Permissions::is_support_only(),
 			'doublescale_view_support'            => Permissions::has_support_access(),
 			'doublescale_manage_all_tickets'      => Permissions::can_manage_all_tickets(),
 			// Mailbox/settings gate (manager-tier): admins, CRM Managers, and
@@ -154,6 +164,10 @@ final class AdminConfig {
 				'forms'               => class_exists( '\DoubleScale\Modules\Forms\Services\FormsManager' )
 					? \DoubleScale\Modules\Forms\Services\FormsManager::instance()->get_options()
 					: array(),
+				/** WordPress form-plugin slugs actually installed/active — lets the
+				 * Forms page tell "Pro-locked but installed" apart from "Pro-locked,
+				 * not installed" for vendors Free doesn't ship a Form model for. */
+				'activeFormPlugins'   => TriggersManager::instance()->get_active_form_vendor_slugs(),
 				'filtersGroups'       => FiltersManager::instance()->get_groups(),
 				'customFieldsTypes'   => class_exists( \DoubleScale\Pro\Modules\CustomFields\CustomFieldsManager::class ) ? \DoubleScale\Pro\Modules\CustomFields\CustomFieldsManager::instance()->get_options() : array(),
 				'contactFieldsGroups' => Utils::get_contact_fields(),
@@ -199,6 +213,9 @@ final class AdminConfig {
 				'salesApprovalWorkflowEnabled' => class_exists( \DoubleScale\Modules\Sales\Services\SalesSettings::class )
 					? (bool) \DoubleScale\Modules\Sales\Services\SalesSettings::get( 'approval_workflow_enabled', false )
 					: false,
+				/** Whether a configured WhatsApp provider can send documents without
+				 * the admin opening wa.me — Pro answers this filter. */
+				'salesWhatsappAutoAvailable' => (bool) apply_filters( 'doublescale_sales_whatsapp_auto_available', false ),
 				'business'            => self::get_business_branding_config(),
 				'calendarWeekStartsOn' => Settings::get_calendar_week_starts_on(),
 			)

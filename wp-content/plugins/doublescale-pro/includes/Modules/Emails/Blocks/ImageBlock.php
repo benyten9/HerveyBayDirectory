@@ -47,6 +47,7 @@ class ImageBlock extends EmailBlock {
 			'alt'             => 'Image',
 			'width'           => '100%',
 			'height'          => 'auto',
+			'maxWidth'        => '100%',
 			'align'           => 'center',
 			'backgroundColor' => 'transparent',
 			'padding'         => array(
@@ -87,16 +88,33 @@ class ImageBlock extends EmailBlock {
 		);
 
 		// Container style (matches frontend containerStyle)
-		$is_full_width   = $props['width'] === '100%' || ( strpos( $props['width'], '%' ) !== false && floatval( $props['width'] ) >= 100 );
-		$should_center   = $props['align'] === 'center';
+		$is_full_width = $props['width'] === '100%' || ( strpos( $props['width'], '%' ) !== false && floatval( $props['width'] ) >= 100 );
+		$should_center = $props['align'] === 'center';
+
+		// A px width is an explicit, absolute request, but `max-width: 100%`
+		// resolves against the parent column and silently clamps it back down.
+		// `100%` is also the default maxWidth every block ships with, so it
+		// cannot be read as a deliberate cap — drop it for pixel widths and
+		// honour only a narrower, explicitly chosen max-width.
+		$is_auto_width  = $props['width'] === 'auto';
+		$is_pixel_width = substr( $props['width'], -2 ) === 'px';
+
+		$container_max_width = ! empty( $props['maxWidth'] ) ? $props['maxWidth'] : '100%';
+		if ( $is_pixel_width && $container_max_width === '100%' ) {
+			$container_max_width = null;
+		}
+
 		$container_style = $this->build_style_string(
 			array(
 				'background-color' => $props['backgroundColor'],
 				'padding'          => $this->format_padding( $props['padding'] ),
 				'border-radius'    => $props['borderRadius'] . 'px',
 				'display'          => ( $is_full_width && ! $should_center ) ? 'block' : 'inline-block',
-				'max-width'        => '100%',
+				'max-width'        => $container_max_width,
 				'width'            => $props['width'],
+				// Padding must not eat into an explicit width, or a 320px image
+				// with horizontal padding renders narrower than requested.
+				'box-sizing'       => 'border-box',
 				'margin'           => '0',
 			)
 		);
@@ -104,7 +122,9 @@ class ImageBlock extends EmailBlock {
 		// Image style (matches frontend imageStyle)
 		$image_style = $this->build_style_string(
 			array(
-				'width'         => '100%',
+				// The image fills its container, except at width:auto where the
+				// container shrink-wraps — filling it would collapse the image.
+				'width'         => $is_auto_width ? 'auto' : '100%',
 				'height'        => $props['height'] === 'auto' ? 'auto' : $props['height'],
 				'max-width'     => '100%',
 				'border-radius' => $props['borderRadius'] . 'px',
@@ -161,8 +181,16 @@ class ImageBlock extends EmailBlock {
 
 		// Build the image or placeholder
 		if ( ! empty( $src ) ) {
+			// Outlook's Word engine ignores CSS width on <img>, so mirror an
+			// explicit px width onto the HTML width attribute (unitless, as the
+			// attribute requires) to keep the size intact there.
+			$width_attr = '';
+			if ( $is_pixel_width ) {
+				$width_attr = ' width="' . esc_attr( (string) (int) floatval( $props['width'] ) ) . '"';
+			}
+
 			// Render image with proper URL escaping
-			$image = '<img src="' . esc_url( $src ) . '" alt="' . esc_attr( $alt ) . '" style="' . $image_style . '" border="0" />';
+			$image = '<img src="' . $this->escape_image_src( $src ) . '" alt="' . esc_attr( $alt ) . '"' . $width_attr . ' style="' . $image_style . '" border="0" />';
 
 			// Wrap in link if provided
 			if ( $link ) {

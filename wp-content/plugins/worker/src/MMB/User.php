@@ -149,6 +149,11 @@ class MMB_User extends MMB_Core
         //$args: $users, $new_role, $new_password, $user_edit_action
         // if action is edit-user $args are: $users, $new_role, $new_password, $user_edit_action, $new_first_name, $new_last_name, $new_user_email, $new_description, $new_user_url
 
+        // Initialize $username if not provided in $args
+        if (!isset($username)) {
+            $username = '';
+        }
+
         $return = array();
         if (count($users)) {
             foreach ($users as $user) {

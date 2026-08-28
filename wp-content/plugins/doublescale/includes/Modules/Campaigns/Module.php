@@ -13,9 +13,22 @@ namespace DoubleScale\Modules\Campaigns;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
+use DoubleScale\Modules\Campaigns\Abilities\CampaignAbilities;
 use DoubleScale\Core\Container;
 
-final class Module extends AbstractModule {
+final class Module extends AbstractModule implements ProvidesAbilities {
+
+	/**
+	 * Read-only abilities for this module.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return CampaignAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'campaigns';

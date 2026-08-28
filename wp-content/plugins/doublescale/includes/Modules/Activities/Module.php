@@ -13,9 +13,22 @@ namespace DoubleScale\Modules\Activities;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Core\Container;
+use DoubleScale\Modules\Activities\Abilities\ActivityAbilities;
 
-final class Module extends AbstractModule {
+final class Module extends AbstractModule implements ProvidesAbilities {
+
+	/**
+	 * Read-only activity timeline abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return ActivityAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'activities';

@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 //security check
 if(!function_exists('wp_get_current_user') || !current_user_can('manage_options') || is_admin() || !isset($_GET['perfmatters']) || !perfmatters_network_access() || Perfmatters\Utilities::is_page_builder()) {
 	return;

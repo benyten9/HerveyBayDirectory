@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 $perfmatters_tools = get_option('perfmatters_tools');
 
 //actions and filters

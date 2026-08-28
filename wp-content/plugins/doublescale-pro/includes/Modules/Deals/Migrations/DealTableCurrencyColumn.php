@@ -187,7 +187,7 @@ class DealTableCurrencyColumn {
 		);
 
 		if ( ! empty( $invoice ) ) {
-			return Settings::document_currency(
+			return \DoubleScale\Pro\Compat\SettingsCurrency::document_currency(
 				$invoice['currency'] ?? null,
 				$invoice['sent_at'] ?? null
 			);
@@ -213,7 +213,7 @@ class DealTableCurrencyColumn {
 		);
 
 		if ( ! empty( $proposal ) ) {
-			return Settings::document_currency(
+			return \DoubleScale\Pro\Compat\SettingsCurrency::document_currency(
 				$proposal['currency'] ?? null,
 				$proposal['sent_at'] ?? null
 			);

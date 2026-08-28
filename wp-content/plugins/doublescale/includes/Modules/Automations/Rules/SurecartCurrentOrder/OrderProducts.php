@@ -84,12 +84,12 @@ class OrderProducts extends Rule {
 	 * @return array
 	 */
 	public function get_options() {
-		if ( ! class_exists( '\Surecart\Models\Product' ) ) {
+		if ( ! class_exists( '\SureCart\Models\Product' ) ) {
 			return array();
 		}
 
 		try {
-			$products = \Surecart\Models\Product::where( array( 'archived' => false ) )->get();
+			$products = \SureCart\Models\Product::where( array( 'archived' => false ) )->get();
 
 			$options = array();
 			if ( is_array( $products ) ) {

@@ -16,6 +16,7 @@ use DoubleScale\Core\Constants\MessageSourceTypes;
 use DoubleScale\Core\Constants\MessageDirection;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Core\Constants\CampaignChannel;
+use DoubleScale\Core\Settings\Settings;
 use DoubleScale\Core\Validators\PhoneValidator;
 use DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry;
 
@@ -567,6 +568,13 @@ class MessagingIncoming {
 
 		// Check for opt-out keywords
 		if ( in_array( $normalized_message, $opt_out_keywords, true ) ) {
+			if (
+				CampaignChannel::STR_WHATSAPP === $channel
+				&& ! Settings::is_whatsapp_auto_keyword_unsubscribe_enabled()
+			) {
+				return null;
+			}
+
 			return $this->process_opt_out( $contact, $channel, $status_field );
 		}
 

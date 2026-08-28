@@ -80,6 +80,28 @@ class WhatsappProcessing extends AbstractCampaignProcessing {
 	 * @throws \Exception If template is missing required data.
 	 */
 	protected function prepare_message_content( TemplateModel $template, $contact_or_automation_contact, CommunicationTrackingModel $campaign_message ) {
+		$provider = $this->get_message_provider();
+
+		// Providers that do not require templates can send free-form text.
+		if ( $provider && method_exists( $provider, 'requires_template' ) && ! $provider->requires_template( $this->channel ) ) {
+			add_filter( 'doublescale_active_channel_context', array( $this, 'get_channel_context' ), 10 );
+
+			$contact = $contact_or_automation_contact instanceof ContactModel
+				? $contact_or_automation_contact
+				: $contact_or_automation_contact->contact;
+
+			$message = $template->body ?? $this->get_default_campaign_content();
+			$message = MergeTagsManager::instance()->process_merge_tags( $message, $contact_or_automation_contact );
+
+			remove_filter( 'doublescale_active_channel_context', array( $this, 'get_channel_context' ), 10 );
+
+			return array(
+				'body'      => $message,
+				'recipient' => $campaign_message->recipient,
+				'hash_key'  => $campaign_message->hash_key,
+			);
+		}
+
 		// Set channel context for merge tags
 		add_filter( 'doublescale_active_channel_context', array( $this, 'get_channel_context' ), 10 );
 
@@ -192,17 +214,42 @@ class WhatsappProcessing extends AbstractCampaignProcessing {
 			// Get message provider
 			$provider = $this->get_message_provider();
 			if ( ! $provider ) {
-				throw new \Exception( esc_html__( 'Meta WhatsApp not configured. Please configure Meta WhatsApp in Settings > Integrations.', 'doublescale' ) );
+				throw new \Exception( esc_html__( 'WhatsApp provider not configured. Please configure a WhatsApp provider in Settings > Integrations.', 'doublescale' ) );
 			}
 
 			// Validate provider is configured
 			if ( ! $provider->is_configured() ) {
-				throw new \Exception( esc_html__( 'Meta WhatsApp is not configured. Please configure it in Settings > Integrations.', 'doublescale' ) );
+				throw new \Exception( esc_html__( 'WhatsApp provider is not configured. Please configure it in Settings > Integrations.', 'doublescale' ) );
 			}
 
 			$content_sid = $message_data['ContentSid'] ?? null;
+			$body        = $message_data['body'] ?? '';
 
-			// Validate ContentSid is present
+			// Free-form providers send rendered body text directly.
+			if ( method_exists( $provider, 'requires_template' ) && ! $provider->requires_template( $this->channel ) ) {
+				if ( empty( $body ) ) {
+					throw new \Exception( esc_html__( 'WhatsApp message body is empty.', 'doublescale' ) );
+				}
+
+				$api_data = array(
+					'To'   => $campaign_message->recipient,
+					'Body' => $body,
+				);
+
+				if ( ! empty( $message_data['media_urls'] ) ) {
+					$api_data['media_urls'] = (array) $message_data['media_urls'];
+				}
+
+				$webhook_url = $provider->get_webhook_url( $this->channel );
+				if ( $webhook_url ) {
+					$api_data['StatusCallback'] = $webhook_url;
+				}
+
+				$result = $provider->send_message( $this->channel, $api_data, $contact );
+				return $this->handle_provider_response( $result, $campaign_message, $contact );
+			}
+
+			// Validate ContentSid is present for Meta template providers.
 			if ( empty( $content_sid ) ) {
 				throw new \Exception( esc_html__( 'Whatsapp message missing template ID. All WhatsApp messages must use approved Meta business templates.', 'doublescale' ) );
 			}

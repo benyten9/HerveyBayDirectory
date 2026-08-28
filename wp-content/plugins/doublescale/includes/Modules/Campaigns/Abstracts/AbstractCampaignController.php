@@ -36,6 +36,15 @@ use DoubleScale\Core\Constants\MessageSourceTypes;
 abstract class AbstractCampaignController extends RestController {
 
 	/**
+	 * Columns campaign lists may be sorted by.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string[]
+	 */
+	const SORTABLE_COLUMNS = array( 'name', 'status', 'type', 'execute_at', 'created_at', 'updated_at' );
+
+	/**
 	 * Campaign REST requires the campaigns module (routes vanish when module is off unless shimmed).
 	 *
 	 * @return WP_Error|null
@@ -325,8 +334,9 @@ abstract class AbstractCampaignController extends RestController {
 				$query->where( 'updated_at', '<=', $updated_to );
 			}
 
-			$campaigns = $query->orderBy( 'created_at', 'desc' )
-				->paginate( $per_page, array( '*' ), 'page', $page );
+			$this->apply_sorting( $query, $request, static::SORTABLE_COLUMNS );
+
+			$campaigns = $query->paginate( $per_page, array( '*' ), 'page', $page );
 
 			// Enrich all campaigns with computed stats (prevents N+1)
 			$this->enrichment->enrich_collection( $campaigns->items() );
@@ -957,7 +967,7 @@ abstract class AbstractCampaignController extends RestController {
 				'type'        => 'string',
 				'format'      => 'date',
 			),
-		);
+		) + $this->get_sorting_collection_params( static::SORTABLE_COLUMNS );
 	}
 
 	/**

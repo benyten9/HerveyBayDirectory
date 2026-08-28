@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 echo '<input type="hidden" name="tab" value="global" />';
 wp_nonce_field('pmsm_global', 'pmsm_global_nonce');
 

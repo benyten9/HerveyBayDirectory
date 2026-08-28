@@ -114,14 +114,8 @@ final class PortalFrontendHandler {
 
 		$box_id = max( 0, (int) $atts['box_id'] );
 
-		// `alignfull` opts the portal into the block theme's full-bleed width.
-		// Block themes constrain `.entry-content` children to the (narrow)
-		// content size by default; the portal is a full app surface that owns
-		// its page, so request the full size where supported. The shell caps its
-		// own readable measure internally, so this widens the page without
-		// running text edge-to-edge.
 		return sprintf(
-			'<div id="%s" class="alignfull" data-box-id="%d"></div>',
+			'<div id="%s" data-box-id="%d"></div>',
 			esc_attr( self::MOUNT_ID ),
 			$box_id
 		);
@@ -134,7 +128,13 @@ final class PortalFrontendHandler {
 	 * @return void
 	 */
 	public function maybe_enqueue(): void {
-		if ( ! $this->should_load_portal_spa() || ! $this->current_page_has_shortcode() ) {
+		if ( ! $this->current_page_has_shortcode() ) {
+			return;
+		}
+
+		$this->enqueue_host_isolation_styles();
+
+		if ( ! $this->should_load_portal_spa() ) {
 			return;
 		}
 
@@ -167,42 +167,51 @@ final class PortalFrontendHandler {
 
 		wp_enqueue_script( self::HANDLE );
 		wp_enqueue_style( self::HANDLE );
-
-		// The portal app owns the whole page, so hide the theme's page title
-		// ("Client Portal") and collapse the large header gap above it so the
-		// app starts near the top. Scoped to the portal body class so every
-		// other page keeps the theme's default title + spacing.
-		wp_add_inline_style( self::HANDLE, $this->page_chrome_css() );
 	}
 
 	/**
-	 * CSS that turns the host page into a clean, full-page app surface: it hides
-	 * the theme's page title, site header (nav) and footer, then zeroes the top
-	 * gap so the portal renders flush to the top (its own inner padding supplies
-	 * the breathing room). Selectors cover block themes (`.wp-block-post-title`,
-	 * `.wp-site-blocks > header|footer`, `*.wp-block-template-part`) and classic
-	 * themes (`.entry-title`/`.site-header`/`.site-footer`); each is scoped to
-	 * the portal body class so every other page keeps the theme's chrome, and is
-	 * harmless on themes whose markup does not match. The WP admin bar is left
-	 * intact (it is the logged-in customer's log-out affordance).
+	 * Let the portal use its designed centered width instead of the host
+	 * theme's blog column (e.g. max-w-4xl / content-size).
 	 *
-	 * @return string
+	 * @return void
 	 */
-	private function page_chrome_css(): string {
-		$b = 'body.doublescale-client-portal-page ';
+	private function enqueue_host_isolation_styles(): void {
+		$version = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
+		$css     = '
+			body.doublescale-client-portal-page #content > main > .max-w-4xl,
+			body.doublescale-client-portal-page .max-w-4xl:has(#doublescale-client-portal),
+			body.doublescale-client-portal-page .entry-content:has(#doublescale-client-portal),
+			body.doublescale-client-portal-page .wp-block-post-content:has(#doublescale-client-portal),
+			body.doublescale-client-portal-page .is-layout-constrained:has(#doublescale-client-portal){
+				max-width:93rem!important;
+				width:100%!important;
+				margin-left:auto!important;
+				margin-right:auto!important;
+			}
+			body.doublescale-client-portal-page .is-layout-constrained > #doublescale-client-portal,
+			body.doublescale-client-portal-page .entry-content > #doublescale-client-portal,
+			body.doublescale-client-portal-page .wp-block-post-content > #doublescale-client-portal,
+			body.doublescale-client-portal-page #doublescale-client-portal{
+				position:relative!important;
+				z-index:1;
+				display:block!important;
+				float:none!important;
+				clear:both;
+				width:100%!important;
+				max-width:93rem!important;
+				margin-left:auto!important;
+				margin-right:auto!important;
+				left:auto!important;
+				right:auto!important;
+				transform:none!important;
+				grid-column:1/-1;
+				justify-self:center;
+			}
+		';
 
-		return $b . '.wp-block-post-title,'
-			. $b . '.entry-title,'
-			. $b . '.page-title,'
-			. $b . '.entry-header,'
-			. $b . '.wp-site-blocks > header,'
-			. $b . 'header.wp-block-template-part,'
-			. $b . '.site-header,'
-			. $b . '.wp-site-blocks > footer,'
-			. $b . 'footer.wp-block-template-part,'
-			. $b . '.site-footer{display:none!important}'
-			. $b . 'main{margin-top:0!important}'
-			. $b . 'main>.wp-block-group{padding-top:0!important}';
+		wp_register_style( 'doublescale-client-portal-host', false, array(), $version );
+		wp_enqueue_style( 'doublescale-client-portal-host' );
+		wp_add_inline_style( 'doublescale-client-portal-host', $css );
 	}
 
 	/**

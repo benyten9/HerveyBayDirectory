@@ -35,6 +35,7 @@ final class ContactEnrollment {
 	 */
 	public function add_contact() {
 		$multiple_runs = $this->automation->get_setting( 'multiple_runs', false );
+		$test_mode     = ! empty( $this->args['test_mode'] );
 		$contact       = $this->args['contact'] ?? null;
 
 		if ( ! $contact ) {
@@ -43,7 +44,7 @@ final class ContactEnrollment {
 
 		$automation_contact = $this->automation->contacts()->where( 'contact_id', $contact->id )->first();
 
-		if ( $automation_contact && ! $multiple_runs ) {
+		if ( $automation_contact && ! $multiple_runs && ! $test_mode ) {
 			return false;
 		}
 

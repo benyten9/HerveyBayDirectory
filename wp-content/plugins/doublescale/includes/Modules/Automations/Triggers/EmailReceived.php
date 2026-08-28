@@ -22,7 +22,7 @@ class EmailReceived extends TriggerPro {
 
 	public $attributes = array();
 
-	public $source = 'crm';
+	public $source = 'messaging';
 
 	public $group = 'messaging';
 }

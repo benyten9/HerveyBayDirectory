@@ -372,7 +372,7 @@ class Perfmatters_Plugin_Updater {
 			),
 		);
 
-		// Get the transient where we store the api request for this plugin for 24 hours
+		// Get the cached API request for this plugin (12 hours)
 		$edd_api_request_transient = $this->get_cached_version_info();
 
 		// If we have no transient-saved value, run the API, set a fresh transient with the API value, and return that value too right now.
@@ -520,17 +520,18 @@ class Perfmatters_Plugin_Updater {
 
 	/**
 	 * Logs a failed HTTP request for this API URL.
-	 * We set a timestamp for 1 hour from now. This prevents future API requests from being
-	 * made to this domain for 1 hour. Once the timestamp is in the past, API requests
-	 * will be allowed again. This way if the site is down for some reason we don't bombard
-	 * it with failed API requests.
+	 * We set a timestamp for 3–6 hours from now (with jitter). This prevents future API
+	 * requests from being made to this domain during that window. Once the timestamp is in
+	 * the past, API requests will be allowed again. The backoff and random jitter reduce
+	 * stampede retries when the store is recovering from an outage.
 	 *
 	 * @see EDD_SL_Plugin_Updater::request_recently_failed
 	 *
 	 * @since 1.9.1
 	 */
 	private function log_failed_request() {
-		update_option( $this->failed_request_cache_key, strtotime( '+1 hour' ) );
+		$backoff = 3 * HOUR_IN_SECONDS + wp_rand( 0, 3 * HOUR_IN_SECONDS );
+		update_option( $this->failed_request_cache_key, time() + $backoff );
 	}
 
 	/**
@@ -675,7 +676,7 @@ class Perfmatters_Plugin_Updater {
 		}
 
 		$data = array(
-			'timeout' => strtotime( '+3 hours', time() ),
+			'timeout' => strtotime( '+12 hours', time() ),
 			'value'   => wp_json_encode( $value ),
 		);
 

@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 //register settings + options
 function perfmatters_settings() {
 
@@ -1888,6 +1892,20 @@ function perfmatters_settings() {
             'tooltip' => __('Hide the Perfmatters menu in the admin bar.', 'perfmatters')
         )
     );
+
+    //safe mode
+    /*add_settings_field(
+        'safe_mode', 
+        perfmatters_title(__('Safe Mode', 'perfmatters'), 'safe_mode', 'https://perfmatters.io/docs/safe-mode/'), 
+        'perfmatters_print_input',
+        'perfmatters_tools', 
+        'plugin', 
+        array(
+            'id' => 'safe_mode',
+            'option' => 'perfmatters_tools',
+            'tooltip' => __('', 'perfmatters')
+        )
+    );*/
 
     //accessibility mode
     add_settings_field(

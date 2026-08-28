@@ -183,49 +183,87 @@ final class ActionsManager {
 	 */
 	public function set_sources() {
 		$this->sources = array(
-			'crm'         => array(
-				'label'  => __( 'CRM', 'doublescale' ),
-				'groups' => array(
-					'contact' => array(
-						'label'   => __( 'Contact', 'doublescale' ),
-						'actions' => array(),
+			'modules'     => array(
+				'label' => __( 'DoubleScale', 'doublescale' ),
+				'tabs'  => array(
+					'crm'      => array(
+						'label'  => __( 'Contacts', 'doublescale' ),
+						'groups' => array(
+							'contact' => array(
+								'label'   => __( 'Contact', 'doublescale' ),
+								'actions' => array(),
+							),
+							'delay'   => array(
+								'label'   => __( 'Delay', 'doublescale' ),
+								'actions' => array(),
+							),
+						),
 					),
-					'delay'   => array(
-						'label'   => __( 'Delay', 'doublescale' ),
-						'actions' => array(),
+					'message'  => array(
+						'label'  => __( 'Messaging', 'doublescale' ),
+						'groups' => array(
+							'sms'      => array(
+								'label'   => __( 'SMS', 'doublescale' ),
+								'actions' => array(),
+							),
+							'whatsapp' => array(
+								'label'   => __( 'WhatsApp', 'doublescale' ),
+								'actions' => array(),
+							),
+						),
 					),
-				),
-			),
-			'sales'       => array(
-				'label'  => __( 'Sales', 'doublescale' ),
-				'groups' => array(
-					'deal' => array(
-						'label'       => __( 'Deal', 'doublescale' ),
-						'actions'     => array(),
-						'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
-							|| ! doublescale_is_module_active( 'deals' ),
+					'email'    => array(
+						'label'  => __( 'Email', 'doublescale' ),
+						'groups' => array(
+							'email' => array(
+								'label'   => __( 'Email', 'doublescale' ),
+								'actions' => array(),
+							),
+						),
 					),
-				),
-			),
-			'support'     => array(
-				'label'  => __( 'Helpdesk', 'doublescale' ),
-				'groups' => array(
-					'support' => array(
-						'label'       => __( 'Ticket', 'doublescale' ),
-						'actions'     => array(),
-						'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
-							|| ! doublescale_is_module_active( 'support' ),
+					'sales'    => array(
+						'label'  => __( 'Sales', 'doublescale' ),
+						'groups' => array(
+							'deal' => array(
+								'label'       => __( 'Deal', 'doublescale' ),
+								'actions'     => array(),
+								'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+									|| ! doublescale_is_module_active( 'deals' ),
+							),
+						),
 					),
-				),
-			),
-			'tasks'       => array(
-				'label'  => __( 'Tasks', 'doublescale' ),
-				'groups' => array(
-					'task' => array(
-						'label'       => __( 'Task', 'doublescale' ),
-						'actions'     => array(),
-						'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
-							|| ! doublescale_is_module_active( 'tasks' ),
+					'projects' => array(
+						'label'  => __( 'Projects', 'doublescale' ),
+						'groups' => array(
+							'project' => array(
+								'label'       => __( 'Project', 'doublescale' ),
+								'actions'     => array(),
+								'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+									|| ! doublescale_is_module_active( 'projects' ),
+							),
+						),
+					),
+					'tasks'    => array(
+						'label'  => __( 'Tasks', 'doublescale' ),
+						'groups' => array(
+							'task' => array(
+								'label'       => __( 'Task', 'doublescale' ),
+								'actions'     => array(),
+								'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+									|| ! doublescale_is_module_active( 'tasks' ),
+							),
+						),
+					),
+					'support'  => array(
+						'label'  => __( 'Helpdesk', 'doublescale' ),
+						'groups' => array(
+							'support' => array(
+								'label'       => __( 'Ticket', 'doublescale' ),
+								'actions'     => array(),
+								'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+									|| ! doublescale_is_module_active( 'support' ),
+							),
+						),
 					),
 				),
 			),
@@ -233,8 +271,9 @@ final class ActionsManager {
 				'label' => __( 'E-commerce', 'doublescale' ),
 				'tabs'  => array(
 					'woocommerce' => array(
-						'label'  => __( 'WooCommerce', 'doublescale' ),
-						'groups' => array(
+						'label'       => __( 'WooCommerce', 'doublescale' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+						'groups'      => array(
 							'order'  => array(
 								'label'       => __( 'Order', 'doublescale' ),
 								'actions'     => array(),
@@ -246,15 +285,6 @@ final class ActionsManager {
 								'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
 							),
 						),
-					),
-				),
-			),
-			'wp'          => array(
-				'label'  => __( 'WordPress', 'doublescale' ),
-				'groups' => array(
-					'user' => array(
-						'label'   => __( 'User', 'doublescale' ),
-						'actions' => array(),
 					),
 				),
 			),
@@ -283,12 +313,22 @@ final class ActionsManager {
 					),
 				),
 			),
+			'wp'          => array(
+				'label'  => __( 'WordPress', 'doublescale' ),
+				'groups' => array(
+					'user' => array(
+						'label'   => __( 'User', 'doublescale' ),
+						'actions' => array(),
+					),
+				),
+			),
 			'membership'  => array(
 				'label' => __( 'Membership', 'doublescale' ),
 				'tabs'  => array(
 					'memberpress' => array(
-						'label'  => __( 'MemberPress', 'doublescale' ),
-						'groups' => array(
+						'label'       => __( 'MemberPress', 'doublescale' ),
+						'is_disabled' => ! defined( 'MEPR_PLUGIN_NAME' ),
+						'groups'      => array(
 							'memberpress' => array(
 								'label'       => __( 'MemberPress', 'doublescale' ),
 								'actions'     => array(),
@@ -297,36 +337,15 @@ final class ActionsManager {
 						),
 					),
 					'pmpro'       => array(
-						'label'  => __( 'Paid Memberships Pro', 'doublescale' ),
-						'groups' => array(
+						'label'       => __( 'Paid Memberships Pro', 'doublescale' ),
+						'is_disabled' => ! defined( 'PMPRO_VERSION' ),
+						'groups'      => array(
 							'pmpro' => array(
 								'label'       => __( 'Paid Memberships Pro', 'doublescale' ),
 								'actions'     => array(),
 								'is_disabled' => ! defined( 'PMPRO_VERSION' ),
 							),
 						),
-					),
-				),
-			),
-			'email'       => array(
-				'label'  => __( 'Email', 'doublescale' ),
-				'groups' => array(
-					'email' => array(
-						'label'   => __( 'Email', 'doublescale' ),
-						'actions' => array(),
-					),
-				),
-			),
-			'message'     => array(
-				'label'  => __( 'Messaging', 'doublescale' ),
-				'groups' => array(
-					'sms'      => array(
-						'label'   => __( 'Sms', 'doublescale' ),
-						'actions' => array(),
-					),
-					'whatsapp' => array(
-						'label'   => __( 'WhatsApp', 'doublescale' ),
-						'actions' => array(),
 					),
 				),
 			),
@@ -399,13 +418,18 @@ final class ActionsManager {
 	/**
 	 * Get sources
 	 *
-	 * Disabled groups (module off, plugin missing) stay in the payload so the
-	 * builder can show them with an enable/install tooltip — same as triggers.
+	 * Vendor-pick categories are pruned to the integrations actually active on
+	 * this site (and dropped when none are), so the selector never offers a
+	 * plugin the site doesn't have. Module categories keep their `is_disabled`
+	 * rows — those are DoubleScale features the user can switch on.
 	 *
 	 * @return array
 	 */
 	public function get_sources() {
-		return $this->sources;
+		return SourceTreePruner::prune(
+			$this->sources,
+			array( 'ecommerce', 'lms', 'membership' )
+		);
 	}
 
 	/**
@@ -491,6 +515,15 @@ final class ActionsManager {
 		$tabbed_sources = array(
 			'ecommerce'  => array( 'woocommerce' ),
 			'membership' => array( 'memberpress', 'pmpro' ),
+			'modules'    => array(
+				'crm',
+				'message',
+				'email',
+				'sales',
+				'projects',
+				'tasks',
+				'support',
+			),
 		);
 
 		foreach ( $tabbed_sources as $category_key => $source_keys ) {

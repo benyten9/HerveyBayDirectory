@@ -58,5 +58,26 @@ abstract class Migration {
 		$sql   = "CREATE TABLE $this->table_name ( $query ) $charset_collate;";
 
 		dbDelta( $sql );
+
+		// dbDelta can fail silently (e.g. "Specified key was too long" on utf8mb4
+		// hosts with the 1000-byte index limit). Surface that so installs aren't
+		// left missing tables while the migrations ledger still advances.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Post-dbDelta existence check; must read live DDL state.
+		$created = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table_name ) );
+		if ( $created !== $this->table_name ) {
+			$error = $wpdb->last_error ? $wpdb->last_error : 'unknown database error';
+			if ( function_exists( 'doublescale_get_logger' ) ) {
+				doublescale_get_logger()->error(
+					'Failed to create DoubleScale table',
+					array(
+						'table' => $this->table_name,
+						'error' => $error,
+					)
+				);
+			} else {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Fallback when logger is unavailable during early install.
+				error_log( sprintf( 'DoubleScale: failed to create table %s (%s)', $this->table_name, $error ) );
+			}
+		}
 	}
 }

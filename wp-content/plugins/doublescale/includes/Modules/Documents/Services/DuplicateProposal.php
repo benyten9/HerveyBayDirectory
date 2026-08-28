@@ -40,7 +40,10 @@ final class DuplicateProposal {
 				'assigned_user_id' => $source->assigned_user_id ? (int) $source->assigned_user_id : null,
 				'date'             => current_time( 'Y-m-d' ),
 				'open_till'        => $source->open_till,
-				'currency'         => (string) $source->currency,
+				// Copy the raw column. Do not resolve via document_currency() and
+				// do not add a getCurrencyAttribute() accessor — NULL must stay
+				// NULL (inherit) and an explicit EUR must stay EUR.
+				'currency'         => ( null === $source->currency || '' === $source->currency ) ? null : $source->currency,
 				'discount_type'    => (string) $source->discount_type,
 				'discount_value'   => (float) $source->discount_value,
 				'line_items'       => is_array( $source->line_items ) ? $source->line_items : array(),

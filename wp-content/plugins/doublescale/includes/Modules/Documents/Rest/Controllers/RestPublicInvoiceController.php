@@ -187,6 +187,11 @@ class RestPublicInvoiceController extends RestController {
 			return $invoice;
 		}
 
+		$terms_error = $this->require_terms_agreement( $invoice, $request );
+		if ( is_wp_error( $terms_error ) ) {
+			return $terms_error;
+		}
+
 		$gateway = sanitize_key( (string) $request->get_param( 'gateway' ) );
 		$result  = GatewayManager::instance()->init_payment( $gateway, $invoice );
 		if ( is_wp_error( $result ) ) {
@@ -294,6 +299,33 @@ class RestPublicInvoiceController extends RestController {
 			return new WP_Error( 'not_found', __( 'Invoice not found.', 'doublescale' ), array( 'status' => 404 ) );
 		}
 		return $invoice;
+	}
+
+	/**
+	 * @param InvoiceModel    $invoice Invoice.
+	 * @param WP_REST_Request $request Request.
+	 * @return true|WP_Error
+	 */
+	private function require_terms_agreement( InvoiceModel $invoice, WP_REST_Request $request ) {
+		$terms = trim( wp_strip_all_tags( (string) $invoice->terms ) );
+		if ( '' === $terms ) {
+			return true;
+		}
+
+		$params = $request->get_json_params();
+		if ( ! is_array( $params ) ) {
+			$params = $request->get_params();
+		}
+
+		if ( empty( $params['agreed_terms'] ) ) {
+			return new WP_Error(
+				'invalid_data',
+				__( 'You must agree to the Terms & Conditions before paying.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return true;
 	}
 
 	/**

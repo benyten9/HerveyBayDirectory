@@ -192,6 +192,14 @@ final class ListPreferencesManager {
 	public static function sanitize_preferences( array $preferences ) {
 		$sanitized = array();
 
+		if ( array_key_exists( 'page', $preferences ) ) {
+			$sanitized['page'] = max( 1, (int) $preferences['page'] );
+		}
+
+		if ( array_key_exists( 'sort', $preferences ) ) {
+			$sanitized['sort'] = self::sanitize_sort( $preferences['sort'] );
+		}
+
 		if ( array_key_exists( 'per_page', $preferences ) ) {
 			$sanitized['per_page'] = max( 1, min( 100, (int) $preferences['per_page'] ) );
 		}
@@ -257,6 +265,38 @@ final class ListPreferencesManager {
 	 *
 	 * @return array{from: string|null, to: string|null}
 	 */
+	/**
+	 * Sanitize a saved sort preference.
+	 *
+	 * The column is stored as a key only; whether it is actually sortable is
+	 * decided by the list endpoint's own allow-list when the sort is applied,
+	 * so a column removed from a list later degrades to that endpoint's default
+	 * order rather than being trusted here.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed $sort Raw sort value.
+	 *
+	 * @return array<string, string>|null
+	 */
+	private static function sanitize_sort( $sort ) {
+		if ( ! is_array( $sort ) || empty( $sort['orderby'] ) ) {
+			return null;
+		}
+
+		$orderby = sanitize_key( (string) $sort['orderby'] );
+		if ( '' === $orderby ) {
+			return null;
+		}
+
+		$order = strtolower( (string) ( $sort['order'] ?? 'desc' ) );
+
+		return array(
+			'orderby' => $orderby,
+			'order'   => in_array( $order, array( 'asc', 'desc' ), true ) ? $order : 'desc',
+		);
+	}
+
 	private static function sanitize_date_range( $date_range ) {
 		if ( ! is_array( $date_range ) ) {
 			return array(

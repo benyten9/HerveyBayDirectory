@@ -13,6 +13,7 @@ namespace DoubleScale\Pro\Modules\Emails\Blocks;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Emails\Abstracts\EmailBlock;
+use DoubleScale\Pro\Modules\Emails\Support\HtmlBlockCssInliner;
 
 /**
  * HTML block for emails
@@ -45,6 +46,7 @@ class HtmlBlock extends EmailBlock {
 		return array(
 			'content'   => '',
 			'customCss' => '',
+			'blockId'   => '',
 			'width'     => '100',
 			'padding'   => array(
 				'top'    => 0,
@@ -83,8 +85,9 @@ class HtmlBlock extends EmailBlock {
 			$content === '<p>Insert your HTML here</p>' ||
 			trim( $content ) === '<p>Insert your HTML here</p>';
 
-		// Generate unique ID for this HTML block (matching frontend)
-		$unique_id = 'html-block-' . substr( md5( wp_rand() ), 0, 9 );
+		$block_id = ! empty( $props['blockId'] )
+			? sanitize_html_class( $props['blockId'] )
+			: 'html-block-' . substr( md5( (string) $content ), 0, 9 );
 
 		// Use CSS string directly (matching frontend)
 		$css_string = $props['customCss'] ?? '';
@@ -94,30 +97,23 @@ class HtmlBlock extends EmailBlock {
 			return '';
 		}
 
+		// Inline CSS for email clients (strips embedded <style> tags).
+		$inlined_content = HtmlBlockCssInliner::process( $content, $css_string, $block_id );
+
 		// Inner content style (matching frontend)
 		$inner_style = $this->build_style_string(
 			array(
-				'width'           => '100%',
-				'min-height'      => '50px',
-				'display'         => 'flex',
-				'align-items'     => 'center',
-				'justify-content' => 'center',
-				'color'           => '#666',
-				'font-size'       => '14px',
+				'width'      => '100%',
+				'min-height' => '50px',
+				'color'      => '#666',
+				'font-size'  => '14px',
 			)
 		);
 
-		// Build the output
-		$style_tag = '';
-		if ( ! empty( $css_string ) ) {
-			$style_tag = "<style>{$css_string}</style>";
-		}
-
-		$inner_content = '';
-		$inner_content = "<div id=\"{$unique_id}\" style=\"width: 100%;\">{$content}</div>";
+		$inner_content = "<div id=\"{$block_id}\" style=\"width: 100%;\">{$inlined_content}</div>";
 
 		// Use table structure for better email client compatibility
-		return "{$style_tag}<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">
+		return "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">
 			<tr>
 				<td style=\"{$container_style}\">
 					<div style=\"{$inner_style}\">{$inner_content}</div>
@@ -126,6 +122,4 @@ class HtmlBlock extends EmailBlock {
 		</table>";
 	}
 }
-
-
 

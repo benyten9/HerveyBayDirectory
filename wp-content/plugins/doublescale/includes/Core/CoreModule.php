@@ -65,6 +65,7 @@ final class CoreModule extends AbstractModule {
 			Rest\Controllers\RestListPreferencesController::class,
 			Rest\Controllers\RestAdminCalendarController::class,
 			Rest\Controllers\RestModulesController::class,
+			Rest\Controllers\RestMcpSettingsController::class,
 			Rest\Controllers\RestPluginsController::class,
 			Rest\Controllers\RestSiteVerificationController::class,
 			Rest\Controllers\RestLicenseController::class,
@@ -107,6 +108,10 @@ final class CoreModule extends AbstractModule {
 		add_filter( 'doublescale_log_handler_register', array( $this, 'register_log_handlers' ) );
 		add_action( 'init', array( $this, 'register_contact_meta_table' ) );
 		add_action( 'init', array( $this, 'register_cron_schedules' ) );
+
+		// WordPress Abilities API (WP 6.9+). Self-guards on function_exists and
+		// an operator kill switch, so this is a silent no-op on older WP.
+		\DoubleScale\Core\Abilities\AbilitiesBootstrap::init();
 
 		add_action( 'doublescale_daily_doublescale_daily3', array( \DoubleScale\Core\Tasks::class, 'cleanup_old_tasks' ) );
 

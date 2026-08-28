@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 use Perfmatters\Vendor\Sabberworm\CSS\CSSList\AtRuleBlockList;
 use Perfmatters\Vendor\Sabberworm\CSS\CSSList\CSSBlockList;
 use Perfmatters\Vendor\Sabberworm\CSS\CSSList\Document;
@@ -923,16 +927,11 @@ class CSS
 
     //clear post used css ajax action
     public static function clear_post_used_css_ajax() {
-        if(empty($_POST['action']) || empty($_POST['nonce']) || empty($_POST['post_id'])) {
-            return;
-        }
 
-        if($_POST['action'] != 'perfmatters_clear_post_used_css') {
-            return;
-        }
+        Ajax::security_check('perfmatters_clear_post_used_css');
 
-        if(!wp_verify_nonce($_POST['nonce'], 'perfmatters_clear_post_used_css')) {
-            return;
+        if(empty($_POST['post_id'])) {
+            wp_send_json_error();
         }
 
         $post_id = (int)$_POST['post_id'];
@@ -940,7 +939,6 @@ class CSS
         self::clear_post_used_css($post_id);
 
         wp_send_json_success();
-        exit;
     }
 
     //clear used css file for specific post or post type
@@ -1007,6 +1005,10 @@ class CSS
     //clear used css from admin bar
     public static function admin_bar_clear_used_css() {
 
+        if(!current_user_can('manage_options') || !perfmatters_network_access()) {
+            wp_die(__('Sorry, you are not allowed to do that.'), 403);
+        }
+
         if(!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key($_GET['_wpnonce']), 'perfmatters_clear_used_css')) {
             wp_nonce_ays('');
         }
@@ -1014,9 +1016,14 @@ class CSS
         if(!empty($_GET['type'])) {
 
             //clear specific type
-            $file = PERFMATTERS_CACHE_DIR . 'css/' . $_GET['type'] . '.used.css';
-            if(is_file($file)) {
-                unlink($file);
+            $type = sanitize_file_name(wp_unslash($_GET['type']));
+            $type = basename($type);
+
+            if($type !== '' && $type !== '.' && $type !== '..' && preg_match('/^[a-zA-Z0-9_-]+$/', $type)) {
+                $file = PERFMATTERS_CACHE_DIR . 'css/' . $type . '.used.css';
+                if(is_file($file)) {
+                    unlink($file);
+                }
             }
         }
         else {

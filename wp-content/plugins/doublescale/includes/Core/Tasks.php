@@ -165,6 +165,11 @@ class Tasks {
 	 */
 	public function schedule_recurring( $timestamp, $interval, $hook, ...$args ) {
 		global $wpdb;
+
+		if ( ! $this->meta_table_exists() ) {
+			return false;
+		}
+
 		$full_hook = "{$this->group}_$hook";
 
 		// Check if meta already exists for this recurring task.
@@ -276,6 +281,10 @@ class Tasks {
 	private function add_meta( $hook, $value ) {
 		global $wpdb;
 
+		if ( ! $this->meta_table_exists() ) {
+			return false;
+		}
+
 		$insert = $wpdb->insert(
 			"{$wpdb->prefix}doublescale_task_meta",
 			array(
@@ -291,6 +300,29 @@ class Tasks {
 		}
 
 		return $wpdb->insert_id;
+	}
+
+	/**
+	 * Whether the task_meta table exists (cached per request).
+	 *
+	 * Missing after a failed install (e.g. utf8mb4 index too long) — avoid
+	 * flooding the error log on every page load.
+	 *
+	 * @return bool
+	 */
+	private function meta_table_exists() {
+		global $wpdb;
+
+		static $exists = null;
+		if ( null !== $exists ) {
+			return $exists;
+		}
+
+		$table = $wpdb->prefix . 'doublescale_task_meta';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-shot schema probe; caching would hide a mid-request repair.
+		$exists = ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table );
+
+		return $exists;
 	}
 
 	/**

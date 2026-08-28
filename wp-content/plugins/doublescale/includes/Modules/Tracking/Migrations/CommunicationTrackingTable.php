@@ -83,7 +83,7 @@ class CommunicationTrackingTable extends Migration {
             PRIMARY KEY (id),
             KEY contact_id (contact_id),
             KEY template_id (template_id),
-            KEY hash_key (hash_key),
+            KEY hash_key (hash_key(191)),
             KEY mode (mode),
             KEY direction (direction),
             KEY source_type (source_type),
@@ -91,9 +91,9 @@ class CommunicationTrackingTable extends Migration {
             KEY idx_source_polymorphic (source_type, source_id),
             KEY step_id (step_id),
             KEY author_id (author_id),
-            KEY recipient (recipient),
+            KEY recipient (recipient(191)),
             KEY status (status),
-            KEY external_id (external_id),
+            KEY external_id (external_id(191)),
             KEY sent_at (sent_at),
             KEY idx_seq_contact_status (source_type, source_id, contact_id, mode, status)';
 

@@ -14,11 +14,24 @@ namespace DoubleScale\Modules\Booking;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
+use DoubleScale\Modules\Booking\Abilities\BookingAbilities;
 use DoubleScale\Core\Container;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 
-final class Module extends AbstractModule {
+final class Module extends AbstractModule implements ProvidesAbilities {
+
+	/**
+	 * Read-only abilities for this module.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return BookingAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'booking';

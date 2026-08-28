@@ -9,6 +9,7 @@ namespace DoubleScale\Pro\Modules\CreditNotes\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Modules\Documents\Constants\InvoiceStatus;
 use DoubleScale\Modules\Documents\Constants\PaymentMode;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
@@ -173,6 +174,7 @@ class CreditNoteApplications {
 	 * @return float
 	 */
 	private function credit_remaining( CreditNoteModel $credit_note ): float {
+		// Same credit note = same currency; this is not a cross-document total.
 		$amount_applied = (float) CreditNoteApplicationModel::query()
 			->where( 'credit_note_id', (int) $credit_note->id )
 			->sum( 'amount' );
@@ -238,9 +240,17 @@ class CreditNoteApplications {
 	 * @return CreditNoteModel
 	 */
 	public function sync( CreditNoteModel $credit_note ): CreditNoteModel {
+		// Same credit note = same currency; this is not a cross-document total.
 		$amount_applied = (float) CreditNoteApplicationModel::query()
 			->where( 'credit_note_id', (int) $credit_note->id )
 			->sum( 'amount' );
+
+		// Credit that has been applied to an invoice is settled value, so pin the
+		// currency even if the note was never sent — otherwise a later change to
+		// the global setting relabels an applied USD credit as EUR.
+		if ( $amount_applied > 0 ) {
+			DocumentCurrency::freeze_on_send( $credit_note );
+		}
 
 		$credit_note->amount_applied = round( $amount_applied, 2 );
 		$credit_note->status         = self::derive_status( $credit_note );

@@ -4,7 +4,7 @@
  * Plugin Name:       DoubleScale Pro
  * Plugin URI:        https://www.doublescale.io/
  * Description:       A powerful CRM Builder for WordPress that lets you manage leads, track interactions, and automate customer relationships—all seamlessly integrated within your WordPress dashboard.
- * Version:           1.1.15
+ * Version:           1.2.15
  * Author:            doublescale.io
  * Author URI:        http://www.doublescale.io
  * License:           GPL v2 or later
@@ -23,7 +23,7 @@ if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_FILE' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_FILE', __FILE__ );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_VERSION', '1.1.15' );
+	define( 'DOUBLESCALE_PRO_VERSION', '1.2.15' );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -37,10 +37,24 @@ if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_PATH' ) ) {
 if ( ! defined( 'DOUBLESCALE_PRO_PRICE_URL' ) ) {
 	define( 'DOUBLESCALE_PRO_PRICE_URL', 'https://doublescale.io/pricing' );
 }
-if ( ! defined( 'DOUBLESCALE_PRO_MIN_FREE_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.2.10' );
-}
 
+/*
+ * Minimum free version this Pro build expects.
+ *
+ * This is a SOFT requirement — it never blocks Pro from booting. WordPress
+ * updates plugins one at a time, so an admin who updates Pro first runs new
+ * Pro against the older free for a while; hard-blocking there would take the
+ * whole plugin down over a partial update.
+ *
+ * Instead, Pro boots normally and individual features that need something the
+ * older free does not provide degrade on their own `class_exists()` /
+ * `method_exists()` checks, while the admin notice below explains why.
+ *
+ * Bump this when a Pro release starts depending on APIs added in a newer free.
+ */
+if ( ! defined( 'DOUBLESCALE_PRO_MIN_FREE_VERSION' ) ) {
+	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.3.8' );
+}
 add_filter( 'doublescale_is_pro_addon_active', '__return_true', 1 );
 add_filter(
 	'doublescale_pro_plugin_basenames',
@@ -179,16 +193,91 @@ function doublescale_pro_get_free_version(): ?string {
 }
 
 /**
- * Whether the installed free plugin meets the minimum version Pro requires.
+ * Whether the installed free plugin is older than this Pro build expects.
+ *
+ * Returns false when the version cannot be determined, so an unreadable
+ * version header never produces a false warning.
  */
-function doublescale_pro_is_free_version_compatible(): bool {
+function doublescale_pro_is_free_outdated(): bool {
 	$free_version = doublescale_pro_get_free_version();
+
 	if ( null === $free_version || '' === $free_version ) {
 		return false;
 	}
 
-	return version_compare( $free_version, DOUBLESCALE_PRO_MIN_FREE_VERSION, '>=' );
+	return version_compare( $free_version, DOUBLESCALE_PRO_MIN_FREE_VERSION, '<' );
 }
+
+/**
+ * Warn when free is older than this Pro build expects.
+ *
+ * Pro keeps running: everything the older free supports works as usual, and
+ * only the features that need the newer APIs stay inactive. The notice is
+ * dismissible per free-version so that dismissing it once does not hide a
+ * later, different mismatch.
+ */
+add_action(
+	'admin_notices',
+	static function (): void {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			return;
+		}
+
+		// The "free is missing entirely" case has its own notice above.
+		if ( ! doublescale_pro_is_free_plugin_active() || ! doublescale_pro_is_free_outdated() ) {
+			return;
+		}
+
+		$free_version = (string) doublescale_pro_get_free_version();
+
+		if ( get_user_meta( get_current_user_id(), 'doublescale_pro_dismissed_free_update_notice', true ) === $free_version ) {
+			return;
+		}
+
+		$message = sprintf(
+			/* translators: 1: Pro version, 2: required free version, 3: installed free version. */
+			__( 'DoubleScale Pro %1$s expects DoubleScale (free) %2$s or newer, but version %3$s is installed. Pro is still running — only the features that rely on the newer version are unavailable until you update DoubleScale (free).', 'doublescale' ),
+			DOUBLESCALE_PRO_VERSION,
+			DOUBLESCALE_PRO_MIN_FREE_VERSION,
+			$free_version
+		);
+
+		$dismiss_url = wp_nonce_url(
+			add_query_arg( 'doublescale_pro_dismiss_free_notice', $free_version ),
+			'doublescale_pro_dismiss_free_notice'
+		);
+
+		printf(
+			'<div class="notice notice-warning"><p>%s <a href="%s">%s</a> &middot; <a href="%s">%s</a></p></div>',
+			esc_html( $message ),
+			esc_url( admin_url( 'plugins.php' ) ),
+			esc_html__( 'Update now', 'doublescale' ),
+			esc_url( $dismiss_url ),
+			esc_html__( 'Dismiss', 'doublescale' )
+		);
+	}
+);
+
+/**
+ * Persist dismissal of the outdated-free notice for the current user.
+ */
+add_action(
+	'admin_init',
+	static function (): void {
+		if ( ! isset( $_GET['doublescale_pro_dismiss_free_notice'] ) ) {
+			return;
+		}
+
+		if ( ! isset( $_GET['_wpnonce'] )
+			|| ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'doublescale_pro_dismiss_free_notice' ) ) {
+			return;
+		}
+
+		$version = sanitize_text_field( wp_unslash( $_GET['doublescale_pro_dismiss_free_notice'] ) );
+
+		update_user_meta( get_current_user_id(), 'doublescale_pro_dismissed_free_update_notice', $version );
+	}
+);
 
 /**
  * Block Pro activation when the free DoubleScale plugin is not installed/active.
@@ -225,32 +314,6 @@ function doublescale_pro_require_free_on_activation(): void {
 			array( 'back_link' => true )
 		);
 	}
-
-	if ( ! doublescale_pro_is_free_version_compatible() ) {
-		$free_version = doublescale_pro_get_free_version() ?? __( 'unknown', 'doublescale' );
-		$title        = __( 'DoubleScale Pro cannot be activated', 'doublescale' );
-		$message      = sprintf(
-			/* translators: 1: detected free version, 2: minimum required free version */
-			__(
-				'DoubleScale Pro requires DoubleScale (free) version %2$s or later. Your site has version %1$s. Please update the free DoubleScale plugin first, then activate DoubleScale Pro.',
-				'doublescale'
-			),
-			$free_version,
-			DOUBLESCALE_PRO_MIN_FREE_VERSION
-		);
-
-		$back_link = sprintf(
-			'<p><a href="%s">%s</a></p>',
-			esc_url( admin_url( 'plugins.php' ) ),
-			esc_html__( 'Back to Plugins', 'doublescale' )
-		);
-
-		wp_die(
-			esc_html( $message ) . $back_link,
-			esc_html( $title ),
-			array( 'back_link' => true )
-		);
-	}
 }
 register_activation_hook( __FILE__, 'doublescale_pro_require_free_on_activation' );
 
@@ -274,31 +337,14 @@ add_action(
 			return;
 		}
 
-		if ( doublescale_pro_is_free_plugin_active() && doublescale_pro_is_free_version_compatible() ) {
+		if ( doublescale_pro_is_free_plugin_active() ) {
 			return;
 		}
-
-		if ( ! doublescale_pro_is_free_plugin_active() ) {
-			echo '<div class="notice notice-error is-dismissible"><p>';
-			esc_html_e(
-				'DoubleScale Pro requires the free DoubleScale plugin to be active. DoubleScale Pro features are disabled until the free plugin is activated.',
-				'doublescale'
-			);
-			echo '</p></div>';
-			return;
-		}
-
-		$free_version = doublescale_pro_get_free_version() ?? __( 'unknown', 'doublescale' );
 
 		echo '<div class="notice notice-error is-dismissible"><p>';
-		printf(
-			/* translators: 1: detected free version, 2: minimum required free version */
-			esc_html__(
-				'DoubleScale Pro is paused because the free DoubleScale plugin (version %1$s) is older than the required version %2$s. Please update the free DoubleScale plugin to restore Pro features.',
-				'doublescale'
-			),
-			esc_html( $free_version ),
-			esc_html( DOUBLESCALE_PRO_MIN_FREE_VERSION )
+		esc_html_e(
+			'DoubleScale Pro requires the free DoubleScale plugin to be active. DoubleScale Pro features are disabled until the free plugin is activated.',
+			'doublescale'
 		);
 		echo '</p></div>';
 	}
@@ -492,10 +538,15 @@ if ( ! doublescale_pro_is_free_plugin_active() ) {
 add_action( 'plugins_loaded', 'doublescale_pro_maybe_bootstrap', 1 );
 
 /**
- * Load Pro bootstrap only when the free plugin version is compatible.
+ * Load Pro bootstrap only when the free plugin is present.
  *
  * Runs at plugins_loaded priority 1 — after all plugin main files are included
- * (so DOUBLESCALE_VERSION is available) but before free's kernel boots at 5.
+ * (so the free plugin has set its load constants) but before free's kernel
+ * boots at 5.
+ *
+ * Pro no longer enforces a minimum free version; it only requires that free is
+ * active, because Pro compiles against free's shared runtime and would fatal if
+ * free were absent entirely.
  */
 function doublescale_pro_maybe_bootstrap(): void {
 	static $bootstrapped = false;
@@ -503,11 +554,25 @@ function doublescale_pro_maybe_bootstrap(): void {
 		return;
 	}
 
-	if ( ! doublescale_pro_is_free_version_compatible() ) {
+	if ( ! doublescale_pro_is_free_plugin_active() ) {
 		return;
 	}
 
 	$bootstrapped = true;
+
+	// Soft stubs for free ≥ 1.3.8 APIs when Pro was updated first.
+	$free_api_stubs = DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/Compat/FreeApiStubs.php';
+	if ( is_readable( $free_api_stubs ) ) {
+		require_once $free_api_stubs;
+	}
+	$settings_currency = DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/Compat/SettingsCurrency.php';
+	if ( is_readable( $settings_currency ) ) {
+		require_once $settings_currency;
+	}
+	$payment_mode_slugs = DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/Compat/PaymentModeSlugs.php';
+	if ( is_readable( $payment_mode_slugs ) ) {
+		require_once $payment_mode_slugs;
+	}
 
 	if ( file_exists( DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/pro-plugin-bootstrap.php' ) ) {
 		require_once DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/pro-plugin-bootstrap.php';

@@ -11,6 +11,11 @@
 class MWP_EventListener_PublicRequest_AutomaticLogin implements Symfony_EventDispatcher_EventSubscriberInterface
 {
 
+    /**
+     * Expected format of the auto-login message_id (nonce), matching the value the dashboard issues.
+     */
+    const MESSAGE_ID_PATTERN = '/^[0-9a-f]{38}_[0-9]{9,12}$/';
+
     private $context;
 
     private $signer;
@@ -87,6 +92,9 @@ class MWP_EventListener_PublicRequest_AutomaticLogin implements Symfony_EventDis
             return;
         }
 
+        // Username exactly as received (empty string when omitted); this exact value is bound by the signature.
+        $signedUsername = isset($request->query['username']) ? (string) $request->query['username'] : '';
+
         $username = empty($request->query['username']) ? null : $request->query['username'];
 
         if ($username === null) {
@@ -98,10 +106,19 @@ class MWP_EventListener_PublicRequest_AutomaticLogin implements Symfony_EventDis
 
         $messageId = $request->query['message_id'];
 
+        // Reject any message_id that is not in the exact format issued by the dashboard.
+        if (!preg_match(self::MESSAGE_ID_PATTERN, $messageId)) {
+            /** @handled function */
+            load_plugin_textdomain('worker');
+            $this->context->wpDie(esc_html__("The automatic login token is invalid. Please try again, or, if this keeps happening, contact support.", 'worker'), '', 200);
+
+            return;
+        }
+
         $currentUser = $this->context->getCurrentUser();
 
         $adminUri    = rtrim($this->context->getAdminUrl(''), '/').'/'.$where;
-        $redirectUri = $this->modifyUriParameters($adminUri, $request->query, array('signature', 'username', 'auto_login', 'message_id', 'mwp_goto', 'mwpredirect', 'auto_login_fixed', 'service_sign', 'service_key', 'site_id'));
+        $redirectUri = $this->modifyUriParameters($adminUri, $request->query, array('signature', 'username', 'auto_login', 'message_id', 'mwp_goto', 'mwpredirect', 'auto_login_fixed', 'service_sign', 'service_sign_v2', 'service_sign_v2_algo', 'service_key', 'site_id'));
 
         if ($currentUser->user_login === $username) {
             try {
@@ -145,12 +162,12 @@ class MWP_EventListener_PublicRequest_AutomaticLogin implements Symfony_EventDis
             }
 
             $publicKey = $this->configuration->getLivePublicKey($request->query['service_key']);
-            $message   = $communicationKey.$where.$messageId;
+            $message   = $communicationKey.self::buildLoginMessage($signedUsername, $where, $messageId);
             $signed    = base64_decode($request->query['service_sign_v2_algo'] ? $request->query['service_sign_v2'] : $request->query['service_sign']);
 			$signAlgorithm = $request->query['service_sign_v2_algo'];
 		} else {
             $publicKey = $this->configuration->getPublicKey();
-            $message   = $where.$messageId;
+            $message   = self::buildLoginMessage($signedUsername, $where, $messageId);
             $signed    = base64_decode($request->query['signature']);
         }
 
@@ -188,6 +205,28 @@ class MWP_EventListener_PublicRequest_AutomaticLogin implements Symfony_EventDis
         $event->setResponse(new MWP_Http_RedirectResponse($redirectUri, 302, array(
             'P3P' => 'CP="CAO PSA OUR"',
         )));
+    }
+
+    /**
+     * Build the message an auto-login signature must cover. Each field is length-prefixed so it is bound
+     * unambiguously. Must stay byte-identical to the dashboard signer (managewp-backend LoginMessage).
+     *
+     * @param string $username
+     * @param string $where
+     * @param string $messageId
+     *
+     * @return string
+     */
+    private static function buildLoginMessage($username, $where, $messageId)
+    {
+        $fields  = array((string) $username, (string) $where, (string) $messageId);
+        $message = 'mwp_auto_login';
+
+        foreach ($fields as $field) {
+            $message .= '|'.strlen($field).':'.$field;
+        }
+
+        return $message;
     }
 
     private function getCookieName()

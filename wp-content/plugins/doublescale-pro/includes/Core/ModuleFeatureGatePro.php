@@ -52,10 +52,6 @@ add_filter( 'doublescale_module_slug_to_class_map', 'doublescale_pro_merge_modul
  */
 function doublescale_pro_merge_feature_group_module_slug_map( array $map ): array {
 	$defaults = array(
-		'contact_filters'  => array(
-			'lead_scoring' => 'leadscoring',
-			'submission'   => 'forms',
-		),
 		'automation_rules' => array(
 			'lead_scoring'              => 'leadscoring',
 			'deal'                      => 'deals',
@@ -74,6 +70,8 @@ function doublescale_pro_merge_feature_group_module_slug_map( array $map ): arra
 			'woocommerce_review'        => 'campaigns',
 			'cart'                      => 'campaigns',
 			'surecart_current_order'    => 'campaigns',
+			'project'                   => 'projects',
+			'project_fields'            => 'projects',
 		),
 		'merge_tags'       => array(
 			'deal'           => 'deals',
@@ -88,6 +86,13 @@ function doublescale_pro_merge_feature_group_module_slug_map( array $map ): arra
 			'edd_order'      => 'campaigns',
 			'last_post'      => 'campaigns',
 			'messaging'      => 'inbox',
+			'project'        => 'projects',
+		),
+		'contact_filters'  => array(
+			'lead_scoring' => 'leadscoring',
+			'submission'   => 'forms',
+			'project'      => 'projects',
+			'project_fields' => 'projects',
 		),
 	);
 

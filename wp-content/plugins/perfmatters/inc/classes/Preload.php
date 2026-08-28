@@ -1,6 +1,10 @@
 <?php
 namespace Perfmatters;
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 class Preload
 {
     private static $fetch_priority;
@@ -91,19 +95,19 @@ class Preload
                 }
             }
 
-            //add selector
+            //add selector => priority
             if(!empty($line['parent'])) {
-                $parent_selectors[] = $line['selector'];
+                $parent_selectors[$line['selector']] = $line['priority'];
             }
             else {
-                $selectors[] = $line['selector'];
+                $selectors[$line['selector']] = $line['priority'];
             }
         }
 
         //parent selectors
         if(!empty($parent_selectors)) {
 
-            $elements = HTML::get_selector_elements($html, $parent_selectors);
+            $elements = HTML::get_selector_elements($html, array_keys($parent_selectors));
 
             if(!empty($elements)) {
                 foreach($elements as $element) {
@@ -112,12 +116,10 @@ class Preload
 
                     if(!empty($tags)) {
 
-                        $key = array_search($element['selector'], array_column(self::$fetch_priority, 'selector'));
-
                         foreach($tags as $tag) {
 
                             $atts = Utilities::get_atts_array($tag[1]);
-                            $atts['fetchpriority'] = self::$fetch_priority[$key]['priority'];
+                            $atts['fetchpriority'] = $parent_selectors[$element['selector']];
 
                             //replace video attributes string
                             $new_tag = str_replace($tag[1], ' ' . Utilities::get_atts_string($atts), $tag[0]);
@@ -133,14 +135,13 @@ class Preload
         //selectors
         if(!empty($selectors)) {
 
-            preg_match_all('#<(?>link|img|script)(\s[^>]*?(' . implode('|', $selectors) . ').*?)>#is', $html, $matches, PREG_SET_ORDER);
+            preg_match_all('#<(?>link|img|script)(\s[^>]*?(' . implode('|', array_keys($selectors)) . ').*?)>#is', $html, $matches, PREG_SET_ORDER);
 
             if(!empty($matches)) {
                 foreach($matches as $tag) {
 
                     $atts = Utilities::get_atts_array($tag[1]);
-                    $key = array_search($tag[2], array_column(self::$fetch_priority, 'selector'));
-                    $atts['fetchpriority'] = self::$fetch_priority[$key]['priority'];;
+                    $atts['fetchpriority'] = $selectors[$tag[2]];
 
                     //replace video attributes string
                     $new_tag = str_replace($tag[1], ' ' . Utilities::get_atts_string($atts), $tag[0]);

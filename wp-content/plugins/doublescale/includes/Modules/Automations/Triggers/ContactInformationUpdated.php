@@ -36,7 +36,7 @@ class ContactInformationUpdated extends TriggerPro {
 	 *
 	 * @var string
 	 */
-	public $description = 'This trigger fires when a contact\'s profile information is updated, either by an admin or by the contact themselves.';
+	public $description = 'This trigger fires when a contact\'s profile information is updated — from the DoubleScale contact editor, the client portal, or a WordPress user profile.';
 
 	/**
 	 * Trigger Attributes

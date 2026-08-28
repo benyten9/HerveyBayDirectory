@@ -934,7 +934,7 @@ final class DealManager
 			}
 		}
 
-		$freeze = \DoubleScale\Core\Settings\Settings::document_currency( $doc_currency, $sent_at );
+		$freeze = \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $doc_currency, $sent_at );
 
 		$deal->setAttribute( 'currency', $freeze );
 		$deal->save();

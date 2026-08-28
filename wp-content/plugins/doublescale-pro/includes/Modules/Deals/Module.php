@@ -13,8 +13,20 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Container;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
+use DoubleScale\Pro\Modules\Deals\Abilities\DealAbilities;
 
 final class Module extends AbstractSalesChildModule {
+
+	/**
+	 * Read-only deal abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return DealAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'deals';
@@ -65,6 +77,10 @@ final class Module extends AbstractSalesChildModule {
 			Services\DealAttachmentActivityLogger::class,
 			static fn() => new Services\DealAttachmentActivityLogger()
 		);
+		$container->singleton(
+			Services\DealPortalProvider::class,
+			static fn() => new Services\DealPortalProvider()
+		);
 	}
 
 	public function restControllers(): array {
@@ -84,6 +100,10 @@ final class Module extends AbstractSalesChildModule {
 		// Admin/staff calendar bridge: contributes deals (on expected_close_date)
 		// to the cross-module calendar feed (owner-scoped for reps; all for managers).
 		$container->get( Services\DealCalendarProvider::class );
+
+		// Client Portal calendar bridge: contributes the contact's own deal close
+		// dates (title + status only — never pipeline internals).
+		$container->get( Services\DealPortalProvider::class );
 
 		$container->get( Services\DealAttachmentActivityLogger::class )->register();
 

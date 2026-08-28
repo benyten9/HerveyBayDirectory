@@ -52,7 +52,10 @@ class ConvertProposalToInvoice {
 				'contact_id'          => (int) $proposal->contact_id,
 				'proposal_id'         => (int) $proposal->id,
 				'sale_agent_user_id'  => $proposal->assigned_user_id ? (int) $proposal->assigned_user_id : null,
-				'currency'            => (string) $proposal->currency,
+				// Copy the raw column. Do not resolve via document_currency() and
+				// do not add a getCurrencyAttribute() accessor — NULL must stay
+				// NULL (inherit) and an explicit EUR must stay EUR.
+				'currency'            => ( null === $proposal->currency || '' === $proposal->currency ) ? null : $proposal->currency,
 				'discount_type'       => (string) $proposal->discount_type,
 				'discount_value'      => (float) $proposal->discount_value,
 				'adjustment'          => (float) $proposal->adjustment,
@@ -66,6 +69,8 @@ class ConvertProposalToInvoice {
 					(string) $proposal->proposal_number,
 					(string) $proposal->subject
 				),
+				'terms'               => $proposal->terms,
+				'sections'            => is_array( $proposal->sections ) ? $proposal->sections : array(),
 			)
 		);
 		SalesNumbering::save_with_retry( $invoice );

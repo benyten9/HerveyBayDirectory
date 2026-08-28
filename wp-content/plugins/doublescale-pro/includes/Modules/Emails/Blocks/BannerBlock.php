@@ -136,7 +136,7 @@ class BannerBlock extends EmailBlock {
 		// Render banner element
 		if ( ! empty( $src ) ) {
 			// Render image
-			$banner_element = "<img src=\"{$src}\" alt=\"{$alt}\" style=\"{$image_style}\" />";
+			$banner_element = '<img src="' . $this->escape_image_src( $src ) . '" alt="' . esc_attr( $alt ) . '" style="' . $image_style . '" />';
 		} else {
 			// Render placeholder (simplified for email - no icon, just text)
 			$banner_element = "<div style=\"{$placeholder_style}\">📷</div>";

@@ -170,7 +170,7 @@ class EmailIncoming {
 
 		if ( ! $contact ) {
 			if ( ! $auto_create ) {
-				doublescale_get_logger()->debug(
+				doublescale_get_logger()->info(
 					'Incoming email from unknown sender, auto_create_contacts is disabled — skipping',
 					array(
 						'code'       => 'email_incoming_unknown_sender_skipped',
@@ -183,7 +183,7 @@ class EmailIncoming {
 			// Skip excluded senders (no-reply addresses, blocked domains).
 			$excluded_domains = $email_inbound_settings['excluded_domains'] ?? array();
 			if ( $this->is_excluded_sender( $data['from_email'], $excluded_domains ) ) {
-				doublescale_get_logger()->debug(
+				doublescale_get_logger()->info(
 					'Incoming email from excluded sender — skipping contact creation',
 					array(
 						'code'       => 'email_incoming_excluded_sender',
@@ -930,9 +930,18 @@ class EmailIncoming {
 		// When auto_create is OFF: only process emails from known contacts (safe default).
 		// When auto_create is ON: also process emails from unknown senders, filtered
 		// through is_excluded_sender() to block no-reply addresses and excluded domains.
-		$contact_emails = ContactModel::pluck( 'email' )->map( function ( $email ) {
-			return strtolower( $email );
-		} )->all();
+		$contact_emails = ContactModel::pluck( 'email' )
+			->filter(
+				function ( $email ) {
+					return is_string( $email ) && '' !== trim( $email );
+				}
+			)
+			->map(
+				function ( $email ) {
+					return strtolower( $email );
+				}
+			)
+			->all();
 		$contact_set    = array_flip( $contact_emails );
 
 		// Forward-only sync anchor: the inbox never ingests mail that predates the
@@ -975,6 +984,7 @@ class EmailIncoming {
 			$lookback_days = max( 1, (int) ceil( ( time() - $since_time ) / DAY_IN_SECONDS ) );
 			$recent_limit  = min( 20 * $lookback_days, 100 );
 			$recent_emails = $client->fetch_recent( $since_date, $recent_limit );
+			$mailbox_status = method_exists( $client, 'get_mailbox_status' ) ? $client->get_mailbox_status() : array( 'nmsgs' => 0, 'unseen' => 0 );
 
 			// Merge both sets, deduplicating by UID (or message_id when UID is unavailable).
 			// php-imap2's imap2_uid() can return false for some messages — use
@@ -1002,7 +1012,9 @@ class EmailIncoming {
 			);
 			$emails = array_slice( $emails, 0, 20 );
 
-			$processed = 0;
+			$processed        = 0;
+			$skipped_anchor   = 0;
+			$skipped_unknown  = 0;
 
 			foreach ( $emails as $email ) {
 				// Precise forward-only guard: the date floors above (SINCE / receivedDateTime ge)
@@ -1011,6 +1023,7 @@ class EmailIncoming {
 				// Do NOT mark it seen — it is the user's pre-existing mail and must stay
 				// untouched in their inbox; we simply never ingest it.
 				if ( $this->is_before_sync_anchor( $email, $sync_since ) ) {
+					++$skipped_anchor;
 					continue;
 				}
 
@@ -1020,8 +1033,9 @@ class EmailIncoming {
 
 				if ( $is_known_contact || ( $auto_create && ! $this->is_excluded_sender( $sender, $excluded_domains ) ) ) {
 					try {
-						$this->process_incoming_email( $email );
-						++$processed;
+						if ( $this->process_incoming_email( $email ) ) {
+							++$processed;
+						}
 					} catch ( \Exception $e ) {
 						// Exception = retriable failure — don't mark as seen so next poll retries.
 						$should_mark_seen = false;
@@ -1035,6 +1049,8 @@ class EmailIncoming {
 						);
 					}
 					// false returns (dedup, validation, unknown sender) are permanent skips — still mark seen.
+				} else {
+					++$skipped_unknown;
 				}
 
 				if ( $should_mark_seen && ! empty( $email['uid'] ) ) {
@@ -1046,17 +1062,24 @@ class EmailIncoming {
 			delete_transient( 'doublescale_imap_consecutive_failures' );
 			update_option( 'doublescale_imap_last_successful_poll', time(), false );
 
-			if ( ! empty( $emails ) ) {
-				doublescale_get_logger()->info(
-					'IMAP polling completed',
-					array(
-						'code'      => 'email_incoming_imap_poll_complete',
-						'provider'  => $provider,
-						'fetched'   => count( $emails ),
-						'processed' => $processed,
-					)
-				);
-			}
+			doublescale_get_logger()->info(
+				'IMAP polling completed',
+				array(
+					'code'            => 'email_incoming_imap_poll_complete',
+					'provider'        => $provider,
+					'username'        => $settings['imap']['username'] ?? '',
+					'inbox_total'     => (int) ( $mailbox_status['nmsgs'] ?? 0 ),
+					'inbox_unseen'    => (int) ( $mailbox_status['unseen'] ?? 0 ),
+					'unseen'          => count( $unseen_emails ),
+					'recent'          => count( $recent_emails ),
+					'fetched'         => count( $emails ),
+					'processed'       => $processed,
+					'skipped_anchor'  => $skipped_anchor,
+					'skipped_unknown' => $skipped_unknown,
+					'since_date'      => $since_date,
+					'auto_create'     => $auto_create,
+				)
+			);
 
 			// Sync SENT folder if enabled (reuses the same connection).
 			if ( ! empty( $settings['sync_sent'] ) ) {
@@ -1095,16 +1118,16 @@ class EmailIncoming {
 				++$fail_count;
 				set_transient( 'doublescale_imap_consecutive_failures', $fail_count, HOUR_IN_SECONDS );
 
+				$log_context = array(
+					'code'                   => 'email_incoming_imap_error',
+					'provider'               => $provider,
+					'error'                  => $e->getMessage(),
+					'consecutive_failures'   => $fail_count,
+				);
 				if ( 1 === $fail_count || 5 === $fail_count || 0 === $fail_count % 10 ) {
-					doublescale_get_logger()->error(
-						'IMAP polling error',
-						array(
-							'code'            => 'email_incoming_imap_error',
-							'provider'        => $provider,
-							'error'           => $e->getMessage(),
-							'consecutive_failures' => $fail_count,
-						)
-					);
+					doublescale_get_logger()->error( 'IMAP polling error', $log_context );
+				} else {
+					doublescale_get_logger()->warning( 'IMAP polling error', $log_context );
 				}
 
 				// For OAuth providers, mark as needing re-auth on authentication errors.

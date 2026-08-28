@@ -230,32 +230,34 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 				return $validation;
 			}
 
-			// Check 24h conversation window
-			$window = \DoubleScale\Modules\Campaigns\Services\WhatsappConversationWindow::check( $contact_id );
-			if ( ! $window['active'] ) {
-				$reason = $window['reason'] === 'no_inbound_messages'
-					? __( 'No incoming WhatsApp messages from this contact. Send a template message first to start the conversation.', 'doublescale')
-					: __( 'The 24-hour conversation window has expired. Please use an approved template.', 'doublescale');
-
-				return new WP_Error(
-					'conversation_window_closed',
-					$reason,
-					array(
-						'status'       => 400,
-						'window'       => $window,
-						'requires_template' => true,
-					)
-				);
-			}
-
 			// Get provider
 			$provider = MessageProviderRegistry::instance()->get_provider( $this->get_channel_type() );
 			if ( ! $provider ) {
 				return new WP_Error(
 					'provider_not_configured',
-					__( 'Whatsapp provider not configured. Please configure Meta WhatsApp in settings.', 'doublescale'),
+					__( 'Whatsapp provider not configured. Please configure a WhatsApp provider in settings.', 'doublescale'),
 					array( 'status' => 500 )
 				);
+			}
+
+			// Check 24h conversation window only for template-restricted providers (Meta).
+			if ( $provider->requires_template( $this->get_channel_type() ) ) {
+				$window = \DoubleScale\Modules\Campaigns\Services\WhatsappConversationWindow::check( $contact_id );
+				if ( ! $window['active'] ) {
+					$reason = $window['reason'] === 'no_inbound_messages'
+						? __( 'No incoming WhatsApp messages from this contact. Send a template message first to start the conversation.', 'doublescale')
+						: __( 'The 24-hour conversation window has expired. Please use an approved template.', 'doublescale');
+
+					return new WP_Error(
+						'conversation_window_closed',
+						$reason,
+						array(
+							'status'              => 400,
+							'window'              => $window,
+							'requires_template'   => true,
+						)
+					);
+				}
 			}
 
 			// Process merge tags in message
@@ -298,14 +300,18 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 			);
 
 			// Log success
+			$log_context = array(
+				'contact_id'   => $contact->id,
+				'activity_id'  => $activity->id,
+				'tracking_id'  => $tracking_entry->id,
+			);
+			if ( $provider->requires_template( $this->get_channel_type() ) && isset( $window ) ) {
+				$log_context['window_left'] = $window['minutes_left'] . ' minutes';
+			}
+
 			doublescale_get_logger()->info(
 				__( 'Individual WhatsApp session message sent successfully', 'doublescale'),
-				array(
-					'contact_id'   => $contact->id,
-					'activity_id'  => $activity->id,
-					'tracking_id'  => $tracking_entry->id,
-					'window_left'  => $window['minutes_left'] . ' minutes',
-				)
+				$log_context
 			);
 
 			return new WP_REST_Response(
@@ -383,6 +389,14 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 			// UNIQUE: WhatsApp template preparation
 			$message_data = $this->prepare_template_message( $template, $contact, $template_variables, $tracking_entry );
 
+			if ( ! $provider->requires_template( $this->get_channel_type() ) ) {
+				$message_data['fallback_body'] = MergeTagsManager::instance()->process_merge_tags(
+					$template->body,
+					$contact
+				);
+				$message_data['Body'] = $message_data['fallback_body'];
+			}
+
 			// UNIQUE: Send template via provider
 			$result = $this->send_template_via_provider( $provider, $to, $message_data, $contact );
 
@@ -433,12 +447,20 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 	 */
 	protected function send_template_via_provider( $provider, $to, $message_data, $contact ) {
 		$api_data = array(
-			'To'         => $to,
-			'ContentSid' => $message_data['ContentSid'],
+			'To' => $to,
 		);
 
-		if ( ! empty( $message_data['ContentVariables'] ) ) {
-			$api_data['ContentVariables'] = $message_data['ContentVariables'];
+		if ( ! $provider->requires_template( $this->get_channel_type() ) ) {
+			$api_data['Body'] = $message_data['Body'] ?? '';
+			if ( empty( $api_data['Body'] ) && ! empty( $message_data['fallback_body'] ) ) {
+				$api_data['Body'] = $message_data['fallback_body'];
+			}
+		} else {
+			$api_data['ContentSid'] = $message_data['ContentSid'];
+
+			if ( ! empty( $message_data['ContentVariables'] ) ) {
+				$api_data['ContentVariables'] = $message_data['ContentVariables'];
+			}
 		}
 
 		// Add webhook URL for delivery status tracking

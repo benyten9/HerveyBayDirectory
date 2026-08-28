@@ -164,8 +164,12 @@ class RestPortalProjectController extends RestController {
 			'description' => (string) $project->description,
 			'status'      => $project->status
 				? array(
+					'id'           => (int) $project->status->id,
 					'name'         => (string) $project->status->name,
+					'color'        => (string) ( $project->status->color ?? '#8775EC' ),
+					'bg_color'     => (string) ( $project->status->bg_color ?? '#F4F2FE' ),
 					'is_completed' => (bool) $project->status->is_completed,
+					'position'     => (int) ( $project->status->position ?? 0 ),
 				)
 				: null,
 			'budget'      => null !== $project->budget ? (float) $project->budget : null,

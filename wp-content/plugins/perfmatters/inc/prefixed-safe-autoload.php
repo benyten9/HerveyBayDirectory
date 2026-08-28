@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 $safe_root = dirname(__DIR__) . '/vendor-prefixed/thecodingmachine/safe';
 
 if(!is_dir($safe_root)) {

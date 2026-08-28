@@ -62,6 +62,7 @@ if ($ownUser->ID == $user->ID) {
 								else {
 									WFLS.closeStandaloneModal();
 									$('#wfls-deactivation-controls').crossfade($('#wfls-activation-controls'));
+									$('#wfls-grace-period-controls').toggle(!!response.grace_period_visible);
 								}
 							},
 							function(error) {
@@ -73,4 +74,4 @@ if ($ownUser->ID == $user->ID) {
 			});
 		});
 	})(jQuery);
-</script> 
+</script>

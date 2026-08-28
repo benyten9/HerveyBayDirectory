@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 return array(
     'plugins' => array(
     	'atarim' => array(

@@ -10,6 +10,8 @@ namespace DoubleScale\Pro\Modules\Contracts\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Services\CurrencyResolver;
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Sales\Capabilities;
@@ -23,6 +25,7 @@ use DoubleScale\Pro\Modules\Contracts\Services\ContractNotifications;
 use DoubleScale\Pro\Modules\Contracts\Services\ContractUrl;
 use DoubleScale\Pro\Modules\Contracts\Services\ContractPdf;
 use DoubleScale\Modules\Documents\Services\DocumentIssuerSnapshot;
+use DoubleScale\Modules\Sales\Rest\SendsDocumentViaWhatsapp;
 use DoubleScale\Modules\Sales\Services\SalesNumbering;
 use DoubleScale\Modules\Sales\Services\SalesRepNotifications;
 use DoubleScale\Modules\Sales\Services\SalesSettings;
@@ -35,6 +38,8 @@ use WP_REST_Server;
  * RestContractController class.
  */
 class RestContractController extends RestController {
+
+	use SendsDocumentViaWhatsapp;
 
 	/**
 	 * @var string
@@ -82,6 +87,18 @@ class RestContractController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/send-whatsapp',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_item_whatsapp' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
@@ -345,12 +362,13 @@ class RestContractController extends RestController {
 		$by_status   = array();
 
 		foreach ( ContractStatus::all() as $status ) {
-			$count = (int) ( clone $query )->where( 'status', $status )->count();
-			$sum   = (float) ( clone $query )->where( 'status', $status )->sum( 'contract_value' );
+			$count  = (int) ( clone $query )->where( 'status', $status )->count();
+			$totals = $this->sum_by_currency( clone $query, array( $status ) );
 			$by_status[ $status ] = array(
-				'count'   => $count,
-				'amount'  => round( $sum, 2 ),
-				'percent' => $total_count > 0 ? round( ( $count / $total_count ) * 100, 2 ) : 0,
+				'count'              => $count,
+				'amount'             => $totals['total'],
+				'amount_by_currency' => $totals['by_currency'],
+				'percent'            => $total_count > 0 ? round( ( $count / $total_count ) * 100, 2 ) : 0,
 			);
 		}
 
@@ -384,21 +402,25 @@ class RestContractController extends RestController {
 		$types   = ContractTypeModel::query()->orderBy( 'name' )->get();
 		foreach ( $types as $type ) {
 			$type_query = ( clone $query )->where( 'contract_type_id', (int) $type->id );
+			$totals     = $this->sum_column_by_currency( $type_query );
 			$by_type[]  = array(
-				'contract_type_id' => (int) $type->id,
-				'name'             => (string) $type->name,
-				'count'            => (int) $type_query->count(),
-				'value_total'      => round( (float) $type_query->sum( 'contract_value' ), 2 ),
+				'contract_type_id'   => (int) $type->id,
+				'name'               => (string) $type->name,
+				'count'              => (int) $type_query->count(),
+				'value_total'        => $totals['total'],
+				'value_by_currency'  => $totals['by_currency'],
 			);
 		}
 
 		$untyped_query = ( clone $query )->whereNull( 'contract_type_id' );
 		if ( (int) $untyped_query->count() > 0 ) {
+			$totals    = $this->sum_column_by_currency( $untyped_query );
 			$by_type[] = array(
-				'contract_type_id' => null,
-				'name'             => __( 'Uncategorized', 'doublescale' ),
-				'count'            => (int) $untyped_query->count(),
-				'value_total'      => round( (float) $untyped_query->sum( 'contract_value' ), 2 ),
+				'contract_type_id'  => null,
+				'name'              => __( 'Uncategorized', 'doublescale' ),
+				'count'             => (int) $untyped_query->count(),
+				'value_total'       => $totals['total'],
+				'value_by_currency' => $totals['by_currency'],
 			);
 		}
 
@@ -414,6 +436,29 @@ class RestContractController extends RestController {
 				'total_count'           => $total_count,
 			),
 			200
+		);
+	}
+
+	/**
+	 * @param mixed    $query    Contract query (already scoped).
+	 * @param string[] $statuses Statuses to include.
+	 * @return array{total: float, by_currency: array<string, float>}
+	 */
+	private function sum_by_currency( $query, array $statuses ): array {
+		return $this->sum_column_by_currency( $query->whereIn( 'status', $statuses ) );
+	}
+
+	/**
+	 * @param mixed $query Contract query.
+	 * @return array{total: float, by_currency: array<string, float>}
+	 */
+	private function sum_column_by_currency( $query ): array {
+		$by_currency = CurrencyResolver::sum_by_currency( $query->get(), 'contract_value' );
+		$global      = CurrencyResolver::global_currency();
+
+		return array(
+			'total'       => $by_currency[ $global ] ?? 0.0,
+			'by_currency' => $by_currency,
 		);
 	}
 
@@ -483,25 +528,99 @@ class RestContractController extends RestController {
 		}
 		$message = isset( $params['message'] ) ? sanitize_textarea_field( (string) $params['message'] ) : '';
 
-		$notifier = new ContractNotifications();
-		if ( ! $notifier->send_contract( $contract, $message ) ) {
-			return new WP_Error(
-				'email_failed',
-				__( 'Failed to send the contract email. Check the customer email and SMTP settings.', 'doublescale' ),
-				array( 'status' => 500 )
-			);
+		$channel = isset( $params['channel'] ) ? sanitize_key( (string) $params['channel'] ) : 'email';
+
+		// WhatsApp shares are delivered by the client opening wa.me; this call
+		// only records that the send happened.
+		if ( 'whatsapp' !== $channel ) {
+			$notifier = new ContractNotifications();
+			if ( ! $notifier->send_contract( $contract, $message ) ) {
+				return new WP_Error(
+					'email_failed',
+					__( 'Failed to send the contract email. Check the customer email and SMTP settings.', 'doublescale' ),
+					array( 'status' => 500 )
+				);
+			}
 		}
 
+		return $this->finish_contract_send( $contract, $message, $channel );
+	}
+
+	/**
+	 * Prepare or perform a WhatsApp share for a contract.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_item_whatsapp( $request ) {
+		$disabled = $this->require_module( 'contracts' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
+		$contract = ContractModel::with( array( 'contact', 'assigned_user', 'type' ) )->find( (int) $request->get_param( 'id' ) );
+		if ( ! $contract ) {
+			return new WP_Error( 'not_found', __( 'Contract not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$forbidden = $this->require_ownership( $contract );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
+
+		if ( ContractStatus::EXPIRED === (string) $contract->status ) {
+			return new WP_Error( 'invalid_status', __( 'Expired contracts cannot be sent.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		$no_page = $this->require_public_page(
+			'contract',
+			'no_contract_page',
+			__( 'Create a WordPress page with the [doublescale_contract] shortcode before sending contracts.', 'doublescale' )
+		);
+		if ( $no_page ) {
+			return $no_page;
+		}
+
+		$gate = apply_filters( 'doublescale_sales_send_gate', null, 'contract', $contract );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
+		$params  = $this->read_whatsapp_params( $request );
+		$payload = $this->build_whatsapp_payload( $contract, 'contract', $params );
+
+		if ( 'auto' !== $params['mode'] ) {
+			return new WP_REST_Response( $this->whatsapp_link_response( $payload ), 200 );
+		}
+
+		$sent = $this->dispatch_whatsapp_auto( $contract, 'contract', $payload );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
+		}
+
+		return $this->finish_contract_send( $contract, $params['message'], 'whatsapp' );
+	}
+
+	/**
+	 * Advance status and record the send, once a channel has delivered.
+	 *
+	 * @param ContractModel $contract Contract.
+	 * @param string        $message  Custom message.
+	 * @param string        $channel  Delivery channel.
+	 * @return WP_REST_Response
+	 */
+	private function finish_contract_send( ContractModel $contract, string $message, string $channel ): WP_REST_Response {
 		if ( ContractStatus::DRAFT === (string) $contract->status ) {
 			$contract->status = ContractStatus::SENT;
 		}
 		DocumentIssuerSnapshot::freeze_if_needed( $contract );
+		DocumentCurrency::freeze_on_send( $contract );
 		$contract->sent_at = current_time( 'mysql' );
 		$contract->save();
 
-		$this->log_contract_sent( $contract, $message );
+		$this->log_contract_sent( $contract, $message, $channel );
 
-		do_action( 'doublescale_sales_contract_sent', $contract, $message );
+		do_action( 'doublescale_sales_contract_sent', $contract, $message, $channel );
 
 		( new SalesRepNotifications() )->notify_contract_event( $contract, 'sent' );
 
@@ -568,6 +687,13 @@ class RestContractController extends RestController {
 		$payload = $this->sanitize_payload( $request, false );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
+		}
+
+		if ( array_key_exists( 'currency', $payload ) ) {
+			$locked = DocumentCurrency::reject_if_locked( $contract, $payload['currency'] );
+			if ( is_wp_error( $locked ) ) {
+				return $locked;
+			}
 		}
 
 		if ( ! Capabilities::can_assign_sales_rep() && isset( $payload['assigned_user_id'] ) ) {
@@ -858,19 +984,27 @@ class RestContractController extends RestController {
 	/**
 	 * @param ContractModel $contract Contract.
 	 * @param string        $message Optional custom message.
+	 * @param string        $channel Delivery channel (email|whatsapp).
 	 * @return void
 	 */
-	private function log_contract_sent( ContractModel $contract, string $message = '' ): void {
+	private function log_contract_sent( ContractModel $contract, string $message = '', string $channel = 'email' ): void {
 		if ( ! class_exists( ActivityModel::class ) ) {
 			return;
 		}
 
-		$note = sprintf(
-			/* translators: 1: contract number, 2: contract subject */
-			__( 'Contract %1$s sent: %2$s', 'doublescale' ),
-			(string) $contract->contract_number,
-			(string) $contract->subject
-		);
+		$note = 'whatsapp' === $channel
+			? sprintf(
+				/* translators: 1: contract number, 2: contract subject */
+				__( 'Contract %1$s sent via WhatsApp: %2$s', 'doublescale' ),
+				(string) $contract->contract_number,
+				(string) $contract->subject
+			)
+			: sprintf(
+				/* translators: 1: contract number, 2: contract subject */
+				__( 'Contract %1$s sent: %2$s', 'doublescale' ),
+				(string) $contract->contract_number,
+				(string) $contract->subject
+			);
 		if ( '' !== trim( $message ) ) {
 			$note .= ' — ' . $message;
 		}
@@ -917,7 +1051,6 @@ class RestContractController extends RestController {
 		$string_fields = array(
 			'subject',
 			'status',
-			'currency',
 			'start_date',
 			'end_date',
 		);
@@ -926,6 +1059,14 @@ class RestContractController extends RestController {
 			if ( array_key_exists( $field, $params ) ) {
 				$payload[ $field ] = sanitize_text_field( (string) $params[ $field ] );
 			}
+		}
+
+		if ( array_key_exists( 'currency', $params ) ) {
+			$currency = DocumentCurrency::sanitize_input( $params['currency'] );
+			if ( is_wp_error( $currency ) ) {
+				return $currency;
+			}
+			$payload['currency'] = $currency;
 		}
 
 		if ( array_key_exists( 'description', $params ) ) {

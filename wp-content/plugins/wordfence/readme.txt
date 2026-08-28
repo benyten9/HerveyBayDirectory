@@ -3,8 +3,8 @@ Contributors: mmaunder, wfryan, wfmatt, wfmattr
 Tags: security, malware, 2fa, firewall, scanner
 Requires at least: 4.7
 Requires PHP: 7.0
-Tested up to: 7.0
-Stable tag: 8.2.2
+Tested up to: 7.1
+Stable tag: 9.0.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,7 +28,7 @@ The sun never sets on our global security team and we run a sophisticated threat
 
 **Wordfence Security includes an endpoint firewall, malware scanner, robust login security features, live traffic views, and more.** Our [Threat Defense Feed](https://www.wordfence.com/threat-intel/) arms Wordfence with the newest firewall rules, malware signatures, and malicious IP addresses it needs to keep your website safe. 
 
-Rounded out by 2FA and a suite of additional features, Wordfence is the most comprehensive WordPress security solution available.
+Rounded out by passkeys, 2FA, and a suite of additional features, Wordfence is the most comprehensive WordPress security solution available.
 
 ### 🔥 WORDPRESS FIREWALL
 - **[Web Application Firewall](https://www.wordfence.com/help/firewall/)** identifies and blocks malicious traffic. Built and maintained by a large team focused 100% on WordPress security.
@@ -49,9 +49,10 @@ Rounded out by 2FA and a suite of additional features, Wordfence is the most com
 - **Checks to see if your site or IP have been blocklisted [Premium]** for malicious activity, generating spam or other security issues.
 
 ### 🔒 LOGIN SECURITY
+- **[Passkeys](https://www.wordfence.com/help/login-security/#module-login-security-passkeys)** let users sign in with touch, facial recognition, a device password, or a PIN as a simple and secure alternative to a password and two-factor credentials.
 - **[Two-factor authentication (2FA)](https://www.wordfence.com/help/tools/two-factor-authentication/)**, one of the most secure forms of remote system authentication available via any TOTP-based authenticator app or service.
 - **[Login Page CAPTCHA](https://www.wordfence.com/help/login-security/)** stops bots from logging in.
-- **[2FA for WooCommerce and custom integrations](https://www.wordfence.com/help/login-security/#woocommerce-and-custom-integrations)** allow for 2FA to be setup on custom account pages
+- **[Passkey and 2FA management for WooCommerce and custom integrations](https://www.wordfence.com/help/login-security/#woocommerce-and-custom-integrations)** allows users to manage credentials on custom account pages.
 - **XML-RPC** options including disabling or adding 2FA.
 - **Password Security:** Block logins for administrators using known compromised passwords.
 
@@ -160,7 +161,7 @@ Wordfence provides true endpoint security for your WordPress website. Unlike clo
 * Wordfence scans check all your files, comments and posts for URLs in Google's Safe Browsing list. We are the only plugin to offer this very important security enhancement.
 * Wordfence scans do not consume large amounts of your bandwidth because all security scans happen on your web server which makes them very fast.
 * Wordfence fully supports WordPress Multi-Site which means you can security scan every blog in your Multi-Site installation with one click.
-* Wordfence includes Two-Factor authentication, the most secure way to stop brute force attackers in their tracks.
+* Wordfence includes passkeys and Two-Factor authentication to help secure WordPress accounts against phishing and brute-force attacks.
 * Wordfence fully supports IPv6 including giving you the ability to look up the location of IPv6 addresses, block IPv6 ranges, detect IPv6 country and do a whois lookup on IPv6 addresses and more.
 
 = Will Wordfence slow down my website? =
@@ -206,6 +207,21 @@ Secure your website with Wordfence.
 9. Logging in is easy with Wordfence 2FA.
 
 == Changelog ==
+
+= 9.0.0 - August 10, 2026 =
+* Improvement: Added support for passkey authentication
+    * Available for both free and premium installations
+    * Can be enabled for any user role (multisite support is currently limited)
+    * WooCommerce integration
+    * Support for custom authentication integrations
+* Improvement: GeoIP database updated
+* Improvement: Several mobile styling and layout improvements on the login security page
+* Improvement: Added diagnostics info for authentication hooks to assist with login-related troubleshooting
+* Change: Hardened 2FA flow when installed next to plugins with non-standard authentication (credit: Austin Ginder of Anchor Hosting)
+* Change: Hardened 2FA remember cookie handling
+* Change: The scanner will now display an issue when the standalone Wordfence Login Security plugin is installed because all functionality is already provided by Wordfence itself
+* Change: Updated internal libraries used by the Vue UI
+* Change: Login error masking setting now also applies to the Login Security functionality
 
 = 8.2.2 - May 13, 2026 =
 * Improvement: Better presentation of Live Traffic data on wide screens

@@ -63,4 +63,15 @@ interface MessageProviderInterface {
 	 * @return array Standardized webhook result
 	 */
 	public function process_webhook( string $channel, array $webhook_data ): array;
+
+	/**
+	 * Whether the provider requires approved templates for outbound messages on a channel.
+	 *
+	 * Meta WhatsApp returns true (templates + 24h session window).
+	 * Custom providers may return false for free-form text/media.
+	 *
+	 * @param string $channel Channel type ('sms', 'whatsapp', etc.)
+	 * @return bool True when templates or session windows are required.
+	 */
+	public function requires_template( string $channel ): bool;
 }

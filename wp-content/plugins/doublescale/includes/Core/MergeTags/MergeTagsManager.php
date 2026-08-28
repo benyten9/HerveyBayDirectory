@@ -371,6 +371,22 @@ final class MergeTagsManager {
 				'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
 					|| ! doublescale_is_module_active( 'tasks' ),
 			),
+			'project'        => array(
+				'name'        => __( 'Project', 'doublescale' ),
+				'mergeTags'   => array(),
+				'triggers'    => array(
+					'project_created',
+					'project_status_changed',
+					'project_completed',
+					'project_owner_changed',
+					'project_due_soon',
+					'project_overdue',
+					'project_comment_posted',
+					'project_converted_from_deal',
+				),
+				'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+					|| ! doublescale_is_module_active( 'projects' ),
+			),
 			'booking'        => array(
 				'name'        => __( 'Booking', 'doublescale' ),
 				'mergeTags'   => array(),
@@ -489,7 +505,29 @@ final class MergeTagsManager {
 					return '';
 				}
 
-				return $merge_tag->get_tag_value( $contact, $slug );
+				// A tag resolves against whatever context the message carries,
+				// so missing orders, deleted products or absent cart data are
+				// normal input. Losing the whole email because one placeholder
+				// could not resolve is never the right trade — blank the tag,
+				// log it, and let the rest of the message go out.
+				try {
+					return $merge_tag->get_tag_value( $contact, $slug );
+				} catch ( \Throwable $e ) {
+					doublescale_get_logger()->error(
+						__( 'Merge tag failed to resolve', 'doublescale' ),
+						array(
+							'code'  => 'merge_tag_resolution_failed',
+							'error' => array(
+								'tag'     => "{$group}:{$merge_tag_slug}",
+								'message' => $e->getMessage(),
+								'file'    => $e->getFile(),
+								'line'    => $e->getLine(),
+							),
+						)
+					);
+
+					return '';
+				}
 			},
 			$content
 		);

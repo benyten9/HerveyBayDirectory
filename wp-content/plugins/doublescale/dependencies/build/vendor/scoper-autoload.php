@@ -467,5 +467,15 @@ if (!function_exists('trigger_deprecation')) {
         return \DoubleScale\Vendor\trigger_deprecation(...func_get_args());
     }
 }
+if (!function_exists('utf8_to_extended_ascii')) {
+    function utf8_to_extended_ascii() {
+        return \DoubleScale\Vendor\utf8_to_extended_ascii(...func_get_args());
+    }
+}
+if (!function_exists('mb_levenshtein')) {
+    function mb_levenshtein() {
+        return \DoubleScale\Vendor\mb_levenshtein(...func_get_args());
+    }
+}
 
 return $loader;

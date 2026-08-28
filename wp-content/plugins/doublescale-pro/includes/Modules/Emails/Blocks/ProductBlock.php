@@ -69,6 +69,7 @@ class ProductBlock extends EmailBlock {
 			'descriptionColor'     => '#000000',
 			'priceColor'           => '#059669',
 			'imageBackgroundColor' => '#f9fafb',
+			'textDirection'        => 'ltr',
 		);
 	}
 
@@ -80,18 +81,9 @@ class ProductBlock extends EmailBlock {
 	 * @return string HTML output
 	 */
 	public function render( array $props, $contact = null ): string {
-		// Check if productId is set and fetch live WooCommerce data
-		if ( ! empty( $props['productId'] ) ) {
-			$live_product_data = \DoubleScale\Modules\Emails\ProductDataFetcher::get_product_data( $props['productId'] );
-
-			if ( $live_product_data ) {
-				// Override props with live product data
-				$props = array_merge( $props, $live_product_data );
-			} else {
-				// Product not found or not published - hide the block
-				return '';
-			}
-		}
+		// productId is kept for editor reference only. Field values are snapshotted
+		// when a WooCommerce product is picked; customized copy (e.g. Arabic) must
+		// survive send/test instead of being replaced with live catalog data.
 
 		// Merge with default props
 		$props = wp_parse_args( $props, $this->get_default_props() );
@@ -105,13 +97,17 @@ class ProductBlock extends EmailBlock {
 		$button_text = $this->process_merge_tags( $props['buttonText'], $contact );
 		$button_link = $this->process_merge_tags( $props['buttonLink'], $contact );
 
+		$text_direction = ( isset( $props['textDirection'] ) && 'rtl' === $props['textDirection'] ) ? 'rtl' : 'ltr';
+		$text_align     = 'rtl' === $text_direction ? 'right' : 'center';
+
 		// Get button settings
 		$button_settings = $this->get_global_button_settings( $props['buttonStyle'] );
 
 		// Build wrapper styles (always centered)
 		$wrapper_styles = array(
-			'text-align' => 'center',
+			'text-align' => $text_align,
 			'width'      => '100%',
+			'direction'  => $text_direction,
 		);
 
 		// Build container styles - matching frontend to prevent overflow
@@ -125,7 +121,8 @@ class ProductBlock extends EmailBlock {
 			'vertical-align' => 'top',
 			'margin'         => '0 auto',
 			'box-sizing'     => 'border-box',
-			'text-align'     => 'center',
+			'text-align'     => $text_align,
+			'direction'      => $text_direction,
 			'word-wrap'      => 'break-word',
 			'overflow-wrap'  => 'break-word',
 		);
@@ -207,7 +204,7 @@ class ProductBlock extends EmailBlock {
 		// Render image or placeholder
 		$image_html = '';
 		if ( ! empty( $image_src ) ) {
-			$image_html = "<img src=\"{$image_src}\" alt=\"{$image_alt}\" style=\"{$image_style_string}\" />";
+			$image_html = '<img src="' . $this->escape_image_src( $image_src ) . '" alt="' . esc_attr( $image_alt ) . '" style="' . $image_style_string . '" />';
 		} else {
 			$image_html = "<div style=\"{$image_placeholder_style_string}\">📷</div>";
 		}
@@ -215,8 +212,8 @@ class ProductBlock extends EmailBlock {
 		// Render price with fallback
 		$display_price = ! empty( $price ) ? $price : '0.00 EGP';
 
-		return "<div style=\"{$wrapper_style_string}\">
-			<div style=\"{$container_style_string}\">
+		return "<div style=\"{$wrapper_style_string}\" dir=\"" . esc_attr( $text_direction ) . "\">
+			<div style=\"{$container_style_string}\" dir=\"" . esc_attr( $text_direction ) . "\">
 				{$image_html}
 				<h3 style=\"{$title_style_string}\">{$title}</h3>
 				<p style=\"{$description_style_string}\">{$description}</p>

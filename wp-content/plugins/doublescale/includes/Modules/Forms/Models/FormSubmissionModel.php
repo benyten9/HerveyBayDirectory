@@ -14,6 +14,7 @@ namespace DoubleScale\Modules\Forms\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 use WPEloquent\Eloquent\Model;
 
 /**
@@ -70,7 +71,7 @@ class FormSubmissionModel extends Model {
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function form() {
-		return $this->belongsTo( FormModel::class, 'id' );
+		return $this->belongsTo( FormModel::class, 'form_id' );
 	}
 
 	/**
@@ -79,6 +80,6 @@ class FormSubmissionModel extends Model {
 	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
-		 return $this->belongsTo( ContactModel::class, 'contact_id' );
+		return $this->belongsTo( ContactModel::class, 'contact_id' );
 	}
 }

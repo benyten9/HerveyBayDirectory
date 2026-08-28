@@ -153,8 +153,13 @@ class SendCampaignEmail extends Action
 				return false;
 			}
 
-			// Check for existing message to prevent duplicates
-			$existing_message = $this->check_existing_campaign_message($contact, $template_id);
+			// Check for an existing send from THIS automation step to prevent duplicates
+			$existing_message = $this->check_existing_campaign_message(
+				$contact,
+				$template_id,
+				$automation->id,
+				$step->id
+			);
 			if ($existing_message) {
 				doublescale_get_logger()->info(
 					'Send Campaign Email: skipped duplicate (tracking record already exists)',
@@ -274,17 +279,27 @@ class SendCampaignEmail extends Action
 	}
 
 	/**
-	 * Check for existing campaign message for a contact.
+	 * Check whether THIS automation step already sent to this contact.
 	 *
-	 * @param CampaignModel           $campaign The campaign model.
-	 * @param AutomationContactModel $contact The contact model.
-	 * @return CommunicationTrackingModel|false The existing message or false if none.
+	 * Scoped to source_type + source_id + step_id on purpose. Matching on
+	 * contact + template alone would treat any earlier send of the same template —
+	 * a broadcast campaign, or a different automation reusing it — as a duplicate,
+	 * and this step would silently never send.
+	 *
+	 * @param object $contact       The contact model.
+	 * @param int    $template_id   Resolved template ID (may differ per contact under A/B).
+	 * @param int    $automation_id Automation ID (tracking source_id).
+	 * @param int    $step_id       Automation step ID.
+	 * @return CommunicationTrackingModel|null The existing message, or null if none.
 	 */
-	private function check_existing_campaign_message($contact, $template_id)
+	private function check_existing_campaign_message($contact, $template_id, $automation_id, $step_id)
 	{
 		return CommunicationTrackingModel::where('contact_id', $contact->id)
 			->where('mode', CommunicationTrackingModel::MODE_EMAIL)
 			->where('template_id', $template_id)
+			->where('source_type', MessageSourceTypes::AUTOMATION)
+			->where('source_id', $automation_id)
+			->where('step_id', $step_id)
 			->first();
 	}
 }

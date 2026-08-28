@@ -61,6 +61,16 @@ class MetaWhatsappProvider extends AbstractMessageProvider {
 	private $api = null;
 
 	/**
+	 * Meta WhatsApp requires approved templates outside the 24h session window.
+	 *
+	 * @param string $channel Channel type.
+	 * @return bool
+	 */
+	public function requires_template( string $channel ): bool {
+		return $this->supports_channel( $channel );
+	}
+
+	/**
 	 * Send a message via Meta WhatsApp Api
 	 *
 	 * @param string                         $channel Channel type (whatsapp).

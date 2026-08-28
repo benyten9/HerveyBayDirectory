@@ -29,7 +29,7 @@ class SendSms extends AbstractSendMessage
 	 *
 	 * @var string
 	 */
-	public $name = 'Send Sms';
+	public $name = 'Send SMS';
 
 	/**
 	 * Action Slug
@@ -57,7 +57,7 @@ class SendSms extends AbstractSendMessage
 	 *
 	 * @var string
 	 */
-	public $description = 'This action will send an Sms to the user with full tracking and analytics.';
+	public $description = 'This action will send an SMS to the user with full tracking and analytics.';
 
 	/**
 	 * Action Attributes
@@ -140,7 +140,7 @@ class SendSms extends AbstractSendMessage
 	 */
 	protected function get_channel_name()
 	{
-		return 'Sms';
+		return 'SMS';
 	}
 
 	/**
@@ -156,8 +156,8 @@ class SendSms extends AbstractSendMessage
 				'label'       => __('Message', 'doublescale'),
 				'type'        => 'textarea',
 				'required'    => true,
-				'placeholder' => __('Enter Sms message...', 'doublescale'),
-				'description' => __('Maximum 160 characters for standard Sms. Longer messages will be split.', 'doublescale'),
+				'placeholder' => __('Enter SMS message...', 'doublescale'),
+				'description' => __('Maximum 160 characters for standard SMS. Longer messages will be split.', 'doublescale'),
 			),
 		);
 	}
@@ -197,7 +197,7 @@ class SendSms extends AbstractSendMessage
 		$body = $step->get_setting('body');
 
 		if (empty($body)) {
-			throw new \Exception(__('Sms message body is empty.', 'doublescale'));
+			throw new \Exception(__('SMS message body is empty.', 'doublescale'));
 		}
 
 		return array(

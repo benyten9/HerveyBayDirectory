@@ -987,9 +987,11 @@ class MMB_Installer extends MMB_Core
         extract($args);
         $return = array();
         foreach ($items as $item) {
+            $result = false;
             switch ($items_edit_action) {
                 case 'activate':
                     switch_theme($item['path'], $item['stylesheet']);
+                    $result = true;
                     break;
                 case 'delete':
                     $result = delete_theme($item['stylesheet']);

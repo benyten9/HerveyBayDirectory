@@ -29,11 +29,84 @@ final class SalesEmailMergeTags {
 	 * @return string
 	 */
 	public static function resolve( string $content, ?AutomationContactModel $context ): string {
-		if ( '' === $content || null === $context || false === strpos( $content, '{{' ) ) {
+		if ( '' === $content || false === strpos( $content, '{{' ) ) {
+			return $content;
+		}
+
+		if ( null === $context ) {
 			return $content;
 		}
 
 		return MergeTagsManager::instance()->process_merge_tags( $content, $context );
+	}
+
+	/**
+	 * Resolve merge tags and normalize inline HTML for document sections.
+	 *
+	 * @param string|null                $content Rich text or plain text.
+	 * @param AutomationContactModel|null $context Merge-tag context.
+	 * @return string|null
+	 */
+	public static function resolve_rich_text( ?string $content, ?AutomationContactModel $context ): ?string {
+		if ( null === $content || '' === $content ) {
+			return null;
+		}
+
+		$resolved = self::resolve( $content, $context );
+
+		return self::wrap_inline_rich_text( $resolved );
+	}
+
+	/**
+	 * Resolve merge tags in document section rows.
+	 *
+	 * @param array<int, array<string, mixed>> $sections Section rows.
+	 * @param AutomationContactModel|null    $context  Merge-tag context.
+	 * @return array<int, array{title: string, body: string}>
+	 */
+	public static function resolve_sections( array $sections, ?AutomationContactModel $context ): array {
+		if ( empty( $sections ) ) {
+			return array();
+		}
+
+		$resolved = array();
+
+		foreach ( $sections as $section ) {
+			if ( ! is_array( $section ) ) {
+				continue;
+			}
+
+			$title = isset( $section['title'] ) ? (string) $section['title'] : '';
+			$body  = isset( $section['body'] ) ? (string) $section['body'] : '';
+
+			$resolved[] = array(
+				'title'    => self::resolve( $title, $context ),
+				'body'     => self::wrap_inline_rich_text( self::resolve( $body, $context ) ),
+				'position' => isset( $section['position'] ) && 'before_items' === $section['position']
+					? 'before_items'
+					: 'after_totals',
+			);
+		}
+
+		return $resolved;
+	}
+
+	/**
+	 * Wrap plain inline HTML so document section styles apply consistently.
+	 *
+	 * @param string $html Sanitized HTML fragment.
+	 * @return string
+	 */
+	public static function wrap_inline_rich_text( string $html ): string {
+		if ( '' === trim( $html ) ) {
+			return $html;
+		}
+
+		if ( preg_match( '/<(p|div|ul|ol|h[1-6]|table|blockquote|br)\b/i', $html ) ) {
+			return $html;
+		}
+
+		return '<p>' . $html . '</p>';
 	}
 
 	/**
@@ -59,11 +132,37 @@ final class SalesEmailMergeTags {
 	}
 
 	/**
+	 * Load contact relation only for persisted documents (unit stubs skip DB).
+	 *
+	 * @param object $document Proposal, invoice, or similar Eloquent model.
+	 * @return void
+	 */
+	public static function ensure_document_contact_loaded( object $document ): void {
+		if ( ! method_exists( $document, 'loadMissing' ) || ! method_exists( $document, 'relationLoaded' ) ) {
+			return;
+		}
+
+		if ( $document->relationLoaded( 'contact' ) ) {
+			return;
+		}
+
+		if ( empty( $document->contact_id ) ) {
+			return;
+		}
+
+		if ( method_exists( $document, 'exists' ) && ! $document->exists ) {
+			return;
+		}
+
+		$document->loadMissing( 'contact' );
+	}
+
+	/**
 	 * @param ProposalModel $proposal Proposal.
 	 * @return AutomationContactModel
 	 */
 	public static function for_proposal( ProposalModel $proposal ): AutomationContactModel {
-		$proposal->loadMissing( 'contact' );
+		self::ensure_document_contact_loaded( $proposal );
 
 		return self::context_from_contact(
 			$proposal->contact,
@@ -76,7 +175,7 @@ final class SalesEmailMergeTags {
 	 * @return AutomationContactModel
 	 */
 	public static function for_invoice( InvoiceModel $invoice ): AutomationContactModel {
-		$invoice->loadMissing( 'contact' );
+		self::ensure_document_contact_loaded( $invoice );
 
 		$data = array( 'invoice_id' => (int) $invoice->id );
 		if ( ! empty( $invoice->proposal_id ) ) {
@@ -92,9 +191,7 @@ final class SalesEmailMergeTags {
 	 * @return AutomationContactModel
 	 */
 	public static function for_document( object $document, string $id_key ): AutomationContactModel {
-		if ( method_exists( $document, 'loadMissing' ) ) {
-			$document->loadMissing( 'contact' );
-		}
+		self::ensure_document_contact_loaded( $document );
 
 		// Eloquent models expose id/contact via __get — property_exists() is always false.
 		$contact = isset( $document->contact ) ? $document->contact : null;

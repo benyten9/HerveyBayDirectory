@@ -1,4 +1,8 @@
 <?php
+if(!defined('ABSPATH')) {
+	exit;
+}
+
 //register network menu and settings
 function perfmatters_network_admin_menu() {
 

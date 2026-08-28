@@ -75,7 +75,19 @@ class MessageProviderRegistry {
 	 * @since 1.0.0
 	 */
 	private function __construct() {
-		// Prevent direct instantiation
+		$this->load_default_providers();
+	}
+
+	/**
+	 * Load default provider slugs from settings.
+	 *
+	 * @return void
+	 */
+	private function load_default_providers(): void {
+		$whatsapp_provider = get_option( 'doublescale_default_whatsapp_provider', 'meta-whatsapp' );
+		if ( is_string( $whatsapp_provider ) && '' !== $whatsapp_provider ) {
+			$this->default_providers['whatsapp'] = $whatsapp_provider;
+		}
 	}
 
 	/**
@@ -204,6 +216,43 @@ class MessageProviderRegistry {
 	}
 
 	/**
+	 * Get providers that support a channel, as UI/API-friendly choice rows.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $channel Channel type ('sms', 'whatsapp').
+	 * @return array<int, array{slug: string, name: string, configured: bool, requires_template: bool}>
+	 */
+	public function get_providers_for_channel( string $channel ): array {
+		$choices = array();
+
+		foreach ( $this->providers as $provider ) {
+			if ( ! $provider->supports_channel( $channel ) ) {
+				continue;
+			}
+
+			$choices[] = array(
+				'slug'              => $provider->get_provider_slug(),
+				'name'              => $provider->get_provider_name(),
+				'configured'        => $provider->is_configured(),
+				'requires_template' => method_exists( $provider, 'requires_template' )
+					? (bool) $provider->requires_template( $channel )
+					: true,
+			);
+		}
+
+		/**
+		 * Filter WhatsApp/SMS provider choices exposed to the admin UI.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array  $choices Provider choice rows.
+		 * @param string $channel Channel type.
+		 */
+		return apply_filters( 'doublescale_message_provider_choices', $choices, $channel );
+	}
+
+	/**
 	 * Set default provider for a channel
 	 * Future: This can be made dynamic via settings
 	 *
@@ -215,6 +264,10 @@ class MessageProviderRegistry {
 	 */
 	public function set_default_provider( string $channel, string $provider_slug): void {
 		$this->default_providers[ $channel ] = $provider_slug;
+
+		if ( 'whatsapp' === $channel ) {
+			update_option( 'doublescale_default_whatsapp_provider', $provider_slug, false );
+		}
 	}
 
 	/**

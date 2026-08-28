@@ -22,7 +22,18 @@ class Integration extends Integration_Abstract {
 
 	public $description = 'Accept PayPal payments for invoices. Configure sandbox or live REST app credentials.';
 
+	/**
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'Accept PayPal payments for invoices. Configure sandbox or live REST app credentials.', 'doublescale' );
+	}
+
 	public $is_pro = false;
+
+	public $show_in_catalog = true;
+
+	public $catalog_category = 'payment';
 
 	public $option_name = 'paypal';
 
@@ -149,5 +160,14 @@ class Integration extends Integration_Abstract {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Catalog icon.
+	 *
+	 * @return string
+	 */
+	public function get_icon_url(): string {
+		return $this->plugin_asset_url( 'assets/images/paypal/paypal.png' );
 	}
 }

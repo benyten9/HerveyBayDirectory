@@ -12,19 +12,24 @@
 
 namespace DoubleScale\Pro\Modules\Automations\Actions\Messaging;
 
-use DoubleScale\Pro\Modules\Inbox\Abstracts\AbstractSendMessage;
-use DoubleScale\Modules\Automations\Models\AutomationModel;
-use DoubleScale\Modules\Automations\Models\AutomationStepModel;
-use DoubleScale\Modules\Automations\Models\AutomationContactModel;
-use DoubleScale\Modules\Contacts\Models\ContactModel;
-use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
-use DoubleScale\Modules\Campaigns\Models\TemplateModel;
+use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Core\Constants\MessageSourceTypes;
 use DoubleScale\Core\Constants\MessageDirection;
 use DoubleScale\Core\Constants\TrackingStatus;
-use DoubleScale\Modules\Campaigns\Campaign\WhatsappProcessing;
+use DoubleScale\Core\MergeTags\MergeTagsManager;
 use DoubleScale\Core\Validators\PhoneValidator;
+use DoubleScale\Modules\Automations\Models\AutomationContactModel;
+use DoubleScale\Modules\Automations\Models\AutomationModel;
+use DoubleScale\Modules\Automations\Models\AutomationStepModel;
+use DoubleScale\Modules\Campaigns\Campaign\WhatsappProcessing;
+use DoubleScale\Modules\Campaigns\Models\TemplateModel;
+use DoubleScale\Modules\Campaigns\Services\WhatsappConversationWindow;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel;
+use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Pro\Modules\Automations\Support\AutomationModuleStorage;
+use DoubleScale\Pro\Modules\Inbox\Abstracts\AbstractSendMessage;
+use DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry;
 
 /**
  * Send WhatsApp Action
@@ -65,7 +70,7 @@ class SendWhatsapp extends AbstractSendMessage
 	 *
 	 * @var string
 	 */
-	public $description = 'Send a WhatsApp message using a pre-approved Meta WhatsApp business template. Templates must be created in Meta Business Suite and imported via Settings > WhatsApp Templates.';
+	public $description = 'Send a WhatsApp message using a pre-approved Meta template, or a free-form auto-reply when the trigger is WhatsApp Message Received.';
 
 	/**
 	 * Action Attributes
@@ -209,6 +214,13 @@ class SendWhatsapp extends AbstractSendMessage
 				return $recipient_error;
 			}
 
+			$whatsapp_template = $step->get_setting( 'whatsapp_template', array() );
+			$message_type      = $this->get_message_type( $whatsapp_template );
+
+			if ( 'text' === $message_type ) {
+				return $this->process_freeform_message( $automation, $step, $automation_contact, $contact, $whatsapp_template );
+			}
+
 			// Get template - WhatsApp uses whatsapp_template.template_sid format
 			$template = $this->resolve_template_from_step( $step );
 
@@ -314,6 +326,165 @@ class SendWhatsapp extends AbstractSendMessage
 	}
 
 	/**
+	 * Resolve message type from whatsapp_template settings.
+	 *
+	 * @param array $whatsapp_template Step whatsapp_template setting.
+	 * @return string template|text
+	 */
+	private function get_message_type( array $whatsapp_template ): string {
+		$message_type = isset( $whatsapp_template['message_type'] ) ? (string) $whatsapp_template['message_type'] : 'template';
+		return 'text' === $message_type ? 'text' : 'template';
+	}
+
+	/**
+	 * Send a free-form session message (24h window required).
+	 *
+	 * @param AutomationModel         $automation         Automation.
+	 * @param AutomationStepModel    $step               Step.
+	 * @param AutomationContactModel $automation_contact Enrollment.
+	 * @param ContactModel           $contact            Contact.
+	 * @param array                  $whatsapp_template  Step settings.
+	 * @return bool|array
+	 */
+	private function process_freeform_message(
+		AutomationModel $automation,
+		AutomationStepModel $step,
+		AutomationContactModel $automation_contact,
+		ContactModel $contact,
+		array $whatsapp_template
+	) {
+		$channel_name = $this->get_channel_name();
+		$channel_type = $this->get_channel_type();
+
+		if ( 'whatsapp_received' !== $automation->trigger ) {
+			doublescale_get_logger()->info(
+				"Send {$channel_name} action: free-form message not allowed for this trigger",
+				array(
+					'automation_id' => $automation->id,
+					'trigger'       => $automation->trigger,
+					'contact_id'    => $contact->id,
+					'code'          => 'send_whatsapp_freeform_not_allowed',
+				)
+			);
+
+			return array(
+				'success' => false,
+				'message' => __( 'Free-form WhatsApp messages are only available when the trigger is WhatsApp Message Received.', 'doublescale'),
+				'code'    => 'freeform_not_allowed',
+			);
+		}
+
+		$body = isset( $whatsapp_template['body'] ) ? trim( (string) $whatsapp_template['body'] ) : '';
+		if ( '' === $body ) {
+			throw new \Exception( __( 'WhatsApp message body is required.', 'doublescale') );
+		}
+
+		$window = WhatsappConversationWindow::check( $contact->id );
+		if ( ! $window['active'] ) {
+			doublescale_get_logger()->info(
+				"Send {$channel_name} action: 24-hour session window closed",
+				array(
+					'automation_id' => $automation->id,
+					'contact_id'    => $contact->id,
+					'window'        => $window,
+					'code'          => 'send_whatsapp_window_closed',
+				)
+			);
+
+			return array(
+				'status'  => 'skipped',
+				'message' => __( '24-hour WhatsApp session window has closed. Free-form messages cannot be sent.', 'doublescale'),
+				'code'    => 'window_closed',
+			);
+		}
+
+		$processed_body = MergeTagsManager::instance()->process_merge_tags( $body, $automation_contact );
+		$recipient      = $this->get_recipient( $contact );
+
+		$tracking = CommunicationTrackingModel::create(
+			array(
+				'contact_id'  => $contact->id,
+				'mode'        => $this->get_tracking_mode(),
+				'direction'   => MessageDirection::OUTBOUND,
+				'source_type' => MessageSourceTypes::AUTOMATION,
+				'source_id'   => $automation->id,
+				'step_id'     => $step->id,
+				'recipient'   => $recipient,
+				'hash_key'    => \DoubleScale\Pro\Utils::generate_hash_key(),
+				'status'      => TrackingStatus::PENDING,
+			)
+		);
+
+		CommunicationTrackingMetaModel::create(
+			array(
+				'communication_tracking_id' => $tracking->id,
+				'meta_key'                  => 'message_body',
+				'meta_value'                => $processed_body,
+			)
+		);
+
+		$provider = MessageProviderRegistry::instance()->get_provider( $channel_type );
+		if ( ! $provider ) {
+			$tracking->update( array( 'status' => TrackingStatus::FAILED ) );
+			throw new \Exception( __( 'WhatsApp provider not configured.', 'doublescale') );
+		}
+
+		$api_data = array(
+			'To'                 => $recipient,
+			'Body'               => $processed_body,
+			'is_session_message' => true,
+		);
+
+		$webhook_url = $provider->get_webhook_url( CampaignChannel::STR_WHATSAPP );
+		if ( $webhook_url ) {
+			$api_data['StatusCallback'] = $webhook_url;
+		}
+
+		$result = $provider->send_message( CampaignChannel::STR_WHATSAPP, $api_data, $contact );
+
+		if ( ! isset( $result['success'] ) || ! $result['success'] ) {
+			$tracking->update( array( 'status' => TrackingStatus::FAILED ) );
+
+			doublescale_get_logger()->error(
+				"Send {$channel_name} action: Session message failed to send",
+				array(
+					'automation_id' => $automation->id,
+					'contact_id'    => $contact->id,
+					'tracking_id'   => $tracking->id,
+					'error'         => $result['error'] ?? 'Unknown error',
+					'code'          => 'send_whatsapp_failed',
+				)
+			);
+
+			return array(
+				'success' => false,
+				'message' => $result['error'] ?? __( 'WhatsApp message failed to send', 'doublescale'),
+				'code'    => 'send_failed',
+			);
+		}
+
+		$tracking->update(
+			array(
+				'status'      => TrackingStatus::SENT,
+				'sent_at'     => current_time( 'mysql', true ),
+				'external_id' => $result['message_id'] ?? null,
+			)
+		);
+
+		doublescale_get_logger()->info(
+			"Send {$channel_name} action: Session message sent successfully",
+			array(
+				'automation_id' => $automation->id,
+				'contact_id'    => $contact->id,
+				'tracking_id'   => $tracking->id,
+				'code'          => 'send_whatsapp_success',
+			)
+		);
+
+		return true;
+	}
+
+	/**
 	 * Resolve template from step settings
 	 *
 	 * Handles both new format (whatsapp_template.template_sid) and legacy format (template_id).
@@ -407,8 +578,11 @@ class SendWhatsapp extends AbstractSendMessage
 				'options'     => $template_options,
 				'settings'    => array(
 					'templateData' => $template_data,
+					'freeform'     => array(
+						'trigger' => 'whatsapp_received',
+					),
 				),
-				'description' => __( 'Select a pre-approved WhatsApp business template and configure its variables.', 'doublescale'),
+				'description' => __( 'Select a pre-approved WhatsApp business template, or send a free-form auto-reply when the trigger is WhatsApp Message Received.', 'doublescale'),
 			),
 		);
 	}
@@ -428,6 +602,12 @@ class SendWhatsapp extends AbstractSendMessage
 					'type'       => 'object',
 					'required'   => false,
 					'properties' => array(
+						'message_type' => array(
+							'type' => 'string',
+						),
+						'body' => array(
+							'type' => 'string',
+						),
 						'template_sid'       => array(
 							'type' => 'string', // External ID like "hello_world:en_US"
 						),

@@ -451,36 +451,31 @@ class CustomFieldsService {
 			return new WP_Error( 'not_allowed', __( 'You do not have permission to manage support settings.', 'doublescale' ), array( 'status' => 403 ) );
 		}
 
-		$definitions_by_key = array();
+		$prepared = array();
+		$seen_keys = array();
 		foreach ( $definitions as $field ) {
 			if ( ! is_array( $field ) ) {
 				continue;
 			}
-			$key = sanitize_key( (string) ( $field['key'] ?? '' ) );
-			if ( '' === $key ) {
-				$public_label = (string) ( $field['public_label'] ?? $field['label'] ?? '' );
-				if ( '' !== $public_label ) {
-					$key = sanitize_key( str_replace( ' ', '_', strtolower( $public_label ) ) );
-				}
-			}
-			if ( '' !== $key ) {
-				$definitions_by_key[ $key ] = $field;
-			}
+			$key = $this->resolve_definition_key( $field, $seen_keys );
+			$field['key']     = $key;
+			$seen_keys[ $key ] = true;
+			$prepared[]       = $field;
+		}
+
+		$definitions_by_key = array();
+		foreach ( $prepared as $field ) {
+			$definitions_by_key[ (string) $field['key'] ] = $field;
 		}
 
 		$normalized = array();
-		$seen_keys  = array();
-		foreach ( $definitions as $field ) {
-			if ( ! is_array( $field ) ) {
-				continue;
-			}
+		foreach ( $prepared as $field ) {
 			$row = $this->normalize_definition( $field, $definitions_by_key );
 			$key = (string) $row['key'];
-			if ( '' === $key || isset( $seen_keys[ $key ] ) ) {
+			if ( '' === $key ) {
 				continue;
 			}
-			$seen_keys[ $key ] = true;
-			$normalized[]      = $row;
+			$normalized[] = $row;
 		}
 
 		$support = Settings::get( 'support', array() );
@@ -489,6 +484,51 @@ class CustomFieldsService {
 		}
 		$support['custom_fields'] = $normalized;
 		return Settings::update( 'support', $support );
+	}
+
+	/**
+	 * Whether a sanitized key is usable (has at least one alphanumeric char).
+	 *
+	 * Underscore-only keys from non-Latin labels (e.g. "رقم الطلب" → "_")
+	 * are treated as unusable so we can generate a stable fallback.
+	 *
+	 * @param string $key Sanitized key.
+	 * @return bool
+	 */
+	private function is_usable_field_key( string $key ): bool {
+		return '' !== $key && 1 === preg_match( '/[a-z0-9]/', $key );
+	}
+
+	/**
+	 * Resolve a unique field key for persistence.
+	 *
+	 * Non-Latin public labels cannot be slugified via sanitize_key(); without a
+	 * fallback those definitions were silently dropped on save.
+	 *
+	 * @param array<string, mixed> $field     Raw field definition.
+	 * @param array<string, bool>  $seen_keys Keys already claimed in this save.
+	 * @return string
+	 */
+	private function resolve_definition_key( array $field, array $seen_keys = array() ): string {
+		$key = sanitize_key( (string) ( $field['key'] ?? '' ) );
+		if ( ! $this->is_usable_field_key( $key ) ) {
+			$public_label = (string) ( $field['public_label'] ?? $field['label'] ?? '' );
+			if ( '' !== $public_label ) {
+				$key = sanitize_key( str_replace( ' ', '_', strtolower( $public_label ) ) );
+			}
+		}
+		if ( ! $this->is_usable_field_key( $key ) ) {
+			$key = 'field_' . strtolower( wp_generate_password( 8, false, false ) );
+		}
+
+		$base = $key;
+		$i    = 2;
+		while ( isset( $seen_keys[ $key ] ) ) {
+			$key = $base . '_' . $i;
+			++$i;
+		}
+
+		return $key;
 	}
 
 	/**
@@ -532,8 +572,11 @@ class CustomFieldsService {
 		);
 		$admin_label  = sanitize_text_field( (string) ( $field['admin_label'] ?? '' ) );
 		$key          = sanitize_key( (string) ( $field['key'] ?? '' ) );
-		if ( '' === $key && '' !== $public_label ) {
+		if ( ! $this->is_usable_field_key( $key ) && '' !== $public_label ) {
 			$key = sanitize_key( str_replace( ' ', '_', strtolower( $public_label ) ) );
+		}
+		if ( ! $this->is_usable_field_key( $key ) ) {
+			$key = '';
 		}
 
 		$options = array();

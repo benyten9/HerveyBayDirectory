@@ -26,6 +26,17 @@ use DoubleScale\Core\UserRoles\Permissions;
 abstract class RestTaxonomyController extends RestController {
 
 	/**
+	 * Columns lists and tags may be sorted by.
+	 *
+	 * Both live in the shared terms table; a child can narrow or extend this.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string[]
+	 */
+	const SORTABLE_COLUMNS = array( 'name', 'slug', 'status', 'created_at', 'updated_at' );
+
+	/**
 	 * REST Base - must be defined in child class
 	 *
 	 * @since 1.0.0
@@ -171,7 +182,11 @@ abstract class RestTaxonomyController extends RestController {
 				'type'        => 'string',
 				'format'      => 'date',
 			),
-		);
+			'campaign_type' => array(
+				'description' => __( 'When set, each item includes eligible_contacts_count for that campaign channel.', 'doublescale' ),
+				'type'        => 'string',
+			),
+		) + $this->get_sorting_collection_params( static::SORTABLE_COLUMNS );
 	}
 
 	/**
@@ -258,6 +273,7 @@ abstract class RestTaxonomyController extends RestController {
 			$contact_id = $request->get_param( 'contact_id' ) ?? '';
 			$from       = $request->get_param( 'from' ) ?? null;
 			$to         = $request->get_param( 'to' ) ?? null;
+			$campaign_type = $request->get_param( 'campaign_type' ) ?? null;
 
 			$model_class = $this->model_class;
 			$query       = $model_class::query();
@@ -271,9 +287,7 @@ abstract class RestTaxonomyController extends RestController {
 					->paginate( $per_page, array( '*' ), 'page', $page );
 
 				foreach ( $items->items() as $item ) {
-					if ( ! isset( $item->contacts_count ) || is_null( $item->contacts_count ) ) {
-						$item->contacts_count = $item->contacts()->distinct()->count();
-					}
+					$this->attach_contacts_counts( $item, $campaign_type );
 				}
 
 				return new WP_REST_Response(
@@ -311,14 +325,13 @@ abstract class RestTaxonomyController extends RestController {
 			}
 
 			// Execute query with pagination
-			$items = $query->orderBy( 'created_at', 'desc' )
-				->paginate( $per_page, array( '*' ), 'page', $page );
+			$this->apply_sorting( $query, $request, static::SORTABLE_COLUMNS );
+
+			$items = $query->paginate( $per_page, array( '*' ), 'page', $page );
 
 			// Ensure contacts_count is calculated for each item
 			foreach ( $items->items() as $item ) {
-				if ( ! isset( $item->contacts_count ) || is_null( $item->contacts_count ) ) {
-					$item->contacts_count = $item->contacts()->distinct()->count();
-				}
+				$this->attach_contacts_counts( $item, $campaign_type );
 			}
 
 			return new WP_REST_Response(
@@ -478,9 +491,8 @@ abstract class RestTaxonomyController extends RestController {
 			}
 
 			// Ensure contacts_count is calculated
-			if ( ! isset( $item->contacts_count ) || is_null( $item->contacts_count ) ) {
-				$item->contacts_count = $item->contacts()->distinct()->count();
-			}
+			$campaign_type = $request->get_param( 'campaign_type' ) ?? null;
+			$this->attach_contacts_counts( $item, $campaign_type );
 
 			return new WP_REST_Response( $item, 200 );
 		} catch ( \Exception $e ) {
@@ -713,5 +725,24 @@ abstract class RestTaxonomyController extends RestController {
 	 */
 	public function delete_items_permissions_check( $request ) {
 		return Permissions::has_crm_manager_access();
+	}
+
+	/**
+	 * Attach contacts_count and optional eligible_contacts_count to a taxonomy item.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param object      $item Taxonomy model instance.
+	 * @param string|null $campaign_type Campaign channel when eligible count is needed.
+	 * @return void
+	 */
+	protected function attach_contacts_counts( $item, $campaign_type = null ) {
+		if ( ! isset( $item->contacts_count ) || is_null( $item->contacts_count ) ) {
+			$item->contacts_count = $item->contacts()->distinct()->count();
+		}
+
+		if ( $campaign_type && method_exists( $item, 'get_eligible_contacts_count' ) ) {
+			$item->eligible_contacts_count = $item->get_eligible_contacts_count( $campaign_type );
+		}
 	}
 }

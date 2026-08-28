@@ -10,6 +10,7 @@ namespace DoubleScale\Modules\Documents\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Modules\Sales\Capabilities;
 use DoubleScale\Modules\Documents\Constants\DiscountType;
 use DoubleScale\Modules\Documents\Constants\DocumentTemplate;
@@ -22,12 +23,11 @@ use DoubleScale\Modules\Documents\Models\ProposalModel;
 use DoubleScale\Modules\Documents\Rest\InvoiceShaper;
 use DoubleScale\Modules\Documents\Rest\ProposalShaper;
 use DoubleScale\Modules\Documents\Services\ConvertProposalToInvoice;
-use DoubleScale\Modules\Documents\Services\DocumentCustomerDetails;
-use DoubleScale\Modules\Documents\Services\DocumentIssuerSnapshot;
 use DoubleScale\Modules\Documents\Services\DocumentPdf;
+use DoubleScale\Modules\Documents\Services\DocumentSectionsSanitizer;
 use DoubleScale\Modules\Documents\Services\DuplicateProposal;
-use DoubleScale\Modules\Documents\Services\ProposalNotifications;
-use DoubleScale\Modules\Documents\Services\ProposalUrl;
+use DoubleScale\Modules\Documents\Services\SendProposal;
+use DoubleScale\Modules\Sales\Rest\SendsDocumentViaWhatsapp;
 use DoubleScale\Modules\Sales\Services\SalesNumbering;
 use DoubleScale\Modules\Sales\Services\SalesRepNotifications;
 use DoubleScale\Modules\Sales\Services\SalesSettings;
@@ -40,6 +40,8 @@ use WP_REST_Server;
  * RestProposalController class.
  */
 class RestProposalController extends RestController {
+
+	use SendsDocumentViaWhatsapp;
 
 	/**
 	 * @var string
@@ -75,6 +77,18 @@ class RestProposalController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'send_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/send-whatsapp',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'send_item_whatsapp' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
 			)
@@ -343,56 +357,85 @@ class RestProposalController extends RestController {
 			return $forbidden;
 		}
 
-		if ( ProposalStatus::DECLINED === (string) $proposal->status ) {
-			return new WP_Error( 'invalid_status', __( 'Declined proposals cannot be sent.', 'doublescale' ), array( 'status' => 400 ) );
-		}
-
-		if ( '' === ProposalUrl::get_page_url() ) {
-			return new WP_Error(
-				'no_proposal_page',
-				__( 'Create a WordPress page with the [doublescale_proposal] shortcode before sending proposals.', 'doublescale' ),
-				array( 'status' => 400 )
-			);
-		}
-
-		$gate = apply_filters( 'doublescale_sales_send_gate', null, 'proposal', $proposal );
-		if ( is_wp_error( $gate ) ) {
-			return $gate;
-		}
-
 		$params = $request->get_json_params();
 		if ( ! is_array( $params ) ) {
 			$params = $request->get_params();
 		}
 		$message = isset( $params['message'] ) ? sanitize_textarea_field( (string) $params['message'] ) : '';
 
-		$notifier = new ProposalNotifications();
-		if ( ! $notifier->send_proposal( $proposal, $message ) ) {
-			return new WP_Error(
-				'email_failed',
-				__( 'Failed to send the proposal email. Check the customer email and SMTP settings.', 'doublescale' ),
-				array( 'status' => 500 )
-			);
+		$channel = isset( $params['channel'] ) ? sanitize_key( (string) $params['channel'] ) : 'email';
+
+		$sent = SendProposal::send( $proposal, $message, $channel );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
 		}
-
-		if ( ProposalStatus::DRAFT === (string) $proposal->status ) {
-			$proposal->status = ProposalStatus::SENT;
-		}
-		DocumentCustomerDetails::snapshot_proposal_party_from_contact( $proposal );
-		DocumentIssuerSnapshot::freeze_if_needed( $proposal );
-		$proposal->sent_at = current_time( 'mysql' );
-		$proposal->save();
-
-		$this->log_proposal_sent( $proposal, $message );
-
-		do_action( 'doublescale_sales_proposal_sent', $proposal, $message );
-
-		( new SalesRepNotifications() )->notify_proposal_event( $proposal, 'sent' );
 
 		return new WP_REST_Response(
 			array(
 				'sent'     => true,
-				'proposal' => ProposalShaper::shape_admin( $proposal->fresh( array( 'contact', 'assigned_user' ) ), true ),
+				'proposal' => ProposalShaper::shape_admin( $sent->fresh( array( 'contact', 'assigned_user' ) ), true ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Prepare or perform a WhatsApp share for a proposal.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function send_item_whatsapp( $request ) {
+		$disabled = $this->require_module( 'documents' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
+		$proposal = ProposalModel::with( array( 'contact', 'assigned_user' ) )->find( (int) $request->get_param( 'id' ) );
+		if ( ! $proposal ) {
+			return new WP_Error( 'not_found', __( 'Proposal not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$forbidden = $this->require_ownership( $proposal );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
+
+		$blocked = SendProposal::check_preconditions( $proposal );
+		if ( $blocked ) {
+			return $blocked;
+		}
+
+		$params  = $this->read_whatsapp_params( $request );
+		$payload = $this->build_whatsapp_payload( $proposal, 'proposal', $params );
+
+		if ( 'auto' !== $params['mode'] ) {
+			return new WP_REST_Response( $this->whatsapp_link_response( $payload ), 200 );
+		}
+
+		$sent = $this->dispatch_whatsapp_auto( $proposal, 'proposal', $payload );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
+		}
+
+		return $this->finish_proposal_send( $proposal, $params['message'], 'whatsapp' );
+	}
+
+	/**
+	 * Advance status and record the send, once a channel has delivered.
+	 *
+	 * @param ProposalModel $proposal Proposal.
+	 * @param string        $message  Custom message.
+	 * @param string        $channel  Delivery channel.
+	 * @return WP_REST_Response
+	 */
+	private function finish_proposal_send( ProposalModel $proposal, string $message, string $channel ): WP_REST_Response {
+		$sent = SendProposal::record( $proposal, $message, $channel );
+
+		return new WP_REST_Response(
+			array(
+				'sent'     => true,
+				'proposal' => ProposalShaper::shape_admin( $sent->fresh( array( 'contact', 'assigned_user' ) ), true ),
 			),
 			200
 		);
@@ -463,6 +506,13 @@ class RestProposalController extends RestController {
 		$payload = $this->sanitize_payload( $request, false );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
+		}
+
+		if ( array_key_exists( 'currency', $payload ) ) {
+			$locked = DocumentCurrency::reject_if_locked( $proposal, $payload['currency'] );
+			if ( is_wp_error( $locked ) ) {
+				return $locked;
+			}
 		}
 
 		$discount_check = DiscountType::validate_payload( $payload, $proposal );
@@ -594,7 +644,7 @@ class RestProposalController extends RestController {
 			return $forbidden;
 		}
 
-		$shaped = ProposalShaper::shape_admin( $proposal, true );
+		$shaped = ProposalShaper::shape_for_render( $proposal );
 
 		return DocumentPdf::rest_response( $shaped, 'proposal', (string) $proposal->proposal_number );
 	}
@@ -747,42 +797,6 @@ class RestProposalController extends RestController {
 	}
 
 	/**
-	 * @param ProposalModel $proposal Proposal.
-	 * @param string        $message Optional custom message.
-	 * @return void
-	 */
-	private function log_proposal_sent( ProposalModel $proposal, string $message = '' ): void {
-		if ( ! class_exists( ActivityModel::class ) ) {
-			return;
-		}
-
-		$note = sprintf(
-			/* translators: 1: proposal number, 2: proposal subject */
-			__( 'Proposal %1$s sent: %2$s', 'doublescale' ),
-			(string) $proposal->proposal_number,
-			(string) $proposal->subject
-		);
-		if ( '' !== trim( $message ) ) {
-			$note .= ' — ' . $message;
-		}
-
-		ActivityModel::create(
-			array(
-				'contact_id'    => (int) $proposal->contact_id,
-				'activity_type' => ActivityTypes::EMAIL_SENT,
-				'data'          => array(
-					'title'       => __( 'Proposal sent', 'doublescale' ),
-					'type'        => 'system',
-					'note'        => $note,
-					'proposal_id' => (int) $proposal->id,
-				),
-				'user_id'       => get_current_user_id() ?: null,
-			)
-		);
-		// TODO(morph): wire proposal/invoice associations (ENTITY_TYPE_PROPOSAL).
-	}
-
-	/**
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
@@ -844,7 +858,6 @@ class RestProposalController extends RestController {
 		$string_fields = array(
 			'subject',
 			'status',
-			'currency',
 			'discount_type',
 			'to_name',
 			'address',
@@ -862,6 +875,14 @@ class RestProposalController extends RestController {
 			if ( array_key_exists( $field, $params ) ) {
 				$payload[ $field ] = sanitize_text_field( (string) $params[ $field ] );
 			}
+		}
+
+		if ( array_key_exists( 'currency', $params ) ) {
+			$currency = DocumentCurrency::sanitize_input( $params['currency'] );
+			if ( is_wp_error( $currency ) ) {
+				return $currency;
+			}
+			$payload['currency'] = $currency;
 		}
 
 		if ( array_key_exists( 'contact_id', $params ) ) {
@@ -882,6 +903,14 @@ class RestProposalController extends RestController {
 		}
 		if ( array_key_exists( 'line_items', $params ) && is_array( $params['line_items'] ) ) {
 			$payload['line_items'] = $params['line_items'];
+		}
+
+		if ( array_key_exists( 'terms', $params ) ) {
+			$payload['terms'] = wp_kses_post( (string) $params['terms'] );
+		}
+
+		if ( array_key_exists( 'sections', $params ) && is_array( $params['sections'] ) ) {
+			$payload['sections'] = DocumentSectionsSanitizer::sanitize( $params['sections'] );
 		}
 
 		if ( array_key_exists( 'template', $params ) ) {

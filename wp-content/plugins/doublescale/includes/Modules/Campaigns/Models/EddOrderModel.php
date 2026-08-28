@@ -14,6 +14,7 @@ namespace DoubleScale\Modules\Campaigns\Models;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 use WPEloquent\Eloquent\Model;
 
 /**

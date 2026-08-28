@@ -75,9 +75,9 @@ class ImapClient {
 	private $novalidate_cert = true;
 
 	/**
-	 * IMAP connection (Connection object from php-imap2, or native resource)
+	 * IMAP connection (php-imap2 Connection, native ext-imap resource, or IMAP\Connection)
 	 *
-	 * @var \Javanile\Imap2\Connection|resource|false
+	 * @var \Javanile\Imap2\Connection|\IMAP\Connection|resource|false
 	 */
 	private $connection = false;
 
@@ -133,7 +133,7 @@ class ImapClient {
 			}
 		);
 
-		$this->connection = imap2_open( $mailbox, $this->username, $this->password, $flags );
+		$this->connection = $this->open_mailbox( $mailbox, $flags );
 
 		restore_error_handler();
 
@@ -169,6 +169,44 @@ class ImapClient {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Open an IMAP mailbox.
+	 *
+	 * php-imap2's imap2_open() delegates to ext-imap when it is installed.
+	 * On PHP 8.1+ that returns an IMAP\Connection object, which imap2_check()
+	 * and imap2_search() still treat as invalid (they test is_resource()).
+	 * imap2_check() then fatals: invalidImapConnection() requires 3 arguments
+	 * but Mailbox::check() only passes 2. Use the pure-PHP client instead.
+	 *
+	 * @param string $mailbox Mailbox string.
+	 * @param int    $flags   imap2_open flags.
+	 * @return \Javanile\Imap2\Connection|\IMAP\Connection|resource|false
+	 */
+	private function open_mailbox( $mailbox, $flags ) {
+		if ( class_exists( '\Javanile\Imap2\Connection' ) ) {
+			return \Javanile\Imap2\Connection::open( $mailbox, $this->username, $this->password, $flags );
+		}
+
+		return imap2_open( $mailbox, $this->username, $this->password, $flags );
+	}
+
+	/**
+	 * Whether the handle is native ext-imap (resource or PHP 8 IMAP\Connection).
+	 *
+	 * @return bool
+	 */
+	private function is_native_imap_connection() {
+		if ( ! $this->connection ) {
+			return false;
+		}
+
+		if ( is_resource( $this->connection ) ) {
+			return 'imap' === get_resource_type( $this->connection );
+		}
+
+		return is_object( $this->connection ) && 'IMAP\Connection' === get_class( $this->connection );
 	}
 
 	/**
@@ -303,33 +341,29 @@ class ImapClient {
 			return array();
 		}
 
-		$emails = array();
-
-		// Search for unseen messages by message number (not UID).
-		// php-imap2 has bugs with FT_UID/SE_UID in several functions
-		// (fetchbody, msgno, fetch_overview), so we work with message
-		// numbers throughout and only resolve UIDs via imap2_uid().
-		// Optionally add a SINCE floor so old unread backlog is excluded
-		// server-side (IMAP SINCE is date-only: d-M-Y).
-		$criteria = 'UNSEEN';
+		$msgnos = array();
 		if ( null !== $since_date && '' !== (string) $since_date ) {
 			$timestamp = strtotime( (string) $since_date );
 			if ( false !== $timestamp ) {
-				$criteria .= ' SINCE "' . gmdate( 'd-M-Y', $timestamp ) . '"';
+				$msgnos = $this->search_since( 'UNSEEN', $timestamp );
 			}
 		}
 
-		$msgnos = imap2_search( $this->connection, $criteria );
+		// Some IMAP servers (including Rackspace) return no hits for SINCE even
+		// when unread mail exists. Fall back to a plain UNSEEN search; the caller
+		// still applies the connect-time anchor in PHP.
+		if ( empty( $msgnos ) ) {
+			$msgnos = $this->search_msgnos( 'UNSEEN' );
+		}
 
-		if ( ! $msgnos || ! is_array( $msgnos ) ) {
+		if ( empty( $msgnos ) ) {
 			return array();
 		}
 
-		// Process newest emails first (highest msgno) and cap at $limit
-		// to avoid timeouts on large mailboxes.
 		rsort( $msgnos );
 		$msgnos = array_slice( $msgnos, 0, $limit );
 
+		$emails = array();
 		foreach ( $msgnos as $msgno ) {
 			$email = $this->parse_email( $msgno );
 			if ( $email ) {
@@ -358,11 +392,18 @@ class ImapClient {
 			return array();
 		}
 
-		// IMAP SINCE uses date-only format: d-M-Y (e.g., "16-Feb-2026").
-		$imap_date = gmdate( 'd-M-Y', strtotime( $since_date ) );
-		$msgnos    = imap2_search( $this->connection, 'SINCE "' . $imap_date . '"' );
+		$msgnos    = array();
+		$timestamp = strtotime( (string) $since_date );
+		if ( false !== $timestamp ) {
+			$msgnos = $this->search_since( '', $timestamp );
+		}
 
-		if ( ! $msgnos || ! is_array( $msgnos ) ) {
+		// If SINCE is unsupported, take the newest sequence numbers instead.
+		if ( empty( $msgnos ) ) {
+			$msgnos = $this->newest_msgnos( $limit );
+		}
+
+		if ( empty( $msgnos ) ) {
 			return array();
 		}
 
@@ -378,6 +419,109 @@ class ImapClient {
 		}
 
 		return $emails;
+	}
+
+	/**
+	 * IMAP SEARCH that tries quoted and unquoted SINCE dates.
+	 *
+	 * @param string $prefix    Optional prefix such as UNSEEN (empty = date only).
+	 * @param int    $timestamp Unix timestamp for the date floor.
+	 * @return int[] Message numbers.
+	 */
+	private function search_since( $prefix, $timestamp ) {
+		$imap_date = gmdate( 'd-M-Y', (int) $timestamp );
+		$base      = trim( $prefix . ' SINCE' );
+		$msgnos    = $this->search_msgnos( $base . ' "' . $imap_date . '"' );
+		if ( empty( $msgnos ) ) {
+			$msgnos = $this->search_msgnos( $base . ' ' . $imap_date );
+		}
+		return $msgnos;
+	}
+
+	/**
+	 * Run IMAP SEARCH and return message numbers (never false).
+	 *
+	 * @param string $criteria IMAP search criteria.
+	 * @return int[]
+	 */
+	private function search_msgnos( $criteria ) {
+		if ( ! $this->connection || '' === trim( (string) $criteria ) ) {
+			return array();
+		}
+
+		if ( $this->is_native_imap_connection() && function_exists( 'imap_search' ) ) {
+			$msgnos = imap_search( $this->connection, $criteria );
+		} else {
+			$msgnos = imap2_search( $this->connection, $criteria );
+		}
+
+		if ( ! $msgnos || ! is_array( $msgnos ) ) {
+			return array();
+		}
+
+		return array_map( 'intval', $msgnos );
+	}
+
+	/**
+	 * Newest message numbers in the open mailbox (sequence numbers, not UIDs).
+	 *
+	 * @param int $limit Max messages.
+	 * @return int[]
+	 */
+	private function newest_msgnos( $limit ) {
+		$n = $this->mailbox_message_count();
+		if ( $n <= 0 ) {
+			return array();
+		}
+
+		$limit = max( 1, (int) $limit );
+		$start = max( 1, $n - $limit + 1 );
+		$out   = array();
+		for ( $i = $n; $i >= $start; $i-- ) {
+			$out[] = $i;
+		}
+		return $out;
+	}
+
+	/**
+	 * Total messages in the currently selected mailbox.
+	 *
+	 * @return int
+	 */
+	public function mailbox_message_count() {
+		if ( ! $this->connection ) {
+			return 0;
+		}
+
+		if ( $this->is_native_imap_connection() && function_exists( 'imap_num_msg' ) ) {
+			$n = imap_num_msg( $this->connection );
+			return false !== $n && null !== $n ? (int) $n : 0;
+		}
+
+		if ( function_exists( 'imap2_num_msg' ) ) {
+			$n = imap2_num_msg( $this->connection );
+			if ( false !== $n && null !== $n ) {
+				return (int) $n;
+			}
+		}
+
+		// Do not call imap2_check(): php-imap2 0.1.10 Mailbox::check() fatals on
+		// an invalid handle (invalidImapConnection() called with 2 args, needs 3).
+
+		return 0;
+	}
+
+	/**
+	 * Lightweight INBOX stats for poll diagnostics.
+	 *
+	 * @return array{nmsgs:int,unseen:int}
+	 */
+	public function get_mailbox_status() {
+		$unseen = $this->search_msgnos( 'UNSEEN' );
+		return array(
+			'nmsgs'  => $this->mailbox_message_count(),
+			'unseen' => count( $unseen ),
+		);
 	}
 
 	/**
@@ -758,19 +902,14 @@ class ImapClient {
 			return 0;
 		}
 
-		// Use message numbers (not SE_UID) for consistency with fetch_unseen(),
-		// as php-imap2 has known bugs with UID-based flags.
-		$criteria = 'UNSEEN';
 		if ( null !== $since_date && '' !== (string) $since_date ) {
 			$timestamp = strtotime( (string) $since_date );
 			if ( false !== $timestamp ) {
-				$criteria .= ' SINCE "' . gmdate( 'd-M-Y', $timestamp ) . '"';
+				return count( $this->search_since( 'UNSEEN', $timestamp ) );
 			}
 		}
 
-		$msgnos = imap2_search( $this->connection, $criteria );
-
-		return $msgnos && is_array( $msgnos ) ? count( $msgnos ) : 0;
+		return count( $this->search_msgnos( 'UNSEEN' ) );
 	}
 
 	/**

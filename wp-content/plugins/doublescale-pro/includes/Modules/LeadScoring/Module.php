@@ -16,8 +16,20 @@ use DoubleScale\Core\Container;
 use DoubleScale\Modules\Automations\Rules\LeadScoring\LeadScoreLevel;
 use DoubleScale\Modules\Automations\Rules\LeadScoring\LeadScorePoints;
 use DoubleScale\Modules\Automations\Services\RulesManager;
+use DoubleScale\Pro\Modules\LeadScoring\Abilities\LeadScoringAbilities;
 
 final class Module extends AbstractModule {
+
+	/**
+	 * Read-only lead scoring abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return LeadScoringAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'leadscoring';

@@ -34,13 +34,31 @@ class MigrationRunner {
 			migration VARCHAR(191) NOT NULL,
 			ran_at DATETIME NOT NULL,
 			PRIMARY KEY (id),
-			UNIQUE KEY module_migration (module, migration)
+			UNIQUE KEY module_migration (module, migration(150))
 		) {$charset_collate};";
 
 		if ( ! function_exists( 'dbDelta' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		}
 		dbDelta( $sql );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Post-dbDelta existence check.
+		$created = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		if ( $created !== $table ) {
+			$error = $wpdb->last_error ? $wpdb->last_error : 'unknown database error';
+			if ( function_exists( 'doublescale_get_logger' ) ) {
+				doublescale_get_logger()->error(
+					'Failed to create DoubleScale migrations tracking table',
+					array(
+						'table' => $table,
+						'error' => $error,
+					)
+				);
+			} else {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'DoubleScale: failed to create table %s (%s)', $table, $error ) );
+			}
+		}
 	}
 
 	/**

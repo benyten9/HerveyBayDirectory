@@ -401,7 +401,23 @@ class ProjectModel extends Model {
 
 		static::updated(
 			function ( $project ) {
-				do_action( 'doublescale_project_updated', $project, $project->getChanges() );
+				$changes = $project->getChanges();
+
+				do_action( 'doublescale_project_updated', $project, $changes );
+
+				if ( is_array( $changes ) && array_key_exists( 'owner_id', $changes ) ) {
+					$old_owner_id = $project->getOriginal( 'owner_id' );
+					$new_owner_id = $project->owner_id;
+
+					/**
+					 * Fires when a project's owner changes.
+					 *
+					 * @param ProjectModel $project      Updated project.
+					 * @param int|null     $old_owner_id Previous owner user ID.
+					 * @param int|null     $new_owner_id New owner user ID.
+					 */
+					do_action( 'doublescale_project_owner_changed', $project, $old_owner_id, $new_owner_id );
+				}
 			}
 		);
 

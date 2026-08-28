@@ -2,7 +2,7 @@
 /**
  * Client Portal booking endpoints.
  *
- *   GET  /doublescale/v1/portal/bookings                  (filter: upcoming|past|cancelled)
+ *   GET  /doublescale/v1/portal/bookings                  (filter: all|upcoming|past|cancelled)
  *   GET  /doublescale/v1/portal/bookings/{id}             (one booking, ownership-gated)
  *   POST /doublescale/v1/portal/bookings/{id}/cancel      (attendee cancel)
  *   GET  /doublescale/v1/portal/bookings/{id}/reschedule-url
@@ -58,8 +58,8 @@ class RestPortalBookingController extends RestController {
 					'args'                => array(
 						'filter' => array(
 							'type'    => 'string',
-							'enum'    => array( 'upcoming', 'past', 'cancelled' ),
-							'default' => 'upcoming',
+							'enum'    => array( 'all', 'upcoming', 'past', 'cancelled' ),
+							'default' => 'all',
 						),
 					),
 				),
@@ -132,6 +132,9 @@ class RestPortalBookingController extends RestController {
 		// `cancelled`, so a waiting booking surfaces in Upcoming (future slot)
 		// or Past (slot already elapsed) with its own "Waiting" status badge.
 		switch ( $filter ) {
+			case 'all':
+				$query->orderBy( 'start_time', 'desc' );
+				break;
 			case 'cancelled':
 				$query->where( 'status', 'cancelled' )->orderBy( 'start_time', 'desc' );
 				break;

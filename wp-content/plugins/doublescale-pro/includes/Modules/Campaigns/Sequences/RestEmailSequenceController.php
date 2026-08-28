@@ -30,6 +30,18 @@ class RestEmailSequenceController extends RestController {
 	protected $rest_base = 'email-sequences';
 
 	/**
+	 * Columns the email sequence list may be sorted by.
+	 *
+	 * Sequences are stored in the campaigns table, so these mirror
+	 * AbstractCampaignController::SORTABLE_COLUMNS.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string[]
+	 */
+	const SORTABLE_COLUMNS = array( 'name', 'status', 'type', 'created_at', 'updated_at' );
+
+	/**
 	 * Campaign type
 	 *
 	 * @var int|string
@@ -278,7 +290,7 @@ class RestEmailSequenceController extends RestController {
 				'type'        => 'string',
 				'format'      => 'date',
 			),
-		);
+		) + $this->get_sorting_collection_params( self::SORTABLE_COLUMNS );
 	}
 
 	/**
@@ -309,7 +321,9 @@ class RestEmailSequenceController extends RestController {
 		}
 
 		$total_count     = $query->count();
-		$email_sequences = $query->orderBy( 'created_at', 'desc' )->paginate( $per_page, array( '*' ), 'page', $page );
+		$this->apply_sorting( $query, $request, self::SORTABLE_COLUMNS );
+
+		$email_sequences = $query->paginate( $per_page, array( '*' ), 'page', $page );
 		foreach ( $email_sequences as $email_sequence ) {
 			$email_count                      = $email_sequence->sequences_mail()->count();
 			$email_sequence->email_count      = $email_count;

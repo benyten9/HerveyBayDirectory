@@ -22,7 +22,7 @@ class SmsReceived extends Trigger {
 	 *
 	 * @var string
 	 */
-	public $name = 'Sms Received';
+	public $name = 'SMS Received';
 
 	/**
 	 * Trigger Slug
@@ -36,7 +36,7 @@ class SmsReceived extends Trigger {
 	 *
 	 * @var string
 	 */
-	public $description = 'Triggers when an Sms is received from a contact';
+	public $description = 'Triggers when an SMS is received from a contact';
 
 	/**
 	 * Trigger Attributes
@@ -50,7 +50,7 @@ class SmsReceived extends Trigger {
 	 *
 	 * @var string
 	 */
-	public $source = 'crm';
+	public $source = 'messaging';
 
 	/**
 	 * Group

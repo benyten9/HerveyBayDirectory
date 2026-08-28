@@ -14,8 +14,20 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
+use DoubleScale\Pro\Modules\Tasks\Abilities\TaskAbilities;
 
 final class Module extends AbstractModule {
+
+	/**
+	 * Read-only task abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return TaskAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'tasks';
@@ -58,9 +70,9 @@ final class Module extends AbstractModule {
 			$dir . '/TaskRecurrencesTable.php',
 			$dir . '/TaskSubtasksTable.php',
 			$dir . '/SubtaskGroupsTable.php',
-			$dir . '/AddColumnsToSubtasksTable.php',
-			$dir . '/AlterSubtasksDueDateToDatetime.php',
-			$dir . '/AddNotesToSubtasksTable.php',
+			$dir . '/SubtasksTableColumns.php',
+			$dir . '/SubtasksTableDueDateToDatetime.php',
+			$dir . '/SubtasksTableNotesColumn.php',
 		);
 	}
 
@@ -97,13 +109,13 @@ final class Module extends AbstractModule {
 	public function boot( Container $container ): void {
 		parent::boot( $container );
 
-		Migrations\AddColumnsToSubtasksTable::ensure_columns();
-		Migrations\AlterSubtasksDueDateToDatetime::ensure();
-		Migrations\AddNotesToSubtasksTable::ensure();
-		Migrations\AddStatusIdToTasksTable::ensure();
-		Migrations\RenameTaskStageIdToStatusId::ensure();
-		Migrations\AddIsProtectedToTaskStatuses::ensure();
-		Migrations\AddColumnsToTaskRecurrencesTable::ensure();
+		Migrations\SubtasksTableColumns::ensure_columns();
+		Migrations\SubtasksTableDueDateToDatetime::ensure();
+		Migrations\SubtasksTableNotesColumn::ensure();
+		Migrations\TasksTableStatusIdColumn::ensure();
+		Migrations\TasksTableStageIdToStatusIdColumn::ensure();
+		Migrations\TaskStatusesTableProtectedColumn::ensure();
+		Migrations\TaskRecurrencesTableColumns::ensure();
 
 		$container->get( Reminders\TaskReminderScheduler::class );
 		$container->get( Reminders\TaskAutomationSweeper::class );

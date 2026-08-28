@@ -57,8 +57,8 @@ class ContactsTable extends Migration {
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),
 			UNIQUE KEY email (email),
-			UNIQUE KEY phone (phone),
-			UNIQUE KEY whatsapp_phone (whatsapp_phone),
+			UNIQUE KEY phone (phone(191)),
+			UNIQUE KEY whatsapp_phone (whatsapp_phone(191)),
 			KEY email_status (email_status),
 			KEY sms_status (sms_status),
 			KEY whatsapp_status (whatsapp_status)';

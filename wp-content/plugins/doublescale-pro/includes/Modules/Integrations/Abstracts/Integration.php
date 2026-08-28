@@ -62,6 +62,31 @@ abstract class Integration {
 	public $required_plan = null;
 
 	/**
+	 * Whether to show a card on the Integrations catalog page.
+	 * CRM/automation-only integrations should leave this false.
+	 *
+	 * @var bool
+	 */
+	public $show_in_catalog = false;
+
+	/**
+	 * Catalog tab this integration belongs to.
+	 *
+	 * One of: payment, messaging, forms, automation, other.
+	 *
+	 * @var string
+	 */
+	public $catalog_category = 'other';
+
+	/**
+	 * Absolute URL for the Integrations catalog card image.
+	 * Prefer setting this (or override get_icon_url()) from the Integration class — no frontend whitelist needed.
+	 *
+	 * @var string
+	 */
+	public $icon_url = '';
+
+	/**
 	 * Option name
 	 *
 	 * @var string
@@ -115,6 +140,15 @@ abstract class Integration {
 		}
 
 		$this->option_name = 'doublescale_' . $this->slug . '_settings';
+	}
+
+	/**
+	 * Catalog / REST description. Child classes may override for extractable strings.
+	 *
+	 * @return string
+	 */
+	public function get_description(): string {
+		return is_string( $this->description ) ? __( $this->description, 'doublescale' ) : '';
 	}
 
 	/**
@@ -210,5 +244,77 @@ abstract class Integration {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Catalog card image URL for the Integrations UI.
+	 *
+	 * @return string Absolute URL or empty string.
+	 */
+	public function get_icon_url(): string {
+		return is_string( $this->icon_url ) ? $this->icon_url : '';
+	}
+
+	/**
+	 * Integrations catalog tab slug.
+	 *
+	 * @return string
+	 */
+	public function get_catalog_category(): string {
+		$allowed = array( 'payment', 'messaging', 'forms', 'automation', 'other' );
+		$category = is_string( $this->catalog_category ) ? $this->catalog_category : 'other';
+		return in_array( $category, $allowed, true ) ? $category : 'other';
+	}
+
+	/**
+	 * Build an absolute URL for a catalog icon.
+	 *
+	 * Icons ship with the free plugin (WordPress.org package). When the file is
+	 * missing there (older free install), fall back to the same path under Pro.
+	 *
+	 * @param string $relative Path relative to the plugin root (e.g. assets/images/twilio/twilio.png).
+	 * @return string
+	 */
+	protected function plugin_asset_url( string $relative ): string {
+		$relative = ltrim( $relative, '/' );
+
+		if ( defined( 'DOUBLESCALE_PLUGIN_DIR' ) && defined( 'DOUBLESCALE_PLUGIN_URL' ) ) {
+			$free_path = trailingslashit( DOUBLESCALE_PLUGIN_DIR ) . $relative;
+			if ( is_readable( $free_path ) ) {
+				return trailingslashit( DOUBLESCALE_PLUGIN_URL ) . $relative;
+			}
+		}
+
+		if ( defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) && defined( 'DOUBLESCALE_PRO_PLUGIN_URL' ) ) {
+			$pro_path = trailingslashit( DOUBLESCALE_PRO_PLUGIN_DIR ) . $relative;
+			if ( is_readable( $pro_path ) ) {
+				return trailingslashit( DOUBLESCALE_PRO_PLUGIN_URL ) . $relative;
+			}
+		}
+
+		// Last resort: prefer free URL so placeholders still resolve after icons ship.
+		if ( defined( 'DOUBLESCALE_PLUGIN_URL' ) ) {
+			return trailingslashit( DOUBLESCALE_PLUGIN_URL ) . $relative;
+		}
+
+		if ( defined( 'DOUBLESCALE_PRO_PLUGIN_URL' ) ) {
+			return trailingslashit( DOUBLESCALE_PRO_PLUGIN_URL ) . $relative;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Build an absolute URL under the Pro plugin assets directory (when available).
+	 *
+	 * @param string $relative Path relative to Pro assets/.
+	 * @return string
+	 */
+	protected function pro_plugin_asset_url( string $relative ): string {
+		if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_URL' ) ) {
+			return '';
+		}
+
+		return trailingslashit( DOUBLESCALE_PRO_PLUGIN_URL ) . ltrim( $relative, '/' );
 	}
 }

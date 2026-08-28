@@ -64,12 +64,14 @@ final class InvoicePayable {
 			return false;
 		}
 
-		$modes = PaymentMode::normalize_list( $invoice->allowed_payment_modes );
-		if ( empty( $modes ) ) {
+		$split = PaymentMode::split_modes( $invoice->allowed_payment_modes );
+		// Offline-only lists are staff recording methods. They do not restrict
+		// which configured online gateways appear on the public invoice.
+		if ( empty( $split['online'] ) ) {
 			return true;
 		}
 
-		return in_array( $gateway_slug, $modes, true );
+		return in_array( $gateway_slug, $split['online'], true );
 	}
 
 	/**

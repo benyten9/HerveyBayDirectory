@@ -293,6 +293,40 @@ final class RulesManager {
 				'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
 					|| ! doublescale_is_module_active( 'tasks' ),
 			),
+			'project'                   => array(
+				'name'        => __( 'Project', 'doublescale' ),
+				'key'         => 'project',
+				'rules'       => array(),
+				'triggers'    => array(
+					'project_created',
+					'project_status_changed',
+					'project_completed',
+					'project_owner_changed',
+					'project_due_soon',
+					'project_overdue',
+					'project_comment_posted',
+					'project_converted_from_deal',
+				),
+				'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+					|| ! doublescale_is_module_active( 'projects' ),
+			),
+			'project_fields'            => array(
+				'name'        => __( 'Project Fields', 'doublescale' ),
+				'key'         => 'project_fields',
+				'rules'       => array(),
+				'triggers'    => array(
+					'project_created',
+					'project_status_changed',
+					'project_completed',
+					'project_owner_changed',
+					'project_due_soon',
+					'project_overdue',
+					'project_comment_posted',
+					'project_converted_from_deal',
+				),
+				'is_disabled' => ! function_exists( 'doublescale_is_module_active' )
+					|| ! doublescale_is_module_active( 'projects' ),
+			),
 			'support'                   => array(
 				'name'        => __( 'Helpdesk', 'doublescale' ),
 				'key'         => 'support',

@@ -148,6 +148,11 @@ class SendEmail extends AbstractSendMessage {
 				'label'    => __( 'Body', 'doublescale'),
 				'type'     => 'open_builder',
 				'required' => true,
+				// Enables "Send test email" in the builder header so the email
+				// can be previewed in a real inbox before the automation runs.
+				'settings' => array(
+					'supportsTestEmail' => true,
+				),
 			),
 			'from_name'  => array(
 				'label'       => __( 'From Name', 'doublescale'),

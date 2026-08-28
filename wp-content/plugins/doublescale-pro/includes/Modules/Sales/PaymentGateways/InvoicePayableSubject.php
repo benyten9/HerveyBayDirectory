@@ -9,12 +9,15 @@ namespace DoubleScale\Pro\Modules\Sales\PaymentGateways;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Payment\GatewayManager;
 use DoubleScale\Core\Payment\PayableSubject;
+use DoubleScale\Core\Settings\Settings;
 use DoubleScale\Modules\Documents\Constants\PaymentMode;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Models\PaymentModel;
 use DoubleScale\Modules\Documents\Services\InvoicePayments;
 use DoubleScale\Pro\Modules\Integrations\Stripe\Utils as StripeUtils;
+use DoubleScale\Pro\Compat\PaymentModeSlugs;
 
 /**
  * InvoicePayableSubject class.
@@ -53,7 +56,7 @@ final class InvoicePayableSubject implements PayableSubject {
 	}
 
 	public function currency(): string {
-		return (string) $this->invoice->currency;
+		return \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $this->invoice->currency, $this->invoice->sent_at );
 	}
 
 	public function customer_name(): ?string {
@@ -108,16 +111,25 @@ final class InvoicePayableSubject implements PayableSubject {
 
 		$currency        = strtolower( (string) ( $charge->currency ?? $this->invoice->currency ) );
 		$expected_amount = $this->amount_due();
+		$gateway         = GatewayManager::instance()->get( GatewayManager::CONTEXT_INVOICE, $payment_mode );
+		$is_major_units  = $gateway
+			? $gateway->uses_major_units()
+			: in_array(
+				$payment_mode,
+				array( PaymentMode::PAYPAL, PaymentModeSlugs::woocommerce(), PaymentModeSlugs::surecart() ),
+				true
+			);
 
-		if ( PaymentMode::PAYPAL === $payment_mode ) {
+		if ( $is_major_units ) {
 			$received_amount = round( (float) ( $charge->amount ?? 0 ), 2 );
 			if ( $received_amount > $expected_amount + 0.01 ) {
 				doublescale_get_logger()->error(
-					'PayPal invoice payment exceeds balance due',
+					'Invoice payment exceeds balance due',
 					array(
-						'code'       => 'paypal_invoice_amount_mismatch',
-						'invoice_id' => (int) $this->invoice->id,
-						'capture_id' => $transaction_id,
+						'code'           => $payment_mode . '_invoice_amount_mismatch',
+						'invoice_id'     => (int) $this->invoice->id,
+						'transaction_id' => $transaction_id,
+						'payment_mode'   => $payment_mode,
 					)
 				);
 				return;
@@ -140,17 +152,35 @@ final class InvoicePayableSubject implements PayableSubject {
 			}
 		}
 
-		$note = PaymentMode::PAYPAL === $payment_mode
-			? sprintf(
+		$invoice_number = (string) $this->invoice->invoice_number;
+
+		if ( $gateway ) {
+			$note = $gateway->payment_note( $invoice_number );
+		} elseif ( PaymentMode::PAYPAL === $payment_mode ) {
+			$note = sprintf(
 				/* translators: %s: invoice number */
 				__( 'PayPal payment for invoice %s', 'doublescale' ),
-				(string) $this->invoice->invoice_number
-			)
-			: sprintf(
+				$invoice_number
+			);
+		} elseif ( PaymentModeSlugs::woocommerce() === $payment_mode ) {
+			$note = sprintf(
+				/* translators: %s: invoice number */
+				__( 'WooCommerce payment for invoice %s', 'doublescale' ),
+				$invoice_number
+			);
+		} elseif ( PaymentModeSlugs::surecart() === $payment_mode ) {
+			$note = sprintf(
+				/* translators: %s: invoice number */
+				__( 'SureCart payment for invoice %s', 'doublescale' ),
+				$invoice_number
+			);
+		} else {
+			$note = sprintf(
 				/* translators: %s: invoice number */
 				__( 'Stripe payment for invoice %s', 'doublescale' ),
-				(string) $this->invoice->invoice_number
+				$invoice_number
 			);
+		}
 
 		$payment = new PaymentModel();
 		$payment->fill(

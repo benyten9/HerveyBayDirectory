@@ -36,6 +36,15 @@ class RestFormController extends RestController {
 	protected $rest_base = 'forms';
 
 	/**
+	 * Columns the forms list may be sorted by.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string[]
+	 */
+	const SORTABLE_COLUMNS = array( 'name', 'form_type', 'status', 'created_at', 'updated_at' );
+
+	/**
 	 * Register the routes for the objects of the controller.
 	 *
 	 * @since 1.0.0
@@ -212,7 +221,7 @@ class RestFormController extends RestController {
 				'type'        => 'string',
 				'format'      => 'date',
 			),
-		);
+		) + $this->get_sorting_collection_params( self::SORTABLE_COLUMNS );
 	}
 
 	/**
@@ -244,7 +253,9 @@ class RestFormController extends RestController {
 			if ( $to ) {
 				$query->where( 'created_at', '<=', $to );
 			}
-			$forms = $query->orderBy( 'created_at', 'desc' )->paginate( $per_page, array( '*' ), 'page', $page );
+			$this->apply_sorting( $query, $request, self::SORTABLE_COLUMNS );
+
+			$forms = $query->paginate( $per_page, array( '*' ), 'page', $page );
 
 			return new WP_REST_Response( $forms->toArray() + array( 'total_count' => $total_count ), 200 );
 		} catch ( \Exception $e ) {

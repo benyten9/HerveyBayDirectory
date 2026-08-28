@@ -5,6 +5,7 @@ namespace DoubleScale\Core\Abstracts;
 defined( 'ABSPATH' ) || exit;
 
 use WPEloquent\Eloquent\Model;
+use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use Illuminate\Support\Str;
 
@@ -108,6 +109,60 @@ class TaxonomyModel extends Model {
 		)
 			->wherePivot( 'taxonomy_type', $this->model_slug )
 			->withPivot( 'taxonomy_type' );
+	}
+
+	/**
+	 * Count contacts on this taxonomy who can receive a campaign on the given channel.
+	 *
+	 * Mirrors campaign recipient rules: channel status subscribed, non-empty recipient
+	 * field, and (for lists) subscribed pivot on the list relationship.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string|int $campaign_type Campaign channel (email, sms, whatsapp).
+	 * @return int
+	 */
+	public function get_eligible_contacts_count( $campaign_type ) {
+		$channel_int = CampaignChannel::ensure_integer( $campaign_type );
+		if ( null === $channel_int ) {
+			return (int) $this->contacts()->distinct()->count();
+		}
+
+		$channel_string  = CampaignChannel::to_string( $channel_int );
+		$status_field    = $channel_string . '_status';
+		$recipient_field = CampaignChannel::get_recipient_field( $channel_int );
+
+		if ( ! $recipient_field ) {
+			return (int) $this->contacts()->distinct()->count();
+		}
+
+		global $wpdb;
+		$pivot_status = $wpdb->prefix . 'doublescale_contact_taxonomy_relationship.status';
+		$taxonomy_id  = (int) $this->id;
+
+		$query = ContactModel::query()
+			->where( $status_field, 'subscribed' )
+			->whereNotNull( $recipient_field )
+			->where( $recipient_field, '!=', '' );
+
+		if ( 'list' === $this->model_slug ) {
+			$query->whereHas(
+				'lists',
+				function ( $q ) use ( $taxonomy_id, $pivot_status ) {
+					$q->where( $q->getModel()->getTable() . '.id', $taxonomy_id )
+						->where( $pivot_status, 'subscribed' );
+				}
+			);
+		} else {
+			$query->whereHas(
+				'tags',
+				function ( $q ) use ( $taxonomy_id ) {
+					$q->where( $q->getModel()->getTable() . '.id', $taxonomy_id );
+				}
+			);
+		}
+
+		return (int) $query->count();
 	}
 
 	/**

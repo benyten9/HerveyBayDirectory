@@ -14,6 +14,7 @@ use DoubleScale\Pro\Modules\Contracts\Models\ContractModel;
 use DoubleScale\Pro\Modules\Contracts\Services\ContractUrl;
 use DoubleScale\Pro\Modules\Contracts\Services\ContractContentMergeTags;
 use DoubleScale\Modules\Sales\Services\SalesSettings;
+use DoubleScale\Core\Constants\Currencies;
 use DoubleScale\Core\Settings\Settings;
 
 /**
@@ -37,7 +38,8 @@ final class ContractShaper {
 			'assigned_user_id'   => $contract->assigned_user_id ? (int) $contract->assigned_user_id : null,
 			'contract_type_id'   => $contract->contract_type_id ? (int) $contract->contract_type_id : null,
 			'contract_value'     => (float) $contract->contract_value,
-			'currency'           => Settings::document_currency( $contract->currency, $contract->sent_at ),
+			'currency'           => \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $contract->currency, $contract->sent_at ),
+			'currency_stored'    => Currencies::stored_or_null( $contract->currency ),
 			'start_date'         => $contract->start_date,
 			'end_date'           => $contract->end_date,
 			'description'        => $contract->description ? (string) $contract->description : '',
@@ -102,7 +104,7 @@ final class ContractShaper {
 			'subject'             => (string) $contract->subject,
 			'status'              => (string) $contract->status,
 			'contract_value'      => (float) $contract->contract_value,
-			'currency'            => Settings::document_currency( $contract->currency, $contract->sent_at ),
+			'currency'            => \DoubleScale\Pro\Compat\SettingsCurrency::document_currency( $contract->currency, $contract->sent_at ),
 			'start_date'          => $contract->start_date,
 			'end_date'            => $contract->end_date,
 			'description'         => self::resolved_description( $contract ),

@@ -11,7 +11,9 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
+use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Core\Container;
+use DoubleScale\Modules\Documents\Abilities\DocumentAbilities;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
 use DoubleScale\Modules\Documents\Renderer\InvoiceFrontendHandler;
 use DoubleScale\Modules\Documents\Renderer\ProposalFrontendHandler;
@@ -29,10 +31,21 @@ use DoubleScale\Modules\Sales\Services\SalesRepNotifications;
 /**
  * Sales documents module (proposals + invoices + payments).
  */
-final class Module extends AbstractSalesChildModule {
+final class Module extends AbstractSalesChildModule implements ProvidesAbilities {
 
 	public function slug(): string {
 		return 'documents';
+	}
+
+	/**
+	 * Read-only invoice and proposal abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return DocumentAbilities::definitions();
 	}
 
 	public function label(): string {
@@ -80,6 +93,7 @@ final class Module extends AbstractSalesChildModule {
 			$this->sales_migration_path( 'SalesProposalsTable.php' ),
 			$this->sales_migration_path( 'SalesProposalTableViewedAt.php' ),
 			$this->sales_migration_path( 'SalesProposalTableSignatureColumns.php' ),
+			$this->sales_migration_path( 'SalesProposalTableContentColumns.php' ),
 			$this->sales_migration_path( 'SalesProposalTableResponseColumns.php' ),
 			$this->sales_migration_path( 'SalesProposalTableTemplateColumn.php' ),
 			$this->sales_migration_path( 'SalesProposalTableTemplateColorColumn.php' ),
@@ -92,12 +106,19 @@ final class Module extends AbstractSalesChildModule {
 			$this->sales_migration_path( 'SalesInvoiceTableTemplateColorColumn.php' ),
 			$this->sales_migration_path( 'SalesInvoicePaymentsTable.php' ),
 			$this->sales_migration_path( 'SalesInvoiceTableIssuerSnapshotColumn.php' ),
+			$this->sales_migration_path( 'SalesInvoiceTableContentColumns.php' ),
+			$this->sales_migration_path( 'SalesInvoiceTableRecurrenceColumn.php' ),
 			$this->sales_migration_path( 'SalesProposalTableIssuerSnapshotColumn.php' ),
+			$this->sales_migration_path( 'SalesInvoiceTableCurrencyNullable.php' ),
+			$this->sales_migration_path( 'SalesProposalTableCurrencyNullable.php' ),
 		);
 	}
 
 	protected function boot_child( Container $container ): void {
 		unset( $container );
+
+		Migrations\SalesInvoiceTableCurrencyNullable::ensure();
+		Migrations\SalesProposalTableCurrencyNullable::ensure();
 
 		require_once dirname( __DIR__ ) . '/Sales/MergeTags/AbstractSalesMergeTag.php';
 		$this->loadModuleMergeTagFiles();

@@ -68,6 +68,14 @@ final class ProRendererLoader {
 			true
 		);
 
+		if ( function_exists( 'wp_set_script_translations' ) ) {
+			wp_set_script_translations(
+				self::SCRIPT_HANDLE,
+				'doublescale',
+				DOUBLESCALE_PRO_PLUGIN_DIR . 'languages'
+			);
+		}
+
 		$style_file = DOUBLESCALE_PRO_PLUGIN_DIR . 'build/renderer/style.css';
 		if ( is_readable( $style_file ) ) {
 			wp_enqueue_style(

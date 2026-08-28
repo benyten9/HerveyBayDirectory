@@ -13,8 +13,20 @@ use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\Container;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
+use DoubleScale\Pro\Modules\CreditNotes\Abilities\CreditNoteAbilities;
 
 final class Module extends AbstractSalesChildModule {
+
+	/**
+	 * Read-only credit note abilities for the WordPress Abilities API.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function abilities(): array {
+		return CreditNoteAbilities::definitions();
+	}
 
 	public function slug(): string {
 		return 'credit_notes';
@@ -51,6 +63,8 @@ final class Module extends AbstractSalesChildModule {
 
 	protected function boot_child( Container $container ): void {
 		unset( $container );
+
+		Migrations\SalesCreditNotesTableCurrencyNullable::ensure();
 
 		$this->loadModuleMergeTagFiles();
 

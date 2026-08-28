@@ -4,6 +4,11 @@
  *
  * Prefer Composer autoload. Mapping: DoubleScale\Foo\Bar -> includes/Foo/Bar.php
  *
+ * SMTP providers use WordPress-style filenames under mixed-case directories, e.g.
+ * DoubleScale\Modules\Smtp\Providers\SendLayer\SendLayer
+ *   -> includes/Modules/Smtp/Providers/sendlayer/class-sendlayer.php
+ * Lowercasing every directory segment breaks on Linux (modules/ vs Modules/).
+ *
  * @package DoubleScale
  */
 
@@ -26,17 +31,44 @@ spl_autoload_register(
 		}
 
 		// Fallback: WordPress filename convention used under Modules/Smtp/.
-		// Directory segments are lowercased; the leaf becomes "class-<leaf>.php"
-		// with underscores converted to hyphens (e.g. Account_API -> class-account-api.php).
+		// Leaf becomes "class-<leaf>.php" with underscores → hyphens.
 		$segments = explode( '\\', $relative );
 		$leaf     = array_pop( $segments );
-		$dir      = '';
+		if ( null === $leaf || '' === $leaf ) {
+			return;
+		}
+
+		$leaf_file = 'class-' . strtolower( str_replace( '_', '-', $leaf ) ) . '.php';
+		$candidates = array();
+
+		// Preserve Modules/Smtp/Providers casing; lowercase provider package dirs
+		// (sendlayer, mailgun, rest, …) which are lowercase on disk.
+		$dir             = '';
+		$lowercase_rest  = false;
+		foreach ( $segments as $segment ) {
+			if ( $lowercase_rest ) {
+				$dir .= strtolower( str_replace( '_', '-', $segment ) ) . '/';
+			} else {
+				$dir .= str_replace( '_', '-', $segment ) . '/';
+				if ( 'Providers' === $segment ) {
+					$lowercase_rest = true;
+				}
+			}
+		}
+		$candidates[] = __DIR__ . '/' . $dir . $leaf_file;
+
+		// Legacy: lowercase every segment (case-insensitive filesystems only).
+		$dir = '';
 		foreach ( $segments as $segment ) {
 			$dir .= strtolower( str_replace( '_', '-', $segment ) ) . '/';
 		}
-		$wp_path = __DIR__ . '/' . $dir . 'class-' . strtolower( str_replace( '_', '-', $leaf ) ) . '.php';
-		if ( is_file( $wp_path ) ) {
-			require_once $wp_path;
+		$candidates[] = __DIR__ . '/' . $dir . $leaf_file;
+
+		foreach ( array_unique( $candidates ) as $candidate ) {
+			if ( is_file( $candidate ) ) {
+				require_once $candidate;
+				return;
+			}
 		}
 	}
 );

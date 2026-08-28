@@ -137,14 +137,17 @@ class PipelineStageModel extends Model {
 	}
 
 	/**
-	 * Get stage total value
+	 * Global-currency bucket only. Prefer `total_value_by_currency` so mixed
+	 * EUR+USD deals are never added together.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return float
 	 */
 	public function getTotalValueAttribute() {
-		return $this->active_deals()->sum( 'value' );
+		$map    = $this->total_value_by_currency;
+		$global = \DoubleScale\Core\Services\CurrencyResolver::global_currency();
+		return (float) ( $map[ $global ] ?? 0.0 );
 	}
 
 	/**

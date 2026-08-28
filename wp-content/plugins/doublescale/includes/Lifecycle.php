@@ -46,7 +46,7 @@ final class Lifecycle {
 	private static function define_constants( string $plugin_file ): void {
 		$defaults = array(
 			'DOUBLESCALE_PLUGIN_FILE'   => $plugin_file,
-			'DOUBLESCALE_VERSION'       => '1.2.19',
+			'DOUBLESCALE_VERSION'       => '1.3.21',
 			'DOUBLESCALE_PLUGIN_DIR'    => plugin_dir_path( $plugin_file ),
 			'DOUBLESCALE_PLUGIN_URL'    => plugin_dir_url( $plugin_file ),
 			'DOUBLESCALE_PLUGIN_PATH'   => plugin_basename( $plugin_file ),
@@ -140,6 +140,35 @@ final class Lifecycle {
 			}
 		}
 
+		/*
+		 * WordPress.org packages omit root vendor/. SMTP (and other WP-style
+		 * class-*.php files) still need Composer’s classmap. Ship a generated
+		 * subset at includes/includes-classmap.php and always merge/register it.
+		 */
+		$doublescale_includes_classmap_file = $dir . 'includes/includes-classmap.php';
+		if ( is_readable( $doublescale_includes_classmap_file ) ) {
+			$doublescale_includes_classmap = require $doublescale_includes_classmap_file;
+			if ( is_array( $doublescale_includes_classmap ) && $doublescale_includes_classmap ) {
+				$doublescale_absolute_map = array();
+				foreach ( $doublescale_includes_classmap as $doublescale_fqcn => $doublescale_rel ) {
+					$doublescale_absolute_map[ $doublescale_fqcn ] = $dir . ltrim( (string) $doublescale_rel, '/' );
+				}
+				if ( $doublescale_composer_loader instanceof \Composer\Autoload\ClassLoader ) {
+					$doublescale_composer_loader->addClassMap( $doublescale_absolute_map );
+				} else {
+					spl_autoload_register(
+						static function ( $class ) use ( $doublescale_absolute_map ) {
+							if ( isset( $doublescale_absolute_map[ $class ] ) && is_readable( $doublescale_absolute_map[ $class ] ) ) {
+								require_once $doublescale_absolute_map[ $class ];
+							}
+						},
+						true,
+						true
+					);
+				}
+			}
+		}
+
 		if ( file_exists( $dir . 'includes/Autoload.php' ) ) {
 			require_once $dir . 'includes/Autoload.php';
 		}
@@ -178,6 +207,7 @@ final class Lifecycle {
 		// Priority 4 guarantees the path is set before that first call.
 		add_action( 'plugins_loaded', array( __CLASS__, 'load_textdomain' ), 4 );
 		add_action( 'plugins_loaded', array( __CLASS__, 'on_plugins_loaded' ), 5 );
+		add_action( 'loco_file_written', array( \DoubleScale\I18n\LocoJsonSync::class, 'on_file_written' ) );
 
 		// Suppress WP 6.7+'s "translation loaded too early" notice for the
 		// `doublescale` domain. This codebase's modular boot fires

@@ -50,7 +50,7 @@ class WhatsappReceived extends Trigger {
 	 *
 	 * @var string
 	 */
-	public $source = 'crm';
+	public $source = 'messaging';
 
 	/**
 	 * Group
