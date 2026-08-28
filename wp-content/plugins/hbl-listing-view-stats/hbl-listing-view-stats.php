@@ -16,7 +16,7 @@
  *               Applies to Bronze, Silver and Gold listings alike; the plan
  *               tier is published as its own field so campaigns can segment.
  *
- * Version:      1.1.109
+ * Version:      1.1.110
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_LVS_VERSION', '1.1.109' );
+define( 'HBL_LVS_VERSION', '1.1.110' );
 
 /** Schema version — bump to trigger dbDelta on the next load. */
 define( 'HBL_LVS_DB_VERSION', 1 );
@@ -2640,12 +2640,37 @@ function hbl_lvs_tab_results(): void {
 		ARRAY_A
 	);
 
+	// The stats row's `views` is only ever as fresh as the last rollup/preview
+	// that wrote it. For a quarter still in progress that can be stale within
+	// minutes of being computed — the whole point of viewing an open quarter is
+	// to see it climb, not a number frozen at whatever it was when someone last
+	// clicked "Run rollup". So for an open quarter, overlay a live count straight
+	// from the event log for exactly the rows on this page (cheap: one query,
+	// bounded to <= $per_page listings) and re-sort just this page by it, rather
+	// than by the now-outdated value the SQL above sorted on. This does not
+	// touch the stored row or push anything to contacts — display only.
+	$is_live = ! hbl_lvs_quarter_has_ended( $quarter );
+	if ( $is_live && $rows ) {
+		$listing_ids = array_map( static fn( $row ) => (int) $row['listing_id'], $rows );
+		$live_views  = hbl_lvs_views_from_events( $quarter, $listing_ids );
+
+		foreach ( $rows as &$row ) {
+			$row['views'] = isset( $live_views[ (int) $row['listing_id'] ] ) ? $live_views[ (int) $row['listing_id'] ] : 0;
+		}
+		unset( $row );
+
+		usort( $rows, static fn( $a, $b ) => $b['views'] <=> $a['views'] );
+	}
+
 	hbl_lvs_step_open(
 		1,
 		__( 'Listing results', 'hbl-lvs' ),
-		__( 'Exactly the values written to each contact — same code path, so this cannot drift from what was sent.', 'hbl-lvs' ),
-		'hbl-badge-off',
-		sprintf( /* translators: %s: count */ _n( '%s listing', '%s listings', $total, 'hbl-lvs' ), number_format_i18n( $total ) )
+		$is_live
+			? __( 'Quarter still in progress — views update live from the event log as they happen. Nothing is written to contacts until the quarter ends.', 'hbl-lvs' )
+			: __( 'Exactly the values written to each contact — same code path, so this cannot drift from what was sent.', 'hbl-lvs' ),
+		$is_live ? 'hbl-badge-warn' : 'hbl-badge-off',
+		( $is_live ? __( 'Live', 'hbl-lvs' ) . ' — ' : '' )
+			. sprintf( /* translators: %s: count */ _n( '%s listing', '%s listings', $total, 'hbl-lvs' ), number_format_i18n( $total ) )
 	);
 	?>
 	<form method="get" class="hbl-lvs-toolbar">
