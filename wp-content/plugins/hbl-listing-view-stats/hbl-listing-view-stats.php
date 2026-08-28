@@ -16,7 +16,7 @@
  *               Applies to Bronze, Silver and Gold listings alike; the plan
  *               tier is published as its own field so campaigns can segment.
  *
- * Version:      1.1.108
+ * Version:      1.1.109
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_LVS_VERSION', '1.1.108' );
+define( 'HBL_LVS_VERSION', '1.1.109' );
 
 /** Schema version — bump to trigger dbDelta on the next load. */
 define( 'HBL_LVS_DB_VERSION', 1 );
@@ -742,6 +742,32 @@ function hbl_lvs_next_rollup_target(): string {
 	return $target;
 }
 
+/**
+ * Did a quarter end entirely before the event logger existed?
+ *
+ * hbl_lvs_next_rollup_target() already steers the automatic scheduler away from
+ * such a quarter, but the Tools tab's "Run rollup" field accepts any quarter key
+ * typed into it. Rolling up a quarter like this can only ever produce a false
+ * zero (no events, and no boundary-snapshot pair either, since snapshots only
+ * start being captured once the logger is running) — and because the quarter
+ * has genuinely ended, that zero gets banked as a real "Scheduled Run" and can
+ * never self-correct. This is the check that stops it being computed at all,
+ * from any entry point.
+ *
+ * @param string $quarter Quarter key.
+ * @return bool
+ */
+function hbl_lvs_quarter_before_logger( string $quarter ): bool {
+	$started = get_option( HBL_LVS_OPT_LOGGER_START );
+	if ( ! $started ) {
+		return false; // Nothing to compare against yet.
+	}
+
+	$bounds = hbl_lvs_quarter_bounds_gmt( $quarter );
+
+	return $bounds['end_ts'] <= (int) strtotime( $started . ' UTC' );
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // BOUNDARY SNAPSHOTS (fallback / reconciliation)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -864,6 +890,13 @@ function hbl_lvs_maybe_start_rollup(): bool {
  */
 function hbl_lvs_start_rollup( string $quarter ): void {
 	global $wpdb;
+
+	// Refuse quarters that ended before the logger existed — see
+	// hbl_lvs_quarter_before_logger(). There is no source that can produce a
+	// real number for one, so computing it would only ever write a false zero.
+	if ( hbl_lvs_quarter_before_logger( $quarter ) ) {
+		return;
+	}
 
 	// Clear any previous results for this quarter so a re-run is a clean rebuild
 	// rather than a merge with stale rows.
@@ -2906,6 +2939,25 @@ function hbl_lvs_tab_tools(): void {
 			<button class="button button-primary"><?php esc_html_e( 'Run rollup', 'hbl-lvs' ); ?></button>
 		</div>
 	</form>
+	<p class="description">
+		<?php esc_html_e( 'A quarter that had already ended before view logging started can never have real data — entering one above is refused rather than silently banking a false zero.', 'hbl-lvs' ); ?>
+	</p>
+	<hr>
+	<p class="description">
+		<?php esc_html_e( 'Got a wrong result for a quarter on the books already — e.g. one computed as all-zero before this safeguard existed? Discard just that quarter\'s results below. Real recorded view history is never touched, so nothing is lost; a quarter that has genuinely ended can be re-run afterwards.', 'hbl-lvs' ); ?>
+	</p>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="hbl-lvs-toolbar">
+		<?php wp_nonce_field( 'hbl_lvs_admin' ); ?>
+		<input type="hidden" name="action" value="hbl_lvs_admin_action">
+		<input type="hidden" name="task" value="discard_quarter">
+		<div class="hbl-lvs-field">
+			<label for="hbl-lvs-discard-quarter"><?php esc_html_e( 'Quarter', 'hbl-lvs' ); ?></label>
+			<input id="hbl-lvs-discard-quarter" type="text" name="quarter" class="hbl-lvs-input" placeholder="2026Q2">
+		</div>
+		<div class="hbl-lvs-actions">
+			<button class="button button-danger" onclick="return confirm('<?php echo esc_js( __( 'Discard the computed results for this quarter? Real view history is not affected.', 'hbl-lvs' ) ); ?>');"><?php esc_html_e( 'Discard quarter\'s results', 'hbl-lvs' ); ?></button>
+		</div>
+	</form>
 	<?php
 	hbl_lvs_step_close();
 
@@ -3063,12 +3115,27 @@ function hbl_lvs_handle_admin_action(): void {
 			$tab     = 'results';
 			$quarter = isset( $_POST['quarter'] ) ? sanitize_text_field( wp_unslash( $_POST['quarter'] ) ) : '';
 			$quarter = $quarter ? $quarter : hbl_lvs_next_rollup_target();
-			hbl_lvs_start_rollup( $quarter );
-			$notice = sprintf(
-				/* translators: %s: quarter */
-				__( 'Rollup started for %s. It runs in the background; refresh in a moment.', 'hbl-lvs' ),
-				$quarter
-			);
+
+			if ( hbl_lvs_quarter_before_logger( $quarter ) ) {
+				$notice = sprintf(
+					/* translators: %s: quarter */
+					__( '%s ended before view logging started, so it can never have real data. Rollup not run.', 'hbl-lvs' ),
+					$quarter
+				);
+			} else {
+				hbl_lvs_start_rollup( $quarter );
+				$notice = sprintf(
+					/* translators: %s: quarter */
+					__( 'Rollup started for %s. It runs in the background; refresh in a moment.', 'hbl-lvs' ),
+					$quarter
+				);
+			}
+			break;
+
+		case 'discard_quarter':
+			$tab     = 'tools';
+			$quarter = isset( $_POST['quarter'] ) ? sanitize_text_field( wp_unslash( $_POST['quarter'] ) ) : '';
+			$notice  = $quarter ? hbl_lvs_discard_quarter( $quarter ) : __( 'No quarter specified.', 'hbl-lvs' );
 			break;
 
 		case 'cancel_run':
@@ -3128,6 +3195,45 @@ function hbl_lvs_reset_all(): string {
 	hbl_lvs_capture_snapshot( hbl_lvs_current_quarter_key() );
 
 	return __( 'All view data deleted and a fresh baseline snapshot taken.', 'hbl-lvs' );
+}
+
+/**
+ * Deletes one quarter's computed results and, if it was banked as the last
+ * completed rollup, un-banks it so it is eligible to be computed again later.
+ *
+ * Unlike hbl_lvs_reset_all(), this never touches the events or snapshots
+ * tables — only derived output for the one quarter named, which is what makes
+ * it safe to use for clearing a rollup that was computed wrongly (e.g. for a
+ * quarter that ended before the logger existed) without losing real history.
+ *
+ * @param string $quarter Quarter key.
+ * @return string Notice text.
+ */
+function hbl_lvs_discard_quarter( string $quarter ): string {
+	global $wpdb;
+
+	$stats = hbl_lvs_table( 'stats' );
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$stats} WHERE period_key = %s", $quarter ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	delete_option( hbl_lvs_aggregate_option( $quarter ) );
+
+	if ( get_option( HBL_LVS_OPT_LAST_ROLLUP ) === $quarter ) {
+		delete_option( HBL_LVS_OPT_LAST_ROLLUP );
+	}
+
+	$summary = get_option( 'hbl_lvs_last_summary' );
+	if ( is_array( $summary ) && isset( $summary['quarter'] ) && $summary['quarter'] === $quarter ) {
+		delete_option( 'hbl_lvs_last_summary' );
+	}
+
+	return sprintf(
+		/* translators: 1: rows, 2: quarter */
+		__( 'Discarded %1$d result row(s) for %2$s. Real view history was not touched.', 'hbl-lvs' ),
+		$rows,
+		$quarter
+	);
 }
 
 /**
