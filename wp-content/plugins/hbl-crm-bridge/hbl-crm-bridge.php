@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.44
+ * Version:      1.0.46
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -26,7 +26,14 @@
  *   listing_published  – atbdp_listing_published  (new listing goes live)
  *   listing_inserted   – atbdp_listing_inserted   (draft/pending created)
  *   listing_updated    – atbdp_listing_updated
- *   listing_expired    – atbdp_listing_expired
+ *   listing_expired    – atbdp_listing_expired     (plan expiry date reached; not Stripe-driven)
+ *
+ *   subscription_payment_failed  – hbl_subscription_payment_failed (renewal declined,
+ *                                  Stripe still retrying — nothing has lapsed yet)
+ *   subscription_lapsed_payment  – directorist_package_updated, $triggered_by === 'payment_failed'
+ *                                  (Stripe exhausted retries and cancelled the subscription)
+ *   subscription_cancelled       – directorist_package_updated, any other/no $triggered_by
+ *                                  (the owner cancelled the subscription themselves in Stripe)
  *
  * Payload structure (JSON):
  *   {
@@ -96,10 +103,10 @@
  *
  * These custom fields are written on the listing owner's DoubleScale contact
  * and are therefore usable as email merge tags. Field definitions this plugin
- * owns (currently just expiration-date) are created in DoubleScale
- * automatically on the first admin page load; the rest are written on the
- * assumption that a matching field already exists (created by hand in
- * DoubleScale → Custom Fields) — writes no-op harmlessly until it does.
+ * owns (expiration-date and the subscription-lifecycle fields below) are
+ * created in DoubleScale automatically on the first admin page load; the rest
+ * are written on the assumption that a matching field already exists (created
+ * by hand in DoubleScale → Custom Fields) — writes no-op harmlessly until it does.
  *
  *   {{contact:contact_field:expiration-date}}     27 July 2027 / Never / ''
  *     When the listing's current plan expires (e.g. a Silver membership).
@@ -108,6 +115,23 @@
  *   {{contact:contact_field:listing-url}}         https://example.com/listing/acme-plumbing/
  *   {{contact:contact_field:edited-since-claim}}  Yes — 2026-08-03
  *   {{contact:contact_field:plan-upgrade-status}} Completed: Gold — 2026-08-03
+ *
+ *   Subscription lifecycle (Stripe, via directorist-stripe) — see the
+ *   "SUBSCRIPTION LIFECYCLE" section below for exactly when each is written:
+ *
+ *   {{contact:contact_field:subscription-status}}     Payment Failed — Retrying /
+ *                                                      Cancelled — Payment Failed /
+ *                                                      Cancelled — Owner Requested
+ *   {{contact:contact_field:payment-failed-attempts}} 2
+ *     Set on each invoice.payment_failed while Stripe is still retrying.
+ *   {{contact:contact_field:payment-retry-date}}      12 September 2026 / 'None scheduled'
+ *     Stripe's next retry attempt — the date to reference in the "update your
+ *     card before X" email.
+ *   {{contact:contact_field:cancellation-reason}}     payment_failed / cancellation_requested / unknown
+ *     Stripe's raw cancellation_details.reason — useful for automation branch
+ *     conditions, not just email copy.
+ *   {{contact:contact_field:subscription-ended-date}} 5 September 2026
+ *     Set once, when the subscription actually ends (either reason).
  *
  * ──────────────────────────────────────────────────────────────────────────────
  * DEVELOPER HOOKS
@@ -138,7 +162,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.44' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.46' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -176,6 +200,16 @@ function hbl_crm_bridge_boot(): void {
 	add_action( 'hbl_order_started', 'hbl_crm_bridge_on_order_started', 10, 3 );
 	// … and completed (Stripe confirmed).
 	add_action( 'hbl_listing_payment_verified', 'hbl_crm_bridge_on_payment_verified', 10, 4 );
+
+	// ── Subscription lifecycle (Stripe, via Directorist Stripe/Pricing Plans) ──
+	// A renewal payment was declined but Stripe is still retrying — fired from
+	// directorist-stripe's invoice.payment_failed handler, before anything lapses.
+	add_action( 'hbl_subscription_payment_failed', 'hbl_crm_bridge_on_subscription_payment_failed', 10, 3 );
+	// The subscription actually ended — fired by UserPackageRepository::cancel_package()
+	// for both a declined-card lapse and a deliberate cancellation; $triggered_by
+	// (Stripe's cancellation_details.reason, forwarded by directorist-stripe) is what
+	// tells the two apart.
+	add_action( 'directorist_package_updated', 'hbl_crm_bridge_on_package_updated', 10, 3 );
 
 	// ── Incoming: REST endpoint ───────────────────────────────────────────────
 
@@ -241,6 +275,140 @@ function hbl_crm_bridge_on_updated( int $listing_id ): void {
 function hbl_crm_bridge_on_expired( int $listing_id ): void {
 	hbl_crm_bridge_dispatch( 'listing_expired', $listing_id );
 	hbl_crm_bridge_doublescale_sync( 'listing_expired', $listing_id );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SUBSCRIPTION LIFECYCLE (STRIPE) — payment-failed vs. cancelled
+//
+// Distinguishes *why* a subscription ended instead of letting everything land on
+// the generic listing_expired → "Silver: Lapsed" tag:
+//   - hbl_subscription_payment_failed  fires on each declined renewal attempt
+//     while Stripe is still retrying (subscription is past_due, nothing has
+//     lapsed yet) — the hook point for an "update your card" email.
+//   - directorist_package_updated      fires when the subscription actually
+//     ends; $triggered_by carries Stripe's cancellation_details.reason so a
+//     declined-card lapse and a deliberate owner cancellation get different tags.
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * A renewal payment attempt was declined; Stripe is still retrying.
+ * Fired by directorist-stripe's invoice.payment_failed webhook handler.
+ *
+ * @param int      $listing_id
+ * @param int      $attempt_count Number of payment attempts made on this invoice so far.
+ * @param int|null $next_attempt  Unix timestamp of Stripe's next retry, or null if none scheduled.
+ */
+function hbl_crm_bridge_on_subscription_payment_failed( int $listing_id, int $attempt_count, ?int $next_attempt ): void {
+	if ( ! $listing_id ) {
+		return;
+	}
+	hbl_crm_bridge_dispatch( 'subscription_payment_failed', $listing_id );
+	hbl_crm_bridge_doublescale_sync( 'subscription_payment_failed', $listing_id );
+
+	$contact = hbl_crm_bridge_get_contact_for_listing( $listing_id );
+	if ( ! $contact ) {
+		return;
+	}
+
+	$retry_date = $next_attempt ? gmdate( 'j F Y', $next_attempt ) : 'None scheduled';
+
+	// Merge tags for the "card declined, please fix it" email/automation, e.g.
+	// {{contact:contact_field:payment-retry-date}} and
+	// {{contact:contact_field:payment-failed-attempts}}.
+	hbl_crm_bridge_set_custom_field( $contact, 'subscription-status', 'Payment Failed — Retrying' );
+	hbl_crm_bridge_set_custom_field( $contact, 'payment-failed-attempts', (string) $attempt_count );
+	hbl_crm_bridge_set_custom_field( $contact, 'payment-retry-date', $retry_date );
+
+	hbl_crm_bridge_log_activity(
+		$contact,
+		'Renewal payment declined',
+		$next_attempt
+			? sprintf( 'Payment attempt #%d failed. Stripe will retry on %s.', $attempt_count, $retry_date )
+			: sprintf( 'Payment attempt #%d failed. No further retry is scheduled.', $attempt_count )
+	);
+}
+
+/**
+ * A Directorist user package (subscription) changed status. Only acts when it
+ * just became CANCELLED — i.e. the subscription actually ended in Stripe — and
+ * branches the tag on $triggered_by (Stripe's cancellation_details.reason,
+ * forwarded via CheckoutController::delete_subscription()).
+ *
+ * @param \DirectoristPricingPlan\App\DTO\UserPackage\DTO $new_package
+ * @param \DirectoristPricingPlan\App\DTO\UserPackage\DTO $old_package
+ * @param string|null                                     $triggered_by
+ */
+function hbl_crm_bridge_on_package_updated( $new_package, $old_package, ?string $triggered_by = null ): void {
+	if ( ! $new_package || 'cancelled' !== $new_package->get_status() ) {
+		return;
+	}
+	// Already cancelled before this update — cancel_package() itself no-ops in that
+	// case and never fires the action a second time, but guard here too since this
+	// hook is shared with any other future caller of directorist_package_updated.
+	if ( $old_package && 'cancelled' === $old_package->get_status() ) {
+		return;
+	}
+
+	$listing_id = hbl_crm_bridge_listing_id_from_order( (int) $new_package->get_last_order_id() );
+	if ( ! $listing_id ) {
+		return;
+	}
+
+	// Stripe sends "payment_failed" when Smart Retries were exhausted; everything
+	// else (owner-initiated cancellation, or no reason at all e.g. a manual
+	// cancellation elsewhere) is treated as a deliberate cancellation.
+	$is_payment_failure = ( 'payment_failed' === $triggered_by );
+	$event              = $is_payment_failure ? 'subscription_lapsed_payment' : 'subscription_cancelled';
+
+	hbl_crm_bridge_dispatch( $event, $listing_id );
+	hbl_crm_bridge_doublescale_sync( $event, $listing_id );
+
+	$contact = hbl_crm_bridge_get_contact_for_listing( $listing_id );
+	if ( ! $contact ) {
+		return;
+	}
+
+	$ended_date = gmdate( 'j F Y' );
+
+	// Merge tags for the automation split, e.g.
+	// {{contact:contact_field:subscription-status}} and
+	// {{contact:contact_field:cancellation-reason}}.
+	hbl_crm_bridge_set_custom_field(
+		$contact,
+		'subscription-status',
+		$is_payment_failure ? 'Cancelled — Payment Failed' : 'Cancelled — Owner Requested'
+	);
+	hbl_crm_bridge_set_custom_field( $contact, 'cancellation-reason', $triggered_by ?: 'unknown' );
+	hbl_crm_bridge_set_custom_field( $contact, 'subscription-ended-date', $ended_date );
+
+	hbl_crm_bridge_log_activity(
+		$contact,
+		$is_payment_failure ? 'Subscription cancelled — payment failed' : 'Subscription cancelled by owner',
+		$is_payment_failure
+			? sprintf( 'Stripe exhausted payment retries and cancelled the subscription on %s.', $ended_date )
+			: sprintf( 'The owner cancelled their subscription in Stripe on %s.', $ended_date )
+	);
+}
+
+/**
+ * Resolves a Directorist listing ID from a pricing-plan order ID.
+ *
+ * @param int $order_id
+ * @return int 0 when the order has no associated listing.
+ */
+function hbl_crm_bridge_listing_id_from_order( int $order_id ): int {
+	if ( ! $order_id || ! function_exists( 'directorist_order_repository' ) ) {
+		return 0;
+	}
+	try {
+		$order = directorist_order_repository()->to_dto( directorist_order_repository()->get_by_id( $order_id ) );
+		if ( $order && $order->is_initialized( 'listing_id' ) && $order->get_listing_id() ) {
+			return (int) $order->get_listing_id();
+		}
+	} catch ( \Throwable $e ) {
+		// Non-fatal — falls through to 0, and the caller skips the sync.
+	}
+	return 0;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -776,7 +944,14 @@ function hbl_crm_bridge_get_listing_expiry( int $listing_id ): string {
  */
 function hbl_crm_bridge_field_definitions(): array {
 	return [
-		'expiration-date' => [ 'name' => 'Expiration Date', 'type' => 'text' ],
+		'expiration-date'          => [ 'name' => 'Expiration Date', 'type' => 'text' ],
+		// Subscription lifecycle (Stripe) — usable as merge tags in DoubleScale
+		// emails/automations, e.g. {{contact:contact_field:subscription-status}}.
+		'subscription-status'      => [ 'name' => 'Subscription Status', 'type' => 'text' ],
+		'payment-failed-attempts'  => [ 'name' => 'Payment Failed Attempts', 'type' => 'text' ],
+		'payment-retry-date'       => [ 'name' => 'Payment Retry Date', 'type' => 'text' ],
+		'cancellation-reason'      => [ 'name' => 'Cancellation Reason', 'type' => 'text' ],
+		'subscription-ended-date'  => [ 'name' => 'Subscription Ended Date', 'type' => 'text' ],
 	];
 }
 
@@ -1817,29 +1992,41 @@ function hbl_crm_bridge_get_settings(): array {
 			'listing_inserted',
 			'listing_updated',
 			'listing_expired',
+			'subscription_payment_failed',
+			'subscription_lapsed_payment',
+			'subscription_cancelled',
 		],
 		'doublescale_enabled' => false,
 		'doublescale_list'    => '',
 		'doublescale_tags'    => [
-			'listing_claimed'   => '',
-			'listing_published' => '',
-			'listing_inserted'  => '',
-			'listing_updated'   => '',
-			'listing_expired'   => '',
+			'listing_claimed'             => '',
+			'listing_published'           => '',
+			'listing_inserted'            => '',
+			'listing_updated'             => '',
+			'listing_expired'             => '',
+			'subscription_payment_failed' => '',
+			'subscription_lapsed_payment' => '',
+			'subscription_cancelled'      => '',
 		],
 		'doublescale_workflow_remove_tag' => [
-			'listing_claimed'   => '',
-			'listing_published' => '',
-			'listing_inserted'  => '',
-			'listing_updated'   => '',
-			'listing_expired'   => '',
+			'listing_claimed'             => '',
+			'listing_published'           => '',
+			'listing_inserted'            => '',
+			'listing_updated'             => '',
+			'listing_expired'             => '',
+			'subscription_payment_failed' => '',
+			'subscription_lapsed_payment' => '',
+			'subscription_cancelled'      => '',
 		],
 		'doublescale_workflow_add_tag'    => [
-			'listing_claimed'   => '',
-			'listing_published' => '',
-			'listing_inserted'  => '',
-			'listing_updated'   => '',
-			'listing_expired'   => '',
+			'listing_claimed'             => '',
+			'listing_published'           => '',
+			'listing_inserted'            => '',
+			'listing_updated'             => '',
+			'listing_expired'             => '',
+			'subscription_payment_failed' => '',
+			'subscription_lapsed_payment' => '',
+			'subscription_cancelled'      => '',
 		],
 		'doublescale_debug_log'           => false,
 	];
@@ -1916,6 +2103,9 @@ function hbl_crm_bridge_sanitize_settings( $input ): array {
 		'listing_inserted',
 		'listing_updated',
 		'listing_expired',
+		'subscription_payment_failed',
+		'subscription_lapsed_payment',
+		'subscription_cancelled',
 	];
 
 	$clean = [];
@@ -1987,9 +2177,33 @@ function hbl_crm_bridge_settings_page_html(): void {
 		],
 		'listing_expired'   => [
 			'label' => 'Listing Expired',
-			'desc'  => 'a listing reaches its expiry date',
+			'desc'  => 'a listing reaches its expiry date (no Stripe subscription involved)',
 		],
 	];
+
+	// Stripe subscription lifecycle — kept as a separate group from the Directorist
+	// listing events above because they fire from directorist-stripe's webhook
+	// handler, not a Directorist listing hook, and exist specifically so a
+	// declined-card lapse and a deliberate cancellation don't both collapse onto
+	// "Listing Expired" / a single "Lapsed" tag.
+	$subscription_events = [
+		'subscription_payment_failed' => [
+			'label' => 'Payment Failed (retrying)',
+			'desc'  => 'a renewal charge is declined but Stripe is still retrying — fires before anything lapses',
+		],
+		'subscription_lapsed_payment' => [
+			'label' => 'Subscription Lapsed (payment)',
+			'desc'  => 'Stripe exhausted retries and cancelled the subscription for non-payment',
+		],
+		'subscription_cancelled'      => [
+			'label' => 'Subscription Cancelled',
+			'desc'  => 'the owner cancelled the subscription themselves in Stripe',
+		],
+	];
+
+	// Rendered in the same grids (toggle + tag, and workflow tags) as the listing
+	// events above — same settings mechanism, just a different trigger source.
+	$all_events = array_merge( $all_events, $subscription_events );
 
 	$workflow_tag_switch_count = 0;
 	foreach ( $all_events as $slug => $info ) {
@@ -2032,7 +2246,7 @@ function hbl_crm_bridge_settings_page_html(): void {
 		<div class="hbl-crmb-stats">
 			<div class="hbl-crmb-stat">
 				<div class="hbl-crmb-stat-value"><?php echo esc_html( count( $enabled ) . ' / ' . count( $all_events ) ); ?></div>
-				<div class="hbl-crmb-stat-label">Listing Events Enabled</div>
+				<div class="hbl-crmb-stat-label">Events Enabled</div>
 			</div>
 			<div class="hbl-crmb-stat">
 				<div class="hbl-crmb-stat-value">
@@ -2059,8 +2273,8 @@ function hbl_crm_bridge_settings_page_html(): void {
 				<div class="hbl-crmb-step-header">
 					<div class="hbl-crmb-step-number">1</div>
 					<div>
-						<h2>Listing Events</h2>
-						<p class="hbl-crmb-step-sub">Choose which Directorist events trigger a sync, and the DoubleScale tag (if any) each one applies to the contact.</p>
+						<h2>Listing &amp; Subscription Events</h2>
+						<p class="hbl-crmb-step-sub">Choose which events trigger a sync, and the DoubleScale tag (if any) each one applies to the contact. The three "Subscription" events below come from Stripe (via directorist-stripe) and let a declined-card lapse, a completed lapse, and a deliberate cancellation carry different tags instead of all landing on "Listing Expired".</p>
 					</div>
 				</div>
 

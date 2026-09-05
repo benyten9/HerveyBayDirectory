@@ -84,10 +84,16 @@ class CheckoutController extends Controller {
                 $this->handle_checkout_session_completed( $data['object']['id'] ?? '' );
                 break;
             case 'customer.subscription.deleted':
-                $this->delete_subscription( $data['object']['id'] ?? '' );
+                $this->delete_subscription(
+                    $data['object']['id'] ?? '',
+                    $data['object']['cancellation_details']['reason'] ?? null
+                );
                 break;
             case 'invoice.paid':
                 $this->handle_invoice_paid( $data['object']['id'] ?? '' );
+                break;
+            case 'invoice.payment_failed':
+                $this->handle_invoice_payment_failed( $data['object'] ?? [] );
                 break;
             case 'charge.updated':
                 $this->handle_charge_updated( $data['object']['id'] ?? '' );
@@ -244,7 +250,14 @@ class CheckoutController extends Controller {
         }
     }
 
-    public function delete_subscription( string $stripe_subscription_id ) {
+    /**
+     * @param string      $stripe_subscription_id
+     * @param string|null $cancellation_reason Stripe's `cancellation_details.reason` from the
+     *                                          subscription object, e.g. "cancellation_requested"
+     *                                          (owner cancelled) or "payment_failed" (retries
+     *                                          exhausted). Null when Stripe didn't send one.
+     */
+    public function delete_subscription( string $stripe_subscription_id, ?string $cancellation_reason = null ) {
         if ( empty( $stripe_subscription_id ) || ! directorist_stripe_is_pricing_plan_active() ) {
             return;
         }
@@ -261,12 +274,60 @@ class CheckoutController extends Controller {
                 return;
             }
 
-            $user_package_repository->cancel_package( $subscription->id );
-            do_action( 'directorist_pricing_plans_subscription_cancelled', $subscription->id );
+            // Passed through as $triggered_by so `directorist_package_updated` listeners
+            // (e.g. the CRM bridge) can tell a declined-card lapse apart from a deliberate
+            // cancellation instead of treating every cancellation the same way.
+            $user_package_repository->cancel_package( $subscription->id, $cancellation_reason );
+            do_action( 'directorist_pricing_plans_subscription_cancelled', $subscription->id, $cancellation_reason );
         } catch ( \Exception $e ) {
             error_log(
                 sprintf(
                     'Directorist Stripe: Failed to delete subscription %s - %s',
+                    $stripe_subscription_id,
+                    $e->getMessage()
+                )
+            );
+        }
+    }
+
+    /**
+     * A renewal payment attempt was declined. The subscription is `past_due` and Stripe
+     * is still retrying (Smart Retries) at this point — nothing has lapsed yet, so this
+     * never touches package status. It only fires `hbl_subscription_payment_failed` so an
+     * "update your card" email can go out while there's still time to fix it.
+     *
+     * @param array $invoice Raw Stripe invoice object (webhook payload, not re-fetched).
+     */
+    public function handle_invoice_payment_failed( array $invoice ) {
+        $stripe_subscription_id = $invoice['subscription'] ?? '';
+
+        if ( empty( $stripe_subscription_id ) || ! directorist_stripe_is_pricing_plan_active() ) {
+            return;
+        }
+
+        try {
+            $user_package_repository = directorist_user_package_repository();
+            $subscription            = $user_package_repository->get_by_subscription_id( $stripe_subscription_id );
+
+            if ( ! $subscription || empty( $subscription->last_order_id ) ) {
+                return;
+            }
+
+            $order      = $this->get_order_dto( (int) $subscription->last_order_id );
+            $listing_id = ( $order && $order->is_initialized( 'listing_id' ) ) ? $order->get_listing_id() : null;
+
+            if ( ! $listing_id ) {
+                return;
+            }
+
+            $attempt_count = isset( $invoice['attempt_count'] ) ? (int) $invoice['attempt_count'] : 0;
+            $next_attempt  = ! empty( $invoice['next_payment_attempt'] ) ? (int) $invoice['next_payment_attempt'] : null;
+
+            do_action( 'hbl_subscription_payment_failed', (int) $listing_id, $attempt_count, $next_attempt );
+        } catch ( \Exception $e ) {
+            error_log(
+                sprintf(
+                    'Directorist Stripe: Failed to handle failed payment for subscription %s - %s',
                     $stripe_subscription_id,
                     $e->getMessage()
                 )

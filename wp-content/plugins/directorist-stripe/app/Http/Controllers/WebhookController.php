@@ -48,6 +48,7 @@ class WebhookController extends Controller {
                         'customer.subscription.deleted',
                         'customer.subscription.updated',
                         'invoice.paid',
+                        'invoice.payment_failed',
                         'charge.updated',
                     ],
                 ]

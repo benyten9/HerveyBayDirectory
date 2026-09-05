@@ -16,7 +16,7 @@
  *               Applies to Bronze, Silver and Gold listings alike; the plan
  *               tier is published as its own field so campaigns can segment.
  *
- * Version:      1.1.110
+ * Version:      1.1.20
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -154,7 +154,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_LVS_VERSION', '1.1.110' );
+define( 'HBL_LVS_VERSION', '1.1.20' );
 
 /** Schema version — bump to trigger dbDelta on the next load. */
 define( 'HBL_LVS_DB_VERSION', 1 );
