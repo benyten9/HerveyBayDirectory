@@ -28,7 +28,15 @@ class Event extends JsonSchemaValue implements GetJsonData {
 	protected function getKeysForSchemaManual() {
 		return array(
 			'type'                => '_seopress_pro_rich_snippets_type',
-			'eventType'           => '_seopress_pro_rich_snippets_events_type',
+			// The metabox select persists its own default as soon as it renders, so this
+			// fallback only fires on posts where the type was never written at all: the legacy
+			// metabox, imports, programmatic writes. Nothing there tells us which kind of event
+			// it was, and `Event` is the parent of every value the select offers, so it is the
+			// one type that stays true whichever was intended.
+			'eventType'           => array(
+				'value'   => '_seopress_pro_rich_snippets_events_type',
+				'default' => 'Event',
+			),
 			'name'                => '_seopress_pro_rich_snippets_events_name',
 			'description'         => '_seopress_pro_rich_snippets_events_desc',
 			'image'               => '_seopress_pro_rich_snippets_events_img',

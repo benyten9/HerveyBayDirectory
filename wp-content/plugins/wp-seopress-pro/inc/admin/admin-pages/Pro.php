@@ -18,6 +18,12 @@ if ( is_plugin_active( 'wp-seopress/seopress.php' ) ) {
 	<h1><?php esc_html_e( 'PRO', 'wp-seopress-pro' ); ?></h1>
 </div>
 
+<?php
+if ( function_exists( 'seopress_admin_notices_anchor' ) ) {
+	seopress_admin_notices_anchor();
+}
+?>
+
 <div id="seopress-admin-settings-root" class="seopress-option">
 	<?php seopress_settings_skeleton(); ?>
 </div>

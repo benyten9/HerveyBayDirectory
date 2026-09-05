@@ -73,6 +73,7 @@ if (function_exists('wp_register_ability')) {
                 'questions'           => ['type' => 'array'],
                 'cached_answers'      => ['type' => 'object'],
                 'preflight_token'     => ['type' => 'string', 'description' => 'Raw token returned ONCE at mint time. Pass as _preflight_token to the downstream destructive ability. Server stores only sha256(token).'],
+                'must_call_next'      => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'The pipeline steps this skill manifest requires after preflight, in order. Not advisory: a payload built without the playbook these name is built from guesswork and fails validation.'],
                 'expires_at'          => ['type' => 'integer'],
             ],
         ],
@@ -217,6 +218,18 @@ function nibwp_skill_preflight_execute(array $input): array|WP_Error
     }
 
     $raw_token = nibwp_skill_preflight_mint_token($skill_id, $resolved);
+    $remaining = nibwp_skill_preflight_remaining_pipeline($skill_id);
+
+    // The steps the manifest requires after this one, named here because this
+    // response is the one moment an agent building against this skill is
+    // certain to be reading. Leaving them to be discovered is how a payload
+    // gets invented from a one-line schema description.
+    $must_call_next = [];
+    foreach ($remaining as $step) {
+        $must_call_next[] = $step['why'] === ''
+            ? $step['ability']
+            : sprintf('%s - %s', $step['ability'], $step['why']);
+    }
 
     return [
         'success'         => true,
@@ -224,10 +237,12 @@ function nibwp_skill_preflight_execute(array $input): array|WP_Error
         'cached_answers'  => $resolved,
         'preflight_token' => $raw_token,
         'expires_at'      => time() + NIBWP_PREFLIGHT_TOKEN_TTL,
+        'must_call_next'  => $must_call_next,
         'next_action'     => sprintf(
-            'Pass _preflight_token: "%s" to the downstream ability (e.g. nibwp/etchwp-pro-html-to-component). The token expires in 1 hour and is bound to user_id=%d.',
+            'Pass _preflight_token: "%s" at the TOP LEVEL of the downstream ability parameters - a sibling of source and payload, never inside payload. The token expires in 1 hour and is bound to user_id=%d. If you have not loaded this skill playbook yet, call nibwp/load-skill-playbook with skill_id "%s" first: it defines the payload contract, and a payload built by guesswork fails validation.',
             $raw_token,
-            get_current_user_id()
+            get_current_user_id(),
+            $skill_id
         ),
     ];
 }
@@ -529,15 +544,101 @@ function nibwp_skill_preflight_mint_token(string $skill_id, array $answers): str
 }
 
 /**
+ * The pipeline steps a skill's manifest puts after preflight.
+ *
+ * The manifest has always declared load-skill-playbook as mandatory, and the
+ * token response never mentioned it — so an agent that reached preflight
+ * without reading the routing contract got a token, no contract, and built the
+ * payload from a one-line schema description. One of them invented core/group
+ * blocks that way and shipped a page the Etch builder could not open.
+ *
+ * Returning it here puts the remaining steps in front of the agent at the only
+ * moment it is guaranteed to be looking.
+ *
+ * @return array<int, array{ability:string, why:string}>
+ */
+function nibwp_skill_preflight_remaining_pipeline(string $skill_id): array
+{
+    if (!function_exists('nibwp_skills_discover')) {
+        return [];
+    }
+
+    foreach (nibwp_skills_discover() as $skill) {
+        if ((string) ($skill['id'] ?? '') !== $skill_id) {
+            continue;
+        }
+
+        $out  = [];
+        $seen_preflight = false;
+        foreach ((array) ($skill['mandatory_routing']['pipeline'] ?? []) as $step) {
+            $ability = is_array($step) ? (string) ($step['ability'] ?? '') : (string) $step;
+            if ($ability === '') {
+                continue;
+            }
+            if ($ability === 'nibwp/skill-preflight') {
+                $seen_preflight = true;
+                continue;
+            }
+            // Everything before preflight has already had its turn.
+            if (!$seen_preflight) {
+                continue;
+            }
+            $out[] = [
+                'ability' => $ability,
+                'why'     => is_array($step) ? (string) ($step['why'] ?? '') : '',
+            ];
+        }
+
+        return $out;
+    }
+
+    return [];
+}
+
+/**
+ * Where a caller put _preflight_token, when it is not where it belongs.
+ *
+ * Only one level down, which is where it actually lands: an agent building a
+ * nested payload object tends to sweep every parameter it was told about into
+ * that object. Returns the containing key, or null when the token is genuinely
+ * absent.
+ */
+function nibwp_skill_preflight_locate_token(array $input): ?string
+{
+    foreach ($input as $key => $value) {
+        if (is_array($value) && is_string($value['_preflight_token'] ?? null) && $value['_preflight_token'] !== '') {
+            return (string) $key;
+        }
+    }
+
+    return null;
+}
+
+/**
  * Read + validate a preflight token. Returns the payload on success or
  * WP_Error on any of: invalid, expired, user mismatch, skill mismatch,
  * attempts_exhausted.
  *
  * @return array{skill_id:string,user_id:int,answers:array<string,mixed>,attempts:int,expires_at:int}|WP_Error
  */
-function nibwp_skill_preflight_consume_token(string $raw_token, string $expected_skill_id)
+function nibwp_skill_preflight_consume_token(string $raw_token, string $expected_skill_id, ?array $input = null)
 {
     if ($raw_token === '') {
+        // A token that was supplied but nested is the common way to land here,
+        // and the generic "call preflight first" is a lie in that case: the
+        // caller did call it. One agent read that message, concluded the skill
+        // was blocked by a server fault, and reported the skill as broken.
+        $misplaced = $input === null ? null : nibwp_skill_preflight_locate_token($input);
+        if ($misplaced !== null) {
+            return new WP_Error(
+                'preflight_token_misplaced',
+                sprintf(
+                    '_preflight_token was found inside "%s", but it belongs at the top level of the parameters, alongside "source" and "payload". Move it up one level and call again — the token itself is fine, no need to re-run nibwp/skill-preflight.',
+                    $misplaced
+                )
+            );
+        }
+
         return new WP_Error('preflight_token_missing', '_preflight_token is required. Call nibwp/skill-preflight first.');
     }
     $hash = hash('sha256', $raw_token);

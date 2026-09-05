@@ -3,7 +3,7 @@
  * Plugin Name: SEOPress PRO
  * Plugin URI: https://www.seopress.org/wordpress-seo-plugins/pro/
  * Description: The PRO version of SEOPress. SEOPress required (free).
- * Version: 10.1.1
+ * Version: 10.2
  * Author: The SEO Guys at SEOPress
  * Author URI: https://www.seopress.org/wordpress-seo-plugins/pro/
  * License: GPLv3 or later
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 /**
  * Define constants
  */
-define( 'SEOPRESS_PRO_VERSION', '10.1.1' );
+define( 'SEOPRESS_PRO_VERSION', '10.2' );
 define( 'SEOPRESS_PRO_AUTHOR', 'Benjamin Denis' );
 define( 'STORE_URL_SEOPRESS', 'https://www.seopress.org' );
 define( 'ITEM_ID_SEOPRESS', 113 );
@@ -65,6 +65,37 @@ require_once SEOPRESS_PRO_PLUGIN_DIR_PATH . 'seopress-autoload.php';
 // Runtime hooks below must be gated on this constant; the activation/deactivation and
 // self-deactivation safety hooks (which only use core functions) stay unconditional.
 define( 'SEOPRESS_PRO_RUNTIME_READY', file_exists( SEOPRESS_PRO_PLUGIN_DIR_PATH . '/vendor/autoload.php' ) && file_exists( WP_PLUGIN_DIR . '/wp-seopress/seopress-autoload.php' ) );
+
+/**
+ * Whether the free plugin is actually running, not merely installed.
+ *
+ * SEOPRESS_PRO_RUNTIME_READY proves the files are on disk, which is a different
+ * question. The free plugin can be deactivated, or have its directory swapped
+ * mid-update, while its autoloader still exists. Pro then boots against an API
+ * that was never loaded, and every callback reaching into the free plugin
+ * raises an `Error`. Pro does deactivate itself in that situation, but
+ * `deactivate_plugins()` only takes effect from the next request: the hooks of
+ * the current one are already armed and still fire.
+ *
+ * Load order between the two plugins is not guaranteed, so this can only be
+ * answered from `plugins_loaded` onwards, never at file scope.
+ *
+ * @since 10.2.0
+ *
+ * @return bool
+ */
+function seopress_pro_is_free_runtime_available() {
+	$available = function_exists( 'seopress_get_service' ) && function_exists( 'seopress_capability' );
+
+	/**
+	 * Filter whether Pro considers the free plugin runtime usable.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param bool $available Whether the free plugin API is loaded.
+	 */
+	return (bool) apply_filters( 'seopress_pro_free_runtime_available', $available );
+}
 
 if ( SEOPRESS_PRO_RUNTIME_READY ) {
 	require_once WP_PLUGIN_DIR . '/wp-seopress/seopress-autoload.php';
@@ -260,6 +291,13 @@ function seopress_pro_activation() {
 		}
 		add_option( 'seopress_pro_activated', 'yes', '', false );
 
+		// Turn the AI Assistant on unless this site already has a preference.
+		// The assistant stays inert until a provider is configured, so this only
+		// removes a step for people who go on to set one up.
+		if ( function_exists( 'seopress_pro_set_ai_assistant_default' ) ) {
+			seopress_pro_set_ai_assistant_default();
+		}
+
 		// Force an immediate language pack install on the next admin request.
 		set_transient( 'seopress_pro_install_langpack', 1, 5 * MINUTE_IN_SECONDS );
 
@@ -329,6 +367,13 @@ register_deactivation_hook( __FILE__, 'seopress_pro_deactivation' );
  * @return void
  */
 function seopress_pro_plugins_loaded() {
+	// The free plugin can be switched off, or have its directory swapped
+	// mid-update, while Pro stays loaded for the rest of this request. Every
+	// value below is read through the free plugin's service container.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	// CRON.
 	seopress_pro_cron();
 
@@ -436,6 +481,13 @@ add_action( 'init', 'seopress_pro_init_t15s' );
  * @return void
  */
 function seopress_pro_admin_scripts() {
+	// The free plugin can be switched off, or have its directory swapped
+	// mid-update, while Pro stays loaded for the rest of this request. Every
+	// value below is read through the free plugin's service container.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	$prefix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
 	if ( seopress_get_service( 'ToggleOption' )->getToggleAi() !== '1' ) {
@@ -447,10 +499,12 @@ function seopress_pro_admin_scripts() {
 		'seopress_ai_generate_seo_meta' => admin_url( 'admin-ajax.php' ),
 		'ai_logs_url'                   => admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_ai' ),
 		'i18n'                          => array(
-			'alt_text_not_found' => __( 'Alternative text input could not be found.', 'wp-seopress-pro' ),
-			'bulk_token_expired' => __( 'Your security token has expired. Please reload the page and run the bulk action again.', 'wp-seopress-pro' ),
-			'bulk_request_error' => __( 'The bulk AI generation could not be completed. Please try again.', 'wp-seopress-pro' ),
-			'check_logs'         => __( 'Check out logs', 'wp-seopress-pro' ),
+			'alt_text_not_found'        => __( 'Alternative text input could not be found.', 'wp-seopress-pro' ),
+			'bulk_token_expired'        => __( 'Your security token has expired. Please reload the page and run the bulk action again.', 'wp-seopress-pro' ),
+			'bulk_request_error'        => __( 'The bulk AI generation could not be completed. Please try again.', 'wp-seopress-pro' ),
+			/* translators: %s: reason returned by the AI provider */
+			'bulk_request_error_reason' => __( 'The bulk AI generation could not be completed: %s', 'wp-seopress-pro' ),
+			'check_logs'                => __( 'Check out logs', 'wp-seopress-pro' ),
 		),
 	);
 
@@ -491,6 +545,13 @@ function seopress_pro_admin_ps_scripts() {
  * @return void
  */
 function seopress_pro_add_admin_options_scripts( $hook ) {
+	// The free plugin can be switched off, or have its directory swapped
+	// mid-update, while Pro stays loaded for the rest of this request. Every
+	// value below is read through the free plugin's service container.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	$prefix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 	global $typenow;
 	global $pagenow;
@@ -618,10 +679,12 @@ function seopress_pro_add_admin_options_scripts( $hook ) {
 				'seopress_ai_generate_seo_meta' => admin_url( 'admin-ajax.php' ),
 				'ai_logs_url'                   => admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_ai' ),
 				'i18n'                          => array(
-					'alt_text_not_found' => __( 'Alternative text input could not be found.', 'wp-seopress-pro' ),
-					'bulk_token_expired' => __( 'Your security token has expired. Please reload the page and run the bulk action again.', 'wp-seopress-pro' ),
-					'bulk_request_error' => __( 'The bulk AI generation could not be completed. Please try again.', 'wp-seopress-pro' ),
-					'check_logs'         => __( 'Check out logs', 'wp-seopress-pro' ),
+					'alt_text_not_found'        => __( 'Alternative text input could not be found.', 'wp-seopress-pro' ),
+					'bulk_token_expired'        => __( 'Your security token has expired. Please reload the page and run the bulk action again.', 'wp-seopress-pro' ),
+					'bulk_request_error'        => __( 'The bulk AI generation could not be completed. Please try again.', 'wp-seopress-pro' ),
+					/* translators: %s: reason returned by the AI provider */
+					'bulk_request_error_reason' => __( 'The bulk AI generation could not be completed: %s', 'wp-seopress-pro' ),
+					'check_logs'                => __( 'Check out logs', 'wp-seopress-pro' ),
 				),
 			);
 
@@ -784,7 +847,7 @@ function seopress_pro_register_react_page() {
 		$pro_features = array(
 			'404', 'rich-snippets', 'local-business', 'woocommerce', 'edd',
 			'dublin-core', 'robots', 'llms', 'news', 'inspect-url',
-			'breadcrumbs', 'white-label', 'ai', 'alerts', 'agent-ready',
+			'breadcrumbs', 'white-label', 'ai', 'ai-assistant', 'alerts', 'agent-ready',
 		);
 		return array_merge( $features, $pro_features );
 	} );
@@ -796,6 +859,14 @@ add_action( 'plugins_loaded', 'seopress_pro_register_react_page' );
  * Loads after the free plugin's settings JS so the extension registry is available.
  */
 function seopress_pro_enqueue_react_settings( $hook ) {
+	// This callback is registered at file scope rather than through the kernel,
+	// so it survives the guard there and has to answer the same question: it
+	// reads a dozen values through the free plugin's service container, which
+	// does not exist when the free plugin is not running.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	// Match by page slug suffix -- the hook prefix varies depending on the parent menu slug
 	// (e.g. seopress_page_, seo_page_, or custom white-label prefix).
 	//
@@ -856,56 +927,9 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 	// Point to wp-content/languages/plugins/ where TranslationsPress language packs are stored.
 	wp_set_script_translations( 'seopress-pro-admin-settings', 'wp-seopress-pro', WP_LANG_DIR . '/plugins' );
 
-	// Merge translations from lazy-loaded webpack chunks into the main script.
-	// TranslationsPress generates a separate JSON per chunk, but wp_set_script_translations
-	// only loads the one matching the main bundle. This filter merges all of them.
-	add_filter(
-		'pre_load_script_translations',
-		function ( $translations, $file, $handle, $domain ) {
-			if ( 'seopress-pro-admin-settings' !== $handle || 'wp-seopress-pro' !== $domain ) {
-				return $translations;
-			}
-
-			$locale    = determine_locale();
-			$cache_key = 'seopress_pro_i18n_merged_' . $locale;
-			$cached    = wp_cache_get( $cache_key, 'seopress' );
-
-			if ( false !== $cached ) {
-				return $cached;
-			}
-
-			$lang_dir = WP_LANG_DIR . '/plugins';
-			$merged   = array( 'locale_data' => array( 'messages' => array( '' => array() ) ) );
-
-			foreach ( glob( $lang_dir . '/wp-seopress-pro-' . $locale . '-*.json' ) as $json_file ) {
-				$content = file_get_contents( $json_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-				if ( ! $content ) {
-					continue;
-				}
-				$data = json_decode( $content, true );
-				if ( ! isset( $data['locale_data']['messages'] ) ) {
-					continue;
-				}
-				foreach ( $data['locale_data']['messages'] as $key => $value ) {
-					if ( '' === $key ) {
-						if ( empty( $merged['locale_data']['messages'][''] ) ) {
-							$merged['locale_data']['messages'][''] = $value;
-						}
-						continue;
-					}
-					$merged['locale_data']['messages'][ $key ] = $value;
-				}
-			}
-
-			$result = wp_json_encode( $merged );
-
-			wp_cache_set( $cache_key, $result, 'seopress' );
-
-			return $result;
-		},
-		10,
-		4
-	);
+	// The settings bundle is code-split, and wp_set_script_translations() only
+	// loads the JSON matching the entry file. Merge the chunk JSONs into it.
+	\SEOPressPro\Helpers\ScriptTranslations::merge_chunks( 'seopress-pro-admin-settings', 'wp-seopress-pro' );
 
 	// Localize PRO tools data on all SEOPress settings pages (needed for SPA navigation).
 	{
@@ -1121,31 +1145,26 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 
 			// AI Logs.
 			'AI_LOGS'                 => get_transient( 'seopress_pro_ai_logs' ) ? json_decode( get_transient( 'seopress_pro_ai_logs' ), true ) : null,
-			// AI API key constants defined in wp-config.php.
-			'AI_CONSTANTS'            => array(
-				'openai'   => defined( 'SEOPRESS_OPENAI_KEY' ),
-				'deepseek' => defined( 'SEOPRESS_DEEPSEEK_KEY' ),
-				'gemini'   => defined( 'SEOPRESS_GEMINI_KEY' ),
-				'mistral'  => defined( 'SEOPRESS_MISTRAL_KEY' ),
-				'claude'   => defined( 'SEOPRESS_CLAUDE_KEY' ),
-				'seopress' => defined( 'SEOPRESS_CREDITS_KEY' ),
-			),
-			'AI_KEY_HINTS'            => call_user_func( function () {
-				$hints     = array();
-				$providers = array(
-					'openai'   => 'SEOPRESS_OPENAI_KEY',
-					'deepseek' => 'SEOPRESS_DEEPSEEK_KEY',
-					'gemini'   => 'SEOPRESS_GEMINI_KEY',
-					'mistral'  => 'SEOPRESS_MISTRAL_KEY',
-					'claude'   => 'SEOPRESS_CLAUDE_KEY',
-					'seopress' => 'SEOPRESS_CREDITS_KEY',
-				);
-				$options   = get_option( 'seopress_pro_option_name' );
+			// AI API key constants defined in wp-config.php. A constant defined
+			// but left empty is ignored by Usage::getLicenseKey(), so it must
+			// not lock the field here either.
+			'AI_CONSTANTS'            => call_user_func( function () {
+				$constants = array();
 
-				foreach ( $providers as $key => $constant ) {
+				foreach ( array_keys( seopress_ai_get_providers() ) as $key ) {
+					$constants[ $key ] = seopress_ai_provider_key_is_constant( $key );
+				}
+
+				return $constants;
+			} ),
+			'AI_KEY_HINTS'            => call_user_func( function () {
+				$hints   = array();
+				$options = get_option( 'seopress_pro_option_name' );
+
+				foreach ( array_keys( seopress_ai_get_providers() ) as $key ) {
 					$raw = '';
-					if ( defined( $constant ) && ! empty( constant( $constant ) ) ) {
-						$raw = constant( $constant );
+					if ( seopress_ai_provider_key_is_constant( $key ) ) {
+						$raw = constant( seopress_ai_get_provider_constant( $key ) );
 					} elseif ( ! empty( $options[ 'seopress_ai_' . $key . '_api_key' ] ) ) {
 						$raw = $options[ 'seopress_ai_' . $key . '_api_key' ];
 					}
@@ -1234,6 +1253,13 @@ add_action( 'admin_enqueue_scripts', 'seopress_pro_enqueue_react_settings', 20, 
  * @param string $hook The current admin page hook.
  */
 function seopress_pro_enqueue_react_dashboard( $hook ) {
+	// The free plugin can be switched off, or have its directory swapped
+	// mid-update, while Pro stays loaded for the rest of this request. Every
+	// value below is read through the free plugin's service container.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( 0 !== strpos( $page, 'seopress-' ) && 'seopress-option' !== $page ) {
 		return;
@@ -1267,12 +1293,14 @@ function seopress_pro_enqueue_react_dashboard( $hook ) {
 		true
 	);
 
+	// No `merge_chunks()` here: the dashboard bundle is a single `index.js`
+	// with no lazy chunk, so the handle's own JSON already carries everything.
 	wp_set_script_translations( 'seopress-pro-dashboard', 'wp-seopress-pro', WP_LANG_DIR . '/plugins' );
 
 	$style_file = plugin_dir_path( __FILE__ ) . 'public/admin/dashboard/index.css';
 	if ( file_exists( $style_file ) ) {
 		$style_version = SEOPRESS_PRO_VERSION;
-		if ( '10.1.1' === $style_version || empty( $style_version ) ) {
+		if ( '10.2' === $style_version || empty( $style_version ) ) {
 			$style_version = substr( md5_file( $style_file ), 0, 12 );
 		}
 		wp_enqueue_style(
@@ -1620,7 +1648,11 @@ function seopress_redirections_page_render() {
 		seopress_pro_render_dataviews_unsupported_notice( __( 'Redirections', 'wp-seopress-pro' ) );
 		return;
 	}
-	echo '<div class="wrap"><div id="seopress-redirections-root"></div></div>';
+	// The empty `.wp-header-end` gives wp-admin/js/common.js somewhere to put
+	// admin notices. Without it, it falls back to the first h1 or h2 inside
+	// `.wrap`, which on a bare React root is whatever heading the app renders
+	// first: notices landed inside the sidebar card.
+	echo '<div class="wrap"><hr class="wp-header-end"><div id="seopress-redirections-root"></div></div>';
 }
 
 /**
@@ -1631,6 +1663,13 @@ function seopress_redirections_page_render() {
  * @return void
  */
 function seopress_pro_enqueue_redirections_assets( $hook ) {
+	// The free plugin can be switched off, or have its directory swapped
+	// mid-update, while Pro stays loaded for the rest of this request. Every
+	// value below is read through the free plugin's service container.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	// Skip the DataViews bundle on WP versions older than the minimum required
 	// for `@wordpress/dataviews@14`. The submenu render callback redirects to
 	// the classic `seopress_404` CPT screen instead.
@@ -1696,6 +1735,99 @@ if ( SEOPRESS_PRO_RUNTIME_READY ) {
 }
 
 /**
+ * Terms for the Term Taxonomy filter in the schema rules builder.
+ *
+ * Served lazily over `/seopress/v1/schemas/editor-data`, not inlined into the
+ * page. The picker is a searchable combobox, so this list only has to be
+ * complete, not short: the user types instead of scrolling.
+ *
+ * Two details are load-bearing.
+ *
+ * The payload is a *list*, not a map keyed by term ID. `Object.entries()`
+ * enumerates integer-like keys in ascending numeric order, so a map hands the
+ * interface term IDs in creation order and throws away whatever ordering was
+ * built here.
+ *
+ * And the ordering inside a taxonomy is the one `get_terms()` returned, which
+ * is the database collation's. Re-sorting it in PHP with `strcasecmp()` would
+ * compare bytes and push every accented name past `Z` — `Écologie` after
+ * `Zèbre` — which is the same "my term is not in the list" symptom this whole
+ * function exists to remove. Only the taxonomy groups are ordered here.
+ *
+ * @since 10.2.0
+ *
+ * @return array {
+ *     @type array[] $terms     List of { value, label, taxonomy }.
+ *     @type bool    $truncated Whether any taxonomy hit the limit.
+ *     @type int     $limit     The limit in force.
+ * }
+ */
+function seopress_pro_schema_rule_terms() {
+	/**
+	 * How many terms per taxonomy reach the picker.
+	 *
+	 * The whole list is sent in one response and filtered client-side, so it
+	 * cannot be unbounded. Raise it on a site with a very large taxonomy.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param int $limit Terms per taxonomy.
+	 */
+	$limit = (int) apply_filters( 'seopress_pro_schema_rules_terms_limit', 2000 );
+	$limit = max( 1, $limit );
+
+	$grouped     = array();
+	$truncated   = false;
+	$public_taxs = get_taxonomies( array( 'public' => true ), 'objects' );
+
+	foreach ( $public_taxs as $tax ) {
+		$found = get_terms(
+			array(
+				'taxonomy'   => $tax->name,
+				'hide_empty' => false,
+				// One over the limit, so hitting it can be told from landing
+				// exactly on it. The extra entry is dropped below.
+				'number'     => $limit + 1,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+				// Names are all this needs; hydrating full term objects for
+				// thousands of rows is pure overhead.
+				'fields'     => 'id=>name',
+			)
+		);
+
+		if ( is_wp_error( $found ) || empty( $found ) ) {
+			continue;
+		}
+
+		if ( count( $found ) > $limit ) {
+			$truncated = true;
+			$found     = array_slice( $found, 0, $limit, true );
+		}
+
+		$tax_label = html_entity_decode( $tax->label, ENT_QUOTES | ENT_SUBSTITUTE );
+
+		foreach ( $found as $term_id => $term_name ) {
+			$grouped[ $tax_label ][] = array(
+				'value'    => (string) $term_id,
+				'label'    => html_entity_decode( $term_name, ENT_QUOTES | ENT_SUBSTITUTE ),
+				'taxonomy' => $tax_label,
+			);
+		}
+	}
+
+	// Taxonomy labels are short and site-authored; ordering them naturally is
+	// enough, and it leaves each group's own ordering untouched.
+	uksort( $grouped, 'strnatcasecmp' );
+
+	return array(
+		'terms'     => $grouped ? array_merge( ...array_values( $grouped ) ) : array(),
+		'truncated' => $truncated,
+		'limit'     => $limit,
+	);
+}
+
+/**
  * Render the Schemas DataViews admin page.
  *
  * Older WordPress installs are bounced to the classic `seopress_schemas` CPT
@@ -1709,7 +1841,11 @@ function seopress_schemas_page_render() {
 		seopress_pro_render_dataviews_unsupported_notice( __( 'Schemas', 'wp-seopress-pro' ) );
 		return;
 	}
-	echo '<div class="wrap"><div id="seopress-schemas-root"></div></div>';
+	// The empty `.wp-header-end` gives wp-admin/js/common.js somewhere to put
+	// admin notices. Without it, it falls back to the first h1 or h2 inside
+	// `.wrap`, which on a bare React root is whatever heading the app renders
+	// first: notices landed inside the sidebar card.
+	echo '<div class="wrap"><hr class="wp-header-end"><div id="seopress-schemas-root"></div></div>';
 }
 
 /**
@@ -1720,6 +1856,13 @@ function seopress_schemas_page_render() {
  * @return void
  */
 function seopress_pro_enqueue_schemas_assets( $hook ) {
+	// The free plugin can be switched off, or have its directory swapped
+	// mid-update, while Pro stays loaded for the rest of this request. Every
+	// value below is read through the free plugin's service container.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return;
+	}
+
 	// Bail out early before doing any of the heavy data collection below if we
 	// are not on the Schemas screen.
 	if ( false === strpos( $hook, 'seopress-schemas' ) ) {
@@ -1740,23 +1883,10 @@ function seopress_pro_enqueue_schemas_assets( $hook ) {
 		$pt_labels[ $pt->name ] = $pt->label;
 	}
 
-	// Build taxonomy term labels map (term ID → term name).
-	$taxonomies  = array();
-	$public_taxs = get_taxonomies( array( 'public' => true ), 'objects' );
-	foreach ( $public_taxs as $tax ) {
-		$terms = get_terms(
-			array(
-				'taxonomy'   => $tax->name,
-				'hide_empty' => false,
-				'number'     => 200,
-			)
-		);
-		if ( ! is_wp_error( $terms ) ) {
-			foreach ( $terms as $term ) {
-				$taxonomies[ (string) $term->term_id ] = $term->name . ' (' . $tax->label . ')';
-			}
-		}
-	}
+	// Terms for the Term Taxonomy picker are NOT built here. They are served
+	// lazily over `/seopress/v1/schemas/editor-data`, so a site with a large
+	// taxonomy does not pay for them on the listing screen, where the picker
+	// does not exist.
 
 	// Taxonomy slugs (lightweight — no DB query).
 	$taxonomy_slugs = array_keys( get_taxonomies( array( 'public' => true ) ) );
@@ -1819,7 +1949,6 @@ function seopress_pro_enqueue_schemas_assets( $hook ) {
 				'addNewUrl'              => admin_url( 'post-new.php?post_type=seopress_schemas' ),
 				'adminUrl'               => admin_url(),
 				'postTypes'              => $pt_labels,
-				'taxonomies'             => $taxonomies,
 				'taxonomySlugs'          => $taxonomy_slugs,
 				'restUrl'                => rest_url( 'seopress/v1/schemas/editor-data' ),
 				'restNonce'              => wp_create_nonce( 'wp_rest' ),
@@ -1827,6 +1956,7 @@ function seopress_pro_enqueue_schemas_assets( $hook ) {
 				'isWooCommerceActive'    => is_plugin_active( 'woocommerce/woocommerce.php' ),
 				'wcDefaultSchemaEnabled' => $wc_default_schema_enabled,
 				'richSnippetsEnabled'    => $rich_snippets_enabled,
+				'perPostOpeningHours'    => seopress_pro_has_per_post_opening_hours_support(),
 				'settingsUrl'            => admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_rich_snippets' ),
 				'docsFaqAcf'             => $docs_faq_acf,
 				'googleDocs'             => $docs_google_urls,
@@ -1893,6 +2023,14 @@ add_action( 'admin_notices', 'seopress_pro_admin_notices' );
  * @return array The plugin action links.
  */
 function seopress_pro_plugin_action_links( $links, $file ) {
+	// Runs on the Plugins screen, which is exactly where the free plugin gets
+	// deactivated or updated, and reads the white-label settings through the
+	// free service container. Returning the links untouched keeps the row
+	// rendering instead of taking the whole screen down.
+	if ( ! seopress_pro_is_free_runtime_available() ) {
+		return $links;
+	}
+
 	static $this_plugin;
 
 	if ( ! $this_plugin ) {
@@ -1945,6 +2083,10 @@ if ( ! class_exists( 'SEOPRESS_Updater' ) ) {
 	require_once plugin_dir_path( __FILE__ ) . 'inc/admin/updater/plugin-upgrader.php';
 	require_once plugin_dir_path( __FILE__ ) . 'inc/admin/updater/site-audit-table-migrations.php';
 }
+
+// Kept outside the updater guard above: this one only reads and writes an
+// option, and must run whether or not the updater class is already loaded.
+require_once plugin_dir_path( __FILE__ ) . 'inc/admin/updater/ai-assistant-default.php';
 
 /**
  * SEOPress PRO Updater.
@@ -2071,7 +2213,11 @@ function seopress_broken_links_page_render() {
 		seopress_pro_render_dataviews_unsupported_notice( __( 'Broken links', 'wp-seopress-pro' ) );
 		return;
 	}
-	echo '<div class="wrap"><div id="seopress-broken-links-root"></div></div>';
+	// The empty `.wp-header-end` gives wp-admin/js/common.js somewhere to put
+	// admin notices. Without it, it falls back to the first h1 or h2 inside
+	// `.wrap`, which on a bare React root is whatever heading the app renders
+	// first: notices landed inside the sidebar card.
+	echo '<div class="wrap"><hr class="wp-header-end"><div id="seopress-broken-links-root"></div></div>';
 }
 
 /**

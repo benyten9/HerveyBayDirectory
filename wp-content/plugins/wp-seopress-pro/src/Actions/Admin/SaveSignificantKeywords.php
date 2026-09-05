@@ -59,10 +59,61 @@ class SaveSignificantKeywords implements ExecuteHooks {
 		$keywords = seopress_pro_get_service( 'SignificantKeywords' )->retrieveSignificantKeywords( $content );
 		$data     = seopress_pro_get_service( 'SignificantKeywords' )->prepareWordsToInsert( $keywords, $id, $content );
 
-		seopress_pro_get_service( 'SignificantKeywordsRepository' )->removeSignificantKeywordsByPostId( $id );
+		$repository = seopress_pro_get_service( 'SignificantKeywordsRepository' );
+
 		if ( ! empty( $data ) ) {
-			seopress_pro_get_service( 'SignificantKeywordsRepository' )->insertSignificantKeywords( $data );
+			$repository->removeSignificantKeywordsByPostId( $id );
+			$repository->insertSignificantKeywords( $data );
+
+			return;
 		}
+
+		// Nothing to index. The delete above used to run unconditionally, so a
+		// save that produced no keywords was not a no-op: it emptied the index
+		// and nothing put it back. Internal link suggestions are built from
+		// that table, so the post silently stopped being suggested anywhere,
+		// while the save reported success.
+		if ( $this->shouldClearIndex( $post, $content ) ) {
+			$repository->removeSignificantKeywordsByPostId( $id );
+		}
+	}
+
+	/**
+	 * Whether an empty extraction is an answer about the post, or a failure to
+	 * read it.
+	 *
+	 * The two are indistinguishable from the result alone, which is why the
+	 * unconditional delete was destructive: a builder that renders nothing
+	 * here looks exactly like a post with nothing in it.
+	 *
+	 * The emptiness is accounted for, so the index should be cleared, when the
+	 * post genuinely carries no content, or when what it carries sits under the
+	 * minimum length `retrieveSignificantKeywords()` deliberately refuses to
+	 * work on. Measured with the same `cleanContent()` and the same filtered
+	 * floor, so the two cannot drift apart.
+	 *
+	 * Anything else means readable text produced no keywords, which is what
+	 * #1666 looks like on Divi 5: the stored content is substantial and the
+	 * render comes back empty. Deleting on that loses an index this save
+	 * cannot rebuild, and nothing surfaces it.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param \WP_Post $post    The post being saved.
+	 * @param string   $content What the renderer handed back for it.
+	 *
+	 * @return bool
+	 */
+	protected function shouldClearIndex( $post, $content ) {
+		$readable = seopress_pro_get_service( 'SignificantKeywords' )->cleanContent( (string) $content );
+
+		if ( '' === trim( $readable ) ) {
+			// Nothing readable. Only an equally empty post accounts for that;
+			// stored content that did not survive the render does not.
+			return '' === trim( (string) $post->post_content );
+		}
+
+		return strlen( $readable ) < apply_filters( 'seopress_pro_minimum_length_content_linking', 200 );
 	}
 
 	public function delete( $id ) {

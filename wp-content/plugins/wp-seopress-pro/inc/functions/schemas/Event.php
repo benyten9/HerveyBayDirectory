@@ -225,7 +225,7 @@ function seopress_automatic_rich_snippets_events_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_event_json', $json );
 
-		$json = '<script type="application/ld+json">' . wp_json_encode( $json ) . '</script>' . "\n";
+		$json = '<script type="application/ld+json">' . seopress_pro_json_ld_encode( $json ) . '</script>' . "\n";
 
 		$json = apply_filters( 'seopress_schemas_auto_event_html', $json );
 

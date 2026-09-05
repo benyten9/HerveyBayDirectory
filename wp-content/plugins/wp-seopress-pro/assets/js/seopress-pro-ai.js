@@ -636,6 +636,11 @@ jQuery(document).ready(function ($) {
 
         let aborted = false;
 
+        // The reason the server gave for the first failure ("Could not fetch
+        // the image", an API status code, ...). It is what support needs, and
+        // it beats the generic message shown when nothing could be generated.
+        let failureReason = '';
+
         for (const postId of postIds) {
             let response;
 
@@ -664,8 +669,12 @@ jQuery(document).ready(function ($) {
             }
 
             // An error payload (wp_send_json_error) has no generated field, so
-            // count it as failed instead of reading undefined properties.
+            // count it as failed instead of reading undefined properties. It
+            // carries the reason the generation failed: keep it.
             if (!response || !response.success || !response.data) {
+                if (!failureReason && response && response.data && response.data.message) {
+                    failureReason = response.data.message;
+                }
                 postIdsFailed.push(postId);
                 continue;
             }
@@ -711,9 +720,18 @@ jQuery(document).ready(function ($) {
         }
 
         // Nothing could be generated at all: reloading would hide the reason,
-        // so surface an explicit error instead.
+        // so surface an explicit error instead. When the server said why, show
+        // that rather than the generic sentence.
         if (postIds.length > 0 && postIdsFailed.length === postIds.length) {
-            showBulkError(i18n.bulk_request_error || 'The bulk AI generation could not be completed. Please try again.');
+            if (failureReason) {
+                const template = i18n.bulk_request_error_reason || 'The bulk AI generation could not be completed: %s';
+                // Replacement passed as a function: a provider message
+                // containing "$&" or "$'" would otherwise be read as a
+                // substitution pattern.
+                showBulkError(template.replace('%s', function () { return failureReason; }));
+            } else {
+                showBulkError(i18n.bulk_request_error || 'The bulk AI generation could not be completed. Please try again.');
+            }
             return;
         }
 

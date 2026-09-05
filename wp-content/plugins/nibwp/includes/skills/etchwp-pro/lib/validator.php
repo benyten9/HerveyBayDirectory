@@ -161,6 +161,38 @@ function nibwp_etchwp_brand_color_allowlist(): array
 }
 
 /**
+ * Every blockName in a payload tree, at any depth.
+ *
+ * @param array<string, mixed>|null $node
+ * @param array<int, string>        $out
+ */
+function nibwp_etchwp_collect_block_names($node, array &$out): void
+{
+    if (!is_array($node)) {
+        return;
+    }
+
+    if (isset($node['blockName'])) {
+        $out[] = (string) $node['blockName'];
+    }
+
+    foreach (['innerBlocks', 'inner_blocks'] as $key) {
+        foreach ((array) ($node[$key] ?? []) as $child) {
+            nibwp_etchwp_collect_block_names($child, $out);
+        }
+    }
+
+    // A bare list of blocks, rather than one block with children.
+    if (!isset($node['blockName'])) {
+        foreach ($node as $child) {
+            if (is_array($child)) {
+                nibwp_etchwp_collect_block_names($child, $out);
+            }
+        }
+    }
+}
+
+/**
  * Validate an agent-built Etch payload against the full playbook.
  *
  * @param array<string,mixed> $payload The full Etch artifact.
@@ -175,6 +207,70 @@ function nibwp_etchwp_validate_payload(array $payload, array $ctx): array
     $brand        = (string) ($ctx['brand'] ?? '');
     $acss_active  = array_key_exists('acss_active', $ctx) ? (bool) $ctx['acss_active'] : nibwp_etchwp_acss_active();
     $color_allow  = nibwp_etchwp_brand_color_allowlist();
+
+    // 0) Something to actually write.
+    //
+    // Every other rule here reads gutenbergBlock with `?? null` and stays
+    // quiet when it is absent, so a payload that carried no block tree passed
+    // validation clean. The persister then created the page, merged the
+    // styles, wrote no content and returned success — a blank page reported
+    // as a successful build, which is how a customer spent a day on it.
+    //
+    // components-only payloads are legitimate: they register reusable
+    // definitions without touching a page. Everything else must bring blocks.
+    $block_tree = $payload['gutenbergBlock'] ?? null;
+    $has_components = !empty($payload['components']) && is_array($payload['components']);
+    if (!is_array($block_tree) || $block_tree === []) {
+        if (!$has_components) {
+            $failed[] = [
+                'id'   => 'missing_block_tree',
+                'msg'  => 'payload.gutenbergBlock is missing or empty, so this payload would create a page with no content on it. Put the etch/element tree under the gutenbergBlock key. (A payload with only `components` is allowed, and registers definitions without writing a page.)',
+                'path' => 'gutenbergBlock',
+            ];
+        }
+    }
+
+    // 0b) The blocks have to be Etch's blocks.
+    //
+    // Nothing here ever checked this. Every mention of etch/element in this
+    // file was a comment or an error message, and the only blockName tests are
+    // for core/html and the shortcode blocks. So a tree built from core/group,
+    // core/heading and core/paragraph passed with no failures and no warnings.
+    //
+    // That page is not empty and not broken. WordPress stores it, Gutenberg
+    // edits it, the front end renders it — and the Etch builder shows inert
+    // placeholders, because they are not its blocks. A customer read that as
+    // the page having been created empty.
+    if (is_array($block_tree) && $block_tree !== []) {
+        $block_names = [];
+        nibwp_etchwp_collect_block_names($block_tree, $block_names);
+
+        $etch_blocks = array_filter($block_names, static fn(string $n): bool => str_starts_with($n, 'etch/'));
+        // core/html and core/shortcode are deliberate escape hatches the rest
+        // of this validator already supports; everything else from core is a
+        // block Etch cannot edit.
+        $foreign = array_values(array_unique(array_filter(
+            $block_names,
+            static fn(string $n): bool => $n !== '' && !str_starts_with($n, 'etch/') && $n !== 'core/html' && $n !== 'core/shortcode'
+        )));
+
+        if ($etch_blocks === []) {
+            $failed[] = [
+                'id'   => 'no_etch_blocks',
+                'msg'  => sprintf(
+                    'gutenbergBlock contains no etch/* blocks (found: %s). Etch can only edit its own blocks — a tree of core blocks produces a page that Gutenberg can edit and the Etch builder shows as inert placeholders. Build the tree from etch/element blocks.',
+                    $block_names === [] ? 'none' : implode(', ', array_unique($block_names))
+                ),
+                'path' => 'gutenbergBlock',
+            ];
+        } elseif ($foreign !== []) {
+            $warnings[] = [
+                'id'   => 'foreign_blocks',
+                'msg'  => sprintf('gutenbergBlock mixes in blocks Etch cannot edit: %s. They will render, but appear as inert placeholders in the builder.', implode(', ', $foreign)),
+                'path' => 'gutenbergBlock',
+            ];
+        }
+    }
 
     // 1) __libraryMeta shape
     $manifest_issues = nibwp_etchwp_validate_manifest($payload);

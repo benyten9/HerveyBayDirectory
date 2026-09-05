@@ -29,21 +29,38 @@ function seopress_301_do_redirect() {
 		$_SERVER['QUERY_STRING'] = '';
 	}
 
-	$get_init_current_url = htmlspecialchars( rawurldecode( add_query_arg( $_SERVER['QUERY_STRING'], '', $home_url ) ) );
-	$get_current_url      = wp_parse_url( $get_init_current_url );
+	// Parsed before being decoded: parse_url() turns every C1 byte into an
+	// underscore, so decoding first destroyed the non-Latin characters this
+	// path is then compared against. See seopress_pro_parse_url_decoded().
+	$raw_current_url = add_query_arg( $_SERVER['QUERY_STRING'], '', $home_url );
+	$get_current_url = seopress_pro_parse_url_decoded( $raw_current_url );
+
+	// Kept decoded and escaped exactly as before: this one is not compared
+	// against anything, it is handed to handleRedirectionWithId() as `init_url`
+	// and ends up in the Location header of a 410/451. Reordering the parse
+	// must not change what those visitors receive.
+	$get_init_current_url = htmlspecialchars( rawurldecode( $raw_current_url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+
+	// home_url() puts back the path the site is served from, which
+	// WP::parse_request() had just stripped out of $wp->request. Origins are
+	// stored without it, so on an install in a subdirectory the comparison was
+	// `blog/tag/promo/` against `tag/promo/` and nothing ever matched.
+	if ( isset( $get_current_url['path'] ) ) {
+		$get_current_url['path'] = seopress_pro_strip_home_path( $get_current_url['path'] );
+	}
 
 	// WPML.
 	if ( defined( 'ICL_SITEPRESS_VERSION' ) ) {
 		add_filter( 'wpml_get_home_url', 'seopress_remove_wpml_home_url_filter', 20, 5 );
-		$home_url2             = home_url( $wp->request );
-		$get_init_current_url2 = htmlspecialchars( rawurldecode( add_query_arg( $_SERVER['QUERY_STRING'], '', $home_url2 ) ) );
-		$get_current_url2      = wp_parse_url( $get_init_current_url2 );
+		$home_url2        = home_url( $wp->request );
+		$get_current_url2 = seopress_pro_parse_url_decoded( add_query_arg( $_SERVER['QUERY_STRING'], '', $home_url2 ) );
 		remove_filter( 'wpml_get_home_url', 'seopress_remove_wpml_home_url_filter', 20 );
 	}
 
-	// Weglot.
+	// Weglot. Decoded like the others: the origin is stored decoded, so an
+	// encoded path here could never match it either.
 	if ( function_exists( 'weglot_get_current_full_url' ) ) {
-		$get_current_url_weglot = wp_parse_url( weglot_get_current_full_url() );
+		$get_current_url_weglot = seopress_pro_parse_url_decoded( weglot_get_current_full_url() );
 	}
 
 	$uri               = '';
@@ -113,10 +130,10 @@ function seopress_301_do_redirect() {
 	}
 
 	// Necessary to allowed "&" in query.
-	$uri  = htmlspecialchars_decode( $uri );
-	$uri2 = htmlspecialchars_decode( $uri2 );
-	$uri3 = htmlspecialchars_decode( $uri3 );
-	$uri4 = htmlspecialchars_decode( $uri4 );
+	$uri  = htmlspecialchars_decode( $uri, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+	$uri2 = htmlspecialchars_decode( $uri2, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+	$uri3 = htmlspecialchars_decode( $uri3, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+	$uri4 = htmlspecialchars_decode( $uri4, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 
 	$page_uri = seopress_pro_get_service( 'Redirection' )->getPageByTitle( trailingslashit( $uri ), '', 'seopress_404' );
 
@@ -150,15 +167,21 @@ function seopress_301_do_redirect() {
 	if ( empty( $seopress_get_page ) ) {
 		$if_exact_match = false;
 
-		$uri  = wp_parse_url( $uri, PHP_URL_PATH );
-		$uri2 = wp_parse_url( $uri2, PHP_URL_PATH );
-		$uri3 = wp_parse_url( $uri3, PHP_URL_PATH );
-		$uri4 = wp_parse_url( $uri4, PHP_URL_PATH );
+		// Not wp_parse_url(): these strings have already been decoded above, and
+		// parse_url() is the exact call that turns every C1 byte into an
+		// underscore. Feeding it a decoded URI here mangled `остров` back into
+		// `о_ _ _ов` and this branch never matched a non-Latin origin, which is
+		// the same defect seopress_pro_parse_url_decoded() fixes upstream.
+		// Ignoring the parameters only means dropping the query string.
+		$uri  = seopress_pro_strip_query_string( $uri );
+		$uri2 = seopress_pro_strip_query_string( $uri2 );
+		$uri3 = seopress_pro_strip_query_string( $uri3 );
+		$uri4 = seopress_pro_strip_query_string( $uri4 );
 
-		$uri  = is_string( $uri ) ? ltrim( $uri, '/' ) : '';
-		$uri2 = is_string( $uri2 ) ? ltrim( $uri2, '/' ) : '';
-		$uri3 = is_string( $uri3 ) ? ltrim( $uri3, '/' ) : '';
-		$uri4 = is_string( $uri4 ) ? ltrim( $uri4, '/' ) : '';
+		$uri  = ltrim( $uri, '/' );
+		$uri2 = ltrim( $uri2, '/' );
+		$uri3 = ltrim( $uri3, '/' );
+		$uri4 = ltrim( $uri4, '/' );
 
 		$page_uri  = seopress_pro_get_service( 'Redirection' )->getPageByTitle( trailingslashit( $uri ), '', 'seopress_404' );
 		$page_uri2 = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri2, '', 'seopress_404' );
@@ -230,11 +253,25 @@ function seopress_404_create_redirect() {
 	global $wp;
 	global $post;
 
-	$get_current_url = htmlspecialchars( rawurldecode( add_query_arg( array(), $wp->request ) ) );
+	$get_current_url = htmlspecialchars( rawurldecode( add_query_arg( array(), $wp->request ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+
+	// A request the site makes to itself is not a visitor hitting a missing
+	// page. Guarding here rather than at each caller means no call site can
+	// reintroduce the loop by forgetting the check.
+	if ( seopress_404_is_loopback_request() ) {
+		return;
+	}
 
 	// Exclude URLs from cache and user-defined patterns.
 	$match                = false;
-	$seopress_404_exclude = array( 'wp-content/cache' );
+	// `^purge/` covers the cache-purge endpoints that fed the loop above. The
+	// anchor is what keeps it from swallowing an ordinary page: matching the
+	// word anywhere in the request would also drop `blog/how-to-purge/`,
+	// `tag/purge/` or `cache-purge/`, silently and for good. The purge
+	// endpoint sits at the root of the install, so the start of the request
+	// is where it belongs. A site serving it under a prefix, from a language
+	// directory for instance, can add `^fr/purge/` to the exclusion list.
+	$seopress_404_exclude = array( 'wp-content/cache', '^purge/' );
 	$seopress_404_exclude = apply_filters( 'seopress_404_exclude', $seopress_404_exclude );
 
 	foreach ( $seopress_404_exclude as $kw ) {
@@ -247,6 +284,18 @@ function seopress_404_create_redirect() {
 		if ( 0 === strpos( $kw, '.' ) ) {
 			// Match file extension at end of URL.
 			if ( substr( strtolower( $get_current_url ), -strlen( $kw ) ) === strtolower( $kw ) ) {
+				$match = true;
+				break;
+			}
+		} elseif ( 0 === strpos( $kw, '^' ) ) {
+			// Match at the start of the request only. A leading slash is
+			// tolerated, since `$wp->request` carries none and writing
+			// `^/purge/` is the natural thing to type.
+			$prefix = ltrim( substr( $kw, 1 ), '/' );
+
+			// `strpos()` accepts an empty needle and answers 0, so a bare `^`
+			// would exclude every request. It is not a pattern, skip it.
+			if ( '' !== $prefix && 0 === strpos( $get_current_url, $prefix ) ) {
 				$match = true;
 				break;
 			}
@@ -279,7 +328,7 @@ function seopress_404_create_redirect() {
 
 		// Get Full Origin.
 		$seopress_get_referer = '';
-		$seopress_get_referer = htmlspecialchars( rawurldecode( home_url( $wp->request ) ) );
+		$seopress_get_referer = htmlspecialchars( rawurldecode( home_url( $wp->request ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 
 		if ( $get_current_url && $seopress_get_post_title != $get_current_url ) {
 			// Security: Enforce maximum 404 entries limit to prevent DDOS attacks.
@@ -560,10 +609,54 @@ function seopress_404_one_time_migration() {
 add_action( 'seopress_pro_activation', 'seopress_404_one_time_migration' );
 
 /**
+ * Whether the current request is the site calling itself.
+ *
+ * WordPress sends `WordPress/<version>; <home_url>` on every `wp_remote_*`
+ * call, so a loopback carries our own address in its user agent. Such a
+ * request is not a visitor hitting a missing page, and logging it is what
+ * turns any cache layer that purges on post save into a self-feeding loop:
+ * the purge URL 404s, the 404 log creates a post, creating the post triggers
+ * another purge, one path segment longer each turn. A production site was
+ * taken down repeatedly that way, with the slug recording eight levels of
+ * `purge-seopress_404-purge-seopress_404-…`.
+ *
+ * `seopress_is_bot()` never caught it: the regex knows plenty of crawlers and
+ * nothing about WordPress itself.
+ *
+ * @since 10.2.0
+ *
+ * @return bool
+ */
+function seopress_404_is_loopback_request() {
+	$user_agent = empty( $_SERVER['HTTP_USER_AGENT'] ) ? '' : sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
+
+	if ( '' === $user_agent || 0 !== strpos( $user_agent, 'WordPress/' ) ) {
+		return (bool) apply_filters( 'seopress_404_is_loopback_request', false, $user_agent );
+	}
+
+	// The version alone is not enough: another WordPress site may crawl us, and
+	// that is an ordinary visitor as far as the log is concerned. Only our own
+	// address makes it a loopback.
+	$host       = wp_parse_url( home_url(), PHP_URL_HOST );
+	$agent_host = wp_parse_url( trim( substr( $user_agent, strpos( $user_agent, ';' ) + 1 ) ), PHP_URL_HOST );
+
+	$is_loopback = ! empty( $host ) && ! empty( $agent_host ) && strtolower( $host ) === strtolower( $agent_host );
+
+	return (bool) apply_filters( 'seopress_404_is_loopback_request', $is_loopback, $user_agent );
+}
+
+/**
  * Check if the user is a bot.
+ *
+ * `ai` and `indexing` used to sit in the alternation bare, with no word
+ * boundary, so `ai` matched any user agent carrying those two letters in
+ * sequence. `Mozilla/5.0 Mail/16.0` was treated as a bot, which silently
+ * dropped the 404s of every visitor on Apple Mail. That is the opposite
+ * failure to the loopback one, quieter and probably older: it made the log
+ * incomplete without anyone noticing.
  */
 function seopress_is_bot() {
-	$bot_regex = '/bot|crawler|spider|curl|slurp|bingbot|DuckDuckBot|YandexBot|Baiduspider|Sogou|Exabot|facebot|ia_archiver|MJ12bot|AhrefsBot|SemrushBot|DotBot|Googlebot|AppEngine-Google|AdsBot-Google|Google-Structured-Data-Testing-Tool|mediapartners-google|Twitterbot|Pinterest|LinkedInBot|PetalBot|OpenGraphRobot|TelegramBot|Discordbot|WhatsApp|facebookexternalhit|python-requests|Wget|HTTPClient|libwww-perl|okhttp|Slackbot-LinkExpanding|Tumblr|Apache-HttpClient|Postman|Zapier|Cloudflare-AMP|axios|PageSpeed|phantomjs|Nutch|SeznamBot|CCBot|serpstatbot|Upptime|statuscake|Datadog|kube-probe|Go-http-client|screenshot|HeadlessChrome|Headless|GTmetrix|Bytespider|nextcrawl|ai|indexing|crawler$/i';
+	$bot_regex = '/bot|crawler|spider|curl|slurp|bingbot|DuckDuckBot|YandexBot|Baiduspider|Sogou|Exabot|facebot|ia_archiver|MJ12bot|AhrefsBot|SemrushBot|DotBot|Googlebot|AppEngine-Google|AdsBot-Google|Google-Structured-Data-Testing-Tool|mediapartners-google|Twitterbot|Pinterest|LinkedInBot|PetalBot|OpenGraphRobot|TelegramBot|Discordbot|WhatsApp|facebookexternalhit|python-requests|Wget|HTTPClient|libwww-perl|okhttp|Slackbot-LinkExpanding|Tumblr|Apache-HttpClient|Postman|Zapier|Cloudflare-AMP|axios|PageSpeed|phantomjs|Nutch|SeznamBot|CCBot|serpstatbot|Upptime|statuscake|Datadog|kube-probe|Go-http-client|screenshot|HeadlessChrome|Headless|GTmetrix|Bytespider|nextcrawl|\bai\b|\bindexing\b|crawler$/i';
 
 	$bot_regex = apply_filters( 'seopress_404_bots', $bot_regex );
 
@@ -622,6 +715,13 @@ add_action( 'template_redirect', 'seopress_404_log' );
 
 /**
  * Add user-defined paths to 404 exclude list.
+ *
+ * A pattern takes one of three forms, matched against the request without its
+ * leading slash:
+ *
+ * - `.css`      a file extension, matched at the end of the request
+ * - `^purge/`   anchored, matched at the start of the request only
+ * - `wp-content/cache` anywhere in the request
  *
  * @param array $exclude The default exclude paths.
  * @return array The modified exclude paths.
@@ -685,7 +785,8 @@ function seopress_prevent_title_redirection_already_exist( $post ) {
 			array(
 				'insert_post'                 => $post,
 				'post_exist'                  => $exist_redirect_post,
-				'seopress_redirections_value' => isset( $_POST['seopress_redirections_value'] ) ? $_POST['seopress_redirections_value'] : null,
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- the post save this hangs off already verified its own nonce.
+				'seopress_redirections_value' => isset( $_POST['seopress_redirections_value'] ) ? sanitize_text_field( wp_unslash( $_POST['seopress_redirections_value'] ) ) : null,
 			),
 			3600
 		);
@@ -734,12 +835,15 @@ function seopress_notice_prevent_create_title_redirection() {
 
 	$edit_post_link = get_edit_post_link( $transient['post_exist']->ID );
 
+	// The redirection value comes straight from the submitted form and the
+	// transient is site-wide, so the notice can render for a different user
+	// than the one who triggered it: everything interpolated here is escaped.
 	$message  = '<p>';
 	$message .= sprintf(
 		/* translators: %1$s: post name (slug) %2$s: url redirect */
 		__( 'We were unable to create the redirection you requested (<code>%1$s</code> to <code>%2$s</code>).', 'wp-seopress-pro' ),
-		$transient['insert_post']->post_name,
-		$transient['seopress_redirections_value']
+		esc_html( $transient['insert_post']->post_name ),
+		esc_html( (string) $transient['seopress_redirections_value'] )
 	);
 	$message .= '</p>';
 
@@ -747,13 +851,13 @@ function seopress_notice_prevent_create_title_redirection() {
 	$message .= sprintf(
 		/* translators: %1$s: get_edit_post_link() %2$s: post name (slug) */
 		__( 'This URL is already listed as a redirection or a 404 error. Click this link to edit it: <a href="%1$s">%2$s</a>.', 'wp-seopress-pro' ),
-		$edit_post_link,
-		$transient['post_exist']->post_name
+		esc_url( $edit_post_link ),
+		esc_html( $transient['post_exist']->post_name )
 	);
 	$message .= '</p>';
 	?>
 <div class="error notice is-dismissable">
-	<?php echo $message; ?>
+	<?php echo wp_kses_post( $message ); ?>
 </div>
 	<?php
 }

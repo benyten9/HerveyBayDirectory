@@ -9,6 +9,16 @@ defined( 'ABSPATH' ) || exit;
  */
 class Completions {
 	public const NAME_SERVICE                   = 'Completions';
+
+	/**
+	 * Transient holding the last provider failure shown in the AI settings tab.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @var string
+	 */
+	public const ERROR_LOG_TRANSIENT            = 'seopress_pro_ai_logs';
+
 	private const OPENAI_URL_CHAT_COMPLETIONS   = 'https://api.openai.com/v1/chat/completions';
 	private const OPENAI_URL_RESPONSES          = 'https://api.openai.com/v1/responses';
 	private const DEEPSEEK_URL_CHAT_COMPLETIONS = 'https://api.deepseek.com/v1/chat/completions';
@@ -154,6 +164,59 @@ class Completions {
 			default:
 				return array();
 		}
+	}
+
+	/**
+	 * Turn a non-200 provider response into something a human can read.
+	 *
+	 * The body is not always the provider's JSON. When the API is down, the
+	 * answer is an HTML error page from its CDN (Cloudflare 520 and friends),
+	 * and dumping it raw used to fill the editor notice with a full page of
+	 * markup. The full body still goes to the AI log transient for debugging;
+	 * the notice only ever gets one readable sentence.
+	 *
+	 * @param int    $response_code HTTP response code.
+	 * @param string $response_body Raw response body.
+	 *
+	 * @return string Short, plain-text details for the error notice.
+	 */
+	private function formatApiErrorDetails( $response_code, $response_body ) {
+		// The provider's own error message, when the body is its JSON.
+		$error_data = json_decode( (string) $response_body, true );
+		if ( isset( $error_data['error']['message'] ) && is_string( $error_data['error']['message'] ) && '' !== $error_data['error']['message'] ) {
+			return $error_data['error']['message'];
+		}
+
+		// An HTML body means the request never reached the API itself: CDN
+		// error page, maintenance page, proxy. Its <title> is the only line
+		// worth showing ("api.openai.com | 520: Web server is returning an
+		// unknown error"); the rest is markup.
+		if ( false !== stripos( (string) $response_body, '<html' ) ) {
+			if ( preg_match( '/<title>(.*?)<\/title>/is', (string) $response_body, $m ) ) {
+				$title = trim( wp_strip_all_tags( $m[1] ) );
+				if ( '' !== $title ) {
+					return $title;
+				}
+			}
+
+			return (int) $response_code >= 500
+				? __( 'The AI provider is temporarily unavailable. Please try again in a few minutes.', 'wp-seopress-pro' )
+				: __( 'The AI provider returned an unexpected response.', 'wp-seopress-pro' );
+		}
+
+		// Plain-text or unknown body: keep it, but never more than one line.
+		$details = trim( sanitize_text_field( (string) $response_body ) );
+		if ( '' === $details ) {
+			return (int) $response_code >= 500
+				? __( 'The AI provider is temporarily unavailable. Please try again in a few minutes.', 'wp-seopress-pro' )
+				: __( 'The AI provider returned an empty response.', 'wp-seopress-pro' );
+		}
+
+		if ( strlen( $details ) > 200 ) {
+			$details = substr( $details, 0, 200 ) . '…';
+		}
+
+		return $details;
 	}
 
 	/**
@@ -497,8 +560,16 @@ class Completions {
 			'effort' => 'medium',
 		);
 
-		// Note: JSON schema structured output is handled via prompt instructions
-		// as the Responses API has different structured output requirements.
+		// Carry the JSON constraint the caller asked for. The Responses API
+		// spells it `text.format` where chat completions use `response_format`,
+		// and rebuilding the body from scratch used to drop it silently: the
+		// prompt was then written in its lighter form, on the assumption the
+		// parameter would do the work, and nothing enforced anything.
+		if ( isset( $body['response_format']['type'] ) ) {
+			$gpt5_body['text'] = array(
+				'format' => array( 'type' => $body['response_format']['type'] ),
+			);
+		}
 
 		return $gpt5_body;
 	}
@@ -571,12 +642,59 @@ class Completions {
 	}
 
 	/**
-	 * Fetch an image from URL and convert to base64 for Gemini API
+	 * Fetch an image from URL and convert to base64 for the multimodal APIs.
 	 *
-	 * @param string $url The image URL.
+	 * Public because it is part of this service's surface: the AI Assistant
+	 * builds its Claude and Gemini payloads in
+	 * `ChatCompletions::prepare_multimodal_messages()` and calls this from
+	 * there. That is a different class with no inheritance link, so declaring
+	 * this private made every image-carrying chat request raise a PHP `Error`
+	 * rather than send anything.
+	 *
+	 * @param string $url           The image URL.
+	 * @param int    $attachment_id Attachment ID when known, so the file can be
+	 *                              read from disk instead of over HTTP.
 	 * @return array|false Array with 'mime_type' and 'data' keys, or false on failure
 	 */
-	private function fetchImageAsBase64( $url ) {
+	public function fetchImageAsBase64( $url, $attachment_id = 0 ) {
+		$url = is_string( $url ) ? $url : '';
+
+		/*
+		 * Read the file from disk when we know which attachment this is.
+		 *
+		 * The previous behaviour was to ask the site for its own image over
+		 * HTTP, which is a loopback request and fails for reasons that have
+		 * nothing to do with the image: a host that blocks loopback, a WAF or
+		 * CDN that challenges a request with no browser User-Agent, or a URL
+		 * that is not absolute in the first place.
+		 *
+		 * That last one is what a customer hit: a site where
+		 * wp_get_attachment_image_src() returns a root-relative path, so
+		 * wp_remote_get() answered "A valid URL was not provided." and the only
+		 * thing the user saw was "Could not fetch the image".
+		 *
+		 * The file is on the same server in every one of those cases, so
+		 * reading it directly removes the whole class of failure. Offloaded
+		 * media (S3 and friends) has no local file, and falls through to the
+		 * HTTP path below.
+		 */
+		if ( $attachment_id ) {
+			$path = get_attached_file( $attachment_id );
+
+			if ( $path && is_readable( $path ) ) {
+				$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file, not a remote request.
+
+				if ( false !== $contents && '' !== $contents ) {
+					$mime_type = get_post_mime_type( $attachment_id );
+
+					return array(
+						'mime_type' => $mime_type ? $mime_type : 'image/jpeg',
+						'data'      => base64_encode( $contents ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- the API expects base64.
+					);
+				}
+			}
+		}
+
 		// Handle data URIs directly (already base64-encoded).
 		if ( strpos( $url, 'data:' ) === 0 ) {
 			if ( preg_match( '/^data:(image\/[^;]+);base64,(.+)$/', $url, $matches ) ) {
@@ -585,6 +703,20 @@ class Completions {
 					'data'      => $matches[2],
 				);
 			}
+			return false;
+		}
+
+		// A root-relative or protocol-relative URL is never a valid argument to
+		// wp_remote_get(); it answers "A valid URL was not provided." Sites do
+		// produce them, through a CDN plugin or an upload_url_path that was set
+		// relative, so resolve rather than fail.
+		if ( 0 === strpos( $url, '//' ) ) {
+			$url = ( is_ssl() ? 'https:' : 'http:' ) . $url;
+		} elseif ( 0 === strpos( $url, '/' ) ) {
+			$url = home_url( $url );
+		}
+
+		if ( '' === $url ) {
 			return false;
 		}
 
@@ -817,12 +949,267 @@ class Completions {
 	}
 
 	/**
+	 * Record the last provider failure for the AI settings panel.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param array $error_log Provider, response code, bodies and timestamp.
+	 *
+	 * @return void
+	 */
+	public function logApiError( $error_log ) {
+		set_transient( self::ERROR_LOG_TRANSIENT, wp_json_encode( $error_log ), 30 * DAY_IN_SECONDS );
+	}
+
+	/**
+	 * Drop the recorded failure once a call has succeeded.
+	 *
+	 * The entry was written with a thirty day lifetime and nothing ever
+	 * invalidated it, so the panel kept reporting a failure that had been fixed
+	 * days or weeks earlier, naming a provider the site had since stopped
+	 * using. Users read it as live and concluded the plugin was calling the
+	 * wrong provider; one reported an entry still on screen twenty-three days
+	 * later while every call in between had gone elsewhere.
+	 *
+	 * The retention is a sensible upper bound for a genuinely persistent
+	 * failure. What was missing is anything that ends it.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @return void
+	 */
+	public function clearApiErrorLog() {
+		delete_transient( self::ERROR_LOG_TRANSIENT );
+	}
+
+	/**
+	 * Record a request that never reached the provider.
+	 *
+	 * The panel only ever recorded errors the provider answered with. When the
+	 * request never completes at all, the message was kept for the screen and
+	 * nothing was written, so the log stayed empty while generation was
+	 * actively failing.
+	 *
+	 * That is the worst case to hide: a timeout, a DNS failure, a TLS error, an
+	 * outbound connection blocked by the host, or WP_HTTP_BLOCK_EXTERNAL set on
+	 * the install. Those are exactly the situations where the user has no other
+	 * clue, and where the message names the cause outright.
+	 *
+	 * `response_code` is 0, which reads as "the request never got an answer"
+	 * and keeps the existing panel layout working unchanged.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param \WP_Error $error    The transport failure.
+	 * @param string    $provider Provider the request was going to.
+	 *
+	 * @return void
+	 */
+	public function logTransportError( $error, $provider ) {
+		$this->logApiError(
+			array(
+				'provider'      => $provider,
+				'response_code' => 0,
+				'error_code'    => $error->get_error_code(),
+				'response_body' => $error->get_error_message(),
+				'request_body'  => '',
+				'timestamp'     => current_time( 'mysql' ),
+			)
+		);
+	}
+
+	/**
+	 * Turn a locale into a readable language name for the prompt.
+	 *
+	 * `locale_get_display_name()` comes from ext-intl, which nothing here requires:
+	 * not composer.json, not the readme, not WordPress core. It is common but far
+	 * from universal on shared hosting, and calling it unguarded killed every
+	 * generation with a fatal before any request went out.
+	 *
+	 * The raw locale is a perfectly usable fallback, `fr_FR` reads as well as
+	 * `French (France)` in a prompt, so a missing extension degrades here rather
+	 * than becoming an install requirement.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param string $language The locale, e.g. `fr_FR`.
+	 *
+	 * @return string The display name when intl can resolve it, the locale otherwise.
+	 */
+	private function getLanguageDisplayName( $language ) {
+		if ( ! function_exists( 'locale_get_display_name' ) ) {
+			return $language;
+		}
+
+		$display_name = locale_get_display_name( $language, 'en' );
+
+		return $display_name ? esc_html( $display_name ) : $language;
+	}
+
+	/**
 	 * Get OpenAI model from the SEOPress options (backward compatibility).
 	 *
 	 * @return string $model the OpenAI model name.
 	 */
 	public function getOpenAIModel() {
 		return $this->getAIModel( 'openai' );
+	}
+
+	/**
+	 * Whether a generation the API answered with a 200 actually produced something.
+	 *
+	 * A provider can answer 200 with nothing usable in it: no JSON at all, or JSON
+	 * without the keys the prompt asked for. Every requested value then comes back
+	 * empty while the transport reports a success, and the caller has nothing to
+	 * save and nothing to tell the user.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param array $values The generated values for the requested fields.
+	 *
+	 * @return bool
+	 */
+	private function hasGeneratedContent( $values ) {
+		foreach ( $values as $value ) {
+			if ( '' !== trim( (string) $value ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * The output token budget for a generation request.
+	 *
+	 * Reasoning models bill their chain-of-thought from the same budget as the
+	 * answer. DeepSeek V4 spends the whole historical 220 on reasoning and gets
+	 * cut off (`finish_reason: length`) before writing a single output token,
+	 * so every generation comes back empty. A captured response showed
+	 * `completion_tokens: 220` with `reasoning_tokens: 220`. DeepSeek documents
+	 * 4K as the recommended response budget for its reasoning models, on top of
+	 * the chain-of-thought.
+	 *
+	 * The Gemini body builder has raised its own floor to 2048 for the same
+	 * reason since 10.1; this puts the decision in one place instead of a new
+	 * patch per call site each time a provider starts reasoning. Matched on the
+	 * model name as well as the provider so a gateway routing a DeepSeek model
+	 * gets the same budget.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param string $provider   The AI provider (openai, deepseek, gemini...).
+	 * @param string $model_name The resolved model name.
+	 * @param int    $floor      The budget the call site would use on its own.
+	 *
+	 * @return int
+	 */
+	private function getMaxOutputTokens( $provider, $model_name, $floor = 220 ) {
+		$max_tokens = (int) $floor;
+
+		if ( 'deepseek' === strtolower( (string) $provider ) || 0 === strpos( (string) $model_name, 'deepseek' ) ) {
+			$max_tokens = max( $max_tokens, 4096 );
+		}
+
+		return (int) apply_filters( 'seopress_ai_max_output_tokens', $max_tokens, $provider, $model_name, (int) $floor );
+	}
+
+	/**
+	 * The message to report when a 200 response carried none of the requested values.
+	 *
+	 * A truncated generation is the one case where "try again" is wrong advice:
+	 * the model spent its whole token budget before writing the answer, so the
+	 * same request fails the same way every time. Name the cause and log it,
+	 * so the settings panel shows what actually happened instead of a success.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param object $data         The parsed response, in OpenAI shape.
+	 * @param string $provider     The AI provider.
+	 * @param array  $request_body The request body, for the error log.
+	 *
+	 * @return string
+	 */
+	private function describeEmptyResponse( $data, $provider, $request_body ) {
+		$finish_reason = isset( $data->choices[0]->finish_reason ) ? (string) $data->choices[0]->finish_reason : '';
+
+		// OpenAI, DeepSeek and Mistral report a truncation as `length`;
+		// parseResponse() passes Claude's `max_tokens` and Gemini's
+		// `MAX_TOKENS` through as `max_tokens`.
+		if ( in_array( $finish_reason, array( 'length', 'max_tokens' ), true ) ) {
+			$this->logApiError(
+				array(
+					'provider'      => $provider,
+					'response_code' => 200,
+					'response_body' => wp_json_encode( $data ),
+					'request_body'  => $request_body,
+					'timestamp'     => current_time( 'mysql' ),
+				)
+			);
+
+			return sprintf(
+				/* translators: %s: provider name */
+				__( 'The %s model spent its whole token budget before writing an answer (finish_reason: length). Retrying will not help; raise the budget with the seopress_ai_max_output_tokens filter or pick a model that reasons less.', 'wp-seopress-pro' ),
+				$this->getProviderName( $provider )
+			);
+		}
+
+		return __( 'The AI returned an empty response. Please try again.', 'wp-seopress-pro' );
+	}
+
+	/**
+	 * Decode a JSON answer a model wrapped in something else.
+	 *
+	 * We ask for a JSON object and then read it with a strict json_decode(),
+	 * which fails on anything around it. Models routinely fence their answer in
+	 * a ```json block, or introduce it with a sentence, and the longer the
+	 * answer the likelier that becomes: asking for three fields fails where
+	 * asking for one succeeds, on the same model and the same image.
+	 *
+	 * Only OpenAI and Mistral can be told to answer in JSON at the API level.
+	 * Claude, Gemini and DeepSeek are asked in the prompt and nothing enforces
+	 * it, so this is the only thing standing between them and a silent failure.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param mixed $raw The model answer.
+	 *
+	 * @return array|null Decoded object, or null when there is no JSON in it.
+	 */
+	private function decodeJsonPayload( $raw ) {
+		if ( ! is_string( $raw ) ) {
+			return null;
+		}
+
+		$decoded = json_decode( $raw, true );
+		if ( is_array( $decoded ) ) {
+			return $decoded;
+		}
+
+		$candidate = trim( $raw );
+
+		// ```json { … } ``` or a bare ``` fence.
+		if ( 0 === strpos( $candidate, '```' ) ) {
+			$candidate = preg_replace( '/^```[a-zA-Z]*\s*/', '', $candidate );
+			$candidate = preg_replace( '/\s*```$/', '', (string) $candidate );
+
+			$decoded = json_decode( (string) $candidate, true );
+			if ( is_array( $decoded ) ) {
+				return $decoded;
+			}
+		}
+
+		// A sentence before or after the object: keep the outermost braces.
+		$start = strpos( $candidate, '{' );
+		$end   = strrpos( $candidate, '}' );
+
+		if ( false === $start || false === $end || $end <= $start ) {
+			return null;
+		}
+
+		$decoded = json_decode( substr( $candidate, $start, $end - $start + 1 ), true );
+
+		return is_array( $decoded ) ? $decoded : null;
 	}
 
 	/**
@@ -837,7 +1224,7 @@ class Completions {
 	 * @param string $provider  The AI provider to use (default is null, uses user's saved preference).
 	 * @param string $nonce     Security nonce for admin requests (optional).
 	 *
-	 * @return array $data The answers from AI with title/desc
+	 * @return array $data The answers from AI with success/title/desc
 	 */
 	public function generateTitlesDesc(
 		$post_id,
@@ -851,6 +1238,7 @@ class Completions {
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
 			return array(
+				'success' => false,
 				'message' => __( 'Invalid post ID provided.', 'wp-seopress-pro' ),
 				'title'   => '',
 				'desc'    => '',
@@ -860,6 +1248,7 @@ class Completions {
 		// Verify nonce if provided (for admin requests).
 		if ( null !== $nonce && ! wp_verify_nonce( $nonce, 'seopress_ai_generate_' . $post_id ) ) {
 			return array(
+				'success' => false,
 				'message' => __( 'Security check failed.', 'wp-seopress-pro' ),
 				'title'   => '',
 				'desc'    => '',
@@ -917,10 +1306,11 @@ class Completions {
 
 		// GPT-5 models use max_completion_tokens instead of max_tokens.
 		$is_gpt5_model = strpos( $model_name, 'gpt-5' ) !== false;
+		$max_tokens    = $this->getMaxOutputTokens( $provider, $model_name );
 		if ( $is_gpt5_model ) {
-			$body['max_completion_tokens'] = 220;
+			$body['max_completion_tokens'] = $max_tokens;
 		} else {
-			$body['max_tokens'] = 220;
+			$body['max_tokens'] = $max_tokens;
 		}
 
 		// Add response_format only if supported by the provider.
@@ -958,7 +1348,7 @@ class Completions {
 		}
 
 		// Convert language code to readable name.
-		$language = locale_get_display_name( $language, 'en' ) ? esc_html( locale_get_display_name( $language, 'en' ) ) : $language;
+		$language = $this->getLanguageDisplayName( $language );
 
 		// Get target keywords.
 		$target_keywords = ! empty( get_post_meta( $post_id, '_seopress_analysis_target_kw', true ) ) ? get_post_meta( $post_id, '_seopress_analysis_target_kw', true ) : null;
@@ -1102,23 +1492,18 @@ class Completions {
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( is_wp_error( $response ) ) {
 				$message = $response->get_error_message();
+
+				$this->logTransportError( $response, $provider );
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
-
-				// Try to extract the actual error message from the API.
-				$error_data        = json_decode( $response_body, true );
-				$api_error_message = '';
-				if ( isset( $error_data['error']['message'] ) ) {
-					$api_error_message = $error_data['error']['message'];
-				}
 
 				$message = sprintf(
 					/* translators: 1: provider name, 2: response code, 3: error details */
 					__( 'An error occurred with %1$s API. Response code: %2$s. Details: %3$s', 'wp-seopress-pro' ),
 					$this->getProviderName( $provider ),
 					$response_code,
-					$api_error_message ? $api_error_message : $response_body
+					$this->formatApiErrorDetails( $response_code, $response_body )
 				);
 
 				// Log detailed error information.
@@ -1129,9 +1514,13 @@ class Completions {
 					'request_body'  => $request_body,
 					'timestamp'     => current_time( 'mysql' ),
 				);
-				set_transient( 'seopress_pro_ai_logs', wp_json_encode( $error_log ), 30 * DAY_IN_SECONDS );
+				$this->logApiError( $error_log );
 			}
 		} else {
+			// The call went through, so whatever the panel is still reporting
+			// is no longer true.
+			$this->clearApiErrorLog();
+
 			$raw_data = json_decode( wp_remote_retrieve_body( $response ) );
 
 			// Parse response based on provider format
@@ -1146,38 +1535,62 @@ class Completions {
 			$message = 'Success';
 
 			if ( empty( $meta ) || 'title' === $meta ) {
-				$result = json_decode( $data->choices[0]->message->content, true );
+				$result = $this->decodeJsonPayload( $data->choices[0]->message->content );
 
 				$result = is_array( $result ) && isset( $result['title'] ) ? $result['title'] : '';
 
 				$title = esc_attr( trim( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $result ) ) ) ), '"' ) );
 
-				if ( true === $autosave ) {
-					update_post_meta( $post_id, '_seopress_titles_title', sanitize_text_field( html_entity_decode( $title ) ) );
+				// An answer the model returned without a title is a failed
+				// generation: saving it would wipe the meta already in place.
+				// The image generator has always guarded its own saves this way.
+				if ( true === $autosave && '' !== $title ) {
+					update_post_meta( $post_id, '_seopress_titles_title', sanitize_text_field( html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
 				}
 			}
 
 			if ( empty( $meta ) ) {
-				$result = json_decode( $data->choices[0]->message->content, true );
+				$result = $this->decodeJsonPayload( $data->choices[0]->message->content );
 				$result = is_array( $result ) && isset( $result['desc'] ) ? $result['desc'] : '';
 			} elseif ( 'desc' === $meta ) {
-				$result = json_decode( $data->choices[0]->message->content, true );
+				$result = $this->decodeJsonPayload( $data->choices[0]->message->content );
 				$result = is_array( $result ) && isset( $result['desc'] ) ? $result['desc'] : '';
 			}
 
 			if ( empty( $meta ) || 'desc' === $meta ) {
 				$description = esc_attr( trim( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $result ) ) ) ), '"' ) );
 
-				if ( true === $autosave ) {
-					update_post_meta( $post_id, '_seopress_titles_desc', sanitize_textarea_field( html_entity_decode( $description ) ) );
+				if ( true === $autosave && '' !== $description ) {
+					update_post_meta( $post_id, '_seopress_titles_desc', sanitize_textarea_field( html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
 				}
 			}
 		}
 
+		// The transport succeeded, which is not the same as having generated
+		// something: report an answer that came back without any of the
+		// requested values as the failure it is.
+		$success = ( 'Success' === $message );
+
+		if ( $success ) {
+			$generated = array();
+			if ( empty( $meta ) || 'title' === $meta ) {
+				$generated[] = $title;
+			}
+			if ( empty( $meta ) || 'desc' === $meta ) {
+				$generated[] = $description;
+			}
+
+			if ( ! $this->hasGeneratedContent( $generated ) ) {
+				$success = false;
+				$message = $this->describeEmptyResponse( $data, $provider, $request_body );
+			}
+		}
+
 		$data = array(
+			'success' => $success,
 			'message' => $message,
-			'title'   => html_entity_decode( $title ),
-			'desc'    => html_entity_decode( $description ),
+			'title'   => html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+			'desc'    => html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 		);
 
 		return $data;
@@ -1274,7 +1687,7 @@ class Completions {
 	 * @param string $language The language locale.
 	 * @param string $provider The AI provider, or null for the user's default.
 	 *
-	 * @return array{ message: string, title: string, desc: string }
+	 * @return array{ success: bool, message: string, title: string, desc: string }
 	 */
 	public function generateTermTitlesDesc( $term_id, $taxonomy, $meta = '', $language = 'en_US', $provider = null ) {
 		$term_id = absint( $term_id );
@@ -1282,6 +1695,7 @@ class Completions {
 
 		if ( ! $term instanceof \WP_Term ) {
 			return array(
+				'success' => false,
 				'message' => __( 'Invalid term provided.', 'wp-seopress-pro' ),
 				'title'   => '',
 				'desc'    => '',
@@ -1319,7 +1733,7 @@ class Completions {
 		// The term has no target keyword field; the term name is the natural keyword hint.
 		$target_keywords = $term->name;
 
-		$language = locale_get_display_name( $language, 'en' ) ? esc_html( locale_get_display_name( $language, 'en' ) ) : $language;
+		$language = $this->getLanguageDisplayName( $language );
 
 		$model_name = $this->getAIModel( $provider );
 		$body       = array(
@@ -1328,10 +1742,11 @@ class Completions {
 		);
 
 		$is_gpt5_model = strpos( $model_name, 'gpt-5' ) !== false;
+		$max_tokens    = $this->getMaxOutputTokens( $provider, $model_name );
 		if ( $is_gpt5_model ) {
-			$body['max_completion_tokens'] = 220;
+			$body['max_completion_tokens'] = $max_tokens;
 		} else {
-			$body['max_tokens'] = 220;
+			$body['max_tokens'] = $max_tokens;
 		}
 
 		if ( $this->supportsResponseFormat( $provider ) ) {
@@ -1445,11 +1860,11 @@ class Completions {
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( is_wp_error( $response ) ) {
 				$message = $response->get_error_message();
+
+				$this->logTransportError( $response, $provider );
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
-				$error_data    = json_decode( $response_body, true );
-				$api_error     = isset( $error_data['error']['message'] ) ? $error_data['error']['message'] : '';
 				$message       = sprintf(
 					/* translators: 1: provider name, 2: response code, 3: error details */
 					__( 'An error occurred with %1$s API. Response code: %2$s. Details: %3$s', 'wp-seopress-pro' ),
@@ -1457,17 +1872,23 @@ class Completions {
 					$response_code,
 					// The details come from the provider's HTTP response: never
 					// trust them as markup.
-					esc_html( $api_error ? $api_error : $response_body )
+					esc_html( $this->formatApiErrorDetails( $response_code, $response_body ) )
 				);
-				set_transient( 'seopress_pro_ai_logs', wp_json_encode( array(
-					'provider'      => $provider,
-					'response_code' => $response_code,
-					'response_body' => $response_body,
-					'request_body'  => $request_body,
-					'timestamp'     => current_time( 'mysql' ),
-				) ), 30 * DAY_IN_SECONDS );
+				$this->logApiError(
+					array(
+						'provider'      => $provider,
+						'response_code' => $response_code,
+						'response_body' => $response_body,
+						'request_body'  => $request_body,
+						'timestamp'     => current_time( 'mysql' ),
+					)
+				);
 			}
 		} else {
+			// The call went through, so whatever the panel is still reporting
+			// is no longer true.
+			$this->clearApiErrorLog();
+
 			$raw_data = json_decode( wp_remote_retrieve_body( $response ) );
 			if ( $is_gpt5_model && 'seopress' !== strtolower( $provider ) ) {
 				$data = $this->parseGpt5Response( $raw_data );
@@ -1477,7 +1898,7 @@ class Completions {
 
 			$message = 'Success';
 
-			$decoded = isset( $data->choices[0]->message->content ) ? json_decode( $data->choices[0]->message->content, true ) : array();
+			$decoded = isset( $data->choices[0]->message->content ) ? $this->decodeJsonPayload( $data->choices[0]->message->content ) : array();
 
 			if ( empty( $meta ) || 'title' === $meta ) {
 				$result = is_array( $decoded ) && isset( $decoded['title'] ) ? $decoded['title'] : '';
@@ -1490,10 +1911,28 @@ class Completions {
 			}
 		}
 
+		$success = ( 'Success' === $message );
+
+		if ( $success ) {
+			$generated = array();
+			if ( empty( $meta ) || 'title' === $meta ) {
+				$generated[] = $title;
+			}
+			if ( empty( $meta ) || 'desc' === $meta ) {
+				$generated[] = $description;
+			}
+
+			if ( ! $this->hasGeneratedContent( $generated ) ) {
+				$success = false;
+				$message = $this->describeEmptyResponse( $data, $provider, $request_body );
+			}
+		}
+
 		return array(
+			'success' => $success,
 			'message' => $message,
-			'title'   => html_entity_decode( $title ),
-			'desc'    => html_entity_decode( $description ),
+			'title'   => html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+			'desc'    => html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 		);
 	}
 
@@ -1508,7 +1947,7 @@ class Completions {
 	 * @param string $language  The language for generating social metas (default is 'en_US').
 	 * @param string $provider  The AI provider to use (default is null, uses user's saved preference).
 	 *
-	 * @return array $data The answer from AI with content
+	 * @return array $data The answer from AI with success/content
 	 */
 	public function generateSocialMetas( // phpcs:ignore
 		$post_id,
@@ -1521,6 +1960,7 @@ class Completions {
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
 			return array(
+				'success' => false,
 				'message' => __( 'Invalid post ID provided.', 'wp-seopress-pro' ),
 				'content' => '',
 			);
@@ -1576,10 +2016,11 @@ class Completions {
 
 		// GPT-5 models use max_completion_tokens instead of max_tokens.
 		$is_gpt5_model = strpos( $model_name, 'gpt-5' ) !== false;
+		$max_tokens    = $this->getMaxOutputTokens( $provider, $model_name );
 		if ( $is_gpt5_model ) {
-			$body['max_completion_tokens'] = 220;
+			$body['max_completion_tokens'] = $max_tokens;
 		} else {
-			$body['max_tokens'] = 220;
+			$body['max_tokens'] = $max_tokens;
 		}
 
 		// Add response_format only if supported by the provider.
@@ -1614,7 +2055,7 @@ class Completions {
 		}
 
 		// Convert language code to readable name.
-		$language = locale_get_display_name( $language, 'en' ) ? esc_html( locale_get_display_name( $language, 'en' ) ) : $language;
+		$language = $this->getLanguageDisplayName( $language );
 
 		// Get target keywords.
 		$target_keywords = ! empty( get_post_meta( $post_id, '_seopress_analysis_target_kw', true ) ) ? get_post_meta( $post_id, '_seopress_analysis_target_kw', true ) : null;
@@ -1748,6 +2189,8 @@ class Completions {
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( is_wp_error( $response ) ) {
 				$message = $response->get_error_message();
+
+				$this->logTransportError( $response, $provider );
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
@@ -1766,9 +2209,13 @@ class Completions {
 					'request_body'  => $request_body,
 					'timestamp'     => current_time( 'mysql' ),
 				);
-				set_transient( 'seopress_pro_ai_logs', wp_json_encode( $error_log ), 30 * DAY_IN_SECONDS );
+				$this->logApiError( $error_log );
 			}
 		} else {
+			// The call went through, so whatever the panel is still reporting
+			// is no longer true.
+			$this->clearApiErrorLog();
+
 			$raw_data = json_decode( wp_remote_retrieve_body( $response ) );
 
 			// Parse response based on provider format.
@@ -1781,16 +2228,24 @@ class Completions {
 
 			$message = 'Success';
 
-			$result = json_decode( $data->choices[0]->message->content, true );
+			$result = $this->decodeJsonPayload( $data->choices[0]->message->content );
 
 			$result = is_array( $result ) && isset( $result['content'] ) ? $result['content'] : '';
 
 			$content_result = esc_attr( trim( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $result ) ) ) ), '"' ) );
 		}
 
+		$success = ( 'Success' === $message );
+
+		if ( $success && ! $this->hasGeneratedContent( array( $content_result ) ) ) {
+			$success = false;
+			$message = $this->describeEmptyResponse( $data, $provider, $request_body );
+		}
+
 		$data = array(
+			'success' => $success,
 			'message' => $message,
-			'content' => html_entity_decode( $content_result ),
+			'content' => html_entity_decode( $content_result, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 		);
 
 		return $data;
@@ -1808,7 +2263,10 @@ class Completions {
 	 * @param string $provider  The AI provider to use (default is null, uses user's saved preference).
 	 * @param array  $fields    Specific fields to generate (default is null, generates all). Accepts: 'alt_text', 'caption', 'description'.
 	 *
-	 * @return array $data The answers from AI with title/desc
+	 * @return array The answer from AI: success, message, alt_text, caption, description.
+	 *               Always this shape, whatever $action is. Every early return
+	 *               already answered the array, so the string variant meant callers
+	 *               reading the success path with the failure shape in mind.
 	 */
 	public function generateImgAltText(
 		$post_id,
@@ -1822,8 +2280,11 @@ class Completions {
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
 			return array(
-				'message'  => __( 'Invalid post ID provided.', 'wp-seopress-pro' ),
-				'alt_text' => '',
+				'success'     => false,
+				'message'     => __( 'Invalid post ID provided.', 'wp-seopress-pro' ),
+				'alt_text'    => '',
+				'caption'     => '',
+				'description' => '',
 			);
 		}
 
@@ -1835,12 +2296,15 @@ class Completions {
 		// Check if provider supports multimodal content.
 		if ( ! $this->supportsMultimodal( $provider ) ) {
 			return array(
-				'message'  => sprintf(
+				'success'     => false,
+				'message'     => sprintf(
 					/* translators: 1: provider name */
 					__( 'Image alt text generation is not supported by %1$s. Please use OpenAI or another provider that supports multimodal content.', 'wp-seopress-pro' ),
 					$this->getProviderName( $provider )
 				),
-				'alt_text' => '',
+				'alt_text'    => '',
+				'caption'     => '',
+				'description' => '',
 			);
 		}
 
@@ -1874,7 +2338,11 @@ class Completions {
 				}
 			}
 			if ( $all_requested_filled ) {
+				// Nothing to generate is not a failure: the values the caller
+				// asked for are already there, and they are returned as they
+				// stand.
 				return array(
+					'success'     => true,
 					'message'     => __( 'Alt text, caption, and description already exist, no need to generate them.', 'wp-seopress-pro' ),
 					'alt_text'    => $current_alt_text,
 					'caption'     => $current_caption,
@@ -1905,7 +2373,7 @@ class Completions {
 		}
 
 		// Convert language code to readable name.
-		$language = locale_get_display_name( $language, 'en' ) ? esc_html( locale_get_display_name( $language, 'en' ) ) : $language;
+		$language = $this->getLanguageDisplayName( $language );
 
 		$image_src = wp_get_attachment_image_src( $post_id, 'full' );
 
@@ -1913,6 +2381,7 @@ class Completions {
 		$mime_type = get_post_mime_type( $post_id );
 		if ( 'image/svg+xml' === $mime_type ) {
 			return array(
+				'success'     => false,
 				'message'     => __( 'SVG files are not supported for AI image analysis. Please use JPG, PNG, GIF, or WebP images.', 'wp-seopress-pro' ),
 				'alt_text'    => '',
 				'caption'     => '',
@@ -1921,13 +2390,18 @@ class Completions {
 		}
 
 		// Fetch image as base64 for better compatibility (works with localhost, firewalls, etc.).
-		$image_url  = $image_src[0];
-		$image_data = $this->fetchImageAsBase64( $image_url );
+		// The attachment ID is passed so the file can be read from disk rather
+		// than fetched over HTTP: see fetchImageAsBase64().
+		$image_url  = is_array( $image_src ) && ! empty( $image_src[0] ) ? $image_src[0] : '';
+		$image_data = $this->fetchImageAsBase64( $image_url, $post_id );
 
 		if ( ! $image_data ) {
 			return array(
-				'message'  => __( 'Could not fetch the image. Please check if the image URL is accessible.', 'wp-seopress-pro' ),
-				'alt_text' => '',
+				'success'     => false,
+				'message'     => __( 'Could not fetch the image. Please check if the image URL is accessible.', 'wp-seopress-pro' ),
+				'alt_text'    => '',
+				'caption'     => '',
+				'description' => '',
 			);
 		}
 
@@ -1997,7 +2471,7 @@ class Completions {
 		);
 
 		// Scale max tokens based on number of requested fields (~150 per field, minimum 200).
-		$max_tokens    = max( 200, count( $fields ) * 150 );
+		$max_tokens    = $this->getMaxOutputTokens( $provider, $model_name, max( 200, count( $fields ) * 150 ) );
 		$is_gpt5_model = strpos( $model_name, 'gpt-5' ) !== false;
 		if ( $is_gpt5_model ) {
 			$body['max_completion_tokens'] = $max_tokens;
@@ -2111,6 +2585,8 @@ class Completions {
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( is_wp_error( $response ) ) {
 				$message = $response->get_error_message();
+
+				$this->logTransportError( $response, $provider );
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
@@ -2129,9 +2605,13 @@ class Completions {
 					'request_body'  => $request_body,
 					'timestamp'     => current_time( 'mysql' ),
 				);
-				set_transient( 'seopress_pro_ai_logs', json_encode( $error_log ), 30 * DAY_IN_SECONDS );
+				$this->logApiError( $error_log );
 			}
 		} else {
+			// The call went through, so whatever the panel is still reporting
+			// is no longer true.
+			$this->clearApiErrorLog();
+
 			// Get the response body once.
 			$response_body = wp_remote_retrieve_body( $response );
 
@@ -2168,7 +2648,7 @@ class Completions {
 						$message         = $refusal_message;
 					} else {
 						// Parse the JSON content to extract all fields.
-						$parsed_result = json_decode( $result, true );
+						$parsed_result = $this->decodeJsonPayload( $result );
 
 						// Handle JSON format with all three fields.
 						if ( is_array( $parsed_result ) ) {
@@ -2189,16 +2669,39 @@ class Completions {
 			}
 		}
 
+		// A 200 with no usable content in it is a failed generation, not a
+		// success with empty values: only the fields that were asked for count.
+		$success = ( 'Success' === $message );
+
+		if ( $success ) {
+			$generated = array(
+				'alt_text'    => $alt_text,
+				'caption'     => $caption,
+				'description' => $description,
+			);
+
+			$requested = array();
+			foreach ( $fields as $field ) {
+				$requested[] = $generated[ $field ];
+			}
+
+			if ( ! $this->hasGeneratedContent( $requested ) ) {
+				$success = false;
+				$message = $this->describeEmptyResponse( $data, $provider, $request_body );
+			}
+		}
+
 		$data = array(
+			'success'     => $success,
 			'message'     => $message,
-			'alt_text'    => html_entity_decode( $alt_text ),
-			'caption'     => html_entity_decode( $caption ),
-			'description' => html_entity_decode( $description ),
+			'alt_text'    => html_entity_decode( $alt_text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+			'caption'     => html_entity_decode( $caption, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+			'description' => html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 		);
 
 		// Save alt text to post meta (only if requested and if missing when $update_empty_alt_text is false).
 		if ( in_array( 'alt_text', $fields, true ) && ! empty( $alt_text ) && ( $update_empty_alt_text || empty( $current_alt_text ) ) ) {
-			update_post_meta( $post_id, '_wp_attachment_image_alt', apply_filters( 'seopress_update_alt', sanitize_text_field( html_entity_decode( $alt_text ) ), $post_id ) );
+			update_post_meta( $post_id, '_wp_attachment_image_alt', apply_filters( 'seopress_update_alt', sanitize_text_field( html_entity_decode( $alt_text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ) );
 		}
 
 		// Save caption to post_excerpt (only if requested and if missing when $update_empty_alt_text is false).
@@ -2206,7 +2709,7 @@ class Completions {
 			wp_update_post(
 				array(
 					'ID'           => $post_id,
-					'post_excerpt' => apply_filters( 'seopress_update_caption', sanitize_text_field( html_entity_decode( $caption ) ), $post_id ),
+					'post_excerpt' => apply_filters( 'seopress_update_caption', sanitize_text_field( html_entity_decode( $caption, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ),
 				)
 			);
 		}
@@ -2216,11 +2719,15 @@ class Completions {
 			wp_update_post(
 				array(
 					'ID'           => $post_id,
-					'post_content' => apply_filters( 'seopress_update_description', wp_kses_post( html_entity_decode( $description ) ), $post_id ),
+					'post_content' => apply_filters( 'seopress_update_description', wp_kses_post( html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ),
 				)
 			);
 		}
 
-		return 'alt_text' === $action ? $data['alt_text'] : $data;
+		// One shape for one method. This used to answer the bare string when
+		// $action was 'alt_text', while every early return above answered the
+		// array, so the callers checking $result['alt_text'] or is_array()
+		// read a success as a failure and reported nothing generated.
+		return $data;
 	}
 }

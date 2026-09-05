@@ -81,3 +81,59 @@ function seopress_pro_unregister_blocks() {
 		unregister_block_type( 'wpseopress/how-to-step' );
 	}
 }
+
+add_filter( 'render_block', 'seopress_pro_how_to_block_render_schema', 10, 2 );
+/**
+ * Re-encode the How-to block JSON-LD at render time.
+ *
+ * The block writes its schema into the saved markup as a string child of the
+ * script element, and the block serializer escapes a string child as HTML: an
+ * angle bracket is stored as `&lt;`, a bare ampersand as `&amp;`. The step
+ * titles and texts are RichText values on top of that, so they arrive carrying
+ * entities of their own.
+ *
+ * Google unescapes the body of a JSON-LD script element exactly once and asks
+ * publishers to move to standard JSON escapes, so the stored payload is
+ * replaced by one built from the block attributes, where every ampersand,
+ * angle bracket and quote is a JSON unicode escape.
+ *
+ * Rebuilding at render rather than changing save.js is what fixes the posts
+ * already in the database: nothing is rewritten until an author happens to edit
+ * one, and the stored markup keeps matching what the editor expects.
+ *
+ * @since 10.2.0
+ *
+ * @param string $block_content The rendered block markup.
+ * @param array  $block         The parsed block.
+ *
+ * @return string HTML.
+ */
+function seopress_pro_how_to_block_render_schema( $block_content, $block ) {
+	if ( ! isset( $block['blockName'] ) || 'wpseopress/how-to' !== $block['blockName'] ) {
+		return $block_content;
+	}
+
+	if ( empty( $block['attrs']['schema'] ) || ! is_array( $block['attrs']['schema'] ) ) {
+		return $block_content;
+	}
+
+	$json = seopress_pro_json_ld_encode( $block['attrs']['schema'] );
+
+	if ( false === $json ) {
+		return $block_content;
+	}
+
+	// preg_replace_callback rather than preg_replace: the JSON is full of
+	// backslashes, which the replacement string of preg_replace would read as
+	// escapes of its own.
+	$rendered = preg_replace_callback(
+		'#<script\b[^>]*type\s*=\s*["\']application/ld\+json["\'][^>]*>.*?</script\s*>#is',
+		function () use ( $json ) {
+			return '<script type="application/ld+json">' . $json . '</script>';
+		},
+		$block_content,
+		1
+	);
+
+	return null === $rendered ? $block_content : $rendered;
+}

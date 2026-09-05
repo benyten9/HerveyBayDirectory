@@ -176,6 +176,17 @@ function nibwp_connect_oauth_blocker(string $client): string
     if (empty($available['ok'])) {
         return __('Sign-in is not available on this site yet.', 'nibwp');
     }
+
+    // Switched on and on https is not the same as reachable. Some hosts block
+    // /.well-known or strip the challenge header, and until this asked, the
+    // page recommended a route that could only fail — in the customer's AI
+    // client, with a message from their vendor rather than from us.
+    if (function_exists('nibwp_oauth_discovery_probe')) {
+        $served = nibwp_oauth_discovery_probe();
+        if (empty($served['ok'])) {
+            return (string) $served['message'];
+        }
+    }
     if (!$info['oauth']) {
         return sprintf(
             /* translators: %s: the AI client's name */
@@ -198,24 +209,35 @@ function nibwp_connect_render_method_picker(string $client, string $chosen): voi
         'password' => '<circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H20"/><path d="M17 12v3"/><path d="M20 12v2.5"/>',
     ];
 
+    // Application password leads because it works on every host. Signing in is
+    // the better route where it works — nothing stored, revocable — but it
+    // depends on the host serving discovery, and enough of them do not that
+    // recommending it first sent people into an opaque failure in their own
+    // AI client. It is still offered, still marked as the lighter option, and
+    // withdrawn with a reason when the probe above proves it cannot work.
     $methods = [
+        'password' => [
+            'title' => __('Application password', 'nibwp'),
+            'note'  => __('Works with every client and every host. Creates a key you paste into its config.', 'nibwp'),
+            'meta'  => __('Universal · one copy & paste', 'nibwp'),
+            'ok'    => true,
+        ],
         'oauth' => [
             'title' => __('Sign in', 'nibwp'),
             'note'  => $can_oauth ? __('Approve it once. Nothing to copy, no password stored anywhere.', 'nibwp') : $why,
-            'meta'  => __('Fastest · nothing to store', 'nibwp'),
+            'meta'  => __('Nothing to store · needs host support', 'nibwp'),
             'ok'    => $can_oauth,
-        ],
-        'password' => [
-            'title' => __('Application password', 'nibwp'),
-            'note'  => __('Works with every client. Creates a key you paste into its config.', 'nibwp'),
-            'meta'  => __('Universal · one copy & paste', 'nibwp'),
-            'ok'    => true,
         ],
     ];
 
     // What this client would pick on its own, so the badge follows the client
     // rather than being pinned to one route in the markup.
-    $recommended = $can_oauth ? 'oauth' : 'password';
+    // The application password is what we put our name behind: it works on
+    // every client and every host, and its failure modes are ours to explain.
+    // Sign-in stays available and is the lighter option where the host serves
+    // it, but recommending it by default meant recommending something we
+    // could not guarantee.
+    $recommended = 'password';
     ?>
     <div class="nw-cf-methods" role="radiogroup" aria-label="<?php esc_attr_e('Connection method', 'nibwp'); ?>">
         <?php foreach ($methods as $key => $m): ?>
@@ -509,7 +531,11 @@ function nibwp_render_connect_flow(
             if (cfg) { cfg.click(); }
         }
 
-        function showRoute(route) {
+        // `decided` is the difference between preparing a route and choosing
+        // it. Picking a client used to call this with no distinction, so step 3
+        // went straight to done and step 4 opened — the method was decided for
+        // the reader and the one real choice on the page was skipped past.
+        function showRoute(route, decided) {
             for (var i = 0; i < panes.length; i++) {
                 panes[i].hidden = panes[i].getAttribute('data-cf-pane') !== route;
             }
@@ -523,11 +549,24 @@ function nibwp_render_connect_flow(
                 if (t) { t.textContent = route === 'password' ? STEP4_PASSWORD : STEP4_OAUTH; }
             }
 
+            // Only a chosen method is shown as chosen. Filling the radio while
+            // step 3 is still the open question tells the reader the decision
+            // has already been made for them.
             var methods = root.querySelectorAll('[data-cf-method]');
             for (var j = 0; j < methods.length; j++) {
-                var on = methods[j].getAttribute('data-cf-method') === route;
+                var on = decided && methods[j].getAttribute('data-cf-method') === route;
                 methods[j].classList.toggle('is-active', on);
                 methods[j].setAttribute('aria-checked', on ? 'true' : 'false');
+            }
+
+            if (!decided) {
+                // Panes are ready underneath; step 3 stays the open question and
+                // step 4 stays shut until it is answered.
+                setState(step(3), 'current');
+                summary(step(3), '');
+                setState(step(4), 'locked');
+                setState(step(5), 'locked');
+                return;
             }
 
             root.setAttribute('data-cf-route', route);
@@ -561,12 +600,18 @@ function nibwp_render_connect_flow(
             var note = btn.querySelector('.nw-cf-method__note');
             if (note) { note.textContent = canOauth ? OAUTH_NOTE : (reason || ''); }
 
-            // The badge marks what this client would pick on its own, so it
-            // moves with the client rather than staying where PHP drew it.
+            // The badge stays on the application password. It used to follow
+            // whatever the client could do, which quietly undid the server's
+            // recommendation the moment a client was picked — PHP drew the pill
+            // on password and this moved it straight back to sign-in.
+            //
+            // What we recommend does not depend on the client: the password
+            // route works on every client and every host, and its failures are
+            // ours to explain rather than a vendor's.
             var pills = root.querySelectorAll('.nw-cf-method .nw-cf-pill');
             for (var i = 0; i < pills.length; i++) {
                 var owner = pills[i].closest('[data-cf-method]').getAttribute('data-cf-method');
-                pills[i].hidden = owner !== (canOauth ? 'oauth' : 'password');
+                pills[i].hidden = owner !== 'password';
             }
         }
 
@@ -617,7 +662,7 @@ function nibwp_render_connect_flow(
                 ? pick.getAttribute('data-cf-route')
                 : current;
 
-            showRoute(route);
+            showRoute(route, false);
             syncPaneClient(key);
             remember('client', key);
             scrollToStep(3);
@@ -626,7 +671,7 @@ function nibwp_render_connect_flow(
         function chooseMethod(btn) {
             if (btn.disabled) { return; }
             var route = btn.getAttribute('data-cf-method');
-            showRoute(route);
+            showRoute(route, true);
             remember('method', route);
             scrollToStep(4);
         }
@@ -639,7 +684,8 @@ function nibwp_render_connect_flow(
             if (method) { chooseMethod(method); return; }
 
             var swap = e.target.closest('[data-cf-switch]');
-            if (swap) { showRoute(swap.getAttribute('data-cf-switch')); }
+            // Switching method is itself a choice, so it decides.
+            if (swap) { showRoute(swap.getAttribute('data-cf-switch'), true); }
         });
 
         // Arrow keys walk a radiogroup — a keyboard reader lands on one button

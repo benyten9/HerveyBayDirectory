@@ -944,9 +944,13 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 					// Check if URL is available.
 					if ( ! empty( $crumb[1] ) ) {
 						if ( false === $old_markup ) {
+							// "@id", not "id": a plain "id" key carries no meaning in
+							// JSON-LD, so the node had no identifier at all. Google
+							// reported "Missing field 'id' (in 'itemListElement.item')"
+							// and dropped the breadcrumb from rich results.
 							$sp_breadcrumbs_json['itemListElement'][ $key ]['item'] = array(
 								'@type' => 'WebPage',
-								'id'    => $crumb[1] . '#webpage',
+								'@id'   => $crumb[1] . '#webpage',
 								'url'   => $crumb[1],
 								'name'  => $crumb[0],
 							);
@@ -972,8 +976,12 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 			if ( $json_enabled ) {
 				$sp_breadcrumbs_json = apply_filters( 'seopress_pro_breadcrumbs_json', $sp_breadcrumbs_json );
 
+				// Crumb labels come straight from get_the_title() and friends, so
+				// they carry entities. seopress_pro_json_ld_encode() resolves them
+				// and re-escapes with JSON's own escapes rather than leaving the
+				// output to depend on an HTML unescaping pass.
 				$jsonld  = '<script type="application/ld+json">';
-				$jsonld .= wp_json_encode( $sp_breadcrumbs_json );
+				$jsonld .= seopress_pro_json_ld_encode( $sp_breadcrumbs_json );
 				$jsonld .= '</script>';
 				$jsonld .= "\n";
 			}

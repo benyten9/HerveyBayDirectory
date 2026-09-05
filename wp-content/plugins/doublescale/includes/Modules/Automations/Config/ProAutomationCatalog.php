@@ -59,6 +59,7 @@ return array(
 		\DoubleScale\Pro\Modules\Automations\Triggers\Memberpress\TransactionFailed::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Memberpress\TransactionRefunded::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\EmailReceived::class,
+		\DoubleScale\Pro\Modules\Automations\Triggers\EmailNotOpened::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\SmsReceived::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\WhatsappReceived::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Booking\BookingCreated::class,

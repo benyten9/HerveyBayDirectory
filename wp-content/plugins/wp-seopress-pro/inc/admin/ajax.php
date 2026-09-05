@@ -92,6 +92,83 @@ function seopress_google_analytics_lock() {
 add_action( 'wp_ajax_seopress_google_analytics_lock', 'seopress_google_analytics_lock' );
 
 /**
+ * Find the first Apache directive in a .htaccess body that could expose the
+ * source of PHP files, or null when the body is clean.
+ *
+ * These directives switch off the PHP handler or reassign the file type, so the
+ * server returns .php files as plain text instead of executing them. Any of them
+ * turns wp-config.php into a readable file: database credentials, secret keys,
+ * and every API key hardcoded elsewhere in the codebase. None of the snippets
+ * this editor offers (redirects, directory-browsing, wp-config protection) uses
+ * them, so refusing them costs the feature nothing.
+ *
+ * The cases beyond the obvious handler directives, and the line-continuation
+ * handling that a naive line split misses, were contributed by Julio Potier.
+ *
+ * @since 10.1.2
+ *
+ * @param string $content Raw .htaccess body.
+ * @return string|null The offending directive as matched, or null.
+ */
+function seopress_htaccess_find_unsafe_directive( $content ) {
+	if ( ! is_string( $content ) || '' === trim( $content ) ) {
+		return null;
+	}
+
+	$blocked = array( 'SetHandler', 'AddHandler', 'RemoveHandler', 'AddType', 'RemoveType', 'ForceType' );
+
+	// Apache joins lines ending with a backslash before parsing directives, so
+	// the same must happen here or "SetH\" + "andler" would slip through.
+	$content = preg_replace( '/\\\\[ \t]*(\r\n|\r|\n)[ \t]*/', '', $content );
+
+	foreach ( preg_split( '/\r\n|\r|\n/', $content ) as $line ) {
+		$trimmed = ltrim( $line );
+
+		// Comments are inert, so a directive name inside one is harmless.
+		if ( '' === $trimmed || '#' === $trimmed[0] ) {
+			continue;
+		}
+
+		// The directive (or section tag) is the first token on the line; a
+		// dangerous directive nested inside a <Files> block is still caught,
+		// since the block container spans its own lines.
+		$parts = preg_split( '/\s+/', $trimmed, 2 );
+		$token = strtolower( $parts[0] );
+
+		foreach ( $blocked as $directive ) {
+			if ( $token === strtolower( $directive ) ) {
+				return $directive;
+			}
+		}
+
+		// Turning the PHP engine off has the same effect as removing the
+		// handler. The value can be quoted, and the `_value` variants set the
+		// same thing as the `_flag` ones.
+		if ( in_array( $token, array( 'php_flag', 'php_admin_flag', 'php_value', 'php_admin_value' ), true )
+			&& preg_match( '/\bengine\s+["\']?(off|0|false)\b/i', $trimmed ) ) {
+			return 'php_flag engine off';
+		}
+
+		// mod_headers runs in the fixup phase, before the handler is picked, and
+		// setting Content-Type there calls ap_set_content_type(): that deselects
+		// PHP wherever it is wired through AddType rather than SetHandler. Only
+		// this header is refused, so the usual security headers still save.
+		if ( 'header' === $token
+			&& preg_match( '/^header\s+(?:always\s+|onsuccess\s+)?(?:set|setifempty|append|add|merge|unset|edit\*?|echo)\s+["\']?content-type\b/i', $trimmed ) ) {
+			return 'Header Content-Type';
+		}
+
+		// Same phase for mod_rewrite: T= forces the MIME type, and H= replaces
+		// the handler outright, which defeats SetHandler as well.
+		if ( 'rewriterule' === $token && preg_match( '/\[[^\]]*\b(?:T|H)=/i', $trimmed ) ) {
+			return 'RewriteRule T=/H=';
+		}
+	}
+
+	return null;
+}
+
+/**
  * Save htaccess file.
  *
  * @return void
@@ -102,6 +179,26 @@ function seopress_save_htaccess() {
 	if ( ! current_user_can( seopress_capability( 'manage_options', 'htaccess' ) ) ) {
 		wp_send_json_error( array( 'message' => __( 'You are not allowed to perform this action.', 'wp-seopress-pro' ) ), 403 );
 	}
+
+	// Refuse to write when the site is hardened against file edits. The settings
+	// screen already hides the editor in this case, but that guard is only
+	// applied while rendering the page: the AJAX endpoint has to enforce it too,
+	// or the file can still be written by posting to it directly. A control that
+	// lives only in the display is not a control.
+	if (
+		( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT )
+		|| ( defined( 'SEOPRESS_BLOCK_HTACCESS' ) && SEOPRESS_BLOCK_HTACCESS )
+	) {
+		wp_send_json_error( array( 'message' => __( 'Editing the .htaccess file is disabled on this site.', 'wp-seopress-pro' ) ), 403 );
+	}
+
+	// On multisite the .htaccess lives at the network root and is shared by every
+	// site, so only a Super Admin may write it. A regular site administrator must
+	// not be able to change a file that affects the whole network.
+	if ( is_multisite() && ! is_super_admin() ) {
+		wp_send_json_error( array( 'message' => __( 'Only a Super Admin can edit the network .htaccess file.', 'wp-seopress-pro' ) ), 403 );
+	}
+
 	$filename = get_home_path() . '/.htaccess';
 
 	if ( ! file_exists( get_home_path() . '/.htaccess' ) ) {
@@ -110,8 +207,26 @@ function seopress_save_htaccess() {
 	}
 	$old_htaccess = file_get_contents( $filename );
 
-	if ( isset( $_POST['htaccess_content'] ) ) {
-		$current_htaccess = wp_unslash( $_POST['htaccess_content'] );
+	// Never defaulted before: a request without htaccess_content used to write an
+	// undefined variable and empty the file. Default to empty and let the
+	// homepage check below decide.
+	$current_htaccess = isset( $_POST['htaccess_content'] ) ? wp_unslash( $_POST['htaccess_content'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- a .htaccess body is not sanitizable text; it is validated against a directive denylist below and written verbatim.
+
+	// Reject directives that would make the server hand back the raw source of
+	// PHP files, wp-config.php included. Checked before the file is touched, so a
+	// rejected payload leaves the current .htaccess exactly as it was.
+	$unsafe_directive = seopress_htaccess_find_unsafe_directive( $current_htaccess );
+	if ( null !== $unsafe_directive ) {
+		wp_send_json_success(
+			array(
+				'msg'   => sprintf(
+					/* translators: %s: the Apache directive that was rejected, e.g. SetHandler. */
+					__( 'For security reasons, the "%s" directive is not allowed here: it can expose the source code of your PHP files, including wp-config.php. Please remove it and try again.', 'wp-seopress-pro' ),
+					$unsafe_directive
+				),
+				'class' => 'is-error',
+			)
+		);
 	}
 
 	if ( is_writable( $filename ) ) {
@@ -334,11 +449,14 @@ function seopress_ai_generate_seo_meta() {
 		$data = seopress_pro_get_service( 'Completions' )->generateTitlesDesc( $post_id, $meta, $language );
 	}
 
-	if ( 'Success' !== $data['message'] ) {
+	// The service reports the outcome with an explicit flag: `message` alone
+	// cannot be trusted, since it also carries benign notices such as "already
+	// exists, no need to generate".
+	if ( is_array( $data ) && empty( $data['success'] ) ) {
 		wp_send_json_error( $data );
-	} else {
-		wp_send_json_success( $data );
 	}
+
+	wp_send_json_success( $data );
 }
 add_action( 'wp_ajax_seopress_ai_generate_seo_meta', 'seopress_ai_generate_seo_meta' );
 
@@ -375,11 +493,11 @@ function seopress_ai_generate_term_seo_meta() {
 
 	$data = seopress_pro_get_service( 'Completions' )->generateTermTitlesDesc( $term_id, $taxonomy, $meta, $language );
 
-	if ( 'Success' !== $data['message'] ) {
+	if ( is_array( $data ) && empty( $data['success'] ) ) {
 		wp_send_json_error( $data );
-	} else {
-		wp_send_json_success( $data );
 	}
+
+	wp_send_json_success( $data );
 }
 add_action( 'wp_ajax_seopress_ai_generate_term_seo_meta', 'seopress_ai_generate_term_seo_meta' );
 

@@ -70,10 +70,6 @@ class AbilitiesApi implements ExecuteHooks {
 	 * @return void
 	 */
 	public function registerAbilities() {
-		$show_in_rest = function_exists( 'seopress_abilities_api_rest_enabled' )
-			? seopress_abilities_api_rest_enabled()
-			: false;
-
 		wp_register_ability(
 			'seopress/get-technical-audit',
 			array(
@@ -127,14 +123,45 @@ class AbilitiesApi implements ExecuteHooks {
 
 					return ( new HomepageAudit() )->getResults( $refresh );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => true,
-					),
+					)
 				),
 			)
+		);
+	}
+
+	/**
+	 * Build the "meta" array of an ability.
+	 *
+	 * Delegates to the free plugin helper, which owns the exposure rules
+	 * (meta.mcp.public for MCP clients, meta.show_in_rest for the REST API
+	 * on WordPress 6.9/7.0). The fallback covers Pro running alongside a free
+	 * version that predates the helper, and stays disabled by default.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param array $annotations The MCP annotations.
+	 *
+	 * @return array
+	 */
+	protected function abilityMeta( $annotations ) {
+		if ( function_exists( 'seopress_abilities_api_meta' ) ) {
+			return seopress_abilities_api_meta( $annotations );
+		}
+
+		$exposed = function_exists( 'seopress_abilities_api_rest_enabled' ) && seopress_abilities_api_rest_enabled();
+
+		return array(
+			'public'       => $exposed,
+			'show_in_rest' => $exposed,
+			'mcp'          => array(
+				'public' => $exposed,
+				'type'   => 'tool',
+			),
+			'annotations'  => $annotations,
 		);
 	}
 

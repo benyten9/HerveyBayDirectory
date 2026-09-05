@@ -214,6 +214,11 @@ class DataViewsAssets {
 
 		wp_set_script_translations( $handle, $text_domain, WP_LANG_DIR . '/plugins' );
 
+		// These bundles are code-split, and `wp_set_script_translations()` only
+		// loads the JSON matching the entry file. Without this the strings that
+		// webpack moved into a lazy chunk stay in English.
+		ScriptTranslations::merge_chunks( $handle, $text_domain );
+
 		if ( ! empty( $args['localize_object'] ) && isset( $args['localize_data'] ) ) {
 			wp_localize_script( $handle, $args['localize_object'], $args['localize_data'] );
 		}

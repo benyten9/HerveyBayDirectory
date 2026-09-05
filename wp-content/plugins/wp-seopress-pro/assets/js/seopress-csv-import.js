@@ -30,10 +30,22 @@
     };
 
     /**
+     * Stop the import and tell the user why, instead of leaving the progress
+     * bar spinning on a batch that will never come back.
+     */
+    metadatasImportForm.prototype.stop_with_error = function (message) {
+        this.$form.find('.seopress-importer-running').hide();
+        this.$form.find('.seopress-importer-failure-message').text(message);
+        this.$form.find('.seopress-importer-failure').show();
+    };
+
+    /**
      * Run the import in batches until finished.
      */
     metadatasImportForm.prototype.run_import = function () {
         var $this = this;
+        var i18n = seopress_csv_import_params.i18n || {};
+
         $.ajax({
             type: 'POST',
             url: ajaxurl,
@@ -48,23 +60,29 @@
             },
             dataType: 'json',
             success: function (response) {
-                if (response.success) {
-                    $this.position = response.data.position;
-                    $this.imported += response.data.imported;
-                    $this.failed += response.data.failed;
-                    $this.updated += response.data.updated;
-                    $this.skipped += response.data.skipped;
-                    $this.$form.find('.seopress-importer-progress').val(response.data.percentage);
+                if (!response || !response.success) {
+                    $this.stop_with_error(
+                        (response && response.data && response.data.message) || i18n.genericError
+                    );
+                    return;
+                }
 
-                    if ('done' === response.data.position) {
-                        window.location = response.data.url + '&metadatas-imported=' + parseInt($this.imported, 10) + '&metadatas-failed=' + parseInt($this.failed, 10) + '&metadatas-updated=' + parseInt($this.updated, 10) + '&metadatas-skipped=' + parseInt($this.skipped, 10);
-                    } else {
-                        $this.run_import();
-                    }
+                $this.position = response.data.position;
+                $this.imported += response.data.imported;
+                $this.failed += response.data.failed;
+                $this.updated += response.data.updated;
+                $this.skipped += response.data.skipped;
+                $this.$form.find('.seopress-importer-progress').val(response.data.percentage);
+
+                if ('done' === response.data.position) {
+                    window.location = response.data.url + '&metadatas-imported=' + parseInt($this.imported, 10) + '&metadatas-failed=' + parseInt($this.failed, 10) + '&metadatas-updated=' + parseInt($this.updated, 10) + '&metadatas-skipped=' + parseInt($this.skipped, 10);
+                } else {
+                    $this.run_import();
                 }
             }
         }).fail(function (response) {
             window.console.log(response);
+            $this.stop_with_error(i18n.serverError);
         });
     };
 

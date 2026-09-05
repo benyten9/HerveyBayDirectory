@@ -1,0 +1,63 @@
+# Directories
+/.git
+/.github
+/.claude
+/.playwright-mcp
+/.vscode
+/node_modules
+/tests
+/src
+/docs
+/phpunit
+/tools
+/bin
+/dependencies/vendor
+/vendor
+/dist
+
+# Most UI images are webpack-bundled into build/client/images/. Keep shipping
+# the runtime-loaded sets used by Automations / Integrations / Extensions (not hashed):
+#   templates-images, form-types, typeform, jotform, catalog icons, white-label
+# When syncing for release, use bin/build-zip.sh rsync filters (see that script).
+# booking-icons/ live in DoubleScale Pro and are loaded from Pro at runtime.
+/assets/booking-icons
+
+# Files
+.DS_Store
+.distignore
+.editorconfig
+.gitattributes
+.gitignore
+.prettierrc.js
+.eslintrc.js
+.eslintignore
+.stylelintrc.json
+.nvmrc
+.phpunit.result.cache
+.wp-env.json
+CLAUDE.md
+moduleenabled_active.md
+DoubleScale.postman_collection.json
+components.json
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpcs.xml
+phpcs.xml.dist
+phpunit.xml
+phpunit.xml.dist
+postcss.config.js
+php-scoper.phar
+webpack.config.js
+Gruntfile.js
+gulpfile.js
+tsconfig.json
+tsconfig.tsbuildinfo
+tailwind.config.js
+phpcs.security.xml.dist
+*.map
+*.ts
+*.tsx
+*.scss
+*.less

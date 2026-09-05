@@ -77,11 +77,12 @@ class LastEmailSent extends Rule {
 	public function get_value( $automation_contact ) {
 		$contact        = $automation_contact->contact;
 		$campaign_email = CommunicationTrackingModel::emails()->where( 'contact_id', $contact->id )
-			->orderBy( 'created_at', 'desc' )
+			->whereNotNull( 'sent_at' )
+			->orderBy( 'sent_at', 'desc' )
 			->first();
 
 		if ( $campaign_email ) {
-			return $campaign_email->created_at;
+			return $campaign_email->sent_at;
 		}
 
 		return null;
@@ -115,24 +116,11 @@ class LastEmailSent extends Rule {
 	 * @return bool
 	 */
 	public function is_met( AutomationContactModel $automation_contact, $rule = array() ) {
-		$value      = $this->get_value( $automation_contact );
-		$operator   = $rule['operator'];
-		$rule_value = $rule['value'];
-
-		switch ( $operator ) {
-			case 'before':
-				return ( strtotime( $value ) < strtotime( $rule_value ) );
-			case 'after':
-				return ( strtotime( $value ) > strtotime( $rule_value ) );
-			case 'on':
-				return ( strtotime( $value ) == strtotime( $rule_value ) );
-			case 'between':
-				return ( strtotime( $value ) > strtotime( $rule_value[0] ) && strtotime( $value ) < strtotime( $rule_value[1] ) );
-			case 'within':
-				return ( strtotime( $value ) > strtotime( $rule_value[0] ) && strtotime( $value ) < strtotime( $rule_value[1] ) );
-			default:
-				return false;
-		}
+		return $this->is_date_condition_met(
+			$this->get_value( $automation_contact ),
+			$rule['operator'] ?? '',
+			$rule['value'] ?? ''
+		);
 	}
 }
 

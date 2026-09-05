@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdoublescale=self.webpackChunkdoublescale||[]).push([[891],{94891:(e,l,u)=>{u.r(l),u.d(l,{default:()=>a});var c=u(51609),n=(u(86087),u(31104)),s=u(36167);const a=()=>{const e=(0,n.g)(),l=e?.id,u=l&&"new"!==l&&l?Number(l):null;return(0,c.createElement)(s.A,{invoiceId:u,mode:"dialog"})}}}]);

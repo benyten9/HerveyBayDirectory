@@ -57,14 +57,14 @@ if ( is_singular() || is_home() ) {
 
 		if ( is_home() && get_post_meta( $page_id, '_seopress_robots_canonical', true ) != '' ) {
 			$_seopress_robots_canonical    = get_post_meta( $page_id, '_seopress_robots_canonical', true );
-			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $_seopress_robots_canonical ) ) . '">';
+			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $_seopress_robots_canonical ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
 		} elseif ( get_post_meta( get_the_ID(), '_seopress_robots_canonical', true ) != '' ) { // Is metabox enabled.
 			$_seopress_robots_canonical    = get_post_meta( get_the_ID(), '_seopress_robots_canonical', true );
-			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $_seopress_robots_canonical ) ) . '">';
+			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $_seopress_robots_canonical ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
 		} else {
 			global $wp;
 			$current_url                   = user_trailingslashit( home_url( add_query_arg( array(), $wp->request ) ) );
-			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $current_url ) ) . '">';
+			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $current_url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
 		}
 		// Hook on post Dublin Core Relation - 'seopress_dublin_core_relation'.
 		if ( has_filter( 'seopress_dublin_core_relation' ) ) {
@@ -83,7 +83,7 @@ if ( is_singular() || is_home() ) {
 	 * @return void
 	 */
 	function seopress_dublin_core_source_hook() {
-		$seopress_dublin_core_source = '<meta name="dc.source" content="' . htmlspecialchars( urldecode( user_trailingslashit( get_home_url() ) ) ) . '">';
+		$seopress_dublin_core_source = '<meta name="dc.source" content="' . htmlspecialchars( urldecode( user_trailingslashit( get_home_url() ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
 
 		// Hook on post Dublin Core Source - 'seopress_dublin_core_source'.
 		if ( has_filter( 'seopress_dublin_core_source' ) ) {

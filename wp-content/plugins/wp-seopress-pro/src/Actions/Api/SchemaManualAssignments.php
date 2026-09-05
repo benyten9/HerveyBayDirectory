@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use SEOPress\Core\Hooks\ExecuteHooks;
 use SEOPressPro\Actions\Api\Traits\ViewPreferencesTrait;
+use SEOPressPro\Helpers\Schemas\ManualSchemas;
 
 /**
  * REST API endpoint listing the content that has a manual schema assigned
@@ -188,6 +189,25 @@ class SchemaManualAssignments implements ExecuteHooks {
 		$order    = strtoupper( $request->get_param( 'order' ) ?: 'ASC' );
 		$search   = $request->get_param( 'search' );
 
+		// Holding the meta is not the same as holding a schema: a row typed
+		// "none", or with no type at all, renders nothing. Matching on the meta
+		// alone listed those posts as assignments, which on a site upgraded from
+		// a version where "None" was the default choice meant listing very
+		// nearly every post it had.
+		$assigned_ids = ManualSchemas::getAssignedPostIds();
+
+		if ( empty( $assigned_ids ) ) {
+			// An empty `post__in` is ignored by WP_Query, which would return
+			// the whole site instead of nothing.
+			return new \WP_REST_Response(
+				array(
+					'data'       => array(),
+					'total'      => 0,
+					'totalPages' => 0,
+				)
+			);
+		}
+
 		$args = array(
 			'post_type'      => 'any',
 			'post_status'    => 'any',
@@ -195,17 +215,7 @@ class SchemaManualAssignments implements ExecuteHooks {
 			'paged'          => $page,
 			'orderby'        => $orderby,
 			'order'          => $order,
-			// A manual schema is stored as an array of schemas. The `!=` compare
-			// requires the key to exist (rows without it never join) and, at the
-			// same time, excludes posts whose array was emptied but left behind
-			// (serialized empty array). No LIKE on the serialized blob.
-			'meta_query'     => array(
-				array(
-					'key'     => self::META_KEY,
-					'value'   => 'a:0:{}',
-					'compare' => '!=',
-				),
-			),
+			'post__in'       => $assigned_ids,
 		);
 
 		if ( ! empty( $search ) ) {
@@ -255,16 +265,9 @@ class SchemaManualAssignments implements ExecuteHooks {
 	 * @return array
 	 */
 	private function build_item( \WP_Post $post ) {
-		$schemas = get_post_meta( $post->ID, self::META_KEY, true );
-		$types   = array();
-
-		if ( is_array( $schemas ) ) {
-			foreach ( $schemas as $schema ) {
-				if ( is_array( $schema ) && ! empty( $schema['_seopress_pro_rich_snippets_type'] ) ) {
-					$types[] = $schema['_seopress_pro_rich_snippets_type'];
-				}
-			}
-		}
+		// Only the types that render: a row typed "none" would otherwise be
+		// displayed as a schema named "None".
+		$types = ManualSchemas::getEffectiveTypes( get_post_meta( $post->ID, self::META_KEY, true ) );
 
 		$post_type_obj  = get_post_type_object( $post->post_type );
 		$post_type_name = $post_type_obj ? $post_type_obj->labels->singular_name : $post->post_type;

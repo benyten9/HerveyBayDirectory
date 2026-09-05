@@ -174,7 +174,6 @@ function seopress_pro_run_license_activation( $license ) {
 		array(
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 			'timeout'    => 15,
-			'sslverify'  => false,
 			'body'       => $api_params,
 		)
 	);
@@ -251,7 +250,6 @@ function seopress_pro_run_license_deactivation() {
 		array(
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 			'timeout'    => 15,
-			'sslverify'  => false,
 			'body'       => array(
 				'edd_action'  => 'deactivate_license',
 				'license'     => $license,

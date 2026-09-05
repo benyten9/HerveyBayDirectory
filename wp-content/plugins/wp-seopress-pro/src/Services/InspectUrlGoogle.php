@@ -93,7 +93,7 @@ class InspectUrlGoogle {
 
 	public function request( $siteUrl, $url, $type = 'normal' ) {
 		// Fix encoding URL (e.g. cyrillic alphabet)
-		$url = htmlspecialchars( rawurldecode( $url ) );
+		$url = htmlspecialchars( rawurldecode( $url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 
 		$service  = $this->getService();
 		$postBody = new \SEOPressPro\Vendor\Google\Service\SearchConsole\InspectUrlIndexRequest();

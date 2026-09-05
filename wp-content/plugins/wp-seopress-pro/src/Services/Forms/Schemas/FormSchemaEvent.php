@@ -166,6 +166,10 @@ class FormSchemaEvent extends FormApi {
 			case '_seopress_pro_rich_snippets_events_type':
 				return array(
 					array(
+						'value' => 'Event',
+						'label' => __( 'Event (default)', 'wp-seopress-pro' ),
+					),
+					array(
 						'value' => 'BusinessEvent',
 						'label' => __( 'Business Event', 'wp-seopress-pro' ),
 					),
@@ -332,7 +336,7 @@ class FormSchemaEvent extends FormApi {
 		return array(
 			array(
 				'key'   => '_seopress_pro_rich_snippets_events_type',
-				'value' => 'BusinessEvent',
+				'value' => 'Event',
 			),
 			array(
 				'key' => '_seopress_pro_rich_snippets_events_name',

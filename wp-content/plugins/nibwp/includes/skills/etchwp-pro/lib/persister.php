@@ -35,6 +35,23 @@ function nibwp_etchwp_persist_payload(array $payload, array $target, array $ctx 
 {
     require_once __DIR__ . '/validator.php';
 
+    // Nothing to write is a failure, and it has to be caught before the
+    // first side effect. A payload with no block tree used to fall straight
+    // through: the page got created, the styles got merged, no content was
+    // written, and a success shape came back with blocks_added: 0. The
+    // caller reported a finished build and the customer opened a blank page.
+    //
+    // A components-only payload is legitimate — it registers reusable
+    // definitions and touches no page.
+    $tree_in = $payload['gutenbergBlock'] ?? null;
+    $components_in = !empty($payload['components']) && is_array($payload['components']);
+    if ((!is_array($tree_in) || $tree_in === []) && !$components_in) {
+        return new WP_Error(
+            'persist_no_blocks',
+            'payload.gutenbergBlock is missing or empty: there is nothing to write to the page. Nothing was created or changed.'
+        );
+    }
+
     // Re-validate unconditionally before any write. No --force, no skip.
     $derived_ctx = [
         'brand'               => (string) ($payload['__libraryMeta']['brand'] ?? ''),
@@ -159,7 +176,7 @@ function nibwp_etchwp_persist_payload(array $payload, array $target, array $ctx 
     // 2) Serialize the block tree to post_content.
     $block_tree = $payload['gutenbergBlock'] ?? null;
     $blocks_added = 0;
-    if (is_array($block_tree)) {
+    if (is_array($block_tree) && $block_tree !== []) {
         $markup = nibwp_etchwp_serialize_block($block_tree);
 
         // Safety net: serialization must never lose blocks. Parse the markup back

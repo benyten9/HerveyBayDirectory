@@ -91,6 +91,9 @@ class CommandPalette implements ExecuteHooks {
 			)
 		);
 
+		// No `merge_chunks()` here: this bundle is a single `index.js` with no
+		// lazy chunk, and it is enqueued on every admin screen — merging would
+		// inline the whole domain payload site-wide for nothing.
 		wp_set_script_translations( 'seopress-pro-command-palette', 'wp-seopress-pro', WP_LANG_DIR . '/plugins' );
 	}
 

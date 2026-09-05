@@ -14,6 +14,7 @@ namespace DoubleScale\Modules\Automations\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Utils\DateWithin;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 
 /**
@@ -214,5 +215,67 @@ abstract class Rule {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Compare an actual datetime against a date operator (before/after/on/between/within).
+	 *
+	 * `within` is a rolling day count. Legacy calendar ranges are still accepted.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed  $actual     Contact datetime string or timestamp.
+	 * @param string $operator   Date operator.
+	 * @param mixed  $rule_value Condition value.
+	 * @return bool
+	 */
+	protected function is_date_condition_met( $actual, $operator, $rule_value ) {
+		if ( empty( $actual ) ) {
+			return false;
+		}
+
+		$actual_ts = is_numeric( $actual ) && (int) $actual > 100000
+			? (int) $actual
+			: strtotime( (string) $actual );
+		if ( false === $actual_ts ) {
+			return false;
+		}
+
+		switch ( $operator ) {
+			case 'before':
+				$compare_ts = strtotime( (string) $rule_value );
+				return false !== $compare_ts && $actual_ts < $compare_ts;
+
+			case 'after':
+				$compare_ts = strtotime( (string) $rule_value );
+				return false !== $compare_ts && $actual_ts > $compare_ts;
+
+			case 'on':
+				$compare_ts = strtotime( (string) $rule_value );
+				return false !== $compare_ts && gmdate( 'Y-m-d', $actual_ts ) === gmdate( 'Y-m-d', $compare_ts );
+
+			case 'between':
+				if ( ! is_array( $rule_value ) || count( $rule_value ) < 2 ) {
+					return false;
+				}
+				$start_ts = strtotime( (string) $rule_value[0] );
+				$end_ts   = strtotime( (string) $rule_value[1] );
+				return false !== $start_ts && false !== $end_ts && $actual_ts >= $start_ts && $actual_ts <= $end_ts;
+
+			case 'within':
+				$days = DateWithin::parse_days( $rule_value );
+				if ( null !== $days ) {
+					return DateWithin::is_within_days( $actual_ts, $days );
+				}
+				if ( is_array( $rule_value ) && count( $rule_value ) >= 2 ) {
+					$start_ts = strtotime( (string) $rule_value[0] );
+					$end_ts   = strtotime( (string) $rule_value[1] );
+					return false !== $start_ts && false !== $end_ts && $actual_ts >= $start_ts && $actual_ts <= $end_ts;
+				}
+				return false;
+
+			default:
+				return false;
+		}
 	}
 }

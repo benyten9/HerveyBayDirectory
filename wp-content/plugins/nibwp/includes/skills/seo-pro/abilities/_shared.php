@@ -43,7 +43,7 @@ function nibwp_seo_pro_guard(array $input, bool $require_token = true): array|WP
         return ['answers' => [], 'token' => ''];
     }
     $token = (string) ($input['_preflight_token'] ?? '');
-    $answers = nibwp_skill_preflight_consume_token($token, 'seo-pro');
+    $answers = nibwp_skill_preflight_consume_token($token, 'seo-pro', $input);
     if (is_wp_error($answers)) {
         return $answers;
     }

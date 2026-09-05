@@ -160,7 +160,7 @@ class SEOPRESS_CSV_Importers {
 
 		$file   = sanitize_text_field( wp_unslash( $_POST['file'] ) );
 		$params = array(
-			'delimiter'              => ! empty( $_POST['delimiter'] ) ? sanitize_text_field( wp_unslash( $_POST['delimiter'] ) ) : ';',
+			'delimiter'              => ! empty( $_POST['delimiter'] ) ? sanitize_text_field( wp_unslash( $_POST['delimiter'] ) ) : 'auto',
 			'import_ignore_metadata' => ! empty( $_POST['import_ignore_metadata'] ) ? sanitize_text_field( wp_unslash( $_POST['import_ignore_metadata'] ) ) : false,
 			'start_pos'              => isset( $_POST['position'] ) ? absint( $_POST['position'] ) : 0,
 			'mapping'                => isset( $_POST['mapping'] ) ? map_deep( wp_unslash( $_POST['mapping'] ), 'sanitize_text_field' ) : array(),
@@ -175,7 +175,14 @@ class SEOPRESS_CSV_Importers {
 			$error_log = array();
 		}
 
-		$importer         = SEOPRESS_CSV_Setup_Wizard_Controller::get_importer( $file, $params );
+		$importer = SEOPRESS_CSV_Setup_Wizard_Controller::get_importer( $file, $params );
+
+		// The importer records why it could not read the file instead of dying,
+		// so the batch can report it as JSON the progress screen understands.
+		if ( method_exists( $importer, 'has_error' ) && $importer->has_error() ) {
+			wp_send_json_error( array( 'message' => $importer->get_error()->get_error_message() ) );
+		}
+
 		$results          = $importer->import();
 		$percent_complete = $importer->get_percent_complete();
 		$error_log        = array_merge( $error_log, $results['failed'], $results['skipped'] );

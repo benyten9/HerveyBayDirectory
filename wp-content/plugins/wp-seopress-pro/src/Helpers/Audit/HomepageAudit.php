@@ -397,9 +397,8 @@ class HomepageAudit {
 			);
 		}
 
-		$body = (string) wp_remote_retrieve_body( $response );
-		// A bare "Disallow: /" applied to all user-agents blocks the whole site.
-		$blocks_all = (bool) preg_match( '/user-agent:\s*\*[\s\S]*?disallow:\s*\/\s*(\n|$)/i', $body );
+		$body       = (string) wp_remote_retrieve_body( $response );
+		$blocks_all = self::robotsBlocksEveryone( $body );
 
 		return $this->row(
 			'robots_txt',
@@ -410,6 +409,78 @@ class HomepageAudit {
 				? __( 'robots.txt blocks the entire site (Disallow: /). Search engines cannot crawl it.', 'wp-seopress-pro' )
 				: __( 'robots.txt is reachable and does not block the whole site.', 'wp-seopress-pro' )
 		);
+	}
+
+	/**
+	 * Whether a robots.txt shuts the whole site to every crawler.
+	 *
+	 * The directive only counts inside a group that applies to `*`. A
+	 * `Disallow: /` under `User-agent: AhrefsBot` blocks that one crawler and
+	 * says nothing about search engines, which is the whole point of writing
+	 * it. Matching the two tokens anywhere in the file reported "search
+	 * engines cannot crawl this site" to anyone who blocks an SEO crawler or
+	 * an AI bot — a common, deliberate configuration.
+	 *
+	 * Parsing follows the robots.txt grammar: consecutive `User-agent` lines
+	 * open one group sharing the rules that follow, and the group ends at the
+	 * next `User-agent` line that comes after a rule. Only a bare `/` counts:
+	 * `Disallow: /*?*` or `Disallow: /wp-admin/` restrict paths, not the site.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param string $body Raw robots.txt contents.
+	 *
+	 * @return bool
+	 */
+	public static function robotsBlocksEveryone( $body ) { // phpcs:ignore -- camelCase matches the surrounding methods.
+		$agents         = array();
+		$collecting     = false;
+		$applies_to_all = false;
+
+		foreach ( preg_split( '/\r\n|\r|\n/', (string) $body ) as $line ) {
+			// Strip comments, whatever their position on the line.
+			$line = trim( preg_replace( '/#.*$/', '', $line ) );
+
+			if ( '' === $line || false === strpos( $line, ':' ) ) {
+				continue;
+			}
+
+			list( $field, $value ) = explode( ':', $line, 2 );
+
+			$field = strtolower( trim( $field ) );
+			$value = trim( $value );
+
+			if ( 'user-agent' === $field ) {
+				// A User-agent line following a rule starts a new group.
+				if ( $collecting ) {
+					$agents         = array();
+					$collecting     = false;
+					$applies_to_all = false;
+				}
+
+				$agents[] = $value;
+
+				if ( '*' === $value ) {
+					$applies_to_all = true;
+				}
+
+				continue;
+			}
+
+			if ( empty( $agents ) ) {
+				// A rule before any User-agent line belongs to no group; every
+				// parser ignores it, and so do we.
+				continue;
+			}
+
+			$collecting = true;
+
+			if ( 'disallow' === $field && '/' === $value && $applies_to_all ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private function checkSitemap() {

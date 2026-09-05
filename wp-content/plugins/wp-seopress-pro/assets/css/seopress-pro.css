@@ -1241,3 +1241,10 @@ ul.list-none li .dashicons {
     font-size: 12px;
     vertical-align: top;
 }
+
+/* .htaccess editor: the stacked notices (the backup reminder and any save
+   result) sit flush against each other and against the editor below, because
+   the WP Notice default bottom margin is flattened in this panel. Restore it. */
+.seopress-htaccess-notice {
+    margin-bottom: 12px;
+}

@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use SEOPress\Core\Hooks\ExecuteHooks;
+use SEOPressPro\Helpers\Schemas\ManualSchemas;
 
 class SchemaManual implements ExecuteHooks {
 
@@ -123,17 +124,19 @@ class SchemaManual implements ExecuteHooks {
 			);
 		}
 
-		$schemas = $params['schemas'];
+		// The meta is registered as a list of objects, so the rows are stored
+		// as a numerically indexed list whatever the client sent. A payload
+		// keyed by anything else would persist a value its own schema rejects,
+		// and the Block Editor then refuses every later save of that post.
+		$schemas = array_values( array_filter( (array) $params['schemas'], 'is_array' ) );
 
 		// Sanitize each schema, preserving <script> tags for custom schemas.
 		foreach ( $schemas as $key => $schema ) {
 			foreach ( $schema as $field => $value ) {
 				if ( '_seopress_pro_rich_snippets_custom' === $field ) {
-					// Allow script tags for custom JSON-LD schemas.
-					$schemas[ $key ][ $field ] = wp_kses(
-						$value,
-						array( 'script' => array( 'type' => array() ) )
-					);
+					// Allow a JSON-LD script tag, and only that one: the field
+					// is echoed into wp_head() as it is stored.
+					$schemas[ $key ][ $field ] = seopress_pro_kses_json_ld( $value );
 				} elseif ( is_array( $value ) ) {
 					$schemas[ $key ][ $field ] = map_deep( $value, 'sanitize_text_field' );
 				} else {
@@ -142,7 +145,16 @@ class SchemaManual implements ExecuteHooks {
 			}
 		}
 
-		update_post_meta( $id, '_seopress_pro_schemas_manual', $schemas );
+		// Nothing here renders (no row, or every row left on "None"), so drop
+		// the meta rather than leave a marker that reads as an assignment. This
+		// is what lets a site upgraded from a version where "None" was the
+		// default choice shed those rows as its posts get saved again. Rows
+		// that do carry a type are always stored, untouched.
+		if ( ! ManualSchemas::hasEffectiveSchema( $schemas ) ) {
+			delete_post_meta( $id, ManualSchemas::META_KEY );
+		} else {
+			update_post_meta( $id, ManualSchemas::META_KEY, $schemas );
+		}
 
 		return new \WP_REST_Response(
 			array(

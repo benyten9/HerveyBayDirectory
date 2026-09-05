@@ -617,6 +617,14 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 	margin-top: 16px;
 }
 
+/* ── Category token field ── */
+
+.seopress-redirections-category-tokens__error {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--colorAlert, #eb0f00);
+}
+
 /* ── URL tester modal ── */
 
 .seopress-redirections-tester-modal {
@@ -626,6 +634,16 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 .seopress-redirections-tester-modal__help {
 	color: var(--color, #757575);
 	margin: 0 0 12px;
+}
+
+/* Drop the horizontal margin WP applies to admin notices: inside the modal
+   they should line up with the help text and the input row. */
+.seopress-redirections-tester-modal .components-notice {
+	margin: 0 0 12px;
+}
+
+.seopress-redirections-tester-modal__result .components-notice {
+	margin: 0;
 }
 
 .seopress-redirections-tester-modal__input {
@@ -709,6 +727,72 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 	word-break: break-all;
 }
 
+/* ── Destination URL autocomplete (editor) ── */
+
+.seopress-destination-field {
+	position: relative;
+}
+
+/* Room for the loading spinner so it never sits on top of a long URL. */
+.seopress-destination-field__input {
+	padding-right: 30px;
+}
+
+.seopress-destination-field .components-spinner {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	margin: -8px 0 0;
+}
+
+.seopress-destination-field__suggestions {
+	position: absolute;
+	z-index: 10;
+	top: calc(100% + 2px);
+	right: 0;
+	left: 0;
+	max-height: 260px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 4px 0;
+	list-style: none;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 2px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seopress-destination-field__suggestions[hidden] {
+	display: none;
+}
+
+.seopress-destination-field__suggestion {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 0;
+	padding: 6px 12px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+
+.seopress-destination-field__suggestion.is-active {
+	background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
+}
+
+.seopress-destination-field__suggestion-title {
+	color: #1d2327;
+	font-weight: 600;
+}
+
+.seopress-destination-field__suggestion-url {
+	overflow: hidden;
+	color: #646970;
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 /* ── Inline regex tester (editor) ── */
 
 .seopress-redirection-regex-tester {
@@ -746,6 +830,11 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 
 /* ── Layout: categories sidebar + DataViews main ── */
 
+/* Two states only: the panel is either at its full width or collapsed to a
+   zero-width track. Which one applies on an intermediate screen is decided in
+   RedirectionsDataView.js — see `SIDEBAR_MIN_LAYOUT_WIDTH` — because the
+   toggle has to stay able to override the automatic collapse, and a media
+   query cannot be overridden per-user. */
 .seopress-redirections-layout {
 	display: grid;
 	grid-template-columns: 240px minmax( 0, 1fr );
@@ -773,6 +862,18 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 
 .seopress-redirections-layout__main {
 	min-width: 0;
+}
+
+/* Both URL cells ask for an ellipsis through `max-width: 100%`, but a table
+   column sizes itself to its content, so that 100% resolved to the width of
+   the URL itself and the truncation never engaged. The columns grew with the
+   longest URL in the page until the table overflowed and Destination URL ended
+   up behind the sticky actions column. Cap the cells in `ch` so there is a real
+   width to truncate against; the full URL stays available in the title
+   tooltip. */
+.seopress-redirections-layout__main td .dataviews-view-table__primary-column-content,
+.seopress-redirections-layout__main td .dataviews-view-table__cell-content-wrapper {
+	max-width: 32ch;
 }
 
 @media screen and (max-width: 960px) {

@@ -40,6 +40,38 @@ function seopress_ga_oauth_get_client() {
 }
 
 /**
+ * Build the OAuth state token tying a consent redirect to the user who started it.
+ *
+ * Without it, the callback below accepts any authorization code handed to it:
+ * an attacker who gets a logged-in administrator to load
+ * admin.php?page=seopress-google-analytics&code=<their own code> makes the site
+ * exchange that code and store the attacker's refresh token, silently swapping
+ * the site's Analytics connection to their Google account.
+ *
+ * @since 10.2.0
+ *
+ * @return string
+ */
+function seopress_ga_oauth_state() {
+	return wp_create_nonce( 'seopress_ga_oauth_state' );
+}
+
+/**
+ * Create the Google consent URL, bound to the current user with a state token.
+ *
+ * @since 10.2.0
+ *
+ * @param \Google\Client $client The configured client.
+ *
+ * @return string
+ */
+function seopress_ga_oauth_build_auth_url( $client ) {
+	$client->setState( seopress_ga_oauth_state() );
+
+	return $client->createAuthUrl();
+}
+
+/**
  * Handle OAuth code exchange and logout on the analytics settings page.
  *
  * Runs on admin_init so it catches the Google redirect before React renders.
@@ -57,7 +89,7 @@ function seopress_ga_oauth_handle_callback() {
 	}
 
 	// Handle logout.
-	if ( isset( $_GET['logout'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'seopress-ga-logout' ) ) {
+	if ( isset( $_GET['logout'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'seopress-ga-logout' ) ) {
 		$options                  = get_option( 'seopress_google_analytics_option_name1', array() );
 		$options['refresh_token'] = null;
 		$options['access_token']  = null;
@@ -72,6 +104,15 @@ function seopress_ga_oauth_handle_callback() {
 
 	// Handle code exchange from Google OAuth redirect.
 	if ( isset( $_GET['code'] ) ) {
+		// Only exchange a code for a consent flow this very user started, so a
+		// crafted link cannot make the site adopt someone else's Google account.
+		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
+
+		if ( ! wp_verify_nonce( $state, 'seopress_ga_oauth_state' ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=seopress-google-analytics&seopress_ga_oauth_error=state' ) );
+			exit;
+		}
+
 		$client = seopress_ga_oauth_get_client();
 
 		if ( null === $client ) {
@@ -89,8 +130,10 @@ function seopress_ga_oauth_handle_callback() {
 			$options                  = get_option( 'seopress_google_analytics_option_name1', array() );
 			$options['access_token']  = $token['access_token'];
 			$options['refresh_token'] = isset( $token['refresh_token'] ) ? $token['refresh_token'] : null;
-			$options['debug']         = $token;
-			$options['code']          = sanitize_text_field( wp_unslash( $_GET['code'] ) );
+			// Keep the shape of the payload for support, never a second copy of
+			// the tokens: they already live in their own keys.
+			$options['debug'] = array_diff_key( $token, array_flip( array( 'access_token', 'refresh_token', 'id_token' ) ) );
+			$options['code']  = sanitize_text_field( wp_unslash( $_GET['code'] ) );
 			update_option( 'seopress_google_analytics_option_name1', $options, 'yes' );
 
 			// If a property is already selected (e.g. reconnecting), refresh the
@@ -156,7 +199,7 @@ function seopress_ga_oauth_save_and_connect() {
 		wp_send_json_error( array( 'message' => __( 'Could not initialize the Google client. Please check your credentials.', 'wp-seopress-pro' ) ) );
 	}
 
-	wp_send_json_success( array( 'auth_url' => $client->createAuthUrl() ) );
+	wp_send_json_success( array( 'auth_url' => seopress_ga_oauth_build_auth_url( $client ) ) );
 }
 add_action( 'wp_ajax_seopress_ga_oauth_save_and_connect', 'seopress_ga_oauth_save_and_connect' );
 
@@ -211,7 +254,7 @@ function seopress_ga_oauth_get_status() {
 	if ( ! $is_connected ) {
 		$client = seopress_ga_oauth_get_client();
 		if ( null !== $client ) {
-			$auth_url = $client->createAuthUrl();
+			$auth_url = seopress_ga_oauth_build_auth_url( $client );
 		}
 	} else {
 		$logout_url = wp_nonce_url(

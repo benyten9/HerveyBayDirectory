@@ -171,7 +171,7 @@ function seopress_xml_sitemap_video() {
 				$seopress_sitemaps .= '<url>';
 				$seopress_sitemaps .= "\n";
 				$seopress_sitemaps .= '<loc>';
-				$seopress_sitemaps .= htmlspecialchars( urldecode( get_permalink( $id ) ) );
+				$seopress_sitemaps .= htmlspecialchars( urldecode( get_permalink( $id ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 				$seopress_sitemaps .= '</loc>';
 				$seopress_sitemaps .= "\n";
 
@@ -187,10 +187,10 @@ function seopress_xml_sitemap_video() {
 						// Thumbnail.
 						$thumbnail = isset( $seopress_video[0][ $key ]['thumbnail'] ) ? $seopress_video[0][ $key ]['thumbnail'] : null;
 						if ( '' != $thumbnail ) {// Video Thumbnail.
-							$seopress_sitemaps .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $thumbnail ) ) ) ) . '</video:thumbnail_loc>';
+							$seopress_sitemaps .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $thumbnail ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</video:thumbnail_loc>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != get_the_post_thumbnail_url( $id, 'full' ) ) {// Post Thumbnail.
-							$seopress_sitemaps .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( get_the_post_thumbnail_url( $id, 'full' ) ) ) ) ) . '</video:thumbnail_loc>';
+							$seopress_sitemaps .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( get_the_post_thumbnail_url( $id, 'full' ) ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</video:thumbnail_loc>';
 							$seopress_sitemaps .= "\n";
 						}
 
@@ -216,7 +216,7 @@ function seopress_xml_sitemap_video() {
 							$seopress_sitemaps .= '<video:description><![CDATA[' . get_post_meta( $id, '_seopress_titles_desc', true ) . ']]></video:description>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != get_the_excerpt( $id ) ) {// Excerpt.
-							$seopress_sitemaps .= '<video:description><![CDATA[' . wp_trim_words( esc_attr( wp_filter_nohtml_kses( htmlentities( get_the_excerpt( $id ) ) ) ), 60 ) . ']]></video:description>';
+							$seopress_sitemaps .= '<video:description><![CDATA[' . wp_trim_words( esc_attr( wp_filter_nohtml_kses( htmlentities( get_the_excerpt( $id ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ), 60 ) . ']]></video:description>';
 							$seopress_sitemaps .= "\n";
 						}
 

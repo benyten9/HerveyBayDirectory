@@ -51,7 +51,7 @@ function nibwp_bricks_surecart_execute(array $input): array|WP_Error
         return $gate;
     }
     $token = (string) ($input['_preflight_token'] ?? '');
-    $answers = nibwp_skill_preflight_consume_token($token, 'bricks-pro');
+    $answers = nibwp_skill_preflight_consume_token($token, 'bricks-pro', $input);
     if (is_wp_error($answers)) {
         return $answers;
     }

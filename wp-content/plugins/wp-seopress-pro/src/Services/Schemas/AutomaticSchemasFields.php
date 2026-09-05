@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * - `manual_time_single`   — time override (HH:MM or HH:MM:SS)
  * - `manual_rating_single` — rating number override
  * - `manual_custom_single` — custom JSON-LD blob override
+ * - `manual_opening_hours_single` — Local Business opening hours override
  *
  * This service:
  * 1. Encodes the complete map of overridable fields (meta key + sentinel +
@@ -51,6 +52,15 @@ class AutomaticSchemasFields {
 	const SENTINEL_TIME   = 'manual_time_single';
 	const SENTINEL_RATING = 'manual_rating_single';
 	const SENTINEL_CUSTOM = 'manual_custom_single';
+
+	/*
+	 * Opening hours are not mapped through a source token like the other
+	 * properties: `_seopress_pro_rich_snippets_lb_opening_hours` holds the
+	 * days array itself. The per-post opt-in therefore lives in its own
+	 * `_source` meta key, absent by default so existing schemas keep
+	 * resolving against the global hours.
+	 */
+	const SENTINEL_OPENING_HOURS = 'manual_opening_hours_single';
 
 	/**
 	 * Return the overridable fields for a schema post.
@@ -234,7 +244,7 @@ class AutomaticSchemasFields {
 	 * @param string $key          The override sub-key.
 	 * @param string $meta_key     The global schema meta key.
 	 * @param string $sentinel     The sentinel that flags this field as manual.
-	 * @param string $type         UI type (text, textarea, date, time, upload, select, number, checkbox, rating, custom).
+	 * @param string $type         UI type (text, textarea, date, time, upload, select, number, checkbox, rating, custom, opening_hours).
 	 * @param string $label        Field label.
 	 * @param string $placeholder  Input placeholder.
 	 * @param string $default_hint Optional "Default value if empty: ..." hint.
@@ -344,12 +354,13 @@ class AutomaticSchemasFields {
 	}
 
 	/**
-	 * Local Business fields (13).
+	 * Local Business fields (14).
 	 *
-	 * Note: the `opening_hours` sub-UI is always rendered unconditionally by
-	 * the classic template (not gated by a `manual_*` sentinel) and is
-	 * intentionally excluded from this map. It will be handled by a dedicated
-	 * component in the React sub-tab.
+	 * Note: `opening_hours` is gated by its own `_source` meta key rather than
+	 * by a sentinel written on the value meta, because that meta already holds
+	 * the days array. The classic per-post metabox still renders its own
+	 * opening hours block unconditionally, which keeps the pre-existing
+	 * behaviour of sites that never opted in.
 	 *
 	 * @return array
 	 */
@@ -459,6 +470,16 @@ class AutomaticSchemasFields {
 				__( 'Price range', 'wp-seopress-pro' ),
 				/* translators: example price range symbols */
 				__( 'e.g. $$, €€€, or ££££...', 'wp-seopress-pro' )
+			),
+			$this->field(
+				'opening_hours',
+				'_seopress_pro_rich_snippets_lb_opening_hours_source',
+				self::SENTINEL_OPENING_HOURS,
+				'opening_hours',
+				__( 'Opening hours', 'wp-seopress-pro' ),
+				'',
+				'',
+				__( '<strong>Morning and Afternoon are just time slots</strong>. e.g. if you\'re opened from 10:00 AM to 9:00 PM, check Morning and enter 10:00 / 21:00. If you are open non-stop, check Morning and enter 0:00 / 23:59.', 'wp-seopress-pro' )
 			),
 		);
 	}
@@ -931,7 +952,7 @@ class AutomaticSchemasFields {
 				__( 'Event type', 'wp-seopress-pro' ),
 				__( 'Select your event type', 'wp-seopress-pro' ),
 				'',
-				__( 'Authorized values: "BusinessEvent", "ChildrensEvent", "ComedyEvent", "CourseInstance", "DanceEvent", "DeliveryEvent", "EducationEvent", "ExhibitionEvent", "Festival", "FoodEvent", "LiteraryEvent", "MusicEvent", "PublicationEvent", "SaleEvent", "ScreeningEvent", "SocialEvent", "SportsEvent", "TheaterEvent", "VisualArtsEvent"', 'wp-seopress-pro' )
+				__( 'Authorized values: "Event", "BusinessEvent", "ChildrensEvent", "ComedyEvent", "CourseInstance", "DanceEvent", "DeliveryEvent", "EducationEvent", "ExhibitionEvent", "Festival", "FoodEvent", "LiteraryEvent", "MusicEvent", "PublicationEvent", "SaleEvent", "ScreeningEvent", "SocialEvent", "SportsEvent", "TheaterEvent", "VisualArtsEvent"', 'wp-seopress-pro' )
 			),
 			$this->field(
 				'name',
@@ -1610,5 +1631,199 @@ class AutomaticSchemasFields {
 				__( 'Custom schema', 'wp-seopress-pro' )
 			),
 		);
+	}
+
+	/**
+	 * Merge the freshly sanitized overrides into the tree already stored.
+	 *
+	 * Values submitted by the client win, key by key; everything else in the
+	 * stored tree is preserved. Sanitization keeps only the fields declared for
+	 * the schemas currently matching the post, so a plain overwrite would drop
+	 * the rest: the overrides of a schema that stopped matching, and the
+	 * opening hours the classic metabox saved on a schema that never opted into
+	 * the per-post source.
+	 *
+	 * @param array $existing  The tree currently stored on the post.
+	 * @param array $sanitized The sanitized tree submitted by the client.
+	 *
+	 * @return array
+	 */
+	public function mergeOverrides( array $existing, array $sanitized ) {
+		$merged = $existing;
+
+		foreach ( $sanitized as $schema_id => $sections ) {
+			if ( ! isset( $merged[ $schema_id ] ) || ! is_array( $merged[ $schema_id ] ) ) {
+				$merged[ $schema_id ] = array();
+			}
+
+			foreach ( $sections as $section_name => $fields ) {
+				if ( ! isset( $merged[ $schema_id ][ $section_name ] ) || ! is_array( $merged[ $schema_id ][ $section_name ] ) ) {
+					$merged[ $schema_id ][ $section_name ] = array();
+				}
+
+				foreach ( $fields as $key => $value ) {
+					$merged[ $schema_id ][ $section_name ][ $key ] = $value;
+				}
+			}
+		}
+
+		return $merged;
+	}
+
+	/**
+	 * Normalize the opening hours submitted by the React field.
+	 *
+	 * The shared `<FieldOpeningHours/>` component wraps the seven days under
+	 * `seopress_local_business_opening_hours`. We unwrap it and store the bare
+	 * days array, byte-compatible with what the classic per-post metabox posts,
+	 * so `seopress_automatic_rich_snippets_lb_option()` reads it unchanged.
+	 *
+	 * Like the classic form, the `open` flags are only written when checked:
+	 * `open` on a day means "closed all day", `open` on a half-day means the
+	 * business is open during that slot.
+	 *
+	 * @param mixed $value The raw value submitted by the client.
+	 *
+	 * @return array
+	 */
+	public function sanitizeOpeningHours( $value ) {
+		if ( is_array( $value ) && isset( $value['seopress_local_business_opening_hours'] ) && is_array( $value['seopress_local_business_opening_hours'] ) ) {
+			$value = $value['seopress_local_business_opening_hours'];
+		}
+
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+
+		$days = array();
+
+		foreach ( $value as $index => $day ) {
+			$index = (int) $index;
+			if ( $index < 0 || $index > 6 || ! is_array( $day ) ) {
+				continue;
+			}
+
+			$clean = array();
+
+			if ( ! empty( $day['open'] ) ) {
+				$clean['open'] = '1';
+			}
+
+			foreach ( array( 'am', 'pm' ) as $half ) {
+				if ( ! isset( $day[ $half ] ) || ! is_array( $day[ $half ] ) ) {
+					continue;
+				}
+
+				$clean_half = array();
+
+				if ( ! empty( $day[ $half ]['open'] ) ) {
+					$clean_half['open'] = '1';
+				}
+
+				foreach ( array( 'start', 'end' ) as $bound ) {
+					if ( ! isset( $day[ $half ][ $bound ] ) || ! is_array( $day[ $half ][ $bound ] ) ) {
+						continue;
+					}
+
+					// The order matters: the frontend concatenates the values
+					// of this array to build "HH:MM".
+					$clean_half[ $bound ] = array(
+						'hours' => $this->sanitizeHours( isset( $day[ $half ][ $bound ]['hours'] ) ? $day[ $half ][ $bound ]['hours'] : '' ),
+						'mins'  => $this->sanitizeMinutes( isset( $day[ $half ][ $bound ]['mins'] ) ? $day[ $half ][ $bound ]['mins'] : '' ),
+					);
+				}
+
+				if ( ! empty( $clean_half ) ) {
+					$clean[ $half ] = $clean_half;
+				}
+			}
+
+			$days[ $index ] = $clean;
+		}
+
+		ksort( $days );
+
+		return $days;
+	}
+
+	/**
+	 * Clamp an hour to the "00".."23" list offered by the UI.
+	 *
+	 * @param mixed $value The raw hour.
+	 *
+	 * @return string
+	 */
+	public function sanitizeHours( $value ) {
+		if ( ! is_scalar( $value ) ) {
+			return '00';
+		}
+
+		$hours = (int) $value;
+		if ( $hours < 0 || $hours > 23 ) {
+			$hours = 0;
+		}
+
+		return sprintf( '%02d', $hours );
+	}
+
+	/**
+	 * Keep a minute value within the list offered by the UI.
+	 *
+	 * @param mixed $value The raw minutes.
+	 *
+	 * @return string
+	 */
+	public function sanitizeMinutes( $value ) {
+		$allowed = array( '00', '15', '30', '45', '59' );
+
+		if ( ! is_scalar( $value ) ) {
+			return '00';
+		}
+
+		$mins = sprintf( '%02d', (int) $value );
+
+		return in_array( $mins, $allowed, true ) ? $mins : '00';
+	}
+
+	/**
+	 * Shape the stored days for the React field, which expects the seven days
+	 * wrapped under `seopress_local_business_opening_hours` and always present
+	 * so every row renders as a controlled input.
+	 *
+	 * @param mixed $stored The value read from `_seopress_pro_schemas`.
+	 *
+	 * @return array
+	 */
+	public function formatOpeningHoursForClient( $stored ) {
+		$stored = is_array( $stored ) ? $stored : array();
+		$days   = array();
+
+		for ( $index = 0; $index < 7; $index++ ) {
+			$day = isset( $stored[ $index ] ) && is_array( $stored[ $index ] ) ? $stored[ $index ] : array();
+
+			$formatted = array(
+				'open' => isset( $day['open'] ) ? '1' : '',
+			);
+
+			foreach ( array( 'am', 'pm' ) as $half ) {
+				$half_day = isset( $day[ $half ] ) && is_array( $day[ $half ] ) ? $day[ $half ] : array();
+
+				$formatted[ $half ] = array(
+					'open'  => isset( $half_day['open'] ) ? '1' : '',
+					'start' => array(
+						'hours' => $this->sanitizeHours( isset( $half_day['start']['hours'] ) ? $half_day['start']['hours'] : '00' ),
+						'mins'  => $this->sanitizeMinutes( isset( $half_day['start']['mins'] ) ? $half_day['start']['mins'] : '00' ),
+					),
+					'end'   => array(
+						'hours' => $this->sanitizeHours( isset( $half_day['end']['hours'] ) ? $half_day['end']['hours'] : '00' ),
+						'mins'  => $this->sanitizeMinutes( isset( $half_day['end']['mins'] ) ? $half_day['end']['mins'] : '00' ),
+					),
+				);
+			}
+
+			$days[] = $formatted;
+		}
+
+		return array( 'seopress_local_business_opening_hours' => $days );
 	}
 }

@@ -214,7 +214,7 @@ function seopress_xml_sitemap_news() {
 											}
 
 											// Cleaning URL.
-											$url = htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $url ) ) ) );
+											$url = htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $url ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 
 											// Remove query strings.
 											$parse_url = wp_parse_url( $url );
@@ -251,18 +251,18 @@ function seopress_xml_sitemap_news() {
 
 			// Array with all the information needed for a sitemap URL.
 
-			$google_news_name = htmlspecialchars( urldecode( esc_attr( html_entity_decode( seopress_pro_get_service( 'OptionPro' )->getGoogleNewsName() ) ) ) );
+			$google_news_name = htmlspecialchars( urldecode( esc_attr( html_entity_decode( seopress_pro_get_service( 'OptionPro' )->getGoogleNewsName(), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 			$google_news_name = apply_filters( 'seopress_sitemaps_xml_news_name', $google_news_name );
 
 			$seopress_url = array(
-				'loc'    => htmlspecialchars( urldecode( get_permalink( $post ) ) ),
+				'loc'    => htmlspecialchars( urldecode( get_permalink( $post ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 				'mod'    => $seopress_mod,
 				'images' => $images_array,
 				'news'   => array(
 					'name'             => $google_news_name,
 					'language'         => $lang,
 					'publication_date' => get_the_date( 'c', $post ),
-					'title'            => htmlspecialchars( urldecode( esc_attr( html_entity_decode( get_the_title( $post ) ) ) ) ),
+					'title'            => htmlspecialchars( urldecode( esc_attr( html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 					'keywords'         => $seopress_keywords,
 				),
 			);

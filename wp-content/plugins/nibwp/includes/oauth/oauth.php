@@ -82,6 +82,17 @@ function nibwp_oauth_metadata_url(): string
  */
 function nibwp_oauth_authorize_url(): string
 {
+    // Set only by the sign-in probe, on proof that the pretty path answers
+    // 404/403 while the admin-post handler works — a WAF or server rule
+    // blocking /nibwp-oauth/* outright. The metadata document is fetched at
+    // every sign-in, so switching what this returns heals every client on
+    // its next attempt without anyone touching anything. Cleared by the same
+    // probe the moment the pretty path answers again, because the query-string
+    // form has its own cost (see the docblock above).
+    if (get_option('nibwp_oauth_authorize_fallback')) {
+        return admin_url('admin-post.php?action=nibwp_oauth_authorize');
+    }
+
     if (get_option('permalink_structure')) {
         return home_url('/nibwp-oauth/authorize');
     }

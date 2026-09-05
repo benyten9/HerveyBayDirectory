@@ -69,13 +69,24 @@ class RestSalesUsersController extends RestController {
 
 		$users  = UserRoles::get_users_with_module_roles( 'sales' );
 		$shaped = array();
+		$seen   = array();
 
 		foreach ( $users as $user ) {
-			$shaped[] = array(
-				'id'           => (int) $user['id'],
+			$id = (int) $user['id'];
+			if ( $id <= 0 || isset( $seen[ $id ] ) ) {
+				continue;
+			}
+			$seen[ $id ] = true;
+			$shaped[]    = array(
+				'id'           => $id,
 				'display_name' => (string) $user['name'],
 				'email'        => (string) $user['email'],
 			);
+		}
+
+		$current = wp_get_current_user();
+		if ( $current instanceof \WP_User && $current->ID > 0 && empty( $seen[ (int) $current->ID ] ) ) {
+			array_unshift( $shaped, $this->shape_user( $current ) );
 		}
 
 		return new WP_REST_Response( $shaped, 200 );

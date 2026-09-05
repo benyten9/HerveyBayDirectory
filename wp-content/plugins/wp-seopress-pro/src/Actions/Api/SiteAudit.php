@@ -56,6 +56,54 @@ class SiteAudit implements ExecuteHooks {
 	private $allowed_types = null;
 
 	/**
+	 * Sortable DataViews field ids, and where their value comes from.
+	 *
+	 * Doubles as the allowlist for the `orderby` parameter: nothing the
+	 * request supplies ever reaches the query, only the expression that
+	 * orderByExpression() builds for a key of this map.
+	 *
+	 * A `meta` entry is read through a correlated subquery rather than a
+	 * LEFT JOIN, so a post carrying the same meta_key twice cannot duplicate
+	 * its issue rows in the result set.
+	 *
+	 * @var array<string, array{source: string, key?: string, numeric?: bool}>
+	 */
+	const SORTABLE_FIELDS = array(
+		'priority'       => array( 'source' => 'priority' ),
+		'postTitle'      => array( 'source' => 'column' ),
+		'issueName'      => array( 'source' => 'column' ),
+		'targetKeyword'  => array(
+			'source' => 'meta',
+			'key'    => '_seopress_analysis_target_kw',
+		),
+		'gscClicks'      => array(
+			'source'  => 'meta',
+			'key'     => '_seopress_search_console_analysis_clicks',
+			'numeric' => true,
+		),
+		'gscImpressions' => array(
+			'source'  => 'meta',
+			'key'     => '_seopress_search_console_analysis_impressions',
+			'numeric' => true,
+		),
+		'gscPosition'    => array(
+			'source'  => 'meta',
+			'key'     => '_seopress_search_console_analysis_position',
+			'numeric' => true,
+		),
+	);
+
+	/**
+	 * Plain columns behind the sortable fields whose source is `column`.
+	 *
+	 * @var array<string, string>
+	 */
+	const SORTABLE_COLUMNS = array(
+		'postTitle' => 'posts.post_title',
+		'issueName' => 'issues.issue_name',
+	);
+
+	/**
 	 * Bind REST registration to the WP REST bootstrap.
 	 *
 	 * @return void
@@ -100,30 +148,69 @@ class SiteAudit implements ExecuteHooks {
 				'callback'            => array( $this, 'processGetIssueDetails' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'type'     => array(
+					'type'       => array(
 						'validate_callback' => array( $this, 'validateIssueType' ),
 						'sanitize_callback' => 'sanitize_key',
 					),
-					'per_page' => array(
+					'per_page'   => array(
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
 						},
 						'sanitize_callback' => 'absint',
 						'default'           => 25,
 					),
-					'page'     => array(
+					'page'       => array(
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0;
 						},
 						'sanitize_callback' => 'absint',
 						'default'           => 1,
 					),
-					'ignored'  => array(
+					'ignored'    => array(
 						'validate_callback' => function ( $param ) {
 							return in_array( (string) $param, array( '0', '1' ), true );
 						},
 						'sanitize_callback' => 'absint',
 						'default'           => 0,
+					),
+					// Search, sort and filters are resolved in SQL, not on the
+					// page that was already sent: with 25 rows per page and
+					// thousands of issues, applying them client-side only ever
+					// searched the slice the user happened to be looking at.
+					'search'     => array(
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => '',
+					),
+					'orderby'    => array(
+						'validate_callback' => function ( $param ) {
+							return array_key_exists( (string) $param, self::SORTABLE_FIELDS );
+						},
+						// Not sanitize_key(): field ids are camelCase on the
+						// DataViews side, and lowercasing them here would turn
+						// every sort into the default one.
+						'sanitize_callback' => function ( $param ) {
+							$param = (string) $param;
+
+							return array_key_exists( $param, self::SORTABLE_FIELDS ) ? $param : 'priority';
+						},
+						'default'           => 'priority',
+					),
+					'order'      => array(
+						'validate_callback' => function ( $param ) {
+							return in_array( strtolower( (string) $param ), array( 'asc', 'desc' ), true );
+						},
+						'sanitize_callback' => 'sanitize_key',
+						'default'           => 'asc',
+					),
+					// Comma-separated lists, mirroring the `isAny` operator of
+					// the matching DataViews column filters.
+					'issue_name' => array(
+						'sanitize_callback' => array( $this, 'sanitizeSlugList' ),
+						'default'           => '',
+					),
+					'priority'   => array(
+						'sanitize_callback' => array( $this, 'sanitizeSlugList' ),
+						'default'           => '',
 					),
 				),
 			)
@@ -408,11 +495,47 @@ class SiteAudit implements ExecuteHooks {
 			'byPriority'   => $by_priority,
 			'healthScore'  => $score,
 			'topIssues'    => $this->getTopIssues( 3 ),
-			'lastScan'     => sanitize_text_field( (string) get_option( 'seopress_bot_log', '' ) ),
+			'lastScan'     => $this->getLastScanDate(),
 			'scanStatus'   => $this->getScanStatus(),
 		);
 
 		return new \WP_REST_Response( $payload );
+	}
+
+	/**
+	 * Date of the last completed site audit, for the Overview header.
+	 *
+	 * Read from the audit history table, which is written once a scan reaches
+	 * its end, so the date shown is a scan that actually finished. This used to
+	 * read the `seopress_bot_log` option, which the Broken Links scan writes and
+	 * the site audit never touches: the header displayed the date of the last
+	 * broken-links scan, or claimed no scan had ever run on a site where none
+	 * had, both while the audit history sat right below it listing real scans.
+	 *
+	 * `scan_date` is stored with `current_time( 'mysql' )`, so it already is in
+	 * the site's timezone. It is trimmed to the minute rather than run through
+	 * a date function, so the header cannot end up an hour away from the same
+	 * scan listed in the history below it.
+	 *
+	 * @return string Date as `Y-m-d H:i`, or an empty string when no audit has
+	 *                completed yet.
+	 */
+	private function getLastScanDate() { // phpcs:ignore -- camelCase matches the surrounding methods.
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'seopress_site_audit_history';
+
+		// Direct query, uncached: this backs an admin screen that has to show a
+		// freshly finished audit straight away.
+		$scan_date = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			"SELECT scan_date FROM {$table} ORDER BY scan_date DESC LIMIT 1" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		if ( empty( $scan_date ) ) {
+			return '';
+		}
+
+		return sanitize_text_field( substr( (string) $scan_date, 0, 16 ) );
 	}
 
 	/**
@@ -434,8 +557,10 @@ class SiteAudit implements ExecuteHooks {
 
 		$table = $wpdb->prefix . 'seopress_seo_issues';
 
+		// Joined on published posts: rows whose post is gone or unpublished
+		// are invisible in every list, so they must not be counted either.
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			"SELECT issue_priority, issue_ignore, COUNT(*) AS cnt FROM {$table} GROUP BY issue_priority, issue_ignore" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT issues.issue_priority, issues.issue_ignore, COUNT(*) AS cnt FROM {$table} AS issues INNER JOIN {$wpdb->posts} AS posts ON posts.ID = issues.post_id AND posts.post_status = 'publish' GROUP BY issues.issue_priority, issues.issue_ignore" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		);
 
 		$total       = 0;
@@ -484,7 +609,7 @@ class SiteAudit implements ExecuteHooks {
 
 		$table = $wpdb->prefix . 'seopress_seo_issues';
 		$rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			"SELECT issue_type, issue_priority, COUNT(*) AS cnt FROM {$table} WHERE issue_ignore = 0 AND issue_priority IN ('high','medium','low') GROUP BY issue_type, issue_priority" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"SELECT issues.issue_type, issues.issue_priority, COUNT(*) AS cnt FROM {$table} AS issues INNER JOIN {$wpdb->posts} AS posts ON posts.ID = issues.post_id AND posts.post_status = 'publish' WHERE issues.issue_ignore = 0 AND issues.issue_priority IN ('high','medium','low') GROUP BY issues.issue_type, issues.issue_priority" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		);
 
 		if ( ! is_array( $rows ) || empty( $rows ) ) {
@@ -592,6 +717,9 @@ class SiteAudit implements ExecuteHooks {
 	 * (issue name + priority + translated description + target keyword)
 	 * for the React DataViews to render without a second round-trip.
 	 *
+	 * Search, sort, filters and pagination are all resolved by the query, so
+	 * `total` describes the same set of rows as `data` whatever the view is.
+	 *
 	 * @param \WP_REST_Request $request The request.
 	 *
 	 * @return \WP_REST_Response
@@ -602,13 +730,22 @@ class SiteAudit implements ExecuteHooks {
 		$page     = (int) $request->get_param( 'page' );
 		$ignored  = (int) $request->get_param( 'ignored' );
 
-		$rows  = $this->queryIssuesForType( $type, $ignored );
-		$total = count( $rows );
+		$query = $this->queryIssuesForType(
+			$type,
+			$ignored,
+			array(
+				'search'     => (string) $request->get_param( 'search' ),
+				'orderby'    => (string) $request->get_param( 'orderby' ),
+				'order'      => (string) $request->get_param( 'order' ),
+				'issue_name' => (array) $request->get_param( 'issue_name' ),
+				'priority'   => (array) $request->get_param( 'priority' ),
+				'per_page'   => $per_page,
+				'page'       => $page,
+			)
+		);
 
-		usort( $rows, array( $this, 'compareIssuesByPriority' ) );
-
-		$offset = ( $page - 1 ) * $per_page;
-		$slice  = array_slice( $rows, $offset, $per_page );
+		$slice = $query['rows'];
+		$total = $query['total'];
 
 		// GSC sync is only meaningful when the toggle is ON and an API key
 		// exists; otherwise post meta will be empty/stale and we hide the
@@ -691,8 +828,101 @@ class SiteAudit implements ExecuteHooks {
 				'total'      => $total,
 				'totalPages' => $per_page > 0 ? (int) ceil( $total / $per_page ) : 1,
 				'gscEnabled' => $gsc_enabled,
+				// Every issue_name this type holds, not just the ones on the
+				// current page: the column filter is useless if its options
+				// change as you paginate.
+				'issueNames' => $this->issueNamesForType( $type, $ignored ),
 			)
 		);
+	}
+
+	/**
+	 * Distinct issue_name values stored for a type, with their translated
+	 * labels, sorted by label. Feeds the "Issue" column filter.
+	 *
+	 * @param string $type    Issue type slug.
+	 * @param int    $ignored 1 to include ignored rows, 0 for active only.
+	 *
+	 * @return array<int, array{value: string, label: string}>
+	 */
+	private function issueNamesForType( $type, $ignored ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'seopress_seo_issues';
+
+		// Same published-posts join as the list itself: an option that matches
+		// nothing but rows the list cannot render is a dead end in the filter.
+		$join = "INNER JOIN {$wpdb->posts} AS posts ON posts.ID = issues.post_id AND posts.post_status = 'publish'";
+
+		if ( 1 === (int) $ignored ) {
+			$sql = $wpdb->prepare(
+				"SELECT DISTINCT issues.issue_name FROM {$table} AS issues {$join} WHERE issues.issue_type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$type
+			);
+		} else {
+			$sql = $wpdb->prepare(
+				"SELECT DISTINCT issues.issue_name FROM {$table} AS issues {$join} WHERE issues.issue_type = %s AND issues.issue_ignore = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$type
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$names = $wpdb->get_col( $sql );
+
+		if ( ! is_array( $names ) ) {
+			return array();
+		}
+
+		$labels = SEOIssueName::getIssueNames();
+		$out    = array();
+
+		foreach ( $names as $name ) {
+			$name = sanitize_text_field( (string) $name );
+			if ( '' === $name ) {
+				continue;
+			}
+			$out[] = array(
+				'value' => $name,
+				'label' => isset( $labels[ $name ] ) ? $labels[ $name ] : $name,
+			);
+		}
+
+		usort(
+			$out,
+			function ( $a, $b ) {
+				return strcasecmp( $a['label'], $b['label'] );
+			}
+		);
+
+		return $out;
+	}
+
+	/**
+	 * Turn a comma-separated list of slugs into a clean array.
+	 *
+	 * Used as the sanitize_callback of the column filter parameters, which
+	 * carry the values of a DataViews `isAny` operator.
+	 *
+	 * @param mixed $value Raw parameter value.
+	 *
+	 * @return string[]
+	 */
+	public function sanitizeSlugList( $value ) {
+		if ( is_array( $value ) ) {
+			$parts = $value;
+		} else {
+			$parts = explode( ',', (string) $value );
+		}
+
+		$parts = array_map( 'sanitize_key', $parts );
+		$parts = array_filter(
+			$parts,
+			function ( $part ) {
+				return '' !== $part;
+			}
+		);
+
+		return array_values( array_unique( $parts ) );
 	}
 
 	/**
@@ -1328,6 +1558,15 @@ class SiteAudit implements ExecuteHooks {
 		delete_option( 'seopress_pro_site_audit_log' );
 		delete_option( 'seopress_pro_site_audit_last_error' );
 		delete_option( 'seopress_pro_site_audit_heartbeat' );
+
+		// The stuck-offset bookkeeping belongs to the run that wrote it. Left
+		// behind, a scan that died twice at the same offset makes the *next*
+		// scan step over the page sitting there on its very first batch, even
+		// though that page has not failed once in this run.
+		delete_option( 'seopress_pro_site_audit_stuck_offset' );
+		delete_option( 'seopress_pro_site_audit_stuck_count' );
+		delete_option( 'seopress_pro_site_audit_current_post' );
+
 		update_option( 'seopress_pro_site_audit_last_scan', time(), false );
 
 		// Queue the first batch. The cron hook re-enters run_task_fn() and
@@ -1543,61 +1782,223 @@ class SiteAudit implements ExecuteHooks {
 	}
 
 	/**
-	 * Fetch every issue row of a given type. Sorting happens in PHP since
-	 * priority is stored as a string ('low' / 'medium' / 'high' / 'good')
-	 * which does not sort naturally.
+	 * Fetch one page of issue rows for a type, with the search, filters and
+	 * ordering of the current view already applied.
+	 *
+	 * Everything is resolved by the database, including the count: loading
+	 * the whole type and slicing in PHP made `total` describe a different
+	 * set of rows than `data` as soon as a search or a filter was active,
+	 * and it read the entire table into memory on every page view.
 	 *
 	 * @param string $type    Issue type slug.
 	 * @param int    $ignored 1 = include ignored rows, anything else = active only.
+	 * @param array  $args    Search / sort / filter / pagination arguments.
 	 *
-	 * @return array<int, object>
+	 * @return array{rows: array<int, object>, total: int}
 	 */
-	private function queryIssuesForType( $type, $ignored ) {
+	private function queryIssuesForType( $type, $ignored, array $args = array() ) {
 		global $wpdb;
+
+		$args = wp_parse_args(
+			$args,
+			array(
+				'search'     => '',
+				'orderby'    => 'priority',
+				'order'      => 'asc',
+				'issue_name' => array(),
+				'priority'   => array(),
+				'per_page'   => 25,
+				'page'       => 1,
+			)
+		);
 
 		$table = $wpdb->prefix . 'seopress_seo_issues';
 
-		if ( 1 === (int) $ignored ) {
-			$sql = $wpdb->prepare(
-				"SELECT id, post_id, issue_name, issue_desc, issue_priority, issue_ignore FROM {$table} WHERE issue_type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$type
-			);
-		} else {
-			$sql = $wpdb->prepare(
-				"SELECT id, post_id, issue_name, issue_desc, issue_priority, issue_ignore FROM {$table} WHERE issue_type = %s AND issue_ignore = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$type
-			);
+		// Joined on the primary key, so it can never duplicate a row. It reads
+		// post_title for the search and the sort, and restricts the list to
+		// published posts so pagination happens on exactly the rows that will
+		// render: the renderer used to drop rows whose post had been deleted
+		// AFTER slicing the page, so the header said "33", page 1 showed 3,
+		// and page 2 was empty.
+		$join = "INNER JOIN {$wpdb->posts} AS posts ON posts.ID = issues.post_id AND posts.post_status = 'publish'";
+
+		$where = array( $wpdb->prepare( 'issues.issue_type = %s', $type ) );
+
+		if ( 1 !== (int) $ignored ) {
+			$where[] = 'issues.issue_ignore = 0';
 		}
 
-		$rows = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$name_filter = $this->prepareInClause( 'issues.issue_name', $args['issue_name'] );
+		if ( $name_filter ) {
+			$where[] = $name_filter;
+		}
 
-		return is_array( $rows ) ? $rows : array();
+		$priority_filter = $this->prepareInClause( 'issues.issue_priority', $args['priority'] );
+		if ( $priority_filter ) {
+			$where[] = $priority_filter;
+		}
+
+		$search = $this->prepareSearchClause( $args['search'] );
+		if ( $search ) {
+			$where[] = $search;
+		}
+
+		$where_sql = implode( ' AND ', $where );
+		$order_sql = $this->orderByExpression( $args['orderby'], $args['order'] );
+
+		$per_page = max( 1, (int) $args['per_page'] );
+		$offset   = max( 0, ( max( 1, (int) $args['page'] ) - 1 ) * $per_page );
+
+		// The interpolated fragments are either literals built here ($table,
+		// $join), an allowlisted ORDER BY expression, or WHERE clauses that
+		// went through $wpdb->prepare() already. Only the pagination is left
+		// for the outer prepare().
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$sql = $wpdb->prepare(
+			"SELECT issues.id, issues.post_id, issues.issue_name, issues.issue_desc, issues.issue_priority, issues.issue_ignore
+			FROM {$table} AS issues
+			{$join}
+			WHERE {$where_sql}
+			ORDER BY {$order_sql}
+			LIMIT %d OFFSET %d",
+			$per_page,
+			$offset
+		);
+
+		$rows = $wpdb->get_results( $sql );
+
+		$total = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$table} AS issues {$join} WHERE {$where_sql}"
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return array(
+			'rows'  => is_array( $rows ) ? $rows : array(),
+			'total' => $total,
+		);
 	}
 
 	/**
-	 * Order issues by priority: high → medium → low → good → other.
-	 * Used as a usort() callback.
+	 * Build a prepared `column IN (…)` clause, or null when there is nothing
+	 * to filter on.
 	 *
-	 * @param object $a First issue row.
-	 * @param object $b Second issue row.
+	 * @param string   $column Fully qualified column name (never user input).
+	 * @param string[] $values Already sanitized slugs.
 	 *
-	 * @return int
+	 * @return string|null
 	 */
-	private function compareIssuesByPriority( $a, $b ) {
-		$weights = array(
-			'high'   => 0,
-			'medium' => 1,
-			'low'    => 2,
-			'good'   => 3,
-		);
-		$wa      = isset( $weights[ $a->issue_priority ] ) ? $weights[ $a->issue_priority ] : 9;
-		$wb      = isset( $weights[ $b->issue_priority ] ) ? $weights[ $b->issue_priority ] : 9;
+	private function prepareInClause( $column, $values ) {
+		global $wpdb;
 
-		if ( $wa === $wb ) {
-			return (int) $a->post_id <=> (int) $b->post_id;
+		$values = array_filter( array_map( 'strval', (array) $values ) );
+
+		if ( empty( $values ) ) {
+			return null;
 		}
 
-		return $wa <=> $wb;
+		$placeholders = implode( ', ', array_fill( 0, count( $values ), '%s' ) );
+
+		return $wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			"{$column} IN ({$placeholders})",
+			$values
+		);
+	}
+
+	/**
+	 * Build the WHERE fragment for the global search box.
+	 *
+	 * Matches what the columns flagged `enableGlobalSearch` display: the post
+	 * title, the issue label, and the target keyword. The label lives in a
+	 * translation table rather than in the database, so it is resolved to the
+	 * matching issue_name slugs before the query runs — searching "noindex is
+	 * ON" has to find rows whose stored name is `meta_robots_noindex`.
+	 *
+	 * @param string $search Raw search term.
+	 *
+	 * @return string|null
+	 */
+	private function prepareSearchClause( $search ) {
+		global $wpdb;
+
+		$search = trim( (string) $search );
+
+		if ( '' === $search ) {
+			return null;
+		}
+
+		$like  = '%' . $wpdb->esc_like( $search ) . '%';
+		$parts = array(
+			$wpdb->prepare( 'posts.post_title LIKE %s', $like ),
+			$wpdb->prepare( 'issues.issue_name LIKE %s', $like ),
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"EXISTS ( SELECT 1 FROM {$wpdb->postmeta} AS kw WHERE kw.post_id = issues.post_id AND kw.meta_key = '_seopress_analysis_target_kw' AND kw.meta_value LIKE %s )",
+				$like
+			),
+		);
+
+		$matching_names = array();
+		foreach ( SEOIssueName::getIssueNames() as $slug => $label ) {
+			if ( false !== stripos( $label, $search ) ) {
+				$matching_names[] = $slug;
+			}
+		}
+
+		$by_label = $this->prepareInClause( 'issues.issue_name', $matching_names );
+		if ( $by_label ) {
+			$parts[] = $by_label;
+		}
+
+		return '( ' . implode( ' OR ', $parts ) . ' )';
+	}
+
+	/**
+	 * Build the ORDER BY fragment for a sortable field.
+	 *
+	 * Both the expression and the direction come from an allowlist, so no
+	 * part of this string originates from the request. post_id then id close
+	 * every ordering, so equal values keep a stable page-to-page order —
+	 * post_id first to preserve the secondary ordering the PHP sort used.
+	 *
+	 * @param string $orderby Sortable field id.
+	 * @param string $order   'asc' or 'desc'.
+	 *
+	 * @return string
+	 */
+	private function orderByExpression( $orderby, $order ) {
+		global $wpdb;
+
+		$direction = 'desc' === strtolower( (string) $order ) ? 'DESC' : 'ASC';
+		$field     = isset( self::SORTABLE_FIELDS[ $orderby ] ) ? self::SORTABLE_FIELDS[ $orderby ] : self::SORTABLE_FIELDS['priority'];
+
+		switch ( $field['source'] ) {
+			case 'column':
+				$expression = self::SORTABLE_COLUMNS[ $orderby ];
+				break;
+
+			case 'meta':
+				$value = $wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"( SELECT meta.meta_value FROM {$wpdb->postmeta} AS meta WHERE meta.post_id = issues.post_id AND meta.meta_key = %s LIMIT 1 )",
+					$field['key']
+				);
+				// Empty and missing metas must sort as 0, not as the string
+				// '', otherwise a site with partial GSC data orders randomly.
+				$expression = ! empty( $field['numeric'] )
+					? "CAST( COALESCE( {$value}, 0 ) AS DECIMAL(20,4) )"
+					: "COALESCE( {$value}, '' )";
+				break;
+
+			case 'priority':
+			default:
+				// Same weights the client-side sort used: high first, then
+				// medium, low, good, and anything unknown last.
+				$expression = "CASE issues.issue_priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 WHEN 'good' THEN 3 ELSE 9 END";
+				break;
+		}
+
+		return "{$expression} {$direction}, issues.post_id ASC, issues.id ASC";
 	}
 
 	/**

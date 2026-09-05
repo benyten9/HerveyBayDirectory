@@ -81,7 +81,10 @@ abstract class JsonSchemaValue extends JsonSchemaValueBase {
 			if ( is_string( $item ) ) {
 				$variables[ $key ] = isset( $data[ $item ] ) ? $data[ $item ] : '';
 			} elseif ( is_array( $item ) ) {
-				$variables[ $key ] = ( isset( $item['value'] ) && isset( $data[ $item['value'] ] ) && ! empty( $data[ $item['value'] ] ) ) ? $data[ $item['value'] ] : $item['default'];
+				// `default` is optional: a key may declare `value` alone and fall back to an
+				// empty string, exactly as the string form does.
+				$default           = isset( $item['default'] ) ? $item['default'] : '';
+				$variables[ $key ] = ( isset( $item['value'] ) && isset( $data[ $item['value'] ] ) && ! empty( $data[ $item['value'] ] ) ) ? $data[ $item['value'] ] : $default;
 			}
 		}
 

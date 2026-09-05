@@ -51,7 +51,7 @@ function nibwp_tutorlms_minisite_build(array $input): array|WP_Error
         return $gate;
     }
     $raw_token = (string) ($input['_preflight_token'] ?? '');
-    $token = nibwp_skill_preflight_consume_token($raw_token, 'tutorlms-minisite');
+    $token = nibwp_skill_preflight_consume_token($raw_token, 'tutorlms-minisite', $input);
     if (is_wp_error($token)) {
         return [
             'success' => false,

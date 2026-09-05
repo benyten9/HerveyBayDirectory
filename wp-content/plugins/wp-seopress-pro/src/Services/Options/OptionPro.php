@@ -951,7 +951,15 @@ class OptionPro {
 	 * @return string
 	 */
 	public function getAIAssistantEnabled() {
-		return $this->searchOptionByKey( 'seopress_ai_assistant_enable' );
+		// Stored with the other feature modules (`seopress_toggle`) rather than in
+		// the PRO settings array, so the Dashboard can switch the assistant on
+		// from its feature card like any other module. Installs from before 10.2
+		// are moved over by seopress_pro_migrate_ai_assistant_default().
+		if ( ! function_exists( 'seopress_get_toggle_option' ) ) {
+			return null;
+		}
+
+		return seopress_get_toggle_option( 'ai-assistant' );
 	}
 
 	/**

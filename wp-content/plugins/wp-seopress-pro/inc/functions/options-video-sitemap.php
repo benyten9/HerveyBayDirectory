@@ -69,7 +69,7 @@ if ( ! empty( $video_items ) ) {
 		$video_xml .= "\n";
 
 		if ( isset( $item->snippet->thumbnails->high->url ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			$video_xml .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $item->snippet->thumbnails->high->url ) ) ) ) . '</video:thumbnail_loc>';
+			$video_xml .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $item->snippet->thumbnails->high->url ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</video:thumbnail_loc>';
 			$video_xml .= "\n";
 		}
 
@@ -84,7 +84,7 @@ if ( ! empty( $video_items ) ) {
 			? $item->snippet->description
 			: ( isset( $item->snippet->title ) ? $item->snippet->title : '' );
 		if ( '' !== $video_description ) {
-			$video_xml .= '<video:description><![CDATA[' . esc_attr( wp_filter_nohtml_kses( htmlentities( substr( $video_description, 0, 2000 ) ) ) ) . ']]></video:description>';
+			$video_xml .= '<video:description><![CDATA[' . esc_attr( wp_filter_nohtml_kses( htmlentities( substr( $video_description, 0, 2000 ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ) . ']]></video:description>';
 			$video_xml .= "\n";
 		}
 

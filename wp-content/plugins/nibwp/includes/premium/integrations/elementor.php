@@ -168,11 +168,15 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
         return new WP_Error('missing_title', __('page_title is required.', domain: 'nibwp'));
     }
 
-    $template = (string) ($input['template'] ?? 'elementor_canvas');
+    // Only a default for a page being created. On an update, silence means
+    // "leave the template alone" - defaulting to canvas here rewrote the
+    // template of every existing page this ability touched.
+    $template = isset($input['template']) ? (string) $input['template'] : null;
     $sections = (array) ($input['sections'] ?? []);
     $post_id = isset($input['post_id']) ? (int) $input['post_id'] : 0;
 
     // Update or create.
+    $is_new = $post_id <= 0;
     if ($post_id > 0) {
         $existing = get_post($post_id);
         if (!$existing) {
@@ -195,8 +199,13 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
         }
     }
 
-    // Set page template.
-    update_post_meta($post_id, '_wp_page_template', $template);
+    // Set page template. A new page with nothing said gets canvas, which is what
+    // an Elementor page usually wants; an existing one keeps whatever it has.
+    if ($template !== null) {
+        update_post_meta($post_id, '_wp_page_template', $template);
+    } elseif ($is_new) {
+        update_post_meta($post_id, '_wp_page_template', 'elementor_canvas');
+    }
 
     // Build Elementor data.
     $elementor_data = array_map('nibwp_elementor_normalise_element', $sections);
@@ -206,7 +215,13 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
         return new WP_Error('json_encode_failed', __('Failed to encode Elementor data as JSON.', domain: 'nibwp'));
     }
 
-    update_post_meta($post_id, '_elementor_data', $encoded);
+    // wp_slash is not optional. update_metadata() runs wp_unslash() over the
+    // value, so every backslash JSON needs - the escaped slash, the escaped
+    // quote, the unicode escape - is eaten on the way in, and what lands in
+    // the database no longer decodes. Elementor then renders nothing while the
+    // post still looks built. This is what Elementor's own save does, and what
+    // elementor-pro/lib/persister.php has always done.
+    update_post_meta($post_id, '_elementor_data', wp_slash($encoded));
     update_post_meta($post_id, '_elementor_edit_mode', 'builder');
     update_post_meta($post_id, '_elementor_version', ELEMENTOR_VERSION);
 
@@ -823,7 +838,9 @@ function nibwp_elementor_manage_templates(array $input): array|WP_Error
         $normalised = array_map('nibwp_elementor_normalise_element', $content);
         $encoded = wp_json_encode($normalised);
         if ($encoded !== false) {
-            update_post_meta($post_id, '_elementor_data', $encoded);
+            // Same reason as elementor-create-page: unslashed JSON does not
+            // survive update_metadata(), and the template renders blank.
+            update_post_meta($post_id, '_elementor_data', wp_slash($encoded));
         }
     }
 

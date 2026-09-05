@@ -79,9 +79,7 @@ final class SalesPortalProvider {
 		$config['credit_notes_pro_active']       = function_exists( 'doublescale_is_pro_addon_active' )
 			&& doublescale_is_pro_addon_active()
 			&& doublescale_sales_child_module_active( 'credit_notes' );
-		$config['invoices_payments_pro_active'] = function_exists( 'doublescale_is_pro_addon_active' )
-			&& doublescale_is_pro_addon_active()
-			&& doublescale_sales_child_module_active( 'documents' );
+		$config['invoices_payments_pro_active'] = doublescale_sales_child_module_active( 'documents' );
 		$config['contracts_module_enabled'] = doublescale_sales_child_module_active( 'contracts' );
 		$config['contracts_pro_active']       = function_exists( 'doublescale_is_pro_addon_active' )
 			&& doublescale_is_pro_addon_active()

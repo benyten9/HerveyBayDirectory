@@ -29,7 +29,9 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 
 		$products_description = $schema_datas['description'];
 		if ( '' == $products_description ) {
-			$products_description = wp_trim_words( esc_html( get_the_excerpt() ), 30 );
+			// Escaping before trimming can cut an entity in half, and the value
+			// goes to JSON-LD rather than to HTML. wp_trim_words() strips tags.
+			$products_description = wp_trim_words( get_the_excerpt(), 30 );
 		}
 
 		$seopress_thumbnail_size = apply_filters( 'seopress_schemas_post_thumbnail_size', 'large' );
@@ -457,7 +459,7 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_product_json', $json );
 
-		$json = '<script type="application/ld+json">' . wp_json_encode( $json ) . '</script>' . "\n";
+		$json = '<script type="application/ld+json">' . seopress_pro_json_ld_encode( $json ) . '</script>' . "\n";
 
 		$json = apply_filters( 'seopress_schemas_auto_product_html', $json );
 

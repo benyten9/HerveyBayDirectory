@@ -295,7 +295,6 @@ class License implements ExecuteHooks {
 			array(
 				'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 				'timeout'    => 15,
-				'sslverify'  => false,
 				'body'       => array(
 					'edd_action' => 'get_version',
 					'license'    => $license,

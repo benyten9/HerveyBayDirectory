@@ -1027,7 +1027,7 @@ class RestAutomationStepController extends RestController {
 			// The body arrives either as builder JSON ({"type":"builder","value":{...}})
 			// or as raw HTML. Only the former needs rendering.
 			$builder_data = null;
-			$decoded      = json_decode( $body, true );
+			$decoded      = is_array( $body ) ? $body : json_decode( (string) $body, true );
 			if ( is_array( $decoded ) ) {
 				if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
 					$builder_data = $decoded['value'];
@@ -1103,9 +1103,10 @@ class RestAutomationStepController extends RestController {
 			$reply_to   = $request->get_param( 'reply_to' );
 
 			// The body arrives either as builder JSON ({"type":"builder","value":{...}})
-			// or as raw HTML. Only the former needs rendering.
+			// or as raw HTML. Only the former needs rendering. REST may already
+			// have decoded a JSON object into an array.
 			$builder_data = null;
-			$decoded      = json_decode( $body, true );
+			$decoded      = is_array( $body ) ? $body : json_decode( (string) $body, true );
 			if ( is_array( $decoded ) ) {
 				if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
 					$builder_data = $decoded['value'];

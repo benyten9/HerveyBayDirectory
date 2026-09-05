@@ -273,15 +273,18 @@ add_filter( 'bulk_post_updated_messages', 'seopress_bot_set_messages_list', 10, 
  */
 function seopress_bot_btn() {
 	$screen = get_current_screen();
-	if ( 'seopress_bot' === $screen->post_type ) {
-		?>
-		<script>
-		jQuery(function(){
-			jQuery("body.post-type-seopress_bot .wrap h1").append('<a href="<?php echo esc_url( admin_url( 'admin.php?page=seopress-broken-links' ) ); ?>" class="page-title-action"><?php esc_attr_e( 'Scan broken links', 'wp-seopress-pro' ); ?></a> <a href="<?php echo esc_url( admin_url( 'admin.php?page=seopress-broken-links' ) ); ?>" class="page-title-action"><?php esc_attr_e( 'Export to CSV', 'wp-seopress-pro' ); ?></a>');
-		});
-		</script>
-		<?php
+	// Null on admin pages that never register a WP_Screen (some third-party
+	// plugin screens): reading a property on it warned on every such page.
+	if ( ! $screen || 'seopress_bot' !== $screen->post_type ) {
+		return;
 	}
+	?>
+	<script>
+	jQuery(function(){
+		jQuery("body.post-type-seopress_bot .wrap h1").append('<a href="<?php echo esc_url( admin_url( 'admin.php?page=seopress-broken-links' ) ); ?>" class="page-title-action"><?php esc_attr_e( 'Scan broken links', 'wp-seopress-pro' ); ?></a> <a href="<?php echo esc_url( admin_url( 'admin.php?page=seopress-broken-links' ) ); ?>" class="page-title-action"><?php esc_attr_e( 'Export to CSV', 'wp-seopress-pro' ); ?></a>');
+	});
+	</script>
+	<?php
 }
 add_action( 'admin_head', 'seopress_bot_btn' );
 

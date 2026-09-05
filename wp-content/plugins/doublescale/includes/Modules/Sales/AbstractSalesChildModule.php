@@ -164,20 +164,28 @@ abstract class AbstractSalesChildModule extends AbstractModule {
 	/**
 	 * Register a recurring Action Scheduler job under the sales group.
 	 *
+	 * The callback is attached on every request: `add_action()` only lives for the
+	 * current request, and the Action Scheduler queue runner needs to find it on
+	 * whichever request happens to run the queue. Only the scheduling half — a DB
+	 * write that must not race between concurrent `init` fires — is behind the
+	 * transient lock. Registering inside the lock would leave the hook callback-less
+	 * on every request but the first in each lock window, and Action Scheduler would
+	 * fail the action with "no callbacks are registered".
+	 *
 	 * @param string   $hook     Hook name.
 	 * @param callable $callback Callback.
 	 * @param int      $interval Interval in seconds.
 	 * @return void
 	 */
 	protected function register_recurring_sales_task( string $hook, callable $callback, int $interval ): void {
+		$tasks = new \DoubleScale\Core\Tasks( 'doublescale_sales' );
+		$tasks->register_callback( $hook, $callback );
+
 		$lock_key = 'doublescale_register_tasks_lock_' . $hook;
 		if ( get_transient( $lock_key ) ) {
 			return;
 		}
 		set_transient( $lock_key, 1, MINUTE_IN_SECONDS );
-
-		$tasks = new \DoubleScale\Core\Tasks( 'doublescale_sales' );
-		$tasks->register_callback( $hook, $callback );
 
 		if ( false === $tasks->get_next_timestamp( $hook ) ) {
 			$tasks->schedule_recurring( time(), $interval, $hook );

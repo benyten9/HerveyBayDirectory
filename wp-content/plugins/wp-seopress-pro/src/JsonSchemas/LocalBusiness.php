@@ -65,7 +65,10 @@ class LocalBusiness extends JsonSchemaValue implements GetJsonData {
 	 */
 	protected function getKeysForSchemaManual() {
 		return array(
-			'type'                => '_seopress_pro_rich_snippets_lb_type',
+			'type'                => array(
+				'value'   => '_seopress_pro_rich_snippets_lb_type',
+				'default' => 'LocalBusiness',
+			),
 			'image'               => '_seopress_pro_rich_snippets_lb_img',
 			'url'                 => '_seopress_pro_rich_snippets_lb_website',
 			'telephone'           => '_seopress_pro_rich_snippets_lb_tel',

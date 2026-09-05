@@ -29,20 +29,19 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 						// Initialize the post meta value.
 						$_post_meta_value = null;
 
-						// Single datas.
+						// Opening hours are not driven by a source token — the
+						// meta holds the days array itself — so they resolve on
+						// their own and skip the mapping chain below. Falling
+						// through used to read `$post_meta_value` left over from
+						// the previous key of the loop.
 						if ( 'opening_hours' == $key ) {
-							if ( ! empty( $seopress_pro_schemas[0][ $id ][ 'rich_snippets_' . $schema_name ][ $key ] ) && function_exists( 'seopress_if_key_exists' ) && true === seopress_if_key_exists( $seopress_pro_schemas[0][ $id ][ 'rich_snippets_' . $schema_name ][ $key ], 'open' ) ) {
-								$_post_meta_value = $seopress_pro_schemas[0][ $id ][ 'rich_snippets_' . $schema_name ][ $key ];
-							} else {
-								// Accepts both stored shapes, and guards the key access:
-								// the meta is not always an array holding the inner key
-								// (e.g. empty value), which emitted an "Undefined array
-								// key" warning on PHP 8+.
-								$_post_meta_value = seopress_pro_get_lb_opening_hours_days( get_post_meta( $id, $value, true ) );
-							}
-						} else {
-							$post_meta_value = get_post_meta( $id, $value, true );
+							$schema_datas[ $key ] = seopress_pro_resolve_lb_opening_hours( $id, $value, $schema_name, $seopress_pro_schemas );
+
+							continue;
 						}
+
+						// Single datas.
+						$post_meta_value = get_post_meta( $id, $value, true );
 
 						// Global datas.
 						$manual_global = get_post_meta( $id, $value . '_manual_global', true );
@@ -65,9 +64,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 						$lb = get_post_meta( $id, $value . '_lb', true );
 
 						// From current single post.
-						if ( ! empty( $_post_meta_value ) && 7 === count( $_post_meta_value ) ) {
-							$_post_meta_value = $_post_meta_value;
-						} elseif ( 'manual_single' == $post_meta_value || 'manual_img_single' == $post_meta_value || 'manual_date_single' == $post_meta_value || 'manual_time_single' == $post_meta_value || 'manual_rating_single' == $post_meta_value || 'manual_custom_single' == $post_meta_value ) {
+						if ( 'manual_single' == $post_meta_value || 'manual_img_single' == $post_meta_value || 'manual_date_single' == $post_meta_value || 'manual_time_single' == $post_meta_value || 'manual_rating_single' == $post_meta_value || 'manual_custom_single' == $post_meta_value ) {
 							if ( isset( $seopress_pro_schemas[0][ $id ][ 'rich_snippets_' . $schema_name ][ $key ] ) ) {
 								$_post_meta_value = $seopress_pro_schemas[0][ $id ][ 'rich_snippets_' . $schema_name ][ $key ];
 							}

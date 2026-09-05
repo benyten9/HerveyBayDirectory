@@ -198,7 +198,8 @@ add_filter( 'map_meta_cap', 'seopress_schemas_map_meta_cap', 10, 4 );
  */
 function seopress_schemas_cpt_title( $title ) {
 	$screen = get_current_screen();
-	if ( 'seopress_schemas' === $screen->post_type ) {
+	// Null on screens without a WP_Screen context. Hand the title back as is.
+	if ( $screen && 'seopress_schemas' === $screen->post_type ) {
 		$title = esc_html__( 'Enter the name of your schema', 'wp-seopress-pro' );
 	}
 
@@ -211,7 +212,10 @@ add_filter( 'enter_title_here', 'seopress_schemas_cpt_title' );
  */
 function seopress_schemas_btn_cpt() {
 	$screen = get_current_screen();
-	if ( 'seopress_schemas' === $screen->post_type ) {
+	// Null on admin pages that never register a WP_Screen: warned there.
+	if ( ! $screen || 'seopress_schemas' !== $screen->post_type ) {
+		return;
+	}
 		?>
 <script>
 	jQuery(function() {
@@ -221,7 +225,6 @@ function seopress_schemas_btn_cpt() {
 	});
 </script>
 		<?php
-	}
 }
 add_action( 'admin_head', 'seopress_schemas_btn_cpt' );
 
@@ -732,7 +735,7 @@ function seopress_schemas_cpt( $post ) {
 
 						$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_custom_global', true );
 
-						$seopress_schemas_manual_custom_global = '<textarea rows="25" id="' . $post_meta_name . '_manual_custom_global" name="' . $post_meta_name . '_manual_custom_global" class="manual_custom_global" aria-label="' . __( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . htmlspecialchars( $post_meta_value ) . '" placeholder="' . esc_html__(
+						$seopress_schemas_manual_custom_global = '<textarea rows="25" id="' . $post_meta_name . '_manual_custom_global" name="' . $post_meta_name . '_manual_custom_global" class="manual_custom_global" aria-label="' . __( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . htmlspecialchars( $post_meta_value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '" placeholder="' . esc_html__(
 							'e.g. <script type="application/ld+json">{
                             "@context": "https://schema.org/",
                             "@type": "Review",
@@ -767,7 +770,7 @@ function seopress_schemas_cpt( $post ) {
                             }
                         }</script>',
 							'wp-seopress-pro'
-						) . '">' . htmlspecialchars( $post_meta_value ) . '</textarea>';
+						) . '">' . htmlspecialchars( $post_meta_value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</textarea>';
 					break;
 			}
 		}
@@ -839,6 +842,8 @@ function seopress_schemas_cpt( $post ) {
 			'seopress_pro_rich_snippets_lb_opening_hours' => is_array( $seopress_pro_rich_snippets_lb_opening_hours_days ) ? $seopress_pro_rich_snippets_lb_opening_hours_days : array(),
 		),
 	);
+
+	$seopress_pro_rich_snippets_lb_opening_hours_source = get_post_meta( $post->ID, '_seopress_pro_rich_snippets_lb_opening_hours_source', true );
 	?>
 <tr id="term-seopress" class="form-field">
 	<td>
@@ -1525,6 +1530,9 @@ function seopress_schemas_save_metabox( $post_id, $post ) {
 		),
 		'seopress_pro_rich_snippets_lb_opening_hours'      => array(
 			'key' => '_seopress_pro_rich_snippets_lb_opening_hours',
+		),
+		'seopress_pro_rich_snippets_lb_opening_hours_source' => array(
+			'key' => '_seopress_pro_rich_snippets_lb_opening_hours_source',
 		),
 	);
 

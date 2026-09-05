@@ -1941,7 +1941,7 @@ if ( ! empty( $sp_schemas_ids ) ) {
 							}
 						  }</script>',
 								'wp-seopress-pro'
-							) . '" aria-label="' . esc_html__( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . esc_html( $check_custom ) . '">' . htmlspecialchars( $check_custom ) . '</textarea>
+							) . '" aria-label="' . esc_html__( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . esc_html( $check_custom ) . '">' . htmlspecialchars( $check_custom, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</textarea>
 					</p>';
 			}
 		}

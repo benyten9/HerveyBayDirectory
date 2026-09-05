@@ -109,7 +109,7 @@ function nibwp_elementor_pro_convert(array $input): array|WP_Error
     if (!function_exists('nibwp_skill_preflight_consume_token')) {
         require_once __DIR__ . '/../../../abilities/skill-preflight.php';
     }
-    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'elementor-pro');
+    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'elementor-pro', $input);
     if (is_wp_error($token_payload)) {
         return [
             'success' => false,

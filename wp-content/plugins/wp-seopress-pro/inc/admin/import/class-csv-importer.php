@@ -14,6 +14,10 @@ if ( ! class_exists( 'SEOPRESS_Importer_Interface', false ) ) {
 	include_once __DIR__ . '/class-csv-importer-interface.php';
 }
 
+// seopress_detect_csv_separator(). The importer files are included on demand,
+// so we cannot rely on options-import-export.php having run.
+require_once dirname( dirname( __DIR__ ) ) . '/functions/helpers-csv.php';
+
 /**
  * SEOPRESS_Importer Class.
  */
@@ -85,6 +89,46 @@ abstract class SEOPRESS_Importer implements SEOPRESS_Importer_Interface {
 	protected $start_time = 0;
 
 	/**
+	 * Error raised while reading the file, if any.
+	 *
+	 * The importer never dies on its own: it records what went wrong and lets
+	 * the caller render it, so the wizard keeps its own error UI and the Ajax
+	 * batches keep returning JSON.
+	 *
+	 * @var WP_Error|null
+	 */
+	protected $error = null;
+
+	/**
+	 * Whether the file could not be read.
+	 *
+	 * @return bool
+	 */
+	public function has_error() {
+		return is_wp_error( $this->error );
+	}
+
+	/**
+	 * Get the error raised while reading the file.
+	 *
+	 * @return WP_Error|null
+	 */
+	public function get_error() {
+		return $this->error;
+	}
+
+	/**
+	 * Get the separator actually used to read the file.
+	 *
+	 * Resolved once the file has been read, so it reflects auto-detection.
+	 *
+	 * @return string
+	 */
+	public function get_delimiter() {
+		return isset( $this->params['delimiter'] ) ? $this->params['delimiter'] : '';
+	}
+
+	/**
 	 * Get file raw headers.
 	 *
 	 * @return array
@@ -144,6 +188,10 @@ abstract class SEOPRESS_Importer implements SEOPRESS_Importer_Interface {
 	 * @return int
 	 */
 	public function get_percent_complete() {
+		if ( empty( $this->file ) || ! is_readable( $this->file ) ) {
+			return 0;
+		}
+
 		$size = filesize( $this->file );
 		if ( ! $size ) {
 			return 0;
@@ -370,6 +418,10 @@ abstract class SEOPRESS_Importer implements SEOPRESS_Importer_Interface {
 	 * @return string
 	 */
 	protected function unescape_data( $value ) {
+		if ( ! is_string( $value ) ) {
+			return $value;
+		}
+
 		$active_content_triggers = array( "'=", "'+", "'-", "'@" );
 
 		if ( in_array( mb_substr( $value, 0, 2 ), $active_content_triggers, true ) ) {
@@ -400,6 +452,11 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 	 */
 	public function __construct( $file, $params = array() ) {
 		if ( ! $this->import_allowed() ) {
+			$this->error = new WP_Error(
+				'seopress_csv_importer_forbidden',
+				__( 'You are not allowed to import metadata.', 'wp-seopress-pro' )
+			);
+
 			return;
 		}
 
@@ -409,7 +466,7 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 			'lines'                  => -1, // Max lines to read.
 			'mapping'                => array(), // Column mapping. csv_heading => schema_heading.
 			'parse'                  => false, // Whether to sanitize and format data.
-			'delimiter'              => ';', // CSV delimiter.
+			'delimiter'              => 'auto', // CSV delimiter, auto-detected by default.
 			'import_ignore_metadata' => false, // Ignore existing metadata.
 			'prevent_timeouts'       => true, // Check memory and time usage and abort if reaching limit.
 			'enclosure'              => '"', // The character used to wrap text in the CSV.
@@ -417,7 +474,18 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 		);
 
 		$this->params = wp_parse_args( $params, $default_args );
-		$this->file   = $file;
+		// Safety net: the path also reaches this class straight from a request
+		// argument, and a backslash in it would not survive esc_url_raw().
+		$this->file   = wp_normalize_path( $file );
+
+		if ( ! self::is_file_within_allowed_dirs( $this->file ) ) {
+			$this->error = new WP_Error(
+				'seopress_csv_importer_file_outside_uploads',
+				__( 'The file to import must live in the uploads directory.', 'wp-seopress-pro' )
+			);
+
+			return;
+		}
 
 		if ( isset( $this->params['mapping']['from'], $this->params['mapping']['to'] ) ) {
 			$this->params['mapping'] = array_combine( $this->params['mapping']['from'], $this->params['mapping']['to'] );
@@ -439,60 +507,200 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 	}
 
 	/**
+	 * Whether a path the request pointed at may be read by the importer.
+	 *
+	 * The file to import travels through the request from step to step, so the
+	 * path is caller-supplied on every batch. Without this, a traversal such as
+	 * ../../../../etc/backup.csv reads any .csv on the filesystem, since the
+	 * only check was the extension.
+	 *
+	 * The path is resolved with realpath() before being compared, so a symlink
+	 * or a .. segment cannot leave the base directory after the fact.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param string $file The path to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_file_within_allowed_dirs( $file ) {
+		$real = realpath( $file );
+
+		if ( false === $real || ! is_file( $real ) ) {
+			return false;
+		}
+
+		$real   = wp_normalize_path( $real );
+		$upload = wp_upload_dir();
+
+		$allowed = array();
+		if ( empty( $upload['error'] ) && ! empty( $upload['basedir'] ) ) {
+			$allowed[] = $upload['basedir'];
+		}
+
+		/**
+		 * Filter the base directories the metadata CSV importer may read from.
+		 *
+		 * Defaults to the uploads directory, where the importer's own upload
+		 * step stores the file.
+		 *
+		 * @since 10.2.0
+		 *
+		 * @param array  $allowed Absolute base directories.
+		 * @param string $file    The path being checked.
+		 */
+		$allowed = (array) apply_filters( 'seopress_csv_importer_allowed_dirs', $allowed, $file );
+
+		foreach ( $allowed as $base ) {
+			$base = realpath( $base );
+
+			if ( false === $base ) {
+				continue;
+			}
+
+			$base = trailingslashit( wp_normalize_path( $base ) );
+
+			if ( 0 === strpos( $real, $base ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Resolve the requested separator to the character used to parse the file.
+	 *
+	 * Accepts the values submitted by the upload form (`auto`, `comma`,
+	 * `semicolon`) as well as the literal characters, because the wizard hands
+	 * the resolved separator from one step to the next.
+	 *
+	 * @return string|WP_Error
+	 */
+	protected function resolve_delimiter() {
+		$delimiter = isset( $this->params['delimiter'] ) ? $this->params['delimiter'] : 'auto';
+
+		if ( ! is_string( $delimiter ) || '' === $delimiter ) {
+			$delimiter = 'auto';
+		}
+
+		if ( 'auto' === $delimiter ) {
+			// Same escape character as the fgetcsv() calls below, so the sample
+			// is split exactly the way the file will be.
+			return seopress_detect_csv_separator( $this->file, $this->params['escape'] );
+		}
+
+		$delimiters = array(
+			'comma'     => ',',
+			','         => ',',
+			'semicolon' => ';',
+			';'         => ';',
+		);
+
+		if ( isset( $delimiters[ $delimiter ] ) ) {
+			return $delimiters[ $delimiter ];
+		}
+
+		return new WP_Error(
+			'seopress_csv_importer_invalid_delimiter',
+			__( 'Invalid separator. Choose a comma or a semicolon, or let it be detected automatically.', 'wp-seopress-pro' )
+		);
+	}
+
+	/**
 	 * Read file.
 	 */
 	protected function read_file() {
 		if ( ! SEOPRESS_CSV_Setup_Wizard_Controller::is_file_valid_csv( $this->file ) ) {
-			wp_die( esc_html__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'wp-seopress-pro' ) );
+			$this->error = new WP_Error(
+				'seopress_csv_importer_invalid_type',
+				__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'wp-seopress-pro' )
+			);
+
+			return;
 		}
+
+		// is_file_valid_csv() only inspects the extension, never whether the
+		// file is there. Without this, a path that does not resolve leaves
+		// fopen() returning false, the read block below is skipped, and the
+		// import reports success while importing nothing.
+		if ( ! is_readable( $this->file ) ) {
+			$this->error = new WP_Error(
+				'seopress_csv_importer_unreadable',
+				sprintf(
+					/* translators: %s: file path. */
+					__( 'The file could not be read: %s. It may have been moved or deleted, please upload it again.', 'wp-seopress-pro' ),
+					$this->file
+				)
+			);
+
+			return;
+		}
+
+		// Resolved before the file is opened, so a rejected separator cannot
+		// leave a handle behind.
+		$delimiter = $this->resolve_delimiter();
+
+		if ( is_wp_error( $delimiter ) ) {
+			$this->error = $delimiter;
+
+			return;
+		}
+
+		$this->params['delimiter'] = $delimiter;
 
 		$handle = fopen( $this->file, 'r' );
 
-		if ( 'comma' === $this->params['delimiter'] ) {
-			$this->params['delimiter'] = ',';
-		} elseif ( 'semicolon' === $this->params['delimiter'] ) {
-			$this->params['delimiter'] = ';';
-		} else {
-			wp_die( esc_html__( 'Invalid separator', 'wp-seopress-pro' ) );
+		if ( false === $handle ) {
+			$this->error = new WP_Error(
+				'seopress_csv_importer_unreadable',
+				sprintf(
+					/* translators: %s: file path. */
+					__( 'The file could not be opened: %s. Check its permissions and try again.', 'wp-seopress-pro' ),
+					$this->file
+				)
+			);
+
+			return;
 		}
 
-		if ( false !== $handle ) {
-			// Read header row with proper escape parameter.
-			$header_row = fgetcsv( $handle, 0, $this->params['delimiter'], $this->params['enclosure'], $this->params['escape'] );
+		// Read header row with proper escape parameter.
+		$header_row = fgetcsv( $handle, 0, $this->params['delimiter'], $this->params['enclosure'], $this->params['escape'] );
 
-			// Handle null return (empty file or EOF) and trim values.
-			if ( false !== $header_row && is_array( $header_row ) ) {
-				$this->raw_keys = array_map( 'trim', $header_row );
-			} else {
-				$this->raw_keys = array();
-			}
+		// Handle null return (empty file or EOF) and trim values.
+		if ( false !== $header_row && is_array( $header_row ) ) {
+			$this->raw_keys = array_map( 'trim', $header_row );
+		} else {
+			$this->raw_keys = array();
+		}
 
-			// Remove BOM signature from the first item.
-			if ( isset( $this->raw_keys[0] ) ) {
-				$this->raw_keys[0] = $this->remove_utf8_bom( $this->raw_keys[0] );
-			}
+		// Remove BOM signature from the first item.
+		if ( isset( $this->raw_keys[0] ) ) {
+			$this->raw_keys[0] = $this->remove_utf8_bom( $this->raw_keys[0] );
+		}
 
-			if ( 0 !== $this->params['start_pos'] ) {
-				fseek( $handle, (int) $this->params['start_pos'] );
-			}
+		if ( 0 !== $this->params['start_pos'] ) {
+			fseek( $handle, (int) $this->params['start_pos'] );
+		}
 
-			while ( 1 ) {
-				$row = fgetcsv( $handle, 0, $this->params['delimiter'], $this->params['enclosure'], $this->params['escape'] );
+		while ( 1 ) {
+			$row = fgetcsv( $handle, 0, $this->params['delimiter'], $this->params['enclosure'], $this->params['escape'] );
 
-				if ( false !== $row && is_array( $row ) ) {
-					$this->raw_data[]                                 = $row;
-					$this->file_positions[ count( $this->raw_data ) ] = ftell( $handle );
+			if ( false !== $row && is_array( $row ) ) {
+				$this->raw_data[]                                 = $row;
+				$this->file_positions[ count( $this->raw_data ) ] = ftell( $handle );
 
-					if ( ( $this->params['end_pos'] > 0 && ftell( $handle ) >= $this->params['end_pos'] ) || 0 === --$this->params['lines'] ) {
-						break;
-					}
-				} else {
+				if ( ( $this->params['end_pos'] > 0 && ftell( $handle ) >= $this->params['end_pos'] ) || 0 === --$this->params['lines'] ) {
 					break;
 				}
+			} else {
+				break;
 			}
-
-			$this->file_position = ftell( $handle );
 		}
+
+		$this->file_position = ftell( $handle );
+
+		fclose( $handle );
 
 		if ( ! empty( $this->params['mapping'] ) ) {
 			$this->set_mapped_keys();
@@ -695,6 +903,10 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 
 				// Convert UTF8.
 				$value = wp_check_invalid_utf8( $value, true );
+
+				// Drop the leading quote our exporter adds in front of a cell
+				// a spreadsheet would otherwise evaluate as a formula.
+				$value = $this->unescape_data( $value );
 
 				$data[ $mapped_keys[ $id ] ] = call_user_func( $parse_functions[ $id ], $value );
 			}

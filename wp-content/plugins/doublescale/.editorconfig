@@ -1,0 +1,58 @@
+# EditorConfig — universal editor baseline for DoubleScale.
+# Reference: https://editorconfig.org
+# Recognized by VS Code, JetBrains/PHPStorm, vim, Sublime, Atom, and most
+# modern editors with no plugin install. Tells the editor *how* to insert
+# whitespace as you type, so saved files start out matching WPCS instead of
+# being auto-corrected after the fact by PHPCBF.
+
+root = true
+
+# Defaults for every file.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = tab
+indent_size = 4
+
+# PHP — WordPress Coding Standards mandate tabs for indentation.
+[*.php]
+indent_style = tab
+indent_size = 4
+
+# JavaScript / TypeScript / JSX / TSX — match @wordpress/prettier-config.
+[*.{js,jsx,ts,tsx,mjs,cjs}]
+indent_style = tab
+indent_size = 4
+
+# Stylesheets.
+[*.{css,scss,sass,less}]
+indent_style = tab
+indent_size = 4
+
+# Markdown — trailing whitespace is meaningful (line break).
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+
+# YAML — YAML spec disallows tabs for indentation.
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# JSON / JSONC — spaces, 2-wide (matches Prettier default).
+[*.{json,jsonc}]
+indent_style = space
+indent_size = 2
+
+# package.json — npm conventionally uses 2-space indent.
+[package.json]
+indent_style = space
+indent_size = 2
+
+# composer.json — Composer's own canonical format uses 4-space indent.
+[composer.json]
+indent_style = space
+indent_size = 4

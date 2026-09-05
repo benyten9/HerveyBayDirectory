@@ -309,6 +309,11 @@ class RestCampaignController extends AbstractCampaignController {
 							'items'       => array( 'type' => 'string' ),
 							'required'    => true,
 						),
+						'body'   => array(
+							'description' => __( 'Optional live builder JSON. When present, the test is rendered from this instead of the last saved template.', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
 					),
 				),
 			)
@@ -714,9 +719,26 @@ class RestCampaignController extends AbstractCampaignController {
 				// Get contact for merge tags
 				$contact = ContactModel::get_by_email( $recipient_email ) ?? null;
 
-				// Render template
+				// Prefer the live builder JSON from the request (what the canvas
+				// is showing, including Theme → Link Style). Fall back to the
+				// saved template so older clients still work.
 				$email_renderer = new EmailRenderer();
-				$body_content   = $email_renderer->render_template( $template_id, $contact );
+				$live_body      = $request->get_param( 'body' );
+				$body_content   = '';
+				if ( ! empty( $live_body ) ) {
+					$decoded = is_array( $live_body ) ? $live_body : json_decode( (string) $live_body, true );
+					if ( is_array( $decoded ) ) {
+						if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
+							$decoded = $decoded['value'];
+						}
+						if ( isset( $decoded['sections'] ) ) {
+							$body_content = $email_renderer->render_from_builder_data( $decoded, $contact );
+						}
+					}
+				}
+				if ( '' === $body_content ) {
+					$body_content = $email_renderer->render_template( $template_id, $contact );
+				}
 
 				if ( empty( $body_content ) ) {
 					++$failed_count;

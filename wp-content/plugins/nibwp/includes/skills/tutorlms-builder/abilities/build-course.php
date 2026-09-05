@@ -80,7 +80,7 @@ function nibwp_tutorlms_builder_build_course(array $input): array|WP_Error
             'question' => 'Run nibwp/skill-preflight { skill_id: "tutorlms-builder" } first to obtain a _preflight_token.',
         ];
     }
-    $token = nibwp_skill_preflight_consume_token($raw_token, 'tutorlms-builder');
+    $token = nibwp_skill_preflight_consume_token($raw_token, 'tutorlms-builder', $input);
     if (is_wp_error($token)) {
         return [
             'success' => false,

@@ -15,12 +15,15 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
+use DoubleScale\Modules\Contacts\Filters\Traits\DateWithinContactFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * LastEmailSent class
  */
 class LastEmailSent extends Filter {
+
+	use DateWithinContactFilter;
 
 	/**
 	 * Name
@@ -89,9 +92,11 @@ class LastEmailSent extends Filter {
 		$operator = isset( $filter['operator'] ) ? $filter['operator'] : 'before';
 		$value    = isset( $filter['value'] ) ? $filter['value'] : '';
 
-		if ( 'within' === $operator && ! is_array( $value ) ) {
-			$value = array( $value, $value );
-		} elseif ( 'within' !== $operator && is_array( $value ) ) {
+		if ( 'within' === $operator ) {
+			return $this->apply_within_on_relation( $query, $value, 'campaign_emails', 'sent_at' );
+		}
+
+		if ( is_array( $value ) ) {
 			$value = $value[0];
 		}
 
@@ -147,18 +152,6 @@ class LastEmailSent extends Filter {
 					'campaign_emails',
 					function ( $query ) use ( $value ) {
 						$query->whereBetween( 'sent_at', $value );
-					}
-				);
-				break;
-			case 'within':
-				if ( ! is_array( $value ) || count( $value ) !== 2 ) {
-					return $query;
-				}
-				$query->whereHas(
-					'campaign_emails',
-					function ( $query ) use ( $value ) {
-						$query->whereDate( 'sent_at', '>=', $value[0] )
-							->whereDate( 'sent_at', '<=', $value[1] );
 					}
 				);
 				break;

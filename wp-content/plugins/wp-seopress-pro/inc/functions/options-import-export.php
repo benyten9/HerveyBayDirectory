@@ -8,42 +8,44 @@
 
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
+// seopress_detect_csv_separator(), shared with the metadata CSV importer.
+require_once __DIR__ . '/helpers-csv.php';
+
+/**
+ * Store an imported redirection origin the way it will be matched.
+ *
+ * A plain path keeps the treatment every importer has always applied: decoded,
+ * sometimes sanitized, and stripped of its leading slash, which is how the
+ * redirection list and the exact-match lookup expect to read it.
+ *
+ * A regex origin gets none of that, because none of it is safe on a pattern.
+ * `%2F` is not an escape waiting to be resolved, `+` means "one or more" rather
+ * than a space, sanitize_text_field() deletes every `%XX` sequence, and the
+ * leading slash is what anchors the match. Strip it and the matcher, which does
+ * not anchor the stored pattern itself, applies the rest anywhere in the path:
+ * `/it(/(.*))?$` becomes `it(/(.*))?$` and catches every URL merely containing
+ * "it", /credit and /produits/kit included.
+ *
+ * The return value is slashed because wp_insert_post() unslashes what it is
+ * given. Without it every backslash in a pattern is lost on the way to the
+ * database - `\d{4}` stored as `d{4}`, `\.html$` as `.html$` - and both still
+ * look like regexes while matching far more than the imported rule did.
+ *
+ * @param string $raw        Origin exactly as it appears in the imported file.
+ * @param string $normalized Origin after the importer's own path normalization.
+ * @param bool   $is_regex   Whether the imported redirection matches by regex.
+ *
+ * @return string Slashed origin, ready to hand to wp_insert_post().
+ */
+function seopress_import_redirection_origin( $raw, $normalized, $is_regex ) {
+	return wp_slash( $is_regex ? trim( (string) $raw ) : (string) $normalized );
+}
+
 /**
  * Import / Exports settings page.
  *
  * @return void
  */
-/**
- * Auto-detect the CSV separator by analyzing the first lines of the file.
- *
- * @param string $file_path Path to the CSV file.
- *
- * @return string Detected separator character (',' or ';').
- */
-function seopress_detect_csv_separator( $file_path ) {
-	$candidates = array(
-		',' => 0,
-		';' => 0,
-	);
-	$lines      = file( $file_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-	if ( false === $lines || empty( $lines ) ) {
-		return ',';
-	}
-	$sample_size = min( 5, count( $lines ) );
-
-	for ( $i = 0; $i < $sample_size; $i++ ) {
-		foreach ( $candidates as $sep => &$score ) {
-			$cols = str_getcsv( $lines[ $i ], $sep, '"', '\\' );
-			if ( count( $cols ) >= 3 ) {
-				++$score;
-			}
-		}
-		unset( $score );
-	}
-
-	return $candidates[';'] >= $candidates[','] ? ';' : ',';
-}
-
 function seopress_import_redirections_settings() {
 	if ( empty( $_POST['seopress_action'] ) || 'import_redirections_settings' != $_POST['seopress_action'] ) {
 		return;
@@ -93,7 +95,9 @@ function seopress_import_redirections_settings() {
 	$skipped  = 0;
 
 	foreach ( $csv as $key => $value ) {
-		$csv_line = $value;
+		// Drop the leading quote the export adds in front of a cell a
+		// spreadsheet would evaluate, so the round trip stays lossless.
+		$csv_line = array_map( 'seopress_pro_unescape_csv_value', (array) $value );
 
 		// Skip rows that weren't split correctly (wrong separator or malformed).
 		if ( count( $csv_line ) < 2 || empty( $csv_line[0] ) ) {
@@ -158,7 +162,7 @@ function seopress_import_redirections_settings() {
 		}
 		$id = wp_insert_post(
 			array(
-				'post_title'  => ltrim( rawurldecode( $csv_line[0] ), '/' ),
+				'post_title'  => seopress_import_redirection_origin( $csv_line[0], ltrim( rawurldecode( $csv_line[0] ), '/' ), 'yes' === $regex_enable ),
 				'post_type'   => 'seopress_404',
 				'post_status' => 'publish',
 				'meta_input'  => array(
@@ -264,7 +268,7 @@ function seopress_import_yoast_redirections() {
 			);
 		}
 	}
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
+	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
 	exit;
 }
 add_action( 'admin_init', 'seopress_import_yoast_redirections' );
@@ -338,8 +342,8 @@ function seopress_export_redirections_settings() {
 
 			// Collect row data.
 			$row = array(
-				html_entity_decode( urldecode( esc_attr( wp_filter_nohtml_kses( get_the_title() ) ) ) ),
-				html_entity_decode( urldecode( esc_attr( get_post_meta( get_the_ID(), '_seopress_redirections_value', true ) ) ) ),
+				html_entity_decode( urldecode( esc_attr( wp_filter_nohtml_kses( get_the_title() ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+				html_entity_decode( urldecode( esc_attr( get_post_meta( get_the_ID(), '_seopress_redirections_value', true ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 				get_post_meta( get_the_ID(), '_seopress_redirections_type', true ),
 				get_post_meta( get_the_ID(), '_seopress_redirections_enabled', true ),
 				get_post_meta( get_the_ID(), '_seopress_redirections_param', true ),
@@ -352,8 +356,9 @@ function seopress_export_redirections_settings() {
 				get_post_meta( get_the_ID(), 'seopress_redirections_referer', true ),
 			);
 
-			// Write row to CSV.
-			fputcsv( $output, $row, ',', '"', '\\' );
+			// Write row to CSV. The title and the referer come from visitor
+			// requests, so a cell must never be evaluated as a formula.
+			fputcsv( $output, array_map( 'seopress_pro_escape_csv_value', $row ), ',', '"', '\\' );
 		}
 		wp_reset_postdata();
 	}
@@ -392,14 +397,22 @@ function seopress_export_slug_changes() {
 	$slug_changes = get_option( 'seopress_can_post_redirect' ) ?? null;
 
 	if ( ! empty( $slug_changes ) ) {
+		// php://temp is an in-memory stream, not a file on disk, so WP_Filesystem does not apply.
+		$slug_output = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+
 		foreach ( $slug_changes as $slug ) {
-			$slug_changes_csv .= html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( $slug['before_url'] ) ) ) ) );
-			$slug_changes_csv .= ';';
-			$slug_changes_csv .= html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( $slug['new_url'] ) ) ) ) );
-			$slug_changes_csv .= ';';
-			$slug_changes_csv .= esc_html( $slug['type'] );
-			$slug_changes_csv .= "\n";
+			$row = array(
+				html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( $slug['before_url'] ) ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+				html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( $slug['new_url'] ) ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+				$slug['type'],
+			);
+
+			fputcsv( $slug_output, array_map( 'seopress_pro_escape_csv_value', $row ), ';', '"', '\\' );
 		}
+
+		rewind( $slug_output );
+		$slug_changes_csv = stream_get_contents( $slug_output );
+		fclose( $slug_output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	}
 
 	ignore_user_abort( true );
@@ -546,7 +559,7 @@ function seopress_import_redirections_plugin_settings() {
 
 		wp_insert_post(
 			array(
-				'post_title'  => ltrim( urldecode( $redirect_value['url'] ), '/' ),
+				'post_title'  => seopress_import_redirection_origin( $redirect_value['url'], ltrim( urldecode( $redirect_value['url'] ), '/' ), 'yes' === $regex_enable ),
 				'post_type'   => 'seopress_404',
 				'post_status' => 'publish',
 				'meta_input'  => array(
@@ -561,7 +574,7 @@ function seopress_import_redirections_plugin_settings() {
 		);
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
+	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
 	exit;
 }
 add_action( 'admin_init', 'seopress_import_redirections_plugin_settings' );
@@ -600,14 +613,16 @@ function seopress_import_rk_redirections() {
 			$type = $redirect_value['header_code'];
 		}
 
-		$source = '';
+		$source     = '';
+		$raw_source = '';
 		if ( ! empty( $redirect_value['sources'] ) ) {
 			if ( is_serialized( $redirect_value['sources'] ) ) {
 
 				$source = @unserialize( sanitize_text_field( $redirect_value['sources'] ), array( 'allowed_classes' => false ) );
 
 				if ( is_array( $source ) ) {
-					$source = ltrim( urldecode( $source[0]['pattern'] ), '/' );
+					$raw_source = $source[0]['pattern'];
+					$source     = ltrim( urldecode( $raw_source ), '/' );
 				}
 			}
 		}
@@ -644,7 +659,7 @@ function seopress_import_rk_redirections() {
 
 		wp_insert_post(
 			array(
-				'post_title'  => $source,
+				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
 				'post_type'   => 'seopress_404',
 				'post_status' => 'publish',
 				'meta_input'  => array(
@@ -660,7 +675,7 @@ function seopress_import_rk_redirections() {
 		);
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
+	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
 	exit;
 }
 add_action( 'admin_init', 'seopress_import_rk_redirections' );
@@ -825,7 +840,7 @@ function seopress_import_rk_csv_redirections() {
 
 			$id = wp_insert_post(
 				array(
-					'post_title'  => ltrim( urldecode( $pattern ), '/' ),
+					'post_title'  => seopress_import_redirection_origin( $pattern, ltrim( urldecode( $pattern ), '/' ), 'yes' === $regex ),
 					'post_type'   => 'seopress_404',
 					'post_status' => 'publish',
 					'meta_input'  => array(
@@ -950,7 +965,8 @@ function seopress_import_slimseo_redirections() {
 			continue;
 		}
 
-		$source      = ltrim( urldecode( $get( $row, 'from' ) ), '/' );
+		$raw_source  = $get( $row, 'from' );
+		$source      = ltrim( urldecode( $raw_source ), '/' );
 		$destination = urldecode( $get( $row, 'to' ) );
 
 		// A source is always required.
@@ -1000,7 +1016,7 @@ function seopress_import_slimseo_redirections() {
 
 		$id = wp_insert_post(
 			array(
-				'post_title'  => $source,
+				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
 				'post_type'   => 'seopress_404',
 				'post_status' => 'publish',
 				'meta_input'  => array(
@@ -1089,10 +1105,11 @@ function seopress_import_aioseo_redirections() {
 			}
 		}
 
-		$source = '';
+		$source     = '';
+		$raw_source = '';
 		if ( ! empty( $redirect_value['source_url'] ) ) {
-			$source = sanitize_text_field( $redirect_value['source_url'] );
-			$source = ltrim( urldecode( $source ), '/' );
+			$raw_source = (string) $redirect_value['source_url'];
+			$source     = ltrim( urldecode( sanitize_text_field( $raw_source ) ), '/' );
 		}
 
 		$param = 'exact_match';
@@ -1153,7 +1170,7 @@ function seopress_import_aioseo_redirections() {
 
 		wp_insert_post(
 			array(
-				'post_title'  => $source,
+				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
 				'post_type'   => 'seopress_404',
 				'post_status' => 'publish',
 				'meta_input'  => array(
@@ -1169,7 +1186,7 @@ function seopress_import_aioseo_redirections() {
 		);
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
+	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
 	exit;
 }
 add_action( 'admin_init', 'seopress_import_aioseo_redirections' );
@@ -1227,10 +1244,12 @@ function seopress_import_smartcrawl_redirections() {
 			}
 		}
 
-		$source = '';
+		$source     = '';
+		$raw_source = '';
 		if ( ! empty( $redirect_value['source'] ) ) {
-			$source = sanitize_text_field( $redirect_value['source'] );
-			$source = wp_parse_url( $source );
+			$raw_source = (string) $redirect_value['source'];
+			$source     = sanitize_text_field( $raw_source );
+			$source     = wp_parse_url( $source );
 			if ( is_array( $source ) && isset( $source['path'] ) ) {
 				$source = $source['path'];
 			}
@@ -1263,7 +1282,7 @@ function seopress_import_smartcrawl_redirections() {
 
 		wp_insert_post(
 			array(
-				'post_title'  => $source,
+				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
 				'post_type'   => 'seopress_404',
 				'post_status' => 'publish',
 				'meta_input'  => array(
@@ -1279,7 +1298,7 @@ function seopress_import_smartcrawl_redirections() {
 		);
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
+	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
 	exit;
 }
 add_action( 'admin_init', 'seopress_import_smartcrawl_redirections' );
@@ -1319,17 +1338,28 @@ function seopress_export_404_settings() {
 	$seopress_404_query = new WP_Query( $args );
 
 	if ( $seopress_404_query->have_posts() ) {
+		// php://temp is an in-memory stream, not a file on disk, so WP_Filesystem does not apply.
+		$errors_output = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+
 		while ( $seopress_404_query->have_posts() ) {
 			$seopress_404_query->the_post();
 
-			$errors_404_html .= html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( get_the_title() ) ) ) ) );
-			$errors_404_html .= ';';
-			$errors_404_html .= esc_html( get_post_meta( get_the_ID(), 'seopress_404_count', true ) );
-			$errors_404_html .= ';';
-			$errors_404_html .= html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( ( get_post_meta( get_the_ID(), 'seopress_redirections_referer', true ) ) ) ) ) ) );
-			$errors_404_html .= "\n";
+			// The title is the URL the visitor requested and the referer comes
+			// from their request headers: both are attacker-controlled, so the
+			// cells are quoted and escaped rather than concatenated raw.
+			$row = array(
+				html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( get_the_title() ) ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+				get_post_meta( get_the_ID(), 'seopress_404_count', true ),
+				html_entity_decode( urldecode( urlencode( esc_attr( wp_filter_nohtml_kses( ( get_post_meta( get_the_ID(), 'seopress_redirections_referer', true ) ) ) ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+			);
+
+			fputcsv( $errors_output, array_map( 'seopress_pro_escape_csv_value', $row ), ';', '"', '\\' );
 		}
 		wp_reset_postdata();
+
+		rewind( $errors_output );
+		$errors_404_html = stream_get_contents( $errors_output );
+		fclose( $errors_output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	}
 
 	ignore_user_abort( true );
@@ -1341,6 +1371,244 @@ function seopress_export_404_settings() {
 	exit;
 }
 add_action( 'admin_init', 'seopress_export_404_settings' );
+
+/**
+ * Admin pages a maintenance action redirects to.
+ *
+ * The outcome notice is rendered on these and nowhere else, so it keeps out of
+ * the rest of wp-admin.
+ *
+ * @since 10.2.0
+ *
+ * @return string[]
+ */
+function seopress_maintenance_pages() {
+	return array( 'seopress-redirections', 'seopress-import-export' );
+}
+
+/**
+ * Where the outcome of a maintenance action waits for the next page load.
+ *
+ * Keyed on the account that ran it, so one operator's result cannot surface on
+ * another's screen.
+ *
+ * @since 10.2.0
+ *
+ * @return string
+ */
+function seopress_maintenance_transient_key() {
+	return 'seopress_maintenance_' . get_current_user_id();
+}
+
+/**
+ * Send the user back from a maintenance action with the outcome attached.
+ *
+ * The four maintenance actions used to bail out on three bare `return`s: a
+ * nonce that had expired because the tab was left open, a filtered capability,
+ * or a stripped POST field all ended the request with nothing on screen. They
+ * were equally silent on success. So a user clicking "Delete everything" got a
+ * page reload either way and no means of telling a completed deletion from a
+ * no-op, which is exactly what was reported.
+ *
+ * The outcome waits in a transient of its own rather than in the URL. An
+ * outcome carried in query args survives everything the user does next: the
+ * dismiss cross only removes the notice from the page, so a reload rendered it
+ * again from the same arguments, and the arguments stay in anything the user
+ * copies or bookmarks. A transient is read once, belongs to the account that
+ * ran the action, cannot be forged into somebody else's screen, and survives
+ * the redirect on older installs that drop query args on the way.
+ *
+ * @since 10.2.0
+ *
+ * @param string   $page    Admin page to return to.
+ * @param string   $outcome One of `done`, `failed`, `expired`, `denied`.
+ * @param int|null $deleted Rows removed, when the action can count them.
+ *
+ * @return void
+ */
+function seopress_maintenance_redirect( $page, $outcome, $deleted = null ) {
+	set_transient(
+		seopress_maintenance_transient_key(),
+		array(
+			'outcome' => $outcome,
+			'deleted' => null === $deleted ? null : (int) $deleted,
+		),
+		MINUTE_IN_SECONDS
+	);
+
+	wp_safe_redirect( admin_url( $page ) );
+	exit;
+}
+
+/**
+ * Whether a maintenance action was asked for, and may proceed.
+ *
+ * Answers the outcome to report rather than a boolean, so each caller redirects
+ * with a reason instead of returning into silence.
+ *
+ * @since 10.2.0
+ *
+ * @param string $action     Expected `seopress_action` value.
+ * @param string $nonce_name POST field holding the nonce.
+ * @param string $capability Capability area passed to seopress_capability().
+ *
+ * @return string `skip` when the request is not ours, otherwise `ok`,
+ *                `expired` or `denied`.
+ */
+function seopress_maintenance_check( $action, $nonce_name, $capability ) {
+	// admin-ajax.php fires admin_init too. The four actions are ordinary form
+	// posts to an admin page, never AJAX calls, so an AJAX request carrying our
+	// action is not ours: answering it with a redirect would cut short whatever
+	// call it really was.
+	if ( wp_doing_ajax() ) {
+		return 'skip';
+	}
+
+	if ( empty( $_POST['seopress_action'] ) || $action !== $_POST['seopress_action'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return 'skip';
+	}
+
+	// Reading the field unguarded warned on its own when the form was posted
+	// without it, which is one of the ways this failed silently.
+	$nonce = isset( $_POST[ $nonce_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $nonce_name ] ) ) : '';
+
+	if ( ! wp_verify_nonce( $nonce, $nonce_name ) ) {
+		return 'expired';
+	}
+
+	if ( ! current_user_can( seopress_capability( 'manage_options', $capability ) ) ) {
+		return 'denied';
+	}
+
+	return 'ok';
+}
+
+/**
+ * Render the outcome of a maintenance action.
+ *
+ * @since 10.2.0
+ *
+ * @return void
+ */
+function seopress_maintenance_admin_notice() {
+	// The outcome belongs to the screen the action sent the user back to, so it
+	// keeps out of the rest of wp-admin.
+	$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+	if ( ! in_array( $page, seopress_maintenance_pages(), true ) ) {
+		return;
+	}
+
+	$key    = seopress_maintenance_transient_key();
+	$report = get_transient( $key );
+
+	if ( ! is_array( $report ) || empty( $report['outcome'] ) ) {
+		return;
+	}
+
+	// Read once. The dismiss cross only takes the notice off the page, so an
+	// outcome that stayed available would come straight back on the next reload.
+	delete_transient( $key );
+
+	$outcome = (string) $report['outcome'];
+	$deleted = isset( $report['deleted'] ) && null !== $report['deleted'] ? (int) $report['deleted'] : null;
+
+	switch ( $outcome ) {
+		case 'done':
+			$type = 'success';
+
+			if ( null === $deleted ) {
+				$message = __( 'Done. The selected data has been deleted.', 'wp-seopress-pro' );
+			} else {
+				$message = sprintf(
+					/* translators: %s: number of database rows deleted. */
+					_n( 'Done. %s row deleted.', 'Done. %s rows deleted.', $deleted, 'wp-seopress-pro' ),
+					number_format_i18n( $deleted )
+				);
+			}
+			break;
+
+		case 'failed':
+			$type    = 'error';
+			$message = __( 'Nothing was deleted: the database refused the query. Check your error log, then try again.', 'wp-seopress-pro' );
+			break;
+
+		case 'expired':
+			$type    = 'error';
+			$message = __( 'Nothing was deleted: this page had been open long enough for its security token to expire. Reload it and try again.', 'wp-seopress-pro' );
+			break;
+
+		case 'denied':
+			$type    = 'error';
+			$message = __( 'Nothing was deleted: your account is not allowed to perform this action.', 'wp-seopress-pro' );
+			break;
+
+		default:
+			return;
+	}
+
+	printf(
+		'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
+		esc_attr( $type ),
+		esc_html( $message )
+	);
+}
+add_action( 'admin_notices', 'seopress_maintenance_admin_notice' );
+
+/**
+ * Re-attach the maintenance notice after the free plugin clears the hook.
+ *
+ * seopress_remove_other_notices() drops every admin_notices callback on
+ * `in_admin_header` at priority 1000 whenever the current screen is one of
+ * ours, and puts back only its own three. wp-admin/admin-header.php fires
+ * `in_admin_header` well before `admin_notices`, and every page a maintenance
+ * action redirects to is a SEOPress page, so without this the notice is
+ * unhooked before it can render and the actions stay as silent as they were.
+ *
+ * add_action() keys on the callback and the priority, so registering the same
+ * one twice cannot render the notice twice.
+ *
+ * @since 10.2.0
+ *
+ * @return void
+ */
+function seopress_maintenance_restore_admin_notice() {
+	add_action( 'admin_notices', 'seopress_maintenance_admin_notice' );
+}
+add_action( 'in_admin_header', 'seopress_maintenance_restore_admin_notice', 1001 );
+
+/**
+ * Drop the object caches a raw SQL deletion leaves behind.
+ *
+ * The deletions below go straight to the tables, so none of the cache
+ * housekeeping wp_delete_post() and delete_post_meta() normally do happens.
+ * Without a persistent object cache that is invisible, the caches die with the
+ * request. With Redis or Memcached in front of it, which is the norm on managed
+ * hosting, WP_Query keeps serving the deleted entries out of the `posts` group:
+ * the rows are gone from the database and the screen still lists them, which
+ * from the other side looks exactly like "Delete everything did nothing".
+ *
+ * Post meta is cached per object id rather than behind `last_changed`, so a
+ * bulk delete has nothing finer than the whole group to drop, and nothing at
+ * all on a drop-in that cannot flush a group.
+ *
+ * @since 10.2.0
+ *
+ * @param bool $posts Whether whole posts were deleted, not only their meta.
+ *
+ * @return void
+ */
+function seopress_maintenance_flush_caches( $posts = false ) {
+	if ( $posts ) {
+		wp_cache_set_posts_last_changed();
+	}
+
+	if ( wp_cache_supports( 'flush_group' ) ) {
+		wp_cache_flush_group( 'post_meta' );
+	}
+
+	wp_cache_set_last_changed( 'post_meta' );
+}
 
 /**
  * Clean all 404.
@@ -1361,20 +1629,22 @@ function seopress_clean_404_query_hook( $args ) {
  * @return void
  */
 function seopress_clean_404() {
-	if ( empty( $_POST['seopress_action'] ) || 'clean_404' != $_POST['seopress_action'] ) {
+	$page    = 'admin.php?page=seopress-redirections&view=404';
+	$outcome = seopress_maintenance_check( 'clean_404', 'seopress_clean_404_nonce', '404' );
+
+	if ( 'skip' === $outcome ) {
 		return;
 	}
-	if ( ! wp_verify_nonce( $_POST['seopress_clean_404_nonce'], 'seopress_clean_404_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', '404' ) ) ) {
-		return;
+
+	if ( 'ok' !== $outcome ) {
+		seopress_maintenance_redirect( $page, $outcome );
 	}
 
 	add_filter( 'seopress_404_cleaning_query', 'seopress_clean_404_query_hook' );
 	do_action( 'seopress_404_cron_cleaning', true );
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=404' ) );
-	exit;
+
+	// The cleaning runs through a cron action and reports no count.
+	seopress_maintenance_redirect( $page, 'done' );
 }
 add_action( 'admin_init', 'seopress_clean_404' );
 
@@ -1384,27 +1654,37 @@ add_action( 'admin_init', 'seopress_clean_404' );
  * @return void
  */
 function seopress_clean_counters() {
-	if ( empty( $_POST['seopress_action'] ) || 'clean_counters' != $_POST['seopress_action'] ) {
+	$page    = 'admin.php?page=seopress-redirections';
+	$outcome = seopress_maintenance_check( 'clean_counters', 'seopress_clean_counters_nonce', '404' );
+
+	if ( 'skip' === $outcome ) {
 		return;
 	}
-	if ( ! wp_verify_nonce( $_POST['seopress_clean_counters_nonce'], 'seopress_clean_counters_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', '404' ) ) ) {
-		return;
+
+	if ( 'ok' !== $outcome ) {
+		seopress_maintenance_redirect( $page, $outcome );
 	}
 
 	global $wpdb;
 
-	// SQL query.
-	$sql = 'DELETE  FROM `' . $wpdb->prefix . 'postmeta` WHERE `meta_key` = \'seopress_404_count\'';
+	// No placeholder, so no prepare(): calling it on a query with nothing to
+	// bind raises "The query argument of wpdb::prepare() must have a
+	// placeholder", and on a host that promotes notices to exceptions that
+	// stops the request before the delete ever runs.
+	$deleted = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		'DELETE FROM `' . $wpdb->prefix . 'postmeta` WHERE `meta_key` = \'seopress_404_count\''
+	);
 
-	$sql = $wpdb->prepare( $sql );
+	// query() answers false on a database error, and (int) false is 0: reported
+	// as a count that would read "0 rows deleted" under a green notice, which is
+	// the failure this whole change exists to stop hiding.
+	if ( false === $deleted ) {
+		seopress_maintenance_redirect( $page, 'failed' );
+	}
 
-	$wpdb->query( $sql );
+	seopress_maintenance_flush_caches();
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
-	exit;
+	seopress_maintenance_redirect( $page, 'done', $deleted );
 }
 add_action( 'admin_init', 'seopress_clean_counters' );
 
@@ -1414,14 +1694,15 @@ add_action( 'admin_init', 'seopress_clean_counters' );
  * @return void
  */
 function seopress_clean_all() {
-	if ( empty( $_POST['seopress_action'] ) || 'clean_all' != $_POST['seopress_action'] ) {
+	$page    = 'admin.php?page=seopress-redirections';
+	$outcome = seopress_maintenance_check( 'clean_all', 'seopress_clean_all_nonce', '404' );
+
+	if ( 'skip' === $outcome ) {
 		return;
 	}
-	if ( ! wp_verify_nonce( $_POST['seopress_clean_all_nonce'], 'seopress_clean_all_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', '404' ) ) ) {
-		return;
+
+	if ( 'ok' !== $outcome ) {
+		seopress_maintenance_redirect( $page, $outcome );
 	}
 
 	global $wpdb;
@@ -1432,12 +1713,18 @@ function seopress_clean_all() {
 		LEFT JOIN `' . $wpdb->prefix . 'postmeta` AS `pm` ON `pm`.`post_id` = `posts`.`ID`
 		WHERE `posts`.`post_type` = \'seopress_404\'';
 
-	$sql = $wpdb->prepare( $sql );
+	// No placeholder, so no prepare(). See seopress_clean_counters().
+	$deleted = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 
-	$wpdb->query( $sql );
+	// See seopress_clean_counters(): a database error must not come back as a
+	// deletion of no rows.
+	if ( false === $deleted ) {
+		seopress_maintenance_redirect( $page, 'failed' );
+	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections' ) );
-	exit;
+	seopress_maintenance_flush_caches( true );
+
+	seopress_maintenance_redirect( $page, 'done', $deleted );
 }
 add_action( 'admin_init', 'seopress_clean_all' );
 
@@ -1502,7 +1789,7 @@ function seopress_download_batch_export() {
 
 		if ( ! empty( $csv ) ) {
 			foreach ( $csv as $value ) {
-				fputcsv( $output_handle, $value, ';', '"', '\\' );
+				fputcsv( $output_handle, array_map( 'seopress_pro_escape_csv_value', (array) $value ), ';', '"', '\\' );
 			}
 		}
 
@@ -1522,26 +1809,34 @@ add_action( 'admin_init', 'seopress_download_batch_export' );
  * @return void
  */
 function seopress_clean_audit_scans() {
-	if ( empty( $_POST['seopress_action'] ) || 'clean_audit_scans' != $_POST['seopress_action'] ) {
+	$page    = 'admin.php?page=seopress-import-export';
+	$outcome = seopress_maintenance_check( 'clean_audit_scans', 'seopress_clean_audit_scans_nonce', 'cleaning' );
+
+	if ( 'skip' === $outcome ) {
 		return;
 	}
-	if ( ! wp_verify_nonce( $_POST['seopress_clean_audit_scans_nonce'], 'seopress_clean_audit_scans_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'cleaning' ) ) ) {
-		return;
+
+	if ( 'ok' !== $outcome ) {
+		seopress_maintenance_redirect( $page, $outcome );
 	}
 
 	global $wpdb;
 
+	// Left null when the table was never created: there was nothing to count,
+	// which is not the same answer as having counted zero.
+	$deleted = null;
+
 	// Clean custom table if it exists.
-	if ( $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->prefix}seopress_seo_issues'" ) === $wpdb->prefix . 'seopress_seo_issues' ) {
-		$sql = 'DELETE FROM `' . $wpdb->prefix . 'seopress_seo_issues`';
-		$sql = $wpdb->prepare( $sql );
-		$wpdb->query( $sql );
+	if ( $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->prefix}seopress_seo_issues'" ) === $wpdb->prefix . 'seopress_seo_issues' ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		// No placeholder, so no prepare(). See seopress_clean_counters().
+		$deleted = $wpdb->query( 'DELETE FROM `' . $wpdb->prefix . 'seopress_seo_issues`' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+
+		// See seopress_clean_counters().
+		if ( false === $deleted ) {
+			seopress_maintenance_redirect( $page, 'failed' );
+		}
 	}
 
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-import-export' ) );
-	exit;
+	seopress_maintenance_redirect( $page, 'done', $deleted );
 }
 add_action( 'admin_init', 'seopress_clean_audit_scans' );

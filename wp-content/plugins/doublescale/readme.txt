@@ -1,10 +1,10 @@
 === DoubleScale | Self-Hosted CRM – Sales, Marketing, Booking, Helpdesk, Automation, MCP & More ===
 Contributors: samuelgallegos, vixgrowy
-Tags:  crm, marketing automation, email campaigns, mcp, pipelines
+Tags:  email marketing, sales pipeline, whatsapp crm, booking calendar, helpdesk
 Requires at least: 5.8
-Tested up to: 7.0.2
+Tested up to: 7.1.0
 Requires PHP: 7.4
-Stable tag: 1.3.21
+Stable tag: 1.3.24
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -158,7 +158,7 @@ See how DoubleScale stacks up against popular CRM and marketing automation tools
 
 This plugin includes compiled JavaScript and CSS in the `build/` directory. Human-readable source lives in `src/`.
 
-**Public repository:** [DoubleScale on GitHub](https://github.com/Double-Scale/doublescale)
+**Public repository:** [DoubleScale on GitHub](https://github.com/vixgrow/DoubleScale)
 
 **Build from source**
 1. Install Node.js (LTS recommended)
@@ -275,6 +275,34 @@ Yes. Multiple users can work simultaneously, with role-based access, ownership-a
 Documentation and setup guides: [doublescale.io](https://doublescale.io). Community support via WordPress.org. Pro tiers include email and priority support.
 
 == Changelog ==
+
+= 1.3.24 = 3 Sep 2026
+- Move invoices and payments out of Discover Pro; subscriptions are no longer listed as a Pro feature
+- Prevent double registration of recurring sales and support cleanup tasks
+- Keep sidebar submenus collapsed when the user closes them
+- Hide the extra Pro notice on shared mailbox settings
+
+= 1.3.23 = 3 Sep 2026
+- Add link settings in the email builder
+- Support live builder JSON in the email builder
+- Add link-related translation strings
+
+= 1.3.22 = 31 Aug 2026
+- Add EmailNotOpened trigger for automation workflows
+- Enhance sticky note functionality with resizing capabilities in automation builder
+- Enhance drag-and-drop functionality for saved blocks and sections
+- Improve date filtering with DateWithin utility
+- Add "Save & Exit" functionality in email campaign builder
+- Enhance link styling in email text blocks for better rendering
+- Improve notice handling in WorkflowSidebar component
+- Update React Flow styles for better UI consistency
+- Implement online payment availability check for Pro users
+- Refactor EmailNotOpened trigger source and group properties
+- Fix: Remove 'My Blocks' entry and add 'My Sections' in translation file
+- Fix: Update title in LayoutItems component for clarity
+- Fix: Standardize message casing in localization files
+- Enhance error handling and localization messages across components
+
 = 1.3.21 = 26 Aug 2026
 - Render the client portal shortcode on the page instead of replacing the whole canvas, and isolate layout from the host theme
 - Escape email image sources with esc_attr so merge tags and data URIs survive rendering

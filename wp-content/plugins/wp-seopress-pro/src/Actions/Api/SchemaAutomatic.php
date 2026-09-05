@@ -431,6 +431,87 @@ class SchemaAutomatic implements ExecuteHooks {
 	}
 
 	/**
+	 * Term IDs a set of rule groups points at, as strings.
+	 *
+	 * @param array $rules Rule groups.
+	 *
+	 * @return string[]
+	 */
+	private function term_ids_in_rules( $rules ) {
+		$ids = array();
+
+		foreach ( $rules as $group ) {
+			foreach ( $group as $rule ) {
+				if ( ! isset( $rule['filter'], $rule['taxo'] ) || 'taxonomy' !== $rule['filter'] ) {
+					continue;
+				}
+
+				$id = (int) $rule['taxo'];
+				if ( $id > 0 ) {
+					$ids[ (string) $id ] = true;
+				}
+			}
+		}
+
+		return array_keys( $ids );
+	}
+
+	/**
+	 * Attach the term names the listing needs to render its Rules column.
+	 *
+	 * The column used to resolve them against a map of every term on the site,
+	 * inlined into the page. That map is gone: the picker fetches its terms
+	 * lazily now, and the listing has no picker. What it needs instead is the
+	 * handful of terms its own rules actually point at — one query for the
+	 * whole page, rather than a payload that grows with the site.
+	 *
+	 * A term that no longer exists is simply left out, and the interface falls
+	 * back to showing the raw ID. The rule really is dangling at that point,
+	 * and saying so beats inventing a name for it.
+	 *
+	 * @param array[] $schemas Schemas, as built by `build_schema_data()`.
+	 *
+	 * @return array[] The same schemas, each with a `termLabels` map.
+	 */
+	private function add_term_labels( array $schemas ) {
+		$per_schema = array();
+		$wanted     = array();
+
+		foreach ( $schemas as $index => $schema ) {
+			$per_schema[ $index ] = $this->term_ids_in_rules( $schema['rules'] );
+			$wanted               = array_merge( $wanted, $per_schema[ $index ] );
+		}
+
+		$labels = array();
+		$wanted = array_values( array_unique( $wanted ) );
+
+		if ( ! empty( $wanted ) ) {
+			$names = get_terms(
+				array(
+					'include'    => array_map( 'intval', $wanted ),
+					'hide_empty' => false,
+					'fields'     => 'id=>name',
+				)
+			);
+
+			if ( ! is_wp_error( $names ) ) {
+				foreach ( $names as $term_id => $term_name ) {
+					$labels[ (string) $term_id ] = html_entity_decode( $term_name, ENT_QUOTES | ENT_SUBSTITUTE );
+				}
+			}
+		}
+
+		foreach ( $schemas as $index => $schema ) {
+			$schemas[ $index ]['termLabels'] = array_intersect_key(
+				$labels,
+				array_flip( $per_schema[ $index ] )
+			);
+		}
+
+		return $schemas;
+	}
+
+	/**
 	 * Build schema data from a post.
 	 *
 	 * @param \WP_Post $post The post.
@@ -517,6 +598,8 @@ class SchemaAutomatic implements ExecuteHooks {
 		foreach ( $query->posts as $post ) {
 			$schemas[] = $this->build_schema_data( $post );
 		}
+
+		$schemas = $this->add_term_labels( $schemas );
 
 		return new \WP_REST_Response(
 			array(
@@ -1207,8 +1290,9 @@ class SchemaAutomatic implements ExecuteHooks {
 	/**
 	 * GET /seopress/v1/schemas/editor-data — Lazy-loaded data for the editor.
 	 *
-	 * Returns custom fields (normal + hidden, separated) and local business
-	 * types. Avoids running expensive queries on the listing page.
+	 * Returns custom fields (normal + hidden, separated), local business types
+	 * and the terms behind the Term Taxonomy rule filter. Avoids running
+	 * expensive queries on the listing page.
 	 * Results are cached for 15 minutes via a transient.
 	 *
 	 * @return \WP_REST_Response
@@ -1221,10 +1305,24 @@ class SchemaAutomatic implements ExecuteHooks {
 			$lb_types = seopress_lb_types_list();
 		}
 
+		// The term list used to be inlined into every Schemas page load. It is
+		// the one payload here that scales with the site's content rather than
+		// its configuration, so it belongs behind this route more than any of
+		// the others.
+		$terms = array(
+			'terms'     => array(),
+			'truncated' => false,
+			'limit'     => 0,
+		);
+		if ( function_exists( 'seopress_pro_schema_rule_terms' ) ) {
+			$terms = seopress_pro_schema_rule_terms();
+		}
+
 		return new \WP_REST_Response(
 			array(
 				'customFields' => $custom_fields,
 				'lbTypes'      => $lb_types,
+				'terms'        => $terms,
 			)
 		);
 	}

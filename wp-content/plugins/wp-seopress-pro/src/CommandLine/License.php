@@ -67,7 +67,6 @@ class License extends WP_CLI_Command {
 			array(
 				'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 				'timeout'    => 15,
-				'sslverify'  => false,
 				'body'       => $api_params,
 			)
 		);
@@ -144,7 +143,6 @@ class License extends WP_CLI_Command {
 			array(
 				'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 				'timeout'    => 15,
-				'sslverify'  => false,
 				'body'       => $api_params,
 			)
 		);

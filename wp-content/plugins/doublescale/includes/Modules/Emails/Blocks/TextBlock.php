@@ -171,6 +171,7 @@ class TextBlock extends EmailBlock {
 			)
 		);
 		$content = $this->inject_list_alignment_styles( $content, (string) $props['textAlign'], $text_direction );
+		$content = $this->style_text_links( $content, (string) $props['color'] );
 
 		return "<div dir=\"" . esc_attr( $text_direction ) . "\" style=\"{$style_string}\">{$content}</div>";
 	}
@@ -360,6 +361,13 @@ class TextBlock extends EmailBlock {
 				$tag   = $matches[1];
 				$attrs = $matches[2];
 
+				// Theme → Links owns <a> styling. Forcing the text-block color/
+				// size onto anchors here made Send test email look like body
+				// copy instead of the Link Style sitting in the sidebar.
+				if ( 0 === strcasecmp( $tag, 'a' ) ) {
+					return $matches[0];
+				}
+
 				$inject = array();
 				foreach ( $escaped as $prop => $val ) {
 					$has_prop = (bool) preg_match( '/style\s*=\s*("[^"]*|\'[^\']*)' . preg_quote( $prop, '/' ) . '/i', $attrs );
@@ -396,6 +404,173 @@ class TextBlock extends EmailBlock {
 		);
 
 		return is_string( $replaced ) ? $replaced : $content;
+	}
+
+	/**
+	 * Text-block links: Theme → Links styles (font, color, size, spacing,
+	 * decoration). Gmail recolors bare `<a>` tags, so an inner span /
+	 * `<font color>` keeps the theme color. A `<u>` wrapper is not used —
+	 * it stacked a second underline on top of text-decoration.
+	 *
+	 * @param string $content       HTML content
+	 * @param string $fallback_color Block font color when theme color is empty
+	 * @return string
+	 */
+	private function style_text_links( string $content, string $fallback_color ): string {
+		if ( false === stripos( $content, '<a' ) ) {
+			return $content;
+		}
+
+		$settings    = $this->get_theme_link_settings();
+		$color       = esc_attr( ! empty( $settings['color'] ) ? (string) $settings['color'] : $fallback_color );
+		$link_style  = $this->build_theme_link_style( $settings, $color );
+		$outer_style = $this->build_theme_link_style( $settings, $color, 'none' );
+
+		$replaced = preg_replace_callback(
+			'/<a\b([^>]*)>(.*?)<\/a>/is',
+			static function ( $matches ) use ( $color, $link_style, $outer_style, $settings ) {
+				$attrs = $matches[1];
+				$inner = $matches[2];
+
+				$inner = preg_replace_callback(
+					'/style\s*=\s*(["\'])(.*?)\1/i',
+					static function ( $style_matches ) {
+						$quote = $style_matches[1];
+						$decls = preg_split( '/;/', $style_matches[2] );
+						$kept  = array();
+						foreach ( $decls as $decl ) {
+							$decl = trim( $decl );
+							if ( '' === $decl ) {
+								continue;
+							}
+							if ( preg_match( '/^(color|text-decoration|-webkit-text-fill-color|font-family|font-size|letter-spacing|font-weight|font-style)\s*:/i', $decl ) ) {
+								continue;
+							}
+							$kept[] = $decl;
+						}
+						if ( empty( $kept ) ) {
+							return '';
+						}
+						return 'style=' . $quote . implode( '; ', $kept ) . $quote;
+					},
+					$inner
+				);
+				if ( ! is_string( $inner ) ) {
+					$inner = $matches[2];
+				}
+				$link_html = $inner;
+
+				$attrs = preg_replace_callback(
+					'/style\s*=\s*(["\'])(.*?)\1/i',
+					static function ( $style_matches ) {
+						$quote = $style_matches[1];
+						$decls = preg_split( '/;/', $style_matches[2] );
+						$kept  = array();
+						foreach ( $decls as $decl ) {
+							$decl = trim( $decl );
+							if ( '' === $decl ) {
+								continue;
+							}
+							if ( preg_match( '/^(color|text-decoration|-webkit-text-fill-color|font-family|font-size|letter-spacing|font-weight|font-style)\s*:/i', $decl ) ) {
+								continue;
+							}
+							$kept[] = $decl;
+						}
+						if ( empty( $kept ) ) {
+							return '';
+						}
+						return 'style=' . $quote . implode( '; ', $kept ) . $quote;
+					},
+					$attrs
+				);
+
+				if ( preg_match( '/style\s*=\s*"/i', $attrs ) ) {
+					$attrs = preg_replace( '/style\s*=\s*"/i', 'style="' . $outer_style . '; ', $attrs );
+				} elseif ( preg_match( "/style\s*=\s*'/i", $attrs ) ) {
+					$attrs = preg_replace( "/style\s*=\s*'/i", "style='" . $outer_style . '; ', $attrs );
+				} else {
+					$attrs .= ' style="' . $outer_style . ';"';
+				}
+
+				$already_wrapped = (bool) preg_match( '/<font\b[^>]*\bcolor=/i', $inner );
+				if ( ! $already_wrapped ) {
+					// Underline only on the span. <a> + <font> also having
+					// text-decoration draws a second line in Gmail.
+					$inner  = '<span class="ds-text-link" style="' . $link_style . ';">';
+					$inner .= '<font color="' . $color . '" face="' . esc_attr( (string) ( $settings['font'] ?? 'Arial, sans-serif' ) ) . '" style="' . $outer_style . ';">' . $link_html . '</font>';
+					$inner .= '</span>';
+				}
+
+				return '<a' . $attrs . '>' . $inner . '</a>';
+			},
+			$content
+		);
+
+		return is_string( $replaced ) ? $replaced : $content;
+	}
+
+	/**
+	 * Theme link settings from the current email renderer.
+	 *
+	 * @return array
+	 */
+	private function get_theme_link_settings(): array {
+		$defaults = array(
+			'font'          => 'Arial, sans-serif',
+			'size'          => 16,
+			'letterSpacing' => '0px',
+			'color'         => '#458DC7',
+			'bold'          => false,
+			'italic'        => false,
+			'underline'     => true,
+			'strikethrough' => false,
+		);
+
+		global $doublescale_email_renderer;
+		if ( isset( $doublescale_email_renderer ) && method_exists( $doublescale_email_renderer, 'get_link_settings' ) ) {
+			$saved = $doublescale_email_renderer->get_link_settings();
+			if ( is_array( $saved ) && ! empty( $saved ) ) {
+				return wp_parse_args( $saved, $defaults );
+			}
+		}
+
+		return $defaults;
+	}
+
+	/**
+	 * @param array  $settings Theme link settings
+	 * @return string
+	 */
+	private function get_theme_link_decoration( array $settings ): string {
+		$parts = array();
+		if ( ! empty( $settings['underline'] ) ) {
+			$parts[] = 'underline';
+		}
+		if ( ! empty( $settings['strikethrough'] ) ) {
+			$parts[] = 'line-through';
+		}
+		return ! empty( $parts ) ? implode( ' ', $parts ) : 'none';
+	}
+
+	/**
+	 * @param array  $settings Theme link settings
+	 * @param string $color    Escaped color
+	 * @return string
+	 */
+	private function build_theme_link_style( array $settings, string $color, ?string $decoration = null ): string {
+		if ( null === $decoration ) {
+			$decoration = $this->get_theme_link_decoration( $settings );
+		}
+		return sprintf(
+			'font-family: %s; font-size: %spx; letter-spacing: %s; color: %s; font-weight: %s; font-style: %s; text-decoration: %s',
+			esc_attr( (string) ( $settings['font'] ?? 'Arial, sans-serif' ) ),
+			(int) ( $settings['size'] ?? 16 ),
+			esc_attr( (string) ( $settings['letterSpacing'] ?? '0px' ) ),
+			$color,
+			! empty( $settings['bold'] ) ? 'bold' : 'normal',
+			! empty( $settings['italic'] ) ? 'italic' : 'normal',
+			$decoration
+		);
 	}
 
 	/**

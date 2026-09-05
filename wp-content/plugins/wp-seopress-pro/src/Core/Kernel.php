@@ -41,6 +41,16 @@ abstract class Kernel {
 	public static function handleHooksPlugin() {
 		switch ( current_filter() ) {
 			case 'plugins_loaded':
+				// Registering an action whose callback reaches into the free
+				// plugin is what turns a deactivated or mid-update free plugin
+				// into a fatal error: the callback fires later in this very
+				// request, long after Pro decided to deactivate itself. Arming
+				// nothing at all is the only thing that holds for every
+				// callback, rather than guarding them one by one.
+				if ( function_exists( 'seopress_pro_is_free_runtime_available' ) && ! seopress_pro_is_free_runtime_available() ) {
+					break;
+				}
+
 				foreach ( self::getContainer()->getActions() as $key => $class ) {
 					try {
 						if ( ! class_exists( $class ) ) {

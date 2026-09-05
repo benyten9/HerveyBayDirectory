@@ -183,6 +183,18 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
         return new WP_Error('missing_title', __('title is required.', domain: 'nibwp'));
     }
 
+    // Nothing to build is a failure, and it has to be said before the template
+    // exists. The element write below is guarded by `if (!empty($elements))`,
+    // so an empty tree used to create the template, set its type, write no
+    // content and return success — a caller then reported a finished build over
+    // a blank page. Same fault the EtchWP persister had; a customer hit both.
+    if (empty($input['elements']) || !is_array($input['elements'])) {
+        return new WP_Error(
+            'bricks_no_elements',
+            __('elements is missing or empty: there is nothing to build. Nothing was created or changed.', domain: 'nibwp')
+        );
+    }
+
     $template_type = (string) ($input['template_type'] ?? 'content');
     $allowed_types = ['header', 'footer', 'content', 'section', 'archive'];
     if (!in_array($template_type, $allowed_types, true)) {
@@ -236,9 +248,15 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
         update_post_meta($template_id, '_bricks_template_conditions', $conditions);
     }
 
+    // Report what actually landed in the meta, not what was asked for. A
+    // caller that only knows the template id cannot tell a built page from an
+    // empty one, and every summary written from this return said "persisted".
+    $stored = get_post_meta($template_id, '_bricks_page_content_2', true);
+
     return [
-        'template_id' => $template_id,
-        'edit_url' => add_query_arg(['bricks' => 'run'], get_permalink($template_id)),
+        'template_id'    => $template_id,
+        'edit_url'       => add_query_arg(['bricks' => 'run'], get_permalink($template_id)),
+        'elements_saved' => is_array($stored) ? count($stored) : 0,
     ];
 }
 

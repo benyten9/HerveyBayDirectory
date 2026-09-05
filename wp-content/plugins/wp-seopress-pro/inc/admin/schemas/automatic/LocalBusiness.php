@@ -176,6 +176,36 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Opening hours', 'wp-seopress-pro' ); ?>
 			<code>openingHours</code>
 		</label>
+		<?php
+		/*
+		 * The per-post source is only offered when the free plugin can render
+		 * and save the property, and when it is already the stored choice, so
+		 * that saving a schema that opted in under a newer free build does not
+		 * silently reset it. Otherwise the field looks exactly as it did before
+		 * the option existed.
+		 */
+		$per_post_hours_available = seopress_pro_has_per_post_opening_hours_support()
+			|| 'manual_opening_hours_single' === $seopress_pro_rich_snippets_lb_opening_hours_source;
+		?>
+		<?php if ( $per_post_hours_available ) : ?>
+		<select
+			id="seopress_pro_rich_snippets_lb_opening_hours_source"
+			name="seopress_pro_rich_snippets_lb_opening_hours_source">
+			<option value=""><?php esc_html_e( 'Manual opening hours', 'wp-seopress-pro' ); ?></option>
+			<option value="manual_opening_hours_single"
+				<?php selected( 'manual_opening_hours_single', $seopress_pro_rich_snippets_lb_opening_hours_source ); ?>>
+				<?php esc_html_e( 'Manual opening hours on each post', 'wp-seopress-pro' ); ?>
+			</option>
+		</select>
+		<?php endif; ?>
+	</p>
+
+	<?php if ( 'manual_opening_hours_single' === $seopress_pro_rich_snippets_lb_opening_hours_source ) : ?>
+	<p class="description">
+		<?php esc_html_e( 'Opening hours are set on each post matching this schema, from the Schemas tab of the SEO metabox. Save this schema to switch back to hours shared by every post.', 'wp-seopress-pro' ); ?>
+	</p>
+	<?php else : ?>
+	<p>
 		<span class="description"><?php echo wp_kses_post( __( '<strong>Morning and Afternoon are just time slots</strong>. e.g. if you\'re opened from 10:00 AM to 9:00 PM, check Morning and enter 10:00 / 21:00. If you are open non-stop, check Morning and enter 0:00 / 23:59.', 'wp-seopress-pro' ) ); ?></span>
 	</p>
 
@@ -448,4 +478,5 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 		?>
 
 	</ul>
+	<?php endif; ?>
 </div>

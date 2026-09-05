@@ -34,7 +34,6 @@ namespace SEOPressPro\Vendor\phpseclib3\System\SSH;
 use SEOPressPro\Vendor\phpseclib3\Common\Functions\Strings;
 use SEOPressPro\Vendor\phpseclib3\Crypt\Common\PublicKey;
 use SEOPressPro\Vendor\phpseclib3\Crypt\PublicKeyLoader;
-use SEOPressPro\Vendor\phpseclib3\Crypt\RSA;
 use SEOPressPro\Vendor\phpseclib3\Exception\BadConfigurationException;
 use SEOPressPro\Vendor\phpseclib3\Net\SSH2;
 use SEOPressPro\Vendor\phpseclib3\System\SSH\Agent\Identity;

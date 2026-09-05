@@ -11,6 +11,15 @@ if ( ! class_exists( 'WP_Importer' ) ) {
 	return;
 }
 
+// seopress_detect_csv_separator(). The importer files are included on demand,
+// so we cannot rely on options-import-export.php having run.
+require_once dirname( dirname( __DIR__ ) ) . '/functions/helpers-csv.php';
+
+// SEOPRESS_Importer::is_file_within_allowed_dirs(), used by handle_upload().
+if ( ! class_exists( 'SEOPRESS_Importer', false ) ) {
+	include_once __DIR__ . '/class-csv-importer.php';
+}
+
 /**
  * SEOPRESS_CSV_Setup_Wizard_Controller class.
  */
@@ -47,9 +56,12 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 	/**
 	 * The current delimiter for the file being read.
 	 *
+	 * Holds the value submitted by the upload form (`auto`, `comma` or
+	 * `semicolon`); `auto` is resolved as soon as the file lands on the server.
+	 *
 	 * @var string
 	 */
-	protected $delimiter = ';';
+	protected $delimiter = 'auto';
 
 	/**
 	 * Ignore existing metadata.
@@ -139,8 +151,8 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 		$this->steps = apply_filters( 'seopress_setup_csv_wizard_steps', $default_steps );
 
 		$this->step                   = isset( $_REQUEST['step'] ) ? sanitize_key( $_REQUEST['step'] ) : current( array_keys( $this->steps ) );
-		$this->file                   = isset( $_REQUEST['file'] ) ? seopress_clean( wp_unslash( $_REQUEST['file'] ) ) : '';
-		$this->delimiter              = ! empty( $_REQUEST['delimiter'] ) ? seopress_clean( wp_unslash( $_REQUEST['delimiter'] ) ) : ';';
+		$this->file                   = isset( $_REQUEST['file'] ) ? wp_normalize_path( seopress_clean( wp_unslash( $_REQUEST['file'] ) ) ) : '';
+		$this->delimiter              = ! empty( $_REQUEST['delimiter'] ) ? seopress_clean( wp_unslash( $_REQUEST['delimiter'] ) ) : 'auto';
 		$this->import_ignore_metadata = ! empty( $_REQUEST['import_ignore_metadata'] ) ? esc_attr( $_REQUEST['import_ignore_metadata'] ) : false;
 
 		// Import mappings for CSV data.
@@ -177,7 +189,7 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 
 		$params = array(
 			'step'                   => $keys[ $step_index + 1 ],
-			'file'                   => $this->file,
+			'file'                   => wp_normalize_path( $this->file ),
 			'delimiter'              => $this->delimiter,
 			'import_ignore_metadata' => $this->import_ignore_metadata,
 			'_wpnonce'               => wp_create_nonce( 'seopress-csv-importer' ),
@@ -372,14 +384,23 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 		</strong>
 	</p>
 	<p>
+		<label for="import_sep_auto">
+			<input id="import_sep_auto" name="delimiter" type="radio" value="auto"
+				<?php checked( 'auto', $this->delimiter ); ?> />
+			<?php esc_html_e( 'Detect automatically (recommended)', 'wp-seopress-pro' ); ?>
+		</label>
+	</p>
+	<p>
 		<label for="import_sep_comma">
-			<input id="import_sep_comma" name="delimiter" type="radio" value="comma" />
+			<input id="import_sep_comma" name="delimiter" type="radio" value="comma"
+				<?php checked( 'comma', $this->delimiter ); ?> />
 			<?php echo wp_kses_post( __( 'Comma separator: <code>,</code>', 'wp-seopress-pro' ) ); ?>
 		</label>
 	</p>
 	<p>
 		<label for="import_sep_semicolon">
-			<input id="import_sep_semicolon" name="delimiter" type="radio" value="semicolon" />
+			<input id="import_sep_semicolon" name="delimiter" type="radio" value="semicolon"
+				<?php checked( 'semicolon', $this->delimiter ); ?> />
 			<?php echo wp_kses_post( __( 'Semicolon separator: <code>;</code>', 'wp-seopress-pro' ) ); ?>
 		</label>
 	</p>
@@ -415,7 +436,8 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 	</p>
 	<p>
 		<label for="import_ignore_metadata">
-			<input id="import_ignore_metadata" name="import_ignore_metadata" type="checkbox" value="1" />
+			<input id="import_ignore_metadata" name="import_ignore_metadata" type="checkbox" value="1"
+				<?php checked( '1', $this->import_ignore_metadata ); ?> />
 			<?php esc_html_e( 'Existing post and term metas will not be updated. Only empty values will be filled.', 'wp-seopress-pro' ); ?>
 		</label>
 	</p>
@@ -436,6 +458,48 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 	}
 
 	/**
+	 * Action pointing back to the upload screen, offered alongside every error.
+	 *
+	 * @return array
+	 */
+	protected function get_upload_again_action() {
+		return array(
+			array(
+				'url'   => admin_url( 'admin.php?page=seopress_csv_importer&step=upload' ),
+				'label' => esc_html__( 'Upload a new file', 'wp-seopress-pro' ),
+			),
+		);
+	}
+
+	/**
+	 * Resolve the separator chosen on the upload screen to a value the next
+	 * steps can carry around.
+	 *
+	 * Auto-detection runs once, here, so the mapping and import steps never
+	 * have to work out again how the file is delimited.
+	 *
+	 * @param string $file path to the uploaded file.
+	 *
+	 * @return string|WP_Error `comma` or `semicolon`
+	 */
+	protected function resolve_delimiter( $file ) {
+		if ( in_array( $this->delimiter, array( 'comma', 'semicolon' ), true ) ) {
+			return $this->delimiter;
+		}
+
+		if ( 'auto' === $this->delimiter || '' === $this->delimiter ) {
+			// "\0" matches the escape character the importer reads the file
+			// with, so the sample is split exactly the same way.
+			return ',' === seopress_detect_csv_separator( $file, "\0" ) ? 'comma' : 'semicolon';
+		}
+
+		return new WP_Error(
+			'seopress_metadata_csv_importer_invalid_delimiter',
+			esc_html__( 'Invalid separator. Choose a comma or a semicolon, or let it be detected automatically.', 'wp-seopress-pro' )
+		);
+	}
+
+	/**
 	 * Handle the upload form and store options.
 	 */
 	public function upload_form_handler() {
@@ -447,9 +511,19 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			$this->add_error( $file->get_error_message() );
 
 			return;
-		} else {
-			$this->file = $file;
 		}
+
+		$this->file = wp_normalize_path( $file );
+
+		$delimiter = $this->resolve_delimiter( $this->file );
+
+		if ( is_wp_error( $delimiter ) ) {
+			$this->add_error( $delimiter->get_error_message() );
+
+			return;
+		}
+
+		$this->delimiter = $delimiter;
 
 		wp_redirect( esc_url_raw( $this->get_next_step_link() ) );
 		exit;
@@ -502,13 +576,19 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			 */
 			wp_schedule_single_event( time() + DAY_IN_SECONDS, 'importer_scheduled_cleanup', array( $id ) );
 
-			return $upload['file'];
+			return wp_normalize_path( $upload['file'] );
 		} elseif ( file_exists( ABSPATH . $file_url ) ) {
 			if ( ! self::is_file_valid_csv( ABSPATH . $file_url ) ) {
 				return new WP_Error( 'seopress_metadata_csv_importer_upload_file_invalid', esc_html__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'wp-seopress-pro' ) );
 			}
 
-			return ABSPATH . $file_url;
+			// The path is relative to ABSPATH but nothing stops it climbing out
+			// of it, and the extension was the only thing being checked.
+			if ( ! SEOPRESS_Importer::is_file_within_allowed_dirs( ABSPATH . $file_url ) ) {
+				return new WP_Error( 'seopress_metadata_csv_importer_file_outside_uploads', esc_html__( 'The file to import must live in the uploads directory.', 'wp-seopress-pro' ) );
+			}
+
+			return wp_normalize_path( ABSPATH . $file_url );
 		}
 
 		return new WP_Error( 'seopress_metadata_csv_importer_upload_invalid_file', esc_html__( 'Please upload or provide the link to a valid CSV file.', 'wp-seopress-pro' ) );
@@ -524,20 +604,48 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			'delimiter' => $this->delimiter,
 		);
 
-		$importer     = self::get_importer( $this->file, $args );
-		$headers      = $importer->get_raw_keys();
-		$mapped_items = $this->auto_map_columns( $headers );
-		$sample       = current( $importer->get_raw_data() );
+		$importer = self::get_importer( $this->file, $args );
+
+		if ( method_exists( $importer, 'has_error' ) && $importer->has_error() ) {
+			$this->add_error( $importer->get_error()->get_error_message(), $this->get_upload_again_action() );
+
+			// Force output the errors in the same page.
+			$this->output_errors();
+
+			return;
+		}
+
+		// Auto-detection happens while reading the file: carry the separator it
+		// settled on to the import step rather than detecting it again.
+		if ( method_exists( $importer, 'get_delimiter' ) ) {
+			$this->delimiter = ( ',' === $importer->get_delimiter() ) ? 'comma' : 'semicolon';
+		}
+
+		$separator_char = ( 'comma' === $this->delimiter ) ? ',' : ';';
+		$headers        = $importer->get_raw_keys();
+		$mapped_items   = $this->auto_map_columns( $headers );
+		$sample         = current( $importer->get_raw_data() );
 
 		if ( empty( $sample ) ) {
 			$this->add_error(
 				esc_html__( 'The file is empty or using a different encoding than UTF-8, please try again with a new file.', 'wp-seopress-pro' ),
-				array(
-					array(
-						'url'   => admin_url( 'admin.php?page=seopress_csv_importer' ),
-						'label' => esc_html__( 'Upload a new file', 'wp-seopress-pro' ),
-					),
-				)
+				$this->get_upload_again_action()
+			);
+
+			// Force output the errors in the same page.
+			$this->output_errors();
+
+			return;
+		}
+
+		if ( 1 === count( $headers ) ) {
+			$this->add_error(
+				sprintf(
+					/* translators: %s: separator character used to read the file. */
+					esc_html__( 'Only one column was found using the %s separator, so there is nothing to map. Your file most likely uses a different one: upload it again and pick the separator yourself.', 'wp-seopress-pro' ),
+					$separator_char
+				),
+				$this->get_upload_again_action()
 			);
 
 			// Force output the errors in the same page.
@@ -553,6 +661,18 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 	action="<?php echo esc_url( $this->get_next_step_link() ); ?>">
 	<p>
 		<?php esc_html_e( 'Select fields from your CSV file to map against posts / terms fields, or to ignore during import.', 'wp-seopress-pro' ); ?>
+	</p>
+	<p class="description">
+		<?php
+		printf(
+			/* translators: 1: separator character, 2: number of columns found. */
+			esc_html__( 'Read with the %1$s separator, %2$s columns found.', 'wp-seopress-pro' ),
+			'<code>' . esc_html( $separator_char ) . '</code>',
+			'<strong>' . esc_html( number_format_i18n( count( $headers ) ) ) . '</strong>'
+		);
+		?>
+		<a
+			href="<?php echo esc_url( admin_url( 'admin.php?page=seopress_csv_importer&step=upload' ) ); ?>"><?php esc_html_e( 'Wrong separator? Upload your file again.', 'wp-seopress-pro' ); ?></a>
 	</p>
 
 	<section class="seopress-importer-mapping-table-wrapper">
@@ -633,14 +753,20 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 		check_admin_referer( 'seopress-csv-importer' );
 
 		if ( ! self::is_file_valid_csv( $this->file ) ) {
-			$this->add_error( esc_html__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'wp-seopress-pro' ) );
+			$this->add_error(
+				esc_html__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'wp-seopress-pro' ),
+				$this->get_upload_again_action()
+			);
 			$this->output_errors();
 
 			return;
 		}
 
 		if ( ! is_file( $this->file ) ) {
-			$this->add_error( esc_html__( 'The file does not exist, please try again.', 'wp-seopress-pro' ) );
+			$this->add_error(
+				esc_html__( 'The file is no longer on the server. It may have been moved or deleted, please upload it again.', 'wp-seopress-pro' ),
+				$this->get_upload_again_action()
+			);
 			$this->output_errors();
 
 			return;
@@ -665,6 +791,10 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 				'file'                   => $this->file,
 				'delimiter'              => $this->delimiter,
 				'import_ignore_metadata' => $this->import_ignore_metadata,
+				'i18n'                   => array(
+					'genericError' => esc_html__( 'The import stopped unexpectedly. Nothing else was imported.', 'wp-seopress-pro' ),
+					'serverError'  => esc_html__( 'The server did not return a valid response, so the import was stopped. Check your error logs, then try again.', 'wp-seopress-pro' ),
+				),
 			)
 		);
 		// wp_print_scripts( 'seopress-csv-import' );
@@ -677,9 +807,20 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 		<?php esc_html_e( 'Your metadata are now being imported...', 'wp-seopress-pro' ); ?>
 </p>
 <div class="seopress-progress-form-content seopress-importer seopress-importer__importing">
-	<section>
+	<section class="seopress-importer-running">
 		<span class="spinner is-active"></span>
 		<progress class="seopress-importer-progress" max="100" value="0"></progress>
+	</section>
+	<section class="seopress-importer-failure" style="display:none">
+		<div class="seopress-notice is-error">
+			<p class="seopress-importer-failure-message"></p>
+			<p>
+				<a class="btn btnPrimary"
+					href="<?php echo esc_url( admin_url( 'admin.php?page=seopress_csv_importer&step=upload' ) ); ?>">
+					<?php esc_html_e( 'Upload a new file', 'wp-seopress-pro' ); ?>
+				</a>
+			</p>
+		</div>
 	</section>
 </div>
 		<?php

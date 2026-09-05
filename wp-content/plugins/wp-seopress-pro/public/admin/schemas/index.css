@@ -956,14 +956,8 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 
 /* ── Opening Hours widget ── */
 
-.seopress-opening-hours__desc {
-	margin: 0 0 12px;
-	font-size: 12px;
-	color: var(--color, #757575);
-}
-
 .seopress-opening-hours__days {
-	margin: 0;
+	margin: 12px 0 0;
 	padding: 0;
 	list-style: none;
 	display: flex;
@@ -1163,6 +1157,56 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 
 .seopress-rules-add-group {
 	align-self: flex-start;
+}
+
+/*
+ * ComboboxControl renders its suggestion list in the flow, between the input
+ * and whatever follows. In a vertical stack that only pushes fields down; in a
+ * rule row it grows the row to the height of the open list, and since the row
+ * aligns to its baseline, FILTER and CONDITION drift to the bottom and end up
+ * nowhere near the VALUE they belong to. Float the list over the form instead.
+ */
+.seopress-rules-row .components-combobox-control__suggestions-container {
+	position: relative;
+}
+
+.seopress-rules-row .components-form-token-field__suggestions-list {
+	position: absolute;
+	top: 100%;
+	right: -1px;
+	left: -1px;
+	z-index: 20;
+	/* Free of the row's height now, so it can show more than four terms. */
+	max-height: 280px;
+	background: #fff;
+	border: 1px solid #949494;
+	border-top: none;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/*
+ * A term reads as "Bar Stools", not "Bar Stools (Product tags)". The taxonomy
+ * still has to be there — two taxonomies can hold the same name — but as a
+ * quiet second column rather than a parenthesis repeated down every row.
+ */
+.seopress-rules-option {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.seopress-rules-option__taxonomy {
+	flex: 0 0 auto;
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.components-form-token-field__suggestion.is-selected .seopress-rules-option__taxonomy {
+	color: inherit;
+	opacity: 0.75;
 }
 
 .seopress-rules-desc {

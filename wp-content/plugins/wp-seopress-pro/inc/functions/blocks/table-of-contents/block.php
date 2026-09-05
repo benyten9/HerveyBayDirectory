@@ -252,11 +252,39 @@ class SEOPRESS_PRO_Table_of_Contents_Block {
 		 */
 		$names = apply_filters( 'seopress_pro_toc_heading_blocks', array( 'core/heading' ) );
 
-		if ( is_array( $names ) && in_array( $name, $names, true ) ) {
-			return true;
-		}
+		$is_heading = ( is_array( $names ) && in_array( $name, $names, true ) )
+			|| 1 === preg_match( '#/heading$#', $name );
 
-		return 1 === preg_match( '#/heading$#', $name );
+		/**
+		 * Filter whether a parsed block is a heading, with the block at hand.
+		 *
+		 * Matching on the name alone cannot describe a builder that ships one
+		 * generic block for every element. GreenShift, which Greenlight is built
+		 * on, registers a section, a div, a paragraph and an H2 all as
+		 * `greenshift-blocks/element`, and only the `tag` attribute tells them
+		 * apart. Adding that name to `seopress_pro_toc_heading_blocks` makes the
+		 * table of contents worse rather than better: every element on the page
+		 * becomes an entry.
+		 *
+		 * This filter receives the block, so the condition can look at its
+		 * attributes:
+		 *
+		 *     add_filter( 'seopress_pro_toc_is_heading_block', function ( $is_heading, $block ) {
+		 *         if ( 'greenshift-blocks/element' !== ( $block['blockName'] ?? '' ) ) {
+		 *             return $is_heading;
+		 *         }
+		 *
+		 *         $tag = $block['attrs']['tag'] ?? '';
+		 *
+		 *         return is_string( $tag ) && 1 === preg_match( '#^h[1-6]$#i', $tag );
+		 *     }, 10, 2 );
+		 *
+		 * @since 10.2.0
+		 *
+		 * @param bool  $is_heading Whether the block is treated as a heading.
+		 * @param array $block      Parsed block.
+		 */
+		return (bool) apply_filters( 'seopress_pro_toc_is_heading_block', $is_heading, $block );
 	}
 
 	/**
@@ -284,7 +312,56 @@ class SEOPRESS_PRO_Table_of_Contents_Block {
 			return (int) $matches[1];
 		}
 
+		/*
+		 * Builders using one generic block keep the element in an attribute rather
+		 * than in a `level`. Attributes come straight from the JSON of the block
+		 * comment, so `tag` holds whatever the content holds: anything but a string
+		 * is not an element name, and casting an array raised an "Array to string
+		 * conversion" notice on the front end.
+		 */
+		$tag = isset( $block['attrs']['tag'] ) && is_string( $block['attrs']['tag'] ) ? $block['attrs']['tag'] : '';
+
+		if ( preg_match( '#^h([1-6])$#i', $tag, $matches ) ) {
+			return (int) $matches[1];
+		}
+
 		return 2;
+	}
+
+	/**
+	 * The text a heading block renders.
+	 *
+	 * A builder shipping one generic block routinely wraps the text in inner
+	 * blocks, so the heading's own `innerHTML` holds the tag and nothing else
+	 * (`<h2 class="...">`, null, `</h2>`). Reading it alone produced an entry with
+	 * no label and no anchor, so fall back to what the inner blocks render.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param array $block Parsed block.
+	 *
+	 * @return string
+	 */
+	function get_heading_text( $block ) {
+		$html = isset( $block['innerHTML'] ) && is_string( $block['innerHTML'] ) ? $block['innerHTML'] : '';
+		$text = trim( wp_strip_all_tags( $html ) );
+
+		if ( '' !== $text ) {
+			return $text;
+		}
+
+		$inner_blocks = isset( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ? $block['innerBlocks'] : array();
+		$parts        = array();
+
+		foreach ( $inner_blocks as $inner_block ) {
+			$part = $this->get_heading_text( $inner_block );
+
+			if ( '' !== $part ) {
+				$parts[] = $part;
+			}
+		}
+
+		return implode( ' ', $parts );
 	}
 
 	/**
@@ -301,11 +378,19 @@ class SEOPRESS_PRO_Table_of_Contents_Block {
 				$level = $this->get_heading_level( $block );
 				if ( in_array( $level, $included, true ) ) {
 					$block = $this->headings_block_data( $block );
-					// Normalize the resolved level onto the block so nest_headings()
-					// keeps building the hierarchy from a single attribute, whatever
-					// the heading block stored it as (or did not store at all).
-					$block['attrs']['level'] = $level;
-					$headings[]              = $block;
+
+					/*
+					 * A heading with no text has no label and nothing to link to. It was
+					 * listed all the same, as an empty and unclickable
+					 * `<li><span></span></li>`.
+					 */
+					if ( '' !== $this->get_heading_text( $block ) ) {
+						// Normalize the resolved level onto the block so nest_headings()
+						// keeps building the hierarchy from a single attribute, whatever
+						// the heading block stored it as (or did not store at all).
+						$block['attrs']['level'] = $level;
+						$headings[]              = $block;
+					}
 				}
 			}
 			$headings = array_merge( $headings, $this->get_headings( $block['innerBlocks'] ?? array(), $included ) );
@@ -365,9 +450,10 @@ class SEOPRESS_PRO_Table_of_Contents_Block {
 			function ( $list, $heading ) use ( $list_tag ) {
 				$child_list = ! empty( $heading['children'] ) ? $this->headings_list( $heading['children'], $list_tag ) : '';
 				$anchor     = $heading['attrs']['anchor'] ?? '';
+				$label      = $this->get_heading_text( $heading );
 				$element    = $anchor
-				? sprintf( '<a href="#%s">%s</a>', esc_attr( $anchor ), wp_strip_all_tags( $heading['innerHTML'] ) )
-				: sprintf( '<span>%s</span>', wp_strip_all_tags( $heading['innerHTML'] ) );
+				? sprintf( '<a href="#%s">%s</a>', esc_attr( $anchor ), $label )
+				: sprintf( '<span>%s</span>', $label );
 				$list      .= sprintf( '<li>%s%s</li>', $element, $child_list );
 				return $list;
 			},
@@ -386,17 +472,32 @@ class SEOPRESS_PRO_Table_of_Contents_Block {
 	 */
 	function headings_block_data( $block, $source_block = array(), $parent_block = array() ) {
 		if ( $this->is_heading_block( $block ) && ! isset( $block['attrs']['anchor'] ) ) {
-			$level                    = $this->get_heading_level( $block );
-			$data                     = $this->add_heading_anchor( $block['innerHTML'], $level );
+			$level = $this->get_heading_level( $block );
+			$text  = $this->get_heading_text( $block );
+
+			$data                     = $this->add_heading_anchor( $block['innerHTML'] ?? '', $level, $text );
 			$block['innerHTML']       = $data['html'] ?? '';
 			$block['attrs']['anchor'] = $data['anchor'] ?? '';
+
 			if ( ! empty( $block['innerContent'] ) && is_array( $block['innerContent'] ) ) {
-				$block['innerContent'] = array_map(
-					function ( $inner_content ) use ( $level ) {
-						return $this->add_heading_anchor( $inner_content, $level )['html'] ?? '';
-					},
-					$block['innerContent']
-				);
+				$anchored = false;
+
+				foreach ( $block['innerContent'] as $index => $inner_content ) {
+					/*
+					 * A null entry marks where an inner block renders. Mapping it to a
+					 * string left WP_Block nowhere to render that block, and the whole
+					 * inner tree disappeared from the page. Anchoring stops after the
+					 * first chunk that took the id, so the same id is never written twice.
+					 */
+					if ( $anchored || ! is_string( $inner_content ) ) {
+						continue;
+					}
+
+					$chunk = $this->add_heading_anchor( $inner_content, $level, $text );
+
+					$block['innerContent'][ $index ] = $chunk['html'] ?? $inner_content;
+					$anchored                        = '' !== ( $chunk['anchor'] ?? '' );
+				}
 			}
 		}
 		if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
@@ -412,48 +513,107 @@ class SEOPRESS_PRO_Table_of_Contents_Block {
 
 
 	/**
-	 * Adds an ID attribute to heading tags in the provided HTML.
+	 * Adds an ID attribute to the heading tag in the provided HTML.
 	 *
-	 * @param string $html The HTML content to modify.
-	 * @param int    $level The heading level.
-	 * @return string The modified HTML content with ID attributes added to the Heading tags
+	 * The markup is edited through the HTML API instead of being reserialized.
+	 * A heading block that wraps inner blocks has its `innerContent` split into
+	 * unbalanced chunks (`<h2 class="...">`, null, `</h2>`), and pushing those
+	 * through DOMDocument closed them early, duplicated the closing tag and left
+	 * an `id=""` on the page. The tag processor inserts the attribute and leaves
+	 * every other byte alone, so a heading that renders siblings or entities keeps
+	 * them exactly as authored.
+	 *
+	 * @param string $html          The HTML content to modify.
+	 * @param int    $level         The heading level.
+	 * @param string $fallback_text Text to build the anchor from when the heading
+	 *                              renders its own text through inner blocks.
+	 * @return array {
+	 *     @type string $html   The HTML content, with an id on the heading tag.
+	 *     @type string $anchor The anchor, empty when there is nothing to anchor.
+	 * }
 	 */
-	function add_heading_anchor( $html, $level = 2 ) {
-		$anchor = '';
-		if ( class_exists( 'DomDocument' ) ) {
-			try {
-				libxml_use_internal_errors( true );
-				$dom = new DomDocument();
-				@$dom->loadHTML( '<?xml version="1.0" encoding="UTF-8"?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
-				$tag     = sprintf( 'h%d', (int) $level );
-				$element = @$dom->getElementsByTagName( $tag )->item( 0 );
-				$anchor  = $element ? $element->getAttribute( 'id' ) : '';
-				if ( $element && ! $anchor ) {
-					$anchor = sanitize_title( $element->textContent ?? '' );
-					$element->setAttribute( 'id', $anchor );
-
-					// Serialize every root node, not just the first one: with
-					// LIBXML_HTML_NOIMPLIED, saveHTML( $dom->documentElement ) returns the
-					// first root element only and silently drops whatever follows. A
-					// core/heading is always a single <hN> root, but third party heading
-					// blocks routinely ship sibling nodes (separators, decorative SVG),
-					// which would otherwise disappear from the rendered page.
-					$html = '';
-					foreach ( $dom->childNodes as $node ) {
-						if ( XML_PI_NODE === $node->nodeType ) {
-							continue;
-						}
-						$html .= @$dom->saveHTML( $node );
-					}
-				}
-				libxml_clear_errors();
-			} catch ( Exception $e ) {
-				error_log( $e->getMessage() );
-			}
-		}
-		return array(
+	function add_heading_anchor( $html, $level = 2, $fallback_text = '' ) {
+		$html      = is_string( $html ) ? $html : '';
+		$unchanged = array(
 			'html'   => $html,
+			'anchor' => '',
+		);
+
+		if ( '' === $html || ! class_exists( 'WP_HTML_Tag_Processor' ) ) {
+			return $unchanged;
+		}
+
+		$tag       = sprintf( 'h%d', (int) $level );
+		$processor = new WP_HTML_Tag_Processor( $html );
+
+		if ( ! $processor->next_tag( array( 'tag_name' => $tag ) ) ) {
+			return $unchanged;
+		}
+
+		$existing = $processor->get_attribute( 'id' );
+
+		if ( is_string( $existing ) && '' !== $existing ) {
+			return array(
+				'html'   => $html,
+				'anchor' => $existing,
+			);
+		}
+
+		$anchor = sanitize_title( $this->get_element_text( $html, $tag ) );
+
+		if ( '' === $anchor ) {
+			$anchor = sanitize_title( $fallback_text );
+		}
+
+		// Nothing to slugify means nothing to link to, and `id=""` used to be
+		// written onto the page for it.
+		if ( '' === $anchor ) {
+			return $unchanged;
+		}
+
+		$processor->set_attribute( 'id', $anchor );
+
+		return array(
+			'html'   => $processor->get_updated_html(),
 			'anchor' => $anchor,
 		);
+	}
+
+	/**
+	 * Text of the first element carrying the given tag name.
+	 *
+	 * Read only: the document is parsed to reach the text and thrown away. What
+	 * gets rendered is never what DOMDocument reserialized.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param string $html HTML to read.
+	 * @param string $tag  Tag name to look for.
+	 *
+	 * @return string
+	 */
+	private function get_element_text( $html, $tag ) {
+		if ( ! class_exists( 'DomDocument' ) ) {
+			return '';
+		}
+
+		// Restore the caller's setting rather than leaving libxml errors captured
+		// for the rest of the request.
+		$previous = libxml_use_internal_errors( true );
+		$text     = '';
+
+		try {
+			$dom = new DomDocument();
+			@$dom->loadHTML( '<?xml version="1.0" encoding="UTF-8"?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+			$element = @$dom->getElementsByTagName( $tag )->item( 0 );
+			$text    = $element ? (string) $element->textContent : '';
+		} catch ( Exception $e ) {
+			error_log( $e->getMessage() );
+		}
+
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+
+		return $text;
 	}
 }

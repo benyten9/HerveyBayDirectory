@@ -286,6 +286,27 @@ if ( ! function_exists( 'doublescale_is_pro_addon_active' ) ) {
 	}
 }
 
+if ( ! function_exists( 'doublescale_sales_online_payments_available' ) ) {
+	/**
+	 * Whether invoice online-payment gateways (Stripe, PayPal, …) may run.
+	 *
+	 * Invoices and offline (manual) payments ship in free. Checkout gateways
+	 * require DoubleScale Pro.
+	 *
+	 * @return bool
+	 */
+	function doublescale_sales_online_payments_available(): bool {
+		$available = function_exists( 'doublescale_is_pro_addon_active' ) && doublescale_is_pro_addon_active();
+
+		/**
+		 * Filter whether invoice online payments are available.
+		 *
+		 * @param bool $available Default: Pro add-on is active.
+		 */
+		return (bool) apply_filters( 'doublescale_sales_online_payments_available', $available );
+	}
+}
+
 if ( ! function_exists( 'doublescale_uses_legacy_pro_booking_gateway' ) ) {
 	/**
 	 * Whether an older doublescale-pro build still ships StripeBookingGateway.

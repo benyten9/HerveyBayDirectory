@@ -278,22 +278,27 @@ if ( '1' == seopress_get_toggle_option( '404' ) && apply_filters( 'seopress_post
 	 * @return void
 	 */
 	function seopress_dismiss_notice_need_to_redirect() {
-		if ( isset( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( $_GET['_wpnonce'] ), 'seopress_dismiss_notice_need_to_redirect' ) ) {
-			wp_redirect( admin_url( 'admin.php?page=seopress-option' ) );
+		// The nonce is required, not merely checked when present: guarding the
+		// verification behind isset() meant a request that simply omitted
+		// _wpnonce skipped it entirely.
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+
+		if ( ! wp_verify_nonce( $nonce, 'seopress_dismiss_notice_need_to_redirect' ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=seopress-option' ) );
 			exit;
 		}
 
 		if ( ! current_user_can( seopress_capability( 'edit_redirections', 'notice' ) ) ) {
-			wp_redirect( admin_url( 'admin.php?page=seopress-option' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=seopress-option' ) );
 			exit;
 		}
 
 		if ( ! isset( $_GET['id'] ) ) {
-			wp_redirect( admin_url( 'admin.php?page=seopress-option' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=seopress-option' ) );
 			exit;
 		}
 
-		seopress_remove_notification_for_redirect( esc_html( wp_unslash( $_GET['id'] ) ) );
+		seopress_remove_notification_for_redirect( sanitize_text_field( wp_unslash( $_GET['id'] ) ) );
 
 		$redirect = isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : admin_url( 'admin.php?page=seopress-option' );
 
@@ -308,13 +313,16 @@ if ( '1' == seopress_get_toggle_option( '404' ) && apply_filters( 'seopress_post
 	 * @return void
 	 */
 	function seopress_dismiss_all_notice_need_to_redirect() {
-		if ( isset( $_GET['_wpnonce'] ) && ! wp_verify_nonce( wp_unslash( $_GET['_wpnonce'] ), 'seopress_dismiss_all_notice_need_to_redirect' ) ) {
-			wp_redirect( admin_url( 'admin.php?page=seopress-option' ) );
+		// Same as above: the nonce must be present and valid, not optional.
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+
+		if ( ! wp_verify_nonce( $nonce, 'seopress_dismiss_all_notice_need_to_redirect' ) ) {
+			wp_safe_redirect( admin_url( 'admin.php?page=seopress-option' ) );
 			exit;
 		}
 
 		if ( ! current_user_can( seopress_capability( 'edit_redirections', 'notice' ) ) ) {
-			wp_redirect( admin_url( 'admin.php?page=seopress-option' ) );
+			wp_safe_redirect( admin_url( 'admin.php?page=seopress-option' ) );
 			exit;
 		}
 

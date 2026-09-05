@@ -103,6 +103,9 @@ class ProductBlock extends EmailBlock {
 		// Get button settings
 		$button_settings = $this->get_global_button_settings( $props['buttonStyle'] );
 
+		$card_width_px  = $this->get_product_card_pixel_width( $props );
+		$image_width_px = $this->get_product_image_pixel_width( $props, $card_width_px );
+
 		// Build wrapper styles (always centered)
 		$wrapper_styles = array(
 			'text-align' => $text_align,
@@ -110,33 +113,47 @@ class ProductBlock extends EmailBlock {
 			'direction'  => $text_direction,
 		);
 
-		// Build container styles - matching frontend to prevent overflow
+		// Table card: `inline-block` shrink-wraps to the image's intrinsic size
+		// in Outlook and several inboxes, so a small canvas thumbnail becomes
+		// the full WooCommerce photo on send.
 		$container_styles = array(
-			'width'          => $props['width'],
-			'max-width'      => '100%',
-			'padding'        => $this->format_padding( $props['padding'] ),
-			'border'         => '1px solid ' . $props['borderColor'],
-			'border-radius'  => '8px',
-			'display'        => 'inline-block',
-			'vertical-align' => 'top',
-			'margin'         => '0 auto',
-			'box-sizing'     => 'border-box',
-			'text-align'     => $text_align,
-			'direction'      => $text_direction,
-			'word-wrap'      => 'break-word',
-			'overflow-wrap'  => 'break-word',
+			'width'         => $card_width_px . 'px',
+			'max-width'     => '100%',
+			'border'        => '1px solid ' . $props['borderColor'],
+			'border-radius' => '8px',
+			'border-collapse' => 'collapse',
 		);
 
-		// Build image styles
-		$image_padding = $props['imagePadding'] ? $this->format_padding( $props['imagePadding'] ) : '8px';
-		$image_styles  = array(
-			'width'            => '100%',
-			'height'           => '200px',
-			'object-fit'       => 'cover',
-			'border-radius'    => '4px',
-			'background-color' => $props['imageBackgroundColor'],
+		$card_cell_styles = array(
+			'padding'       => $this->format_padding( $props['padding'] ),
+			'text-align'    => $text_align,
+			'direction'     => $text_direction,
+			'word-wrap'     => 'break-word',
+			'overflow-wrap' => 'break-word',
+		);
+
+		$image_padding     = $props['imagePadding'] ? $this->format_padding( $props['imagePadding'] ) : '8px';
+		$image_cell_styles = array(
 			'padding'          => $image_padding,
-			'box-sizing'       => 'border-box',
+			'background-color' => $props['imageBackgroundColor'],
+			'border-radius'    => '4px',
+			'line-height'      => '0',
+			'font-size'        => '0',
+		);
+
+		// HTML width (px) is required: most inboxes ignore CSS width on <img>
+		// and otherwise paint the file at its natural (often 1000-2000px) size.
+		$image_styles = array(
+			'display'       => 'block',
+			'width'         => '100%',
+			'max-width'     => '100%',
+			'height'        => '200px',
+			'object-fit'    => 'cover',
+			'border'        => '0',
+			'outline'       => 'none',
+			'border-radius' => '4px',
+			'margin'        => '0',
+			'padding'       => '0',
 		);
 
 		$image_placeholder_styles = array(
@@ -144,13 +161,12 @@ class ProductBlock extends EmailBlock {
 			'height'           => '200px',
 			'background-color' => '#F5F5F580',
 			'border-radius'    => '4px',
-			'padding'          => $image_padding,
-			'display'          => 'flex',
-			'align-items'      => 'center',
-			'justify-content'  => 'center',
+			'display'          => 'block',
 			'color'            => '#6B7280',
 			'font-size'        => '14px',
 			'font-weight'      => '500',
+			'line-height'      => '200px',
+			'text-align'       => 'center',
 			'box-sizing'       => 'border-box',
 		);
 
@@ -194,6 +210,8 @@ class ProductBlock extends EmailBlock {
 		// Build style strings
 		$wrapper_style_string           = $this->build_style_string( $wrapper_styles );
 		$container_style_string         = $this->build_style_string( $container_styles );
+		$card_cell_style_string         = $this->build_style_string( $card_cell_styles );
+		$image_cell_style_string        = $this->build_style_string( $image_cell_styles );
 		$image_style_string             = $this->build_style_string( $image_styles );
 		$image_placeholder_style_string = $this->build_style_string( $image_placeholder_styles );
 		$title_style_string             = $this->build_style_string( $title_styles );
@@ -201,26 +219,75 @@ class ProductBlock extends EmailBlock {
 		$price_style_string             = $this->build_style_string( $price_styles );
 		$button_style_string            = $this->build_style_string( $button_styles );
 
-		// Render image or placeholder
 		$image_html = '';
 		if ( ! empty( $image_src ) ) {
-			$image_html = '<img src="' . $this->escape_image_src( $image_src ) . '" alt="' . esc_attr( $image_alt ) . '" style="' . $image_style_string . '" />';
+			$image_html  = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:100%;">';
+			$image_html .= '<tr><td style="' . $image_cell_style_string . '">';
+			$image_html .= '<img src="' . $this->escape_image_src( $image_src ) . '" alt="' . esc_attr( $image_alt ) . '" width="' . esc_attr( (string) $image_width_px ) . '" border="0" style="' . $image_style_string . '" />';
+			$image_html .= '</td></tr></table>';
 		} else {
-			$image_html = "<div style=\"{$image_placeholder_style_string}\">📷</div>";
+			$image_html  = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:100%;">';
+			$image_html .= '<tr><td style="' . $image_cell_style_string . '">';
+			$image_html .= '<div style="' . $image_placeholder_style_string . '">📷</div>';
+			$image_html .= '</td></tr></table>';
 		}
 
-		// Render price with fallback
 		$display_price = ! empty( $price ) ? $price : '0.00 EGP';
 
-		return "<div style=\"{$wrapper_style_string}\" dir=\"" . esc_attr( $text_direction ) . "\">
-			<div style=\"{$container_style_string}\" dir=\"" . esc_attr( $text_direction ) . "\">
-				{$image_html}
-				<h3 style=\"{$title_style_string}\">{$title}</h3>
-				<p style=\"{$description_style_string}\">{$description}</p>
-				<div style=\"{$price_style_string}\">{$display_price}</div>
-				<a href=\"{$button_link}\" style=\"{$button_style_string}\">{$button_text}</a>
-			</div>
-		</div>";
+		return '<div style="' . $wrapper_style_string . '" dir="' . esc_attr( $text_direction ) . '">'
+			. '<table role="presentation" align="center" width="' . esc_attr( (string) $card_width_px ) . '" cellpadding="0" cellspacing="0" border="0" dir="' . esc_attr( $text_direction ) . '" style="' . $container_style_string . '">'
+			. '<tr><td style="' . $card_cell_style_string . '">'
+			. $image_html
+			. '<h3 style="' . $title_style_string . '">' . $title . '</h3>'
+			. '<p style="' . $description_style_string . '">' . $description . '</p>'
+			. '<div style="' . $price_style_string . '">' . $display_price . '</div>'
+			. '<a href="' . esc_url( $button_link ) . '" style="' . $button_style_string . '">' . $button_text . '</a>'
+			. '</td></tr></table>'
+			. '</div>';
+	}
+
+	/**
+	 * Pixel width of the product card, from the email content width and the
+	 * block's width prop (100% / 75% / 50% / 25% or an explicit px value).
+	 *
+	 * @param array<string, mixed> $props Block properties.
+	 * @return int
+	 */
+	private function get_product_card_pixel_width( array $props ): int {
+		global $doublescale_email_renderer;
+
+		$content_width = 600;
+		if ( isset( $doublescale_email_renderer ) && ! empty( $doublescale_email_renderer->content_width ) ) {
+			$content_width = (int) $doublescale_email_renderer->content_width;
+		}
+
+		$width = isset( $props['width'] ) ? (string) $props['width'] : '100%';
+		if ( 'auto' === $width ) {
+			return max( 40, $content_width );
+		}
+		if ( strlen( $width ) >= 2 && 'px' === substr( $width, -2 ) ) {
+			return max( 40, (int) floatval( $width ) );
+		}
+
+		$pct = max( 1, min( 100, (float) $width ) );
+		return max( 40, (int) round( ( $pct / 100 ) * $content_width ) );
+	}
+
+	/**
+	 * Pixel width of the product image (card width minus horizontal padding).
+	 *
+	 * @param array<string, mixed> $props          Block properties.
+	 * @param int                  $card_width_px Card width in pixels.
+	 * @return int
+	 */
+	private function get_product_image_pixel_width( array $props, int $card_width_px ): int {
+		$padding = is_array( $props['padding'] ?? null ) ? $props['padding'] : array();
+		$h_pad   = (int) ( $padding['left'] ?? 0 ) + (int) ( $padding['right'] ?? 0 );
+
+		$image_padding = is_array( $props['imagePadding'] ?? null ) ? $props['imagePadding'] : array();
+		$img_h_pad     = (int) ( $image_padding['left'] ?? 0 ) + (int) ( $image_padding['right'] ?? 0 );
+
+		return max( 40, $card_width_px - $h_pad - $img_h_pad );
 	}
 
 	/**

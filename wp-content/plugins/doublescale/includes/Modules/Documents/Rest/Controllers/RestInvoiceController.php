@@ -860,7 +860,18 @@ class RestInvoiceController extends RestController {
 		}
 
 		if ( array_key_exists( 'allowed_payment_modes', $params ) ) {
-			$payload['allowed_payment_modes'] = PaymentMode::normalize_list( $params['allowed_payment_modes'] );
+			$modes = PaymentMode::normalize_list( $params['allowed_payment_modes'] );
+			if ( ! doublescale_sales_online_payments_available() ) {
+				$modes = array_values(
+					array_filter(
+						$modes,
+						static function ( string $mode ): bool {
+							return PaymentMode::is_offline( $mode );
+						}
+					)
+				);
+			}
+			$payload['allowed_payment_modes'] = $modes;
 		}
 		if ( array_key_exists( 'line_items', $params ) && is_array( $params['line_items'] ) ) {
 			$payload['line_items'] = $params['line_items'];

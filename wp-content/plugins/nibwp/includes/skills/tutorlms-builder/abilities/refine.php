@@ -53,7 +53,7 @@ function nibwp_tutorlms_builder_refine(array $input): array|WP_Error
     }
 
     $raw_token = (string) ($input['_preflight_token'] ?? '');
-    $token = nibwp_skill_preflight_consume_token($raw_token, 'tutorlms-builder');
+    $token = nibwp_skill_preflight_consume_token($raw_token, 'tutorlms-builder', $input);
     if (is_wp_error($token)) {
         return [
             'success' => false,

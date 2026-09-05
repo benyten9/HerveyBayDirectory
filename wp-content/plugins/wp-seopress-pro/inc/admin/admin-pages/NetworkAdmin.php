@@ -16,6 +16,11 @@ if ( is_plugin_active( 'wp-seopress/seopress.php' ) ) {
 	<div class="seopress-option seopress-php-header">
 		<h1><?php esc_html_e( 'SEO Network settings', 'wp-seopress-pro' ); ?></h1>
 	</div>
+	<?php
+	if ( function_exists( 'seopress_admin_notices_anchor' ) ) {
+		seopress_admin_notices_anchor();
+	}
+	?>
 	<div id="seopress-admin-settings-root" class="seopress-option">
 		<?php // React app renders here. ?>
 	</div>

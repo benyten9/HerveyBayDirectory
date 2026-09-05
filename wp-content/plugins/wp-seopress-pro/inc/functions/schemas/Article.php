@@ -193,7 +193,10 @@ function seopress_automatic_rich_snippets_articles_option( $schema_datas ) {
 			);
 		}
 
-		$desc = wp_trim_words( esc_html( get_the_excerpt() ), 30 );
+		// Trimming an escaped string can cut through an entity and leave `&am`
+		// behind, and the escape buys nothing here: the excerpt is encoded as
+		// JSON-LD, not as HTML. wp_trim_words() strips the tags itself.
+		$desc = wp_trim_words( get_the_excerpt(), 30 );
 		if ( '' != $article_desc ) {
 			$desc = $article_desc;
 		}
@@ -211,7 +214,7 @@ function seopress_automatic_rich_snippets_articles_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_article_json', $json );
 
-		$json = '<script type="application/ld+json">' . wp_json_encode( $json ) . '</script>' . "\n";
+		$json = '<script type="application/ld+json">' . seopress_pro_json_ld_encode( $json ) . '</script>' . "\n";
 
 		$json = apply_filters( 'seopress_schemas_auto_article_html', $json );
 

@@ -49,6 +49,6 @@
 	</admin-texts>
 	<custom-fields>
 		<custom-field action="translate">_seopress_news_disabled</custom-field>
-		<custom-field action="copy" type="taxonomy-ids" sub-type="category">_seopress_robots_primary_cat</custom-field>
+		<custom-field action="copy" type="taxonomy-ids">_seopress_robots_primary_cat</custom-field>
 	</custom-fields>
 </wpml-config>

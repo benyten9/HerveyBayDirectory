@@ -9,6 +9,94 @@
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
 /**
+ * Fill in variables the tag engine cannot resolve, from the legacy list.
+ *
+ * `seopress_dyn_variables_fn` is how a site adds its own variable to the title
+ * and meta templates, and this schema path used to be built entirely on it, so
+ * dropping it would break anyone extending it.
+ *
+ * It cannot simply run before or after the engine. After is too late: the
+ * engine's opening pass strips the names it does not know, so a site's own
+ * variable would already be gone. Before is too early: the legacy list also
+ * holds the core names, and resolving those here rather than through the
+ * engine is exactly the divergence between the two attachment paths that this
+ * is meant to end.
+ *
+ * So it is applied per name, and only where the engine comes back with
+ * nothing. The engine keeps every name it owns; the legacy list only fills the
+ * gaps.
+ *
+ * The `htmlentities()` mapping the old code applied to each replacement value
+ * is deliberately not kept. Paired with the `wp_specialchars_decode()` that
+ * followed it, it was a neutral round trip for `&`, `"` and tags, but it
+ * turned accented characters into entities nothing ever decoded, so a French
+ * title reached the JSON-LD as `Cr&egrave;me br&ucirc;l&eacute;e`.
+ *
+ * @since 10.2.0
+ *
+ * @param string $custom  The raw schema.
+ * @param array  $context The page context.
+ *
+ * @return string
+ */
+function seopress_pro_schema_custom_legacy_variables( $custom, $context ) {
+	if ( false === strpos( $custom, '%%' ) ) {
+		return $custom;
+	}
+
+	if ( ! preg_match_all( '/%%[^%\s]+%%/', $custom, $matches ) ) {
+		return $custom;
+	}
+
+	$variables = apply_filters( 'seopress_dyn_variables_fn', null );
+
+	if ( ! is_array( $variables )
+		|| ! isset( $variables['seopress_titles_template_variables_array'] )
+		|| ! isset( $variables['seopress_titles_template_replace_array'] )
+		|| ! is_array( $variables['seopress_titles_template_variables_array'] )
+		|| ! is_array( $variables['seopress_titles_template_replace_array'] ) ) {
+		return $custom;
+	}
+
+	// The names and the values are two separate public filters,
+	// `seopress_titles_template_variables_array` and
+	// `seopress_titles_template_replace_array`, so a site can lengthen one
+	// without the other and there is no guarantee they still match. The old
+	// `str_replace()` took a mismatch in its stride; `array_combine()` does
+	// not, and raises a ValueError on PHP 8 that would take the front end
+	// down. Cut first, then pad: padding alone only ever lengthens.
+	$names  = array_values( $variables['seopress_titles_template_variables_array'] );
+	$values = array_values( $variables['seopress_titles_template_replace_array'] );
+
+	$legacy = array_combine(
+		$names,
+		array_pad( array_slice( $values, 0, count( $names ) ), count( $names ), '' )
+	);
+
+	if ( ! is_array( $legacy ) ) {
+		return $custom;
+	}
+
+	$engine = seopress_get_service( 'TagsToString' );
+
+	foreach ( array_unique( $matches[0] ) as $needle ) {
+		if ( ! isset( $legacy[ $needle ] ) || '' === (string) $legacy[ $needle ] ) {
+			continue;
+		}
+
+		// The engine owns every name it can resolve, so only the ones it
+		// answers nothing for are filled in here.
+		if ( '' !== (string) $engine->replace( $needle, $context ) ) {
+			continue;
+		}
+
+		$custom = str_replace( $needle, (string) $legacy[ $needle ], $custom );
+	}
+
+	return $custom;
+}
+
+/**
  * Automatic rich snippets custom option.
  *
  * @param array $schema_datas The schema datas.
@@ -16,92 +104,53 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
  */
 function seopress_automatic_rich_snippets_custom_option( $schema_datas ) {
 	// If no data.
-	if ( 0 != count( array_filter( $schema_datas ) ) ) {
-		$custom = $schema_datas['custom'];
-
-		$variables = null;
-		$variables = apply_filters( 'seopress_dyn_variables_fn', $variables );
-
-		$post                                     = $variables['post'];
-		$term                                     = $variables['term'];
-		$seopress_titles_title_template           = $variables['seopress_titles_title_template'];
-		$seopress_titles_description_template     = $variables['seopress_titles_description_template'];
-		$seopress_paged                           = $variables['seopress_paged'];
-		$the_author_meta                          = $variables['the_author_meta'];
-		$sep                                      = $variables['sep'];
-		$seopress_excerpt                         = $variables['seopress_excerpt'];
-		$post_category                            = $variables['post_category'];
-		$post_tag                                 = $variables['post_tag'];
-		$post_thumbnail_url                       = $variables['post_thumbnail_url'];
-		$get_search_query                         = $variables['get_search_query'];
-		$woo_single_cat_html                      = $variables['woo_single_cat_html'];
-		$woo_single_tag_html                      = $variables['woo_single_tag_html'];
-		$woo_single_price                         = $variables['woo_single_price'];
-		$woo_single_price_exc_tax                 = $variables['woo_single_price_exc_tax'];
-		$woo_single_sku                           = $variables['woo_single_sku'];
-		$author_bio                               = $variables['author_bio'];
-		$seopress_get_the_excerpt                 = $variables['seopress_get_the_excerpt'];
-		$seopress_titles_template_variables_array = $variables['seopress_titles_template_variables_array'];
-		$seopress_titles_template_replace_array   = array_map(
-			function ( $value ) {
-				return null !== $value ? htmlentities( $value ) : null;
-			},
-			$variables['seopress_titles_template_replace_array']
-		);
-		$seopress_excerpt_length                  = $variables['seopress_excerpt_length'];
-
-		preg_match_all( '/%%_cf_(.*?)%%/', $custom, $matches ); // Custom fields.
-
-		if ( ! empty( $matches ) ) {
-			$seopress_titles_cf_template_variables_array = array();
-			$seopress_titles_cf_template_replace_array   = array();
-
-			foreach ( $matches['0'] as $key => $value ) {
-				$seopress_titles_cf_template_variables_array[] = $value;
-			}
-
-			foreach ( $matches['1'] as $key => $value ) {
-				$seopress_titles_cf_template_replace_array[] = esc_attr( get_post_meta( $post->ID, $value, true ) );
-			}
-		}
-
-		preg_match_all( '/%%_ct_(.*?)%%/', $custom, $matches2 ); // Custom terms taxonomy.
-
-		if ( ! empty( $matches2 ) ) {
-			$seopress_titles_ct_template_variables_array = array();
-			$seopress_titles_ct_template_replace_array   = array();
-
-			foreach ( $matches2['0'] as $key => $value ) {
-				$seopress_titles_ct_template_variables_array[] = $value;
-			}
-
-			foreach ( $matches2['1'] as $key => $value ) {
-				$term = wp_get_post_terms( $post->ID, $value );
-				if ( ! is_wp_error( $term ) ) {
-					$seopress_titles_ct_template_replace_array[] = isset( $term[0]->name ) ? esc_attr( $term[0]->name ) : '';
-				}
-			}
-		}
-
-		// Default.
-		$custom = str_replace( $seopress_titles_template_variables_array, $seopress_titles_template_replace_array, $custom );
-
-		// Custom fields.
-		if ( ! empty( $matches ) && ! empty( $seopress_titles_cf_template_variables_array ) && ! empty( $seopress_titles_cf_template_replace_array ) ) {
-			$custom = str_replace( $seopress_titles_cf_template_variables_array, $seopress_titles_cf_template_replace_array, $custom );
-		}
-
-		// Custom terms taxonomy.
-		if ( ! empty( $matches2 ) && ! empty( $seopress_titles_ct_template_variables_array ) && ! empty( $seopress_titles_ct_template_replace_array ) ) {
-			$custom = str_replace( $seopress_titles_ct_template_variables_array, $seopress_titles_ct_template_replace_array, $custom );
-		}
-
-		$html = wp_specialchars_decode( $custom, ENT_COMPAT );
-
-		$html .= "\n";
-
-		$html = apply_filters( 'seopress_schemas_auto_custom_html', $html );
-
-		echo $html;
+	if ( 0 === count( array_filter( $schema_datas ) ) ) {
+		return;
 	}
+
+	$custom = $schema_datas['custom'];
+
+	/**
+	 * One engine for both ways of attaching a custom schema.
+	 *
+	 * A schema set per post goes through `TagsToString`, which registers 105
+	 * variables including the schema-specific ones. This path, the one a
+	 * template rule uses, ran three `str_replace()` passes over the legacy
+	 * title and meta list instead, which knows 51 names and none of
+	 * `schema_post_date`, `schema_post_modified_date` or `post_date_iso8601`.
+	 *
+	 * So the same schema resolved differently depending on how it was attached,
+	 * and the template path is the one most people use since it is the one that
+	 * scales. Worse, `str_replace()` leaves an unmatched needle alone, so an
+	 * unresolved variable was printed literally into public JSON-LD:
+	 *
+	 *     "datePublished": "%%schema_post_date%%"
+	 *     "dateModified":  "10. August 2026"
+	 *
+	 * `TagsToString` already covers the legacy names, the schema names and the
+	 * `_cf_` / `_ct_` custom formats, and removes a known variable that
+	 * resolves to nothing rather than leaving its markers behind.
+	 */
+	$context = seopress_get_service( 'ContextPage' )->getContext();
+
+	// Fill in only what the engine cannot resolve, so a site extending
+	// `seopress_dyn_variables_fn` keeps working without taking names back from
+	// the engine.
+	$custom = seopress_pro_schema_custom_legacy_variables( $custom, $context );
+
+	$custom = seopress_get_service( 'TagsToString' )->replace( $custom, $context );
+
+	// TagsToString returns its values entity-encoded, the way WordPress stores
+	// them, so decoding the string as a whole is not an option: a `&quot;` that
+	// is part of a value would become the quote that ends it. The payload is
+	// parsed instead, and re-encoded with JSON's own escapes, which resolves
+	// the entities without ever letting one act as JSON syntax. A schema that
+	// does not parse is left exactly as it was.
+	$html = seopress_pro_json_ld_normalize_custom( $custom );
+
+	$html .= "\n";
+
+	$html = apply_filters( 'seopress_schemas_auto_custom_html', $html );
+
+	echo $html;
 }

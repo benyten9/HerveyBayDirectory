@@ -4,7 +4,7 @@
  * Plugin Name:       DoubleScale Pro
  * Plugin URI:        https://www.doublescale.io/
  * Description:       A powerful CRM Builder for WordPress that lets you manage leads, track interactions, and automate customer relationships—all seamlessly integrated within your WordPress dashboard.
- * Version:           1.2.15
+ * Version:           1.2.16
  * Author:            doublescale.io
  * Author URI:        http://www.doublescale.io
  * License:           GPL v2 or later
@@ -23,7 +23,7 @@ if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_FILE' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_FILE', __FILE__ );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_VERSION', '1.2.15' );
+	define( 'DOUBLESCALE_PRO_VERSION', '1.2.16' );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

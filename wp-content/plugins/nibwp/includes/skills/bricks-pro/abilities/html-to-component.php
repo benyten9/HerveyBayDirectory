@@ -175,7 +175,7 @@ function nibwp_bricks_pro_html_to_component(array $input): array|WP_Error
     if (!function_exists('nibwp_skill_preflight_consume_token')) {
         require_once __DIR__ . '/../../../abilities/skill-preflight.php';
     }
-    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'bricks-pro');
+    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'bricks-pro', $input);
     if (is_wp_error($token_payload)) {
         return [
             'success'             => false,
@@ -325,8 +325,12 @@ function nibwp_bricks_pro_html_to_component(array $input): array|WP_Error
         'edit_url'        => (string) ($diff['edit_url'] ?? ''),
         'validation'      => $validation,
         'recommendations' => $recommendations,
+        // Elements written first, stated even at zero — see the EtchWP twin.
         'summary'         => sprintf(
-            'Persisted as Bricks %s template id=%d%s.',
+            '%s Bricks %s template id=%d%s.',
+            (int) ($diff['elements_saved'] ?? 0) > 0
+                ? sprintf('Saved %d element(s) to', (int) $diff['elements_saved'])
+                : 'NO ELEMENTS WERE SAVED - the template is empty:',
             $template_type,
             (int) $diff['template_id'],
             $recommendations === [] ? '' : sprintf(', %d follow-up suggestion(s)', count($recommendations))

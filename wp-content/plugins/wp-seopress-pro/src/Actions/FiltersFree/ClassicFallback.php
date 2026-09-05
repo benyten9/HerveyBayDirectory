@@ -107,10 +107,6 @@ class ClassicFallback implements ExecuteHooks {
 			return map_deep( $value, array( $this, 'sanitizeSchemaManualField' ) );
 		}
 
-		if ( ! is_scalar( $value ) ) {
-			return '';
-		}
-
-		return wp_kses( (string) $value, array( 'script' => array( 'type' => array() ) ) );
+		return seopress_pro_kses_json_ld( $value );
 	}
 }

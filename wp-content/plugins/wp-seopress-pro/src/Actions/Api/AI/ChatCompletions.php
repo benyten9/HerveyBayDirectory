@@ -964,7 +964,10 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 
 		curl_exec( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_exec
 		$http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_getinfo
-		curl_close( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
+		if ( \PHP_VERSION_ID < 80000 ) {
+			// curl_close() is a no-op since PHP 8.0 and deprecated since PHP 8.5.
+			curl_close( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
+		}
 
 		// Parse actions from the full content.
 		$parsed = $this->parse_and_execute_actions( $full_content );
@@ -1958,6 +1961,11 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 		$response = wp_remote_post( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
+			// The early return meant this never reached the logging call a few
+			// lines below, so a request that never left the server was the one
+			// failure the panel could not show.
+			$completions_service->logTransportError( $response, $provider );
+
 			return new \WP_Error(
 				'api_error',
 				$response->get_error_message(),
@@ -1971,16 +1979,21 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 			$error_data    = json_decode( $response_body, true );
 			$error_message = isset( $error_data['error']['message'] ) ? $error_data['error']['message'] : __( 'API request failed', 'wp-seopress-pro' );
 
-			// Log error.
+			// Log error, flat like every other write.
+			//
+			// This used to nest everything under an `error` key while
+			// Completions wrote the same fields flat, and AITab gates on
+			// `logs.provider` (`AITab.jsx:514`). So an assistant failure took
+			// the transient and then rendered as "Currently no errors logged":
+			// the panel reported no error while holding one.
 			$error_log = array(
-				'error' => array(
-					'provider'      => $provider,
-					'response_code' => $response_code,
-					'message'       => $error_message,
-					'timestamp'     => current_time( 'mysql' ),
-				),
+				'provider'      => $provider,
+				'response_code' => $response_code,
+				'response_body' => $error_message,
+				'request_body'  => '',
+				'timestamp'     => current_time( 'mysql' ),
 			);
-			set_transient( 'seopress_pro_ai_logs', wp_json_encode( $error_log ), 30 * DAY_IN_SECONDS );
+			$completions_service->logApiError( $error_log );
 
 			return new \WP_Error(
 				'api_error',
@@ -1988,6 +2001,10 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 				array( 'status' => $response_code )
 			);
 		}
+
+		// The call went through, so whatever the panel is still reporting is no
+		// longer true.
+		$completions_service->clearApiErrorLog();
 
 		// Parse response based on provider.
 		$response_data = json_decode( wp_remote_retrieve_body( $response ), true );

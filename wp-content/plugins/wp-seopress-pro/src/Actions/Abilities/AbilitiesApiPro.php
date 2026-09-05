@@ -73,8 +73,6 @@ class AbilitiesApiPro implements ExecuteHooks {
 	 * @return void
 	 */
 	public function registerAbilities() {
-		$show_in_rest = function_exists( 'seopress_abilities_api_rest_enabled' ) && seopress_abilities_api_rest_enabled();
-
 		// 1. List redirections.
 		wp_register_ability(
 			'seopress/list-redirections',
@@ -116,12 +114,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 				'execute_callback'    => function ( $input ) {
 					return $this->runController( new Redirections(), 'processGetAll', 'GET', is_array( $input ) ? $input : array() );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => true,
-					),
+					)
 				),
 			)
 		);
@@ -147,12 +144,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 				'execute_callback'    => function ( $input ) {
 					return $this->runController( new Redirections(), 'processGet', 'GET', array( 'id' => (int) $input['id'] ) );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => true,
-					),
+					)
 				),
 			)
 		);
@@ -199,13 +195,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 				'execute_callback'    => function ( $input ) {
 					return $this->runController( new Redirections(), 'processCreate', 'POST', is_array( $input ) ? $input : array() );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => false,
-					),
+					)
 				),
 			)
 		);
@@ -245,13 +240,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 				'execute_callback'    => function ( $input ) {
 					return $this->runController( new Redirections(), 'processUpdate', 'PUT', is_array( $input ) ? $input : array() );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => true,
-					),
+					)
 				),
 			)
 		);
@@ -274,13 +268,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 				'execute_callback'    => function ( $input ) {
 					return $this->runController( new Redirections(), 'processDelete', 'DELETE', array( 'id' => (int) $input['id'] ) );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => true,
-					),
+					)
 				),
 			)
 		);
@@ -301,12 +294,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 				'execute_callback'    => function ( $input ) {
 					return $this->runController( new SchemaManual(), 'processGet', 'GET', array( 'id' => (int) $input['post_id'] ) );
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => true,
-					),
+					)
 				),
 			)
 		);
@@ -349,13 +341,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 						)
 					);
 				},
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => true,
-					),
+					)
 				),
 			)
 		);
@@ -388,12 +379,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 				),
 				'permission_callback' => array( $this, 'canEditPost' ),
 				'execute_callback'    => array( $this, 'generateTitle' ),
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => false,
-					),
+					)
 				),
 			)
 		);
@@ -426,12 +416,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 				),
 				'permission_callback' => array( $this, 'canEditPost' ),
 				'execute_callback'    => array( $this, 'generateDescription' ),
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => false,
-					),
+					)
 				),
 			)
 		);
@@ -465,12 +454,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 					return $attachment_id > 0 && current_user_can( 'edit_post', $attachment_id );
 				},
 				'execute_callback'    => array( $this, 'generateAltText' ),
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'   => true,
 						'idempotent' => false,
-					),
+					)
 				),
 			)
 		);
@@ -503,13 +491,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 				),
 				'permission_callback' => array( $this, 'canEditPost' ),
 				'execute_callback'    => array( $this, 'updateTargetKeywords' ),
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => true,
-					),
+					)
 				),
 			)
 		);
@@ -548,13 +535,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 					return current_user_can( 'upload_files' );
 				},
 				'execute_callback'    => array( $this, 'uploadImage' ),
-				'meta'                => array(
-					'show_in_rest' => $show_in_rest,
-					'annotations'  => array(
+				'meta'                => $this->abilityMeta(
+					array(
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => false,
-					),
+					)
 				),
 			)
 		);
@@ -829,6 +815,38 @@ class AbilitiesApiPro implements ExecuteHooks {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Build the "meta" array of an ability.
+	 *
+	 * Delegates to the free plugin helper, which owns the exposure rules
+	 * (meta.mcp.public for MCP clients, meta.show_in_rest for the REST API
+	 * on WordPress 6.9/7.0). The fallback covers Pro running alongside a free
+	 * version that predates the helper, and stays disabled by default.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param array $annotations The MCP annotations.
+	 *
+	 * @return array
+	 */
+	protected function abilityMeta( $annotations ) {
+		if ( function_exists( 'seopress_abilities_api_meta' ) ) {
+			return seopress_abilities_api_meta( $annotations );
+		}
+
+		$exposed = function_exists( 'seopress_abilities_api_rest_enabled' ) && seopress_abilities_api_rest_enabled();
+
+		return array(
+			'public'       => $exposed,
+			'show_in_rest' => $exposed,
+			'mcp'          => array(
+				'public' => $exposed,
+				'type'   => 'tool',
+			),
+			'annotations'  => $annotations,
+		);
 	}
 
 	/**

@@ -51,9 +51,16 @@ wp_register_ability('nibwp/etchwp-pro-html-to-component', [
             ],
             'target' => [
                 'type' => 'object',
-                'description' => 'Where to persist.',
+                'description' => 'Where to persist. For a new page use mode "new_page" with new_page_title, and either omit post_id or send the string "new".',
                 'properties' => [
-                    'post_id'        => ['type' => 'integer'],
+                    // Was integer-only, which left new_page with no way to say
+                    // "there is no post yet". Agents sent the string "new",
+                    // were rejected at schema validation, and improvised around
+                    // it — one deleted target entirely and lost the block tree
+                    // with it. Accepting "new" costs one line and removes the
+                    // contradiction rather than documenting it.
+                    'post_id'        => ['description' => 'Existing post to write into. Omit, or send "new", when mode is new_page.'],
+                    'new_page_title' => ['type' => 'string', 'description' => 'Title for the page to create when mode is new_page. Falls back to the preflight answer, then to __libraryMeta.name.'],
                     'section_anchor' => ['type' => 'string'],
                     'mode'           => ['type' => 'string', 'enum' => ['append', 'replace_section', 'new_page']],
                 ],
@@ -180,7 +187,7 @@ function nibwp_etchwp_pro_html_to_component(array $input): array|WP_Error
     if (!function_exists('nibwp_skill_preflight_consume_token')) {
         require_once __DIR__ . '/../../../abilities/skill-preflight.php';
     }
-    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'etchwp-pro');
+    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'etchwp-pro', $input);
     if (is_wp_error($token_payload)) {
         $err_code = $token_payload->get_error_code();
         return [
@@ -286,15 +293,32 @@ function nibwp_etchwp_pro_html_to_component(array $input): array|WP_Error
 
     // 3) Persist — target overridden from cached_answers (INVARIANT 3).
     $target = (array) ($input['target'] ?? []);
+
+    // "new" is a way of saying there is no post yet. Anything non-numeric
+    // means the same thing, and letting it through as a string would cast to
+    // 0 further down anyway — better to be explicit about it here.
+    if (isset($target['post_id']) && !is_numeric($target['post_id'])) {
+        if (($target['mode'] ?? '') === '') {
+            $target['mode'] = 'new_page';
+        }
+        unset($target['post_id']);
+    }
     if ($cached_target['post_id'] > 0) {
         $target['post_id'] = $cached_target['post_id'];
     }
     if ($cached_target['mode'] !== '') {
         $target['mode'] = $cached_target['mode'];
     }
-    if (($target['mode'] ?? '') === 'new_page' && $cached_target['new_page_title'] !== '') {
-        $target['new_page_title'] = $cached_target['new_page_title'];
-        $target['new_page_type']  = $cached_target['new_page_type'];
+    if (($target['mode'] ?? '') === 'new_page') {
+        // The cached answer is the user's own, so it wins (INVARIANT 3). A
+        // title passed in the call is still honoured when preflight never
+        // asked for one — otherwise new_page had no title to work from unless
+        // the question had been answered, and the persister fell back to a
+        // generic name nobody chose.
+        if ($cached_target['new_page_title'] !== '') {
+            $target['new_page_title'] = $cached_target['new_page_title'];
+        }
+        $target['new_page_type'] = $cached_target['new_page_type'];
     }
     $diff = nibwp_etchwp_persist_payload($payload, $target);
     if (is_wp_error($diff)) {
@@ -319,8 +343,17 @@ function nibwp_etchwp_pro_html_to_component(array $input): array|WP_Error
         'validation'      => $validation,
         'diff'            => $diff,
         'recommendations' => $recommendations,
+        // Blocks written comes first, and is stated even when it is zero.
+        // This line used to report the post id and the style counts only, so a
+        // build that wrote no content at all still read as "Persisted to post
+        // 123. 5 style(s) added" — and the agent relaying it told the customer
+        // the page was built. blocks_added was in the diff the whole time;
+        // nothing that summarised the result ever looked at it.
         'summary'         => sprintf(
-            'Persisted to post %d. %d style(s) added, %d updated%s.',
+            '%s Post %d. %d style(s) added, %d updated%s.',
+            (int) $diff['blocks_added'] > 0
+                ? sprintf('Wrote %d block group(s) to the page.', (int) $diff['blocks_added'])
+                : 'NO CONTENT WAS WRITTEN TO THE PAGE - the payload produced no blocks, so the page is empty.',
             $diff['post_id'],
             count($diff['styles_added']),
             count($diff['styles_updated']),

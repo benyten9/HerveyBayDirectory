@@ -927,10 +927,18 @@ function nibwp_status_check_auth_header(array $probe): array
         __('This server strips the Authorization header before PHP sees it.', 'nibwp'),
         __('The client sends correct credentials, the server discards them, and WordPress reports the request as logged out. It looks exactly like a wrong password, which is why this one costs people hours. Typical on CGI and FastCGI setups.', 'nibwp'),
         [
-            __('Apache: add "CGIPassAuth On" to .htaccess, or SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1', 'nibwp'),
+            // A button rather than advice, where writing it is provably safe.
+            function_exists('nibwp_oauth_can_fix_htaccess') && nibwp_oauth_can_fix_htaccess()
+                ? sprintf(
+                    /* translators: %s: URL of the one-click fix action */
+                    __('Apache/LiteSpeed: <a href="%s">apply the fix now</a> — one reversible line in .htaccess, removed again if the plugin is deactivated.', 'nibwp'),
+                    esc_url(wp_nonce_url(admin_url('admin-post.php?action=nibwp_fix_auth_header'), 'nibwp_fix_auth_header'))
+                )
+                : __('Apache: add "CGIPassAuth On" to .htaccess, or SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1', 'nibwp'),
             __('Nginx + PHP-FPM: add fastcgi_param HTTP_AUTHORIZATION $http_authorization; to the PHP location block.', 'nibwp'),
             __('LiteSpeed: enable "CGI Set ENV" / rewrite the header in .htaccess the same way as Apache.', 'nibwp'),
             __('On managed hosting, send your host this line: "PHP is not receiving the HTTP Authorization header on REST API requests."', 'nibwp'),
+            __('If sign-in discovery also fails: allow /.well-known/oauth-* to reach WordPress (nginx: location ^~ /.well-known/oauth- { try_files $uri /index.php?$args; }).', 'nibwp'),
         ],
         true
     );

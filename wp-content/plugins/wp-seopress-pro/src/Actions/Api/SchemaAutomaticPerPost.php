@@ -103,7 +103,8 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 	}
 
 	/**
-	 * GET handler — list matching automatic schemas and their per-post state.
+	 * GET handler — list matching automatic schemas, their per-post state, and
+	 * the raw overrides tree stored on the post.
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 *
@@ -146,10 +147,15 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 			$schema_fields = array();
 
 			foreach ( $type_definition['fields'] as $field ) {
-				$value = '';
+				$stored = null;
 				if ( '' !== $section && isset( $overrides_legacy[ $schema_id ][ $section ][ $field['key'] ] ) ) {
 					$stored = $overrides_legacy[ $schema_id ][ $section ][ $field['key'] ];
-					$value  = is_scalar( $stored ) ? (string) $stored : '';
+				}
+
+				if ( 'opening_hours' === $field['type'] ) {
+					$value = $fields->formatOpeningHoursForClient( $stored );
+				} else {
+					$value = is_scalar( $stored ) ? (string) $stored : '';
 				}
 
 				$schema_fields[] = array(
@@ -172,12 +178,7 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 				'title'    => get_the_title( $schema_id ),
 				'type'     => isset( $type_definition['type'] ) ? (string) $type_definition['type'] : '',
 				'section'  => $section,
-				// Built manually instead of get_edit_post_link() because the
-				// `seopress_schemas` CPT uses custom capabilities (`edit_schema`)
-				// mapped via map_meta_cap, which makes the WP helper return null
-				// in REST context. The classic metabox template uses the same
-				// admin_url() pattern.
-				'edit_url' => admin_url( 'post.php?post=' . $schema_id . '&action=edit' ),
+				'edit_url' => $this->getSchemaEditUrl( $schema_id ),
 				'disabled' => isset( $disabled[ $schema_id ] ) && '1' === $disabled[ $schema_id ],
 				'fields'   => $schema_fields,
 			);
@@ -188,8 +189,59 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 				'disable_all'      => $disable_all,
 				'disabled'         => $disabled,
 				'matching_schemas' => $matching_schemas,
+				/*
+				 * The whole stored tree, so the client can seed its state with
+				 * it and hand it back untouched. The metabox mirrors this meta
+				 * into the Block Editor and into the Classic Editor post form,
+				 * and both of those write it verbatim: sending only the fields
+				 * of the schemas currently matching would drop the rest — the
+				 * overrides of a schema that no longer matches, and the opening
+				 * hours the classic metabox saved.
+				 */
+				'overrides'        => (object) $overrides_legacy,
 			)
 		);
+	}
+
+	/**
+	 * Admin URL where an automatic schema is edited.
+	 *
+	 * The React Schemas editor replaced the CPT edit screen, so the metabox
+	 * link has to land there too. The classic metabox already routes this way,
+	 * falling back to the CPT screen on the WordPress versions that cannot run
+	 * DataViews — mirror both branches here so the two metaboxes agree.
+	 *
+	 * Built manually instead of get_edit_post_link() because the
+	 * `seopress_schemas` CPT uses custom capabilities (`edit_schema`) mapped
+	 * via map_meta_cap, which makes the WP helper return null in REST context.
+	 *
+	 * Returns an empty string when the user cannot manage schemas — the same
+	 * gate the classic metabox applies before printing its own link, and the
+	 * React metabox already hides the link when the URL is empty. Otherwise a
+	 * contributor is handed a link to a screen they cannot open.
+	 *
+	 * @param int $schema_id The `seopress_schemas` post ID.
+	 *
+	 * @return string
+	 */
+	private function getSchemaEditUrl( $schema_id ) {
+		$capability = function_exists( 'seopress_capability' )
+			? seopress_capability( 'manage_options', 'schemas' )
+			: 'manage_options';
+
+		if ( ! current_user_can( $capability ) ) {
+			return '';
+		}
+
+		// The only caller already casts, but the guarantee belongs to whoever
+		// builds the URL: the value ends up in an href the metabox renders.
+		$schema_id = absint( $schema_id );
+
+		if ( \SEOPressPro\Helpers\DataViewsAssets::is_supported() ) {
+			return admin_url( 'admin.php?page=seopress-schemas#/edit/' . $schema_id );
+		}
+
+		return admin_url( 'post.php?post=' . $schema_id . '&action=edit' );
 	}
 
 	/**
@@ -243,7 +295,20 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 		$overrides_input = isset( $params['overrides'] ) && is_array( $params['overrides'] ) ? $params['overrides'] : array();
 		$sanitized       = $this->sanitizeOverrides( $overrides_input );
 
-		if ( ! empty( $sanitized ) ) {
+		/*
+		 * Only the fields this controller knows about are replaced. Anything
+		 * else already stored on the post is carried over untouched: overrides
+		 * belonging to a schema that no longer matches, and — on sites that
+		 * never opted into the per-post opening hours — the `opening_hours`
+		 * entry written by the classic metabox, which the frontend resolver
+		 * still reads. Overwriting the whole tree would silently drop both.
+		 */
+		$fields_service = seopress_pro_get_service( 'AutomaticSchemasFields' );
+		$existing_raw   = get_post_meta( $post_id, '_seopress_pro_schemas', false );
+		$existing       = isset( $existing_raw[0] ) && is_array( $existing_raw[0] ) ? $existing_raw[0] : array();
+		$merged         = $fields_service ? $fields_service->mergeOverrides( $existing, $sanitized ) : $sanitized;
+
+		if ( ! empty( $merged ) ) {
 			/*
 			 * The classic save path stores the schema tree as
 			 * [ <schemaId> => [ <section> => [ <key> => value ] ] ]
@@ -253,7 +318,7 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 			 * must NOT wrap it ourselves or the classic UI will look one
 			 * level too deep and find nothing.
 			 */
-			update_post_meta( $post_id, '_seopress_pro_schemas', $sanitized );
+			update_post_meta( $post_id, '_seopress_pro_schemas', $merged );
 		} else {
 			delete_post_meta( $post_id, '_seopress_pro_schemas' );
 		}
@@ -312,6 +377,12 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 				if ( ! isset( $allowed_keys[ $key ] ) ) {
 					continue;
 				}
+
+				if ( 'opening_hours' === $field_types[ $key ] ) {
+					$clean_section[ $key ] = $fields_service->sanitizeOpeningHours( $value );
+					continue;
+				}
+
 				$clean_section[ $key ] = $this->sanitizeValue( $value, $field_types[ $key ] );
 			}
 

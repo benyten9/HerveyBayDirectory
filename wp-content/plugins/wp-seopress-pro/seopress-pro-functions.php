@@ -253,6 +253,100 @@ function seopress_ai_generation_role_option() {
 }
 
 /**
+ * Get the supported AI providers and the wp-config.php constant that pins each
+ * one's API key.
+ *
+ * Single source of truth for the provider list: the settings tab, the wizard
+ * step and the key hints all read it, so adding a provider is a one-line change
+ * here. Order matches the AI settings tab, SEOPress Credits first — it is the
+ * only one that needs no provider account of its own.
+ *
+ * @since 10.2.0
+ *
+ * @return array Map of provider slug => array( 'label', 'constant' ).
+ */
+function seopress_ai_get_providers() {
+	return array(
+		'seopress' => array(
+			'label'    => __( 'SEOPress AI Credits', 'wp-seopress-pro' ),
+			'constant' => 'SEOPRESS_CREDITS_KEY',
+		),
+		'openai'   => array(
+			'label'    => 'OpenAI',
+			'constant' => 'SEOPRESS_OPENAI_KEY',
+		),
+		'deepseek' => array(
+			'label'    => 'DeepSeek',
+			'constant' => 'SEOPRESS_DEEPSEEK_KEY',
+		),
+		'gemini'   => array(
+			'label'    => 'Gemini',
+			'constant' => 'SEOPRESS_GEMINI_KEY',
+		),
+		'mistral'  => array(
+			'label'    => 'Mistral',
+			'constant' => 'SEOPRESS_MISTRAL_KEY',
+		),
+		'claude'   => array(
+			'label'    => 'Claude',
+			'constant' => 'SEOPRESS_CLAUDE_KEY',
+		),
+	);
+}
+
+/**
+ * Get the provider list shaped for a React <SelectControl>.
+ *
+ * @since 10.2.0
+ *
+ * @return array List of array( 'value' => slug, 'label' => name ).
+ */
+function seopress_ai_get_providers_list() {
+	$options = array();
+
+	foreach ( seopress_ai_get_providers() as $slug => $provider ) {
+		$options[] = array(
+			'value' => $slug,
+			'label' => $provider['label'],
+		);
+	}
+
+	return $options;
+}
+
+/**
+ * Get the wp-config.php constant that overrides a provider's API key.
+ *
+ * @since 10.2.0
+ *
+ * @param string $provider Provider slug.
+ * @return string Constant name, or an empty string for an unknown provider.
+ */
+function seopress_ai_get_provider_constant( $provider ) {
+	$providers = seopress_ai_get_providers();
+
+	return isset( $providers[ $provider ] ) ? $providers[ $provider ]['constant'] : '';
+}
+
+/**
+ * Whether a provider's API key is pinned in wp-config.php.
+ *
+ * Matches what Usage::getLicenseKey() actually honors: a constant defined but
+ * left empty is ignored there, so it must not read as "pinned" here either —
+ * otherwise the settings UI locks the field and claims a key that is never used.
+ *
+ * @since 10.2.0
+ *
+ * @param string $provider Provider slug.
+ * @return bool
+ */
+function seopress_ai_provider_key_is_constant( $provider ) {
+	$constant = seopress_ai_get_provider_constant( $provider );
+
+	return '' !== $constant && defined( $constant ) && ! empty( constant( $constant ) );
+}
+
+/**
  * Whether the current user may use AI generation features.
  *
  * ALLOW semantics: when no role is configured the behavior is unchanged
@@ -357,6 +451,87 @@ function seopress_pro_get_lb_opening_hours_days( $value ) {
 	}
 
 	return $value[ $inner_key ];
+}
+
+/**
+ * Whether the free plugin is recent enough to drive the per-post opening hours.
+ *
+ * The property is rendered and saved by the universal metabox, which lives in
+ * the free plugin. An older free build renders the field but writes it back in
+ * the shape its own tab expects, without the weekday translations and without
+ * the override merge, so the option is not offered there. Schemas that already
+ * opted in keep working: the resolver reads the meta whatever the free version
+ * is, and the callers below keep showing the option when it is the stored one,
+ * so saving such a schema never silently resets it.
+ *
+ * @since 10.2.0
+ *
+ * @return bool
+ */
+function seopress_pro_has_per_post_opening_hours_support() {
+	$free_version = defined( 'SEOPRESS_VERSION' ) ? SEOPRESS_VERSION : '0';
+
+	// In development the version is the literal `{VERSION}` placeholder, which
+	// version_compare() would read as older than any release.
+	if ( '{VERSION}' === $free_version ) {
+		return true;
+	}
+
+	return version_compare( $free_version, '10.2', '>=' );
+}
+
+/**
+ * Resolve the opening hours of an automatic Local Business schema for the post
+ * being rendered.
+ *
+ * Two modes, kept apart on purpose:
+ *
+ * - Opt-in (`_source` meta set to `manual_opening_hours_single`): the schema
+ *   delegates the property to each post, so the post value is authoritative,
+ *   including when the post left it empty.
+ * - Default (no `_source` meta, which is every schema created before 10.2):
+ *   the historical precedence applies untouched — a post that filled the hours
+ *   through the classic metabox wins, otherwise the schema global applies.
+ *
+ * @since 10.2.0
+ *
+ * @param int    $schema_id            The `seopress_schemas` post ID.
+ * @param string $meta_key             The global opening hours meta key.
+ * @param string $schema_name          The schema short name (e.g. `lb`).
+ * @param array  $seopress_pro_schemas The `_seopress_pro_schemas` post meta of the current post.
+ *
+ * @return array|string The days list (0-6), or '' when absent.
+ */
+function seopress_pro_resolve_lb_opening_hours( $schema_id, $meta_key, $schema_name, $seopress_pro_schemas ) {
+	$section  = 'rich_snippets_' . $schema_name;
+	$per_post = isset( $seopress_pro_schemas[0][ $schema_id ][ $section ]['opening_hours'] )
+		? $seopress_pro_schemas[0][ $schema_id ][ $section ]['opening_hours']
+		: null;
+
+	// The React field keeps its seven days wrapped; the meta stores them bare.
+	// Accept both, the way the global hours already do, so the JSON-LD does not
+	// depend on which save path wrote the value.
+	if ( is_array( $per_post ) && isset( $per_post['seopress_local_business_opening_hours'] ) && is_array( $per_post['seopress_local_business_opening_hours'] ) ) {
+		$per_post = $per_post['seopress_local_business_opening_hours'];
+	}
+
+	if ( 'manual_opening_hours_single' === get_post_meta( $schema_id, $meta_key . '_source', true ) ) {
+		return ! empty( $per_post ) && is_array( $per_post ) ? $per_post : '';
+	}
+
+	if ( ! empty( $per_post ) && is_array( $per_post ) && function_exists( 'seopress_if_key_exists' ) && true === seopress_if_key_exists( $per_post, 'open' ) ) {
+		$hours = $per_post;
+	} else {
+		$hours = seopress_pro_get_lb_opening_hours_days( get_post_meta( $schema_id, $meta_key, true ) );
+	}
+
+	/*
+	 * Both UIs that write these hours always cover the seven days. A shorter
+	 * list never reached the JSON-LD before 10.2 — it fell through to a branch
+	 * driven by the previous key of the resolver loop — so keep discarding it
+	 * rather than start emitting hours on sites that never showed any.
+	 */
+	return is_array( $hours ) && 7 === count( $hours ) ? $hours : '';
 }
 
 /**
@@ -705,3 +880,520 @@ function seopress_pro_attach_seo_issues_to_content_analysis( $data, $post_id ) {
 	return $data;
 }
 add_filter( 'seopress_content_analysis_response', 'seopress_pro_attach_seo_issues_to_content_analysis', 10, 2 );
+
+/**
+ * Neutralize a CSV cell a spreadsheet would evaluate as a formula.
+ *
+ * Excel, LibreOffice Calc and Google Sheets treat a cell starting with =, +,
+ * - or @ as a formula, so a value that reached the database from an untrusted
+ * source (a 404 URL logged from a visitor request, a title written by a
+ * contributor) can run DDE or exfiltrate the sheet when a site owner opens the
+ * export. Prefixing a single quote makes the cell a literal string.
+ *
+ * The tab and carriage return are included because a leading whitespace does
+ * not stop the parsers from evaluating what follows.
+ *
+ * The importer strips the quote back (SEOPRESS_Importer::unescape_data()), so
+ * an export/import round trip is lossless.
+ *
+ * @since 10.2.0
+ *
+ * @param mixed $value The cell value.
+ *
+ * @return mixed The value, quoted when it would otherwise be evaluated.
+ */
+function seopress_pro_escape_csv_value( $value ) {
+	if ( ! is_string( $value ) || '' === $value ) {
+		return $value;
+	}
+
+	if ( in_array( mb_substr( $value, 0, 1 ), array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+		return "'" . $value;
+	}
+
+	return $value;
+}
+
+/**
+ * Reverse seopress_pro_escape_csv_value() when reading a cell back.
+ *
+ * Keeps an export/import round trip lossless: a redirection whose source path
+ * legitimately starts with a dash must come back without the quote the export
+ * added.
+ *
+ * @since 10.2.0
+ *
+ * @param mixed $value The cell value read from the CSV.
+ *
+ * @return mixed The value without the leading quote guard.
+ */
+function seopress_pro_unescape_csv_value( $value ) {
+	if ( ! is_string( $value ) || '' === $value ) {
+		return $value;
+	}
+
+	if ( in_array( mb_substr( $value, 0, 2 ), array( "'=", "'+", "'-", "'@", "'\t", "'\r" ), true ) ) {
+		return mb_substr( $value, 1 );
+	}
+
+	return $value;
+}
+
+/**
+ * Encode schema data for a `<script type="application/ld+json">` element.
+ *
+ * A thin wrapper over the free plugin's seopress_json_ld_encode(), which
+ * decodes the HTML entities WordPress stores and re-escapes the result with
+ * JSON's own escapes, so nothing printed here needs an HTML unescaping pass to
+ * be read. Google applies that pass exactly once and asks publishers to move
+ * away from it.
+ *
+ * The wrapper exists because these call sites all run on the front end, where
+ * an undefined function is a white page, and nothing stops a site from updating
+ * Pro before the free plugin. On an older free plugin the schema keeps the
+ * output it had rather than the process dying over it.
+ *
+ * @since 10.2.0
+ *
+ * @param mixed $data The schema data.
+ *
+ * @return string|false The JSON-LD, or false if the data cannot be encoded.
+ */
+function seopress_pro_json_ld_encode( $data ) {
+	if ( function_exists( 'seopress_json_ld_encode' ) ) {
+		return seopress_json_ld_encode( $data );
+	}
+
+	return seopress_pro_json_ld_encode_fallback( $data );
+}
+
+/**
+ * Encode schema data on a site whose free plugin predates the encoder.
+ *
+ * The values are left as they are found, entities and all, because decoding
+ * them is what the free plugin's encoder is for: a site running an older one
+ * keeps the output it has always had rather than getting a different one out
+ * of Pro alone.
+ *
+ * What is not kept is the bare `<` this used to print. `wp_json_encode()`
+ * escapes the slash of a `</script>` by default, so no value could close the
+ * element, but a value opening with `<!--<script>` still put the parser in the
+ * double-escaped state where the element's own `</script>` no longer ends it
+ * and the rest of the document is swallowed as script data. The How-to block
+ * made that reachable: the block serializer used to escape its payload as
+ * HTML, and rebuilding it from the attributes prints it raw.
+ *
+ * `JSON_HEX_TAG` and its three companions settle it. A JSON reader sees the
+ * same strings it saw before — `\u003C` and `<` decode alike — so nothing
+ * downstream changes; only the markup stops carrying characters a parser can
+ * act on. The slashes and the unicode stay escaped, as they were.
+ *
+ * @since 10.2.0
+ *
+ * @param mixed $data The schema data.
+ *
+ * @return string|false The JSON-LD, or false if the data cannot be encoded.
+ */
+function seopress_pro_json_ld_encode_fallback( $data ) {
+	return wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT );
+}
+
+/**
+ * The only script type a custom schema is allowed to carry.
+ *
+ * @since 10.2.0
+ *
+ * @return string
+ */
+function seopress_pro_json_ld_script_type() {
+	return 'application/ld+json';
+}
+
+/**
+ * Drop every script element a JSON-LD payload has no business carrying.
+ *
+ * The custom schema field is the one place SEOPress lets an editor store a
+ * `<script>` tag, so `wp_kses()` is called there with `script` on the
+ * allowlist. An allowlist entry covers the tag, not the value of its
+ * attributes: `<script type="text/javascript">` matches it just as well as
+ * `<script type="application/ld+json">`, and the field is echoed into
+ * `wp_head()` untouched. Constraining the attribute in the allowlist does not
+ * help either — `wp_kses_check_attr_val()` knows `maxlen` and `minval`, not a
+ * list of accepted values, and a failed check drops the attribute while
+ * keeping the tag, which turns the payload into a bare `<script>` and makes
+ * things worse.
+ *
+ * So the tags are filtered here instead. Every opening tag is rewritten from
+ * what it declares: a JSON-LD one comes back canonical, stripped of whatever
+ * a paste or a filter attached to it, and anything else disappears. A field
+ * holding several schemas keeps all of them, which is what the metabox
+ * allows.
+ *
+ * @since 10.2.0
+ *
+ * @param string $value The custom schema.
+ *
+ * @return string
+ */
+function seopress_pro_strip_foreign_script_tags( $value ) {
+	if ( ! is_string( $value ) || false === stripos( $value, '<script' ) ) {
+		return $value;
+	}
+
+	$type = preg_quote( seopress_pro_json_ld_script_type(), '#' );
+
+	// `(?<![\w-])type` so that a `data-type` carrying the right value does not
+	// vouch for a tag whose own type is `text/javascript`, and `\b` after the
+	// type so that `application/ld+jsonx` is not read as a match while
+	// `application/ld+json; charset=utf-8` still is.
+	$declared = '(?<![\w-])type\s*=\s*["\']?\s*' . $type . '\b';
+
+	// A foreign script goes with its body, so its source does not stay behind
+	// as text. The body is matched as "holding no other script tag", which is
+	// what stops a payload that never closes from swallowing the schema that
+	// follows it: the pair simply fails to match and the tag alone is removed
+	// by the pass below.
+	$paired = preg_replace(
+		'#<script\b(?![^>]*' . $declared . ')[^>]*>(?:(?!</?script\b).)*</script\s*>#is',
+		'',
+		$value
+	);
+
+	if ( null !== $paired ) {
+		$value = $paired;
+	}
+
+	$rebuilt = preg_replace_callback(
+		'#<script\b[^>]*>#i',
+		function ( $matches ) use ( $declared ) {
+			if ( ! preg_match( '#' . $declared . '#i', $matches[0] ) ) {
+				return '';
+			}
+
+			return '<script type="' . seopress_pro_json_ld_script_type() . '">';
+		},
+		$value
+	);
+
+	return null === $rebuilt ? $value : $rebuilt;
+}
+
+/**
+ * Sanitize a custom JSON-LD field on its way into the database.
+ *
+ * The three paths that store a schema — the REST route the metabox talks to,
+ * the registered post meta the Block Editor writes through, and the Classic
+ * Editor fallback — all ran the same `wp_kses()` call with the same
+ * `script` allowlist. They share this instead, so the script type is
+ * constrained in one place.
+ *
+ * @since 10.2.0
+ *
+ * @param mixed $value The submitted field value.
+ *
+ * @return string
+ */
+function seopress_pro_kses_json_ld( $value ) {
+	if ( ! is_scalar( $value ) ) {
+		return '';
+	}
+
+	// Everything but a script tag goes, so nothing outside a schema can carry
+	// an event handler. The type is then constrained on what is left.
+	$value = wp_kses( (string) $value, array( 'script' => array( 'type' => array() ) ) );
+
+	return seopress_pro_strip_foreign_script_tags( $value );
+}
+
+/**
+ * Re-encode a custom JSON-LD payload with JSON escapes.
+ *
+ * A custom schema is a raw string an administrator pastes, with `%%variables%%`
+ * resolved into it afterwards. Those values come out of WordPress
+ * entity-encoded, so the JSON-LD reaches the page carrying `&#038;`, `&quot;`
+ * and friends, and can only be read by a consumer that unescapes HTML. Google
+ * now applies that pass exactly once and asks publishers to use standard JSON
+ * escapes instead.
+ *
+ * Decoding the string as a whole is not an option — a `&quot;` sitting inside a
+ * value would become the quote that ends it — so the payload is parsed and
+ * re-encoded through seopress_pro_json_ld_encode(), which decodes the values and
+ * escapes them at the JSON level. Anything that does not parse is handed back
+ * untouched, so a schema that was already broken stays exactly as it was.
+ *
+ * @since 10.2.0
+ *
+ * @param string $html The custom schema, usually a full script element.
+ *
+ * @return string
+ */
+function seopress_pro_json_ld_normalize_custom( $html ) {
+	if ( ! is_string( $html ) ) {
+		return $html;
+	}
+
+	// A value stored before the script type was constrained on the way in is
+	// still in the database, and nothing rewrites it until its post is saved
+	// again. Filtering here is what keeps it from reaching wp_head(), and it
+	// has to run before the early return below: a payload that carries no
+	// brace has nothing to re-encode but may still carry a script tag.
+	$html = seopress_pro_strip_foreign_script_tags( $html );
+
+	if ( false === strpos( $html, '{' ) ) {
+		return $html;
+	}
+
+	if ( false !== stripos( $html, '<script' ) ) {
+		// The field may hold several script elements. Each body is normalized
+		// on its own and everything around them is left alone.
+		$normalized = preg_replace_callback(
+			'#(<script\b[^>]*type\s*=\s*["\']application/ld\+json["\'][^>]*>)(.*?)(</script\s*>)#is',
+			function ( $matches ) {
+				return $matches[1] . seopress_pro_json_ld_normalize_body( $matches[2] ) . $matches[3];
+			},
+			$html
+		);
+
+		return null === $normalized ? $html : $normalized;
+	}
+
+	return seopress_pro_json_ld_normalize_body( $html );
+}
+
+/**
+ * Re-encode the body of a single JSON-LD payload.
+ *
+ * @since 10.2.0
+ *
+ * @param string $body The JSON, without its script element.
+ *
+ * @return string
+ */
+function seopress_pro_json_ld_normalize_body( $body ) {
+	$decoded = json_decode( $body, true );
+
+	if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $decoded ) ) {
+		return $body;
+	}
+
+	$encoded = seopress_pro_json_ld_encode( $decoded );
+
+	return false === $encoded ? $body : $encoded;
+}
+
+/**
+ * Read REQUEST_URI without destroying percent-encoded characters.
+ *
+ * `sanitize_text_field()` runs `_sanitize_text_fields()`, which strips every
+ * `%XX` sequence. That rule is meant for text; on a URL it deletes the
+ * percent-encoded UTF-8 that makes up any non-ASCII path. A Japanese slug
+ * such as `/topics/news/%E5%BB%BA%E8%A8%AD/` comes back as `/topics/news//`,
+ * so the Markdown URL we advertise to agents points at a page that does not
+ * exist. Reported on a live site; the same mechanism was fixed on redirection
+ * origins in #1356.
+ *
+ * `esc_url_raw()` keeps `%XX` intact while still dropping tags and encoding
+ * spaces, and it is already what the free plugin uses on this exact
+ * superglobal (`Render.php`, `template-xml-sitemaps-single-term.php`,
+ * `options-redirections.php`). #1356 could not use it because redirection
+ * origins may hold regex patterns, whose metacharacters it would mangle;
+ * nothing regex-shaped passes through here.
+ *
+ * It lives here rather than next to its Agent Readiness call sites because
+ * `options-llms-txt.php` uses it too, and the two features sit behind two
+ * toggles a site owner sets independently. Declared inside
+ * `options-agent-ready.php`, it was simply absent whenever LLMS.txt was on and
+ * Agent Readiness was off, and `seopress_serve_llms_txt()` fatals on
+ * `do_parse_request` — every front-end page and every admin screen that calls
+ * `wp()`. `seopress-pro.php` loads this file unconditionally, so a shared
+ * helper is reachable here whatever the toggles say. See #1722.
+ *
+ * @since 10.2.0
+ *
+ * @param string $fallback Value to return when the superglobal is absent.
+ *
+ * @return string
+ */
+function seopress_agent_ready_request_uri( $fallback = '' ) {
+	if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
+		return $fallback;
+	}
+
+	return esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- esc_url_raw() is the sanitizer; sanitize_text_field() would strip percent-encoding.
+}
+
+/**
+ * Remove the path WordPress serves the site from.
+ *
+ * `WP::parse_request()` strips that prefix from `$wp->request`, so a request for
+ * `/blog/tag/promo/` on a site installed in `/blog` arrives as `tag/promo/`, and
+ * that is the shape the 404 log stores an origin under. The redirection matcher
+ * rebuilds an absolute URL with `home_url( $wp->request )`, which puts the
+ * prefix straight back, and then compares `blog/tag/promo/` against a stored
+ * `tag/promo/`. The two can never be equal, so redirections created the normal
+ * way never fired.
+ *
+ * Affects every install whose home URL carries a path: WordPress in a
+ * subdirectory (`/blog`, `/wp`), and every subsite of a subdirectory multisite.
+ * Subdomain multisite has no prefix and is unaffected, as is a site at the
+ * domain root, where this returns the path untouched.
+ *
+ * The prefix is only removed when a full segment matches, so a site at `/blog`
+ * does not shorten a request for `/blogging/`.
+ *
+ * Only the default matcher and `getCurrentUrl()` use this. The WPML and Weglot
+ * branches build their URL from a home URL this function cannot reason about —
+ * WPML deliberately unhooks its own filter around the call, Weglot returns a URL
+ * of its own — and they exist precisely to offer an alternative prefix, so they
+ * are left exactly as they were.
+ *
+ * @since 10.2.0
+ *
+ * @param string $path Path taken from the current URL.
+ *
+ * @return string The same path, without the site prefix.
+ */
+function seopress_pro_strip_home_path( $path ) {
+	$path = (string) $path;
+
+	$home_path = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	$home_path = is_string( $home_path ) ? trim( $home_path, '/' ) : '';
+
+	if ( '' === $home_path ) {
+		return $path;
+	}
+
+	$leading = ( '' !== $path && '/' === $path[0] ) ? '/' : '';
+	$rest    = ltrim( $path, '/' );
+
+	if ( 0 === stripos( $rest, $home_path . '/' ) ) {
+		return $leading . substr( $rest, strlen( $home_path ) + 1 );
+	}
+
+	if ( 0 === strcasecmp( $rest, $home_path ) ) {
+		return $leading;
+	}
+
+	return $path;
+}
+
+/**
+ * Reduce a redirection origin to the path it stands for.
+ *
+ * Origins travel decoded through the plugin, so `parse_url()` cannot be used to
+ * take one apart: it replaces every byte in the C1 range (0x80-0x9F, plus 0xAD)
+ * with an underscore. That destroys `ß`, every uppercase Latin accent, `í`, the
+ * Polish, Czech, Turkish and Romanian letters, and every non-Latin script:
+ *
+ *     parse_url( 'tag/остров/' )['path']  →  tag/о_ _ _ов/
+ *     parse_url( 'tag/straße/' )['path']  →  tag/stra_e/
+ *
+ * The result is invalid UTF-8, which the database then refuses outright — so
+ * the save failed — or, on a three-byte `utf8` column, silently stores mangled.
+ *
+ * Only the scheme and the authority have to go, and they are ASCII by
+ * definition, so removing them as text leaves everything after them untouched.
+ * A value that is already a relative path comes back unchanged apart from its
+ * leading slash.
+ *
+ * The fragment is dropped: browsers never send it.
+ *
+ * @since 10.2.0
+ *
+ * @param string $origin Origin as typed or pasted, decoded.
+ *
+ * @return string Path and query string, without a leading slash. Empty when the
+ *                value carries no path at all, e.g. a bare domain.
+ */
+function seopress_pro_redirection_origin_path( $origin ) {
+	$origin = (string) $origin;
+
+	// `https://example.com`, `http://example.com`, or protocol-relative `//example.com`.
+	$rest = preg_replace( '#^(?:[a-z][a-z0-9+.\-]*:)?//[^/?\#]*#i', '', $origin, 1 );
+
+	if ( null === $rest ) {
+		$rest = $origin;
+	}
+
+	$hash = strpos( $rest, '#' );
+	if ( false !== $hash ) {
+		$rest = substr( $rest, 0, $hash );
+	}
+
+	return ltrim( $rest, '/' );
+}
+
+/**
+ * Parse a URL, then decode its components, in that order.
+ *
+ * `parse_url()` replaces every byte in the C1 range (0x80-0x9F) with an
+ * underscore. Handing it a URL whose path has already been percent-decoded
+ * therefore destroys any character whose UTF-8 continuation byte falls in
+ * that range:
+ *
+ *     parse_url( '/tag/' . "\xd0\xbe\xd1\x81" )['path']  →  /tag/о_
+ *
+ * In Cyrillic that is every letter from `р` to `я`, so a redirection stored
+ * for `остров` could never match the request it was created from. Greek,
+ * Hebrew, Arabic and Thai are hit the same way; Latin accents are spared
+ * (`é` is C3 A9), which is why this stayed invisible on Western sites.
+ *
+ * Parsing the encoded URL is safe, and decoding each component afterwards
+ * gives back exactly the characters the origin was stored with.
+ *
+ * @since 10.2.0
+ *
+ * @param string $url URL to parse, percent-encoded.
+ *
+ * @return array|false|null|int|string Same shape as wp_parse_url().
+ */
+function seopress_pro_parse_url_decoded( $url ) {
+	$parts = wp_parse_url( (string) $url );
+
+	if ( ! is_array( $parts ) ) {
+		return $parts;
+	}
+
+	// The htmlspecialchars() call mirrors what the callers used to apply to
+	// the whole URL: the query keeps travelling escaped, and the existing
+	// htmlspecialchars_decode() downstream still gives back a usable `&`.
+	foreach ( array( 'path', 'query', 'fragment' ) as $component ) {
+		if ( isset( $parts[ $component ] ) && '' !== $parts[ $component ] ) {
+			$parts[ $component ] = htmlspecialchars(
+				rawurldecode( $parts[ $component ] ),
+				ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401
+			);
+		}
+	}
+
+	return $parts;
+}
+
+/**
+ * Drop the query string from a URI that has already been decoded.
+ *
+ * The redirection matcher falls back to "ignore all parameters" when no exact
+ * match is found, and at that point the URI it holds has been through
+ * `rawurldecode()` already. Sending it back through `parse_url()` to get the
+ * path is what `seopress_pro_parse_url_decoded()` exists to avoid: every byte
+ * in the C1 range comes back as an underscore, so `tag/остров/?utm_source=x`
+ * became `tag/о_ _ _ов/` and no non-Latin origin could ever be matched once a
+ * query string was present.
+ *
+ * Ignoring the parameters only means cutting at the first `?`, so that is all
+ * this does. Anything a decoded path may legitimately carry — a `#` that came
+ * in as `%23`, raw UTF-8 — is left untouched, exactly as the exact-match pass
+ * left it.
+ *
+ * @since 10.2.0
+ *
+ * @param string $uri URI, already decoded.
+ *
+ * @return string The URI without its query string.
+ */
+function seopress_pro_strip_query_string( $uri ) {
+	$uri = (string) $uri;
+	$pos = strpos( $uri, '?' );
+
+	return false === $pos ? $uri : substr( $uri, 0, $pos );
+}

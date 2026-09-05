@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use SEOPress\Core\Hooks\ExecuteHooksFrontend;
+use SEOPressPro\Helpers\Schemas\PersonId;
 use SEOPressPro\Helpers\SocialProfiles;
 
 class PrintProfilePage implements ExecuteHooksFrontend {
@@ -55,7 +56,7 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 			return;
 		}
 
-		$json = wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		$json = seopress_pro_json_ld_encode( $schema );
 
 		?><script type="application/ld+json"><?php echo apply_filters( 'seopress_schemas_profile_page_html', $json ); ?></script>
 		<?php
@@ -90,7 +91,7 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 		// Build main entity (Person).
 		$main_entity = array(
 			'@type'         => 'Person',
-			'@id'           => trailingslashit( $author_url ) . '#person',
+			'@id'           => PersonId::get( $author->ID ),
 			'name'          => esc_html( $author->display_name ),
 			'alternateName' => esc_html( $author->user_login ),
 			'identifier'    => (string) $author->ID,
@@ -163,7 +164,10 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 		// Rebuild schema from filtered data.
 		$main_entity = array(
 			'@type'         => 'Person',
-			'@id'           => esc_url( trailingslashit( $profile_data['url'] ) ) . '#person',
+			// Rebuilt from the filtered URL, so an integrator emptying it
+			// through seopress_pro_schema_profilepage_data cannot turn the
+			// identifier into the relative "/#person".
+			'@id'           => PersonId::getFromUrl( $profile_data['url'], $author->ID ),
 			'name'          => esc_html( $profile_data['name'] ),
 			'alternateName' => esc_html( $profile_data['alternateName'] ),
 			'identifier'    => esc_html( $profile_data['identifier'] ),

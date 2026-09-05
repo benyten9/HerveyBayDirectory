@@ -121,6 +121,10 @@ final class GatewayManager {
 	 * @return Gateway[]
 	 */
 	public function get_payable_for_invoice( InvoiceModel $invoice ): array {
+		if ( ! doublescale_sales_online_payments_available() ) {
+			return array();
+		}
+
 		$payable = array();
 		foreach ( $this->all( self::CONTEXT_INVOICE ) as $gateway ) {
 			if ( ! $this->is_enabled_for_sales( $gateway->slug ) ) {
@@ -167,6 +171,10 @@ final class GatewayManager {
 	 * @return array<int, array<string, mixed>>
 	 */
 	public function shape_for_invoice( InvoiceModel $invoice ): array {
+		if ( ! doublescale_sales_online_payments_available() ) {
+			return array();
+		}
+
 		$list = array();
 		foreach ( $this->all( self::CONTEXT_INVOICE ) as $gateway ) {
 			if ( ! $this->is_enabled_for_sales( $gateway->slug ) ) {
@@ -196,6 +204,14 @@ final class GatewayManager {
 	 * @return array|WP_Error
 	 */
 	public function init( string $context, string $slug, PayableSubject $subject ) {
+		if ( self::CONTEXT_INVOICE === $context && ! doublescale_sales_online_payments_available() ) {
+			return new WP_Error(
+				'online_payments_pro',
+				__( 'Online invoice payments require DoubleScale Pro.', 'doublescale' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		// The legacy filter is the back-compat hook for a Stripe implementation
 		// supplied outside this registry, so it has to be consulted before the
 		// "is a gateway registered?" checks — otherwise it can never fire.
@@ -249,6 +265,14 @@ final class GatewayManager {
 	 * @return array|WP_Error
 	 */
 	public function confirm( string $context, string $slug, PayableSubject $subject ) {
+		if ( self::CONTEXT_INVOICE === $context && ! doublescale_sales_online_payments_available() ) {
+			return new WP_Error(
+				'online_payments_pro',
+				__( 'Online invoice payments require DoubleScale Pro.', 'doublescale' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		// Mirrors init(): the legacy hook must win before registration checks.
 		if ( self::CONTEXT_INVOICE === $context ) {
 			$legacy = $this->apply_legacy_filter( 'confirm', $slug, null, $subject );
@@ -285,6 +309,14 @@ final class GatewayManager {
 	 * @return array|WP_Error
 	 */
 	public function init_payment( string $slug, InvoiceModel $invoice ) {
+		if ( ! doublescale_sales_online_payments_available() ) {
+			return new WP_Error(
+				'online_payments_pro',
+				__( 'Online invoice payments require DoubleScale Pro.', 'doublescale' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		$guard = InvoicePayable::guard( $invoice, $slug );
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
@@ -326,6 +358,14 @@ final class GatewayManager {
 	 * @return array|WP_Error
 	 */
 	public function confirm_payment( string $slug, InvoiceModel $invoice ) {
+		if ( ! doublescale_sales_online_payments_available() ) {
+			return new WP_Error(
+				'online_payments_pro',
+				__( 'Online invoice payments require DoubleScale Pro.', 'doublescale' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		// Mirrors init_payment(): the legacy hook precedes the Pro-only subject.
 		$legacy = $this->apply_invoice_legacy_filter( 'confirm', $slug, $invoice );
 		if ( null !== $legacy ) {

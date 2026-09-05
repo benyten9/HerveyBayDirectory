@@ -86,6 +86,14 @@ function seopress_pro_features_list_before_tools( $features ) {
 		'btn_primary' => admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_ai' ),
 		'filter'      => 'seopress_remove_feature_ai',
 	);
+	$features['ai-assistant']   = array(
+		'svg'         => SEOPRESS_PRO_ASSETS_DIR . '/img/ico-ai.svg',
+		'title'       => __( 'AI Assistant', 'wp-seopress-pro' ),
+		'desc'        => __( 'A chat assistant in the block editor and on the settings pages: write content, generate metas, and fix the SEO issues it finds on the post you are editing.', 'wp-seopress-pro' ),
+		'btn_primary' => admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_ai' ),
+		'filter'      => 'seopress_remove_feature_ai_assistant',
+		'toggle'      => true,
+	);
 	$features['breadcrumbs']    = array(
 		'svg'         => SEOPRESS_PRO_ASSETS_DIR . '/img/ico-breadcrumbs.svg',
 		'title'       => __( 'Breadcrumbs', 'wp-seopress-pro' ),
@@ -213,7 +221,10 @@ function seopress_pro_features_list_groups( $features ) {
 		'woocommerce'    => 'content',
 		'edd'            => 'content',
 		'dublin-core'    => 'content',
-		'ai'             => 'data-tracking',
+		// Content, not Data & Tracking: both are about producing copy — metas,
+		// alt text, articles — not about measuring or monitoring a site.
+		'ai'             => 'content',
+		'ai-assistant'   => 'content',
 		'page-speed'     => 'data-tracking',
 		'inspect-url'    => 'data-tracking',
 		'news'           => 'data-tracking',
@@ -244,9 +255,9 @@ add_filter( 'seopress_features_list_after_tools', 'seopress_pro_features_list_gr
  * @return array The overridden order.
  */
 function seopress_pro_features_list_order( $order ) {
-	$order['content']       = array( 'titles', 'advanced', 'social', 'dublin-core', 'woocommerce', 'edd', 'rich-snippets' );
+	$order['content']       = array( 'titles', 'ai', 'ai-assistant', 'advanced', 'social', 'dublin-core', 'woocommerce', 'edd', 'rich-snippets' );
 	$order['technical']     = array( '404', 'robots', 'llms', 'instant-indexing', 'htaccess', 'breadcrumbs', 'local-business', 'xml-sitemap', 'tools', 'license', 'agent-ready' );
-	$order['data-tracking'] = array( 'google-analytics', 'page-speed', 'news', 'alerts', 'bot', 'ai', 'inspect-url', 'rss' );
+	$order['data-tracking'] = array( 'google-analytics', 'page-speed', 'news', 'alerts', 'bot', 'inspect-url', 'rss' );
 
 	return $order;
 }

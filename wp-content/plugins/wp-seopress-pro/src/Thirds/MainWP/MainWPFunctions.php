@@ -25,7 +25,6 @@ function seopress_save_pro_licence( $licence ) {
 		array(
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 			'timeout'    => 15,
-			'sslverify'  => false,
 			'body'       => $api_params,
 		)
 	);

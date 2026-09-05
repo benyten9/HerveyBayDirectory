@@ -61,7 +61,7 @@ function nibwp_bricks_pro_image_to_component(array $input): array|WP_Error
     if (!function_exists('nibwp_skill_preflight_consume_token')) {
         require_once __DIR__ . '/../../../abilities/skill-preflight.php';
     }
-    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'bricks-pro');
+    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'bricks-pro', $input);
     if (is_wp_error($token_payload)) {
         return $token_payload;
     }

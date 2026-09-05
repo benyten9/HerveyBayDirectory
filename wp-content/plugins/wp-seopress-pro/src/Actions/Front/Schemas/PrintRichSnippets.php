@@ -65,6 +65,12 @@ class PrintRichSnippets implements ExecuteHooksFrontend {
 		$jsonsCustom = seopress_get_service( 'TagsToString' )->replaceDataToString( $jsonsCustom, $context );
 
 		foreach ( $jsonsCustom as $key => $json ) {
+			// The resolved variables carry the entities WordPress stores, which
+			// a JSON-LD consumer should not have to unescape. Re-encoding the
+			// payload resolves them into JSON escapes; anything that does not
+			// parse is printed unchanged.
+			$json = seopress_pro_json_ld_normalize_custom( $json );
+
 			echo apply_filters( 'seopress_rich_snippets_custom_' . $key . '_html', $json, $context );
 			echo "\n";
 		}

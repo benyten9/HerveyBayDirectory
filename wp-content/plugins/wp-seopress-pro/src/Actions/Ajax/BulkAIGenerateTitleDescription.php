@@ -23,6 +23,30 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 	}
 
 	/**
+	 * Answer a generation result.
+	 *
+	 * The service reports a failure in the payload itself, and both outcomes
+	 * carry a `message`: a failed generation was announced with
+	 * wp_send_json_success() all the same, so the browser saw a success with
+	 * nothing usable in it and could only fall back to a generic error. The
+	 * reason sat in the payload and never reached the user, which is exactly
+	 * what support needs.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param array $data The result returned by the Completions service.
+	 *
+	 * @return void
+	 */
+	protected function sendGenerationResult( $data ) {
+		if ( is_array( $data ) && empty( $data['success'] ) ) {
+			wp_send_json_error( $data );
+		}
+
+		wp_send_json_success( $data );
+	}
+
+	/**
 	 * @return void
 	 */
 	public function handleTitle() {
@@ -54,7 +78,7 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 
 		$data = seopress_pro_get_service( 'Completions' )->generateTitlesDesc( $post_id, 'title', $lang, true );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 
 	/**
@@ -89,7 +113,7 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 
 		$data = seopress_pro_get_service( 'Completions' )->generateTitlesDesc( $post_id, 'desc', $lang, true );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 
 	/**
@@ -127,7 +151,7 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 		// Generate all image metadata (alt text, caption, description) - replace all fields
 		$data = seopress_pro_get_service( 'Completions' )->generateImgAltText( $post_id, 'image_meta', $lang, true );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 
 	/**
@@ -165,7 +189,7 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 		// Generate image metadata only for empty fields (alt text, caption, description)
 		$data = seopress_pro_get_service( 'Completions' )->generateImgAltText( $post_id, 'image_meta', $lang, false );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 
 	/**
@@ -202,7 +226,7 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 
 		$data = seopress_pro_get_service( 'Completions' )->generateImgAltText( $post_id, 'image_meta', $lang, true, null, array( 'alt_text' ) );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 
 	/**
@@ -239,7 +263,7 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 
 		$data = seopress_pro_get_service( 'Completions' )->generateImgAltText( $post_id, 'image_meta', $lang, true, null, array( 'caption' ) );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 
 	/**
@@ -276,6 +300,6 @@ class BulkAIGenerateTitleDescription implements ExecuteHooks {
 
 		$data = seopress_pro_get_service( 'Completions' )->generateImgAltText( $post_id, 'image_meta', $lang, true, null, array( 'description' ) );
 
-		wp_send_json_success( $data );
+		$this->sendGenerationResult( $data );
 	}
 }

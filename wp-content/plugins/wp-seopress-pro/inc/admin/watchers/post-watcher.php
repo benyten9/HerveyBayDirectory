@@ -11,7 +11,9 @@ defined( 'ABSPATH' ) || die( 'Please don&rsquo;t call the plugin directly. Thank
  */
 function seopress_pro_post_watcher_scripts() {
 	$screen = get_current_screen();
-	if ( $screen->is_block_editor() && 'post' === $screen->base ) {
+	// Null on admin pages without a WP_Screen context; a method call on it is
+	// an uncaught Error, not just a warning.
+	if ( $screen && $screen->is_block_editor() && 'post' === $screen->base ) {
 		global $post;
 		wp_enqueue_script( 'seopress-pro-post-watcher', SEOPRESS_PRO_PUBLIC_URL . '/editor/post-watcher/post-watcher.js', array( 'wp-data' ), SEOPRESS_PRO_VERSION, true );
 

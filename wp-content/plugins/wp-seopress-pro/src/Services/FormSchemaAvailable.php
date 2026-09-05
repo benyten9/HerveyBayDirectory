@@ -20,7 +20,7 @@ class FormSchemaAvailable {
 			);
 		}
 
-		$pre = '<code>' . htmlspecialchars( '<script type="application/ld+json">your custom schema</script>' ) . '</code>';
+		$pre = '<code>' . htmlspecialchars( '<script type="application/ld+json">your custom schema</script>', ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</code>';
 
 		return array(
 			array(

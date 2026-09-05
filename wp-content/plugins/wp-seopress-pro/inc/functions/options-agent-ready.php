@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
  * @return string
  */
 function seopress_agent_ready_current_markdown_url() {
-	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/';
+	$request_uri = seopress_agent_ready_request_uri( '/' );
 	$path        = (string) wp_parse_url( $request_uri, PHP_URL_PATH );
 	$url         = home_url( '' === $path ? '/' : $path );
 	$url         = remove_query_arg( array( 'format' ), $url );
@@ -143,7 +143,11 @@ function seopress_agent_ready_inject_content_signal_robots( $output, $public ) {
 		return $output;
 	}
 
-	$block  = "\n# Content Signals (https://blog.cloudflare.com/content-signals/)\n";
+	// The specification's own site, not the announcement blog post that
+	// introduced it. This URL is written into a public file on every site
+	// with the feature on, so it has to survive the source reorganising its
+	// own content: the first one we shipped now returns a 404.
+	$block  = "\n# Content Signals (https://contentsignals.org/)\n";
 	$block .= "User-agent: *\n";
 	$block .= 'Content-Signal: ' . $value . "\n";
 
@@ -336,6 +340,8 @@ function seopress_agent_ready_markdown_negotiation() {
 		$body = seopress_agent_ready_render_home_markdown();
 	}
 
+	seopress_agent_ready_prevent_page_caching();
+
 	nocache_headers();
 	header( 'Content-Type: text/markdown; charset=utf-8' );
 	header( 'Vary: Accept' );
@@ -345,6 +351,45 @@ function seopress_agent_ready_markdown_negotiation() {
 	exit;
 }
 add_action( 'template_redirect', 'seopress_agent_ready_markdown_negotiation' );
+
+/**
+ * Keep the Markdown representation out of every full-page cache.
+ *
+ * An `Accept: text/markdown` request carries the canonical URL, byte for byte,
+ * so a cache that keys on the URL alone stores the Markdown body under the key
+ * the HTML belongs to and then serves it to every plain visitor until the cache
+ * is purged. Reported on a LiteSpeed site where seven URLs answered
+ * `Content-Type: text/markdown` to an ordinary browser.
+ *
+ * The `Cache-Control` headers sent alongside this do not prevent it: page
+ * caches decide what to store through their own layer and do not defer to
+ * headers PHP emits, and `Vary: Accept` only matters to caches that key on that
+ * header, which these do not. So the request is flagged through the interfaces
+ * they actually read.
+ *
+ * Called only once the Markdown body is about to be sent. A request that asked
+ * for Markdown but falls back to HTML (an unpublished or password-protected
+ * post) is left alone, so its HTML response stays cacheable.
+ *
+ * @return void
+ */
+function seopress_agent_ready_prevent_page_caching() {
+	// Read by WP Rocket, W3 Total Cache, WP Super Cache, Comet Cache and the
+	// LiteSpeed Cache plugin, among others.
+	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+		define( 'DONOTCACHEPAGE', true );
+	}
+
+	// LiteSpeed Cache's own control layer, which is what decides cacheability
+	// when the plugin is active.
+	do_action( 'litespeed_control_set_nocache', 'SEOPress: Markdown content negotiation' );
+
+	// Same instruction for a LiteSpeed server running without the plugin, where
+	// the action above has nobody listening.
+	if ( ! headers_sent() ) {
+		header( 'X-LiteSpeed-Cache-Control: no-cache' );
+	}
+}
 
 /* -----------------------------------------------------------------------------
  * Protocol Discovery: WebMCP tool registration
@@ -698,7 +743,7 @@ function seopress_agent_ready_get_agent_skill_descriptor( $skill_id ) {
  * @return bool
  */
 function seopress_agent_ready_serve_well_known( $do_parse, $wp, $extra_query_vars ) {
-	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	$request_uri = seopress_agent_ready_request_uri();
 
 	if ( '' === $request_uri || false === strpos( $request_uri, '.well-known/' ) ) {
 		return $do_parse;

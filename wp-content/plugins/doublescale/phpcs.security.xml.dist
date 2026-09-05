@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<ruleset name="DoubleScale Security-Only PHPCS">
+	<description>
+		Subset of WordPress Coding Standards covering only the sniffs the
+		WordPress.org plugin-review team blocks releases on. Run by the
+		pre-commit hook so a developer can never ship code that fails the
+		security gate. The full ruleset (phpcs.xml.dist) still runs on push / CI.
+	</description>
+
+	<exclude-pattern>./vendor/*</exclude-pattern>
+	<exclude-pattern>./dependencies/*</exclude-pattern>
+	<exclude-pattern>./node_modules/*</exclude-pattern>
+	<exclude-pattern>./build/*</exclude-pattern>
+	<exclude-pattern>./dist/*</exclude-pattern>
+	<exclude-pattern>./assets/*</exclude-pattern>
+	<exclude-pattern>./tools/*</exclude-pattern>
+	<exclude-pattern>./tests/*</exclude-pattern>
+	<exclude-pattern>./docs/*</exclude-pattern>
+	<exclude-pattern>./src/*</exclude-pattern>
+
+	<config name="testVersion" value="7.4-"/>
+	<config name="minimum_wp_version" value="5.8"/>
+
+	<!-- Escaping / output -->
+	<rule ref="WordPress.Security.EscapeOutput"/>
+	<rule ref="WordPress.CodeAnalysis.EscapedNotTranslated"/>
+
+	<!-- Nonce / CSRF -->
+	<rule ref="WordPress.Security.NonceVerification"/>
+
+	<!-- Input handling -->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput"/>
+	<rule ref="WordPress.Security.SafeRedirect"/>
+	<rule ref="WordPress.Security.PluginMenuSlug"/>
+
+	<!-- SQL / DB safety -->
+	<rule ref="WordPress.DB.PreparedSQL"/>
+	<rule ref="WordPress.DB.PreparedSQLPlaceholders"/>
+
+	<!-- Asset registration the WP.org bots flag -->
+	<rule ref="WordPress.WP.EnqueuedResources"/>
+
+	<!-- i18n correctness (the bot blocks on a missing/wrong text-domain) -->
+	<rule ref="WordPress.WP.I18n"/>
+	<config name="text_domain" value="doublescale,default"/>
+
+	<!-- Files / dirs targeted by the security gate -->
+	<arg value="ps"/>
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+
+	<file>./doublescale.php</file>
+	<file>./includes</file>
+	<file>./bin</file>
+</ruleset>

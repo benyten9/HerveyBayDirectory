@@ -691,9 +691,23 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 			$args = array(
 				'blocking'  => true,
 				'timeout'   => 10,
-				'sslverify' => false,
 				'body'      => $body,
 			);
+
+			/**
+			 * Filter whether the Matomo request validates the TLS certificate.
+			 *
+			 * The request carries the Matomo `token_auth`, so verification is on
+			 * by default. Self-hosted instances behind a self-signed certificate
+			 * can opt out, accepting that the token then travels over a
+			 * connection an active network attacker can read.
+			 *
+			 * @since 10.2.0
+			 *
+			 * @param bool   $sslverify Whether to verify the certificate. Default true.
+			 * @param string $url       The Matomo endpoint being called.
+			 */
+			$args['sslverify'] = (bool) apply_filters( 'seopress_matomo_request_sslverify', true, $url );
 
 			$single = wp_remote_post( $url, $args );
 			if ( is_wp_error( $single ) ) {
@@ -1406,7 +1420,6 @@ function seopress_send_alerts_cron() {
 				),
 				'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 				'timeout'    => 15,
-				'sslverify'  => false,
 				'body'       => wp_json_encode( $body ),
 			);
 
@@ -1423,6 +1436,85 @@ add_action( 'seopress_alerts_cron', 'seopress_send_alerts_cron' );
  * @param boolean $new Is new.
  * @return void
  */
+/**
+ * Where the next batch resumes, skipping a post that keeps killing the worker.
+ *
+ * A post that fatally ends the request (memory exhaustion, a hard timeout in
+ * the DOM analysis, a fatal in a third-party filter) leaves the worker no
+ * chance to record anything: the watchdog relaunches from the saved offset,
+ * reaches the same post and dies again. The audit never completes and burns a
+ * cron slot every five minutes, indefinitely.
+ *
+ * A fatal cannot be caught, so the only thing that can break that cycle is
+ * noticing it from the outside: when a run starts at the same point it started
+ * at last time, and the time before that, the post sitting there is the one
+ * ending the request. It is skipped and recorded, so one toxic page costs one
+ * skipped page rather than the whole audit.
+ *
+ * @since 10.2.0
+ *
+ * @param int $offset Offset this run was asked to start from.
+ *
+ * @return int Offset to actually start from.
+ */
+function seopress_site_audit_resolve_resume_offset( $offset ) {
+	$offset      = max( 0, (int) $offset );
+	$stuck_at    = get_option( 'seopress_pro_site_audit_stuck_offset', null );
+	$stuck_count = (int) get_option( 'seopress_pro_site_audit_stuck_count', 0 );
+
+	// Moved since last time: the previous run made progress.
+	if ( null === $stuck_at || (int) $stuck_at !== $offset ) {
+		update_option( 'seopress_pro_site_audit_stuck_offset', $offset, false );
+		update_option( 'seopress_pro_site_audit_stuck_count', 1, false );
+
+		return $offset;
+	}
+
+	++$stuck_count;
+
+	/**
+	 * How many runs may start from the same point before the post sitting
+	 * there is treated as the one ending the request.
+	 *
+	 * Two is not enough: a host-wide timeout can legitimately cost one retry.
+	 *
+	 * @since 10.2.0
+	 *
+	 * @param int $threshold Number of runs.
+	 */
+	$threshold = (int) apply_filters( 'seopress_site_audit_stuck_threshold', 3 );
+
+	if ( $stuck_count < $threshold ) {
+		update_option( 'seopress_pro_site_audit_stuck_count', $stuck_count, false );
+
+		return $offset;
+	}
+
+	// The worker records the post it is about to analyse, so the one that ended
+	// the request can be named even though it left no other trace.
+	$skipped = (int) get_option( 'seopress_pro_site_audit_current_post', 0 );
+
+	update_option(
+		'seopress_pro_site_audit_last_error',
+		array(
+			'post_id'   => $skipped,
+			'url'       => $skipped ? get_permalink( $skipped ) : '',
+			'offset'    => $offset,
+			'timestamp' => time(),
+		),
+		false
+	);
+
+	// Zero, not one: the post now sitting at that offset has not been seen yet,
+	// and it deserves the same number of chances as any other. Recording it as
+	// already sighted would condemn it a run early.
+	update_option( 'seopress_pro_site_audit_stuck_offset', $offset + 1, false );
+	update_option( 'seopress_pro_site_audit_stuck_count', 0, false );
+	update_option( 'seopress_pro_site_audit_offset', $offset + 1, false );
+
+	return $offset + 1;
+}
+
 function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 	// Check if GSC toggle is ON.
 	if ( seopress_get_service( 'ToggleOption' )->getToggleBot() !== '1' ) {
@@ -1452,6 +1544,10 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 		delete_option( 'seopress_pro_site_audit_offset' );
 		delete_option( 'seopress_pro_site_audit_count_posts' );
 		delete_option( 'seopress_pro_site_audit_post_count' );
+		delete_option( 'seopress_pro_site_audit_stuck_offset' );
+		delete_option( 'seopress_pro_site_audit_stuck_count' );
+		delete_option( 'seopress_pro_site_audit_current_post' );
+		delete_option( 'seopress_pro_site_audit_last_error' );
 		update_option( 'seopress_pro_site_audit_last_scan', time(), false );
 	}
 
@@ -1459,6 +1555,10 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 	if ( 0 === (int) $offset ) {
 		$offset = get_option( 'seopress_pro_site_audit_offset', 0 );
 	}
+
+	// A run that keeps starting where the last one started is stuck on the post
+	// sitting there. Step over it rather than dying on it forever.
+	$offset = seopress_site_audit_resolve_resume_offset( $offset );
 
 	// Query the posts.
 	$args = array(
@@ -1507,7 +1607,7 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 
 		$post_count = get_option( 'seopress_pro_site_audit_post_count' ) ? (int) get_option( 'seopress_pro_site_audit_post_count' ) : 1;
 
-		foreach ( $postslist as $post_id ) {
+		foreach ( $postslist as $batch_index => $post_id ) {
 			$is_running = get_option( 'seopress_pro_site_audit_running', 0 );
 
 			if ( 0 === $is_running ) {
@@ -1515,8 +1615,11 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 				break;
 			}
 
-			// Save current offset.
-			update_option( 'seopress_pro_site_audit_offset', $offset, false );
+			// Save the resume point for this post, not the batch's starting
+			// offset. Pinning it to the start meant a worker that died mid-batch
+			// re-audited and re-counted everything already done in it, which is
+			// how post_count climbed past the total ("410 / 67 posts").
+			update_option( 'seopress_pro_site_audit_offset', $offset + $batch_index, false );
 
 			// Heartbeat: record that a batch is actively making progress. The
 			// watchdog uses this to tell a live audit from a stalled one, so it
@@ -1530,35 +1633,65 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 				continue;
 			}
 
-			// Skip if noindex is enabled for this post.
+			// Skip if noindex is enabled for this post. Its issues from earlier
+			// scans are purged, not just skipped: a page audited before being
+			// noindexed would otherwise keep showing up in the results forever,
+			// since only visited posts get their rows rewritten.
 			if ( get_post_meta( $post_id, '_seopress_robots_index', true ) === 'yes' && seopress_pro_get_service( 'OptionBot' )->getBotScanSettingsAuditNoindex() !== '1' ) {
+				seopress_pro_get_service( 'SEOIssuesRepository' )->deleteAllForPost( $post_id );
 				continue;
 			}
 
-			// Skip if redirections are enabled for this post.
+			// Skip if redirections are enabled for this post. Same purge, same
+			// reason: a redirected page is out of the audit's scope.
 			if ( 'yes' == get_post_meta( $post_id, '_seopress_redirections_enabled', true ) ) {
+				seopress_pro_get_service( 'SEOIssuesRepository' )->deleteAllForPost( $post_id );
 				continue;
 			}
+
+			// Name the post about to be analysed. A fatal leaves no trace of
+			// itself, so this is the only record of which post ended the run.
+			update_option( 'seopress_pro_site_audit_current_post', $post_id, false );
 
 			// Process post audit logic.
-			$dom_result = seopress_get_service( 'RequestPreview' )->getDomById( $post_id, null );
+			//
+			// A fatal cannot be caught and is handled by the stuck detection at
+			// the top of this function. A Throwable can, and one page throwing
+			// should cost that page rather than the rest of the batch.
+			try {
+				$dom_result = seopress_get_service( 'RequestPreview' )->getDomById( $post_id, null );
 
-			if ( ! $dom_result['success'] ) {
+				if ( ! $dom_result['success'] ) {
+					continue;
+				}
+
+				$str = $dom_result['body'];
+
+				$data = seopress_get_service( 'DomFilterContent' )->getData( $str, $post_id );
+				$data = seopress_get_service( 'DomAnalysis' )->getDataAnalyze( $data, array( 'id' => $post_id ) );
+
+				// Save analysis data.
+				$post          = get_post( $post_id );
+				$score         = seopress_get_service( 'DomAnalysis' )->getScore( $post );
+				$data['score'] = $score;
+				$keywords      = seopress_get_service( 'DomAnalysis' )->getKeywords( array( 'id' => $post_id ) );
+				seopress_get_service( 'ContentAnalysisDatabase' )->saveData( $post_id, $data, $keywords );
+				seopress_get_service( 'GetContentAnalysis' )->getAnalyzes( $post );
+			} catch ( \Throwable $e ) {
+				update_option(
+					'seopress_pro_site_audit_last_error',
+					array(
+						'post_id'   => $post_id,
+						'url'       => get_permalink( $post_id ),
+						'offset'    => $offset + $batch_index,
+						'message'   => $e->getMessage(),
+						'timestamp' => time(),
+					),
+					false
+				);
+
 				continue;
 			}
-
-			$str = $dom_result['body'];
-
-			$data = seopress_get_service( 'DomFilterContent' )->getData( $str, $post_id );
-			$data = seopress_get_service( 'DomAnalysis' )->getDataAnalyze( $data, array( 'id' => $post_id ) );
-
-			// Save analysis data.
-			$post          = get_post( $post_id );
-			$score         = seopress_get_service( 'DomAnalysis' )->getScore( $post );
-			$data['score'] = $score;
-			$keywords      = seopress_get_service( 'DomAnalysis' )->getKeywords( array( 'id' => $post_id ) );
-			seopress_get_service( 'ContentAnalysisDatabase' )->saveData( $post_id, $data, $keywords );
-			seopress_get_service( 'GetContentAnalysis' )->getAnalyzes( $post );
 
 			// Re-enable QM if disabled.
 			remove_filter( 'user_has_cap', 'seopress_disable_qm', 10, 3 );
@@ -1566,8 +1699,17 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 			// Log post title.
 			update_option( 'seopress_pro_site_audit_log', $post->post_title . ' - ' . get_permalink( $post_id ), false );
 
-			// Increment current post count.
-			update_option( 'seopress_pro_site_audit_post_count', $post_count++, false );
+			// Increment current post count. Capped at the total: a counter that
+			// reports more posts than exist is never right, and reading past
+			// 100% is what the reporter saw first.
+			$total_posts = (int) get_option( 'seopress_pro_site_audit_count_posts', 0 );
+			$next_count  = $post_count++;
+
+			if ( $total_posts > 0 ) {
+				$next_count = min( $next_count, $total_posts );
+			}
+
+			update_option( 'seopress_pro_site_audit_post_count', $next_count, false );
 		}
 
 		// Update offset for the next batch.
@@ -2211,6 +2353,82 @@ function seopress_broken_links_watchdog_fn() {
 add_action( 'seopress_broken_links_watchdog_cron', 'seopress_broken_links_watchdog_fn' );
 
 /**
+ * Broken Links - Whether a host name resolves at all.
+ *
+ * @since 10.2.1
+ *
+ * @param string $host Host name to look up.
+ *
+ * @return bool
+ */
+function seopress_broken_links_host_resolves( $host ) {
+	if ( gethostbyname( $host ) !== $host ) {
+		return true;
+	}
+
+	// gethostbyname() only knows about A records, so an IPv6-only host answers
+	// nothing here while being perfectly reachable. Reporting it as dead would
+	// be a false positive, and this second lookup only ever runs on the handful
+	// of links that failed the first one.
+	if ( function_exists( 'checkdnsrr' ) ) {
+		return (bool) checkdnsrr( $host, 'AAAA' );
+	}
+
+	return false;
+}
+
+/**
+ * Broken Links - Decide what to do with a link before probing it.
+ *
+ * wp_http_validate_url() answers one question — may WordPress fetch this? — and
+ * returns the same refusal for a host that resolves into a private range and
+ * for a host that does not resolve at all. The scan needs those two apart: the
+ * first must never be requested, the second is the single most common broken
+ * link there is and is exactly what the report exists to show.
+ *
+ * @since 10.2.1
+ *
+ * @param string $href The link found in the content.
+ *
+ * @return string 'safe' to probe it, 'unresolved' for a host that does not
+ *                exist, 'blocked' for a target WordPress refuses to fetch, or
+ *                'invalid' for anything that is not an absolute HTTP(S) URL.
+ */
+function seopress_broken_links_classify_target( $href ) {
+	if ( ! is_string( $href ) || '' === $href ) {
+		return 'invalid';
+	}
+
+	$parsed = wp_parse_url( $href );
+
+	if ( empty( $parsed['scheme'] ) || empty( $parsed['host'] ) ) {
+		return 'invalid';
+	}
+
+	if ( ! in_array( strtolower( $parsed['scheme'] ), array( 'http', 'https' ), true ) ) {
+		return 'invalid';
+	}
+
+	if ( wp_http_validate_url( $href ) ) {
+		return 'safe';
+	}
+
+	// Core refused it. The only reason worth telling apart is a host that does
+	// not resolve, and only for a host that is not the site's own: core lets
+	// that one through whatever it resolves to, so a refusal there is about the
+	// port or the credentials, never about DNS.
+	$host        = trim( $parsed['host'], '.' );
+	$parsed_home = wp_parse_url( home_url() );
+	$same_host   = ! empty( $parsed_home['host'] ) && strtolower( $parsed_home['host'] ) === strtolower( $host );
+
+	if ( ! $same_host && ! filter_var( $host, FILTER_VALIDATE_IP ) && ! seopress_broken_links_host_resolves( $host ) ) {
+		return 'unresolved';
+	}
+
+	return 'blocked';
+}
+
+/**
  * Broken Links - Process a single post for broken links.
  *
  * @since 9.8.0
@@ -2286,14 +2504,67 @@ function seopress_broken_links_process_post( $post_id, $timeout, $where, $only_4
 		$checked_urls[ $href ] = true;
 
 		// Check link status.
-		$link_args     = array(
-			'timeout'     => $timeout,
-			'blocking'    => true,
-			'sslverify'   => false,
-			'compress'    => true,
-			'redirection' => 4,
+		//
+		// The href comes from post content, so anyone who can publish decides
+		// what the server connects to: reject_unsafe_urls makes WordPress
+		// validate the target (and every hop of the redirect chain) against
+		// private and reserved ranges, so a link cannot turn the scan into a
+		// probe of the internal network or of a cloud metadata endpoint.
+		//
+		// Certificate verification stays off: this only reads a status code,
+		// sends no credential, and an expired certificate on a third-party site
+		// is not what the broken links report is meant to flag.
+		$link_args = array(
+			'timeout'            => $timeout,
+			'blocking'           => true,
+			'sslverify'          => false,
+			'compress'           => true,
+			'redirection'        => 4,
+			'reject_unsafe_urls' => true,
 		);
-		$link_response = wp_remote_get( $href, $link_args );
+
+		/**
+		 * Filter the arguments used to probe a link found in the content.
+		 *
+		 * Set reject_unsafe_urls to false to let the scan reach hosts on a
+		 * private range — needed on a staging site that links to internal
+		 * hosts, at the cost of the protection described above.
+		 *
+		 * @since 10.2.0
+		 *
+		 * @param array  $link_args The wp_remote_get() arguments.
+		 * @param string $href      The link being checked.
+		 */
+		$link_args = apply_filters( 'seopress_broken_links_request_args', $link_args, $href );
+
+		// A host that no longer resolves is the most common broken link there
+		// is, and reject_unsafe_urls refuses it exactly the way it refuses a
+		// link into the internal network: the request never leaves, and the
+		// WP_Error that comes back says nothing more than "A valid URL was not
+		// provided". Classifying the target here keeps the two apart, so the
+		// dead domain lands in the report and the internal host still does not.
+		$link_response = null;
+		$unreachable   = false;
+
+		if ( ! empty( $link_args['reject_unsafe_urls'] ) ) {
+			$target = seopress_broken_links_classify_target( $href );
+
+			if ( 'blocked' === $target ) {
+				continue;
+			}
+
+			$unreachable = 'unresolved' === $target;
+		}
+
+		if ( ! $unreachable ) {
+			$link_response = wp_remote_get( $href, $link_args );
+
+			// The cURL transport is the only one to phrase an unresolved host
+			// this way; the streams one says "getaddrinfo failed". Both are only
+			// reached when the pre-flight above was skipped through the filter.
+			$unreachable = is_wp_error( $link_response )
+				&& false !== strpos( $link_response->get_error_message(), 'cURL error 6' );
+		}
 
 		$bot_status_code = wp_remote_retrieve_response_code( $link_response );
 		$bot_status_type = '';
@@ -2307,13 +2578,13 @@ function seopress_broken_links_process_post( $post_id, $timeout, $where, $only_4
 		}
 
 		// Filter 404 only if setting is enabled.
-		if ( $only_404 ) {
-			$is_404    = '404' === $bot_status_code;
-			$is_curl_6 = ! is_wp_error( $link_response ) ? false : ( false !== strpos( $link_response->get_error_message(), 'cURL error 6' ) );
-
-			if ( ! $is_404 && ! $is_curl_6 ) {
-				continue;
-			}
+		//
+		// The status code comes back from the HTTP API as an integer, so the
+		// comparison has to be one too: '404' === $bot_status_code never matched
+		// a real response, which left unreachable hosts as the only thing this
+		// option ever let through.
+		if ( $only_404 && 404 !== (int) $bot_status_code && ! $unreachable ) {
+			continue;
 		}
 
 		// Check if link already exists.
@@ -2479,7 +2750,6 @@ function seopress_license_validation_cron() {
 		array(
 			'user-agent' => 'WordPress/' . get_bloginfo( 'version' ),
 			'timeout'    => 15,
-			'sslverify'  => false,
 			'body'       => $api_params,
 		)
 	);

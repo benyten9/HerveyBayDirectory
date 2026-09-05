@@ -7,12 +7,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 abstract class SEOIssueName {
-	public static function getIssueNameI18n( $issueName ) {
-		if ( ! $issueName ) {
-			return;
-		}
-
-		$data = array(
+	/**
+	 * Every known issue_name mapped to its translated label.
+	 *
+	 * Exposed on its own so callers that need the whole table — searching on
+	 * the label the user actually reads, listing the values of a column
+	 * filter — don't have to call getIssueNameI18n() once per slug.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function getIssueNames() {
+		return array(
 			'json_schemas_duplicated'       => __( 'Duplicated JSON schemas', 'wp-seopress-pro' ),
 			'json_schemas_not_found'        => __( 'No JSON schemas found', 'wp-seopress-pro' ),
 			'old_post'                      => __( 'Post too old', 'wp-seopress-pro' ),
@@ -69,7 +74,26 @@ abstract class SEOIssueName {
 			'content_media_missing'         => __( 'No media in content', 'wp-seopress-pro' ),
 			'content_wall_of_text'          => __( 'Wall of text', 'wp-seopress-pro' ),
 		);
+	}
 
-		return $data[ $issueName ];
+	/**
+	 * Translated label for a single issue_name.
+	 *
+	 * @param string $issueName The issue name.
+	 *
+	 * @return string|null
+	 */
+	public static function getIssueNameI18n( $issueName ) {
+		if ( ! $issueName ) {
+			return;
+		}
+
+		$data = self::getIssueNames();
+
+		// An unknown name reaches this map whenever the table holds rows
+		// written by another version of the plugin (upgrade, downgrade, or a
+		// renamed issue). Rendering the raw slug beats a PHP warning on every
+		// row of the results screen.
+		return isset( $data[ $issueName ] ) ? $data[ $issueName ] : $issueName;
 	}
 }

@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<ruleset name="WordPress Coding Standards for DoubleScale Plugin">
+	<description>Sniffs for WordPress plugins, with minor modifications for DoubleScale</description>
+
+	<exclude-pattern>./vendor/*</exclude-pattern>
+	<exclude-pattern>./dependencies/*</exclude-pattern>
+	<exclude-pattern>./node_modules/*</exclude-pattern>
+	<exclude-pattern>./build/*</exclude-pattern>
+	<exclude-pattern>./dist/*</exclude-pattern>
+	<exclude-pattern>./assets/*</exclude-pattern>
+	<exclude-pattern>./tools/*</exclude-pattern>
+	<exclude-pattern>./tests/*</exclude-pattern>
+	<exclude-pattern>./docs/*</exclude-pattern>
+	<exclude-pattern>./src/*</exclude-pattern>
+	<exclude-pattern>*.min.js</exclude-pattern>
+	<exclude-pattern>*.min.css</exclude-pattern>
+
+	<rule ref="PHPCompatibilityWP"/>
+	<config name="testVersion" value="7.4-"/>
+	<config name="minimum_wp_version" value="5.8"/>
+
+	<rule ref="WordPress-Core">
+		<exclude name="WordPress.PHP.YodaConditions"/>
+		<!--
+			CRM, scheduler, and campaign code does write-heavy, per-request DB work
+			(claim/release locks, ad-hoc queue queries, custom-field reads). Persistent
+			caching is not applicable to most of these paths, and individual
+			justifications add noise. WooCommerce/FluentCRM/etc. take the same stance.
+		-->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+
+		<!--
+			Architecture conflict (A): PSR-4 vs WPCS file naming.
+
+			This plugin autoloads via Composer PSR-4 (DoubleScale\ → includes/),
+			which requires PascalCase class files (EmailLog.php). WPCS file naming
+			expects hyphenated-lowercase (class-email-log.php), which predates PSR-4
+			and is incompatible with Composer's autoloader rules. Following WPCS here
+			would force a switch to classmap autoloading and break every namespace
+			import. Modern WP plugins (WooCommerce Blocks, Gutenberg, Jetpack) take
+			the same stance.
+		-->
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+	</rule>
+
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs">
+		<!--
+			Docblock-Missing exclusions (B): the WordPress-Docs ruleset assumes
+			every class / method / property is part of a documented public API.
+			This codebase uses dependency-injected services, Eloquent models, and
+			DTO-style value objects where adding "@param int $id" on getId(int $id)
+			is pure noise. We keep documentation sniffs for public hooks, REST
+			controllers, and the bootstrap entry (where it actually helps third
+			parties), and silence them on internal class surfaces.
+
+			What we DON'T silence: WordPress.WP.I18n.*, EscapeOutput, NonceVerification,
+			ValidatedSanitizedInput, EnqueuedResources, PreparedSQL — i.e. anything
+			the WordPress.org review team blocks releases on.
+		-->
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.Missing"/>
+		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+		<exclude name="Squiz.Commenting.FileComment.SpacingAfterOpen"/>
+		<exclude name="Squiz.Commenting.FileComment.SpacingAfterComment"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag"/>
+		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
+		<exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>
+		<exclude name="Squiz.Commenting.FunctionCommentThrowTag.Missing"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+
+		<!--
+			Noise (C): the "comments must end with . ! or ?" sniff fires on every
+			single-line code comment in the codebase (2,200+ hits) and provides
+			zero security or correctness value. We treat it as taste.
+		-->
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+	</rule>
+	<rule ref="WordPress.WP.I18n"/>
+	<config name="text_domain" value="doublescale,default"/>
+
+	<!-- These special comments are markers for the build process -->
+	<rule ref="Squiz.Commenting.InlineComment.WrongStyle" />
+
+	<rule ref="WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase" />
+	<rule ref="WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase" />
+	<rule ref="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase" />
+
+	<rule ref="VariableAnalysis.CodeAnalysis.VariableAnalysis">
+		<properties>
+			<property name="allowUnusedParametersBeforeUsed" value="true"/>
+		</properties>
+	</rule>
+	<rule ref="Generic.CodeAnalysis.EmptyStatement"/>
+
+	<arg value="ps"/>
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+
+	<file>./doublescale.php</file>
+	<file>./includes</file>
+	<file>./bin</file>
+	<file>./phpunit</file>
+
+
+
+
+	<!-- Do not require docblocks for unit tests -->
+	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.FileComment.Missing">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.ClassComment.Missing">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.ClassComment.SpacingAfter">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.Commenting.DocComment.Empty">
+    	<exclude-pattern>phpunit/*</exclude-pattern>
+    </rule>
+	<rule ref="Generic.Commenting.DocComment.MissingShort">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.VariableComment.Missing">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting.FunctionCommentThrowTag.Missing">
+		<exclude-pattern>phpunit/*</exclude-pattern>
+	</rule>
+
+	<!-- Ignore snake case error in parser -->
+</ruleset>

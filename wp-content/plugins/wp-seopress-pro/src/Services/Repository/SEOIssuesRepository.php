@@ -34,6 +34,40 @@ class SEOIssuesRepository extends AbstractRepository {
 		);
 	}
 
+	/**
+	 * Remove every issue row for a post, whatever the type.
+	 *
+	 * Used when the post leaves the audit entirely: permanent deletion, or a
+	 * scan that skips it (noindex, active redirection). Nothing else ever
+	 * removes these rows, so without this the audit keeps reporting pages
+	 * that no longer exist or are deliberately out of scope.
+	 *
+	 * @param int $postId Post id.
+	 *
+	 * @return int|false Number of rows removed, or false on error.
+	 */
+	public function deleteAllForPost( $postId ) {
+		global $wpdb;
+
+		$postId = absint( $postId );
+
+		if ( empty( $postId ) ) {
+			return false;
+		}
+
+		$tableName = esc_sql( $this->getTableName() );
+
+		try {
+			return $wpdb->delete(
+				$tableName,
+				array( 'post_id' => $postId ),
+				array( '%d' )
+			);
+		} catch ( \Exception $e ) {
+			return false;
+		}
+	}
+
 	public function issueAlreadyExistForPostId( $postId, $issue_name ) {
 		global $wpdb;
 
@@ -52,14 +86,60 @@ class SEOIssuesRepository extends AbstractRepository {
 	/**
 	 * @param array $issue
 	 */
+	/**
+	 * Reduce an issue to the columns it is allowed to write, ready for $wpdb.
+	 *
+	 * The values reach this class from the site audit, which reads them out of
+	 * the post content (image URLs, alt texts, headings), so they are authored
+	 * by anyone who can edit a post. They belong in bound parameters, not in a
+	 * concatenated statement.
+	 *
+	 * @param array $issue      The issue data.
+	 * @param array $authorized The column names that may be written.
+	 *
+	 * @return array Column name => scalar value.
+	 */
+	protected function toColumns( array $issue, array $authorized ) {
+		$data = array();
+
+		foreach ( $authorized as $column ) {
+			if ( ! isset( $issue[ $column ] ) ) {
+				continue;
+			}
+
+			$value = $issue[ $column ];
+
+			if ( $value instanceof \DateTime ) {
+				$value = $value->format( 'Y-m-d H:i:s' );
+			} elseif ( is_array( $value ) ) {
+				$value = empty( $value ) ? null : maybe_serialize( $value );
+			} elseif ( in_array( $column, array( 'post_id', 'issue_ignore' ), true ) ) {
+				// The integer columns were cast by the previous statement builder.
+				$value = (int) $value;
+			}
+
+			$data[ $column ] = $value;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param array $issue
+	 */
 	public function insertSEOIssue( $issue ) {
 
 		global $wpdb;
-		$sql  = $this->getInsertInstruction( $issue );
-		$sql .= $this->getInsertValuesInstruction( $issue );
+
+		$data = $this->toColumns( (array) $issue, $this->getAuthorizedInsertValues() );
+
+		if ( empty( $data ) ) {
+			return null;
+		}
 
 		try {
-			return $wpdb->query( $sql );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, values are bound by $wpdb->insert().
+			return $wpdb->insert( $this->getTableName(), $data );
 		} catch ( \Exception $e ) {
 			return null;
 		}
@@ -71,12 +151,22 @@ class SEOIssuesRepository extends AbstractRepository {
 		$postId     = absint( $postId );
 		$issue_name = sanitize_text_field( $issue['issue_name'] );
 
-		$sql  = $this->getUpdateInstruction( $issue );
-		$sql .= $this->getUpdateValues( $issue );
-		$sql .= $wpdb->prepare( ' WHERE post_id = %d AND issue_name = %s', $postId, $issue_name );
+		$data = $this->toColumns( (array) $issue, $this->getAuthorizedUpdateValues() );
+
+		if ( empty( $data ) ) {
+			return null;
+		}
 
 		try {
-			return $wpdb->query( $sql );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- custom table, values and WHERE are bound by $wpdb->update().
+			return $wpdb->update(
+				$this->getTableName(),
+				$data,
+				array(
+					'post_id'    => $postId,
+					'issue_name' => $issue_name,
+				)
+			);
 		} catch ( \Exception $e ) {
 			return null;
 		}

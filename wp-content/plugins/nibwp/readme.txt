@@ -4,7 +4,7 @@ Tags: ai, mcp, claude, automation
 Requires at least: 6.5
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.2.5
+Stable tag: 1.2.8
 License: Commercial — see https://nibwp.com/terms
 
 The same NIBWP plugin you got from WordPress.org plus the premium runtime: file/process abilities, sandboxed PHP execution, premium integrations (Elementor, Bricks, ACF, JetEngine, EtchWP, ACSS, WPJM, …), toolkits (security, notifications, migration, content planner, SEO), and the Skill marketplace.
@@ -16,5 +16,5 @@ The same NIBWP plugin you got from WordPress.org plus the premium runtime: file/
 
 == Changelog ==
 
-= 1.2.5 =
+= 1.2.8 =
 * Drop-in replacement build — same nibwp/ folder as Free + wp.org, no separate "Pro" plugin entry.

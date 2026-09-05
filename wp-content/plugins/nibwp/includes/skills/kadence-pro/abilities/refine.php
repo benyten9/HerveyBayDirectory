@@ -55,7 +55,7 @@ function nibwp_kadence_pro_refine(array $input): array|WP_Error
     if (!function_exists('nibwp_skill_preflight_consume_token')) {
         require_once __DIR__ . '/../../../abilities/skill-preflight.php';
     }
-    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'kadence-pro');
+    $token_payload = nibwp_skill_preflight_consume_token($raw_token, 'kadence-pro', $input);
     if (is_wp_error($token_payload)) {
         return ['success' => false, 'requires_user_input' => true, 'question' => 'Run nibwp/skill-preflight { skill_id:"kadence-pro" } first.', 'summary' => $token_payload->get_error_message()];
     }

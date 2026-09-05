@@ -9,6 +9,27 @@ class Redirection {
 	protected $cachePageByTitle = array();
 
 	public function getPageByTitle( $title, $output, $post_type ) {
+		// An empty title is not a lookup key. Both queries below compare
+		// `post_title` to it directly, so they answer with whatever row happens
+		// to carry an empty title — and rows like that exist: `processCreate()`
+		// stores one whenever `normalize_origin()` reduces the input to nothing,
+		// which `/`, a bare domain and any non-Latin path all do.
+		//
+		// The front-end matcher reaches here with an empty key on the homepage:
+		// a request carrying only query parameters has no path, and the pass
+		// that ignores the parameters then has nothing left to match on. The
+		// visitor was redirected to that unrelated row's destination, so
+		// `/?utm_source=…` and `/?fbclid=…` left the homepage while `/` itself
+		// stayed put.
+		//
+		// Trimmed, because `WP_Query` trims `title` before testing it and a
+		// whitespace-only key degrades exactly the same way.
+		$title = (string) $title;
+
+		if ( '' === trim( $title ) ) {
+			return false;
+		}
+
 		if ( isset( $this->cachePageByTitle[ $title ] ) ) {
 			return $this->cachePageByTitle[ $title ];
 		}
@@ -101,13 +122,23 @@ class Redirection {
 			$currentUrl = untrailingslashit( $currentUrl );
 		}
 
-		$currentUrl = htmlspecialchars( rawurldecode( add_query_arg( $_SERVER['QUERY_STRING'] ?? '', '', $currentUrl ) ) );
+		$currentUrl = add_query_arg( $_SERVER['QUERY_STRING'] ?? '', '', $currentUrl );
+
+		// Parsed before being decoded: parse_url() replaces every C1 byte with
+		// an underscore, so decoding first turned `остров` into `о_ _ ов` and
+		// no non-Latin pattern could ever match. See
+		// seopress_pro_parse_url_decoded().
+		$currentUrlParse = seopress_pro_parse_url_decoded( $currentUrl );
 
 		if ( isset( $options['only_uri'] ) && $options['only_uri'] ) {
-			$currentUrlParse = wp_parse_url( $currentUrl );
-
 			if ( isset( $currentUrlParse['path'] ) ) {
-				$currentUrl = $currentUrlParse['path'];
+				// Without the path the site is served from: home_url() adds it
+				// back, and both the stored origins and the URL tester work
+				// without it. See seopress_pro_strip_home_path().
+				$currentUrl = seopress_pro_strip_home_path( $currentUrlParse['path'] );
+				if ( '' === $currentUrl ) {
+					$currentUrl = '/';
+				}
 			} else {
 				$currentUrl = '/';
 			}
@@ -115,6 +146,10 @@ class Redirection {
 			if ( isset( $currentUrlParse['query'] ) && ! empty( $currentUrlParse['query'] ) ) {
 				$currentUrl .= '?' . $currentUrlParse['query'];
 			}
+		} else {
+			// The full URL keeps its previous shape: decoded, and escaped the
+			// same way, so callers that log or redirect on it are unchanged.
+			$currentUrl = htmlspecialchars( rawurldecode( $currentUrl ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 		}
 
 		if ( isset( $options['with_query_params'] ) && $options['with_query_params'] && isset( $_SERVER['QUERY_STRING'] ) ) {
@@ -122,6 +157,36 @@ class Redirection {
 		}
 
 		return apply_filters( 'redirection_get_current_url', $currentUrl );
+	}
+
+	/**
+	 * Turn a stored redirection pattern into a usable PCRE expression.
+	 *
+	 * The delimiter is `#`, not `/`, so a pattern full of slashes needs no
+	 * mangling before it can be compiled. We used to wrap patterns in `/…/`
+	 * and escape every `/` on the way in, which broke the moment a user
+	 * escaped one themselves: `\/it` became `\\/it`, a literal backslash
+	 * followed by a slash, and the redirection quietly stopped matching
+	 * anything. Both `/it` and `\/it` now compile to the same thing.
+	 *
+	 * A `#` inside the pattern is escaped, unless the user already escaped it.
+	 *
+	 * Matching stays case-insensitive, as it has always been.
+	 *
+	 * @param string $pattern Pattern as stored on the redirection.
+	 *
+	 * @return string A delimited, case-insensitive PCRE pattern.
+	 */
+	public function buildRegexPattern( $pattern ) {
+		$escaped = preg_replace_callback(
+			'~(?<!\\\\)#~',
+			static function () {
+				return '\\#';
+			},
+			(string) $pattern
+		);
+
+		return '#' . $escaped . '#i';
 	}
 
 	public function checkRegexRedirect() {
@@ -161,10 +226,9 @@ class Redirection {
 		$redirectionMatch = null;
 		$matches          = null;
 		do {
-			$regex = $redirectionsWithRegex[ $i ]->post_title;
-			$regex = preg_replace( '/\//', '\/', $regex );
+			$regex = $this->buildRegexPattern( $redirectionsWithRegex[ $i ]->post_title );
 			try {
-				@\preg_match( sprintf( '/%s/i', $regex ), $currentUrl, $matches );
+				@\preg_match( $regex, $currentUrl, $matches );
 				if ( ! empty( $matches ) ) {
 					$redirectionMatch = $redirectionsWithRegex[ $i ];
 				}
@@ -266,7 +330,7 @@ class Redirection {
 		// 301 / 302 / 307
 		elseif ( $redirectionValue ) {
 			// URL redirection
-			$seopress_redirections_value = html_entity_decode( $redirectionValue );
+			$seopress_redirections_value = html_entity_decode( $redirectionValue, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 
 			// Query parameters
 			if ( 'with_ignored_param' === $query_param_value_safe && isset( $_SERVER['QUERY_STRING'] ) ) {

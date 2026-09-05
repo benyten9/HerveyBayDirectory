@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<phpunit
+	backupGlobals="false"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+	>
+	<testsuites>
+		<testsuite name="fast">
+			<directory phpVersion="7.4.0" phpVersionOperator=">=">./phpunit/tests</directory>
+		</testsuite>
+		<testsuite name="integration">
+			<directory phpVersion="7.4.0" phpVersionOperator=">=">./tests/integration</directory>
+		</testsuite>
+	</testsuites>
+	<groups>
+		<exclude>
+			<group>ms-required</group>
+		</exclude>
+	</groups>
+	<php>
+		<!--
+			Bootstrap is selected at runtime via the phpunit bootstrap CLI flag
+			in the composer scripts. The fast suite uses phpunit/bootstrap.php
+			(stubs, no DB). The integration suite uses tests/integration/bootstrap.php
+			(real WP_UnitTestCase + MySQL).
+		-->
+	</php>
+</phpunit>

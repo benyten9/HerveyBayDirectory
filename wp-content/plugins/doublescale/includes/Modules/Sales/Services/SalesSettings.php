@@ -69,6 +69,9 @@ final class SalesSettings {
 		$merged = array_merge( self::defaults(), $stored );
 		$merged = self::migrate_legacy_email_subjects( $merged );
 		$merged['enabled_online_gateways'] = self::get_resolved_enabled_online_gateways();
+		if ( ! doublescale_sales_online_payments_available() ) {
+			$merged['default_online_payment_gateways'] = array();
+		}
 		$merged['rep_notification_templates'] = self::merge_rep_notification_templates(
 			$merged['rep_notification_templates'] ?? array()
 		);
@@ -124,6 +127,10 @@ final class SalesSettings {
 	 * @return string[]
 	 */
 	public static function get_resolved_enabled_online_gateways(): array {
+		if ( ! doublescale_sales_online_payments_available() ) {
+			return array();
+		}
+
 		$registered = GatewayManager::instance()->invoice_slugs();
 		$explicit   = self::get_enabled_online_gateways();
 
@@ -237,7 +244,11 @@ final class SalesSettings {
 
 			$list = PaymentMode::normalize_list( $merged[ $key ] );
 
-			if ( 'enabled_online_gateways' === $key ) {
+			if ( ! doublescale_sales_online_payments_available()
+				&& in_array( $key, array( 'enabled_online_gateways', 'default_online_payment_gateways' ), true )
+			) {
+				$list = array();
+			} elseif ( 'enabled_online_gateways' === $key ) {
 				$list = array_values( array_intersect( $list, GatewayManager::instance()->invoice_slugs() ) );
 			} elseif ( 'default_offline_payment_modes' === $key ) {
 				$list = array_values(

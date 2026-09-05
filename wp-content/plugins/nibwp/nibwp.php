@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Plugin Name: NIBWP
  * Plugin URI: https://www.nibwp.com
  * Description: Turns your WordPress site into a Model Context Protocol (MCP) server so AI agents like Claude Code and ChatGPT can read posts, terms, users, media, options, search, and a key-value memory store through a standard, permissioned interface.
- * Version: 1.2.5
+ * Version: 1.2.8
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: NIBWP
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-define(constant_name: 'NIBWP_VERSION', value: '1.2.5');
+define(constant_name: 'NIBWP_VERSION', value: '1.2.8');
 define(constant_name: 'NIBWP_MAX_EXECUTION_TIME', value: 30);
 define('NIBWP_PLUGIN_FILE', __FILE__);
 define('NIBWP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -588,6 +588,12 @@ require_once __DIR__ . '/includes/oauth/oauth.php';
 require_once __DIR__ . '/includes/oauth/oauth-server.php';
 require_once __DIR__ . '/includes/oauth/oauth-consent.php';
 require_once __DIR__ . '/includes/oauth/oauth-connect-tab.php';
+require_once __DIR__ . '/includes/oauth/oauth-htaccess.php';
+
+// The .htaccess fix is admin-consented on the way in; on the way out it must
+// not need consent at all — deactivating the plugin removes its marker block
+// so a switched-off NibWP leaves no fingerprints in server configuration.
+register_deactivation_hook(__FILE__, 'nibwp_oauth_remove_htaccess_rules');
 require_once __DIR__ . '/includes/addon-conflicts.php';
 require_once __DIR__ . '/includes/cli-info.php';
 require_once __DIR__ . '/includes/user-access.php';

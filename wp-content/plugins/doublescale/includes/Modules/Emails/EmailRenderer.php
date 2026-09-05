@@ -41,6 +41,13 @@ class EmailRenderer {
 	private $button_settings = array();
 
 	/**
+	 * Theme link settings from template
+	 *
+	 * @var array
+	 */
+	private $link_settings = array();
+
+	/**
 	 * Rendered conditional section IDs for current render
 	 *
 	 * @var array
@@ -150,6 +157,13 @@ class EmailRenderer {
 		// Get global settings from builder data
 		$global_settings = isset( $builder_data['globalSettings'] ) ? $builder_data['globalSettings'] : array();
 
+		if ( isset( $builder_data['linkSettings'] ) && is_array( $builder_data['linkSettings'] ) ) {
+			$this->link_settings = $builder_data['linkSettings'];
+		}
+		if ( isset( $builder_data['buttonSettings'] ) && is_array( $builder_data['buttonSettings'] ) ) {
+			$this->button_settings = $builder_data['buttonSettings'];
+		}
+
 		// Process preview text if provided
 		if ( ! empty( $preview_text ) && $contact ) {
 			$preview_text = MergeTagsManager::instance()->process_merge_tags( $preview_text, $contact );
@@ -203,6 +217,10 @@ class EmailRenderer {
 		// Extract button settings from content if available
 		if ( isset( $content['buttonSettings'] ) && is_array( $content['buttonSettings'] ) ) {
 			$this->button_settings = $content['buttonSettings'];
+		}
+
+		if ( isset( $content['linkSettings'] ) && is_array( $content['linkSettings'] ) ) {
+			$this->link_settings = $content['linkSettings'];
 		}
 
 		// Extract global settings (with defaults)
@@ -270,8 +288,12 @@ class EmailRenderer {
 			/* Font inheritance */
 			* { font-family: Arial, sans-serif; }
 			
-			/* Link styles */
-			a { text-decoration: none; }
+			/* Decoration lives only on .ds-text-link. Gmail underlines every
+			   <a> by default — none !important on `a` cancels that extra line
+			   without touching button size/color. */
+			a { ' . $this->get_link_css_declarations( false, 'none' ) . ' }
+			a { text-decoration: none !important; }
+			.ds-text-link { ' . $this->get_link_css_declarations( true ) . ' }
 
 			/* Fallback media query for clients that support it */
 			@media only screen and (max-width: ' . $mobile_breakpoint . 'px) {
@@ -871,6 +893,74 @@ class EmailRenderer {
 		}
 
 		return array();
+	}
+
+	/**
+	 * Default theme link settings (matches the builder store).
+	 *
+	 * @return array
+	 */
+	public function get_default_link_settings(): array {
+		return array(
+			'font'           => 'Arial, sans-serif',
+			'size'           => 16,
+			'letterSpacing'  => '0px',
+			'color'          => '#458DC7',
+			'bold'           => false,
+			'italic'         => false,
+			'underline'      => true,
+			'strikethrough'  => false,
+		);
+	}
+
+	/**
+	 * Theme link settings for text-block links.
+	 *
+	 * @return array
+	 */
+	public function get_link_settings(): array {
+		return wp_parse_args( $this->link_settings, $this->get_default_link_settings() );
+	}
+
+	/**
+	 * CSS declarations for theme links (no trailing semicolon).
+	 *
+	 * @param bool $important When true, each declaration ends with !important.
+	 *                        Use only on .ds-text-link (not bare `a`) so Gmail
+	 *                        keeps size/color without restyling buttons.
+	 * @return string
+	 */
+	public function get_link_css_declarations( bool $important = false, ?string $decoration = null ): string {
+		$settings = $this->get_link_settings();
+		if ( null === $decoration ) {
+			$parts = array();
+			if ( ! empty( $settings['underline'] ) ) {
+				$parts[] = 'underline';
+			}
+			if ( ! empty( $settings['strikethrough'] ) ) {
+				$parts[] = 'line-through';
+			}
+			$decoration = ! empty( $parts ) ? implode( ' ', $parts ) : 'none';
+		}
+		$bang = $important ? ' !important' : '';
+
+		return sprintf(
+			'font-family: %s%s; font-size: %spx%s; letter-spacing: %s%s; color: %s%s; font-weight: %s%s; font-style: %s%s; text-decoration: %s%s;',
+			esc_attr( (string) $settings['font'] ),
+			$bang,
+			(int) $settings['size'],
+			$bang,
+			esc_attr( (string) $settings['letterSpacing'] ),
+			$bang,
+			esc_attr( (string) $settings['color'] ),
+			$bang,
+			! empty( $settings['bold'] ) ? 'bold' : 'normal',
+			$bang,
+			! empty( $settings['italic'] ) ? 'italic' : 'normal',
+			$bang,
+			esc_attr( $decoration ),
+			$bang
+		);
 	}
 
 	/**

@@ -273,19 +273,16 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	/**
 	 * Register and schedule the daily temp-attachment cleanup task.
 	 *
-	 * Runs on `init` (Action Scheduler's data store is ready by then). A short
-	 * transient lock keeps concurrent `init` fires from double-registering, and
-	 * the recurring schedule is only created when none is pending — so repeated
-	 * boots are idempotent.
+	 * Runs on `init` (Action Scheduler's data store is ready by then). The callback
+	 * is attached on every request — `add_action()` only lives for the current
+	 * request, and the queue runner needs to find it on whichever request runs the
+	 * queue. Only the scheduling half is behind a short transient lock, which keeps
+	 * concurrent `init` fires from racing on the DB write; the recurring schedule is
+	 * created only when none is pending, so repeated boots are idempotent.
 	 *
 	 * @return void
 	 */
 	public function register_attachment_cleanup_schedule(): void {
-		if ( get_transient( 'doublescale_register_tasks_lock_support_attachments' ) ) {
-			return;
-		}
-		set_transient( 'doublescale_register_tasks_lock_support_attachments', 1, MINUTE_IN_SECONDS );
-
 		$tasks = new \DoubleScale\Core\Tasks( 'doublescale_support' );
 		$tasks->register_callback(
 			'doublescale_support_attachment_cleanup',
@@ -293,6 +290,11 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 				( new AttachmentService() )->cleanup_stale_temp();
 			}
 		);
+
+		if ( get_transient( 'doublescale_register_tasks_lock_support_attachments' ) ) {
+			return;
+		}
+		set_transient( 'doublescale_register_tasks_lock_support_attachments', 1, MINUTE_IN_SECONDS );
 
 		if ( false === $tasks->get_next_timestamp( 'doublescale_support_attachment_cleanup' ) ) {
 			$tasks->schedule_recurring( time(), DAY_IN_SECONDS, 'doublescale_support_attachment_cleanup' );

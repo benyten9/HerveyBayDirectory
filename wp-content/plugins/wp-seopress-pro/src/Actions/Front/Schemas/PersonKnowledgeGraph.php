@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use SEOPress\Core\Hooks\ExecuteHooksFrontend;
+use SEOPressPro\Helpers\Schemas\PersonId;
 use SEOPressPro\Helpers\SocialProfiles;
 
 /**
@@ -86,8 +87,7 @@ class PersonKnowledgeGraph implements ExecuteHooksFrontend {
 		}
 
 		// Add @id for Person.
-		$author_url  = get_author_posts_url( $user_id );
-		$data['@id'] = trailingslashit( esc_url( $author_url ) ) . '#person';
+		$data['@id'] = PersonId::get( $user_id );
 
 		return $data;
 	}

@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use SEOPress\Models\GetJsonData;
+use SEOPressPro\Helpers\Schemas\PersonId;
 use SEOPressPro\Helpers\SocialProfiles;
 use SEOPressPro\Models\JsonSchemaValue;
 
@@ -35,11 +36,9 @@ class Author extends JsonSchemaValue implements GetJsonData {
 			$user_id = $post ? (int) $post->post_author : 0;
 
 			if ( $user_id ) {
-				$author_url = get_author_posts_url( $user_id );
-
 				// Person @id — consistent with ProfilePage.
 				if ( isset( $data['@id'] ) && '[[personId]]' === $data['@id'] ) {
-					$data['@id'] = trailingslashit( esc_url( $author_url ) ) . '#person';
+					$data['@id'] = PersonId::get( $user_id );
 				}
 
 				// Description.

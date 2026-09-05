@@ -30,20 +30,25 @@ class SiteAudit {
 	public function countTotalIssues( $type = '', $priority = '', $ignore = 0 ) {
 		global $wpdb;
 
-		$sql = 'SELECT COUNT(*) FROM `' . $wpdb->prefix . 'seopress_seo_issues`';
+		// Joined on published posts so the counters describe exactly what the
+		// detail view will show. Rows can outlive their post (deleted content,
+		// pages that left the audit scope): counting them says "33 active"
+		// while the list renders 3, with an empty extra page for the rest.
+		$sql = 'SELECT COUNT(*) FROM `' . $wpdb->prefix . 'seopress_seo_issues` AS issues'
+			. " INNER JOIN {$wpdb->posts} AS posts ON posts.ID = issues.post_id AND posts.post_status = 'publish'";
 
 		$conditions = array();
 
 		if ( ! empty( $type ) ) {
-			$conditions[] = $wpdb->prepare( '`issue_type` = %s', $type );
+			$conditions[] = $wpdb->prepare( 'issues.`issue_type` = %s', $type );
 		}
 
 		if ( ! empty( $priority ) ) {
-			$conditions[] = $wpdb->prepare( '`issue_priority` = %s', $priority );
+			$conditions[] = $wpdb->prepare( 'issues.`issue_priority` = %s', $priority );
 		}
 
 		if ( ! empty( $ignore ) ) {
-			$conditions[] = $wpdb->prepare( '`issue_ignore` = %d', $ignore );
+			$conditions[] = $wpdb->prepare( 'issues.`issue_ignore` = %d', $ignore );
 		}
 
 		if ( ! empty( $conditions ) ) {
@@ -62,7 +67,9 @@ class SiteAudit {
 	public function countTotalCrawledURL() {
 		global $wpdb;
 
-		$sql = 'SELECT COUNT(DISTINCT `post_id`) FROM `' . $wpdb->prefix . 'seopress_seo_issues`';
+		// Same published-posts join as countTotalIssues(), same reason.
+		$sql = 'SELECT COUNT(DISTINCT issues.`post_id`) FROM `' . $wpdb->prefix . 'seopress_seo_issues` AS issues'
+			. " INNER JOIN {$wpdb->posts} AS posts ON posts.ID = issues.post_id AND posts.post_status = 'publish'";
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 		return (int) $wpdb->get_var( $sql );

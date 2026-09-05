@@ -603,7 +603,7 @@ function seopress_serve_llms_txt( $do_parse, $wp, $extra_query_vars ) {
 	// Get the request path. wp_parse_url() returns null/false when the URI
 	// has no path component or fails to parse, which trips a PHP 8.1+
 	// deprecation when passed straight to trim(). Cast to string.
-	$request_uri  = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+	$request_uri  = seopress_agent_ready_request_uri();
 	$request_path = trim( (string) wp_parse_url( $request_uri, PHP_URL_PATH ), '/' );
 
 	// Check if the request is for llms.txt.

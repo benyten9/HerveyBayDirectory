@@ -1293,7 +1293,7 @@ function seopress_404_bulk_delete_admin_notice() {
 function seopress_404_cpt_title( $title ) {
 	if ( function_exists( 'get_current_screen' ) ) {
 		$screen = get_current_screen();
-		if ( 'seopress_404' === $screen->post_type ) {
+		if ( $screen && 'seopress_404' === $screen->post_type ) {
 			$title = esc_html__( 'Enter the old URL here without domain name', 'wp-seopress-pro' );
 		}
 
@@ -1413,10 +1413,15 @@ function seopress_check_redirection() {
 	// Check for redirect chain: is the destination of the current post already an origin of another redirect?
 	$destination = get_post_meta( $post_id, '_seopress_redirections_value', true );
 	if ( ! empty( $destination ) ) {
-		$dest_path = wp_parse_url( $destination, PHP_URL_PATH );
-		if ( $dest_path ) {
-			$dest_path = ltrim( $dest_path, '/' );
+		$dest_path = trim( ltrim( (string) wp_parse_url( $destination, PHP_URL_PATH ), '/' ) );
 
+		// Same guard as the REST validator in `SEOPressPro\Actions\Api\Redirections`.
+		// A destination pointing at the site root, or one whose path is only
+		// whitespace, leaves nothing to match on: "/" is truthy but becomes an
+		// empty string once the slash is stripped, and `WP_Query` answers an empty
+		// title clause by dropping it, turning the lookup into "the first
+		// seopress_404 post" and reporting an unrelated entry as a chain.
+		if ( '' !== $dest_path ) {
 			$chain_post = get_posts(
 				array(
 					'post_type'      => 'seopress_404',
@@ -1948,6 +1953,34 @@ function seopress_bulk_quick_edit_301_save_post( $post_id ) {
 }
 
 /**
+ * Whether the redirection being written stores a regex pattern rather than a path.
+ *
+ * The stored meta is the source of truth, but both editors can flip the mode and
+ * the origin in the same request and only save the meta afterwards, so at this
+ * point it still holds the previous mode. Callers that know better say so:
+ * the REST endpoints pass `seopress_enabled_regex` in the post array, and the
+ * classic edit screen and quick edit post the checkbox alongside the title,
+ * which their own nonce lets us trust.
+ *
+ * @param array $postarr Post array handed to wp_insert_post().
+ * @return bool
+ */
+function seopress_redirection_origin_is_regex( $postarr ) {
+	if ( isset( $postarr['seopress_enabled_regex'] ) ) {
+		return ! empty( $postarr['seopress_enabled_regex'] );
+	}
+
+	if ( isset( $_REQUEST['seopress_301_edit_nonce'] ) ) {
+		$nonce = sanitize_text_field( wp_unslash( $_REQUEST['seopress_301_edit_nonce'] ) );
+		if ( wp_verify_nonce( $nonce, plugin_basename( __FILE__ ) ) ) {
+			return isset( $_REQUEST['seopress_redirections_enabled_regex'] );
+		}
+	}
+
+	return 'yes' === get_post_meta( $postarr['ID'], '_seopress_redirections_enabled_regex', true );
+}
+
+/**
  * Filter post title
  *
  * @param array $data Data.
@@ -1957,17 +1990,30 @@ function seopress_bulk_quick_edit_301_save_post( $post_id ) {
 function seopress_filter_post_title( $data, $postarr ) {
 	if ( isset( $data['post_type'] ) && 'seopress_404' === $data['post_type'] && isset( $postarr['ID'] ) ) {
 		if ( '' != get_post_meta( $postarr['ID'], '_seopress_redirections_type', true ) ) {
+			// A regex origin is a pattern, not a path. This filter runs on every
+			// update of a redirection, whatever wrote it - REST editor, classic
+			// edit screen, quick edit, WP-CLI, an import - so without this guard
+			// a pattern stored verbatim on create is normalized back on its first
+			// update: `/it(/(.*))?$` returns to `it(/(.*))?$`, which the matcher
+			// applies unanchored and which then catches every URL merely
+			// containing "it".
+			if ( seopress_redirection_origin_is_regex( $postarr ) ) {
+				return $data;
+			}
+
 			$title = $data['post_title'];
 
 			if ( $title ) {
-				$url = wp_parse_url( $title );
+				// Not wp_parse_url(): this filter runs on every save, the title
+				// is stored decoded, and parse_url() turns every C1 byte into an
+				// underscore. `tag/остров/` came back as `tag/о_ _ _ов/` and
+				// `tag/straße/` as `tag/stra_e/`, both invalid UTF-8, which the
+				// database refuses — so saving any redirection whose origin is
+				// not ASCII failed, with nothing on screen to say why.
+				$path = seopress_pro_redirection_origin_path( $title );
 
-				if ( isset( $url['path'] ) && ! empty( $url['path'] ) ) {
-					$title = $url['path'];
-					if ( isset( $url['query'] ) && ! empty( $url['query'] ) ) {
-						$title .= '?' . $url['query'];
-					}
-					$data['post_title'] = ltrim( $title, '/' );
+				if ( '' !== $path ) {
+					$data['post_title'] = $path;
 				}
 			}
 		}
