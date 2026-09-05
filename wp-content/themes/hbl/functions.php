@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HBL_VERSION', '1.2.697' );
+define( 'HBL_VERSION', '1.2.70' );
 define( 'HBL_THEME_DIR', get_template_directory() );
 define( 'HBL_THEME_URI', get_template_directory_uri() );
 define( 'HBL_THEME_PATH', get_template_directory() );
@@ -232,6 +232,35 @@ function hbl_scripts() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'hbl_scripts' );
+
+/**
+ * Turns off comments on blog posts/pages site-wide. Does NOT touch listing
+ * reviews — Directorist stores those as WP comments with comment_type
+ * 'review' on the at_biz_dir post type, which this deliberately excludes.
+ */
+function hbl_disable_blog_comments_support() {
+	foreach ( array( 'post', 'page' ) as $post_type ) {
+		if ( post_type_supports( $post_type, 'comments' ) ) {
+			remove_post_type_support( $post_type, 'comments' );
+			remove_post_type_support( $post_type, 'trackbacks' );
+		}
+	}
+}
+add_action( 'init', 'hbl_disable_blog_comments_support', 100 );
+
+/**
+ * Belt-and-braces: forces comments_open() to false for posts/pages that
+ * already have comments open (removing post-type support above only affects
+ * new content and admin UI, not existing comment_status values).
+ */
+function hbl_force_blog_comments_closed( $open, $post_id ) {
+	$post = get_post( $post_id );
+	if ( $post && in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
+		return false;
+	}
+	return $open;
+}
+add_filter( 'comments_open', 'hbl_force_blog_comments_closed', 20, 2 );
 
 function hbl_resource_hints( $hints, $relation_type ) {
 	if ( 'preconnect' === $relation_type ) {
