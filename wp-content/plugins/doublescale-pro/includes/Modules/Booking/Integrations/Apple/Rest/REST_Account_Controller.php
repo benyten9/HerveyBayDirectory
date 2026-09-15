@@ -140,7 +140,12 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 			$data       = $client->get_calendars();
 			$account_id = Arr::get( $data, 'account_id' );
 			if ( ! $account_id ) {
-				throw new Exception( __( 'Could not add Apple account.', 'doublescale' ) );
+				throw new Exception(
+					__(
+						'Could not connect to Apple Calendar. Apple did not return a calendar account — check your Apple ID and app-specific password.',
+						'doublescale'
+					)
+				);
 			}
 			$calendars = Arr::get( $data, 'calendars', array() );
 
@@ -167,8 +172,38 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 
 			return new WP_REST_Response( $calendars, 200 );
 		} catch ( Exception $e ) {
-			return new WP_Error( 'add_apple_account_error', $e->getMessage(), array( 'status' => 500 ) );
+			return new WP_Error(
+				'add_apple_account_error',
+				self::format_connect_error_message( $e->getMessage() ),
+				array( 'status' => 400 )
+			);
 		}
+	}
+
+	/**
+	 * Turn a CalDAV/Sabre exception into copy a user can act on.
+	 *
+	 * @param string $raw Exception message.
+	 * @return string
+	 */
+	public static function format_connect_error_message( $raw ) {
+		$message = is_string( $raw ) ? trim( $raw ) : '';
+
+		if ( $message === '' ) {
+			return __(
+				'Could not connect to Apple Calendar. Check your Apple ID and app-specific password, then try again.',
+				'doublescale'
+			);
+		}
+
+		if ( preg_match( '/\b(401|403|unauthorized|forbidden|not authorized)\b/i', $message ) ) {
+			return __(
+				'Apple rejected these credentials. Use your Apple ID email and an app-specific password (not your regular Apple password). Create one at appleid.apple.com → Sign-In and Security → App-Specific Passwords.',
+				'doublescale'
+			);
+		}
+
+		return $message;
 	}
 
 	/**

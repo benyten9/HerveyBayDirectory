@@ -156,13 +156,9 @@ class App {
 			)
 		);
 
-		// Redirect to Calendars list (per-host integrations live there).
+		// Back to the connect page for this host, with Zoom still selected.
 		echo esc_html__( 'Success, Account added!', 'doublescale' );
-		wp_redirect(
-			admin_url(
-				'admin.php?page=doublescale&path=booking/calendars'
-			)
-		);
+		wp_redirect( OAuthConfig::booking_return_url( $host_id, 'zoom' ) );
 		exit;
 	}
 

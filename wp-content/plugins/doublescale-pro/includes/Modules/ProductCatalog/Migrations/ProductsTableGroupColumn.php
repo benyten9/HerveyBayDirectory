@@ -39,7 +39,7 @@ class ProductsTableGroupColumn {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "ALTER TABLE `{$table}` ADD `group_id` BIGINT(20) UNSIGNED NULL AFTER `unit`" );
+		$wpdb->query( "ALTER TABLE `{$table}` ADD `group_id` BIGINT(20) UNSIGNED NULL" );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( "ALTER TABLE `{$table}` ADD INDEX `idx_group_id` (`group_id`)" );

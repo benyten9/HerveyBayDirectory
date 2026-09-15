@@ -18,6 +18,7 @@ namespace DoubleScale\Pro\Modules\LinkTriggers;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\MergeTags\MergeTagsManager;
 use DoubleScale\Pro\Modules\LinkTriggers\Models\LinkTriggerModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
@@ -97,6 +98,11 @@ class LinkTriggers {
 			}
 
 			if ( $contact ) {
+				// Resolve {{merge tags}} against THIS click's contact so one
+				// trigger (e.g. "View Listing") can send Ahmed and John to
+				// different destinations. Tags/automations still key off the
+				// trigger hash, not the destination URL.
+				$redirect_url = self::resolve_redirect_url( (string) $redirect_url, $contact );
 				$this->sync_contact_data( $link_trigger, $contact );
 				do_action( 'doublescale_link_trigger_clicked', $link_trigger, $contact );
 			}
@@ -152,6 +158,41 @@ class LinkTriggers {
 
 		// Contacts are keyed by email; the contacts table has no user_id column.
 		return ContactModel::get_by_email( $user->user_email );
+	}
+
+	/**
+	 * Resolve merge tags in a Link Trigger redirect URL at click time.
+	 *
+	 * Fixed URLs (no `{{`) are returned unchanged. Unknown track-id / no contact
+	 * leaves the template unprocessed so {@see doublescale_safe_redirect()} can
+	 * apply the existing invalid-URL fallback. An empty resolved value falls
+	 * back to `home_url()`, matching that helper's empty-location behaviour.
+	 *
+	 * @param string $redirect_url Stored redirect setting.
+	 * @param mixed  $contact      Identified contact, or null.
+	 * @return string
+	 */
+	public static function resolve_redirect_url( string $redirect_url, $contact ): string {
+		if ( '' === $redirect_url || false === strpos( $redirect_url, '{{' ) || ! $contact ) {
+			return $redirect_url;
+		}
+
+		if ( ! class_exists( MergeTagsManager::class ) ) {
+			return $redirect_url;
+		}
+
+		try {
+			$resolved = MergeTagsManager::instance()->process_merge_tags( $redirect_url, $contact );
+		} catch ( \Throwable $e ) {
+			return $redirect_url;
+		}
+
+		$resolved = is_string( $resolved ) ? trim( $resolved ) : '';
+		if ( '' === $resolved ) {
+			return function_exists( 'home_url' ) ? (string) home_url() : '';
+		}
+
+		return $resolved;
 	}
 
 	public function sync_contact_data( LinkTriggerModel $link_trigger, $contact ) {

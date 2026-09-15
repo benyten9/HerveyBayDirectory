@@ -1258,8 +1258,11 @@ function nibwp_render_admin_header(): void
         <aside class="nw-sidebar" id="nw-sidebar">
             <div class="nw-sidebar__inner">
                 <a class="nw-sidebar__logo" href="<?php echo esc_url(admin_url('admin.php?page=nibwp-dashboard')); ?>">
-                    <div class="nw-logo-icon">
-                        <img src="<?php echo esc_url((string) NIBWP_PLUGIN_URL . 'assets/nibwp-logo.svg'); ?>" alt="NIBWP">
+                    <div class="nw-logo-row">
+                        <div class="nw-logo-icon">
+                            <img src="<?php echo esc_url((string) NIBWP_PLUGIN_URL . 'assets/nibwp-logo.svg'); ?>" alt="NIBWP">
+                        </div>
+                        <span class="nw-sidebar__version">v<?php echo esc_html(NIBWP_VERSION); ?></span>
                     </div>
                     <div class="nw-logo-sub"><?php esc_html_e('AI-POWERED WORDPRESS — A NEW ERA', 'nibwp'); ?></div>
                 </a>
@@ -1321,7 +1324,6 @@ function nibwp_render_admin_header(): void
                             <?php endfor; ?>
                         </div>
                     </div>
-                    <div class="nw-sidebar__version">v<?php echo esc_html(NIBWP_VERSION); ?></div>
                 </div>
             </div>
         </aside>
@@ -2948,4 +2950,92 @@ function nibwp_render_admin_footer(): void
     })();
     </script>
     <?php
+}
+
+/**
+ * Hand post content to wp_insert_post()/wp_update_post() the way core does.
+ *
+ * Both functions run wp_unslash() over the array they are given, so content
+ * passed to them must arrive slashed. This was passed through wp_kses_post()
+ * and nothing else, which is wrong twice over:
+ *
+ *   1. Unslashed content loses a backslash on the way in. Block markup is full
+ *      of them — serialize_block_attributes() escapes `&` as & and `--`
+ *      as -- so the block-delimiter comment stays valid HTML — so a
+ *      heading of "Verdict & recommendations" was stored as
+ *      "Verdict u0026amp; recommendations" and a class of `cell--name` as
+ *      `cellu002du002dname`, breaking the styling that depended on it. A
+ *      customer hit both and had to route writes around this ability.
+ *
+ *   2. wp_kses_post() re-encodes the `&` inside those attributes, turning
+ *      & into &amp; — a second, quieter corruption of the same
+ *      content. Applied to correctly-slashed markup it is worse still: kses
+ *      reads the escaped comment as malformed and drops the block attributes
+ *      wholesale, leaving `<!-- wp:heading -->` with no settings at all.
+ *
+ * Slashing and passing it on is what the block editor and the core REST API
+ * both do. Sanitising stays with core: wp_insert_post() applies the
+ * `content_save_pre` filters, which include wp_filter_post_kses for any user
+ * without `unfiltered_html` — verified against a contributor, whose <script>
+ * is still stripped. Users who do hold the capability get what core gives
+ * them, which is the same content they could save from the editor.
+ */
+function nibwp_wp_prepare_post_content($content): string {
+    return wp_slash((string) $content);
+}
+
+/**
+ * The CSS custom properties Automatic.css actually defines on this site,
+ * name => first declared value.
+ *
+ * Token names differ between ACSS versions, and a guessed name with a var()
+ * fallback renders the fallback without complaint: a build that validated
+ * could still paint invisible borders and brand-tinted greys. ACSS's own
+ * generated file is the one source that cannot drift from the site.
+ *
+ * Empty when ACSS files cannot be read. Callers treat empty as "cannot
+ * check", never as "this site defines nothing".
+ *
+ * @return array<string,string>
+ */
+function nibwp_acss_site_tokens(): array
+{
+    static $tokens = null;
+    if ($tokens !== null) {
+        return $tokens;
+    }
+
+    $tokens = [];
+    if (!function_exists('wp_upload_dir')) {
+        return $tokens;
+    }
+
+    $uploads = wp_upload_dir(null, false);
+    $dir = rtrim((string) ($uploads['basedir'] ?? ''), '/\\') . '/automatic-css/';
+
+    // ACSS 3 writes a variables file; newer versions split tokens out. The full
+    // stylesheet is the last resort because it is by far the largest.
+    foreach (['automatic-variables.css', 'automatic-tokens.css', 'automatic.css'] as $file) {
+        $css = is_readable($dir . $file) ? (string) file_get_contents($dir . $file) : '';
+        if ($css === '' || !preg_match_all('/(--[a-z0-9-]+)\s*:\s*([^;{}]+)/i', $css, $declarations, PREG_SET_ORDER)) {
+            continue;
+        }
+        foreach ($declarations as $declaration) {
+            $name = strtolower($declaration[1]);
+            if (!isset($tokens[$name])) {
+                $tokens[$name] = trim($declaration[2]);
+            }
+        }
+        if (count($tokens) >= 50) {
+            break;
+        }
+    }
+
+    // A handful of names is a partial read, not a design system; checking a
+    // payload against it would reject tokens that are perfectly real.
+    if (count($tokens) < 50) {
+        $tokens = [];
+    }
+
+    return $tokens;
 }

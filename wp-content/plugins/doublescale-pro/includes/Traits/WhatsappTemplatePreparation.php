@@ -63,12 +63,21 @@ trait WhatsappTemplatePreparation {
 
 		$this->capture_merge_tag_values( $template_variables, $tracking_entry, $contact );
 
-		return array(
+		$message_data = array(
 			'ContentSid'       => $content_sid,
 			'ContentVariables' => $encode_as_json && ! empty( $content_variables )
 				? wp_json_encode( $content_variables )
 				: $content_variables,
 		);
+
+		// A media-header template needs its header definition to reach the
+		// provider, or the send goes out body-only and Meta rejects it.
+		$header_settings = $template->get_whatsapp_header_settings();
+		if ( ! empty( $header_settings ) ) {
+			$message_data['TemplateSettings'] = $header_settings;
+		}
+
+		return $message_data;
 	}
 
 	/**

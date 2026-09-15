@@ -36,7 +36,9 @@ use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 use DoubleScale\Modules\Contacts\Filters\Process as Contact_Filters_Process;
+use DoubleScale\Modules\Contacts\Services\ContactQueryBuilder;
 use DoubleScale\Modules\Contacts\Services\ContactUpdateNotifier;
+use DoubleScale\Modules\Contacts\Services\ContactMergeService;
 use DoubleScale\Modules\Contacts\Services\EmailAttachmentService;
 use DoubleScale\Core\Settings\Settings;
 use DoubleScale\Core\Constants\CampaignChannel;
@@ -138,7 +140,13 @@ class RestContactController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
-					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
+					'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ) + array(
+						'merge_existing' => array(
+							'description' => __( 'Confirm updating the contact that already owns this identifier instead of creating a new one.', 'doublescale' ),
+							'type'        => 'boolean',
+							'required'    => false,
+						),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -153,6 +161,30 @@ class RestContactController extends RestController {
 							'description' => __( 'Also delete financial records (invoices, contracts, credit notes) tied to these contacts.', 'doublescale' ),
 							'type'        => 'boolean',
 							'default'     => false,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/merge',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'merge_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'primary_id' => array(
+							'description' => __( 'Contact ID to keep as the primary record.', 'doublescale' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'source_id'  => array(
+							'description' => __( 'Contact ID to merge into the primary record.', 'doublescale' ),
+							'type'        => 'integer',
+							'required'    => true,
 						),
 					),
 				),
@@ -424,15 +456,9 @@ class RestContactController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'add_to_lists' ),
 					'permission_callback' => array( $this, 'add_to_lists_permissions_check' ),
-					'args'                => array(
-						'ids'      => array(
-							'description' => __( 'Contact IDs.', 'doublescale' ),
-							'type'        => 'array',
-						),
-						'list_ids' => array(
-							'description' => __( 'Lists to add.', 'doublescale' ),
-							'type'        => 'array',
-						),
+					'args'                => $this->get_membership_bulk_args(
+						'list_ids',
+						__( 'Lists to add.', 'doublescale' )
 					),
 				),
 			)
@@ -447,15 +473,9 @@ class RestContactController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'remove_from_lists' ),
 					'permission_callback' => array( $this, 'remove_from_lists_permissions_check' ),
-					'args'                => array(
-						'ids'      => array(
-							'description' => __( 'Contact IDs.', 'doublescale' ),
-							'type'        => 'array',
-						),
-						'list_ids' => array(
-							'description' => __( 'Lists to remove.', 'doublescale' ),
-							'type'        => 'array',
-						),
+					'args'                => $this->get_membership_bulk_args(
+						'list_ids',
+						__( 'Lists to remove.', 'doublescale' )
 					),
 				),
 			)
@@ -470,15 +490,9 @@ class RestContactController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'add_tags' ),
 					'permission_callback' => array( $this, 'add_tags_permissions_check' ),
-					'args'                => array(
-						'ids'     => array(
-							'description' => __( 'Contact IDs.', 'doublescale' ),
-							'type'        => 'array',
-						),
-						'tag_ids' => array(
-							'description' => __( 'Tags to add.', 'doublescale' ),
-							'type'        => 'array',
-						),
+					'args'                => $this->get_membership_bulk_args(
+						'tag_ids',
+						__( 'Tags to add.', 'doublescale' )
 					),
 				),
 			)
@@ -493,15 +507,9 @@ class RestContactController extends RestController {
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'remove_tags' ),
 					'permission_callback' => array( $this, 'remove_tags_permissions_check' ),
-					'args'                => array(
-						'ids'     => array(
-							'description' => __( 'Contact IDs.', 'doublescale' ),
-							'type'        => 'array',
-						),
-						'tag_ids' => array(
-							'description' => __( 'Tags to remove.', 'doublescale' ),
-							'type'        => 'array',
-						),
+					'args'                => $this->get_membership_bulk_args(
+						'tag_ids',
+						__( 'Tags to remove.', 'doublescale' )
 					),
 				),
 			)
@@ -2145,6 +2153,202 @@ class RestContactController extends RestController {
 	}
 
 	/**
+	 * When an identifier belongs to another contact and a merge is safe, ask
+	 * the admin to confirm instead of returning a generic duplicate error.
+	 *
+	 * @param int                                               $primary_id Contact being edited.
+	 * @param array{field: string, contact: ContactModel}|null $conflict   Identifier conflict.
+	 * @return WP_Error|null
+	 */
+	private function merge_required_error( $primary_id, $conflict ) {
+		if ( ! $conflict || empty( $conflict['contact'] ) ) {
+			return null;
+		}
+
+		$preview = ( new ContactMergeService() )->preview( $primary_id, (int) $conflict['contact']->id );
+		if ( is_wp_error( $preview ) || ! empty( $preview['blocking'] ) ) {
+			return null;
+		}
+
+		$field    = (string) $conflict['field'];
+		$messages = array(
+			'email'          => __( 'A contact with this email address already exists. Review and confirm a merge to continue.', 'doublescale' ),
+			'phone'          => __( 'A contact with this phone number already exists. Review and confirm a merge to continue.', 'doublescale' ),
+			'whatsapp_phone' => __( 'A contact with this WhatsApp number already exists. Review and confirm a merge to continue.', 'doublescale' ),
+		);
+
+		return new WP_Error(
+			'merge_required',
+			$messages[ $field ] ?? __( 'A duplicate contact was found. Review and confirm a merge to continue.', 'doublescale' ),
+			array_merge(
+				$preview,
+				array(
+					'status' => 409,
+					'field'  => $field,
+				)
+			)
+		);
+	}
+
+	/**
+	 * Offer the existing contact instead of refusing the create outright.
+	 *
+	 * Returns the record that owns the identifier plus the fields the submitted
+	 * data would add or change, so the admin can see the consequence before
+	 * confirming. Nothing is written here.
+	 *
+	 * @param array{field: string, contact: ContactModel}|null $conflict     Identifier conflict.
+	 * @param array<string, mixed>                             $contact_data Submitted data.
+	 * @return WP_Error|null
+	 */
+	private function existing_contact_offer( $conflict, array $contact_data ) {
+		if ( ! $conflict || empty( $conflict['contact'] ) ) {
+			return null;
+		}
+
+		$existing = $conflict['contact'];
+		$changes  = array();
+
+		// Identifiers matter as much as profile fields here: submitting a phone
+		// number the existing record lacks is the main reason to confirm.
+		$reviewable = array_merge(
+			ContactMergeService::IDENTIFIER_FIELDS,
+			ContactMergeService::PROFILE_FIELDS
+		);
+
+		foreach ( $reviewable as $field ) {
+			if ( ! array_key_exists( $field, $contact_data ) ) {
+				continue;
+			}
+
+			$incoming = $contact_data[ $field ];
+			if ( ContactMergeService::is_empty_value( $incoming ) ) {
+				continue;
+			}
+
+			$current = $existing->$field ?? null;
+
+			// A value that already matches is not worth showing.
+			if ( ! ContactMergeService::is_empty_value( $current )
+				&& (string) $current === (string) $incoming ) {
+				continue;
+			}
+
+			$changes[] = array(
+				'field'    => $field,
+				'existing' => $current,
+				'incoming' => $incoming,
+				// Filling an empty field is an addition; replacing a different
+				// value is a decision the admin has to make.
+				'conflict' => ! ContactMergeService::is_empty_value( $current ),
+			);
+		}
+
+		$field    = (string) $conflict['field'];
+		$messages = array(
+			'email'          => __( 'A contact with this email address already exists. Review the existing contact and confirm to update it.', 'doublescale' ),
+			'phone'          => __( 'A contact with this phone number already exists. Review the existing contact and confirm to update it.', 'doublescale' ),
+			'whatsapp_phone' => __( 'A contact with this WhatsApp number already exists. Review the existing contact and confirm to update it.', 'doublescale' ),
+		);
+
+		return new WP_Error(
+			'contact_exists_merge_available',
+			$messages[ $field ] ?? __( 'This contact already exists. Review the existing contact and confirm to update it.', 'doublescale' ),
+			array(
+				'status'   => 409,
+				'field'    => $field,
+				'existing' => $existing,
+				'changes'  => $changes,
+			)
+		);
+	}
+
+	/**
+	 * Apply the submitted data to the contact that already owns the identifier.
+	 *
+	 * Reached only when the admin confirmed the offer above, so this updates the
+	 * existing record rather than creating a second one.
+	 *
+	 * @param WP_REST_Request                                  $request      Request.
+	 * @param array{field: string, contact: ContactModel}|null $conflict     Identifier conflict.
+	 * @param array<string, mixed>                             $contact_data Submitted data.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function update_existing_on_create( $request, $conflict, array $contact_data ) {
+		if ( ! $conflict || empty( $conflict['contact'] ) ) {
+			return $this->identifier_conflict_error( $conflict );
+		}
+
+		$existing = $conflict['contact'];
+
+		// Another contact may own one of the *other* identifiers being
+		// submitted; updating would then trade one duplicate for another.
+		$other = ContactModel::find_identifier_conflict( $contact_data, (int) $existing->id );
+		if ( $other ) {
+			$merge_error = $this->merge_required_error( (int) $existing->id, $other );
+			if ( $merge_error ) {
+				return $merge_error;
+			}
+			return $this->identifier_conflict_error( $other );
+		}
+
+		$changes = ContactUpdateNotifier::collect_field_changes( $existing, $contact_data );
+		$existing->update( $contact_data );
+
+		$sync_lists = $this->sync_lists( $request, $existing );
+		if ( is_wp_error( $sync_lists ) ) {
+			return $sync_lists;
+		}
+
+		$sync_tags = $this->sync_tags( $request, $existing );
+		if ( is_wp_error( $sync_tags ) ) {
+			return $sync_tags;
+		}
+
+		if ( ! empty( $changes ) ) {
+			ContactUpdateNotifier::fire(
+				$existing,
+				array(
+					'updated_by' => 'admin',
+					'changes'    => $changes,
+				)
+			);
+		}
+
+		return new WP_REST_Response( $existing, 200 );
+	}
+
+	/**
+	 * Merge a source contact into a primary contact after explicit confirmation.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function merge_item( $request ) {
+		$service = new ContactMergeService();
+		$result  = $service->merge(
+			(int) $request->get_param( 'primary_id' ),
+			(int) $request->get_param( 'source_id' )
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$contact = ContactModel::find( (int) $result['id'] );
+		if ( ! $contact ) {
+			return new WP_REST_Response( $result, 200 );
+		}
+
+		$contact->load( array( 'lists', 'tags' ) );
+		if ( class_exists( 'DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel' ) ) {
+			$contact->load( 'custom_fields' );
+		}
+
+		return new WP_REST_Response( $contact, 200 );
+	}
+
+	/**
 	 * Permission check for unified messages endpoint
 	 *
 	 * @param WP_REST_Request $request
@@ -2181,17 +2385,9 @@ class RestContactController extends RestController {
 	 */
 	public function get_items( $request ) {
 		try {
-			$per_page           = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
-			$page               = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
-			$keywords           = $request->get_param( 'keywords' ) ?? '';
-			$filters            = $this->normalize_contact_filters_param( $request->get_param( 'filters' ) );
-			$subscribed         = $request->get_param( 'subscribed' ) ?? false;
-			$campaign_type      = $request->get_param( 'campaign_type' ) ?? null;
-			$has_whatsapp_phone = $request->get_param( 'has_whatsapp_phone' ) ?? null;
-			$from               = $request->get_param( 'from' ) ?? null;
-			$to                 = $request->get_param( 'to' ) ?? null;
-			$query              = ContactModel::query();
-			$total_count        = $query->count();
+			$per_page    = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
+			$page        = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
+			$total_count = ContactModel::query()->count();
 
 			// Start with base query and load relationships
 			// Load custom_fields when the CustomField model is available.
@@ -2199,89 +2395,10 @@ class RestContactController extends RestController {
 			if ( class_exists( 'DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel' ) ) {
 				$relationships[] = 'custom_fields';
 			}
-			$contacts = $query->with( $relationships );
 
-			// Apply date range filters
-			if ( $from ) {
-				$contacts->where( 'created_at', '>=', $from );
-			}
-			if ( $to ) {
-				$contacts->where( 'created_at', '<=', $to );
-			}
-
-			// Apply filters FIRST to narrow down the results
-			if ( $filters ) {
-				$filters_process = new Contact_Filters_Process( $contacts, $filters );
-				$contacts        = $filters_process->filter();
-			}
-
-			// Apply subscription filter
-			if ( $subscribed ) {
-				$contacts = $contacts->where( 'email_status', 'subscribed' );
-			}
-
-			// Apply campaign type filter (email/phone availability + channel status)
-			if ( $campaign_type ) {
-				// Convert campaign_type to integer format for processing
-				// Frontend may send: "sms" (string), "2" (numeric string), or 2 (integer)
-				if ( is_numeric( $campaign_type ) ) {
-					$campaign_type_int = (int) $campaign_type;
-				} else {
-					$campaign_type_int = CampaignChannel::to_integer( $campaign_type );
-				}
-
-				// Convert back to string for channel status field lookup
-				$campaign_type_string = CampaignChannel::to_string( $campaign_type_int );
-
-				if ( $campaign_type_string ) {
-					// Apply channel-specific status filter (e.g., sms_status = 'subscribed')
-					$channel_status_field = $campaign_type_string . '_status';
-					$contacts             = $contacts->where( $channel_status_field, 'subscribed' );
-
-					if ( class_exists( '\DoubleScale\Modules\Campaigns\Services\CampaignContactFilter' ) ) {
-						$campaign_contact_filter = \DoubleScale\Modules\Campaigns\Services\CampaignContactFilter::instance();
-						$contacts                = $campaign_contact_filter->apply_campaign_type_filter( $contacts, $campaign_type_int );
-					}
-				}
-			}
-
-			// Apply WhatsApp phone filter
-			if ( ! is_null( $has_whatsapp_phone ) ) {
-				if ( $has_whatsapp_phone ) {
-					$contacts = $contacts->whereNotNull( 'whatsapp_phone' )
-						->where( 'whatsapp_phone', '!=', '' );
-				} else {
-					$contacts = $contacts->where(
-						function ( $query ) {
-							$query->whereNull( 'whatsapp_phone' )
-								->orWhere( 'whatsapp_phone', '=', '' );
-						}
-					);
-				}
-			}
-
-			// Apply keyword search AFTER filters (search within filtered results)
-			if ( '' !== $keywords ) {
-				$has_custom_fields = class_exists( 'DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel' );
-				$contacts          = $contacts->where(
-					function ( $query ) use ( $keywords, $has_custom_fields ) {
-						$query->where( 'first_name', 'like', '%' . $keywords . '%' )
-							->orWhere( 'last_name', 'like', '%' . $keywords . '%' )
-							->orWhere( 'email', 'like', '%' . $keywords . '%' )
-							->orWhere( 'phone', 'like', '%' . $keywords . '%' )
-							->orWhere( 'whatsapp_phone', 'like', '%' . $keywords . '%' );
-
-						if ( $has_custom_fields ) {
-							$query->orWhereHas(
-								'custom_fields',
-								function ( $custom_field_query ) use ( $keywords ) {
-									$custom_field_query->where( 'value', 'like', '%' . $keywords . '%' );
-								}
-							);
-						}
-					}
-				);
-			}
+			// Shared with the filter-targeted bulk actions so "select all
+			// matching" mutates exactly the rows this list displays.
+			$contacts = ContactQueryBuilder::from_request( $request, array( 'with' => $relationships ) );
 
 			// Paginate and get results (pagination automatically handles total count)
 			// Note: paginate() returns total in the response, so filtered_total comes from pagination
@@ -2332,6 +2449,19 @@ class RestContactController extends RestController {
 
 			$existing = ContactModel::find_identifier_conflict( $contact_data );
 			if ( $existing ) {
+				// The identifier already belongs to someone. Rather than a flat
+				// "already exists" that leaves the admin to hunt for the other
+				// record, offer it: show what would change, and update it on
+				// confirmation instead of creating a second contact.
+				if ( $request->get_param( 'merge_existing' ) ) {
+					return $this->update_existing_on_create( $request, $existing, $contact_data );
+				}
+
+				$offer = $this->existing_contact_offer( $existing, $contact_data );
+				if ( $offer ) {
+					return $offer;
+				}
+
 				return $this->identifier_conflict_error( $existing );
 			}
 
@@ -2374,6 +2504,18 @@ class RestContactController extends RestController {
 	 */
 	public function delete_items( $request ) {
 		try {
+			// Deletion is irreversible and the confirmation dialog reports
+			// per-contact consequences that cannot be computed for an abstract
+			// filter, so bulk delete stays on the explicit, reviewable ID path.
+			$target = $request->get_param( 'target' );
+			if ( is_array( $target ) && isset( $target['mode'] ) && 'filter' === $target['mode'] ) {
+				return new WP_Error(
+					'doublescale_bulk_filter_delete_unsupported',
+					__( 'Deleting contacts requires selecting them explicitly; a filter target is not supported.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+
 			$contact_ids = array_values(
 				array_filter(
 					array_map( 'intval', (array) ( $request->get_param( 'ids' ) ? $request->get_param( 'ids' ) : array() ) )
@@ -2515,9 +2657,18 @@ class RestContactController extends RestController {
 		$impact = $this->build_contact_deletion_impact( $contact_ids );
 
 		if ( ! $force && $this->contact_deletion_requires_force( $impact ) ) {
+			// Bookings block deletion for a different reason than invoices, so
+			// say which one it is — "delete their invoices first" is useless
+			// advice to someone whose contact only has a booking.
+			$blocks_on_bookings = empty( $impact['invoices'] )
+				&& empty( $impact['contracts'] )
+				&& empty( $impact['credit_notes'] );
+
 			return new WP_Error(
-				'contact_has_invoices',
-				__( 'These contacts have invoices and cannot be deleted. Delete or reassign their invoices first.', 'doublescale' ),
+				$blocks_on_bookings ? 'contact_has_bookings' : 'contact_has_invoices',
+				$blocks_on_bookings
+					? __( 'These contacts have bookings and cannot be deleted. Cancel or reassign their bookings first.', 'doublescale' )
+					: __( 'These contacts have invoices and cannot be deleted. Delete or reassign their invoices first.', 'doublescale' ),
 				array(
 					'status'         => 409,
 					'blocked_ids'      => $this->contact_ids_with_invoices( $contact_ids ),
@@ -2541,7 +2692,10 @@ class RestContactController extends RestController {
 	 * @return bool
 	 */
 	private function contact_deletion_requires_force( array $impact ): bool {
-		foreach ( array( 'invoices', 'contracts', 'credit_notes' ) as $key ) {
+		// `bookings` belongs here with the financial records: a booking row
+		// keyed to a deleted contact loses the attendee's identity AND keeps
+		// its `booked_slots` lock, so that slot can never be booked again.
+		foreach ( array( 'invoices', 'contracts', 'credit_notes', 'bookings' ) as $key ) {
 			if ( ! empty( $impact[ $key ] ) ) {
 				return true;
 			}
@@ -2835,6 +2989,10 @@ class RestContactController extends RestController {
 
 			$duplicate = ContactModel::find_identifier_conflict( $contact_data, (int) $contact_id );
 			if ( $duplicate ) {
+				$merge_error = $this->merge_required_error( (int) $contact_id, $duplicate );
+				if ( $merge_error ) {
+					return $merge_error;
+				}
 				return $this->identifier_conflict_error( $duplicate );
 			}
 
@@ -3395,27 +3553,7 @@ class RestContactController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function add_to_lists( $request ) {
-		try {
-			$contact_ids = $request->get_param( 'ids' );
-			$list_ids    = $request->get_param( 'list_ids' );
-
-			if ( ! $list_ids ) {
-				return new WP_Error( 'error', 'Lists not found', array( 'status' => 404 ) );
-			}
-
-			$contacts = ContactModel::find( $contact_ids );
-			if ( ! $contacts ) {
-				return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
-			}
-
-			foreach ( $contacts as $contact ) {
-				$contact->add_lists( $list_ids );
-			}
-
-			return new WP_REST_Response( $contacts, 200 );
-		} catch ( \Exception $e ) {
-			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
-		}
+		return $this->run_membership_bulk( $request, 'list_ids', 'list', 'attach' );
 	}
 
 
@@ -3430,27 +3568,7 @@ class RestContactController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function remove_from_lists( $request ) {
-		try {
-			$contact_ids = $request->get_param( 'ids' );
-			$list_ids    = $request->get_param( 'list_ids' );
-
-			if ( ! $list_ids ) {
-				return new WP_Error( 'error', 'Lists not found', array( 'status' => 404 ) );
-			}
-
-			$contacts = ContactModel::find( $contact_ids );
-			if ( ! $contacts ) {
-				return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
-			}
-
-			foreach ( $contacts as $contact ) {
-				$contact->lists()->detach( $list_ids );
-			}
-
-			return new WP_REST_Response( $contacts, 200 );
-		} catch ( \Exception $e ) {
-			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
-		}
+		return $this->run_membership_bulk( $request, 'list_ids', 'list', 'detach' );
 	}
 
 
@@ -3465,27 +3583,255 @@ class RestContactController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function add_tags( $request ) {
+		return $this->run_membership_bulk( $request, 'tag_ids', 'tag', 'attach' );
+	}
+
+	/**
+	 * Shared argument schema for the four membership bulk routes.
+	 *
+	 * @since 1.3.28
+	 *
+	 * @param string $terms_key   'tag_ids' or 'list_ids'.
+	 * @param string $terms_label Human description for the terms param.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function get_membership_bulk_args( $terms_key, $terms_label ) {
+		return array(
+			'ids'       => array(
+				'description' => __( 'Contact IDs.', 'doublescale' ),
+				'type'        => 'array',
+				'items'       => array( 'type' => 'integer' ),
+				// Page selection can never exceed the largest page size.
+				'maxItems'    => 1000,
+			),
+			$terms_key  => array(
+				'description' => $terms_label,
+				'type'        => 'array',
+				'items'       => array( 'type' => 'integer' ),
+			),
+			'target'    => array(
+				'description' => __( 'Optional filter target applying the action to every matching contact.', 'doublescale' ),
+				'type'        => 'object',
+			),
+			'after_id'  => array(
+				'description' => __( 'Cursor: process contacts with an ID greater than this.', 'doublescale' ),
+				'type'        => 'integer',
+				'minimum'     => 0,
+				'default'     => 0,
+			),
+			'total'     => array(
+				'description' => __( 'Matched total carried across batches for progress reporting.', 'doublescale' ),
+				'type'        => 'integer',
+				'minimum'     => 0,
+				'default'     => 0,
+			),
+		);
+	}
+
+	/**
+	 * Apply a membership change to a batch of contacts, addressed either by an
+	 * explicit ID list or by the same filter the contacts list uses.
+	 *
+	 * The filter path is processed in resumable batches keyed on a **cursor**,
+	 * never an offset. Applying a tag can change whether a row still matches
+	 * the filter (`tag != X` then applying X is the obvious case); with offset
+	 * paging the result set shifts under the cursor between batches and rows
+	 * are silently skipped. Anchoring to a monotonic primary key makes each
+	 * batch independent of what left the set.
+	 *
+	 * @since 1.3.28
+	 *
+	 * @param WP_REST_Request $request       Request object.
+	 * @param string          $terms_key     'tag_ids' or 'list_ids'.
+	 * @param string          $taxonomy_type 'tag' or 'list'.
+	 * @param string          $operation     'attach' or 'detach'.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function run_membership_bulk( $request, $terms_key, $taxonomy_type, $operation ) {
 		try {
-			$contact_ids = $request->get_param( 'ids' );
-			$tags_ids    = $request->get_param( 'tag_ids' );
+			$term_ids = $request->get_param( $terms_key );
+			$term_ids = array_values( array_filter( array_map( 'intval', (array) $term_ids ) ) );
 
-			if ( ! $tags_ids ) {
-				return new WP_Error( 'error', 'Tags not found', array( 'status' => 404 ) );
+			if ( empty( $term_ids ) ) {
+				return new WP_Error(
+					'doublescale_bulk_missing_terms',
+					'tag_ids' === $terms_key
+						? __( 'No tags were provided.', 'doublescale' )
+						: __( 'No lists were provided.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
 			}
 
-			$contacts = ContactModel::find( $contact_ids );
-			if ( ! $contacts ) {
-				return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
+			$raw_ids     = $request->get_param( 'ids' );
+			$contact_ids = array_values( array_filter( array_map( 'intval', (array) $raw_ids ) ) );
+			$target      = $request->get_param( 'target' );
+			$target      = is_array( $target ) ? $target : array();
+			$is_filter   = isset( $target['mode'] ) && 'filter' === $target['mode'];
+
+			// A filter must never silently widen an explicit row list.
+			if ( $is_filter && ! empty( $contact_ids ) ) {
+				return new WP_Error(
+					'doublescale_bulk_ambiguous_target',
+					__( 'Provide either contact IDs or a filter target, not both.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
 			}
 
-			foreach ( $contacts as $contact ) {
-				$contact->add_tags( $tags_ids );
+			if ( ! $is_filter ) {
+				return $this->apply_membership_to_ids( $contact_ids, $term_ids, $taxonomy_type, $operation );
 			}
 
-			return new WP_REST_Response( $contacts, 200 );
+			return $this->apply_membership_to_filter( $request, $target, $term_ids, $taxonomy_type, $operation );
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * Apply a membership change to an explicit list of contact IDs.
+	 *
+	 * @since 1.3.28
+	 *
+	 * @param int[]  $contact_ids   Contact IDs.
+	 * @param int[]  $term_ids      Taxonomy term IDs.
+	 * @param string $taxonomy_type 'tag' or 'list'.
+	 * @param string $operation     'attach' or 'detach'.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function apply_membership_to_ids( array $contact_ids, array $term_ids, $taxonomy_type, $operation ) {
+		if ( empty( $contact_ids ) ) {
+			return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
+		}
+
+		$contacts = ContactModel::query()->whereIn( 'id', $contact_ids )->get()->all();
+
+		if ( empty( $contacts ) ) {
+			return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
+		}
+
+		$result = 'attach' === $operation
+			? ContactModel::attach_terms_bulk( $contacts, $term_ids, $taxonomy_type )
+			: ContactModel::detach_terms_bulk( $contacts, $term_ids, $taxonomy_type );
+
+		return new WP_REST_Response(
+			array(
+				'status'        => 'completed',
+				'total'         => count( $contacts ),
+				'processed'     => count( $contacts ),
+				'updated'       => $result['updated'],
+				'skipped'       => $result['skipped'],
+				'next_after_id' => null,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Apply a membership change to every contact matching the list filter,
+	 * one resumable batch per request.
+	 *
+	 * @since 1.3.28
+	 *
+	 * @param WP_REST_Request      $request       Request object.
+	 * @param array<string, mixed> $target        Filter target payload.
+	 * @param int[]                $term_ids      Taxonomy term IDs.
+	 * @param string               $taxonomy_type 'tag' or 'list'.
+	 * @param string               $operation     'attach' or 'detach'.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	private function apply_membership_to_filter( $request, array $target, array $term_ids, $taxonomy_type, $operation ) {
+		$criteria = array(
+			'keywords'           => $target['keywords'] ?? '',
+			'filters'            => ContactQueryBuilder::normalize_filters( $target['filters'] ?? null ),
+			'subscribed'         => $target['subscribed'] ?? false,
+			'campaign_type'      => $target['campaign_type'] ?? null,
+			'has_whatsapp_phone' => $target['has_whatsapp_phone'] ?? null,
+			'from'               => $target['from'] ?? null,
+			'to'                 => $target['to'] ?? null,
+		);
+
+		// An empty target addresses every contact in the database. That is a
+		// legitimate request, but it has to be deliberate.
+		$confirm_all = ! empty( $target['confirm_all'] );
+		if ( ContactQueryBuilder::is_empty_criteria( $criteria ) && ! $confirm_all ) {
+			return new WP_Error(
+				'doublescale_bulk_empty_target',
+				__( 'Selecting every contact requires an explicit confirmation when no filter is applied.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$after_id = (int) $request->get_param( 'after_id' );
+		$total    = (int) $request->get_param( 'total' );
+
+		// Count once, on the opening request. Re-counting each batch would
+		// walk the denominator downwards as rows leave the filter.
+		if ( $after_id <= 0 ) {
+			$total = ContactQueryBuilder::from_criteria( $criteria )->count();
+		}
+
+		/**
+		 * Filters how many contacts a single bulk batch processes.
+		 *
+		 * @since 1.3.28
+		 *
+		 * @param int $batch_size Number of contacts per batch.
+		 */
+		$batch_size = (int) apply_filters( 'doublescale_contacts_bulk_batch_size', 100 );
+		$batch_size = max( 1, $batch_size );
+
+		$processed    = 0;
+		$updated      = 0;
+		$skipped      = 0;
+		$is_completed = false;
+		$last_seen_id = $after_id;
+
+		// One batch per request. The client re-POSTs with the cursor we hand
+		// back, which is what keeps the progress bar moving and lets a slow
+		// per-contact automation stretch the run instead of timing it out.
+		$contacts = ContactQueryBuilder::from_criteria( $criteria )
+			->where( 'id', '>', $last_seen_id )
+			->orderBy( 'id', 'asc' )
+			->limit( $batch_size )
+			->get()
+			->all();
+
+		if ( empty( $contacts ) ) {
+			$is_completed = true;
+		} else {
+			$result = 'attach' === $operation
+				? ContactModel::attach_terms_bulk( $contacts, $term_ids, $taxonomy_type )
+				: ContactModel::detach_terms_bulk( $contacts, $term_ids, $taxonomy_type );
+
+			$updated += $result['updated'];
+			$skipped += $result['skipped'];
+
+			foreach ( $contacts as $contact ) {
+				$last_seen_id = max( $last_seen_id, (int) $contact->id );
+			}
+			$processed += count( $contacts );
+
+			// A short batch means the cursor reached the end of the set.
+			if ( count( $contacts ) < $batch_size ) {
+				$is_completed = true;
+			}
+		}
+
+		return new WP_REST_Response(
+			array(
+				'status'        => $is_completed ? 'completed' : 'in_progress',
+				'total'         => $total,
+				'processed'     => $processed,
+				'updated'       => $updated,
+				'skipped'       => $skipped,
+				'next_after_id' => $is_completed ? null : $last_seen_id,
+			),
+			200
+		);
 	}
 
 
@@ -3500,27 +3846,7 @@ class RestContactController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function remove_tags( $request ) {
-		try {
-			$contact_ids = $request->get_param( 'ids' );
-			$tags_ids    = $request->get_param( 'tag_ids' );
-
-			if ( ! $tags_ids ) {
-				return new WP_Error( 'error', 'Tags not found', array( 'status' => 404 ) );
-			}
-
-			$contacts = ContactModel::find( $contact_ids );
-			if ( ! $contacts ) {
-				return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
-			}
-
-			foreach ( $contacts as $contact ) {
-				$contact->tags()->detach( $tags_ids );
-			}
-
-			return new WP_REST_Response( $contacts, 200 );
-		} catch ( \Exception $e ) {
-			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
-		}
+		return $this->run_membership_bulk( $request, 'tag_ids', 'tag', 'detach' );
 	}
 
 	// all permissions checks
@@ -4051,33 +4377,6 @@ class RestContactController extends RestController {
 	 * @return array|null
 	 */
 	private function normalize_contact_filters_param( $filters ) {
-		if ( null === $filters || false === $filters || '' === $filters ) {
-			return null;
-		}
-		if ( is_string( $filters ) ) {
-			$decoded = json_decode( $filters, true );
-			if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $decoded ) ) {
-				return null;
-			}
-			$filters = $decoded;
-		} elseif ( is_object( $filters ) ) {
-			$decoded = json_decode( wp_json_encode( $filters ), true );
-			if ( ! is_array( $decoded ) ) {
-				return null;
-			}
-			$filters = $decoded;
-		}
-		if ( ! is_array( $filters ) ) {
-			return null;
-		}
-		if ( empty( $filters ) ) {
-			return $filters;
-		}
-		return map_deep(
-			$filters,
-			static function ( $value ) {
-				return $value;
-			}
-		);
+		return ContactQueryBuilder::normalize_filters( $filters );
 	}
 }

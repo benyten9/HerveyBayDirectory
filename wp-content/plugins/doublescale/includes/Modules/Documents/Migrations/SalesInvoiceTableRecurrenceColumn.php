@@ -42,16 +42,9 @@ class SalesInvoiceTableRecurrenceColumn {
 			return;
 		}
 
-		// `subscription_id` is only present on installs that have seen the
-		// Subscriptions add-on's schema; append to the end when it is missing
-		// rather than failing the ALTER outright.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$has_subscription_column = $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'subscription_id'" );
-		$position                = $has_subscription_column ? ' AFTER `subscription_id`' : '';
-
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD `recurrence_id` BIGINT(20) UNSIGNED NULL{$position}"
+			"ALTER TABLE `{$table}` ADD `recurrence_id` BIGINT(20) UNSIGNED NULL"
 		);
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared

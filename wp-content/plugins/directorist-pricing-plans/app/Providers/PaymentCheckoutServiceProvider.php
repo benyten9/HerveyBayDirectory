@@ -21,6 +21,7 @@ class PaymentCheckoutServiceProvider implements Provider {
     const CHECKOUT_TYPE = 'payment';
 
     public function boot() {
+        add_action( 'directorist_checkout_validation', [ $this, 'validate_payment_order_plan' ], 20, 2 );
         add_filter( 'directorist_checkout_process_payment', [$this, 'checkout_process_payment'], 10, 3 );
         add_filter( 'directorist_checkout_show_payment_gateways', [ $this, 'handle_gateway_visibility' ], 10, 4 );
         add_action( 'directorist_checkout_table', [ $this, 'handle_checkout_table' ], 5, 4 );
@@ -30,6 +31,28 @@ class PaymentCheckoutServiceProvider implements Provider {
         add_filter( 'directorist_checkout_active_gateways', [ $this, 'handle_active_gateways' ], 40, 3 );
         add_filter( 'directorist_payment_receipt_order_dto', [ $this, 'handle_payment_receipt_order_dto' ], 10, 1 );
         add_filter( 'directorist_checkout_table_after_total', [ $this, 'handle_trial_plan_due_summary' ], 10, 4 );
+    }
+
+    public function validate_payment_order_plan( string $checkout_type, WP_REST_Request $request ): void {
+        if ( self::CHECKOUT_TYPE !== $checkout_type ) {
+            return;
+        }
+
+        $order = directorist_get_order_by_id( $request->get_param( 'order_id' ) );
+
+        if ( ! $order || empty( $order->ref_type ) || empty( $order->ref ) ) {
+            return;
+        }
+
+        if ( OrderRefType::PRICING_PLAN !== $order->ref_type ) {
+            return;
+        }
+
+        $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
+
+        if ( ! $plan_repository->get_by_id( $order->ref ) ) {
+            throw new Exception( __( 'This pricing plan is no longer available. Please cancel this order and choose another plan.', 'directorist-pricing-plans' ) );
+        }
     }
 
     public function handle_payment_receipt_order_dto( OrderDTO $order_dto ) {
@@ -65,7 +88,7 @@ class PaymentCheckoutServiceProvider implements Provider {
     }
 
     public function checkout_process_payment( bool $process_payment, OrderDTO $order_dto, WP_REST_Request $request ) {
-        if ( self::CHECKOUT_TYPE !== $request->get_param( 'checkout_type' )  ) {
+        if ( self::CHECKOUT_TYPE !== $request->get_param( 'checkout_type' ) ) {
             return $process_payment;
         }
 
@@ -212,7 +235,7 @@ class PaymentCheckoutServiceProvider implements Provider {
         $plan            = $plan_repository->get_by_id( $order->ref );
 
         if ( ! $plan ) {
-            throw new Exception( __( 'Invalid plan id.', 'directorist-pricing-plans' ) );
+            return;
         }
 
         View::render(

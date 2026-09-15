@@ -356,7 +356,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
                 'post_type'    => NIBWP_JFB_POST_TYPE,
                 'post_title'   => (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp')),
                 'post_status'  => 'publish',
-                'post_content' => (string) ($input['content'] ?? ''),
+                'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
             ], true);
 
             if (is_wp_error($new_id)) {
@@ -404,7 +404,10 @@ function nibwp_jfb_forms(array $input): array|WP_Error
                     'post_type'    => NIBWP_JFB_POST_TYPE,
                     'post_title'   => $post->post_title . ' ' . __('(copy)', domain: 'nibwp'),
                     'post_status'  => $post->post_status,
-                    'post_content' => $post->post_content,
+                    // Read back from the database already unslashed, so it has to
+                    // be slashed again or the copy loses every backslash the
+                    // original form JSON depends on.
+                    'post_content' => wp_slash($post->post_content),
                 ], true);
 
                 if (is_wp_error($new_id)) {

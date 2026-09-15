@@ -61,7 +61,7 @@ class MetaTemplateSaver {
 					'code'        => 'meta_whatsapp_template_exists',
 				)
 			);
-			return $existing;
+			return $this->backfill_header_settings( $existing, $settings );
 		}
 
 		// Create new template record
@@ -89,6 +89,60 @@ class MetaTemplateSaver {
 				'name'        => $template->name,
 				'external_id' => $external_id,
 				'code'        => 'meta_whatsapp_template_saved',
+			)
+		);
+
+		return $template;
+	}
+
+	/**
+	 * Add header settings to a template row saved before header support existed.
+	 *
+	 * A template cached by an earlier version has no header_format/header_media,
+	 * so a media template would keep sending body-only and keep being rejected —
+	 * and because an existing row is otherwise returned untouched, re-syncing
+	 * would never repair it. Only missing keys are filled in: anything already
+	 * stored (media a user chose deliberately) wins over Meta's sample.
+	 *
+	 * @param TemplateModel $template Existing template row.
+	 * @param array         $settings Freshly normalized settings from Meta.
+	 *
+	 * @return TemplateModel The template, updated when it was missing header data.
+	 */
+	private function backfill_header_settings( TemplateModel $template, array $settings ): TemplateModel {
+		// Only templates that actually declare a header or interactive buttons
+		// are worth repairing. `components` alone is no signal — every template
+		// has components, so backfilling on that would rewrite every row on
+		// every re-sync.
+		if ( empty( $settings['header_format'] ) && empty( $settings['buttons'] ) ) {
+			return $template;
+		}
+
+		$header_keys = array( 'components', 'header_format', 'header_media', 'buttons', 'template_type' );
+		$stored      = is_array( $template->settings ) ? $template->settings : array();
+		$changed     = false;
+
+		foreach ( $header_keys as $key ) {
+			if ( empty( $settings[ $key ] ) || ! empty( $stored[ $key ] ) ) {
+				continue;
+			}
+
+			$stored[ $key ] = $settings[ $key ];
+			$changed        = true;
+		}
+
+		if ( ! $changed ) {
+			return $template;
+		}
+
+		$template->settings = $stored;
+		$template->save();
+
+		doublescale_get_logger()->info(
+			'Backfilled WhatsApp template header settings',
+			array(
+				'template_id' => $template->id,
+				'code'        => 'meta_whatsapp_template_header_backfilled',
 			)
 		);
 

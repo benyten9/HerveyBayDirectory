@@ -20,6 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Modules\Portal\Renderer\PortalFrontendHandler;
 use DoubleScale\Modules\Portal\Services\PortalPageProvisioner;
 use DoubleScale\Modules\Portal\Services\PortalUrl;
@@ -90,9 +91,21 @@ final class Module extends AbstractModule {
 		$container->get( PortalFrontendHandler::class );
 
 		// Auto-create the portal page once so the portal is discoverable on a
-		// fresh install (admin_init: post types + home_url() are ready, and it
-		// never touches front-end requests).
-		add_action( 'admin_init', array( PortalPageProvisioner::class, 'maybe_provision' ) );
+		// fresh install. Registers into the shared provisioner alongside every
+		// other customer-facing shortcode; the single `admin_init` pass below
+		// provisions whatever each enabled module registered (admin_init: post
+		// types + home_url() are ready, and front-end requests are untouched).
+		ShortcodePageProvisioner::register(
+			PortalFrontendHandler::SHORTCODE_NAME,
+			array(
+				'title' => __( 'Client Portal', 'doublescale' ),
+				'slug'  => 'client-portal',
+			)
+		);
+
+		// Portal is non-toggleable, so hooking the shared pass here runs it on
+		// every admin load regardless of which other modules are enabled.
+		add_action( 'admin_init', array( ShortcodePageProvisioner::class, 'maybe_provision_all' ) );
 
 		// Re-point the booking details URL (consumed by the
 		// {{booking.details_url}} merge tag) to the customer portal when a

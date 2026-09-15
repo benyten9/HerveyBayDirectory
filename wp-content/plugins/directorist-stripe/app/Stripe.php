@@ -40,8 +40,12 @@ class Stripe extends Payment implements PaymentInterface {
 
         StripeSDK::setApiKey( $stripe_secret_key );
 
+        // The gateway creates card-only sessions, so opt out of Stripe's preview Managed Payments flow.
         $session_data = [
-            'payment_method_types' => ['card'],
+            'managed_payments'     => [
+                'enabled' => false,
+            ],
+            'payment_method_types' => [ 'card' ],
             'success_url'          => $this->get_success_url( $dto->get_id() ),
             'cancel_url'           => directorist_payment_failure_url(),
             'line_items'           => [],

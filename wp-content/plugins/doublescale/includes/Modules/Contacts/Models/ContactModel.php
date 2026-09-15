@@ -157,7 +157,8 @@ class ContactModel extends Model {
 	public function lists() {
 		return $this->belongsToMany( ListModel::class, 'doublescale_contact_taxonomy_relationship', 'contact_id', 'taxonomy_id' )
 			->wherePivot( 'taxonomy_type', 'list' )
-			->withPivot( 'taxonomy_type', 'status' );
+			->withPivot( 'taxonomy_type', 'status' )
+			->orderBy( 'name', 'asc' );
 	}
 
 	/**
@@ -170,7 +171,8 @@ class ContactModel extends Model {
 	public function tags() {
 		return $this->belongsToMany( TagModel::class, 'doublescale_contact_taxonomy_relationship', 'contact_id', 'taxonomy_id' )
 			->wherePivot( 'taxonomy_type', 'tag' )
-			->withPivot( 'taxonomy_type' );
+			->withPivot( 'taxonomy_type' )
+			->orderBy( 'name', 'asc' );
 	}
 
 	/**
@@ -726,7 +728,24 @@ class ContactModel extends Model {
 	 * @return ContactModel
 	 */
 	public static function get_by_hash_id( $hash_id ) {
-		return self::where( 'hash_id', $hash_id )->first();
+		$contact = self::where( 'hash_id', $hash_id )->first();
+		if ( $contact ) {
+			return $contact;
+		}
+
+		if ( '' === (string) $hash_id ) {
+			return null;
+		}
+
+		$meta = ContactMetaModel::where( 'meta_key', \DoubleScale\Modules\Contacts\Services\ContactMergeService::MERGED_HASH_META_KEY )
+			->where( 'meta_value', $hash_id )
+			->first();
+
+		if ( ! $meta ) {
+			return null;
+		}
+
+		return self::find( (int) $meta->contact_id );
 	}
 
 	/**
@@ -1170,6 +1189,199 @@ class ContactModel extends Model {
 			$this->tags()->attach( $tags_to_add, array( 'taxonomy_type' => 'tag' ) );
 			do_action( 'doublescale_contact_tag_apply', $this, $tags_to_add );
 		}
+	}
+
+	/**
+	 * Attach taxonomy terms to a batch of contacts in a constant number of
+	 * queries, firing the per-contact hook once per changed contact.
+	 *
+	 * The per-contact helpers above lazy-load `$this->tags` / `$this->lists`,
+	 * which costs one JOIN per contact — fine for one row, ruinous for a bulk
+	 * action spanning thousands. This reads the relevant pivot rows for the
+	 * whole batch in a single query, diffs in PHP, and inserts once.
+	 *
+	 * Ordering note: every pivot row in the batch is written before any hook
+	 * fires, whereas the per-contact helpers interleave them. Listeners that
+	 * re-query aggregate counts will therefore observe a fully-applied batch
+	 * rather than a half-applied one. Each listener still receives its own
+	 * contact and only the ids newly added for it.
+	 *
+	 * @since 1.3.28
+	 *
+	 * @param ContactModel[] $contacts      Contact models to update.
+	 * @param int[]          $term_ids      Taxonomy term IDs to attach.
+	 * @param string         $taxonomy_type 'tag' or 'list'.
+	 *
+	 * @return array{updated:int,skipped:int} Counts of changed and unchanged contacts.
+	 */
+	public static function attach_terms_bulk( array $contacts, array $term_ids, $taxonomy_type ) {
+		global $wpdb;
+
+		$term_ids = array_values( array_unique( array_filter( array_map( 'intval', $term_ids ) ) ) );
+
+		if ( empty( $contacts ) || empty( $term_ids ) ) {
+			return array(
+				'updated' => 0,
+				'skipped' => count( $contacts ),
+			);
+		}
+
+		$table       = $wpdb->prefix . 'doublescale_contact_taxonomy_relationship';
+		$contact_ids = array();
+		$by_id       = array();
+		foreach ( $contacts as $contact ) {
+			$id            = (int) $contact->id;
+			$contact_ids[] = $id;
+			$by_id[ $id ]  = $contact;
+		}
+
+		// One query for the pivot rows that matter, narrowed to the terms
+		// being applied — we do not need every term each contact already has.
+		$contact_placeholders = implode( ',', array_fill( 0, count( $contact_ids ), '%d' ) );
+		$term_placeholders    = implode( ',', array_fill( 0, count( $term_ids ), '%d' ) );
+		$existing_rows        = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from counts above.
+				"SELECT contact_id, taxonomy_id FROM `{$table}` WHERE taxonomy_type = %s AND contact_id IN ({$contact_placeholders}) AND taxonomy_id IN ({$term_placeholders})",
+				array_merge( array( $taxonomy_type ), $contact_ids, $term_ids )
+			)
+		);
+
+		$existing = array();
+		foreach ( (array) $existing_rows as $row ) {
+			$existing[ (int) $row->contact_id ][ (int) $row->taxonomy_id ] = true;
+		}
+
+		$now       = current_time( 'mysql', true );
+		$rows      = array();
+		$values    = array();
+		$to_notify = array();
+		$updated   = 0;
+		$skipped   = 0;
+		$is_list   = 'list' === $taxonomy_type;
+
+		foreach ( $contact_ids as $contact_id ) {
+			$to_add = array();
+			foreach ( $term_ids as $term_id ) {
+				if ( ! isset( $existing[ $contact_id ][ $term_id ] ) ) {
+					$to_add[] = $term_id;
+				}
+			}
+
+			if ( empty( $to_add ) ) {
+				++$skipped;
+				continue;
+			}
+
+			foreach ( $to_add as $term_id ) {
+				$rows[]   = '(%d, %s, %d, %s, %s, %s)';
+				$values[] = $contact_id;
+				$values[] = $taxonomy_type;
+				$values[] = $term_id;
+				$values[] = 'subscribed';
+				$values[] = $now;
+				$values[] = $now;
+			}
+
+			$to_notify[ $contact_id ] = $to_add;
+			++$updated;
+		}
+
+		if ( ! empty( $rows ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built per row above.
+					"INSERT INTO `{$table}` (contact_id, taxonomy_type, taxonomy_id, status, created_at, updated_at) VALUES " . implode( ', ', $rows ),
+					$values
+				)
+			);
+		}
+
+		$hook = $is_list ? 'doublescale_contact_list_apply' : 'doublescale_contact_tag_apply';
+		foreach ( $to_notify as $contact_id => $added ) {
+			do_action( $hook, $by_id[ $contact_id ], $added );
+		}
+
+		return array(
+			'updated' => $updated,
+			'skipped' => $skipped,
+		);
+	}
+
+	/**
+	 * Detach taxonomy terms from a batch of contacts, firing the removal hook
+	 * once per contact that actually lost a term.
+	 *
+	 * The REST controller previously called `->detach()` directly, which never
+	 * fired the removal hooks — leaving "tag removed" automations silently
+	 * dead for bulk operations while the abilities path fired them correctly.
+	 *
+	 * @since 1.3.28
+	 *
+	 * @param ContactModel[] $contacts      Contact models to update.
+	 * @param int[]          $term_ids      Taxonomy term IDs to detach.
+	 * @param string         $taxonomy_type 'tag' or 'list'.
+	 *
+	 * @return array{updated:int,skipped:int} Counts of changed and unchanged contacts.
+	 */
+	public static function detach_terms_bulk( array $contacts, array $term_ids, $taxonomy_type ) {
+		global $wpdb;
+
+		$term_ids = array_values( array_unique( array_filter( array_map( 'intval', $term_ids ) ) ) );
+
+		if ( empty( $contacts ) || empty( $term_ids ) ) {
+			return array(
+				'updated' => 0,
+				'skipped' => count( $contacts ),
+			);
+		}
+
+		$table       = $wpdb->prefix . 'doublescale_contact_taxonomy_relationship';
+		$contact_ids = array();
+		$by_id       = array();
+		foreach ( $contacts as $contact ) {
+			$id            = (int) $contact->id;
+			$contact_ids[] = $id;
+			$by_id[ $id ]  = $contact;
+		}
+
+		$contact_placeholders = implode( ',', array_fill( 0, count( $contact_ids ), '%d' ) );
+		$term_placeholders    = implode( ',', array_fill( 0, count( $term_ids ), '%d' ) );
+		$existing_rows        = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from counts above.
+				"SELECT contact_id, taxonomy_id FROM `{$table}` WHERE taxonomy_type = %s AND contact_id IN ({$contact_placeholders}) AND taxonomy_id IN ({$term_placeholders})",
+				array_merge( array( $taxonomy_type ), $contact_ids, $term_ids )
+			)
+		);
+
+		$to_notify = array();
+		foreach ( (array) $existing_rows as $row ) {
+			$to_notify[ (int) $row->contact_id ][] = (int) $row->taxonomy_id;
+		}
+
+		$updated = count( $to_notify );
+		$skipped = count( $contact_ids ) - $updated;
+
+		if ( $updated > 0 ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders built from counts above.
+					"DELETE FROM `{$table}` WHERE taxonomy_type = %s AND contact_id IN ({$contact_placeholders}) AND taxonomy_id IN ({$term_placeholders})",
+					array_merge( array( $taxonomy_type ), $contact_ids, $term_ids )
+				)
+			);
+		}
+
+		$hook = 'list' === $taxonomy_type ? 'doublescale_contact_list_remove' : 'doublescale_contact_tag_remove';
+		foreach ( $to_notify as $contact_id => $removed ) {
+			do_action( $hook, $by_id[ $contact_id ], $removed );
+		}
+
+		return array(
+			'updated' => $updated,
+			'skipped' => $skipped,
+		);
 	}
 
 	/**

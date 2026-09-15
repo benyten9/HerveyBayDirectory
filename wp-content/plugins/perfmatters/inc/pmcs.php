@@ -220,7 +220,7 @@ echo '<div class="perfmatters-settings-section">';
 						echo '</div>';
 
 						//load behavior
-						echo '<div data-code-type="js">';
+						echo '<div data-code-type="js" data-location="wp_head,wp_footer">';
 							echo '<label for="pmcs-behavior-js" class="perfmatters-inline-label-input">';
 								echo '<span>' . esc_html__('Load Behavior', 'perfmatters') . '</span>';
 								echo '<select id="pmcs-behavior-js" name="optimizations[behavior]">';
@@ -233,7 +233,7 @@ echo '<div class="perfmatters-settings-section">';
 						echo '</div>';
 
 						//load behavior
-						echo '<div data-code-type="css">';
+						echo '<div data-code-type="css" data-location="wp_head,wp_footer">';
 							echo '<label for="pmcs-behavior-css" class="perfmatters-inline-label-input">';
 								echo '<span>' . esc_html__('Load Behavior', 'perfmatters') . '</span>';
 								echo '<select id="pmcs-behavior-css" name="optimizations[behavior]">';
@@ -253,11 +253,19 @@ echo '<div class="perfmatters-settings-section">';
 							echo '</label>';
 						echo '</div>';
 
+						//load in block editor
+						echo '<div data-code-type="css" data-location="wp_head,wp_footer">';
+							echo '<label style="margin: 0px; font-weight: normal;" title="' . esc_attr__('Also enqueue this CSS in the WordPress block editor canvas.', 'perfmatters') . '">';
+								echo esc_html__('Load in Block Editor', 'perfmatters');
+								echo '<input type="checkbox" name="optimizations[block_editor]" id="pmcs-block-editor" value="1"' . (!empty($snippet['optimizations']['block_editor']) ? ' checked' : '') . ' style="margin: 0px 0px 0px 7px;">';
+							echo '</label>';
+						echo '</div>';
+
 					echo '</div>';
 				echo '</div>';
 
 				//shortcode
-				echo '<div id="pmcs-shortcode" class="' . (($snippet['location'] ?? '') === 'shortcode' ? '' : 'hidden') . '" style="margin: 0px -20px 20px; border-bottom: 1px solid #f2f2f2; padding: 0px 20px 20px 20px;">';
+				echo '<div id="pmcs-shortcode" data-location="shortcode" class="' . (($snippet['location'] ?? '') === 'shortcode' ? '' : 'hidden') . '" style="margin: 0px -20px 20px; border-bottom: 1px solid #f2f2f2; padding: 0px 20px 20px 20px;">';
 
 					//title + tooltip
 					echo '<div class="pmcs-title">';

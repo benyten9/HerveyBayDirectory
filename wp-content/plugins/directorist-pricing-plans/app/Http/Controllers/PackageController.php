@@ -14,12 +14,17 @@ use DirectoristPricingPlan\App\DTO\UserPackage\Read;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 use DirectoristPricingPlan\App\Enums\Plan\Interval as PlanInterval;
 use DirectoristPricingPlan\App\Models\Plan;
+use DirectoristPricingPlan\App\Services\ExpiredListingRenewalService;
+use DirectoristPricingPlan\App\Services\SubscriptionPaymentService;
 
 class PackageController extends Controller {
     public UserPackageRepository $package_repository;
 
-    public function __construct( UserPackageRepository $user_package_repository ) {
-        $this->package_repository = $user_package_repository;
+    private SubscriptionPaymentService $subscription_payment_service;
+
+    public function __construct( UserPackageRepository $user_package_repository, SubscriptionPaymentService $subscription_payment_service ) {
+        $this->package_repository           = $user_package_repository;
+        $this->subscription_payment_service = $subscription_payment_service;
     }
 
     public function user_packages( Validator $validator, WP_REST_Request $request ): array {
@@ -35,7 +40,6 @@ class PackageController extends Controller {
 
         $dto = ( new Read )
             ->set_user_id( get_current_user_id() )
-            ->set_with_usage_data( true )
             ->set_page( $request->has_param( 'page' ) ? (int) $request->get_param( 'page' ) : 1 )
             ->set_per_page( $request->has_param( 'per_page' ) ? (int) $request->get_param( 'per_page' ) : 10 )
             ->set_search( $request->has_param( 'search' ) ? $request->get_param( 'search' ) : null )
@@ -43,6 +47,99 @@ class PackageController extends Controller {
             ->set_is_recurring( $request->has_param( 'is_recurring' ) ? 1 === (int) $request->get_param( 'is_recurring' ) : null );
 
         return Response::send( $this->package_repository->get( $dto ) );
+    }
+
+    public function renewable_listings(): array {
+        $service = directorist_pricing_plans_singleton( ExpiredListingRenewalService::class );
+
+        return Response::send(
+            [
+                'data' => [
+                    'packages' => $service->get_eligible_packages( get_current_user_id() ),
+                ],
+            ]
+        );
+    }
+
+    public function renew_expired_listings( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'id' => 'required|numeric',
+            ]
+        );
+
+        $result = directorist_pricing_plans_singleton( ExpiredListingRenewalService::class )->renew(
+            (int) $request->get_param( 'id' ),
+            get_current_user_id()
+        );
+
+        return Response::send(
+            [
+                'message' => sprintf(
+                    esc_html( _n( '%d listing renewed successfully.', '%d listings renewed successfully.', $result['renewed_count'], 'directorist-pricing-plans' ) ),
+                    $result['renewed_count']
+                ),
+                'data'    => $result,
+            ]
+        );
+    }
+
+    public function usage( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                "id" => "required|numeric"
+            ]
+        );
+
+        $package = $this->package_repository->get_usage_by_id( (int) $request->get_param( "id" ), get_current_user_id() );
+
+        if ( null === $package ) {
+            throw new Exception( esc_html__( "Package not found.", 'directorist-pricing-plans' ) );
+        }
+
+        return Response::send(
+            [
+                "data" => [
+                    "uses" => $package->uses,
+                ],
+            ]
+        );
+    }
+
+    public function recheck_payment( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'id' => 'required|numeric',
+            ]
+        );
+
+        $package_id = (int) $request->get_param( 'id' );
+        $package    = $this->package_repository->get_by_id( $package_id );
+
+        if ( ! $package ) {
+            throw new Exception( esc_html__( 'Package not found.', 'directorist-pricing-plans' ), 404 );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) && (int) $package->user_id !== get_current_user_id() ) {
+            throw new Exception( esc_html__( 'You are not authorized to re-check payment for this package.', 'directorist-pricing-plans' ), 403 );
+        }
+
+        $triggered_by = current_user_can( 'manage_options' ) ? 'admin' : 'user';
+        $order_id     = $this->subscription_payment_service->recheck( $package_id, $triggered_by );
+
+        if ( ! $order_id ) {
+            throw new Exception( esc_html__( 'No paid renewal payment was found.', 'directorist-pricing-plans' ), 409 );
+        }
+
+        return Response::send(
+            [
+                'message' => esc_html__( 'Payment found and package renewed successfully.', 'directorist-pricing-plans' ),
+                'data'    => [
+                    'renewed'  => true,
+                    'order_id' => $order_id,
+                ],
+            ]
+        );
     }
 
     public function cancel_at_period_end( Validator $validator, WP_REST_Request $request ): array {

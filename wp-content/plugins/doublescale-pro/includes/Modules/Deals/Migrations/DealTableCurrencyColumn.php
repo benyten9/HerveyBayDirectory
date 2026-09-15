@@ -67,7 +67,7 @@ class DealTableCurrencyColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD COLUMN `currency` VARCHAR(10) NULL AFTER `value`"
+			"ALTER TABLE `{$table}` ADD COLUMN `currency` VARCHAR(10) NULL"
 		);
 	}
 

@@ -10,6 +10,9 @@ if (!defined('ABSPATH')) { exit(); }
 // Permission callback
 // -----------------------------------------------------------------------------
 
+// nibwp_wp_prepare_post_content() lives in includes/helpers.php: every
+// integration that writes post_content needs it, not just these abilities.
+
 function nibwp_wp_core_permission_callback(): bool {
     return current_user_can('edit_posts');
 }
@@ -165,7 +168,7 @@ function nibwp_wp_create_post(array $input): array|\WP_Error {
 
     $postarr = [
         'post_title'   => sanitize_text_field($input['title']),
-        'post_content' => wp_kses_post($input['content'] ?? ''),
+        'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
         'post_excerpt' => sanitize_textarea_field($input['excerpt'] ?? ''),
         'post_status'  => $status,
         'post_type'    => sanitize_text_field($input['post_type'] ?? 'post'),
@@ -222,7 +225,7 @@ function nibwp_wp_update_post(array $input): array|\WP_Error {
         $postarr['post_title'] = sanitize_text_field($input['title']);
     }
     if (isset($input['content'])) {
-        $postarr['post_content'] = wp_kses_post($input['content']);
+        $postarr['post_content'] = nibwp_wp_prepare_post_content($input['content']);
     }
     if (isset($input['excerpt'])) {
         $postarr['post_excerpt'] = sanitize_textarea_field($input['excerpt']);

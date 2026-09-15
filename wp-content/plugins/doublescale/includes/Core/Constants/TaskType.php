@@ -66,6 +66,19 @@ class TaskType {
 	}
 
 	/**
+	 * Stored type keys only (never labels).
+	 *
+	 * JSON Schema `enum` must be a list. Passing {@see get_all()} serialises as
+	 * an object of labels, and MCP clients (Claude Code) drop the whole tool as
+	 * a malformed schema.
+	 *
+	 * @return string[]
+	 */
+	public static function all() {
+		return array_keys( self::get_all() );
+	}
+
+	/**
 	 * Get type label
 	 *
 	 * @param string $type Type constant value.

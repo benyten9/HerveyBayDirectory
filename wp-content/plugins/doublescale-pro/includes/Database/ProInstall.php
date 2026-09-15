@@ -102,6 +102,26 @@ final class ProInstall {
 		}
 
 		self::ensure_sales_approvals_table();
+		self::maybe_sync_declared_columns();
+	}
+
+	/**
+	 * Once per Pro version: add columns declared on CREATE but missing on disk.
+	 *
+	 * @return void
+	 */
+	private static function maybe_sync_declared_columns(): void {
+		if ( ! method_exists( MigrationRunner::class, 'ensure_declared_columns' ) ) {
+			return;
+		}
+
+		$revision = defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '0';
+		if ( (string) get_option( 'doublescale_pro_schema_sync_rev', '' ) === $revision ) {
+			return;
+		}
+
+		MigrationRunner::ensure_declared_columns( self::migration_registry() );
+		update_option( 'doublescale_pro_schema_sync_rev', $revision );
 	}
 
 	/**
@@ -187,6 +207,10 @@ final class ProInstall {
 
 		MigrationRunner::repair_missing_tables( self::migration_registry() );
 
+		if ( method_exists( MigrationRunner::class, 'ensure_declared_columns' ) ) {
+			MigrationRunner::ensure_declared_columns( self::migration_registry() );
+		}
+
 		self::run_abandoned_carts_migration();
 
 		self::run_version_migrations();
@@ -196,6 +220,7 @@ final class ProInstall {
 		}
 
 		self::update_pro_version();
+		update_option( 'doublescale_pro_schema_sync_rev', defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '0' );
 
 		delete_transient( 'doublescale_pro_installing' );
 	}

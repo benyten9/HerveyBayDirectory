@@ -326,6 +326,40 @@ class OldDataMigrationRepository extends Repository {
         return $map;
     }
 
+    public function query_latest_listing_date_for_plan( int $user_id, string $meta_key, int $plan_id, string $after_date, string $before_date ): ?string {
+        global $wpdb;
+
+        $post_type = defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir';
+
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Core table names are provided by wpdb.
+        $listing_date = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT listing.post_date
+                FROM {$wpdb->posts} AS listing
+                INNER JOIN {$wpdb->postmeta} AS plan_meta
+                    ON plan_meta.post_id = listing.ID
+                    AND plan_meta.meta_key = %s
+                    AND plan_meta.meta_value = %s
+                WHERE listing.post_type = %s
+                    AND listing.post_author = %d
+                    AND listing.post_status NOT IN ( 'trash', 'auto-draft' )
+                    AND listing.post_date > %s
+                    AND listing.post_date <= %s
+                ORDER BY listing.post_date DESC, listing.ID DESC
+                LIMIT 1",
+                $meta_key,
+                (string) $plan_id,
+                $post_type,
+                $user_id,
+                $after_date,
+                $before_date
+            )
+        );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+        return is_string( $listing_date ) && '' !== $listing_date ? $listing_date : null;
+    }
+
     public function update_migration_error( ?array $error ): void {
         update_option( 'directorist_plans_migration_error', $error );
     }
@@ -469,17 +503,6 @@ class OldDataMigrationRepository extends Repository {
         return $this->query_last_paid_order_for_user_plan( $user_id, $plan_id );
     }
 
-    public function insert_expired_package( array $package_data ): int {
-        global $wpdb;
-
-        $packages_table = "{$wpdb->prefix}directorist_user_packages";
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Direct insert to bypass constraints for migration
-        $wpdb->insert( $packages_table, $package_data );
-
-        return (int) $wpdb->insert_id;
-    }
-
     /**
      * @return int[]
      */
@@ -489,5 +512,9 @@ class OldDataMigrationRepository extends Repository {
 
     public function get_postmeta_map( int $post_id ): array {
         return $this->query_postmeta_map( $post_id );
+    }
+
+    public function get_latest_listing_date_for_plan( int $user_id, string $meta_key, int $plan_id, string $after_date, string $before_date ): ?string {
+        return $this->query_latest_listing_date_for_plan( $user_id, $meta_key, $plan_id, $after_date, $before_date );
     }
 }

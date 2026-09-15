@@ -164,6 +164,23 @@ function nibwp_bricks_normalise_elements(array $elements): array
 }
 
 /**
+ * Which meta key holds this template type's element tree.
+ *
+ * Bricks stores header and footer templates in their own keys and everything
+ * else in the content key. The distinction is invisible from the post type -
+ * a footer is a bricks_template like any other - which is why writing them
+ * all to the content key failed silently rather than erroring.
+ */
+function nibwp_bricks_content_meta_key(string $template_type): string
+{
+    return match ($template_type) {
+        'header' => '_bricks_page_header_2',
+        'footer' => '_bricks_page_footer_2',
+        default  => '_bricks_page_content_2',
+    };
+}
+
+/**
  * Create or update a Bricks template.
  *
  * @param array $input Input data.
@@ -196,7 +213,11 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
     }
 
     $template_type = (string) ($input['template_type'] ?? 'content');
-    $allowed_types = ['header', 'footer', 'content', 'section', 'archive'];
+    // Kept in step with NIBWP_BRICKS_TEMPLATE_TYPES in the bricks-pro
+    // validator. They disagreed: the validator accepted `error` and `popup`,
+    // this list did not, so a payload could pass a dry run and then be
+    // refused at commit.
+    $allowed_types = ['header', 'footer', 'content', 'section', 'archive', 'error', 'popup'];
     if (!in_array($template_type, $allowed_types, true)) {
         return new WP_Error(
             'invalid_template_type',
@@ -209,7 +230,8 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
     $template_id = isset($input['template_id']) ? (int) $input['template_id'] : 0;
 
     // Update or create.
-    if ($template_id > 0) {
+    $is_update = $template_id > 0;
+    if ($is_update) {
         $existing = get_post($template_id);
         if (!$existing || $existing->post_type !== 'bricks_template') {
             return new WP_Error(
@@ -234,30 +256,418 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
         }
     }
 
+    // Bricks keeps a template's tree in a different meta key per template
+    // type. Writing everything to the content key put a second, orphaned tree
+    // beside a header or footer template's real one, reported success, and
+    // left the template rendering exactly what it rendered before — while
+    // _bricks_template_type was overwritten on the way past, changing what
+    // Bricks thought the template was. A customer found this on a live footer.
+    $meta_key = nibwp_bricks_content_meta_key($template_type);
+
+    // On an existing template, the tree already on disk decides the key. An
+    // explicit template_type may legitimately convert one, but a caller who
+    // did not name a type must never silently move a footer's content.
+    if ($is_update && !isset($input['template_type'])) {
+        $stored_type = (string) get_post_meta($template_id, '_bricks_template_type', true);
+        if ($stored_type !== '') {
+            $template_type = $stored_type;
+            $meta_key      = nibwp_bricks_content_meta_key($stored_type);
+        }
+    }
+
     // Set template type meta.
     update_post_meta($template_id, '_bricks_template_type', $template_type);
 
     // Store elements.
     if (!empty($elements)) {
         $normalised = nibwp_bricks_normalise_elements($elements);
-        update_post_meta($template_id, '_bricks_page_content_2', $normalised);
+        // update_metadata() unslashes what it is given, so a backslash inside
+        // an element setting - a CSS content:"C", an escaped quote - is
+        // stripped on the way in unless it is slashed first.
+        update_post_meta($template_id, $meta_key, wp_slash($normalised));
     }
 
     // Store conditions if provided.
     if (is_array($conditions)) {
-        update_post_meta($template_id, '_bricks_template_conditions', $conditions);
+        update_post_meta($template_id, '_bricks_template_conditions', wp_slash($conditions));
     }
 
     // Report what actually landed in the meta, not what was asked for. A
     // caller that only knows the template id cannot tell a built page from an
     // empty one, and every summary written from this return said "persisted".
-    $stored = get_post_meta($template_id, '_bricks_page_content_2', true);
+    nibwp_bricks_regenerate_css($template_id, $meta_key);
+
+    // Read back the key actually written, or the count describes a tree the
+    // template does not render from.
+    $stored = get_post_meta($template_id, $meta_key, true);
 
     return [
         'template_id'    => $template_id,
         'edit_url'       => add_query_arg(['bricks' => 'run'], get_permalink($template_id)),
         'elements_saved' => is_array($stored) ? count($stored) : 0,
     ];
+}
+
+// ---------------------------------------------------------------------------
+// Ability: nibwp/bricks-update-element
+// ---------------------------------------------------------------------------
+
+wp_register_ability('nibwp/bricks-update-element', [
+    'label' => __('Bricks – Update One Element', domain: 'nibwp'),
+    'description' => __(
+        'Changes settings on a single existing Bricks element, on a page or a template, leaving the rest of the tree untouched.',
+        domain: 'nibwp',
+    ),
+    'category' => 'bricks',
+    'input_schema' => [
+        'type' => 'object',
+        'properties' => [
+            'post_id' => [
+                'type' => 'integer',
+                'description' => 'The post holding the element — a page, a post, or a bricks_template.',
+            ],
+            'element_id' => [
+                'type' => 'string',
+                'description' => 'The element\'s Bricks id, e.g. "wqlhxj". Element ids are only unique WITHIN a post, so post_id and element_id are both required and are matched together.',
+            ],
+            'settings_patch' => [
+                'type' => 'object',
+                'description' => 'Settings to merge into the element. Keys not named here keep their current value. Nested objects merge recursively; a null value deletes that setting.',
+            ],
+            'dry_run' => [
+                'type' => 'boolean',
+                'description' => 'Default true. Returns the before/after diff and the validation result without writing.',
+                'default' => true,
+            ],
+        ],
+        'required' => ['post_id', 'element_id', 'settings_patch'],
+        'additionalProperties' => false,
+    ],
+    'output_schema' => [
+        'type' => 'object',
+        'properties' => [
+            'written'    => ['type' => 'boolean', 'description' => 'False on a dry run.'],
+            'post_id'    => ['type' => 'integer'],
+            'element_id' => ['type' => 'string'],
+            'meta_key'   => ['type' => 'string', 'description' => 'The meta key the tree actually lives in.'],
+            'before'     => ['type' => 'object', 'description' => 'The element as it is now.'],
+            'after'      => ['type' => 'object', 'description' => 'The element as it would be, or now is.'],
+            'changed'    => ['type' => 'array', 'description' => 'Setting keys this patch alters.', 'items' => ['type' => 'string']],
+            'validation' => ['type' => 'object', 'description' => 'Validator verdict for the patched element.'],
+        ],
+    ],
+    'execute_callback' => 'nibwp_bricks_update_element',
+    'permission_callback' => 'nibwp_permission_callback',
+    'meta' => [
+        'show_in_rest' => true,
+        'mcp' => ['public' => true],
+        'annotations' => [
+            'instructions' => implode("\n", [
+                'Edits ONE element in place. Use this for small, surgical changes — adding a link, fixing a URL,',
+                'correcting a typo, changing a class — on a page or a template.',
+                '',
+                'Prefer this over bricks-pro-html-to-component for small edits. That ability replaces a whole',
+                'template tree, which is the wrong instrument for a one-setting change and loses anything the',
+                'payload does not restate.',
+                '',
+                'FINDING THE ELEMENT:',
+                'Read the tree first (nibwp/wp-get-post-meta on _bricks_page_content_2, or _bricks_page_header_2 /',
+                '_bricks_page_footer_2 for header and footer templates) and take the `id` of the element you want.',
+                'Element ids are NOT unique across posts — the same id can name a different element on another',
+                'page — so always pass the post_id you read the tree from.',
+                '',
+                'THE PATCH:',
+                'settings_patch merges into the element\'s existing settings. Only the keys you name change.',
+                'Nested objects merge recursively, so you can set settings_patch = {"_typography":{"font-size":"18px"}}',
+                'without restating the rest of _typography. A null value deletes that key.',
+                '',
+                'ALWAYS run with dry_run=true first, read the `before`/`after` diff, then re-run with dry_run=false.',
+            ]),
+            'readonly'    => false,
+            'destructive' => false,
+            'idempotent'  => true,
+        ],
+    ],
+]);
+
+/**
+ * Rebuild the post's CSS file after a write that bypassed Bricks' own save.
+ *
+ * Bricks renders styles inline by default, in which case a change shows up on
+ * the next request and there is nothing to do. On installs with "CSS loading
+ * method" set to External Files the stylesheet is a file on disk, regenerated
+ * when the builder saves — which a direct meta write never triggers, so the
+ * edit lands in the database and the page keeps serving the old CSS.
+ *
+ * Bricks' own generator returns immediately unless that setting is on, so this
+ * is safe to call either way and needs no setting check of its own.
+ */
+function nibwp_bricks_regenerate_css(int $post_id, string $meta_key): void
+{
+    if (!class_exists('\Bricks\Assets_Files') || !method_exists('\Bricks\Assets_Files', 'generate_post_css_file')) {
+        return;
+    }
+
+    $area = match ($meta_key) {
+        '_bricks_page_header_2' => 'header',
+        '_bricks_page_footer_2' => 'footer',
+        default                 => 'content',
+    };
+
+    $elements = get_post_meta($post_id, $meta_key, true);
+    if (!is_array($elements) || $elements === []) {
+        return;
+    }
+
+    \Bricks\Assets_Files::generate_post_css_file($post_id, $area, $elements);
+}
+
+/**
+ * Change settings on one element, in place.
+ *
+ * The tree-replacing abilities were the only way to change a Bricks page, and
+ * for a one-setting edit that is the wrong instrument: it rewrites everything
+ * and loses whatever the caller did not restate. What actually happened is
+ * that agents reached for raw execute-php on the meta instead, which skips
+ * every guardrail the validator provides. This is the small tool that was
+ * missing.
+ *
+ * Two things it deliberately does not assume:
+ *
+ *   - which meta key holds the tree. A header or footer template keeps its
+ *     elements in its own key, and guessing the content key is what let a
+ *     previous write land beside a footer's real tree instead of in it. All
+ *     three are searched, and the one actually holding the element wins.
+ *
+ *   - that an element id identifies an element. Bricks ids are unique within a
+ *     post and not across posts — the same id names different elements on two
+ *     pages of the same site — so the key is (post_id, element_id) and the
+ *     post is never inferred.
+ *
+ * @param array $input Input data.
+ * @return array|WP_Error
+ */
+function nibwp_bricks_update_element(array $input): array|WP_Error
+{
+    if (!defined('BRICKS_VERSION')) {
+        return new WP_Error('bricks_not_active', __('Bricks is not active on this site.', domain: 'nibwp'));
+    }
+
+    $post_id    = (int) ($input['post_id'] ?? 0);
+    $element_id = trim((string) ($input['element_id'] ?? ''));
+    $patch      = $input['settings_patch'] ?? null;
+    $dry_run    = array_key_exists('dry_run', $input) ? (bool) $input['dry_run'] : true;
+
+    if ($post_id <= 0 || $element_id === '') {
+        return new WP_Error('bricks_bad_target', __('post_id and element_id are both required.', domain: 'nibwp'));
+    }
+    if (!is_array($patch) || $patch === []) {
+        return new WP_Error(
+            'bricks_empty_patch',
+            __('settings_patch is missing or empty, so there is nothing to change. Nothing was written.', domain: 'nibwp')
+        );
+    }
+
+    $post = get_post($post_id);
+    if (!$post instanceof WP_Post) {
+        return new WP_Error('bricks_post_missing', sprintf(__('Post %d does not exist.', domain: 'nibwp'), $post_id));
+    }
+    // The generic ability capability is not enough on its own: this writes to
+    // one specific post, so the check has to name it.
+    if (!current_user_can('edit_post', $post_id)) {
+        return new WP_Error('bricks_no_caps', sprintf(__('You are not allowed to edit post %d.', domain: 'nibwp'), $post_id));
+    }
+
+    // Find the element, without assuming which key holds the tree.
+    $found = null;
+    foreach (['_bricks_page_content_2', '_bricks_page_header_2', '_bricks_page_footer_2'] as $key) {
+        $tree = get_post_meta($post_id, $key, true);
+        if (!is_array($tree) || $tree === []) {
+            continue;
+        }
+        $hits = [];
+        foreach ($tree as $index => $element) {
+            if (is_array($element) && (string) ($element['id'] ?? '') === $element_id) {
+                $hits[] = $index;
+            }
+        }
+        if ($hits === []) {
+            continue;
+        }
+        if (count($hits) > 1) {
+            return new WP_Error(
+                'bricks_ambiguous_element',
+                sprintf(
+                    __('Element id "%1$s" appears %2$d times in %3$s on post %4$d. That tree is malformed — ids must be unique within a post — so nothing was changed.', domain: 'nibwp'),
+                    $element_id,
+                    count($hits),
+                    $key,
+                    $post_id
+                )
+            );
+        }
+        $found = ['key' => $key, 'index' => $hits[0], 'tree' => $tree];
+        break;
+    }
+
+    if ($found === null) {
+        return new WP_Error(
+            'bricks_element_not_found',
+            sprintf(
+                __('No element with id "%1$s" on post %2$d. Element ids are unique only within a post, so an id read from another page will not be found here — re-read this post\'s tree and take the id from it.', domain: 'nibwp'),
+                $element_id,
+                $post_id
+            )
+        );
+    }
+
+    $before  = $found['tree'][$found['index']];
+    $after   = $before;
+    $after['settings'] = nibwp_bricks_merge_settings((array) ($before['settings'] ?? []), $patch);
+
+    $changed = nibwp_bricks_changed_keys((array) ($before['settings'] ?? []), $after['settings']);
+    if ($changed === []) {
+        return [
+            'written'    => false,
+            'post_id'    => $post_id,
+            'element_id' => $element_id,
+            'meta_key'   => $found['key'],
+            'before'     => $before,
+            'after'      => $after,
+            'changed'    => [],
+            'validation' => ['passed' => true, 'failed' => [], 'warnings' => []],
+            'summary'    => __('The patch matches what is already stored, so nothing was written.', domain: 'nibwp'),
+        ];
+    }
+
+    // Validate the patched element alone. The rest of the tree is untouched
+    // and is not this call's to answer for.
+    $validation = ['passed' => true, 'failed' => [], 'warnings' => []];
+    $validator  = WP_PLUGIN_DIR . '/nibwp/includes/skills/bricks-pro/lib/validator.php';
+    if (is_readable($validator)) {
+        require_once $validator;
+        if (function_exists('nibwp_bricks_pro_validate_payload')) {
+            $validation = nibwp_bricks_pro_validate_payload(['elements' => [$after]]);
+        }
+    }
+    if (empty($validation['passed'])) {
+        return new WP_Error(
+            'bricks_patch_invalid',
+            __('The patched element does not validate, so nothing was written.', domain: 'nibwp'),
+            ['failed' => $validation['failed'] ?? [], 'warnings' => $validation['warnings'] ?? []]
+        );
+    }
+
+    $result = [
+        'written'    => false,
+        'post_id'    => $post_id,
+        'element_id' => $element_id,
+        'meta_key'   => $found['key'],
+        'before'     => $before,
+        'after'      => $after,
+        'changed'    => $changed,
+        'validation' => $validation,
+    ];
+
+    if ($dry_run) {
+        $result['summary'] = sprintf(
+            /* translators: 1: comma-separated setting names, 2: element id */
+            __('Would change %1$s on element %2$s. Re-run with dry_run=false to write.', domain: 'nibwp'),
+            implode(', ', $changed),
+            $element_id
+        );
+
+        return $result;
+    }
+
+    $tree = $found['tree'];
+    $tree[$found['index']] = $after;
+
+    // update_metadata() unslashes what it is given, so a backslash anywhere in
+    // the tree — a CSS content:"\201C", an escaped quote — is stripped unless
+    // it is slashed on the way in. That applies to the whole tree, not just
+    // the element being patched.
+    update_post_meta($post_id, $found['key'], wp_slash($tree));
+
+    // Read back rather than trust the write: a caller that is told "changed"
+    // and got nothing is exactly the failure this ability exists to end.
+    $stored = get_post_meta($post_id, $found['key'], true);
+    $landed = is_array($stored) && isset($stored[$found['index']]['settings'])
+        ? $stored[$found['index']]['settings']
+        : null;
+    if ($landed !== $after['settings']) {
+        return new WP_Error(
+            'bricks_write_unconfirmed',
+            __('The element was written but reading it back did not return the patched settings. Nothing further was changed; inspect the post before retrying.', domain: 'nibwp')
+        );
+    }
+
+    nibwp_bricks_regenerate_css($post_id, $found['key']);
+
+    $result['written'] = true;
+    $result['summary'] = sprintf(
+        /* translators: 1: comma-separated setting names, 2: element id */
+        __('Changed %1$s on element %2$s.', domain: 'nibwp'),
+        implode(', ', $changed),
+        $element_id
+    );
+
+    return $result;
+}
+
+/**
+ * Merge a patch into an element's settings.
+ *
+ * Only the named keys change. Nested associative arrays merge recursively, so
+ * a caller can set one typography property without restating the rest; a null
+ * deletes the key, which is the only way to remove a setting rather than blank
+ * it. Lists (Bricks stores repeaters as sequential arrays) are replaced
+ * wholesale, because merging them by index silently mixes two different rows.
+ *
+ * @param array $settings Current settings.
+ * @param array $patch    Incoming patch.
+ * @return array
+ */
+function nibwp_bricks_merge_settings(array $settings, array $patch): array
+{
+    foreach ($patch as $key => $value) {
+        if ($value === null) {
+            unset($settings[$key]);
+            continue;
+        }
+        $existing = $settings[$key] ?? null;
+        if (is_array($value) && is_array($existing)
+            && !array_is_list($value) && !array_is_list($existing)
+        ) {
+            $settings[$key] = nibwp_bricks_merge_settings($existing, $value);
+            continue;
+        }
+        $settings[$key] = $value;
+    }
+
+    return $settings;
+}
+
+/**
+ * The setting names a patch actually alters, so a caller can see the change
+ * without diffing two objects — and so a patch that changes nothing can say so
+ * instead of writing.
+ *
+ * @return array<int,string>
+ */
+function nibwp_bricks_changed_keys(array $before, array $after): array
+{
+    $changed = [];
+    foreach (array_keys($before + $after) as $key) {
+        $was = $before[$key] ?? null;
+        $now = $after[$key] ?? null;
+        if ($was !== $now) {
+            $changed[] = (string) $key;
+        }
+    }
+    sort($changed);
+
+    return $changed;
 }
 
 // ---------------------------------------------------------------------------

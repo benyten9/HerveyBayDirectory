@@ -349,6 +349,14 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 			$template_variables = $request->get_param( 'template_variables' ) ?? array();
 			$deal_id            = $request->get_param( 'deal_id' ) ?? null;
 
+			// Media for a template whose header is an image/video/document, and
+			// values for its interactive buttons. Meta does not return the
+			// approved sample media in its template list, so a media template
+			// cannot be sent unless the caller supplies it per send.
+			$header_media  = $request->get_param( 'header_media' ) ?? array();
+			$button_params = $request->get_param( 'button_params' ) ?? array();
+			$card_params   = $request->get_param( 'card_params' ) ?? array();
+
 			// Validate contact exists
 			$contact = ContactModel::find( $contact_id );
 			if ( ! $contact ) {
@@ -388,6 +396,19 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 
 			// UNIQUE: WhatsApp template preparation
 			$message_data = $this->prepare_template_message( $template, $contact, $template_variables, $tracking_entry );
+
+			// Per-send media and button values override whatever the cached
+			// template definition carried.
+			$overrides = array(
+				'header_media'  => $header_media,
+				'button_params' => $button_params,
+				'card_params'   => $card_params,
+			);
+			foreach ( $overrides as $key => $value ) {
+				if ( ! empty( $value ) ) {
+					$message_data['TemplateSettings'][ $key ] = $value;
+				}
+			}
 
 			if ( ! $provider->requires_template( $this->get_channel_type() ) ) {
 				$message_data['fallback_body'] = MergeTagsManager::instance()->process_merge_tags(
@@ -460,6 +481,11 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 
 			if ( ! empty( $message_data['ContentVariables'] ) ) {
 				$api_data['ContentVariables'] = $message_data['ContentVariables'];
+			}
+
+			// Carry the header definition so media templates send their media.
+			if ( ! empty( $message_data['TemplateSettings'] ) ) {
+				$api_data['TemplateSettings'] = $message_data['TemplateSettings'];
 			}
 		}
 

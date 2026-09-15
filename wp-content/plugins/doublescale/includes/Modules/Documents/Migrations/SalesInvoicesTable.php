@@ -55,6 +55,8 @@ class SalesInvoicesTable extends Migration {
 			shipping_address TEXT NULL,
 			client_note TEXT NULL,
 			terms TEXT NULL,
+			sections JSON NULL,
+			issuer_snapshot LONGTEXT NULL,
 			sent_at DATETIME NULL,
 			viewed_at DATETIME NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

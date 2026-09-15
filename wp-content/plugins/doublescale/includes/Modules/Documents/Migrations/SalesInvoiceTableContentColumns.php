@@ -15,9 +15,18 @@ defined( 'ABSPATH' ) || exit;
 class SalesInvoiceTableContentColumns {
 
 	/**
+	 * Safe on every boot, and idempotent.
+	 *
+	 * Called from the module boot as well as the migration ledger, because a
+	 * site whose ledger already advanced past this version never re-runs
+	 * `run()` — so a table that missed the ALTER (a multisite subsite created
+	 * out of order, or a run where the statement failed) stays permanently
+	 * without `sections`, and every invoice INSERT fails against it. The
+	 * proposal twin was hardened the same way for the same reason.
+	 *
 	 * @return void
 	 */
-	public function run() {
+	public static function ensure(): void {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'doublescale_sales_invoices';
@@ -34,7 +43,17 @@ class SalesInvoiceTableContentColumns {
 			return;
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "ALTER TABLE `{$table}` ADD `sections` JSON NULL AFTER `terms`" );
+		// No AFTER — do not depend on any later column existing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "ALTER TABLE `{$table}` ADD `sections` JSON NULL" );
+	}
+
+	/**
+	 * Migration-ledger entry point.
+	 *
+	 * @return void
+	 */
+	public function run() {
+		self::ensure();
 	}
 }

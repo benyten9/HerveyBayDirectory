@@ -292,18 +292,24 @@ class SendWhatsapp extends AbstractSendMessage
 
 			// Check for failure
 			if ( $tracking->status === TrackingStatus::FAILED ) {
+				$stored_error = CommunicationTrackingMetaModel::get_meta_value( $tracking->id, 'send_error' );
+				$fail_message = $this->get_send_failure_message(
+					is_string( $stored_error ) ? $stored_error : ''
+				);
+
 				doublescale_get_logger()->error(
 					"Send {$channel_name} action: Message failed to send",
 					array(
 						'automation_id' => $automation->id,
 						'contact_id'    => $contact->id,
 						'tracking_id'   => $tracking->id,
+						'error'         => $fail_message,
 						'code'          => "send_{$channel_type}_failed",
 					)
 				);
 				return array(
 					'success' => false,
-					'message' => __( 'Whatsapp message failed to send', 'doublescale'),
+					'message' => $fail_message,
 					'code'    => 'send_failed',
 				);
 			}
@@ -567,6 +573,12 @@ class SendWhatsapp extends AbstractSendMessage
 				'variables' => $template['variables'] ?? array(),
 				'language'  => $template['settings']['language'] ?? 'en',
 				'category'  => $template['settings']['category'] ?? 'UTILITY',
+				// The approved definition itself: header format, buttons and
+				// carousel cards. The field reads these to decide which
+				// per-send inputs to show — without them a media template
+				// looks identical to a plain one and its image is never asked
+				// for, which is why such templates failed from an automation.
+				'settings'  => $template['settings'] ?? array(),
 			);
 		}
 
@@ -616,6 +628,19 @@ class SendWhatsapp extends AbstractSendMessage
 							'additionalProperties' => array(
 								'type' => 'string',
 							),
+						),
+						// Per-send values for media and interactive templates.
+						// Meta omits approved sample media from its template
+						// list, so these cannot be derived from the template
+						// and must be carried by the step itself.
+						'header_media'       => array(
+							'type' => 'object',
+						),
+						'button_params'      => array(
+							'type' => 'array',
+						),
+						'card_params'        => array(
+							'type' => 'array',
 						),
 					),
 				),
@@ -687,6 +712,78 @@ class SendWhatsapp extends AbstractSendMessage
 				)
 			);
 		}
+
+		$this->store_interactive_settings( $step, $tracking );
+	}
+
+	/**
+	 * Record the per-send values an interactive or media template needs.
+	 *
+	 * A template's cached definition describes its *shape* — that the header is
+	 * an image, that a button copies a code — but never carries the values, and
+	 * Meta does not return its approved sample media in the template list. So
+	 * the image, the coupon code and a carousel's per-card media have to be
+	 * supplied per send, exactly as the contact dialog supplies them.
+	 *
+	 * Without this the automation sent the template shape with nothing filling
+	 * it, and Meta answered "(#131008) Required parameter is missing".
+	 *
+	 * @param AutomationStepModel        $step     Automation Step Model.
+	 * @param CommunicationTrackingModel $tracking Communication Tracking Model.
+	 * @return void
+	 */
+	private function store_interactive_settings( AutomationStepModel $step, CommunicationTrackingModel $tracking ) {
+		$whatsapp_template = $step->get_setting( 'whatsapp_template', array() );
+
+		if ( empty( $whatsapp_template ) || ! is_array( $whatsapp_template ) ) {
+			return;
+		}
+
+		$settings = array();
+
+		foreach ( array( 'header_media', 'button_params', 'card_params' ) as $key ) {
+			$value = isset( $whatsapp_template[ $key ] ) ? $whatsapp_template[ $key ] : null;
+
+			// Legacy rows stored these as JSON strings; the send path expects arrays.
+			if ( is_string( $value ) ) {
+				$decoded = json_decode( $value, true );
+				$value   = ( JSON_ERROR_NONE === json_last_error() && is_array( $decoded ) ) ? $decoded : null;
+			}
+
+			if ( ! empty( $value ) && is_array( $value ) ) {
+				$settings[ $key ] = $value;
+			}
+		}
+
+		if ( empty( $settings ) ) {
+			return;
+		}
+
+		\DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel::create(
+			array(
+				'communication_tracking_id' => $tracking->id,
+				'meta_key'                  => 'automation_template_settings',
+				'meta_value'                => $settings,
+			)
+		);
+	}
+
+	/**
+	 * Copy Reports shows when this send failed.
+	 *
+	 * Prefers the provider error stored on the tracking row so the user sees
+	 * the same reason Meta returned, not a generic "failed to send".
+	 *
+	 * @param string $stored_error Tracking meta `send_error`, if any.
+	 * @return string
+	 */
+	private function get_send_failure_message( $stored_error = '' ): string {
+		$stored = is_string( $stored_error ) ? trim( $stored_error ) : '';
+		if ( '' !== $stored ) {
+			return $stored;
+		}
+
+		return __( 'Whatsapp message failed to send', 'doublescale' );
 	}
 
 	/**
@@ -697,7 +794,12 @@ class SendWhatsapp extends AbstractSendMessage
 	 */
 	private function find_or_create_template_by_sid( string $template_sid )
 	{
-		if ( ! AutomationModuleStorage::is_ready( 'campaigns', TemplateModel::class ) ) {
+		// Templates are shared with inbox and automations. Do not gate on the
+		// Campaigns *module* being enabled — that toggle only hides the
+		// campaigns UI. When it is off, is_ready() returns false, lookup
+		// returns null, and every Send WhatsApp run throws "template not
+		// found" then sits Pending in Reports. Guard the table only.
+		if ( ! AutomationModuleStorage::table_exists( TemplateModel::class ) ) {
 			return null;
 		}
 

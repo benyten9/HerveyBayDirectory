@@ -10,6 +10,7 @@ return [
     'prefix' => 'Perfmatters\\Vendor',
 
     // Scope third-party parser/runtime dependencies from Composer's vendor dir.
+    // Also copy LICENSE files so MIT attribution survives prefixing.
     'finders' => [
         Finder::create()
             ->files()
@@ -17,8 +18,13 @@ return [
             ->name('*.php'),
         Finder::create()
             ->files()
+            ->depth(0)
+            ->in(__DIR__ . '/vendor/sabberworm/php-css-parser')
+            ->name('LICENSE'),
+        Finder::create()
+            ->files()
             ->in(__DIR__ . '/vendor/thecodingmachine/safe')
-            ->name('*.php'),
+            ->name(['*.php', 'LICENSE']),
     ],
 ];
 

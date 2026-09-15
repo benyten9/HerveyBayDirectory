@@ -29,10 +29,10 @@ class SalesProposalTableResponseColumns {
 		}
 
 		$columns = array(
-			'sent_at'        => "ADD `sent_at` DATETIME NULL AFTER `allow_comments`",
-			'accepted_at'    => "ADD `accepted_at` DATETIME NULL AFTER `sent_at`",
-			'declined_at'    => "ADD `declined_at` DATETIME NULL AFTER `accepted_at`",
-			'decline_reason' => "ADD `decline_reason` TEXT NULL AFTER `declined_at`",
+			'sent_at'        => "ADD `sent_at` DATETIME NULL",
+			'accepted_at'    => "ADD `accepted_at` DATETIME NULL",
+			'declined_at'    => "ADD `declined_at` DATETIME NULL",
+			'decline_reason' => "ADD `decline_reason` TEXT NULL",
 		);
 
 		foreach ( $columns as $name => $ddl ) {

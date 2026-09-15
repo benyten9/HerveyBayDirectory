@@ -1235,23 +1235,42 @@ class Redirections implements ExecuteHooks {
 		// The root is a legitimate origin to store, and it exists under two
 		// shapes: `processCreate()` normalises `/` down to an empty title, while
 		// older rows and imports keep the slash. Both are looked up explicitly.
-		$exact = ( '' === $path )
-			? $this->find_root_redirections()
-			: get_posts(
-				array(
-					'post_type'      => 'seopress_404',
-					'post_status'    => 'publish',
-					'title'          => $path,
-					'posts_per_page' => 1,
-					'meta_query'     => array(
-						array(
-							'key'     => '_seopress_redirections_enabled',
-							'value'   => 'yes',
-							'compare' => '=',
+		//
+		// The install path is optional in a stored origin, so the tester has to
+		// look the input up under every shape the front end does — otherwise it
+		// reports no match on a redirection that fires, or the reverse, which is
+		// worse than no tester at all. See seopress_pro_origin_path_variants().
+		$exact = array();
+
+		if ( '' === $path ) {
+			$exact = $this->find_root_redirections();
+		} else {
+			foreach ( seopress_pro_origin_path_variants( $path ) as $candidate ) {
+				if ( '' === $candidate ) {
+					continue;
+				}
+
+				$exact = get_posts(
+					array(
+						'post_type'      => 'seopress_404',
+						'post_status'    => 'publish',
+						'title'          => $candidate,
+						'posts_per_page' => 1,
+						'meta_query'     => array(
+							array(
+								'key'     => '_seopress_redirections_enabled',
+								'value'   => 'yes',
+								'compare' => '=',
+							),
 						),
-					),
-				)
-			);
+					)
+				);
+
+				if ( ! empty( $exact ) ) {
+					break;
+				}
+			}
+		}
 		if ( ! empty( $exact ) ) {
 			$p    = $exact[0];
 			$type = get_post_meta( $p->ID, '_seopress_redirections_type', true );
@@ -1293,7 +1312,14 @@ class Redirections implements ExecuteHooks {
 		// $path has had it trimmed; put it back for the regex comparison only.
 		// Otherwise a pattern anchored on `/` would redirect on the site while
 		// this tester reported no match, which is worse than no tester at all.
-		$regex_path = '/' . ltrim( $path, '/' );
+		//
+		// And under both shapes, like checkRegexRedirect(): a pattern anchored on
+		// a subsite (`^/fr/support/`) matches only the one that kept that path.
+		$regex_paths = array();
+		foreach ( seopress_pro_origin_path_variants( $path ) as $candidate ) {
+			$regex_paths[ '/' . ltrim( $candidate, '/' ) ] = true;
+		}
+		$regex_paths = array_keys( $regex_paths );
 
 		foreach ( $regex_posts as $p ) {
 			$pattern = $p->post_title;
@@ -1303,8 +1329,17 @@ class Redirections implements ExecuteHooks {
 			// Built by the front-end service itself, so this tester cannot drift
 			// away from what visitors will actually get.
 			$delimited = ( new \SEOPressPro\Services\Redirection() )->buildRegexPattern( $pattern );
-			// Silence warnings on invalid user patterns — we just want to know if it matches.
-			$matched = @preg_match( $delimited, $regex_path, $matches ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+			$matched = 0;
+			$matches = array();
+			foreach ( $regex_paths as $regex_path ) {
+				// Silence warnings on invalid user patterns — we just want to know if it matches.
+				$matched = @preg_match( $delimited, $regex_path, $matches ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				if ( 1 === $matched ) {
+					break;
+				}
+			}
+
 			if ( 1 === $matched ) {
 				$dest     = get_post_meta( $p->ID, '_seopress_redirections_value', true );
 				$replaced = $dest;

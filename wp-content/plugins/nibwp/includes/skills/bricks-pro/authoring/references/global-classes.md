@@ -60,12 +60,15 @@ The persister merges into `wp_options['bricks_global_classes']` — names are un
     "_id": "card01",
     "tag": "article",
     "_cssGlobalClasses": ["etched-card"],
-    "_cssCustom": ".brxe-{id} { /* one-off override only */ }"
+    "_padding": { "top": "var(--space-m, 24px)" },
+    "_cssCustom": ".brxe-{id}:hover { /* states only - anything with a control goes in settings */ }"
   }
 }
 ```
 
 `{id}` inside `_cssCustom` is auto-replaced by the persister with the element's actual ID, so the selector is unique to that element.
+
+A global class is a **bundle of settings**, not a stylesheet: put `_padding`, `_background`, `_typography` and the rest in its `settings`, exactly as you would on an element, and leave `_cssCustom` for states and pseudo-elements. See [element-settings.md](element-settings.md).
 
 ## Per-breakpoint values
 

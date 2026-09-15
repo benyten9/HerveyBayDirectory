@@ -7,7 +7,9 @@
  * Generalised from {@see \DoubleScale\Modules\Support\Renderer\PortalFrontendHandler}:
  *
  *   - Shortcode-driven (does NOT hijack `template_redirect`), so it renders
- *     inline on whatever page the admin pasted the shortcode onto.
+ *     inline on whatever page the admin pasted the shortcode onto. Theme
+ *     header/footer/content stay intact. The SPA mounts in a Shadow DOM so
+ *     theme CSS cannot change portal colors, padding, or typography.
  *   - Logged-out visitors see a login gate; support staff (an agent whose email
  *     is not also a contact) see a redirect notice; logged-in customers load the
  *     SPA bundle.
@@ -155,38 +157,30 @@ final class PortalFrontendHandler {
 			true
 		);
 
-		wp_register_style(
-			self::HANDLE,
-			$plugin_url . 'build/renderer/portal/style.css',
-			array(),
-			$ver
-		);
-
 		wp_localize_script( self::HANDLE, 'doublescale_client_portal_config', $this->build_config() );
-		wp_style_add_data( self::HANDLE, 'rtl', 'replace' );
 
 		wp_enqueue_script( self::HANDLE );
-		wp_enqueue_style( self::HANDLE );
+		// Portal CSS is fetched and inlined into the Shadow DOM (see style_urls).
+		// Do not print it in the light DOM or the theme can restyle escaped dialogs.
 	}
 
 	/**
-	 * Let the portal use its designed centered width instead of the host
-	 * theme's blog column (e.g. max-w-4xl / content-size).
+	 * Size the shortcode host only. Portal UI lives in a Shadow DOM so theme
+	 * CSS cannot reach colors/padding inside; this just keeps the host slot
+	 * full-width and padding-free inside the theme content column.
 	 *
 	 * @return void
 	 */
 	private function enqueue_host_isolation_styles(): void {
 		$version = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
 		$css     = '
-			body.doublescale-client-portal-page #content > main > .max-w-4xl,
-			body.doublescale-client-portal-page .max-w-4xl:has(#doublescale-client-portal),
-			body.doublescale-client-portal-page .entry-content:has(#doublescale-client-portal),
-			body.doublescale-client-portal-page .wp-block-post-content:has(#doublescale-client-portal),
-			body.doublescale-client-portal-page .is-layout-constrained:has(#doublescale-client-portal){
-				max-width:93rem!important;
+			/* Fill the theme content column only — never force a wider rem max-width. */
+			body.doublescale-client-portal-page .elementor-widget:has(#doublescale-client-portal),
+			body.doublescale-client-portal-page .elementor-widget-container:has(#doublescale-client-portal),
+			body.doublescale-client-portal-page .elementor-shortcode:has(#doublescale-client-portal),
+			body.doublescale-client-portal-page .wp-block-shortcode:has(#doublescale-client-portal){
 				width:100%!important;
-				margin-left:auto!important;
-				margin-right:auto!important;
+				max-width:100%!important;
 			}
 			body.doublescale-client-portal-page .is-layout-constrained > #doublescale-client-portal,
 			body.doublescale-client-portal-page .entry-content > #doublescale-client-portal,
@@ -198,14 +192,32 @@ final class PortalFrontendHandler {
 				float:none!important;
 				clear:both;
 				width:100%!important;
-				max-width:93rem!important;
-				margin-left:auto!important;
-				margin-right:auto!important;
+				max-width:100%!important;
+				margin-left:0!important;
+				margin-right:0!important;
+				padding:0!important;
+				border:0!important;
+				background:transparent!important;
+				box-shadow:none!important;
 				left:auto!important;
 				right:auto!important;
 				transform:none!important;
-				grid-column:1/-1;
-				justify-self:center;
+				box-sizing:border-box!important;
+			}
+			body.doublescale-client-portal-page .doublescale-client-portal-shell{
+				position:relative!important;
+				z-index:1;
+				display:block!important;
+				width:100%!important;
+				max-width:100%!important;
+				margin-left:0!important;
+				margin-right:0!important;
+				box-sizing:border-box!important;
+				font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif!important;
+				font-size:16px!important;
+				line-height:1.5!important;
+				color:#29292e!important;
+				background:transparent!important;
 			}
 		';
 
@@ -227,6 +239,17 @@ final class PortalFrontendHandler {
 	private function build_config(): array {
 		$user = wp_get_current_user();
 
+		$plugin_dir = defined( 'DOUBLESCALE_PLUGIN_DIR' ) ? \DOUBLESCALE_PLUGIN_DIR : '';
+		$plugin_url = defined( 'DOUBLESCALE_PLUGIN_URL' ) ? \DOUBLESCALE_PLUGIN_URL : '';
+		$version    = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
+		$asset_file = $plugin_dir . 'build/renderer/portal/index.asset.php';
+		$asset      = file_exists( $asset_file ) ? require $asset_file : null;
+		$ver        = isset( $asset['version'] ) ? $asset['version'] : $version;
+		$style_file = is_rtl() ? 'style-rtl.css' : 'style.css';
+		$style_url  = $plugin_url
+			? add_query_arg( 'ver', $ver, $plugin_url . 'build/renderer/portal/' . $style_file )
+			: '';
+
 		$config = array(
 			'rest_root'            => esc_url_raw( rest_url() ),
 			'nonce'                => wp_create_nonce( 'wp_rest' ),
@@ -242,6 +265,9 @@ final class PortalFrontendHandler {
 			'is_guest'             => false,
 			'guest_hash'           => '',
 			'calendarWeekStartsOn' => \DoubleScale\Core\Settings\Settings::get_calendar_week_starts_on(),
+			// Shadow DOM mounts fetch these and rewrite rem→px so theme html font-size
+			// / CSS variables cannot change portal colors or padding.
+			'style_urls'           => $style_url ? array( esc_url_raw( $style_url ) ) : array(),
 		);
 
 		/**

@@ -7,11 +7,14 @@ defined( 'ABSPATH' ) || exit;
 use DirectoristPricingPlan\WpMVC\Contracts\Provider;
 use DirectoristPricingPlan\App\Jobs\OldDataMigrationQueue;
 use DirectoristPricingPlan\App\Repositories\OldDataMigrationRepository;
+use DirectoristPricingPlan\Database\Migrations\ListingPlanMetaMigration;
+use DirectoristPricingPlan\Database\Migrations\RepairV4LegacyPackageDatesMigration;
 
 class MigrationNoticeServiceProvider implements Provider {
     public function boot() {
         add_action( 'admin_notices', [ $this, 'show_migration_notice' ] );
         add_action( 'admin_init', [ $this, 'handle_migration_dismiss' ] );
+        add_action( 'admin_post_directorist_start_package_dates_repair', [ $this, 'handle_package_dates_repair_start' ] );
         add_filter( 'directorist_should_show_plan_assignment_notice', [ $this, 'maybe_suppress_plan_assignment_notice' ] );
     }
 
@@ -34,13 +37,21 @@ class MigrationNoticeServiceProvider implements Provider {
      * Show admin notices related to migration.
      */
     public function show_migration_notice() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        if ( $this->render_listing_plan_meta_migration_notice() ) {
+            return;
+        }
+
         $screen = get_current_screen();
 
         if ( ! $screen || ! in_array( $screen->id, $this->get_relevant_screen_ids(), true ) ) {
             return;
         }
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( $this->render_legacy_package_dates_repair_notice() ) {
             return;
         }
         
@@ -76,10 +87,54 @@ class MigrationNoticeServiceProvider implements Provider {
         }
     }
 
+    private function render_listing_plan_meta_migration_notice(): bool {
+        $state = get_option( ListingPlanMetaMigration::STATE_OPTION, [] );
+
+        if ( ! is_array( $state ) || empty( $state['status'] ) ) {
+            return false;
+        }
+
+        $processed = (int) ( $state['processed'] ?? 0 );
+        $total     = (int) ( $state['total'] ?? 0 );
+
+        if ( 'failed' === $state['status'] ) {
+            printf(
+                '<div class="notice notice-error"><p><strong>%s</strong> %s</p></div>',
+                esc_html__( 'Pricing Plans listing migration failed.', 'directorist-pricing-plans' ),
+                esc_html( $state['error'] ?? __( 'The migration will retry on the next request.', 'directorist-pricing-plans' ) )
+            );
+            return true;
+        }
+
+        printf(
+            '<div class="notice notice-info"><p><strong>%s</strong> %s</p></div>',
+            esc_html__( 'Pricing Plans listing migration is running.', 'directorist-pricing-plans' ),
+            esc_html(
+                sprintf(
+                    /* translators: 1: processed listings, 2: total listings */
+                    __( '%1$d of %2$d listings processed. Multiple-plan features will be enabled after completion.', 'directorist-pricing-plans' ),
+                    $processed,
+                    $total
+                )
+            )
+        );
+
+        return true;
+    }
+
     /**
      * Handle migration notice dismiss / retry actions.
      */
     public function handle_migration_dismiss() {
+        if ( isset( $_GET['directorist_dismiss_package_dates_repair_notice'], $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'directorist_dismiss_package_dates_repair_notice' ) ) {
+            if ( current_user_can( 'manage_options' ) ) {
+                delete_option( RepairV4LegacyPackageDatesMigration::STATE_OPTION );
+
+                wp_safe_redirect( remove_query_arg( [ 'directorist_dismiss_package_dates_repair_notice', '_wpnonce' ] ) );
+                exit;
+            }
+        }
+
         // Handle dismiss of completed migration notice
         if ( isset( $_GET['directorist_dismiss_migration_notice'], $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'directorist_dismiss_migration_notice' ) ) {
             if ( current_user_can( 'manage_options' ) ) {
@@ -89,6 +144,108 @@ class MigrationNoticeServiceProvider implements Provider {
                 exit;
             }
         }
+    }
+
+    /**
+     * Start the legacy package date repair after administrator confirmation.
+     */
+    public function handle_package_dates_repair_start(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'You are not allowed to start this migration.', 'directorist-pricing-plans' ) );
+        }
+
+        check_admin_referer( 'directorist_start_package_dates_repair' );
+
+        /**
+         * @var RepairV4LegacyPackageDatesMigration $migration
+         */
+        $migration = directorist_pricing_plans_singleton( RepairV4LegacyPackageDatesMigration::class );
+        $migration->start();
+
+        $redirect_url = wp_get_referer() ?: admin_url();
+
+        wp_safe_redirect( $redirect_url );
+        exit;
+    }
+
+    private function render_legacy_package_dates_repair_notice(): bool {
+        $state = get_option( RepairV4LegacyPackageDatesMigration::STATE_OPTION, [] );
+
+        if ( ! is_array( $state ) || empty( $state['status'] ) ) {
+            return false;
+        }
+
+        $processed = (int) ( $state['processed'] ?? 0 );
+        $total     = (int) ( $state['total'] ?? 0 );
+        $repaired  = (int) ( $state['repaired'] ?? 0 );
+        $skipped   = (int) ( $state['skipped'] ?? 0 );
+
+        if ( RepairV4LegacyPackageDatesMigration::STATUS_PENDING === $state['status'] ) {
+            ?>
+            <div class="notice notice-warning">
+                <p><strong><?php esc_html_e( 'Package Billing Start and End Date Migration', 'directorist-pricing-plans' ); ?></strong></p>
+                <p><?php esc_html_e( 'The version 4 migration set incorrect billing dates for some legacy packages. This migration restores billing start dates from paid orders and adjusts package end dates so eligible listings retain their expected expiry period.', 'directorist-pricing-plans' ); ?></p>
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:0 0 12px;">
+                    <input type="hidden" name="action" value="directorist_start_package_dates_repair">
+                    <?php wp_nonce_field( 'directorist_start_package_dates_repair' ); ?>
+                    <?php submit_button( __( 'Start Migration', 'directorist-pricing-plans' ), 'primary', 'submit', false ); ?>
+                </form>
+            </div>
+            <?php
+            return true;
+        }
+
+        if ( 'failed' === $state['status'] ) {
+            printf(
+                '<div class="notice notice-error"><p><strong>%1$s</strong> %2$s</p></div>',
+                esc_html__( 'Pricing Plans package date repair failed.', 'directorist-pricing-plans' ),
+                esc_html( $state['error'] ?? __( 'The repair will retry on the next request.', 'directorist-pricing-plans' ) )
+            );
+            return true;
+        }
+
+        if ( 'completed' === $state['status'] ) {
+            $dismiss_url = wp_nonce_url(
+                add_query_arg( 'directorist_dismiss_package_dates_repair_notice', '1' ),
+                'directorist_dismiss_package_dates_repair_notice'
+            );
+            ?>
+            <div class="notice notice-success">
+                <p>
+                    <strong><?php esc_html_e( 'Pricing Plans package dates repaired successfully.', 'directorist-pricing-plans' ); ?></strong>
+                    <?php
+                    echo esc_html(
+                        sprintf(
+                            /* translators: 1: repaired packages, 2: skipped packages */
+                            __( '%1$d packages repaired; %2$d packages skipped because required migration data was unavailable.', 'directorist-pricing-plans' ),
+                            $repaired,
+                            $skipped
+                        )
+                    );
+                    ?>
+                    <a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'directorist-pricing-plans' ); ?></a>
+                </p>
+            </div>
+            <?php
+            return true;
+        }
+
+        printf(
+            '<div class="notice notice-info"><p><strong>%1$s</strong> %2$s</p></div>',
+            esc_html__( 'Pricing Plans package date repair is running.', 'directorist-pricing-plans' ),
+            esc_html(
+                sprintf(
+                    /* translators: 1: processed packages, 2: total packages, 3: repaired packages, 4: skipped packages */
+                    __( '%1$d of %2$d packages processed; %3$d repaired and %4$d skipped. Reload this page to process each batch until the migration completes.', 'directorist-pricing-plans' ),
+                    $processed,
+                    $total,
+                    $repaired,
+                    $skipped
+                )
+            )
+        );
+
+        return true;
     }
 
     private function migration_repository(): OldDataMigrationRepository {

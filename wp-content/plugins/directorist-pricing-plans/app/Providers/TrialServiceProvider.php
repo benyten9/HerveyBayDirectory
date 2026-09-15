@@ -150,9 +150,9 @@ class TrialServiceProvider implements Provider {
             return $show;
         }
 
-        // If subscription is enabled, show gateways
+        // If subscription is enabled, show gateways only when at least one active gateway supports recurring trials.
         if ( directorist_plan_has_subscription( $plan ) ) {
-            return $show;
+            return $this->has_recurring_trial_gateway( $plan ) ? $show : false;
         }
 
         // If subscription is not enabled and user is eligible for trial so hide gateways
@@ -193,6 +193,38 @@ class TrialServiceProvider implements Provider {
         $is_eligible = directorist_is_user_trial_eligible( $plan->directory_type_id );
 
         return $is_eligible;
+    }
+
+    private function has_recurring_trial_gateway( stdClass $plan ): bool {
+        $active_gateways    = (array) get_directorist_option( 'active_gateways', [ 'bank_transfer' ] );
+        $payment_processors = directorist_get_payment_processors();
+
+        if ( empty( $active_gateways ) || empty( $payment_processors ) || ! is_array( $payment_processors ) ) {
+            return false;
+        }
+
+        foreach ( $active_gateways as $gateway_name ) {
+            if ( ! isset( $payment_processors[ $gateway_name ] ) ) {
+                continue;
+            }
+
+            /**
+             * @var PaymentInterface $payment_processor
+             */
+            $payment_processor = directorist_make( $payment_processors[ $gateway_name ], __( 'Invalid payment gateway.', 'directorist-pricing-plans' ) );
+
+            if ( ! $payment_processor->supports_recurring() || ! $payment_processor->supports_trial() ) {
+                continue;
+            }
+
+            if ( apply_filters( 'directorist_pricing_plan_hide_gateway_for_subscription', false, $payment_processor, $plan, $active_gateways, self::CHECKOUT_TYPE ) ) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     public function handle_hide_gateway_for_subscription( bool $hide, PaymentInterface $payment_processor, stdClass $plan, array $active_gateways, string $checkout_type ): bool {

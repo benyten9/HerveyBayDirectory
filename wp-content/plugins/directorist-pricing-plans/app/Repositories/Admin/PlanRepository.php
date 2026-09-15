@@ -126,6 +126,25 @@ class PlanRepository extends Repository {
         return $this->get_query_builder()->where_in( 'plan.directory_type_id', $directory_type_ids )->get();
     }
 
+    public function get_published_plans_by_directory_types( array $directory_type_ids ): array {
+        if ( empty( $directory_type_ids ) ) {
+            return [];
+        }
+
+        return $this->get_query_builder()
+            ->select( 'plan.id', 'plan.title', 'plan.directory_type_id' )
+            ->where_in( 'plan.directory_type_id', array_map( 'absint', $directory_type_ids ) )
+            ->where( 'plan.is_published', 1 )
+            ->order_by( 'plan.title', 'asc' )
+            ->get();
+    }
+
+    public function is_assigned_to_packages( int $plan_id ): bool {
+        return (bool) UserPackage::query()
+            ->where( 'plan_id', $plan_id )
+            ->count( 'id' );
+    }
+
     public function get_directory_types_with_no_plans( ?int $user_id = null ) {
         $directory_types_with_no_plans = Post::query( 'post' )
             ->select( 
@@ -192,7 +211,7 @@ class PlanRepository extends Repository {
             ->where( 'term_taxonomy.taxonomy', ATBDP_DIRECTORY_TYPE );
     }
 
-    public function make_exceeding_listings_as_private( int $listing_owner_id, int $directory_type_id, int $plan_max_limit ) {
+    public function make_exceeding_listings_as_private( int $listing_owner_id, int $plan_id, int $plan_max_limit ) {
         global $wpdb;
         
         $posts_table    = $wpdb->prefix . Post::get_table_name();
@@ -203,14 +222,14 @@ class PlanRepository extends Repository {
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
             $sql = $wpdb->prepare(
                 "UPDATE {$posts_table} AS post
-                INNER JOIN {$postmeta_table} AS directory_type 
-                    ON post.ID = directory_type.post_id 
-                    AND directory_type.meta_key = '_directory_type'
+                INNER JOIN {$postmeta_table} AS plan_meta
+                    ON post.ID = plan_meta.post_id
+                    AND plan_meta.meta_key = '_plan_id'
                 SET post.post_status = 'private'
                 WHERE post.post_author = %d
-                    AND directory_type.meta_value = %d",
+                    AND plan_meta.meta_value = %d",
                 $listing_owner_id,
-                $directory_type_id
+                $plan_id
             );
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             
@@ -222,15 +241,15 @@ class PlanRepository extends Repository {
         $post = Post::query( 'post' )
             ->select( 'post.ID' )
             ->join(
-                PostMeta::get_table_name() . ' as directory_type', function( $join ) {
-                    $join->on_column( 'post.ID', '=', 'directory_type.post_id' )
-                        ->on( 'directory_type.meta_key', '=', '_directory_type' );
+                PostMeta::get_table_name() . ' as plan_meta', function( $join ) {
+                    $join->on_column( 'post.ID', '=', 'plan_meta.post_id' )
+                        ->on( 'plan_meta.meta_key', '=', '_plan_id' );
                 } 
             )
             ->where( 'post.post_author', $listing_owner_id )
             ->where( 'post.post_type', 'at_biz_dir' )
             ->where( 'post.post_status', 'publish' )
-            ->where( 'directory_type.meta_value', $directory_type_id )
+            ->where( 'plan_meta.meta_value', $plan_id )
             ->order_by( 'post.ID', 'desc' )
             ->offset( $plan_max_limit - 1 )
             ->first();
@@ -243,23 +262,23 @@ class PlanRepository extends Repository {
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
         $sql = $wpdb->prepare(
             "UPDATE {$posts_table} AS post
-            INNER JOIN {$postmeta_table} AS directory_type 
-                ON post.ID = directory_type.post_id 
-                AND directory_type.meta_key = '_directory_type'
+            INNER JOIN {$postmeta_table} AS plan_meta
+                ON post.ID = plan_meta.post_id
+                AND plan_meta.meta_key = '_plan_id'
             SET post.post_status = 'private'
             WHERE post.ID < %d
                 AND post.post_author = %d
-                AND directory_type.meta_value = %d",
+                AND plan_meta.meta_value = %d",
             $post->ID,
             $listing_owner_id,
-            $directory_type_id
+            $plan_id
         );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         
         $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Already prepared above.
     }
 
-    public function make_exceeding_featured_listings_as_regular( int $listing_owner_id, int $directory_type_id, int $plan_max_limit ) {
+    public function make_exceeding_featured_listings_as_regular( int $listing_owner_id, int $plan_id, int $plan_max_limit ) {
         global $wpdb;
         
         $posts_table    = $wpdb->prefix . Post::get_table_name();
@@ -270,17 +289,17 @@ class PlanRepository extends Repository {
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
             $sql = $wpdb->prepare(
                 "UPDATE {$posts_table} AS post
-                INNER JOIN {$postmeta_table} AS directory_type 
-                    ON post.ID = directory_type.post_id 
-                    AND directory_type.meta_key = '_directory_type'
-                LEFT JOIN {$postmeta_table} AS featured 
-                    ON post.ID = directory_type.post_id 
-                    AND directory_type.meta_key = '_featured'
+                INNER JOIN {$postmeta_table} AS plan_meta
+                    ON post.ID = plan_meta.post_id
+                    AND plan_meta.meta_key = '_plan_id'
+                INNER JOIN {$postmeta_table} AS featured
+                    ON post.ID = featured.post_id
+                    AND featured.meta_key = '_featured'
                 SET featured.meta_value = 0
                 WHERE post.post_author = %d
-                    AND directory_type.meta_value = %d",
+                    AND plan_meta.meta_value = %d",
                 $listing_owner_id,
-                $directory_type_id
+                $plan_id
             );
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             
@@ -292,20 +311,20 @@ class PlanRepository extends Repository {
         $post = Post::query( 'post' )
             ->select( 'post.ID' )
             ->join(
-                PostMeta::get_table_name() . ' as directory_type', function( $join ) {
-                    $join->on_column( 'post.ID', '=', 'directory_type.post_id' )
-                        ->on( 'directory_type.meta_key', '=', '_directory_type' );
+                PostMeta::get_table_name() . ' as plan_meta', function( $join ) {
+                    $join->on_column( 'post.ID', '=', 'plan_meta.post_id' )
+                        ->on( 'plan_meta.meta_key', '=', '_plan_id' );
                 } 
             )
             ->join(
                 PostMeta::get_table_name() . ' as featured', function( $join ) {
-                    $join->on_column( 'post.ID', '=', 'directory_type.post_id' )
+                    $join->on_column( 'post.ID', '=', 'featured.post_id' )
                         ->on( 'featured.meta_key', '=', '_featured' );
                 } 
             )
             ->where( 'post.post_author', $listing_owner_id )
             ->where( 'post.post_type', 'at_biz_dir' )
-            ->where( 'directory_type.meta_value', $directory_type_id )
+            ->where( 'plan_meta.meta_value', $plan_id )
             ->where( 'featured.meta_value', 1 )
             ->order_by( 'post.ID', 'desc' )
             ->offset( $plan_max_limit - 1 )
@@ -319,26 +338,26 @@ class PlanRepository extends Repository {
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
         $sql = $wpdb->prepare(
             "UPDATE {$posts_table} AS post
-            INNER JOIN {$postmeta_table} AS directory_type 
-                ON post.ID = directory_type.post_id 
-                AND directory_type.meta_key = '_directory_type'
-            LEFT JOIN {$postmeta_table} AS featured 
-                ON post.ID = directory_type.post_id 
-                AND directory_type.meta_key = '_featured'
+            INNER JOIN {$postmeta_table} AS plan_meta
+                ON post.ID = plan_meta.post_id
+                AND plan_meta.meta_key = '_plan_id'
+            INNER JOIN {$postmeta_table} AS featured
+                ON post.ID = featured.post_id
+                AND featured.meta_key = '_featured'
             SET featured.meta_value = 0
             WHERE post.ID < %d
                 AND post.post_author = %d
-                AND directory_type.meta_value = %d",
+                AND plan_meta.meta_value = %d",
             $post->ID,
             $listing_owner_id,
-            $directory_type_id
+            $plan_id
         );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         
         $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Already prepared above.
     }
 
-    public function make_listings_pending( int $listing_owner_id, int $directory_type_id ) {
+    public function make_listings_pending( int $listing_owner_id, int $plan_id ) {
         global $wpdb;
         
         $posts_table    = $wpdb->prefix . Post::get_table_name();
@@ -347,21 +366,21 @@ class PlanRepository extends Repository {
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
         $sql = $wpdb->prepare(
             "UPDATE {$posts_table} AS post
-            INNER JOIN {$postmeta_table} AS directory_type 
-                ON post.ID = directory_type.post_id 
-                AND directory_type.meta_key = '_directory_type'
+            INNER JOIN {$postmeta_table} AS plan_meta
+                ON post.ID = plan_meta.post_id
+                AND plan_meta.meta_key = '_plan_id'
             SET post.post_status = 'pending'
             WHERE post.post_author = %d
-                AND directory_type.meta_value = %d",
+                AND plan_meta.meta_value = %d",
             $listing_owner_id,
-            $directory_type_id
+            $plan_id
         );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         
         $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Already prepared above.
     }
 
-    public function get_belonging_listing_ids( int $listing_owner_id, int $directory_type_id, array $post_statuses = [], int $limit = -1 ): array {
+    public function get_belonging_listing_ids( int $listing_owner_id, int $plan_id, array $post_statuses = [], int $limit = -1 ): array {
         $args = [
             'post_type'      => ATBDP_POST_TYPE,
             'post_status'    => $post_statuses ?: 'any',
@@ -374,8 +393,10 @@ class PlanRepository extends Repository {
             ],
             'meta_query'     => [
                 [
-                    'key'   => '_directory_type',
-                    'value' => $directory_type_id,
+                    'key'     => '_plan_id',
+                    'value'   => $plan_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
                 ],
             ],
         ];
@@ -383,23 +404,73 @@ class PlanRepository extends Repository {
         return array_map( 'intval', get_posts( $args ) );
     }
 
-    public function renew_belonging_listings_expiration( int $listing_owner_id, int $directory_type_id, string $expiry_date, int $limit = -1, array $post_statuses = [ 'publish', 'expired' ] ): int {
-        if ( empty( $expiry_date ) ) {
-            return 0;
-        }
-
-        $listing_ids = $this->get_belonging_listing_ids( $listing_owner_id, $directory_type_id, $post_statuses, $limit );
+    public function reassign_belonging_listings( int $listing_owner_id, int $old_plan_id, int $new_plan_id ): int {
+        $listing_ids = $this->get_belonging_listing_ids( $listing_owner_id, $old_plan_id );
 
         foreach ( $listing_ids as $listing_id ) {
-            directorist_pricing_plan_set_listing_expiry_date( $listing_id, $expiry_date );
-            directorist_set_listing_status( $listing_id, 'publish' );
+            update_post_meta( $listing_id, directorist_plan_key(), $new_plan_id );
         }
 
         return count( $listing_ids );
     }
 
-    public function expire_belonging_listings( int $listing_owner_id, int $directory_type_id ): int {
-        $listing_ids = $this->get_belonging_listing_ids( $listing_owner_id, $directory_type_id );
+    public function assign_directory_listings_to_plan( int $listing_owner_id, int $directory_type_id, int $plan_id ): int {
+        $listing_ids = get_posts(
+            [
+                'post_type'      => ATBDP_POST_TYPE,
+                'post_status'    => 'any',
+                'author'         => $listing_owner_id,
+                'fields'         => 'ids',
+                'posts_per_page' => -1,
+                'meta_query'     => [
+                    'relation' => 'AND',
+                    [
+                        'key'   => '_directory_type',
+                        'value' => $directory_type_id,
+                    ],
+                    [
+                        'key'     => '_plan_id',
+                        'compare' => 'NOT EXISTS',
+                    ],
+                ],
+            ]
+        );
+
+        $assigned = 0;
+
+        foreach ( $listing_ids as $listing_id ) {
+            if ( add_post_meta( (int) $listing_id, directorist_plan_key(), $plan_id, true ) ) {
+                $assigned++;
+            }
+        }
+
+        return $assigned;
+    }
+
+    public function renew_belonging_listings_expiration( int $listing_owner_id, int $plan_id, string $expiry_date, int $limit = -1, array $post_statuses = [ 'publish', 'expired' ] ): int {
+        if ( empty( $expiry_date ) ) {
+            return 0;
+        }
+
+        $listing_ids = $this->get_belonging_listing_ids( $listing_owner_id, $plan_id, $post_statuses, $limit );
+
+        $renewed = 0;
+
+        foreach ( $listing_ids as $listing_id ) {
+            if ( $plan_id !== (int) get_post_meta( $listing_id, directorist_plan_key(), true ) ) {
+                continue;
+            }
+
+            directorist_pricing_plan_set_listing_expiry_date( $listing_id, $expiry_date );
+            directorist_set_listing_status( $listing_id, 'publish' );
+            $renewed++;
+        }
+
+        return $renewed;
+    }
+
+    public function expire_belonging_listings( int $listing_owner_id, int $plan_id ): int {
+        $listing_ids = $this->get_belonging_listing_ids( $listing_owner_id, $plan_id );
         $expiry_date = current_time( 'mysql' );
 
         foreach ( $listing_ids as $listing_id ) {
@@ -410,7 +481,7 @@ class PlanRepository extends Repository {
         return count( $listing_ids );
     }
 
-    public function publish_available_pending_listings( int $listing_owner_id, int $directory_type_id, int $plan_max_limit ) {
+    public function publish_available_pending_listings( int $listing_owner_id, int $plan_id, int $plan_max_limit ) {
         if ( $plan_max_limit === -1 ) {
             global $wpdb;
 
@@ -420,16 +491,16 @@ class PlanRepository extends Repository {
             // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
             $sql = $wpdb->prepare(
                 "UPDATE {$posts_table} AS post
-                INNER JOIN {$postmeta_table} AS directory_type
-                    ON post.ID = directory_type.post_id
-                    AND directory_type.meta_key = '_directory_type'
+                INNER JOIN {$postmeta_table} AS plan_meta
+                    ON post.ID = plan_meta.post_id
+                    AND plan_meta.meta_key = '_plan_id'
                 SET post.post_status = 'publish'
                 WHERE post.post_author = %d
                     AND post.post_type = 'at_biz_dir'
                     AND post.post_status = 'pending'
-                    AND directory_type.meta_value = %d",
+                    AND plan_meta.meta_value = %d",
                 $listing_owner_id,
-                $directory_type_id
+                $plan_id
             );
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
@@ -440,15 +511,15 @@ class PlanRepository extends Repository {
         $pending_listings_count = Post::query( 'post' )
             ->select( 'post.ID' )
             ->join(
-                PostMeta::get_table_name() . ' as directory_type', function( $join ) {
-                    $join->on_column( 'post.ID', '=', 'directory_type.post_id' )
-                        ->on( 'directory_type.meta_key', '=', '_directory_type' );
+                PostMeta::get_table_name() . ' as plan_meta', function( $join ) {
+                    $join->on_column( 'post.ID', '=', 'plan_meta.post_id' )
+                        ->on( 'plan_meta.meta_key', '=', '_plan_id' );
                 } 
             )
             ->where( 'post.post_author', $listing_owner_id )
             ->where( 'post.post_type', 'at_biz_dir' )
             ->where( 'post.post_status', 'pending' )
-            ->where( 'directory_type.meta_value', $directory_type_id )
+            ->where( 'plan_meta.meta_value', $plan_id )
             ->count();
 
         $max_limit = min( $plan_max_limit, $pending_listings_count );
@@ -461,15 +532,15 @@ class PlanRepository extends Repository {
         $post = Post::query( 'post' )
             ->select( 'post.ID' )
             ->join(
-                PostMeta::get_table_name() . ' as directory_type', function( $join ) {
-                    $join->on_column( 'post.ID', '=', 'directory_type.post_id' )
-                        ->on( 'directory_type.meta_key', '=', '_directory_type' );
+                PostMeta::get_table_name() . ' as plan_meta', function( $join ) {
+                    $join->on_column( 'post.ID', '=', 'plan_meta.post_id' )
+                        ->on( 'plan_meta.meta_key', '=', '_plan_id' );
                 } 
             )
             ->where( 'post.post_author', $listing_owner_id )
             ->where( 'post.post_type', 'at_biz_dir' )
             ->where( 'post.post_status', 'pending' )
-            ->where( 'directory_type.meta_value', $directory_type_id )
+            ->where( 'plan_meta.meta_value', $plan_id )
             ->order_by( 'post.ID', 'desc' )
             ->offset( $max_limit - 1 )
             ->first();
@@ -487,17 +558,17 @@ class PlanRepository extends Repository {
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe.
         $sql = $wpdb->prepare(
             "UPDATE {$posts_table} AS post
-            INNER JOIN {$postmeta_table} AS directory_type 
-                ON post.ID = directory_type.post_id 
-                AND directory_type.meta_key = '_directory_type'
+            INNER JOIN {$postmeta_table} AS plan_meta
+                ON post.ID = plan_meta.post_id
+                AND plan_meta.meta_key = '_plan_id'
             SET post.post_status = 'publish'
             WHERE post.post_author = %d
                 AND post.ID >= %d
                 AND post.post_status = 'pending'
-                AND directory_type.meta_value = %d",
+                AND plan_meta.meta_value = %d",
             $listing_owner_id,
             $post->ID,
-            $directory_type_id
+            $plan_id
         );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         

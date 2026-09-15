@@ -8,7 +8,7 @@ use DirectoristPricingPlan\WpMVC\App;
 /**
  * Plugin Name:       Directorist - Pricing Plans
  * Description:       Allow you to monetize your directory by creating and selling unlimited subscription plans.
- * Version:           4.0.1
+ * Version:           4.1.1
  * Requires Plugins:  directorist
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -39,6 +39,8 @@ final class DirectoristPricingPlan {
     }
 
     public function load() {
+        add_action( 'init', [ $this, 'load_textdomain' ] );
+
         register_activation_hook(
             __FILE__, function() {
                 $setup = new Setup();
@@ -74,7 +76,7 @@ final class DirectoristPricingPlan {
                 }
 
                 // Ensure minimum required Directorist version
-                $required_version = '8.8.0';
+                $required_version = '8.9.4';
                 $current_version  = defined( 'ATBDP_VERSION' ) ? ATBDP_VERSION : '0';
 
                 if ( version_compare( $current_version, $required_version, '<' ) ) {
@@ -102,6 +104,22 @@ final class DirectoristPricingPlan {
 
                 do_action( 'after_load_directorist_pricing_plans' );
             }
+        );
+    }
+
+    public function load_textdomain() {
+        $locale = determine_locale();
+        $locale = apply_filters( 'plugin_locale', $locale, 'directorist-pricing-plans' );
+
+        load_textdomain(
+            'directorist-pricing-plans',
+            WP_LANG_DIR . '/plugins/directorist-pricing-plans-' . $locale . '.mo'
+        );
+
+        load_plugin_textdomain(
+            'directorist-pricing-plans',
+            false,
+            dirname( plugin_basename( __FILE__ ) ) . '/languages'
         );
     }
 

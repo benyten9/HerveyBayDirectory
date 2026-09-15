@@ -31,6 +31,7 @@ class PMCS
         'active',
         'priority',
         'minify',
+        'block_editor',
         'author',
         'updated_by'
     ];
@@ -71,6 +72,11 @@ class PMCS
 
         //data handler
         add_action('admin_init', array(__CLASS__, 'action_handler'));
+
+        add_filter('infinite_uploads_sync_exclusions', function($exclusions) {
+            $exclusions[] = 'wp-content/uploads/perfmatters/';
+            return $exclusions;
+        });
 
         new Ajax();
 
@@ -619,7 +625,7 @@ class PMCS
             return [];
         }
 
-        $loaded_config = include $config_file; 
+        $loaded_config = include self::filesystem_path($config_file);
         
         self::$snippet_config_cache = is_array($loaded_config) ? $loaded_config : []; 
 
@@ -869,7 +875,7 @@ class PMCS
         ];
 
         //get the file paths and store them in an array
-        $files = glob(self::get_storage_dir() . '/*.php');
+        $files = glob(self::filesystem_path(self::get_storage_dir()) . '/*.php');
 
         $snippets = [];
         foreach($files as $file) {
@@ -914,7 +920,7 @@ class PMCS
     //update snippet config file with given data
     public static function update_snippet_config($data)
     {
-        $config_file = self::get_storage_dir() . '/index.php';
+        $config_file = self::filesystem_path(self::get_storage_dir() . '/index.php');
 
         if(!is_file($config_file)) {
             wp_mkdir_p(dirname($config_file));
@@ -983,7 +989,7 @@ PHP;
         }
 
         //load config
-        $config = include self::get_storage_dir() . '/index.php';
+        $config = include self::filesystem_path(self::get_storage_dir() . '/index.php');
 
         //no valid config
         if(empty($config)) {
@@ -1082,7 +1088,7 @@ PHP;
                         }
 
                         //load snippet file
-                        require_once($file);
+                        require_once(self::filesystem_path($file));
 
                     }, self::get_priority($snippet['priority'] ?? null));
 
@@ -1213,6 +1219,36 @@ PHP;
                             }
                         }
 
+                        //load in block editor canvas (same path as Customizer Additional CSS)
+                        if(!empty($snippet['optimizations']['block_editor']) && in_array($location, ['wp_head', 'wp_footer'], true)) {
+                            add_filter('block_editor_settings_all', function($editor_settings) use($snippet, $method, $cached_file_url, $cached_file_path) {
+
+                                if(!Conditions::evaluate($snippet['conditions'])) {
+                                    return $editor_settings;
+                                }
+
+                                $code = file_get_contents($cached_file_path);
+                                if(!$code) {
+                                    return $editor_settings;
+                                }
+
+                                $style = array(
+                                    'css'            => $code,
+                                    '__unstableType' => 'user',
+                                    'isGlobalStyles' => false,
+                                );
+
+                                if($method == 'file' && $cached_file_url) {
+                                    $style['baseURL'] = $cached_file_url;
+                                }
+
+                                $editor_settings['styles'][] = $style;
+
+                                return $editor_settings;
+
+                            }, self::get_priority($snippet['priority'] ?? null));
+                        }
+
                         //enqueue css file
                         if($method == 'file' && !$is_footer) {
 
@@ -1282,7 +1318,7 @@ PHP;
                                 return;
                             }
 
-                            require_once $file;
+                            require_once self::filesystem_path($file);
 
                         }, self::get_priority($snippet['priority'] ?? null));
                     }
@@ -1305,7 +1341,7 @@ PHP;
                             }
 
                             ob_start();
-                            require_once $file;
+                            require_once self::filesystem_path($file);
                             $result = ob_get_clean();
 
                             if($result) {
@@ -1357,8 +1393,20 @@ PHP;
         }
 
         ob_start();
-        require $entry['file'];
+        require self::filesystem_path($entry['file']);
         return ob_get_clean();
+    }
+
+    //resolve stream wrapper paths (e.g. Infinite Uploads iu://) to local filesystem paths
+    public static function filesystem_path(string $path): string {
+        if(strpos($path, '://') === false) {
+            return $path;
+        }
+
+        $uploads = wp_normalize_path(defined('UPLOADS') ? ABSPATH . UPLOADS : WP_CONTENT_DIR . '/uploads');
+        $relative = preg_replace('#^[a-z][a-z0-9+.\-]*://[^/]+/#i', '', wp_normalize_path($path));
+
+        return trailingslashit($uploads) . $relative;
     }
 
     //get url of cached js or css file

@@ -1223,6 +1223,78 @@ function seopress_agent_ready_request_uri( $fallback = '' ) {
 }
 
 /**
+ * The path WordPress is installed under, as a bare segment.
+ *
+ * `/blog`, `/wp`, the `/fr` of a subdirectory network's subsite: `blog`, `wp`,
+ * `fr`. An empty string for a site at the domain root, which is most of them.
+ *
+ * Read from the `home` option, never from `home_url()`. A multilingual plugin
+ * serving its languages from directories filters `home_url()` per request: on a
+ * German page WPML answers `https://example.com/de/`, Polylang and
+ * TranslatePress do the same. Taking the prefix from there made callers treat
+ * the language directory as the install path, so `de/aktuelles/page/` was
+ * looked up as `aktuelles/page/` and every localized redirection stopped
+ * firing. The option holds the one path WordPress is actually installed under,
+ * which is the only thing that belongs here.
+ *
+ * MultilingualPress is the case where the two genuinely coincide: it builds its
+ * languages as sites of a network, so `/fr` really is that subsite's install
+ * path and really does come off.
+ *
+ * @since 10.2.1
+ *
+ * @return string Path segment, no slashes.
+ */
+function seopress_pro_home_path_segment() {
+	$home_path = wp_parse_url( (string) get_option( 'home' ), PHP_URL_PATH );
+
+	return is_string( $home_path ) ? trim( $home_path, '/' ) : '';
+}
+
+/**
+ * The shapes one request path can be stored under as a redirection origin.
+ *
+ * The install path is optional in an origin, because the two ways of creating a
+ * redirection disagree about it and always have. `seopress_404_create_redirect()`
+ * writes `$wp->request`, which core already stripped: `support/page/`. Pasting a
+ * full URL into the origin field keeps everything after the domain, and so do
+ * the CSV and third-party imports: `fr/support/page/`.
+ *
+ * 10.2 picked the first shape and looked up nothing else, on the reasoning that
+ * one representation is better than two. It is — but the second shape was
+ * already sitting in thousands of databases, and every redirection stored that
+ * way went dark. On a subdirectory network the whole of a subsite's
+ * redirections could disappear at once, which is what happened to the French
+ * site of seopress.org. See #1756.
+ *
+ * So both are looked up, canonical shape first. Nothing new is written: this
+ * only decides what an incoming request is compared against.
+ *
+ * @since 10.2.1
+ *
+ * @param string $path Path taken from a request or typed into the tester.
+ *
+ * @return string[] One or two shapes, without a leading slash, canonical first.
+ */
+function seopress_pro_origin_path_variants( $path ) {
+	$path      = ltrim( (string) $path, '/' );
+	$home_path = seopress_pro_home_path_segment();
+
+	if ( '' === $home_path || '' === $path ) {
+		return array( $path );
+	}
+
+	$stripped = ltrim( seopress_pro_strip_home_path( $path ), '/' );
+	$prefixed = $home_path . '/' . $stripped;
+
+	if ( $stripped === $prefixed ) {
+		return array( $stripped );
+	}
+
+	return array( $stripped, $prefixed );
+}
+
+/**
  * Remove the path WordPress serves the site from.
  *
  * `WP::parse_request()` strips that prefix from `$wp->request`, so a request for
@@ -1241,6 +1313,17 @@ function seopress_agent_ready_request_uri( $fallback = '' ) {
  * The prefix is only removed when a full segment matches, so a site at `/blog`
  * does not shorten a request for `/blogging/`.
  *
+ * The prefix is read from the `home` option, never from `home_url()`. A
+ * multilingual plugin serving its languages from directories filters
+ * `home_url()` per request: on a German page WPML answers
+ * `https://example.com/de/`, Polylang and TranslatePress do the same. Taking the
+ * prefix from there made this strip the language directory as if it were the
+ * install path, so `de/aktuelles/page/` was looked up as `aktuelles/page/` and
+ * every localized redirection stopped firing — including the ones Auto Redirect
+ * had created itself, and every regex anchored on a language (`^/es/…`). The
+ * option holds the one path WordPress is actually installed under, which is the
+ * only thing that belongs here. See #1756.
+ *
  * Only the default matcher and `getCurrentUrl()` use this. The WPML and Weglot
  * branches build their URL from a home URL this function cannot reason about —
  * WPML deliberately unhooks its own filter around the call, Weglot returns a URL
@@ -1256,8 +1339,7 @@ function seopress_agent_ready_request_uri( $fallback = '' ) {
 function seopress_pro_strip_home_path( $path ) {
 	$path = (string) $path;
 
-	$home_path = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
-	$home_path = is_string( $home_path ) ? trim( $home_path, '/' ) : '';
+	$home_path = seopress_pro_home_path_segment();
 
 	if ( '' === $home_path ) {
 		return $path;

@@ -2,6 +2,10 @@
 
 namespace ElementorPro\Modules\CollectionLoop\Query;
 
+use Elementor\Element_Base;
+use ElementorPro\Modules\CollectionLoop\Query\ItemProviders\Loop_Item_Provider;
+use ElementorPro\Modules\CollectionLoop\Query\ItemProviders\Post_Loop_Item_Provider;
+use ElementorPro\Modules\CollectionLoop\Query\TemplateTypes\Template_Type_Base;
 use ElementorPro\Modules\CollectionLoop\Query\TemplateTypes\Template_Type_Registry;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -9,14 +13,71 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class Loop_Query_Args_Builder {
-	public static function from_resolved( array $value ): array {
+	/**
+	 * Storage key under which the transformer stashes the raw resolved settings
+	 * so the element / builder can rebuild an item provider on demand. Prefer
+	 * the `extract_settings()` helper over reading this key directly.
+	 */
+	const SETTINGS_KEY = 'settings';
+
+	/**
+	 * Internal settings key used to signal pagination for post-based template
+	 * types. Prefer the `extract_page()` / `apply_pagination()` helpers over
+	 * reading or writing this key directly.
+	 */
+	const PAGE_SETTING_KEY = '__paged';
+
+	public static function item_provider_from_resolved( array $value, ?Element_Base $element = null ): Loop_Item_Provider {
+		$value = self::unwrap_settings( $value );
+		$type  = self::resolve_template_type( $value );
+
+		if ( null === $type ) {
+			return new Post_Loop_Item_Provider( new \WP_Query() );
+		}
+
+		return $type->build_item_provider( $value, $element );
+	}
+
+	public static function extract_query_id( array $settings ): string {
+		return is_string( $settings['query_id'] ?? null ) ? $settings['query_id'] : '';
+	}
+
+	public static function extract_settings( array $resolved ): array {
+		return is_array( $resolved[ self::SETTINGS_KEY ] ?? null ) ? $resolved[ self::SETTINGS_KEY ] : [];
+	}
+
+	public static function extract_page( array $settings ): int {
+		return (int) ( $settings[ self::PAGE_SETTING_KEY ] ?? 0 );
+	}
+
+	public static function apply_pagination( array $settings, int $page ): array {
+		if ( $page > 1 ) {
+			$settings[ self::PAGE_SETTING_KEY ] = $page;
+		}
+
+		return $settings;
+	}
+
+	/**
+	 * Tolerate callers that hand us the full transformer envelope
+	 * (`[ query_id, settings ]`) instead of the raw settings dict. Without
+	 * this, `template_type` wouldn't resolve and we'd silently fall back to the
+	 * default type with empty settings.
+	 */
+	private static function unwrap_settings( array $value ): array {
+		if ( isset( $value[ self::SETTINGS_KEY ] ) && is_array( $value[ self::SETTINGS_KEY ] ) ) {
+			return $value[ self::SETTINGS_KEY ];
+		}
+
+		return $value;
+	}
+
+	private static function resolve_template_type( array $value ): ?Template_Type_Base {
 		$registry = Template_Type_Registry::instance();
 		$id       = is_string( $value['template_type'] ?? null ) && '' !== $value['template_type']
 			? $value['template_type']
 			: $registry->get_default_id();
 
-		$type = $registry->get( $id ) ?? $registry->get_default();
-
-		return null === $type ? [] : $type->build_query_args( $value );
+		return $registry->get( $id ) ?? $registry->get_default();
 	}
 }

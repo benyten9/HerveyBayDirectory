@@ -46,8 +46,8 @@ wp_register_ability('nibwp/bricks-pro-html-to-component', [
                 'type' => 'object',
                 'description' => 'Where to persist.',
                 'properties' => [
-                    'template_id'   => ['type' => 'integer', 'description' => 'Existing template post ID to update (only used when mode=replace_template or append_to_existing).'],
-                    'mode'          => ['type' => 'string', 'enum' => ['new_template', 'replace_template', 'append_to_existing']],
+                    'template_id'   => ['type' => 'integer', 'description' => 'Existing template post ID to update (only used when mode=replace_template).'],
+                    'mode'          => ['type' => 'string', 'enum' => ['new_template', 'replace_template']],
                     'title'         => ['type' => 'string'],
                     'template_type' => ['type' => 'string', 'enum' => ['header', 'footer', 'content', 'section', 'archive', 'error', 'popup']],
                 ],
@@ -80,7 +80,7 @@ wp_register_ability('nibwp/bricks-pro-html-to-component', [
             'dry_run' => [
                 'type'    => 'boolean',
                 'default' => false,
-                'description' => 'When true, run validation only; do not write to bricks_template / page meta.',
+                'description' => 'When true, run validation only; do not write to bricks_template meta. Targets must be bricks_template posts; page-level trees are not supported.',
             ],
             '_preflight_token' => [
                 'type'        => 'string',
@@ -282,7 +282,12 @@ function nibwp_bricks_pro_html_to_component(array $input): array|WP_Error
         'template_type' => $template_type,
         'elements'      => array_values((array) ($payload['elements'] ?? [])),
     ];
-    if (in_array($mode, ['replace_template', 'append_to_existing'], true)) {
+    // `append_to_existing` used to be accepted here and routed into exactly
+    // this branch, which overwrites the stored tree wholesale - a mode that
+    // said it would extend a template and instead replaced it. It is gone
+    // from the enum rather than aliased, so a caller asking to append is told
+    // no instead of losing the template it meant to add to.
+    if ($mode === 'replace_template') {
         $tid = $cached_target['template_id'] > 0 ? $cached_target['template_id'] : (int) ($target['template_id'] ?? 0);
         if ($tid > 0) {
             $persist_input['template_id'] = $tid;

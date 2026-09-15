@@ -60,6 +60,9 @@ function nibwp_handle_settings_save(): ?bool
     }
     update_option('nibwp_audit_log_retention', $audit_retention);
 
+    // Notifications.
+    update_option('nibwp_update_email_enabled', !empty($_POST['nibwp_update_email_enabled']));
+
     // Tool Management settings.
     $disabled_tools = isset($_POST['nibwp_disabled_tools']) && is_array($_POST['nibwp_disabled_tools'])
         ? array_map('sanitize_text_field', $_POST['nibwp_disabled_tools'])
@@ -95,6 +98,8 @@ function nibwp_render_settings_page_view(): void
     $max_title_length = (int) get_option('nibwp_max_title_length', 0);
     $audit_enabled = (bool) get_option('nibwp_audit_log_enabled', true);
     $audit_retention = (int) get_option('nibwp_audit_log_retention', 30);
+    $update_email = (bool) get_option('nibwp_update_email_enabled', false);
+    $update_email_to = (string) apply_filters('nibwp_update_email_recipient', (string) get_option('admin_email'));
     $disabled_tools = get_option('nibwp_disabled_tools', []);
     if (!is_array($disabled_tools)) {
         $disabled_tools = [];
@@ -225,6 +230,34 @@ function nibwp_render_settings_page_view(): void
                             <?php esc_html_e('Also run cleanup now when saving', domain: 'nibwp'); ?>
                         </label>
                         <p class="description"><?php esc_html_e('Check this box and save to immediately delete log entries older than the retention period above.', domain: 'nibwp'); ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Section -->
+            <h2 class="nibwp-section-title"><?php esc_html_e('Notifications', domain: 'nibwp'); ?></h2>
+            <div class="nibwp-settings-card">
+                <div class="nibwp-settings-row">
+                    <div class="nibwp-settings-label">
+                        <label for="nibwp-update-email"><?php esc_html_e('Update emails', domain: 'nibwp'); ?></label>
+                        <span class="nw-tooltip" data-tip="<?php esc_attr_e('Sends one email per new NIBWP version, never twice for the same one. Off by default.', domain: 'nibwp'); ?>">?</span>
+                    </div>
+                    <div class="nibwp-settings-field">
+                        <label class="nibwp-settings-switch" for="nibwp-update-email">
+                            <input type="checkbox" id="nibwp-update-email" name="nibwp_update_email_enabled" value="1"
+                                   <?php checked($update_email); ?> />
+                            <span class="nibwp-settings-switch__track" aria-hidden="true"><span class="nibwp-settings-switch__thumb"></span></span>
+                            <span><?php esc_html_e('Email me when a new NIBWP version is available', domain: 'nibwp'); ?></span>
+                        </label>
+                        <p class="description">
+                            <?php
+                            printf(
+                                /* translators: %s: recipient email address */
+                                esc_html__('Sent to %s, once per new version. Licensed sites only. The update notice inside NIBWP and on the Plugins page keeps working either way.', domain: 'nibwp'),
+                                '<strong>' . esc_html($update_email_to) . '</strong>'
+                            );
+                            ?>
+                        </p>
                     </div>
                 </div>
             </div>

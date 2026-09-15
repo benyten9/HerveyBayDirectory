@@ -14,6 +14,7 @@ use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use DoubleScale\Modules\Booking\Models\BookedSlotModel;
 use DoubleScale\Modules\Booking\Services\BookingEvents;
+use DoubleScale\Modules\Booking\Exceptions\InvalidBookingInputException;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use Exception;
 use Illuminate\Support\Arr;
@@ -491,7 +492,9 @@ class BookingService {
 				$email = sanitize_email( Arr::get( $item, 'email', null ) );
 
 				if ( ! $name || ! $email ) {
-					throw new \Exception( esc_html__( 'Invalid invitee', 'doublescale' ) );
+					// Caller-supplied data, not a server fault: the REST layer
+					// maps this to 400 rather than 500.
+					throw new InvalidBookingInputException( esc_html__( 'Invalid invitee', 'doublescale' ) );
 				}
 
 				$guest = array(
@@ -509,7 +512,7 @@ class BookingService {
 		);
 
 		if ( ! $allow_many && count( $invitee ) > 1 ) {
-			throw new \Exception( esc_html( $multi_error ?: __( 'Multiple invitees are not allowed', 'doublescale' ) ) );
+			throw new InvalidBookingInputException( esc_html( $multi_error ?: __( 'Multiple invitees are not allowed', 'doublescale' ) ) );
 		}
 
 		return $invitee;

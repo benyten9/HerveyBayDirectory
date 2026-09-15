@@ -51,7 +51,7 @@ class TaskStatusesTableProtectedColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD COLUMN `is_protected` TINYINT(1) NOT NULL DEFAULT 0 AFTER `status`"
+			"ALTER TABLE `{$table}` ADD COLUMN `is_protected` TINYINT(1) NOT NULL DEFAULT 0"
 		);
 
 		$manager = TaskStatusManager::instance();

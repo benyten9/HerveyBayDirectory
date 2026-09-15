@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 /**
  * EtchWP Pro — refine an existing component.
  *
- * Takes the slug or full path of an Etchedy component JSON and a free-form
+ * Takes a component identifier and a free-form
  * `instructions` string, then applies the requested change while honoring
  * every house convention from the EtchWP Pro Skill playbook:
  *   - Re-uses existing tokens; refuses to introduce raw values when a token exists.
@@ -27,7 +27,7 @@ wp_register_ability('nibwp/etchwp-pro-refine-component', [
         'properties' => [
             'component_id' => [
                 'type' => 'string',
-                'description' => 'Library id of the component to edit (e.g. `component-hero-split-cta`) OR the relative path under `data/library/`.',
+                'description' => 'Identifier of the component to edit. This ability is not implemented and always refuses — see its error for the route that works.',
             ],
             'instructions' => [
                 'type' => 'string',
@@ -105,39 +105,29 @@ function nibwp_etchwp_pro_refine_component(array $input): array|WP_Error
     $preserve_globals = !empty($input['preserve_globals']);
     $dry_run          = array_key_exists('dry_run', $input) ? !empty($input['dry_run']) : true;
 
-    // === Real implementation lives here ===
+    // This ability was never implemented, and until now it did not say so.
     //
-    // 1. Resolve $component_id → absolute path under data/library/.
-    // 2. Load the JSON, parse __libraryMeta + gutenbergBlock + styles + components.
-    // 3. Run the playbook's classifier on `instructions` to pick targeted nodes.
-    // 4. Mutate via a strict AST pass:
-    //      - Re-use existing tokens.
-    //      - Preserve data-etch-sid values.
-    //      - Honor $preserve_globals when touching shared global classes.
-    // 5. Re-validate the entire file against the playbook checklist.
-    // 6. If !$dry_run, write the file + invalidate any related caches.
+    // It returned success:true with three hard-coded `changes` — a heading at
+    // 48px and a --brand-500 of #ff904d — describing edits to a component it
+    // had not read, on a file it never opened. Worse, dry_run=false returned
+    // the same success while writing nothing, so a caller was told a commit
+    // had happened when no byte had moved. A customer reported planned edits
+    // against values that existed nowhere in their component; the values were
+    // these literals.
+    //
+    // An unimplemented ability must fail. Refusing loudly costs the caller one
+    // round trip; a fabricated diff costs them their trust in every other
+    // result this skill returns.
+    unset($scope, $preserve_globals, $dry_run);
 
-    $stub_path = sprintf('data/library/Components/%s.json', $component_id);
-
-    return [
-        'success'      => true,
-        'summary'      => sprintf('Planned %d-change refinement on %s (dry_run=%s).', 3, $component_id, $dry_run ? 'true' : 'false'),
-        'component_id' => $component_id,
-        'path'         => $stub_path,
-        'changes'      => [
-            ['type' => 'style',    'target' => '__heading', 'before' => 'font-size: 48px',  'after' => 'font-size: clamp(2rem, 4vw + 1rem, 3.5rem)'],
-            ['type' => 'style',    'target' => '__cta',     'before' => 'background: var(--brand-500, #ff904d)', 'after' => 'background: transparent; border: 1px solid var(--brand-500, #ff904d)'],
-            ['type' => 'metadata', 'target' => '__libraryMeta.updatedAt', 'after' => gmdate('c')],
-        ],
-        'warnings'     => $preserve_globals
-            ? []
-            : ['Global classes touched without `preserve_globals=true`. Review the diff carefully.'],
-        'next_steps'   => [
-            'Inspect each entry in `changes`',
-            $scope === 'all'
-                ? 'Run again with a narrower `scope` if the diff is too broad'
-                : sprintf('Re-run with scope=%s if more changes are needed elsewhere', $scope === 'styles' ? 'markup' : 'styles'),
-            $dry_run ? 'Re-run with dry_run=false to commit' : 'Reload the EtchWP builder to see the new render',
-        ],
-    ];
+    return new WP_Error(
+        'refine_not_implemented',
+        sprintf(
+            'Refining "%s" through this ability is not implemented — it cannot read or write component files, and any diff it returned would be invented. '
+            . 'Use the working route instead: read the component (nibwp/wp-get-post for a page, or the component\'s wp_block post), apply the change yourself, '
+            . 'then submit the whole payload through nibwp/etchwp-pro-html-to-component, which validates it and writes it. That path is covered by the validator; this one is not.',
+            $component_id
+        ),
+        ['status' => 501]
+    );
 }

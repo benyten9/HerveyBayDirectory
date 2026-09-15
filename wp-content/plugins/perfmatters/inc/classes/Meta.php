@@ -18,7 +18,7 @@ class Meta
 
 		global $pagenow;
 
-		if(in_array($pagenow, ['post.php', 'new-post.php'])) {
+		if(in_array($pagenow, ['post.php', 'post-new.php'])) {
 
 			//setup meta options
 			self::get_meta_options();

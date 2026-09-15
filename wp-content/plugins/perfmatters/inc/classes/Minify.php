@@ -22,6 +22,11 @@ class Minify
 		//parse given url
 		$parsed_url = parse_url($src);
 
+		//invalid or incomplete url
+		if(!$parsed_url || empty($parsed_url['path'])) {
+			return;
+		}
+
 		//extension check
 		$ext = strtolower(pathinfo($parsed_url['path'], PATHINFO_EXTENSION));
 		if(empty($ext) || ($ext != 'js' && $ext != 'css')) {

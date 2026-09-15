@@ -45,8 +45,17 @@ function seopress_301_do_redirect() {
 	// WP::parse_request() had just stripped out of $wp->request. Origins are
 	// stored without it, so on an install in a subdirectory the comparison was
 	// `blog/tag/promo/` against `tag/promo/` and nothing ever matched.
+	$home_path     = seopress_pro_home_path_segment();
+	$has_home_path = false;
+
 	if ( isset( $get_current_url['path'] ) ) {
-		$get_current_url['path'] = seopress_pro_strip_home_path( $get_current_url['path'] );
+		$path_as_requested       = $get_current_url['path'];
+		$get_current_url['path'] = seopress_pro_strip_home_path( $path_as_requested );
+
+		// An origin created by pasting a full URL keeps that prefix, so the
+		// request has to be looked up under both shapes. See
+		// seopress_pro_origin_path_variants().
+		$has_home_path = ( $get_current_url['path'] !== $path_as_requested );
 	}
 
 	// WPML.
@@ -67,6 +76,8 @@ function seopress_301_do_redirect() {
 	$uri2              = '';
 	$uri3              = '';
 	$uri4              = '';
+	$uri5              = '';
+	$uri6              = '';
 	$seopress_get_page = '';
 	$if_exact_match    = true;
 
@@ -135,6 +146,19 @@ function seopress_301_do_redirect() {
 	$uri3 = htmlspecialchars_decode( $uri3, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 	$uri4 = htmlspecialchars_decode( $uri4, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 
+	// The same request with the install path still on it. The prefix is put back
+	// on the finished keys rather than rebuilt from the URL: the install path is
+	// a prefix of the path, so it is a prefix of the key, query string included.
+	if ( $has_home_path && '' !== $home_path ) {
+		if ( '' !== $uri ) {
+			$uri5 = $home_path . '/' . ltrim( $uri, '/' );
+		}
+
+		if ( '' !== $uri2 ) {
+			$uri6 = $home_path . '/' . ltrim( $uri2, '/' );
+		}
+	}
+
 	$page_uri = seopress_pro_get_service( 'Redirection' )->getPageByTitle( trailingslashit( $uri ), '', 'seopress_404' );
 
 	$page_uri2 = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri2, '', 'seopress_404' );
@@ -149,16 +173,38 @@ function seopress_301_do_redirect() {
 
 	$page_uri3 = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri, '', 'seopress_404' );
 
+	$page_uri6 = '' !== $uri5 ? seopress_pro_get_service( 'Redirection' )->getPageByTitle( trailingslashit( $uri5 ), '', 'seopress_404' ) : false;
+	$page_uri7 = '' !== $uri6 ? seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri6, '', 'seopress_404' ) : false;
+	$page_uri8 = '' !== $uri5 ? seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri5, '', 'seopress_404' ) : false;
+
 	// Find URL in Redirections post type --- EXACT MATCH.
+	//
+	// Both shapes of the requested path are tried before either fallback: those
+	// two drop the language directory, and an origin stored with it therefore
+	// lost to an unprefixed twin. A German `de/page` was answered by the French
+	// rule `page` while its own rule sat right there. See #1756.
+	//
+	// The three branches at the end are the request with the install path still
+	// on it, which is the shape a pasted or imported origin is stored under.
+	// They come last so that nothing already matching can be diverted: they only
+	// ever turn a 404 into a redirection the site owner did configure.
 	// With trailing slash.
 	if ( isset( $uri ) && '' != $uri && $page_uri ) {
 		$seopress_get_page = $page_uri;
 	} elseif ( isset( $uri2 ) && '' != $uri2 && $page_uri2 ) { // Without trailing slash.
 		$seopress_get_page = $page_uri2;
+	} elseif ( isset( $uri ) && '' != $uri && $page_uri3 ) { // Exactly as requested.
+		$seopress_get_page = $page_uri3;
 	} elseif ( defined( 'ICL_SITEPRESS_VERSION' ) && isset( $uri3 ) && '' != $uri3 && $page_uri4 ) { // Without language prefix (WPML).
 		$seopress_get_page = $page_uri4;
 	} elseif ( function_exists( 'weglot_get_current_full_url' ) && isset( $uri4 ) && '' != $uri4 && $page_uri5 ) { // Without language prefix (Weglot).
 		$seopress_get_page = $page_uri5;
+	} elseif ( '' !== $uri5 && $page_uri6 ) { // With the install path, trailing slash.
+		$seopress_get_page = $page_uri6;
+	} elseif ( '' !== $uri6 && $page_uri7 ) { // With the install path, no trailing slash.
+		$seopress_get_page = $page_uri7;
+	} elseif ( '' !== $uri5 && $page_uri8 ) { // With the install path, exactly as requested.
+		$seopress_get_page = $page_uri8;
 	} else { // Default.
 		$seopress_get_page = $page_uri3;
 	}
@@ -177,11 +223,15 @@ function seopress_301_do_redirect() {
 		$uri2 = seopress_pro_strip_query_string( $uri2 );
 		$uri3 = seopress_pro_strip_query_string( $uri3 );
 		$uri4 = seopress_pro_strip_query_string( $uri4 );
+		$uri5 = seopress_pro_strip_query_string( $uri5 );
+		$uri6 = seopress_pro_strip_query_string( $uri6 );
 
 		$uri  = ltrim( $uri, '/' );
 		$uri2 = ltrim( $uri2, '/' );
 		$uri3 = ltrim( $uri3, '/' );
 		$uri4 = ltrim( $uri4, '/' );
+		$uri5 = ltrim( $uri5, '/' );
+		$uri6 = ltrim( $uri6, '/' );
 
 		$page_uri  = seopress_pro_get_service( 'Redirection' )->getPageByTitle( trailingslashit( $uri ), '', 'seopress_404' );
 		$page_uri2 = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri2, '', 'seopress_404' );
@@ -200,15 +250,27 @@ function seopress_301_do_redirect() {
 		$page_uri2 = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri2, '', 'seopress_404' );
 		$page_uri3 = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri, '', 'seopress_404' );
 
+		$page_uri6 = '' !== $uri5 ? seopress_pro_get_service( 'Redirection' )->getPageByTitle( trailingslashit( $uri5 ), '', 'seopress_404' ) : false;
+		$page_uri7 = '' !== $uri6 ? seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri6, '', 'seopress_404' ) : false;
+		$page_uri8 = '' !== $uri5 ? seopress_pro_get_service( 'Redirection' )->getPageByTitle( $uri5, '', 'seopress_404' ) : false;
+
 		// With trailing slash.
 		if ( isset( $uri ) && '' != $uri && $page_uri ) {
 			$seopress_get_page = $page_uri;
 		} elseif ( isset( $uri2 ) && '' != $uri2 && $page_uri2 ) { // Without trailing slash.
 			$seopress_get_page = $page_uri2;
+		} elseif ( isset( $uri ) && '' != $uri && $page_uri3 ) { // Exactly as requested.
+			$seopress_get_page = $page_uri3;
 		} elseif ( defined( 'ICL_SITEPRESS_VERSION' ) && isset( $uri3 ) && '' != $uri3 && $page_uri4 ) { // Without language prefix (WPML).
 			$seopress_get_page = $page_uri4;
 		} elseif ( function_exists( 'weglot_get_current_full_url' ) && isset( $uri4 ) && '' != $uri4 && $page_uri5 ) { // Without language prefix (Weglot).
 			$seopress_get_page = $page_uri5;
+		} elseif ( '' !== $uri5 && $page_uri6 ) { // With the install path, trailing slash.
+			$seopress_get_page = $page_uri6;
+		} elseif ( '' !== $uri6 && $page_uri7 ) { // With the install path, no trailing slash.
+			$seopress_get_page = $page_uri7;
+		} elseif ( '' !== $uri5 && $page_uri8 ) { // With the install path, exactly as requested.
+			$seopress_get_page = $page_uri8;
 		} else { // Default.
 			$seopress_get_page = $page_uri3;
 		}

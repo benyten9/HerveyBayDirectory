@@ -17,6 +17,7 @@ use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Modules\Booking\Abilities\BookingAbilities;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 
@@ -120,6 +121,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		);
 
 		$container->singleton( Renderer\BookingFrontendHandler::class, static fn () => new Renderer\BookingFrontendHandler() );
+		$container->singleton( Renderer\BookingShortcode::class, static fn () => new Renderer\BookingShortcode() );
 
 		$container->singleton( EventLocations\PersonAddress::class, static fn () => EventLocations\PersonAddress::instance() );
 		$container->singleton( EventLocations\AttendeeAddress::class, static fn () => EventLocations\AttendeeAddress::instance() );
@@ -192,6 +194,20 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 
 		$container->get( Renderer\BookingFrontendHandler::class );
 
+		// Registers `[doublescale_booking]`, which embeds the standalone booking
+		// page served by the handler above.
+		$container->get( Renderer\BookingShortcode::class );
+
+		// Auto-create the page hosting that shortcode so the booking embed has a
+		// published home on a fresh install.
+		ShortcodePageProvisioner::register(
+			Renderer\BookingShortcode::SHORTCODE_NAME,
+			array(
+				'title' => __( 'Book a Meeting', 'doublescale' ),
+				'slug'  => 'doublescale-booking',
+			)
+		);
+
 		$container->get( Managers\FieldsManager::class );
 		$container->get( Managers\LocationsManager::class );
 
@@ -242,6 +258,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			}
 		}
 
+		Capabilities::register_multisite_hooks();
 		Capabilities::ensure_capabilities_synced();
 
 		// For users whose only DoubleScale role is Booking Agent / Booking
@@ -292,6 +309,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 
 			$users = get_users(
 				array(
+					'blog_id'  => get_current_blog_id(),
 					'role__in' => array(
 						'administrator',
 						\DoubleScale\Core\UserRoles\UserRoles::CRM_MANAGER,
@@ -328,6 +346,9 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 
 			update_option( 'doublescale_booking_host_calendars_deduped', true );
 		}
+
+
+		$this->maybe_ensure_current_user_host_calendar_on_multisite( $container );
 
 		$resolve = static function () use ( $container ): Services\BookingProvisioner {
 			return $container->get( Services\BookingProvisioner::class );
@@ -392,6 +413,46 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		add_action( 'wpmu_delete_user', $purge, 10, 1 );
 		add_action( 'remove_user_from_blog', $purge, 10, 1 );
 	}
+
+	/**
+	 * Multisite: super admins and booking-eligible users on a subsite do not
+	 * always pass through the single-site provision hooks, so the Calendars
+	 * "Connect to remote calendars" action never gets a host calendar id.
+	 */
+	private function maybe_ensure_current_user_host_calendar_on_multisite( Container $container ): void {
+		if ( ! is_multisite() || ! is_user_logged_in() ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+		if (
+			! is_user_member_of_blog( $user_id, get_current_blog_id() )
+			&& ! is_super_admin( $user_id )
+		) {
+			return;
+		}
+
+		$eligible = \DoubleScale\Core\UserRoles\Permissions::user_has_role(
+			\DoubleScale\Core\UserRoles\UserRoles::ADMINISTRATOR,
+			$user_id
+		) || Services\BookingProvisioner::user_has_any_booking_role( $user_id );
+
+		if ( ! $eligible ) {
+			return;
+		}
+
+		$has_host = Models\CalendarModel::query()
+			->where( 'user_id', $user_id )
+			->where( 'type', 'host' )
+			->exists();
+
+		if ( $has_host ) {
+			return;
+		}
+
+		$container->get( Services\BookingProvisioner::class )->ensure_host_calendar( $user_id );
+	}
+
 
 	/**
 	 * Remove every DoubleScale submenu except Booking for users whose only

@@ -63,8 +63,8 @@ class UnassignedPlanOrderQueue extends BaseSequence {
 
         foreach ( $task_data['directory_type_ids'] as $directory_type_id ) {
             try {
-                $assignment   = $this->get_directory_plan_assignment( $directory_type_id, $task_data['assignments'] );
-                $plan         = directorist_get_pricing_plan_by_id( $assignment['plan_id'] );
+                $assignment = $this->get_directory_plan_assignment( $directory_type_id, $task_data['assignments'] );
+                $plan       = directorist_get_pricing_plan_by_id( $assignment['plan_id'] );
 
                 if ( ! $plan ) {
                     throw new Exception( sprintf( 'Plan %d is not available anymore', $assignment['plan_id'] ) );
@@ -76,7 +76,7 @@ class UnassignedPlanOrderQueue extends BaseSequence {
                     throw new Exception( sprintf( 'Plan %d is not supported by directory type %d', $plan->id, $directory_type_id ) );
                 }
 
-                $order_id = $this->create_order( $user_id, $plan, $order_status, $currency );
+                $order_id = $this->create_order( $user_id, $plan, $order_status, $currency, true );
 
                 if ( $order_id && $order_status === OrderStatus::PAID ) {
                     $this->activate_package( $user_id, $plan, $order_id );
@@ -121,7 +121,7 @@ class UnassignedPlanOrderQueue extends BaseSequence {
         return $assignment;
     }
 
-    public function create_order( int $user_id, stdClass $plan, string $order_status, string $currency ) {
+    public function create_order( int $user_id, stdClass $plan, string $order_status, string $currency, bool $assign_unassigned_listings = false, ?int $listing_id = null ) {
         /**
          * @var PlanRepository
          */
@@ -130,20 +130,32 @@ class UnassignedPlanOrderQueue extends BaseSequence {
 
         $order_dto->set_amount( $plan->price )->set_sub_total( $plan->price );
 
+        if ( $listing_id ) {
+            $order_dto->set_listing_id( $listing_id );
+
+            if ( ! empty( $plan->is_featured ) ) {
+                $order_dto->set_is_featured_listing( true );
+            }
+        }
+
+        if ( $assign_unassigned_listings ) {
+            $plan_repository->assign_directory_listings_to_plan( $user_id, (int) $plan->directory_type_id, (int) $plan->id );
+        }
+
         if ( $plan->is_taxable ) {
             $order_dto->set_tax_type( $plan->tax_type )->set_tax_rate( $plan->tax_rate );
         }
 
         if ( 0 === $plan->is_allowed_unlimited_listings ) {
-            $plan_repository->make_exceeding_listings_as_private( $user_id, $plan->directory_type_id, $plan->allowed_listings );
+            $plan_repository->make_exceeding_listings_as_private( $user_id, (int) $plan->id, $plan->allowed_listings );
         }
 
         if ( 0 === $plan->is_allowed_unlimited_featured_listings ) {
-            $plan_repository->make_exceeding_featured_listings_as_regular( $user_id, $plan->directory_type_id, $plan->allowed_featured_listings );
+            $plan_repository->make_exceeding_featured_listings_as_regular( $user_id, (int) $plan->id, $plan->allowed_featured_listings );
         }
 
         if ( $plan->fee_type !== PlanFeeType::FREE && $order_status !== OrderStatus::PAID ) {
-            $plan_repository->make_listings_pending( $user_id, $plan->directory_type_id );
+            $plan_repository->make_listings_pending( $user_id, (int) $plan->id );
         }
         
         return directorist_order_repository()->create( $order_dto );
@@ -220,6 +232,7 @@ class UnassignedPlanOrderQueue extends BaseSequence {
         }
         
         $this->before_dispatch();
-        $this->push_to_queue( [ 'assignments' => $assignments ] )->save()->dispatch();
+        $this->push_to_queue( [ 'assignments' => $assignments ] )->save();
+        $this->dispatch_or_process();
     }
 }

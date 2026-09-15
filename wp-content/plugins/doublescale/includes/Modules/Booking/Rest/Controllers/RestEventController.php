@@ -27,6 +27,7 @@ use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Modules\Booking\Capabilities;
+use DoubleScale\Modules\Booking\Helpers\MultisiteScope;
 use DoubleScale\Modules\Booking\Services\AvailabilityService;
 use DoubleScale\Modules\Booking\EventFields\EventFields;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
@@ -521,7 +522,12 @@ class RestEventController extends RestController {
 			}
 
 			if ( 'all' !== $user ) {
+				if ( ! MultisiteScope::is_member( (int) $user ) ) {
+					return new WP_Error( 'rest_event_error', __( 'You do not have permission', 'doublescale' ), array( 'status' => 403 ) );
+				}
 				$query->where( 'user_id', $user );
+			} else {
+				MultisiteScope::apply_user_id_scope( $query );
 			}
 
 			$events = $query->paginate( $per_page, array( '*' ), 'page', $page );

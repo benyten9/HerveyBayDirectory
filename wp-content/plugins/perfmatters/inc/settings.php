@@ -908,6 +908,21 @@ function perfmatters_settings() {
         )
     );
 
+    //inline excluded stylesheets
+    add_settings_field(
+        'rucss_inline_stylesheets', 
+        perfmatters_title(__('Inline Excluded Stylesheets', 'perfmatters'), 'assets-rucss_inline_stylesheets', 'https://perfmatters.io/docs/remove-unused-css/#inline-excluded'), 
+        'perfmatters_print_input', 
+        'perfmatters_options', 
+        'assets_css', 
+        array(
+            'id' => 'rucss_inline_stylesheets',
+            'section' => 'assets',
+            'tooltip' => __('Inline the full contents of stylesheets that have been excluded from unused CSS removal.', 'perfmatters'),
+            'class' => 'assets-remove_unused_css' . (empty($perfmatters_options['assets']['remove_unused_css']) ? ' hidden' : '') . ' pm-advanced-option'
+        )
+    );
+
     //cdn url
     add_settings_field(
         'rucss_cdn_url', 
@@ -1894,18 +1909,18 @@ function perfmatters_settings() {
     );
 
     //safe mode
-    /*add_settings_field(
+    add_settings_field(
         'safe_mode', 
-        perfmatters_title(__('Safe Mode', 'perfmatters'), 'safe_mode', 'https://perfmatters.io/docs/safe-mode/'), 
+        perfmatters_title(__('Safe Mode', 'perfmatters'), 'safe_mode', 'https://perfmatters.io/docs/test-perfmatters-off/#safe-mode'), 
         'perfmatters_print_input',
         'perfmatters_tools', 
         'plugin', 
         array(
             'id' => 'safe_mode',
             'option' => 'perfmatters_tools',
-            'tooltip' => __('', 'perfmatters')
+            'tooltip' => __('Disable all Perfmatters optimizations sitewide for troubleshooting. Security-related options and code snippets will remain active.', 'perfmatters')
         )
-    );*/
+    );
 
     //accessibility mode
     add_settings_field(
@@ -2791,10 +2806,13 @@ function perfmatters_print_import_settings($args) {
     }
 }
 
-//sanitize options
-function perfmatters_sanitize_options($values) {
+//normalize textarea inputs that should be stored as one-per-line arrays
+function perfmatters_normalize_one_per_line_options(&$values) {
 
-    //textarea inputs with one per line
+    if(!is_array($values)) {
+        return;
+    }
+
     $sections_one_per_line = array(
         'lazyload' => array(
             'lazy_loading_exclusions',
@@ -2823,6 +2841,13 @@ function perfmatters_sanitize_options($values) {
             }
         }
     }
+}
+
+//sanitize options
+function perfmatters_sanitize_options($values) {
+
+    //textarea inputs with one per line
+    perfmatters_normalize_one_per_line_options($values);
 
     //input rows
     $sections_input_rows = array(

@@ -33,7 +33,7 @@ class TaskRecurrencesTableColumns {
 
 		if ( ! in_array( 'month_mode', $columns, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `month_mode` VARCHAR(10) DEFAULT NULL AFTER `month_day`" );
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `month_mode` VARCHAR(10) DEFAULT NULL" );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -41,7 +41,7 @@ class TaskRecurrencesTableColumns {
 
 		if ( ! in_array( 'year_month', $columns, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `year_month` TINYINT UNSIGNED DEFAULT NULL AFTER `month_mode`" );
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `year_month` TINYINT UNSIGNED DEFAULT NULL" );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -49,7 +49,7 @@ class TaskRecurrencesTableColumns {
 
 		if ( ! in_array( 'repeat_when_completed', $columns, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `repeat_when_completed` TINYINT(1) NOT NULL DEFAULT 0 AFTER `year_month`" );
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `repeat_when_completed` TINYINT(1) NOT NULL DEFAULT 0" );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -57,16 +57,15 @@ class TaskRecurrencesTableColumns {
 
 		if ( ! in_array( 'status_id', $columns, true ) && ! in_array( 'stage_id', $columns, true ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `status_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL AFTER `repeat_when_completed`" );
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `status_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL" );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$columns = $wpdb->get_col( "DESC `{$table}`", 0 );
 
 		if ( ! in_array( 'create_new_on_repeat', $columns, true ) ) {
-			$after_column = in_array( 'status_id', $columns, true ) ? 'status_id' : 'stage_id';
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `create_new_on_repeat` TINYINT(1) NOT NULL DEFAULT 1 AFTER `{$after_column}`" );
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `create_new_on_repeat` TINYINT(1) NOT NULL DEFAULT 1" );
 		}
 	}
 }

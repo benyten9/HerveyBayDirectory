@@ -247,7 +247,7 @@ function nibwp_tutorlms_courses_manage(array $input): array|WP_Error
                 $cid = wp_insert_post([
                     'post_type'    => $cpt,
                     'post_title'   => sanitize_text_field((string) $input['title']),
-                    'post_content' => wp_kses_post((string) ($input['content'] ?? '')),
+                    'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
                     'post_excerpt' => sanitize_text_field((string) ($input['excerpt'] ?? '')),
                     'post_status'  => in_array($input['status'] ?? '', ['publish', 'draft', 'pending', 'private'], true) ? $input['status'] : 'draft',
                 ], true);
@@ -448,7 +448,9 @@ function nibwp_tutorlms_content_manage(array $input): array|WP_Error
                     'post_type'    => $topic_cpt,
                     'post_parent'  => $cid,
                     'post_title'   => sanitize_text_field((string) ($input['title'] ?? 'Untitled topic')),
-                    'post_content' => sanitize_textarea_field((string) ($input['summary'] ?? $input['content'] ?? '')),
+                    // A topic summary is plain text by design, so the tag strip
+                    // stays; the slash is what wp_insert_post() expects.
+                    'post_content' => wp_slash(sanitize_textarea_field((string) ($input['summary'] ?? $input['content'] ?? ''))),
                     'post_status'  => 'publish',
                 ], true);
                 return is_wp_error($tid) ? $tid : ['topic_id' => (int) $tid, 'created' => true];
@@ -518,7 +520,7 @@ function nibwp_tutorlms_content_manage(array $input): array|WP_Error
                     'post_type'    => $lesson_cpt,
                     'post_parent'  => $tid,
                     'post_title'   => sanitize_text_field((string) ($input['title'] ?? 'Untitled lesson')),
-                    'post_content' => wp_kses_post((string) ($input['content'] ?? '')),
+                    'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
                     'post_status'  => 'publish',
                 ], true);
                 return is_wp_error($lid) ? $lid : ['lesson_id' => (int) $lid, 'created' => true];
@@ -560,7 +562,7 @@ function nibwp_tutorlms_content_manage(array $input): array|WP_Error
                     'post_type'    => $announcement_cpt,
                     'post_parent'  => $cid,
                     'post_title'   => sanitize_text_field((string) ($input['title'] ?? '')),
-                    'post_content' => wp_kses_post((string) ($input['content'] ?? '')),
+                    'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
                     'post_status'  => 'publish',
                 ], true);
                 return is_wp_error($aid) ? $aid : ['announcement_id' => (int) $aid, 'created' => true];

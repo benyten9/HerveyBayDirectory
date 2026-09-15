@@ -266,7 +266,10 @@ function nibwp_seo_image_optimize(array $input): array|WP_Error
                 if (!empty($new_content)) {
                     wp_update_post([
                         'ID' => $post_id,
-                        'post_content' => $new_content,
+                        // Rewritten from the stored (unslashed) content, so it
+                        // must be slashed on the way back or every post this
+                        // touches loses its block-attribute escapes.
+                        'post_content' => nibwp_wp_prepare_post_content($new_content),
                     ]);
                 }
             }

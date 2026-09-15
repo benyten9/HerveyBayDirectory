@@ -37,6 +37,7 @@ class ContactTaxonomyRelationshipTable extends Migration {
 			contact_id BIGINT(20) UNSIGNED NOT NULL,
 			taxonomy_type VARCHAR(20) NOT NULL COMMENT \'list or tag\',
 			taxonomy_id BIGINT(20) UNSIGNED NOT NULL,
+			status VARCHAR(20) NOT NULL DEFAULT \'subscribed\',
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),

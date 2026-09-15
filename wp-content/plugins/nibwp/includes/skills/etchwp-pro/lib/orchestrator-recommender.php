@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
  *   - image_no_alt            : <img> without alt attribute → propose alt + upload via wp-upload-media
  *   - iframe_youtube_raw      : raw YouTube/Vimeo iframe → propose etch/embed block
  *   - iframe_provider         : any third-party iframe → propose proper embed block
- *   - form_detected           : raw <form> → propose forms-manage list_plugins + etch/shortcode
+ *   - form_detected           : raw <form> → propose forms-manage list_plugins + core/shortcode
  *   - gallery_grid            : ≥4 sibling <img> children → propose CPT + ACF gallery field
  *   - div_soup                : deeply nested <div>-only tree → propose semantic landmarks
  *   - dynamic_data_hint       : hardcoded business data (prices, dates, names) → propose ACF fields
@@ -70,7 +70,9 @@ function nibwp_etchwp_recommend_abilities(array $payload, array $ctx = []): arra
         $component_slug = strtolower((string) preg_replace('/[^a-z0-9-]+/i', '-', $family));
         $recs[] = [
             'type'           => 'extract_to_component',
-            'severity'       => $cand['count'] >= 3 ? 'suggestion' : 'strong',
+            // Two siblings sharing a skeleton are as often two layout columns
+            // as two cards, so a pair is never pressed as "strong".
+            'severity'       => 'suggestion',
             'summary'        => sprintf(
                 'Detected %d sibling "%s" structures sharing the same skeleton but differing in copy. Extract them into an etch/component with properties (label, icon, link, etc.) so future edits change one place instead of N.',
                 $cand['count'],
@@ -83,7 +85,7 @@ function nibwp_etchwp_recommend_abilities(array $payload, array $ctx = []): arra
                 [
                     'ability'   => 'nibwp/etchwp-pro-html-to-component',
                     'args_hint' => [
-                        'note' => 'Define ONE etch/component named "' . $component_slug . '" in payload.components. Schema: properties = [{name:"title",type:"string"},{name:"body",type:"string"},{name:"icon",type:"image"},{name:"cta_label",type:"string"},{name:"cta_url",type:"url"}]. Replace the ' . $cand['count'] . ' static blocks with ' . $cand['count'] . ' etch/component INSTANCE blocks where each instance differs only in its `props` payload (title/body/icon/cta_label/cta_url values).',
+                        'note' => 'Define ONE etch/component named "' . $component_slug . '" in payload.components. Give it a key and typed properties, e.g. {name:"Title",key:"title",type:{primitive:"string"}}, {name:"Icon",key:"icon",type:{primitive:"string",specialized:"image"}}, with its tree under `blocks`. Replace the ' . $cand['count'] . ' static blocks with ' . $cand['count'] . ' etch/component instances {ref: <component id>, attributes: {title, icon, …}} that differ only in their attributes.',
                     ],
                     'why' => 'Component + props makes the markup DRY. Each instance is a thin wrapper of property values. Editing the component template updates every instance.',
                 ],
@@ -141,7 +143,7 @@ function nibwp_etchwp_recommend_abilities(array $payload, array $ctx = []): arra
                 [
                     'ability'   => 'nibwp/etchwp-pro-html-to-component',
                     'args_hint' => [
-                        'note' => 'Wrap each conditionally-visible block in an etch/condition with explicit shape: { blockName: "etch/condition", attrs: { conditions: [{ source: "{props.show_extras}", operator: "isTruthy" }] }, innerBlocks: [<wrapped content>] }. Operators: isTruthy / isFalsy / == / != / contains / && / ||.',
+                        'note' => 'Wrap each conditionally-visible block in an etch/condition: { blockName: "etch/condition", attrs: { condition: { leftHand: "props.showExtras", operator: "isTruthy", rightHand: null }, conditionString: "props.showExtras" }, innerBlocks: [<wrapped content>] }. Operators: isTruthy / == / != / && / || (a compound condition nests condition objects as leftHand and rightHand).',
                     ],
                     'why' => 'etch/condition resolves at render time. Bricks/EtchWP know which branch to ship; CSS-driven visibility hides DOM that still pays render + a11y cost.',
                 ],
@@ -177,8 +179,8 @@ function nibwp_etchwp_recommend_abilities(array $payload, array $ctx = []): arra
                     'ability'   => 'nibwp/wp-register-cpt',
                     'args_hint' => [
                         'post_type'     => $cpt_slug,
-                        'label_plural'  => ucfirst($family) . 's',
-                        'label_single'  => ucfirst($family),
+                        'label_plural'  => nibwp_etchwp_pluralize(ucfirst(nibwp_etchwp_singularize($family))),
+                        'label_single'  => ucfirst(nibwp_etchwp_singularize($family)),
                         'supports'      => ['title', 'editor', 'thumbnail', 'excerpt'],
                         'public'        => true,
                         'has_archive'   => true,
@@ -368,7 +370,7 @@ function nibwp_etchwp_recommend_abilities(array $payload, array $ctx = []): arra
                 ],
                 [
                     'ability'   => 'nibwp/etchwp-pro-html-to-component',
-                    'args_hint' => ['note' => 'Resubmit with etch/shortcode block wrapping the returned shortcode + a style-hoist block for the wrapper classes.'],
+                    'args_hint' => ['note' => 'Resubmit with a core/shortcode block wrapping the returned shortcode + a style-hoist block for the wrapper classes.'],
                     'why' => 'Hands the form rendering back to the plugin while keeping Etch styling on the wrapper.',
                 ],
             ],
@@ -393,7 +395,58 @@ function nibwp_etchwp_recommend_abilities(array $payload, array $ctx = []): arra
         ];
     }
 
+    // A stable id per suggestion, so one the user declined at the dry run can
+    // be passed back and is not offered again at persist.
+    foreach ($recs as &$rec) {
+        $rec['id'] = $rec['type'] . ':' . substr(md5((string) json_encode([
+            $rec['type'],
+            $rec['sample_paths'] ?? [],
+            $rec['sample_classes'] ?? [],
+        ])), 0, 8);
+    }
+    unset($rec);
+
     return $recs;
+}
+
+/**
+ * English plural for a CPT label. "Process" became "Processs" and "Services"
+ * became "Servicess" when this was a bare `. 's'`.
+ *
+ * ponytail: English-only heuristic; swap for a real inflector if labels are
+ * ever localised.
+ */
+function nibwp_etchwp_pluralize(string $word): string
+{
+    if ($word === '') {
+        return $word;
+    }
+    if (preg_match('/(ss|x|z|ch|sh)$/i', $word)) {
+        return $word . 'es';
+    }
+    if (preg_match('/[^aeiou]y$/i', $word)) {
+        return substr($word, 0, -1) . 'ies';
+    }
+    if (preg_match('/s$/i', $word)) {
+        return $word; // Already plural: a class family like "services".
+    }
+
+    return $word . 's';
+}
+
+function nibwp_etchwp_singularize(string $word): string
+{
+    if (preg_match('/[^aeiou]ies$/i', $word)) {
+        return substr($word, 0, -3) . 'y';
+    }
+    if (preg_match('/(ss|x|z|ch|sh)es$/i', $word)) {
+        return substr($word, 0, -2);
+    }
+    if (preg_match('/[^s]s$/i', $word)) {
+        return substr($word, 0, -1);
+    }
+
+    return $word;
 }
 
 /**

@@ -6,7 +6,7 @@ Tags: seo, ai seo, schema, xml sitemap, google search console
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 10.2
+Stable tag: 10.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -313,6 +313,9 @@ By using our contact form (select Misc as subject), or directly from <a href="ht
 12. Schema metabox
 
 == Changelog ==
+= 10.2.1 =
+FIX Redirects with multilingual plugins
+
 = 10.2 <a href="https://www.seopress.org/newsroom/product-news/seopress-10-2/">Read the blog post update</a> =
 NEW Setup wizard: a new AI Assistant step to turn on AI and connect your provider without leaving the wizard
 NEW The AI Assistant is now enabled by default in the editor, with a one-time notice explaining how it works (PRO)

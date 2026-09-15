@@ -19,6 +19,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Modules\Contacts\ImportExport\CsvEncoding;
 use DoubleScale\Modules\Contacts\ImportExport\Security;
 use DoubleScale\Modules\Contacts\ImportExport\Importers\Manager;
 
@@ -579,6 +580,8 @@ class RestImportExportController extends RestController {
 			return new WP_Error( 'move_error', 'Failed to move file', array( 'status' => 500 ) );
 		}
 
+		CsvEncoding::ensure_file_is_utf8( $file_path );
+
 		$header_columns = $this->get_header_columns( $file_path );
 
 		return new WP_REST_Response(
@@ -608,7 +611,8 @@ class RestImportExportController extends RestController {
 
 		$contents = $wp_filesystem->get_contents( $file_path );
 		if ( false !== $contents ) {
-			$lines = explode( "\n", $contents );
+			$contents = CsvEncoding::to_utf8( $contents );
+			$lines    = explode( "\n", $contents );
 			if ( ! empty( $lines[0] ) ) {
 				return str_getcsv( $lines[0] );
 			}
@@ -668,9 +672,21 @@ class RestImportExportController extends RestController {
 			$importer = new $importer( $args );
 			$result   = $importer->import();
 
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+
 			return new WP_REST_Response( $result, 200 );
-		} catch ( Exception $e ) {
-			return new WP_Error( 'import_error', $e->getMessage(), array( 'status' => 500 ) );
+		} catch ( \Throwable $e ) {
+			return new WP_Error(
+				'import_error',
+				sprintf(
+					/* translators: %s: underlying error */
+					__( 'Import stopped unexpectedly: %s. Contacts already processed stay in your list. Re-import the same file with “Update existing contacts” enabled to continue.', 'doublescale' ),
+					$e->getMessage()
+				),
+				array( 'status' => 500 )
+			);
 		}
 	}
 

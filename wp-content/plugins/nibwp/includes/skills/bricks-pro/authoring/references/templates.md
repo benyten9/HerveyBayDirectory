@@ -57,7 +57,7 @@ Set via preflight `push_mode`:
 
 - `new_template` — creates a new `bricks_template` post. Requires `new_template_title`.
 - `replace_template` — overwrites elements + global classes of an existing template. Requires `target_template_id`.
-- `append_to_existing` — appends new elements after existing ones in `target_template_id`.
+- Appending to a template is not supported. Read the existing tree, merge your elements into it yourself, and submit the whole tree with `replace_template`.
 
 ## Anti-patterns
 

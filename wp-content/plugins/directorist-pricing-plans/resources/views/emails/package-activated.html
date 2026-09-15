@@ -98,13 +98,8 @@
                 <p><strong>Package:</strong> {{plan_name}}</p>
                 <p><strong>Amount Paid:</strong> {{amount}}</p>
                 <p><strong>Activated Date:</strong> {{activated_date}}</p>
-                {{#expiry_date}}
-                <p><strong>Valid Until:</strong> {{expiry_date}}</p>
-                {{/expiry_date}}
+                {{expiry_date_row}}
             </div>
-            
-            <p><strong>What's included?</strong></p>
-            <p>You now have full access to all the features and benefits included in your {{plan_name}} package. You can start using your package right away!</p>
             
             <p style="text-align: center;">
                 <a href="{{dashboard_url}}" class="button">Go to Dashboard</a>
@@ -124,4 +119,3 @@
     </div>
 </body>
 </html>
-

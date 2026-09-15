@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 use DirectoristPricingPlan\App\Http\Controllers\Admin\PlanController;
 use DirectoristPricingPlan\App\Http\Controllers\Admin\DirectoryController;
 use DirectoristPricingPlan\App\Http\Controllers\Admin\PackageController;
+use DirectoristPricingPlan\App\Http\Controllers\Admin\ListingController;
 use DirectoristPricingPlan\App\Http\Controllers\Admin\MigrationController;
 use DirectoristPricingPlan\WpMVC\Routing\Route;
 
@@ -20,12 +21,24 @@ Route::group(
     'packages', function() {
         Route::get( '/assignment-options', [ PackageController::class, 'assignment_options' ] );
         Route::post( '/assign', [ PackageController::class, 'assign' ] );
+        Route::post( '/recover-missing-plans', [ PackageController::class, 'recover_missing_plans' ] );
+        Route::post( '/{id}/renew', [ PackageController::class, 'renew' ] );
+        Route::post( '/{id}/renew-expired-listings', [ PackageController::class, 'renew_expired_listings' ] );
+        Route::post( '/{id}/period-end', [ PackageController::class, 'update_period_end' ] );
         Route::post( '/{id}/cancel', [ PackageController::class, 'cancel' ] );
         Route::post( '/{id}/cancel-at-period-end', [ PackageController::class, 'cancel_at_period_end' ] );
         Route::get( '/', [ PackageController::class, 'index' ] );
+        Route::get( '/{id}/usage', [ PackageController::class, 'usage' ] );
         Route::get( '/{id}', [ PackageController::class, 'show' ] );
         Route::get( '/{id}/orders', [ PackageController::class, 'orders' ] );
         Route::get( '/{id}/logs', [ PackageController::class, 'logs' ] );
+    }
+);
+
+Route::group(
+    'listings', function() {
+        Route::post( '/{id}/renew', [ ListingController::class, 'renew' ] );
+        Route::post( '/{id}/assign-order', [ ListingController::class, 'assign_order' ] );
     }
 );
 

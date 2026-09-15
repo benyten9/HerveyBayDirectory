@@ -172,6 +172,18 @@ class RestSettingsController extends RestController {
 						),
 					),
 				),
+				'contact_merge'    => array(
+					'type'                 => 'object',
+					'additionalProperties' => false,
+					'properties'           => array(
+						// Where to send the notice after a duplicate is merged
+						// without review. Empty means send nothing.
+						'notify_email' => array(
+							'type'    => 'string',
+							'default' => '',
+						),
+					),
+				),
 				'sms'              => array(
 					'type'                 => 'object',
 					'additionalProperties' => false,
@@ -616,6 +628,23 @@ class RestSettingsController extends RestController {
 			$whatsapp_validation = $this->validate_whatsapp_settings( $settings['whatsapp'] );
 			if ( is_wp_error( $whatsapp_validation ) ) {
 				return $whatsapp_validation;
+			}
+		}
+
+		// Validate the automatic-merge notification address. The notifier
+		// silently sends nothing to an address it cannot use, so a typo has to
+		// be caught here — otherwise the save succeeds, no notice ever arrives,
+		// and there is nothing on screen to explain why. Empty is how the
+		// feature is turned off, so only a non-empty bad address is an error.
+		if ( isset( $settings['contact_merge']['notify_email'] ) ) {
+			$notify_email = trim( (string) $settings['contact_merge']['notify_email'] );
+
+			if ( '' !== $notify_email && ! is_email( $notify_email ) ) {
+				return new \WP_Error(
+					'invalid_email',
+					__( 'Merge notification email is not a valid email address', 'doublescale' ),
+					array( 'status' => 400 )
+				);
 			}
 		}
 

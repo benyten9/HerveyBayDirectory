@@ -18,9 +18,8 @@ jQuery(function($) {
 		editor.setOption("mode", PMCS.code_types[type].mime);
 		editor.setOption("lint", PMCS.code_types[type].lint);
 
-		//populate locations for code type
-		pmcsGetLocationOptions(type);
-		pmcsUpdateLoadBehavior(type);
+		//populate locations and visible fields for code type
+		pmcsRefreshSnippetUI(type);
 	});
 
 	//update name in ui when input changes
@@ -49,14 +48,10 @@ jQuery(function($) {
   	});
 
   	//load method change
-	$("#pmcs-method").on('change', function() {
-
-		//populate behaviors for method
-		pmcsUpdateLoadBehavior();
-	});
+	$("#pmcs-method").on('change', pmcsUpdateLoadBehavior);
 
 	//location change
-	$("#pmcs-location").on('change', pmcsUpdateShortcodeSection);
+	$("#pmcs-location").on('change', pmcsUpdateVisibleFields);
 
   	//delete snippet confirmation
     $('a.pmcs-delete').on('click', function(e) {
@@ -70,7 +65,14 @@ jQuery(function($) {
 	    }
     });
 
+	function pmcsRefreshSnippetUI(pmcsCodeType = null) {
+		pmcsGetLocationOptions(pmcsCodeType);
+		pmcsUpdateVisibleFields();
+	}
+
   	function pmcsGetLocationOptions(pmcsCodeType = null) {
+
+		var currentLocation = $("#pmcs-location").val();
 
 		$("#pmcs-location").empty();
 
@@ -90,35 +92,35 @@ jQuery(function($) {
 	        $(this).clone().appendTo("#pmcs-location");
 	    });
 
-	    $("#pmcs-snippet div[data-code-type]").each(function() {
-			if($(this).attr('data-code-type').includes(pmcsCodeType)) {
-				$(this).removeClass('hidden');
-				$(this).find(":input[name]").prop("disabled", false);
-				
-			}
-			else {
-				$(this).addClass('hidden');
-				$(this).find(":input[name]").prop("disabled", true);
-			}
-		});
-
-		pmcsUpdateShortcodeSection();
+		if(currentLocation) {
+			$("#pmcs-location").val(currentLocation);
+		}
 	}
 
-	function pmcsUpdateShortcodeSection() {
+	function pmcsAttrContains($el, attr, value) {
+		var raw = $el.attr(attr);
 
-		var $section = $('#pmcs-shortcode');
-
-		if(!$section.length) {
-			return;
+		if(typeof raw === 'undefined') {
+			return true;
 		}
 
-		if($('#pmcs-location').val() === 'shortcode') {
-			$section.removeClass('hidden');
-		}
-		else {
-			$section.addClass('hidden');
-		}
+		return $.inArray(value, raw.split(/[,\s]+/)) !== -1;
+	}
+
+	function pmcsUpdateVisibleFields() {
+
+		var type = $("#pmcs-snippet").attr("data-code-type");
+		var location = $("#pmcs-location").val() || '';
+
+		$("#pmcs-snippet [data-code-type], #pmcs-snippet [data-location]").each(function() {
+			var $el = $(this);
+			var visible = pmcsAttrContains($el, 'data-code-type', type) && pmcsAttrContains($el, 'data-location', location);
+
+			$el.toggleClass('hidden', !visible);
+			$el.find(":input[name]").prop("disabled", !visible);
+		});
+
+		pmcsUpdateLoadBehavior();
 	}
 
 	//update load behavior options for selected code type
@@ -150,6 +152,12 @@ jQuery(function($) {
 			}
 	    });
 
+		//hidden fields stay disabled so they are not posted
+		if($select.closest('.hidden').length) {
+			$select.prop('disabled', true);
+			return;
+		}
+
 		//set disabled status for select
 		$select.prop('disabled', $select.find('option:not(:disabled)').length < 2);
 	}
@@ -158,8 +166,7 @@ jQuery(function($) {
 	$(document).ready(function() {
 
 		//update options once on load
-		pmcsGetLocationOptions();
-		pmcsUpdateLoadBehavior();
+		pmcsRefreshSnippetUI();
 
 		var $editorPanel = $('#pmcs-code-editor-panel');
 

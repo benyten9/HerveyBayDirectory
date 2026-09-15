@@ -14,9 +14,10 @@ use DirectoristPricingPlan\App\Enums\Plan\TaxType;
  */
 do_action( 'atbdp_before_plan_page_loaded' );
 
-$atts           = ! empty( $atts ) ? $atts : [];
-$atts           = shortcode_atts( [ 'id' => null, 'columns' => 3 ], $atts );
-$is_single_plan = ! empty( $atts['id'] );
+$atts             = ! empty( $atts ) ? $atts : [];
+$atts             = shortcode_atts( [ 'id' => null, 'columns' => 3, 'include_plan_ids' => '' ], $atts );
+$is_single_plan   = ! empty( $atts['id'] );
+$include_plan_ids = array_values( array_filter( array_map( 'absint', explode( ',', (string) $atts['include_plan_ids'] ) ) ) );
 
 $columns           = 12 / ( ! empty( $atts['columns'] ) ? absint( $atts['columns'] ) : 3 );
 $plan_repo         = directorist_pricing_plans_singleton( PlanRepository::class );
@@ -34,7 +35,19 @@ if ( $is_single_plan ) {
 } else {
     $directory_type = ! empty( $_GET['directory_type'] ) ? sanitize_text_field( wp_unslash( $_GET['directory_type'] ) ) : default_directory_type(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     $directory_term = ! empty( $directory_type ) ? get_term_by( is_numeric( $directory_type ) ? 'id' : 'slug', $directory_type, 'atbdp_listing_types' ) : null;
-    $plans          = $directory_term ? $plan_repo->get_by_directory_type( $directory_term->term_id ) : [];
+    $plans          = [];
+
+    if ( $directory_term && ! empty( $include_plan_ids ) ) {
+        foreach ( $include_plan_ids as $include_plan_id ) {
+            $active_plan = $plan_repo->get_by_id( $include_plan_id );
+
+            if ( $active_plan && (int) $active_plan->directory_type_id === (int) $directory_term->term_id ) {
+                $plans[] = $active_plan;
+            }
+        }
+    } elseif ( $directory_term ) {
+        $plans = $plan_repo->get_by_directory_type( $directory_term->term_id );
+    }
 }
 
 $is_user_logged_in      = is_user_logged_in();
@@ -261,6 +274,14 @@ if ( ! empty( $directory_term ) && $is_user_logged_in ) {
                                         'plan_id'        => $plan->id,
                                         'directory_type' => $directory_term->slug,
                                     ];
+
+                                    if ( isset( $_GET['listing_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                                        $query_args['listing_id'] = absint( wp_unslash( $_GET['listing_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                                    }
+
+                                    if ( isset( $_GET['force_direct_purchase'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['force_direct_purchase'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                                        $query_args['force_direct_purchase'] = '1';
+                                    }
 
                                     $url       = add_query_arg( $query_args, directorist_permalink()::get_add_listing_page_link() );
                                     $url       = apply_filters( 'directorist_pricing_plans_continue_url', $url, $query_args, $plan, $directory_term );

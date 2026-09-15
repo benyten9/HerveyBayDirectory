@@ -98,6 +98,52 @@ class MigrationRunner {
 		foreach ( $module->migrations() as $file ) {
 			self::run_one( $module->slug(), $file );
 		}
+
+		// run_one() returns early for anything already in the ledger, so a module
+		// whose tables were created by an older release would never pick up
+		// columns added since. Sync them explicitly.
+		self::ensure_columns_for_module( $module );
+	}
+
+	/**
+	 * Add any column declared by this module's CREATE migrations but missing on disk.
+	 *
+	 * Idempotent: each migration checks the live schema and only issues
+	 * `ALTER TABLE ... ADD` for columns that are genuinely absent, and does
+	 * nothing at all when the table does not exist.
+	 *
+	 * @param ModuleInterface $module Module.
+	 * @return void
+	 */
+	public static function ensure_columns_for_module( ModuleInterface $module ): void {
+		foreach ( self::schema_migration_files_for( $module ) as $file ) {
+			if ( ! is_readable( $file ) ) {
+				continue;
+			}
+
+			require_once $file;
+
+			$class = self::class_from_file( $file );
+			if ( ! $class || ! class_exists( $class ) || ! is_subclass_of( $class, Migration::class ) ) {
+				continue;
+			}
+
+			try {
+				( new $class() )->ensure_columns();
+			} catch ( \Throwable $e ) {
+				if ( function_exists( 'doublescale_get_logger' ) ) {
+					doublescale_get_logger()->error(
+						'Failed to sync declared table columns',
+						array(
+							'source' => 'migration-runner',
+							'module' => $module->slug(),
+							'file'   => $file,
+							'error'  => $e->getMessage(),
+						)
+					);
+				}
+			}
+		}
 	}
 
 	private static function run_one( string $module_slug, string $file ): void {
@@ -173,6 +219,57 @@ class MigrationRunner {
 			),
 			array( '%s', '%s', '%s' )
 		);
+	}
+
+	/**
+	 * Walk every Migration subclass and add missing columns from get_query().
+	 *
+	 * The ledger only runs each file once. CREATE migrations also skip dbDelta
+	 * when the table already exists. Existing sites therefore never pick up
+	 * columns that were later folded into the CREATE statement — unless we
+	 * sync them here.
+	 *
+	 * @param ModuleRegistry $registry Module registry.
+	 * @return void
+	 */
+	public static function ensure_declared_columns( ModuleRegistry $registry ): void {
+		foreach ( $registry->all_sorted_by_dependencies() as $module ) {
+			// Disabled modules are deliberately NOT skipped. Their tables may
+			// still exist from an earlier activation, and this sync is gated to
+			// run once per release — so skipping them here left their columns
+			// permanently stale: enabling the module later hits the migrations
+			// ledger, returns early, and never calls ensure_columns().
+			//
+			// Syncing a disabled module is safe and cheap: ensure_columns() is
+			// a no-op when the table does not exist.
+			foreach ( self::schema_migration_files_for( $module ) as $file ) {
+				if ( ! is_readable( $file ) ) {
+					continue;
+				}
+
+				require_once $file;
+
+				$class = self::class_from_file( $file );
+				if ( ! $class || ! class_exists( $class ) || ! is_subclass_of( $class, Migration::class ) ) {
+					continue;
+				}
+
+				try {
+					( new $class() )->ensure_columns();
+				} catch ( \Throwable $e ) {
+					if ( function_exists( 'doublescale_get_logger' ) ) {
+						doublescale_get_logger()->error(
+							'Failed to sync declared table columns',
+							array(
+								'source' => 'migration-runner',
+								'file'   => $file,
+								'error'  => $e->getMessage(),
+							)
+						);
+					}
+				}
+			}
+		}
 	}
 
 	/**

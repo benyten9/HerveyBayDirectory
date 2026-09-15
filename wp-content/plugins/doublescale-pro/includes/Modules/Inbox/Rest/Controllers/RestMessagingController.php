@@ -85,6 +85,21 @@ class RestMessagingController extends RestController {
 						'type'        => 'object',
 						'required'    => false,
 					),
+					'header_media' => array(
+						'description' => __( 'Header payload for a template: image/video/document ({"type": "image", "link": "https://…"}) or a map ({"type": "location", "latitude": "37.48", "longitude": "-122.14"}).', 'doublescale'),
+						'type'        => 'object',
+						'required'    => false,
+					),
+					'button_params' => array(
+						'description' => __( 'Values for a template\'s interactive buttons, keyed by button index (e.g., {"0": {"coupon_code": "SAVE20"}}).', 'doublescale'),
+						'type'        => 'object',
+						'required'    => false,
+					),
+					'card_params' => array(
+						'description' => __( 'Per-card media for a carousel template, keyed by card index (e.g., {"0": {"header_media": {"type": "image", "link": "https://…"}}}).', 'doublescale'),
+						'type'        => 'object',
+						'required'    => false,
+					),
 					'message' => array(
 						'description' => __( 'Free-text message for WhatsApp session messages (within 24h conversation window).', 'doublescale'),
 						'type'        => 'string',

@@ -379,12 +379,13 @@ class Manager extends Base_Object {
 		] );
 
 		$this->add_feature( [
-			'name' => 'e_panel_promotions',
-			'title' => esc_html__( 'Panel Promotions', 'elementor' ),
-			'description' => esc_html__( 'Enable experimental rendering for targeted promotions within the elements panels.', 'elementor' ),
-			'release_status' => self::RELEASE_STATUS_DEV,
-			'default' => self::STATE_ACTIVE,
-			'type' => self::TYPE_HIDDEN,
+			'name' => 'e_optimized_css_files',
+			'title' => esc_html__( 'Optimized CSS Files', 'elementor' ),
+			'tag' => esc_html__( 'Performance', 'elementor' ),
+			'description' => esc_html__( 'Keeps external CSS files available and consistent for sites behind page caching or a CDN.', 'elementor' ),
+			'release_status' => self::RELEASE_STATUS_ALPHA,
+			'default' => self::STATE_INACTIVE,
+			'generator_tag' => true,
 		] );
 	}
 

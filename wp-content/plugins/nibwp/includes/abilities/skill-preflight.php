@@ -238,8 +238,21 @@ function nibwp_skill_preflight_execute(array $input): array|WP_Error
         'preflight_token' => $raw_token,
         'expires_at'      => time() + NIBWP_PREFLIGHT_TOKEN_TTL,
         'must_call_next'  => $must_call_next,
+        // The answers are settled facts, and a question that was auto-answered
+        // was never put to anyone — so the agent has no way to know it was
+        // decided unless this says so. A brand prefix resolved from the site's
+        // existing classes is the case that bites: author with a different one
+        // and every selector is rejected for a prefix nobody mentioned. Naming
+        // the resolved values here costs a sentence and saves a round trip.
         'next_action'     => sprintf(
-            'Pass _preflight_token: "%s" at the TOP LEVEL of the downstream ability parameters - a sibling of source and payload, never inside payload. The token expires in 1 hour and is bound to user_id=%d. If you have not loaded this skill playbook yet, call nibwp/load-skill-playbook with skill_id "%s" first: it defines the payload contract, and a payload built by guesswork fails validation.',
+            'Build with these settled answers, not your own: %s. Pass _preflight_token: "%s" at the TOP LEVEL of the downstream ability parameters - a sibling of source and payload, never inside payload. The token expires in 1 hour and is bound to user_id=%d. If you have not loaded this skill playbook yet, call nibwp/load-skill-playbook with skill_id "%s" first: it defines the payload contract, and a payload built by guesswork fails validation.',
+            $resolved === []
+                ? 'none were needed'
+                : implode(', ', array_map(
+                    static fn($k, $v): string => $k . '=' . (is_scalar($v) ? (string) $v : wp_json_encode($v)),
+                    array_keys($resolved),
+                    $resolved
+                )),
             $raw_token,
             get_current_user_id(),
             $skill_id

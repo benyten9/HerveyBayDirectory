@@ -237,7 +237,10 @@ function nibwp_migration_import_content(array $input): array|WP_Error
         $post_data = [
             'post_title' => sanitize_text_field($item['post_title']),
             'post_name' => $slug,
-            'post_content' => $item['post_content'] ?? '',
+            // Imported content is block markup straight out of an export;
+            // wp_insert_post() unslashes, so without this every migrated post
+            // loses the escapes in its block-delimiter comments.
+            'post_content' => nibwp_wp_prepare_post_content($item['post_content'] ?? ''),
             'post_excerpt' => $item['post_excerpt'] ?? '',
             'post_status' => $status,
             'post_type' => $post_type,
@@ -715,7 +718,9 @@ function nibwp_migration_clone_post(array $input): array|WP_Error
     // Clone the post.
     $new_post_data = [
         'post_title' => $new_title,
-        'post_content' => $original->post_content,
+        // Read out of the database already unslashed, so it has to be
+        // slashed again before the clone is inserted.
+        'post_content' => nibwp_wp_prepare_post_content($original->post_content),
         'post_excerpt' => $original->post_excerpt,
         'post_status' => $new_status,
         'post_type' => $original->post_type,

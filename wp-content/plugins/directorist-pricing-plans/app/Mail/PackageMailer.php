@@ -50,8 +50,9 @@ class PackageMailer extends Mailer {
      * @return bool Whether the email was sent successfully
      */
     public function send_package_activated( stdClass $package, WP_User $user, stdClass $plan ): bool {
-        $pricing      = $this->get_package_pricing( $package, $plan );
+        $pricing      = $this->get_package_pricing_details( $package, $plan );
         $is_recurring = ! empty( $package->is_recurring );
+        $expiry_date  = ( ! $is_recurring && $package->current_period_end ) ? $this->format_date( $package->current_period_end ) : '';
 
         // Base data for all packages
         $data = array_merge(
@@ -60,10 +61,12 @@ class PackageMailer extends Mailer {
                 'user_name'      => $user->display_name,
                 'user_email'     => $user->user_email,
                 'plan_name'      => $plan->title,
-                'amount'         => $this->format_currency( $pricing['amount'], $pricing['currency'] ),
+                'amount'         => $this->format_currency( $pricing['first_amount'], $pricing['currency'] ),
                 'currency'       => $pricing['currency'],
-                'activated_date' => $this->format_date( $package->started_at ?? new DateTime() ),
-                'dashboard_url'  => $this->get_dashboard_url(),
+                'activated_date'    => $this->format_date( $package->started_at ?? new DateTime() ),
+                'dashboard_url'     => $this->get_dashboard_url(),
+                'expiry_date_row'   => $expiry_date ? sprintf( '<p><strong>%s</strong> %s</p>', esc_html__( 'Valid Until:', 'directorist-pricing-plans' ), esc_html( $expiry_date ) ) : '',
+                'billing_breakdown' => $this->get_subscription_billing_breakdown( $pricing, $package ),
             ]
         );
 
@@ -177,7 +180,7 @@ class PackageMailer extends Mailer {
         }
 
         $manage_url = $this->get_dashboard_url();
-        $pricing    = $this->get_package_pricing( $package, $plan );
+        $pricing    = $this->get_package_pricing_details( $package, $plan );
 
         $data = array_merge(
             $this->get_common_placeholders(),
@@ -187,7 +190,7 @@ class PackageMailer extends Mailer {
                 'plan_name'   => $plan->title,
                 'expiry_date' => $this->format_date( $package->current_period_end ),
                 'manage_url'  => $manage_url,
-                'amount'      => $this->format_currency( $pricing['amount'], $pricing['currency'] ),
+                'amount'      => $this->format_currency( $pricing['regular_amount'], $pricing['currency'] ),
                 'currency'    => $pricing['currency'],
             ]
         );
@@ -215,7 +218,7 @@ class PackageMailer extends Mailer {
      */
     public function send_trial_ending( stdClass $package, WP_User $user, stdClass $plan ): bool {
         $manage_url = $this->get_dashboard_url();
-        $pricing    = $this->get_package_pricing( $package, $plan );
+        $pricing    = $this->get_package_pricing_details( $package, $plan );
 
         $data = array_merge(
             $this->get_common_placeholders(),
@@ -224,7 +227,7 @@ class PackageMailer extends Mailer {
                 'user_email'     => $user->user_email,
                 'plan_name'      => $plan->title,
                 'trial_end_date' => $this->format_date( $package->current_period_end ),
-                'renewal_amount' => $this->format_currency( $pricing['amount'], $pricing['currency'] ),
+                'renewal_amount' => $this->format_currency( $pricing['regular_amount'], $pricing['currency'] ),
                 'manage_url'     => $manage_url,
             ]
         );
@@ -286,25 +289,81 @@ class PackageMailer extends Mailer {
      * @param stdClass $plan Plan object
      * @return array Array with 'amount' and 'currency' keys
      */
-    private function get_package_pricing( stdClass $package, stdClass $plan ): array {
+    private function get_package_pricing_details( stdClass $package, stdClass $plan ): array {
         $is_recurring = ! empty( $package->is_recurring );
         $is_trial     = ! empty( $package->is_trial );
+        $currency     = $package->subscription_currency ?? get_directorist_option( 'g_currency', 'USD' );
+        $order        = $this->get_last_order( $package );
+        $first_amount = $order ? directorist_order_total_amount( $order ) : (float) ( $plan->price ?? 0 );
+        $has_discount = $order && (float) ( $order->coupon_discount ?? 0 ) > 0;
 
-        // If package is recurring and not in trial, use subscription amount and currency
-        if ( $is_recurring && ! $is_trial ) {
-            return [
-                'amount'   => $package->subscription_amount ?? 0,
-                'currency' => $package->subscription_currency ?? 'USD',
-            ];
+        if ( $order && ! empty( $order->currency ) ) {
+            $currency = $order->currency;
         }
 
-        // Otherwise, use plan price and Directorist currency settings
-        $currency = get_directorist_option( 'g_currency', 'USD' );
+        $regular_amount = (float) ( $package->subscription_amount ?? $plan->price ?? 0 );
+
+        if ( ! $is_recurring || $is_trial ) {
+            $regular_amount = (float) ( $plan->price ?? $regular_amount );
+        }
+
+        $next_amount = $regular_amount;
+
+        if ( $has_discount && function_exists( 'directorist_compute_order_total_amount' ) ) {
+            $next_amount = directorist_compute_order_total_amount(
+                (float) ( $plan->price ?? 0 ),
+                isset( $order->tax_rate ) ? (float) $order->tax_rate : null,
+                $order->tax_type ?? null,
+                isset( $order->coupon_discount ) ? (float) $order->coupon_discount : null,
+                $order->coupon_discount_type ?? null
+            );
+        }
 
         return [
-            'amount'   => $plan->price ?? 0,
-            'currency' => $currency,
+            'first_amount'   => $first_amount,
+            'next_amount'    => $next_amount,
+            'regular_amount' => $regular_amount,
+            'currency'       => $currency,
+            'has_discount'   => $has_discount,
         ];
+    }
+
+    private function get_last_order( stdClass $package ): ?stdClass {
+        if ( empty( $package->last_order_id ) || ! function_exists( 'directorist_get_order_by_id' ) ) {
+            return null;
+        }
+
+        $order = directorist_get_order_by_id( (int) $package->last_order_id );
+
+        return $order ?: null;
+    }
+
+    private function get_subscription_billing_breakdown( array $pricing, stdClass $package ): string {
+        $is_recurring = ! empty( $package->is_recurring );
+
+        if ( ! $is_recurring ) {
+            return '';
+        }
+
+        $first_amount   = $this->format_currency( $pricing['first_amount'], $pricing['currency'] );
+        $next_amount    = $this->format_currency( $pricing['next_amount'], $pricing['currency'] );
+        $regular_amount = $this->format_currency( $pricing['regular_amount'], $pricing['currency'] );
+        $rows           = [
+            sprintf( '<p><strong>%s</strong> %s</p>', esc_html__( 'First period amount:', 'directorist-pricing-plans' ), esc_html( $first_amount ) ),
+        ];
+
+        if ( ! empty( $package->is_trial ) ) {
+            $rows[] = sprintf( '<p><strong>%s</strong> %s</p>', esc_html__( 'Trial period amount:', 'directorist-pricing-plans' ), esc_html( $first_amount ) );
+            $rows[] = sprintf( '<p><strong>%s</strong> %s</p>', esc_html__( 'Next billing amount:', 'directorist-pricing-plans' ), esc_html( $next_amount ) );
+
+            if ( ! empty( $pricing['has_discount'] ) && $pricing['next_amount'] !== $pricing['regular_amount'] ) {
+                $rows[] = sprintf( '<p><strong>%s</strong> %s</p>', esc_html__( 'Regular renewal amount:', 'directorist-pricing-plans' ), esc_html( $regular_amount ) );
+            }
+        } else if ( ! empty( $pricing['has_discount'] ) && $pricing['first_amount'] !== $pricing['regular_amount'] ) {
+            $rows[] = sprintf( '<p><strong>%s</strong> %s</p>', esc_html__( 'Regular renewal amount:', 'directorist-pricing-plans' ), esc_html( $regular_amount ) );
+        }
+
+        return implode( '', array_unique( $rows ) );
     }
 
     /**
@@ -318,4 +377,3 @@ class PackageMailer extends Mailer {
         return "{$amount} {$currency}";
     }
 }
-

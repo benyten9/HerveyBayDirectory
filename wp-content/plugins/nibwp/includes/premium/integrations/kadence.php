@@ -741,7 +741,10 @@ function nibwp_kadence_elements_execute(array $input): array|WP_Error
                 'post_type'    => $cpt,
                 'post_status'  => in_array($input['status'] ?? 'publish', ['publish', 'draft'], true) ? (string) $input['status'] : 'publish',
                 'post_title'   => sanitize_text_field((string) ($input['title'] ?? 'Kadence element')),
-                'post_content' => (string) ($input['content'] ?? ''),
+                // Slashed: wp_insert_post() unslashes, and Kadence content is
+                // block markup whose delimiter comments escape -- and & as
+                // \uXXXX sequences that lose their backslash otherwise.
+                'post_content' => wp_slash((string) ($input['content'] ?? '')),
             ], true);
             if (is_wp_error($pid)) {
                 return $pid;

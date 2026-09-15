@@ -47,6 +47,7 @@ class SalesContractsTable extends Migration {
 			signed_at DATETIME NULL,
 			sent_at DATETIME NULL,
 			viewed_at DATETIME NULL,
+			issuer_snapshot LONGTEXT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),

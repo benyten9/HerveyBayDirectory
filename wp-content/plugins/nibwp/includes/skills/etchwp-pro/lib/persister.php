@@ -173,6 +173,14 @@ function nibwp_etchwp_persist_payload(array $payload, array $target, array $ctx 
     }
     update_option('etch_styles', $existing, autoload: false);
 
+    // 1b) Mint a wp_block post per payload.components entry and rewrite every
+    //     etch/component instance to its ref. Must happen before serialization:
+    //     `ref` is the only thing Etch resolves a component by.
+    $materialized = nibwp_etchwp_materialize_components($payload);
+    if (isset($materialized['error'])) {
+        return $materialized['error'];
+    }
+
     // 2) Serialize the block tree to post_content.
     $block_tree = $payload['gutenbergBlock'] ?? null;
     $blocks_added = 0;
@@ -244,7 +252,9 @@ function nibwp_etchwp_persist_payload(array $payload, array $target, array $ctx 
         if (is_wp_error($updated_id)) {
             return $updated_id;
         }
-        $blocks_added = 1;
+        // The real number of blocks written. This was a hard-coded 1, and the
+        // playbook tells agents to echo the diff verbatim.
+        $blocks_added = nibwp_etchwp_count_blocks($block_tree);
     }
 
     update_post_meta($post_id, '_nibwp_etchwp_component_' . $component_id, [
@@ -253,21 +263,250 @@ function nibwp_etchwp_persist_payload(array $payload, array $target, array $ctx 
         'styles_updated' => $updated,
     ]);
 
-    // Persist reusable etch/component definitions from payload.components.
-    // Stored in wp_options['nibwp_etchwp_components'] keyed by component id.
-    // Future conversions can reference these by componentId; the validator
-    // checks {props.X} against the registered properties array.
-    $components_diff = nibwp_etchwp_persist_components($payload);
-
+    // Components are the wp_block posts materialized above. The option this
+    // used to report from (nibwp_etchwp_components) is read by nothing, Etch
+    // included, so the diff said "no components added" while posts were being
+    // created, and agents echoing it verbatim told the customer the same.
     return [
         'component_id'      => $component_id,
         'post_id'           => $post_id,
         'styles_added'      => $added,
         'styles_updated'    => $updated,
         'blocks_added'      => $blocks_added,
-        'components_added'  => $components_diff['added'],
-        'components_updated'=> $components_diff['updated'],
+        'components_added'  => array_values(array_map('strval', $materialized['created'])),
+        'components_updated'=> array_values(array_map('strval', $materialized['updated'])),
+        'component_posts'   => $materialized['map'],
     ];
+}
+
+/**
+ * Turn `payload.components` into components Etch can actually resolve.
+ *
+ * A component in Etch is a `wp_block` post, and an `etch/component` block
+ * finds it through `ref` — that post's id. Nothing else resolves: the block
+ * declares only `ref` and `attributes`, and returns an empty string when `ref`
+ * is null.
+ *
+ * This used to write the definitions to `wp_options['nibwp_etchwp_components']`
+ * and leave the instances carrying our own `componentId`. That option is ours;
+ * Etch never reads it. So the definitions registered nowhere, every instance
+ * resolved to nothing, and the section rendered blank on a payload the
+ * validator had passed and the persister had reported as a success.
+ *
+ * Two passes, because a component may reference another component: mint every
+ * post first so an id exists for each, then write the trees with instance
+ * references rewritten to the refs those posts got.
+ *
+ * @param array $payload  Mutated in place: componentId → ref, props → attributes.
+ * @return array{map:array<string,int>,created:array<int,string>,updated:array<int,string>}
+ */
+function nibwp_etchwp_materialize_components(array &$payload): array
+{
+    $components = (array) ($payload['components'] ?? []);
+    if ($components === []) {
+        return ['map' => [], 'created' => [], 'updated' => []];
+    }
+
+    $known   = (array) get_option('nibwp_etchwp_component_posts', []);
+    $map     = [];
+    $idents  = [];
+    $created = [];
+    $updated = [];
+
+    // Pass 1 — every component gets a wp_block post, so every id is known
+    // before any tree that might reference it is written.
+    foreach ($components as $cid => $def) {
+        $cid = (string) $cid;
+        if ($cid === '' || !is_array($def)) {
+            continue;
+        }
+
+        // Remembered by what the component is, not by its key in this payload:
+        // payload keys are "1", "2" in every build, and keying on them made a
+        // second build overwrite the first build's components site-wide.
+        $ident = (string) ($def['key'] ?? '') !== ''
+            ? (string) $def['key']
+            : ((string) ($def['name'] ?? '') !== '' ? (string) $def['name'] : $cid);
+        $idents[$cid] = $ident;
+
+        $existing_id = isset($known[$ident]) ? (int) $known[$ident] : 0;
+
+        // Posts saved by 1.2.9 and earlier sit under their payload key. Adopt
+        // one only when it is visibly the same component, so a rebuild still
+        // updates it in place while an unrelated "1" never takes it over.
+        if ($existing_id === 0 && $ident !== $cid && isset($known[$cid])) {
+            $legacy = get_post((int) $known[$cid]);
+            if ($legacy && $legacy->post_title === sanitize_text_field((string) ($def['name'] ?? $cid))) {
+                $existing_id = (int) $known[$cid];
+            }
+        }
+        if ($existing_id > 0) {
+            $post = get_post($existing_id);
+            if (!$post || $post->post_type !== 'wp_block' || $post->post_status === 'trash') {
+                $existing_id = 0; // Deleted or trashed since we last wrote it.
+            }
+        }
+
+        if ($existing_id > 0) {
+            $map[$cid] = $existing_id;
+            $updated[] = $cid;
+            continue;
+        }
+
+        $title = (string) ($def['name'] ?? $cid);
+        $inserted = wp_insert_post([
+            'post_title'   => sanitize_text_field($title),
+            'post_name'    => sanitize_title($cid),
+            'post_type'    => 'wp_block',
+            'post_status'  => 'publish',
+            'post_content' => '',
+        ], true);
+
+        if (is_wp_error($inserted)) {
+            return ['map' => $map, 'created' => $created, 'updated' => $updated, 'error' => $inserted];
+        }
+
+        $map[$cid] = (int) $inserted;
+        $created[] = $cid;
+    }
+
+    // Pass 2 — write each component's tree, with nested instances resolved.
+    foreach ($components as $cid => $def) {
+        $cid = (string) $cid;
+        if (!isset($map[$cid]) || !is_array($def)) {
+            continue;
+        }
+
+        $blocks = nibwp_etchwp_component_blocks($def, $cid);
+        if ($blocks === []) {
+            continue;
+        }
+
+        foreach ($blocks as &$block) {
+            nibwp_etchwp_rewrite_component_refs($block, $map, $components);
+        }
+        unset($block);
+
+        $content = implode("\n\n", array_map('nibwp_etchwp_serialize_block', $blocks));
+        wp_update_post([
+            'ID' => $map[$cid],
+            // Same reason as the page write below: wp_update_post unslashes,
+            // and the \uXXXX escapes in serialized block attributes must survive.
+            'post_content' => wp_slash($content),
+        ], true);
+
+        // Where Etch reads a component's props from (CachedPattern). Without
+        // it every instance's attributes have no property to land on.
+        $name = (string) ($def['name'] ?? $cid);
+        $html_key = (string) ($def['key'] ?? '') !== ''
+            ? (string) $def['key']
+            : str_replace(' ', '', ucwords(trim((string) preg_replace('/[^a-z0-9]+/i', ' ', $name))));
+        update_post_meta($map[$cid], 'etch_component_properties', wp_slash(nibwp_etchwp_component_properties_for_etch($def)));
+        update_post_meta($map[$cid], 'etch_component_html_key', wp_slash($html_key));
+    }
+
+    // The page tree's own instances.
+    if (isset($payload['gutenbergBlock']) && is_array($payload['gutenbergBlock'])) {
+        nibwp_etchwp_rewrite_component_refs($payload['gutenbergBlock'], $map, $components);
+    }
+
+    if ($map !== []) {
+        $remember = [];
+        foreach ($map as $cid => $post_id) {
+            $remember[$idents[$cid]] = $post_id;
+        }
+        // array_replace, not array_merge: merge renumbers numeric keys.
+        update_option('nibwp_etchwp_component_posts', array_replace($known, $remember), false);
+    }
+
+    return ['map' => $map, 'created' => $created, 'updated' => $updated];
+}
+
+/**
+ * Rewrite `etch/component` instances into the shape Etch reads.
+ *
+ * An instance naming a component in this payload - by `componentId`, or by a
+ * `ref` equal to the component's id or key - gets `ref` set to the minted
+ * wp_block post id, and `props` folded into `attributes`. An instance whose
+ * ref points at a post already on the site is left exactly as it is.
+ *
+ * @param array<string,int>   $map        component key => wp_block post id
+ * @param array<string,mixed> $components payload.components
+ */
+function nibwp_etchwp_rewrite_component_refs(array &$node, array $map, array $components): void
+{
+    if (($node['blockName'] ?? '') === 'etch/component') {
+        $attrs = (array) ($node['attrs'] ?? []);
+        $local = nibwp_etchwp_local_component_key($attrs, $components);
+
+        if ($local !== '' && isset($map[$local])) {
+            $attrs['ref'] = $map[$local];
+            unset($attrs['componentId']);
+
+            if (isset($attrs['props'])) {
+                // Merge rather than overwrite: an instance may legitimately
+                // carry both, and Etch reads only `attributes`.
+                $attrs['attributes'] = (array) ($attrs['attributes'] ?? []) + (array) $attrs['props'];
+                unset($attrs['props']);
+            }
+
+            $node['attrs'] = $attrs;
+        }
+    }
+
+    foreach (['innerBlocks', 'inner_blocks'] as $key) {
+        if (!isset($node[$key]) || !is_array($node[$key])) {
+            continue;
+        }
+        foreach ($node[$key] as &$child) {
+            if (is_array($child)) {
+                nibwp_etchwp_rewrite_component_refs($child, $map, $components);
+            }
+        }
+        unset($child);
+    }
+}
+
+/**
+ * Property definitions in the shape Etch reads.
+ *
+ * ComponentProperty::from_array() returns null for a property without a `key`
+ * and treats a `type` that is not {primitive, specialized?} as no type at all,
+ * so the instance's values have nowhere to land. The skill's older shorthand
+ * ({name, type: "string"}) is converted rather than silently lost.
+ *
+ * @return array<int,array<string,mixed>>
+ */
+function nibwp_etchwp_component_properties_for_etch(array $def): array
+{
+    $out = [];
+    foreach ((array) ($def['properties'] ?? []) as $p) {
+        $key = nibwp_etchwp_property_key($p);
+        if ($key === '') {
+            continue;
+        }
+
+        $p['key']  = $key;
+        $p['name'] = (string) ($p['name'] ?? '') !== '' ? (string) $p['name'] : $key;
+
+        if (!is_array($p['type'] ?? null)) {
+            $type = strtolower((string) ($p['type'] ?? 'string'));
+            $p['type'] = match ($type) {
+                'boolean', 'bool' => ['primitive' => 'boolean'],
+                'number'          => ['primitive' => 'number'],
+                'image'           => ['primitive' => 'string', 'specialized' => 'image'],
+                'select'          => ['primitive' => 'string', 'specialized' => 'select'],
+                default           => ['primitive' => 'string'],
+            };
+            if ($type === 'select' && !isset($p['selectOptionsString']) && is_array($p['options'] ?? null)) {
+                $p['selectOptionsString'] = implode("\n", array_map('strval', $p['options']));
+            }
+        }
+
+        $out[] = $p;
+    }
+
+    return $out;
 }
 
 /**

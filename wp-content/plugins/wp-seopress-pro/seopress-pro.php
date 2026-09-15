@@ -3,7 +3,7 @@
  * Plugin Name: SEOPress PRO
  * Plugin URI: https://www.seopress.org/wordpress-seo-plugins/pro/
  * Description: The PRO version of SEOPress. SEOPress required (free).
- * Version: 10.2
+ * Version: 10.2.1
  * Author: The SEO Guys at SEOPress
  * Author URI: https://www.seopress.org/wordpress-seo-plugins/pro/
  * License: GPLv3 or later
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 /**
  * Define constants
  */
-define( 'SEOPRESS_PRO_VERSION', '10.2' );
+define( 'SEOPRESS_PRO_VERSION', '10.2.1' );
 define( 'SEOPRESS_PRO_AUTHOR', 'Benjamin Denis' );
 define( 'STORE_URL_SEOPRESS', 'https://www.seopress.org' );
 define( 'ITEM_ID_SEOPRESS', 113 );
@@ -1300,7 +1300,7 @@ function seopress_pro_enqueue_react_dashboard( $hook ) {
 	$style_file = plugin_dir_path( __FILE__ ) . 'public/admin/dashboard/index.css';
 	if ( file_exists( $style_file ) ) {
 		$style_version = SEOPRESS_PRO_VERSION;
-		if ( '10.2' === $style_version || empty( $style_version ) ) {
+		if ( '10.2.1' === $style_version || empty( $style_version ) ) {
 			$style_version = substr( md5_file( $style_file ), 0, 12 );
 		}
 		wp_enqueue_style(

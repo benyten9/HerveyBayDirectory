@@ -47,6 +47,7 @@ class SalesCreditNotesTable extends Migration {
 			billing_address TEXT NULL,
 			client_note TEXT NULL,
 			terms TEXT NULL,
+			issuer_snapshot LONGTEXT NULL,
 			sent_at DATETIME NULL,
 			viewed_at DATETIME NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

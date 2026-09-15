@@ -480,7 +480,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		$body = $this->render_builder_content_for_bulk( $body );
 
 		// Get footer content (with merge tags - will be processed per contact)
-		$footer = $this->get_curl_multi_footer_content();
+		$footer = $this->get_curl_multi_footer_content( $body );
 
 		// Inject footer into body
 		if ( strpos( $body, '</body>' ) !== false ) {
@@ -784,7 +784,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		$rendered_body = $this->render_builder_content_for_bulk_with_sections( $body, $section_ids );
 
 		// Get footer content
-		$footer = $this->get_curl_multi_footer_content();
+		$footer = $this->get_curl_multi_footer_content( $rendered_body );
 
 		// Inject footer into body
 		if ( strpos( $rendered_body, '</body>' ) !== false ) {
@@ -871,7 +871,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @return string Footer HTML with merge tag placeholders
 	 */
-	protected function get_curl_multi_footer_content() {
+	protected function get_curl_multi_footer_content( $body = '' ) {
 		// Get footer from settings
 		if ( ! empty( $this->settings['email_footer'] ) ) {
 			$footer = $this->settings['email_footer'];
@@ -880,7 +880,17 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			if ( ! empty( $global_settings['email_footer'] ) ) {
 				$footer = $global_settings['email_footer'];
 			} else {
-				$footer = EmailTrackingHelper::get_default_footer();
+				// Check if the email body already contains an unsubscribe link
+				$has_unsubscribe = false !== strpos( $body, '{{contact:unsubscribe_link}}' )
+					|| false !== strpos( $body, 'doublescale=email_unsubscribe' )
+					|| false !== strpos( $body, 'doublescale-unsubscribe' );
+
+				if ( $has_unsubscribe ) {
+					// Body already has unsubscribe link - don't add default footer
+					$footer = '';
+				} else {
+					$footer = EmailTrackingHelper::get_default_footer();
+				}
 			}
 		}
 
@@ -1876,9 +1886,20 @@ class EmailProcessing extends AbstractCampaignProcessing {
 				$email_footer  = $global_settings['email_footer'];
 				$footer_source = 'global_settings';
 			} else {
-				// Use default footer if campaign and global settings are both empty.
-				$email_footer  = EmailTrackingHelper::get_default_footer();
-				$footer_source = 'default';
+				// Check if the email body already contains an unsubscribe link
+				$has_unsubscribe = false !== strpos( $message, '{{contact:unsubscribe_link}}' )
+					|| false !== strpos( $message, 'doublescale=email_unsubscribe' )
+					|| false !== strpos( $message, 'doublescale-unsubscribe' );
+
+				if ( $has_unsubscribe ) {
+					// Body already has unsubscribe link - don't add default footer
+					$email_footer  = '';
+					$footer_source = 'body_has_unsubscribe';
+				} else {
+					// Use default footer if campaign and global settings are both empty.
+					$email_footer  = EmailTrackingHelper::get_default_footer();
+					$footer_source = 'default';
+				}
 			}
 		}
 
@@ -1899,8 +1920,9 @@ class EmailProcessing extends AbstractCampaignProcessing {
 				'footer_length'             => strlen( $footer_html ),
 				'email_footer_length'       => strlen( $email_footer ),
 				'has_unsubscribe_merge_tag' => ( strpos( $email_footer, '{{contact:unsubscribe_link}}' ) !== false ),
+				'body_has_unsubscribe'      => ( 'body_has_unsubscribe' === $footer_source ),
 				'campaign_settings_empty'   => empty( $this->settings['email_footer'] ),
-				'global_settings_empty'     => empty( $global_settings['email_footer'] ),
+				'global_settings_empty'     => empty( $global_settings['email_footer'] ?? '' ),
 				'email_footer_preview'      => substr( $email_footer, 0, 100 ),
 			)
 		);

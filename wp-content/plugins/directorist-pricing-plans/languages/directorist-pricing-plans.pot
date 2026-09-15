@@ -1,0 +1,2453 @@
+# Copyright (C) 2026 wpWax
+# This file is distributed under the GPL v3 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Directorist - Pricing Plans 4.1.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/directorist-pricing-plans\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-09-08T14:11:20+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: directorist-pricing-plans\n"
+
+#. Plugin Name of the plugin
+#: directorist-pricing-plans.php
+msgid "Directorist - Pricing Plans"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: directorist-pricing-plans.php
+msgid "https://directorist.com/product/directorist-pricing-plans"
+msgstr ""
+
+#. Description of the plugin
+#: directorist-pricing-plans.php
+msgid "Allow you to monetize your directory by creating and selling unlimited subscription plans."
+msgstr ""
+
+#. Author of the plugin
+#: directorist-pricing-plans.php
+msgid "wpWax"
+msgstr ""
+
+#. Author URI of the plugin
+#: directorist-pricing-plans.php
+msgid "https://wpwax.com"
+msgstr ""
+
+#: app/Helpers/EDDPluginUpdaterPricingPlan.php:249
+#, php-format
+msgid "There is a new version of %1$s available. %2$sView version %3$s details%4$s."
+msgstr ""
+
+#: app/Helpers/EDDPluginUpdaterPricingPlan.php:257
+#, php-format
+msgid "There is a new version of %1$s available. %2$sView version %3$s details%4$s or %5$supdate now%6$s."
+msgstr ""
+
+#: app/Helpers/EDDPluginUpdaterPricingPlan.php:499
+msgid "You do not have permission to install plugin updates"
+msgstr ""
+
+#: app/Helpers/EDDPluginUpdaterPricingPlan.php:499
+msgid "Error"
+msgstr ""
+
+#: app/Helpers/helper.php:94
+msgid "This plan has no listing quota and cannot be purchased. Please choose another plan or contact the site administrator."
+msgstr ""
+
+#: app/Helpers/helper.php:298
+msgid "Privacy Policy"
+msgstr ""
+
+#: app/Helpers/helper.php:361
+msgid "Related Listings"
+msgstr ""
+
+#: app/Helpers/helper.php:472
+msgid "days"
+msgstr ""
+
+#: app/Helpers/helper.php:472
+msgid "day"
+msgstr ""
+
+#: app/Helpers/helper.php:474
+msgid "weeks"
+msgstr ""
+
+#: app/Helpers/helper.php:474
+msgid "week"
+msgstr ""
+
+#: app/Helpers/helper.php:476
+msgid "months"
+msgstr ""
+
+#: app/Helpers/helper.php:476
+msgid "month"
+msgstr ""
+
+#: app/Helpers/helper.php:478
+msgid "years"
+msgstr ""
+
+#: app/Helpers/helper.php:478
+msgid "year"
+msgstr ""
+
+#: app/Helpers/helper.php:480
+#: app/Http/Controllers/Legacy/PlanController.php:427
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+#: assets/build/js/frontend/listing-owner-dashboard.js:1874
+msgid "Lifetime"
+msgstr ""
+
+#: app/Helpers/helper.php:492
+msgid "Invalid tax type."
+msgstr ""
+
+#: app/Helpers/old-helpers.php:241
+#, php-format
+msgid "Page #%d"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:87
+msgid "Assignment data is required"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:96
+msgid "Directory type ID is required"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:100
+msgid "Plan ID is required"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:104
+msgid "Order status is required"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:108
+msgid "Invalid order status"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:116
+#: app/Http/Controllers/Admin/DirectoryController.php:182
+msgid "Invalid directory type selected."
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:124
+#: app/Http/Controllers/Admin/PackageController.php:252
+#: app/Providers/ListingFormManager.php:268
+msgid "Invalid plan selected."
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:128
+#: app/Http/Controllers/Admin/PackageController.php:256
+msgid "The selected plan does not belong to the selected directory type."
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:133
+#: app/Http/Controllers/Admin/PackageController.php:260
+msgid "Free plans cannot be assigned with a pending order status."
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:145
+msgid "Your request has been queued. Orders for the associated plans are being generated for the listing owners"
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:176
+msgid "You are not allowed to update listings."
+msgstr ""
+
+#: app/Http/Controllers/Admin/DirectoryController.php:198
+msgid "Directory types were assigned successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/ListingController.php:31
+msgid "Listing renewed successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/ListingController.php:50
+msgid "Order assigned successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/MigrationController.php:76
+msgid "Migration has been started."
+msgstr ""
+
+#: app/Http/Controllers/Admin/MigrationController.php:120
+msgid "Migration retry has been started."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:131
+#: app/Providers/Admin/NoticeServiceProvider.php:237
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Paid"
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:132
+#: app/Providers/Admin/NoticeServiceProvider.php:238
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Pending"
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:146
+msgid "You are not allowed to recover packages."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:152
+msgid "Plan assignments are required."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:159
+msgid "Invalid plan assignment."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:166
+msgid "Every missing plan must have one valid replacement."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:181
+#, php-format
+msgid "Packages referencing missing plan #%d have inconsistent directory types."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:197
+msgid "Missing plan data has changed. Refresh the page and try again."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:207
+msgid "A selected replacement plan is no longer available."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:211
+msgid "A selected replacement plan belongs to a different directory type."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:219
+msgid "Missing package plans were recovered successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:242
+msgid "Invalid user selected."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:246
+msgid "Invalid order status selected."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:266
+msgid "This user already has an active plan in the selected directory type."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:270
+msgid "This user already has a pending order in the selected directory type."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:280
+msgid "Failed to create order for the selected plan."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:290
+msgid "Plan was assigned successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:291
+msgid "Pending order was created successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:310
+#: app/Http/Controllers/Admin/PackageController.php:352
+#: app/Http/Controllers/Admin/PackageController.php:393
+#: app/Http/Controllers/Admin/PackageController.php:424
+#: app/Http/Controllers/Admin/PackageController.php:466
+#: app/Http/Controllers/Admin/PackageController.php:482
+#: app/Http/Controllers/Admin/PackageController.php:525
+#: app/Http/Controllers/PackageController.php:97
+#: app/Http/Controllers/PackageController.php:120
+#: app/Http/Controllers/PackageController.php:155
+#: app/Http/Controllers/PackageController.php:201
+#: app/Services/ExpiredListingRenewalService.php:243
+#: app/Services/SubscriptionPaymentService.php:50
+msgid "Package not found."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:334
+#: app/Http/Controllers/PackageController.php:79
+#, php-format
+msgid "%d listing renewed successfully."
+msgid_plural "%d listings renewed successfully."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Admin/PackageController.php:401
+#: app/Http/Controllers/Admin/PackageController.php:443
+#: app/Http/Controllers/PackageController.php:178
+#: app/Http/Controllers/PackageController.php:213
+msgid "Package was not cancelled, please try again."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:409
+#: app/Http/Controllers/PackageController.php:221
+msgid "Package was cancelled."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:431
+#: app/Http/Controllers/PackageController.php:166
+msgid "Cancel at period end is not applicable for pay per listing packages."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:435
+#: app/Http/Controllers/PackageController.php:170
+msgid "Cancel at period end is not applicable for lifetime packages."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:451
+#: app/Http/Controllers/PackageController.php:186
+msgid "Package was scheduled for cancellation."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:488
+#: app/Http/Controllers/Admin/PackageController.php:531
+#: app/Services/ListingOrderService.php:95
+msgid "The plan associated with this package is not available anymore."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:492
+msgid "Only expired packages can be renewed."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:499
+msgid "This package type cannot be renewed manually."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:506
+msgid "Package renewed successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:535
+msgid "Only active packages can be updated."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:542
+msgid "This package type does not support manual next billing date updates."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:565
+msgid "Next billing date updated successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:580
+msgid "Please select a valid date and time."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PackageController.php:584
+msgid "Next billing date must be in the future."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:95
+msgid "Plan was created successfully"
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:121
+#: app/Http/Controllers/Admin/PlanController.php:334
+msgid "Plan not found"
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:200
+msgid "Subscription cannot be enabled for a free plan or a plan with a zero price."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:216
+msgid "The number of featured listings cannot exceed the total listings allowed."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:286
+msgid "Plan was updated successfully"
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:309
+msgid "This plan cannot be deleted because it is assigned to one or more user packages."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:318
+msgid "Plan was deleted successfully"
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:340
+msgid "This plan already has a valid directory type."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:355
+msgid "Failed to assign directory type."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:360
+msgid "Directory type was assigned successfully."
+msgstr ""
+
+#: app/Http/Controllers/Admin/PlanController.php:386
+msgid "Directory type not found"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:69
+msgid "Pricing plan extension disabled."
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:126
+msgid "Invalid ID."
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:347
+msgid "Per Package"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:347
+msgid "Per Listing"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:434
+#, php-format
+msgid "%d day"
+msgid_plural "%d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:435
+#, php-format
+msgid "%d week"
+msgid_plural "%d weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:436
+#, php-format
+msgid "%d month"
+msgid_plural "%d months"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:437
+#, php-format
+msgid "%d year"
+msgid_plural "%d years"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:476
+msgid "Auto renewing"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:500
+msgid "Listing as featured"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:512
+msgid "Contact Owner"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:513
+msgid "Allow Customer Review"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:514
+msgid "Claim Badge Included"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:515
+msgid "Booking Included"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:516
+msgid "Live Chat Included"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:517
+msgid "Mark as Sold Included"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:518
+msgid "All Categories"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:542
+msgid "Unlimited Regular Listings"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:543
+#, php-format
+msgid "%s Regular Listing"
+msgid_plural "%s Regular Listings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:547
+msgid "Unlimited Featured Listings"
+msgstr ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:548
+#, php-format
+msgid "%s Featured Listing"
+msgid_plural "%s Featured Listings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Http/Controllers/Legacy/PlanController.php:572
+#, php-format
+msgid "%s (unlimited)"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:74
+msgid "The listing was removed from its plan and expired."
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:90
+msgid "The listing was renewed as a regular listing because no featured quota was available."
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:91
+msgid "The listing was renewed successfully."
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:111
+msgid "The listing was not found"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:115
+msgid "The listing is not published yet"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:121
+msgid "No active plan was found"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:127
+msgid "The plan associated with your package is not available anymore."
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:132
+#: app/Http/Controllers/ListingsController.php:159
+msgid "Your package does not support featured listings, please upgrade your plan."
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:140
+#: app/Http/Controllers/ListingsController.php:180
+msgid "The listing was marked as featured successfully"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:149
+#: app/Http/Controllers/ListingsController.php:189
+msgid "The listing was marked as regular successfully"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:163
+msgid "Your package does not support regular listings, please upgrade your plan."
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:169
+msgid "You have no remaining quota for featured listings"
+msgstr ""
+
+#: app/Http/Controllers/ListingsController.php:172
+msgid "You have no remaining quota for regular listings"
+msgstr ""
+
+#: app/Http/Controllers/PackageController.php:124
+msgid "You are not authorized to re-check payment for this package."
+msgstr ""
+
+#: app/Http/Controllers/PackageController.php:131
+msgid "No paid renewal payment was found."
+msgstr ""
+
+#: app/Http/Controllers/PackageController.php:136
+msgid "Payment found and package renewed successfully."
+msgstr ""
+
+#: app/Http/Controllers/PackageController.php:159
+#: app/Http/Controllers/PackageController.php:205
+msgid "You are not authorized to cancel this package."
+msgstr ""
+
+#: app/Jobs/OldDataMigrationQueue.php:124
+msgid "Order migration is incomplete. Please retry the migration after all orders are migrated."
+msgstr ""
+
+#: app/Mail/PackageMailer.php:32
+#, php-format
+msgid "Your %s trial has started"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:68
+msgid "Valid Until:"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:84
+#, php-format
+msgid "Your %s package is now active"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:122
+#, php-format
+msgid "Your %s package has been cancelled"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:157
+#, php-format
+msgid "Your %s package has expired"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:199
+#, php-format
+msgid "Your %s package is expiring soon"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:236
+#, php-format
+msgid "Your %s trial is ending soon"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:273
+#, php-format
+msgid "Your fallback plan %s has been activated"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:352
+msgid "First period amount:"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:356
+msgid "Trial period amount:"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:357
+msgid "Next billing amount:"
+msgstr ""
+
+#: app/Mail/PackageMailer.php:360
+#: app/Mail/PackageMailer.php:363
+msgid "Regular renewal amount:"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanColumnProvider.php:34
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:44
+#: app/Providers/ListingDashboardServiceProvider.php:30
+#: assets/build/js/admin/listing-table-notice.js:1327
+#: assets/build/js/app.js:3190
+msgid "Plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanColumnProvider.php:51
+#: app/Providers/ListingDashboardServiceProvider.php:40
+msgid "No plan assigned"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:65
+msgid "No plan assigned yet"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:72
+#: resources/views/shortcode.php:119
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:2958
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Pay Per Listing"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:73
+#: resources/views/shortcode.php:120
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:2958
+#: assets/build/js/app.js:3190
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Package"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:92
+#: app/Providers/ListingDashboardServiceProvider.php:84
+msgid "Renew Listing"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:113
+msgid "Last Assigned Order:"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:123
+msgid "Assign Order"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:142
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:173
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:207
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:731
+msgid "You are not allowed to perform this action."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:242
+msgid "Plan action completed successfully."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:250
+msgid "Listing removed from plan and expired successfully."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:257
+msgid "Plan action failed."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:301
+msgid "Removing this listing from its plan will expire the listing. Continue?"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:302
+#: app/Providers/ListingDashboardServiceProvider.php:152
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Remove from plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:562
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:565
+msgid "Assign plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:563
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:566
+msgid "Change plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:568
+msgid "About assigning a plan to this listing"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:569
+msgid "About changing this listing plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:571
+msgid "Assign this listing to an active package, or create a paid order and package when an inactive plan is selected."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:572
+msgid "Move this listing to another active package, or create a paid order and package when an inactive plan is selected."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:573
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Select a plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:575
+msgid "Choose a plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:576
+msgid "Choose a new plan"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:586
+msgid "Select a plan before continuing."
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:616
+msgid "User Plans"
+msgstr ""
+
+#: app/Providers/Admin/ListingPlanMetaboxProvider.php:625
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Available Plans"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:41
+#: app/Providers/ListingDashboardServiceProvider.php:190
+#: assets/build/js/app.js:3297
+msgid "Packages"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:42
+#: app/Providers/Admin/MenuServiceProvider.php:47
+#: assets/build/js/app.js:3297
+msgid "Pricing Plans"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:52
+msgid "Pricing Plans Settings"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:53
+msgid "You can Customize all the settings of Pricing Plans Extension here"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:74
+msgid "Direct Plan Purchase"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:80
+msgid "Allow Multiple Plans per Directory Type"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:81
+msgid "Allow users to purchase and use more than one active plan in the same directory type."
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:86
+msgid "Pricing Plans Page"
+msgstr ""
+
+#: app/Providers/Admin/MenuServiceProvider.php:88
+#, php-format
+msgid "Following shortcode must be in the selected page %s"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:103
+msgid "Pricing Plans listing migration failed."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:104
+msgid "The migration will retry on the next request."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:111
+msgid "Pricing Plans listing migration is running."
+msgstr ""
+
+#. translators: 1: processed listings, 2: total listings
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:115
+#, php-format
+msgid "%1$d of %2$d listings processed. Multiple-plan features will be enabled after completion."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:154
+msgid "You are not allowed to start this migration."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:186
+msgid "Package Billing Start and End Date Migration"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:187
+msgid "The version 4 migration set incorrect billing dates for some legacy packages. This migration restores billing start dates from paid orders and adjusts package end dates so eligible listings retain their expected expiry period."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:191
+msgid "Start Migration"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:201
+msgid "Pricing Plans package date repair failed."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:202
+msgid "The repair will retry on the next request."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:215
+msgid "Pricing Plans package dates repaired successfully."
+msgstr ""
+
+#. translators: 1: repaired packages, 2: skipped packages
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:220
+#, php-format
+msgid "%1$d packages repaired; %2$d packages skipped because required migration data was unavailable."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:226
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:719
+msgid "Dismiss"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:235
+msgid "Pricing Plans package date repair is running."
+msgstr ""
+
+#. translators: 1: processed packages, 2: total packages, 3: repaired packages, 4: skipped packages
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:239
+#, php-format
+msgid "%1$d of %2$d packages processed; %3$d repaired and %4$d skipped. Reload this page to process each batch until the migration completes."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:386
+msgid "Waiting"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:395
+msgid "In Progress"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:404
+msgid "Done"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:413
+msgid "Failed"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:440
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Plans"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:445
+#: assets/build/js/app.js:3190
+msgid "Orders"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:450
+msgid "User Packages"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:485
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:545
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:707
+msgid "Directorist Pricing Plan:"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:486
+msgid "Old pricing plan data needs to be migrated to the new format."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:493
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:518
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:524
+msgid "Migrate Now"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:507
+msgid "Starting..."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:519
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:525
+msgid "Failed to start migration. Please try again."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:546
+msgid "Migration is in progress. Please do not close this page."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:689
+msgid "Migration completed successfully."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:691
+msgid "Migration completed with remaining items that were not migrated. Please retry again."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:694
+#, php-format
+msgid "Migration completed with %d failed step. Please retry again."
+msgid_plural "Migration completed with %d failed steps. Please retry again."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:716
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:745
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:751
+msgid "Retry"
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:734
+msgid "Retrying..."
+msgstr ""
+
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:746
+#: app/Providers/Admin/MigrationNoticeServiceProvider.php:752
+msgid "Failed to start retry. Please try again."
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:106
+msgid "Multiple directory types"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:321
+#, php-format
+msgid "Meta has directory #%d, but term is missing"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:321
+msgid "Directory term not assigned"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:391
+#: app/Providers/Admin/NoticeServiceProvider.php:433
+#: app/Providers/Admin/NoticeServiceProvider.php:490
+#: app/Providers/Admin/NoticeServiceProvider.php:511
+msgid "Directorist Notice:"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:395
+#, php-format
+msgid "There is %d directory type needs plan assignment. Assign now?"
+msgid_plural "There are %d directory types needs plan assignment. Assign them now?"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:406
+#: assets/build/js/admin/listing-table-notice.js:1327
+msgid "Assign Plans"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:410
+#: app/Providers/Admin/NoticeServiceProvider.php:530
+msgid "Dismiss this notice."
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:437
+#, php-format
+msgid "There is %d listing with missing or deleted directory type."
+msgid_plural "There are %d listings with missing or deleted directory types."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:448
+#: assets/build/js/admin/listing-table-notice.js:1380
+#: assets/build/js/app.js:2447
+msgid "Assign Directory Type"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:459
+msgid "User packages need plan recovery"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:464
+#, php-format
+msgid "%d deleted pricing plan is still assigned to user packages. Assign a replacement plan to restore those packages."
+msgid_plural "%d deleted pricing plans are still assigned to user packages. Assign replacement plans to restore those packages."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:475
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Assign Replacement Plans"
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:491
+msgid "Plan assignment to the listing owners is in progress..."
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:512
+msgid "Plan assignment to the listing owners has been completed."
+msgstr ""
+
+#: app/Providers/Admin/NoticeServiceProvider.php:517
+#, php-format
+msgid "There was some issue while assigning plans to %d listing owner, please check the logs for more details."
+msgid_plural "There was some issue while assigning plans to %d listing owners, please check the logs for more details."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/Providers/CheckoutServiceProvider.php:115
+msgid "This payment processor does not support recurring payments."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:129
+#: app/Providers/ListingFormManager.php:135
+#: app/Providers/ListingFormManager.php:160
+msgid "Invalid directory selected."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:149
+#: app/Providers/CheckoutServiceProvider.php:423
+msgid "You already have multiple active plans and cannot purchase or activate another one at this time."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:158
+msgid "A plan is required to submit listing."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:177
+#: app/Providers/CheckoutServiceProvider.php:353
+#: app/Providers/CheckoutServiceProvider.php:524
+#: app/Providers/CheckoutServiceProvider.php:558
+#: app/Providers/CheckoutServiceProvider.php:577
+#: app/Providers/CheckoutServiceProvider.php:593
+#: app/Providers/TrialServiceProvider.php:280
+msgid "Invalid plan id."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:181
+#: app/Providers/CheckoutServiceProvider.php:411
+msgid "The selected plan is not available."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:190
+msgid "The selected plan is not available for this directory."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:215
+#: app/Providers/CheckoutServiceProvider.php:454
+#: app/Providers/CheckoutServiceProvider.php:615
+msgid "You have a pending order. Please wait for the payment to be completed."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:311
+msgid "This free plan has already been used and cannot be activated again."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:370
+msgid "A listing is required for plan reassignment."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:382
+msgid "A listing renewal cannot also be a plan reassignment."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:419
+#: app/Providers/CheckoutServiceProvider.php:816
+msgid "You must cancel your existing subscription before switching plans."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:439
+msgid "You are not allowed to switch plans while on the Pay-Per-Listing plan. Please cancel your current package before switching to a different plan."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:443
+msgid "You are not allowed to switch to the Pay-Per-Listing plan from your current package. Please cancel your existing package or wait until it expires before switching to another plan."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:461
+msgid "You have reached the maximum number of allowed listings."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:645
+msgid "Failed to create order."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:1014
+#, php-format
+msgid "Pricing Plan - %s"
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:1015
+msgid "Pricing Plan"
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:1118
+#: app/Services/ExpiredListingRenewalService.php:310
+#: app/Services/ListingPlanAssignmentService.php:544
+msgid "The listing was not found."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:1122
+msgid "You are not allowed to purchase a plan for this listing."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:1126
+msgid "The selected plan is not available for this listing directory."
+msgstr ""
+
+#: app/Providers/CheckoutServiceProvider.php:1214
+#: app/Providers/PaymentCheckoutServiceProvider.php:199
+#: app/Providers/TrialServiceProvider.php:214
+msgid "Invalid payment gateway."
+msgstr ""
+
+#: app/Providers/DirectCheckout.php:52
+msgid "Submit Listing"
+msgstr ""
+
+#: app/Providers/LegacyPlanApiProvider.php:44
+msgid "Plan id."
+msgstr ""
+
+#: app/Providers/ListingDashboardServiceProvider.php:97
+#: app/Providers/ListingDashboardServiceProvider.php:137
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Assign Plan"
+msgstr ""
+
+#: app/Providers/ListingDashboardServiceProvider.php:112
+msgid "Mark as Regular"
+msgstr ""
+
+#: app/Providers/ListingDashboardServiceProvider.php:112
+msgid "Mark as Featured"
+msgstr ""
+
+#: app/Providers/ListingDashboardServiceProvider.php:136
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Switch Plan"
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:70
+msgid "Configure the Add Listing form and its pricing plan layout."
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:78
+msgid "Pricing Plan Columns"
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:88
+msgid "Choose how many pricing plans appear per row before the listing form."
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:119
+msgid "Remaining Character:"
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:120
+msgid "Max character limit reached!"
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:189
+#: app/Providers/ListingFormManager.php:241
+msgid "You have reached the maximum number of allowed listings. Please upgrade your plan to continue."
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:206
+msgid "You already have multiple active plans. You cannot purchase or activate a new plan at this time. Please select one of your existing plans to submit a listing."
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:325
+msgid "Redirecting to checkout..."
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:327
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Continue to checkout"
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:345
+msgid "Site Maintenance in Progress"
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:346
+msgid "We are currently updating our database to improve your experience. Listing submission is temporarily unavailable."
+msgstr ""
+
+#: app/Providers/ListingFormManager.php:347
+msgid "We are sorry for the inconvenience. Please check back in a few minutes — this process will complete shortly."
+msgstr ""
+
+#: app/Providers/PaymentCheckoutServiceProvider.php:54
+msgid "This pricing plan is no longer available. Please cancel this order and choose another plan."
+msgstr ""
+
+#: app/Providers/PaymentCheckoutServiceProvider.php:274
+#: app/Providers/PaymentCheckoutServiceProvider.php:310
+#: resources/views/plan-summary.php:79
+msgid "Trial ends on"
+msgstr ""
+
+#: app/Providers/PaymentCheckoutServiceProvider.php:276
+#: app/Providers/PaymentCheckoutServiceProvider.php:312
+#: resources/views/plan-summary.php:47
+msgid "First renewal"
+msgstr ""
+
+#: app/Providers/PaymentCheckoutServiceProvider.php:278
+#: app/Providers/PaymentCheckoutServiceProvider.php:289
+#: app/Providers/PaymentCheckoutServiceProvider.php:314
+#: resources/views/plan-summary.php:49
+msgid "Expires on"
+msgstr ""
+
+#: app/Providers/PaymentCheckoutServiceProvider.php:290
+#: resources/views/plan-summary.php:37
+msgid "Never Expires"
+msgstr ""
+
+#: app/Providers/PaymentCheckoutServiceProvider.php:427
+#: app/Providers/TrialServiceProvider.php:128
+msgid "Start Trial"
+msgstr ""
+
+#: app/Providers/PlanServiceProvider.php:244
+msgid "The listing data is temporarily unavailable."
+msgstr ""
+
+#: app/Providers/PlanServiceProvider.php:256
+msgid "This listing does not have an active package and is currently unavailable to public visitors. Please purchase a plan to make the listing publicly visible."
+msgstr ""
+
+#: app/Providers/PlanServiceProvider.php:336
+#: app/Providers/PlanServiceProvider.php:646
+msgid "No active plan found."
+msgstr ""
+
+#: app/Providers/PlanServiceProvider.php:652
+msgid "The plan associated with this package no longer exists."
+msgstr ""
+
+#: app/Providers/PlanServiceProvider.php:666
+msgid "Payment is required for this listing."
+msgstr ""
+
+#: app/Providers/TrialServiceProvider.php:46
+msgid "This payment processor does not support trials."
+msgstr ""
+
+#: app/Providers/TrialServiceProvider.php:76
+msgid "Trial plan not found."
+msgstr ""
+
+#: app/Providers/TrialServiceProvider.php:81
+msgid "Trial is not enabled for this plan."
+msgstr ""
+
+#: app/Providers/TrialServiceProvider.php:86
+msgid "Free plans do not offer trials."
+msgstr ""
+
+#: app/Providers/TrialServiceProvider.php:90
+msgid "You are not eligible for trial."
+msgstr ""
+
+#: app/Providers/TrialServiceProvider.php:105
+msgid "You have already used a trial for this directory."
+msgstr ""
+
+#: app/Repositories/UserPackageRepository.php:99
+msgid "Failed to start package plan recovery."
+msgstr ""
+
+#: app/Repositories/UserPackageRepository.php:116
+msgid "Failed to update packages with missing plans."
+msgstr ""
+
+#: app/Repositories/UserPackageRepository.php:134
+msgid "Failed to update pricing plan orders."
+msgstr ""
+
+#: app/Repositories/UserPackageRepository.php:142
+msgid "Failed to commit package plan recovery."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:77
+#: app/Services/ExpiredListingRenewalService.php:94
+msgid "This plan cannot renew the assigned listing."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:101
+msgid "The listing could not be renewed after payment."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:125
+msgid "Payment is required to renew this listing."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:133
+msgid "The listing could not be renewed as a regular listing."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:141
+msgid "The listing could not be renewed."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:247
+msgid "You are not authorized to renew listings for this package."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:251
+msgid "Only active packages can renew expired listings."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:255
+msgid "This package has expired."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:261
+msgid "This package cannot renew listings in bulk."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:271
+msgid "This package has no remaining listing quota."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:277
+msgid "This package has no expired listings to renew."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:314
+msgid "You are not authorized to renew this listing."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:318
+#: app/Services/ListingOrderService.php:56
+msgid "Only expired listings can be renewed."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:324
+msgid "This listing does not have an assigned plan."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:330
+msgid "The assigned plan does not have an active package."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:334
+msgid "The assigned package has expired."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:338
+msgid "The assigned package is not compatible with this listing directory."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:344
+#: app/Services/ListingPlanAssignmentService.php:123
+msgid "The assigned plan is not available anymore."
+msgstr ""
+
+#: app/Services/ExpiredListingRenewalService.php:360
+msgid "The assigned package has no remaining listing quota."
+msgstr ""
+
+#: app/Services/ListingOrderService.php:34
+msgid "Expired listings do not require assigning an order."
+msgstr ""
+
+#: app/Services/ListingOrderService.php:43
+msgid "This listing already has an assigned order."
+msgstr ""
+
+#: app/Services/ListingOrderService.php:72
+msgid "Listing not found."
+msgstr ""
+
+#: app/Services/ListingOrderService.php:86
+msgid "No active package was found for this listing."
+msgstr ""
+
+#: app/Services/ListingOrderService.php:102
+msgid "This action is only available for pay per listing packages."
+msgstr ""
+
+#: app/Services/ListingOrderService.php:137
+msgid "Failed to create order for this listing."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:85
+msgid "This listing already has a plan assigned."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:101
+#: app/Services/ListingPlanAssignmentService.php:117
+msgid "This listing does not have a plan assigned."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:105
+msgid "The selected plan is already assigned to this listing."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:127
+msgid "Only package plan assignments can be removed."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:131
+msgid "The listing could not be removed from its plan."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:136
+msgid "The listing could not be expired after removing its plan."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:153
+msgid "The selected plan is not available anymore."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:159
+msgid "The selected plan does not belong to this listing directory."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:190
+msgid "An active package already exists for this directory type."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:206
+msgid "Failed to create a paid order for the selected plan."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:213
+msgid "The new package could not be activated."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:306
+#: app/Services/ListingPlanAssignmentService.php:462
+msgid "Currently assigned"
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:363
+msgid "The selected plan is not compatible with this listing or has no remaining quota."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:370
+msgid "No active package was found for the selected plan."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:411
+msgid "The prepaid order could not be assigned to this listing."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:430
+msgid "This listing cannot be reassigned to the selected plan."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:464
+msgid "No listing quota remaining"
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:466
+msgid "No featured listing quota remaining"
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:526
+msgid "The selected plan has no remaining listing quota."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:536
+msgid "The selected plan has no remaining featured listing quota."
+msgstr ""
+
+#: app/Services/ListingPlanAssignmentService.php:548
+msgid "You are not allowed to manage this listing plan."
+msgstr ""
+
+#: app/Services/SubscriptionPaymentService.php:56
+msgid "Only recurring subscription packages can re-check payment."
+msgstr ""
+
+#: app/Services/SubscriptionPaymentService.php:60
+msgid "Only past due packages can re-check payment."
+msgstr ""
+
+#: app/Services/SubscriptionPaymentService.php:64
+msgid "The package does not have valid subscription payment details."
+msgstr ""
+
+#: app/Utils/PlanProration.php:50
+msgid "You must cancel your current plan before switching to a free plan."
+msgstr ""
+
+#: app/Utils/PlanProration.php:80
+msgid "Your unused plan credit exceeds the new plan price. Please cancel your current plan first."
+msgstr ""
+
+#: app/Utils/PlanProration.php:93
+msgid "You must cancel your current unlimited plan before switching to a limited plan."
+msgstr ""
+
+#: app/Utils/PlanProration.php:104
+msgid "You must cancel your current plan before switching to a lower-priced plan."
+msgstr ""
+
+#. translators: %d: package ID
+#: database/Migrations/RepairV4LegacyPackageDatesMigration.php:115
+#, php-format
+msgid "Could not repair legacy package %d."
+msgstr ""
+
+#: database/Migrations/RepairV4LegacyPackageDatesMigration.php:295
+msgid "Could not schedule the repaired package expiration."
+msgstr ""
+
+#. translators: 1: required version, 2: current version
+#: directorist-pricing-plans.php:90
+#, php-format
+msgid "<strong>Directorist Pricing Plans</strong> requires Directorist version <strong>%1$s</strong> or higher. You are running version <strong>%2$s</strong>. Please update Directorist to use this plugin."
+msgstr ""
+
+#: resources/views/plan-due-summary.php:11
+msgid "Total due today"
+msgstr ""
+
+#: resources/views/shortcode.php:30
+msgid "Plan not found."
+msgstr ""
+
+#: resources/views/shortcode.php:89
+msgid "Current plan reached your limit, please upgrade to a higher plan to continue"
+msgstr ""
+
+#: resources/views/shortcode.php:141
+msgid " ( All can be featured )"
+msgstr ""
+
+#: resources/views/shortcode.php:145
+msgid " ( can be featured )"
+msgstr ""
+
+#: resources/views/shortcode.php:147
+msgid " ( 1 can be featured )"
+msgstr ""
+
+#: resources/views/shortcode.php:150
+#, php-format
+msgid " ( %s of them can be featured )"
+msgstr ""
+
+#: resources/views/shortcode.php:162
+msgid "Recommended"
+msgstr ""
+
+#: resources/views/shortcode.php:170
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Active"
+msgstr ""
+
+#: resources/views/shortcode.php:175
+msgid "Already used"
+msgstr ""
+
+#: resources/views/shortcode.php:196
+#, php-format
+msgid "Plus %s tax"
+msgstr ""
+
+#: resources/views/shortcode.php:201
+#: assets/build/js/app.js:2447
+msgid "Free"
+msgstr ""
+
+#: resources/views/shortcode.php:207
+#, php-format
+msgid "After %d %s of trial"
+msgstr ""
+
+#: resources/views/shortcode.php:218
+msgid "Auto Renew"
+msgstr ""
+
+#: resources/views/shortcode.php:225
+msgid "Unlimited listings"
+msgstr ""
+
+#: resources/views/shortcode.php:227
+#, php-format
+msgid "%d Total listing %s"
+msgid_plural "%d Total listings %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: resources/views/shortcode.php:233
+msgid "Featured listing"
+msgstr ""
+
+#: resources/views/shortcode.php:250
+msgid "Unlimited | Partial"
+msgstr ""
+
+#: resources/views/shortcode.php:252
+#: resources/views/templates/listing_type.php:26
+#: resources/views/templates/listing_type.php:33
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Unlimited"
+msgstr ""
+
+#. translators: %s: maximum limit number
+#: resources/views/shortcode.php:256
+#, php-format
+msgid "Up to %s | Partial"
+msgstr ""
+
+#. translators: %s: maximum limit number
+#: resources/views/shortcode.php:259
+#, php-format
+msgid "Up to %s"
+msgstr ""
+
+#: resources/views/shortcode.php:261
+msgid "Partial"
+msgstr ""
+
+#: resources/views/shortcode.php:301
+#: resources/views/shortcode.php:305
+#: resources/views/shortcode.php:309
+msgid "Continue"
+msgstr ""
+
+#: resources/views/shortcode.php:324
+msgid "Please select a directory to see the plans."
+msgstr ""
+
+#: resources/views/shortcode.php:326
+msgid "There is no Plan available right now. Please contact with administrator."
+msgstr ""
+
+#: resources/views/templates/listing_type.php:22
+#: resources/views/templates/listing_type.php:40
+msgid "Remaining"
+msgstr ""
+
+#: resources/views/templates/listing_type.php:37
+msgid "No Remaining"
+msgstr ""
+
+#: resources/views/templates/listing_type.php:67
+#, php-format
+msgid " (%s)"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+msgid "No plans are available for this directory type. Please create a plan first."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+msgid "Select the plan to assign to listing owners for this directory type."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+#: assets/build/js/app.js:3190
+msgid "Order Status"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+msgid "Choose the order status for generated plan orders."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+msgid "Plan Assignment"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+#, js-format
+msgid "Assign plans to %d directory types that have published listings without assigned plans."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+#: assets/build/js/admin/listing-table-notice.js:1380
+#: assets/build/js/app.js:2447
+msgid "Assign"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1327
+#: assets/build/js/admin/listing-table-notice.js:1380
+#: assets/build/js/admin/listing-table-notice.js:1450
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:3190
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Cancel"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1380
+msgid "Directory Type Assignment"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1380
+#, js-format
+msgid "Select one directory type to assign to %d orphan listings."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1380
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Directory Type"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1380
+#, js-format
+msgid "Choose the directory type that should be assigned to all %d listings that do not have a directory type term."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Map each deleted plan to a published plan from the same directory type. All affected packages and pricing plan orders will be updated."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Missing Plan ID"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Missing Plan's Directory Type"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "New Plan"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Select a replacement plan"
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Create and publish a plan for this directory type first."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "These packages have inconsistent directory types and cannot be recovered automatically."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Failed to recover packages. Please refresh the page and try again."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Select a replacement for every missing plan."
+msgstr ""
+
+#: assets/build/js/admin/listing-table-notice.js:1450
+msgid "Update Plans"
+msgstr ""
+
+#: assets/build/js/app.js:1911
+#: assets/build/js/frontend/listing-owner-dashboard.js:1778
+msgid "Featured:"
+msgstr ""
+
+#: assets/build/js/app.js:1911
+#: assets/build/js/frontend/listing-owner-dashboard.js:1778
+msgid "Total:"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "ID"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Missing directory type"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Plan Name"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Price"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:3190
+msgid "Package Type"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Status"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Published"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Draft"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "created at"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "This plan is assigned to a directory type that no longer exists. Select an existing directory type to repair the plan."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Failed to assign directory type. Please try again."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Select a directory type."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Create New Plan"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Actions"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Edit Plan"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Delete"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "All Plans"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Title"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+#: assets/build/js/app.js:2958
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Plan Type"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Delete Plan"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "To discontinue this plan, hide it from public view instead:"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Open the plan settings."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "In Plan Status, enable “Hide from all plans”."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Click “Save Changes”."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Existing packages will remain valid, but new users will no longer be able to purchase the plan."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Are you sure you want to permanently delete this plan? This action cannot be undone."
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "Close"
+msgstr ""
+
+#: assets/build/js/app.js:2447
+msgid "This plan could not be deleted. Please try again."
+msgstr ""
+
+#: assets/build/js/app.js:2949
+msgid "App Configuration"
+msgstr ""
+
+#: assets/build/js/app.js:2949
+msgid "Product ID"
+msgstr ""
+
+#: assets/build/js/app.js:2949
+msgid "Product Price"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Featured Listing"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "If enabled, listings purchased with this plan will be marked as featured."
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Featured Listing Allowed cannot be greater than Total Listing Allowed."
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Publish"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Hide from all plans"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Hides from public view."
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Mark as Recommended "
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Enable Expiry Fallback"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "If enabled, the plan will be displayed as expired if the expiry date is reached."
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Select Fallback Plan"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Plan Displaying Order"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Set plan position in pricing table. A lower number means higher priority."
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Listing Display Priority"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "A lower number means higher priority. E.g. 1 will appear at the top in archives and search results."
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Embed plan"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Easily embed this plan anywhere with this shortcode"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Use Inside PHP Code"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Plan updated successfully"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "All plans"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Edit plan"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+msgid "Save Changes"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+#: assets/build/js/frontend/listing-owner-dashboard.js:1874
+msgid "Day"
+msgid_plural "Days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+#: assets/build/js/frontend/listing-owner-dashboard.js:1874
+msgid "Week"
+msgid_plural "Weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+#: assets/build/js/frontend/listing-owner-dashboard.js:1874
+msgid "Month"
+msgid_plural "Months"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+#: assets/build/js/frontend/listing-owner-dashboard.js:1874
+msgid "Year"
+msgid_plural "Years"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Trialing"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Cancelled"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Archived"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Paused"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Past Due"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Canceled at Period End"
+msgstr ""
+
+#: assets/build/js/app.js:2958
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:171
+msgid "Expired"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to load usage."
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Refresh usage"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Show usage"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Id"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Customer"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Billing Gateway"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Billing Details"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+#, js-format
+msgid "Trial / %s"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+#, js-format
+msgid "%1$s / %2$s"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+#, js-format
+msgid "Free / %s"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Package Usage"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Initial Billing Date"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Next Payment"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Cancelled Date"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Failed to load assignment options."
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "User"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Free plans are assigned as paid orders automatically."
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Failed to assign plan. Please try again."
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Select a user, directory type, plan, and order status."
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "All Packages"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Customer Information"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Phone Number"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Order ID"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Amount"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Reason"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Date"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Listing Details"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Listing Used"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Featured Listing Used"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Activated"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Renewed"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Scheduled for Cancellation"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Package Logs"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "No package logs found."
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Uses Summary"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+#, js-format
+msgid "Package ID: #%s"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Billing Interval"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Start Date"
+msgstr ""
+
+#: assets/build/js/app.js:3190
+msgid "Next Billing Date"
+msgstr ""
+
+#. translators: 1: number of listings, 2: plan title.
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+#, js-format
+msgid "%1$d expired listing can be renewed from %2$s."
+msgid_plural "%1$d expired listings can be renewed from %2$s."
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Expired listings are ready to renew"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Renew All"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+msgid "View Package"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to re-check payment."
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Re-Check Payment"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Renew"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+msgid "Update Next Billing Date"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Cancel at Period End"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Cancel Package"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to renew listings."
+msgstr ""
+
+#: assets/build/js/app.js:3297
+msgid "Cancelling..."
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Yes, Cancel Now"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Are you sure you want to cancel this package immediately? The package will be cancelled right away."
+msgstr ""
+
+#: assets/build/js/app.js:3297
+msgid "Confirm"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Cancel Package at Period End"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Yes, Cancel at Period End"
+msgstr ""
+
+#: assets/build/js/app.js:3297
+msgid "Are you sure you want to schedule this package for cancellation at the end of the current billing period?"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to load renewable listings."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Listings renewed successfully."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to load plans. Please try again."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Re-Checking Payment…"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Purchase"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Cancel Trial"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Package actions"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "No"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Are you sure you want to cancel this package at the end of the current billing period? Your package will remain active until the period ends."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Yes, Cancel Trial"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Are you sure you want to cancel this trial? The trial package will be cancelled right away."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Select a plan to continue to checkout."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Loading plans…"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "No plans found for this directory type."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Current"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Regular"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Featured"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to load compatible plans."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to switch the listing plan."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to assign the listing plan."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Failed to remove the listing from its plan."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "My Plans"
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "You do not have any plan yet."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "There is no plan available."
+msgstr ""
+
+#: assets/build/js/frontend/listing-owner-dashboard.js:2155
+msgid "Removing this listing from its plan will expire the listing."
+msgstr ""

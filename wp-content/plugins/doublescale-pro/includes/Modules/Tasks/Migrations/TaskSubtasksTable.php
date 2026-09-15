@@ -47,10 +47,17 @@ class TaskSubtasksTable extends Migration {
 			is_completed TINYINT(1) NOT NULL DEFAULT 0,
 			position INT UNSIGNED NOT NULL DEFAULT 0,
 			completed_at DATETIME DEFAULT NULL,
+			group_id BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+			assigned_to BIGINT(20) UNSIGNED NULL DEFAULT NULL,
+			due_date DATETIME NULL DEFAULT NULL,
+			reminder_at DATETIME NULL DEFAULT NULL,
+			reminder_sent_at DATETIME NULL DEFAULT NULL,
+			notes TEXT NULL DEFAULT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY task_id (task_id),
+			KEY group_id (group_id),
 			KEY position (position)";
 	}
 }

@@ -54,6 +54,11 @@ class PackageNotificationProvider implements Provider {
         $new_status = $new_package_dto->get_status();
         $old_status = $old_package_dto->get_status();
 
+        if ( $new_status === UserPackageStatus::ACTIVE && $old_status !== UserPackageStatus::ACTIVE ) {
+            $this->handle_package_created( $new_package_dto );
+            return;
+        }
+
         // Send notification when package is cancelled
         if ( $new_status === UserPackageStatus::CANCELLED && $old_status !== UserPackageStatus::CANCELLED ) {
             $this->send_email( $new_package_dto->get_id(), 'package_cancelled' );
@@ -61,8 +66,10 @@ class PackageNotificationProvider implements Provider {
             return;
         }
 
-        // Send notification when package is expired
-        if ( $new_status === UserPackageStatus::EXPIRED && $old_status !== UserPackageStatus::EXPIRED ) {
+        // Past due packages have the same inactive behavior as expired packages.
+        $expired_statuses = [ UserPackageStatus::EXPIRED, UserPackageStatus::PAST_DUE ];
+
+        if ( in_array( $new_status, $expired_statuses, true ) && ! in_array( $old_status, $expired_statuses, true ) ) {
             $this->send_email( $new_package_dto->get_id(), 'package_expired' );
             $this->clear_expiry_warning_cron( $new_package_dto->get_id() );
         }
@@ -215,4 +222,3 @@ class PackageNotificationProvider implements Provider {
         }
     }
 }
-

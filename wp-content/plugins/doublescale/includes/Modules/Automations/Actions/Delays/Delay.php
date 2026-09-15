@@ -85,26 +85,32 @@ class Delay extends Action {
 	 * @return bool
 	 */
 	public function process_action( AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact ) {
-		// Schedule the next step after 2 minutes
 		$next_step = $automation->get_next_step( $step );
-		$time      = null;
-		$delay     = $step->get_setting( 'delay' );
-		$unit      = $step->get_setting( 'unit' );
-
-		switch ( $unit ) {
-			case 'minutes':
-				$time = strtotime( "+{$delay} minutes" );
-				break;
-			case 'hours':
-				$time = strtotime( "+{$delay} hours" );
-				break;
-			case 'days':
-				$time = strtotime( "+{$delay} days" );
-				break;
-		}
 		if ( ! $next_step ) {
 			return false;
 		}
+
+		$delay = (int) $step->get_setting( 'delay' );
+		$unit  = $step->get_setting( 'unit' );
+
+		// For relative delays (2 hours, 3 days), timezone is irrelevant
+		// Just add the duration to current time
+		switch ( $unit ) {
+			case 'minutes':
+				$seconds = $delay * 60;
+				break;
+			case 'hours':
+				$seconds = $delay * 3600;
+				break;
+			case 'days':
+				$seconds = $delay * 86400;
+				break;
+			default:
+				$seconds = $delay * 60;
+				break;
+		}
+
+		$time = time() + $seconds;
 
 		PluginKernel::instance()->automations_tasks->schedule_single( $time, 'process_automation_step', $automation->id, $step->id, $next_step->id, $automation_contact->id );
 

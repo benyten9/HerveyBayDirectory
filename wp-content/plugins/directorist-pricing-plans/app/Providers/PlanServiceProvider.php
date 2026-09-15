@@ -20,6 +20,7 @@ use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 use DirectoristPricingPlan\App\Enums\Order\RefType as OrderRefType;
 use DirectoristPricingPlan\App\Repositories\Admin\PlanRepository;
 use DirectoristPricingPlan\App\Repositories\UserPackageRepository;
+use DirectoristPricingPlan\App\Services\SubscriptionPaymentService;
 use DirectoristPricingPlan\App\DTO\UserPackage\DTO as UserPackageDTO;
 use DirectoristPricingPlan\App\DTO\Plan\DTO as PlanDTO;
 use DirectoristPricingPlan\App\DTO\UserPackage\Activation as UserPackageActivationDTO;
@@ -28,8 +29,17 @@ use DirectoristPricingPlan\App\Enums\UserPackage\Status as UserPackageStatus;
 class PlanServiceProvider implements Provider {
     public UserPackageRepository $user_package_repository;
 
-    public function __construct( UserPackageRepository $user_package_repository ) {
-        $this->user_package_repository = $user_package_repository;
+    private SubscriptionPaymentService $subscription_payment_service;
+
+    private array $restricted_listing_access = [];
+
+    private bool $is_frontend_listing_update = false;
+
+    private bool $has_rendered_package_less_notice = false;
+
+    public function __construct( UserPackageRepository $user_package_repository, SubscriptionPaymentService $subscription_payment_service ) {
+        $this->user_package_repository      = $user_package_repository;
+        $this->subscription_payment_service = $subscription_payment_service;
     }
 
     public function boot() {
@@ -38,6 +48,16 @@ class PlanServiceProvider implements Provider {
         add_action( 'atbdp_listing_inserted', [ $this, 'validate_non_admin_listing_publish_package' ], 100, 1 );
         add_action( 'atbdp_listing_updated', [ $this, 'validate_non_admin_listing_publish_package' ], 100, 1 );
         add_action( 'atbdp_after_renewal', [ $this, 'validate_non_admin_listing_publish_package' ], 100, 1 );
+        add_filter( 'the_content', [ $this, 'restrict_package_less_listing_content' ], PHP_INT_MAX );
+        add_filter( 'directorist_custom_single_listing_pre_page_content', [ $this, 'restrict_custom_single_listing_content' ], PHP_INT_MAX );
+        add_filter( 'directorist_single_listing_header', [ $this, 'restrict_single_listing_header' ], PHP_INT_MAX, 2 );
+        add_filter( 'directorist_single_listings_contents', [ $this, 'restrict_single_listing_sections' ], PHP_INT_MAX, 2 );
+        add_filter( 'sidebars_widgets', [ $this, 'restrict_single_listing_sidebar' ], PHP_INT_MAX );
+        add_action( 'directorist_single_listing_after_title', [ $this, 'render_listing_unavailable_notice' ], PHP_INT_MAX );
+        add_filter( 'atbdp_add_listing_page_template', [ $this, 'add_package_less_notice_to_listing_form' ], PHP_INT_MAX, 2 );
+        add_action( 'edit_form_top', [ $this, 'render_admin_package_less_listing_notice' ] );
+        add_action( 'atbdp_before_processing_to_update_listing', [ $this, 'mark_frontend_listing_update' ], PHP_INT_MAX );
+        add_filter( 'wp_insert_post_data', [ $this, 'prevent_frontend_listing_publish_without_package' ], PHP_INT_MAX, 2 );
         add_action( 'directorist_before_update_listing_status', [ $this, 'before_update_listing_status' ], 10, 2 );
         add_action( 'directorist_after_listing_plan_approval', [ $this, 'after_listing_plan_approval' ], 10, 2 );
         add_action( 'directorist_validate_listing_plan_approval', [ $this, 'handle_listing_plan_approval_validation' ], 10, 4 );
@@ -49,6 +69,216 @@ class PlanServiceProvider implements Provider {
         add_action( 'directorist_package_expiry_event', [ $this, 'handle_package_expiry_event' ], 10, 1 );
         add_action( 'directorist_after_update_plan', [ $this, 'after_update_plan' ], 10, 1 );
         add_filter( 'rest_request_before_callbacks', [ $this, 'prevent_dashboard_listing_publish_without_package' ], 10, 3 );
+        add_filter( 'directorist_renewal_order', [ $this, 'create_renewal_order' ], 10, 2 );
+    }
+
+    public function restrict_package_less_listing_content( string $content ): string {
+        if ( ! in_the_loop() || ! is_main_query() ) {
+            return $content;
+        }
+
+        if ( $this->should_restrict_listing_content() ) {
+            return $this->get_listing_unavailable_notice();
+        }
+
+        if ( ! $this->has_rendered_package_less_notice && $this->should_show_package_less_listing_notice() ) {
+            $this->has_rendered_package_less_notice = true;
+
+            return $this->get_package_less_listing_notice() . $content;
+        }
+
+        return $content;
+    }
+
+    public function restrict_custom_single_listing_content( string $content ): string {
+        return $this->should_restrict_listing_content() ? $this->get_restricted_listing_content() : $content;
+    }
+
+    public function restrict_single_listing_header( array $header_data, array $data ): array {
+        $listing_id = (int) ( $data['listing_id'] ?? 0 );
+
+        if ( ! $this->should_restrict_listing_content( $listing_id ) ) {
+            return $header_data;
+        }
+
+        return [
+            [
+                'type'            => 'placeholder_item',
+                'placeholderKey'  => 'listing-title-placeholder',
+                'selectedWidgets' => [
+                    [
+                        'type'           => 'title',
+                        'widget_name'    => 'title',
+                        'widget_key'     => 'title',
+                        'enable_tagline' => false,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function restrict_single_listing_sections( array $sections, array $data ): array {
+        $listing_id = (int) ( $data['listing_id'] ?? 0 );
+
+        if ( ! $this->should_restrict_listing_content( $listing_id ) ) {
+            return $sections;
+        }
+
+        return [
+            'fields' => [],
+            'groups' => [],
+        ];
+    }
+
+    public function restrict_single_listing_sidebar( array $sidebars ): array {
+        if ( $this->should_restrict_listing_content() ) {
+            $sidebars['right-sidebar-listing'] = [];
+        }
+
+        return $sidebars;
+    }
+
+    public function render_listing_unavailable_notice( int $listing_id = 0 ): void {
+        if ( ! $this->has_rendered_package_less_notice && $this->should_show_package_less_listing_notice( $listing_id ) ) {
+            $this->has_rendered_package_less_notice = true;
+
+            echo $this->get_package_less_listing_notice(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The method returns escaped static markup.
+            return;
+        }
+
+        if ( ! $this->should_restrict_listing_content() ) {
+            return;
+        }
+
+        echo $this->get_listing_unavailable_notice(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The method returns escaped static markup.
+    }
+
+    public function add_package_less_notice_to_listing_form( string $template, array $data ): string {
+        $listing_id = (int) ( $data['listing_id'] ?? 0 );
+
+        if ( empty( $data['is_edit_mode'] ) || ! $this->should_show_package_less_listing_notice( $listing_id ) ) {
+            return $template;
+        }
+
+        $container          = '<div class="directorist-container-fluid">';
+        $container_position = strpos( $template, $container );
+
+        if ( false === $container_position ) {
+            return $template;
+        }
+
+        return substr_replace(
+            $template,
+            $container . $this->get_package_less_listing_notice(),
+            $container_position,
+            strlen( $container )
+        );
+    }
+
+    public function render_admin_package_less_listing_notice( WP_Post $post ): void {
+        if ( ! $this->is_listing_post( $post ) || ! $this->should_show_package_less_listing_notice( (int) $post->ID ) ) {
+            return;
+        }
+
+        printf(
+            '<div class="notice notice-warning inline directorist-package-less-listing-notice" style="margin-top: 20px; margin-bottom: 20px;"><p>%s</p></div>',
+            $this->get_package_less_listing_notice_message() // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The method returns an escaped static message.
+        );
+    }
+
+    private function should_restrict_listing_content( int $listing_id = 0 ): bool {
+        $listing_post_type = defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir';
+
+        if ( ! is_singular( $listing_post_type ) ) {
+            return false;
+        }
+
+        $listing_id = $listing_id ?: get_queried_object_id();
+
+        if ( array_key_exists( $listing_id, $this->restricted_listing_access ) ) {
+            return $this->restricted_listing_access[ $listing_id ];
+        }
+
+        $listing = $listing_id ? get_post( $listing_id ) : null;
+
+        if ( ! $listing || directorist_get_listing_package( $listing_id ) ) {
+            return $this->restricted_listing_access[ $listing_id ] = false;
+        }
+
+        $is_listing_owner = get_current_user_id() === (int) $listing->post_author;
+        $is_restricted    = ! $is_listing_owner && ! current_user_can( 'edit_others_at_biz_dirs' );
+
+        if ( $is_restricted ) {
+            nocache_headers();
+        }
+
+        return $this->restricted_listing_access[ $listing_id ] = $is_restricted;
+    }
+
+    private function should_show_package_less_listing_notice( int $listing_id = 0 ): bool {
+        if ( is_preview() ) {
+            return false;
+        }
+
+        $listing_id = $listing_id ?: get_queried_object_id();
+        $listing    = $listing_id ? get_post( $listing_id ) : null;
+
+        if ( ! $listing || ! $this->is_listing_post( $listing ) || directorist_get_listing_package( $listing_id ) ) {
+            return false;
+        }
+
+        return get_current_user_id() === (int) $listing->post_author || current_user_can( 'edit_others_at_biz_dirs' );
+    }
+
+    private function get_restricted_listing_content(): string {
+        return sprintf(
+            '<section class="directorist-single-listing-header"><h1 class="directorist-listing-details__listing-title">%s</h1></section>%s',
+            esc_html( get_the_title() ),
+            $this->get_listing_unavailable_notice()
+        );
+    }
+
+    private function get_listing_unavailable_notice(): string {
+        return sprintf(
+            '<section class="directorist-alert directorist-alert-info directorist-single-listing-notice"><div class="directorist-alert__content">%s</div></section>',
+            esc_html__( 'The listing data is temporarily unavailable.', 'directorist-pricing-plans' )
+        );
+    }
+
+    private function get_package_less_listing_notice(): string {
+        return sprintf(
+            '<section class="directorist-alert directorist-alert-warning directorist-package-less-listing-notice" style="margin-top: 20px; margin-bottom: 20px;"><div class="directorist-alert__content">%s</div></section>',
+            $this->get_package_less_listing_notice_message()
+        );
+    }
+
+    private function get_package_less_listing_notice_message(): string {
+        return esc_html__( 'This listing does not have an active package and is currently unavailable to public visitors. Please purchase a plan to make the listing publicly visible.', 'directorist-pricing-plans' );
+    }
+
+    public function mark_frontend_listing_update(): void {
+        $this->is_frontend_listing_update = true;
+    }
+
+    public function prevent_frontend_listing_publish_without_package( array $data, array $postarr ): array {
+        $listing_id = (int) ( $postarr['ID'] ?? 0 );
+        $post        = $listing_id ? get_post( $listing_id ) : null;
+
+        if ( ! $this->is_frontend_listing_update || ! $post || ! $this->is_listing_post( $post ) ) {
+            return $data;
+        }
+
+        $this->is_frontend_listing_update = false;
+
+        if ( 'publish' !== ( $data['post_status'] ?? '' ) ) {
+            return $data;
+        }
+
+        if ( ! directorist_get_listing_package( $listing_id ) ) {
+            $data['post_status'] = 'pending';
+        }
+
+        return $data;
     }
 
     public function after_update_plan( PlanDTO $dto ) {
@@ -235,7 +465,7 @@ class PlanServiceProvider implements Provider {
     }
 
     public function maybe_schedule_package_expiration( UserPackageDTO $package_dto, ?UserPackageDTO $previous_package_dto = null ) {
-        if ( in_array( $package_dto->get_status(), [ UserPackageStatus::CANCELLED, UserPackageStatus::ARCHIVED ] ) ) {
+        if ( in_array( $package_dto->get_status(), [ UserPackageStatus::CANCELLED, UserPackageStatus::ARCHIVED, UserPackageStatus::EXPIRED, UserPackageStatus::PAST_DUE ], true ) ) {
             wp_clear_scheduled_hook( 'directorist_package_expiry_event', [ [ 'package_id' => $package_dto->get_id() ] ] );
             return;
         }
@@ -255,10 +485,15 @@ class PlanServiceProvider implements Provider {
     }
 
     public function handle_package_expiry_event( array $package_data ) {
-        $package_id   = $package_data['package_id'];
+        $package_id = (int) ( $package_data['package_id'] ?? 0 );
+
+        if ( ! $package_id ) {
+            return;
+        }
+
         $user_package = $this->user_package_repository->get_by_id( $package_id );
 
-        if ( ! $user_package ) {
+        if ( ! $this->is_package_due_for_expiration( $user_package ) ) {
             return;
         }
 
@@ -270,13 +505,52 @@ class PlanServiceProvider implements Provider {
             return;
         }
 
+        if ( UserPackageStatus::CANCELLED_AT_PERIOD_END !== $user_package->status ) {
+            $prepaid_order = $this->user_package_repository->get_prepaid_order_for_package( (int) $user_package->id );
+
+            if ( $prepaid_order ) {
+                $this->user_package_repository->renew( (int) $user_package->id, (int) $prepaid_order->id, 'prepaid_order' );
+                return;
+            }
+
+            if ( ! empty( $user_package->is_recurring ) && ! empty( $user_package->subscription_method ) && ! empty( $user_package->subscription_id ) ) {
+                $renewal_order_id = $this->subscription_payment_service->recheck( $package_id, (string) $user_package->subscription_method );
+
+                // Gateways may synchronize a webhook while resolving the renewal.
+                $user_package = $this->user_package_repository->get_by_id( $package_id );
+
+                if ( ! $this->is_package_due_for_expiration( $user_package ) ) {
+                    return;
+                }
+
+                if ( $renewal_order_id ) {
+                    return;
+                }
+            }
+        }
+
+        // A payment webhook can renew the package while this cron callback is running.
+        // Re-read it so a stale expiration event cannot overwrite the renewed period.
+        $user_package = $this->user_package_repository->get_by_id( $package_id );
+
+        if ( ! $this->is_package_due_for_expiration( $user_package ) ) {
+            return;
+        }
+
         // Activate the fallback plan if it exists
         if ( $plan->fallback_plan_id ) {
-            $activated = $this->activate_fallback_plan( $user_package->user_id, $plan->fallback_plan_id, $plan->directory_type_id );
+            $activated = $this->activate_fallback_plan(
+                (int) $user_package->user_id,
+                (int) $plan->fallback_plan_id,
+                (int) $plan->directory_type_id,
+                (int) $plan->id
+            );
 
             if ( $activated ) {
+                $this->mark_package_expired_or_past_due( $user_package );
+
                 // Get the new package ID to send notification
-                $new_package = $this->user_package_repository->get_current_package( $user_package->user_id, $plan->directory_type_id );
+                $new_package = $this->user_package_repository->get_package_by_plan( (int) $user_package->user_id, (int) $plan->fallback_plan_id );
                 
                 if ( $new_package ) {
                     do_action( 'directorist_fallback_plan_activated', $new_package->id, $plan->id );
@@ -285,14 +559,33 @@ class PlanServiceProvider implements Provider {
             }
         }
 
-        $this->user_package_repository->expire_package( $user_package->id );
+        $this->mark_package_expired_or_past_due( $user_package );
     }
 
-    public function activate_fallback_plan( int $user_id, int $fallback_plan_id, int $current_directory_type_id ): bool {
+    private function is_package_due_for_expiration( ?stdClass $package ): bool {
+        if ( ! $package || ! in_array( $package->status, [ UserPackageStatus::ACTIVE, UserPackageStatus::CANCELLED_AT_PERIOD_END ], true ) ) {
+            return false;
+        }
+
+        $current_period_end = $this->user_package_repository->to_dto( $package )->get_current_period_end();
+
+        return $current_period_end && $current_period_end->getTimestamp() <= directorist_now()->getTimestamp();
+    }
+
+    private function mark_package_expired_or_past_due( stdClass $package ): void {
+        if ( UserPackageStatus::CANCELLED_AT_PERIOD_END !== $package->status && ! empty( $package->is_recurring ) ) {
+            $this->user_package_repository->mark_package_past_due( (int) $package->id );
+            return;
+        }
+
+        $this->user_package_repository->expire_package( (int) $package->id );
+    }
+
+    public function activate_fallback_plan( int $user_id, int $fallback_plan_id, int $current_directory_type_id, int $source_plan_id = 0 ): bool {
         $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
         $plan            = $plan_repository->get_by_id( $fallback_plan_id );
 
-        if ( ! $plan || $plan->directory_type_id !== $current_directory_type_id || $plan->fee_type !== FeeType::FREE ) {
+        if ( ! $plan || (int) $plan->directory_type_id !== $current_directory_type_id || $plan->fee_type !== FeeType::FREE ) {
             return false;
         }
 
@@ -305,18 +598,22 @@ class PlanServiceProvider implements Provider {
             $order_dto->set_tax_type( $plan->tax_type )->set_tax_rate( $plan->tax_rate );
         }
 
+        $order_id = directorist_order_repository()->create( $order_dto );
+
+        if ( ! $order_id ) {
+            return false;
+        }
+
+        if ( $source_plan_id ) {
+            $plan_repository->reassign_belonging_listings( $user_id, $source_plan_id, (int) $plan->id );
+        }
+
         if ( 0 === $plan->is_allowed_unlimited_listings ) {
-            $plan_repository->make_exceeding_listings_as_private( $user_id, $plan->directory_type_id, $plan->allowed_listings );
+            $plan_repository->make_exceeding_listings_as_private( $user_id, (int) $plan->id, $plan->allowed_listings );
         }
 
         if ( 0 === $plan->is_allowed_unlimited_featured_listings ) {
-            $plan_repository->make_exceeding_featured_listings_as_regular( $user_id, $plan->directory_type_id, $plan->allowed_featured_listings );
-        }
-        
-        $order_id = directorist_order_repository()->create( $order_dto );
-
-        if ( $order_id ) {
-            return false;
+            $plan_repository->make_exceeding_featured_listings_as_regular( $user_id, (int) $plan->id, $plan->allowed_featured_listings );
         }
 
         $user_package_activation_dto = ( new UserPackageActivationDTO )
@@ -327,6 +624,14 @@ class PlanServiceProvider implements Provider {
         directorist_pricing_plan_activate_package( $user_package_activation_dto );
 
         return true;
+    }
+
+    public function create_renewal_order( $order, string $subscription_id ) {
+        if ( $order ) {
+            return $order;
+        }
+
+        return $this->user_package_repository->create_renewal_order_by_subscription_id( $subscription_id );
     }
 
     /**
@@ -373,7 +678,7 @@ class PlanServiceProvider implements Provider {
         $this->after_listing_plan_approval( $listing_id, $is_featured_listing );
     }
 
-    public function handle_package_listing_status( UserPackageDTO $package_dto ) {
+    public function handle_package_listing_status( UserPackageDTO $package_dto, ?UserPackageDTO $previous_package_dto = null ) {
         if ( $package_dto->is_is_legacy() ) {
             return;
         }
@@ -385,8 +690,8 @@ class PlanServiceProvider implements Provider {
          */
         $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
 
-        if ( in_array( $status, [ UserPackageStatus::CANCELLED, UserPackageStatus::ARCHIVED, UserPackageStatus::EXPIRED ], true ) ) {
-            $plan_repository->expire_belonging_listings( $package_dto->get_user_id(), $package_dto->get_directory_type_id() );
+        if ( in_array( $status, [ UserPackageStatus::CANCELLED, UserPackageStatus::ARCHIVED, UserPackageStatus::EXPIRED, UserPackageStatus::PAST_DUE ], true ) ) {
+            $plan_repository->expire_belonging_listings( $package_dto->get_user_id(), $package_dto->get_plan_id() );
             return;
         }
 
@@ -403,7 +708,19 @@ class PlanServiceProvider implements Provider {
             return;
         }
 
-        if ( PlanType::PACKAGE !== $plan_type || ! $package_dto->is_is_recurring() ) {
+        if ( PlanType::PACKAGE !== $plan_type ) {
+            return;
+        }
+
+        $was_expired = false;
+
+        if ( $previous_package_dto ) {
+            $was_expired = in_array( $previous_package_dto->get_status(), [ UserPackageStatus::EXPIRED, UserPackageStatus::PAST_DUE ], true )
+                || ( $previous_package_dto->get_current_period_end()
+                    && $previous_package_dto->get_current_period_end()->getTimestamp() < directorist_now()->getTimestamp() );
+        }
+
+        if ( ! $package_dto->is_is_recurring() && ! $was_expired ) {
             return;
         }
 
@@ -421,7 +738,7 @@ class PlanServiceProvider implements Provider {
 
         $plan_repository->renew_belonging_listings_expiration(
             $package_dto->get_user_id(),
-            $package_dto->get_directory_type_id(),
+            $package_dto->get_plan_id(),
             $current_period_end,
             $max_limit
         );
@@ -439,6 +756,10 @@ class PlanServiceProvider implements Provider {
 
         if ( PlanType::PAY_PER_LISTING === $plan_type && $plan && ! empty( $plan->is_featured ) ) {
             $is_featured_listing = true;
+        }
+
+        if ( $plan ) {
+            update_post_meta( $listing_id, directorist_plan_key(), (int) $plan->id );
         }
 
         do_action( 'directorist_after_listing_plan_approval', $listing_id, $is_featured_listing );
@@ -462,8 +783,13 @@ class PlanServiceProvider implements Provider {
         // Make the listing featured if it is true
         directorist_set_listing_featured( $listing_id, $is_featured_listing );
 
-        // Publishe the listing
-        directorist_set_listing_status( $listing_id, 'publish' );
+        $directory_type_id = directorist_get_listing_directory( $listing_id );
+
+        if ( ! $directory_type_id ) {
+            return;
+        }
+
+        directorist_set_listing_status( $listing_id, directorist_get_listing_create_status( $directory_type_id ) );
     }
 
     public function has_plan_remaining_quota( bool $has_remaining_quota, stdClass $plan, bool $is_featured_listing ): bool {

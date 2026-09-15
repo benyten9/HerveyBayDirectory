@@ -59,6 +59,22 @@ class Install {
 		}
 
 		self::repair_missing_schema_tables();
+		self::maybe_sync_declared_columns();
+	}
+
+	/**
+	 * Once per schema revision: add columns that exist on CREATE but not on disk.
+	 *
+	 * @return void
+	 */
+	private static function maybe_sync_declared_columns(): void {
+		$revision = defined( 'DOUBLESCALE_VERSION' ) ? DOUBLESCALE_VERSION : '0';
+		if ( (string) get_option( 'doublescale_schema_sync_rev', '' ) === $revision ) {
+			return;
+		}
+
+		MigrationRunner::ensure_declared_columns( self::migration_registry() );
+		update_option( 'doublescale_schema_sync_rev', $revision );
 	}
 
 	public static function init(): void {
@@ -121,6 +137,8 @@ class Install {
 
 		MigrationRunner::repair_missing_tables( $registry );
 
+		MigrationRunner::ensure_declared_columns( $registry );
+
 		self::maybe_unify_legacy_attachments();
 
 		self::maybe_backfill_activity_contact_associations();
@@ -138,6 +156,7 @@ class Install {
 		}
 
 		self::update_doublescale_version();
+		update_option( 'doublescale_schema_sync_rev', defined( 'DOUBLESCALE_VERSION' ) ? DOUBLESCALE_VERSION : '0' );
 
 		delete_transient( 'doublescale_installing' );
 	}

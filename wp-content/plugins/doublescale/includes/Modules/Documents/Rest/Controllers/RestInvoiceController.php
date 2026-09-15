@@ -393,7 +393,15 @@ class RestInvoiceController extends RestController {
 		$invoice->fill( $payload );
 		SalesNumbering::save_with_retry( $invoice );
 
-		return new WP_REST_Response( InvoiceShaper::shape( $invoice->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ), 201 );
+		// The Eloquent wrapper does not always throw when `wpdb` rejects the
+		// INSERT (schema drift on one site leaves the table without a column,
+		// for example), so an unwritten row reaches here as a model with no id.
+		// Answer with a real error rather than letting the shaper fatal on null.
+		if ( ! $this->invoice_was_persisted( $invoice ) ) {
+			return $this->invoice_save_failed_error();
+		}
+
+		return new WP_REST_Response( InvoiceShaper::shape( $this->reload_invoice( $invoice ), true ), 201 );
 	}
 
 	/**
@@ -447,7 +455,7 @@ class RestInvoiceController extends RestController {
 
 		do_action( 'doublescale_sales_invoice_updated', $invoice );
 
-		return new WP_REST_Response( InvoiceShaper::shape( $invoice->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ), 200 );
+		return new WP_REST_Response( InvoiceShaper::shape( $this->reload_invoice( $invoice ), true ), 200 );
 	}
 
 	/**
@@ -549,7 +557,7 @@ class RestInvoiceController extends RestController {
 		$previous = (string) $invoice->status;
 
 		if ( $previous === $status ) {
-			return new WP_REST_Response( InvoiceShaper::shape( $invoice->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ), 200 );
+			return new WP_REST_Response( InvoiceShaper::shape( $this->reload_invoice( $invoice ), true ), 200 );
 		}
 
 		$invoice->status = $status;
@@ -559,7 +567,7 @@ class RestInvoiceController extends RestController {
 
 		do_action( 'doublescale_sales_invoice_updated', $invoice );
 
-		return new WP_REST_Response( InvoiceShaper::shape( $invoice->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ), 200 );
+		return new WP_REST_Response( InvoiceShaper::shape( $this->reload_invoice( $invoice ), true ), 200 );
 	}
 
 	/**
@@ -640,7 +648,7 @@ class RestInvoiceController extends RestController {
 		return new WP_REST_Response(
 			array(
 				'sent'    => true,
-				'invoice' => InvoiceShaper::shape( $sent->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ),
+				'invoice' => InvoiceShaper::shape( $this->reload_invoice( $sent ), true ),
 			),
 			200
 		);
@@ -708,7 +716,7 @@ class RestInvoiceController extends RestController {
 		return new WP_REST_Response(
 			array(
 				'sent'    => true,
-				'invoice' => InvoiceShaper::shape( $recorded->fresh( array( 'contact', 'sale_agent', 'proposal' ) ), true ),
+				'invoice' => InvoiceShaper::shape( $this->reload_invoice( $recorded ), true ),
 			),
 			200
 		);
@@ -910,6 +918,58 @@ class RestInvoiceController extends RestController {
 		}
 
 		return $payload;
+	}
+
+	/**
+	 * Reload an invoice with its relations, tolerating a row that is not there.
+	 *
+	 * `Model::fresh()` returns null when the row cannot be read back — most
+	 * often because the INSERT itself failed (a schema drift such as a missing
+	 * column on one multisite subsite makes every save fail). Passing that null
+	 * straight to {@see InvoiceShaper::shape()} turned a recoverable database
+	 * error into a PHP fatal:
+	 *
+	 *   InvoiceShaper::shape(): Argument #1 ($invoice) must be of type
+	 *   InvoiceModel, null given
+	 *
+	 * Falling back to the in-memory model keeps a successful save renderable
+	 * even if the re-read races, and lets the caller detect the genuine failure
+	 * (an unsaved model has no id) and answer with an error instead of a crash.
+	 *
+	 * @param InvoiceModel $invoice Invoice to reload.
+	 * @return InvoiceModel Reloaded invoice, or the in-memory model.
+	 */
+	private function reload_invoice( InvoiceModel $invoice ): InvoiceModel {
+		$fresh = $invoice->fresh( array( 'contact', 'sale_agent', 'proposal' ) );
+
+		return $fresh instanceof InvoiceModel ? $fresh : $invoice;
+	}
+
+	/**
+	 * Whether a model actually reached the database.
+	 *
+	 * A failed INSERT leaves the model without a primary key, which is the only
+	 * reliable signal available here: the Eloquent wrapper does not always throw
+	 * on a `wpdb` error, so `save()` can return with nothing written.
+	 *
+	 * @param InvoiceModel $invoice Invoice to check.
+	 * @return bool
+	 */
+	private function invoice_was_persisted( InvoiceModel $invoice ): bool {
+		return ! empty( $invoice->id );
+	}
+
+	/**
+	 * Error returned when an invoice could not be written.
+	 *
+	 * @return WP_Error
+	 */
+	private function invoice_save_failed_error(): WP_Error {
+		return new WP_Error(
+			'invoice_save_failed',
+			__( 'The invoice could not be saved. Please try again, or contact support if the problem persists.', 'doublescale' ),
+			array( 'status' => 500 )
+		);
 	}
 
 }

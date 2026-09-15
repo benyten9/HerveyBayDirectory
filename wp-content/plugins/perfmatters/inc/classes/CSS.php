@@ -65,6 +65,10 @@ class CSS
             && self::$url_type = self::get_url_type();
         self::$run['minify'] = !empty(apply_filters('perfmatters_minify_css', !empty(Config::$options['assets']['minify_css']))) && !Utilities::get_post_meta('perfmatters_exclude_minify_css');
 
+        //inline stylesheets filter (can run without RUCSS; old rucss-prefixed filter still supported)
+        self::$data['inline'] = apply_filters('perfmatters_inline_stylesheets', apply_filters('perfmatters_rucss_inline_stylesheets', array()));
+        self::$run['inline'] = !empty(self::$data['inline']);
+
         //pmcs css optimizations
         self::$run['snippets'] = !empty(self::$snippet_optimizations);
 
@@ -145,9 +149,6 @@ class CSS
             //delay stylesheets
             self::$data['rucss']['delay'] = apply_filters('perfmatters_rucss_delay_stylesheets', array());
 
-            //inline stylesheets
-            self::$data['rucss']['inline'] = apply_filters('perfmatters_rucss_inline_stylesheets', array());
-
             $used_css_string = '';
         }
 
@@ -199,6 +200,13 @@ class CSS
                 }
             }
 
+            //inline stylesheets (standalone when RUCSS is off; RUCSS exclusions handle this when on)
+            if(!empty(self::$run['inline']) && empty(self::$run['rucss']) && Utilities::match_in_array($stylesheet[0], self::$data['inline'])) {
+                if(self::inline_stylesheet($html, $stylesheet[0], $atts_array_new)) {
+                    continue;
+                }
+            }
+
             //unused css
             if(self::$run['rucss']) {
 
@@ -211,38 +219,34 @@ class CSS
 
                 //exclusion check
                 if(!$skip && !Utilities::match_in_array($stylesheet[0], self::$data['rucss']['exclusions']['stylesheet'])) {
-                
+
+                    //only delay/async/remove stylesheets that exist locally (same gate when generating or serving used CSS)
+                    $file = self::get_local_stylesheet_path($atts_array['href'] ?? '');
+                    $is_local = !empty($file) && file_exists($file);
+
+                    if(!$is_local) {
+                        $skip = true;
+                    }
                     //need to generate used css
-                    if(!$used_css_exists) {
+                    elseif(!$used_css_exists) {
 
-                        //get local stylesheet file path
-                        $file = self::get_local_stylesheet_path($atts_array['href']);
+                        //get used css from stylesheet
+                        $used_css = self::clean_stylesheet($atts_array['href'], @file_get_contents($file));
 
-                        //make sure local file exists
-                        if(file_exists($file)) {
+                        if($used_css !== false) {
 
-                            //get used css from stylesheet
-                            $used_css = self::clean_stylesheet($atts_array['href'], @file_get_contents($file));
-
-                            if($used_css !== false) {
-
-                                //wrap in media query if needed
-                                if(!empty($atts_array['media']) && $atts_array['media'] != 'all') {
-                                    $used_css = '@media ' . $atts_array['media'] . '{' . $used_css . '}';
-                                }
-
-                                //add used stylesheet css to total used
-                                $used_css_string.= $used_css;
+                            //wrap in media query if needed
+                            if(!empty($atts_array['media']) && $atts_array['media'] != 'all') {
+                                $used_css = '@media ' . $atts_array['media'] . '{' . $used_css . '}';
                             }
-                            else {
-                                //cannot parse: keep original link loading; skip delay/async/remove for this sheet
-                                $skip = true;
-                            }
+
+                            //add used stylesheet css to total used
+                            $used_css_string.= $used_css;
                         }
                         else {
+                            //cannot parse: keep original link loading; skip delay/async/remove for this sheet
                             $skip = true;
                         }
-                        
                     }
 
                     if(!$skip) {
@@ -268,29 +272,10 @@ class CSS
                 }
                 else {
 
-                    //inline fallback
-                    if(Utilities::match_in_array($stylesheet[0], self::$data['rucss']['inline'])) {
-
-                        //get local stylesheet file path
-                        $file = self::get_local_stylesheet_path($atts_array_new['href']);
-
-                        //make sure local file exists
-                        if(file_exists($file)) {
-
-                            //get used css from stylesheet
-                            $content = @file_get_contents($file);
-
-                            if($content) {
-
-                                //rewrite relative urls without using the parser
-                                $css = self::rewrite_relative_urls_inline($content, $atts_array_new['href']);
-
-                                //swap inline css in html
-                                $inline_style = '<style' . (!empty($atts_array_new['id']) ? ' id="' . $atts_array_new['id'] . '"' : '') . '>' . $css . '</style>';
-                                $html = str_replace($stylesheet[0], $inline_style, $html);
-
-                                continue;
-                            }
+                    //inline fallback (toggle blankets excluded sheets; filter only applies here so RUCSS still wins for non-excluded)
+                    if((!empty(Config::$options['assets']['rucss_inline_stylesheets']) && !$skip) || (!empty(self::$run['inline']) && Utilities::match_in_array($stylesheet[0], self::$data['inline']))) {
+                        if(self::inline_stylesheet($html, $stylesheet[0], $atts_array_new)) {
+                            continue;
                         }
                     }
                     //async fallback
@@ -569,28 +554,54 @@ class CSS
     //get local stylesheet file path from a stylesheet url
     public static function get_local_stylesheet_path($stylesheet_url) {
 
-        if(!empty($stylesheet_url)) {
+        if(empty($stylesheet_url)) {
+            return false;
+        }
 
-            //normalize protocol-relative urls so local URL matching works
+        //custom CDN/root URL via setting or filter (zone prefixes, path rewrites)
+        $custom_url = apply_filters('perfmatters_local_stylesheet_url', !empty(Config::$options['assets']['rucss_cdn_url']) ? Config::$options['assets']['rucss_cdn_url'] : '');
+
+        if(!empty($custom_url)) {
+
+            //normalize protocol-relative urls so custom URL matching works
             if(strpos($stylesheet_url, '//') === 0) {
                 $stylesheet_url = set_url_scheme($stylesheet_url);
             }
 
-            //get any custom set url
-            $custom_url = apply_filters('perfmatters_local_stylesheet_url', !empty(Config::$options['assets']['rucss_cdn_url']) ? Config::$options['assets']['rucss_cdn_url'] : '');
+            $url = str_ireplace(trailingslashit($custom_url), '', explode('?', $stylesheet_url)[0]);
 
-            //prep local url
-            $local_url = !empty($custom_url) ? trailingslashit($custom_url) : array(trailingslashit(home_url()), trailingslashit(site_url()));
-
-            //get local stylesheet path
-            $url = str_ireplace($local_url, '', explode('?', $stylesheet_url)[0]);
-
-            $file = Utilities::get_root_dir_path() . ltrim($url, '/');
-
-            return $file;
+            return Utilities::get_root_dir_path() . ltrim($url, '/');
         }
-        
-        return false;
+
+        //path-based resolution (same-path CDN host rewrites work without a custom CDN URL)
+        return Utilities::get_file_path($stylesheet_url);
+    }
+
+    //swap a stylesheet link tag with an inline style tag
+    private static function inline_stylesheet(&$html, $stylesheet, $atts_array)
+    {
+        //get local stylesheet file path
+        $file = self::get_local_stylesheet_path($atts_array['href'] ?? '');
+
+        //make sure local file exists
+        if(empty($file) || !file_exists($file)) {
+            return false;
+        }
+
+        $content = @file_get_contents($file);
+
+        if(empty($content)) {
+            return false;
+        }
+
+        //rewrite relative urls without using the parser
+        $css = self::rewrite_relative_urls_inline($content, $atts_array['href']);
+
+        //swap inline css in html
+        $inline_style = '<style' . (!empty($atts_array['id']) ? ' id="' . $atts_array['id'] . '"' : '') . '>' . $css . '</style>';
+        $html = str_replace($stylesheet, $inline_style, $html);
+
+        return true;
     }
 
     //remove unusde css from stylesheet

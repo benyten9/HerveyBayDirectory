@@ -56,7 +56,7 @@ class TasksTableStatusIdColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD COLUMN `status_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL AFTER `status`, ADD INDEX `idx_status_id` (`status_id`)"
+			"ALTER TABLE `{$table}` ADD COLUMN `status_id` BIGINT(20) UNSIGNED NULL DEFAULT NULL, ADD INDEX `idx_status_id` (`status_id`)"
 		);
 	}
 }

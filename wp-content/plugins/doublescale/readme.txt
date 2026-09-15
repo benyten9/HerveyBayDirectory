@@ -1,10 +1,10 @@
-=== DoubleScale | Self-Hosted CRM – Sales, Marketing, Booking, Helpdesk, Automation, MCP & More ===
+=== DoubleScale | All-in-One CRM – Sales, Multi-Channel Marketing, Booking, Helpdesk, Automation, MCP & More ===
 Contributors: samuelgallegos, vixgrowy
-Tags:  email marketing, sales pipeline, whatsapp crm, booking calendar, helpdesk
+Tags:  crm, email marketing, sales pipeline, booking calendar, helpdesk
 Requires at least: 5.8
-Tested up to: 7.1.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.24
+Stable tag: 1.3.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -275,6 +275,58 @@ Yes. Multiple users can work simultaneously, with role-based access, ownership-a
 Documentation and setup guides: [doublescale.io](https://doublescale.io). Community support via WordPress.org. Pro tiers include email and priority support.
 
 == Changelog ==
+
+= 1.3.30 = 12 Sep 2026
+- Preserve campaign sender settings and reusable templates when applying an email template
+- Keep failed-email retry actions visible across campaign analytics pages
+- Show historical campaign emails safely when their contact is no longer available
+- Schedule relative automation delays from the current elapsed time
+- Apply bulk contact actions to every contact matching the active filters
+- Sort contact tags and lists alphabetically and preserve Arabic text during CSV imports
+- Improve client portal style isolation and responsive layouts
+
+= 1.3.29 = 11 Sep 2026
+- Skip default email footer when body already contains an unsubscribe link
+
+= 1.3.28 = 10 Sep 2026
+- Allow CSV contact import without an email column
+- Keep large CSV imports from dying mid-file
+- Repair table columns that migrations marked as applied but never added
+- Stop invoice creation from fataling when a column is missing
+- Auto-create WordPress pages for DoubleScale shortcodes
+- Improve booking host availability when resolving calendars
+- Keep the return path when navigating away from an automation
+- Improve how custom field values show on the contact info card
+
+= 1.3.27 = 9 Sep 2026
+- Rename the plugin to All-in-One CRM with multi-channel marketing in the title
+- Show every supported form type even when the builder plugin is inactive
+- Add a Mobile app tab on Discover Pro, for Plus and Enterprise plans only
+- List Stripe, PayPal, Square, Mollie, Razorpay, and Authorize.Net on Discover Pro integrations
+- Update SMTP mailer documentation links
+
+= 1.3.26 = 9 Sep 2026
+- Detect WPForms Lite (`wpforms-lite/wpforms.php`) on the Forms type picker, not only WPForms Pro
+- Sync missing table columns from the current CREATE definitions so upgrades do not depend on chained ALTER migrations
+- Include proposal terms, sections, signatures, and related sales columns on the base tables
+- Return a proper error when a proposal cannot be saved instead of a fatal
+- Add Google/Outlook remote calendars for booking, including a loading state and clearer connection errors
+- Isolate booking data per multisite blog and provision host calendars on each site
+- Show Connect to remote calendars for network super admins on subsites
+- Stop deleting a contact from leaving orphaned bookings
+- Add a booking shortcode for embedding scheduling on the front end
+- Add contact merge with conflict resolution, and offer the existing contact when creating a duplicate
+- Email a configured address after an automatic contact merge
+- Support WhatsApp template headers, buttons, and interactive sub-types
+- Improve long text in admin tables and shared fetch-generation state in the UI
+- Fix Action Scheduler heartbeat updates when the task meta row is missing
+
+= 1.3.25 = 5 Sep 2026
+- Add a Coming Soon section on Discover Pro for Membership, LMS, and Community modules
+- Fix MCP task-type schema so clients keep the task tools (enum of stored keys, not labels)
+- Detect WPForms Lite correctly when registering form automation triggers
+- Log a warning when form field mapping produces no email so skipped contacts are easier to diagnose
+- Standardize casing in the translation template
 
 = 1.3.24 = 3 Sep 2026
 - Move invoices and payments out of Discover Pro; subscriptions are no longer listed as a Pro feature

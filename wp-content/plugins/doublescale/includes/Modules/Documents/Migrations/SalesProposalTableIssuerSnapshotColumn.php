@@ -35,6 +35,6 @@ class SalesProposalTableIssuerSnapshotColumn {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "ALTER TABLE `{$table}` ADD `issuer_snapshot` LONGTEXT NULL AFTER `signed_ip`" );
+		$wpdb->query( "ALTER TABLE `{$table}` ADD `issuer_snapshot` LONGTEXT NULL" );
 	}
 }

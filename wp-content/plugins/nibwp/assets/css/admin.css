@@ -293,9 +293,29 @@ body.nw-dark .nw-logo-icon img {
 .nw-rating-stars a:hover { transform: scale(1.15); }
 html.nw-dark .nw-rating-stars a, body.nw-dark .nw-rating-stars a { color: #3a404d; }
 
+/* Sits beside the logo, not at the foot of the sidebar: the version belongs
+   with the thing it is the version OF, and it is the first answer anyone needs
+   when reporting a problem. Centred against the logo rather than baseline-
+   aligned: the logo is an image, whose baseline is its bottom edge, which
+   would drop the version to the foot of a 48px mark instead of beside it. */
+.nw-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 .nw-sidebar__version {
-    text-align: right; font-size: 10.5px; color: var(--nw-text-muted-2);
-    margin-top: 8px; padding-right: 4px;
+    font-size: 10.5px;
+    line-height: 1;
+    /* Both tokens are redefined under the dark theme, so the tag follows it
+       without a second rule here. */
+    color: var(--nw-brand);
+    background: var(--nw-brand-soft);
+    border-radius: 999px;
+    padding: 3px 7px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
 /* ── Main Area ── */

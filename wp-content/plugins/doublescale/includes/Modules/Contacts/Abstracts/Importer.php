@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Settings\PhoneAsWhatsappSetting;
 use DoubleScale\Core\Utils\Utils;
+use DoubleScale\Core\Validators\PhoneValidator;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Contacts\Models\ListModel;
 use DoubleScale\Modules\Contacts\Models\TagModel;
@@ -163,6 +164,13 @@ abstract class Importer {
 	protected $phone_is_whatsapp = true;
 
 	/**
+	 * Reason the last import_contact() call returned false.
+	 *
+	 * @var string
+	 */
+	protected $last_failure_reason = '';
+
+	/**
 	 * Constructor
 	 *
 	 * @param array $args args
@@ -266,12 +274,28 @@ abstract class Importer {
 	 * @return bool|string True on success, 'skipped' if skipped, false on failure
 	 */
 	public function import_contact( $subscriber, $mapping ) {
-		try {
-			// Check if the contact already exists
-			$email = is_object( $subscriber ) ? $subscriber->{$mapping['email']} : $subscriber[ $mapping['email'] ];
+		$this->last_failure_reason = '';
 
-			// Validate email
-			if ( empty( $email ) || ! is_email( $email ) ) {
+		try {
+			$email          = $this->subscriber_value( $subscriber, $mapping['email'] ?? '' );
+			$phone          = $this->subscriber_value( $subscriber, $mapping['phone'] ?? '' );
+			$whatsapp_phone = $this->subscriber_value( $subscriber, $mapping['whatsapp_phone'] ?? '' );
+			$country        = $this->subscriber_value( $subscriber, $mapping['country'] ?? '' );
+
+			if ( is_string( $email ) ) {
+				$email = trim( $email );
+			} else {
+				$email = '';
+			}
+
+			// Invalid email skips this row only; never abort the file.
+			if ( '' !== $email && ! is_email( $email ) ) {
+				$this->last_failure_reason = 'invalid_email';
+				return false;
+			}
+
+			if ( ! ContactModel::has_identifier( $email, $phone, $whatsapp_phone ) ) {
+				$this->last_failure_reason = 'missing_identifier';
 				return false;
 			}
 
@@ -280,7 +304,14 @@ abstract class Importer {
 			$tags  = is_object( $subscriber ) ? $subscriber->tags ?? array() : $subscriber['tags'] ?? array();
 			$tags  = $tags ? explode( ',', $tags ) : array();
 
-			$contact  = ContactModel::where( 'email', $email )->first();
+			$contact  = ContactModel::find_by_identifiers(
+				array(
+					'email'          => $email,
+					'phone'          => $phone,
+					'whatsapp_phone' => $whatsapp_phone,
+					'country'        => $country,
+				)
+			);
 			$existing = $contact ? true : false;
 			if ( ! $contact ) {
 				$contact = new ContactModel();
@@ -296,12 +327,12 @@ abstract class Importer {
 
 				foreach ( $mapping as $key => $value ) {
 					if ( 'status' === $key ) {
-						$status                = is_object( $subscriber ) ? $subscriber->status : $subscriber['status'];
+						$status                = $this->subscriber_value( $subscriber, 'status' );
 						$contact->email_status = isset( $value[ $status ] ) ? $value[ $status ] : 'unverified';
 						continue;
 					}
 
-					$raw_value = is_object( $subscriber ) ? $subscriber->$value : $subscriber[ $value ];
+					$raw_value = $this->subscriber_value( $subscriber, $value );
 
 					if ( is_numeric( $key ) ) {
 						$custom_field_values[ (int) $key ] = $raw_value;
@@ -314,6 +345,8 @@ abstract class Importer {
 					$contact->email_status = $this->status;
 				}
 
+				$this->maybe_copy_phone_to_whatsapp( $contact );
+
 				$contact->save();
 
 				if ( ! empty( $custom_field_values ) && class_exists( 'DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel' ) ) {
@@ -325,7 +358,7 @@ abstract class Importer {
 					}
 				}
 
-				if ( ! $existing && $this->send_double_optin && 'unverified' === $contact->email_status ) {
+				if ( ! $existing && $this->send_double_optin && 'unverified' === $contact->email_status && ! empty( $contact->email ) ) {
 					$this->send_double_optin_email( $contact );
 				}
 
@@ -382,25 +415,75 @@ abstract class Importer {
 			}
 
 			return 'skipped';
-		} catch ( \Exception $e ) {
-			$error_message = __( 'Error importing contact', 'doublescale' ) . ': ' . $e->getMessage();
-			doublescale_get_logger()->error(
-				$error_message,
-				array(
-					'code'       => 'import_contact_error',
-					'subscriber' => $subscriber,
-					'mapping'    => $mapping,
-					'error'      => array(
-						'message' => $e->getMessage(),
-						'code'    => $e->getCode(),
-						'file'    => $e->getFile(),
-						'line'    => $e->getLine(),
-					),
-				)
-			);
+		} catch ( \Throwable $e ) {
+			$this->last_failure_reason = $e->getMessage();
+			$error_message             = __( 'Error importing contact', 'doublescale' ) . ': ' . $e->getMessage();
+			if ( function_exists( 'doublescale_get_logger' ) ) {
+				doublescale_get_logger()->error(
+					$error_message,
+					array(
+						'code'       => 'import_contact_error',
+						'subscriber' => $subscriber,
+						'mapping'    => $mapping,
+						'error'      => array(
+							'message' => $e->getMessage(),
+							'code'    => $e->getCode(),
+							'file'    => $e->getFile(),
+							'line'    => $e->getLine(),
+						),
+					)
+				);
+			}
 			// Don't return WP_Error here as it stops the import process
 			// Just log the error and continue with the next contact
 			return false;
+		}
+	}
+
+	/**
+	 * Read a mapped column from a CSV/API row without emitting notices.
+	 *
+	 * @param object|array $subscriber Row.
+	 * @param string       $column     Column / property name.
+	 * @return mixed
+	 */
+	protected function subscriber_value( $subscriber, $column ) {
+		if ( '' === $column || null === $column ) {
+			return '';
+		}
+
+		if ( is_object( $subscriber ) ) {
+			return $subscriber->{$column} ?? '';
+		}
+
+		if ( is_array( $subscriber ) ) {
+			return $subscriber[ $column ] ?? '';
+		}
+
+		return '';
+	}
+
+	/**
+	 * Copy phone onto WhatsApp when the import toggle is on and WhatsApp is empty.
+	 *
+	 * Invalid E.164 conversions are skipped so a national phone still imports.
+	 *
+	 * @param ContactModel $contact Contact being saved.
+	 */
+	protected function maybe_copy_phone_to_whatsapp( $contact ) {
+		if ( ! PhoneAsWhatsappSetting::is_enabled( $this->phone_is_whatsapp ) ) {
+			return;
+		}
+
+		$phone    = (string) ( $contact->phone ?? '' );
+		$whatsapp = (string) ( $contact->whatsapp_phone ?? '' );
+		if ( '' === $phone || '' !== $whatsapp ) {
+			return;
+		}
+
+		$converted = PhoneValidator::to_e164( $phone, (string) ( $contact->country ?? '' ) );
+		if ( null !== $converted ) {
+			$contact->whatsapp_phone = $converted;
 		}
 	}
 
@@ -669,7 +752,46 @@ abstract class Importer {
 	}
 
 	/**
+	 * Contacts processed in one HTTP request.
+	 *
+	 * Kept small so the REST handler always returns JSON before the web
+	 * server or PHP kills the request. The browser chains requests until
+	 * status is completed.
+	 *
+	 * @return int
+	 */
+	public function get_contacts_per_request() {
+		$limit = (int) apply_filters( 'doublescale_import_contacts_per_request', 50 );
+		return max( 1, $limit );
+	}
+
+	/**
+	 * Optional pause between HTTP batches. CSV defaults to 0 — a 1s sleep
+	 * per page of 20 rows is what timed out 1,500-row imports.
+	 *
+	 * @return int
+	 */
+	protected function get_batch_pause_microseconds() {
+		return max( 0, (int) apply_filters( 'doublescale_import_batch_pause_microseconds', 0 ) );
+	}
+
+	/**
+	 * @param object|array $subscriber Row.
+	 * @param array        $mapping    Field mapping.
+	 * @return array{email: string, reason: string}
+	 */
+	protected function describe_import_failure( $subscriber, $mapping ) {
+		$email = $this->subscriber_value( $subscriber, $mapping['email'] ?? 'email' );
+		return array(
+			'email'  => is_scalar( $email ) ? (string) $email : '',
+			'reason' => '' !== $this->last_failure_reason ? $this->last_failure_reason : 'invalid_or_duplicate',
+		);
+	}
+
+	/**
 	 * Import with offset
+	 *
+	 * One page of rows per HTTP request so the client always receives JSON.
 	 *
 	 * @param int      $total
 	 * @param int      $offset
@@ -681,44 +803,58 @@ abstract class Importer {
 		$imported = 0;
 		$skipped  = 0;
 		$failed   = 0;
+		$failures = array();
 
-		while ( $this->get_current_execution_time() < $this->max_execution_time && ! Utils::is_memory_limit_reached() ) {
-			// Usleep is used to prevent the server from crashing
-			usleep( 1000000 );
+		$pause = $this->get_batch_pause_microseconds();
+		if ( $pause > 0 ) {
+			usleep( $pause );
+		}
 
-			$subscribers = $get_subscribers_callback( $offset );
-			if ( empty( $subscribers ) ) {
+		$subscribers = $get_subscribers_callback( $offset );
+		if ( empty( $subscribers ) ) {
+			return array(
+				'offset'   => $offset,
+				'status'   => 'completed',
+				'total'    => $total,
+				'imported' => 0,
+				'skipped'  => 0,
+				'failed'   => 0,
+				'failures' => array(),
+			);
+		}
+
+		foreach ( $subscribers as $subscriber ) {
+			if ( Utils::is_memory_limit_reached() ) {
 				break;
 			}
 
-			foreach ( $subscribers as $subscriber ) {
-				$result = $this->import_contact( $subscriber, $mapping );
-				if ( false === $result ) {
-					++$failed;
-				} elseif ( 'skipped' === $result ) {
-					++$skipped;
-				} else {
-					++$imported;
+			$result = $this->import_contact( $subscriber, $mapping );
+			if ( false === $result ) {
+				++$failed;
+				if ( count( $failures ) < 10 ) {
+					$failures[] = $this->describe_import_failure( $subscriber, $mapping );
 				}
-				++$offset;
+			} elseif ( 'skipped' === $result ) {
+				++$skipped;
+			} else {
+				++$imported;
 			}
+			++$offset;
 
-			// Check if offset is greater than or equal to total
 			if ( $offset >= $total ) {
 				break;
 			}
 		}
 
-		$result = array(
+		return array(
 			'offset'   => $offset,
 			'status'   => $offset >= $total ? 'completed' : 'in_progress',
 			'total'    => $total,
 			'imported' => $imported,
 			'skipped'  => $skipped,
 			'failed'   => $failed,
+			'failures' => $failures,
 		);
-
-		return $result;
 	}
 
 	/**
@@ -731,57 +867,63 @@ abstract class Importer {
 	 * @return array
 	 */
 	public function import_with_cursor( $total, $offset, $get_subscribers_callback, $mapping ) {
-		$processed_in_session = 0;
-		$current_offset       = $offset;
-		$cursor               = $this->cursor; // Use the cursor from constructor
-		$imported             = 0;
-		$skipped              = 0;
-		$failed               = 0;
+		$current_offset = $offset;
+		$cursor         = $this->cursor;
+		$imported       = 0;
+		$skipped        = 0;
+		$failed         = 0;
+		$failures       = array();
 
-		while ( $this->get_current_execution_time() < $this->max_execution_time && ! Utils::is_memory_limit_reached() ) {
-			// Usleep is used to prevent the server from crashing
-			usleep( 1000000 );
-
-			$batch_result = $get_subscribers_callback( $cursor );
-			if ( empty( $batch_result['contacts'] ) ) {
-				break;
-			}
-
-			foreach ( $batch_result['contacts'] as $subscriber ) {
-				$result = $this->import_contact( $subscriber, $mapping );
-				if ( false === $result ) {
-					++$failed;
-				} elseif ( 'skipped' === $result ) {
-					++$skipped;
-				} else {
-					++$imported;
-				}
-				++$processed_in_session;
-				++$current_offset;
-			}
-
-			// Update cursor for next iteration
-			$cursor = $batch_result['next_cursor'] ?? null;
-
-			// Store cursor for next session (this would need to be persisted in real implementation)
-			$this->cursor = $cursor;
-
-			// Check if we have a next cursor or if we've processed everything
-			if ( empty( $cursor ) || $current_offset >= $total ) {
-				break;
-			}
+		$pause = $this->get_batch_pause_microseconds();
+		if ( $pause > 0 ) {
+			usleep( $pause );
 		}
 
-		$result = array(
+		$batch_result = $get_subscribers_callback( $cursor );
+		if ( empty( $batch_result['contacts'] ) ) {
+			return array(
+				'offset'   => $current_offset,
+				'cursor'   => null,
+				'status'   => 'completed',
+				'total'    => $total,
+				'imported' => 0,
+				'skipped'  => 0,
+				'failed'   => 0,
+				'failures' => array(),
+			);
+		}
+
+		foreach ( $batch_result['contacts'] as $subscriber ) {
+			if ( Utils::is_memory_limit_reached() ) {
+				break;
+			}
+
+			$result = $this->import_contact( $subscriber, $mapping );
+			if ( false === $result ) {
+				++$failed;
+				if ( count( $failures ) < 10 ) {
+					$failures[] = $this->describe_import_failure( $subscriber, $mapping );
+				}
+			} elseif ( 'skipped' === $result ) {
+				++$skipped;
+			} else {
+				++$imported;
+			}
+			++$current_offset;
+		}
+
+		$cursor       = $batch_result['next_cursor'] ?? null;
+		$this->cursor = $cursor;
+
+		return array(
 			'offset'   => $current_offset,
-			'cursor'   => $cursor, // Include cursor for next request
+			'cursor'   => $cursor,
 			'status'   => empty( $cursor ) || $current_offset >= $total ? 'completed' : 'in_progress',
 			'total'    => $total,
 			'imported' => $imported,
 			'skipped'  => $skipped,
 			'failed'   => $failed,
+			'failures' => $failures,
 		);
-
-		return $result;
 	}
 }

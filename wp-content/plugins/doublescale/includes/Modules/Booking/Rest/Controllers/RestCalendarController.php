@@ -30,6 +30,7 @@ use DoubleScale\Modules\Booking\Capabilities;
 use DoubleScale\Modules\Booking\Managers\IntegrationsManager;
 use DoubleScale\Modules\Booking\Models\UserModel;
 use DoubleScale\Modules\Booking\Helpers\IntegrationsHelper;
+use DoubleScale\Modules\Booking\Helpers\MultisiteScope;
 
 /**
  * Calendar Controller class
@@ -396,7 +397,16 @@ class RestCalendarController extends RestController {
 			}
 
 			if ( 'all' !== $user ) {
+				if ( ! MultisiteScope::is_member( (int) $user ) ) {
+					return new WP_Error(
+						'rest_calendar_error',
+						__( 'You do not have permission', 'doublescale' ),
+						array( 'status' => 403 )
+					);
+				}
 				$query->where( 'user_id', $user );
+			} else {
+				MultisiteScope::apply_user_id_scope( $query );
 			}
 
 			if ( 'all' !== $type ) {

@@ -37,11 +37,16 @@ final class Module extends AbstractModule {
 		return __( 'Sales', 'doublescale' );
 	}
 
+	/**
+	 * Describes what the module offers once enabled.
+	 *
+	 * Deliberately unconditional: `doublescale_sales_documents_ready()` tracks
+	 * whether this module is *active*, so gating the copy on it showed
+	 * "coming soon" to exactly the audience still deciding whether to switch
+	 * Sales on — advertising the feature set as unfinished on the Get Started
+	 * and Settings → Modules cards.
+	 */
 	public function description(): string {
-		if ( ! \doublescale_sales_documents_ready() ) {
-			return __( 'Sales tools for your team. Includes the sales pipeline; proposals and invoices are coming soon.', 'doublescale' );
-		}
-
 		return __( 'Sales workspace with pipelines, proposals, invoices, contracts, credit notes, taxes, subscriptions, and team settings.', 'doublescale' );
 	}
 

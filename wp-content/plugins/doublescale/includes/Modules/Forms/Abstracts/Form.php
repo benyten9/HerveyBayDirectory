@@ -221,6 +221,7 @@ abstract class Form {
 			$contact_fields   = $this->get_contact_data();
 			$contact_data     = $contact_fields['fields'];
 			$custom_fields    = $contact_fields['custom_fields'];
+			$this->log_empty_mapped_email( $contact_data, $data );
 			$lists            = $this->form_data->data['lists'] ?? array();
 			$tags             = $this->form_data->data['tags'] ?? array();
 			$update_existing  = $this->form_data->data['update_existing_contact'] ?? false;
@@ -338,6 +339,40 @@ abstract class Form {
 	 *
 	 * @return array
 	 */
+	/**
+	 * Log when mapping produced no email so skipped fields are visible.
+	 *
+	 * @param array<string,mixed> $contact_data Mapped contact fields.
+	 * @param array<string,mixed> $submission   Raw submission.
+	 * @param int|null            $automation_id Automation id when mapping ran from a workflow.
+	 * @param array<string,mixed>|null $mapped_fields Mapping used for this run.
+	 * @return void
+	 */
+	protected function log_empty_mapped_email( $contact_data, $submission, $automation_id = null, $mapped_fields = null ) {
+		$email = isset( $contact_data['email'] ) ? trim( (string) $contact_data['email'] ) : '';
+		if ( '' !== $email ) {
+			return;
+		}
+
+		$mapped = is_array( $mapped_fields ) ? $mapped_fields : array();
+		if ( empty( $mapped ) && $this->form_data && isset( $this->form_data->data['mapped_fields'] ) && is_array( $this->form_data->data['mapped_fields'] ) ) {
+			$mapped = $this->form_data->data['mapped_fields'];
+		}
+
+		doublescale_get_logger()->warning(
+			__( 'Form mapping produced no email; contact may not be created', 'doublescale' ),
+			array(
+				'code'           => 'form_mapping_empty_email',
+				'source'         => $this->slug,
+				'automation_id'  => $automation_id,
+				'mapped_fields'  => $mapped,
+				'contact_keys'   => array_keys( $contact_data ),
+				'answer_keys'    => array_keys( $submission['entry']['fields'] ?? array() ),
+				'question_keys'  => array_keys( $submission['fields'] ?? array() ),
+			)
+		);
+	}
+
 	public function get_contact_data() {
 		$mapped_fields = $this->form_data->data['mapped_fields'] ?? array();
 
@@ -587,6 +622,7 @@ abstract class Form {
 			$contact_fields         = $this->get_contact_fields( $mapped_fields );
 			$custom_fields          = $contact_fields['custom_fields'];
 			$contact_data           = $contact_fields['fields'];
+			$this->log_empty_mapped_email( $contact_data, $this->submission, $automation->id ?? null, $mapped_fields );
 			$contact_data['source'] = $this->slug;
 			$make_as_subscriber     = $automation->get_setting( 'mark_as_subscribed', false );
 			$update_blank_fields    = $automation->get_setting( 'update_blank_fields', false );

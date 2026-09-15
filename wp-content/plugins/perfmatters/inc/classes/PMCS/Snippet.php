@@ -32,7 +32,7 @@ class Snippet
 		if(empty($_POST['file_name'])) {
 
 			//get file count
-	        $file_count = count(glob(PMCS::get_storage_dir() . '/*.php'));
+	        $file_count = count(glob(PMCS::filesystem_path(PMCS::get_storage_dir()) . '/*.php'));
 	        if(!$file_count) {
 	            PMCS::build_snippet_config();
 	            $file_count = 1;
@@ -40,16 +40,22 @@ class Snippet
 
 	        //first four words max
 	        $file_title = $_POST['name'];
-	        $name_words = explode(' ', $file_title);
+	        $name_words = preg_split('/\s+/u', trim($file_title));
+	        if(!is_array($name_words)) {
+	            return PMCS::admin_notice('invalid_name', __('Invalid snippet name.', 'perfmatters'), 'error');
+	        }
 	        if(count($name_words) > 4) {
 	            $name_words = array_slice($name_words, 0, 4);
 	            $file_title = implode(' ', $name_words);
 	        }
 
-	        //get file name
-	        $file_title = sanitize_title($file_title, 'snippet');
+	        //filesystem-safe name, keep UTF-8 (same idea as media uploads)
+	        $file_title = sanitize_file_name(str_replace(' ', '-', $file_title));
+	        if($file_title === '' || $file_title === '.' || $file_title === '..') {
+	            $file_title = 'snippet';
+	        }
+
 	        $file_name = $file_count . '-' . $file_title . '.php';
-	        $file_name = sanitize_file_name($file_name);
 
 	        //file path
 	        $file = PMCS::get_storage_dir() . '/' . $file_name;
@@ -225,7 +231,7 @@ class Snippet
 
         	//delete cached files if needed
         	if(!empty($snippet['meta']['type']) && in_array($snippet['meta']['type'], ['js', 'css'])) {
-        		$cached_files = PMCS::get_storage_dir() . '/' . $snippet['meta']['type'] . '/' . str_replace('.php', '*', $file_name);
+        		$cached_files = PMCS::filesystem_path(PMCS::get_storage_dir()) . '/' . $snippet['meta']['type'] . '/' . str_replace('.php', '*', $file_name);
         		foreach(glob($cached_files) as $cached_file) {
 				    unlink($cached_file);
 				}

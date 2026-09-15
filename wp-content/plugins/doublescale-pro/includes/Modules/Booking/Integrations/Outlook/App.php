@@ -279,11 +279,7 @@ class App {
 		$existing_account = $this->integration->accounts->get_account( $account_id );
 		if ( ! empty( $existing_account ) ) {
 			echo \esc_html__( 'Error, This account is already connected!', 'doublescale' );
-			\wp_redirect(
-				\admin_url(
-					'admin.php?page=doublescale&path=booking/calendars'
-				)
-			);
+			\wp_redirect( OAuthConfig::booking_return_url( $host_id, 'outlook' ) );
 			exit;
 		}
 
@@ -296,13 +292,9 @@ class App {
 			)
 		);
 
-		// Redirect to settings page.
+		// Back to the connect page for this host, with Outlook still selected.
 		echo \esc_html__( 'Success, Account added!', 'doublescale' );
-		\wp_redirect(
-			\admin_url(
-				'admin.php?page=doublescale&path=booking/calendars'
-			)
-		);
+		\wp_redirect( OAuthConfig::booking_return_url( $host_id, 'outlook' ) );
 		exit;
 	}
 

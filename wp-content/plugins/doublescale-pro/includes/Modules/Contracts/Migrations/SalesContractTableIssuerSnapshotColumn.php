@@ -35,6 +35,6 @@ class SalesContractTableIssuerSnapshotColumn {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "ALTER TABLE `{$table}` ADD `issuer_snapshot` LONGTEXT NULL AFTER `viewed_at`" );
+		$wpdb->query( "ALTER TABLE `{$table}` ADD `issuer_snapshot` LONGTEXT NULL" );
 	}
 }

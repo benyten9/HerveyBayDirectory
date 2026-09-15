@@ -177,7 +177,7 @@ final class TaskAbilities {
 						'task_type'   => array(
 							'type'        => 'string',
 							'description' => 'What kind of task this is. Defaults to a to-do.',
-							'enum'        => TaskType::get_all(),
+							'enum'        => TaskType::all(),
 						),
 						'assigned_to' => array(
 							'type'        => 'integer',
@@ -316,7 +316,7 @@ final class TaskAbilities {
 							'task_type'   => array(
 								'type'        => 'string',
 								'description' => 'Task type applied to every matched contact (contact_ids or filter).',
-								'enum'        => TaskType::get_all(),
+								'enum'        => TaskType::all(),
 							),
 							'assigned_to' => array(
 								'type'        => 'integer',
@@ -677,7 +677,7 @@ final class TaskAbilities {
 					'priority'
 				),
 				AbilityInput::enum( $input['entity_type'] ?? null, array_keys( $types ), 'entity_type' ),
-				AbilityInput::enum( $input['task_type'] ?? null, TaskType::get_all(), 'task_type' ),
+				AbilityInput::enum( $input['task_type'] ?? null, TaskType::all(), 'task_type' ),
 				AbilityInput::id( $input['entity_id'] ?? null, 'entity_id' ),
 				AbilityInput::id( $input['assigned_to'] ?? null, 'assigned_to' ),
 			)

@@ -5,7 +5,7 @@ namespace DirectoristPricingPlan\App\Mail;
 defined( 'ABSPATH' ) || exit;
 
 use DirectoristPricingPlan\WpMVC\App;
-use DirectoristPricingPlan\WpMVC\View\View;
+use DirectoristPricingPlan\App\Utils\View;
 
 abstract class Mailer {
     /**

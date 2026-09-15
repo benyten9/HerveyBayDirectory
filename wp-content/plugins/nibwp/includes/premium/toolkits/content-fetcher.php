@@ -945,7 +945,7 @@ function nibwp_fetch_to_draft(array $input): array|WP_Error
     // Create the draft post.
     $post_id = wp_insert_post([
         'post_title' => sanitize_text_field($title),
-        'post_content' => wp_kses_post($body),
+        'post_content' => nibwp_wp_prepare_post_content($body),
         'post_status' => 'draft',
         'post_type' => $post_type,
     ], true);
@@ -996,7 +996,7 @@ function nibwp_fetch_to_draft(array $input): array|WP_Error
         if ($images_imported > 0) {
             wp_update_post([
                 'ID' => $post_id,
-                'post_content' => wp_kses_post($updated_body),
+                'post_content' => nibwp_wp_prepare_post_content($updated_body),
             ]);
         }
     }
@@ -1173,7 +1173,7 @@ function nibwp_fetch_bulk_import(array $input): array|WP_Error
 
         $post_id = wp_insert_post([
             'post_title' => $title,
-            'post_content' => $content,
+            'post_content' => nibwp_wp_prepare_post_content($content),
             'post_status' => $status,
             'post_type' => $post_type,
             'post_date' => $post_date,
@@ -1220,7 +1220,7 @@ function nibwp_fetch_bulk_import(array $input): array|WP_Error
             if ($updated_content !== $content) {
                 wp_update_post([
                     'ID' => $post_id,
-                    'post_content' => wp_kses_post($updated_content),
+                    'post_content' => nibwp_wp_prepare_post_content($updated_content),
                 ]);
             }
         }

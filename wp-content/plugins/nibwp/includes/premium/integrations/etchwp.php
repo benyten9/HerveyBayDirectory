@@ -484,7 +484,10 @@ function nibwp_etchwp_update_global_styles(array $input): array|WP_Error
 
     $result = wp_update_post([
         'ID' => $global_styles_id,
-        'post_content' => $encoded,
+        // wp_update_post() unslashes what it is given, which would strip the
+        // backslashes out of the JSON escapes and store an unparseable
+        // stylesheet.
+        'post_content' => wp_slash($encoded),
     ]);
 
     if (is_wp_error($result)) {

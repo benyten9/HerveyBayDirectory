@@ -136,22 +136,24 @@ class Utilities
 
     //get local file path from url
     public static function get_file_path(string $url) {
-        
-        //get image path
+
         $parsed_url = @parse_url($url);
         if(empty($parsed_url['path'])) {
             return false;
         }
 
-        //parse base path to strip
+        $path = $parsed_url['path'];
+
+        //strip subdirectory install prefix (e.g. /blog/)
         $base_path = parse_url(home_url('/'), PHP_URL_PATH);
-    
-        //make sure base_path is not empty and ends with a slash
-        $base_path = ($base_path && $base_path !== '/') ? rtrim($base_path, '/') . '/' : '/';
+        if(!empty($base_path) && $base_path !== '/') {
+            $base_path = rtrim($base_path, '/') . '/';
+            if(str_starts_with($path, $base_path)) {
+                $path = substr($path, strlen($base_path));
+            }
+        }
 
-        $file_path = Utilities::get_root_dir_path() . ltrim($parsed_url['path'], $base_path);
-
-        return $file_path;
+        return self::get_root_dir_path() . ltrim($path, '/');
     }
 
     //gets path to uploads directory, can pass in directory or file to add if needed
@@ -308,13 +310,13 @@ class Utilities
         }
     }
 
-    //?perfmattersoff request check
+    //?perfmattersoff / safe mode check
     public static function is_perfmatters_off(): bool {
         static $off = null;
         if($off !== null) {
             return $off;
         }
-        $off = isset($_GET['perfmattersoff']);
+        $off = isset($_GET['perfmattersoff']) || !empty(Config::$tools['safe_mode']);
         return $off;
     }
 }

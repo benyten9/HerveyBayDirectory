@@ -23,35 +23,54 @@ if (!defined('ABSPATH')) {
  */
 
 /**
- * Canonical ACSS tokens mirrored from references/acss-tokens.md.
+ * ACSS tokens the playbook may name, mirrored from references/acss-tokens.md.
  *
- * Names found in this list are always allowed. Names NOT in this list are
- * allowed only when they don't match the forbidden patterns (see below).
+ * Taken from a live Automatic.css 3.3.7 variables file, not from memory: the
+ * previous list named tokens ACSS 3 does not define (--surface-light,
+ * --text-muted, --radius-full, --content-padding, --leading-*) and gave
+ * neutral roles to tokens that are brand-tinted or meant for dark surfaces.
+ * Every one carried a fallback, so nothing failed and pages rendered wrong.
+ *
+ * This list keeps the documentation honest (tests/etchwp-docs-lint-check.php).
+ * What a payload may use is decided per site: see
+ * nibwp_etchwp_validate_site_tokens(), which checks against the tokens the
+ * site actually defines.
  */
 const NIBWP_ETCHWP_CANONICAL_TOKENS = [
     // Space
-    '--space-2xs', '--space-xs', '--space-s', '--space-m', '--space-l', '--space-xl',
-    '--section-space-m', '--section-space-l',
-    '--content-gap', '--card-gap',
+    '--space-xs', '--space-s', '--space-m', '--space-l', '--space-xl', '--space-xxl',
+    '--section-space-xs', '--section-space-s', '--section-space-m', '--section-space-l', '--section-space-xl', '--section-space-xxl',
+    '--gutter', '--section-gutter', '--grid-gap', '--content-gap', '--container-gap',
     // Layout
-    '--content-width', '--content-width-narrow', '--content-padding',
-    // Text
+    '--content-width', '--content-width-safe',
+    // Text size + rhythm
     '--text-xs', '--text-s', '--text-m', '--text-l', '--text-xl', '--text-xxl',
-    '--h2', '--h2-size', '--h3',
-    // Line height
-    '--leading-snug', '--leading-normal', '--leading-relaxed', '--heading-line-height',
+    '--h1', '--h2', '--h3', '--h4', '--h5', '--h6',
+    '--text-line-height', '--heading-line-height', '--heading-font-weight',
     // Radius
-    '--radius', '--radius-m', '--radius-l', '--radius-full',
-    // Surface
-    '--white', '--surface-dark', '--surface-light',
-    // Text color
-    '--heading-color', '--text-dark', '--text-muted', '--footer-text',
-    // Border
-    '--border-color-light', '--border-size',
-    // Brand
-    '--primary', '--primary-dark', '--secondary',
-    // Base ramp
-    '--base-ultra-light', '--base-light', '--base-medium', '--base-dark', '--base-ultra-dark',
+    '--radius', '--radius-xs', '--radius-s', '--radius-m', '--radius-l', '--radius-xl', '--radius-xxl', '--radius-circle', '--radius-none',
+    // Text color (dark-muted on light surfaces, light-muted on dark ones)
+    '--text-color', '--text-dark', '--text-dark-muted', '--text-light', '--text-light-muted', '--body-color', '--link-color', '--link-color-hover',
+    // Surfaces
+    '--white', '--black', '--body-bg-color',
+    '--bg-ultra-light', '--bg-light', '--bg-dark', '--bg-ultra-dark',
+    // Borders (dark on light surfaces, light on dark ones)
+    '--border-color-dark', '--border-color-light', '--border-size', '--border-style', '--border-width',
+    '--divider-color-dark', '--divider-color-light',
+    // Shadow, focus, motion
+    '--box-shadow-m', '--box-shadow-xl', '--box-shadow-1', '--box-shadow-2', '--box-shadow-3',
+    '--focus-color', '--focus-width', '--focus-offset',
+    '--transition', '--transition-duration', '--transition-timing',
+];
+
+/**
+ * Token families ACSS generates per color: `--primary`, `--primary-light`,
+ * `--primary-hover`, `--black-trans-20`, and so on. Real on every site that
+ * enables the color, so they are allowed by pattern rather than listed.
+ */
+const NIBWP_ETCHWP_CANONICAL_TOKEN_PATTERNS = [
+    '/^--(primary|secondary|tertiary|accent|base|neutral|success|warning|danger|info)(-(ultra-light|light|semi-light|semi-dark|dark|ultra-dark|hover))?(-trans-\d0)?$/',
+    '/^--(black|white)-trans-\d0$/',
 ];
 
 /**
@@ -208,6 +227,21 @@ function nibwp_etchwp_validate_payload(array $payload, array $ctx): array
     $acss_active  = array_key_exists('acss_active', $ctx) ? (bool) $ctx['acss_active'] : nibwp_etchwp_acss_active();
     $color_allow  = nibwp_etchwp_brand_color_allowlist();
 
+    // The tokens this site defines. Checked only when ACSS is on and its files
+    // could be read: an empty list means "cannot check", not "none exist".
+    $site_tokens = array_key_exists('site_tokens', $ctx)
+        ? (array) $ctx['site_tokens']
+        : ($acss_active && function_exists('nibwp_acss_site_tokens') ? nibwp_acss_site_tokens() : []);
+
+    // Custom properties the payload declares itself (in a style, or inline as
+    // a component prop hook) are real even though ACSS never heard of them.
+    $declared_props = [];
+    if ($site_tokens !== [] && preg_match_all('/(--[a-z0-9-]+)\s*:/i', (string) wp_json_encode($payload), $declared_matches)) {
+        foreach ($declared_matches[1] as $declared_name) {
+            $declared_props[strtolower($declared_name)] = true;
+        }
+    }
+
     // 0) Something to actually write.
     //
     // Every other rule here reads gutenbergBlock with `?? null` and stays
@@ -272,6 +306,19 @@ function nibwp_etchwp_validate_payload(array $payload, array $ctx): array
         }
     }
 
+    // 0c) Will Etch resolve it? Every rule above checks the payload against
+    //     our conventions; these check it against Etch, which is what decides
+    //     whether anything appears on the page at all.
+    $resolvable = nibwp_etchwp_validate_etch_resolvable($payload);
+    $failed = array_merge($failed, $resolvable['failed']);
+    $warnings = array_merge($warnings, $resolvable['warnings']);
+
+    // 0d) Will anything on the page actually be styled? Etch emits a style
+    //     only when a block references its id, so CSS can be written and
+    //     never rendered, and classes can exist with no CSS behind them.
+    $failed = array_merge($failed, nibwp_etchwp_validate_style_coverage($payload, $brand));
+    $failed = array_merge($failed, nibwp_etchwp_validate_element_classes($payload));
+
     // 1) __libraryMeta shape
     $manifest_issues = nibwp_etchwp_validate_manifest($payload);
     $failed = array_merge($failed, $manifest_issues['failed']);
@@ -324,6 +371,13 @@ function nibwp_etchwp_validate_payload(array $payload, array $ctx): array
 
         // Token rules
         $failed = array_merge($failed, nibwp_etchwp_validate_tokens($css, $path . '.css'));
+
+        // A name the site does not define renders only its fallback, and a real
+        // name can still be the wrong one for the surface it sits on.
+        if ($site_tokens !== []) {
+            $warnings = array_merge($warnings, nibwp_etchwp_validate_site_tokens($css, $path . '.css', $site_tokens, $declared_props));
+            $warnings = array_merge($warnings, nibwp_etchwp_warn_token_roles($css, $path . '.css', $site_tokens));
+        }
 
         // No clamp() on font-size
         $failed = array_merge($failed, nibwp_etchwp_validate_no_clamp_font_size($css, $path . '.css'));
@@ -554,6 +608,141 @@ function nibwp_etchwp_validate_bem(string $selector, string $brand): bool
 }
 
 /**
+ * Undefined names the playbook used to teach, with what this site calls them.
+ * Suggestions are only offered when the site actually defines them.
+ */
+const NIBWP_ETCHWP_TOKEN_RENAMES = [
+    '--surface-light'    => ['--neutral-ultra-light', '--white'],
+    '--surface-dark'     => ['--bg-dark', '--neutral-ultra-dark'],
+    '--text-muted'       => ['--text-dark-muted', '--text-light-muted'],
+    '--heading-color'    => ['--text-dark'],
+    '--footer-text'      => ['--text-light-muted'],
+    '--radius-full'      => ['--radius-circle'],
+    '--content-padding'  => ['--gutter', '--section-gutter'],
+    '--leading-snug'     => ['--heading-line-height'],
+    '--leading-normal'   => ['--text-line-height'],
+    '--leading-relaxed'  => ['--text-line-height'],
+    '--card-gap'         => ['--grid-gap', '--content-gap'],
+    '--section-padding-y'=> ['--section-space-m'],
+    '--base-medium'      => ['--neutral-semi-dark', '--text-dark-muted'],
+    '--action'           => ['--primary', '--focus-color'],
+    '--action-hover'     => ['--primary-hover'],
+];
+
+/**
+ * Flag var() names this site does not define.
+ *
+ * A warning, not a failure. A brand value the design system has no token for
+ * is legitimately written as var(--name, #hex) so it can be defined later, and
+ * failing it would spend one of the agent's three validation attempts on
+ * something that renders exactly as intended.
+ *
+ * Every token carries a fallback, so an undefined one never errors in the
+ * browser: it quietly renders the fallback, and a page that validated comes
+ * out in colours and spacing nobody chose. A customer's cards got light-blue
+ * backgrounds and no visible borders that way. The site's own ACSS file is the
+ * list, so this holds for whichever ACSS version the site runs.
+ *
+ * @param array<string,string> $site_tokens name => value
+ * @param array<string,bool>   $declared    custom properties the payload declares itself
+ * @return array<int,array{id:string,msg:string,path:string}>
+ */
+function nibwp_etchwp_validate_site_tokens(string $css, string $path, array $site_tokens, array $declared): array
+{
+    $issues = [];
+    if ($css === '' || !preg_match_all('/var\(\s*(--[a-z0-9-]+)/i', $css, $matches)) {
+        return $issues;
+    }
+
+    foreach (array_unique(array_map('strtolower', $matches[1])) as $name) {
+        if (isset($site_tokens[$name]) || isset($declared[$name])
+            || str_starts_with($name, '--wp--') || str_starts_with($name, '--bo-') || str_starts_with($name, '--etch-')) {
+            continue;
+        }
+
+        $issues[] = [
+            'id'   => 'token_not_on_site',
+            'msg'  => sprintf(
+                '%s is not defined by Automatic.css on this site, so the page renders only its fallback. Use a token this site defines instead: %s.',
+                $name,
+                implode(', ', nibwp_etchwp_nearest_tokens($name, $site_tokens))
+            ),
+            'path' => $path,
+        ];
+    }
+
+    return $issues;
+}
+
+/**
+ * The tokens this site defines that most likely mean what $name was reaching for.
+ *
+ * @param array<string,string> $site_tokens
+ * @return array<int,string>
+ */
+function nibwp_etchwp_nearest_tokens(string $name, array $site_tokens, int $limit = 3): array
+{
+    $known = array_values(array_filter(
+        NIBWP_ETCHWP_TOKEN_RENAMES[$name] ?? [],
+        static fn(string $candidate): bool => isset($site_tokens[$candidate])
+    ));
+    if ($known !== []) {
+        return $known;
+    }
+
+    // ponytail: edit distance with a bonus for the same role word ("-muted",
+    // "-light"); good enough to point at the right family, not a thesaurus.
+    $suffix = (string) strrchr($name, '-');
+    $scores = [];
+    foreach ($site_tokens as $candidate => $value) {
+        // Colour channels (--primary-h: 195) and generated variants are not
+        // something anyone should type into a stylesheet.
+        if (preg_match('/^\d+(\.\d+)?%?$/', trim((string) $value)) || preg_match('/-(hex|hsl|rgb)$|-trans-\d0$/', $candidate)) {
+            continue;
+        }
+        $score = levenshtein($name, $candidate);
+        if ($suffix !== '' && str_ends_with($candidate, $suffix)) {
+            $score -= 4;
+        }
+        $scores[$candidate] = $score;
+    }
+    asort($scores);
+
+    return array_slice(array_keys($scores), 0, $limit);
+}
+
+/**
+ * Warn when a real token is used for the wrong kind of surface.
+ *
+ * On ACSS 3 --border-color-light is white at 20%: right on a dark section,
+ * invisible on a white card. Whether a given card is dark cannot be known from
+ * CSS alone, so this is a warning with the site's actual value in it.
+ *
+ * @param array<string,string> $site_tokens
+ * @return array<int,array{id:string,msg:string,path:string}>
+ */
+function nibwp_etchwp_warn_token_roles(string $css, string $path, array $site_tokens): array
+{
+    if (!preg_match('/\b(?:border|outline)[a-z-]*\s*:[^;]*var\(\s*--border-color-light\b/i', $css)) {
+        return [];
+    }
+
+    $value = strtolower((string) ($site_tokens['--border-color-light'] ?? ''));
+    if (!str_contains($value, 'white') && !preg_match('/255\s*,\s*255\s*,\s*255/', $value)) {
+        return [];
+    }
+
+    return [[
+        'id'   => 'border_token_for_dark_surfaces',
+        'msg'  => sprintf(
+            'On this site --border-color-light is %s: a light border meant for dark backgrounds. On a light surface it is invisible; use --border-color-dark there.',
+            $value
+        ),
+        'path' => $path,
+    ]];
+}
+
+/**
  * Token validation. Extracts every `var(--name, fallback)` reference and rejects
  * forbidden token names (Tailwind ramps + display aliases + numeric blocklist).
  *
@@ -765,7 +954,7 @@ function nibwp_etchwp_walk_for_wp_html($node, bool &$found): void
 
 /**
  * Form-shortcode requirement: if the source HTML contained <form>, the output
- * tree MUST include at least one etch/shortcode or core/shortcode block.
+ * tree MUST include at least one core/shortcode block.
  *
  * @return array<int,array{id:string,msg:string,path:string}>
  */
@@ -778,7 +967,7 @@ function nibwp_etchwp_validate_form_shortcode(array $payload): array
     }
     return [[
         'id'   => 'missing_form_shortcode',
-        'msg'  => 'Source HTML contained <form> but the output has no etch/shortcode (or wp:shortcode) block. Detect the installed form plugin via nibwp/forms-manage and wrap its shortcode. See checklists/form.md.',
+        'msg'  => 'Source HTML contained <form> but the output has no core/shortcode block. Detect the installed form plugin via nibwp/forms-manage and wrap its shortcode in a core/shortcode block (Etch registers no shortcode block of its own). See checklists/form.md.',
         'path' => 'gutenbergBlock',
     ]];
 }
@@ -789,7 +978,10 @@ function nibwp_etchwp_walk_for_shortcode($node, bool &$found): void
         return;
     }
     $name = (string) ($node['blockName'] ?? '');
-    if ($name === 'etch/shortcode' || $name === 'core/shortcode') {
+    // Only core/shortcode. Etch registers no shortcode block, so an
+    // etch/shortcode here would satisfy this rule with a block that renders
+    // as nothing — the failure this rule exists to prevent.
+    if ($name === 'core/shortcode') {
         $found = true;
         return;
     }
@@ -922,6 +1114,11 @@ function nibwp_etchwp_validate_hardcoded_color(string $css, string $path, array 
         }
         // Strip every var(...) call so we only look at residual literals.
         $residual = trim(nibwp_etchwp_strip_var_calls($value));
+        $residual = trim((string) preg_replace_callback(
+            '/\b(?:rgba?|hsla?)\s*\([^()]*\)/i',
+            static fn (array $c): string => nibwp_etchwp_is_translucent_neutral($c[0]) ? '' : $c[0],
+            $residual
+        ));
         if ($residual === '') {
             continue; // Pure var() — fine.
         }
@@ -1133,6 +1330,14 @@ function nibwp_etchwp_fix_hint_for(array $item): string
             return 'Delete the <link rel="stylesheet"> / @import. Inline the rules into the payload `styles` dict.';
         case 'missing_brand_prefix':
             return 'Rename the class to start with the brand prefix (e.g. `etched-cta__title`). Utility hooks like is-active/has-error are exempt.';
+        case 'element_without_class':
+            return 'Add a BEM class to every element ({brand}-{component}__{element}) and a matching style referenced from attrs.styles. SVG primitives inside an icon are exempt.';
+        case 'styles_missing':
+            return 'Write the rules into payload.styles and reference each id from the element it styles via attrs.styles. A class alone renders nothing.';
+        case 'style_unreferenced':
+            return 'Add the style id to attrs.styles on the element it styles, or delete the style. Etch renders only what a block asks for.';
+        case 'style_reference_dangling':
+            return 'Define the style in payload.styles under that id, or remove the reference from attrs.styles.';
         case 'missing_style_hoist':
             return 'Add a hidden wp:etch/element with attrs.attributes.hidden=true and attrs.styles=["<class>-style"] so Etch enqueues the CSS for classes used in wp:html.';
         case 'invented_token':
@@ -1146,18 +1351,526 @@ function nibwp_etchwp_fix_hint_for(array $item): string
         case 'libmeta_slug_mismatch':
             return 'Set __libraryMeta.slug = sanitize_title(__libraryMeta.name).';
         case 'missing_form_shortcode':
-            return 'Call nibwp/forms-manage action=list_plugins, ask the user which form plugin, emit an etch/shortcode block wrapping the chosen plugin shortcode.';
+            return 'Call nibwp/forms-manage action=list_plugins, ask the user which form plugin, emit a core/shortcode block wrapping the chosen plugin shortcode.';
         case 'acss_absent_tokens_used':
             return 'ACSS not active on this site. Choose: (a) install Automatic.css, (b) replace `var(--token, X)` with the literal X everywhere, or (c) use a non-ACSS brand stylesheet.';
         case 'component_undefined_property':
-            return 'Either add the referenced property to the component\'s `properties` array (with name + type + default), OR delete the {props.X} reference from the block tree.';
+            return 'Either add the property to the component\'s `properties` (with a `key` equal to X, a `type` object and a default), OR delete the {props.X} reference from the block tree.';
         case 'component_instance_unknown_id':
-            return 'Either define the component in payload.components with this `componentId`, OR change the etch/component block to reference an already-defined componentId.';
+            return 'Define the component in payload.components under this key, OR set attrs.ref to the id of a component defined there (or of an existing wp_block post).';
+        case 'token_not_on_site':
+            return 'Swap the token for one this site defines (the message lists the closest). load-skill-playbook returns the full list as site_tokens.';
+        case 'svg_markup_ignored':
+            return 'Rebuild the icon as etch/element tag "svg" with etch/element path/circle/rect children, or set attrs.attributes.src to an uploaded SVG attachment ID.';
+        case 'slot_name_missing':
+            return 'Rename slotName to name on both etch/slot-placeholder and etch/slot-content, with the same value.';
+        case 'condition_unreadable':
+            return 'Replace attrs.conditions with attrs.condition {leftHand, operator, rightHand} and add attrs.conditionString.';
+        case 'component_empty':
+            return 'Put the component\'s block tree under `blocks` - the key Etch imports components from.';
         case 'component_instance_missing_required_prop':
-            return 'Set the missing property on the instance\'s attrs.props payload, OR declare a default on the component\'s properties[].default field.';
+            return 'Set the missing property in the instance\'s attrs.attributes, OR declare a default on the component\'s properties[].default field.';
         default:
             return 'See msg for details.';
     }
+}
+
+/**
+ * The blocks Etch actually registers.
+ *
+ * Verified against a running Etch 1.6.5 registry, not documentation. Used only
+ * when the live registry cannot be read (dry-run on a host where Etch is not
+ * loaded); when Etch IS loaded its own registry wins, so a future release that
+ * adds or renames a block needs no change here.
+ */
+const NIBWP_ETCHWP_KNOWN_BLOCKS = [
+    'etch/component',
+    'etch/condition',
+    'etch/dynamic-element',
+    'etch/dynamic-image',
+    'etch/element',
+    'etch/loop',
+    'etch/raw-html',
+    'etch/slot-content',
+    'etch/slot-placeholder',
+    'etch/svg',
+    'etch/text',
+];
+
+/**
+ * Every `etch/*` block name this site can actually render.
+ *
+ * @return array<int,string>
+ */
+function nibwp_etchwp_renderable_blocks(): array
+{
+    if (class_exists('WP_Block_Type_Registry')) {
+        $names = array_keys(WP_Block_Type_Registry::get_instance()->get_all_registered());
+        $etch  = array_values(array_filter($names, static fn(string $n): bool => str_starts_with($n, 'etch/')));
+        if ($etch !== []) {
+            return $etch;
+        }
+    }
+
+    return NIBWP_ETCHWP_KNOWN_BLOCKS;
+}
+
+/**
+ * Walk every block node in a payload tree, passing each to $fn.
+ */
+function nibwp_etchwp_walk_block_nodes($node, callable $fn): void
+{
+    if (!is_array($node)) {
+        return;
+    }
+
+    if (isset($node['blockName'])) {
+        $fn($node);
+    }
+
+    foreach (['innerBlocks', 'inner_blocks'] as $key) {
+        foreach ((array) ($node[$key] ?? []) as $child) {
+            nibwp_etchwp_walk_block_nodes($child, $fn);
+        }
+    }
+
+    // A bare list of blocks rather than one block with children.
+    if (!isset($node['blockName'])) {
+        foreach ($node as $child) {
+            if (is_array($child)) {
+                nibwp_etchwp_walk_block_nodes($child, $fn);
+            }
+        }
+    }
+}
+
+/**
+ * Will Etch actually resolve what this payload describes?
+ *
+ * Every other rule in this file checks the payload against our own conventions
+ * — BEM, tokens, manifest shape — and a payload can satisfy all of them while
+ * Etch renders nothing at all from it. That gap is not theoretical: a customer
+ * shipped a page of `etch/component` blocks carrying `componentId`, this
+ * validator returned passed:true, the persister reported success, and the
+ * section came out empty, because `etch/component` declares exactly two
+ * attributes — `ref` (a wp_block post id) and `attributes` — and returns an
+ * empty string when `ref` is null.
+ *
+ * So these rules check the payload against ETCH, not against us:
+ *
+ *   - a block name Etch does not register renders as nothing;
+ *   - an `etch/component` that resolves to no component renders as nothing;
+ *   - a `<style>` tag inside raw HTML is stripped by wp_kses and its CSS is
+ *     left behind as visible body text.
+ *
+ * The rule these encode: never return passed:true for a payload whose visible
+ * output would be empty or broken.
+ *
+ * @return array{failed:array<int,array{id:string,msg:string,path:string}>,warnings:array<int,array{id:string,msg:string,path:string}>}
+ */
+function nibwp_etchwp_validate_etch_resolvable(array $payload): array
+{
+    $failed   = [];
+    $warnings = [];
+
+    $tree = $payload['gutenbergBlock'] ?? null;
+    if (!is_array($tree) || $tree === []) {
+        return ['failed' => $failed, 'warnings' => $warnings];
+    }
+
+    $renderable = nibwp_etchwp_renderable_blocks();
+    $components = (array) ($payload['components'] ?? []);
+    $seen_bad   = [];
+
+    // Component trees render too: a dead block or ref inside one is as blank
+    // as one on the page.
+    $trees = [$tree];
+    foreach ($components as $key => $def) {
+        foreach (nibwp_etchwp_component_blocks($def, (string) $key) as $block) {
+            $trees[] = $block;
+        }
+    }
+
+    // Can this install resolve a ref? Only when Etch is loaded here; a dry run
+    // elsewhere must not fail a ref it simply cannot see.
+    $can_check_refs = function_exists('get_post') && function_exists('did_action') && did_action('init');
+
+    $check = static function (array $node) use (
+        &$failed,
+        &$warnings,
+        &$seen_bad,
+        $renderable,
+        $components,
+        $can_check_refs
+    ): void {
+        $name  = (string) ($node['blockName'] ?? '');
+        $attrs = (array) ($node['attrs'] ?? []);
+
+        // 1) A block Etch does not register renders as nothing at all.
+        if (str_starts_with($name, 'etch/') && !in_array($name, $renderable, true) && !isset($seen_bad[$name])) {
+            $seen_bad[$name] = true;
+            $hint = $name === 'etch/shortcode'
+                ? ' Etch has no shortcode block — use core/shortcode, which Etch renders and its builder accepts.'
+                : '';
+            $failed[] = [
+                'id'   => 'block_unknown_to_etch',
+                'msg'  => sprintf(
+                    'Block "%s" is not registered by Etch on this site, so WordPress renders it as nothing and the page section comes out empty. Etch registers: %s.%s',
+                    $name,
+                    implode(', ', $renderable),
+                    $hint
+                ),
+                'path' => 'gutenbergBlock',
+            ];
+        }
+
+        if ($name !== 'etch/component') {
+            // 2a) etch/svg renders an uploaded SVG named by attributes.src and
+            //     nothing else. Markup handed to it is dropped and Etch draws
+            //     its placeholder logo instead: four different icons came out
+            //     as four identical logos on a customer's page.
+            if ($name === 'etch/svg' && trim((string) ($attrs['attributes']['src'] ?? '')) === '') {
+                $failed[] = [
+                    'id'   => 'svg_markup_ignored',
+                    'msg'  => 'etch/svg only renders an uploaded SVG named by attrs.attributes.src (an attachment ID); inline markup is ignored and Etch draws its placeholder logo. For an inline icon use an etch/element with tag "svg" whose innerBlocks are etch/element tags path, circle, rect, line, polyline, polygon or g carrying their attributes.',
+                    'path' => 'gutenbergBlock',
+                ];
+            }
+
+            // 2b) Slots are matched by attrs.name. Without it the placeholder
+            //     returns an empty string and the slot content disappears.
+            if (($name === 'etch/slot-placeholder' || $name === 'etch/slot-content') && trim((string) ($attrs['name'] ?? '')) === '') {
+                $failed[] = [
+                    'id'   => 'slot_name_missing',
+                    'msg'  => sprintf(
+                        '%s has no attrs.name%s, so Etch cannot match the slot and renders nothing for it. Set attrs.name to the slot name, the same on the placeholder and the content.',
+                        $name,
+                        isset($attrs['slotName']) ? ' (it has slotName, which Etch does not read)' : ''
+                    ),
+                    'path' => 'gutenbergBlock',
+                ];
+            }
+
+            // 2c) Etch reads a condition object (and its string form), not a
+            //     list of conditions.
+            if ($name === 'etch/condition' && !is_array($attrs['condition'] ?? null) && trim((string) ($attrs['conditionString'] ?? '')) === '') {
+                $failed[] = [
+                    'id'   => 'condition_unreadable',
+                    'msg'  => sprintf(
+                        'etch/condition has no attrs.condition%s, so Etch cannot evaluate it. Use attrs.condition {leftHand, operator, rightHand} with attrs.conditionString, e.g. {"condition":{"leftHand":"props.showCta","operator":"isTruthy","rightHand":null},"conditionString":"props.showCta"}.',
+                        isset($attrs['conditions']) ? ' (it has a conditions array, which Etch does not read)' : ''
+                    ),
+                    'path' => 'gutenbergBlock',
+                ];
+            }
+
+            // 2) wp_kses strips <style> from raw HTML and leaves the CSS behind
+            //    as visible text on the page.
+            if ($name === 'etch/raw-html' || $name === 'core/html') {
+                $html = (string) ($attrs['content'] ?? '') . (string) ($node['innerHTML'] ?? '');
+                if (stripos($html, '<style') !== false) {
+                    $failed[] = [
+                        'id'   => 'style_tag_in_html',
+                        'msg'  => sprintf(
+                            'A <style> tag inside %s is removed by wp_kses before the page renders, and its CSS is left on the page as visible text. Move the rules into payload.styles, which the persister writes to Etch\'s own stylesheet.',
+                            $name
+                        ),
+                        'path' => 'gutenbergBlock',
+                    ];
+                }
+            }
+
+            return;
+        }
+
+        // 3) An etch/component has to resolve to something. Etch reads `ref`
+        //    (a wp_block post id) and nothing else. One naming a component
+        //    defined in this payload - by `ref` or by our `componentId` - is
+        //    resolvable because the persister mints the wp_block and rewrites
+        //    the instance to it before writing.
+        $ref = $attrs['ref'] ?? null;
+        $cid = (string) ($attrs['componentId'] ?? '');
+
+        if (nibwp_etchwp_local_component_key($attrs, $components) !== '') {
+            return;
+        }
+
+        if (is_numeric($ref) && (int) $ref > 0) {
+            if ($can_check_refs) {
+                $post = get_post((int) $ref);
+                if (!$post || $post->post_type !== 'wp_block') {
+                    $failed[] = [
+                        'id'   => 'component_ref_dead',
+                        'msg'  => sprintf(
+                            'etch/component references ref %d, which is neither a component defined in payload.components nor a wp_block component post on this site, so Etch renders nothing for it. Set ref to the id of a component defined in payload.components, or to an existing component post.',
+                            (int) $ref
+                        ),
+                        'path' => 'gutenbergBlock',
+                    ];
+                }
+            }
+
+            return;
+        }
+
+        // An undefined componentId is left to component_instance_unknown_id,
+        // so the caller gets one error for the mistake rather than two.
+        if ($cid === '') {
+            $failed[] = [
+                'id'   => 'component_unresolvable',
+                'msg'  => 'An etch/component block carries neither a `ref` nor a `componentId`. Etch resolves components by `ref` and renders an empty string without one, so this block would leave a blank space on the page. Set attrs.ref to the id of a component defined in payload.components, or to an existing wp_block component post.',
+                'path' => 'gutenbergBlock',
+            ];
+        }
+    };
+
+    foreach ($trees as $subtree) {
+        nibwp_etchwp_walk_block_nodes($subtree, $check);
+    }
+
+    return ['failed' => $failed, 'warnings' => $warnings];
+}
+
+/**
+ * SVG primitives. These are drawing instructions inside an icon, not elements
+ * anyone styles individually, and a real conversion is full of them.
+ *
+ * @var array<int,string>
+ */
+const NIBWP_ETCHWP_SVG_PRIMITIVES = [
+    'path', 'circle', 'rect', 'ellipse', 'line', 'polyline', 'polygon',
+    'g', 'defs', 'use', 'symbol', 'marker', 'pattern', 'mask', 'clippath',
+    'lineargradient', 'radialgradient', 'stop', 'filter', 'tspan', 'textpath',
+    'title', 'desc', 'animate', 'animatetransform', 'foreignobject',
+];
+
+/**
+ * Every element the payload owns has to be addressable.
+ *
+ * The playbook has always called this non-negotiable — "Every element MUST have
+ * a BEM class" — and nothing enforced it. So a payload of bare semantic tags
+ * passed with no failures and no warnings, which is exactly what a customer
+ * got: they asked for a hero with Etch and ACSS, received a correct tree of
+ * `section > div > h1 > a` carrying nothing but `aria-label` and `href`, and
+ * every element in it rendered unstyled because there was nothing to style it
+ * BY. The same request with a reference image produced a fully classed and
+ * styled tree, so the difference never looked like a rule that could be
+ * enforced — it looked like luck.
+ *
+ * An element is addressable if it carries a class, or if it references a style
+ * id directly. Anything else has no way to be styled and no way to be targeted
+ * later, and the page it belongs to can only ever be rebuilt, not edited.
+ *
+ * @return array<int,array{id:string,msg:string,path:string}>
+ */
+function nibwp_etchwp_validate_element_classes(array $payload): array
+{
+    $tree = $payload['gutenbergBlock'] ?? null;
+    if (!is_array($tree) || $tree === []) {
+        return [];
+    }
+
+    $trees = [$tree];
+    foreach ((array) ($payload['components'] ?? []) as $key => $component) {
+        foreach (nibwp_etchwp_component_blocks($component, (string) $key) as $block) {
+            $trees[] = $block;
+        }
+    }
+
+    $bare  = [];
+    $total = 0;
+
+    foreach ($trees as $subtree) {
+        nibwp_etchwp_walk_block_nodes($subtree, static function (array $node) use (&$bare, &$total): void {
+            if ((string) ($node['blockName'] ?? '') !== 'etch/element') {
+                return; // etch/text carries content, not presentation.
+            }
+
+            $attrs = (array) ($node['attrs'] ?? []);
+            $tag   = strtolower(trim((string) ($attrs['tag'] ?? '')));
+
+            if ($tag === '' || in_array($tag, NIBWP_ETCHWP_SVG_PRIMITIVES, true)) {
+                return;
+            }
+
+            // A direct style reference is addressing by another name.
+            if (!empty($attrs['styles']) || !empty($attrs['metadata']['etchData']['styles'])) {
+                return;
+            }
+
+            if (trim((string) ($attrs['attributes']['class'] ?? '')) !== '') {
+                return;
+            }
+
+            $total++;
+            if (count($bare) < 6 && !in_array($tag, $bare, true)) {
+                $bare[] = $tag;
+            }
+        });
+    }
+
+    if ($total === 0) {
+        return [];
+    }
+
+    return [[
+        'id'   => 'element_without_class',
+        'msg'  => sprintf(
+            /* translators: 1: number of elements, 2: comma-separated tag names */
+            _n(
+                '%1$d element has no class and references no style (%2$s), so nothing can style it and nothing can target it later. Give every element a BEM class — {brand}-{component}__{element} — and a style that references it. A tree of bare semantic tags renders completely unstyled.',
+                '%1$d elements have no class and reference no style (%2$s), so nothing can style them and nothing can target them later. Give every element a BEM class — {brand}-{component}__{element} — and a style that references it. A tree of bare semantic tags renders completely unstyled.',
+                $total,
+                'nibwp'
+            ),
+            $total,
+            implode(', ', array_map(static fn(string $t): string => '<' . $t . '>', $bare))
+        ),
+        'path' => 'gutenbergBlock',
+    ]];
+}
+
+/**
+ * Styles Etch will never emit, and elements it will never style.
+ *
+ * Etch does not render a stylesheet for the classes on a page. It renders the
+ * styles a BLOCK ASKED FOR: `StylesRegister::register_block_styles()` takes the
+ * ids in `attrs.styles`, and only those reach `wp_head`. A class attribute on
+ * its own emits nothing.
+ *
+ * That makes three payloads look finished and render bare, and until now all
+ * three passed validation clean:
+ *
+ *   - no styles at all, on a tree full of BEM classes. A customer asked for a
+ *     hero built with Etch and ACSS, got the section, and every element in it
+ *     was unstyled.
+ *   - styles written but never referenced. The CSS lands in the `etch_styles`
+ *     option, Etch is never told any block needs it, and nothing is emitted.
+ *   - a block referencing an id the payload never defines. There is nothing to
+ *     emit for it.
+ *
+ * Component trees count as part of the page: a style used only inside a
+ * component is referenced, and reporting it as dead would be wrong.
+ *
+ * @return array<int,array{id:string,msg:string,path:string}>
+ */
+function nibwp_etchwp_validate_style_coverage(array $payload, string $brand): array
+{
+    $tree = $payload['gutenbergBlock'] ?? null;
+    if (!is_array($tree) || $tree === []) {
+        return [];
+    }
+
+    // Etch ships these itself; a block may reference them without the payload
+    // defining them.
+    $scaffold = ['etch-section-style', 'etch-container-style', 'etch-flex-div-style', 'etch-iframe-style', 'etch-global-variable-style'];
+
+    // What the payload defines, under the id the persister will actually write.
+    $defined = [];
+    foreach ((array) ($payload['styles'] ?? []) as $key => $def) {
+        $normalized = nibwp_etchwp_normalize_style((string) $key, $def);
+        if ($normalized !== null) {
+            $defined[$normalized['id']] = (string) $key;
+        }
+    }
+
+    // What the blocks ask for — across the page tree and every component tree,
+    // because a component is part of what renders.
+    $referenced = [];
+    $classes    = [];
+    $trees      = [$tree];
+    foreach ((array) ($payload['components'] ?? []) as $key => $component) {
+        foreach (nibwp_etchwp_component_blocks($component, (string) $key) as $block) {
+            $trees[] = $block;
+        }
+    }
+
+    foreach ($trees as $subtree) {
+        nibwp_etchwp_walk_block_nodes($subtree, static function (array $node) use (&$referenced, &$classes): void {
+            $attrs = (array) ($node['attrs'] ?? []);
+
+            foreach ((array) ($attrs['styles'] ?? []) as $sid) {
+                if (is_string($sid) && $sid !== '') {
+                    $referenced[$sid] = true;
+                }
+            }
+            $meta_styles = $attrs['metadata']['etchData']['styles'] ?? null;
+            foreach ((array) $meta_styles as $sid) {
+                if (is_string($sid) && $sid !== '') {
+                    $referenced[$sid] = true;
+                }
+            }
+
+            $class = (string) ($attrs['attributes']['class'] ?? '');
+            foreach (preg_split('/\s+/', trim($class)) ?: [] as $one) {
+                if ($one !== '') {
+                    $classes[] = $one;
+                }
+            }
+        });
+    }
+
+    $issues = [];
+
+    // 1) Nothing to style anything with.
+    //
+    // Only when the tree carries classes this payload is responsible for. A
+    // build made entirely of framework utility classes is styled by the
+    // framework's own stylesheet and defines nothing here, which is legitimate.
+    if ($defined === [] && $referenced === []) {
+        $owned = array_values(array_filter($classes, static function (string $class) use ($brand): bool {
+            if ($brand !== '' && str_starts_with($class, $brand . '-')) {
+                return true;
+            }
+
+            // BEM element and modifier markers never come from a utility
+            // framework, whatever the brand is called.
+            return str_contains($class, '__') || str_contains($class, '--');
+        }));
+
+        if ($owned !== []) {
+            $issues[] = [
+                'id'   => 'styles_missing',
+                'msg'  => sprintf(
+                    'The tree carries classes this payload has to style (%s) but payload.styles is empty, so the page renders with no CSS for them. Etch emits a style only when a block references its id, so add the rules to payload.styles and list the id in that element\'s attrs.styles.',
+                    implode(', ', array_slice(array_unique($owned), 0, 4))
+                ),
+                'path' => 'styles',
+            ];
+        }
+    }
+
+    // 2) Written, and never asked for. The persister stores it in etch_styles
+    //    and Etch renders nothing, so the element it was meant for is bare.
+    foreach ($defined as $id => $key) {
+        if (!isset($referenced[$id])) {
+            $issues[] = [
+                'id'   => 'style_unreferenced',
+                'msg'  => sprintf(
+                    'Style `%1$s` (id `%2$s`) is defined but no block references it. Etch only emits a style a block asked for, so this CSS is stored and never rendered. Add "%2$s" to attrs.styles on the element it styles.',
+                    $key,
+                    $id
+                ),
+                'path' => 'styles.' . $key,
+            ];
+        }
+    }
+
+    // 3) Asked for, and never written.
+    foreach (array_keys($referenced) as $id) {
+        if (!isset($defined[$id]) && !in_array($id, $scaffold, true)) {
+            $issues[] = [
+                'id'   => 'style_reference_dangling',
+                'msg'  => sprintf(
+                    'A block references style id `%s`, which payload.styles does not define, so Etch has nothing to emit for it and the element renders unstyled. Define it, or drop the reference.',
+                    $id
+                ),
+                'path' => 'gutenbergBlock',
+            ];
+        }
+    }
+
+    return $issues;
 }
 
 /**
@@ -1167,7 +1880,7 @@ function nibwp_etchwp_fix_hint_for(array $item): string
  *   - Every etch/component instance must reference a componentId that exists
  *     in payload.components.
  *   - Every {props.NAME} reference inside the component definition tree must
- *     match a declared properties[i].name on that component.
+ *     match a declared property key on that component (Etch binds by key).
  *
  * @return array<int,array{id:string,msg:string,path:string}>
  */
@@ -1176,58 +1889,69 @@ function nibwp_etchwp_validate_component_refs(array $payload): array
     $issues = [];
     $components = (array) ($payload['components'] ?? []);
 
-    // Build name → properties[] map per component.
-    $defined_props = [];
+    // Every {props.X} inside a component must name a declared property key -
+    // Etch binds props by key, so a binding by name renders nothing.
     foreach ($components as $cid => $cdef) {
         if (!is_array($cdef)) {
             continue;
         }
-        $names = [];
-        foreach ((array) ($cdef['properties'] ?? []) as $p) {
-            if (is_array($p) && !empty($p['name'])) {
-                $names[] = (string) $p['name'];
-            }
-        }
-        $defined_props[(string) $cid] = $names;
+        $keys   = array_values(array_filter(array_map('nibwp_etchwp_property_key', (array) ($cdef['properties'] ?? [])), 'strlen'));
+        $blocks = nibwp_etchwp_component_blocks($cdef, (string) $cid);
 
-        // Walk component definition tree — any {props.X} where X not in $names is invalid.
-        $tree_string = wp_json_encode($cdef['gutenbergBlock'] ?? null);
+        if ($blocks === []) {
+            $issues[] = [
+                'id'   => 'component_empty',
+                'msg'  => sprintf('Component "%s" has no blocks, so every instance of it renders nothing. Put its block tree under components.%s.blocks.', $cid, $cid),
+                'path' => sprintf('components.%s.blocks', $cid),
+            ];
+            continue;
+        }
+
+        $tree_string = wp_json_encode($blocks);
         if (is_string($tree_string) && preg_match_all('/\{props\.([a-z0-9_]+)\}/i', $tree_string, $m)) {
             foreach (array_unique($m[1]) as $referenced) {
-                if (!in_array($referenced, $names, true)) {
+                if (!in_array($referenced, $keys, true)) {
                     $issues[] = [
                         'id'   => 'component_undefined_property',
-                        'msg'  => sprintf('Component "%s" references {props.%s} but no property with name "%s" is declared in properties[]. Declared: [%s].', $cid, $referenced, $referenced, implode(', ', $names) ?: '(none)'),
-                        'path' => sprintf('components.%s.gutenbergBlock', $cid),
+                        'msg'  => sprintf('Component "%s" references {props.%s} but no property with key "%s" is declared in properties[]. Declared keys: [%s].', $cid, $referenced, $referenced, implode(', ', $keys) ?: '(none)'),
+                        'path' => sprintf('components.%s.blocks', $cid),
                     ];
                 }
             }
         }
     }
 
-    // Walk block tree — every etch/component instance must reference a defined componentId.
+    // Every instance - on the page or nested in a component - must resolve:
+    // to a component defined here, or by ref to a post already on the site,
+    // which the resolvability gate checks.
     $instances = [];
-    nibwp_etchwp_walk_for_component_instances($payload['gutenbergBlock'] ?? null, $instances);
+    $trees     = [$payload['gutenbergBlock'] ?? null];
+    foreach ($components as $cid => $cdef) {
+        foreach (nibwp_etchwp_component_blocks($cdef, (string) $cid) as $block) {
+            $trees[] = $block;
+        }
+    }
+    foreach ($trees as $tree) {
+        nibwp_etchwp_walk_for_component_instances($tree, $instances);
+    }
+
     foreach ($instances as $inst) {
-        $cid = (string) $inst['componentId'];
-        if ($cid === '') {
-            continue;
-        }
-        if (!array_key_exists($cid, $defined_props)) {
-            $issues[] = [
-                'id'   => 'component_instance_unknown_id',
-                'msg'  => sprintf('etch/component instance references componentId "%s" but it is not defined in payload.components.', $cid),
-                'path' => 'gutenbergBlock',
-            ];
-            continue;
-        }
-        // Required-property check — properties with required=true (and no default) must be set on the instance.
-        $instance_props = is_array($inst['props']) ? $inst['props'] : [];
-        foreach ((array) ($components[$cid]['properties'] ?? []) as $p) {
-            if (!is_array($p)) {
-                continue;
+        $local = nibwp_etchwp_local_component_key($inst['attrs'], $components);
+        if ($local === '') {
+            if ($inst['componentId'] !== '') {
+                $issues[] = [
+                    'id'   => 'component_instance_unknown_id',
+                    'msg'  => sprintf('etch/component instance references componentId "%s" but it is not defined in payload.components.', $inst['componentId']),
+                    'path' => 'gutenbergBlock',
+                ];
             }
-            $name = (string) ($p['name'] ?? '');
+            continue;
+        }
+
+        // Required-property check — properties with required=true (and no default) must be set on the instance.
+        $instance_props = (array) ($inst['attrs']['attributes'] ?? []) + (is_array($inst['props']) ? $inst['props'] : []);
+        foreach ((array) ($components[$local]['properties'] ?? []) as $p) {
+            $name = nibwp_etchwp_property_key($p);
             if ($name === '') {
                 continue;
             }
@@ -1236,7 +1960,7 @@ function nibwp_etchwp_validate_component_refs(array $payload): array
             if ($required && !$has_default && !array_key_exists($name, $instance_props)) {
                 $issues[] = [
                     'id'   => 'component_instance_missing_required_prop',
-                    'msg'  => sprintf('etch/component instance of "%s" is missing required property "%s" (no default declared).', $cid, $name),
+                    'msg'  => sprintf('etch/component instance of "%s" is missing required property "%s" (no default declared).', $local, $name),
                     'path' => 'gutenbergBlock',
                 ];
             }
@@ -1262,11 +1986,131 @@ function nibwp_etchwp_walk_for_component_instances($node, array &$out): void
         $out[] = [
             'componentId' => (string) ($attrs['componentId'] ?? ''),
             'props'       => $attrs['props'] ?? null,
+            'attrs'       => $attrs,
         ];
     }
     foreach ((array) ($node['innerBlocks'] ?? []) as $child) {
         nibwp_etchwp_walk_for_component_instances($child, $out);
     }
+}
+
+/**
+ * A component's top-level blocks, in whichever shape the payload carries them.
+ *
+ * Etch's own format is `blocks`, a list: it is what Etch's import reads and
+ * what json-schema.md teaches. An older example used a single `gutenbergBlock`,
+ * sometimes wrapped in an etch/component naming the component itself. Every
+ * rule and the persister read components through here, because reading only
+ * `gutenbergBlock` reported every component-only style as unreferenced and
+ * saved the component as an empty post that rendered nothing.
+ *
+ * @param mixed $def
+ * @return array<int,array<string,mixed>>
+ */
+function nibwp_etchwp_component_blocks($def, string $cid = ''): array
+{
+    if (!is_array($def)) {
+        return [];
+    }
+
+    if (isset($def['blocks']) && is_array($def['blocks'])) {
+        return isset($def['blocks']['blockName'])
+            ? [$def['blocks']]
+            : array_values(array_filter($def['blocks'], 'is_array'));
+    }
+
+    $tree = $def['gutenbergBlock'] ?? null;
+    if (!is_array($tree) || $tree === []) {
+        return [];
+    }
+
+    // A root instance of the component itself is a wrapper, not content: saved
+    // as-is the component would contain itself.
+    $attrs = (array) ($tree['attrs'] ?? []);
+    if (($tree['blockName'] ?? '') === 'etch/component' && empty($attrs['ref'])
+        && in_array((string) ($attrs['componentId'] ?? ''), ['', $cid], true)) {
+        return array_values(array_filter((array) ($tree['innerBlocks'] ?? []), 'is_array'));
+    }
+
+    return [$tree];
+}
+
+/**
+ * The payload.components key an etch/component instance points at, or ''.
+ *
+ * `componentId` names an entry by its key. `ref` is Etch's own addressing and
+ * on a site means a wp_block post id, but inside a payload json-schema.md has
+ * it name the component's `id` - the way Etch's exports are written. A ref
+ * naming a component the payload defines is local: the persister mints the
+ * post and rewrites the ref to it. The payload that defines it is the one that
+ * means it, so local wins over a post that happens to share the number.
+ */
+function nibwp_etchwp_local_component_key(array $attrs, array $components): string
+{
+    $cid = (string) ($attrs['componentId'] ?? '');
+    if ($cid !== '' && array_key_exists($cid, $components)) {
+        return $cid;
+    }
+
+    $ref = $attrs['ref'] ?? null;
+    if (!is_string($ref) && !is_int($ref)) {
+        return '';
+    }
+    $ref = (string) $ref;
+    if ($ref === '') {
+        return '';
+    }
+    if (array_key_exists($ref, $components)) {
+        return $ref;
+    }
+    foreach ($components as $key => $def) {
+        if (is_array($def) && isset($def['id']) && (is_string($def['id']) || is_int($def['id'])) && (string) $def['id'] === $ref) {
+            return (string) $key;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * The key a property is bound by. Etch maps props by `key` and drops a
+ * property without one; the skill's older shorthand only had `name`, which the
+ * persister promotes to `key`.
+ */
+function nibwp_etchwp_property_key($property): string
+{
+    if (!is_array($property)) {
+        return '';
+    }
+
+    return (string) ($property['key'] ?? '') !== '' ? (string) $property['key'] : (string) ($property['name'] ?? '');
+}
+
+/**
+ * Black or white at partial opacity: a shadow, a scrim, a hairline. No brand
+ * owns that colour, so demanding var(--primary, rgba(0,0,0,.08)) for it was
+ * noise that cost agents their validation attempts.
+ */
+function nibwp_etchwp_is_translucent_neutral(string $literal): bool
+{
+    $literal = strtolower($literal);
+    if (!preg_match_all('/\d*\.?\d+%?/', $literal, $m) || count($m[0]) !== 4) {
+        return false;
+    }
+
+    [$a, $b, $c, $alpha] = $m[0];
+    $alpha = str_ends_with($alpha, '%') ? (float) $alpha / 100 : (float) $alpha;
+    if ($alpha >= 1) {
+        return false;
+    }
+
+    if (str_starts_with($literal, 'hsl')) {
+        return in_array((float) $c, [0.0, 100.0], true); // lightness 0% or 100%
+    }
+
+    $rgb = [(float) $a, (float) $b, (float) $c];
+
+    return $rgb === [0.0, 0.0, 0.0] || $rgb === [255.0, 255.0, 255.0];
 }
 
 /**
@@ -1309,10 +2153,20 @@ function nibwp_etchwp_normalize_style(string $key, $def): ?array
         $style['css'] = trim($def['css']);
         $style['type'] = (string) ($def['type'] ?? nibwp_etchwp_style_type($selector));
 
+        // When the entry names its own selector, the KEY is an id — that is
+        // Etch's own shape, and its ids are opaque tokens like `p5icdeh`.
+        // Deriving an id from the selector there renamed the style out from
+        // under the blocks: the persister wrote `cc-hero-style` while every
+        // attrs.styles still said `p5icdeh`, Etch found nothing under that id,
+        // and the section rendered with no CSS. Only a key that is itself a CSS
+        // selector (`.hero`, `#id`, a bare tag) gets an id derived for it.
+        $names_own_selector = isset($def['selector']) && (string) $def['selector'] !== '';
+        $key_is_a_selector  = (bool) preg_match('/^[.#:\[]/', trim($key)) || !$names_own_selector;
+
         return [
-            'id' => $looks_like_selector($key) ? nibwp_etchwp_style_id($selector) : $key,
+            'id' => $key_is_a_selector ? nibwp_etchwp_style_id($selector) : $key,
             'style' => $style,
-            'legacy_key' => $looks_like_selector($key) ? $key : null,
+            'legacy_key' => $key_is_a_selector && $looks_like_selector($key) ? $key : null,
         ];
     }
 

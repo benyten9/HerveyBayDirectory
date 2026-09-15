@@ -81,6 +81,13 @@ function nibwp_verify_upload_token(string $token): array|WP_Error
         'max_bytes' => $decoded['max_bytes'] ?? null,
         'overwrite' => $decoded['overwrite'] ?? null,
         'create_directories' => $decoded['create_directories'] ?? null,
+        // Links minted before Media Library registration existed carry none of
+        // these keys. Reading them as "off" keeps such a link doing exactly what
+        // it was issued to do, and only a signed `true` can turn registration on.
+        'register_attachment' => ($decoded['register_attachment'] ?? false) === true,
+        'alt_text' => is_string($decoded['alt_text'] ?? null) ? $decoded['alt_text'] : '',
+        'title' => is_string($decoded['title'] ?? null) ? $decoded['title'] : '',
+        'user_id' => is_int($decoded['user_id'] ?? null) ? $decoded['user_id'] : 0,
     ];
 
     $expires_at = (int) $payload['expires_at'];
@@ -142,7 +149,7 @@ function nibwp_handle_signed_upload(WP_REST_Request $request)
 
     clearstatcache(clear_realpath_cache: true, filename: $destination['path']);
 
-    return [
+    $response = [
         'path' => $destination['path'],
         'bytes_written' => $result['bytes_written'],
         'created' => $result['created'],
@@ -151,6 +158,32 @@ function nibwp_handle_signed_upload(WP_REST_Request $request)
         'source' => $source['source'],
         'filename' => $source['filename'],
     ];
+
+    if ($payload['register_attachment'] !== true) {
+        return $response;
+    }
+
+    $attachment = nibwp_register_uploaded_attachment($destination['path'], $payload, $result['created']);
+    if (is_wp_error($attachment)) {
+        // The bytes are on disk and may have taken a long upload to get there,
+        // so the file stays. What must not happen is a success response that
+        // reads as "it is in the Media Library" when it is not — the caller
+        // needs the path to retry registration or clean up.
+        return new WP_Error(
+            'attachment_registration_failed',
+            sprintf(
+                'The file was uploaded to %s but could not be registered in the Media Library: %s',
+                $destination['path'],
+                $attachment->get_error_message(),
+            ),
+            ['status' => 500, 'path' => $destination['path']],
+        );
+    }
+
+    $response['attachment_id'] = $attachment['attachment_id'];
+    $response['url'] = $attachment['url'];
+
+    return $response;
 }
 
 /**
@@ -177,6 +210,17 @@ function nibwp_prepare_upload_destination(array $payload): array|WP_Error
         }
     }
 
+    // Checked again here, not only when the link was minted: the link is a
+    // bearer credential that outlives that request, and its creator can lose
+    // upload_files in the meantime. Refusing before any directory is created or
+    // byte is written means a rejected registration leaves nothing behind.
+    if ($payload['register_attachment'] ?? false) {
+        $attachment_error = nibwp_check_upload_attachment_target($resolved, (int) ($payload['user_id'] ?? 0));
+        if (is_wp_error($attachment_error)) {
+            return $attachment_error;
+        }
+    }
+
     $parent_dir = dirname($resolved);
     $directories_created = [];
     if (!is_dir($parent_dir)) {
@@ -198,6 +242,149 @@ function nibwp_prepare_upload_destination(array $payload): array|WP_Error
         'max_bytes' => max(1, (int) $payload['max_bytes']),
         'overwrite' => $payload['overwrite'] === true,
         'directories_created' => $directories_created,
+    ];
+}
+
+/**
+ * Path of a resolved file relative to the uploads base directory, or null when
+ * the file is not inside it.
+ *
+ * Both the real and the configured spelling of the base are tried. nibwp_resolve_path()
+ * realpath()s the destination's folder only once that folder exists, so with a
+ * symlinked uploads directory an existing month folder reads as the link target
+ * while one about to be created still reads through the link.
+ */
+function nibwp_upload_relative_path(string $resolved): ?string
+{
+    // $create_dir false: asking where uploads live must not create this
+    // month's folder as a side effect.
+    $uploads = wp_upload_dir(null, false);
+    $basedir = is_array($uploads) && is_string($uploads['basedir'] ?? null) ? $uploads['basedir'] : '';
+    if ($basedir === '') {
+        return null;
+    }
+
+    $real_basedir = realpath($basedir);
+    $path = nibwp_path_normalize($resolved);
+    foreach (array_unique([$real_basedir === false ? $basedir : $real_basedir, $basedir]) as $base) {
+        $base = rtrim(nibwp_path_normalize($base), '/\\');
+        // The file's folder must be the base or below it. Testing the folder
+        // rather than the file keeps the base directory itself from counting.
+        if ($base === '' || !nibwp_path_within(dirname($path), $base)) {
+            continue;
+        }
+
+        return ltrim(str_replace('\\', '/', substr($path, strlen($base))), '/');
+    }
+
+    return null;
+}
+
+/**
+ * Can this resolved path become a Media Library attachment owned by this user?
+ *
+ * Shared by link creation and the upload itself, so the two can never disagree
+ * about what the library accepts.
+ */
+function nibwp_check_upload_attachment_target(string $resolved, int $user_id): bool|WP_Error
+{
+    // An attachment's URL is its path under the uploads base URL. A file
+    // anywhere else would get a URL that serves nothing — or a different file.
+    if (nibwp_upload_relative_path($resolved) === null) {
+        $uploads = wp_upload_dir(null, false);
+
+        return new WP_Error('attachment_outside_uploads', sprintf(
+            'Only files inside the uploads directory (%s) can be registered in the Media Library. Choose a path inside it, or upload without register_attachment.',
+            is_array($uploads) && is_string($uploads['basedir'] ?? null) ? $uploads['basedir'] : '',
+        ), ['status' => 400]);
+    }
+
+    if ($user_id <= 0 || !user_can($user_id, 'upload_files')) {
+        return new WP_Error(
+            'attachment_upload_forbidden',
+            'Registering a file in the Media Library requires the upload_files capability.',
+            ['status' => 403],
+        );
+    }
+
+    // The upload request itself carries no logged-in user, so the allow-list
+    // must be the link creator's: get_allowed_mime_types() narrows per user
+    // (whether HTML is allowed depends on unfiltered_html).
+    $filetype = wp_check_filetype(basename($resolved), get_allowed_mime_types($user_id));
+    if (empty($filetype['ext']) || empty($filetype['type'])) {
+        return new WP_Error('attachment_type_not_allowed', sprintf(
+            'This file type is not allowed in the Media Library: %s',
+            basename($resolved),
+        ), ['status' => 400]);
+    }
+
+    return true;
+}
+
+/**
+ * Register an uploaded file as a Media Library attachment.
+ *
+ * @param array<string, mixed> $payload Verified upload token payload.
+ * @return array{attachment_id: int, url: string}|WP_Error
+ */
+function nibwp_register_uploaded_attachment(string $path, array $payload, bool $created): array|WP_Error
+{
+    $relative = nibwp_upload_relative_path($path);
+    if ($relative === null) {
+        return new WP_Error('attachment_outside_uploads', 'The file is not inside the uploads directory.');
+    }
+
+    $user_id = (int) $payload['user_id'];
+    $filetype = wp_check_filetype(basename($path), get_allowed_mime_types($user_id));
+    if (empty($filetype['type'])) {
+        return new WP_Error('attachment_type_not_allowed', 'This file type is not allowed in the Media Library.');
+    }
+
+    $uploads = wp_upload_dir(null, false);
+    $guid = rtrim((string) $uploads['baseurl'], '/') . '/' . $relative;
+    $title = (string) $payload['title'];
+
+    // REST requests do not load the admin include that generates thumbnails.
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+
+    // Overwriting a file that is already in the library must not add a second
+    // row for the same bytes: deleting either row would delete the file out
+    // from under the other. A freshly created file cannot have a row yet, so
+    // the lookup is skipped then.
+    $attachment_id = $created ? 0 : attachment_url_to_postid($guid);
+    if ($attachment_id > 0) {
+        if ($title !== '') {
+            wp_update_post(['ID' => $attachment_id, 'post_title' => $title]);
+        }
+    } else {
+        $attachment_id = wp_insert_attachment([
+            'post_mime_type' => $filetype['type'],
+            'post_title' => $title !== '' ? $title : sanitize_text_field(pathinfo($path, PATHINFO_FILENAME)),
+            'post_content' => '',
+            'post_status' => 'inherit',
+            // The upload request is anonymous; the attachment belongs to whoever minted the link.
+            'post_author' => $user_id,
+            'guid' => $guid,
+        ], $path, 0, true);
+        if (is_wp_error($attachment_id)) {
+            return $attachment_id;
+        }
+        if (!is_int($attachment_id) || $attachment_id <= 0) {
+            return new WP_Error('attachment_insert_failed', 'WordPress did not return an attachment ID.');
+        }
+    }
+
+    wp_update_attachment_metadata($attachment_id, wp_generate_attachment_metadata($attachment_id, $path));
+
+    if ($payload['alt_text'] !== '') {
+        update_post_meta($attachment_id, '_wp_attachment_image_alt', $payload['alt_text']);
+    }
+
+    $url = wp_get_attachment_url($attachment_id);
+
+    return [
+        'attachment_id' => $attachment_id,
+        'url' => is_string($url) && $url !== '' ? $url : $guid,
     ];
 }
 

@@ -1,3 +1,4 @@
+/*! vanilla-lazyload | (C) Andrea Verlicchi | MIT https://github.com/verlok/vanilla-lazyload/blob/master/LICENSE */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :

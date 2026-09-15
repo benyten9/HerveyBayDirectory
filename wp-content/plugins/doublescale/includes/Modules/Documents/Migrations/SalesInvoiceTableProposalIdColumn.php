@@ -37,7 +37,7 @@ class SalesInvoiceTableProposalIdColumn {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
 			"ALTER TABLE `{$table}`
-			ADD `proposal_id` BIGINT(20) UNSIGNED NULL AFTER `contact_id`,
+			ADD `proposal_id` BIGINT(20) UNSIGNED NULL,
 			ADD KEY `idx_proposal_id` (`proposal_id`),
 			ADD UNIQUE KEY `proposal_id` (`proposal_id`)"
 		);

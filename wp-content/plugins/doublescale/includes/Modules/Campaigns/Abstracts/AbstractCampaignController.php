@@ -603,7 +603,13 @@ abstract class AbstractCampaignController extends RestController {
 			$campaign_messages = $query->with( 'contact', 'template' )
 				->paginate( $per_page, array( '*' ), 'page', $page );
 
-			return new WP_REST_Response( $campaign_messages, 200 );
+			$failed_query = $this->get_campaign_message_query( $campaign_id );
+			$this->apply_message_status_filter( $failed_query, 'failed' );
+
+			$response                 = $campaign_messages->jsonSerialize();
+			$response['failed_total'] = (int) $failed_query->count();
+
+			return new WP_REST_Response( $response, 200 );
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}

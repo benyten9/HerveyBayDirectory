@@ -35,10 +35,13 @@ class DirectCheckout implements Provider {
 
         $add_listing_url = directorist_permalink()::get_add_listing_page_link();
 
-        return add_query_arg( [
-            'directory_type' => $directory_term->slug,
-            'plan'           => $plan->id,
-        ], $add_listing_url );
+        return add_query_arg(
+            [
+                'directory_type' => $directory_term->slug,
+                'plan'           => $plan->id,
+            ],
+            $add_listing_url
+        );
     }
 
     public function get_receipt_button_text( string $text, int $order_id ): string {
@@ -86,7 +89,7 @@ class DirectCheckout implements Provider {
 
         // Users with multiple active packages cannot add a new one — keep the original URL
         // so the listing form handles the block with a proper notice.
-        if ( count( $active_packages ) > 1 ) {
+        if ( count( $active_packages ) > 1 && ! directorist_allow_multiple_plans_per_directory_type() ) {
             return $url;
         }
 

@@ -48,6 +48,38 @@ final class OAuthConfig {
 		return rtrim( strtr( base64_encode( $url ), '+/', '-_' ), '=' );
 	}
 
+	/**
+	 * Admin URL an OAuth callback should send the user back to.
+	 *
+	 * Consent happens on the provider's site, so the return is a cold document
+	 * load with no surviving front-end state. Free renders the connect flow as
+	 * its own route — `booking/calendars/{host}/remote-calendars` — precisely so
+	 * this redirect can restore context: the host calendar comes from the OAuth
+	 * `state`, and the provider slug is carried in the query string.
+	 *
+	 * Falls back to the calendars list when the host id is unusable, which is
+	 * also where an older free build (without the route) resolves to.
+	 *
+	 * @param string|int|null $host_id  Host calendar ID parsed from OAuth state.
+	 * @param string          $provider Integration slug (google|outlook|zoom|apple).
+	 */
+	public static function booking_return_url( $host_id = null, string $provider = '' ): string {
+		$host_id = \is_scalar( $host_id ) ? \trim( (string) $host_id ) : '';
+
+		if ( '' === $host_id || ! \ctype_digit( $host_id ) ) {
+			return \admin_url( 'admin.php?page=doublescale&path=booking/calendars' );
+		}
+
+		$path = \sprintf( 'booking/calendars/%s/remote-calendars', $host_id );
+		$url  = \admin_url( 'admin.php?page=doublescale&path=' . $path );
+
+		if ( '' !== $provider ) {
+			$url .= '&provider=' . \rawurlencode( $provider );
+		}
+
+		return $url;
+	}
+
 	public static function google_auth_proxy_url(): string {
 		return self::proxy_host() . '/GoogleAuthProxy.php';
 	}

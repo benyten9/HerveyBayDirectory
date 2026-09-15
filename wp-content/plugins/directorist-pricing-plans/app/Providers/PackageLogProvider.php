@@ -59,6 +59,8 @@ class PackageLogProvider implements Provider {
                  return sprintf( 'The %s has been scheduled to be cancelled at period end by %s', $package_type, $triggered_by );
             case UserPackageStatus::EXPIRED:
                 return \sprintf( 'The %s has been expired', $package_type );
+            case UserPackageStatus::PAST_DUE:
+                return \sprintf( 'The %s payment is past due', $package_type );
             case UserPackageStatus::ARCHIVED:
                 return \sprintf( 'The %s has been archived', $package_type );
         }

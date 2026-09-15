@@ -5,6 +5,7 @@ namespace DirectoristPricingPlan\App\Http\Controllers\Admin;
 defined( "ABSPATH" ) || exit;
 
 use WP_REST_Request;
+use Directorist\Helpers\DateTime;
 use Directorist\Enums\Order\Status as OrderStatus;
 use DirectoristPricingPlan\WpMVC\Routing\Response;
 use DirectoristPricingPlan\WpMVC\Exceptions\Exception;
@@ -13,11 +14,14 @@ use DirectoristPricingPlan\App\Http\Controllers\Controller;
 use DirectoristPricingPlan\App\Repositories\UserPackageRepository;
 use DirectoristPricingPlan\App\DTO\UserPackage\Read;
 use DirectoristPricingPlan\App\Enums\Plan\FeeType as PlanFeeType;
+use DirectoristPricingPlan\App\Jobs\UnassignedPlanOrderQueue;
 use DirectoristPricingPlan\App\DTO\PackageOrder\Read as PackageOrderRead;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 use DirectoristPricingPlan\App\Enums\Plan\Interval as PlanInterval;
-use DirectoristPricingPlan\App\Jobs\UnassignedPlanOrderQueue;
+use DirectoristPricingPlan\App\Enums\UserPackage\Status as UserPackageStatus;
 use DirectoristPricingPlan\App\Models\Plan;
+use DirectoristPricingPlan\App\Repositories\Admin\PlanRepository;
+use DirectoristPricingPlan\App\Services\ExpiredListingRenewalService;
 
 class PackageController extends Controller {
     public UserPackageRepository $package_repository;
@@ -41,8 +45,7 @@ class PackageController extends Controller {
             ->set_page( $request->has_param( 'page' ) ? (int) $request->get_param( 'page' ) : 1 )
             ->set_per_page( $request->has_param( 'per_page' ) ? (int) $request->get_param( 'per_page' ) : 10 )
             ->set_search( $request->has_param( 'search' ) ? $request->get_param( 'search' ) : null )
-            ->set_directory_type_id( $request->has_param( 'directory_type_id' ) ? (int) $request->get_param( 'directory_type_id' ) : null )
-            ->set_with_usage_data( true );
+            ->set_directory_type_id( $request->has_param( 'directory_type_id' ) ? (int) $request->get_param( 'directory_type_id' ) : null );
 
         return Response::send( $this->package_repository->get( $dto ) );
     }
@@ -132,6 +135,94 @@ class PackageController extends Controller {
         );
     }
 
+    public function recover_missing_plans( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'assignments' => 'required|array',
+            ]
+        );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            throw new Exception( esc_html__( 'You are not allowed to recover packages.', 'directorist-pricing-plans' ), 403 );
+        }
+
+        $submitted_assignments = $request->get_param( 'assignments' );
+
+        if ( empty( $submitted_assignments ) ) {
+            throw new Exception( esc_html__( 'Plan assignments are required.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        $assignments = [];
+
+        foreach ( $submitted_assignments as $assignment ) {
+            if ( ! is_array( $assignment ) ) {
+                throw new Exception( esc_html__( 'Invalid plan assignment.', 'directorist-pricing-plans' ), 400 );
+            }
+
+            $missing_plan_id = absint( $assignment['missing_plan_id'] ?? 0 );
+            $new_plan_id     = absint( $assignment['new_plan_id'] ?? 0 );
+
+            if ( ! $missing_plan_id || ! $new_plan_id || isset( $assignments[ $missing_plan_id ] ) ) {
+                throw new Exception( esc_html__( 'Every missing plan must have one valid replacement.', 'directorist-pricing-plans' ), 400 );
+            }
+
+            $assignments[ $missing_plan_id ] = $new_plan_id;
+        }
+
+        $missing_groups = $this->package_repository->get_missing_plan_groups();
+        $missing_by_id  = [];
+
+        foreach ( $missing_groups as $missing_group ) {
+            $missing_plan_id = (int) $missing_group->plan_id;
+
+            if ( 1 !== (int) $missing_group->directory_type_count ) {
+                throw new Exception(
+                    sprintf(
+                        esc_html__( 'Packages referencing missing plan #%d have inconsistent directory types.', 'directorist-pricing-plans' ),
+                        $missing_plan_id
+                    ),
+                    409
+                );
+            }
+
+            $missing_by_id[ $missing_plan_id ] = (int) $missing_group->directory_type_id;
+        }
+
+        $submitted_ids = array_keys( $assignments );
+        $missing_ids   = array_keys( $missing_by_id );
+        sort( $submitted_ids );
+        sort( $missing_ids );
+
+        if ( $submitted_ids !== $missing_ids ) {
+            throw new Exception( esc_html__( 'Missing plan data has changed. Refresh the page and try again.', 'directorist-pricing-plans' ), 409 );
+        }
+
+        /** @var PlanRepository $plan_repository */
+        $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
+
+        foreach ( $assignments as $missing_plan_id => $new_plan_id ) {
+            $new_plan = $plan_repository->get_by_id( $new_plan_id );
+
+            if ( ! $new_plan || 1 !== (int) $new_plan->is_published ) {
+                throw new Exception( esc_html__( 'A selected replacement plan is no longer available.', 'directorist-pricing-plans' ), 400 );
+            }
+
+            if ( (int) $new_plan->directory_type_id !== $missing_by_id[ $missing_plan_id ] ) {
+                throw new Exception( esc_html__( 'A selected replacement plan belongs to a different directory type.', 'directorist-pricing-plans' ), 400 );
+            }
+        }
+
+        $updated = $this->package_repository->recover_missing_plans( $assignments );
+
+        return Response::send(
+            [
+                'message'          => esc_html__( 'Missing package plans were recovered successfully.', 'directorist-pricing-plans' ),
+                'updated_packages' => $updated['packages'],
+                'updated_orders'   => $updated['orders'],
+            ]
+        );
+    }
+
     public function assign( Validator $validator, WP_REST_Request $request ): array {
         $validator->validate(
             [
@@ -169,7 +260,9 @@ class PackageController extends Controller {
             throw new Exception( esc_html__( 'Free plans cannot be assigned with a pending order status.', 'directorist-pricing-plans' ), 400 );
         }
 
-        if ( $this->package_repository->count_active_packages_for_directory( $user_id, $directory_type_id ) > 0 ) {
+        if ( ! directorist_allow_multiple_plans_per_directory_type()
+            && $this->package_repository->count_active_packages_for_directory( $user_id, $directory_type_id ) > 0
+        ) {
             throw new Exception( esc_html__( 'This user already has an active plan in the selected directory type.', 'directorist-pricing-plans' ), 400 );
         }
 
@@ -217,9 +310,53 @@ class PackageController extends Controller {
             throw new Exception( esc_html__( "Package not found.", 'directorist-pricing-plans' ) );
         }
 
+        $item->renewable_listings = directorist_pricing_plans_singleton( ExpiredListingRenewalService::class )->get_summary( (int) $item->id );
+
         return Response::send(
             [
                 "data" => $item
+            ]
+        );
+    }
+
+    public function renew_expired_listings( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'id' => 'required|numeric',
+            ]
+        );
+
+        $result = directorist_pricing_plans_singleton( ExpiredListingRenewalService::class )->renew( (int) $request->get_param( 'id' ) );
+
+        return Response::send(
+            [
+                'message' => sprintf(
+                    esc_html( _n( '%d listing renewed successfully.', '%d listings renewed successfully.', $result['renewed_count'], 'directorist-pricing-plans' ) ),
+                    $result['renewed_count']
+                ),
+                'data'    => $result,
+            ]
+        );
+    }
+
+    public function usage( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                "id" => "required|numeric"
+            ]
+        );
+
+        $package = $this->package_repository->get_usage_by_id( (int) $request->get_param( "id" ) );
+
+        if ( null === $package ) {
+            throw new Exception( esc_html__( "Package not found.", 'directorist-pricing-plans' ) );
+        }
+
+        return Response::send(
+            [
+                "data" => [
+                    "uses" => $package->uses,
+                ],
             ]
         );
     }
@@ -330,5 +467,123 @@ class PackageController extends Controller {
         }
 
         return Response::send( directorist_subscription_log_repository()->get_by_package_id( $request->get_param( "id" ) ) );
+    }
+
+    public function renew( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'id' => 'required|numeric',
+            ]
+        );
+
+        $package = $this->package_repository->single( (int) $request->get_param( 'id' ) );
+
+        if ( ! $package ) {
+            throw new Exception( esc_html__( 'Package not found.', 'directorist-pricing-plans' ), 404 );
+        }
+
+        $plan = directorist_get_pricing_plan_by_id( (int) $package->plan_id );
+
+        if ( ! $plan ) {
+            throw new Exception( esc_html__( 'The plan associated with this package is not available anymore.', 'directorist-pricing-plans' ), 404 );
+        }
+
+        if ( UserPackageStatus::EXPIRED !== $package->status ) {
+            throw new Exception( esc_html__( 'Only expired packages can be renewed.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        if (
+            PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE )
+            || ! empty( $package->is_recurring )
+        ) {
+            throw new Exception( esc_html__( 'This package type cannot be renewed manually.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        $order_id = $this->package_repository->renew( (int) $package->id, null, 'admin' );
+
+        return Response::send(
+            [
+                'message' => esc_html__( 'Package renewed successfully.', 'directorist-pricing-plans' ),
+                'data'    => [
+                    'order_id' => (int) $order_id,
+                ],
+            ]
+        );
+    }
+
+    public function update_period_end( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'id'                 => 'required|numeric',
+                'current_period_end' => 'required|string',
+            ]
+        );
+
+        $package = $this->package_repository->single( (int) $request->get_param( 'id' ) );
+
+        if ( ! $package ) {
+            throw new Exception( esc_html__( 'Package not found.', 'directorist-pricing-plans' ), 404 );
+        }
+
+        $plan = directorist_get_pricing_plan_by_id( (int) $package->plan_id );
+
+        if ( ! $plan ) {
+            throw new Exception( esc_html__( 'The plan associated with this package is not available anymore.', 'directorist-pricing-plans' ), 404 );
+        }
+
+        if ( UserPackageStatus::ACTIVE !== $package->status ) {
+            throw new Exception( esc_html__( 'Only active packages can be updated.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        if (
+            PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE )
+            || ! empty( $package->is_recurring )
+        ) {
+            throw new Exception( esc_html__( 'This package type does not support manual next billing date updates.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        $period_end   = $this->parse_future_datetime( (string) $request->get_param( 'current_period_end' ) );
+        $previous_dto = $this->package_repository->to_dto( $package );
+        $updated_dto  = ( clone $previous_dto )->set_current_period_end( $period_end );
+
+        $this->package_repository->update( $updated_dto );
+
+        do_action( 'directorist_package_updated', $updated_dto, $previous_dto, 'admin' );
+
+        $listing_ids = directorist_pricing_plans_singleton( PlanRepository::class )->get_belonging_listing_ids(
+            (int) $package->user_id,
+            (int) $package->plan_id,
+            [ 'publish' ]
+        );
+
+        foreach ( $listing_ids as $listing_id ) {
+            directorist_pricing_plan_set_listing_expiry_date( $listing_id, $period_end->format( 'Y-m-d H:i:s' ) );
+        }
+
+        return Response::send(
+            [
+                'message' => esc_html__( 'Next billing date updated successfully.', 'directorist-pricing-plans' ),
+            ]
+        );
+    }
+
+    private function parse_future_datetime( string $value ): DateTime {
+        $normalized = str_replace( 'T', ' ', trim( $value ) );
+
+        if ( preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $normalized ) ) {
+            $normalized .= ':00';
+        }
+
+        try {
+            $date = new DateTime( $normalized );
+        } catch ( \Exception $exception ) {
+            throw new Exception( esc_html__( 'Please select a valid date and time.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        if ( $date->getTimestamp() <= directorist_now()->getTimestamp() ) {
+            throw new Exception( esc_html__( 'Next billing date must be in the future.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        return $date;
     }
 }

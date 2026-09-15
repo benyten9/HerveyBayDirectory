@@ -21,7 +21,7 @@ use DirectoristPricingPlan\App\Providers\PaymentCheckoutServiceProvider;
 use DirectoristPricingPlan\App\Providers\TrialServiceProvider;
 use DirectoristPricingPlan\App\Providers\ListingDashboardServiceProvider;
 use DirectoristPricingPlan\App\Providers\PlanServiceProvider;
-use DirectoristPricingPlan\App\Providers\LegacyPlanApiProvider;
+use DirectoristPricingPlan\App\Providers\ExtensionServiceProvider;
 use DirectoristPricingPlan\App\Providers\QueueServiceProvider;
 use DirectoristPricingPlan\App\Providers\PackageLogProvider;
 use DirectoristPricingPlan\Database\Migrations\V4Migration;
@@ -31,6 +31,10 @@ use DirectoristPricingPlan\Database\Migrations\RepairV4ActivePackageDatesMigrati
 use DirectoristPricingPlan\Database\Migrations\RepairV4LifetimePackageDatesMigration;
 use DirectoristPricingPlan\Database\Migrations\RepairV4PlanOrderMetaTimestampMigration;
 use DirectoristPricingPlan\Database\Migrations\RepairV4PendingPlanOrderMetaMigration;
+use DirectoristPricingPlan\Database\Migrations\ListingPlanMetaMigration;
+use DirectoristPricingPlan\Database\Migrations\RepairV4LegacyPackageDatesMigration;
+use DirectoristPricingPlan\Database\Migrations\RepairV4LegacySubscriptionsMigration;
+use DirectoristPricingPlan\Database\Migrations\AddPastDueUserPackageStatusMigration;
 use DirectoristPricingPlan\App\Providers\ListingsQueryProvider;
 use DirectoristPricingPlan\App\Providers\EmailService\PackageNotificationProvider;
 // use DirectoristPricingPlan\Database\Migrations\TestMigration;
@@ -81,7 +85,7 @@ return [
         FormFields::class,
         ShortcodeServiceProvider::class,
         PlanServiceProvider::class,
-        LegacyPlanApiProvider::class,
+        ExtensionServiceProvider::class,
         CheckoutServiceProvider::class,
         PaymentCheckoutServiceProvider::class,
         TrialServiceProvider::class,
@@ -133,6 +137,10 @@ return [
         'repair-v4-lifetime-package-dates'     => RepairV4LifetimePackageDatesMigration::class,
         'repair-v4-plan-order-meta-timestamps' => RepairV4PlanOrderMetaTimestampMigration::class,
         'repair-v4-pending-plan-order-meta'    => RepairV4PendingPlanOrderMetaMigration::class,
+        'listing-plan-meta-v4-0-2'             => ListingPlanMetaMigration::class,
+        'repair-v4-legacy-package-dates'       => RepairV4LegacyPackageDatesMigration::class,
+        'repair-v4-legacy-subscriptions'       => RepairV4LegacySubscriptionsMigration::class,
+        'add-past-due-user-package-status'     => AddPastDueUserPackageStatusMigration::class,
     ],
 
     /**

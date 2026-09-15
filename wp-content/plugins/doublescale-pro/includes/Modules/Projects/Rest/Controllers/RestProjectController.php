@@ -734,9 +734,12 @@ class RestProjectController extends RestController {
 			);
 		}
 		if ( $project->relationLoaded( 'owner' ) && $project->owner ) {
+			$owner_name = (string) $project->owner->display_name;
 			$data['owner'] = array(
-				'id'   => (int) $project->owner->ID,
-				'name' => (string) $project->owner->display_name,
+				'id'           => (int) $project->owner->ID,
+				'name'         => $owner_name,
+				'display_name' => $owner_name,
+				'email'        => (string) ( $project->owner->user_email ?? '' ),
 			);
 		}
 		if ( $project->relationLoaded( 'custom_fields' ) ) {

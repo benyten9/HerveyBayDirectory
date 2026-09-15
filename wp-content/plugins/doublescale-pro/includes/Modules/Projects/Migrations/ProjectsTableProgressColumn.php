@@ -46,7 +46,7 @@ class ProjectsTableProgressColumn {
 		if ( empty( $progress ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query(
-				"ALTER TABLE `{$table}` ADD COLUMN `progress` TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER `budget`"
+				"ALTER TABLE `{$table}` ADD COLUMN `progress` TINYINT UNSIGNED NOT NULL DEFAULT 0"
 			);
 		}
 
@@ -55,7 +55,7 @@ class ProjectsTableProgressColumn {
 		if ( empty( $calculate ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query(
-				"ALTER TABLE `{$table}` ADD COLUMN `calculate_progress` TINYINT(1) NOT NULL DEFAULT 0 AFTER `progress`"
+				"ALTER TABLE `{$table}` ADD COLUMN `calculate_progress` TINYINT(1) NOT NULL DEFAULT 0"
 			);
 		}
 	}

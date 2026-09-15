@@ -97,9 +97,31 @@ class App {
 		$custom_credentials = $this->get_app_credentials();
 		$use_custom_app     = ! empty( $custom_credentials );
 
+		/*
+		 * Least-privilege scope set. Must match the Google Cloud console exactly —
+		 * OAuth verification requires a strict string match between what the app
+		 * requests and what the project declares.
+		 *
+		 * Each scope maps to calls we actually make (see API.php):
+		 *   openid                         → shown on the consent screen as
+		 *                                    "Associate you with your personal info
+		 *                                    on Google"; listed explicitly so the
+		 *                                    codebase, the auth proxy and the Cloud
+		 *                                    console all state the same set.
+		 *   userinfo.email                 → GET  /oauth2/v1/userinfo
+		 *   calendar.calendarlist.readonly → GET  /calendar/v3/users/me/calendarList
+		 *   calendar.events.freebusy       → POST /calendar/v3/freeBusy
+		 *   calendar.events                → GET/POST/PATCH/DELETE .../events
+		 *
+		 * calendar.readonly was removed: it is sensitive and grants read access to
+		 * every calendar and event on the account, while the two narrow read scopes
+		 * above cover the only two endpoints it was needed for.
+		 */
 		$scopes = array(
+			'openid',
 			'https://www.googleapis.com/auth/userinfo.email',
-			'https://www.googleapis.com/auth/calendar.readonly',
+			'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
+			'https://www.googleapis.com/auth/calendar.events.freebusy',
 			'https://www.googleapis.com/auth/calendar.events',
 		);
 
@@ -294,11 +316,7 @@ class App {
 		$existing_account = $this->integration->accounts->get_account( $account_id );
 		if ( ! empty( $existing_account ) ) {
 			echo \esc_html__( 'Error, This account is already connected!', 'doublescale' );
-			\wp_redirect(
-				\admin_url(
-					'admin.php?page=doublescale&path=booking/calendars'
-				)
-			);
+			\wp_redirect( OAuthConfig::booking_return_url( $host_id, 'google' ) );
 			exit;
 		}
 
@@ -311,13 +329,9 @@ class App {
 			)
 		);
 
-		// Redirect to settings page.
+		// Back to the connect page for this host, with Google still selected.
 		echo \esc_html__( 'Success, Account added!', 'doublescale' );
-		\wp_redirect(
-			\admin_url(
-				'admin.php?page=doublescale&path=booking/calendars'
-			)
-		);
+		\wp_redirect( OAuthConfig::booking_return_url( $host_id, 'google' ) );
 		exit;
 	}
 

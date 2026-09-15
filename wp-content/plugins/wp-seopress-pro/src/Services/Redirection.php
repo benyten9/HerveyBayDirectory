@@ -112,7 +112,7 @@ class Redirection {
 
 	/**
 	 *
-	 * @param array $options ["only_uri"]
+	 * @param array $options ["only_uri", "keep_home_path"]
 	 * @return string
 	 */
 	public function getCurrentUrl( $options = array() ) {
@@ -135,7 +135,13 @@ class Redirection {
 				// Without the path the site is served from: home_url() adds it
 				// back, and both the stored origins and the URL tester work
 				// without it. See seopress_pro_strip_home_path().
-				$currentUrl = seopress_pro_strip_home_path( $currentUrlParse['path'] );
+				//
+				// `keep_home_path` asks for it left on, which is the shape a
+				// pattern anchored on a subsite (`^/fr/support/`) was written
+				// against. checkRegexRedirect() tries both.
+				$currentUrl = empty( $options['keep_home_path'] )
+					? seopress_pro_strip_home_path( $currentUrlParse['path'] )
+					: $currentUrlParse['path'];
 				if ( '' === $currentUrl ) {
 					$currentUrl = '/';
 				}
@@ -218,24 +224,48 @@ class Redirection {
 			return;
 		}
 
-		$redirectionMatch = false;
-		$i                = 0;
-		$totalRedirects   = count( $redirectionsWithRegex );
-		$currentUrl       = $this->getCurrentUrl( array( 'only_uri' => true ) );
+		// Both shapes of the request, for the same reason the exact matcher
+		// looks an origin up twice: a pattern written against a subsite or a
+		// subdirectory install carries that path (`^/fr/support/`), and one
+		// written from the 404 log does not. The canonical shape is tried
+		// first, so a pattern that already matched keeps winning.
+		$currentUrls = array( $this->getCurrentUrl( array( 'only_uri' => true ) ) );
+
+		$currentUrlWithHomePath = $this->getCurrentUrl(
+			array(
+				'only_uri'       => true,
+				'keep_home_path' => true,
+			)
+		);
+
+		if ( ! in_array( $currentUrlWithHomePath, $currentUrls, true ) ) {
+			$currentUrls[] = $currentUrlWithHomePath;
+		}
 
 		$redirectionMatch = null;
 		$matches          = null;
-		do {
-			$regex = $this->buildRegexPattern( $redirectionsWithRegex[ $i ]->post_title );
-			try {
-				@\preg_match( $regex, $currentUrl, $matches );
-				if ( ! empty( $matches ) ) {
-					$redirectionMatch = $redirectionsWithRegex[ $i ];
+		foreach ( $redirectionsWithRegex as $redirection ) {
+			$regex = $this->buildRegexPattern( $redirection->post_title );
+
+			foreach ( $currentUrls as $candidate ) {
+				// preg_match() leaves this untouched when the pattern does not
+				// compile, which is exactly what the `@` below tolerates. Only
+				// an empty array can survive from the previous candidate, since
+				// a non-empty one always breaks out — so this is the invariant
+				// stated where it is read, not a defect being patched.
+				$found = array();
+
+				try {
+					@\preg_match( $regex, $candidate, $found );
+					if ( ! empty( $found ) ) {
+						$redirectionMatch = $redirection;
+						$matches          = $found;
+						break 2;
+					}
+				} catch ( \Exception $e ) {
 				}
-			} catch ( \Exception $e ) {
 			}
-			++$i;
-		} while ( $redirectionMatch === null && $i < $totalRedirects );
+		}
 
 		if ( ! $redirectionMatch ) {
 			return;

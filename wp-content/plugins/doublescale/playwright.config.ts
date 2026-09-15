@@ -26,6 +26,7 @@
  *
  * Composer (delegates to npm): `composer test:e2e`
  */
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -40,6 +41,8 @@ function normalizeBaseURL(raw: string | undefined): string {
 	return `${base}/`;
 }
 
+const ADMIN_STORAGE_STATE = path.resolve(__dirname, 'tests/e2e/.auth/admin.json');
+
 const BASE_URL = normalizeBaseURL(process.env.WP_BASE_URL);
 
 export default defineConfig({
@@ -50,7 +53,8 @@ export default defineConfig({
 	fullyParallel: false,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: process.env.CI ? 1 : undefined,
+	// Serial workers avoid shared calendar slot contention and auth storage races.
+	workers: Number(process.env.DS_E2E_WORKERS ?? (process.env.CI ? 1 : 1)),
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 
 	globalSetup: './tests/e2e/global-setup.ts',
@@ -60,7 +64,7 @@ export default defineConfig({
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure',
 		video: 'retain-on-failure',
-		storageState: 'tests/e2e/.auth/admin.json',
+		storageState: ADMIN_STORAGE_STATE,
 	},
 
 	projects: [

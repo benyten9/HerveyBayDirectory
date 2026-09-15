@@ -15,9 +15,13 @@ defined( 'ABSPATH' ) || exit;
 class SalesProposalTableContentColumns {
 
 	/**
+	 * Safe on every boot. Earlier ALTERs used AFTER signed_ip / sections; those
+	 * columns were added in later migrations, so the ALTER failed, the ledger
+	 * still advanced, and sites were left without `terms`.
+	 *
 	 * @return void
 	 */
-	public function run() {
+	public static function ensure(): void {
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'doublescale_sales_proposals';
@@ -29,19 +33,27 @@ class SalesProposalTableContentColumns {
 		}
 
 		$columns = array(
-			'sections' => "ADD `sections` JSON NULL AFTER `signed_ip`",
-			'terms'    => "ADD `terms` TEXT NULL AFTER `sections`",
+			'sections' => 'JSON NULL',
+			'terms'    => 'TEXT NULL',
 		);
 
-		foreach ( $columns as $name => $ddl ) {
+		foreach ( $columns as $name => $definition ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$has_column = $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE '{$name}'" );
 			if ( $has_column ) {
 				continue;
 			}
 
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "ALTER TABLE `{$table}` {$ddl}" );
+			// No AFTER — do not depend on signature/response columns existing.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.SchemaChange
+			$wpdb->query( "ALTER TABLE `{$table}` ADD `{$name}` {$definition}" );
 		}
+	}
+
+	/**
+	 * @return void
+	 */
+	public function run() {
+		self::ensure();
 	}
 }

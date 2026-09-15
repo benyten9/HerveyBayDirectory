@@ -69,7 +69,9 @@ function nibwp_builderius_write_commit(int $branch_id, array $config, string $me
         'post_status'  => 'publish',
         'post_title'   => $message !== '' ? $message : __('Commit', domain: 'nibwp'),
         'post_name'    => $name,
-        'post_content' => $json,
+        // JSON is mostly backslashes; wp_insert_post() unslashes, so an
+        // unslashed write stores a commit that no longer parses.
+        'post_content' => wp_slash($json),
     ], true);
     if (is_wp_error($commit_id)) {
         return $commit_id;
@@ -218,7 +220,8 @@ function nibwp_builderius_create_record(string $post_type, string $title, array 
         'post_type'    => $post_type,
         'post_status'  => 'publish',
         'post_title'   => $title,
-        'post_content' => $json !== false ? $json : '',
+        // Slashed for the same reason as the commit write above.
+        'post_content' => $json !== false ? wp_slash($json) : '',
     ], true);
     if (is_wp_error($id)) {
         return $id;

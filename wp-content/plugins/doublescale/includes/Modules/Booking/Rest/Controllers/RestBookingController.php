@@ -31,11 +31,13 @@ use DoubleScale\Modules\Booking\Services\BookingValidator;
 use DoubleScale\Modules\Booking\Services\BookingService;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Modules\Booking\Capabilities;
+use DoubleScale\Modules\Booking\Exceptions\InvalidBookingInputException;
 use DoubleScale\Modules\Booking\Models\BookedSlotModel;
 use DoubleScale\Modules\Booking\Models\BookingHostsModel;
 use DoubleScale\Modules\Booking\Services\BookingEvents;
 use DoubleScale\Core\Settings\Settings;
 use DoubleScale\Modules\Booking\BookingUtils;
+use DoubleScale\Modules\Booking\Helpers\MultisiteScope;
 
 /**
  * Booking Controller class
@@ -383,7 +385,11 @@ class RestBookingController extends RestController {
 			$user = get_current_user_id();
 		}
 
-		if ( ( 'all' === $user || get_current_user_id() !== $user ) && ! current_user_can( 'doublescale_booking_read_all_bookings' ) ) {
+		if ( ( 'all' === $user || get_current_user_id() !== (int) $user ) && ! current_user_can( 'doublescale_booking_read_all_bookings' ) ) {
+			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'doublescale' ), array( 'status' => 403 ) );
+		}
+
+		if ( 'all' !== $user && ! MultisiteScope::is_member( (int) $user ) ) {
 			return new WP_Error( 'rest_booking_error', __( 'You do not have permission', 'doublescale' ), array( 'status' => 403 ) );
 		}
 
@@ -395,6 +401,8 @@ class RestBookingController extends RestController {
 
 			if ( 'all' !== $user ) {
 				$this->apply_user_filter( $query, $user );
+			} else {
+				MultisiteScope::apply_calendar_owner_scope( $query );
 			}
 
 			if ( ! empty( $keyword ) ) {
@@ -523,6 +531,12 @@ class RestBookingController extends RestController {
 			$bookings[] = $booking;
 
 			return new WP_REST_Response( $bookings, 200 );
+		} catch ( InvalidBookingInputException $e ) {
+			// The caller sent bad data (invalid invitee, unparseable date,
+			// non-positive duration, unknown event). That is a client error,
+			// so answer 400 — a 500 would tell the caller the server broke.
+			// Genuine faults fall through to the handler below and keep 500.
+			return new WP_Error( 'rest_booking_invalid_input', $e->getMessage(), array( 'status' => 400 ) );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_booking_error', $e->getMessage(), array( 'status' => 500 ) );
 		}

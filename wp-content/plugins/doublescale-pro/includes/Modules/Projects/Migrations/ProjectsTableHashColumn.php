@@ -57,7 +57,7 @@ class ProjectsTableHashColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD COLUMN `hash` VARCHAR(32) NULL AFTER `title`, ADD UNIQUE KEY hash (hash)"
+			"ALTER TABLE `{$table}` ADD COLUMN `hash` VARCHAR(32) NULL, ADD UNIQUE KEY hash (hash)"
 		);
 
 		self::backfill_missing_hashes( $table );

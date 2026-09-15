@@ -86,6 +86,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		$container->get( Filters\FiltersManager::class );
 		$container->get( ImportExport\Importers\Manager::class );
 		$container->get( Services\ContactAttachmentActivityLogger::class )->register();
+		Services\ContactMergeNotifier::register();
 
 		add_action(
 			'doublescale_ready',

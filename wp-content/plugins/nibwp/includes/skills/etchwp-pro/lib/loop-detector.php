@@ -68,6 +68,12 @@ function nibwp_etchwp_detect_loops(array $payload, int $min_count = 3): array
  */
 function nibwp_etchwp_walk_for_loops(array $node, string $path, int $depth, array &$groups): void
 {
+    // The paths and circles inside an icon are drawing instructions. Counting
+    // them reported one icon as "five repeating items".
+    if (nibwp_etchwp_is_svg_block($node)) {
+        return;
+    }
+
     $inner_blocks = (array) ($node['innerBlocks'] ?? []);
     if ($inner_blocks !== []) {
         $by_signature = [];
@@ -137,6 +143,20 @@ function nibwp_etchwp_signature_of_block(array $block): string
     if ($name === '') {
         return '';
     }
+
+    // Already componentised: an instance, or a wrapper around instances, is
+    // what "extract to component" would produce. Suggesting it again - and
+    // counting two different components as identical siblings because they
+    // share a block name - was noise.
+    if ($name === 'etch/component' || nibwp_etchwp_is_svg_block($block)) {
+        return '';
+    }
+    foreach ((array) ($block['innerBlocks'] ?? []) as $child) {
+        if (is_array($child) && ($child['blockName'] ?? '') === 'etch/component') {
+            return '';
+        }
+    }
+
     $attrs = (array) ($block['attrs'] ?? []);
     // First class atom from attrs.styles (Etch convention) — drop suffix '-style'.
     $first_class = '';
@@ -162,6 +182,19 @@ function nibwp_etchwp_signature_of_block(array $block): string
     $child_names = array_map(static fn ($c) => is_array($c) ? (string) ($c['blockName'] ?? '') : '', $children);
     $shape = implode(',', $child_names);
     return sprintf('%s|%s|c=%d|s=%s', $name, $first_class, count($children), $shape);
+}
+
+/**
+ * An inline icon: etch/svg, or an etch/element whose tag is svg.
+ */
+function nibwp_etchwp_is_svg_block(array $block): bool
+{
+    $name = (string) ($block['blockName'] ?? '');
+    if ($name === 'etch/svg') {
+        return true;
+    }
+
+    return $name === 'etch/element' && strtolower((string) ($block['attrs']['tag'] ?? '')) === 'svg';
 }
 
 /**

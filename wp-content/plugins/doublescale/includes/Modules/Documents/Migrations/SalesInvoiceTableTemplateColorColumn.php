@@ -36,7 +36,7 @@ class SalesInvoiceTableTemplateColorColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD `template_color` VARCHAR(7) NULL DEFAULT NULL AFTER `template`"
+			"ALTER TABLE `{$table}` ADD `template_color` VARCHAR(7) NULL DEFAULT NULL"
 		);
 	}
 }

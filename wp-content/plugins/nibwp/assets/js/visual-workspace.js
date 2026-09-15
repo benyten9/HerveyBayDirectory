@@ -394,6 +394,61 @@
         return { id: page.id, url: d.location.href, title: d.title, ready: d.readyState };
     }
 
+    /* Page coordinates rather than viewport ones. A click scrolls its target
+       into view first, so viewport boxes from two reads either side of it
+       would disagree about where the same element is. */
+    function boxOf(el) {
+        var r = el.getBoundingClientRect();
+        var win = el.ownerDocument.defaultView;
+        return {
+            x: Math.round(r.left + win.scrollX),
+            y: Math.round(r.top + win.scrollY),
+            w: Math.round(r.width),
+            h: Math.round(r.height)
+        };
+    }
+
+    /* The handful of computed properties that decide whether something looks
+       the way it was meant to. Not the whole computed style: an agent handed
+       three hundred properties per element diffs none of them. */
+    function styleOf(el) {
+        var cs = el.ownerDocument.defaultView.getComputedStyle(el);
+        var out = { color: cs.color };
+
+        // A transparent background says nothing about what the element sits
+        // on, and "transparent" is what almost every element reports. What
+        // the agent needs then is the colour actually showing through.
+        var own = readColor(cs.backgroundColor);
+        if (own && own.a > 0) {
+            out.background = cs.backgroundColor;
+        } else {
+            out.surface = colorText(surfaceFrom(el.parentElement));
+        }
+
+        out['font-size'] = cs.fontSize;
+        out['font-weight'] = cs.fontWeight;
+
+        var radius = cs.borderRadius || cs.borderTopLeftRadius;
+        if (radius && radius !== '0px') { out['border-radius'] = radius; }
+
+        // Only borders that paint. Every element has four border colours in
+        // its computed style, most of them on a zero-width or none border.
+        var sides = bordersOf(cs);
+        if (sides.length) {
+            out.border = { width: sides[0].width, style: sides[0].style, color: sides[0].color };
+            if (sides.length < 4) {
+                out.border.sides = sides.map(function (s) { return s.side; });
+            }
+        }
+
+        return out;
+    }
+
+    // Styles make each entry several times larger, and a read too big for the
+    // agent's context is a read it never sees. The ceiling drops when they are
+    // asked for, and the answer says when it was reached.
+    var STYLED_CAP = 100;
+
     function readPage(payload) {
         var page = activePage();
         if (!page) { throw new Error('No page is open. Use visual-open first.'); }
@@ -403,18 +458,35 @@
         var root = payload.selector ? d.querySelector(payload.selector) : d.body;
         if (!root) { throw new Error('Nothing matches the selector ' + payload.selector); }
 
-        var cap = Math.max(10, Math.min(payload.maxElements || 150, 400));
+        var styles = !!payload.styles;
+        // max_elements as well, because a batch step carries the ability's own
+        // argument names rather than the ones the ability translates them to.
+        var cap = Math.max(10, Math.min(payload.maxElements || payload.max_elements || 150, styles ? STYLED_CAP : 400));
         var out = { url: d.location.href, title: d.title, headings: [], elements: [], text: '' };
+        var dropped = 0;
+
+        // The region itself is often the thing in question — a card whose
+        // border cannot be seen has no interactive element to carry that.
+        if (styles && payload.selector) {
+            out.region = { selector: payload.selector, box: boxOf(root), style: styleOf(root) };
+        }
 
         root.querySelectorAll('h1, h2, h3, h4').forEach(function (h) {
             if (!visible(h)) { return; }
-            out.headings.push({ level: Number(h.tagName[1]), text: h.textContent.trim().slice(0, 160) });
+            if (styles && out.headings.length >= cap) { dropped++; return; }
+            var heading = { level: Number(h.tagName[1]), text: h.textContent.trim().slice(0, 160) };
+            if (styles) {
+                heading.box = boxOf(h);
+                heading.style = styleOf(h);
+            }
+            out.headings.push(heading);
         });
 
         var selector = 'a[href], button, input, select, textarea, [role="button"], [contenteditable="true"]';
         var seen = 0;
         root.querySelectorAll(selector).forEach(function (el) {
-            if (seen >= cap || !visible(el)) { return; }
+            if (!visible(el)) { return; }
+            if (seen >= cap) { dropped++; return; }
             seen++;
             var item = {
                 tag: el.tagName.toLowerCase(),
@@ -425,11 +497,19 @@
             if (el.name) { item.name = el.name; }
             if (el.href) { item.href = el.href; }
             if (el.disabled) { item.disabled = true; }
+            if (styles) {
+                item.box = boxOf(el);
+                item.style = styleOf(el);
+            }
             out.elements.push(item);
         });
 
         out.text = (root.innerText || '').replace(/\s+\n/g, '\n').trim().slice(0, 6000);
-        out.truncated = seen >= cap;
+        out.truncated = dropped > 0;
+        if (out.truncated && styles) {
+            out.note = 'Styles were requested, so at most ' + cap + ' headings and ' + cap
+                + ' elements are returned. Pass a selector to read one section at a time.';
+        }
 
         return out;
     }
@@ -634,22 +714,199 @@
         return { filled: payload.selector, value: el.value, submitted: false };
     }
 
-    /* ------------------------------------------------------------ audits -- */
+    /* ------------------------------------------------------------ colour -- */
 
-    function luminance(rgb) {
-        var parts = rgb.match(/\d+(\.\d+)?/g);
-        if (!parts || parts.length < 3) { return null; }
-        var c = parts.slice(0, 3).map(function (v) {
-            var x = Number(v) / 255;
-            return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
-        });
-        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    /* The colour maths touches no DOM, so it can be checked without a browser
+       (tests/visual-border-contrast-check.js lifts these by name). Computed
+       styles do not come back in one shape: legacy rgba() with commas, rgb()
+       with a slash, or color(srgb …) when a token was built with color-mix(). */
+    function parseColor(value) {
+        var s = String(value || '').trim().toLowerCase();
+        if (s === 'transparent') { return { r: 0, g: 0, b: 0, a: 0 }; }
+
+        var hex = s.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/);
+        if (hex) {
+            var h = hex[1].length < 6
+                ? hex[1].split('').map(function (c) { return c + c; }).join('')
+                : hex[1];
+            return {
+                r: parseInt(h.slice(0, 2), 16),
+                g: parseInt(h.slice(2, 4), 16),
+                b: parseInt(h.slice(4, 6), 16),
+                a: h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1
+            };
+        }
+
+        var fn = s.match(/^(rgba?|color)\(\s*(.*?)\s*\)$/);
+        if (!fn) { return null; }
+
+        var body = fn[2];
+        // color() is only read in sRGB, where channels run 0-1. Wider spaces
+        // need gamut mapping this does not attempt; readColor asks the browser.
+        var unit = 1;
+        if (fn[1] === 'color') {
+            if (body.indexOf('srgb ') !== 0) { return null; }
+            body = body.slice(5);
+            unit = 255;
+        }
+
+        var alpha = '1';
+        var halves = body.split('/');
+        if (halves.length > 2) { return null; }
+        if (halves.length === 2) {
+            alpha = halves[1].trim();
+            body = halves[0];
+        }
+
+        var parts = body.split(/[\s,]+/).filter(Boolean);
+        if (parts.length === 4 && halves.length === 1 && fn[1] !== 'color') { alpha = parts.pop(); }
+        if (parts.length !== 3) { return null; }
+
+        function channel(raw) {
+            var n = raw === 'none' ? 0 : parseFloat(raw);
+            n = raw.slice(-1) === '%' ? n * 2.55 : n * unit;
+            return Math.min(255, Math.max(0, n));
+        }
+
+        var a = alpha === 'none' ? 0 : parseFloat(alpha);
+        if (alpha.slice(-1) === '%') { a = a / 100; }
+
+        var color = { r: channel(parts[0]), g: channel(parts[1]), b: channel(parts[2]), a: Math.min(1, Math.max(0, a)) };
+        // NaN survives min/max, so one bad channel poisons the sum. Better no
+        // answer than a confident ratio computed from garbage.
+        return isNaN(color.r + color.g + color.b + color.a) ? null : color;
     }
 
-    function contrast(fg, bg) {
-        var a = luminance(fg), b = luminance(bg);
-        if (a === null || b === null) { return null; }
+    /* Source-over, the way the browser paints one colour on another. A border
+       at 20% is not the colour its token names: it is mostly whatever lies
+       underneath, and that blend is what the eye actually compares. */
+    function blendOver(top, bottom) {
+        var a = top.a + bottom.a * (1 - top.a);
+        if (a <= 0) { return { r: 0, g: 0, b: 0, a: 0 }; }
+        function mix(t, b) { return (t * top.a + b * bottom.a * (1 - top.a)) / a; }
+        return { r: mix(top.r, bottom.r), g: mix(top.g, bottom.g), b: mix(top.b, bottom.b), a: a };
+    }
+
+    /* WCAG relative luminance. Alpha is ignored on purpose: callers blend
+       first, because a translucent colour has no luminance of its own. */
+    function relativeLuminance(c) {
+        var lin = [c.r, c.g, c.b].map(function (v) {
+            var x = v / 255;
+            return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+    }
+
+    function contrastRatio(x, y) {
+        var a = relativeLuminance(x), b = relativeLuminance(y);
         return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    }
+
+    // Below this a border separates nothing. It is not a WCAG number — WCAG's
+    // 3:1 for non-text UI would flag every hairline divider on the web — it is
+    // the point under which a border stops being visible at all.
+    var BORDER_FLOOR = 1.5;
+
+    /* How far a border stands out, as the better of its two edges: against
+       the surface outside the element and against the element's own fill.
+       Judging the outside alone flagged a border that matched the page but
+       plainly framed a dark card; judging the inside alone missed a white
+       card on a white page, which is exactly the build that shipped with
+       invisible borders. Painted over the fill when the background runs under
+       the border (background-clip: border-box, the default), else the surface. */
+    function borderContrast(border, fill, surface, underBorder) {
+        var inside = blendOver(fill, surface);
+        var drawn = blendOver(border, underBorder ? inside : surface);
+        return Math.max(contrastRatio(drawn, surface), contrastRatio(drawn, inside));
+    }
+
+    var colorCache = {};
+    var colorCanvas = null;
+
+    /* parseColor first; anything it cannot read — oklch(), lab(), display-p3 —
+       the browser can, so let it paint one pixel and read back what it drew.
+       Tokens built in those spaces were otherwise skipped by every check. */
+    function readColor(value) {
+        var key = String(value || '');
+        if (Object.prototype.hasOwnProperty.call(colorCache, key)) { return colorCache[key]; }
+
+        var color = parseColor(key);
+        if (!color && key) {
+            try {
+                if (!colorCanvas) {
+                    colorCanvas = document.createElement('canvas');
+                    colorCanvas.width = 1;
+                    colorCanvas.height = 1;
+                }
+                var ctx = colorCanvas.getContext('2d');
+                // An invalid colour leaves fillStyle untouched, so a sentinel
+                // that survives the assignment means the browser refused it.
+                ctx.fillStyle = '#010203';
+                ctx.fillStyle = key;
+                if (ctx.fillStyle !== '#010203') {
+                    ctx.clearRect(0, 0, 1, 1);
+                    ctx.fillRect(0, 0, 1, 1);
+                    var px = ctx.getImageData(0, 0, 1, 1).data;
+                    color = { r: px[0], g: px[1], b: px[2], a: px[3] / 255 };
+                }
+            } catch (e) { color = null; }
+        }
+
+        // A page has a few dozen distinct colours; a workspace left open all
+        // day visits many pages, so the cache is dropped rather than grown.
+        if (Object.keys(colorCache).length > 500) { colorCache = {}; }
+        colorCache[key] = color;
+        return color;
+    }
+
+    function colorText(c) {
+        var rgb = Math.round(c.r) + ', ' + Math.round(c.g) + ', ' + Math.round(c.b);
+        return c.a < 1 ? 'rgba(' + rgb + ', ' + Math.round(c.a * 100) / 100 + ')' : 'rgb(' + rgb + ')';
+    }
+
+    /* The opaque colour showing behind a node: every translucent background up
+       to the first solid one, blended in paint order. Taking the nearest
+       non-transparent background alone reported a 5% tint as the surface and
+       lost the dark section it sat on. Background images are not seen. */
+    function surfaceFrom(node) {
+        var layers = [];
+        while (node && node.nodeType === 1) {
+            var c = readColor(node.ownerDocument.defaultView.getComputedStyle(node).backgroundColor);
+            if (c && c.a > 0) {
+                layers.push(c);
+                if (c.a >= 1) { break; }
+            }
+            node = node.parentElement;
+        }
+        // Nothing painted at all is the browser's white canvas.
+        var surface = { r: 255, g: 255, b: 255, a: 1 };
+        for (var i = layers.length - 1; i >= 0; i--) { surface = blendOver(layers[i], surface); }
+        return surface;
+    }
+
+    var BORDER_SIDES = ['top', 'right', 'bottom', 'left'];
+
+    /* Sides whose border actually paints. Under 1px is left out: it renders as
+       a hairline or not at all depending on the screen, and is not a border
+       anyone designed to be seen. */
+    function bordersOf(cs) {
+        var out = [];
+        BORDER_SIDES.forEach(function (side) {
+            var width = cs.getPropertyValue('border-' + side + '-width');
+            var kind = cs.getPropertyValue('border-' + side + '-style');
+            if ((parseFloat(width) || 0) >= 1 && kind !== 'none' && kind !== 'hidden') {
+                out.push({ side: side, width: width, style: kind, color: cs.getPropertyValue('border-' + side + '-color') });
+            }
+        });
+        return out;
+    }
+
+    /* ------------------------------------------------------------ audits -- */
+
+    function contrast(fg, bg) {
+        var a = readColor(fg), b = readColor(bg);
+        if (!a || !b) { return null; }
+        return contrastRatio(a, b);
     }
 
     function backdrop(el) {
@@ -669,7 +926,7 @@
         if (!d) { throw new Error('The active page is on another origin.'); }
 
         var want = (payload.checks && payload.checks.length) ? payload.checks
-            : ['contrast', 'alt', 'labels', 'headings', 'overflow'];
+            : ['contrast', 'alt', 'labels', 'headings', 'overflow', 'borders'];
         var findings = [];
         var win = d.defaultView;
 
@@ -736,6 +993,48 @@
                 var r = el.getBoundingClientRect();
                 if (r.width > 0 && r.right > width + 1) {
                     findings.push({ check: 'overflow', selector: cssPath(el), detail: 'Extends ' + Math.round(r.right - width) + 'px past the right edge.', text: (el.textContent || '').trim().slice(0, 40) });
+                }
+            });
+        }
+
+        // A border can be set, sized and styled and still not be there: its
+        // token resolved to white at 20% on a white page, and nothing in the
+        // markup, the stylesheet or a text read says so. Only the rendered
+        // colours, blended the way the browser paints them, show it.
+        if (want.indexOf('borders') !== -1) {
+            var faint = 0;
+            d.querySelectorAll('body *').forEach(function (el) {
+                if (faint >= 200) { return; }
+                var s = win.getComputedStyle(el);
+                var sides = bordersOf(s);
+                if (!sides.length || !visible(el)) { return; }
+
+                var surface = surfaceFrom(el.parentElement);
+                var fill = readColor(s.backgroundColor) || { r: 0, g: 0, b: 0, a: 0 };
+                // The background colour is clipped by the bottom-most layer,
+                // which is the last entry in the list.
+                var clip = String(s.backgroundClip || 'border-box').split(',').pop().trim();
+
+                for (var i = 0; i < sides.length; i++) {
+                    var border = readColor(sides[i].color);
+                    if (!border) { continue; }
+                    var ratio = borderContrast(border, fill, surface, clip === 'border-box');
+                    if (ratio < BORDER_FLOOR) {
+                        faint++;
+                        findings.push({
+                            check: 'borders',
+                            selector: cssPath(el),
+                            detail: 'Border is effectively invisible against its background: '
+                                + ratio.toFixed(2) + ':1 against a floor of ' + BORDER_FLOOR + ':1.',
+                            text: (el.textContent || '').trim().slice(0, 40),
+                            border: sides[i].color,
+                            surface: colorText(surface),
+                            ratio: Math.round(ratio * 100) / 100
+                        });
+                        // One finding per element; four identical sides are
+                        // one mistake, not four.
+                        break;
+                    }
                 }
             });
         }

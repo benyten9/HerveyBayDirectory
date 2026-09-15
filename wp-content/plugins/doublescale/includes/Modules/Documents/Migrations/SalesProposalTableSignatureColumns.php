@@ -29,9 +29,9 @@ class SalesProposalTableSignatureColumns {
 		}
 
 		$columns = array(
-			'signed_name' => "ADD `signed_name` VARCHAR(255) NULL AFTER `decline_reason`",
-			'signature'   => "ADD `signature` TEXT NULL AFTER `signed_name`",
-			'signed_ip'   => "ADD `signed_ip` VARCHAR(45) NULL AFTER `signature`",
+			'signed_name' => 'ADD `signed_name` VARCHAR(255) NULL',
+			'signature'   => 'ADD `signature` TEXT NULL',
+			'signed_ip'   => 'ADD `signed_ip` VARCHAR(45) NULL',
 		);
 
 		foreach ( $columns as $name => $ddl ) {

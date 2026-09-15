@@ -49,6 +49,7 @@ abstract class Migration {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema-existence check before dbDelta; caching would mask the real DDL state we need to read.
 		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->table_name ) );
 		if ( $exists === $this->table_name ) {
+			$this->ensure_columns();
 			return;
 		}
 
@@ -79,5 +80,23 @@ abstract class Migration {
 				error_log( sprintf( 'DoubleScale: failed to create table %s (%s)', $this->table_name, $error ) );
 			}
 		}
+
+		$this->ensure_columns();
+	}
+
+	/**
+	 * Add any column declared in {@see get_query()} that is missing on disk.
+	 *
+	 * Safe when the table already exists — CREATE migrations skip dbDelta in
+	 * that case, so later columns would never land without this.
+	 *
+	 * @return void
+	 */
+	public function ensure_columns(): void {
+		if ( empty( $this->table_name ) ) {
+			return;
+		}
+
+		SchemaColumns::ensure_from_query( $this->table_name, $this->get_query() );
 	}
 }

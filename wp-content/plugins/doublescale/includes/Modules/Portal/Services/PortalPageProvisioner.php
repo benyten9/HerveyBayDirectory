@@ -25,6 +25,7 @@ namespace DoubleScale\Modules\Portal\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Modules\Portal\Renderer\PortalFrontendHandler;
 
 /**
@@ -39,13 +40,30 @@ final class PortalPageProvisioner {
 	public const PROVISIONED_FLAG = 'doublescale_client_portal_page_provisioned';
 
 	/**
-	 * Page body. Wrapped in a shortcode block so it is clean in the block editor
-	 * and still renders on classic themes.
+	 * Ensure the portal descriptor is present in the shared registry.
+	 *
+	 * The settings "Create page" action reaches this class through REST, which
+	 * may run before (or without) the module boot that registers the descriptor.
+	 * Registering here too is idempotent and keeps that path working.
+	 *
+	 * @return void
 	 */
-	private const PAGE_CONTENT = "<!-- wp:shortcode -->\n[" . PortalFrontendHandler::SHORTCODE_NAME . "]\n<!-- /wp:shortcode -->";
+	private static function ensure_registered(): void {
+		ShortcodePageProvisioner::register(
+			PortalFrontendHandler::SHORTCODE_NAME,
+			array(
+				'title' => __( 'Client Portal', 'doublescale' ),
+				'slug'  => 'client-portal',
+			)
+		);
+	}
 
 	/**
 	 * `admin_init` entry point: provision the page once, then never again.
+	 *
+	 * Retained for back-compat; the live `admin_init` hook now runs the shared
+	 * {@see ShortcodePageProvisioner::maybe_provision_all()} pass, which covers
+	 * the portal alongside every other customer-facing shortcode.
 	 *
 	 * @return void
 	 */
@@ -63,128 +81,30 @@ final class PortalPageProvisioner {
 	}
 
 	/**
-	 * Adopt-or-create the portal page and record it. Sets the one-time flag only
-	 * on success, so a failed creation retries on the next admin load. Shared by
-	 * the auto path and the settings "Create page" action.
+	 * Adopt-or-create the portal page and record it. Backs the settings
+	 * "Create page" action.
 	 *
 	 * @return int Resolved page id, or 0 on failure.
 	 */
 	public static function provision(): int {
-		$page_id = self::ensure_page();
+		self::ensure_registered();
 
-		if ( $page_id > 0 ) {
-			update_option( self::PROVISIONED_FLAG, 'yes' );
-		}
-
-		return $page_id;
+		return ShortcodePageProvisioner::provision( PortalFrontendHandler::SHORTCODE_NAME );
 	}
 
 	/**
 	 * Status payload for the admin settings card.
 	 *
+	 * Keeps the historical key set (no `title`) so the existing settings card
+	 * contract is unchanged.
+	 *
 	 * @return array<string, mixed>
 	 */
 	public static function get_status(): array {
-		$page_id = self::resolve_existing_page_id();
-		$exists  = $page_id > 0;
+		$status = ShortcodePageProvisioner::get_status( PortalFrontendHandler::SHORTCODE_NAME );
 
-		return array(
-			'provisioned' => 'yes' === get_option( self::PROVISIONED_FLAG ),
-			'page_id'     => $page_id,
-			'exists'      => $exists,
-			'view_url'    => $exists ? (string) get_permalink( $page_id ) : '',
-			'edit_url'    => $exists ? (string) get_edit_post_link( $page_id, 'raw' ) : '',
-			'shortcode'   => '[' . PortalFrontendHandler::SHORTCODE_NAME . ']',
-		);
-	}
+		unset( $status['title'] );
 
-	/**
-	 * Resolve the live portal page: the recorded id when still valid, else the
-	 * content scan (covers a hand-built page).
-	 *
-	 * @return int Page id, or 0.
-	 */
-	private static function resolve_existing_page_id(): int {
-		$stored = (int) get_option( PortalUrl::PAGE_ID_OPTION, 0 );
-		if ( $stored > 0 && self::page_is_live( $stored ) ) {
-			return $stored;
-		}
-
-		$found = PortalUrl::find_existing_page_id();
-
-		return $found > 0 ? $found : 0;
-	}
-
-	/**
-	 * Adopt an existing shortcode page or create a new one, recording its id in
-	 * {@see PortalUrl::PAGE_ID_OPTION} and flushing the cached permalink.
-	 *
-	 * @return int Page id, or 0 on failure.
-	 */
-	private static function ensure_page(): int {
-		$existing = PortalUrl::find_existing_page_id();
-		if ( $existing > 0 ) {
-			update_option( PortalUrl::PAGE_ID_OPTION, $existing );
-			PortalUrl::flush_cache();
-
-			return $existing;
-		}
-
-		$page_id = self::create_page();
-		if ( $page_id > 0 ) {
-			update_option( PortalUrl::PAGE_ID_OPTION, $page_id );
-			PortalUrl::flush_cache();
-		}
-
-		return $page_id;
-	}
-
-	/**
-	 * Insert the published portal page.
-	 *
-	 * @return int New page id, or 0 on failure.
-	 */
-	private static function create_page(): int {
-		$page_id = wp_insert_post(
-			array(
-				'post_title'   => __( 'Client Portal', 'doublescale' ),
-				'post_name'    => 'client-portal',
-				'post_status'  => 'publish',
-				'post_type'    => 'page',
-				'post_content' => self::PAGE_CONTENT,
-				'post_author'  => get_current_user_id(),
-			),
-			true
-		);
-
-		if ( is_wp_error( $page_id ) || ! $page_id ) {
-			if ( function_exists( 'doublescale_get_logger' ) ) {
-				doublescale_get_logger()->error(
-					'Failed to auto-create the Client Portal page',
-					array(
-						'source' => 'portal-page-provision',
-						'error'  => is_wp_error( $page_id ) ? $page_id->get_error_message() : 'unknown',
-					)
-				);
-			}
-
-			return 0;
-		}
-
-		return (int) $page_id;
-	}
-
-	/**
-	 * Whether a page id points at a live (publish/private) page.
-	 *
-	 * @param int $page_id Page id.
-	 * @return bool
-	 */
-	private static function page_is_live( int $page_id ): bool {
-		$post = get_post( $page_id );
-
-		return $post instanceof \WP_Post
-			&& 'page' === $post->post_type
-			&& in_array( $post->post_status, array( 'publish', 'private' ), true );
+		return $status;
 	}
 }

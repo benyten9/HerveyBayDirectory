@@ -87,10 +87,23 @@ class DelayUntilDatetime extends Action
 		if (! $next_step) {
 			return false;
 		}
-		// Schedule the next step after 2 minutes
+
 		$datetime = $step->get_setting('datetime');
-		// convert datetime to timestamp
-		$timestamp = (new \DateTime($datetime))->getTimestamp();
+
+		// Parse datetime in WordPress timezone, not server timezone
+		try {
+			$tz = wp_timezone();
+			$dt = new \DateTime($datetime, $tz);
+			$timestamp = $dt->getTimestamp();
+		} catch (\Exception $e) {
+			// Fallback: try parsing without explicit timezone
+			try {
+				$timestamp = (new \DateTime($datetime))->getTimestamp();
+			} catch (\Exception $e2) {
+				// Invalid datetime, skip this step
+				return false;
+			}
+		}
 
 		PluginKernel::instance()->automations_tasks->schedule_single($timestamp, 'process_automation_step', $automation->id, $step->id, $next_step->id, $automation_contact->id);
 		return true;

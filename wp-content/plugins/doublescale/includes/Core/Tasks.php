@@ -398,31 +398,64 @@ class Tasks {
 	public function update_heartbeat( $hook ) {
 		global $wpdb;
 
+		if ( ! $this->meta_table_exists() ) {
+			return false;
+		}
+
 		$full_hook    = "{$this->group}_$hook";
 		$current_time = gmdate( 'Y-m-d H:i:s' );
 
-		$result = $wpdb->query(
+		$meta_id = $wpdb->get_var(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->prefix}doublescale_task_meta
-				SET last_run = %s
-				WHERE ID = (
-					SELECT ID FROM (
-						SELECT ID
-						FROM {$wpdb->prefix}doublescale_task_meta
-						WHERE hook = %s
-						AND group_slug = %s
-						ORDER BY ID DESC
-						LIMIT 1
-					) AS tmp
-				)",
-				$current_time,
+				"SELECT ID
+				FROM {$wpdb->prefix}doublescale_task_meta
+				WHERE hook = %s
+				AND group_slug = %s
+				ORDER BY ID DESC
+				LIMIT 1",
 				$full_hook,
 				$this->group
 			)
 		);
 
-		// Log failure for debugging.
-		if ( false === $result ) {
+		if ( $meta_id ) {
+			$result = $wpdb->update(
+				"{$wpdb->prefix}doublescale_task_meta",
+				array( 'last_run' => $current_time ),
+				array( 'ID' => (int) $meta_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
+			if ( false === $result ) {
+				doublescale_get_logger()->info(
+					'Failed to update heartbeat timestamp',
+					array(
+						'hook'  => $full_hook,
+						'group' => $this->group,
+						'error' => $wpdb->last_error,
+					)
+				);
+				return false;
+			}
+
+			return true;
+		}
+
+		// No row yet — typical right after a plugin update when Action Scheduler
+		// actions were cancelled and rescheduled. Insert instead of logging a fake failure.
+		$insert = $wpdb->insert(
+			"{$wpdb->prefix}doublescale_task_meta",
+			array(
+				'hook'         => $full_hook,
+				'group_slug'   => $this->group,
+				'value'        => maybe_serialize( array() ),
+				'last_run'     => $current_time,
+				'date_created' => $current_time,
+			)
+		);
+
+		if ( ! $insert && $wpdb->last_error ) {
 			doublescale_get_logger()->info(
 				'Failed to update heartbeat timestamp',
 				array(
@@ -431,9 +464,10 @@ class Tasks {
 					'error' => $wpdb->last_error,
 				)
 			);
+			return false;
 		}
 
-		return (bool) $result;
+		return (bool) $insert;
 	}
 
 	/**

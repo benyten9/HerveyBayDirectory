@@ -18,7 +18,7 @@ use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 class Setup {
     public const DEFAULT_PLANS_INITIALIZED_OPTION = 'directorist_pricing_plans_default_plans_initialized';
     public const QUERY_INDEXES_VERSION_OPTION     = 'directorist_pricing_plans_query_indexes_version';
-    public const QUERY_INDEXES_VERSION            = '20260611-no-status';
+    public const QUERY_INDEXES_VERSION            = '20260730-admin-package-index-query';
 
     public function execute() {
         $prefix = "directorist_";
@@ -128,6 +128,26 @@ class Setup {
                     ['user_id', 'plan_id', 'listing_display_priority'],
                     'idx_dpp_pkg_user_plan_priority'
                 );
+                $table->index(
+                    ['status', 'started_at', 'id'],
+                    'idx_dpp_pkg_status_started_id'
+                );
+                $table->index(
+                    ['started_at', 'id', 'status'],
+                    'idx_dpp_pkg_started_id_status'
+                );
+                $table->index(
+                    ['user_id', 'directory_type_id', 'status', 'is_legacy', 'plan_id'],
+                    'idx_dpp_pkg_user_dir_status_legacy_plan'
+                );
+                $table->index(
+                    ['user_id', 'plan_id', 'status'],
+                    'idx_dpp_pkg_user_plan_status'
+                );
+                $table->index(
+                    ['last_order_id'],
+                    'idx_dpp_pkg_last_order_id'
+                );
             }
         );
 
@@ -204,6 +224,31 @@ class Setup {
                 $table_name,
                 'idx_dpp_pkg_user_plan_priority',
                 ['user_id', 'plan_id', 'listing_display_priority']
+            ),
+            $this->add_index_if_missing(
+                $table_name,
+                'idx_dpp_pkg_status_started_id',
+                ['status', 'started_at', 'id']
+            ),
+            $this->add_index_if_missing(
+                $table_name,
+                'idx_dpp_pkg_started_id_status',
+                ['started_at', 'id', 'status']
+            ),
+            $this->add_index_if_missing(
+                $table_name,
+                'idx_dpp_pkg_user_dir_status_legacy_plan',
+                ['user_id', 'directory_type_id', 'status', 'is_legacy', 'plan_id']
+            ),
+            $this->add_index_if_missing(
+                $table_name,
+                'idx_dpp_pkg_user_plan_status',
+                ['user_id', 'plan_id', 'status']
+            ),
+            $this->add_index_if_missing(
+                $table_name,
+                'idx_dpp_pkg_last_order_id',
+                ['last_order_id']
             ),
         ];
 

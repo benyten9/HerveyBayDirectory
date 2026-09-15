@@ -53,6 +53,7 @@ class MenuServiceProvider implements Provider
                         'description' => __( 'You can Customize all the settings of Pricing Plans Extension here', 'directorist-pricing-plans' ),
                         'fields'      =>  [ 
                             'plan_direct_purchase',
+                            'allow_multiple_plans_per_directory_type',
                         // TODO: will be added later
                         // 'skip_plan_page',
                         // 'tax_placeholder',
@@ -72,6 +73,13 @@ class MenuServiceProvider implements Provider
             'type'  => 'toggle',
             'label' => __( 'Direct Plan Purchase', 'directorist-pricing-plans' ),
             'value' => false,
+        ];
+
+        $pricing_fields['allow_multiple_plans_per_directory_type'] = [
+            'type'        => 'toggle',
+            'label'       => __( 'Allow Multiple Plans per Directory Type', 'directorist-pricing-plans' ),
+            'description' => __( 'Allow users to purchase and use more than one active plan in the same directory type.', 'directorist-pricing-plans' ),
+            'value'       => false,
         ];
 
         $pricing_fields['pricing_plans'] = [

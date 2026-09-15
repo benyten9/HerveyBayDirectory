@@ -22,7 +22,7 @@ class Capabilities {
 	 * Bump when the booking role-to-capability map changes so existing installs
 	 * re-run {@see sync_capabilities_for_user_roles()} on next boot.
 	 */
-	private const CAPS_SYNC_VERSION = '2026-06-10-booking-roles-v2';
+	private const CAPS_SYNC_VERSION = '2026-09-08-multisite-booking';
 
 	public static function get_core_capabilities() {
 		return array(
@@ -163,6 +163,30 @@ class Capabilities {
 	 * @return void
 	 */
 	public static function sync_capabilities_for_user_roles() {
+		if ( is_multisite() ) {
+			$site_ids = get_sites(
+				array(
+					'fields' => 'ids',
+					'number' => 0,
+				)
+			);
+
+			foreach ( $site_ids as $site_id ) {
+				switch_to_blog( (int) $site_id );
+				self::sync_capabilities_for_current_blog();
+				restore_current_blog();
+			}
+
+			return;
+		}
+
+		self::sync_capabilities_for_current_blog();
+	}
+
+	/**
+	 * Sync booking caps on the current blog only.
+	 */
+	private static function sync_capabilities_for_current_blog(): void {
 		global $wp_roles;
 
 		if ( ! class_exists( 'WP_Roles' ) ) {
@@ -175,9 +199,6 @@ class Capabilities {
 
 		$all_caps = self::get_booking_capability_slugs();
 
-		// TODO: multisite — `$wp_roles->add_cap()` only affects the current blog. For multisite installs
-		// where non-super-admins should receive booking caps on sub-sites, wrap this loop in a
-		// `switch_to_blog()` over `get_sites()`. Single-site is the assumption for now.
 		foreach ( self::sync_role_slugs() as $role_slug ) {
 			$role = get_role( $role_slug );
 			if ( ! $role ) {
@@ -193,10 +214,6 @@ class Capabilities {
 					$wp_roles->remove_cap( $role_slug, $capability );
 				}
 			}
-		}
-
-		if ( is_multisite() ) {
-			add_filter( 'user_has_cap', array( __CLASS__, 'grant_super_admin_capabilities' ), 10, 4 );
 		}
 
 		update_option( 'doublescale_booking_caps_version', self::CAPS_SYNC_VERSION, false );
@@ -244,6 +261,32 @@ class Capabilities {
 		return $allcaps;
 	}
 
+	/**
+	 * Register network-only capability grants once per request bootstrap.
+	 */
+	public static function register_multisite_hooks(): void {
+		if ( ! is_multisite() ) {
+			return;
+		}
+
+		static $registered = false;
+		if ( $registered ) {
+			return;
+		}
+
+		add_filter( 'user_has_cap', array( __CLASS__, 'grant_super_admin_capabilities' ), 10, 4 );
+		$registered = true;
+	}
+
+	/**
+	 * Deny access to booking rows owned by users who are not members of this site.
+	 *
+	 * @param int $owner_user_id Calendar/booking owner user id.
+	 */
+	private static function deny_foreign_site_owner( int $owner_user_id ): bool {
+		return ! \DoubleScale\Modules\Booking\Helpers\MultisiteScope::owner_is_site_member( $owner_user_id );
+	}
+
 	public static function can_manage_calendar( $calendar_id ) {
 		if ( is_multisite() && is_super_admin() ) {
 			return true;
@@ -255,6 +298,10 @@ class Capabilities {
 		// when the calendar didn't exist, which let stale UI mutate
 		// freshly-deleted IDs and returned a 404 (info leak) instead of 403.
 		if ( ! $calendar ) {
+			return false;
+		}
+
+		if ( self::deny_foreign_site_owner( (int) $calendar->user_id ) ) {
 			return false;
 		}
 
@@ -273,6 +320,10 @@ class Capabilities {
 		$calendar = CalendarModel::find( $calendar_id );
 
 		if ( ! $calendar ) {
+			return false;
+		}
+
+		if ( self::deny_foreign_site_owner( (int) $calendar->user_id ) ) {
 			return false;
 		}
 
@@ -299,6 +350,10 @@ class Capabilities {
 		// PHP 8 warning. We then fall through to the manage_all_calendars
 		// check, which is the correct deny-by-default for orphaned events.
 		$calendar_owner = optional( $event->calendar )->user_id;
+		if ( null !== $calendar_owner && self::deny_foreign_site_owner( (int) $calendar_owner ) ) {
+			return false;
+		}
+
 		if ( null !== $calendar_owner && (int) $calendar_owner === get_current_user_id() ) {
 			return true;
 		}
@@ -318,6 +373,10 @@ class Capabilities {
 		}
 
 		$calendar_owner = optional( $event->calendar )->user_id;
+		if ( null !== $calendar_owner && self::deny_foreign_site_owner( (int) $calendar_owner ) ) {
+			return false;
+		}
+
 		if ( null !== $calendar_owner && (int) $calendar_owner === get_current_user_id() ) {
 			return true;
 		}
@@ -330,14 +389,19 @@ class Capabilities {
 			return true;
 		}
 
-		if ( current_user_can( 'doublescale_booking_manage_all_bookings' ) ) {
-			return true;
-		}
-
 		$booking = BookingModel::with( 'event', 'calendar', 'hosts' )->find( $booking_id );
 
 		if ( ! $booking ) {
 			return false;
+		}
+
+		$calendar_owner = optional( $booking->calendar )->user_id;
+		if ( null !== $calendar_owner && self::deny_foreign_site_owner( (int) $calendar_owner ) ) {
+			return false;
+		}
+
+		if ( current_user_can( 'doublescale_booking_manage_all_bookings' ) ) {
+			return true;
 		}
 
 		return $booking->userCanAccessAsStaff( get_current_user_id() );
@@ -348,14 +412,19 @@ class Capabilities {
 			return true;
 		}
 
-		if ( current_user_can( 'doublescale_booking_read_all_bookings' ) ) {
-			return true;
-		}
-
 		$booking = BookingModel::with( 'event', 'calendar', 'hosts' )->find( $booking_id );
 
 		if ( ! $booking ) {
 			return false;
+		}
+
+		$calendar_owner = optional( $booking->calendar )->user_id;
+		if ( null !== $calendar_owner && self::deny_foreign_site_owner( (int) $calendar_owner ) ) {
+			return false;
+		}
+
+		if ( current_user_can( 'doublescale_booking_read_all_bookings' ) ) {
+			return true;
 		}
 
 		if ( current_user_can( 'doublescale_booking_read_own_bookings' ) && $booking->userCanAccessAsStaff( get_current_user_id() ) ) {

@@ -169,7 +169,7 @@ function nibwp_content_schedule_post(array $input): array|WP_Error
 
         $insert_args = [
             'post_title' => sanitize_text_field($input['title']),
-            'post_content' => wp_kses_post($input['content'] ?? ''),
+            'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
             'post_excerpt' => sanitize_textarea_field($input['excerpt'] ?? ''),
             'post_status' => 'future',
             'post_type' => $post_type,
@@ -724,7 +724,7 @@ function nibwp_content_bulk_schedule(array $input): array|WP_Error
 
         $insert_args = [
             'post_title' => sanitize_text_field($post_data['title']),
-            'post_content' => wp_kses_post($post_data['content'] ?? ''),
+            'post_content' => nibwp_wp_prepare_post_content($post_data['content'] ?? ''),
             'post_excerpt' => sanitize_textarea_field($post_data['excerpt'] ?? ''),
             'post_status' => $status,
             'post_type' => $post_type,

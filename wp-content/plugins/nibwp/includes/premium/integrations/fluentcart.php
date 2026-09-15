@@ -353,7 +353,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
             $id = wp_insert_post([
                 'post_type'    => 'fc_product',
                 'post_title'   => $title,
-                'post_content' => (string) ($in['content'] ?? ''),
+                'post_content' => nibwp_wp_prepare_post_content($in['content'] ?? ''),
                 'post_status'  => (string) ($in['status'] ?? 'draft'),
             ], true);
 

@@ -19,8 +19,6 @@ class Read extends DTO {
 
     private ?bool $is_recurring = null;
 
-    private ?bool $with_usage_data = null;
-
     /**
      * Get the value of page
      *
@@ -152,27 +150,4 @@ class Read extends DTO {
 
         return $this;
     }
-
-    /**
-     * Get the value of with_usage_data
-     *
-     * @return ?bool
-     */
-    public function is_with_usage_data(): ?bool {
-        return $this->with_usage_data;
-    }
-    
-    /**
-     * Set the value of with_usage_data
-     *
-     * @param ?bool $with_usage_data 
-     *
-     * @return self
-     */
-    public function set_with_usage_data( ?bool $with_usage_data ): self {
-        $this->with_usage_data = $with_usage_data;
-
-        return $this;
-    }
 }
-

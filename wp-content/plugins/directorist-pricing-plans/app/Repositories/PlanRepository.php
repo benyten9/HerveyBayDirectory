@@ -25,13 +25,22 @@ class PlanRepository extends Repository {
     }
 
     public function get_by_directory_type( $directory_type_id, string $mode = 'all' ) {
+        if ( 'plan-switch' === $mode && directorist_allow_multiple_plans_per_directory_type() ) {
+            return [];
+        }
+
         $query = $this->get_query_builder()->where( "plan.directory_type_id", $directory_type_id )
         ->left_join( "terms as directory_type_term", "directory_type_term.term_id", "=", "plan.directory_type_id" )
         ->where( "plan.is_published", 1 )
         ->where( "plan.is_hidden_from_plans_list", 0 )
         ->order_by( "plan.sort_order", "asc" );
 
-        $active_package = directorist_get_current_package( $directory_type_id );
+        $user_id         = get_current_user_id();
+        $active_packages = $user_id
+            ? directorist_user_package_repository()->get_active_packages_for_directory( $user_id, (int) $directory_type_id )
+            : [];
+        $active_package  = $active_packages[0] ?? null;
+        $active_plan_ids = array_map( 'absint', wp_list_pluck( $active_packages, 'plan_id' ) );
 
         // Filter plans based on mode for plan switching
         if ( 'plan-switch' === $mode && $active_package ) {
@@ -52,13 +61,12 @@ class PlanRepository extends Repository {
             return [];
         }
 
-        $user_id                 = get_current_user_id();
         $has_used_trial          = $user_id ? directorist_user_has_used_trial( $user_id, $directory_type_id ) : true;
         $user_package_repository = directorist_user_package_repository();
 
         $plans = array_map(
-            function( $plan ) use ( $active_package, $has_used_trial, $user_id, $user_package_repository ) {
-                $plan->is_active = $active_package && $plan->id === $active_package->plan_id;
+            function( $plan ) use ( $active_plan_ids, $has_used_trial, $user_id, $user_package_repository ) {
+                $plan->is_active = in_array( (int) $plan->id, $active_plan_ids, true );
 
                 if ( $plan->fee_type === FeeType::FREE ) {
                     $plan->price = 0;

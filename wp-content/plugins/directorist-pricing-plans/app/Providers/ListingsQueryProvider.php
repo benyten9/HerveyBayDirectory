@@ -62,7 +62,7 @@ class ListingsQueryProvider implements Provider {
             . " ON dpp_directory_package.user_id = {$wpdb->posts}.post_author"
             . " AND dpp_directory_package.directory_type_id = CAST( dpp_directory_meta.meta_value AS UNSIGNED )";
 
-        if ( $this->has_migrated_legacy_plans() ) {
+        if ( directorist_is_listing_plan_meta_migrated() ) {
             $join .= " LEFT JOIN {$wpdb->postmeta} AS dpp_pricing_plan_meta"
                 . " ON {$wpdb->posts}.ID = dpp_pricing_plan_meta.post_id"
                 . " AND dpp_pricing_plan_meta.meta_key = '_plan_id'";
@@ -129,18 +129,10 @@ class ListingsQueryProvider implements Provider {
     }
 
     private function get_listing_display_priority_field_sql(): string {
-        if ( ! $this->has_migrated_legacy_plans() ) {
+        if ( ! directorist_is_listing_plan_meta_migrated() ) {
             return 'COALESCE( MAX( dpp_directory_package.listing_display_priority ), 0 )';
         }
 
-        return 'COALESCE(
-            MAX( dpp_plan_package.listing_display_priority ),
-            MAX( dpp_directory_package.listing_display_priority ),
-            0
-        )';
-    }
-
-    private function has_migrated_legacy_plans(): bool {
-        return ! empty( get_option( 'directorist_migration_plan_id_map', [] ) );
+        return 'COALESCE( MAX( dpp_plan_package.listing_display_priority ), 0 )';
     }
 }

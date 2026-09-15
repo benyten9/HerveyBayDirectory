@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
 use DoubleScale\Pro\Modules\Contracts\Abilities\ContractAbilities;
 use DoubleScale\Pro\Modules\Contracts\Renderer\ContractFrontendHandler;
@@ -82,6 +83,19 @@ final class Module extends AbstractSalesChildModule {
 		$this->loadModuleMergeTagFiles();
 
 		new ContractFrontendHandler();
+
+		// Auto-create the page hosting that shortcode, so a sent contract links
+		// somewhere instead of resolving to an empty URL. Guarded: an older free
+		// has no such class, and Pro must degrade silently rather than fatal.
+		if ( class_exists( ShortcodePageProvisioner::class ) ) {
+			ShortcodePageProvisioner::register(
+				ContractFrontendHandler::SHORTCODE_NAME,
+				array(
+					'title' => __( 'Contract', 'doublescale-pro' ),
+					'slug'  => 'doublescale-contract',
+				)
+			);
+		}
 		new ContractPortalProvider();
 		new ContractCalendarProvider();
 

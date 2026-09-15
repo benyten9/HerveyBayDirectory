@@ -65,7 +65,8 @@ class Form extends Abstracts_Form {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		return doublescale_is_plugin_active( 'wpforms/wpforms.php' );
+		return doublescale_is_plugin_active( 'wpforms-lite/wpforms.php' )
+			|| doublescale_is_plugin_active( 'wpforms/wpforms.php' );
 	}
 
 	/**

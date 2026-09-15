@@ -9,6 +9,8 @@ defined( "ABSPATH" ) || exit;
 use Directorist\Helpers\DateTime;
 use Directorist\DTO\Order\DTO as OrderDTO;
 use Directorist\DBModels\Payment;
+use Directorist\DBModels\Order;
+use Directorist\Enums\Order\Status as OrderStatus;
 use Directorist\Repositories\OrderRepository;
 
 use DirectoristPricingPlan\WpMVC\Exceptions\Exception;
@@ -18,14 +20,19 @@ use DirectoristPricingPlan\WpMVC\Repositories\Repository;
 use DirectoristPricingPlan\App\Enums\UserPackage\Status as UserPackageStatus;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 use DirectoristPricingPlan\App\Enums\Plan\FeeType as PlanFeeType;
+use DirectoristPricingPlan\App\Enums\Plan\Interval as PlanInterval;
+use DirectoristPricingPlan\App\Enums\Order\RefType as OrderRefType;
 use DirectoristPricingPlan\App\DTO\UserPackage\Read;
 use DirectoristPricingPlan\App\DTO\UserPackage\Activation as UserPackageActivationDTO;
 use DirectoristPricingPlan\App\DTO\PackageOrder\Read as PackageOrderRead;
 use DirectoristPricingPlan\App\DTO\PackageOrder\DTO as PackageOrderDTO;
+use DirectoristPricingPlan\App\DTO\PlanOrderMeta\DTO as PlanOrderMetaDTO;
 use DirectoristPricingPlan\App\DTO\UserPackage\DTO as UserPackageDTO;
 use DirectoristPricingPlan\App\Models\Plan;
 use DirectoristPricingPlan\App\Models\UserPackage;
+use DirectoristPricingPlan\App\Repositories\Admin\PlanRepository;
 use DirectoristPricingPlan\App\Repositories\PackageOrderRepository;
+use DirectoristPricingPlan\App\Repositories\PlanOrderMetaRepository;
 
 class UserPackageRepository extends Repository {
     public PackageOrderRepository $package_order_repository;
@@ -42,7 +49,108 @@ class UserPackageRepository extends Repository {
     }
 
     public function get( Read $dto ) {
-        $query = $this->get_query_builder()->select(
+        $id_query = $this->get_package_index_query( $dto );
+
+        return [
+            "items" => $this->get_packages( clone $id_query, $dto ),
+            "total" => $this->get_packages_total( clone $id_query, $dto ),
+        ];
+    }
+
+    /**
+     * Get plan IDs referenced by packages whose plans no longer exist.
+     *
+     * @return stdClass[]
+     */
+    public function get_missing_plan_groups(): array {
+        return $this->get_query_builder()
+            ->select(
+                'package.plan_id',
+                'MIN(package.directory_type_id) as directory_type_id',
+                'COUNT(DISTINCT package.directory_type_id) as directory_type_count',
+                'COUNT(package.id) as package_count'
+            )
+            ->left_join( Plan::get_table_name() . ' as plan', 'package.plan_id', '=', 'plan.id' )
+            ->where_not_null( 'package.plan_id' )
+            ->where_null( 'plan.id' )
+            ->group_by( 'package.plan_id' )
+            ->order_by( 'package.plan_id', 'asc' )
+            ->get();
+    }
+
+    /**
+     * Replace missing package plan IDs and their matching pricing-plan order refs.
+     *
+     * @param array<int, int> $assignments Missing plan ID to replacement plan ID map.
+     * @return array{packages: int, orders: int}
+     */
+    public function recover_missing_plans( array $assignments ): array {
+        global $wpdb;
+
+        $packages_table = $wpdb->prefix . UserPackage::get_table_name();
+        $orders_table   = $wpdb->prefix . Order::get_table_name();
+        $updated_at     = current_time( 'mysql' );
+        $updated        = [
+            'packages' => 0,
+            'orders'   => 0,
+        ];
+
+        if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+            throw new Exception( esc_html__( 'Failed to start package plan recovery.', 'directorist-pricing-plans' ), 500 );
+        }
+
+        try {
+            foreach ( $assignments as $missing_plan_id => $new_plan_id ) {
+                $package_count = $wpdb->update(
+                    $packages_table,
+                    [
+                        'plan_id'    => $new_plan_id,
+                        'updated_at' => $updated_at,
+                    ],
+                    [ 'plan_id' => $missing_plan_id ],
+                    [ '%d', '%s' ],
+                    [ '%d' ]
+                );
+
+                if ( false === $package_count ) {
+                    throw new Exception( esc_html__( 'Failed to update packages with missing plans.', 'directorist-pricing-plans' ), 500 );
+                }
+
+                $order_count = $wpdb->update(
+                    $orders_table,
+                    [
+                        'ref'        => (string) $new_plan_id,
+                        'updated_at' => $updated_at,
+                    ],
+                    [
+                        'ref'      => (string) $missing_plan_id,
+                        'ref_type' => OrderRefType::PRICING_PLAN,
+                    ],
+                    [ '%s', '%s' ],
+                    [ '%s', '%s' ]
+                );
+
+                if ( false === $order_count ) {
+                    throw new Exception( esc_html__( 'Failed to update pricing plan orders.', 'directorist-pricing-plans' ), 500 );
+                }
+
+                $updated['packages'] += $package_count;
+                $updated['orders']   += $order_count;
+            }
+
+            if ( false === $wpdb->query( 'COMMIT' ) ) {
+                throw new Exception( esc_html__( 'Failed to commit package plan recovery.', 'directorist-pricing-plans' ), 500 );
+            }
+        } catch ( \Throwable $exception ) {
+            $wpdb->query( 'ROLLBACK' );
+            throw $exception;
+        }
+
+        return $updated;
+    }
+
+    private function get_package_details_query(): Builder {
+        return $this->get_query_builder()->select(
             'package.*',
             'users.user_email',
             'users.display_name as user_display_name',
@@ -60,8 +168,10 @@ class UserPackageRepository extends Repository {
             'payment.method as payment_method',
             'payment.currency'
         );
+    }
 
-        $query->left_join( 'users', 'package.user_id', '=', 'users.ID' )
+    private function add_package_list_joins( Builder $query ): Builder {
+        return $query->left_join( 'users', 'package.user_id', '=', 'users.ID' )
             ->join( Plan::get_table_name() . ' as plan', 'package.plan_id', '=', 'plan.id' )
             ->left_join( "terms as directory_type_term", "directory_type_term.term_id", "=", "plan.directory_type_id" )
             ->left_join(
@@ -70,8 +180,11 @@ class UserPackageRepository extends Repository {
                 }
             )
             ->left_join( Payment::get_table_name() . ' as payment', 'package.last_order_id', '=', 'payment.order_id' );
+    }
 
-        $query->where_not( 'package.status', UserPackageStatus::ARCHIVED );
+    private function get_package_index_query( Read $dto ): Builder {
+        $query = $this->get_query_builder()->select( 'package.id' );
+        $query->where_in( 'package.status', UserPackageStatus::visible() );
 
         if ( null !== $dto->get_user_id() ) {
             $query->where( 'package.user_id', $dto->get_user_id() );
@@ -86,21 +199,31 @@ class UserPackageRepository extends Repository {
         }
 
         if ( ! empty( $dto->get_search() ) ) {
-            $query
-                ->where_like( "package.id", $dto->get_search() )
-                ->or_where_like( "users.user_email", $dto->get_search() )
-                ->or_where_like( "users.display_name", $dto->get_search() )
-                ->or_where_like( "plan.title", $dto->get_search() )
-                ->or_where_like( "directory_type_term.name", $dto->get_search() )
-                ->or_where_like( "general_config_meta.meta_value", $dto->get_search() );
+            $this->add_package_list_joins( $query )
+                ->where(
+                    function( Builder $search_query ) use ( $dto ) {
+                        $search = $dto->get_search();
+
+                        $search_query
+                            ->where_like( "package.id", $search )
+                            ->or_where_like( "users.user_email", $search )
+                            ->or_where_like( "users.display_name", $search )
+                            ->or_where_like( "plan.title", $search )
+                            ->or_where_like( "directory_type_term.name", $search )
+                            ->or_where_like( "general_config_meta.meta_value", $search );
+                    }
+                );
         }
 
-        $count_query = clone $query;
+        return $query;
+    }
 
-        return [
-            "items" => $this->get_packages( $query, $dto ),
-            "total" => $count_query->count( 'package.id' ),
-        ];
+    private function get_packages_total( Builder $query, Read $dto ): int {
+        if ( empty( $dto->get_search() ) ) {
+            return $query->count( 'package.id' );
+        }
+
+        return $query->distinct()->count( 'package.id' );
     }
 
     public function single( $id ) {
@@ -143,6 +266,44 @@ class UserPackageRepository extends Repository {
     public function get_by_subscription_id( string $subscription_id ): ?stdClass {
         return $this->get_query_builder()->where( 'subscription_id', $subscription_id )->first();
     }
+
+    public function get_prepaid_order_for_package( int $package_id ): ?stdClass {
+        return $this->package_order_repository->get_query_builder()
+            ->select( 'd_order.*' )
+            ->join( Order::get_table_name() . ' as d_order', 'package_order.order_id', '=', 'd_order.id' )
+            ->where( 'package_order.package_id', $package_id )
+            ->where( 'd_order.status', OrderStatus::PREPAID )
+            ->order_by_desc( 'd_order.id' )
+            ->first();
+    }
+
+    public function get_pending_renewal_order_for_package( int $package_id ): ?stdClass {
+        return $this->package_order_repository->get_query_builder()
+            ->select( 'd_order.*' )
+            ->join( Order::get_table_name() . ' as d_order', 'package_order.order_id', '=', 'd_order.id' )
+            ->where( 'package_order.package_id', $package_id )
+            ->where( 'd_order.status', OrderStatus::PENDING )
+            ->order_by_desc( 'd_order.id' )
+            ->first();
+    }
+
+    public function create_renewal_order_by_subscription_id( string $subscription_id ): ?OrderDTO {
+        $package = $this->get_by_subscription_id( $subscription_id );
+
+        if ( ! $package ) {
+            return null;
+        }
+
+        $pending_order = $this->get_pending_renewal_order_for_package( (int) $package->id );
+
+        if ( $pending_order ) {
+            return $this->order_repository->to_dto( $pending_order );
+        }
+
+        $order_id = $this->create_renewal_order( $package, OrderStatus::PENDING );
+
+        return $order_id ? $this->order_repository->to_dto( $this->order_repository->get_by_id( $order_id ) ) : null;
+    }
     
     public function get_by_last_order_id( string $last_order_id ): ?stdClass {
         return $this->get_query_builder()->where( 'last_order_id', $last_order_id )->first();
@@ -151,38 +312,62 @@ class UserPackageRepository extends Repository {
     /**
      * Get the active package assigned to a listing.
      *
-     * Prefer the newest legacy package matching the listing's plan meta. If
-     * the meta is missing, stale, or matches only a non-legacy package, return
-     * the newest active package for the listing's author and directory.
+     * Resolve the exact active package matching the listing's plan meta. While
+     * the backfill is incomplete, retain the previous directory fallback.
      *
      * @param int $listing_id Listing post ID.
      * @return stdClass|null
      */
     public function get_listings_package( int $listing_id ): ?stdClass {
-        $author_id         = (int) get_post_field( 'post_author', $listing_id );
-        $directory_type_id = directorist_get_listings_directory_type( $listing_id );
+        $author_id = (int) get_post_field( 'post_author', $listing_id );
 
-        if ( ! $author_id || ! $directory_type_id ) {
-            return null;
-        }
-
-        $active_packages = $this->get_active_packages_for_directory( $author_id, $directory_type_id );
-
-        if ( empty( $active_packages ) ) {
+        if ( ! $author_id ) {
             return null;
         }
 
         $listing_plan_id = (int) get_post_meta( $listing_id, directorist_plan_key(), true );
 
+        if ( directorist_is_listing_plan_meta_migrated() ) {
+            return $listing_plan_id
+                ? $this->get_active_package_for_listing_plan( $author_id, $listing_plan_id )
+                : null;
+        }
+
+        $directory_type_id = directorist_get_listings_directory_type( $listing_id );
+
+        if ( ! $directory_type_id ) {
+            return null;
+        }
+
+        $active_packages = $this->get_active_packages_for_directory( $author_id, $directory_type_id );
+
         if ( $listing_plan_id ) {
             foreach ( $active_packages as $package ) {
-                if ( (int) $package->plan_id === $listing_plan_id && ! empty( $package->is_legacy ) ) {
+                if ( (int) $package->plan_id === $listing_plan_id ) {
                     return $package;
                 }
             }
         }
 
-        return $active_packages[0];
+        return $active_packages[0] ?? null;
+    }
+
+    private function get_active_package_for_listing_plan( int $user_id, int $plan_id ): ?stdClass {
+        $package = $this->get_query_builder()
+            ->select(
+                'package.*',
+                'plan.title as plan_title',
+                'plan.type as plan_type',
+                'plan.is_featured as is_plan_featured'
+            )
+            ->join( Plan::get_table_name() . ' as plan', 'package.plan_id', '=', 'plan.id' )
+            ->where( 'package.user_id', $user_id )
+            ->where( 'package.plan_id', $plan_id )
+            ->where_in( 'package.status', [ UserPackageStatus::ACTIVE, UserPackageStatus::CANCELLED_AT_PERIOD_END ] )
+            ->order_by_desc( 'package.id' )
+            ->first();
+
+        return $package ?: null;
     }
 
     /**
@@ -212,6 +397,7 @@ class UserPackageRepository extends Repository {
     public function count_active_packages_for_directory( int $user_id, int $directory_type_id ): int {
         return $this->get_query_builder()
             ->select( 'package.id' )
+            ->join( Plan::get_table_name() . ' as plan', 'package.plan_id', '=', 'plan.id' )
             ->where( 'package.user_id', $user_id )
             ->where( 'package.directory_type_id', $directory_type_id )
             ->where_in( 'package.status', [ UserPackageStatus::ACTIVE, UserPackageStatus::CANCELLED_AT_PERIOD_END ] )
@@ -277,11 +463,36 @@ class UserPackageRepository extends Repository {
     }
 
     protected function get_packages( Builder $query, Read $dto ) {
-        $query->order_by_desc( 'package.started_at' )->group_by( 'package.id' );
+        $query
+            ->order_by_desc( 'package.started_at' )
+            ->order_by_desc( 'package.id' );
+
+        if ( ! empty( $dto->get_search() ) ) {
+            $query->group_by( 'package.id' );
+        }
+
+        $package_ids = array_map(
+            'absint',
+            wp_list_pluck(
+                $query->pagination( $dto->get_page(), $dto->get_per_page() ),
+                'id'
+            )
+        );
+
+        if ( empty( $package_ids ) ) {
+            return [];
+        }
+
+        $query = $this->add_package_list_joins(
+            $this->get_package_details_query()
+        )
+            ->where_in( 'package.id', $package_ids )
+            ->group_by( 'package.id' )
+            ->order_by_raw( 'FIELD(package.id, ' . implode( ', ', $package_ids ) . ')' );
 
         return array_map(
-            [ $this, $dto->is_with_usage_data() ? 'format_item_with_usage_data' : 'format_item' ],
-            $query->pagination( $dto->get_page(), $dto->get_per_page() )
+            [ $this, 'format_item' ],
+            $query->get()
         );
     }
 
@@ -350,7 +561,7 @@ class UserPackageRepository extends Repository {
             ->set_is_trial( $is_trial )
             ->set_is_legacy( $activation_dto->is_is_legacy() )
             ->set_status( UserPackageStatus::ACTIVE )
-            ->set_started_at( directorist_now() )
+            ->set_started_at( $activation_dto->get_started_at() ?? directorist_now() )
             ->set_cancelled_at( null )
             ->set_current_period_end( $current_period_end );
 
@@ -403,15 +614,15 @@ class UserPackageRepository extends Repository {
     }
 
     public function set_package( UserPackageDTO $package_dto, ?int $order_id = null ): UserPackageDTO {
-        if ( ! $package_dto->is_is_legacy() ) {
-            $previous_package = $this->get_query_builder()
+        if ( ! $package_dto->is_is_legacy() && ! directorist_allow_multiple_plans_per_directory_type() ) {
+            $previous_packages = $this->get_query_builder()
                 ->where( 'user_id', $package_dto->get_user_id() )
                 ->where( 'directory_type_id', $package_dto->get_directory_type_id() )
                 ->where( 'plan_id', '!=', $package_dto->get_plan_id() )
                 ->where_in( 'package.status', [ UserPackageStatus::ACTIVE, UserPackageStatus::CANCELLED_AT_PERIOD_END ] )
-                ->first();
+                ->get();
 
-            if ( $previous_package ) {
+            foreach ( $previous_packages as $previous_package ) {
                 $previous_package_dto = ( new UserPackageDTO() )
                     ->set_id( $previous_package->id )
                     ->set_status( UserPackageStatus::ARCHIVED )
@@ -500,6 +711,62 @@ class UserPackageRepository extends Repository {
         $this->package_order_repository->create( $package_order_dto );
     }
 
+    private function create_renewal_order( stdClass $package, string $status ): int {
+        $plan = directorist_get_pricing_plan_by_id( (int) $package->plan_id );
+
+        if ( ! $plan ) {
+            throw new Exception( 'The plan associated with this package is not available anymore.', 404 );
+        }
+
+        $amount   = null !== $package->subscription_amount ? (float) $package->subscription_amount : (float) $plan->price;
+        $currency = ! empty( $package->subscription_currency ) ? $package->subscription_currency : atbdp_get_payment_currency();
+
+        $order_dto = ( new OrderDTO() )
+            ->set_user_id( (int) $package->user_id )
+            ->set_ref_type( OrderRefType::PRICING_PLAN )
+            ->set_ref( (string) $plan->id )
+            ->set_currency( $currency )
+            ->set_status( $status )
+            ->set_amount( $amount )
+            ->set_sub_total( $amount );
+
+        if ( ! empty( $plan->is_taxable ) ) {
+            $order_dto->set_tax_type( $plan->tax_type )->set_tax_rate( (float) $plan->tax_rate );
+        }
+
+        $order_id = (int) $this->order_repository->create( $order_dto );
+
+        if ( ! $order_id ) {
+            return 0;
+        }
+
+        $this->link_package_order( (int) $package->id, $order_id );
+        $this->plan_order_meta_repository()->upsert_by_order_id( $this->build_renewal_order_meta_dto( $order_id, $package, $plan ) );
+
+        return $order_id;
+    }
+
+    private function build_renewal_order_meta_dto( int $order_id, stdClass $package, stdClass $plan ): PlanOrderMetaDTO {
+        $interval_type  = null;
+        $interval_count = null;
+
+        if ( PlanInterval::LIFETIME !== $plan->interval_type && (int) $plan->interval_count > 0 ) {
+            $interval_type  = $plan->interval_type;
+            $interval_count = (int) $plan->interval_count;
+        }
+
+        return ( new PlanOrderMetaDTO )
+            ->set_order_id( $order_id )
+            ->set_is_recurring( ! empty( $package->is_recurring ) )
+            ->set_is_trial( false )
+            ->set_interval_type( $interval_type )
+            ->set_interval_count( $interval_count );
+    }
+
+    private function plan_order_meta_repository(): PlanOrderMetaRepository {
+        return directorist_pricing_plans_singleton( PlanOrderMetaRepository::class );
+    }
+
     public function has_activated_package_for_order( int $order_id ): bool {
         $package = $this->get_query_builder()
             ->where( 'last_order_id', $order_id )
@@ -534,6 +801,97 @@ class UserPackageRepository extends Repository {
         do_action( 'directorist_package_updated', $new_package_dto, $this->to_dto( $old_package ) );
         
         return true;
+    }
+
+    public function mark_package_past_due( int $package_id ): bool {
+        $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
+
+        if ( ! $old_package ) {
+            throw new Exception( 'Package not found', 404 );
+        }
+
+        $new_package_dto = $this->to_dto( $old_package )
+            ->set_status( UserPackageStatus::PAST_DUE )
+            ->set_current_period_end( null );
+
+        $status = $this->update( $new_package_dto );
+
+        if ( ! $status ) {
+            throw new Exception( 'Failed to mark package as past due', 400 );
+        }
+
+        do_action( 'directorist_package_updated', $new_package_dto, $this->to_dto( $old_package ) );
+
+        return true;
+    }
+
+    public function renew( int $package_id, ?int $order_id = null, ?string $triggered_by = null ): int {
+        $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
+
+        if ( ! $old_package ) {
+            throw new Exception( 'Package not found', 404 );
+        }
+
+        $plan = directorist_get_pricing_plan_by_id( (int) $old_package->plan_id );
+
+        if ( ! $plan ) {
+            throw new Exception( 'The plan associated with this package is not available anymore.', 404 );
+        }
+
+        if ( PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE ) ) {
+            throw new Exception( 'This package type cannot be renewed.', 400 );
+        }
+
+        if ( ! $order_id ) {
+            $prepaid_order = $this->get_prepaid_order_for_package( $package_id );
+            $order_id      = $prepaid_order ? (int) $prepaid_order->id : $this->create_renewal_order( $old_package, OrderStatus::PAID );
+        }
+
+        if ( ! $order_id ) {
+            throw new Exception( 'Failed to create renewal order', 400 );
+        }
+
+        $period_end = $this->resolve_current_period_end_from_interval( (int) $plan->interval_count, $plan->interval_type );
+
+        $new_package_dto = $this->to_dto( $old_package )
+            ->set_status( UserPackageStatus::ACTIVE )
+            ->set_last_order_id( $order_id )
+            ->set_is_trial( false )
+            ->set_current_period_end( $period_end )
+            ->set_cancelled_at( null );
+
+        $status = $this->update( $new_package_dto );
+
+        if ( ! $status ) {
+            throw new Exception( 'Failed to renew package', 400 );
+        }
+
+        $this->link_package_order( $package_id, $order_id );
+
+        $order = $this->order_repository->get_by_id( $order_id );
+
+        if ( $order && OrderStatus::PAID !== $order->status ) {
+            $this->order_repository->update(
+                ( new OrderDTO() )
+                    ->set_id( $order_id )
+                    ->set_status( OrderStatus::PAID )
+            );
+        }
+
+        do_action( 'directorist_package_updated', $new_package_dto, $this->to_dto( $old_package ), $triggered_by ?? 'system' );
+
+        if ( $period_end ) {
+            $limit = ! empty( $plan->is_allowed_unlimited_listings ) ? -1 : (int) $plan->allowed_listings;
+
+            directorist_pricing_plans_singleton( PlanRepository::class )->renew_belonging_listings_expiration(
+                (int) $old_package->user_id,
+                (int) $old_package->plan_id,
+                $period_end->format( 'Y-m-d H:i:s' ),
+                $limit
+            );
+        }
+
+        return $order_id;
     }
 
     public function cancel_package( int $package_id, ?string $triggered_by = null ): bool {
@@ -622,8 +980,10 @@ class UserPackageRepository extends Repository {
             && ! $this->is_empty_datetime( $item->current_period_end ?? null )
             && new DateTime( $item->current_period_end ) < directorist_now();
 
-        if ( $is_expired_package ) {
-            $item->status = UserPackageStatus::EXPIRED;
+        if ( $is_expired_package && UserPackageStatus::PAST_DUE !== $item->status ) {
+            $item->status = UserPackageStatus::ACTIVE === $item->status && ! empty( $item->is_recurring )
+                ? UserPackageStatus::PAST_DUE
+                : UserPackageStatus::EXPIRED;
         }
 
         $item->method                = ! empty( $item->payment_method ) ? $this->get_payment_method_title( $item->payment_method ) : null;
@@ -654,6 +1014,24 @@ class UserPackageRepository extends Repository {
         } catch ( Exception $e ) {
             $item->uses = null;
         }
+    }
+
+    public function get_usage_by_id( int $package_id, ?int $user_id = null ): ?stdClass {
+        $query = $this->get_query_builder()->where( 'id', $package_id );
+
+        if ( null !== $user_id ) {
+            $query->where( 'user_id', $user_id );
+        }
+
+        $package = $query->first();
+
+        if ( ! $package ) {
+            return null;
+        }
+
+        $this->attach_plan_usage_data( $package );
+
+        return $package;
     }
 
     public function to_dto( $package ): UserPackageDTO {

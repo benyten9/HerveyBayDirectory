@@ -3,7 +3,7 @@ namespace Elementor\Modules\GlobalClasses;
 
 use Elementor\Core\Kits\Documents\Kit;
 use Elementor\Modules\DesignSystemSync\Classes\Global_Classes_Sync_Map;
-use Elementor\Modules\GlobalClasses\Concerns\Has_Kit_Dependency;
+use Elementor\Core\Kits\Concerns\Has_Kit_Dependency;
 use Elementor\Modules\GlobalClasses\Concerns\Has_Preview_Context;
 use Elementor\Modules\GlobalClasses\Utils\Global_Class_Data_Normalizer;
 
@@ -83,14 +83,6 @@ class Global_Classes_Repository {
 		}
 
 		$labels->set_labels( $existing_labels );
-
-		if ( ! $this->is_preview() ) {
-			Global_Classes_Order::make( $this->get_kit() )
-				->set_preview( true )
-				->set_order( $order );
-
-			$this->clear_preview_labels_for_ids( array_keys( $new_labels ) );
-		}
 
 		$this->cache = null;
 	}

@@ -796,7 +796,7 @@ class RestTaskController extends RestController {
 					'type'        => 'integer',
 				),
 				'assigned_to'  => array(
-					'description' => __( 'WordPress user ID assigned to this task.', 'doublescale'),
+					'description' => __( 'WordPress user ID assigned to this task. Optional on create; defaults to the current user.', 'doublescale'),
 					'type'        => array( 'integer', 'string' ),
 				),
 				'task_type'    => array(
@@ -3094,6 +3094,11 @@ class RestTaskController extends RestController {
 		// Handle integer fields
 		if ( $request->has_param( 'assigned_to' ) ) {
 			$data['assigned_to'] = absint( $request->get_param( 'assigned_to' ) );
+		} elseif ( ! $request->get_param( 'id' ) ) {
+			// Create only. Omitting assigned_to on update must not reassign the
+			// task to the caller. Matches the OPTIONS schema (optional) and the
+			// MCP create-task default.
+			$data['assigned_to'] = absint( get_current_user_id() );
 		}
 
 		if ( $request->has_param( 'status_id' ) ) {
@@ -3233,7 +3238,8 @@ class RestTaskController extends RestController {
 			$missing[] = 'entity_id';
 		}
 
-		// Validate assigned_to
+		// assigned_to is optional in the REST schema and defaults to the current
+		// user on create. Still refuse if that default could not be resolved.
 		if ( empty( $data['assigned_to'] ) ) {
 			$missing[] = 'assigned_to';
 		}

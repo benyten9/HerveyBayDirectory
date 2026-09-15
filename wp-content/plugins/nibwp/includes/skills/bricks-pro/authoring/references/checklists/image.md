@@ -32,7 +32,7 @@
 
 ## Tokens
 - [ ] `border-radius` if rounded: `var(--radius, 8px)` or `var(--radius-l, 12px)`
-- [ ] `aspect-ratio` if the image must keep a fixed ratio regardless of source dimensions: `aspect-ratio: 4/3;` in `_cssCustom` (Bricks doesn't have a dedicated aspect-ratio setting yet — this is a one-off)
+- [ ] `aspect-ratio` if the image must keep a fixed ratio regardless of source dimensions: set `_aspectRatio` (Bricks has had this control since 1.9 — do NOT write it as custom CSS)
 
 ## Per-breakpoint
 - [ ] Different image per breakpoint (art-direction) via `settings.imageMobile` etc.

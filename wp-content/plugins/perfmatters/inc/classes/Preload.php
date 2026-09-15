@@ -24,21 +24,6 @@ class Preload
         if(!empty(Config::$options['preload']['preload']) || !empty(Config::$options['preload']['critical_images'])) {
             add_filter('rocket_above_the_fold_optimization', '__return_false', 999);
         }
-
-        //instant page
-        if(!empty(Config::$options['preload']['instant_page']) && version_compare(get_bloginfo('version'), '6.8' , '<')) {
-            self::instant_page();
-        }
-
-        //preconnect
-        if(!empty(Config::$options['preload']['preconnect'])) {
-            self::preconnect();
-        }
-
-        //dns prefetch
-        if(!empty(Config::$options['preload']['dns_prefetch'])) {
-            self::dns_prefetch();
-        }
     }
 
     //queue functions
@@ -70,6 +55,21 @@ class Preload
 
         //speculative loading
         self::speculative_loading();
+
+        //instant page (fallback for older WP < 6.8)
+        if(!empty(Config::$options['preload']['instant_page']) && version_compare(get_bloginfo('version'), '6.8' , '<')) {
+            self::instant_page();
+        }
+
+        //preconnect
+        if(!empty(Config::$options['preload']['preconnect'])) {
+            self::preconnect();
+        }
+
+        //dns prefetch
+        if(!empty(Config::$options['preload']['dns_prefetch'])) {
+            self::dns_prefetch();
+        }
     }
 
     //add fetch priority
@@ -482,34 +482,28 @@ class Preload
 
     //instant page (fallback for older WP < 6.8)
     public static function instant_page() {
-        if(!is_admin()) {
-            
-            add_action('wp_enqueue_scripts', function() {
-                
-                if(Utilities::is_perfmatters_off()) {
-                    return;
-                }
-        
-                //exclude specific woocommerce pages
-                if(Utilities::is_woocommerce()) {
-                    return;
-                }
-        
-                $exclude_instant_page = Utilities::get_post_meta('perfmatters_exclude_instant_page');
-        
-                if(!$exclude_instant_page) {
-                    wp_register_script('perfmatters-instant-page', plugins_url('vendor/instant-page/pminstantpage.min.js', dirname(__DIR__)), [], PERFMATTERS_VERSION, true);
-                    wp_enqueue_script('perfmatters-instant-page');
-                }
-            }, PHP_INT_MAX);
-            
-            add_filter('script_loader_tag', function($tag, $handle) {
-                if($handle !== 'perfmatters-instant-page') {
-                    return $tag;
-                }
-                return str_replace(' src', ' async data-no-optimize="1" src', $tag);
-            }, 10, 2);
-        }
+
+        add_action('wp_enqueue_scripts', function() {
+
+            //exclude specific woocommerce pages
+            if(Utilities::is_woocommerce()) {
+                return;
+            }
+
+            $exclude_instant_page = Utilities::get_post_meta('perfmatters_exclude_instant_page');
+
+            if(!$exclude_instant_page) {
+                wp_register_script('perfmatters-instant-page', plugins_url('vendor/instant-page/pminstantpage.min.js', dirname(__DIR__)), [], PERFMATTERS_VERSION, true);
+                wp_enqueue_script('perfmatters-instant-page');
+            }
+        }, PHP_INT_MAX);
+
+        add_filter('script_loader_tag', function($tag, $handle) {
+            if($handle !== 'perfmatters-instant-page') {
+                return $tag;
+            }
+            return str_replace(' src', ' async data-no-optimize="1" src', $tag);
+        }, 10, 2);
     }
 
     //preconnect

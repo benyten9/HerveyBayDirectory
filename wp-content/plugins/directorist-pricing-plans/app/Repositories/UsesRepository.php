@@ -11,7 +11,6 @@ use DirectoristPricingPlan\App\Models\Post;
 use DirectoristPricingPlan\WpMVC\Database\Query\JoinClause;
 
 class UsesRepository extends PackageUses implements PackageUsageInterface {
-
     public function has_plan_remaining_quota( stdClass $plan, bool $is_featured_listing ): bool {
         $total_uses = $this->get_total_uses( get_current_user_id(), $plan );
 
@@ -49,14 +48,14 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
         if ( PlanType::PAY_PER_LISTING === ( $plan->type ?? '' ) ) {
             return [
                 'allowed'   => -1,
-                'used'      => $this->get_regular_listings_count( $listing_owner_id, $plan->directory_type_id ),
+                'used'      => $this->get_regular_listings_count( $listing_owner_id, (int) $plan->id ),
                 'remaining' => -1,
             ];
         }
 
         $uses = [
             'allowed' => $this->get_plan_allowed_listings( $plan ),
-            'used'    => $this->get_regular_listings_count( $listing_owner_id, $plan->directory_type_id ) + $this->get_featured_listings_count( $listing_owner_id, $plan->directory_type_id ),
+            'used'    => $this->get_regular_listings_count( $listing_owner_id, (int) $plan->id ) + $this->get_featured_listings_count( $listing_owner_id, (int) $plan->id ),
         ];
 
         $uses['remaining'] = $this->get_remaining_listings( $uses['allowed'], $uses['used'] );
@@ -68,14 +67,14 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
         if ( PlanType::PAY_PER_LISTING === ( $plan->type ?? '' ) ) {
             return [
                 'allowed'   => -1,
-                'used'      => $this->get_featured_listings_count( $listing_owner_id, $plan->directory_type_id ),
+                'used'      => $this->get_featured_listings_count( $listing_owner_id, (int) $plan->id ),
                 'remaining' => -1,
             ];
         }
 
         $uses = [
             'allowed' => $this->get_plan_allowed_featured_listings( $plan ),
-            'used'    => $this->get_featured_listings_count( $listing_owner_id, $plan->directory_type_id ),
+            'used'    => $this->get_featured_listings_count( $listing_owner_id, (int) $plan->id ),
         ];
 
         $uses['remaining'] = $this->get_remaining_listings( $uses['allowed'], $uses['used'] );
@@ -108,7 +107,7 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
 
         $uses = [
             'allowed' => $this->get_plan_allowed_listings( $plan ),
-            'used'    => $this->get_regular_listings_count( $listing_owner_id, $plan->directory_type_id ) + $this->get_featured_listings_count( $listing_owner_id, $plan->directory_type_id ),
+            'used'    => $this->get_regular_listings_count( $listing_owner_id, (int) $plan->id ) + $this->get_featured_listings_count( $listing_owner_id, (int) $plan->id ),
         ];
 
         $uses['remaining'] = $this->get_remaining_listings( $uses['allowed'], $uses['used'] );
@@ -116,21 +115,14 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
         return $uses;
     }
 
-    public function get_regular_listings_count( int $listing_owner_id, int $directory_type_id ): int {
+    public function get_regular_listings_count( int $listing_owner_id, int $plan_id ): int {
         return Post::query()
             ->join(
                 'postmeta',
-                function ( JoinClause $join ) use ( $directory_type_id ) {
+                function ( JoinClause $join ) use ( $plan_id ) {
                     $join->on_column( 'postmeta.post_id', '=', 'posts.ID' )
-                        ->on( 'postmeta.meta_key', '=', '_directory_type' )
-                        ->on( 'postmeta.meta_value', '=', $directory_type_id );
-                }
-            )
-            ->left_join(
-                'postmeta as plan_id_meta',
-                function ( JoinClause $join ) {
-                    $join->on_column( 'plan_id_meta.post_id', '=', 'posts.ID' )
-                        ->on( 'plan_id_meta.meta_key', '=', '_plan_id' );
+                        ->on( 'postmeta.meta_key', '=', '_plan_id' )
+                        ->on( 'postmeta.meta_value', '=', $plan_id );
                 }
             )
             ->left_join(
@@ -143,7 +135,6 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
             ->where( 'post_type', '=', ATBDP_POST_TYPE )
             ->where( 'post_status', '=', 'publish' )
             ->where( 'post_author', '=', $listing_owner_id )
-            ->where_null( 'plan_id_meta.post_id' )
             ->where(
                 function ( $query ) {
                     $query->where_null( 'featured_meta.post_id' )
@@ -153,7 +144,7 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
             ->count();
     }
 
-    public function get_featured_listings_count( int $listing_owner_id, int $directory_type_id ): int {
+    public function get_featured_listings_count( int $listing_owner_id, int $plan_id ): int {
         return Post::query()
             ->join(
                 'postmeta',
@@ -164,24 +155,16 @@ class UsesRepository extends PackageUses implements PackageUsageInterface {
                 }
             )
             ->join(
-                'postmeta as postmeta_2',
-                function ( JoinClause $join ) use ( $directory_type_id ) {
-                    $join->on_column( 'postmeta_2.post_id', '=', 'posts.ID' )
-                        ->on( 'postmeta_2.meta_key', '=', '_directory_type' )
-                        ->on( 'postmeta_2.meta_value', '=', $directory_type_id );
-                }
-            )
-            ->left_join(
                 'postmeta as plan_id_meta',
-                function ( JoinClause $join ) {
+                function ( JoinClause $join ) use ( $plan_id ) {
                     $join->on_column( 'plan_id_meta.post_id', '=', 'posts.ID' )
-                        ->on( 'plan_id_meta.meta_key', '=', '_plan_id' );
+                        ->on( 'plan_id_meta.meta_key', '=', '_plan_id' )
+                        ->on( 'plan_id_meta.meta_value', '=', $plan_id );
                 }
             )
             ->where( 'post_type', '=', ATBDP_POST_TYPE )
             ->where( 'post_status', '=', 'publish' )
             ->where( 'post_author', '=', $listing_owner_id )
-            ->where_null( 'plan_id_meta.post_id' )
             ->count();
     }
 

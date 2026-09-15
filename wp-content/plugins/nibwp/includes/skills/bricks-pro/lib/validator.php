@@ -140,6 +140,7 @@ function nibwp_bricks_pro_validate_payload(array $payload, array $ctx = []): arr
         $css = (string) (($gc['settings']['_cssCustom']) ?? '');
         if ($css !== '') {
             $failed = array_merge($failed, nibwp_bricks_pro_check_css($css, "global_classes[$i]._cssCustom", $acss_active, $color_allow));
+            $failed = array_merge($failed, nibwp_bricks_pro_check_native_settings($css, "global_classes[$i]._cssCustom"));
         }
     }
 
@@ -184,6 +185,7 @@ function nibwp_bricks_pro_validate_payload(array $payload, array $ctx = []): arr
                     ];
                 }
                 $failed = array_merge($failed, nibwp_bricks_pro_check_css($val, $path . '.settings._cssCustom', $acss_active, $color_allow));
+                $failed = array_merge($failed, nibwp_bricks_pro_check_native_settings($val, $path . '.settings._cssCustom'));
             } else {
                 if (preg_match('/\sstyle\s*=\s*["\']/i', $val)) {
                     $failed[] = [
@@ -357,6 +359,232 @@ function nibwp_bricks_pro_check_css(string $css, string $path, bool $acss_active
 }
 
 /**
+ * CSS properties Bricks already has a control for.
+ *
+ * Styling written as custom CSS is invisible in the builder: the control panel
+ * shows nothing, the client cannot change it, and Bricks' own per-breakpoint
+ * system does not apply to it — which is why a page styled that way can only
+ * ever be edited by going back to the agent. Every property here has a real
+ * control, so writing it as CSS is a choice to hide it.
+ *
+ * Keys taken from Bricks' own base element controls (verified against 2.1.4;
+ * the same names are present in 1.10.3). A property absent from this map has
+ * no native control and belongs in _cssCustom — that is what _cssCustom is
+ * for.
+ *
+ * @var array<string,string> CSS property => the Bricks setting that owns it.
+ */
+const NIBWP_BRICKS_NATIVE_SETTINGS = [
+    // spacing
+    'padding'         => '_padding',
+    'padding-top'     => '_padding.top',
+    'padding-right'   => '_padding.right',
+    'padding-bottom'  => '_padding.bottom',
+    'padding-left'    => '_padding.left',
+    'margin'          => '_margin',
+    'margin-top'      => '_margin.top',
+    'margin-right'    => '_margin.right',
+    'margin-bottom'   => '_margin.bottom',
+    'margin-left'     => '_margin.left',
+    'gap'             => '_gap',
+    'row-gap'         => '_rowGap',
+    'column-gap'      => '_columnGap',
+
+    // sizing
+    'width'           => '_width',
+    'min-width'       => '_widthMin',
+    'max-width'       => '_widthMax',
+    'height'          => '_height',
+    'min-height'      => '_heightMin',
+    'max-height'      => '_heightMax',
+    'aspect-ratio'    => '_aspectRatio',
+
+    // layout
+    'display'         => '_display',
+    'flex-direction'  => '_flexDirection',
+    'align-items'     => '_alignItems',
+    'align-self'      => '_alignSelf',
+    'justify-content' => '_justifyContent',
+    'flex-grow'       => '_flexGrow',
+    'flex-shrink'     => '_flexShrink',
+    'flex-basis'      => '_flexBasis',
+    'order'           => '_order',
+    'overflow'        => '_overflow',
+    'position'        => '_position',
+    'top'             => '_top',
+    'right'           => '_right',
+    'bottom'          => '_bottom',
+    'left'            => '_left',
+    'z-index'         => '_zIndex',
+
+    // type
+    'font-size'       => '_typography.font-size',
+    'font-family'     => '_typography.font-family',
+    'font-weight'     => '_typography.font-weight',
+    'font-style'      => '_typography.font-style',
+    'line-height'     => '_typography.line-height',
+    'letter-spacing'  => '_typography.letter-spacing',
+    'text-align'      => '_typography.text-align',
+    'text-transform'  => '_typography.text-transform',
+    'text-decoration' => '_typography.text-decoration',
+    'color'           => '_typography.color',
+
+    // paint
+    'background'          => '_background',
+    'background-color'    => '_background.color',
+    'background-image'    => '_background.image',
+    'background-position' => '_background.position',
+    'background-size'     => '_background.size',
+    'background-repeat'   => '_background.repeat',
+    'border'              => '_border',
+    'border-width'        => '_border.width',
+    'border-style'        => '_border.style',
+    'border-color'        => '_border.color',
+    'border-radius'       => '_border.radius',
+    'box-shadow'          => '_boxShadow',
+    'opacity'             => '_opacity',
+    'mix-blend-mode'      => '_mixBlendMode',
+    'filter'              => '_cssFilters',
+    'transform'           => '_transform',
+    'transform-origin'    => '_transformOrigin',
+    'transition'          => '_cssTransition',
+    'cursor'              => '_cursor',
+    'pointer-events'      => '_pointerEvents',
+    'visibility'          => '_visibility',
+    'isolation'           => '_isolation',
+];
+
+/**
+ * Does this CSS rule's selector target the element itself?
+ *
+ * Only a bare element selector can be expressed as a setting. A hover state, a
+ * pseudo-element, a descendant or a sibling has no control behind it, so CSS
+ * is the right and only answer there and must not be reported.
+ */
+function nibwp_bricks_pro_selector_is_self(string $selector): bool
+{
+    $selector = trim($selector);
+    if ($selector === '' || str_contains($selector, ',')) {
+        return false; // a group targets more than this element
+    }
+    if (str_contains($selector, ':') || str_contains($selector, '>') || str_contains($selector, '+') || str_contains($selector, '~')) {
+        return false; // pseudo-class, pseudo-element or combinator
+    }
+
+    // A descendant selector has whitespace between compound parts.
+    return preg_split('/\s+/', $selector) === [$selector];
+}
+
+/**
+ * Remove `@media` / `@supports` blocks, braces balanced, leaving everything
+ * outside them intact.
+ */
+function nibwp_bricks_pro_strip_at_rules(string $css): string
+{
+    $out    = '';
+    $length = strlen($css);
+    for ($i = 0; $i < $length; $i++) {
+        if ($css[$i] !== '@') {
+            $out .= $css[$i];
+            continue;
+        }
+        $brace = strpos($css, '{', $i);
+        if ($brace === false) {
+            break; // an unterminated at-rule styles nothing
+        }
+        $depth = 0;
+        for ($j = $brace; $j < $length; $j++) {
+            if ($css[$j] === '{') { $depth++; }
+            elseif ($css[$j] === '}') { $depth--; if ($depth === 0) { break; } }
+        }
+        $i = $j; // skip the whole block
+    }
+
+    return $out;
+}
+
+/**
+ * Styling that Bricks has a control for must be written as that control.
+ *
+ * The point of building in Bricks is that the result is editable in Bricks. A
+ * tree whose padding, colours and typography live in _cssCustom looks correct
+ * on the front end and is inert in the builder: the panels are empty, the
+ * breakpoint switcher does nothing, and the site owner has to come back to an
+ * agent for a change they should be able to make themselves.
+ *
+ * Only declarations in a rule that targets the element itself are reported. A
+ * :hover, a ::before, a descendant — those have no setting behind them, and
+ * telling an author to move them would be telling them to do the impossible.
+ *
+ * @return array<int,array{id:string,msg:string,path:string}>
+ */
+function nibwp_bricks_pro_check_native_settings(string $css, string $path): array
+{
+    if (trim($css) === '') {
+        return [];
+    }
+
+    $issues = [];
+    $seen   = [];
+
+    // Drop at-rule blocks whole. A declaration inside @media is a
+    // per-breakpoint value and belongs in the setting's breakpoint shape, but
+    // bricks_inline_media_query already says so — reporting it twice makes one
+    // mistake look like two.
+    $css = nibwp_bricks_pro_strip_at_rules($css);
+
+    // Split into rules. Declarations written without a selector (Bricks allows
+    // a bare declaration list on an element) are treated as targeting the
+    // element itself, because that is what Bricks does with them.
+    if (!str_contains($css, '{')) {
+        $blocks = [['', $css]];
+    } else {
+        $blocks = [];
+        if (preg_match_all('/([^{}]*)\{([^{}]*)\}/s', $css, $rules, PREG_SET_ORDER)) {
+            foreach ($rules as $rule) {
+                $blocks[] = [trim($rule[1]), $rule[2]];
+            }
+        }
+    }
+
+    foreach ($blocks as [$selector, $declarations]) {
+        // An at-rule wrapper (@media, @supports) is reported by its own rule;
+        // here it simply means these declarations are not plain element style.
+        if (str_starts_with($selector, '@')) {
+            continue;
+        }
+        if ($selector !== '' && !nibwp_bricks_pro_selector_is_self($selector)) {
+            continue;
+        }
+
+        foreach (explode(';', $declarations) as $declaration) {
+            $parts = explode(':', $declaration, 2);
+            if (count($parts) !== 2) {
+                continue;
+            }
+            // A custom property (--brand) can never match a map key, so the
+            // lookup below is the only test needed.
+            $property = strtolower(trim($parts[0]));
+            if (!isset(NIBWP_BRICKS_NATIVE_SETTINGS[$property]) || isset($seen[$property])) {
+                continue;
+            }
+            $seen[$property] = true;
+            $issues[] = [
+                'id'   => 'bricks_css_for_native_setting',
+                'msg'  => sprintf(
+                    '`%1$s` is written as custom CSS, but Bricks has a control for it: set `%2$s` in the element settings instead. Styling written as CSS does not appear in the builder panel, cannot be changed by the site owner, and is skipped by Bricks\' per-breakpoint system.',
+                    $property,
+                    NIBWP_BRICKS_NATIVE_SETTINGS[$property]
+                ),
+                'path' => $path,
+            ];
+        }
+    }
+
+    return $issues;
+}
+
+/**
  * Pure dispatcher — failed id → copy-paste fix hint.
  */
 function nibwp_bricks_pro_fix_hint_for(array $item): string
@@ -368,6 +596,8 @@ function nibwp_bricks_pro_fix_hint_for(array $item): string
             return 'Add settings._id = bin2hex(random_bytes(3)) (6-char hex) per element. The persister will mint one if you omit it, but explicit IDs make later refines stable.';
         case 'bricks_inline_style_attr':
             return 'Move every declaration from style="…" into a global class settings.{property} OR settings._cssCustom. Then reference the class via settings._cssGlobalClasses=["{brand}-foo"].';
+        case 'bricks_css_for_native_setting':
+            return 'Delete the declaration from _cssCustom and set the Bricks control named in the message. Element settings show up in the builder panel and respond to the breakpoint switcher; custom CSS does neither.';
         case 'bricks_inline_media_query':
             return 'Delete the @media block. Set the per-breakpoint value via Bricks settings: { setting: { _base: …, _mobile_landscape: …, _mobile_portrait: … } }. Bricks renders the breakpoint logic.';
         case 'bricks_hardcoded_font_size':

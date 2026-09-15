@@ -680,6 +680,22 @@ add_action(
 );
 
 /**
+ * Public countdown GIF for the email timer block.
+ *
+ * Gmail (and most inbox clients) do not execute JavaScript, so the timer
+ * cannot tick as HTML/CSS. Recipients fetch this image through the same
+ * query-string pattern as the open-tracking pixel; remaining time is
+ * computed at fetch and the GIF animates for up to 60 seconds.
+ */
+add_action(
+	'init',
+	static function (): void {
+		\DoubleScale\Pro\Modules\Emails\Services\TimerGifEndpoint::maybe_serve();
+	},
+	0
+);
+
+/**
  * Abandoned-cart feature wiring (moved from free in 2026).
  *
  * The moved files keep the original `DoubleScale\Modules\Automations\...`

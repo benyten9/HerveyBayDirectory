@@ -258,6 +258,11 @@ if ( ! function_exists( 'directorist_plan_features' ) ) {
 if ( ! function_exists( 'directorist_direct_purchase' ) ) {
     function directorist_direct_purchase() {
         $direct_purchase = function_exists( 'get_directorist_option' ) ? get_directorist_option( 'plan_direct_purchase', false ) : false;
+
+        if ( isset( $_GET['force_direct_purchase'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['force_direct_purchase'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $direct_purchase = true;
+        }
+
         return apply_filters( 'directorist_direct_purchase', $direct_purchase );
     }
 }

@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
 use DoubleScale\Pro\Modules\CreditNotes\Abilities\CreditNoteAbilities;
 
@@ -69,6 +70,21 @@ final class Module extends AbstractSalesChildModule {
 		$this->loadModuleMergeTagFiles();
 
 		new Renderer\CreditNoteFrontendHandler();
+
+		// Auto-create the page hosting that shortcode, so a sent credit note
+		// links somewhere instead of resolving to an empty URL. Registered into
+		// free's shared provisioner, which runs the single `admin_init` pass.
+		// Guarded: an older free has no such class, and Pro must degrade
+		// silently rather than fatal under that upgrade order.
+		if ( class_exists( ShortcodePageProvisioner::class ) ) {
+			ShortcodePageProvisioner::register(
+				Renderer\CreditNoteFrontendHandler::SHORTCODE_NAME,
+				array(
+					'title' => __( 'Credit Note', 'doublescale-pro' ),
+					'slug'  => 'doublescale-credit-note',
+				)
+			);
+		}
 		new Services\CreditNotePortalProvider();
 
 		MenuRegistry::add(

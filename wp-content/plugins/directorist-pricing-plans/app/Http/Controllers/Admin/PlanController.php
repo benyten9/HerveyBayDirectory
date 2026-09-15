@@ -192,6 +192,16 @@ class PlanController extends Controller {
 
         $validator->validate( $validation_rules );
 
+        $is_free_plan            = PlanFeeType::FREE === $request->get_param( 'fee_type' ) || (float) $request->get_param( 'price' ) <= 0;
+        $is_subscription_enabled = rest_sanitize_boolean( $request->get_param( 'is_subscription_enabled' ) );
+
+        if ( $is_free_plan && $is_subscription_enabled ) {
+            throw new Exception(
+                esc_html__( 'Subscription cannot be enabled for a free plan or a plan with a zero price.', 'directorist-pricing-plans' ),
+                422
+            );
+        }
+
         if ( ! $is_pay_per_listing ) {
             $allowed_listings          = absint( $request->get_param( 'allowed_listings' ) );
             $allowed_featured_listings = absint( $request->get_param( 'allowed_featured_listings' ) );
@@ -222,7 +232,7 @@ class PlanController extends Controller {
             ->set_tax_rate( $request->get_param( "tax_rate" ) )
             ->set_interval_type( $request->get_param( "interval_type" ) )
             ->set_interval_count( absint( $request->get_param( "interval_count" ) ) )
-            ->set_is_subscription_enabled( $request->get_param( "is_subscription_enabled" ) )
+            ->set_is_subscription_enabled( $is_free_plan ? false : $is_subscription_enabled )
             ->set_sort_order( absint( $request->get_param( "sort_order" ) ) )
             ->set_is_published( $request->get_param( "is_published" ) )
             ->set_is_hidden_from_plans_list( $request->get_param( "is_hidden_from_plans_list" ) )
@@ -292,7 +302,16 @@ class PlanController extends Controller {
             ]
         );
 
-        $this->repository->delete_by_id( $request->get_param( "id" ) );
+        $plan_id = absint( $request->get_param( "id" ) );
+
+        if ( $this->repository->is_assigned_to_packages( $plan_id ) ) {
+            throw new Exception(
+                __( 'This plan cannot be deleted because it is assigned to one or more user packages.', 'directorist-pricing-plans' ),
+                409
+            );
+        }
+
+        $this->repository->delete_by_id( $plan_id );
 
         return Response::send(
             [

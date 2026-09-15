@@ -1611,7 +1611,7 @@ function nibwp_events_manage(array $input): array|WP_Error
                 }
                 $args = [
                     'post_title' => $data['title'],
-                    'post_content' => $data['description'] ?? '',
+                    'post_content' => nibwp_wp_prepare_post_content($data['description'] ?? ''),
                     'post_status' => 'publish',
                     'EventStartDate' => $data['start_date'],
                     'EventEndDate' => $data['end_date'],
@@ -3277,7 +3277,10 @@ function nibwp_wpml_manage(array $input): array|WP_Error
                 // Create a duplicate.
                 $new_post_id = wp_insert_post([
                     'post_title' => $post->post_title,
-                    'post_content' => $post->post_content,
+                    // Slashed: the content came out of the database unslashed and
+                    // wp_insert_post() unslashes again, which would strip the
+                    // block-attribute escapes out of the duplicated page.
+                    'post_content' => wp_slash($post->post_content),
                     'post_excerpt' => $post->post_excerpt,
                     'post_status' => 'draft',
                     'post_type' => $post->post_type,

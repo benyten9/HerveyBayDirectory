@@ -18,7 +18,8 @@ Fallback checklist when the specific element type doesn't have a sharpened file 
 ## Global classes
 - [ ] Each structural element references at least one `_cssGlobalClasses` entry
 - [ ] Every global class name starts with `{brand}-`
-- [ ] Per-element `_cssCustom` is for one-off overrides only — re-usable styles live on a global class
+- [ ] Styling Bricks has a control for is set as a setting, never written into `_cssCustom` (see element-settings.md)
+- [ ] `_cssCustom` holds only states, pseudo-elements, descendants, and properties with no control
 
 ## Tokens
 - [ ] All `font-size` declarations resolve to `var(--text-*)` with px/rem fallback (NOT clamp)

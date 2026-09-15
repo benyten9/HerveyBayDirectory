@@ -35,6 +35,6 @@ class SalesProposalTableViewedAt {
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "ALTER TABLE `{$table}` ADD `viewed_at` DATETIME NULL AFTER `sent_at`" );
+		$wpdb->query( "ALTER TABLE `{$table}` ADD `viewed_at` DATETIME NULL" );
 	}
 }

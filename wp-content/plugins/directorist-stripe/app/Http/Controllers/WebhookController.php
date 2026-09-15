@@ -11,7 +11,6 @@ use DirectoristStripe\Stripe\WebhookEndpoint;
 use DirectoristStripe\WpMVC\RequestValidator\Validator;
 
 class WebhookController extends Controller {
-
     public function register( Validator $validator, WP_REST_Request $request ) {
         $validator->validate(
             [
@@ -48,7 +47,6 @@ class WebhookController extends Controller {
                         'customer.subscription.deleted',
                         'customer.subscription.updated',
                         'invoice.paid',
-                        'invoice.payment_failed',
                         'charge.updated',
                     ],
                 ]
@@ -87,13 +85,13 @@ class WebhookController extends Controller {
             ? get_directorist_option( 'stripe_live_sk' )
             : get_directorist_option( 'stripe_test_sk' );
 
-
         if ( empty( $secret_key ) ) {
             error_log(
                 sprintf(
                     'Directorist Stripe: Secret key not set for webhook with key %s.',
                     $key
-                )            );
+                )
+            );
             $this->redirect( $this->settings_url() );
         }
 
@@ -105,6 +103,20 @@ class WebhookController extends Controller {
 
             update_directorist_option( $key, [] );
         } catch ( \Exception $e ) {
+            if ( $this->is_missing_webhook_exception( $e ) ) {
+                update_directorist_option( $key, [] );
+
+                error_log(
+                    sprintf(
+                        'Directorist Stripe: Stored webhook %s for %s was not found in Stripe. Local webhook setting cleared.',
+                        $id,
+                        $key
+                    )
+                );
+
+                $this->redirect( $this->settings_url() );
+            }
+
             error_log(
                 sprintf(
                     'Directorist Stripe: Failed to unregister webhook %s - %s',
@@ -124,5 +136,17 @@ class WebhookController extends Controller {
     private function redirect( string $url ) {
         wp_safe_redirect( $url );
         exit;
+    }
+
+    private function is_missing_webhook_exception( \Exception $exception ): bool {
+
+        if ( method_exists( $exception, 'getHttpStatus' ) && 404 === (int) $exception->getHttpStatus() ) {
+            return true;
+        }
+
+        $stripe_code = method_exists( $exception, 'getStripeCode' ) ? (string) $exception->getStripeCode() : '';
+
+        return 'resource_missing' === $stripe_code
+            && false !== stripos( $exception->getMessage(), 'webhook' );
     }
 }

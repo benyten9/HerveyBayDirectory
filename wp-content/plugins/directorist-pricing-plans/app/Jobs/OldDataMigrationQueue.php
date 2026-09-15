@@ -11,7 +11,6 @@ use DirectoristPricingPlan\App\Enums\Order\RefType as OrderRefType;
 use DirectoristPricingPlan\App\Enums\Plan\Interval as PlanInterval;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 use DirectoristPricingPlan\App\Enums\Plan\TaxType as PlanTaxType;
-use DirectoristPricingPlan\App\Enums\UserPackage\Status as PackageStatus;
 use DirectoristPricingPlan\App\Repositories\Admin\PlanAppConfigurationRepository;
 use DirectoristPricingPlan\App\Repositories\OldDataMigrationRepository;
 
@@ -62,7 +61,7 @@ class OldDataMigrationQueue extends BaseSequence {
      * Old post meta to new plan app configuration mapping.
      */
     private const PLAN_APP_CONFIGURATION_MAP = [
-        'apple_app_store' => [
+        'apple_app_store'   => [
             'product_id'    => '_dpp_appstore_product_id',
             'product_price' => '_dpp_appstore_product_price',
         ],
@@ -85,7 +84,7 @@ class OldDataMigrationQueue extends BaseSequence {
     ];
 
     public function __construct( OldDataMigrationRepository $migration_repository, PlanAppConfigurationRepository $plan_app_configuration_repository ) {
-        $this->migration_repository               = $migration_repository;
+        $this->migration_repository              = $migration_repository;
         $this->plan_app_configuration_repository = $plan_app_configuration_repository;
 
         parent::__construct();
@@ -178,7 +177,7 @@ class OldDataMigrationQueue extends BaseSequence {
     public function is_migration_needed(): bool {
         $plans_total = $this->migration_repository->query_plans_total();
 
-        if ( $plans_total < 1  ) {
+        if ( $plans_total < 1 ) {
             return false;
         }
 
@@ -432,8 +431,7 @@ class OldDataMigrationQueue extends BaseSequence {
                 continue;
             }
 
-            if ( 
-                strpos( $key_without_prefix, 'hide_' ) === 0 ||
+            if ( strpos( $key_without_prefix, 'hide_' ) === 0 ||
                 strpos( $key_without_prefix, 'unlimited_' ) === 0 ||
                 strpos( $key_without_prefix, 'max_' ) === 0
             ) {
@@ -811,166 +809,52 @@ class OldDataMigrationQueue extends BaseSequence {
      * @return int New package ID, or 0 on failure.
      */
     private function create_migrated_package( int $user_id, stdClass $plan, stdClass $last_order, int $old_plan_post_id ): int {
-        $plan_type = $plan->type ?? PlanType::PACKAGE;
+        $plan_type      = $plan->type ?? PlanType::PACKAGE;
+        $order_date     = $last_order->created_at;
+        $migration_date = current_time( 'mysql' );
+        $started_at     = new DateTime( $order_date );
 
         if ( PlanType::PAY_PER_LISTING === $plan_type ) {
-            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id );
+            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id, $started_at );
         }
 
         // Package type: check for lifetime duration
         if ( PlanInterval::LIFETIME === $plan->interval_type ) {
-            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id );
+            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id, $started_at );
         }
 
-        // Non-lifetime package: find the latest publish listing after order creation date
-        $order_date    = $last_order->created_at;
-        $listing_query = new \WP_Query(
-            [
-                'post_type'      => 'at_biz_dir',
-                'post_status'    => 'publish',
-                'posts_per_page' => 1,
-                'author'         => $user_id,
-                'orderby'        => 'date',
-                'order'          => 'DESC',
-                'date_query'     => [
-                    [
-                        'after'     => $order_date,
-                        'inclusive' => false,
-                    ],
-                ],
-                'meta_query'     => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-                    [
-                        'key'   => '_fm_plans',
-                        'value' => (string) $old_plan_post_id,
-                    ],
-                ],
-            ]
+        // Find the latest submitted listing between the order and migration dates.
+        $latest_listing_date = $this->migration_repository->get_latest_listing_date_for_plan(
+            $user_id,
+            '_fm_plans',
+            $old_plan_post_id,
+            $order_date,
+            $migration_date
         );
 
-        if ( ! $listing_query->have_posts() ) {
-            // No listing after order date: activate with current date, expiry from plan settings
-            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id );
-        }
+        $period_start = $latest_listing_date ?? $migration_date;
+        $period_end   = $this->calculate_expiry_from_date( $period_start, (int) $plan->interval_count, $plan->interval_type );
 
-        $listing      = $listing_query->posts[0];
-        $never_expire = get_post_meta( $listing->ID, '_never_expire', true );
-        $expiry_date  = get_post_meta( $listing->ID, '_expiry_date', true );
-        $is_unexpired = '1' === $never_expire || empty( $expiry_date ) || strtotime( $expiry_date ) > time();
-
-        if ( $is_unexpired ) {
-            // Unexpired listing: preserve the migrated expiry from the listing/order timeline.
-            $started_at_str = ( $listing->post_date > $order_date ) ? $listing->post_date : $order_date;
-            $period_end     = $this->calculate_expiry_from_date( $started_at_str, (int) $plan->interval_count, $plan->interval_type );
-            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id, $period_end );
-        }
-
-        if ( $this->has_unused_listing_quota_for_migration( $user_id, $plan, $old_plan_post_id, $last_order->created_at ) ) {
-            return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id );
-        }
-
-        // All listings after order date are expired and the package quota is used up.
-        return $this->create_expired_migrated_package( $user_id, $plan, (int) $last_order->id, $last_order->created_at );
+        return $this->activate_package_for_migration( $user_id, $plan, (int) $last_order->id, $started_at, $period_end );
     }
 
     /**
-     * Check whether the current migrated package still has unused listing quota.
-     *
-     * @param int       $user_id
-     * @param stdClass $plan
-     * @param int       $old_plan_post_id
-     * @param string    $order_date MySQL datetime string.
-     * @return bool
-     */
-    private function has_unused_listing_quota_for_migration( int $user_id, stdClass $plan, int $old_plan_post_id, string $order_date ): bool {
-        $has_unlimited_regular  = (bool) $plan->is_allowed_unlimited_listings;
-        $has_unlimited_featured = (bool) $plan->is_allowed_unlimited_featured_listings;
-
-        if ( $has_unlimited_regular || $has_unlimited_featured ) {
-            return true;
-        }
-
-        $allowed_featured_listings = (int) $plan->allowed_featured_listings;
-        $allowed_regular_listings  = max( 0, (int) $plan->allowed_listings - $allowed_featured_listings );
-
-        $regular_listings_count  = $this->count_current_order_assigned_listings( $user_id, $old_plan_post_id, $order_date, false );
-        $featured_listings_count = $this->count_current_order_assigned_listings( $user_id, $old_plan_post_id, $order_date, true );
-
-        return $regular_listings_count < $allowed_regular_listings || $featured_listings_count < $allowed_featured_listings;
-    }
-
-    /**
-     * Count listings assigned to the current legacy package inferred from the last order date.
-     *
-     * @param int    $user_id
-     * @param int    $old_plan_post_id
-     * @param string $order_date MySQL datetime string.
-     * @param bool   $is_featured_listing
-     * @return int
-     */
-    private function count_current_order_assigned_listings( int $user_id, int $old_plan_post_id, string $order_date, bool $is_featured_listing ): int {
-        $meta_query = [
-            [
-                'key'   => '_fm_plans',
-                'value' => (string) $old_plan_post_id,
-            ],
-        ];
-
-        if ( $is_featured_listing ) {
-            $meta_query[] = [
-                'key'   => '_featured',
-                'value' => '1',
-            ];
-        } else {
-            $meta_query[] = [
-                'relation' => 'OR',
-                [
-                    'key'     => '_featured',
-                    'compare' => 'NOT EXISTS',
-                ],
-                [
-                    'key'     => '_featured',
-                    'value'   => '1',
-                    'compare' => '!=',
-                ],
-            ];
-        }
-
-        $listing_query = new \WP_Query(
-            [
-                'post_type'           => 'at_biz_dir',
-                'post_status'         => 'any',
-                'posts_per_page'      => 1,
-                'fields'              => 'ids',
-                'author'              => $user_id,
-                'ignore_sticky_posts' => true,
-                'date_query'          => [
-                    [
-                        'after'     => $order_date,
-                        'inclusive' => false,
-                    ],
-                ],
-                'meta_query'          => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-            ]
-        );
-
-        return (int) $listing_query->found_posts;
-    }
-
-    /**
-     * Activate a package via UserPackageRepository with optional period_end override.
+     * Activate a package via UserPackageRepository with migration date overrides.
      *
      * @param int       $user_id
      * @param stdClass $plan
      * @param int       $order_id
+     * @param DateTime  $started_at
      * @param DateTime|null $period_end
      * @return int New package ID.
      */
-    private function activate_package_for_migration( int $user_id, stdClass $plan, int $order_id, ?DateTime $period_end = null ): int {
+    private function activate_package_for_migration( int $user_id, stdClass $plan, int $order_id, DateTime $started_at, ?DateTime $period_end = null ): int {
         $activation_dto = ( new UserPackageActivationDTO )
             ->set_user_id( $user_id )
             ->set_plan( $plan )
             ->set_order_id( $order_id )
-            ->set_is_legacy( true );
+            ->set_is_legacy( true )
+            ->set_started_at( $started_at );
 
         if ( null !== $period_end ) {
             $activation_dto->set_current_period_end( $period_end );
@@ -978,37 +862,21 @@ class OldDataMigrationQueue extends BaseSequence {
 
         $package_dto = directorist_user_package_repository()->activate_package( $activation_dto );
 
-        return $package_dto->get_id();
-    }
+        if ( $package_dto->is_is_recurring() ) {
+            $payment = directorist_payment_repository()->get_last_payment( $order_id );
 
-    /**
-     * Create an expired package record directly, bypassing the one-active-package constraint.
-     *
-     * @param int       $user_id
-     * @param stdClass $plan
-     * @param int       $order_id
-     * @param string    $started_at MySQL datetime string.
-     * @return int New package ID, or 0 on failure.
-     */
-    private function create_expired_migrated_package( int $user_id, stdClass $plan, int $order_id, string $started_at ): int {
-        return $this->migration_repository->insert_expired_package(
-            [
-            'user_id'                  => $user_id,
-            'plan_id'                  => (int) $plan->id,
-            'last_order_id'            => $order_id,
-            'directory_type_id'        => (int) $plan->directory_type_id,
-            'listing_display_priority' => (int) $plan->listing_display_priority,
-            'status'                   => PackageStatus::EXPIRED,
-            'is_recurring'             => 0,
-            'is_trial'                 => 0,
-            'is_legacy'                => 1,
-            'started_at'               => $started_at,
-            'current_period_end'       => null,
-            'cancelled_at'             => null,
-            'created_at'               => $started_at,
-            'updated_at'               => current_time( 'mysql' ),
-            ]
-        );
+            if ( $payment && ! empty( $payment->transaction_id ) && ! empty( $payment->method ) ) {
+                $package_dto
+                    ->set_subscription_id( (string) $payment->transaction_id )
+                    ->set_subscription_method( (string) $payment->method )
+                    ->set_subscription_currency( ! empty( $payment->currency ) ? (string) $payment->currency : null )
+                    ->set_subscription_amount( isset( $payment->amount ) ? (float) $payment->amount : null );
+
+                directorist_user_package_repository()->update( $package_dto );
+            }
+        }
+
+        return $package_dto->get_id();
     }
 
     /**

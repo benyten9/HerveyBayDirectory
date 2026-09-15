@@ -36,7 +36,7 @@ class SalesInvoiceTableTemplateColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD `template` TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER `status`"
+			"ALTER TABLE `{$table}` ADD `template` TINYINT UNSIGNED NOT NULL DEFAULT 1"
 		);
 	}
 }

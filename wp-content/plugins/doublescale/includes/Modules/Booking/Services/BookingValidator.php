@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Booking\Exceptions\BookingNotFoundException;
 use DoubleScale\Modules\Booking\Exceptions\InvalidBookingHashException;
+use DoubleScale\Modules\Booking\Exceptions\InvalidBookingInputException;
 use DoubleScale\Modules\Booking\Models\BookingModel;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DateTime;
@@ -50,13 +51,13 @@ class BookingValidator {
 		$event_id_abs = is_numeric( $id ) ? absint( $id ) : 0;
 
 		if ( empty( $event_id_abs ) ) {
-			throw new Exception( esc_html__( 'Invalid event ID.', 'doublescale' ) );
+			throw new InvalidBookingInputException( esc_html__( 'Invalid event ID.', 'doublescale' ) );
 		}
 
 		$event = call_user_func( array( $modelClass, 'find' ), $event_id_abs );
 
 		if ( ! $event ) {
-			throw new Exception( esc_html__( 'Invalid event.', 'doublescale' ) );
+			throw new InvalidBookingInputException( esc_html__( 'Invalid event.', 'doublescale' ) );
 		}
 
 		return $event;
@@ -70,7 +71,7 @@ class BookingValidator {
 	 */
 	public static function validate_start_date( $start_date, $timezone ) {
 		if ( empty( $start_date ) || empty( $timezone ) ) {
-			throw new Exception( esc_html__( 'Invalid start date or timezone provided.', 'doublescale' ) );
+			throw new InvalidBookingInputException( esc_html__( 'Invalid start date or timezone provided.', 'doublescale' ) );
 		}
 
 		try {
@@ -78,11 +79,11 @@ class BookingValidator {
 			$start     = new DateTime( $start_date, $tz_object );
 			$now       = new DateTime( 'now', $tz_object );
 		} catch ( \Exception $e ) {
-			throw new Exception( esc_html__( 'Invalid date format or timezone: ', 'doublescale' ) . esc_html( $e->getMessage() ) );
+			throw new InvalidBookingInputException( esc_html__( 'Invalid date format or timezone: ', 'doublescale' ) . esc_html( $e->getMessage() ) );
 		}
 
 		if ( $start->getTimestamp() <= $now->getTimestamp() ) {
-			throw new Exception( esc_html__( 'Invalid start date. Date must be in the future.', 'doublescale' ) );
+			throw new InvalidBookingInputException( esc_html__( 'Invalid start date. Date must be in the future.', 'doublescale' ) );
 		}
 
 		return $start;
@@ -112,7 +113,7 @@ class BookingValidator {
 		}
 
 		if ( $validated_duration <= 0 ) {
-			throw new Exception( esc_html__( 'Invalid duration. Must be a positive number.', 'doublescale' ) );
+			throw new InvalidBookingInputException( esc_html__( 'Invalid duration. Must be a positive number.', 'doublescale' ) );
 		}
 
 		return $validated_duration;

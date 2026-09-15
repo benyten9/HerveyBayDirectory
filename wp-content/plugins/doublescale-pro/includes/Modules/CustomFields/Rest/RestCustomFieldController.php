@@ -336,10 +336,27 @@ class RestCustomFieldController extends RestController {
 				return new WP_Error( 'rest_custom_field_update_item', __( 'Custom field not found', 'doublescale'), array( 'status' => 404 ) );
 			}
 
+			$previous_type     = (string) $custom_field->type;
 			$custom_field_data = $this->prepare_custom_field( $request );
+			$next_type         = isset( $custom_field_data['type'] )
+				? (string) $custom_field_data['type']
+				: $previous_type;
+
 			$custom_field->update( $custom_field_data );
 
-			return new WP_REST_Response( $custom_field, 200 );
+			// Changing type invalidates previously stored values (e.g. free text
+			// after switching to select). Clear them so contacts/deals/tasks do
+			// not keep showing leftover data in the UI.
+			if ( $next_type && $previous_type !== $next_type ) {
+				global $wpdb;
+				$wpdb->delete(
+					$wpdb->prefix . 'doublescale_custom_field_relationship',
+					array( 'custom_field_id' => (int) $custom_field_id ),
+					array( '%d' )
+				);
+			}
+
+			return new WP_REST_Response( $custom_field->fresh(), 200 );
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'rest_custom_field_update_item', $e->getMessage(), array( 'status' => 500 ) );
 		}

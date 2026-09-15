@@ -86,20 +86,14 @@
             
             <div class="info-box">
                 <p><strong>Plan:</strong> {{plan_name}}</p>
-                <p><strong>Subscription Amount:</strong> {{amount}}</p>
+                <p><strong>Amount Paid:</strong> {{amount}}</p>
+                {{billing_breakdown}}
                 <p><strong>Next Billing Date:</strong> {{next_billing_date}}</p>
             </div>
             
             <p>You now have full access to all the features and benefits included in your plan. We're excited to have you as part of our community!</p>
             
-            <p><strong>What's included in your plan:</strong></p>
-            <ul>
-                <li>Full access to all premium features</li>
-                <li>Priority customer support</li>
-                <li>Regular updates and improvements</li>
-            </ul>
-            
-            <p>Your next billing date is <strong>{{next_billing_date}}</strong>, and you'll be charged <strong>{{amount}}</strong>.</p>
+            <p>Your next billing date is <strong>{{next_billing_date}}</strong>. Review the billing breakdown above for the current and future period amounts.</p>
             
             <p>If you have any questions or need assistance getting started, our support team is here to help.</p>
             
@@ -115,4 +109,3 @@
     </div>
 </body>
 </html>
-

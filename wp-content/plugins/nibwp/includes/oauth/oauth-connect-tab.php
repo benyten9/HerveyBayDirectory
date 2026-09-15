@@ -225,6 +225,41 @@ function nibwp_oauth_discovery_probe(bool $fresh = false): array
 
     $args = ['timeout' => 8, 'redirection' => 3, 'sslverify' => false];
 
+    // 0. The address WordPress publishes has to be the address clients reach.
+    //
+    // RFC 8414 requires the `issuer` in the metadata to be identical to the URL
+    // the document was fetched from, and a client that finds otherwise MUST
+    // reject it — before registration, before any screen, with nothing to read
+    // but a failure. Every URL we publish comes from home_url(), so a site
+    // served over HTTPS whose WordPress Address still says http:// publishes a
+    // document no client will accept.
+    //
+    // The loopback checks below cannot see this: they fetch home_url() and get
+    // back exactly what home_url() said. The evidence is the request this admin
+    // page is being served over right now, which is why the test lives here and
+    // not in the fetches.
+    $proto = '';
+    if (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+        $forwarded = explode(',', (string) wp_unslash($_SERVER['HTTP_X_FORWARDED_PROTO']));
+        $proto = strtolower(trim((string) reset($forwarded)));
+    }
+    $served_over_https = $proto === 'https' || is_ssl();
+
+    if ($served_over_https && wp_parse_url(home_url(), PHP_URL_SCHEME) === 'http') {
+        $result = [
+            'ok'      => false,
+            'reason'  => 'issuer_scheme_mismatch',
+            'message' => sprintf(
+                /* translators: %s: the site's WordPress Address setting */
+                __('This site is being served over HTTPS, but its WordPress Address is still %s. Sign-in metadata is published from that setting, and AI clients are required to reject a document whose address does not match the one they fetched it from — so signing in fails before any screen appears. Fix it in Settings > General (set both addresses to https), or ask the host to pass the HTTPS header through. An application password works regardless.', 'nibwp'),
+                home_url()
+            ),
+        ];
+        set_transient('nibwp_oauth_discovery', $result, 15 * MINUTE_IN_SECONDS);
+
+        return $result;
+    }
+
     // 1. The metadata document a client reads to find the endpoints.
     $meta = wp_remote_get(home_url('/.well-known/oauth-authorization-server'), $args);
     if (is_wp_error($meta)) {

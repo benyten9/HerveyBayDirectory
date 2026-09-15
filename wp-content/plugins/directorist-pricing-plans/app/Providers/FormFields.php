@@ -51,17 +51,27 @@ class FormFields implements Provider {
         add_filter( 'directorist_form_field_data', [ $this, 'directorist_form_field_data' ], 10, 1 );
         add_filter( 'get_terms_args', [ $this, 'filter_excluded_category_terms' ], 10, 2 );
         add_filter( "directorist_rest_" . ATBDP_CATEGORY . "_query", [ $this, 'filter_rest_category_query' ], 10, 1 );
-        
+
         add_filter( 'directorist_single_listings_contents', [ $this, 'single_listings_contents' ], 10, 2 );
         add_filter( 'directorist_single_listing_header', [ $this, 'single_listing_header' ], 10, 2 );
         add_filter( 'directorist_single_listing_thumbnails', [ $this, 'listing_thumbnails' ], 10, 2 );
-        
+
         add_filter( 'directorist_listing_archive_thumbnails', [ $this, 'listing_thumbnails' ], 10, 2 );
         add_filter( 'directorist_image_upload_config', [ $this, 'image_upload_config' ], 10, 2 );
         add_filter( 'directorist_listing_archive_fields', [ $this, 'listing_archive_fields' ], 10, 2 );
         add_filter( 'directorist_field_template', [ $this, 'directorist_field_template' ], 10, 3 );
         add_filter( 'directorist_template_file_path', [ $this, 'directorist_template_file_path' ], 10, 3 );
         add_filter( 'atbdp_add_listing_form_validation_logic', [ $this, 'skip_listing_type_validation_when_featured_unavailable' ], 10, 3 );
+        add_action( 'directorist_listing_plan_reassigned', [ $this, 'clear_plan_feature_cache' ] );
+    }
+
+    public function clear_plan_feature_cache(): void {
+        $this->plan_cache               = [];
+        $this->feature_cache            = [];
+        $this->is_resolved_current_plan = false;
+        $this->current_plan             = null;
+        $this->is_current_plan_active   = false;
+        $this->is_current_plan_legacy   = false;
     }
 
     public function skip_listing_type_validation_when_featured_unavailable( bool $should_validate, array $field_props, array $posted_data ): bool {
@@ -85,14 +95,6 @@ class FormFields implements Provider {
     }
 
     public function submission_form_fields( $form_fields, array $context = [] ) {
-        if ( empty( $context['type'] ) ) {
-            return $form_fields;
-        }
-        
-        if ( 'listing_submission_form' !== $context['type'] ) {
-            return $form_fields;
-        }
-
         if ( empty( $form_fields ) || ! is_array( $form_fields ) ) {
             return $form_fields;
         }
@@ -101,13 +103,30 @@ class FormFields implements Provider {
             return $form_fields;
         }
 
+        $form_fields = $this->remove_legacy_listing_type_field( $form_fields );
+
+        if ( empty( $context['type'] ) ) {
+            return $form_fields;
+        }
+
+        if ( 'listing_submission_form' !== $context['type'] ) {
+            return $form_fields;
+        }
+
         $directory_type_id = ! empty( $context['directory_type_id'] ) ? (int) $context['directory_type_id'] : 0;
         $listing_owner_id  = ! empty( $context['listing_owner_id'] ) ? (int) $context['listing_owner_id'] : get_current_user_id();
-        $listing_id        = ! empty( $context['listing_id'] ) ? (int) $context['listing_id'] : 0;
+        $listing_id        = ! empty( $context['listing_id'] ) ? (int) $context['listing_id'] : $this->get_edit_listing_id();
+        $is_edit_mode      = $this->is_edit_mode();
+
+        if ( $is_edit_mode && $listing_id && ! directorist_get_listing_package( $listing_id ) ) {
+            $this->pending_category_exclude_ids = [];
+
+            return $form_fields;
+        }
 
         $plan_features = [];
 
-        if ( $this->is_edit_mode() ) {
+        if ( $is_edit_mode ) {
             $plan_features = $this->get_plan_features_for_listing( $listing_id, $listing_owner_id, $directory_type_id );   
         }
 
@@ -216,6 +235,43 @@ class FormFields implements Provider {
         }
 
         return false;
+    }
+
+    protected function remove_legacy_listing_type_field( array $form_fields ): array {
+        if ( empty( $form_fields['fields']['listing_type'] ) || $this->is_pricing_listing_type_widget( $form_fields['fields']['listing_type'] ) ) {
+            return $form_fields;
+        }
+
+        $has_pricing_listing_type_field = false;
+
+        foreach ( $form_fields['fields'] as $field_key => $field ) {
+            if ( 'listing_type' === $field_key || ! is_array( $field ) ) {
+                continue;
+            }
+
+            if ( $this->is_pricing_listing_type_widget( $field ) && $this->is_listing_type_field( $field ) ) {
+                $has_pricing_listing_type_field = true;
+                break;
+            }
+        }
+
+        if ( ! $has_pricing_listing_type_field ) {
+            return $form_fields;
+        }
+
+        unset( $form_fields['fields']['listing_type'] );
+
+        if ( ! empty( $form_fields['groups'] ) && is_array( $form_fields['groups'] ) ) {
+            foreach ( $form_fields['groups'] as $group_key => $group ) {
+                if ( empty( $group['fields'] ) || ! is_array( $group['fields'] ) ) {
+                    continue;
+                }
+
+                $form_fields['groups'][ $group_key ]['fields'] = array_values( array_diff( $group['fields'], [ 'listing_type' ] ) );
+            }
+        }
+
+        return $form_fields;
     }
 
     /**
@@ -345,10 +401,6 @@ class FormFields implements Provider {
             return $single_listings_contents;
         }
 
-        if ( empty( $single_listings_contents['fields'] ) || ! is_array( $single_listings_contents['fields'] ) ) {
-            return $single_listings_contents;
-        }
-
         $directory_type_id = ! empty( $data['directory_type_id'] ) ? (int) $data['directory_type_id'] : 0;
         $listing_owner_id  = ! empty( $data['listing_owner_id'] ) ? (int) $data['listing_owner_id'] : get_current_user_id();
         $listing_id        = ! empty( $data['listing_id'] ) ? (int) $data['listing_id'] : 0;
@@ -359,8 +411,13 @@ class FormFields implements Provider {
             $plan_features = $this->get_plan_features_for_user( $listing_owner_id, $directory_type_id );
         }
 
+        if ( null === $plan_features ) {
+            // No active plan means there are no Pricing Plans restrictions to apply.
+            return $single_listings_contents;
+        }
+
         if ( empty( $plan_features ) ) {
-            // No active plan — remove all fields except listing_type.
+            // An active plan without enabled features should not expose listing content.
             $single_listings_contents['fields'] = [];
             $single_listings_contents['groups'] = [];
             return $single_listings_contents;
@@ -381,25 +438,27 @@ class FormFields implements Provider {
         // Filter fields by plan features.
         $excluded_form_fields = [];
 
-        foreach ( $single_listings_contents['fields'] as $key => $field ) {
-            $widget_key = ! empty( $field['widget_key'] ) ? $field['widget_key'] : '';
-            $widget_key = ! empty( $alias[ $widget_key ] ) ? $alias[ $widget_key ] : $widget_key;
+        if ( ! empty( $single_listings_contents['fields'] ) && is_array( $single_listings_contents['fields'] ) ) {
+            foreach ( $single_listings_contents['fields'] as $key => $field ) {
+                $widget_key = ! empty( $field['widget_key'] ) ? $field['widget_key'] : '';
+                $widget_key = ! empty( $alias[ $widget_key ] ) ? $alias[ $widget_key ] : $widget_key;
 
-            $feature_index = array_search( $widget_key, $plan_feature_keys );
+                $feature_index = array_search( $widget_key, $plan_feature_keys );
 
-            if ( $feature_index === false ) {
-                $feature_index = array_search( str_replace( '_', '-', "custom_$widget_key" ), $plan_feature_keys );
-            }
+                if ( $feature_index === false ) {
+                    $feature_index = array_search( str_replace( '_', '-', "custom_$widget_key" ), $plan_feature_keys );
+                }
 
-            if ( $feature_index === false ) {
-                continue;
-            }
+                if ( $feature_index === false ) {
+                    continue;
+                }
 
-            $current_feature = $plan_features[ $feature_index ];
+                $current_feature = $plan_features[ $feature_index ];
 
-            if ( ! $current_feature->is_enabled ) {
-                unset( $single_listings_contents['fields'][ $key ] );
-                $excluded_form_fields[] = $key;
+                if ( ! $current_feature->is_enabled ) {
+                    unset( $single_listings_contents['fields'][ $key ] );
+                    $excluded_form_fields[] = $key;
+                }
             }
         }
 
@@ -551,6 +610,12 @@ class FormFields implements Provider {
     }
 
     public function image_upload_config( $config, Directorist_Listing_Form $listing_form ) {
+        $listing_id = (int) $listing_form->get_add_listing_id();
+
+        if ( $listing_id && ! directorist_get_listing_package( $listing_id ) ) {
+            return $config;
+        }
+
         $directory_type_id = (int) $listing_form->get_current_listing_type();
         $listing_owner_id  = (int) $listing_form->get_listing_owner_id();
         
@@ -733,9 +798,11 @@ class FormFields implements Provider {
     }
 
     public function directorist_field_template( $template, $field_data, $directory_type_id ) {
-        $field_key = ! empty( $field_data['field_key'] ) ? $field_data['field_key'] : '';
+        if ( $this->is_listing_type_field( $field_data ) ) {
+            if ( $this->is_edit_mode() ) {
+                return '';
+            }
 
-        if ( 'listing_type' === $field_key && ! $this->is_edit_mode() ) {
             $GLOBALS['directorist_pricing_plans_listing_type_template_context'] = [
                 'field_data'             => $field_data,
                 'current_plan'           => $this->get_current_plan( $directory_type_id ),
@@ -749,6 +816,26 @@ class FormFields implements Provider {
         return $template;
     }
 
+    protected function is_listing_type_field( array $field_data ): bool {
+        $field_key   = ! empty( $field_data['field_key'] ) ? (string) $field_data['field_key'] : '';
+        $widget_name = ! empty( $field_data['widget_name'] ) ? (string) $field_data['widget_name'] : '';
+        $widget_key  = ! empty( $field_data['widget_key'] ) ? (string) $field_data['widget_key'] : '';
+
+        if ( 'listing_type' === $field_key ) {
+            return true;
+        }
+
+        return in_array( 'listing-type', [ $widget_name, $widget_key ], true )
+            && 0 === strpos( $field_key, 'listing_type' );
+    }
+
+    protected function is_pricing_listing_type_widget( array $field_data ): bool {
+        $widget_name = ! empty( $field_data['widget_name'] ) ? (string) $field_data['widget_name'] : '';
+        $widget_key  = ! empty( $field_data['widget_key'] ) ? (string) $field_data['widget_key'] : '';
+
+        return in_array( 'listing-type', [ $widget_name, $widget_key ], true );
+    }
+
     public function directorist_template_file_path( $file, $template, $args ) {
         if ( 'listing-form/fields/listing-type-pricing-plan' !== $template ) {
             return $file;
@@ -758,10 +845,14 @@ class FormFields implements Provider {
     }
 
     public function is_edit_mode(): bool {
+        return $this->get_edit_listing_id() > 0;
+    }
+
+    protected function get_edit_listing_id(): int {
         $id = get_query_var( 'atbdp_listing_id', 0 );
         $id = empty( $id ) && ! empty( $_REQUEST['edit'] ) ? absint( $_REQUEST['edit'] ) : $id; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-        return $id > 0;
+        return (int) $id;
     }
 
     protected function get_current_plan( int $directory_type_id ): ?stdClass {

@@ -24,6 +24,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Modules\Booking\Models\AvailabilityModel;
+use DoubleScale\Modules\Booking\Helpers\MultisiteScope;
 use DoubleScale\Modules\Booking\Models\EventModel;
 
 /**
@@ -232,6 +233,8 @@ class RestAvailabilityController extends RestController {
 
 		if ( 'own' === $user ) {
 			$query->where( 'user_id', get_current_user_id() );
+		} else {
+			MultisiteScope::apply_user_id_scope( $query );
 		}
 
 		$availabilities = $query->get();
@@ -275,6 +278,10 @@ class RestAvailabilityController extends RestController {
 
 		if ( ! $availability ) {
 			return new WP_Error( 'rest_availability_invalid_id', __( 'Invalid availability ID.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		if ( ! MultisiteScope::owner_is_site_member( (int) $availability->user_id ) ) {
+			return new WP_Error( 'rest_forbidden', __( 'You do not have permission to read this availability.', 'doublescale' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! current_user_can( 'doublescale_booking_read_all_availability' ) && get_current_user_id() !== $availability->user_id ) {

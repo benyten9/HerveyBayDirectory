@@ -13,6 +13,8 @@ namespace DoubleScale\Pro\Modules\Emails\Blocks;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Emails\Abstracts\EmailBlock;
+use DoubleScale\Pro\Modules\Emails\Services\TimerCountdownGif;
+use DoubleScale\Pro\Modules\Emails\Services\TimerGifUrl;
 
 /**
  * Timer block for emails
@@ -108,60 +110,11 @@ class TimerBlock extends EmailBlock {
 		$target_timestamp = $this->get_target_timestamp( $props );
 		$time_left        = $this->calculate_time_left( $target_timestamp, $props );
 
-		// Email-friendly table-based layout with frontend-matching styles
-		$container_styles = array(
-			'width'            => $this->format_width( $props['width'] ),
-			'background-color' => $props['backgroundColor'],
-			'text-align'       => $props['align'],
-			'padding'          => $this->format_padding( $props['padding'] ),
-			'border-radius'    => '8px',
-		);
-
-		$digit_styles = array(
-			'font-family' => $props['digitsFontFamily'],
-			'font-size'   => $props['digitsFontSize'] . 'px',
-			'color'       => $props['digitsColor'],
-			'font-weight' => 'bold',
-		);
-
-		$separator_styles = array(
-			'font-family' => $props['separatorFontFamily'],
-			'font-size'   => $props['separatorFontSize'] . 'px',
-			'color'       => $props['separatorColor'],
-			'font-weight' => 'bold',
-			'padding'     => '0 4px',
-		);
-
-		$time_unit_cell_styles = array(
-			'text-align' => 'center',
-			'padding'    => '0 8px',
-		);
-
-		// Format time values
-		$days    = str_pad( $time_left['days'], 2, '0', STR_PAD_LEFT );
-		$hours   = str_pad( $time_left['hours'], 2, '0', STR_PAD_LEFT );
-		$minutes = str_pad( $time_left['minutes'], 2, '0', STR_PAD_LEFT );
-		$seconds = str_pad( $time_left['seconds'], 2, '0', STR_PAD_LEFT );
-
-		$container_style_string      = $this->build_style_string( $container_styles );
-		$digit_style_string          = $this->build_style_string( $digit_styles );
-		$separator_style_string      = $this->build_style_string( $separator_styles );
-		$time_unit_cell_style_string = $this->build_style_string( $time_unit_cell_styles );
-
-		// Build timer HTML using tables (email-compatible) - matching frontend appearance (no labels)
-		$timer_html  = '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td style="' . $container_style_string . '">';
-		$timer_html .= '<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="' . esc_attr( $props['align'] ) . '" style="margin:0 auto;"><tr>';
-
-		$timer_html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $days . '</span></td>';
-		$timer_html .= '<td align="center" style="' . $separator_style_string . '">:</td>';
-		$timer_html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $hours . '</span></td>';
-		$timer_html .= '<td align="center" style="' . $separator_style_string . '">:</td>';
-		$timer_html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $minutes . '</span></td>';
-		$timer_html .= '<td align="center" style="' . $separator_style_string . '">:</td>';
-		$timer_html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $seconds . '</span></td>';
-
-		$timer_html .= '</tr></table>';
-		$timer_html .= '</td></tr></table>';
+		if ( TimerCountdownGif::is_available() ) {
+			$timer_html = $this->render_countdown_gif( $props, $target_timestamp, $time_left );
+		} else {
+			$timer_html = $this->render_static_digits( $props, $time_left, false );
+		}
 
 		// Wrap in link if provided
 		if ( ! empty( $props['link'] ) ) {
@@ -173,20 +126,79 @@ class TimerBlock extends EmailBlock {
 	}
 
 	/**
-	 * Render placeholder when no target date is set
+	 * Hosted animated GIF so Gmail/Outlook can tick for ~60s after open.
 	 *
-	 * @param array $props Block properties
-	 * @return string HTML output
+	 * Remaining time is computed when the inbox fetches the image, not at send.
+	 *
+	 * @param array $props             Block properties.
+	 * @param int   $target_timestamp  Deadline unix timestamp.
+	 * @param array $time_left         Send-time remainder (alt text fallback).
+	 * @return string
 	 */
-	private function render_placeholder( array $props ): string {
-		$placeholder_styles = array(
+	private function render_countdown_gif( array $props, int $target_timestamp, array $time_left ): string {
+		$font_size = is_numeric( $props['digitsFontSize'] ) ? (int) $props['digitsFontSize'] : 24;
+		list( $width, $height ) = TimerCountdownGif::dimensions( $font_size );
+
+		$src = TimerGifUrl::build(
+			array(
+				'end' => $target_timestamp,
+				'bg'  => isset( $props['backgroundColor'] ) ? (string) $props['backgroundColor'] : '#ffffff',
+				'fg'  => isset( $props['digitsColor'] ) ? (string) $props['digitsColor'] : '#333333',
+				'sg'  => isset( $props['separatorColor'] ) ? (string) $props['separatorColor'] : '#333333',
+				'fs'  => $font_size,
+			)
+		);
+
+		$alt = TimerCountdownGif::format_label(
+			( (int) $time_left['days'] * 86400 )
+			+ ( (int) $time_left['hours'] * 3600 )
+			+ ( (int) $time_left['minutes'] * 60 )
+			+ (int) $time_left['seconds']
+		);
+		if ( ! empty( $props['altText'] ) ) {
+			$alt = (string) $props['altText'];
+		}
+
+		$container_style = $this->build_style_string(
+			array(
+				'width'            => $this->format_width( $props['width'] ),
+				'background-color' => $props['backgroundColor'],
+				'text-align'       => $props['align'],
+				'padding'          => $this->format_padding( $props['padding'] ),
+				'border-radius'    => '8px',
+			)
+		);
+
+		$html  = '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td style="' . $container_style . '">';
+		$html .= '<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="' . esc_attr( $props['align'] ) . '" style="margin:0 auto;"><tr>';
+		$html .= '<td align="center" style="font-size:0;line-height:0;">';
+		$html .= '<img src="' . $this->escape_image_src( $src ) . '" width="' . (int) $width . '" height="' . (int) $height . '" alt="' . esc_attr( $alt ) . '" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />';
+		$html .= '</td></tr></table>';
+		$html .= '</td></tr></table>';
+
+		return $html;
+	}
+
+	/**
+	 * Static HTML digits used when GD is unavailable, and for the builder placeholder.
+	 *
+	 * @param array $props       Block properties.
+	 * @param array $time_left   Remainder parts.
+	 * @param bool  $placeholder Whether this is the unset-date placeholder.
+	 * @return string
+	 */
+	private function render_static_digits( array $props, array $time_left, bool $placeholder ): string {
+		$container_styles = array(
 			'width'            => $this->format_width( $props['width'] ),
 			'background-color' => $props['backgroundColor'],
 			'text-align'       => $props['align'],
 			'padding'          => $this->format_padding( $props['padding'] ),
 			'border-radius'    => '8px',
-			'border'           => '2px dashed #e5e5e5',
 		);
+
+		if ( $placeholder ) {
+			$container_styles['border'] = '2px dashed #e5e5e5';
+		}
 
 		$digit_styles = array(
 			'font-family' => $props['digitsFontFamily'],
@@ -208,25 +220,48 @@ class TimerBlock extends EmailBlock {
 			'padding'    => '0 8px',
 		);
 
-		$container_style_string      = $this->build_style_string( $placeholder_styles );
+		$days    = str_pad( (string) $time_left['days'], 2, '0', STR_PAD_LEFT );
+		$hours   = str_pad( (string) $time_left['hours'], 2, '0', STR_PAD_LEFT );
+		$minutes = str_pad( (string) $time_left['minutes'], 2, '0', STR_PAD_LEFT );
+		$seconds = str_pad( (string) $time_left['seconds'], 2, '0', STR_PAD_LEFT );
+
+		$container_style_string      = $this->build_style_string( $container_styles );
 		$digit_style_string          = $this->build_style_string( $digit_styles );
 		$separator_style_string      = $this->build_style_string( $separator_styles );
 		$time_unit_cell_style_string = $this->build_style_string( $time_unit_cell_styles );
 
-		// Placeholder HTML using tables (email-compatible) - matching frontend appearance (no labels)
 		$html  = '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td style="' . $container_style_string . '">';
 		$html .= '<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="' . esc_attr( $props['align'] ) . '" style="margin:0 auto;"><tr>';
-		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">00</span></td>';
+		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $days . '</span></td>';
 		$html .= '<td align="center" style="' . $separator_style_string . '">:</td>';
-		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">00</span></td>';
+		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $hours . '</span></td>';
 		$html .= '<td align="center" style="' . $separator_style_string . '">:</td>';
-		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">00</span></td>';
+		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $minutes . '</span></td>';
 		$html .= '<td align="center" style="' . $separator_style_string . '">:</td>';
-		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">00</span></td>';
+		$html .= '<td align="center" style="' . $time_unit_cell_style_string . '"><span style="' . $digit_style_string . '">' . $seconds . '</span></td>';
 		$html .= '</tr></table>';
 		$html .= '</td></tr></table>';
 
 		return $html;
+	}
+
+	/**
+	 * Render placeholder when no target date is set
+	 *
+	 * @param array $props Block properties
+	 * @return string HTML output
+	 */
+	private function render_placeholder( array $props ): string {
+		return $this->render_static_digits(
+			$props,
+			array(
+				'days'    => 0,
+				'hours'   => 0,
+				'minutes' => 0,
+				'seconds' => 0,
+			),
+			true
+		);
 	}
 
 	/**

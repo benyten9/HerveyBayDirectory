@@ -29,9 +29,9 @@ class ContactsTableLegalTaxColumns {
 		}
 
 		$columns = array(
-			'company_name'                  => "ADD `company_name` VARCHAR(255) NULL AFTER `last_name`",
-			'company_registration_number'   => "ADD `company_registration_number` VARCHAR(191) NULL AFTER `company_name`",
-			'tax_vat_number'                => "ADD `tax_vat_number` VARCHAR(191) NULL AFTER `company_registration_number`",
+			'company_name'                => 'ADD `company_name` VARCHAR(255) NULL',
+			'company_registration_number' => 'ADD `company_registration_number` VARCHAR(191) NULL',
+			'tax_vat_number'              => 'ADD `tax_vat_number` VARCHAR(191) NULL',
 		);
 
 		foreach ( $columns as $name => $ddl ) {

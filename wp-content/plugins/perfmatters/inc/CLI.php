@@ -213,7 +213,7 @@ class CLI {
 		//unpack and update
 		$settings = (array) json_decode(file_get_contents($args[0]), true);
 		if(isset($settings['perfmatters_options'])) {
-			update_option('perfmatters_options', $settings['perfmatters_options']);
+			update_option('perfmatters_options', perfmatters_sanitize_options($settings['perfmatters_options']));
 		}
 		if(isset($settings['perfmatters_tools'])) {
 			update_option('perfmatters_tools', $settings['perfmatters_tools']);

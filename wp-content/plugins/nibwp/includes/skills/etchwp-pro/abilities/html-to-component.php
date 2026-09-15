@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
  *   1. Accept the agent-built `payload` (gutenbergBlock tree + styles dict + __libraryMeta).
  *   2. Detect <form> in source. If found, return a question to the agent
  *      ("which installed form plugin?") so the agent can ask the user, resubmit
- *      with payload._form_decision, and ensure an etch/shortcode block appears.
+ *      with payload._form_decision, and ensure a core/shortcode block appears.
  *   3. Run the playbook validator (lib/validator.php). Failures are returned as
  *      structured unchecked_items so the agent patches and re-submits.
  *   4. On dry_run=true, return validation only.
@@ -95,6 +95,11 @@ wp_register_ability('nibwp/etchwp-pro-html-to-component', [
                 'default' => false,
                 'description' => 'When true, run validation only; do not write to etch_styles or post_content.',
             ],
+            'declined_recommendations' => [
+                'type'        => 'array',
+                'items'       => ['type' => 'string'],
+                'description' => 'Ids of recommendations the user already declined (each recommendation carries an id). They are not offered again.',
+            ],
             '_preflight_token' => [
                 'type'        => 'string',
                 'description' => 'Token minted by nibwp/skill-preflight. REQUIRED. Server validates user_id binding + skill_id binding + expiry + attempt count, then OVERRIDES brand/target.post_id/target.mode from cached_answers. Calling this ability without a valid token returns requires_user_input:true with next_action:"call_preflight".',
@@ -135,7 +140,7 @@ wp_register_ability('nibwp/etchwp-pro-html-to-component', [
                 . "  1. Call nibwp/load-skill-playbook { skill_id:\"etchwp-pro\", brand, element_type? } to read SKILL.md + per-element checklist + lessons-learned.\n"
                 . "  2. Synthesize the payload (gutenbergBlock tree + styles dict + __libraryMeta) following the checklist.\n"
                 . "  3. Submit with dry_run:true. Patch any unchecked_items, re-submit until validation.passed.\n"
-                . "  4. Read the response's `recommendations[]` — these are cross-ability suggestions (loop → CPT+ACF, iframe → etch/embed, raw <form> → forms-manage, alt-less images, deep div-soup). Surface each to the USER with the listed choices BEFORE committing. Run the suggested ability chain if the user accepts.\n"
+                . "  4. Read the response's `recommendations[]` — these are cross-ability suggestions (loop → CPT+ACF, iframe → etch/embed, raw <form> → forms-manage, alt-less images, deep div-soup). Surface each to the USER with the listed choices BEFORE committing. Run the suggested ability chain if the user accepts. Pass the ids of declined ones back as declined_recommendations so they are not offered again.\n"
                 . "  5. Re-submit with dry_run:false and a target post_id to commit.\n"
                 . "  6. Ask the user thumb-up/down; call nibwp/etchwp-pro-feedback with the rating.\n"
                 . "Hard rules enforced server-side:\n"
@@ -143,7 +148,7 @@ wp_register_ability('nibwp/etchwp-pro-html-to-component', [
                 . "  - Tokens from canonical taxonomy only (anti-patterns.md §14)\n"
                 . "  - BEM grammar: {brand}-{component}__{element}[--modifier]\n"
                 . "  - Every wp:html block needs a style-hoist wp:etch/element (anti-patterns.md §15)\n"
-                . "  - Forms → etch/shortcode via nibwp/forms-manage (anti-patterns.md §16)\n"
+                . "  - Forms → core/shortcode via nibwp/forms-manage (anti-patterns.md §16)\n"
                 . "  - No raw <style> tag, no external stylesheet, no hardcoded font-size or color (validator hard rejects)\n"
                 . "Expert routines (recommendations[]):\n"
                 . "  - LOOP detected (≥3 repeating cards) → propose CPT + ACF + etch/loop-block. NEVER persist 6 identical static cards if the user accepts dynamic.\n"
@@ -224,7 +229,7 @@ function nibwp_etchwp_pro_html_to_component(array $input): array|WP_Error
             'requires_user_input' => true,
             'question'            => 'Detected a <form> in the source. Which installed form plugin should this be?',
             'choices'             => $form_check['installed_plugins'],
-            'next_action'         => 'Ask the user which installed plugin + form_id to use. Then re-submit with payload._form_decision = { plugin, form_id, shortcode_tag } and a gutenbergBlock containing an etch/shortcode block + style-hoist hidden block.',
+            'next_action'         => 'Ask the user which installed plugin + form_id to use. Then re-submit with payload._form_decision = { plugin, form_id, shortcode_tag } and a gutenbergBlock containing a core/shortcode block + style-hoist hidden block.',
             'summary'             => 'Form detected; awaiting user choice of installed form plugin.',
         ];
     }
@@ -245,6 +250,15 @@ function nibwp_etchwp_pro_html_to_component(array $input): array|WP_Error
         'element_type' => $element_type,
         'brand'        => $brand,
     ]);
+
+    // A suggestion the user turned down at the dry run is not news at persist.
+    $declined = array_map('strval', (array) ($input['declined_recommendations'] ?? []));
+    if ($declined !== []) {
+        $recommendations = array_values(array_filter(
+            $recommendations,
+            static fn(array $rec): bool => !in_array((string) ($rec['id'] ?? ''), $declined, true)
+        ));
+    }
 
     if (!$validation['passed']) {
         // INVARIANT 7 — bounded retries. Bump the token's attempt counter
@@ -352,7 +366,11 @@ function nibwp_etchwp_pro_html_to_component(array $input): array|WP_Error
         'summary'         => sprintf(
             '%s Post %d. %d style(s) added, %d updated%s.',
             (int) $diff['blocks_added'] > 0
-                ? sprintf('Wrote %d block group(s) to the page.', (int) $diff['blocks_added'])
+                ? sprintf(
+                    'Wrote %d block(s) to the page%s.',
+                    (int) $diff['blocks_added'],
+                    empty($diff['components_added']) ? '' : sprintf(' and created %d component(s)', count((array) $diff['components_added']))
+                )
                 : 'NO CONTENT WAS WRITTEN TO THE PAGE - the payload produced no blocks, so the page is empty.',
             $diff['post_id'],
             count($diff['styles_added']),

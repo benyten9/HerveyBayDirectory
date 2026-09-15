@@ -55,7 +55,7 @@ class Ajax extends \Perfmatters\Ajax
 
 		self::security_check();
 
-        $file_names = array_map('basename', glob(PMCS::get_storage_dir() . '/*.php'));
+        $file_names = array_map('basename', glob(PMCS::filesystem_path(PMCS::get_storage_dir()) . '/*.php'));
 
         $snippet_data = Transfer::get_export_content($file_names);
 

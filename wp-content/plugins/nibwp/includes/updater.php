@@ -354,11 +354,17 @@ function nibwp_updater_admin_notice(): void
 /**
  * Email the site admin once when a new NIBWP version becomes available.
  *
+ * Off until the site owner turns it on (NIBWP → Settings → Notifications,
+ * option `nibwp_update_email_enabled`). Nobody asked to be emailed by default,
+ * and an unrequested message about a plugin is the kind people mark as spam.
+ * The `nibwp_update_email_enabled` filter still has the last word, for hosts
+ * that manage this in code; change the recipient with
+ * `nibwp_update_email_recipient`.
+ *
  * De-duplicated per version via the nibwp_update_last_emailed option, so each
  * release notifies at most once. Runs on admin page loads AND on the plugin
  * update cron (wp_update_plugins), so unattended sites are still notified.
- * Licensed builds only. Disable with the `nibwp_update_email_enabled` filter;
- * change the recipient with `nibwp_update_email_recipient`.
+ * Licensed builds only.
  */
 add_action('admin_init', 'nibwp_updater_maybe_email');
 add_action('wp_update_plugins', 'nibwp_updater_maybe_email');
@@ -381,7 +387,7 @@ function nibwp_updater_maybe_email(): void
 
 function nibwp_updater_maybe_email_run(): void
 {
-    if (!apply_filters('nibwp_update_email_enabled', true)) {
+    if (!apply_filters('nibwp_update_email_enabled', (bool) get_option('nibwp_update_email_enabled', false))) {
         return;
     }
     if (nibwp_updater_active_license_key() === '') {

@@ -605,7 +605,7 @@ function nibwp_gp_elements_execute(array $input): array|WP_Error
                 'post_type'    => 'gp_elements',
                 'post_status'  => in_array($input['status'] ?? 'publish', ['publish', 'draft'], true) ? (string) $input['status'] : 'publish',
                 'post_title'   => sanitize_text_field((string) ($input['title'] ?? ('GP ' . $type . ' element'))),
-                'post_content' => (string) ($input['content'] ?? ''),
+                'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
             ], true);
             if (is_wp_error($pid)) {
                 return $pid;

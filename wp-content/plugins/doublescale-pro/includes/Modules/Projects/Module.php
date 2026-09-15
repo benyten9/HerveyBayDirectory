@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Pro\Modules\Projects\Abilities\ProjectAbilities;
 use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
@@ -105,6 +106,19 @@ final class Module extends AbstractModule {
 		$container->get( Services\ProjectActivityLogger::class )->register();
 		$container->get( Services\ProjectPortalProvider::class );
 		new Renderer\ProjectFrontendHandler();
+
+		// Auto-create the page hosting that shortcode, so a shared project links
+		// somewhere instead of resolving to an empty URL. Guarded: an older free
+		// has no such class, and Pro must degrade silently rather than fatal.
+		if ( class_exists( ShortcodePageProvisioner::class ) ) {
+			ShortcodePageProvisioner::register(
+				Renderer\ProjectFrontendHandler::SHORTCODE_NAME,
+				array(
+					'title' => __( 'Project', 'doublescale-pro' ),
+					'slug'  => 'doublescale-project',
+				)
+			);
+		}
 
 		add_action( 'admin_menu', array( self::class, 'scope_menu_for_project_only_users' ), 9999 );
 

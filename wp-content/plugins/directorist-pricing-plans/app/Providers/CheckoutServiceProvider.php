@@ -27,12 +27,16 @@ use DirectoristPricingPlan\App\Repositories\Admin\PlanRepository;
 use DirectoristPricingPlan\App\Repositories\PlanOrderMetaRepository;
 use DirectoristPricingPlan\App\Repositories\UsesRepository;
 use DirectoristPricingPlan\App\Utils\PlanProration;
+use DirectoristPricingPlan\App\Services\ExpiredListingRenewalService;
+use DirectoristPricingPlan\App\Services\ListingPlanAssignmentService;
 use DirectoristPricingPlan\WpMVC\View\View;
 use DirectoristPricingPlan\WpMVC\Contracts\Provider;
 use DirectoristPricingPlan\WpMVC\Exceptions\Exception;
 
 class CheckoutServiceProvider implements Provider {
-    const CHECKOUT_TYPE = 'plan';
+    const CHECKOUT_TYPE         = 'plan';
+    const REASSIGNMENT_META_KEY = '_directorist_pricing_plan_reassignment';
+    const RENEWAL_META_KEY      = '_directorist_pricing_plan_listing_renewal';
 
     /** @var ProrationResult|null Cached proration result for the current request. */
     private ?ProrationResult $proration_result = null;
@@ -82,6 +86,10 @@ class CheckoutServiceProvider implements Provider {
         }
 
         if ( directorist_plan_has_subscription( $plan ) ) {
+            if ( $this->is_trial_checkout_without_gateway( $request ) ) {
+                return false;
+            }
+
             return true;
         }
 
@@ -123,6 +131,7 @@ class CheckoutServiceProvider implements Provider {
 
         $selected_plan_id       = isset( $request['plan_id'] ) ? (int) $request['plan_id'] : null;
         $current_active_package = null;
+        $allow_multiple         = directorist_allow_multiple_plans_per_directory_type();
 
         $active_packages = directorist_user_package_repository()->get_active_packages_for_directory(
             get_current_user_id(),
@@ -136,11 +145,11 @@ class CheckoutServiceProvider implements Provider {
             }
         }
 
-        if ( \count( $active_packages ) > 1 && ! $current_active_package ) {
+        if ( \count( $active_packages ) > 1 && ! $current_active_package && ! $allow_multiple ) {
             throw new \Exception( __( 'You already have multiple active plans and cannot purchase or activate another one at this time.', 'directorist-pricing-plans' ) );
         }
 
-        if ( \count( $active_packages ) === 1 ) {
+        if ( \count( $active_packages ) === 1 && ( ! $selected_plan_id || (int) $active_packages[0]->plan_id === $selected_plan_id || ! $allow_multiple ) ) {
             $current_active_package = $active_packages[0]; 
         }
 
@@ -168,10 +177,20 @@ class CheckoutServiceProvider implements Provider {
             throw new \Exception( __( 'Invalid plan id.', 'directorist-pricing-plans' ) );
         }
 
+        if ( $selected_plan && ! $active_plan && empty( $selected_plan->is_published ) ) {
+            throw new \Exception( __( 'The selected plan is not available.', 'directorist-pricing-plans' ) );
+        }
+
         // Prevent reuse of free one-time plans
         $this->validate_one_time_plan_usage( $selected_plan, $active_plan );
 
         $current_plan = $selected_plan ?? $active_plan;
+
+        if ( (int) $current_plan->directory_type_id !== (int) $directory_type_id ) {
+            throw new \Exception( __( 'The selected plan is not available for this directory.', 'directorist-pricing-plans' ) );
+        }
+
+        update_post_meta( $listing_id, directorist_plan_key(), (int) $current_plan->id );
 
         if ( ! directorist_plan_has_listing_quota( $current_plan ) ) {
             throw new \Exception( directorist_plan_no_listing_quota_message() );
@@ -183,10 +202,6 @@ class CheckoutServiceProvider implements Provider {
                 try {
                     do_action( 'directorist_validate_listing_plan_approval', $directory_type_id, $listing_id, $is_featured_listing, $current_active_package );
 
-                    if ( ! empty( $current_active_package->is_legacy ) ) {
-                        update_post_meta( $listing_id, directorist_plan_key(), $current_active_package->plan_id );
-                    }
-
                     return $data;
                 } catch ( \Exception $e ) {
                     throw new \Exception( $e->getMessage() );
@@ -196,7 +211,7 @@ class CheckoutServiceProvider implements Provider {
 
         if ( ! $active_plan && PlanType::PACKAGE === $selected_plan->type ) {
             // Package plans do not allow multiple pending orders
-            if ( directorist_current_user_has_pending_order( $directory_type_id ) ) {
+            if ( directorist_current_user_has_pending_order( $directory_type_id, $allow_multiple ? (int) $selected_plan->id : null ) ) {
                 throw new \Exception( __( 'You have a pending order. Please wait for the payment to be completed.', 'directorist-pricing-plans' ) );
             }
 
@@ -243,10 +258,6 @@ class CheckoutServiceProvider implements Provider {
 
                 if ( $current_active_package->is_plan_featured ) {
                     directorist_set_listing_featured( $listing_id );
-                }
-
-                if ( ! empty( $current_active_package->is_legacy ) ) {
-                    update_post_meta( $listing_id, directorist_plan_key(), $current_active_package->plan_id );
                 }
 
                 return $data;
@@ -321,6 +332,14 @@ class CheckoutServiceProvider implements Provider {
             $validation_rules['is_featured'] = 'numeric|accepted:0,1';
         }
 
+        if ( $request->has_param( 'plan_reassignment' ) ) {
+            $validation_rules['plan_reassignment'] = 'numeric|accepted:0,1';
+        }
+
+        if ( $request->has_param( 'listing_renewal' ) ) {
+            $validation_rules['listing_renewal'] = 'numeric|accepted:0,1';
+        }
+
         $errors = $validator->validate( $validation_rules, false );
 
         if ( ! empty( $errors ) ) {
@@ -334,8 +353,40 @@ class CheckoutServiceProvider implements Provider {
             throw new \Exception( __( 'Invalid plan id.', 'directorist-pricing-plans' ) );
         }
 
+        $this->validate_checkout_listing_context(
+            (int) $request->get_param( 'listing_id' ),
+            (int) $plan->directory_type_id,
+            get_current_user_id()
+        );
+
         if ( ! directorist_plan_has_listing_quota( $plan ) ) {
             throw new \Exception( directorist_plan_no_listing_quota_message(), 400 );
+        }
+
+        if ( '1' === (string) $request->get_param( 'plan_reassignment' ) ) {
+            $listing_id = (int) $request->get_param( 'listing_id' );
+
+            if ( ! $listing_id ) {
+                throw new \Exception( __( 'A listing is required for plan reassignment.', 'directorist-pricing-plans' ), 400 );
+            }
+
+            directorist_pricing_plans_singleton( ListingPlanAssignmentService::class )->validate_checkout_reassignment(
+                $listing_id,
+                (int) $plan->id,
+                get_current_user_id()
+            );
+        }
+
+        if ( '1' === (string) $request->get_param( 'listing_renewal' ) ) {
+            if ( '1' === (string) $request->get_param( 'plan_reassignment' ) ) {
+                throw new \Exception( __( 'A listing renewal cannot also be a plan reassignment.', 'directorist-pricing-plans' ), 400 );
+            }
+
+            directorist_pricing_plans_singleton( ExpiredListingRenewalService::class )->validate_pay_per_listing_checkout(
+                (int) $request->get_param( 'listing_id' ),
+                (int) $plan->id,
+                get_current_user_id()
+            );
         }
 
         // Block checkout for users who already have multiple active packages for this directory,
@@ -347,6 +398,7 @@ class CheckoutServiceProvider implements Provider {
 
         $active_package          = null;
         $selected_active_package = null;
+        $allow_multiple          = directorist_allow_multiple_plans_per_directory_type();
         
         foreach ( $active_packages as $active_pkg ) {
             if ( (int) $active_pkg->plan_id === (int) $plan->id ) {
@@ -355,15 +407,19 @@ class CheckoutServiceProvider implements Provider {
             }
         }
 
-        if ( count( $active_packages ) === 1 ) {
+        if ( ! $selected_active_package && empty( $plan->is_published ) ) {
+            throw new \Exception( __( 'The selected plan is not available.', 'directorist-pricing-plans' ), 400 );
+        }
+
+        if ( count( $active_packages ) === 1 && ( ! $allow_multiple || $selected_active_package ) ) {
             $active_package = $active_packages[0];
 
             // Prevent if user is switching away from an active recurring subscription
-            if ( (int) $active_package->is_recurring === 1 && (int) $plan->id !== (int) $active_package->plan_id ) {
+            if ( ! $allow_multiple && (int) $active_package->is_recurring === 1 && (int) $plan->id !== (int) $active_package->plan_id ) {
                 throw new Exception( __( 'You must cancel your existing subscription before switching plans.', 'directorist-pricing-plans' ) );
             }
         } else if ( count( $active_packages ) > 1 ) {
-            if ( ! $selected_active_package ) {
+            if ( ! $selected_active_package && ! $allow_multiple ) {
                 throw new \Exception( __( 'You already have multiple active plans and cannot purchase or activate another one at this time.', 'directorist-pricing-plans' ) );
             }
 
@@ -389,14 +445,19 @@ class CheckoutServiceProvider implements Provider {
         }
 
         // Pay per listing plans allow multiple pending orders
-        if ( PlanType::PAY_PER_LISTING !== $active_package_plan_type && directorist_current_user_has_pending_order( $plan->directory_type_id ) ) {
+        $has_pending_plan_order = directorist_current_user_has_pending_order(
+            (int) $plan->directory_type_id,
+            $allow_multiple ? (int) $plan->id : null
+        );
+
+        if ( PlanType::PAY_PER_LISTING !== $selected_plan_type && $has_pending_plan_order ) {
             throw new \Exception( __( 'You have a pending order. Please wait for the payment to be completed.', 'directorist-pricing-plans' ) );
         }
 
         $is_featured_listing = '1' === strval( $request->get_param( 'is_featured' ) );
 
         // Quota check only applies to package plans
-        if ( PlanType::PAY_PER_LISTING !== $active_package_plan_type && ! apply_filters( 'directorist_has_plan_remaining_quota', true, $plan, $is_featured_listing ) ) {
+        if ( PlanType::PAY_PER_LISTING !== $selected_plan_type && ! $this->has_checkout_allowed_quota( $plan, $is_featured_listing, $request ) ) {
             throw new \Exception( __( 'You have reached the maximum number of allowed listings.', 'directorist-pricing-plans' ) );
         }
 
@@ -410,6 +471,49 @@ class CheckoutServiceProvider implements Provider {
         }
     }
 
+    private function has_checkout_allowed_quota( stdClass $plan, bool $is_featured_listing, WP_REST_Request $request ): bool {
+        $plan_type = $plan->type ?? PlanType::PACKAGE;
+
+        if ( PlanType::PAY_PER_LISTING === $plan_type ) {
+            return true;
+        }
+
+        if ( ! directorist_plan_has_listing_quota( $plan ) ) {
+            return false;
+        }
+
+        $current_package  = directorist_user_package_repository()->get_current_package( get_current_user_id(), (int) $plan->directory_type_id );
+        $package_usage    = directorist_package_usage( ! empty( $current_package->is_legacy ) );
+        $requires_quota   = (bool) $request->get_param( 'listing_id' );
+        $total_uses       = $package_usage->get_regular_uses( get_current_user_id(), $plan );
+        $has_total_quota  = $this->is_checkout_usage_allowed( $total_uses, $requires_quota );
+
+        if ( ! $has_total_quota ) {
+            return false;
+        }
+
+        if ( ! $is_featured_listing ) {
+            return true;
+        }
+
+        return $this->is_checkout_usage_allowed(
+            $package_usage->get_featured_uses( get_current_user_id(), $plan ),
+            $requires_quota
+        );
+    }
+
+    private function is_checkout_usage_allowed( array $uses, bool $requires_quota ): bool {
+        if ( ( $uses['remaining'] ?? 0 ) === -1 ) {
+            return true;
+        }
+
+        if ( $requires_quota ) {
+            return (int) ( $uses['remaining'] ?? 0 ) > 0;
+        }
+
+        return (int) ( $uses['used'] ?? 0 ) <= (int) ( $uses['allowed'] ?? 0 );
+    }
+
     public function handle_checkout_table( string $checkout_type, float $total, float $subtotal, WP_REST_Request $request ) {
         if ( $checkout_type !== self::CHECKOUT_TYPE ) return;
 
@@ -419,6 +523,12 @@ class CheckoutServiceProvider implements Provider {
         if ( ! $plan ) {
             throw new Exception( __( 'Invalid plan id.', 'directorist-pricing-plans' ) );
         }
+
+        $this->validate_checkout_listing_context(
+            (int) $request->get_param( 'listing_id' ),
+            (int) $plan->directory_type_id,
+            get_current_user_id()
+        );
 
         $plan_dto   = $plan_repository->to_dto( $plan );
         $tax_amount = directorist_compute_fixed_or_percent_amount( $plan_dto->get_tax_type(), $plan_dto->get_tax_rate(), $subtotal );
@@ -483,6 +593,12 @@ class CheckoutServiceProvider implements Provider {
             throw new Exception( __( 'Invalid plan id.', 'directorist-pricing-plans' ) );
         }
 
+        $this->validate_checkout_listing_context(
+            (int) $request->get_param( 'listing_id' ),
+            (int) $plan->directory_type_id,
+            get_current_user_id()
+        );
+
         if ( ! directorist_plan_has_listing_quota( $plan ) ) {
             throw new Exception( directorist_plan_no_listing_quota_message(), 400 );
         }
@@ -490,7 +606,12 @@ class CheckoutServiceProvider implements Provider {
         $plan_type = $plan->type ?? PlanType::PACKAGE;
 
         // Check for pending orders — pay per listing plans allow multiple pending orders
-        if ( PlanType::PAY_PER_LISTING !== $plan_type && directorist_current_user_has_pending_order( $plan->directory_type_id ) ) {
+        $has_pending_plan_order = directorist_current_user_has_pending_order(
+            (int) $plan->directory_type_id,
+            directorist_allow_multiple_plans_per_directory_type() ? (int) $plan->id : null
+        );
+
+        if ( PlanType::PAY_PER_LISTING !== $plan_type && $has_pending_plan_order ) {
             throw new Exception( __( 'You have a pending order. Please wait for the payment to be completed.', 'directorist-pricing-plans' ), 400 );
         }
 
@@ -509,7 +630,11 @@ class CheckoutServiceProvider implements Provider {
             $dto->set_tax_type( $plan->tax_type )->set_tax_rate( $plan->tax_rate );
         }
 
-        if ( $request->get_param( 'listing_id' ) && $adjusted_price > 0 ) {
+        if ( $request->get_param( 'listing_id' )
+            && $adjusted_price > 0
+            && '1' !== (string) $request->get_param( 'plan_reassignment' )
+            && '1' !== (string) $request->get_param( 'listing_renewal' )
+        ) {
             directorist_set_listing_status( $request->get_param( 'listing_id' ), Status::PENDING );
         }
 
@@ -525,11 +650,37 @@ class CheckoutServiceProvider implements Provider {
         $this->plan_order_meta_repository()->upsert_by_order_id(
             $this->build_checkout_plan_order_meta_dto( $dto->get_id(), $plan, $request )
         );
+
+        if ( '1' === (string) $request->get_param( 'plan_reassignment' ) && $request->get_param( 'listing_id' ) ) {
+            update_post_meta(
+                (int) $request->get_param( 'listing_id' ),
+                self::REASSIGNMENT_META_KEY,
+                [
+                    'order_id' => (int) $dto->get_id(),
+                    'plan_id'  => (int) $plan->id,
+                ]
+            );
+        }
+
+        if ( '1' === (string) $request->get_param( 'listing_renewal' ) && $request->get_param( 'listing_id' ) ) {
+            update_post_meta(
+                (int) $request->get_param( 'listing_id' ),
+                self::RENEWAL_META_KEY,
+                [
+                    'order_id' => (int) $dto->get_id(),
+                    'plan_id'  => (int) $plan->id,
+                ]
+            );
+        }
     }
 
     private function build_checkout_plan_order_meta_dto( int $order_id, stdClass $plan, WP_REST_Request $request ): PlanOrderMetaDTO {
         $is_trial     = (int) $request->get_param( 'is_trial' ) === 1 && ! empty( $plan->is_trial_enabled ) && (int) $plan->trial_interval_count > 0;
         $is_recurring = directorist_plan_has_subscription( $plan );
+
+        if ( $is_trial && empty( $request->get_param( 'payment_gateway' ) ) ) {
+            $is_recurring = false;
+        }
 
         $interval_type       = null;
         $interval_count      = null;
@@ -593,6 +744,10 @@ class CheckoutServiceProvider implements Provider {
         return apply_filters( 'directorist_pricing_plan_free_order_meta_dto', $dto, $order_id, $plan );
     }
 
+    private function is_trial_checkout_without_gateway( WP_REST_Request $request ): bool {
+        return (int) $request->get_param( 'is_trial' ) === 1 && empty( $request->get_param( 'payment_gateway' ) );
+    }
+
     public function cancel_package_after_order_unpaid( OrderDTO $order_dto ) {
         if ( Status::PAID === $order_dto->get_status() ) {
             return;
@@ -604,6 +759,18 @@ class CheckoutServiceProvider implements Provider {
 
         if ( $order_dto->get_ref_type() !== OrderRefType::PRICING_PLAN || null === $order_dto->get_ref() ) {
             return;
+        }
+
+        if ( in_array( $order_dto->get_status(), [ Status::FAILED, Status::CANCELLED, Status::REFUNDED ], true )
+            && $order_dto->is_initialized( 'listing_id' )
+            && null !== $order_dto->get_listing_id()
+        ) {
+            $listing_id = (int) $order_dto->get_listing_id();
+            $renewal    = get_post_meta( $listing_id, self::RENEWAL_META_KEY, true );
+
+            if ( is_array( $renewal ) && (int) ( $renewal['order_id'] ?? 0 ) === (int) $order_dto->get_id() ) {
+                delete_post_meta( $listing_id, self::RENEWAL_META_KEY );
+            }
         }
 
         $user_package_repository = directorist_user_package_repository();
@@ -641,22 +808,87 @@ class CheckoutServiceProvider implements Provider {
             return;
         }
 
-        $old_package = directorist_get_current_package( $plan->directory_type_id, $order_dto->get_user_id() );
+        $old_package = directorist_allow_multiple_plans_per_directory_type()
+            ? $user_package_repository->get_package_by_plan( $order_dto->get_user_id(), (int) $plan->id )
+            : directorist_get_current_package( $plan->directory_type_id, $order_dto->get_user_id() );
 
-        if ( $old_package && (int) $old_package->is_recurring === 1 && (int) $old_package->plan_id !== (int) $plan->id ) {
+        if ( ! directorist_allow_multiple_plans_per_directory_type() && $old_package && (int) $old_package->is_recurring === 1 && (int) $old_package->plan_id !== (int) $plan->id ) {
             throw new Exception( __( 'You must cancel your existing subscription before switching plans.', 'directorist-pricing-plans' ) );
+        }
+
+        if ( ! directorist_allow_multiple_plans_per_directory_type() && $old_package && (int) $old_package->plan_id !== (int) $plan->id ) {
+            $listing_plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
+            $listing_plan_repository->reassign_belonging_listings(
+                (int) $order_dto->get_user_id(),
+                (int) $old_package->plan_id,
+                (int) $plan->id
+            );
+
+            if ( PlanType::PACKAGE === ( $plan->type ?? PlanType::PACKAGE ) ) {
+                if ( empty( $plan->is_allowed_unlimited_listings ) ) {
+                    $listing_plan_repository->make_exceeding_listings_as_private(
+                        (int) $order_dto->get_user_id(),
+                        (int) $plan->id,
+                        (int) $plan->allowed_listings
+                    );
+                }
+
+                if ( empty( $plan->is_allowed_unlimited_featured_listings ) ) {
+                    $listing_plan_repository->make_exceeding_featured_listings_as_regular(
+                        (int) $order_dto->get_user_id(),
+                        (int) $plan->id,
+                        (int) $plan->allowed_featured_listings
+                    );
+                }
+            }
         }
 
         // For pay per listing plans, if package already exists (active), just handle listing publication
         if ( PlanType::PAY_PER_LISTING === $plan->type ) {
             if ( $old_package && (int) $old_package->plan_id === (int) $plan->id ) {
-                $user_package_repository->link_package_order( $old_package->id, $order_dto->get_id() );
-
                 $listing_id = $order_dto->is_initialized( 'listing_id' ) ? $order_dto->get_listing_id() : null;
+
+                if ( $listing_id ) {
+                    $renewal = get_post_meta( $listing_id, self::RENEWAL_META_KEY, true );
+
+                    $is_renewal_order = is_array( $renewal )
+                        && (int) ( $renewal['order_id'] ?? 0 ) === (int) $order_dto->get_id()
+                        && (int) ( $renewal['plan_id'] ?? 0 ) === (int) $plan->id;
+
+                    if ( $is_renewal_order ) {
+                        directorist_pricing_plans_singleton( ExpiredListingRenewalService::class )->complete_pay_per_listing_renewal(
+                            (int) $listing_id,
+                            (int) $plan->id,
+                            (int) $order_dto->get_user_id()
+                        );
+                        $user_package_repository->link_package_order( $old_package->id, $order_dto->get_id() );
+                        delete_post_meta( $listing_id, self::RENEWAL_META_KEY );
+                        return;
+                    }
+                }
+
+                $user_package_repository->link_package_order( $old_package->id, $order_dto->get_id() );
 
                 // Package already active — just publish the listing
                 if ( $listing_id ) {
                     $is_featured_listing = $order_dto->is_initialized( 'is_featured_listing' ) ? $order_dto->get_is_featured_listing() : false;
+                    $reassignment        = get_post_meta( $listing_id, self::REASSIGNMENT_META_KEY, true );
+
+                    $is_reassignment_order = is_array( $reassignment )
+                        && (int) ( $reassignment['order_id'] ?? 0 ) === (int) $order_dto->get_id()
+                        && (int) ( $reassignment['plan_id'] ?? 0 ) === (int) $plan->id;
+
+                    if ( $is_reassignment_order ) {
+                        directorist_pricing_plans_singleton( ListingPlanAssignmentService::class )->apply_assignment(
+                            (int) $listing_id,
+                            $old_package,
+                            $plan
+                        );
+                        delete_post_meta( (int) $listing_id, self::REASSIGNMENT_META_KEY );
+                        return;
+                    }
+
+                    update_post_meta( $listing_id, directorist_plan_key(), (int) $plan->id );
 
                     do_action( 'directorist_after_listing_plan_approval', $listing_id, $is_featured_listing );
 
@@ -666,8 +898,37 @@ class CheckoutServiceProvider implements Provider {
             }
         }
 
-        // Activate the new package
+        // Activate the new package.
         $user_package_repository->activate_package( $this->build_package_activation_dto_from_order( $order_dto, $plan ) );
+
+        $listing_id   = $order_dto->is_initialized( 'listing_id' ) ? (int) $order_dto->get_listing_id() : 0;
+        $reassignment = $listing_id
+            ? get_post_meta( $listing_id, self::REASSIGNMENT_META_KEY, true )
+            : null;
+
+        $is_reassignment_order = is_array( $reassignment )
+            && (int) ( $reassignment['order_id'] ?? 0 ) === (int) $order_dto->get_id()
+            && (int) ( $reassignment['plan_id'] ?? 0 ) === (int) $plan->id;
+
+        if ( ! $is_reassignment_order ) {
+            return;
+        }
+
+        $new_package = $user_package_repository->get_package_by_plan(
+            (int) $order_dto->get_user_id(),
+            (int) $plan->id
+        );
+
+        if ( ! $new_package ) {
+            return;
+        }
+
+        directorist_pricing_plans_singleton( ListingPlanAssignmentService::class )->apply_assignment(
+            $listing_id,
+            $new_package,
+            $plan
+        );
+        delete_post_meta( $listing_id, self::REASSIGNMENT_META_KEY );
     }
 
     private function build_package_activation_dto_from_order( OrderDTO $order_dto, stdClass $plan ): UserPackageActivationDTO {
@@ -829,6 +1090,14 @@ class CheckoutServiceProvider implements Provider {
         if ( isset( $_GET['is_featured'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             echo '<input type="hidden" name="is_featured" value="' . esc_attr( absint( $_GET['is_featured'] ) ) . '">'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         }
+
+        if ( isset( $_GET['plan_reassignment'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            echo '<input type="hidden" name="plan_reassignment" value="' . esc_attr( absint( $_GET['plan_reassignment'] ) ) . '">'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        }
+
+        if ( isset( $_GET['listing_renewal'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            echo '<input type="hidden" name="listing_renewal" value="' . esc_attr( absint( $_GET['listing_renewal'] ) ) . '">'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        }
     }
 
     private function get_plan_by_id( int $plan_id ): ?stdClass {
@@ -836,6 +1105,26 @@ class CheckoutServiceProvider implements Provider {
         $plan            = $plan_repository->get_by_id( $plan_id );
 
         return $plan;
+    }
+
+    private function validate_checkout_listing_context( int $listing_id, int $directory_type_id, int $user_id ): void {
+        if ( ! $listing_id ) {
+            return;
+        }
+
+        $listing = get_post( $listing_id );
+
+        if ( ! $listing || ATBDP_POST_TYPE !== $listing->post_type ) {
+            throw new Exception( __( 'The listing was not found.', 'directorist-pricing-plans' ), 404 );
+        }
+
+        if ( (int) $listing->post_author !== $user_id ) {
+            throw new Exception( __( 'You are not allowed to purchase a plan for this listing.', 'directorist-pricing-plans' ), 403 );
+        }
+
+        if ( directorist_get_listings_directory_type( $listing_id ) !== $directory_type_id ) {
+            throw new Exception( __( 'The selected plan is not available for this listing directory.', 'directorist-pricing-plans' ), 400 );
+        }
     }
 
     private function plan_order_meta_repository(): PlanOrderMetaRepository {
@@ -854,6 +1143,11 @@ class CheckoutServiceProvider implements Provider {
 
         if ( ! $new_plan ) {
             $this->proration_result = ProrationResult::allow( 0.0, null, 0.0 );
+            return $this->proration_result;
+        }
+
+        if ( ! $this->should_apply_proration() ) {
+            $this->proration_result = ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
             return $this->proration_result;
         }
 
@@ -877,6 +1171,10 @@ class CheckoutServiceProvider implements Provider {
         $this->proration_result = $plan_proration->calculate_result( $current_package, $current_plan, $new_plan );
 
         return $this->proration_result;
+    }
+
+    private function should_apply_proration(): bool {
+        return ! directorist_allow_multiple_plans_per_directory_type();
     }
 
     public function handle_active_gateways( array $active_gateways, string $checkout_type ): array {

@@ -10,8 +10,103 @@ use DirectoristPricingPlan\App\Jobs\OldDataMigrationQueue;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 
 class ListingFormManager implements Provider {
+    private const DEFAULT_PLAN_COLUMNS = 3;
+
+    private const SUPPORTED_PLAN_COLUMNS = [ 1, 2, 3, 4, 6 ];
+
+    private $shortcode_plan_columns;
+
+    private $elementor_plan_columns;
+
     public function boot() {
         add_filter( 'atbdp_add_listing_page_template', [ $this, 'plans_page' ], 10, 3 );
+        add_filter( 'pre_do_shortcode_tag', [ $this, 'capture_add_listing_shortcode_columns' ], 10, 4 );
+        add_filter( 'do_shortcode_tag', [ $this, 'reset_add_listing_plan_columns' ], PHP_INT_MAX, 4 );
+        add_action( 'elementor/element/directorist_add_listing/sec_general/before_section_end', [ $this, 'register_elementor_plan_columns_control' ] );
+        add_action( 'elementor/frontend/widget/before_render', [ $this, 'capture_elementor_plan_columns' ] );
+    }
+
+    /**
+     * Capture attributes before Directorist normalizes the Add Listing shortcode.
+     */
+    public function capture_add_listing_shortcode_columns( $output, $tag, $atts ) {
+        if ( 'directorist_add_listing' !== $tag ) {
+            return $output;
+        }
+
+        $this->shortcode_plan_columns = isset( $atts['columns'] )
+            ? $this->normalize_plan_columns( $atts['columns'] )
+            : null;
+
+        return $output;
+    }
+
+    /**
+     * Prevent one Add Listing instance from leaking its column choice into another.
+     */
+    public function reset_add_listing_plan_columns( $output, $tag ) {
+        if ( 'directorist_add_listing' !== $tag ) {
+            return $output;
+        }
+
+        $this->shortcode_plan_columns = null;
+        $this->elementor_plan_columns = null;
+
+        return $output;
+    }
+
+    /**
+     * Extend the native Directorist Add Listing Elementor widget.
+     */
+    public function register_elementor_plan_columns_control( $element ) {
+        if ( ! class_exists( '\\Elementor\\Controls_Manager' ) ) {
+            return;
+        }
+
+        if ( method_exists( $element, 'update_control' ) ) {
+            $element->update_control(
+                'sec_heading',
+                [
+                    'label' => __( 'Configure the Add Listing form and its pricing plan layout.', 'directorist-pricing-plans' ),
+                ]
+            );
+        }
+
+        $element->add_control(
+            'pricing_plan_columns',
+            [
+                'label'       => __( 'Pricing Plan Columns', 'directorist-pricing-plans' ),
+                'type'        => \Elementor\Controls_Manager::SELECT,
+                'default'     => (string) self::DEFAULT_PLAN_COLUMNS,
+                'options'     => [
+                    '1' => '1',
+                    '2' => '2',
+                    '3' => '3',
+                    '4' => '4',
+                    '6' => '6',
+                ],
+                'description' => __( 'Choose how many pricing plans appear per row before the listing form.', 'directorist-pricing-plans' ),
+            ]
+        );
+    }
+
+    /**
+     * Capture the selected Elementor value before the widget renders its shortcode.
+     */
+    public function capture_elementor_plan_columns( $widget ) {
+        if ( ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) || 'directorist_add_listing' !== $widget->get_name() ) {
+            return;
+        }
+
+        if ( ! method_exists( $widget, 'get_settings_for_display' ) ) {
+            return;
+        }
+
+        $settings = $widget->get_settings_for_display();
+
+        $this->elementor_plan_columns = isset( $settings['pricing_plan_columns'] )
+            ? $this->normalize_plan_columns( $settings['pricing_plan_columns'] )
+            : null;
     }
     
     public function plans_page( $template, $data ) {
@@ -33,16 +128,15 @@ class ListingFormManager implements Provider {
         }
 
         if ( $data['is_edit_mode'] ) {
-            $directory_type_id = directorist_get_listings_directory_type( $data['listing_id'] );
+            $listing_id        = (int) $data['listing_id'];
+            $directory_type_id = directorist_get_listings_directory_type( $listing_id );
 
             if ( ! $directory_type_id ) {
                 return $this->notice( __( 'Invalid directory selected.', 'directorist-pricing-plans' ) );
             }
 
-            $current_package = directorist_get_listing_package( (int) $data['listing_id'] );
-
-            if ( ! $current_package ) {
-                return $this->notice( __( 'You must have an active plan to access this page.', 'directorist-pricing-plans' ) );
+            if ( ! directorist_get_listing_package( $listing_id ) && 'publish' === get_post_status( $listing_id ) ) {
+                directorist_set_listing_status( $listing_id, 'pending' );
             }
 
             return $template;
@@ -71,10 +165,11 @@ class ListingFormManager implements Provider {
             $directory->term_id
         );
 
-        $package_count = count( $active_packages );
+        $package_count  = count( $active_packages );
+        $allow_multiple = directorist_allow_multiple_plans_per_directory_type();
 
-        // Multiple active packages (users migrated from old version): require explicit plan selection.
-        if ( $package_count > 1 ) {
+        // Multiple active packages, or the opt-in multiple-plan flow, require explicit plan selection.
+        if ( $package_count > 1 || ( $allow_multiple && $package_count > 0 ) ) {
             if ( isset( $_GET['plan_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 $selected_plan_id = absint( wp_unslash( $_GET['plan_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
@@ -103,6 +198,10 @@ class ListingFormManager implements Provider {
                     }
                 }
 
+                if ( $allow_multiple ) {
+                    return $this->next_template( $template, $directory->slug, $data );
+                }
+
                 // plan_id given but does not match any active package — block the purchase attempt.
                 return $this->notice( __( 'You already have multiple active plans. You cannot purchase or activate a new plan at this time. Please select one of your existing plans to submit a listing.', 'directorist-pricing-plans' ) );
             }
@@ -110,7 +209,10 @@ class ListingFormManager implements Provider {
             // No plan selected yet — show the plan selection page (existing plans only).
             do_action( 'directorist_before_pricing_plan_page', $data );
 
-            return directorist_render_plans();
+            return $this->render_plans(
+                $data,
+                $allow_multiple ? [] : array_map( 'absint', wp_list_pluck( $active_packages, 'plan_id' ) )
+            );
         }
 
         // Single active package: proceed with the existing quota-check flow.
@@ -156,7 +258,7 @@ class ListingFormManager implements Provider {
         if ( ! isset( $_GET['plan_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             do_action( 'directorist_before_pricing_plan_page', $data );
 
-            return directorist_render_plans();
+            return $this->render_plans( $data );
         }
 
         $plan_id       = absint( wp_unslash( $_GET['plan_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -182,6 +284,34 @@ class ListingFormManager implements Provider {
         return $template;
     }
 
+    private function render_plans( array $data, array $include_plan_ids = [] ): string {
+        $columns = $this->shortcode_plan_columns ?? $this->elementor_plan_columns ?? self::DEFAULT_PLAN_COLUMNS;
+
+        /**
+         * Filters the pricing plan columns shown in the Add Listing flow.
+         *
+         * @param int   $columns Number of plans per row.
+         * @param array $data    Add Listing form data.
+         */
+        $columns = apply_filters( 'directorist_pricing_plans_add_listing_columns', $columns, $data );
+
+        return (string) directorist_render_plans(
+            null,
+            [
+                'columns'          => $this->normalize_plan_columns( $columns ),
+                'include_plan_ids' => implode( ',', array_map( 'absint', $include_plan_ids ) ),
+            ]
+        );
+    }
+
+    private function normalize_plan_columns( $columns ): int {
+        $columns = absint( $columns );
+
+        return in_array( $columns, self::SUPPORTED_PLAN_COLUMNS, true )
+            ? $columns
+            : self::DEFAULT_PLAN_COLUMNS;
+    }
+
     private function redirect_to_checkout( int $plan_id, string $directory_type_slug ): string {
         $checkout_url = directorist_get_checkout_page_url(
             'plan',
@@ -191,16 +321,16 @@ class ListingFormManager implements Provider {
             ]
         );
 
-        if ( ! headers_sent() ) {
-            wp_safe_redirect( $checkout_url );
-            exit;
-        }
-
-        return sprintf(
-            '<script>window.location.href = %1$s;</script><p><a href="%2$s">%3$s</a></p>',
-            wp_json_encode( $checkout_url ),
-            esc_url( $checkout_url ),
-            esc_html__( 'Continue to checkout', 'directorist-pricing-plans' )
+        return $this->notice_with_actions(
+            __( 'Redirecting to checkout...', 'directorist-pricing-plans' ),
+            $checkout_url,
+            __( 'Continue to checkout', 'directorist-pricing-plans' ),
+            '',
+            '',
+            'info'
+        ) . sprintf(
+            '<script>window.location.href = %s;</script>',
+            wp_json_encode( $checkout_url )
         );
     }
 
@@ -228,6 +358,31 @@ class ListingFormManager implements Provider {
             <section class="directorist-alert directorist-alert-<?php echo esc_attr( $type ); ?> directorist-single-listing-notice">
                 <div class="directorist-alert__content">
                     <?php echo esc_html( $message ); ?>
+                </div>
+            </section>
+        </div>
+        <?php
+
+        return ob_get_clean();
+    }
+
+    public function notice_with_actions( string $message, string $primary_url, string $primary_label, string $secondary_url = '', string $secondary_label = '', string $type = 'warning' ): string {
+        ob_start();
+        ?>
+        <div class="directorist-col-md-12">
+            <section class="directorist-alert directorist-alert-<?php echo esc_attr( $type ); ?> directorist-single-listing-notice" style="display: flex; align-items: center; justify-content: center; text-align: center;">
+                <div class="directorist-alert__content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; text-align: center;">
+                    <p style="margin: 0;"><?php echo esc_html( $message ); ?></p>
+                    <p class="directorist-single-listing-notice__actions" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; margin: 10px 0 0;">
+                        <a class="directorist-btn directorist-btn-primary" href="<?php echo esc_url( $primary_url ); ?>">
+                            <?php echo esc_html( $primary_label ); ?>
+                        </a>
+                        <?php if ( $secondary_url && $secondary_label ) : ?>
+                            <a class="directorist-btn directorist-btn-light" href="<?php echo esc_url( $secondary_url ); ?>">
+                                <?php echo esc_html( $secondary_label ); ?>
+                            </a>
+                        <?php endif; ?>
+                    </p>
                 </div>
             </section>
         </div>

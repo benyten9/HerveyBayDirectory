@@ -274,6 +274,46 @@ class TemplateModel extends Model {
 	}
 
 	/**
+	 * Get the WhatsApp settings needed to build a template's HEADER component.
+	 *
+	 * A template approved with an IMAGE/VIDEO/DOCUMENT header must be sent with a
+	 * matching header component or Meta rejects the message outright. These are
+	 * the keys the provider reads to build one: the stored component definition
+	 * (which declares the header format), any media attached to the header, and
+	 * header variables for a TEXT header.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array Header settings; empty when the template declares no header.
+	 */
+	public function get_whatsapp_header_settings() {
+		$settings = array();
+
+		$keys = array(
+			'components',
+			'header_format',
+			'header_media',
+			'header_variables',
+			// Interactive templates (catalog, product list, flow, coupon): the
+			// send path needs the declared buttons and the values for them, or
+			// Meta rejects the message with error 131008.
+			'buttons',
+			'button_params',
+			'template_type',
+		);
+
+		foreach ( $keys as $key ) {
+			$value = $this->get_setting( $key );
+
+			if ( ! empty( $value ) ) {
+				$settings[ $key ] = $value;
+			}
+		}
+
+		return $settings;
+	}
+
+	/**
 	 * Get WhatsApp template variable mappings
 	 * Format: {"1": "{{contact:first_name}}", "2": "Order #123"}
 	 *

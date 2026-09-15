@@ -283,7 +283,7 @@ abstract class RestTaxonomyController extends RestController {
 			// Handle specific IDs query
 			if ( ! empty( $ids ) ) {
 				$items = $query->whereIn( 'id', $ids )
-					->orderBy( 'created_at', 'desc' )
+					->orderBy( 'name', 'asc' )
 					->paginate( $per_page, array( '*' ), 'page', $page );
 
 				foreach ( $items->items() as $item ) {
@@ -325,7 +325,7 @@ abstract class RestTaxonomyController extends RestController {
 			}
 
 			// Execute query with pagination
-			$this->apply_sorting( $query, $request, static::SORTABLE_COLUMNS );
+			$this->apply_sorting( $query, $request, static::SORTABLE_COLUMNS, 'name', 'asc' );
 
 			$items = $query->paginate( $per_page, array( '*' ), 'page', $page );
 

@@ -36,7 +36,7 @@ class SalesInvoiceTableStripeColumn {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD `stripe_payment_intent_id` VARCHAR(191) NULL AFTER `amount_paid`"
+			"ALTER TABLE `{$table}` ADD `stripe_payment_intent_id` VARCHAR(191) NULL"
 		);
 	}
 }

@@ -8,7 +8,7 @@ Every DO/DO-NOT pair the validator policies. Use this as the canonical reference
 
 ## 2. Inline `style="..."` attribute
 **DO NOT** put `style="color:red; padding:1rem"` inside `settings.text` or `settings.code`.
-**DO** move declarations to a global class (`_cssGlobalClasses = ["{brand}-foo"]`) or `settings._cssCustom`. Inline `style` overrides defeat Bricks' per-breakpoint system. Rule id `bricks_inline_style_attr`.
+**DO** move each declaration to the Bricks control that owns it — `padding` to `_padding`, `color` to `_typography.color` — on the element, or on a global class when it repeats. Only what has no control (`:hover`, `::before`, descendants) goes to `_cssCustom`. Inline `style` defeats Bricks' per-breakpoint system and is invisible in the builder. Rule id `bricks_inline_style_attr`. See [element-settings.md](element-settings.md).
 
 ## 3. `@media` inside `_cssCustom`
 **DO NOT** write `@media (max-width: 768px) { … }` inside `settings._cssCustom`.
@@ -32,9 +32,9 @@ Pick the closest `--text-*` from `acss-tokens.md` (when ACSS active) or Bricks D
 **DO NOT** name a global class `card`, `button-primary`, or `nav`.
 **DO** prefix with the brand: `{brand}-card`, `{brand}-button--primary`, `{brand}-nav`. Utility hooks like `is-active`, `has-error`, `sr-only` are exempt (allowlist in `validator.php`). Rule id `bricks_missing_brand_prefix`.
 
-## 7. Per-element CSS instead of a global class
-**DO NOT** put every style declaration in `settings._cssCustom`. Two cards with identical styling end up with two copies of the CSS.
-**DO** define a global class once + reference it from both cards. Rule id `bricks_missing_global_class` (warning).
+## 7. Custom CSS instead of element settings
+**DO NOT** put styling in `settings._cssCustom` when Bricks has a control for it. A page styled that way renders correctly and is inert in the builder: empty panels, a dead breakpoint switcher, and a site owner who cannot change their own page. Rule id `bricks_css_for_native_setting`.
+**DO** set `_padding`, `_typography`, `_background`, `_border` and the rest as settings. When the same styling repeats, put those same settings on a global class and reference it from both elements — a global class is a bundle of settings, not a stylesheet. Rule id `bricks_missing_global_class` (warning). Full map: [element-settings.md](element-settings.md).
 
 ## 8. Raw `<form>` HTML
 **DO NOT** put `<form action="/submit">…</form>` inside a `code` / `html` element.

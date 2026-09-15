@@ -320,7 +320,7 @@ function nibwp_wpjm_create_job(array $input): array|WP_Error
     $post_id = wp_insert_post([
         'post_type' => 'job_listing',
         'post_title' => sanitize_text_field((string) $input['title']),
-        'post_content' => (string) ($input['description'] ?? ''),
+        'post_content' => nibwp_wp_prepare_post_content($input['description'] ?? ''),
         'post_status' => (string) ($input['status'] ?? 'publish'),
     ], wp_error: true);
 

@@ -16,6 +16,7 @@ use DoubleScale\Modules\Booking\Managers\LocationsManager;
 use DoubleScale\Modules\Booking\Managers\MergeTagsManager;
 use DoubleScale\Modules\Booking\Managers\IntegrationsManager;
 use DoubleScale\Modules\Booking\Helpers\IntegrationsHelper;
+use DoubleScale\Modules\Booking\Capabilities;
 use DoubleScale\Core\UserRoles\Permissions;
 
 final class BookingAdminConfig {
@@ -88,7 +89,8 @@ final class BookingAdminConfig {
 	public static function inject_booking_config( array $config ): array {
 		$user_id = get_current_user_id();
 
-		$has_calendars    = CalendarModel::where( 'user_id', $user_id )->exists();
+		$host_calendar    = CalendarModel::where( 'user_id', $user_id )->where( 'type', 'host' )->first();
+		$has_calendars    = null !== $host_calendar || CalendarModel::where( 'user_id', $user_id )->exists();
 		$availabilities   = AvailabilityModel::where( 'user_id', $user_id )->get()->toArray();
 		$has_availability = ! empty( $availabilities );
 
@@ -105,7 +107,8 @@ final class BookingAdminConfig {
 		$wp_user = wp_get_current_user();
 
 		$config['booking'] = array(
-			'hasCalendars'    => $has_calendars,
+			'hasCalendars'              => $has_calendars,
+			'integrationHostCalendarId' => $host_calendar ? (int) $host_calendar->id : null,
 			'hasAvailability' => $has_availability,
 			'timezones'       => $tz_map,
 			'locations'       => $locations,
@@ -143,6 +146,12 @@ final class BookingAdminConfig {
 		$all_caps     = wp_get_current_user()->allcaps;
 		foreach ( $all_caps as $cap => $granted ) {
 			if ( strpos( $cap, 'doublescale_booking_' ) === 0 && $granted ) {
+				$booking_caps[ $cap ] = true;
+			}
+		}
+		// Super admins on subsites get caps via user_has_cap, not stored allcaps.
+		if ( is_multisite() && is_super_admin() ) {
+			foreach ( Capabilities::get_booking_capability_slugs() as $cap ) {
 				$booking_caps[ $cap ] = true;
 			}
 		}

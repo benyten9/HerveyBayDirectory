@@ -140,6 +140,18 @@ class RestWhatsappTemplatesController extends WP_REST_Controller {
 				'default'     => array(),
 				'description' => __( 'Template variable definitions', 'doublescale'),
 			),
+			// The full template settings from Meta: components, buttons,
+			// template_type and header data. An interactive template (catalog,
+			// coupon, media header) cannot be sent without these — Meta rejects
+			// the send with "(#131008) Required parameter is missing" when the
+			// cached row declares no buttons. Persisting only variables drops
+			// them, so the whole settings object is carried through here.
+			'settings'          => array(
+				'required'    => false,
+				'type'        => 'object',
+				'default'     => array(),
+				'description' => __( 'Full template settings (components, buttons, header) from Meta', 'doublescale'),
+			),
 			'variable_mappings' => array(
 				'required'    => false,
 				'type'        => 'object',
@@ -147,6 +159,43 @@ class RestWhatsappTemplatesController extends WP_REST_Controller {
 				'description' => __( 'Variable mappings (slot to value/merge tag)', 'doublescale'),
 			),
 		);
+	}
+
+	/**
+	 * Build the template_data array MetaTemplateSaver::save_on_use() consumes.
+	 *
+	 * Extracted so the forwarding contract is unit-testable without a database:
+	 * the interactive component data (components, buttons, template_type, header
+	 * media) has to survive the trip from client to saver, or a catalog/coupon
+	 * template caches with no buttons and every send is rejected by Meta.
+	 *
+	 * When the client supplies the full `settings` object it is carried through
+	 * so the saver persists the declared buttons; when it does not, the legacy
+	 * variables-only shape is preserved for backward compatibility.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return array Template data for the saver.
+	 */
+	public static function build_template_data( $request ) {
+		$settings = $request->get_param( 'settings' );
+		$settings = is_array( $settings ) ? $settings : array();
+
+		$template_data = array(
+			'sid'       => $request->get_param( 'sid' ),
+			'name'      => $request->get_param( 'name' ),
+			'body'      => $request->get_param( 'body' ) ?? '',
+			'category'  => $request->get_param( 'category' ),
+			'language'  => $request->get_param( 'language' ),
+			'variables' => $request->get_param( 'variables' ),
+		);
+
+		if ( ! empty( $settings ) ) {
+			$template_data['settings'] = $settings;
+		}
+
+		return $template_data;
 	}
 
 	/**
@@ -212,14 +261,7 @@ class RestWhatsappTemplatesController extends WP_REST_Controller {
 	 */
 	public function save_template( $request ) {
 		try {
-			$template_data = array(
-				'sid'       => $request->get_param( 'sid' ),
-				'name'      => $request->get_param( 'name' ),
-				'body'      => $request->get_param( 'body' ) ?? '',
-				'category'  => $request->get_param( 'category' ),
-				'language'  => $request->get_param( 'language' ),
-				'variables' => $request->get_param( 'variables' ),
-			);
+			$template_data = self::build_template_data( $request );
 
 			// Get variable mappings if provided
 			$variable_mappings = $request->get_param( 'variable_mappings' );

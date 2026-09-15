@@ -13,7 +13,7 @@ class General {
         //load options
         $options = Config::$options;
 
-        //options that respect ?perfmattersoff query string
+        //options that respect ?perfmattersoff and Safe Mode
         if(!Utilities::is_perfmatters_off()) {
 
              //disable emojis

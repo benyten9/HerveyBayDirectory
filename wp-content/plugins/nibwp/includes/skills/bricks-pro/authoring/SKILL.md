@@ -5,7 +5,21 @@ description: Use when creating, converting, or refactoring anything into a Brick
 
 # Bricks Authoring
 
-This skill produces validated Bricks templates (`bricks_template` post type) or page-level element trees that the agent submits via `nibwp/bricks-pro-html-to-component`. Server-side: a validator enforces the rules below, an orchestrator-recommender suggests cross-ability follow-ups (CPT + ACF for loops, native video for iframes, native form/shortcode for raw forms), then persistence delegates to the existing `nibwp/bricks-create-template` ability.
+This skill produces validated Bricks templates (`bricks_template` post type) that the agent submits via `nibwp/bricks-pro-html-to-component`. Server-side: a validator enforces the rules below, an orchestrator-recommender suggests cross-ability follow-ups (CPT + ACF for loops, native video for iframes, native form/shortcode for raw forms), then persistence delegates to the existing `nibwp/bricks-create-template` ability.
+
+## Editing one element — do NOT use this pipeline
+
+This skill builds trees. Changing one setting on an element that already exists — adding a link, correcting a URL, fixing a typo, swapping a class — is a different job, and running it through `nibwp/bricks-pro-html-to-component` replaces the whole tree and loses everything the payload does not restate.
+
+Use **`nibwp/bricks-update-element`** instead. It works on pages as well as templates:
+
+1. Read the tree — `nibwp/wp-get-post-meta` on `_bricks_page_content_2` (or `_bricks_page_header_2` / `_bricks_page_footer_2` for header and footer templates) — and take the `id` of the element you want.
+2. Call `nibwp/bricks-update-element` with `post_id`, that `element_id`, and a `settings_patch` naming only the keys you are changing. Nested objects merge, so `{"_typography":{"font-size":"18px"}}` leaves the rest of the typography alone; `null` deletes a key.
+3. Read the `before`/`after` diff it returns, then re-run with `dry_run: false`.
+
+Element ids are unique **within** a post, not across posts — the same id names a different element on another page — so always pass the `post_id` you read the tree from.
+
+Never write `_bricks_page_*` meta directly with `nibwp/execute-php`. That bypasses validation, the slashing that keeps backslashes in your CSS intact, and the read-back that proves the change landed.
 
 ## Mandatory routing — read first
 
@@ -22,6 +36,7 @@ Pipeline:
 ## The validator hard-rejects (each failed entry carries a copy-paste `fix_hint`)
 
 - `bricks_element_unknown` — element `name` not in the Bricks core catalog (see `references/bricks-elements.md`)
+- `bricks_css_for_native_setting` — `_cssCustom` declares a property Bricks has a control for (see `references/element-settings.md`)
 - `bricks_element_missing_id` — element has no `settings._id` (persister mints one but explicit IDs make refines stable) — *warning, not reject*
 - `bricks_inline_style_attr` — raw `style="..."` attribute inside `settings.text` / `settings.code`
 - `bricks_inline_media_query` — `@media` inside `settings._cssCustom` (use Bricks breakpoint settings)
@@ -45,10 +60,11 @@ Agent-side. The server-side ability validates the payload you build and persists
 2. **Pixel-perfect fidelity.** Match spacing, typography weights, colors, radii. Use the source's exact values as token fallbacks (`var(--text-l, 1.25rem)`).
 3. **Always responsive — via Bricks breakpoint settings.** Bricks renders per-breakpoint blocks automatically. Set values per breakpoint inside the same setting object: `{ paddingTop: { _base: "4rem", _mobile_landscape: "3rem", _mobile_portrait: "2rem" } }`. NEVER `@media` blocks inside `_cssCustom`.
 4. **ACSS-first.** Use `var(--token, fallback)` for every value that maps to an ACSS / Bricks design-system token. If ACSS can express it, use the token. Always include the fallback.
-5. **Global classes over per-element CSS.** Every structural element should reference at least one BEM-prefixed global class via `settings._cssGlobalClasses`. Per-element `_cssCustom` is for one-off overrides only.
-6. **Bricks elements only.** Use the names in `references/bricks-elements.md`. No invented names. Container/section/div/block for layout; heading/text/button/image/icon for content; form/nav-menu/video for interactive; posts for query loops.
-7. **Native over raw.** YouTube/Vimeo → `video` element. Forms → `form` element OR `shortcode` wrap. Galleries → `image-gallery`. Repetition → `posts` query loop.
-8. **Dynamic data for content/archive templates.** When `template_type` is `content` or `archive`, heading text becomes `{post_title}`, excerpts become `{post_excerpt:25}`, custom data binds via `{acf:field_name}`. See `references/dynamic-data.md`.
+5. **Global classes over per-element styling.** Every structural element should reference at least one BEM-prefixed global class via `settings._cssGlobalClasses`. A global class carries the same setting keys an element does — it is a bundle of settings, not a stylesheet.
+6. **Style with settings, not CSS.** Every property Bricks has a control for goes in the element's `settings` — `_padding`, `_typography`, `_background`, `_border`, `_width`, `_display`, `_gap`, `_aspectRatio` — or on a global class carrying those same settings when it repeats. `_cssCustom` is for what has no control: `:hover` and other states, `::before`/`::after`, descendant selectors. Styling written as CSS renders fine and leaves the builder panels empty, the breakpoint switcher dead, and the site owner unable to change their own page. Rule id `bricks_css_for_native_setting`. Map: `references/element-settings.md`.
+7. **Bricks elements only.** Use the names in `references/bricks-elements.md`. No invented names. Container/section/div/block for layout; heading/text/button/image/icon for content; form/nav-menu/video for interactive; posts for query loops.
+8. **Native over raw.** YouTube/Vimeo → `video` element. Forms → `form` element OR `shortcode` wrap. Galleries → `image-gallery`. Repetition → `posts` query loop.
+9. **Dynamic data for content/archive templates.** When `template_type` is `content` or `archive`, heading text becomes `{post_title}`, excerpts become `{post_excerpt:25}`, custom data binds via `{acf:field_name}`. See `references/dynamic-data.md`.
 
 ## Flow
 
@@ -74,6 +90,8 @@ Open `references/bricks-elements.md` for the element catalog with common `settin
 Open `references/dynamic-data.md` for the full list of dynamic-data tags Bricks supports (`{post_title}`, `{post_excerpt:25}`, `{acf:field_name}`, `{wp:user_meta:key}`, `{taxonomy_name}`, etc.).
 
 Open `references/query-loops.md` for the `posts` element's `settings.query` schema (which mirrors `WP_Query` args).
+
+Open `references/element-settings.md` FIRST for the styling rule: every property Bricks has a control for is set as a setting, never written into `_cssCustom`. It carries the full CSS-property-to-setting map.
 
 Open `references/global-classes.md` for the BEM grammar + per-breakpoint settings shape.
 

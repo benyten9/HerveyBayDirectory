@@ -12,6 +12,7 @@ use DirectoristPricingPlan\App\Providers\ShortcodeServiceProvider;
 use DirectoristPricingPlan\App\Contracts\PackageUsageInterface;
 use DirectoristPricingPlan\App\Repositories\UsesRepository;
 use DirectoristPricingPlan\App\Repositories\LegacyUsesRepository;
+use DirectoristPricingPlan\App\Repositories\PreMigrationUsesRepository;
 use DirectoristPricingPlan\App\Enums\Plan\Interval;
 use DirectoristPricingPlan\App\Enums\Plan\FeeType as PlanFeeType;
 use DirectoristPricingPlan\App\Enums\Plan\TaxType as PlanTaxType;
@@ -127,6 +128,24 @@ function directorist_plan_key(): string {
     return '_plan_id';
 }
 
+function directorist_is_listing_plan_meta_migrated(): bool {
+    $migrations = get_option( 'directorist_pricing_plans_migrations', [] );
+
+    return is_array( $migrations ) && in_array( 'listing-plan-meta-v4-0-2', $migrations, true );
+}
+
+function directorist_allow_multiple_plans_per_directory_type(): bool {
+    if ( ! directorist_is_listing_plan_meta_migrated() ) {
+        return false;
+    }
+
+    $enabled = function_exists( 'get_directorist_option' )
+        ? (bool) get_directorist_option( 'allow_multiple_plans_per_directory_type', false )
+        : false;
+
+    return (bool) apply_filters( 'directorist_allow_multiple_plans_per_directory_type', $enabled );
+}
+
 /**
  * Get the active package assigned to a listing.
  *
@@ -227,7 +246,7 @@ function directorist_to_timestamp( string $date_time ): ?int {
     return $datetime->getTimestamp();
 }
 
-function directorist_user_has_pending_order( int $user_id, ?int $directory_type_id = null ): bool {
+function directorist_get_user_pending_order( int $user_id, ?int $directory_type_id = null, ?int $plan_id = null ): ?stdClass {
     /**
      * @var OrderRepository
      */
@@ -245,13 +264,23 @@ function directorist_user_has_pending_order( int $user_id, ?int $directory_type_
         $pending_order_query->where( 'plan.directory_type_id', $directory_type_id );
     }
 
-    $pending_order = $pending_order_query->first();
+    if ( $plan_id ) {
+        $pending_order_query->where( 'plan.id', $plan_id );
+    }
+
+    $pending_order = $pending_order_query->order_by_desc( 'd_order.id' )->first();
+
+    return $pending_order ? $pending_order : null;
+}
+
+function directorist_user_has_pending_order( int $user_id, ?int $directory_type_id = null, ?int $plan_id = null ): bool {
+    $pending_order = directorist_get_user_pending_order( $user_id, $directory_type_id, $plan_id );
 
     return $pending_order ? true : false;
 }
 
-function directorist_current_user_has_pending_order( ?int $directory_type_id = null ): bool {
-    return directorist_user_has_pending_order( get_current_user_id(), $directory_type_id );
+function directorist_current_user_has_pending_order( ?int $directory_type_id = null, ?int $plan_id = null ): bool {
+    return directorist_user_has_pending_order( get_current_user_id(), $directory_type_id, $plan_id );
 }
 
 function directorist_plan_registered_features( int $directory_type_id ): array {
@@ -328,6 +357,12 @@ function directorist_plan_registered_features( int $directory_type_id ): array {
         "is_show_in_pricing_table" => false,
     ];
 
+    $features['related_listings'] = [
+        'name'                     => __( 'Related Listings', 'directorist-pricing-plans' ),
+        'is_enabled'               => true,
+        'is_show_in_pricing_table' => false,
+    ];
+
     return apply_filters( 'directorist_pricing_plans_registered_features', $features );
 }
 
@@ -381,7 +416,11 @@ function directorist_get_subscription_gateways(): array {
 }
 
 function directorist_package_usage( bool $is_legacy = false ): PackageUsageInterface {
-    return directorist_pricing_plans_singleton( $is_legacy ? LegacyUsesRepository::class : UsesRepository::class );
+    if ( directorist_is_listing_plan_meta_migrated() ) {
+        return directorist_pricing_plans_singleton( UsesRepository::class );
+    }
+
+    return directorist_pricing_plans_singleton( $is_legacy ? LegacyUsesRepository::class : PreMigrationUsesRepository::class );
 }
 
 function directorist_has_paid_order_without_listing( int $plan_id, ?int $user_id = null ): bool {
@@ -473,6 +512,10 @@ function directorist_is_user_trial_eligible( int $directory_type_id, ?int $user_
 
 function directorist_plan_has_subscription( stdClass $plan ) {
     if ( 1 !== (int) $plan->is_subscription_enabled ) {
+        return apply_filters( 'directorist_pricing_plan_has_subscription', false, $plan );
+    }
+
+    if ( PlanFeeType::FREE === $plan->fee_type || (float) $plan->price <= 0 ) {
         return apply_filters( 'directorist_pricing_plan_has_subscription', false, $plan );
     }
 

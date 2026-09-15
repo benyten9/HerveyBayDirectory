@@ -89,4 +89,32 @@ class CreateUser extends Action
 
 		return true;
 	}
+
+	/**
+	 * Get fields.
+	 *
+	 * This action takes no configuration, so the step card would otherwise open
+	 * empty. These display-only fields explain what the action actually does,
+	 * mirroring process_action() above.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function get_fields()
+	{
+		return array(
+			'how_it_works' => array(
+				'type'       => 'label',
+				'label'      => __('How the user is created', 'doublescale'),
+				'helperText' => __(
+					"The contact's email address is used as both the username and the email. "
+						. 'A random password is generated, so the user signs in through "Lost your password?" on the login page. '
+						. 'If an account with that email already exists, this step is skipped and nothing is changed. '
+						. "The contact's first and last name are saved to the new profile, which gets the site's default role.",
+					'doublescale'
+				),
+			),
+		);
+	}
 }

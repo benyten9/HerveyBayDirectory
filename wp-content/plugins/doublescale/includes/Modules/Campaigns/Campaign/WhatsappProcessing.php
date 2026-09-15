@@ -186,13 +186,22 @@ class WhatsappProcessing extends AbstractCampaignProcessing {
 			)
 		);
 
-		return array(
+		$prepared = array(
 			'ContentSid'       => $content_sid,
 			'ContentVariables' => $content_variables,
 			'recipient'        => $campaign_message->recipient,
 			'hash_key'         => $campaign_message->hash_key,
 			'body'             => $template->body, // For logging/display purposes
 		);
+
+		// A media-header template needs its header definition to reach the
+		// provider, or the send goes out body-only and Meta rejects it.
+		$header_settings = $template->get_whatsapp_header_settings();
+		if ( ! empty( $header_settings ) ) {
+			$prepared['TemplateSettings'] = $header_settings;
+		}
+
+		return $prepared;
 	}
 
 	/**
@@ -263,6 +272,11 @@ class WhatsappProcessing extends AbstractCampaignProcessing {
 			// Add template variables if provided
 			if ( ! empty( $message_data['ContentVariables'] ) ) {
 				$api_data['ContentVariables'] = $message_data['ContentVariables'];
+			}
+
+			// Carry the header definition so media templates send their media.
+			if ( ! empty( $message_data['TemplateSettings'] ) ) {
+				$api_data['TemplateSettings'] = $message_data['TemplateSettings'];
 			}
 
 			// Add StatusCallback webhook

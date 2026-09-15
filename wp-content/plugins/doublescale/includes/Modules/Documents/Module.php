@@ -13,6 +13,7 @@ use DoubleScale\Admin\AdminLoader;
 use DoubleScale\Admin\MenuRegistry;
 use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Modules\Documents\Abilities\DocumentAbilities;
 use DoubleScale\Modules\Sales\AbstractSalesChildModule;
 use DoubleScale\Modules\Documents\Renderer\InvoiceFrontendHandler;
@@ -92,9 +93,9 @@ final class Module extends AbstractSalesChildModule implements ProvidesAbilities
 		return array(
 			$this->sales_migration_path( 'SalesProposalsTable.php' ),
 			$this->sales_migration_path( 'SalesProposalTableViewedAt.php' ),
+			$this->sales_migration_path( 'SalesProposalTableResponseColumns.php' ),
 			$this->sales_migration_path( 'SalesProposalTableSignatureColumns.php' ),
 			$this->sales_migration_path( 'SalesProposalTableContentColumns.php' ),
-			$this->sales_migration_path( 'SalesProposalTableResponseColumns.php' ),
 			$this->sales_migration_path( 'SalesProposalTableTemplateColumn.php' ),
 			$this->sales_migration_path( 'SalesProposalTableTemplateColorColumn.php' ),
 			$this->sales_migration_path( 'SalesInvoicesTable.php' ),
@@ -119,12 +120,35 @@ final class Module extends AbstractSalesChildModule implements ProvidesAbilities
 
 		Migrations\SalesInvoiceTableCurrencyNullable::ensure();
 		Migrations\SalesProposalTableCurrencyNullable::ensure();
+		Migrations\SalesProposalTableContentColumns::ensure();
+		// Same self-heal as the proposal twin above: a site whose migration
+		// ledger already advanced past the ALTER never re-runs it, leaving the
+		// table permanently without `sections` and failing every invoice save.
+		Migrations\SalesInvoiceTableContentColumns::ensure();
 
 		require_once dirname( __DIR__ ) . '/Sales/MergeTags/AbstractSalesMergeTag.php';
 		$this->loadModuleMergeTagFiles();
 
 		new ProposalFrontendHandler();
 		new InvoiceFrontendHandler();
+
+		// Auto-create the pages hosting the customer-facing shortcodes, so a
+		// sent proposal/invoice always has somewhere to link to. Without this
+		// the public URL resolves empty and the mail ships a dead link.
+		ShortcodePageProvisioner::register(
+			ProposalFrontendHandler::SHORTCODE_NAME,
+			array(
+				'title' => __( 'Proposal', 'doublescale' ),
+				'slug'  => 'doublescale-proposal',
+			)
+		);
+		ShortcodePageProvisioner::register(
+			InvoiceFrontendHandler::SHORTCODE_NAME,
+			array(
+				'title' => __( 'Invoice', 'doublescale' ),
+				'slug'  => 'doublescale-invoice',
+			)
+		);
 
 		add_action( 'init', array( $this, 'register_schedules' ) );
 		add_action( 'doublescale_sales_invoice_paid', array( $this, 'on_invoice_paid' ), 10, 1 );

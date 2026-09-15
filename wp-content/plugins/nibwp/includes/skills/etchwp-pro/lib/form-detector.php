@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
  *
  * Used by html-to-component to (a) detect a <form> in source HTML and (b)
  * surface the list of installed form plugins so the agent can ask the user
- * which one to wrap as an etch/shortcode block.
+ * which one to wrap as a core/shortcode block.
  *
  * Mirrors the 9-plugin map from includes/premium/integrations/plugin-integrations.php
  * so it works even when nibwp/forms-manage is locked behind a license gate.

@@ -29,8 +29,8 @@ class SalesInvoiceTableCustomerColumns {
 		}
 
 		$columns = array(
-			'sent_at'   => "ADD `sent_at` DATETIME NULL AFTER `terms`",
-			'viewed_at' => "ADD `viewed_at` DATETIME NULL AFTER `sent_at`",
+			'sent_at'   => "ADD `sent_at` DATETIME NULL",
+			'viewed_at' => "ADD `viewed_at` DATETIME NULL",
 		);
 
 		foreach ( $columns as $name => $ddl ) {

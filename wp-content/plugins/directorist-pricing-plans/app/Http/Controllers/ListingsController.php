@@ -11,12 +11,87 @@ use DirectoristPricingPlan\WpMVC\RequestValidator\Validator;
 use DirectoristPricingPlan\App\Http\Controllers\Controller;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
 use DirectoristPricingPlan\App\Repositories\Admin\PlanRepository;
+use DirectoristPricingPlan\App\Services\ExpiredListingRenewalService;
+use DirectoristPricingPlan\App\Services\ListingPlanAssignmentService;
 
 class ListingsController extends Controller {
     public PlanRepository $plan_repository;
 
-    public function __construct( PlanRepository $plan_repository ) {
-        $this->plan_repository = $plan_repository;
+    private ListingPlanAssignmentService $assignment_service;
+
+    private ExpiredListingRenewalService $renewal_service;
+
+    public function __construct(
+        PlanRepository $plan_repository,
+        ListingPlanAssignmentService $assignment_service,
+        ExpiredListingRenewalService $renewal_service
+    ) {
+        $this->plan_repository    = $plan_repository;
+        $this->assignment_service = $assignment_service;
+        $this->renewal_service    = $renewal_service;
+    }
+
+    public function compatible_plans( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate( [ 'id' => 'required|numeric' ] );
+
+        return Response::send(
+            $this->assignment_service->get_dashboard_plan_options(
+                (int) $request->get_param( 'id' ),
+                get_current_user_id()
+            )
+        );
+    }
+
+    public function change_plan( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate(
+            [
+                'id'      => 'required|numeric',
+                'plan_id' => 'required|integer',
+            ]
+        );
+
+        return Response::send(
+            $this->assignment_service->assign(
+                (int) $request->get_param( 'id' ),
+                (int) $request->get_param( 'plan_id' ),
+                get_current_user_id()
+            )
+        );
+    }
+
+    public function remove_plan( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate( [ 'id' => 'required|numeric' ] );
+
+        $this->assignment_service->remove_package_plan(
+            (int) $request->get_param( 'id' ),
+            get_current_user_id()
+        );
+
+        return Response::send(
+            [
+                'removed' => true,
+                'status'  => 'expired',
+                'message' => esc_html__( 'The listing was removed from its plan and expired.', 'directorist-pricing-plans' ),
+            ]
+        );
+    }
+
+    public function renew( Validator $validator, WP_REST_Request $request ): array {
+        $validator->validate( [ 'id' => 'required|numeric' ] );
+
+        $result = $this->renewal_service->renew_listing(
+            (int) $request->get_param( 'id' ),
+            get_current_user_id()
+        );
+
+        return Response::send(
+            [
+                'message' => ! empty( $result['converted_to_regular'] )
+                    ? esc_html__( 'The listing was renewed as a regular listing because no featured quota was available.', 'directorist-pricing-plans' )
+                    : esc_html__( 'The listing was renewed successfully.', 'directorist-pricing-plans' ),
+                'data'    => $result,
+            ]
+        );
     }
 
     public function mark_listing_as( Validator $validator, WP_REST_Request $request ): array {

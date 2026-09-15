@@ -473,9 +473,27 @@ class RestProposalController extends RestController {
 
 		$proposal = new ProposalModel();
 		$proposal->fill( $payload );
-		SalesNumbering::save_with_retry( $proposal );
 
-		return new WP_REST_Response( ProposalShaper::shape_admin( $proposal->fresh( array( 'contact', 'assigned_user' ) ), true ), 201 );
+		try {
+			SalesNumbering::save_with_retry( $proposal );
+		} catch ( \Throwable $e ) {
+			return new WP_Error(
+				'proposal_create_failed',
+				__( 'Could not save the proposal.', 'doublescale' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$created = $proposal->fresh( array( 'contact', 'assigned_user' ) );
+		if ( ! $created ) {
+			return new WP_Error(
+				'proposal_create_failed',
+				__( 'Could not save the proposal.', 'doublescale' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return new WP_REST_Response( ProposalShaper::shape_admin( $created, true ), 201 );
 	}
 
 	/**

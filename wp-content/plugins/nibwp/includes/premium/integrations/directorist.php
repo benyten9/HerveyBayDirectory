@@ -356,7 +356,7 @@ function nibwp_dr__create_listing(array $in): array|WP_Error
     $post_id = wp_insert_post([
         'post_type'    => ATBDP_POST_TYPE,
         'post_title'   => $title,
-        'post_content' => (string) ($data['content'] ?? ''),
+        'post_content' => nibwp_wp_prepare_post_content($data['content'] ?? ''),
         'post_excerpt' => (string) ($data['excerpt'] ?? ''),
         'post_status'  => (string) ($data['status'] ?? 'publish'),
         'post_author'  => (int) ($data['author_id'] ?? get_current_user_id() ?: 1),

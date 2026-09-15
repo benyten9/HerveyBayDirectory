@@ -1295,7 +1295,7 @@ function pmsm_settings_update_process($old_value, $value) {
 //dequeue scripts based on script manager configuration
 function perfmatters_dequeue_scripts($src, $handle) {
 	
-	if(is_admin() || isset($_GET['perfmatters']) || isset($_GET['perfmattersoff']) || Perfmatters\Utilities::is_page_builder() || empty($src)) {
+	if(is_admin() || isset($_GET['perfmatters']) || Perfmatters\Utilities::is_perfmatters_off() || Perfmatters\Utilities::is_page_builder() || empty($src)) {
 		return $src;
 	}
 

@@ -28,6 +28,8 @@ class ProjectsTable extends Migration {
 			contact_id BIGINT(20) UNSIGNED NULL,
 			deal_id BIGINT(20) UNSIGNED NULL,
 			budget DECIMAL(15,2) NULL,
+			progress TINYINT UNSIGNED NOT NULL DEFAULT 0,
+			calculate_progress TINYINT(1) NOT NULL DEFAULT 0,
 			start_date DATE NULL,
 			due_date DATE NULL,
 			owner_id BIGINT(20) UNSIGNED NULL,

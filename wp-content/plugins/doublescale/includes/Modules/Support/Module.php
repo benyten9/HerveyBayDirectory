@@ -32,6 +32,7 @@ use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Abilities\ProvidesAbilities;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Support\Abilities\SupportAbilities;
 use DoubleScale\Modules\Support\Renderer\PortalFrontendHandler;
@@ -190,6 +191,16 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		// listener that conditionally ships the renderer bundle to pages
 		// containing the shortcode (and only for logged-in visitors).
 		$container->get( PortalFrontendHandler::class );
+
+		// Auto-create the page hosting that shortcode, so ticket links in
+		// customer email resolve instead of coming back empty.
+		ShortcodePageProvisioner::register(
+			PortalFrontendHandler::SHORTCODE_NAME,
+			array(
+				'title' => __( 'Support Portal', 'doublescale' ),
+				'slug'  => 'doublescale-support-portal',
+			)
+		);
 
 		// Resolve the outbound email notifier so its constructor subscribes to
 		// the ticket-lifecycle hooks (reply / created / status-change → customer).

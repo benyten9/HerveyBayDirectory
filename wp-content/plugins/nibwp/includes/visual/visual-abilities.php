@@ -196,18 +196,20 @@ function nibwp_visual_register_abilities(): void
 
     wp_register_ability('nibwp/visual-read', [
         'label' => __('Read the current page', domain: 'nibwp'),
-        'description' => 'Returns the visible text, headings, links, form fields and interactive elements of the active workspace tab, each with a selector the interaction abilities accept. This is how the agent sees the page.',
+        'description' => 'Returns the visible text, headings, links, form fields and interactive elements of the active workspace tab, each with a selector the interaction abilities accept. This is how the agent sees the page. Text alone cannot show a visual defect — a border that blends into the page, a heading in the wrong size or colour — so after building something, read it again with styles: true to get each heading and element\'s box and computed look (color, background or the surface showing behind it, font-size, font-weight, border-radius, and any border that paints). Pair styles with selector to read one section at a time: styles lowers the element cap to 100 and sets truncated when it is reached. For borders across the whole page, nibwp/visual-audit with the borders check is faster.',
         'category' => 'visual',
         'input_schema' => [
             'type' => 'object',
             'properties' => [
-                'selector' => ['type' => 'string', 'description' => 'Limit the read to one region of the page. Defaults to the whole document.'],
-                'max_elements' => ['type' => 'integer', 'description' => 'Cap on interactive elements returned. Default 150.'],
+                'selector' => ['type' => 'string', 'description' => 'CSS selector limiting the read to one region of the page, e.g. a section or card. Defaults to the whole document. With styles: true the region itself is also returned, with its box and style.'],
+                'max_elements' => ['type' => 'integer', 'description' => 'Cap on interactive elements returned. Default 150, at most 400; at most 100 when styles is true.'],
+                'styles' => ['type' => 'boolean', 'description' => 'Also return box {x, y, w, h} (page pixels) and style {color, background or surface, font-size, font-weight, border-radius, border {width, style, color}} for every heading and element. Use it to check what was built looks right. Default false.'],
             ],
         ],
         'execute_callback' => static fn(array $input) => nibwp_visual_dispatch('read', [
             'selector' => (string) ($input['selector'] ?? ''),
             'maxElements' => (int) ($input['max_elements'] ?? 150),
+            'styles' => !empty($input['styles']),
         ]),
         'permission_callback' => 'nibwp_permission_callback',
         'meta' => ['mcp' => ['public' => true], 'annotations' => ['readonly' => true, 'destructive' => false, 'idempotent' => true]],
@@ -328,14 +330,14 @@ function nibwp_visual_register_abilities(): void
 
     wp_register_ability('nibwp/visual-audit', [
         'label' => __('Check the page for problems', domain: 'nibwp'),
-        'description' => 'Runs accessibility and layout checks against the live rendered page: color contrast below the readable threshold, images with no alt text, form fields with no label, heading levels that skip, and anything overflowing the viewport horizontally. Reports what it found with selectors.',
+        'description' => 'Runs accessibility and layout checks against the live rendered page: color contrast below the readable threshold, images with no alt text, form fields with no label, heading levels that skip, anything overflowing the viewport horizontally, and borders that are effectively invisible — a border whose colour, blended over what is behind it, stands out less than 1.5:1 from both the surface around the element and its own fill (for example a white-at-20% border token on a white page). Reports what it found with selectors; border findings also carry the border colour, the surface colour and the ratio. Run the borders check after building cards, inputs or dividers, because a border that does not show cannot be spotted from markup or text.',
         'category' => 'visual',
         'input_schema' => [
             'type' => 'object',
             'properties' => [
                 'checks' => [
                     'type' => 'array',
-                    'items' => ['type' => 'string', 'enum' => ['contrast', 'alt', 'labels', 'headings', 'overflow']],
+                    'items' => ['type' => 'string', 'enum' => ['contrast', 'alt', 'labels', 'headings', 'overflow', 'borders']],
                     'description' => 'Which checks to run. Defaults to all of them.',
                 ],
             ],

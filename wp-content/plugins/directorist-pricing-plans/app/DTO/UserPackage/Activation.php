@@ -25,6 +25,8 @@ class Activation extends DTO {
 
     private ?int $interval_count = null;
 
+    private ?DateTime $started_at = null;
+
     private ?DateTime $current_period_end = null;
 
     public function get_user_id(): int {
@@ -103,6 +105,16 @@ class Activation extends DTO {
 
     public function set_interval_count( ?int $interval_count ): self {
         $this->interval_count = $interval_count;
+
+        return $this;
+    }
+
+    public function get_started_at(): ?DateTime {
+        return $this->started_at;
+    }
+
+    public function set_started_at( ?DateTime $started_at ): self {
+        $this->started_at = $started_at;
 
         return $this;
     }

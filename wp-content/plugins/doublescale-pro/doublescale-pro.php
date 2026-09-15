@@ -4,7 +4,7 @@
  * Plugin Name:       DoubleScale Pro
  * Plugin URI:        https://www.doublescale.io/
  * Description:       A powerful CRM Builder for WordPress that lets you manage leads, track interactions, and automate customer relationships—all seamlessly integrated within your WordPress dashboard.
- * Version:           1.2.16
+ * Version:           1.2.26
  * Author:            doublescale.io
  * Author URI:        http://www.doublescale.io
  * License:           GPL v2 or later
@@ -23,7 +23,7 @@ if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_FILE' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_FILE', __FILE__ );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_VERSION', '1.2.16' );
+	define( 'DOUBLESCALE_PRO_VERSION', '1.2.26' );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -53,7 +53,10 @@ if ( ! defined( 'DOUBLESCALE_PRO_PRICE_URL' ) ) {
  * Bump this when a Pro release starts depending on APIs added in a newer free.
  */
 if ( ! defined( 'DOUBLESCALE_PRO_MIN_FREE_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.3.8' );
+	// 1.3.29 adds POST /doublescale/v1/campaigns/{id}/resend. Retry Sending in
+	// this Pro bundle posts there; an older free 404s the route instead of
+	// retrying failed campaign emails.
+	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.3.29' );
 }
 add_filter( 'doublescale_is_pro_addon_active', '__return_true', 1 );
 add_filter(
@@ -448,6 +451,25 @@ if ( file_exists( $doublescale_scoped_deps ) ) {
 } elseif ( file_exists( $doublescale_pro_composer ) ) {
 	$doublescale_composer_loader = require $doublescale_pro_composer;
 }
+
+/*
+ * PSR-4 fallback for this plugin's own classes.
+ *
+ * The branches above load third-party dependencies only. When the scoped
+ * dependency bundle exists (the normal shipped build) the chain stops at the
+ * first branch, so `vendor/autoload.php` — the only thing that registers
+ * PSR-4 for `DoubleScale\Pro\` — is never reached. The classmap recovery
+ * further down cannot cover it either: an unoptimised Composer classmap holds
+ * no PSR-4 classes, so it merges an empty array.
+ *
+ * The result was that nothing autoloaded `DoubleScale\Pro\*` at all. Anything
+ * relying on `class_exists( ..., true )` rather than an explicit require —
+ * notably third-party add-ons — failed with "Class not found".
+ *
+ * Registered unconditionally and last, so Composer still wins when present.
+ * Mirrors free's `require_once $dir . 'includes/Autoload.php'`.
+ */
+require_once DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/autoload.php';
 
 /*
  * Global IMAP polyfill shim. Our scoped php-imap2 build declares its `imap_*`

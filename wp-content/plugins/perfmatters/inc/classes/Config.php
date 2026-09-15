@@ -20,6 +20,11 @@ class Config
 		self::$options = get_option('perfmatters_options');
 		self::$tools = get_option('perfmatters_tools');
 
+		//ensure one-per-line options are arrays
+		if(is_array(self::$options)) {
+			perfmatters_normalize_one_per_line_options(self::$options);
+		}
+
 		//actions
 		add_action('admin_bar_menu', array('Perfmatters\Config', 'admin_bar_menu'), 500);
 		add_action('wp', array('Perfmatters\Config', 'queue'));
@@ -44,6 +49,24 @@ class Config
 			'title' => 'Perfmatters',
 			'href'  => admin_url('options-general.php?page=perfmatters')
 		));
+	}
+
+	//safe mode admin notice
+	public static function safe_mode_notice() {
+
+		if(is_network_admin() || empty(self::$tools['safe_mode'])) {
+			return;
+		}
+
+		$tools_url = admin_url('options-general.php?page=perfmatters#tools');
+
+		echo '<div class="notice notice-warning">';
+			echo '<p>';
+				echo '<strong>' . esc_html__('Perfmatters Warning', 'perfmatters') . ':</strong> ';
+				echo esc_html__('Safe Mode is enabled. Performance optimizations are currently disabled.', 'perfmatters') . ' ';
+				echo '<a href="' . esc_url($tools_url) . '">' . esc_html__('Manage Safe Mode', 'perfmatters') . '</a>';
+			echo '</p>';
+		echo '</div>';
 	}
 
 	//run the queue

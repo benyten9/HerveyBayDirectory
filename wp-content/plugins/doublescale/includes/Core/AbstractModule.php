@@ -7,6 +7,8 @@
 
 namespace DoubleScale\Core;
 
+use DoubleScale\Core\Services\SchemaGuard;
+
 defined( 'ABSPATH' ) || exit;
 
 abstract class AbstractModule implements ModuleInterface {
@@ -65,6 +67,17 @@ abstract class AbstractModule implements ModuleInterface {
 	}
 
 	public function boot( Container $container ): void {
+		// Repair any column the migration ledger recorded as applied but that
+		// never physically landed — see SchemaGuard for why a ledger-only
+		// migration can leave a site permanently missing a column.
+		//
+		// Deferred to `admin_init` rather than run inline: schema repair is a
+		// database concern, and doing it during boot would put DDL on the path
+		// of every front-end and REST request, including route registration.
+		if ( function_exists( 'add_action' ) ) {
+			add_action( 'admin_init', array( SchemaGuard::class, 'reconcile' ), 5 );
+		}
+
 		if ( $controllers = $this->restControllers() ) {
 			add_action(
 				'rest_api_init',

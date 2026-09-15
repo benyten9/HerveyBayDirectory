@@ -78,9 +78,14 @@ function nibwp_oauth_handle_authorize(): void
         nibwp_oauth_redirect_error($redirect_uri, 'invalid_request', 'code_challenge with method S256 is required.', $state);
     }
 
-    if ($resource !== '' && !in_array(untrailingslashit($resource), nibwp_oauth_valid_audiences(), true)) {
+    if ($resource !== '' && !nibwp_oauth_audience_matches($resource)) {
         nibwp_oauth_redirect_error($redirect_uri, 'invalid_target', 'The requested resource does not match this server.', $state);
     }
+
+    // Record the canonical spelling, never the caller's. The audience check on
+    // every later request compares against this value, so storing a variant
+    // would mint a token that authenticates once and then never again.
+    $resource = nibwp_oauth_resource_id();
 
     $requested = nibwp_oauth_sanitize_scopes($scope);
     $asked_for_nothing = $requested === [];

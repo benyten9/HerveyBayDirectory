@@ -33,7 +33,7 @@ class SalesInvoiceTableExternalPaymentRefColumn {
 		if ( ! $has_column ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->query(
-				"ALTER TABLE `{$table}` ADD `external_payment_ref` VARCHAR(191) NULL AFTER `amount_paid`"
+				"ALTER TABLE `{$table}` ADD `external_payment_ref` VARCHAR(191) NULL"
 			);
 		}
 

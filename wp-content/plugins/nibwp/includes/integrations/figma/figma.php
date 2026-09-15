@@ -2129,7 +2129,10 @@ function nibwp_figma_do_convert(string $url, string $title = '', string $builder
 
     $post_id = wp_insert_post([
         'post_title'   => $title,
-        'post_content' => $markup,
+        // Block markup carries \uXXXX escapes for -- and & in its delimiter
+        // comments; wp_insert_post() unslashes, so slash first or they are
+        // stored as the literal text u002d / u0026.
+        'post_content' => wp_slash($markup),
         'post_status'  => 'draft',
         'post_type'    => 'page',
     ], true);
