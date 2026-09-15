@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.46
+ * Version:      1.0.50
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -162,7 +162,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.46' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.50' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -201,15 +201,20 @@ function hbl_crm_bridge_boot(): void {
 	// … and completed (Stripe confirmed).
 	add_action( 'hbl_listing_payment_verified', 'hbl_crm_bridge_on_payment_verified', 10, 4 );
 
-	// ── Subscription lifecycle (Stripe, via Directorist Stripe/Pricing Plans) ──
-	// A renewal payment was declined but Stripe is still retrying — fired from
-	// directorist-stripe's invoice.payment_failed handler, before anything lapses.
+	// ── Subscription lifecycle (Stripe) ───────────────────────────────────────
+	// Deliberately does NOT rely on any edit to directorist-stripe's own PHP files
+	// — those get overwritten wholesale on every plugin update, silently reverting
+	// hand-edits. Everything here hooks directorist-stripe's own public hook
+	// (directorist_stripe_webhook_received, fired for every Stripe event type) and
+	// Directorist's public repository/option API instead. See the SUBSCRIPTION
+	// LIFECYCLE section below for the full chain.
+	add_action( 'directorist_stripe_webhook_received', 'hbl_crm_bridge_on_stripe_webhook_received', 10, 2 );
 	add_action( 'hbl_subscription_payment_failed', 'hbl_crm_bridge_on_subscription_payment_failed', 10, 3 );
-	// The subscription actually ended — fired by UserPackageRepository::cancel_package()
-	// for both a declined-card lapse and a deliberate cancellation; $triggered_by
-	// (Stripe's cancellation_details.reason, forwarded by directorist-stripe) is what
-	// tells the two apart.
 	add_action( 'directorist_package_updated', 'hbl_crm_bridge_on_package_updated', 10, 3 );
+	// Keeps invoice.payment_failed enabled on the already-registered Stripe webhook
+	// even though directorist-stripe's own webhook-registration code has no filter
+	// for its enabled_events list.
+	add_action( 'admin_init', 'hbl_crm_bridge_maybe_sync_stripe_webhook_events', 20 );
 
 	// ── Incoming: REST endpoint ───────────────────────────────────────────────
 
@@ -281,14 +286,104 @@ function hbl_crm_bridge_on_expired( int $listing_id ): void {
 // SUBSCRIPTION LIFECYCLE (STRIPE) — payment-failed vs. cancelled
 //
 // Distinguishes *why* a subscription ended instead of letting everything land on
-// the generic listing_expired → "Silver: Lapsed" tag:
+// the generic listing_expired → "Silver: Lapsed" tag.
+//
+// Deliberately built without editing a single directorist-stripe file: that
+// plugin overwrites its own controllers wholesale on every update, which has
+// already silently reverted hand-edits here once. Instead this hooks only:
+//   - directorist_stripe_webhook_received  — a hook directorist-stripe fires
+//     itself for every raw Stripe event, before it decides what to do with it.
+//     We use it to (a) act on invoice.payment_failed directly, since core has
+//     no handler for that event at all, and (b) capture cancellation_details
+//     .reason off customer.subscription.deleted before core's own handler
+//     cancels the local package a moment later in the same request.
+//   - directorist_package_updated  — core's own action, fired when a package's
+//     status actually changes (e.g. to "cancelled"). Core doesn't pass a
+//     reason, so we look up what we stashed above via the subscription ID.
+//   - admin_init  — periodically checks the already-registered Stripe webhook
+//     and adds invoice.payment_failed to it directly via the Stripe API if
+//     missing, since core has no filter over its enabled_events list.
+//
+// Flow:
 //   - hbl_subscription_payment_failed  fires on each declined renewal attempt
 //     while Stripe is still retrying (subscription is past_due, nothing has
 //     lapsed yet) — the hook point for an "update your card" email.
 //   - directorist_package_updated      fires when the subscription actually
-//     ends; $triggered_by carries Stripe's cancellation_details.reason so a
-//     declined-card lapse and a deliberate owner cancellation get different tags.
+//     ends; the stashed cancellation reason tells a declined-card lapse and a
+//     deliberate owner cancellation apart.
 // ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fires on EVERY raw Stripe webhook event directorist-stripe receives (core's
+ * own hook — not something we added). Only acts on the two event types this
+ * feature cares about; everything else core already handles on its own.
+ *
+ * @param string $type Stripe event type, e.g. "invoice.payment_failed".
+ * @param mixed  $data The webhook's "data" param — expected shape: ['object' => [...]].
+ */
+function hbl_crm_bridge_on_stripe_webhook_received( string $type, $data ): void {
+	if ( ! is_array( $data ) || empty( $data['object'] ) || ! is_array( $data['object'] ) ) {
+		return;
+	}
+
+	if ( 'invoice.payment_failed' === $type ) {
+		hbl_crm_bridge_handle_invoice_payment_failed( $data['object'] );
+	} elseif ( 'customer.subscription.deleted' === $type ) {
+		hbl_crm_bridge_stash_cancellation_reason( $data['object'] );
+	}
+}
+
+/**
+ * A renewal payment attempt was declined; Stripe is still retrying. Resolves the
+ * listing ourselves (core has no handler for this event) and fires
+ * hbl_subscription_payment_failed, the same as if core had fired it natively.
+ *
+ * @param array $invoice Raw Stripe invoice object from the webhook payload.
+ */
+function hbl_crm_bridge_handle_invoice_payment_failed( array $invoice ): void {
+	$subscription_id = $invoice['subscription'] ?? '';
+	if ( ! $subscription_id || ! function_exists( 'directorist_user_package_repository' )
+		|| ! function_exists( 'directorist_stripe_is_pricing_plan_active' ) || ! directorist_stripe_is_pricing_plan_active() ) {
+		return;
+	}
+
+	try {
+		$package = directorist_user_package_repository()->get_by_subscription_id( $subscription_id );
+		if ( ! $package || empty( $package->last_order_id ) ) {
+			return;
+		}
+
+		$listing_id = hbl_crm_bridge_listing_id_from_order( (int) $package->last_order_id );
+		if ( ! $listing_id ) {
+			return;
+		}
+
+		$attempt_count = isset( $invoice['attempt_count'] ) ? (int) $invoice['attempt_count'] : 0;
+		$next_attempt  = ! empty( $invoice['next_payment_attempt'] ) ? (int) $invoice['next_payment_attempt'] : null;
+
+		do_action( 'hbl_subscription_payment_failed', $listing_id, $attempt_count, $next_attempt );
+	} catch ( \Throwable $e ) {
+		error_log( '[HBL CRM Bridge] Failed handling invoice.payment_failed for subscription ' . $subscription_id . ': ' . $e->getMessage() );
+	}
+}
+
+/**
+ * Stashes Stripe's cancellation_details.reason for a subscription that's about
+ * to be deleted, keyed by subscription ID, so hbl_crm_bridge_on_package_updated()
+ * can read it moments later when core's own delete_subscription() handler
+ * (which runs right after this, in the same request) cancels the local package
+ * and fires directorist_package_updated — without a reason of its own.
+ *
+ * @param array $subscription Raw Stripe subscription object from the webhook payload.
+ */
+function hbl_crm_bridge_stash_cancellation_reason( array $subscription ): void {
+	$subscription_id = $subscription['id'] ?? '';
+	if ( ! $subscription_id ) {
+		return;
+	}
+	$reason = (string) ( $subscription['cancellation_details']['reason'] ?? '' );
+	set_transient( 'hbl_crmb_cancel_reason_' . md5( $subscription_id ), $reason, 5 * MINUTE_IN_SECONDS );
+}
 
 /**
  * A renewal payment attempt was declined; Stripe is still retrying.
@@ -330,9 +425,12 @@ function hbl_crm_bridge_on_subscription_payment_failed( int $listing_id, int $at
 
 /**
  * A Directorist user package (subscription) changed status. Only acts when it
- * just became CANCELLED — i.e. the subscription actually ended in Stripe — and
- * branches the tag on $triggered_by (Stripe's cancellation_details.reason,
- * forwarded via CheckoutController::delete_subscription()).
+ * just became CANCELLED — i.e. the subscription actually ended in Stripe.
+ *
+ * Core's cancel_package() call doesn't pass a reason, so $triggered_by is
+ * accepted only in case a future core version starts supplying one; today the
+ * reason instead comes from the transient hbl_crm_bridge_stash_cancellation_reason()
+ * stored moments earlier in this same request, off the raw webhook payload.
  *
  * @param \DirectoristPricingPlan\App\DTO\UserPackage\DTO $new_package
  * @param \DirectoristPricingPlan\App\DTO\UserPackage\DTO $old_package
@@ -352,6 +450,18 @@ function hbl_crm_bridge_on_package_updated( $new_package, $old_package, ?string 
 	$listing_id = hbl_crm_bridge_listing_id_from_order( (int) $new_package->get_last_order_id() );
 	if ( ! $listing_id ) {
 		return;
+	}
+
+	if ( ! $triggered_by ) {
+		$subscription_id = $new_package->get_subscription_id();
+		if ( $subscription_id ) {
+			$key     = 'hbl_crmb_cancel_reason_' . md5( $subscription_id );
+			$stashed = get_transient( $key );
+			if ( false !== $stashed ) {
+				$triggered_by = $stashed ?: null;
+				delete_transient( $key );
+			}
+		}
 	}
 
 	// Stripe sends "payment_failed" when Smart Retries were exhausted; everything
@@ -409,6 +519,65 @@ function hbl_crm_bridge_listing_id_from_order( int $order_id ): int {
 		// Non-fatal — falls through to 0, and the caller skips the sync.
 	}
 	return 0;
+}
+
+/**
+ * Ensures invoice.payment_failed is enabled on the Stripe webhook endpoint(s)
+ * directorist-stripe already registered (live and/or test mode) — otherwise
+ * Stripe simply never sends the event and hbl_crm_bridge_handle_invoice_payment_failed()
+ * has nothing to react to. directorist-stripe's own registration code has no
+ * filter over its enabled_events list, so this talks to the Stripe API directly
+ * instead, using only the option keys ('stripe_live_sk'/'stripe_live_webhook' and
+ * the test equivalents) and the bundled Stripe SDK's own stable public methods —
+ * nothing that a directorist-stripe update can silently revert.
+ *
+ * Throttled to once a day; this hits the Stripe API and doesn't need to run on
+ * every admin page load.
+ */
+function hbl_crm_bridge_maybe_sync_stripe_webhook_events(): void {
+	if ( get_transient( 'hbl_crmb_stripe_webhook_synced' ) ) {
+		return;
+	}
+	set_transient( 'hbl_crmb_stripe_webhook_synced', 1, DAY_IN_SECONDS );
+
+	if ( ! class_exists( \DirectoristStripe\Stripe\Stripe::class ) || ! class_exists( \DirectoristStripe\Stripe\WebhookEndpoint::class )
+		|| ! function_exists( 'get_directorist_option' ) ) {
+		return;
+	}
+
+	$required_event = 'invoice.payment_failed';
+	$modes          = [
+		'live' => [ 'stripe_live_sk', 'stripe_live_webhook' ],
+		'test' => [ 'stripe_test_sk', 'stripe_test_webhook' ],
+	];
+
+	foreach ( $modes as $mode => list( $secret_key_option, $webhook_option ) ) {
+		$secret_key = get_directorist_option( $secret_key_option );
+		$webhook    = get_directorist_option( $webhook_option );
+
+		if ( empty( $secret_key ) || empty( $webhook['id'] ) ) {
+			continue; // Not registered in this mode — nothing to sync.
+		}
+
+		try {
+			\DirectoristStripe\Stripe\Stripe::setApiKey( $secret_key );
+			$endpoint = \DirectoristStripe\Stripe\WebhookEndpoint::retrieve( $webhook['id'] );
+			$events   = is_array( $endpoint->enabled_events ?? null ) ? $endpoint->enabled_events : [];
+
+			if ( in_array( $required_event, $events, true ) || in_array( '*', $events, true ) ) {
+				continue; // Already covered.
+			}
+
+			$events[] = $required_event;
+			\DirectoristStripe\Stripe\WebhookEndpoint::update( $webhook['id'], [ 'enabled_events' => $events ] );
+
+			if ( ! empty( hbl_crm_bridge_get_settings()['doublescale_debug_log'] ) ) {
+				hbl_crm_bridge_ds_log( sprintf( 'Added %s to the %s Stripe webhook (id=%s).', $required_event, $mode, $webhook['id'] ) );
+			}
+		} catch ( \Throwable $e ) {
+			error_log( sprintf( '[HBL CRM Bridge] Failed to sync %s Stripe webhook events: %s', $mode, $e->getMessage() ) );
+		}
+	}
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1004,7 +1173,13 @@ function hbl_crm_bridge_ensure_custom_fields(): array {
  * silently never publishing anything.
  */
 function hbl_crm_bridge_maybe_ensure_custom_fields(): void {
-	if ( get_option( 'hbl_crm_bridge_fields_ready' ) ) {
+	// Keyed off the current field slugs (not just a one-time "1") so that adding
+	// a new slug to hbl_crm_bridge_field_definitions() later automatically
+	// invalidates this and triggers creation of the new field(s) too — a plain
+	// boolean flag would permanently skip every future addition once set.
+	$signature = md5( wp_json_encode( array_keys( hbl_crm_bridge_field_definitions() ) ) );
+
+	if ( get_option( 'hbl_crm_bridge_fields_ready' ) === $signature ) {
 		return;
 	}
 
@@ -1015,7 +1190,7 @@ function hbl_crm_bridge_maybe_ensure_custom_fields(): void {
 	$result = hbl_crm_bridge_ensure_custom_fields();
 
 	if ( ! $result['error'] ) {
-		update_option( 'hbl_crm_bridge_fields_ready', 1, false );
+		update_option( 'hbl_crm_bridge_fields_ready', $signature, false );
 	}
 }
 
