@@ -49,7 +49,7 @@ class Date_Picker extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'date', 'picker' ];
+		return [ 'atomic', 'form', 'date', 'picker', 'calendar' ];
 	}
 
 	protected static function define_props_schema(): array {

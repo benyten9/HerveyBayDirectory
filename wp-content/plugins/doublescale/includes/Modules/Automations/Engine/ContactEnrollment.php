@@ -53,8 +53,14 @@ final class ContactEnrollment {
 			$data = array();
 		}
 
+		$booking_id = 0;
 		if ( isset( $this->args['booking'] ) && $this->args['booking'] instanceof \DoubleScale\Modules\Booking\Models\BookingModel ) {
-			$data['booking_id'] = (int) $this->args['booking']->id;
+			$booking_id = (int) $this->args['booking']->id;
+		} elseif ( ! empty( $this->args['booking_id'] ) ) {
+			$booking_id = (int) $this->args['booking_id'];
+		}
+		if ( $booking_id > 0 ) {
+			$data['booking_id'] = $booking_id;
 			if ( isset( $this->args['context'] ) && is_array( $this->args['context'] ) ) {
 				$data['booking_context'] = $this->args['context'];
 			}
@@ -112,7 +118,9 @@ final class ContactEnrollment {
 		$attributes = $this->args;
 
 		// Internal-only keys that are not contact columns.
-		unset( $attributes['data'], $attributes['contact'], $attributes['booking'], $attributes['context'] );
+		foreach ( TriggerPayload::internal_keys() as $key ) {
+			unset( $attributes[ $key ] );
+		}
 
 		$country_hint = isset( $attributes['country'] ) ? (string) $attributes['country'] : '';
 

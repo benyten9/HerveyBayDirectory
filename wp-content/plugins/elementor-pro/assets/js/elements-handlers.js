@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.3.0 - 08-09-2026 */
+/*! elementor-pro - v4.3.0 - 22-09-2026 */
 (function(_wordpress_i18n) {
 	//#region \0rolldown/runtime.js
 	var __create = Object.create;
@@ -11603,7 +11603,9 @@
 			}
 			__construct(...args) {
 				super.__construct(...args);
-				elementorFrontend.hooks.addAction("search:results-displayed", this.hideOtherResults.bind(this));
+				elementorFrontend.hooks.addAction("search:results-displayed", (id) => {
+					if (id === this.getID()) this.hideOtherResults();
+				});
 			}
 			getDefaultSettings() {
 				return {

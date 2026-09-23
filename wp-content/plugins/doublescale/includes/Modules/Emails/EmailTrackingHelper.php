@@ -57,18 +57,9 @@ class EmailTrackingHelper {
 		// Add tracking pixel
 		$body_with_tracking = self::add_tracking_pixel( $body, $tracking_entry );
 
-		// Check if unsubscribe link already exists in body
-		if ( self::has_unsubscribe_link( $body_with_tracking ) ) {
-			// Unsubscribe link already present, no need to add footer
+		$email_footer = self::resolve_footer( $body_with_tracking, $settings['email_footer'] ?? null );
+		if ( '' === $email_footer ) {
 			return $body_with_tracking;
-		}
-
-		// Get email footer
-		if ( ! empty( $settings['email_footer'] ) ) {
-			$email_footer = $settings['email_footer'];
-		} else {
-			$global_settings = Settings::get( 'email', array() );
-			$email_footer    = $global_settings['email_footer'] ?? self::get_default_footer();
 		}
 
 		// Process merge tags in footer (for unsubscribe link)
@@ -181,6 +172,8 @@ class EmailTrackingHelper {
 	 * @return bool True if unsubscribe link exists, false otherwise
 	 */
 	public static function has_unsubscribe_link( $body ) {
+		$body = (string) $body;
+
 		// Check for List-Unsubscribe header URL format
 		if ( false !== strpos( $body, 'doublescale=email_unsubscribe' ) ) {
 			return true;
@@ -191,7 +184,44 @@ class EmailTrackingHelper {
 			return true;
 		}
 
+		// Unprocessed content (raw HTML, builder JSON, bulk pre-render with no
+		// contact) still carries the merge tag itself. JSON-encoded builder
+		// bodies may escape the braces or slashes.
+		if ( false !== strpos( $body, '{{contact:unsubscribe_link}}' ) || false !== strpos( $body, 'contact:unsubscribe_link' ) ) {
+			return true;
+		}
+
 		return false;
+	}
+
+	/**
+	 * Footer to append to an outgoing email, or '' when none should be.
+	 *
+	 * Order: campaign/template footer → global email footer → default
+	 * footer, but the default is only a safety net for emails that carry no
+	 * unsubscribe link of their own. Every send path must decide the footer
+	 * through here so the rule cannot drift between them.
+	 *
+	 * @param string      $body            Email body in whatever form the caller has (HTML, builder JSON, pre-rendered bulk HTML).
+	 * @param string|null $campaign_footer Footer configured on the campaign/template, if any.
+	 * @return string
+	 */
+	public static function resolve_footer( $body, $campaign_footer = null ) {
+		if ( is_string( $campaign_footer ) && '' !== trim( $campaign_footer ) ) {
+			return $campaign_footer;
+		}
+
+		$global_settings = Settings::get( 'email', array() );
+		$global_footer   = is_array( $global_settings ) ? ( $global_settings['email_footer'] ?? '' ) : '';
+		if ( is_string( $global_footer ) && '' !== trim( $global_footer ) ) {
+			return $global_footer;
+		}
+
+		if ( self::has_unsubscribe_link( $body ) ) {
+			return '';
+		}
+
+		return self::get_default_footer();
 	}
 
 	/**

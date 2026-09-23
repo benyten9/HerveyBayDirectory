@@ -1832,6 +1832,12 @@ class RestEventController extends RestController {
 				$other_event_count = $other_event_count->where( 'id', '!=', $current_event_id );
 			}
 			if ( $other_event_count->count() > 0 ) {
+				// Re-saving limits / other event fields always posts the
+				// current schedule. That is not a schedule edit — refuse
+				// only when the weekly hours actually changed.
+				if ( $this->shared_availability_is_unchanged( $availability, $event_availability ) ) {
+					return true;
+				}
 				return new WP_Error(
 					'rest_event_availability_shared',
 					__( 'This availability is used by other events. Edit it from Booking → Availability, or switch this event to a custom schedule.', 'doublescale' ),
@@ -1902,6 +1908,40 @@ class RestEventController extends RestController {
 					);
 			throw $e;
 		}
+	}
+
+	/**
+	 * Shared schedules may be re-posted unchanged when the event editor saves
+	 * unrelated fields (limits, range). That is not a global hours edit.
+	 *
+	 * @param mixed $availability        AvailabilityModel (or compatible) row.
+	 * @param mixed $event_availability Incoming payload from the event editor.
+	 */
+	private function shared_availability_is_unchanged( $availability, $event_availability ): bool {
+		if ( ! is_array( $event_availability ) || ! array_key_exists( 'value', $event_availability ) ) {
+			return true;
+		}
+		$stored   = $this->normalize_availability_value( $availability->value ?? null );
+		$incoming = $this->normalize_availability_value( $event_availability['value'] );
+		return wp_json_encode( $stored ) === wp_json_encode( $incoming );
+	}
+
+	/**
+	 * @param mixed $value Availability `value` blob (array, JSON, or serialized).
+	 * @return mixed
+	 */
+	private function normalize_availability_value( $value ) {
+		if ( is_string( $value ) ) {
+			$decoded = json_decode( $value, true );
+			if ( JSON_ERROR_NONE === json_last_error() && is_array( $decoded ) ) {
+				return $decoded;
+			}
+			$unserialized = maybe_unserialize( $value );
+			if ( $unserialized !== $value ) {
+				return $unserialized;
+			}
+		}
+		return $value;
 	}
 
 	// Update event availability

@@ -812,7 +812,7 @@ if (!\function_exists('DoubleScale\\Vendor\\str_before')) {
         return Str::before($subject, $search);
     }
 }
-if (!\function_exists('str_contains')) {
+if (!\function_exists('DoubleScale\\Vendor\\str_contains')) {
     /**
      * Determine if a given string contains a given substring.
      *

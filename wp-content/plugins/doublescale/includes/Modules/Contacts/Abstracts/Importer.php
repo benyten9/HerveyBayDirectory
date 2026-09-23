@@ -17,6 +17,7 @@ namespace DoubleScale\Modules\Contacts\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Automations\Engine\TriggerBatch;
 use DoubleScale\Core\Settings\PhoneAsWhatsappSetting;
 use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Core\Validators\PhoneValidator;
@@ -823,28 +824,34 @@ abstract class Importer {
 			);
 		}
 
-		foreach ( $subscribers as $subscriber ) {
-			if ( Utils::is_memory_limit_reached() ) {
-				break;
-			}
+		// One batch scope per import page: contact-created/updated triggers
+		// fired here are queued as batches instead of one action per row.
+		TriggerBatch::run(
+			function () use ( $subscribers, $mapping, $total, &$offset, &$imported, &$skipped, &$failed, &$failures ) {
+				foreach ( $subscribers as $subscriber ) {
+					if ( Utils::is_memory_limit_reached() ) {
+						break;
+					}
 
-			$result = $this->import_contact( $subscriber, $mapping );
-			if ( false === $result ) {
-				++$failed;
-				if ( count( $failures ) < 10 ) {
-					$failures[] = $this->describe_import_failure( $subscriber, $mapping );
+					$result = $this->import_contact( $subscriber, $mapping );
+					if ( false === $result ) {
+						++$failed;
+						if ( count( $failures ) < 10 ) {
+							$failures[] = $this->describe_import_failure( $subscriber, $mapping );
+						}
+					} elseif ( 'skipped' === $result ) {
+						++$skipped;
+					} else {
+						++$imported;
+					}
+					++$offset;
+
+					if ( $offset >= $total ) {
+						break;
+					}
 				}
-			} elseif ( 'skipped' === $result ) {
-				++$skipped;
-			} else {
-				++$imported;
 			}
-			++$offset;
-
-			if ( $offset >= $total ) {
-				break;
-			}
-		}
+		);
 
 		return array(
 			'offset'   => $offset,
@@ -893,24 +900,28 @@ abstract class Importer {
 			);
 		}
 
-		foreach ( $batch_result['contacts'] as $subscriber ) {
-			if ( Utils::is_memory_limit_reached() ) {
-				break;
-			}
+		TriggerBatch::run(
+			function () use ( $batch_result, $mapping, &$current_offset, &$imported, &$skipped, &$failed, &$failures ) {
+				foreach ( $batch_result['contacts'] as $subscriber ) {
+					if ( Utils::is_memory_limit_reached() ) {
+						break;
+					}
 
-			$result = $this->import_contact( $subscriber, $mapping );
-			if ( false === $result ) {
-				++$failed;
-				if ( count( $failures ) < 10 ) {
-					$failures[] = $this->describe_import_failure( $subscriber, $mapping );
+					$result = $this->import_contact( $subscriber, $mapping );
+					if ( false === $result ) {
+						++$failed;
+						if ( count( $failures ) < 10 ) {
+							$failures[] = $this->describe_import_failure( $subscriber, $mapping );
+						}
+					} elseif ( 'skipped' === $result ) {
+						++$skipped;
+					} else {
+						++$imported;
+					}
+					++$current_offset;
 				}
-			} elseif ( 'skipped' === $result ) {
-				++$skipped;
-			} else {
-				++$imported;
 			}
-			++$current_offset;
-		}
+		);
 
 		$cursor       = $batch_result['next_cursor'] ?? null;
 		$this->cursor = $cursor;

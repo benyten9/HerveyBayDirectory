@@ -603,6 +603,40 @@ class ActivityModel extends Model {
 				);
 
 			case 'status_changed':
+				$event_key = $this->data['event_key'] ?? '';
+				if ( 'invoice_linked' === $event_key || ( ! empty( $this->data['invoice_id'] ) && empty( $this->data['proposal_id'] ) ) ) {
+					$number = ! empty( $this->data['invoice_number'] )
+						? (string) $this->data['invoice_number']
+						: '#' . (int) ( $this->data['invoice_id'] ?? 0 );
+					return sprintf(
+						/* translators: 1: user name, 2: invoice number */
+						__( '%1$s linked invoice %2$s', 'doublescale' ),
+						$user_name,
+						$number
+					);
+				}
+				if ( 'proposal_linked' === $event_key || ! empty( $this->data['proposal_id'] ) ) {
+					$number = ! empty( $this->data['proposal_number'] )
+						? (string) $this->data['proposal_number']
+						: '#' . (int) ( $this->data['proposal_id'] ?? 0 );
+					return sprintf(
+						/* translators: 1: user name, 2: proposal number */
+						__( '%1$s linked proposal %2$s', 'doublescale' ),
+						$user_name,
+						$number
+					);
+				}
+				if ( ! empty( $this->data['invoice_id'] ) ) {
+					$number = ! empty( $this->data['invoice_number'] )
+						? (string) $this->data['invoice_number']
+						: '#' . (int) $this->data['invoice_id'];
+					return sprintf(
+						/* translators: 1: user name, 2: invoice number */
+						__( '%1$s linked invoice %2$s', 'doublescale' ),
+						$user_name,
+						$number
+					);
+				}
 				$status = $this->data['status'] ?? 'unknown';
 				if ( 'won' === $status ) {
 					return sprintf(

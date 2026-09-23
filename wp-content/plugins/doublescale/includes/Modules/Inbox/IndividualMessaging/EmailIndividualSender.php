@@ -218,6 +218,7 @@ class EmailIndividualSender {
 	private function send_via_wp_mail( $to, $subject, $body, $in_reply_to ) {
 		try {
 			$emails = new Emails();
+			$emails->use_conversation_layout();
 
 			$message_id         = '<' . md5( uniqid( (string) wp_rand(), true ) ) . '@' . wp_parse_url( home_url(), PHP_URL_HOST ) . '>';
 			$emails->message_id = $message_id;

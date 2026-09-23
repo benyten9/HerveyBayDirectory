@@ -27,6 +27,7 @@ class Collection_Loop_Item extends Atomic_Element_Base {
 	const ALTERNATE_REPEAT_EVERY_PROP = 'alternate_repeat_every';
 	const ALTERNATE_STATIC_POSITION_PROP = 'alternate_static_position';
 	const REPEAT_EVERY_DISABLED = 0;
+	const REPEAT_EVERY_ALL_SLOTS = 1;
 	const MAX_ALTERNATES = 5;
 
 	public static $widget_description = 'Repeating item template for a Loop. Renders once per item in the collection.';

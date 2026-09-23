@@ -105,6 +105,8 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			'contacts-filters'
 		);
 
+		$this->load_contact_scoped_automation_rules();
+
 		/**
 		 * Register the form-submission contact filter after the full kernel boot.
 		 *
@@ -220,5 +222,64 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			},
 			20
 		);
+	}
+
+	/**
+	 * Load condition rules that describe *contact state*, independently of the
+	 * `automations` module's lifecycle.
+	 *
+	 * These rule files live under `Modules/Automations/Rules/` for historical
+	 * reasons, but what they describe — a contact's email, city, status, tags,
+	 * lists, custom fields — is contact data, not automation runtime state.
+	 * They were only ever loaded inside {@see \DoubleScale\Modules\Automations\Module::boot()},
+	 * which made them disappear whenever a user turned the automations module off.
+	 *
+	 * That mattered because Lead Scoring is non-toggleable: it keeps running and
+	 * evaluating its conditions through
+	 * {@see \DoubleScale\Modules\Automations\Conditions\Condition::is_condition_fulfilled()},
+	 * which resolves each condition via `RulesManager::get_rule()` and `continue`s
+	 * past anything it cannot resolve — leaving `$result` at its initial `true`.
+	 * So every lead-scoring condition silently became a no-op that reported
+	 * "matched", and contacts were awarded points they had not earned, with no
+	 * error and no notice.
+	 *
+	 * Only the contact-scoped directories load here. Automation-runtime rules
+	 * (`Rules/Automation/*` — "entered automation", "completed automation") stay
+	 * behind the automations module, because they are meaningless without it.
+	 * Integration rules (WooCommerce, LMS, …) likewise stay put.
+	 *
+	 * Each file calls `RulesManager::instance()->register(...)` on include, and
+	 * `register()` returns early on a duplicate slug, so loading here and again
+	 * from the automations module is harmless.
+	 *
+	 * @since 1.0.0
+	 */
+	private function load_contact_scoped_automation_rules(): void {
+		$this->loadManifestOrGlobs(
+			array(
+				'includes/Modules/Automations/Rules/Contact/*.php',
+				'includes/Modules/Automations/Rules/ContactFields/*.php',
+				'includes/Modules/Automations/Rules/Segments/*.php',
+			),
+			'contact-scoped-automation-rules'
+		);
+
+		// Activity rules ("last email opened", "was active") are contact state
+		// too, but ship in Pro. Mirrors the Pro-directory handling in
+		// {@see \DoubleScale\Modules\Automations\Module::load_pro_automation_rule_files_if_available()}.
+		if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
+			return;
+		}
+
+		$activity_dir = \DOUBLESCALE_PRO_PLUGIN_DIR
+			. 'includes/Modules/Automations/Rules/Activity';
+
+		if ( ! is_dir( $activity_dir ) ) {
+			return;
+		}
+
+		foreach ( glob( $activity_dir . '/*.php' ) ?: array() as $file ) {
+			require_once $file;
+		}
 	}
 }

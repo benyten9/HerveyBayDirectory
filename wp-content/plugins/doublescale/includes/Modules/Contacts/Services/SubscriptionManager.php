@@ -255,7 +255,13 @@ class SubscriptionManager {
 				)
 				->all();
 
-			foreach ( $public_list_ids as $list_id ) {
+			// The browser submits the list checkboxes as they were rendered, even
+			// when "unsubscribe from all" is ticked. Honouring them here would
+			// re-subscribe a contact who just asked to be left alone, so the
+			// global opt-out below owns the list rows instead.
+			$lists_to_reconcile = $unsubscribe_all ? array() : $public_list_ids;
+
+			foreach ( $lists_to_reconcile as $list_id ) {
 				$desired_status = isset( $list_status[ $list_id ] )
 					? sanitize_text_field( (string) $list_status[ $list_id ] )
 					: 'unsubscribed';

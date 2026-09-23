@@ -85,6 +85,14 @@ class CampaignContext {
 	/** @var callable fn(CampaignModel, int): void */
 	public $fn_complete;
 
+	/**
+	 * Bound to the processor's fail_campaign().
+	 * Signature: fn(CampaignModel $campaign, string $reason, string $message): void
+	 *
+	 * @var callable
+	 */
+	public $fn_fail;
+
 	/** @var callable fn(int $campaign_id): void */
 	public $fn_continue;
 
@@ -118,6 +126,22 @@ class CampaignContext {
 	 */
 	public function complete() {
 		call_user_func( $this->fn_complete, $this->campaign, $this->total );
+		$this->abort();
+	}
+
+	/**
+	 * Mark the campaign as failed for a stated reason and halt the pipeline.
+	 *
+	 * Separate from the no-progress watchdog on purpose: that one concludes
+	 * "this campaign is stuck" after several fruitless continuations, which is
+	 * the wrong diagnosis for a campaign that never had anyone to send to.
+	 *
+	 * @param string $reason Machine-readable reason, e.g. 'no_recipients'.
+	 * @param string $message Human-readable explanation for the log.
+	 * @return void
+	 */
+	public function fail( $reason, $message ) {
+		call_user_func( $this->fn_fail, $this->campaign, $reason, $message );
 		$this->abort();
 	}
 

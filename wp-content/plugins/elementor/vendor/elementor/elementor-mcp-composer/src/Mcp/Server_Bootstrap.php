@@ -2,6 +2,7 @@
 
 namespace Elementor\MCP\Composer\Mcp;
 
+use Elementor\MCP\Composer\Admin\McpSettingsController;
 use WP\MCP\Core\McpAdapter;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -45,6 +46,10 @@ class Server_Bootstrap {
 	 * @return void
 	 */
 	public function register_server( $adapter ): void {
+		if ( ! McpSettingsController::is_enabled() ) {
+			return;
+		}
+
 		if ( ! $adapter instanceof McpAdapter ) {
 			return;
 		}
@@ -73,7 +78,7 @@ class Server_Bootstrap {
 			$prompts
 		);
 
-		if ( is_wp_error( $result ) ) {
+		if ( is_wp_error( $result ) && $result instanceof \WP_Error ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( sprintf( '[Elementor MCP] Server registration failed: %s', $result->get_error_message() ) );
 		}

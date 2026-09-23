@@ -22,15 +22,76 @@ defined( 'ABSPATH' ) || exit;
 class MetaTemplateFetcher {
 
 	/**
+	 * Transient key for the approved-template list.
+	 *
+	 * @var string
+	 */
+	public const CACHE_TRANSIENT = 'doublescale_meta_whatsapp_templates';
+
+	/**
+	 * How long a successful Graph fetch is reused.
+	 *
+	 * Templates change rarely; the automation catalog and REST list are built
+	 * on every admin/REST request, so a short TTL still cuts Graph traffic.
+	 *
+	 * @var int
+	 */
+	public const CACHE_TTL = 10 * MINUTE_IN_SECONDS;
+
+	/**
+	 * In-request copy so register() + load_actions() do not hit the transient twice.
+	 *
+	 * @var array|null
+	 */
+	private static $runtime_cache = null;
+
+	/**
 	 * Fetch approved templates from Meta WhatsApp
 	 * Returns raw data, does NOT save to database
 	 *
 	 * @since 1.0.0
 	 *
+	 * @param bool $force_refresh Skip cache (Settings → Sync).
 	 * @return array List of approved templates.
 	 * @throws \Exception If Meta WhatsApp is not configured.
 	 */
-	public function fetch_approved_templates(): array {
+	public function fetch_approved_templates( bool $force_refresh = false ): array {
+		if ( ! $force_refresh ) {
+			if ( is_array( self::$runtime_cache ) ) {
+				return self::$runtime_cache;
+			}
+
+			$cached = get_transient( self::CACHE_TRANSIENT );
+			if ( is_array( $cached ) ) {
+				self::$runtime_cache = $cached;
+				return $cached;
+			}
+		}
+
+		$templates           = $this->pull_approved_templates_from_meta();
+		self::$runtime_cache = $templates;
+		set_transient( self::CACHE_TRANSIENT, $templates, self::CACHE_TTL );
+
+		return $templates;
+	}
+
+	/**
+	 * Drop the in-request and transient copies (disconnect, tests, after a forced sync).
+	 *
+	 * @return void
+	 */
+	public static function flush_cache(): void {
+		self::$runtime_cache = null;
+		delete_transient( self::CACHE_TRANSIENT );
+	}
+
+	/**
+	 * Call Graph and normalize. Not cached — callers go through fetch_approved_templates().
+	 *
+	 * @return array List of approved templates.
+	 * @throws \Exception If Meta WhatsApp is not configured or Graph fails.
+	 */
+	private function pull_approved_templates_from_meta(): array {
 		$integration = IntegrationsManager::instance()->get_integration( 'meta-whatsapp' );
 
 		if ( ! $integration || ! $integration->is_connected() ) {

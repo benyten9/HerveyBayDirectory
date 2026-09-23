@@ -17,11 +17,14 @@
 		Object.defineProperty(exports, "__esModule", { value: true });
 		exports.getEditorState = getEditorState;
 		exports.isEditorPreview = isEditorPreview;
+		exports.resolveDesignTimeState = resolveDesignTimeState;
 		exports.setEditorState = setEditorState;
 		var _alpinejs$1 = (globalThis.elementorV2.alpinejs);
 		var STORE_NAME = "editor-background-video-state";
+		var PLAYING_STATE = "playing";
+		var PAUSED_STATE = "paused";
 		/**
-		* @typedef {Record<string, 'playing' | 'paused'>} BackgroundVideoState
+		* @typedef {Record<string, 'playing' | 'paused' | ''>} BackgroundVideoState
 		*/
 		function ensureStore() {
 			if (!_alpinejs$1.Alpine.store(STORE_NAME)) _alpinejs$1.Alpine.store(
@@ -31,7 +34,11 @@
 			);
 			return _alpinejs$1.Alpine.store(STORE_NAME);
 		}
-		function getEditorState(elementId, fallback = "playing") {
+		function resolveDesignTimeState(state) {
+			if (PAUSED_STATE === state || "" === state) return state;
+			return PLAYING_STATE;
+		}
+		function getEditorState(elementId, fallback = PLAYING_STATE) {
 			var _store$elementId;
 			return (_store$elementId = ensureStore()[elementId]) !== null && _store$elementId !== void 0 ? _store$elementId : fallback;
 		}
@@ -96,7 +103,7 @@
 					isPlaying: video ? !video.paused : false,
 					isEditor: (0, _editorBackgroundVideoState.isEditorPreview)(),
 					get editorState() {
-						return (0, _editorBackgroundVideoState.getEditorState)(elementId, settings.state || "playing");
+						return (0, _editorBackgroundVideoState.getEditorState)(elementId, (0, _editorBackgroundVideoState.resolveDesignTimeState)(settings.state));
 					},
 					get previewState() {
 						if (this.isEditor) return this.editorState;

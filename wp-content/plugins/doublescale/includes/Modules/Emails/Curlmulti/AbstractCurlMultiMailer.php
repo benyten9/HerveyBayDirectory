@@ -235,10 +235,15 @@ abstract class AbstractCurlMultiMailer {
 		// Log attempt
 		$this->log_send_attempt( $batch_data );
 
-		// Split recipients into chunks for parallel processing
+		// Split recipients into chunks for parallel processing. When the
+		// campaign carries an emails-per-second cap, a chunk never exceeds it
+		// (so one parallel burst cannot overshoot the cap) and each chunk is
+		// held for at least chunk_size / cap seconds — see pace_chunk().
 		$recipients       = $batch_data['recipients'];
 		$max_concurrent   = $this->get_max_concurrent();
-		$recipient_chunks = array_chunk( $recipients, $max_concurrent );
+		$max_per_second   = $this->resolve_max_per_second( $batch_data );
+		$chunk_size       = $max_per_second > 0 ? max( 1, min( $max_concurrent, $max_per_second ) ) : $max_concurrent;
+		$recipient_chunks = array_chunk( $recipients, $chunk_size );
 
 		$results = array(
 			'success'     => true,
@@ -249,6 +254,7 @@ abstract class AbstractCurlMultiMailer {
 
 		// Process each chunk
 		foreach ( $recipient_chunks as $chunk ) {
+			$chunk_started = microtime( true );
 			$chunk_results = $this->send_chunk( $chunk, $batch_data, $credentials );
 
 			// Merge results
@@ -260,8 +266,11 @@ abstract class AbstractCurlMultiMailer {
 				$results['success'] = false;
 			}
 
-			// Delay between chunks to respect rate limits
-			if ( $this->batch_delay > 0 ) {
+			// Hold the line so this chunk occupies at least its share of a
+			// second; without a cap fall back to the legacy fixed delay.
+			if ( $max_per_second > 0 ) {
+				$this->pace_chunk( count( $chunk ), $max_per_second, $chunk_started );
+			} elseif ( $this->batch_delay > 0 ) {
 				usleep( $this->batch_delay );
 			}
 		}
@@ -286,6 +295,50 @@ abstract class AbstractCurlMultiMailer {
 	 * @return array Chunk results
 	 */
 	abstract protected function send_chunk( $recipients, $batch_data, $credentials );
+
+	/**
+	 * Emails-per-second cap carried in the batch, or 0 when none was given.
+	 *
+	 * @param array $batch_data Batch payload.
+	 * @return int
+	 */
+	protected function resolve_max_per_second( $batch_data ) {
+		if ( ! isset( $batch_data['max_per_second'] ) ) {
+			return 0;
+		}
+		return max( 0, (int) $batch_data['max_per_second'] );
+	}
+
+	/**
+	 * Sleep until a chunk has taken at least chunk_size / cap seconds.
+	 *
+	 * Runs after every chunk, including the last one, so pacing also holds
+	 * across consecutive batches from the campaign loop.
+	 *
+	 * @param int   $chunk_size     Emails just sent.
+	 * @param int   $max_per_second Cap.
+	 * @param float $started_at     microtime(true) taken before the send.
+	 */
+	protected function pace_chunk( $chunk_size, $max_per_second, $started_at ) {
+		$min_duration = $chunk_size / $max_per_second;
+		$elapsed      = microtime( true ) - $started_at;
+		$remaining    = $min_duration - $elapsed;
+
+		if ( $remaining > 0 ) {
+			$this->sleep_microseconds( (int) round( $remaining * 1000000 ) );
+		}
+	}
+
+	/**
+	 * Overridable sleep so pacing can be unit-tested without real waits.
+	 *
+	 * @param int $microseconds Microseconds to sleep.
+	 */
+	protected function sleep_microseconds( $microseconds ) {
+		if ( $microseconds > 0 ) {
+			usleep( $microseconds );
+		}
+	}
 
 	/**
 	 * Build HTTP headers for the Api request

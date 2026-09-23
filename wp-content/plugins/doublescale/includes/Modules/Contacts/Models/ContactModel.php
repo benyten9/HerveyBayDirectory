@@ -813,14 +813,20 @@ class ContactModel extends Model {
 		$channel      = $channel_map[ $mode ];
 		$status_field = $channel . '_status';
 
-		// Check if already unsubscribed
+		// Check if already unsubscribed. Lists are still reconciled: a contact
+		// can be globally out while stale pivot rows read 'subscribed', and the
+		// preference page would then offer lists they already opted out of.
 		if ( 'unsubscribed' === $this->getAttribute( $status_field ) ) {
+			$this->unsubscribe_from_channel_lists( $channel, $reason );
 			return true;
 		}
 
 		// Update status
 		$this->$status_field = 'unsubscribed';
 		$this->save();
+
+		// A global opt-out outranks any per-list preference.
+		$this->unsubscribe_from_channel_lists( $channel, $reason );
 
 		// Record unsubscribe in dedicated table
 		try {
@@ -872,6 +878,37 @@ class ContactModel extends Model {
 		do_action( "doublescale_{$channel}_unsubscribed", $this );
 
 		return true;
+	}
+
+	/**
+	 * Mark every list the contact belongs to as unsubscribed.
+	 *
+	 * Lists only drive email sending, so an SMS or WhatsApp opt-out leaves them
+	 * alone. Each list goes through unsubscribe_from_list() so the per-list
+	 * activity note and `doublescale_contact_list_unsubscribed` hook still fire.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $channel Channel name (email, sms, whatsapp).
+	 * @param string $reason  Optional reason.
+	 * @return void
+	 */
+	protected function unsubscribe_from_channel_lists( $channel, $reason = '' ) {
+		if ( 'email' !== $channel ) {
+			return;
+		}
+
+		// Qualify the column: the relation joins the pivot, which also has `id`.
+		$relation = $this->lists();
+		$list_ids = $relation->pluck( $relation->getRelated()->getQualifiedKeyName() )->all();
+
+		foreach ( $list_ids as $list_id ) {
+			$this->unsubscribe_from_list( (int) $list_id, $reason );
+		}
+
+		// The relation was loaded with the old pivot values; drop it so later
+		// is_subscribed_to_list() calls re-read the rows we just changed.
+		$this->unsetRelation( 'lists' );
 	}
 
 	/**
@@ -1297,10 +1334,16 @@ class ContactModel extends Model {
 			);
 		}
 
+		// Per-contact hooks still fire for every listener; automation triggers
+		// collect their enrolments and queue them as batches when the scope ends.
 		$hook = $is_list ? 'doublescale_contact_list_apply' : 'doublescale_contact_tag_apply';
-		foreach ( $to_notify as $contact_id => $added ) {
-			do_action( $hook, $by_id[ $contact_id ], $added );
-		}
+		\DoubleScale\Modules\Automations\Engine\TriggerBatch::run(
+			static function () use ( $hook, $to_notify, $by_id ) {
+				foreach ( $to_notify as $contact_id => $added ) {
+					do_action( $hook, $by_id[ $contact_id ], $added );
+				}
+			}
+		);
 
 		return array(
 			'updated' => $updated,
@@ -1594,6 +1637,13 @@ class ContactModel extends Model {
 		$dispatcher->listen(
 			"eloquent.created: {$model_name}",
 			function ( $contact ) {
+				/**
+				 * Fires once for every newly created contact, whatever its status.
+				 *
+				 * @param ContactModel $contact The persisted contact.
+				 */
+				do_action( 'doublescale_contact_created', $contact );
+
 				if ( $contact->email_status !== 'unsubscribed' ) {
 					do_action( 'doublescale_contact_subscribe', $contact );
 				}

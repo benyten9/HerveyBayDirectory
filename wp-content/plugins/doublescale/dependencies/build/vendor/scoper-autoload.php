@@ -6,12 +6,32 @@ $loader = require_once __DIR__.'/autoload.php';
 
 // Exposed classes. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/docs/configuration.md#exposing-classes
-if (!class_exists('ComposerAutoloaderInitc76ffa71df276f67f33e39a1d22da86d', false) && !interface_exists('ComposerAutoloaderInitc76ffa71df276f67f33e39a1d22da86d', false) && !trait_exists('ComposerAutoloaderInitc76ffa71df276f67f33e39a1d22da86d', false)) {
-    spl_autoload_call('DoubleScale\Vendor\ComposerAutoloaderInitc76ffa71df276f67f33e39a1d22da86d');
+if (!class_exists('ComposerAutoloaderInit16ae31899de823e17ba816de66fa67da', false) && !interface_exists('ComposerAutoloaderInit16ae31899de823e17ba816de66fa67da', false) && !trait_exists('ComposerAutoloaderInit16ae31899de823e17ba816de66fa67da', false)) {
+    spl_autoload_call('DoubleScale\Vendor\ComposerAutoloaderInit16ae31899de823e17ba816de66fa67da');
 }
 
 // Exposed functions. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/docs/configuration.md#exposing-functions
+if (!function_exists('getMaxHistoryMonthsByAmount')) {
+    function getMaxHistoryMonthsByAmount() {
+        return \DoubleScale\Vendor\getMaxHistoryMonthsByAmount(...func_get_args());
+    }
+}
+if (!function_exists('getHtmlAttribute')) {
+    function getHtmlAttribute() {
+        return \DoubleScale\Vendor\getHtmlAttribute(...func_get_args());
+    }
+}
+if (!function_exists('getOpenCollectiveSponsors')) {
+    function getOpenCollectiveSponsors() {
+        return \DoubleScale\Vendor\getOpenCollectiveSponsors(...func_get_args());
+    }
+}
+if (!function_exists('app')) {
+    function app() {
+        return \DoubleScale\Vendor\app(...func_get_args());
+    }
+}
 if (!function_exists('append_config')) {
     function append_config() {
         return \DoubleScale\Vendor\append_config(...func_get_args());
@@ -342,36 +362,6 @@ if (!function_exists('with')) {
         return \DoubleScale\Vendor\with(...func_get_args());
     }
 }
-if (!function_exists('http_get_last_response_headers')) {
-    function http_get_last_response_headers() {
-        return \DoubleScale\Vendor\http_get_last_response_headers(...func_get_args());
-    }
-}
-if (!function_exists('app')) {
-    function app() {
-        return \DoubleScale\Vendor\app(...func_get_args());
-    }
-}
-if (!function_exists('getMaxHistoryMonthsByAmount')) {
-    function getMaxHistoryMonthsByAmount() {
-        return \DoubleScale\Vendor\getMaxHistoryMonthsByAmount(...func_get_args());
-    }
-}
-if (!function_exists('getHtmlAttribute')) {
-    function getHtmlAttribute() {
-        return \DoubleScale\Vendor\getHtmlAttribute(...func_get_args());
-    }
-}
-if (!function_exists('getOpenCollectiveSponsors')) {
-    function getOpenCollectiveSponsors() {
-        return \DoubleScale\Vendor\getOpenCollectiveSponsors(...func_get_args());
-    }
-}
-if (!function_exists('litespeed_finish_request')) {
-    function litespeed_finish_request() {
-        return \DoubleScale\Vendor\litespeed_finish_request(...func_get_args());
-    }
-}
 if (!function_exists('findTranslationFiles')) {
     function findTranslationFiles() {
         return \DoubleScale\Vendor\findTranslationFiles(...func_get_args());
@@ -432,6 +422,16 @@ if (!function_exists('textColorNormal')) {
         return \DoubleScale\Vendor\textColorNormal(...func_get_args());
     }
 }
+if (!function_exists('trigger_deprecation')) {
+    function trigger_deprecation() {
+        return \DoubleScale\Vendor\trigger_deprecation(...func_get_args());
+    }
+}
+if (!function_exists('litespeed_finish_request')) {
+    function litespeed_finish_request() {
+        return \DoubleScale\Vendor\litespeed_finish_request(...func_get_args());
+    }
+}
 if (!function_exists('mb_str_pad')) {
     function mb_str_pad() {
         return \DoubleScale\Vendor\mb_str_pad(...func_get_args());
@@ -462,19 +462,20 @@ if (!function_exists('mb_rtrim')) {
         return \DoubleScale\Vendor\mb_rtrim(...func_get_args());
     }
 }
-if (!function_exists('trigger_deprecation')) {
-    function trigger_deprecation() {
-        return \DoubleScale\Vendor\trigger_deprecation(...func_get_args());
+
+if (!function_exists('str_contains')) {
+    function str_contains($haystack, $needle) {
+        return \DoubleScale\Vendor\str_contains($haystack ?? '', $needle ?? '');
     }
 }
-if (!function_exists('utf8_to_extended_ascii')) {
-    function utf8_to_extended_ascii() {
-        return \DoubleScale\Vendor\utf8_to_extended_ascii(...func_get_args());
+if (!function_exists('str_starts_with')) {
+    function str_starts_with($haystack, $needle) {
+        return \DoubleScale\Vendor\str_starts_with($haystack ?? '', $needle ?? '');
     }
 }
-if (!function_exists('mb_levenshtein')) {
-    function mb_levenshtein() {
-        return \DoubleScale\Vendor\mb_levenshtein(...func_get_args());
+if (!function_exists('str_ends_with')) {
+    function str_ends_with($haystack, $needle) {
+        return \DoubleScale\Vendor\str_ends_with($haystack ?? '', $needle ?? '');
     }
 }
 

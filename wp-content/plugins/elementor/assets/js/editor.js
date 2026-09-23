@@ -49881,6 +49881,16 @@ var import_preview = /* @__PURE__ */ __toESM(require_preview$2());
 			className: "elementor-responsive-panel",
 			initialize: function initialize() {
 				this.listenTo(elementor.channels.panelElements, "filter:change", this.onFilterChanged);
+				this._syncAtomicComparator();
+			},
+			_syncAtomicComparator: function _syncAtomicComparator() {
+				var _elementorCommon$conf;
+				if (elementor.channels.panelElements.request("filter:value") && (_elementorCommon$conf = elementorCommon.config.experimentalFeatures) !== null && _elementorCommon$conf !== void 0 && _elementorCommon$conf.e_atomic_elements) this.viewComparator = function(a, b) {
+					if (a.get("atomic") && !b.get("atomic")) return -1;
+					if (!a.get("atomic") && b.get("atomic")) return 1;
+					return 0;
+				};
+				else this.viewComparator = null;
 			},
 			filter: function filter(childModel) {
 				var filterValue = elementor.channels.panelElements.request("filter:value");
@@ -49896,7 +49906,9 @@ var import_preview = /* @__PURE__ */ __toESM(require_preview$2());
 				});
 			},
 			onFilterChanged: function onFilterChanged() {
-				if (!elementor.channels.panelElements.request("filter:value")) this.onFilterEmpty();
+				var filterValue = elementor.channels.panelElements.request("filter:value");
+				this._syncAtomicComparator();
+				if (!filterValue) this.onFilterEmpty();
 				this._renderChildren();
 				this.triggerMethod("children:render");
 			},
@@ -52605,7 +52617,8 @@ var import_preview = /* @__PURE__ */ __toESM(require_preview$2());
 					custom: item.custom,
 					editable: item.editable,
 					hideOnSearch: item.hide_on_search,
-					isNew: this.isWidgetNew(item)
+					isNew: this.isWidgetNew(item),
+					atomic: !!item.atomic
 				};
 			},
 			initCategoriesCollection: function initCategoriesCollection() {

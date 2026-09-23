@@ -46,7 +46,7 @@ class Label extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'label', 'text' ];
+		return [ 'atomic', 'form', 'label', 'text', 'caption' ];
 	}
 
 	protected static function define_props_schema(): array {

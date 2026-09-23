@@ -150,9 +150,36 @@ class AutomationModel extends Model {
 	 * @return AutomationModel[]
 	 */
 	public static function get_automations_by_trigger( $trigger ) {
-		return self::where( 'trigger', $trigger )
+		$trigger = (string) $trigger;
+		if ( isset( self::$by_trigger_cache[ $trigger ] ) ) {
+			return self::$by_trigger_cache[ $trigger ];
+		}
+
+		$automations = self::where( 'trigger', $trigger )
 			->where( 'status', 'active' )
 			->get();
+
+		self::$by_trigger_cache[ $trigger ] = $automations;
+		return $automations;
+	}
+
+	/**
+	 * Per-request memo for get_automations_by_trigger().
+	 *
+	 * A bulk operation fires the same trigger once per contact; without this
+	 * every contact cost a query plus the `retrieved` event's draft-step
+	 * DELETE. Cleared whenever an automation is saved or deleted, and at the
+	 * start of each queued action so a long-running runner sees edits.
+	 *
+	 * @var array<string, \Illuminate\Support\Collection>
+	 */
+	private static $by_trigger_cache = array();
+
+	/**
+	 * Forget the trigger → automations memo.
+	 */
+	public static function flush_trigger_cache() {
+		self::$by_trigger_cache = array();
 	}
 
 	/**
@@ -313,6 +340,17 @@ class AutomationModel extends Model {
 	 */
 	public static function boot() {
 		parent::boot();
+
+		self::saved(
+			function () {
+				self::flush_trigger_cache();
+			}
+		);
+		self::deleted(
+			function () {
+				self::flush_trigger_cache();
+			}
+		);
 
 		self::deleting(
 			function ( $automation ) {

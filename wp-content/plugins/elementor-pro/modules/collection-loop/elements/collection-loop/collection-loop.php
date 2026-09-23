@@ -32,10 +32,13 @@ use ElementorPro\Modules\CollectionLoop\Query\ItemProviders\Loop_Item_Provider;
 use ElementorPro\Modules\CollectionLoop\Query\ItemProviders\Post_Loop_Item_Provider;
 use ElementorPro\Modules\CollectionLoop\Query\Loop_Query;
 use ElementorPro\Modules\CollectionLoop\Query\Loop_Query_Args_Builder;
+use ElementorPro\Modules\CollectionLoop\Query\Loop_Query_Counts;
 use ElementorPro\Modules\CollectionLoop\Query\Loop_Query_Pagination;
 use ElementorPro\Modules\CollectionLoop\Query\TemplateTypes\Post_Template_Type;
 use ElementorPro\Modules\CollectionLoop\Query\TemplateTypes\Template_Type_Registry;
 use ElementorPro\Modules\CollectionLoop\Traits\Has_Loop_Query;
+use ElementorPro\Modules\CollectionLoop\Utils\Alternate_Selector;
+use ElementorPro\Modules\CollectionLoop\Utils\Loop_Slot_Map;
 use ElementorPro\Modules\CollectionLoop\Utils\Non_Overridable_Props;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -89,7 +92,7 @@ class Collection_Loop extends Atomic_Element_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'loop', 'collection', 'repeater', 'posts', 'grid' ];
+		return [ 'loop', 'collection', 'repeater', 'posts', 'grid', 'dynamic', 'query', 'listing' ];
 	}
 
 	public function get_icon() {
@@ -162,12 +165,49 @@ class Collection_Loop extends Atomic_Element_Base {
 
 		// Rebuild the item provider from the raw settings (stashed by Loop_Query_Transformer)
 		// so post- and term-based template types share a single entry point. The current
-		// page number is threaded in as a setting rather than a WP_Query arg, so term-based
+		// page window is threaded in as a setting rather than a WP_Query arg, so term-based
 		// types (which don't use WP_Query) can safely ignore it.
 		$settings = Loop_Query_Args_Builder::extract_settings( $resolved );
-		$settings = Loop_Query_Args_Builder::apply_pagination( $settings, Loop_Query_Pagination::get_current_page_for_loop( (string) $this->get_id() ) );
 
-		return Loop_Query_Args_Builder::item_provider_from_resolved( $settings, $this );
+		return Loop_Query_Args_Builder::item_provider_from_resolved( $this->apply_page_window( $settings ), $this );
+	}
+
+	/**
+	 * Static alternates take a slot without consuming an item, so a page's first
+	 * item no longer sits at `( $page - 1 ) * $posts_per_page` and `paged` would
+	 * silently drop every pushed item — page by item offset off the slot map
+	 * instead, which has to be known before the query runs.
+	 */
+	private function apply_page_window( array $settings ): array {
+		$page       = $this->resolve_current_page();
+		$selector   = $this->build_alternate_selector();
+		$start_slot = ( $page - 1 ) * self::resolve_slots_per_page( $settings );
+
+		if ( $start_slot > 0 && $selector && $selector->has_static_alternates() ) {
+			return Loop_Query_Args_Builder::apply_offset(
+				$settings,
+				Loop_Slot_Map::items_before_slot( $selector, $start_slot )
+			);
+		}
+
+		return Loop_Query_Args_Builder::apply_pagination( $settings, $page );
+	}
+
+	/**
+	 * A fresh selector per call, since each slot-map walk restarts from slot 0.
+	 */
+	private function build_alternate_selector(): ?Alternate_Selector {
+		$layout = $this->get_children()[ self::TEMPLATE_CHILD_INDEX ] ?? null;
+
+		return $layout ? Alternate_Selector::for_loop_items( $layout->get_children() ) : null;
+	}
+
+	private function resolve_current_page(): int {
+		return Loop_Query_Pagination::get_current_page_for_loop( (string) $this->get_id() );
+	}
+
+	private static function resolve_slots_per_page( array $settings ): int {
+		return Loop_Query::clamp_posts_per_page( $settings['posts_per_page'] ?? null );
 	}
 
 	public static function get_layout_content_id( string $layout_element_id ): string {
@@ -179,19 +219,70 @@ class Collection_Loop extends Atomic_Element_Base {
 		$children = $this->get_children();
 		$layout = $children[ self::TEMPLATE_CHILD_INDEX ] ?? null;
 		$layout_element_id = $layout ? (string) $layout->get_id() : '';
-		$max_num_pages = $item_provider->max_num_pages();
+		$slot_window = $this->resolve_slot_window( $item_provider );
+		$max_num_pages = $slot_window['max_pages'];
 		$empty_state_enabled = (bool) ( $this->get_atomic_setting( self::EMPTY_STATE_PROP ) ?? false );
 
 		return array_merge( $context, [
 			'loop_id'              => $loop_id,
 			'layout_content_id'    => $layout_element_id ? self::get_layout_content_id( $layout_element_id ) : '',
-			'current_page'         => Loop_Query_Pagination::get_current_page_for_loop( $loop_id ),
+			'current_page'         => $this->resolve_current_page(),
 			'max_pages'            => $max_num_pages,
+			'start_slot'           => $slot_window['start_slot'],
+			'slot_budget'          => $slot_window['slot_budget'],
 			'pagination_enabled'   => (bool) ( $this->get_atomic_setting( self::PAGINATION_PROP ) ?? false ) && $max_num_pages > 1,
 			'pagination_type'      => (string) ( $this->get_atomic_setting( self::PAGINATION_TYPE_PROP ) ?? self::PAGINATION_TYPE_PREV_NEXT ),
 			'pagination_load_type' => (string) ( $this->get_atomic_setting( self::PAGINATION_LOAD_TYPE_PROP ) ?? self::PAGINATION_LOAD_PAGE_RELOAD ),
 			'empty_state_enabled'  => $empty_state_enabled,
 		] );
+	}
+
+	/**
+	 * The global slot range this page renders, plus the page count it implies.
+	 *
+	 * `start_slot` stays global even without statics, so "apply once" fires once
+	 * per query instead of once per page. With statics the slot count exceeds the
+	 * item count, so the page count and budget come from the slot map rather than
+	 * from WP_Query.
+	 *
+	 * @return array{start_slot: int, slot_budget: int, max_pages: int}
+	 */
+	private function resolve_slot_window( Loop_Item_Provider $item_provider ): array {
+		$per_page   = self::resolve_slots_per_page( $this->resolve_query_settings() );
+		$start_slot = ( $this->resolve_current_page() - 1 ) * $per_page;
+		$selector   = $this->build_alternate_selector();
+
+		if ( ! $selector || ! $selector->has_static_alternates() ) {
+			return [
+				'start_slot'  => $start_slot,
+				'slot_budget' => $item_provider->count(),
+				'max_pages'   => $item_provider->max_num_pages(),
+			];
+		}
+
+		$total_slots = Loop_Slot_Map::total_slots( $selector, Loop_Query_Counts::found_items( $item_provider ) );
+
+		// Non-post providers (terms) render everything on a single page, so the
+		// inserted slots have to fit in that page's budget.
+		if ( ! $item_provider->query() instanceof \WP_Query ) {
+			return [
+				'start_slot'  => 0,
+				'slot_budget' => $total_slots,
+				'max_pages'   => 1,
+			];
+		}
+
+		return [
+			'start_slot'  => $start_slot,
+			'slot_budget' => min( $per_page, max( 0, $total_slots - $start_slot ) ),
+			'max_pages'   => (int) ceil( $total_slots / $per_page ),
+		];
+	}
+
+	private function resolve_query_settings(): array {
+		$resolved = $this->get_atomic_setting( 'query' );
+
+		return is_array( $resolved ) ? Loop_Query_Args_Builder::extract_settings( $resolved ) : [];
 	}
 
 	protected function define_atomic_controls(): array {

@@ -16,6 +16,7 @@ use DoubleScale\Core\Constants\MessageSourceTypes;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Contacts\Models\ContactUnsubscribeModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel;
+use DoubleScale\Modules\Tracking\DeliveryStatusProgression;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -458,26 +459,32 @@ abstract class AbstractTracking {
 	 */
 	protected function update_delivery_status( $tracking_record, $status, $error_code = '', $error_message = '', $metadata = array() ) {
 		$previous_status = $tracking_record->status;
+		$proposed_status = DeliveryStatusProgression::status_from_webhook_slug( $status, $this->channel );
 
-		// Handle status updates
-		switch ( $status ) {
-			case 'sent':
-				$tracking_record->status  = TrackingStatus::SENT;
-				$tracking_record->sent_at = current_time( 'mysql', true );
-				break;
-			case 'delivered':
-				$tracking_record->status = TrackingStatus::DELIVERED;
-				break;
-			case 'read':
-				// WhatsApp read receipt
-				if ( $this->channel === CampaignChannel::STR_WHATSAPP ) {
-					$tracking_record->status = TrackingStatus::READ;
-				}
-				break;
-			case 'failed':
-			case 'undelivered':
-				$tracking_record->status = TrackingStatus::FAILED;
-				break;
+		if ( null === $proposed_status ) {
+			return;
+		}
+
+		if ( ! DeliveryStatusProgression::should_apply_status_update( $previous_status, $proposed_status, $this->channel ) ) {
+			doublescale_get_logger()->info(
+				ucfirst( $this->channel ) . ' delivery status webhook ignored (stale regression)',
+				array(
+					'tracking_record_id' => $tracking_record->id,
+					'current_status'     => $previous_status,
+					'webhook_status'     => $status,
+					'proposed_status'    => $proposed_status,
+					'contact_id'         => $tracking_record->contact_id,
+					'source_id'          => $tracking_record->source_id,
+					'source_type'        => $tracking_record->source_type,
+					'code'               => "{$this->channel}_delivery_status_skipped",
+				)
+			);
+			return;
+		}
+
+		$tracking_record->status = $proposed_status;
+		if ( TrackingStatus::SENT === $proposed_status ) {
+			$tracking_record->sent_at = current_time( 'mysql', true );
 		}
 
 		$tracking_record->save();

@@ -126,15 +126,10 @@ final class CoreModule extends AbstractModule {
 			}
 		);
 
-		// Cap the queue runner's per-request time budget so DoubleScale tasks cannot
-		// monopolize the entire WP-Cron tick. Other plugins (e.g. UpdraftPlus) share
-		// the same Action Scheduler queue and need processing time.
-		add_filter(
-			'action_scheduler_queue_runner_time_limit',
-			static function ( $time_limit ) {
-				return min( (int) $time_limit, 15 );
-			}
-		);
+		// Runner batch size, concurrency, per-request time budget and history
+		// retention, sized for the queue load automations and campaigns create.
+		// See SchedulerTuning for the reasoning behind each value.
+		\DoubleScale\Core\SchedulerTuning::register();
 
 		// Load the field-type files via the cached manifest instead of globbing
 		// the directory on every request. Falls back to a glob when no manifest

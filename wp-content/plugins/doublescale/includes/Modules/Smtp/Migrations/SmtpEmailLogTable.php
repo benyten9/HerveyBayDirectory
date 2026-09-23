@@ -39,8 +39,10 @@ class SmtpEmailLogTable extends Migration {
 			context longtext NOT NULL,
 			response longtext NOT NULL,
 			resend_count int(11) NOT NULL,
+			tracking_id bigint(20) unsigned DEFAULT NULL,
 			PRIMARY KEY  (log_id),
 			KEY status (status(191)),
-			KEY timestamp (timestamp)';
+			KEY timestamp (timestamp),
+			KEY tracking_id (tracking_id)';
 	}
 }

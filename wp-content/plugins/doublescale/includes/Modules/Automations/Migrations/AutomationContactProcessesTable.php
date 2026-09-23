@@ -45,6 +45,7 @@ class AutomationContactProcessesTable extends Migration {
 		 * automation_id: Automation ID
 		 * automation_contact_id: Automation Contact ID
 		 * status: Status of the process
+		 * message: User-visible reason when a step fails or is skipped
 		 * created_at: Created at timestamp
 		 * updated_at: Updated at timestamp
 		 */
@@ -54,6 +55,7 @@ class AutomationContactProcessesTable extends Migration {
             automation_id BIGINT(20) UNSIGNED NOT NULL,
 			automation_contact_id BIGINT(20) UNSIGNED NOT NULL,
             status VARCHAR(255) NOT NULL,
+            message TEXT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),

@@ -26,10 +26,7 @@ final class JedJsonCompiler {
 		return array(
 			'build/client/index.js',
 			'build/renderer/index.js',
-			'build/renderer/support/index.js',
-			'build/renderer/proposal/index.js',
-			'build/renderer/invoice/index.js',
-			'build/renderer/contract/index.js',
+			'build/renderer/portal/index.js',
 		);
 	}
 

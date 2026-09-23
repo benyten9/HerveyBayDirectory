@@ -201,6 +201,25 @@ class WhatsappProcessing extends AbstractCampaignProcessing {
 			$prepared['TemplateSettings'] = $header_settings;
 		}
 
+		// Per-send values recorded by an automation step. Meta never returns the
+		// approved sample media in its template list, so a cached definition
+		// cannot supply the image a media header needs; the same is true of a
+		// coupon code or a carousel's per-card media. The contact dialog collects
+		// these per send, and an automation has to carry them the same way or its
+		// sends fail with "(#131008) Required parameter is missing".
+		$automation_settings = CommunicationTrackingMetaModel::get_meta_value(
+			$campaign_message->id,
+			'automation_template_settings'
+		);
+
+		if ( ! empty( $automation_settings ) && is_array( $automation_settings ) ) {
+			foreach ( array( 'header_media', 'button_params', 'card_params' ) as $key ) {
+				if ( ! empty( $automation_settings[ $key ] ) ) {
+					$prepared['TemplateSettings'][ $key ] = $automation_settings[ $key ];
+				}
+			}
+		}
+
 		return $prepared;
 	}
 

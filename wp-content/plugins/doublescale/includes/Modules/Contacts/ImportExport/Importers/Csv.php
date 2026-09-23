@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Contacts\Abstracts\Importer;
 use League\Csv\Reader;
 use League\Csv\Statement;
+use DoubleScale\Modules\Contacts\ImportExport\CsvDelimiter;
 use DoubleScale\Modules\Contacts\ImportExport\CsvEncoding;
 use DoubleScale\Modules\Contacts\ImportExport\Security;
 
@@ -29,7 +30,7 @@ class Csv extends Importer {
 	 *
 	 * @var string
 	 */
-	public $name = 'Csv';
+	public $name = 'CSV';
 
 	/**
 	 * Slug
@@ -91,6 +92,7 @@ class Csv extends Importer {
 			CsvEncoding::ensure_file_is_utf8( $file_path );
 
 			$csv = Reader::createFromPath( $file_path, 'r' );
+			$csv->setDelimiter( CsvDelimiter::detect_from_file( $file_path ) );
 			$csv->setHeaderOffset( 0 );
 			$total = count( $csv );
 			$limit = $this->get_contacts_per_request();

@@ -65,7 +65,7 @@ react = __toESM(react);
 //#endregion
 //#region packages/packages/core/editor-widget-creation/src/components/create-widget.tsx
 	var CREATE_WIDGET_EVENT = "elementor/editor/create-widget";
-	var ANGIE_MODAL_PROMOTION_IMAGE_URL = "https://assets.elementor.com/packages/v1/images/angie-modal-promotion.png";
+	var ANGIE_MODAL_PROMOTION_IMAGE_URL = "https://assets.elementor.com/packages/v1/images/angie-top-bar-promotion-modal-0926.png";
 	var ANGIE_CTA_CLICKED_EVENT = "ai_widget_cta_clicked";
 	var ANGIE_INSTALL_STARTED_EVENT = "angie_install_started";
 	var ANGIE_INSTALL_COMPLETED_EVENT = "angie_install_completed";
@@ -144,7 +144,10 @@ react = __toESM(react);
 			variant: "h4",
 			fontWeight: 600,
 			color: "text.secondary"
-		}, installState === "error" ? (0, _wordpress_i18n.__)("Installation failed", "elementor") : (0, _wordpress_i18n.__)("Create custom widgets with Angie", "elementor")), /* @__PURE__ */ react.createElement(_elementor_ui.Typography, { variant: "body2" }, installState === "error" ? (0, _wordpress_i18n.__)("We couldn't install Angie automatically. Click below to install it manually.", "elementor") : (0, _wordpress_i18n.__)("Build custom widgets, sections, and code using simple instructions. Install once to start building directly from the editor.", "elementor")), installState !== "error" && /* @__PURE__ */ react.createElement(_elementor_ui.FormControlLabel, {
+		}, installState === "error" ? (0, _wordpress_i18n.__)("Installation failed", "elementor") : /* @__PURE__ */ react.createElement(react.Fragment, null, (0, _wordpress_i18n.__)("Pages, layouts,", "elementor"), /* @__PURE__ */ react.createElement("br", null), (0, _wordpress_i18n.__)("widgets and more", "elementor"))), /* @__PURE__ */ react.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			fontWeight: 500
+		}, installState === "error" ? (0, _wordpress_i18n.__)("We couldn't install Angie automatically. Click below to install it manually.", "elementor") : (0, _wordpress_i18n.__)("Ask Angie to build you full pages, custom widgets, snippets, and code directly in Elementor. Install and activate Angie once on this site to start building.", "elementor")), installState !== "error" && /* @__PURE__ */ react.createElement(_elementor_ui.FormControlLabel, {
 			control: /* @__PURE__ */ react.createElement(_elementor_ui.Checkbox, {
 				size: "small",
 				checked: agreedToTerms,
@@ -153,7 +156,7 @@ react = __toESM(react);
 			label: /* @__PURE__ */ react.createElement(_elementor_ui.Typography, {
 				variant: "body2",
 				color: "text.secondary"
-			}, interpolateLinks((0, _wordpress_i18n.sprintf)((0, _wordpress_i18n.__)("I agree to the %1$s & %2$s.", "elementor"), "{{terms}}", "{{privacy}}"), {
+			}, interpolateLinks((0, _wordpress_i18n.sprintf)((0, _wordpress_i18n.__)("By installing, you agree to our %1$s & %2$s.", "elementor"), "{{terms}}", "{{privacy}}"), {
 				terms: {
 					label: (0, _wordpress_i18n.__)("Terms", "elementor"),
 					href: "https://elementor.com/terms/angie-terms-conditions/"
@@ -179,7 +182,7 @@ react = __toESM(react);
 				size: 18,
 				color: "inherit"
 			}) : void 0
-		}, installState === "installing" ? (0, _wordpress_i18n.__)("Installing…", "elementor") : (0, _wordpress_i18n.__)("Install & Activate", "elementor"))))))));
+		}, installState === "installing" ? (0, _wordpress_i18n.__)("Installing…", "elementor") : (0, _wordpress_i18n.__)("Install and activate", "elementor"))))))));
 	}
 	function CreateWidget() {
 		const [modalData, setModalData] = (0, react.useState)(null);

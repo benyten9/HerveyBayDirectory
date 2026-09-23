@@ -486,6 +486,8 @@ abstract class AbstractCampaignController extends RestController {
 				return new WP_Error( 'error', sprintf( __( '%s Campaign not found', 'doublescale' ), ucfirst( $this->channel ) ), array( 'status' => 404 ) );
 			}
 
+			$this->cancel_scheduled_work( array( (int) $campaign->id ) );
+
 			$campaign->delete();
 
 			return new WP_REST_Response( null, 204 );
@@ -511,11 +513,70 @@ abstract class AbstractCampaignController extends RestController {
 				return new WP_Error( 'error', sprintf( __( '%s Campaigns not found', 'doublescale' ), ucfirst( $this->channel ) ), array( 'status' => 404 ) );
 			}
 
+			$this->cancel_scheduled_work( $campaigns->pluck( 'id' )->map( 'intval' )->all() );
+
 			CampaignModel::destroy( $campaign_ids );
 
 			return new WP_REST_Response( null, 204 );
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Cancel any scheduled work owned by campaigns that are about to be deleted.
+	 *
+	 * Deleting the campaign row does not touch Action Scheduler. An automated
+	 * campaign holds a *recurring* action created by schedule_campaign_cron();
+	 * without this call that action outlives the campaign and keeps waking on
+	 * its schedule forever. execute_scheduled_campaign() re-reads the campaign
+	 * and bails when it is gone, so nothing is ever sent — but the orphaned
+	 * action stays in the queue indefinitely.
+	 *
+	 * Must run BEFORE the row is deleted: the Pro handler resolves the campaign
+	 * to decide what to unschedule.
+	 *
+	 * @param array<int> $campaign_ids Campaign ids being deleted.
+	 * @return void
+	 */
+	protected function cancel_scheduled_work( array $campaign_ids ) {
+		$campaign_ids = array_values( array_filter( array_map( 'intval', $campaign_ids ) ) );
+
+		if ( empty( $campaign_ids ) ) {
+			return;
+		}
+
+		$handler_class = \DoubleScale\Pro\Modules\Campaigns\Automated\AutomatedCampaignHandler::class;
+
+		foreach ( $campaign_ids as $campaign_id ) {
+			// Cleanup is best-effort: a scheduler problem — or a third-party
+			// listener on the hook below — must never stop the campaign from
+			// being deleted. Both live inside the same try so either can fail
+			// loudly in the log without turning a delete into a 500.
+			try {
+				if ( class_exists( $handler_class ) ) {
+					$handler_class::instance()->unschedule_campaign_cron( $campaign_id );
+				}
+
+				/**
+				 * Fires before a campaign row is deleted, so other schedulers can
+				 * drop work keyed to it.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param int $campaign_id The campaign being deleted.
+				 */
+				do_action( 'doublescale_campaign_before_delete', $campaign_id );
+			} catch ( \Throwable $e ) {
+				doublescale_get_logger()->error(
+					'Failed to cancel scheduled work on campaign delete',
+					array(
+						'code'        => 'campaign_cancel_scheduled_work_failed',
+						'campaign_id' => $campaign_id,
+						'error'       => $e->getMessage(),
+					)
+				);
+			}
 		}
 	}
 

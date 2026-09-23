@@ -50,6 +50,7 @@ class AutomationContactProcessesModel extends Model {
 		'automation_id',
 		'automation_contact_id',
 		'status',
+		'message',
 		'created_at',
 		'updated_at',
 	);

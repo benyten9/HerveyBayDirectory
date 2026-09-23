@@ -4,10 +4,9 @@ namespace ElementorPro\Modules\CollectionLoop\Traits;
 use Elementor\Modules\AtomicWidgets\Elements\Base\Has_Element_Template;
 use Elementor\Modules\AtomicWidgets\Elements\Base\Render_Context;
 use Elementor\Plugin;
-use ElementorPro\Modules\CollectionLoop\Elements\Collection_Loop\Collection_Loop;
-use ElementorPro\Modules\CollectionLoop\Elements\Collection_Loop_Item\Collection_Loop_Item;
 use ElementorPro\Modules\CollectionLoop\Query\ItemProviders\Loop_Item_Provider;
 use ElementorPro\Modules\CollectionLoop\Query\ItemProviders\Post_Loop_Item_Provider;
+use ElementorPro\Modules\CollectionLoop\Query\Loop_Query_Counts;
 use ElementorPro\Modules\CollectionLoop\Utils\Alternate_Selector;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -38,10 +37,9 @@ trait Has_Loop_Iteration {
 			return '';
 		}
 
-		$children = $this->get_children();
-		$template = $children[ Collection_Loop::TEMPLATE_CHILD_INDEX ] ?? null;
+		$selector = Alternate_Selector::for_loop_items( $this->get_children() );
 
-		if ( ! $template ) {
+		if ( ! $selector ) {
 			return '';
 		}
 
@@ -51,15 +49,13 @@ trait Has_Loop_Iteration {
 			return '';
 		}
 
-		$selector = new Alternate_Selector( $template, array_slice( $children, 1, Collection_Loop_Item::MAX_ALTERNATES ) );
-
 		/**
 		 * TODO: @deprecate this check on version 4.4
 		 */
 		$format_element_ids_class = 'Elementor\\Modules\\AtomicWidgets\\Utils\\Format_Element_Ids';
 
 		if ( ! class_exists( $format_element_ids_class ) ) {
-			return $this->render_children_for_loop_legacy( $selector, $item_provider );
+			return $this->render_children_for_loop_legacy( $selector, $loop_context, $item_provider );
 		}
 
 		return $this->render_children_for_loop_with_unique_ids( $selector, $loop_context, $item_provider, $format_element_ids_class );
@@ -69,77 +65,69 @@ trait Has_Loop_Iteration {
 		$loop_id        = (string) ( $loop_context['loop_id'] ?? '' );
 		$html           = '';
 		$raw_data_by_id = [];
-		$iteration      = 0;
-		$budget         = $item_provider->count();
+		$slot           = $this->resolve_start_slot( $loop_context );
+		$end_slot       = $slot + $this->resolve_slot_budget( $loop_context, $item_provider );
 
-		$render_slots = function ( string $item_id ) use ( $selector, $loop_id, &$iteration, $budget, $format_element_ids_class, &$raw_data_by_id ): string {
-			return $this->render_alternate_slots_for_item(
-				$selector,
-				$loop_id,
-				$item_id,
-				$iteration,
-				$budget,
-				$format_element_ids_class,
-				$raw_data_by_id
-			);
-		};
-
-		$item_provider->iterate( function ( string $item_id ) use ( &$iteration, $budget, $render_slots, &$html ): bool {
-			if ( $iteration >= $budget ) {
+		$item_provider->iterate( function ( string $item_id ) use ( $selector, $loop_id, &$slot, $end_slot, $format_element_ids_class, &$raw_data_by_id, &$html ): bool {
+			if ( $slot >= $end_slot ) {
 				return false;
 			}
 
-			$html .= $render_slots( $item_id );
+			$html .= $this->render_alternate_slots_for_item(
+				$selector,
+				$loop_id,
+				$item_id,
+				$slot,
+				$end_slot,
+				$format_element_ids_class,
+				$raw_data_by_id
+			);
 
-			return $iteration < $budget;
+			return $slot < $end_slot;
 		} );
 
 		return $html;
 	}
 
-	private function render_children_for_loop_legacy( Alternate_Selector $selector, Loop_Item_Provider $item_provider ): string {
-		$html      = '';
-		$iteration = 0;
-		$budget    = $item_provider->count();
+	private function render_children_for_loop_legacy( Alternate_Selector $selector, array $loop_context, Loop_Item_Provider $item_provider ): string {
+		$html     = '';
+		$slot     = $this->resolve_start_slot( $loop_context );
+		$end_slot = $slot + $this->resolve_slot_budget( $loop_context, $item_provider );
 
-		$render_slots = function () use ( $selector, &$iteration, $budget ): string {
-			return $this->render_alternate_slots_for_item_legacy( $selector, $iteration, $budget );
-		};
-
-		$item_provider->iterate( function () use ( &$iteration, $budget, $render_slots, &$html ): bool {
-			if ( $iteration >= $budget ) {
+		$item_provider->iterate( function () use ( $selector, &$slot, $end_slot, &$html ): bool {
+			if ( $slot >= $end_slot ) {
 				return false;
 			}
 
-			$html .= $render_slots();
+			$html .= $this->render_alternate_slots_for_item_legacy( $selector, $slot, $end_slot );
 
-			return $iteration < $budget;
+			return $slot < $end_slot;
 		} );
 
 		return $html;
 	}
 
 	/**
-	 * Renders one or more output slots for the current loop item. Static alternates
-	 * may emit multiple slots without advancing to the next item.
+	 * Renders the slots the current loop item occupies — static alternates take a
+	 * slot without advancing to the next item. A page boundary can cut that short;
+	 * the next page re-fetches the item, since its offset skipped the static slot.
 	 */
 	private function render_alternate_slots_for_item(
 		Alternate_Selector $selector,
 		string $loop_id,
 		string $item_id,
-		int &$iteration,
-		int $budget,
+		int &$slot,
+		int $end_slot,
 		string $format_element_ids_class,
 		array &$raw_data_by_id
 	): string {
 		$html = '';
 
-		do {
-			if ( $iteration >= $budget ) {
+		foreach ( $selector->consume_item_slots( $slot ) as $pick ) {
+			if ( $slot >= $end_slot ) {
 				break;
 			}
 
-			$pick   = $selector->select_for_index( $iteration );
 			$picked = $pick['element'];
 			$picked_id = $picked->get_id();
 
@@ -150,10 +138,10 @@ trait Has_Loop_Iteration {
 			$template_data = $raw_data_by_id[ $picked_id ];
 			$children_data = $template_data['elements'] ?? [];
 
-			// Iteration is in the seed so static slots (same $item_id) still get unique ids.
+			// The slot index is in the seed so static slots (same $item_id) still get unique ids.
 			$rewritten_children = $format_element_ids_class::format(
 				$children_data,
-				[ $loop_id, $item_id, (string) $iteration ]
+				[ $loop_id, $item_id, (string) $slot ]
 			);
 
 			$iteration_data = array_merge( $template_data, [ 'elements' => $rewritten_children ] );
@@ -165,25 +153,24 @@ trait Has_Loop_Iteration {
 				$html .= (string) ob_get_clean();
 			}
 
-			$iteration++;
-		} while ( $pick['is_static'] );
+			++$slot;
+		}
 
 		return $html;
 	}
 
 	private function render_alternate_slots_for_item_legacy(
 		Alternate_Selector $selector,
-		int &$iteration,
-		int $budget
+		int &$slot,
+		int $end_slot
 	): string {
 		$html = '';
 
-		do {
-			if ( $iteration >= $budget ) {
+		foreach ( $selector->consume_item_slots( $slot ) as $pick ) {
+			if ( $slot >= $end_slot ) {
 				break;
 			}
 
-			$pick   = $selector->select_for_index( $iteration );
 			$picked = $pick['element'];
 			$picked->reset_descendant_render_state();
 
@@ -191,10 +178,34 @@ trait Has_Loop_Iteration {
 			$picked->print_element();
 			$html .= (string) ob_get_clean();
 
-			$iteration++;
-		} while ( $pick['is_static'] );
+			++$slot;
+		}
 
 		return $html;
+	}
+
+	/**
+	 * First global slot of the current page. Global rather than page-local so
+	 * "apply once" fires once across the whole query instead of once per page.
+	 */
+	private function resolve_start_slot( array $loop_context ): int {
+		return max( 0, (int) ( $loop_context['start_slot'] ?? 0 ) );
+	}
+
+	/**
+	 * Slots this page may fill, published by the loop element that owns the slot
+	 * map. The fallback covers contexts built without it (v3-shaped fake contexts
+	 * in tests): static alternates add slots without consuming a post, so
+	 * budgeting by item count alone drops the pushed post off the tail, while
+	 * `max()` absorbs an unbounded or absent `posts_per_page` and sticky posts
+	 * inflating `post_count`.
+	 */
+	private function resolve_slot_budget( array $loop_context, Loop_Item_Provider $item_provider ): int {
+		if ( isset( $loop_context['slot_budget'] ) ) {
+			return max( 0, (int) $loop_context['slot_budget'] );
+		}
+
+		return max( $item_provider->count(), Loop_Query_Counts::items_per_page( $item_provider ) );
 	}
 
 	/**

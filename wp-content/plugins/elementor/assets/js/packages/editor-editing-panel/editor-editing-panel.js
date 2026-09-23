@@ -1181,7 +1181,7 @@ react = __toESM(react);
 			sx: { mt: 1 }
 		}, /* @__PURE__ */ react.createElement(_elementor_ui.AlertTitle, null, (0, _wordpress_i18n.__)("Some classes are missing", "elementor")), /* @__PURE__ */ react.createElement(_elementor_ui.Typography, {
 			variant: "caption",
-			textColor: "primary"
+			color: "primary"
 		}, (0, _wordpress_i18n.__)("A class was removed from your site and is no longer active on this element", "elementor")));
 	}
 
@@ -5950,8 +5950,15 @@ react = __toESM(react);
 			direction: "row",
 			alignItems: "center",
 			gap: 1.5
-		}, /* @__PURE__ */ react.createElement("span", null, value?.title));
+		}, value.id ? /* @__PURE__ */ react.createElement(AccordionItemRepeaterLabel, {
+			elementId: value.id,
+			fallbackTitle: value.title
+		}) : /* @__PURE__ */ react.createElement("span", null, value?.title));
 	}, "ItemLabel");
+	var AccordionItemRepeaterLabel = ({ elementId, fallbackTitle }) => {
+		const label = (0, _elementor_editor_elements.useElementEditorSettings)(elementId)?.title ?? fallbackTitle ?? "";
+		return /* @__PURE__ */ react.createElement("span", null, label);
+	};
 	var ItemContent$2 = /* @__PURE__ */ __name(({ value }) => {
 		if (!value.id) return null;
 		return /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
@@ -6406,13 +6413,19 @@ react = __toESM(react);
 		});
 	};
 	var ItemLabel = ({ value, index }) => {
-		const elementTitle = value?.title;
 		return /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
 			sx: { minHeight: 20 },
 			direction: "row",
 			alignItems: "center",
 			gap: 1.5
-		}, /* @__PURE__ */ react.createElement("span", null, elementTitle), /* @__PURE__ */ react.createElement(ItemDefaultTab, { index }));
+		}, value.id ? /* @__PURE__ */ react.createElement(TabRepeaterLabel, {
+			elementId: value.id,
+			fallbackTitle: value.title
+		}) : /* @__PURE__ */ react.createElement("span", null, value?.title), /* @__PURE__ */ react.createElement(ItemDefaultTab, { index }));
+	};
+	var TabRepeaterLabel = ({ elementId, fallbackTitle }) => {
+		const label = (0, _elementor_editor_elements.useElementEditorSettings)(elementId)?.title ?? fallbackTitle ?? "";
+		return /* @__PURE__ */ react.createElement("span", null, label);
 	};
 	var ItemDefaultTab = ({ index }) => {
 		const { value: defaultItem } = (0, _elementor_editor_controls.useBoundProp)(_elementor_editor_props.numberPropTypeUtil);

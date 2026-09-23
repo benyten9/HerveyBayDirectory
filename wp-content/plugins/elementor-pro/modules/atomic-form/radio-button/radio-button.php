@@ -53,7 +53,7 @@ class Radio_Button extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'radio', 'button' ];
+		return [ 'atomic', 'form', 'radio', 'button', 'option', 'choice' ];
 	}
 
 	protected static function define_props_schema(): array {

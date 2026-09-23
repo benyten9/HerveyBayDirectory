@@ -4,6 +4,7 @@ namespace Elementor\MCP\Composer;
 
 use Elementor\MCP\Composer\Admin\ConsentController;
 use Elementor\MCP\Composer\Admin\CredentialsController;
+use Elementor\MCP\Composer\Admin\McpSettingsController;
 use Elementor\MCP\Composer\Admin\TestController;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -33,7 +34,7 @@ class Loader {
 	 */
 	public static function define_constants(): void {
 		if ( ! defined( 'ELEMENTOR_MCP_COMPOSER_VERSION' ) ) {
-			define( 'ELEMENTOR_MCP_COMPOSER_VERSION', '1.0.11' );
+			define( 'ELEMENTOR_MCP_COMPOSER_VERSION', '1.0.16' );
 		}
 
 		if ( ! defined( 'ELEMENTOR_MCP_ONBOARDING_FASTLANE' ) ) {
@@ -72,6 +73,9 @@ class Loader {
 	 * @return void
 	 */
 	public static function register_rest_routes(): void {
+		$mcp_settings_controller = new McpSettingsController();
+		$mcp_settings_controller->register_routes();
+
 		$fastlane_mode = defined( 'ELEMENTOR_MCP_ONBOARDING_FASTLANE' ) && ELEMENTOR_MCP_ONBOARDING_FASTLANE;
 
 		if ( ! $fastlane_mode ) {

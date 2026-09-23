@@ -54,7 +54,7 @@ class File_Upload extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'file', 'upload' ];
+		return [ 'atomic', 'form', 'file', 'upload', 'attachment', 'document' ];
 	}
 
 	protected static function define_props_schema(): array {

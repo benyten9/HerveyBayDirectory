@@ -94,6 +94,10 @@ class Settings {
 			$parts[] = __( 'Connection was selected via the doublescale_smtp_explicit_connection filter.', 'doublescale' );
 		}
 
+		if ( 'from_email' === $reason ) {
+			$parts[] = __( 'Connection was selected because its From email matches the message From address.', 'doublescale' );
+		}
+
 		if ( ! empty( $attempt['routing_adjusted'] ) ) {
 			$parts[] = __( 'Routing was adjusted because the first resolved connection was missing from saved settings.', 'doublescale' );
 		}
@@ -225,12 +229,14 @@ class Settings {
 	 *
 	 * Returns the connection routing information based on smart routing rules:
 	 * 1. Explicit connection set via filter (highest priority)
-	 * 2. Filtered/default connection
-	 * 3. First available connection (fallback)
+	 * 2. Connection whose From email matches $from_email (campaign / template From)
+	 * 3. Saved default connection
+	 * 4. First available connection
+	 * Send itself then retries the configured fallback connection if the primary fails.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $from_email Reserved for future per-from routing; currently unused.
+	 * @param string|null $from_email Message From address used to pick a matching connection.
 	 * @return array {
 	 *     Smart route information.
 	 *
@@ -239,7 +245,7 @@ class Settings {
 	 *     @type string|null $fallback_connection_id   The fallback connection ID.
 	 *     @type array|null  $fallback_connection      The fallback connection configuration.
 	 *     @type array       $connections                    All available connections.
-	 *     @type string      $primary_route_reason           explicit|default — why the primary id was chosen.
+	 *     @type string      $primary_route_reason           explicit|from_email|default — why the primary id was chosen.
 	 *     @type string|null $settings_default_connection_id Saved default connection id (UI default), before explicit/from override.
 	 *     @type bool        $routing_adjusted               True if primary id was replaced because it was missing/stale.
 	 * }
@@ -275,13 +281,19 @@ class Settings {
 		$primary_route_reason = 'default';
 		$routing_adjusted     = false;
 
-		// If explicit connection is set via filter, use it; otherwise use filtered/default connection.
+		// If explicit connection is set via filter, use it; otherwise match From, then default.
 		if ( $explicit_connection ) {
 			$default_connection_id = $explicit_connection;
 			$primary_route_reason  = 'explicit';
 		} else {
-			$default_connection_id = $filtered_connection_id;
-			$primary_route_reason  = 'default';
+			$matched_connection_id = self::get_connection_by_from_email( is_string( $from_email ) ? $from_email : '' );
+			if ( $connection_exists( $matched_connection_id ) ) {
+				$default_connection_id = $matched_connection_id;
+				$primary_route_reason  = 'from_email';
+			} else {
+				$default_connection_id = $filtered_connection_id;
+				$primary_route_reason  = 'default';
+			}
 		}
 
 		// Final fallback to first connection

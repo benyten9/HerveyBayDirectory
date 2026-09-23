@@ -23336,7 +23336,6 @@ arguments: record(string(), string()).optional() }).optional()
 			__publicField$2(this, "getRegisteredMcpServers", getRegisteredMcpServers);
 		}
 		async activate() {
-			await this.sdk.waitForReady();
 			await this.registerEntries(this.getRegisteredMcpServers(), MAX_RETRIES);
 		}
 		async registerEntries(entries, retry) {
@@ -24622,11 +24621,7 @@ ${extraData.requiredResources?.join("\n")}
 	var ANGIE_MODEL_PREFERENCES = "angie/modelPreferences";
 	var ANGIE_REQUIRED_RESOURCES = "angie/requiredResources";
 	function createDefaultModelPreferences() {
-		return {
-			hints: [{ name: "claude-sonnet-4-5" }],
-			intelligencePriority: .8,
-			speedPriority: .7
-		};
+		return { hints: [{ name: "claude-sonnet-4-6" }] };
 	}
 
 //#endregion

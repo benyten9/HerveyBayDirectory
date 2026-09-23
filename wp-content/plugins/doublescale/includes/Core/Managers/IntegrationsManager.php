@@ -104,19 +104,19 @@ final class IntegrationsManager {
 			'mollie'        => array(
 				'label'             => __( 'Mollie', 'doublescale' ),
 				'description'       => __( 'Accept iDEAL, Bancontact, SEPA and card payments for invoices via Mollie.', 'doublescale' ),
-				'icon'              => 'assets/images/mollie/mollie.svg',
+				'icon'              => 'assets/images/mollie/mollie.png',
 				'catalog_category'  => 'payment',
 			),
 			'razorpay'      => array(
 				'label'             => __( 'Razorpay', 'doublescale' ),
 				'description'       => __( 'Accept UPI, cards, netbanking and wallet payments for invoices via Razorpay.', 'doublescale' ),
-				'icon'              => 'assets/images/razorpay/razorpay.svg',
+				'icon'              => 'assets/images/razorpay/razorpay.png',
 				'catalog_category'  => 'payment',
 			),
 			'authorize_net' => array(
 				'label'             => __( 'Authorize.Net', 'doublescale' ),
 				'description'       => __( 'Accept card payments for invoices via Authorize.Net Accept Hosted.', 'doublescale' ),
-				'icon'              => 'assets/images/authorize-net/authorize-net.svg',
+				'icon'              => 'assets/images/authorize-net/authorize.png',
 				'catalog_category'  => 'payment',
 			),
 			'typeform'      => array(

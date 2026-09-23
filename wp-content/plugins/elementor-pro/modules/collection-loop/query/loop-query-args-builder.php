@@ -27,6 +27,13 @@ final class Loop_Query_Args_Builder {
 	 */
 	const PAGE_SETTING_KEY = '__paged';
 
+	/**
+	 * Internal settings key that pages post-based template types by item offset
+	 * instead of page number, as static alternates require. Prefer the
+	 * `extract_offset()` / `apply_offset()` helpers over using it directly.
+	 */
+	const OFFSET_SETTING_KEY = '__offset';
+
 	public static function item_provider_from_resolved( array $value, ?Element_Base $element = null ): Loop_Item_Provider {
 		$value = self::unwrap_settings( $value );
 		$type  = self::resolve_template_type( $value );
@@ -53,6 +60,18 @@ final class Loop_Query_Args_Builder {
 	public static function apply_pagination( array $settings, int $page ): array {
 		if ( $page > 1 ) {
 			$settings[ self::PAGE_SETTING_KEY ] = $page;
+		}
+
+		return $settings;
+	}
+
+	public static function extract_offset( array $settings ): int {
+		return (int) ( $settings[ self::OFFSET_SETTING_KEY ] ?? 0 );
+	}
+
+	public static function apply_offset( array $settings, int $offset ): array {
+		if ( $offset > 0 ) {
+			$settings[ self::OFFSET_SETTING_KEY ] = $offset;
 		}
 
 		return $settings;

@@ -187,7 +187,8 @@ class CampaignResender {
 	 * @return void
 	 */
 	private function complete_resending( CampaignModel $campaign, $offset_key ) {
-		$campaign->status = 'completed';
+		$settings         = is_array( $campaign->settings ) ? $campaign->settings : array();
+		$campaign->status = ! empty( $settings['automated'] ) ? 'active' : 'completed';
 		$campaign->save();
 		update_option( $offset_key, 0 );
 

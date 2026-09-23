@@ -55,7 +55,7 @@ class Textarea extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'textarea', 'text', 'email' ];
+		return [ 'atomic', 'form', 'textarea', 'text', 'email', 'multiline', 'message', 'comments' ];
 	}
 
 	private static function supports_number_range_length(): bool {

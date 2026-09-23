@@ -9419,7 +9419,7 @@ react_dom = __toESM(react_dom);
 
 //#endregion
 //#region packages/packages/libs/editor-controls/src/controls/toggle-control.tsx
-	var ToggleControl = createControl(({ options, fullWidth = false, size = "tiny", exclusive = true, maxItems, convertOptions = false }) => {
+	var ToggleControl = createControl(({ options, fullWidth = false, size = "tiny", exclusive = true, maxItems, convertOptions = false, allowEmpty = false }) => {
 		const { value, setValue, placeholder, disabled } = useBoundProp(_elementor_editor_props.stringPropTypeUtil);
 		const processedOptions = convertOptions ? convertToggleOptionsToAtomic(options) : options;
 		const exclusiveValues = processedOptions.filter((option) => option.exclusive).map((option) => option.value);
@@ -9435,10 +9435,17 @@ react_dom = __toESM(react_dom);
 			size,
 			placeholder
 		};
+		const handleExclusiveToggle = (selectedValue) => {
+			if (allowEmpty && !selectedValue) {
+				setValue("");
+				return;
+			}
+			setValue(selectedValue);
+		};
 		return exclusive ? /* @__PURE__ */ react.createElement(ControlToggleButtonGroup, {
 			...toggleButtonGroupProps,
-			value: value ?? null,
-			onChange: setValue,
+			value: allowEmpty ? value || null : value ?? null,
+			onChange: handleExclusiveToggle,
 			disabled,
 			exclusive: true
 		}) : /* @__PURE__ */ react.createElement(ControlToggleButtonGroup, {

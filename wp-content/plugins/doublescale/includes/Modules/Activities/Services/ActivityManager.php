@@ -1886,11 +1886,25 @@ final class ActivityManager {
 		}
 
 		if ( ActivityTypes::STATUS_CHANGED === $type ) {
-			$actor = $user_name ?? __( 'Someone', 'doublescale' );
-			if ( ! empty( $data['proposal_id'] ) ) {
+			$actor     = $user_name ?? __( 'Someone', 'doublescale' );
+			$event_key = isset( $data['event_key'] ) ? (string) $data['event_key'] : '';
+
+			if ( 'invoice_linked' === $event_key || ( ! empty( $data['invoice_id'] ) && empty( $data['proposal_id'] ) ) ) {
+				$number = ! empty( $data['invoice_number'] )
+					? (string) $data['invoice_number']
+					: '#' . (int) ( $data['invoice_id'] ?? 0 );
+				return sprintf(
+					/* translators: 1: user name, 2: invoice number */
+					__( '%1$s linked invoice %2$s to this deal', 'doublescale' ),
+					$actor,
+					$number
+				);
+			}
+
+			if ( 'proposal_linked' === $event_key || ! empty( $data['proposal_id'] ) ) {
 				$number = ! empty( $data['proposal_number'] )
 					? (string) $data['proposal_number']
-					: '#' . (int) $data['proposal_id'];
+					: '#' . (int) ( $data['proposal_id'] ?? 0 );
 				return sprintf(
 					/* translators: 1: user name, 2: proposal number */
 					__( '%1$s linked proposal %2$s to this deal', 'doublescale' ),
@@ -1898,6 +1912,7 @@ final class ActivityManager {
 					$number
 				);
 			}
+
 			if ( ! empty( $data['invoice_id'] ) ) {
 				$number = ! empty( $data['invoice_number'] )
 					? (string) $data['invoice_number']

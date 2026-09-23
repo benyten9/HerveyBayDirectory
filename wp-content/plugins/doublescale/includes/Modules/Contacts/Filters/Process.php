@@ -82,16 +82,19 @@ class Process {
 	protected function filter_nested() {
 		// Detect ListTagFilter payload (rows with list/tag keys, no filter/rule).
 		// Two on-wire shapes are accepted:
-		// - Tagged flat list: each row carries `mode: 'include'|'exclude'`. This
-		// is the canonical wire format; it survives WP core's
-		// rest_sanitize_array() reindexing, which strips outer keys.
+		// - Tagged flat list: `[ {list|tag, mode?}, … ]`. The canonical wire
+		// format; it survives WP core's rest_sanitize_array() reindexing,
+		// which strips outer keys. `mode` is optional and defaults to
+		// include.
 		// - Legacy positional shape: `[ [includeRows…], [excludeRows…] ]`.
 		// Still accepted for direct PHP callers and stored campaign
 		// settings; but on the wire it loses include/exclude semantics
 		// when only one side is populated, so the frontend always sends
 		// the tagged shape.
+		//
+		// The two are told apart by nesting, not by the presence of `mode`:
+		// see is_legacy_positional_list_tag_payload().
 		$is_list_tag_format = false;
-		$has_mode_tagging   = false;
 
 		foreach ( $this->filters as $slot_value ) {
 			if ( ! is_array( $slot_value ) ) {
@@ -103,9 +106,6 @@ class Process {
 			$is_rule_row     = array_key_exists( 'filter', $slot_value ) || array_key_exists( 'rule', $slot_value );
 			if ( $has_list_or_tag && ! $is_rule_row ) {
 				$is_list_tag_format = true;
-				if ( array_key_exists( 'mode', $slot_value ) ) {
-					$has_mode_tagging = true;
-				}
 				continue;
 			}
 
@@ -118,18 +118,22 @@ class Process {
 				$row_is_rule_row     = array_key_exists( 'filter', $row ) || array_key_exists( 'rule', $row );
 				if ( $row_has_list_or_tag && ! $row_is_rule_row ) {
 					$is_list_tag_format = true;
-					if ( array_key_exists( 'mode', $row ) ) {
-						$has_mode_tagging = true;
-					}
 				}
 			}
 		}
 
-		if ( $is_list_tag_format && $has_mode_tagging ) {
+		if ( $is_list_tag_format && ! $this->is_legacy_positional_list_tag_payload() ) {
 			// Re-split tagged flat list into the two-slot shape that
 			// filter_list_tag_format() reads. Rows missing an explicit
 			// `mode` default to include — matches the section the UI puts
 			// rows into when "Send to" carries no exclude marker.
+			//
+			// This deliberately does NOT require any row to carry a `mode`.
+			// It used to, and a payload where no row did fell through to the
+			// legacy positional reader below, which read the single row as the
+			// includes SLOT rather than a row inside it, found no usable
+			// constraint, and applied none — so targeting one list reached
+			// every subscribed contact instead.
 			$includes = array();
 			$excludes = array();
 			foreach ( $this->filters as $row_or_group ) {
@@ -485,6 +489,32 @@ class Process {
 		}
 
 		return $filters;
+	}
+
+	/**
+	 * Whether the payload is the legacy positional shape: [ includes[], excludes[] ].
+	 *
+	 * Both shapes are "list/tag format", and they are told apart by nesting:
+	 * the tagged flat shape is a list of ROWS ({list}, {tag}), while the legacy
+	 * shape is a list of GROUPS of rows. Only the flat one needs re-splitting —
+	 * the legacy one is already in the two-slot form filter_list_tag_format()
+	 * reads, and re-splitting it would flatten its exclude slot into includes.
+	 *
+	 * @return bool
+	 */
+	private function is_legacy_positional_list_tag_payload(): bool {
+		foreach ( $this->filters as $slot_value ) {
+			if ( ! is_array( $slot_value ) ) {
+				continue;
+			}
+
+			// A row at the top level means this is the flat shape.
+			if ( array_key_exists( 'list', $slot_value ) || array_key_exists( 'tag', $slot_value ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

@@ -115,14 +115,14 @@ final class CampaignStatusManager {
 		return array(
 			self::DRAFT      => array( self::INACTIVE, self::ACTIVE, self::SCHEDULED, self::PROCESSING ),
 			self::INACTIVE   => array( self::DRAFT, self::ACTIVE, self::SCHEDULED, self::PROCESSING ),
-			self::ACTIVE     => array( self::DRAFT, self::INACTIVE, self::PROCESSING, self::PAUSED, self::CANCELLED ),
+			self::ACTIVE     => array( self::DRAFT, self::INACTIVE, self::PROCESSING, self::PAUSED, self::CANCELLED, self::RESENDING ),
 			self::SCHEDULED  => array( self::DRAFT, self::INACTIVE, self::PROCESSING, self::CANCELLED, self::FAILED ),
 			self::PROCESSING => array( self::COMPLETED, self::PAUSED, self::CANCELLED, self::FAILED ),
 			self::PAUSED     => array( self::PROCESSING, self::ACTIVE, self::CANCELLED ),
 			self::COMPLETED  => array( self::ACTIVE, self::RESENDING ),
 			self::RESENDING  => array( self::ACTIVE, self::COMPLETED, self::CANCELLED ),
 			self::CANCELLED  => array(),
-			self::FAILED     => array( self::ACTIVE, self::DRAFT ),
+			self::FAILED     => array( self::ACTIVE, self::DRAFT, self::RESENDING ),
 		);
 	}
 

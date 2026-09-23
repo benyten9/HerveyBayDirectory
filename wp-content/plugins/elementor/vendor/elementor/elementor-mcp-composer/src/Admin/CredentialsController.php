@@ -70,6 +70,14 @@ class CredentialsController extends RestController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function generate_credentials( \WP_REST_Request $request ) {
+		if ( ! McpSettingsController::is_enabled() ) {
+			return new \WP_Error(
+				'mcp_disabled',
+				__( 'Elementor MCP is currently disabled for this site.', 'elementor' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		if ( ! class_exists( '\WP_Application_Passwords' ) ) {
 			return new \WP_Error(
 				'application_passwords_unavailable',
@@ -124,7 +132,7 @@ class CredentialsController extends RestController {
 					'username'            => $username,
 					'password'            => $chunked_pwd,
 					'serverUrl'           => \rest_url( 'elementor/mcp/' ),
-					'serverName'          => 'elementor-' . \sanitize_title( $site_name ),
+					'serverName'          => \sanitize_title( $site_name ) . '-elementor',
 					'encodedCredentials'  => $encoded_credentials,
 				],
 			],

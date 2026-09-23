@@ -92,33 +92,8 @@ final class ProposalFrontendHandler {
 			return;
 		}
 
-		$plugin_dir = defined( 'DOUBLESCALE_PLUGIN_DIR' ) ? \DOUBLESCALE_PLUGIN_DIR : '';
-		$plugin_url = defined( 'DOUBLESCALE_PLUGIN_URL' ) ? \DOUBLESCALE_PLUGIN_URL : '';
-		$version    = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
-
-		$asset_file = $plugin_dir . 'build/renderer/proposal/index.asset.php';
-		$asset      = file_exists( $asset_file ) ? require $asset_file : null;
-		$deps       = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
-		$ver        = isset( $asset['version'] ) ? $asset['version'] : $version;
-
-		wp_register_script(
-			self::HANDLE,
-			$plugin_url . 'build/renderer/proposal/index.js',
-			$deps,
-			$ver,
-			true
-		);
-
-		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( self::HANDLE, 'doublescale', $plugin_dir . 'languages' );
-		}
-
-		wp_register_style(
-			self::HANDLE,
-			$plugin_url . 'build/renderer/proposal/style.css',
-			array(),
-			$ver
-		);
+		$handle = \DoubleScale\Modules\Portal\Renderer\PublicFrontendAssets::enqueue_script();
+		\DoubleScale\Modules\Portal\Renderer\PublicFrontendAssets::enqueue_style();
 
 		$config = array(
 			'public_rest_url' => esc_url_raw( rest_url( 'doublescale/v1/sales/public/proposals' ) ),
@@ -126,7 +101,7 @@ final class ProposalFrontendHandler {
 			'mount_id'        => self::MOUNT_ID,
 		);
 
-		wp_localize_script( self::HANDLE, 'doublescale_proposal_config', $config );
+		wp_localize_script( $handle, 'doublescale_proposal_config', $config );
 
 		$business = class_exists( \DoubleScale\Modules\Documents\Services\DocumentPdf::class )
 			? \DoubleScale\Modules\Documents\Services\DocumentPdf::resolved_business_settings()
@@ -137,16 +112,12 @@ final class ProposalFrontendHandler {
 			);
 
 		wp_add_inline_script(
-			self::HANDLE,
+			$handle,
 			'window.doublescaleConfig = window.doublescaleConfig || {};'
 			. 'window.doublescaleConfig.business = ' . wp_json_encode( $business ) . ';'
 			. 'window.doublescaleConfig.blogName = ' . wp_json_encode( get_bloginfo( 'name' ) ) . ';',
 			'before'
 		);
-
-		wp_style_add_data( self::HANDLE, 'rtl', 'replace' );
-		wp_enqueue_script( self::HANDLE );
-		wp_enqueue_style( self::HANDLE );
 	}
 
 	/**
@@ -174,6 +145,6 @@ final class ProposalFrontendHandler {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$hash = sanitize_text_field( wp_unslash( (string) $_GET[ ProposalUrl::HASH_QUERY_ARG ] ) );
-		return preg_match( '/^[a-f0-9]{32}$/', $hash ) ? $hash : '';
+		return preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ? $hash : '';
 	}
 }

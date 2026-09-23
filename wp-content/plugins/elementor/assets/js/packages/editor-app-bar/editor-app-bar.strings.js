@@ -15,12 +15,14 @@ __(
 	'Angie lets you generate custom widgets, sections, and code using simple instructions.',
 	'elementor'
 );
-__( 'Build custom widgets using simple instructions.', 'elementor' );
-__( 'Meet Angie', 'elementor' );
-__( 'New', 'elementor' );
+__(
+	'Describe what you want to build in plain language and Angie generates it in native Elementor structure, fully editable and customizable.',
+	'elementor'
+);
 __( 'Angie', 'elementor' );
+__( 'Generate full pages with AI', 'elementor' );
 __( 'Learn More', 'elementor' );
-__( 'Try for free', 'elementor' );
+__( 'Build with Angie', 'elementor' );
 __( 'Angie', 'elementor' );
 __( 'My Elementor', 'elementor' );
 __( 'Connect my account', 'elementor' );

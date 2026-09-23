@@ -70,6 +70,14 @@ class TestController extends RestController {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function validate_response( \WP_REST_Request $request ) {
+		if ( ! McpSettingsController::is_enabled() ) {
+			return new \WP_Error(
+				'mcp_disabled',
+				__( 'Elementor MCP is currently disabled for this site.', 'elementor' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		$response_text = trim( (string) $request->get_param( 'response' ) );
 
 		if ( '' === $response_text ) {

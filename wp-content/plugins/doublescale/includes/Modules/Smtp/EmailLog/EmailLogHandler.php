@@ -97,6 +97,68 @@ class EmailLogHandler {
 		return self::add( $subject, $body, $headers, $attachments, $from, $recipients, $status, $provider, $connection_id, $account_id, $response, $initiator_name, $initiator_slug, $initiator_type, $context, $resend_count );
 	}
 
+	/** @var bool|null Per-request memo for ensure_tracking_column(). */
+	private static $tracking_column_ready = null;
+
+	/**
+	 * Make sure `tracking_id` exists on the log table.
+	 *
+	 * The column ships in the migration and the upgrade sweep adds it, but a
+	 * log write can happen before that sweep runs (or on a site whose sweep
+	 * was skipped). Rather than fail every insert until then, add it here on
+	 * first use — one SHOW COLUMNS per request, one ALTER ever.
+	 *
+	 * @return bool Whether the column is available.
+	 */
+	public static function ensure_tracking_column() {
+		if ( null !== self::$tracking_column_ready ) {
+			return self::$tracking_column_ready;
+		}
+		global $wpdb;
+		$table = $wpdb->prefix . 'doublescale_smtp_email_log';
+		try {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+			$exists = (bool) $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'tracking_id'" );
+			if ( ! $exists ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- one-off self-healing schema add.
+				$wpdb->query( "ALTER TABLE `{$table}` ADD `tracking_id` bigint(20) unsigned DEFAULT NULL, ADD KEY `tracking_id` (`tracking_id`)" );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$exists = (bool) $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'tracking_id'" );
+			}
+			self::$tracking_column_ready = $exists;
+		} catch ( \Throwable $e ) {
+			self::$tracking_column_ready = false;
+		}
+		return self::$tracking_column_ready;
+	}
+
+	/**
+	 * Communication-tracking id for a DoubleScale send, or 0.
+	 *
+	 * Campaign, sequence and automation sends push `tracking_id` into the log
+	 * context (see EmailProcessing). For those the rendered body is already
+	 * reconstructable from the tracking record (template id + captured merge
+	 * tag values), so storing it again per recipient only inflates the table.
+	 *
+	 * @param array $context Merged log context.
+	 * @return int
+	 */
+	public static function tracking_id_from_context( $context ) {
+		if ( ! is_array( $context ) || empty( $context['tracking_id'] ) ) {
+			return 0;
+		}
+		return (int) $context['tracking_id'];
+	}
+
+	/**
+	 * Whether DoubleScale sends should log a reference instead of the body.
+	 *
+	 * @return bool
+	 */
+	public static function stores_body_by_reference() {
+		return (bool) apply_filters( 'doublescale_smtp_log_body_by_reference', Settings::get( 'log_body_by_reference', true ) );
+	}
+
 	/**
 	 * Adds the email log entry to the database.
 	 *
@@ -119,11 +181,25 @@ class EmailLogHandler {
 	 * @return bool                  True if the email log entry is added successfully, false otherwise.
 	 */
 	public static function add( $subject, $body, $headers, $attachments, $from, $recipients, $status, $provider, $connection_id, $account_id, $response, $initiator_name, $initiator_slug, $initiator_type, $context, $resend_count = 0 ) {
+		$has_tracking_column = self::ensure_tracking_column();
+		$tracking_id         = $has_tracking_column ? self::tracking_id_from_context( $context ) : 0;
+		if ( $tracking_id > 0 && self::stores_body_by_reference() ) {
+			// Body lives on the tracking record; keep the row small. Everything
+			// operational (recipients, status, provider response) is still stored.
+			$body = '';
+			unset( $context['tracking_id'] );
+		} else {
+			$tracking_id = $tracking_id > 0 ? $tracking_id : null;
+		}
 		$headers     = serialize( $headers );
 		$attachments = serialize( $attachments );
 		$recipients  = serialize( $recipients );
 		$context     = serialize( $context );
 		$response    = serialize( $response );
+
+		if ( ! $has_tracking_column ) {
+			unset( $context['tracking_id'] );
+		}
 
 		$data = array(
 			'timestamp'      => gmdate( 'Y-m-d H:i:s', time() ),
@@ -144,6 +220,9 @@ class EmailLogHandler {
 			'context'        => $context,
 			'resend_count'   => $resend_count,
 		);
+		if ( $has_tracking_column ) {
+			$data['tracking_id'] = $tracking_id ? $tracking_id : null;
+		}
 
 		try {
 			return (bool) SmtpEmailLogModel::query()->insert( $data );
@@ -244,13 +323,23 @@ class EmailLogHandler {
 			$source_link  = admin_url( 'admin.php?page=doublescale&path=' . rawurlencode( $ctx['crm_source']['path'] ) );
 		}
 
+		$tracking_id = isset( $log['tracking_id'] ) ? (int) $log['tracking_id'] : 0;
+		$body        = (string) $log['body'];
+		$body_source = 'stored';
+		if ( '' === $body && $tracking_id > 0 ) {
+			$body        = self::render_body_from_tracking( $tracking_id );
+			$body_source = '' !== $body ? 'tracking' : 'unavailable';
+		}
+
 		return array(
 			'log_id'          => $log['log_id'],
 			'datetime'        => $log['timestamp'],
 			'local_datetime'  => $local_datetime,
 			'timestamp'       => $local_datetime,
 			'subject'         => $log['subject'],
-			'body'            => $log['body'],
+			'body'            => $body,
+			'body_source'     => $body_source,
+			'tracking_id'     => $tracking_id ? $tracking_id : null,
 			'headers'         => maybe_unserialize( $log['headers'] ),
 			'attachments'     => maybe_unserialize( $log['attachments'] ),
 			'from'            => $log['from'],
@@ -424,23 +513,234 @@ class EmailLogHandler {
 	}
 
 	/**
+	 * Re-render a DoubleScale send from its tracking record.
+	 *
+	 * Uses the template and the merge-tag values captured at send time, the
+	 * same reconstruction the contact timeline shows. Footer and tracking
+	 * pixel are part of the template render; provider-side rewrites are not.
+	 *
+	 * @param int $tracking_id Communication tracking id.
+	 * @return string HTML, or '' when the tracking row or template is gone.
+	 */
+	public static function render_body_from_tracking( $tracking_id ) {
+		if ( ! class_exists( \DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel::class ) ) {
+			return '';
+		}
+		try {
+			$tracking = \DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel::find( (int) $tracking_id );
+			if ( ! $tracking ) {
+				return '';
+			}
+			$html = (string) $tracking->render_original_template();
+			if ( '' === $html ) {
+				return '';
+			}
+			// Resolve merge tags from the values captured at send time (plain
+			// HTML templates come back raw from the renderer).
+			$contact = $tracking->get_contact_with_tracking_context();
+			if ( $contact && class_exists( \DoubleScale\Core\MergeTags\MergeTagsManager::class ) ) {
+				$html = (string) \DoubleScale\Core\MergeTags\MergeTagsManager::instance()->process_merge_tags( $html, $contact );
+			}
+			return $html;
+		} catch ( \Throwable $e ) {
+			return '';
+		}
+	}
+
+	/**
+	 * Retention window in days (0 = keep forever).
+	 *
+	 * @return int
+	 */
+	public static function retention_days() {
+		$days = Settings::get( 'log_retention_days', 30 );
+		$days = null === $days || '' === $days ? 30 : (int) $days;
+		return max( 0, (int) apply_filters( 'doublescale_smtp_log_retention_days', $days ) );
+	}
+
+	/**
+	 * Hard cap on rows kept (0 = no cap). Oldest rows go first.
+	 *
+	 * @return int
+	 */
+	public static function max_rows() {
+		$rows = Settings::get( 'log_max_rows', 50000 );
+		$rows = null === $rows || '' === $rows ? 50000 : (int) $rows;
+		return max( 0, (int) apply_filters( 'doublescale_smtp_log_max_rows', $rows ) );
+	}
+
+	/**
+	 * Apply retention: age window, then row cap. Chunked so a huge table is
+	 * trimmed in short DELETEs that don't lock it for the whole run.
+	 *
+	 * @param int $chunk Rows per DELETE.
+	 * @param int $max_chunks Upper bound of chunks per invocation.
+	 * @return array{by_age:int,by_cap:int}
+	 */
+	public static function apply_retention( $chunk = 1000, $max_chunks = 50 ) {
+		$by_age = 0;
+		$by_cap = 0;
+		$days   = self::retention_days();
+		if ( $days > 0 ) {
+			$by_age = self::delete_logs_before_timestamp( time() - $days * DAY_IN_SECONDS, $chunk, $max_chunks );
+		}
+
+		$cap = self::max_rows();
+		if ( $cap > 0 ) {
+			$by_cap = self::trim_to_max_rows( $cap, $chunk, $max_chunks );
+		}
+
+		return array(
+			'by_age' => $by_age,
+			'by_cap' => $by_cap,
+		);
+	}
+
+	/**
+	 * Delete the oldest rows until at most $cap remain.
+	 *
+	 * @param int $cap        Rows to keep.
+	 * @param int $chunk      Rows per DELETE.
+	 * @param int $max_chunks Upper bound of chunks per invocation.
+	 * @return int Rows deleted.
+	 */
+	public static function trim_to_max_rows( $cap, $chunk = 1000, $max_chunks = 50 ) {
+		global $wpdb;
+		$table   = $wpdb->prefix . 'doublescale_smtp_email_log';
+		$deleted = 0;
+		try {
+			for ( $i = 0; $i < $max_chunks; $i++ ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+				$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+				$over  = $total - (int) $cap;
+				if ( $over <= 0 ) {
+					break;
+				}
+				$n = min( $over, (int) $chunk );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+				$removed = $wpdb->query( $wpdb->prepare( "DELETE FROM `{$table}` ORDER BY log_id ASC LIMIT %d", $n ) );
+				if ( ! $removed ) {
+					break;
+				}
+				$deleted += (int) $removed;
+			}
+		} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+		}
+		return $deleted;
+	}
+
+	/**
+	 * Drop stored bodies from older DoubleScale-originated rows.
+	 *
+	 * Rows written before bodies were stored by reference carry the full HTML
+	 * per recipient. They have `crm_source` in their context, so they can be
+	 * recognised, but no tracking id — the body cannot be re-rendered, it is
+	 * simply removed. Subject, recipients, status and provider response stay.
+	 * Runs in id-ordered chunks and remembers where it stopped.
+	 *
+	 * @param int $chunk Rows per pass.
+	 * @param int $max_chunks Upper bound of chunks per invocation.
+	 * @return int Rows compacted this invocation.
+	 */
+	public static function compact_legacy_bodies( $chunk = 500, $max_chunks = 20 ) {
+		global $wpdb;
+		if ( ! self::stores_body_by_reference() || ! self::ensure_tracking_column() ) {
+			return 0;
+		}
+		$table     = $wpdb->prefix . 'doublescale_smtp_email_log';
+		$cursor    = (int) get_option( 'doublescale_smtp_log_compact_cursor', 0 );
+		$compacted = 0;
+
+		try {
+			for ( $i = 0; $i < $max_chunks; $i++ ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+						"SELECT log_id, context FROM `{$table}` WHERE log_id > %d AND tracking_id IS NULL AND body <> '' ORDER BY log_id ASC LIMIT %d",
+						$cursor,
+						(int) $chunk
+					),
+					ARRAY_A
+				);
+				if ( empty( $rows ) ) {
+					update_option( 'doublescale_smtp_log_compact_done', 1, false );
+					break;
+				}
+
+				$ids = array();
+				foreach ( $rows as $row ) {
+					$cursor = (int) $row['log_id'];
+					$ctx    = maybe_unserialize( $row['context'] );
+					if ( is_array( $ctx ) && ! empty( $ctx['crm_source'] ) ) {
+						$ids[] = (int) $row['log_id'];
+					}
+				}
+				if ( $ids ) {
+					$in = implode( ',', array_map( 'intval', $ids ) );
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$compacted += (int) $wpdb->query( "UPDATE `{$table}` SET body = '' WHERE log_id IN ({$in})" );
+				}
+				update_option( 'doublescale_smtp_log_compact_cursor', $cursor, false );
+			}
+		} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+		}
+		return $compacted;
+	}
+
+	/**
+	 * Approximate table size in bytes, for the settings screen.
+	 *
+	 * @return array{rows:int,bytes:int}
+	 */
+	public static function table_stats() {
+		global $wpdb;
+		$table = $wpdb->prefix . 'doublescale_smtp_email_log';
+		try {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT TABLE_ROWS AS rows_est, (DATA_LENGTH + INDEX_LENGTH) AS bytes FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $table ), ARRAY_A );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+			$rows = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$table}`" );
+			return array(
+				'rows'  => $rows,
+				'bytes' => (int) ( $row['bytes'] ?? 0 ),
+			);
+		} catch ( \Throwable $e ) {
+			return array(
+				'rows'  => 0,
+				'bytes' => 0,
+			);
+		}
+	}
+
+	/**
 	 * Delete all logs older than a defined timestamp.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param integer $timestamp Timestamp to delete logs before.
 	 */
-	public static function delete_logs_before_timestamp( $timestamp = 0 ) {
+	public static function delete_logs_before_timestamp( $timestamp = 0, $chunk = 1000, $max_chunks = 50 ) {
 		if ( ! $timestamp ) {
-			return;
+			return 0;
 		}
 
+		global $wpdb;
+		$table   = $wpdb->prefix . 'doublescale_smtp_email_log';
+		$before  = gmdate( 'Y-m-d H:i:s', (int) $timestamp );
+		$deleted = 0;
 		try {
-			SmtpEmailLogModel::query()
-				->where( 'timestamp', '<', gmdate( 'Y-m-d H:i:s', $timestamp ) )
-				->delete();
+			for ( $i = 0; $i < $max_chunks; $i++ ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is $wpdb->prefix based.
+				$removed = $wpdb->query( $wpdb->prepare( "DELETE FROM `{$table}` WHERE `timestamp` < %s ORDER BY log_id ASC LIMIT %d", $before, (int) $chunk ) );
+				if ( ! $removed ) {
+					break;
+				}
+				$deleted += (int) $removed;
+			}
 		} catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
 		}
+		return $deleted;
 	}
 
 	/**

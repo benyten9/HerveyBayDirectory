@@ -102,6 +102,9 @@ class CampaignEnrichment {
 		// Compute contacts count
 		$stats['contacts_count'] = $this->compute_contacts_count( $campaign );
 
+		// The audience the campaign actually ran against.
+		$stats['recipients_count'] = $this->compute_recipients_count( $campaign, $stats['contacts_count'] );
+
 		// Compute template counts (optimized single query)
 		$stats['templates_count'] = $this->compute_template_counts( $campaign );
 
@@ -115,8 +118,48 @@ class CampaignEnrichment {
 	}
 
 	/**
+	 * Audience the campaign actually ran against.
+	 *
+	 * `contacts_count` re-queries the contacts table, so it answers "who would
+	 * match these filters right now" — correct while a campaign is still being
+	 * built, wrong once it has run. An unsubscribe, a blanked email, a deleted
+	 * contact or an unrelated new signup all move it long after the send, which
+	 * is how a finished campaign came to report sending to more people than it
+	 * had recipients, and how the progress bar could exceed 100%.
+	 *
+	 * `campaigns.count` is the audience size captured at execution time by
+	 * {@see \DoubleScale\Modules\Campaigns\Pipeline\Steps\InitialiseStep}, so it
+	 * stays put afterwards. Prefer it, and fall back to the live estimate for
+	 * campaigns that have never run (drafts) and so have nothing captured yet.
+	 *
+	 * Never report fewer recipients than messages actually sent: a campaign
+	 * whose stored count predates a resend would otherwise still read as
+	 * "more sent than recipients".
+	 *
+	 * @param CampaignModel $campaign       Campaign model.
+	 * @param int           $contacts_count Live audience estimate.
+	 *
+	 * @return int
+	 */
+	public function compute_recipients_count( CampaignModel $campaign, $contacts_count ) {
+		$stored = (int) $campaign->count;
+
+		if ( $stored < 1 ) {
+			return (int) $contacts_count;
+		}
+
+		$sent_total = (int) $campaign->messages()->count();
+
+		return max( $stored, $sent_total );
+	}
+
+	/**
 	 * Compute contacts count for campaign
 	 * Uses optimized query with proper filtering by channel status
+	 *
+	 * This is a LIVE estimate of who matches the campaign's filters right now.
+	 * For a campaign that has already run, {@see compute_recipients_count()} is
+	 * the number that describes who it was sent to.
 	 *
 	 * @param CampaignModel $campaign Campaign model
 	 *

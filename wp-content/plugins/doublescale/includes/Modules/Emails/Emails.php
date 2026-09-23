@@ -100,6 +100,13 @@ class Emails {
 	public $template;
 
 	/**
+	 * Layout used when assembling HTML: campaign 'template' or 1:1 'conversation'.
+	 *
+	 * @var string
+	 */
+	public $layout = 'template';
+
+	/**
 	 * Unsubscribe URL for List-Unsubscribe header (RFC 8058 compliance)
 	 *
 	 * @since 1.0.0
@@ -196,6 +203,16 @@ class Emails {
 
 		add_action( 'doublescale_mail_send_before', array( $this, 'send_before' ) );
 		add_action( 'doublescale_mail_send_after', array( $this, 'send_after' ) );
+	}
+
+	/**
+	 * Send HTML without the campaign card, gray page, or “Sent from” footer.
+	 *
+	 * @return void
+	 */
+	public function use_conversation_layout() {
+		$this->html   = true;
+		$this->layout = 'conversation';
 	}
 
 	/**
@@ -358,6 +375,10 @@ class Emails {
 			return apply_filters( 'doublescale_mail_message', $message, $this );
 		}
 
+		if ( 'conversation' === $this->layout ) {
+			return apply_filters( 'doublescale_mail_message', $this->build_conversation_email( $message ), $this );
+		}
+
 		// Process as template-based email
 		ob_start();
 
@@ -386,6 +407,30 @@ class Emails {
 		}
 
 		return apply_filters( 'doublescale_mail_message', $message, $this );
+	}
+
+	/**
+	 * Wrap 1:1 mail as a conversation, not a branded newsletter.
+	 *
+	 * @param string $message Email body.
+	 * @return string
+	 */
+	private function build_conversation_email( $message ) {
+		$has_markup = false !== strpos( $message, '<' );
+		if ( ! $has_markup ) {
+			$message = nl2br( $message );
+		}
+
+		if ( function_exists( 'make_clickable' ) && false === strpos( $message, '<a ' ) ) {
+			$message = make_clickable( $message );
+		}
+
+		$dir = ( function_exists( 'is_rtl' ) && is_rtl() ) ? 'rtl' : 'ltr';
+
+		return '<!DOCTYPE html><html dir="' . esc_attr( $dir ) . '"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>'
+			. '<body style="margin:0;padding:0;background:transparent;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#222222;">'
+			. $message
+			. '</body></html>';
 	}
 
 	/**

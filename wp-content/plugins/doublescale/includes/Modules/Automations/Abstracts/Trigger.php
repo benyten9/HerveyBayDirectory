@@ -11,6 +11,8 @@ namespace DoubleScale\Modules\Automations\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Automations\Engine\TriggerBatch;
+use DoubleScale\Modules\Automations\Engine\TriggerPayload;
 use Exception;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Core\PluginKernel;
@@ -123,7 +125,20 @@ abstract class Trigger {
 					continue;
 				}
 
-				PluginKernel::instance()->automations_tasks->enqueue_async( 'process_automations', $automation, $args );
+				// Queue ids, not models: the handler re-reads both from the
+				// database, and a full ContactModel/AutomationModel per contact
+				// was the bulk of the queue's write volume on mass triggers.
+				$automation_id = TriggerPayload::automation_id( $automation );
+				$packed        = TriggerPayload::pack( $args );
+
+				// Inside a bulk operation (mass tag/list, import) the enrolments
+				// are collected and queued as batches when the scope closes.
+				if ( TriggerBatch::is_active() ) {
+					TriggerBatch::collect( $automation_id, $packed );
+					continue;
+				}
+
+				PluginKernel::instance()->automations_tasks->enqueue_async( 'process_automations', $automation_id, $packed );
 			}
 		} catch ( Exception $e ) {
 			// Log error

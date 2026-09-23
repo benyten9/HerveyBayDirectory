@@ -331,6 +331,24 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	}
 
 	/**
+	 * The configured "emails per second" cap for this channel.
+	 *
+	 * Same resolution the pipeline uses for the per-email strategy
+	 * (InitialiseStep + CampaignRateLimiter), so the cURL Multi mailer paces
+	 * its chunks to the number the admin actually set instead of its own
+	 * hard-coded 10/s.
+	 *
+	 * @return int Emails per second (>= 1).
+	 */
+	protected function get_max_per_second() {
+		$max = $this->settings['max_in_second']
+			?? $this->rate_limiter->get_default_per_second_limit( $this->channel );
+		$max = (int) apply_filters( "doublescale_{$this->channel}_max_per_second", (int) $max );
+
+		return max( 1, $max );
+	}
+
+	/**
 	 * Send a batch of emails via cURL Multi
 	 *
 	 * This method reuses the same logic as send_email_batch but uses
@@ -351,7 +369,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		// Include the (raw) footer so its merge tags (e.g. {{contact:unsubscribe_link}})
 		// are registered as recipient variables. Without this the footer link is
 		// injected after key extraction and the mailer substitutes it with an empty value.
-		$content          = $subject . ' ' . $body . ' ' . $this->get_raw_footer_content();
+		$content          = $subject . ' ' . $body . ' ' . $this->get_raw_footer_content( $body );
 
 		// Extract merge tags from content
 		$merge_tag_keys = MergeTagsManager::instance()->extract_merge_tag_keys( $content );
@@ -511,6 +529,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			'recipient_variables' => $recipient_variables,
 			'campaign_id'         => $campaign->id,
 			'tags'                => array( 'doublescale', 'campaign-' . $campaign->id ),
+			'max_per_second'      => $this->get_max_per_second(),
 		);
 
 		// Send via cURL Multi
@@ -815,6 +834,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			'recipient_variables' => $recipient_variables,
 			'campaign_id'         => $campaign->id,
 			'tags'                => array( 'doublescale', 'campaign-' . $campaign->id ),
+			'max_per_second'      => $this->get_max_per_second(),
 		);
 
 		// Send via cURL Multi
@@ -872,30 +892,8 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 * @return string Footer HTML with merge tag placeholders
 	 */
 	protected function get_curl_multi_footer_content( $body = '' ) {
-		// Get footer from settings
-		if ( ! empty( $this->settings['email_footer'] ) ) {
-			$footer = $this->settings['email_footer'];
-		} else {
-			$global_settings = \DoubleScale\Core\Settings\Settings::get( 'email', array() );
-			if ( ! empty( $global_settings['email_footer'] ) ) {
-				$footer = $global_settings['email_footer'];
-			} else {
-				// Check if the email body already contains an unsubscribe link
-				$has_unsubscribe = false !== strpos( $body, '{{contact:unsubscribe_link}}' )
-					|| false !== strpos( $body, 'doublescale=email_unsubscribe' )
-					|| false !== strpos( $body, 'doublescale-unsubscribe' );
-
-				if ( $has_unsubscribe ) {
-					// Body already has unsubscribe link - don't add default footer
-					$footer = '';
-				} else {
-					$footer = EmailTrackingHelper::get_default_footer();
-				}
-			}
-		}
-
 		// Keep merge tags as-is for curl multi (they will be processed per contact)
-		return $footer;
+		return EmailTrackingHelper::resolve_footer( $body, $this->settings['email_footer'] ?? null );
 	}
 
 	/**
@@ -922,7 +920,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		// Include the (raw) footer so its merge tags (e.g. {{contact:unsubscribe_link}})
 		// are registered as recipient variables. Without this the footer link is
 		// injected after key extraction and the mailer substitutes it with an empty value.
-		$content          = $subject . ' ' . $body . ' ' . $this->get_raw_footer_content();
+		$content          = $subject . ' ' . $body . ' ' . $this->get_raw_footer_content( $body );
 
 		// Extract merge tags from content
 		$merge_tag_keys = MergeTagsManager::instance()->extract_merge_tag_keys( $content );
@@ -1288,7 +1286,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		$rendered_body = $this->render_builder_content_for_bulk_with_sections( $body, $section_ids );
 
 		// Get footer content
-		$footer = $this->get_bulk_footer_content();
+		$footer = $this->get_bulk_footer_content( $rendered_body );
 
 		// Inject footer into body
 		if ( strpos( $rendered_body, '</body>' ) !== false ) {
@@ -1463,7 +1461,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		$body = $this->render_builder_content_for_bulk( $body ); // to return html without change format
 
 		// Get footer content
-		$footer = $this->get_bulk_footer_content(); // to return html with convert merge tags format to mailer format
+		$footer = $this->get_bulk_footer_content( $body ); // to return html with convert merge tags format to mailer format
 
 		// Inject footer into body (for builder emails)
 		if ( strpos( $body, '</body>' ) !== false ) {
@@ -1667,9 +1665,11 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @return string Footer HTML with recipient variable placeholders
 	 */
-	protected function get_bulk_footer_content() {
+	protected function get_bulk_footer_content( $body = '' ) {
 		// Convert merge tags to mailer-specific format
-		return \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $this->get_raw_footer_content() );
+		return \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables(
+			EmailTrackingHelper::resolve_footer( $body, $this->settings['email_footer'] ?? null )
+		);
 	}
 
 	/**
@@ -1683,17 +1683,8 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @return string Raw footer HTML with merge tags intact.
 	 */
-	protected function get_raw_footer_content() {
-		if ( ! empty( $this->settings['email_footer'] ) ) {
-			return $this->settings['email_footer'];
-		}
-
-		$global_settings = \DoubleScale\Core\Settings\Settings::get( 'email', array() );
-		if ( ! empty( $global_settings['email_footer'] ) ) {
-			return $global_settings['email_footer'];
-		}
-
-		return EmailTrackingHelper::get_default_footer();
+	protected function get_raw_footer_content( $body = '' ) {
+		return EmailTrackingHelper::resolve_footer( $body, $this->settings['email_footer'] ?? null );
 	}
 
 	/**
@@ -1788,7 +1779,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		// Include the (raw) footer so footer-only merge tags (e.g. {{contact:unsubscribe_link}})
 		// are captured into stored values and resolve correctly in historical/preview renders.
 		if ( is_null( $this->template_merge_tag_keys ) ) {
-			$combined_content              = $subject . ' ' . $message . ' ' . $this->get_raw_footer_content();
+			$combined_content              = $subject . ' ' . $message . ' ' . $this->get_raw_footer_content( $message );
 			$this->template_merge_tag_keys = MergeTagsManager::instance()->extract_merge_tag_keys( $combined_content );
 		}
 
@@ -1875,33 +1866,11 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			return '';
 		}
 
-		// Get footer content (respecting settings hierarchy)
-		if ( ! empty( $this->settings['email_footer'] ) ) {
-			$email_footer  = $this->settings['email_footer'];
-			$footer_source = 'campaign_settings';
-		} else {
-			$global_settings = \DoubleScale\Core\Settings\Settings::get( 'email', array() );
-			// Check if global setting has non-empty footer.
-			if ( ! empty( $global_settings['email_footer'] ) ) {
-				$email_footer  = $global_settings['email_footer'];
-				$footer_source = 'global_settings';
-			} else {
-				// Check if the email body already contains an unsubscribe link
-				$has_unsubscribe = false !== strpos( $message, '{{contact:unsubscribe_link}}' )
-					|| false !== strpos( $message, 'doublescale=email_unsubscribe' )
-					|| false !== strpos( $message, 'doublescale-unsubscribe' );
-
-				if ( $has_unsubscribe ) {
-					// Body already has unsubscribe link - don't add default footer
-					$email_footer  = '';
-					$footer_source = 'body_has_unsubscribe';
-				} else {
-					// Use default footer if campaign and global settings are both empty.
-					$email_footer  = EmailTrackingHelper::get_default_footer();
-					$footer_source = 'default';
-				}
-			}
-		}
+		// Footer decision lives in one place for every send path.
+		$email_footer  = EmailTrackingHelper::resolve_footer( $message, $this->settings['email_footer'] ?? null );
+		$footer_source = ! empty( $this->settings['email_footer'] ) ? 'campaign_settings'
+			: ( '' === $email_footer ? 'body_has_unsubscribe' : ( $email_footer === EmailTrackingHelper::get_default_footer() ? 'default' : 'global_settings' ) );
+		$global_settings = \DoubleScale\Core\Settings\Settings::get( 'email', array() );
 
 		// Add tracking pixel to footer
 		$tracking_pixel = sprintf(
@@ -1941,11 +1910,17 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 * @param callable(): T $callback Operation that triggers wp_mail / SMTP send + log.
 	 * @return T
 	 */
-	protected function with_smtp_campaign_log_context( CampaignModel $campaign, callable $callback ) {
+	protected function with_smtp_campaign_log_context( CampaignModel $campaign, callable $callback, ?CommunicationTrackingModel $tracking = null ) {
 		if ( ! class_exists( EmailLogContext::class ) ) {
 			return $callback();
 		}
-		EmailLogContext::push( CampaignEmailLogSource::for_campaign( $campaign ) );
+		$context = CampaignEmailLogSource::for_campaign( $campaign );
+		if ( $tracking && $tracking->id ) {
+			// Lets the SMTP log store a reference to this send instead of the
+			// rendered body (see EmailLogHandler::add()).
+			$context['tracking_id'] = (int) $tracking->id;
+		}
+		EmailLogContext::push( $context );
 		try {
 			return $callback();
 		} finally {
@@ -2054,7 +2029,8 @@ class EmailProcessing extends AbstractCampaignProcessing {
 							$complete_message,
 							$attachment_paths
 						);
-					}
+					},
+					$campaign_message
 				);
 			} else {
 				$result = $emails->send(

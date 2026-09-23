@@ -395,8 +395,8 @@ react = __toESM(react);
 	var ANGIE_LEARN_MORE_URL = "https://go.elementor.com/angie-learn-more";
 	var ANGIE_DESCRIPTION = (0, _wordpress_i18n.__)("Angie lets you generate custom widgets, sections, and code using simple instructions.", "elementor");
 	var AI_WIDGET_CTA_VIEWED_EVENT = "ai_widget_cta_viewed";
-	var ANGIE_TOP_BAR_PROMOTION_IMAGE_URL = "https://assets.elementor.com/packages/v1/images/angie-top-bar-promotion.svg";
-	var ANGIE_TOP_BAR_DESCRIPTION = (0, _wordpress_i18n.__)("Build custom widgets using simple instructions.", "elementor");
+	var ANGIE_TOP_BAR_PROMOTION_IMAGE_URL = "https://assets.elementor.com/packages/v1/images/angie-top-bar-promotion-0926.svg";
+	var ANGIE_TOP_BAR_DESCRIPTION = (0, _wordpress_i18n.__)("Describe what you want to build in plain language and Angie generates it in native Elementor structure, fully editable and customizable.", "elementor");
 
 //#endregion
 //#region packages/packages/core/editor-app-bar/src/extensions/angie/components/angie-guide-card.tsx
@@ -404,33 +404,42 @@ react = __toESM(react);
 		return /* @__PURE__ */ react.createElement(_elementor_ui.ClickAwayListener, { onClickAway: onClose }, /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
 			sx: { width: 296 },
 			"data-testid": "e-angie-guide-card"
-		}, /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
-			direction: "row",
-			alignItems: "center",
-			gap: 1,
-			py: 1,
-			px: 2
-		}, /* @__PURE__ */ react.createElement(_elementor_ui.Typography, { variant: "subtitle2" }, (0, _wordpress_i18n.__)("Meet Angie", "elementor")), /* @__PURE__ */ react.createElement(_elementor_ui.Chip, {
-			label: (0, _wordpress_i18n.__)("New", "elementor"),
-			size: "small",
-			color: "info",
-			variant: "standard"
-		}), /* @__PURE__ */ react.createElement(_elementor_ui.CloseButton, {
-			edge: "end",
-			sx: { ml: "auto" },
-			slotProps: { icon: { fontSize: "small" } },
-			onClick: onClose
-		})), /* @__PURE__ */ react.createElement(_elementor_ui.Image, {
+		}, /* @__PURE__ */ react.createElement(_elementor_ui.Box, { sx: {
+			position: "relative",
+			p: 1.5
+		} }, /* @__PURE__ */ react.createElement(_elementor_ui.Image, {
 			src: imageUrl,
 			alt: (0, _wordpress_i18n.__)("Angie", "elementor"),
 			sx: {
-				height: 150,
-				width: "100%"
+				width: "100%",
+				maxHeight: 200,
+				objectFit: "cover",
+				objectPosition: "center top",
+				borderRadius: 1,
+				display: "block"
 			}
-		}), /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
+		}), /* @__PURE__ */ react.createElement(_elementor_ui.CloseButton, {
+			sx: {
+				position: "absolute",
+				top: 15,
+				insetInlineEnd: 15,
+				color: "common.white",
+				filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))",
+				"&:hover": {
+					bgcolor: "rgba(255,255,255,0.2)",
+					color: "common.white"
+				}
+			},
+			slotProps: { icon: { fontSize: "small" } },
+			onClick: onClose
+		})), /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
 			px: 2,
-			pt: 1.5,
-			pb: 1
+			pt: .5,
+			pb: .5
+		}, /* @__PURE__ */ react.createElement(_elementor_ui.Typography, { variant: "subtitle2" }, (0, _wordpress_i18n.__)("Generate full pages with AI", "elementor"))), /* @__PURE__ */ react.createElement(_elementor_ui.Stack, {
+			px: 2,
+			pt: .5,
+			pb: 1.5
 		}, /* @__PURE__ */ react.createElement(_elementor_ui.Typography, {
 			variant: "body2",
 			color: "secondary"
@@ -438,7 +447,6 @@ react = __toESM(react);
 			direction: "row",
 			justifyContent: "flex-end",
 			gap: 1,
-			pt: 1,
 			pb: 1.5,
 			px: 2
 		}, /* @__PURE__ */ react.createElement(_elementor_ui.Button, {
@@ -452,9 +460,9 @@ react = __toESM(react);
 		}, (0, _wordpress_i18n.__)("Learn More", "elementor")), onInstall && /* @__PURE__ */ react.createElement(_elementor_ui.Button, {
 			variant: "contained",
 			size: "small",
-			color: "accent",
+			color: "primary",
 			onClick: onInstall
-		}, (0, _wordpress_i18n.__)("Try for free", "elementor")))));
+		}, (0, _wordpress_i18n.__)("Build with Angie", "elementor")))));
 	}
 
 //#endregion
@@ -463,7 +471,7 @@ react = __toESM(react);
 		(0, react.useEffect)(() => {
 			if (!window.elementor?.config?.angie?.autoShow) return;
 			const id = setTimeout(() => {
-				window.dispatchEvent(new CustomEvent(ANGIE_GUIDE_TOGGLE_EVENT));
+				window.dispatchEvent(new CustomEvent(CREATE_WIDGET_EVENT, { detail: { entry_point: "auto_show" } }));
 			}, 0);
 			return () => clearTimeout(id);
 		}, []);

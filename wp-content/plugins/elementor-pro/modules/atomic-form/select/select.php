@@ -53,7 +53,7 @@ class Select extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'select', 'dropdown' ];
+		return [ 'atomic', 'form', 'select', 'dropdown', 'choose', 'option', 'picker' ];
 	}
 
 	protected static function define_props_schema(): array {

@@ -92,10 +92,8 @@ class IndividualDispatchStrategy implements BatchDispatchStrategyInterface {
 				return BatchResult::stop();
 			}
 
-			// Track throughput for per-second rate limiting.
-			if ( empty( $result['skipped'] ) ) {
-				$ctx->rate_limiter->record_sent( $ctx->channel );
-			}
+			// Throughput is recorded by process_campaign_message() itself (the
+			// same path automations use), so it is not counted twice here.
 
 			++$ctx->offset;
 		}

@@ -70,6 +70,28 @@ final class Module extends AbstractModule {
 		SmtpAlertDispatcher::boot();
 		SummaryEmail::boot();
 		SmtpMultisite::boot();
+
+		// Email log housekeeping rides the core daily tick: age/row-cap
+		// retention, then a chunked pass that strips bodies from legacy rows.
+		add_action( 'doublescale_daily_doublescale_daily3', array( $this, 'maintain_email_log' ), 20 );
+	}
+
+	/**
+	 * Daily email-log maintenance.
+	 *
+	 * @return array{by_age:int,by_cap:int,compacted:int}
+	 */
+	public function maintain_email_log(): array {
+		$result              = EmailLogHandler::apply_retention();
+		$result['compacted'] = get_option( 'doublescale_smtp_log_compact_done' ) ? 0 : EmailLogHandler::compact_legacy_bodies();
+
+		if ( array_sum( $result ) > 0 ) {
+			doublescale_get_logger()->info(
+				'SMTP email log maintenance',
+				array_merge( array( 'code' => 'smtp_email_log_maintenance' ), $result )
+			);
+		}
+		return $result;
 	}
 
 	public function replace_phpmailer(): void {

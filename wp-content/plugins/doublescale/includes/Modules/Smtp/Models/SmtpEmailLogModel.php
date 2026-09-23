@@ -43,4 +43,11 @@ class SmtpEmailLogModel extends Model {
 	 * @var bool
 	 */
 	public $timestamps = false;
+
+	/**
+	 * Primary key column.
+	 *
+	 * @var string
+	 */
+	protected $primaryKey = 'log_id';
 }

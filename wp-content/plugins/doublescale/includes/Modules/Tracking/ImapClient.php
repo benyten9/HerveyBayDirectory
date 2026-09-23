@@ -82,6 +82,13 @@ class ImapClient {
 	private $connection = false;
 
 	/**
+	 * Folder currently selected on the connection (INBOX after connect()).
+	 *
+	 * @var string
+	 */
+	private $current_folder = 'INBOX';
+
+	/**
 	 * Constructor
 	 *
 	 * @param string $host           IMAP server hostname.
@@ -133,9 +140,26 @@ class ImapClient {
 			}
 		);
 
-		$this->connection = $this->open_mailbox( $mailbox, $flags );
+		// The bundled client resolves its connect/read timeout from PHP's
+		// default_socket_timeout (usually 60s). A firewalled or dead host then
+		// pins a PHP worker for a full minute on every scheduled poll. Cap it
+		// for the duration of the open; 15s is generous for a healthy server.
+		$timeout          = (int) apply_filters( 'doublescale_imap_connect_timeout', 15 );
+		$previous_timeout = ini_get( 'default_socket_timeout' );
+		if ( $timeout > 0 ) {
+			// phpcs:ignore WordPress.PHP.IniSet.Risky -- scoped to the IMAP open below and restored.
+			ini_set( 'default_socket_timeout', (string) $timeout );
+		}
 
-		restore_error_handler();
+		try {
+			$this->connection = $this->open_mailbox( $mailbox, $flags );
+		} finally {
+			if ( $timeout > 0 && false !== $previous_timeout ) {
+				// phpcs:ignore WordPress.PHP.IniSet.Risky
+				ini_set( 'default_socket_timeout', (string) $previous_timeout );
+			}
+			restore_error_handler();
+		}
 
 		if ( ! $this->connection ) {
 			// Try imap2_errors() first, then fall back to captured PHP warnings.
@@ -267,6 +291,10 @@ class ImapClient {
 		$result = imap2_reopen( $this->connection, $mailbox );
 		restore_error_handler();
 
+		if ( $result ) {
+			$this->current_folder = (string) $folder;
+		}
+
 		return (bool) $result;
 	}
 
@@ -336,7 +364,7 @@ class ImapClient {
 	 *                                (e.g. a mailbox `created_at`). Null = no date floor.
 	 * @return array Array of normalized email data arrays.
 	 */
-	public function fetch_unseen( $limit = 20, $since_date = null ) {
+	public function fetch_unseen( $limit = 20, $since_date = null, $with_body = true ) {
 		if ( ! $this->connection ) {
 			return array();
 		}
@@ -365,7 +393,7 @@ class ImapClient {
 
 		$emails = array();
 		foreach ( $msgnos as $msgno ) {
-			$email = $this->parse_email( $msgno );
+			$email = $this->parse_email( $msgno, $with_body );
 			if ( $email ) {
 				$emails[] = $email;
 			}
@@ -387,7 +415,7 @@ class ImapClient {
 	 * @param int    $limit      Maximum number of emails to fetch. Default 20.
 	 * @return array Array of normalized email data arrays.
 	 */
-	public function fetch_recent( $since_date, $limit = 20 ) {
+	public function fetch_recent( $since_date, $limit = 20, $with_body = true ) {
 		if ( ! $this->connection ) {
 			return array();
 		}
@@ -412,7 +440,7 @@ class ImapClient {
 
 		$emails = array();
 		foreach ( $msgnos as $msgno ) {
-			$email = $this->parse_email( $msgno );
+			$email = $this->parse_email( $msgno, $with_body );
 			if ( $email ) {
 				$emails[] = $email;
 			}
@@ -525,6 +553,61 @@ class ImapClient {
 	}
 
 	/**
+	 * Cheap change detector for the selected folder.
+	 *
+	 * One IMAP STATUS round-trip (no SEARCH, no FETCH). UIDVALIDITY changes
+	 * when the folder is rebuilt, UIDNEXT increments on every arrival, and
+	 * MESSAGES catches deletions — so an identical fingerprint between two
+	 * polls means nothing arrived and the poller can stop right there
+	 * instead of re-downloading the newest N messages every minute.
+	 *
+	 * @return string|null Opaque fingerprint, or null when the server or the
+	 *                     library cannot answer STATUS (caller must then poll
+	 *                     the slow way).
+	 */
+	public function get_mailbox_fingerprint() {
+		if ( ! $this->connection ) {
+			return null;
+		}
+
+		$mailbox = $this->build_server_string() . $this->current_folder;
+		// ext-imap values; php-imap2 defines the same. Fallback keeps this file
+		// loadable when neither is present (the call below then returns false).
+		$flags = ( defined( 'SA_MESSAGES' ) ? SA_MESSAGES : 1 )
+			| ( defined( 'SA_UIDNEXT' ) ? SA_UIDNEXT : 8 )
+			| ( defined( 'SA_UIDVALIDITY' ) ? SA_UIDVALIDITY : 16 );
+
+		// Both implementations warn on servers that reject STATUS; that is a
+		// "fingerprint unavailable" answer, not an error worth surfacing.
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
+		set_error_handler( '__return_true' );
+		try {
+			if ( $this->is_native_imap_connection() && function_exists( 'imap_status' ) ) {
+				$status = imap_status( $this->connection, $mailbox, $flags );
+			} elseif ( function_exists( 'imap2_status' ) ) {
+				$status = imap2_status( $this->connection, $mailbox, $flags );
+			} else {
+				$status = false;
+			}
+		} catch ( \Throwable $e ) {
+			$status = false;
+		} finally {
+			restore_error_handler();
+		}
+
+		if ( ! is_object( $status ) || ! isset( $status->uidnext ) || (int) $status->uidnext <= 0 ) {
+			return null;
+		}
+
+		return sprintf(
+			'%s:%d:%d',
+			isset( $status->uidvalidity ) ? (string) $status->uidvalidity : '0',
+			(int) $status->uidnext,
+			isset( $status->messages ) ? (int) $status->messages : -1
+		);
+	}
+
+	/**
 	 * Parse a single email by message number
 	 *
 	 * Uses message numbers throughout because php-imap2's FT_UID flag is
@@ -534,7 +617,7 @@ class ImapClient {
 	 * @param int $msgno IMAP message number.
 	 * @return array|null Normalized email data or null on failure.
 	 */
-	private function parse_email( $msgno ) {
+	private function parse_email( $msgno, $with_body = true ) {
 		$header_info = imap2_headerinfo( $this->connection, $msgno );
 		if ( ! $header_info ) {
 			return null;
@@ -609,19 +692,25 @@ class ImapClient {
 			$message_id  = '<imap-' . md5( $entropy . $from_email . $subject ) . '@' . wp_parse_url( home_url(), PHP_URL_HOST ) . '>';
 		}
 
-		// Parse body: prefer HTML, fall back to plain text.
-		// Use message number — php-imap2's fetchbody does not work with FT_UID.
-		$body = $this->get_email_body( $msgno );
-
 		// Parse date.
 		$date = isset( $header_info->date ) ? $header_info->date : '';
 
-		// Collect file attachments (consumers that don't need them simply ignore
-		// the key). Done as a separate structure walk so the body extraction above
-		// stays single-purpose.
-		$attachments = $this->get_email_attachments( $msgno );
+		// Body and attachments are the expensive part (full MIME download and
+		// decode). Callers that first check whether the message is already
+		// ingested pass $with_body = false and call load_body() only for the
+		// few that are new.
+		$body        = '';
+		$attachments = array();
+		if ( $with_body ) {
+			// Use message number — php-imap2's fetchbody does not work with FT_UID.
+			$body = $this->get_email_body( $msgno );
+			// Separate structure walk so the body extraction stays single-purpose.
+			$attachments = $this->get_email_attachments( $msgno );
+		}
 
 		return array(
+			'msgno'          => (int) $msgno,
+			'body_loaded'    => (bool) $with_body,
 			'uid'            => $uid,
 			'from_email'     => $from_email,
 			'from_name'      => $from_name,
@@ -635,6 +724,27 @@ class ImapClient {
 			'crm_sent'       => $crm_sent,
 			'attachments'    => $attachments,
 		);
+	}
+
+	/**
+	 * Fill in body and attachments for an email returned with $with_body = false.
+	 *
+	 * Idempotent: an email that already carries its body is returned as-is.
+	 *
+	 * @param array $email Normalized email from fetch_unseen()/fetch_recent().
+	 * @return array Same email with 'body' and 'attachments' populated.
+	 */
+	public function load_body( array $email ) {
+		if ( ! empty( $email['body_loaded'] ) || empty( $email['msgno'] ) || ! $this->connection ) {
+			return $email;
+		}
+
+		$msgno                = (int) $email['msgno'];
+		$email['body']        = $this->get_email_body( $msgno );
+		$email['attachments'] = $this->get_email_attachments( $msgno );
+		$email['body_loaded'] = true;
+
+		return $email;
 	}
 
 	/**

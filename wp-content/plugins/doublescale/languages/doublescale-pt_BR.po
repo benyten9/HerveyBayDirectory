@@ -6056,8 +6056,8 @@ msgstr "Status de Trabalho da CRON"
 msgid "Cron Jobs"
 msgstr "Tarefas Agendadas"
 
-msgid "Csv"
-msgstr "Csv"
+msgid "CSV"
+msgstr "CSV"
 
 msgid "CTA"
 msgstr "CTA"

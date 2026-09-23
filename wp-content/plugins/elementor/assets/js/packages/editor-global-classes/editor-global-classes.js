@@ -253,7 +253,7 @@ react = __toESM(react);
 					const frontendClassData = frontend[id];
 					if (previewClassData === null || previewClassData === void 0) return;
 					if (!(id in state.data.items)) state.data.items[id] = previewClassData;
-					if (!(id in state.initialData.frontend.items)) state.initialData.frontend.items[id] = frontendClassData;
+					if (frontendClassData && !(id in state.initialData.frontend.items)) state.initialData.frontend.items[id] = frontendClassData;
 					if (!(id in state.initialData.preview.items)) state.initialData.preview.items[id] = previewClassData;
 					if (!(id in state.classLabels)) state.classLabels[id] = previewClassData.label;
 				});

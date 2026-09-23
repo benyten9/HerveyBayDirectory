@@ -65,8 +65,13 @@ abstract class Template_Type_Base {
 		$args     = $this->build_query_args( $query_settings );
 		$query_id = Loop_Query_Args_Builder::extract_query_id( $query_settings );
 		$page     = Loop_Query_Args_Builder::extract_page( $query_settings );
+		$offset   = Loop_Query_Args_Builder::extract_offset( $query_settings );
 
-		if ( $page > 1 ) {
+		// The offset is the slot-aware form of pagination, so it wins over `paged`
+		// (WP_Query ignores `paged` once `offset` is set anyway).
+		if ( $offset > 0 ) {
+			$args['offset'] = $offset;
+		} elseif ( $page > 1 ) {
 			$args['paged'] = $page;
 		}
 

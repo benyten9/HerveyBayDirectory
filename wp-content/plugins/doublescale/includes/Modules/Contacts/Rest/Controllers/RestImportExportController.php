@@ -19,6 +19,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Modules\Contacts\ImportExport\CsvDelimiter;
 use DoubleScale\Modules\Contacts\ImportExport\CsvEncoding;
 use DoubleScale\Modules\Contacts\ImportExport\Security;
 use DoubleScale\Modules\Contacts\ImportExport\Importers\Manager;
@@ -614,7 +615,10 @@ class RestImportExportController extends RestController {
 			$contents = CsvEncoding::to_utf8( $contents );
 			$lines    = explode( "\n", $contents );
 			if ( ! empty( $lines[0] ) ) {
-				return str_getcsv( $lines[0] );
+				// Same delimiter the importer will use, so the mapped column
+				// names line up with the headers League reads on import.
+				$delimiter = CsvDelimiter::detect( $lines[0] );
+				return str_getcsv( $lines[0], $delimiter, '"', '\\' );
 			}
 		}
 

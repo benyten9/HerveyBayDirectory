@@ -39,7 +39,7 @@ class RestPublicProposalController extends RestController {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -51,7 +51,7 @@ class RestPublicProposalController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/accept',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/accept',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -63,7 +63,7 @@ class RestPublicProposalController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/decline',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/decline',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -75,7 +75,7 @@ class RestPublicProposalController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/pdf',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/pdf',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,

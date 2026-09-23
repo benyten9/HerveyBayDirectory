@@ -1,21 +1,23 @@
-=== DoubleScale | All-in-One CRM – Sales, Multi-Channel Marketing, Booking, Helpdesk, Automation, MCP & More ===
+=== DoubleScale | All-in-One CRM – Sales, Multi-Channel Marketing, Newsletter, Booking, Helpdesk, Automation, MCP & More ===
 Contributors: samuelgallegos, vixgrowy
-Tags:  crm, email marketing, sales pipeline, booking calendar, helpdesk
+Tags:  crm, email marketing, sales pipeline, newsletter, helpdesk
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.30
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Self-hosted CRM with sales, marketing, booking, helpdesk, tasks & projects, automations plus a built-in MCP server for AI clients. One plugin.
+Self-hosted CRM for newsletter, email marketing, SMS marketing, and WhatsApp marketing — plus sales, booking, helpdesk, and automations. One plugin.
 
 
 == Description ==
 
-**DoubleScale is a self-hosted CRM for WordPress** covering sales, marketing, booking, helpdesk, and task & project management — in **one plugin**, on your own database. A built-in **MCP server** lets AI clients (Claude, Cursor, and compatible tools) operate DoubleScale with API keys, using the same module and permission gates as the rest of the product.
+**DoubleScale is a self-hosted CRM for WordPress** covering sales, newsletter, email marketing, SMS marketing, WhatsApp marketing, booking, helpdesk, and task & project management — in **one plugin**, on your own database. A built-in **MCP server** lets AI clients (Claude, Cursor, and compatible tools) operate DoubleScale with API keys, using the same module and permission gates as the rest of the product.
 
-You get one contact record, one activity timeline, and one automation engine instead of stitching together a CRM, email tool, calendar, helpdesk, and task app. Enable or disable optional modules under **Settings → Modules** so the admin stays lean.
+Use it as a **newsletter** plugin to send issues to lists and segments. Use it for **email marketing** broadcasts, drip sequences, and campaigns. Use it for **SMS marketing** via Twilio. Use it for **WhatsApp marketing** with Meta-approved templates. Those channels sit in the same plugin as CRM, sales pipelines, proposals and invoices, booking, helpdesk, tasks, projects, SMTP, automations, and MCP — one contact record, one activity timeline, one workflow engine, instead of stitching together Mailchimp, Twilio, a WhatsApp dashboard, Pipedrive, Calendly, a helpdesk, and a task app.
+
+Enable or disable optional modules under **Settings → Modules** so the admin stays lean.
 
 **Live demo:** [try.doublescale.io](https://try.doublescale.io) · **Website:** [doublescale.io](https://doublescale.io) · **Documentation:** [doublescale.io/docs](https://doublescale.io/docs/)
 
@@ -44,35 +46,42 @@ Run your full revenue workflow from one Sales workspace in wp-admin — from fir
 
 Every deal, document, and payment links to the same contact record, activity timeline, and automation engine.
 
-**3. Campaigns — email, SMS, and WhatsApp broadcasts and sequences**
-A drag-and-drop email builder with responsive blocks, reusable templates, A/B testing, and merge tags for any custom field. Broadcast to lists, tags, or rule-based segments.
+**3. Newsletter**
+Send a **newsletter** from WordPress to subscribers, lists, tags, or rule-based segments. Design each issue in the drag-and-drop email builder, schedule or send immediately, and track opens, clicks, bounces, and unsubscribes. Newsletter sends use the same contact record as the rest of the CRM, so a subscriber who books a meeting or opens a support ticket is still one person.
+
+**4. Email marketing**
+Full **email marketing** campaigns, not only newsletters. Broadcast to lists and segments, run A/B tests, reuse templates, and personalize with merge tags for any custom field.
 * **Email sequences (drip campaigns)** — multi-step nurture flows with time delays, conditional branches based on opens/clicks/replies, and goal-based exit conditions.
-* **SMS campaigns** — broadcast and triggered SMS via Twilio. Shares the same composer, audience, and merge-tag system as email.
-* **WhatsApp campaigns** — send Meta-approved WhatsApp templates and trigger conversations from the same builder. Inbound replies route to the unified inbox.
 * Per-link tracking with automation triggers, bounce handling with soft/hard classification, and full delivery logs.
 
-**4. Booking — self-service appointment scheduling**
+**5. SMS marketing**
+**SMS marketing** broadcasts and triggered SMS via Twilio. The same audience, composer, and merge-tag system as email marketing — send promotions, reminders, and follow-ups as text messages. Opt-out handling and delivery logs stay on the contact record.
+
+**6. WhatsApp marketing**
+**WhatsApp marketing** with Meta-approved WhatsApp templates from the same campaign builder. Trigger conversations, broadcast to segments, and route inbound replies to the unified inbox so WhatsApp marketing sits next to email marketing and SMS marketing on one timeline.
+
+**7. Booking — self-service appointment scheduling**
 A full scheduling system inside WordPress — no Calendly needed. Create **single events** for one-on-one meetings (consultations, demos, coaching sessions) or **team events** where multiple staff members share availability and bookings are assigned via round-robin or manual selection. Configure slot durations, buffer times between appointments, and per-day availability windows. Guests pick a time from an embeddable booking page, fill out a customizable intake form, and receive automated email/SMS confirmations and reminders. Supports Stripe payment collection for paid bookings, waiting lists when slots fill up, rescheduling and cancellation flows, and automatic time-zone detection. Every booking lands on the contact record and can trigger automations (e.g., tag the contact, create a deal, send a follow-up sequence).
 
-**5. Tasks — team task management**
+**8. Tasks — team task management**
 Create, assign, schedule, and track tasks. Link them to contacts and deals. Due dates, reminders, status workflows. Stop running a separate ClickUp or Asana when 80% of your tasks are about customers anyway.
 
-**6. Projects — project boards linked to CRM and sales (Pro)**
+**9. Projects — project boards linked to CRM and sales (Pro)**
 Manage delivery work next to your contacts and invoices. Kanban boards with customizable statuses, progress tracking, project discussions/comments, custom fields, tags, due dates, and ownership. Link projects to contacts and sales documents so the activity timeline stays unified. Scoped **Project Manager** and **Project Member** roles keep delivery teams focused without granting full CRM admin access.
 
-**7. SMTP — multi-provider email routing**
+**10. SMTP — multi-provider email routing**
 A complete `wp_mail()` replacement built into the CRM — no separate SMTP plugin required. Connect one or more of **20+ providers**: SendGrid, Amazon SES, Mailgun, Postmark, SparkPost, SMTP.com, SMTP2GO, Gmail (OAuth), Outlook (OAuth), Zoho (OAuth), MailerSend, Mailjet, Mandrill, Brevo (Sendinblue), Elastic Email, SendLayer, SocketLabs, Loops, and generic SMTP relay. Set up multiple connections with routing rules so transactional mail goes through one provider while marketing campaigns use another. OAuth authentication for Gmail, Outlook, and Zoho — no app passwords needed. Includes full email delivery logs, bounce handling with soft/hard classification, provider health checks, email test sending, and automatic failover when a provider is down.
 
-**8. Support — ticket-based helpdesk with mailbox channels and customer portal**
+**11. Support — ticket-based helpdesk with mailbox channels and customer portal**
 A complete helpdesk built into your CRM. Customers open tickets via a self-service portal or by emailing a connected mailbox; agents reply, assign, tag, and resolve — all without leaving WordPress. Features include: multiple mailbox channels (web and IMAP), configurable email notifications with threading and subject tagging, file attachments with signed secure downloads, ticket priority and status workflows, CC management, bulk actions (assign, close, merge, tag), per-ticket activity logging, custom fields, saved replies, and a built-in reports dashboard. IMAP polling brings inbound emails straight into the agent inbox. Every ticket links to the contact record and can trigger automations — auto-tag, route to an agent, create a deal, or start a follow-up sequence.
 
-**9. Analytics — dashboards & reports**
+**12. Analytics — dashboards & reports**
 A built-in reporting layer covering revenue, pipeline forecasts, campaign performance (opens, clicks, conversions per send), contact growth, automation execution, and email deliverability. Visual charts, KPI cards, custom date ranges, CSV exports. The numbers your founder, marketer, and ops lead all need — without exporting to a BI tool.
 
-**10. MCP — AI clients that can operate your CRM**
+**13. MCP — AI clients that can operate your CRM**
 DoubleScale ships a built-in **Model Context Protocol (MCP)** server. Enable it under MCP settings, issue API keys for eligible users, and connect Claude, Cursor, or other MCP-compatible clients. Tools cover contacts, documents, marketing, booking, forms, and more — gated by modules and roles, with validation on writes. Setup includes Application Password auth, Windows connection notes, and emailable instructions so teammates can connect without guessing.
 
-**11. User roles — scoped access for sales, support, booking, and project teams**
+**14. User roles — scoped access for sales, support, booking, and project teams**
 DoubleScale ships dedicated roles (plus site administrators). Assign them under **Settings → Team**. Users can hold **multiple roles** — capabilities merge across roles.
 
 **Sales (Pro)**
@@ -275,6 +284,51 @@ Yes. Multiple users can work simultaneously, with role-based access, ownership-a
 Documentation and setup guides: [doublescale.io](https://doublescale.io). Community support via WordPress.org. Pro tiers include email and priority support.
 
 == Changelog ==
+
+= 1.4.0 = 21 Sep 2026
+- Send individual emails as conversation messages, without the campaign card or “Sent from” footer
+- Do not append a second unsubscribe footer when the message already has one
+- Isolate the support portal in a Shadow DOM so theme CSS cannot restyle it
+- Route SMTP by matching the From address before falling back to other connections
+- Keep typing in paginated selects while options are still loading
+- Ignore stale WhatsApp failure webhooks after the message has already been delivered
+- Apply the per-second send cap to automation emails
+- Run consecutive cheap automation steps in one go instead of queueing each one
+- Size the Action Scheduler runner for queue-heavy modules
+- Keep editor selection working inside Shadow DOM contenteditable fields
+- Show CSV in uppercase on the contact import wizard
+
+= 1.3.32 = 18 Sep 2026
+- Add a global email opt-out for subscriptions
+- Hide analytics reports when their related modules are turned off
+- Mark campaigns that sent to nobody as failed, with the real reason
+- Record why a campaign message failed on the message itself
+- Report the audience a campaign was sent to, not today's list
+- Clean up scheduled tasks when a campaign is deleted
+- Cache WhatsApp template fetches instead of hitting Meta on every request
+- Keep list/tag filters targeting their own list when no mode is set
+- Add a Projects tab on contact and deal records
+- Let booking hosts leave remote calendars without picking a default
+- Show remote calendars as a full-screen panel
+- Match proposal and invoice PDFs to the chosen templates
+- Revoke credit-note applications when a payment is deleted
+- Keep advanced filter edits in draft until applied
+- Return to the contacts list after leaving a contact
+- Improve sales document navigation, notices, and submission feedback
+- Detect the delimiter when importing contacts from CSV
+- Keep campaign recipient OR groups intact when loading the audience
+- Show applied filters as removable chips on contact and other tables
+
+= 1.3.31 = 14 Sep 2026
+- Call out newsletter, email marketing, SMS marketing, and WhatsApp marketing as separate channels in the description
+- Resend failed campaign messages from campaign analytics
+- Improve campaign recipient filters and the campaign review step
+- Keep contact filters and contact-scoped automation rules working when the Automations module is off
+- Auto-save templates without changing their visibility
+- Improve automation failure handling, action results, and process recording
+- Show progress for bulk contact actions
+- Improve sales view navigation and filters
+- Fix media modal stacking in the editor
 
 = 1.3.30 = 12 Sep 2026
 - Preserve campaign sender settings and reusable templates when applying an email template

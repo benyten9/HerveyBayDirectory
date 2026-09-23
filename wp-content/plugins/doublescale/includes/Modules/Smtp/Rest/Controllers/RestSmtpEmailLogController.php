@@ -405,6 +405,39 @@ class RestSmtpEmailLogController extends RestController {
 					200
 				);
 
+			case 'delete_before':
+				// Delete everything older than N days (chunked; the response says
+				// whether another call is needed for very large tables).
+				$days = absint( $request->get_param( 'days' ) );
+				if ( $days < 1 ) {
+					return new WP_Error( 'doublescale_smtp_logs_invalid_days', __( 'Provide a positive number of days.', 'doublescale' ), array( 'status' => 400 ) );
+				}
+				$deleted = EmailLogHandler::delete_logs_before_timestamp( time() - $days * DAY_IN_SECONDS, 2000, 25 );
+				return new WP_REST_Response(
+					array(
+						'success'   => true,
+						'deleted'   => $deleted,
+						'remaining' => EmailLogHandler::get_count( false, '1970-01-01 00:00:00', gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS ) ),
+					),
+					200
+				);
+
+			case 'apply_retention':
+				return new WP_REST_Response( array_merge( array( 'success' => true ), EmailLogHandler::apply_retention( 2000, 25 ) ), 200 );
+
+			case 'compact':
+				return new WP_REST_Response(
+					array(
+						'success'   => true,
+						'compacted' => EmailLogHandler::compact_legacy_bodies( 500, 40 ),
+						'done'      => (bool) get_option( 'doublescale_smtp_log_compact_done' ),
+					),
+					200
+				);
+
+			case 'stats':
+				return new WP_REST_Response( array_merge( array( 'success' => true ), EmailLogHandler::table_stats(), array( 'retention_days' => EmailLogHandler::retention_days(), 'max_rows' => EmailLogHandler::max_rows() ) ), 200 );
+
 			default:
 				return new WP_Error(
 					'doublescale_smtp_logs_invalid_op',

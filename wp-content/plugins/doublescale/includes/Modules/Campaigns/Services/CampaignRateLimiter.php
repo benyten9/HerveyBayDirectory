@@ -205,6 +205,14 @@ class CampaignRateLimiter {
 			$sleep_microseconds = min( $sleep_microseconds, 1000000 );
 
 			if ( $sleep_microseconds > 0 ) {
+				/**
+				 * Fires when the per-second cap is reached and the sender is about to
+				 * pause. Tests observe it; nothing should slow down sends further.
+				 *
+				 * @param string $channel            Channel key.
+				 * @param int    $sleep_microseconds Pause length.
+				 */
+				do_action( 'doublescale_rate_limit_wait', $channel, $sleep_microseconds );
 				usleep( $sleep_microseconds );
 			}
 		}

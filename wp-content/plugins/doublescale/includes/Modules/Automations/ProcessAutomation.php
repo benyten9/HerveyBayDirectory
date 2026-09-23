@@ -14,9 +14,13 @@ defined( 'ABSPATH' ) || exit;
 
 use Exception;
 use DoubleScale\Modules\Automations\Engine\ContactEnrollment;
+use DoubleScale\Modules\Automations\Engine\StepBudget;
 use DoubleScale\Modules\Automations\Engine\StepNavigator;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
+use DoubleScale\Modules\Automations\Services\ActionResult;
 use DoubleScale\Modules\Automations\Services\ActionsManager;
+use DoubleScale\Modules\Automations\Services\ProcessRecordPayload;
+use DoubleScale\Modules\Automations\Migrations\AutomationContactProcessesTable;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Core\PluginKernel;
@@ -259,19 +263,29 @@ class ProcessAutomation {
 			} else {
 				$result = $action->process_action( $this->automation, $step, $automation_contact );
 			}
-			$next_step = $this->get_next_step( $step );
+			$next_step   = $this->get_next_step( $step );
+			$interpreted = ActionResult::interpret( $result );
 
-			if ( ! $result ) {
-				$this->add_automation_contact_process( $step, $automation_contact->contact_id, $automation_contact->id, 'failed' );
-				$this->update_automation_contact_status( $automation_contact, 'failed', $step->id, $next_step ? $next_step->id : 0 );
-				throw new Exception( \__( 'Action failed', 'doublescale' ) );
+			if ( 'failed' === $interpreted['outcome'] ) {
+				$this->record_failed_step( $step, $automation_contact, $interpreted['message'] );
+				return;
 			}
 
-			$status = $action->auto_enqueue ? 'completed' : 'pending';
-			// Add to the automation_contact_processes table
-			$this->add_automation_contact_process( $step, $automation_contact->contact_id, $automation_contact->id, $status );
+			$status = $interpreted['outcome'];
+			if ( 'completed' === $status && ! $action->auto_enqueue ) {
+				$status = 'pending';
+			}
 
-			if ( $action->auto_enqueue ) {
+			$this->add_automation_contact_process(
+				$step,
+				$automation_contact->contact_id,
+				$automation_contact->id,
+				$status,
+				$interpreted['message']
+			);
+
+			$should_continue = $action->auto_enqueue || 'skipped' === $interpreted['outcome'];
+			if ( $should_continue ) {
 				if ( $next_step ) {
 					$this->enqueue_step( $next_step->id, $automation_contact->id );
 				} else {
@@ -290,6 +304,9 @@ class ProcessAutomation {
 					),
 				)
 			);
+			if ( isset( $automation_contact ) && $automation_contact ) {
+				$this->record_failed_step( $step, $automation_contact, $e->getMessage() );
+			}
 			return;
 		}
 	}
@@ -555,15 +572,96 @@ class ProcessAutomation {
 	 *
 	 * @return void
 	 */
-	public function add_automation_contact_process( $step, $contact_id, $automation_contact_id, $status ) {
-		$this->automation->processes()->create(
-			array(
-				'automation_contact_id' => $automation_contact_id,
-				'contact_id'            => $contact_id,
-				'step_id'               => $step->id,
-				'status'                => $status,
-			)
+	public function add_automation_contact_process( $step, $contact_id, $automation_contact_id, $status, $message = '' ) {
+		$row = ProcessRecordPayload::attributes(
+			$automation_contact_id,
+			$contact_id,
+			$step->id,
+			$status,
+			$message
 		);
+
+		try {
+			$this->automation->processes()->create( $row );
+			return;
+		} catch ( Exception $e ) {
+			if ( ! ProcessRecordPayload::is_unknown_message_column( $e ) ) {
+				throw $e;
+			}
+		}
+
+		$this->ensure_process_message_column();
+
+		try {
+			$this->automation->processes()->create( $row );
+			return;
+		} catch ( Exception $e ) {
+			if ( ! ProcessRecordPayload::is_unknown_message_column( $e ) ) {
+				throw $e;
+			}
+		}
+
+		$this->automation->processes()->create( ProcessRecordPayload::without_message( $row ) );
+	}
+
+	/**
+	 * Persist a failed step even when the process row cannot store a reason.
+	 *
+	 * The contact status must flip to failed so View Journey can point at
+	 * current_step. The process INSERT is best-effort: a missing `message`
+	 * column must not swallow the failure.
+	 *
+	 * @param object                 $step               Automation step.
+	 * @param AutomationContactModel $automation_contact Automation contact.
+	 * @param string                 $message            User-visible reason.
+	 * @return void
+	 */
+	private function record_failed_step( $step, $automation_contact, $message ) {
+		$next_step = $this->get_next_step( $step );
+
+		try {
+			$this->add_automation_contact_process(
+				$step,
+				$automation_contact->contact_id,
+				$automation_contact->id,
+				'failed',
+				$message
+			);
+		} catch ( Exception $e ) {
+			doublescale_get_logger()->error(
+				\__( 'Process Action Persist Error', 'doublescale' ),
+				array(
+					'code'  => 'process_action_persist',
+					'error' => array(
+						'message' => $e->getMessage(),
+						'code'    => $e->getCode(),
+					),
+				)
+			);
+		}
+
+		$this->update_automation_contact_status(
+			$automation_contact,
+			'failed',
+			$step->id,
+			$next_step ? $next_step->id : 0
+		);
+	}
+
+	/**
+	 * Re-add the optional message column when a write discovered it missing.
+	 *
+	 * SchemaGuard only runs on a version bump, so dropping the column on the
+	 * same version would otherwise stay broken until the next plugin update.
+	 *
+	 * @return void
+	 */
+	private function ensure_process_message_column() {
+		try {
+			( new AutomationContactProcessesTable() )->ensure_columns();
+		} catch ( Exception $e ) {
+			unset( $e );
+		}
 	}
 
 	/**
@@ -581,33 +679,56 @@ class ProcessAutomation {
 	 * @return void
 	 */
 	public function enqueue_step( $step_id, $automation_contact_id ) {
-		// Initialize start time on first call.
-		// if ( null === self::$start_time ) {
-		// self::$start_time = microtime( true );
-		// }
+		// Cheap steps (actions that complete immediately, conditions, end) run
+		// in this request while the StepBudget lasts; anything else — or once
+		// the budget is spent — is queued exactly as before.
+		if ( StepBudget::can_run_inline() ) {
+			$step = AutomationStepModel::find( $step_id );
+			if ( $step && $this->can_run_step_inline( $step ) ) {
+				StepBudget::inline(
+					function () use ( $step, $automation_contact_id ) {
+						$this->process_step( $step, $automation_contact_id );
+					}
+				);
+				return;
+			}
+		}
 
-		// // Check if we should switch to async.
-		// if ( $this->should_switch_to_async() ) {
-			PluginKernel::instance()->automations_tasks->enqueue_async(
-				'process_automation_step',
-				$this->automation->id,
-				0, // parent_step_id - only used for delay steps
-				$step_id,
-				$automation_contact_id
-			);
-			// Reset start time for next batch.
-		// self::$start_time = null;
-		// return;
-		// }
+		PluginKernel::instance()->automations_tasks->enqueue_async(
+			'process_automation_step',
+			$this->automation->id,
+			0, // parent_step_id - only used for delay steps
+			$step_id,
+			$automation_contact_id
+		);
+	}
 
-		// // Safe to continue synchronously.
-		// PluginKernel::instance()->automations_tasks->enqueue_sync(
-		// 'process_automation_step',
-		// $this->automation,
-		// 0, // parent_step_id - only used for delay steps
-		// $step_id,
-		// $automation_contact_id
-		// );
+	/**
+	 * Whether a step can be executed without waiting for the queue.
+	 *
+	 * Delays and goals wait by definition; actions that do not auto-enqueue
+	 * (their follow-up is scheduled elsewhere) keep their own pacing.
+	 *
+	 * @param AutomationStepModel $step Step.
+	 * @return bool
+	 */
+	private function can_run_step_inline( $step ) {
+		switch ( $step->type ) {
+			case 'condition':
+			case 'end_automation':
+				return true;
+			case 'action':
+				$action = ActionsManager::instance()->get_action( $step->action );
+				if ( ! $action ) {
+					return false;
+				}
+				if ( isset( $action->group ) && 'delay' === $action->group ) {
+					return false;
+				}
+				return ! empty( $action->auto_enqueue );
+			default:
+				return false;
+		}
 	}
 
 	/**

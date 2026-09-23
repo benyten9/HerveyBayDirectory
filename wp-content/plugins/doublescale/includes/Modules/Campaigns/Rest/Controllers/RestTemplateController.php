@@ -713,8 +713,20 @@ class RestTemplateController extends RestController {
 			'body'      => $request->get_param( 'body' ),
 			'settings'  => $settings,
 			'thumbnail' => $request->get_param( 'thumbnail' ),
-			'hidden'    => $request->get_param( 'hidden' ) ?? false,
 		);
+
+		// `hidden` decides whether a template appears in the user-facing
+		// picker, so only a caller that actually sent it may change it. A
+		// partial update (auto-save posting just the body) must leave the
+		// stored value alone — defaulting to false here would drag every
+		// campaign scratch template into the picker, and defaulting to true
+		// would hide a design the moment after the user saved it.
+		// A create still needs a concrete value: new templates start visible.
+		if ( $request->has_param( 'hidden' ) ) {
+			$template_data['hidden'] = (bool) $request->get_param( 'hidden' );
+		} elseif ( ! $request->get_param( 'id' ) ) {
+			$template_data['hidden'] = false;
+		}
 
 		// Only set name if provided, otherwise leave it out (for updates that don't change name)
 		if ( $name !== null ) {

@@ -49,7 +49,7 @@ class ConsentController extends RestController {
 	public function check_permission( WP_REST_Request $request ) {
 		$nonce = $request->get_header( 'X-WP-Nonce' );
 
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+		if ( ! $nonce || ! \wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return new WP_Error(
 				'invalid_nonce',
 				__( 'The request nonce is invalid.', 'elementor' ),
@@ -57,7 +57,7 @@ class ConsentController extends RestController {
 			);
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! \current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'forbidden',
 				__( 'You are not allowed to update consent.', 'elementor' ),
@@ -75,7 +75,15 @@ class ConsentController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function save_consent( WP_REST_Request $request ) {
-		$user_id = get_current_user_id();
+		if ( ! McpSettingsController::is_enabled() ) {
+			return new WP_Error(
+				'mcp_disabled',
+				__( 'Elementor MCP is currently disabled for this site.', 'elementor' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		$user_id = \get_current_user_id();
 
 		if ( ! $user_id ) {
 			return new WP_Error(
@@ -90,7 +98,7 @@ class ConsentController extends RestController {
 			'timestamp' => time(),
 		];
 
-		$updated = update_user_meta( $user_id, self::META_KEY, $consent_data );
+		$updated = \update_user_meta( $user_id, self::META_KEY, $consent_data );
 
 		if ( ! $updated && self::get_consent( $user_id ) !== $consent_data ) {
 			return new WP_Error(
@@ -117,7 +125,7 @@ class ConsentController extends RestController {
 	 */
 	public static function get_consent( ?int $user_id = null ): array {
 		if ( null === $user_id ) {
-			$user_id = get_current_user_id();
+			$user_id = \get_current_user_id();
 		}
 
 		if ( ! $user_id ) {
@@ -127,7 +135,7 @@ class ConsentController extends RestController {
 			];
 		}
 
-		$consent = get_user_meta( $user_id, self::META_KEY, true );
+		$consent = \get_user_meta( $user_id, self::META_KEY, true );
 
 		if ( ! is_array( $consent ) ) {
 			return [

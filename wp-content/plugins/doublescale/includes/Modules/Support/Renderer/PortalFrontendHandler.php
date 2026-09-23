@@ -3,13 +3,10 @@
  * Customer-facing support portal renderer.
  *
  * Renders the `[doublescale_support_portal]` shortcode. Mirrors the
- * Booking renderer's enqueue pattern ({@see Modules/Booking/Renderer/BookingFrontendHandler.php}),
- * with two key differences:
+ * Client Portal renderer ({@see Modules/Portal/Renderer/PortalFrontendHandler.php}):
  *
- *   1. Portal is shortcode-driven, NOT URL-query-driven, so we do NOT
- *      hijack `template_redirect` or wipe the global styles queue —
- *      the portal renders inline on whatever page the admin pasted
- *      the shortcode onto (host theme stays intact).
+ *   1. Shortcode-driven (does NOT hijack `template_redirect`); the SPA mounts
+ *      in a Shadow DOM so theme CSS cannot change ticket colors/padding.
  *
  *   2. Logged-out visitors without a guest ticket hash see a login gate
  *      (wp_login_form + register / reset links), mirroring Fluent Support.
@@ -143,6 +140,12 @@ final class PortalFrontendHandler {
 	 * actually placed the shortcode) and off logged-out visits entirely.
 	 */
 	public function maybe_enqueue(): void {
+		if ( ! $this->current_page_has_shortcode() ) {
+			return;
+		}
+
+		$this->enqueue_host_isolation_styles();
+
 		$guest_hash = $this->current_guest_ticket_hash();
 		if ( ! is_user_logged_in() && '' === $guest_hash ) {
 			return;
@@ -152,37 +155,9 @@ final class PortalFrontendHandler {
 			return;
 		}
 
-		if ( ! $this->current_page_has_shortcode() ) {
-			return;
-		}
-
-		$plugin_dir = defined( 'DOUBLESCALE_PLUGIN_DIR' ) ? \DOUBLESCALE_PLUGIN_DIR : '';
-		$plugin_url = defined( 'DOUBLESCALE_PLUGIN_URL' ) ? \DOUBLESCALE_PLUGIN_URL : '';
-		$version    = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
-
-		$asset_file = $plugin_dir . 'build/renderer/support/index.asset.php';
-		$asset      = file_exists( $asset_file ) ? require $asset_file : null;
-		$deps       = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
-		$ver        = isset( $asset['version'] ) ? $asset['version'] : $version;
-
-		wp_register_script(
-			self::HANDLE,
-			$plugin_url . 'build/renderer/support/index.js',
-			$deps,
-			$ver,
-			true
-		);
-
-		if ( function_exists( 'wp_set_script_translations' ) ) {
-			wp_set_script_translations( self::HANDLE, 'doublescale', $plugin_dir . 'languages' );
-		}
-
-		wp_register_style(
-			self::HANDLE,
-			$plugin_url . 'build/renderer/support/style.css',
-			array(),
-			$ver
-		);
+		$handle = \DoubleScale\Modules\Portal\Renderer\PublicFrontendAssets::enqueue_script();
+		// CSS is fetched into Shadow DOM via style_urls (same as client portal).
+		// Do not enqueue the stylesheet in the light DOM.
 
 		$user     = wp_get_current_user();
 		$is_guest = ! is_user_logged_in() && '' !== $guest_hash;
@@ -204,18 +179,79 @@ final class PortalFrontendHandler {
 			// Attachment limits so the portal/guest uploader can show the caps and
 			// pre-validate before sending a file.
 			'attachment_limits'     => \DoubleScale\Modules\Support\Services\AttachmentSettings::to_payload(),
+			'style_urls'            => $this->build_style_urls(),
 		);
 
 		wp_localize_script(
-			self::HANDLE,
+			$handle,
 			'doublescale_support_portal_config',
 			$config
 		);
+	}
 
-		wp_style_add_data( self::HANDLE, 'rtl', 'replace' );
+	/**
+	 * Size the shortcode host only. Ticket UI lives in a Shadow DOM so theme
+	 * CSS cannot reach colors/padding inside.
+	 *
+	 * @return void
+	 */
+	private function enqueue_host_isolation_styles(): void {
+		$version = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
+		$css     = '
+			body.doublescale-support-portal-page .elementor-widget:has(#doublescale-support-portal),
+			body.doublescale-support-portal-page .elementor-widget-container:has(#doublescale-support-portal),
+			body.doublescale-support-portal-page .elementor-shortcode:has(#doublescale-support-portal),
+			body.doublescale-support-portal-page .wp-block-shortcode:has(#doublescale-support-portal){
+				width:100%!important;
+				max-width:100%!important;
+			}
+			body.doublescale-support-portal-page .is-layout-constrained > #doublescale-support-portal,
+			body.doublescale-support-portal-page .entry-content > #doublescale-support-portal,
+			body.doublescale-support-portal-page .wp-block-post-content > #doublescale-support-portal,
+			body.doublescale-support-portal-page #doublescale-support-portal{
+				position:relative!important;
+				z-index:1;
+				display:block!important;
+				float:none!important;
+				clear:both;
+				width:100%!important;
+				max-width:100%!important;
+				margin-left:0!important;
+				margin-right:0!important;
+				padding:0!important;
+				border:0!important;
+				background:transparent!important;
+				box-shadow:none!important;
+				left:auto!important;
+				right:auto!important;
+				transform:none!important;
+				box-sizing:border-box!important;
+			}
+		';
 
-		wp_enqueue_script( self::HANDLE );
-		wp_enqueue_style( self::HANDLE );
+		wp_register_style( 'doublescale-support-portal-host', false, array(), $version );
+		wp_enqueue_style( 'doublescale-support-portal-host' );
+		wp_add_inline_style( 'doublescale-support-portal-host', $css );
+	}
+
+	/**
+	 * Absolute portal stylesheet URLs for Shadow DOM inlining.
+	 *
+	 * @return array<int, string>
+	 */
+	private function build_style_urls(): array {
+		$plugin_dir = defined( 'DOUBLESCALE_PLUGIN_DIR' ) ? \DOUBLESCALE_PLUGIN_DIR : '';
+		$plugin_url = defined( 'DOUBLESCALE_PLUGIN_URL' ) ? \DOUBLESCALE_PLUGIN_URL : '';
+		$version    = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
+		$asset_file = $plugin_dir . 'build/renderer/portal/index.asset.php';
+		$asset      = file_exists( $asset_file ) ? require $asset_file : null;
+		$ver        = isset( $asset['version'] ) ? $asset['version'] : $version;
+		$style_file = is_rtl() ? 'style-rtl.css' : 'style.css';
+		$style_url  = $plugin_url
+			? add_query_arg( 'ver', $ver, $plugin_url . 'build/renderer/portal/' . $style_file )
+			: '';
+
+		return $style_url ? array( esc_url_raw( $style_url ) ) : array();
 	}
 
 	/**
@@ -526,6 +562,6 @@ final class PortalFrontendHandler {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$hash = sanitize_text_field( wp_unslash( (string) $_GET[ \DoubleScale\Modules\Support\Services\PortalUrl::TICKET_HASH_QUERY_ARG ] ) );
-		return preg_match( '/^[a-f0-9]{32}$/', $hash ) ? $hash : '';
+		return preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ? $hash : '';
 	}
 }

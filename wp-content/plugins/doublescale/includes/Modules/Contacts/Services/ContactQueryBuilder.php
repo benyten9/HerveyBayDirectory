@@ -143,7 +143,12 @@ final class ContactQueryBuilder {
 			$contacts = $contacts->with( $with );
 		}
 
-		// Apply date range filters.
+		// Apply date range filters. The UI sends site-local calendar days
+		// (Y-m-d); created_at is stored in UTC, so expand each day to its
+		// UTC start/end. A bare date compared with `<=` would be read by
+		// MySQL as midnight and silently drop the whole last day.
+		$from = self::day_bound_utc( $from, false );
+		$to   = self::day_bound_utc( $to, true );
 		if ( $from ) {
 			$contacts->where( 'created_at', '>=', $from );
 		}
@@ -267,5 +272,36 @@ final class ContactQueryBuilder {
 				return $value;
 			}
 		);
+	}
+
+	/**
+	 * Convert a site-local calendar day into a UTC datetime bound.
+	 *
+	 * `2026-09-18` becomes `2026-09-18 00:00:00` (start) or
+	 * `2026-09-18 23:59:59` (end) in the site timezone, then shifted to UTC
+	 * to match how created_at is stored. Values that already carry a time,
+	 * or that cannot be parsed, are passed through untouched.
+	 *
+	 * @param mixed $value      Raw from/to parameter.
+	 * @param bool  $end_of_day True for the upper bound.
+	 * @return string|null UTC `Y-m-d H:i:s`, the original value, or null when empty.
+	 */
+	public static function day_bound_utc( $value, bool $end_of_day ) {
+		if ( null === $value || '' === $value || false === $value ) {
+			return null;
+		}
+
+		$value = trim( (string) $value );
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			return $value;
+		}
+
+		try {
+			$local = new \DateTimeImmutable( $value . ( $end_of_day ? ' 23:59:59' : ' 00:00:00' ), wp_timezone() );
+		} catch ( \Exception $e ) {
+			return $value;
+		}
+
+		return $local->setTimezone( new \DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
 	}
 }

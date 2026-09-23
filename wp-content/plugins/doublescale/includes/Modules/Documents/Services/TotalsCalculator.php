@@ -34,7 +34,8 @@ class TotalsCalculator {
 				continue;
 			}
 
-			$qty    = isset( $item['qty'] ) ? (float) $item['qty'] : 1.0;
+			// Legacy rows use `quantity`; a row with neither is one unit.
+			$qty    = isset( $item['qty'] ) ? (float) $item['qty'] : ( isset( $item['quantity'] ) ? (float) $item['quantity'] : 1.0 );
 			$rate   = isset( $item['rate'] ) ? (float) $item['rate'] : 0.0;
 			$amount = isset( $item['amount'] ) ? (float) $item['amount'] : ( $qty * $rate );
 

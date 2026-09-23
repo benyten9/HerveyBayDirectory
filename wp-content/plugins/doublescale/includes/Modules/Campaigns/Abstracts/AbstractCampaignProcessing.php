@@ -31,6 +31,7 @@ use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Core\PluginKernel;
 use DoubleScale\Core\Utils\Utils;
+use DoubleScale\Modules\Campaigns\Services\CampaignStatusManager;
 use DoubleScale\Modules\Campaigns\Services\CampaignRateLimiter;
 use DoubleScale\Modules\Campaigns\Services\CampaignContactFilter;
 use DoubleScale\Core\MergeTags\MergeTagsManager;
@@ -62,9 +63,15 @@ abstract class AbstractCampaignProcessing {
 	/**
 	 * Cached merge tag keys for current template
 	 *
+	 * Protected, not private: EmailProcessing caches into this same property
+	 * while preparing each message. A private property is not inherited, so the
+	 * child was writing to a dynamic property of its own and PHP raised
+	 * "Undefined property" on first read — which, with WP_DEBUG on, aborted
+	 * every message and recorded the whole campaign as failed.
+	 *
 	 * @var array|null
 	 */
-	private $template_merge_tag_keys = null;
+	protected $template_merge_tag_keys = null;
 
 	/**
 	 * Temporarily store rendered conditional section IDs by tracking ID
@@ -566,6 +573,19 @@ abstract class AbstractCampaignProcessing {
 	abstract protected function send_message( $message_data, ContactModel $contact, CommunicationTrackingModel $campaign_message );
 
 	/**
+	 * Messages per second this channel may send; null lets the limiter use
+	 * the channel default. Channels with a configurable cap override this.
+	 *
+	 * @return int|null
+	 */
+	protected function get_per_second_cap() {
+		if ( method_exists( $this, 'get_max_per_second' ) ) {
+			return (int) $this->get_max_per_second();
+		}
+		return null;
+	}
+
+	/**
 	 * Get tracking class - must be implemented by child classes
 	 *
 	 * @return string Tracking class name
@@ -772,6 +792,7 @@ abstract class AbstractCampaignProcessing {
 		$ctx->contact_filter     = $this->contact_filter;
 		$ctx->rate_limiter       = $this->rate_limiter;
 		$ctx->fn_complete        = \Closure::fromCallable( array( $this, 'complete_campaign' ) );
+		$ctx->fn_fail            = \Closure::fromCallable( array( $this, 'fail_campaign' ) );
 		$ctx->fn_continue        = array( $this->continuation_scheduler, 'queue' );
 		$ctx->fn_refresh_lock    = array( $this->locker, 'refresh' );
 		$ctx->fn_execution_time  = array( $this, 'get_current_execution_time' );
@@ -1098,8 +1119,15 @@ abstract class AbstractCampaignProcessing {
 			// Prepare message content - pass the original contact model for merge tags
 			$message_data = $this->prepare_message_content( $template, $contact_or_automation_contact, $campaign_message );
 
+			// Automations call this directly (one queued action per contact) and
+			// so skipped the per-second cap the campaign pipeline applies in its
+			// dispatch loop. Apply it here for every caller; the tracker is shared,
+			// so a pipeline that already waited does not wait twice.
+			$this->rate_limiter->check_and_wait_per_second( $this->channel, $this->get_per_second_cap() );
+
 			// Send the message - use actual contact for sending
 			$result = $this->send_message( $message_data, $contact, $campaign_message );
+			$this->rate_limiter->record_sent( $this->channel );
 
 			// Handle result
 			$this->handle_send_result( $campaign_message, $result );
@@ -1281,8 +1309,85 @@ abstract class AbstractCampaignProcessing {
 	 * @param int           $recipients_count
 	 * @return void
 	 */
+	/**
+	 * Mark a campaign failed for a stated reason, before any sending began.
+	 *
+	 * Distinct from the no-progress watchdog in continue_campaign_processing():
+	 * that one ends a campaign which HAS recipients but whose offset will not
+	 * advance, and records "no progress after N attempts". Using it for a
+	 * campaign with no audience both wasted several cron cycles and logged the
+	 * wrong diagnosis.
+	 *
+	 * @param CampaignModel $campaign Campaign model.
+	 * @param string        $reason   Machine-readable reason, e.g. 'no_recipients'.
+	 * @param string        $message  Human-readable explanation.
+	 * @return void
+	 */
+	protected function fail_campaign( CampaignModel $campaign, $reason, $message ) {
+		$campaign->status = 'failed';
+		$campaign->save();
+
+		delete_option( "doublescale_{$this->channel}_campaign_start_time_{$campaign->id}" );
+
+		doublescale_get_logger()->error(
+			$message,
+			array(
+				'code'        => "{$this->channel}_campaign_{$reason}",
+				'reason'      => $reason,
+				'campaign_id' => $campaign->id,
+			)
+		);
+
+		/**
+		 * Fires when a campaign fails before dispatching anything.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param CampaignModel $campaign The failed campaign.
+		 * @param string        $reason   Machine-readable reason.
+		 */
+		do_action( 'doublescale_campaign_failed_early', $campaign, $reason );
+	}
+
+	/**
+	 * Whether this campaign delivered anything at all.
+	 *
+	 * A campaign that attempted every recipient and had every single send fail
+	 * has finished processing, but it has not done its job, and reporting it as
+	 * "Completed" in the campaigns list hides that entirely — which is how a
+	 * campaign whose template had been deleted looked indistinguishable from one
+	 * that reached everybody.
+	 *
+	 * A partial failure is not this case: some of it landed, the campaign did
+	 * its work, and the reason each failed message failed is recorded on that
+	 * message.
+	 *
+	 * @param CampaignModel $campaign Campaign that just finished processing.
+	 * @return bool True when at least one message left in a non-failed state.
+	 */
+	protected function campaign_delivered_something( CampaignModel $campaign ) {
+		$total = (int) $campaign->messages()->count();
+
+		// No messages at all is not the same as "everything failed" — an empty
+		// audience is caught earlier, by fail_campaign('no_recipients'). Treat
+		// anything else that produces no rows as completed, as before.
+		if ( $total < 1 ) {
+			return true;
+		}
+
+		$failed = (int) $campaign->messages()
+			->where( 'status', TrackingStatus::FAILED )
+			->count();
+
+		return $failed < $total;
+	}
+
 	protected function complete_campaign( CampaignModel $campaign, $recipients_count ) {
-		$campaign->status = 'completed';
+		$delivered_something = $this->campaign_delivered_something( $campaign );
+
+		$campaign->status = $delivered_something
+			? CampaignStatusManager::COMPLETED
+			: CampaignStatusManager::FAILED;
 		$campaign->save();
 		update_option( "doublescale_{$this->channel}_campaigns_last_contact_offset_{$campaign->id}", $recipients_count );
 
@@ -1293,21 +1398,38 @@ abstract class AbstractCampaignProcessing {
 		// Calculate and log campaign duration
 		$campaign_duration = $this->calculate_campaign_duration( $campaign );
 
-		doublescale_get_logger()->info(
-			/* translators: %s: dynamic value */
-			sprintf( __( '%s Campaign completed.', 'doublescale' ), ucfirst( $this->channel ) ),
-			array(
-				'code'       => "{$this->channel}_campaign_completed",
-				'campaign'   => array(
-					'id'   => $campaign->id,
-					'name' => $campaign->name,
-				),
-				'duration'   => $campaign_duration['formatted'],
-				'start_time' => $campaign_duration['start_time'],
-				'end_time'   => $campaign_duration['end_time'],
-				'recipients' => $recipients_count,
-			)
+		// Keep the log in step with the status: a campaign that delivered
+		// nothing must not leave "Campaign completed." behind as its only trace.
+		$log_context = array(
+			'code'       => $delivered_something
+				? "{$this->channel}_campaign_completed"
+				: "{$this->channel}_campaign_all_messages_failed",
+			'campaign'   => array(
+				'id'   => $campaign->id,
+				'name' => $campaign->name,
+			),
+			'duration'   => $campaign_duration['formatted'],
+			'start_time' => $campaign_duration['start_time'],
+			'end_time'   => $campaign_duration['end_time'],
+			'recipients' => $recipients_count,
 		);
+
+		if ( $delivered_something ) {
+			doublescale_get_logger()->info(
+				/* translators: %s: channel name, e.g. Email */
+				sprintf( __( '%s Campaign completed.', 'doublescale' ), ucfirst( $this->channel ) ),
+				$log_context
+			);
+		} else {
+			doublescale_get_logger()->error(
+				/* translators: %s: channel name, e.g. Email */
+				sprintf(
+					__( '%s Campaign finished but every message failed.', 'doublescale' ),
+					ucfirst( $this->channel )
+				),
+				$log_context
+			);
+		}
 
 		// Clean up the campaign start time
 		delete_option( "doublescale_{$this->channel}_campaign_start_time_{$campaign->id}" );
@@ -1369,6 +1491,17 @@ abstract class AbstractCampaignProcessing {
 			// Clear pending conditional sections if send failed - don't track sections for unsent emails
 			if ( isset( $this->pending_conditional_sections[ $campaign_message->id ] ) ) {
 				unset( $this->pending_conditional_sections[ $campaign_message->id ] );
+			}
+
+			$error = \DoubleScale\Modules\Tracking\SendErrorMeta::from_result( $result );
+			if ( '' !== $error ) {
+				CommunicationTrackingMetaModel::create(
+					array(
+						'communication_tracking_id' => $campaign_message->id,
+						'meta_key'                  => \DoubleScale\Modules\Tracking\SendErrorMeta::KEY,
+						'meta_value'                => $error,
+					)
+				);
 			}
 
 			// Log error details if available
@@ -1559,6 +1692,19 @@ abstract class AbstractCampaignProcessing {
 	protected function log_campaign_processing_error( $campaign, $contact, $campaign_message, $exception ) {
 		$campaign_message->status = TrackingStatus::FAILED;
 		$campaign_message->save();
+
+		// Record the reason on the message itself, not only in the plugin log.
+		// The overview's Emails tab reads error_info to show a "Failure Reason",
+		// and without it every exception-raised failure showed as a bare
+		// "Failed" — a vanished template looked identical to a provider
+		// rejection or a bad address.
+		if ( $campaign_message->id ) {
+			CommunicationTrackingMetaModel::store_error_info(
+				$campaign_message->id,
+				"campaign_{$this->channel}_error",
+				$exception->getMessage()
+			);
+		}
 
 		doublescale_get_logger()->error(
 			/* translators: %s: channel name */

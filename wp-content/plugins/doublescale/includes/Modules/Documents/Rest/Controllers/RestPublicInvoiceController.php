@@ -39,7 +39,7 @@ class RestPublicInvoiceController extends RestController {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -51,7 +51,7 @@ class RestPublicInvoiceController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/pdf',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/pdf',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -63,7 +63,7 @@ class RestPublicInvoiceController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/pay/(?P<gateway>[a-z0-9_\-]+)/init',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/pay/(?P<gateway>[a-z0-9_\-]+)/init',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -75,7 +75,7 @@ class RestPublicInvoiceController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/pay/(?P<gateway>[a-z0-9_\-]+)/confirm',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/pay/(?P<gateway>[a-z0-9_\-]+)/confirm',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -87,7 +87,7 @@ class RestPublicInvoiceController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/stripe/init',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/stripe/init',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
@@ -99,7 +99,7 @@ class RestPublicInvoiceController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/stripe/confirm',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/stripe/confirm',
 			array(
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,

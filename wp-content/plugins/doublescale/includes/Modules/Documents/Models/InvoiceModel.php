@@ -205,7 +205,7 @@ class InvoiceModel extends Model {
 	 */
 	public static function get_by_hash( $hash ) {
 		$hash = trim( (string) $hash );
-		if ( '' === $hash || ! preg_match( '/^[a-f0-9]{32}$/', $hash ) ) {
+		if ( '' === $hash || ! preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ) {
 			return null;
 		}
 		return self::query()->where( 'hash', $hash )->first();

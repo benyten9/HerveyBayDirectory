@@ -65,4 +65,24 @@ class PaymentModel extends Model {
 	public function recorded_by() {
 		return $this->belongsTo( UserModel::class, 'recorded_by_user_id', 'ID' );
 	}
+
+	/**
+	 * Let Pro (and other listeners) unlink credit-note applications before the row is gone.
+	 *
+	 * @return bool|null
+	 */
+	public function delete() {
+		/**
+		 * Fires immediately before an invoice payment row is deleted.
+		 *
+		 * Credit-note applications write a payment with transaction_id
+		 * `cn_application:{id}`. Deleting that payment must revoke the matching
+		 * application or the credit note still shows Applications / Revoke.
+		 *
+		 * @param PaymentModel $payment Payment about to be deleted.
+		 */
+		do_action( 'doublescale_sales_invoice_payment_deleting', $this );
+
+		return parent::delete();
+	}
 }

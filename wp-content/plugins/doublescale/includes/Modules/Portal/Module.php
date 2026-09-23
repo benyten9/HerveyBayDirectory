@@ -81,6 +81,7 @@ final class Module extends AbstractModule {
 			Rest\Controllers\RestPortalPageController::class,
 			Rest\Controllers\RestPortalCalendarController::class,
 			Rest\Controllers\RestPortalContactController::class,
+			Rest\Controllers\RestPortalUsersController::class,
 		);
 	}
 
@@ -89,6 +90,10 @@ final class Module extends AbstractModule {
 
 		// Wire the shortcode + enqueue listener.
 		$container->get( PortalFrontendHandler::class );
+
+		// Auto-create portal accounts for new contacts when enabled in settings.
+		add_action( 'doublescale_contact_created', array( Services\PortalUserProvisioner::class, 'on_contact_created' ) );
+		add_action( 'doublescale_contact_list_apply', array( Services\PortalUserProvisioner::class, 'on_lists_applied' ), 10, 2 );
 
 		// Auto-create the portal page once so the portal is discoverable on a
 		// fresh install. Registers into the shared provisioner alongside every

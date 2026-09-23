@@ -9,6 +9,32 @@
 
 //#endregion
 
+//#region node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js
+	function _objectWithoutPropertiesLoose(r, e) {
+		if (null == r) return {};
+		var t = {};
+		for (var n in r) if ({}.hasOwnProperty.call(r, n)) {
+			if (-1 !== e.indexOf(n)) continue;
+			t[n] = r[n];
+		}
+		return t;
+	}
+
+//#endregion
+//#region node_modules/@babel/runtime/helpers/esm/objectWithoutProperties.js
+	function _objectWithoutProperties(e, t) {
+		if (null == e) return {};
+		var o;
+		var r;
+		var i = _objectWithoutPropertiesLoose(e, t);
+		if (Object.getOwnPropertySymbols) {
+			var n = Object.getOwnPropertySymbols(e);
+			for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
+		}
+		return i;
+	}
+
+//#endregion
 //#region node_modules/@babel/runtime/helpers/esm/typeof.js
 	function _typeof(o) {
 		"@babel/helpers - typeof";
@@ -52,6 +78,7 @@
 
 //#endregion
 //#region modules/mcp/assets/dev/js/mcp-analytics-registrar.js
+	var _excluded = ["name"];
 	function ownKeys(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
@@ -143,6 +170,8 @@
 					});
 					if (detail.os) props.os = detail.os;
 					return ["mcp_config_copied", props];
+				case "mcp_access_toggled":
+				case "mcp_access_toggle_failed": return [detail.name, _objectWithoutProperties(detail, _excluded)];
 				default: return null;
 			}
 		}

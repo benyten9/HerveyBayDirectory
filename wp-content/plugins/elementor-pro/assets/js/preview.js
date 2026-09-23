@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.3.0 - 08-09-2026 */
+/*! elementor-pro - v4.3.0 - 22-09-2026 */
 (function(_wordpress_i18n) {
 	//#endregion
 	//#region assets/dev/js/preview/utils/document-handle.js

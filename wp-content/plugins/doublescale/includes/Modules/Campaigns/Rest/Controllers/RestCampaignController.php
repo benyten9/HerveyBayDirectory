@@ -36,6 +36,7 @@ use DoubleScale\Modules\Campaigns\Models\TemplateModel;
 use DoubleScale\Modules\Emails\EmailRenderer;
 use DoubleScale\Modules\Emails\EmailTrackingHelper;
 use DoubleScale\Core\MergeTags\MergeTagsManager;
+use DoubleScale\Core\PluginKernel;
 
 
 /**
@@ -204,6 +205,26 @@ class RestCampaignController extends AbstractCampaignController {
 							'type'        => 'string',
 							'enum'        => array( 'all', 'sent', 'opened', 'clicked', 'failed', 'pending', 'delivered', 'scheduled' ),
 							'required'    => false,
+						),
+					),
+				),
+			)
+		);
+
+		// Retry all failed messages (Retry Sending on the campaign overview).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/resend',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'resend_failed_messages' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Campaign ID', 'doublescale' ),
+							'type'        => 'integer',
+							'required'    => true,
 						),
 					),
 				),
@@ -992,6 +1013,87 @@ class RestCampaignController extends AbstractCampaignController {
 	 */
 	public function bulk_delete_permissions_check( $request ) {
 		return Permissions::has_crm_manager_access();
+	}
+
+	/**
+	 * Retry every failed message in a campaign.
+	 *
+	 * Sets status to `resending` so the existing campaign processor picks the
+	 * failures up. This must not go through update_item(): that endpoint
+	 * rejects any write unless the campaign is still a draft.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function resend_failed_messages( $request ) {
+		try {
+			$campaign_id = (int) $request->get_param( 'id' );
+			$campaign    = CampaignModel::find( $campaign_id );
+
+			if ( ! $campaign ) {
+				return new WP_Error(
+					'campaign_not_found',
+					__( 'Campaign not found', 'doublescale' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$failed_count = CommunicationTrackingModel::query()
+				->where( 'source_type', MessageSourceTypes::CAMPAIGN )
+				->where( 'source_id', $campaign_id )
+				->where( 'status', TrackingStatus::FAILED )
+				->count();
+
+			if ( $failed_count < 1 ) {
+				return new WP_Error(
+					'no_failed_messages',
+					__( 'No failed messages to resend', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			if ( CampaignStatusManager::RESENDING !== $campaign->status ) {
+				$allowed = array(
+					CampaignStatusManager::COMPLETED,
+					CampaignStatusManager::FAILED,
+					CampaignStatusManager::ACTIVE,
+				);
+
+				if ( ! in_array( $campaign->status, $allowed, true ) ) {
+					return new WP_Error(
+						'invalid_campaign_status',
+						__( 'This campaign cannot retry sending in its current status.', 'doublescale' ),
+						array( 'status' => 400 )
+					);
+				}
+
+				$campaign->status = CampaignStatusManager::RESENDING;
+				$campaign->save();
+			}
+
+			$channel = is_numeric( $campaign->type )
+				? CampaignChannel::to_string( (int) $campaign->type )
+				: (string) $campaign->type;
+
+			if ( $channel ) {
+				PluginKernel::instance()->campaigns_tasks->enqueue_async( "doublescale_{$channel}_campaigns" );
+			}
+
+			return rest_ensure_response(
+				array(
+					'success'      => true,
+					'status'       => CampaignStatusManager::RESENDING,
+					'failed_count' => (int) $failed_count,
+					'message'      => __( 'Resend process initiated. All failed messages will be retried automatically.', 'doublescale' ),
+				)
+			);
+		} catch ( \Exception $e ) {
+			return new WP_Error(
+				'resend_failed',
+				$e->getMessage(),
+				array( 'status' => 500 )
+			);
+		}
 	}
 
 	/**

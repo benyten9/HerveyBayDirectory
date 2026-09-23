@@ -49,7 +49,7 @@ class Time_Picker extends Atomic_Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'atomic', 'form', 'time', 'picker' ];
+		return [ 'atomic', 'form', 'time', 'picker', 'clock' ];
 	}
 
 	protected static function define_props_schema(): array {

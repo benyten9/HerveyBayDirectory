@@ -12,6 +12,7 @@ use ElementorPro\Modules\CollectionLoop\Elements\Collection_Loop_Layout\Collecti
 use ElementorPro\Modules\CollectionLoop\Elements\Collection_Loop_Pagination\Collection_Loop_Pagination;
 use ElementorPro\Modules\CollectionLoop\Elements\Collection_Loop_Pagination_Next\Collection_Loop_Pagination_Next;
 use ElementorPro\Modules\CollectionLoop\Elements\Collection_Loop_Pagination_Prev\Collection_Loop_Pagination_Prev;
+use ElementorPro\Modules\CollectionLoop\Import\Loop_Query_Import_Remap;
 use ElementorPro\Modules\CollectionLoop\Query\Loop_Query_Prop_Type;
 use ElementorPro\Modules\CollectionLoop\Query\Loop_Query_Transformer;
 use ElementorPro\License\API;
@@ -48,6 +49,8 @@ class Module extends Module_Base {
 
 	public function __construct() {
 		parent::__construct();
+
+		add_action( 'elementor/atomic-widgets/import/id-remap-handlers/register', [ Loop_Query_Import_Remap::class, 'register' ] );
 
 		if ( ! $this->is_experiment_active() || ! $this->is_license_feature_enabled() ) {
 			return;

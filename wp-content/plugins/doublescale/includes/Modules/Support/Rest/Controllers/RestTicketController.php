@@ -108,7 +108,7 @@ class RestTicketController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/by-hash/(?P<hash>[a-f0-9]{32})',
+			'/' . $this->rest_base . '/by-hash/(?P<hash>[A-Za-z0-9]{32})',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_item_by_hash' ),

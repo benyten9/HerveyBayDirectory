@@ -17,6 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use DoubleScale\Modules\Automations\Engine\StepBudget;
+use DoubleScale\Modules\Automations\Engine\TriggerBatch;
+use DoubleScale\Modules\Automations\Engine\TriggerPayload;
 use DoubleScale\Core\PluginKernel;
 use Exception;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
@@ -73,6 +76,11 @@ final class Loader {
 	public function load_hooks() {
 		PluginKernel::instance()->automations_tasks->register_callback( 'process_automation_step', array( $this, 'process_automation_step' ) );
 		PluginKernel::instance()->automations_tasks->register_callback( 'process_automations', array( $this, 'process_automations' ) );
+		PluginKernel::instance()->automations_tasks->register_callback( TriggerBatch::HOOK, array( $this, 'process_automations_batch' ) );
+
+		// The queue runner executes many actions in one PHP process; an
+		// automation edited meanwhile must be seen by the next action.
+		add_action( 'action_scheduler_before_execute', array( AutomationModel::class, 'flush_trigger_cache' ) );
 		PluginKernel::instance()->automations_tasks->register_callback( 'process_automation_goal', array( $this, 'process_automation_goal' ) );
 	}
 
@@ -126,8 +134,16 @@ final class Loader {
 				}
 			}
 
+			// Hydrate contact/booking ids back into models (legacy payloads that
+			// still carry the objects pass through unchanged).
+			$args = TriggerPayload::unpack( is_array( $args ) ? $args : array() );
+
 			$process_automation = new ProcessAutomation( $automation, $args );
-			$process_automation->start();
+			StepBudget::run(
+				static function () use ( $process_automation ) {
+					$process_automation->start();
+				}
+			);
 		} catch ( Exception $e ) {
 			doublescale_get_logger()->error(
 				__( 'Process Automations Error', 'doublescale' ),
@@ -137,6 +153,95 @@ final class Loader {
 						'message' => $e->getMessage(),
 						'code'    => $e->getCode(),
 						'data'    => $e->getTrace(),
+					),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Enrol a batch of contacts into one automation.
+	 *
+	 * Queued by {@see TriggerBatch::flush()} as (automation_id, items[]) where
+	 * each item is the packed trigger args one `process_automations` action
+	 * would have carried. Each item is enrolled independently — the same
+	 * ContactEnrollment path, its own data snapshot, its own first-step
+	 * action — and one failing item never blocks the rest of the batch.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|array  $automation Meta id (async) or automation id.
+	 * @param array|null $items      Packed args list when invoked directly.
+	 * @return void
+	 */
+	public function process_automations_batch( $automation, $items = null ) {
+		try {
+			if ( null === $items ) {
+				$meta_id = is_array( $automation ) && isset( $automation['meta_id'] ) ? $automation['meta_id'] : $automation;
+				$args    = is_numeric( $meta_id ) ? doublescale_get_meta_args( $meta_id ) : null;
+				if ( ! $args || count( $args ) < 2 ) {
+					throw new Exception( 'Failed to retrieve batch arguments from meta_id: ' . (string) $meta_id );
+				}
+				list( $automation, $items ) = $args;
+			}
+
+			$automation_id = TriggerPayload::automation_id( $automation );
+			$model         = $automation_id > 0 ? AutomationModel::find( $automation_id ) : null;
+			if ( ! $model ) {
+				throw new Exception( 'Automation not found for batch: ' . (string) $automation_id );
+			}
+
+			$enrolled = 0;
+			$failed   = 0;
+			// One budget for the whole batch: early contacts run their first
+			// steps inline, later ones fall back to queued steps once it is spent.
+			StepBudget::run(
+				function () use ( $items, $model, $automation_id, &$enrolled, &$failed ) {
+					foreach ( (array) $items as $item ) {
+						if ( ! is_array( $item ) ) {
+							continue;
+						}
+						try {
+							$process = new ProcessAutomation( $model, TriggerPayload::unpack( $item ) );
+							if ( $process->start() ) {
+								++$enrolled;
+							}
+						} catch ( \Throwable $e ) {
+							++$failed;
+							doublescale_get_logger()->error(
+								__( 'Process Automations Batch: item failed', 'doublescale' ),
+								array(
+									'code'          => 'process_automations_batch_item_error',
+									'automation_id' => $automation_id,
+									'contact_id'    => $item['contact_id'] ?? null,
+									'error'         => $e->getMessage(),
+								)
+							);
+						}
+					}
+				},
+				// The batch itself may hold up to 100 enrolments; give it more room.
+				StepBudget::default_seconds() * 2
+			);
+
+			doublescale_get_logger()->debug(
+				'Process Automations Batch completed',
+				array(
+					'code'          => 'process_automations_batch_complete',
+					'automation_id' => $automation_id,
+					'items'         => count( (array) $items ),
+					'enrolled'      => $enrolled,
+					'failed'        => $failed,
+				)
+			);
+		} catch ( Exception $e ) {
+			doublescale_get_logger()->error(
+				__( 'Process Automations Batch Error', 'doublescale' ),
+				array(
+					'code'  => 'process_automations_batch_error',
+					'error' => array(
+						'message' => $e->getMessage(),
+						'code'    => $e->getCode(),
 					),
 				)
 			);
@@ -190,7 +295,11 @@ final class Loader {
 			}
 			$step               = AutomationStepModel::findOrFail( $step_id );
 			$automation_process = new ProcessAutomation( $automation );
-			$automation_process->process_step( $step, $automation_contact_id );
+			StepBudget::run(
+				static function () use ( $automation_process, $step, $automation_contact_id ) {
+					$automation_process->process_step( $step, $automation_contact_id );
+				}
+			);
 		} catch ( Exception $e ) {
 			doublescale_get_logger()->error(
 				__( 'Process Automation Step Error: ', 'doublescale' ),

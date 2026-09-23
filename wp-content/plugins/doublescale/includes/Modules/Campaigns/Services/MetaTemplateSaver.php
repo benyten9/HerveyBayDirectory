@@ -206,7 +206,7 @@ class MetaTemplateSaver {
 	 */
 	public function sync_from_meta(): array {
 		$fetcher   = new MetaTemplateFetcher();
-		$templates = $fetcher->fetch_approved_templates();
+		$templates = $fetcher->fetch_approved_templates( true );
 
 		$created = 0;
 		$updated = 0;
