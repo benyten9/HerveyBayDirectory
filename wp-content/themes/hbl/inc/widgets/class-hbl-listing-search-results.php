@@ -271,7 +271,7 @@ class HBL_Listing_Search_Results extends Widget_Base {
 		);
 
 		if ( ! empty( $keyword ) ) {
-			$args['s'] = $keyword;
+			$args = hbl_listing_title_search_args( $args, $keyword );
 			if ( 'relevance' === $settings['default_orderby'] ) {
 				$args['orderby'] = 'relevance';
 			}

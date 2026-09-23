@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HBL_VERSION', '1.2.70' );
+define( 'HBL_VERSION', '1.2.71' );
 define( 'HBL_THEME_DIR', get_template_directory() );
 define( 'HBL_THEME_URI', get_template_directory_uri() );
 define( 'HBL_THEME_PATH', get_template_directory() );
@@ -3628,6 +3628,58 @@ function hbl_submit_review() {
 add_action( 'wp_ajax_hbl_submit_review', 'hbl_submit_review' );
 add_action( 'wp_ajax_nopriv_hbl_submit_review', 'hbl_submit_review' );
 
+/**
+ * Restrict a listing keyword search to the listing title (business name).
+ *
+ * When $rank_by_match is true, results are ordered by how closely the title
+ * matches the keyword (exact name, then starts with, then word-start, then
+ * contains) ahead of the query's own ordering. Pass false when the visitor
+ * picked an explicit sort (A–Z, Newest…) so their choice wins.
+ */
+function hbl_listing_title_search_args( array $args, $keyword, $rank_by_match = true ) {
+	$keyword = trim( (string) $keyword );
+
+	if ( '' === $keyword ) {
+		return $args;
+	}
+
+	$args['s']              = $keyword;
+	$args['search_columns'] = array( 'post_title' );
+
+	if ( $rank_by_match ) {
+		$args['hbl_title_match'] = $keyword;
+	}
+
+	return $args;
+}
+
+function hbl_listing_title_match_orderby( $orderby, $query ) {
+	$keyword = $query->get( 'hbl_title_match' );
+
+	if ( ! is_string( $keyword ) || '' === $keyword ) {
+		return $orderby;
+	}
+
+	global $wpdb;
+
+	$phrase = trim( $keyword, " \t\"'" );
+	if ( '' === $phrase ) {
+		return $orderby;
+	}
+
+	$like = $wpdb->esc_like( $phrase );
+	$rank = $wpdb->prepare(
+		"(CASE WHEN {$wpdb->posts}.post_title = %s THEN 0 WHEN {$wpdb->posts}.post_title LIKE %s THEN 1 WHEN {$wpdb->posts}.post_title LIKE %s THEN 2 WHEN {$wpdb->posts}.post_title LIKE %s THEN 3 ELSE 4 END) ASC",
+		$phrase,
+		$like . '%',
+		'% ' . $like . '%',
+		'%' . $like . '%'
+	);
+
+	return $orderby ? $rank . ', ' . $orderby : $rank;
+}
+add_filter( 'posts_orderby', 'hbl_listing_title_match_orderby', 10, 2 );
+
 function hbl_search_listings() {
 	check_ajax_referer( 'hbl_search_nonce', 'nonce' );
 
@@ -3639,12 +3691,14 @@ function hbl_search_listings() {
 
 	$post_type = defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir';
 
-	$args = array(
-		'post_type'      => $post_type,
-		'post_status'    => 'publish',
-		'posts_per_page' => 10,
-		's'              => $query,
-		'orderby'        => 'relevance',
+	$args = hbl_listing_title_search_args(
+		array(
+			'post_type'      => $post_type,
+			'post_status'    => 'publish',
+			'posts_per_page' => 10,
+			'orderby'        => 'relevance',
+		),
+		$query
 	);
 
 	$listings_query = new WP_Query( $args );

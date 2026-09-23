@@ -30,9 +30,9 @@ function hbl_directorist_v2_filter_listings() {
 	$args['update_post_term_cache'] = false;
 
 	if ( ! empty( $keyword ) ) {
-		$args['s'] = $keyword;
+		$args = hbl_listing_title_search_args( $args, $keyword, 'recommended' === $sort );
 	}
-	
+
 	$args['tax_query'] = array();
 	
 	if ( isset( $widget_settings['category_filter_type'] ) && 'specific' === $widget_settings['category_filter_type'] ) {
