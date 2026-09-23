@@ -591,13 +591,13 @@ class HBL_Search extends Widget_Base {
 		}
 
 		if ( 'yes' === $settings['search_in_listings'] && isset( $_GET['search_listings'] ) ) {
-			$listing_args = hbl_listing_title_search_args(
+			$listing_args = hbl_listing_search_args(
 				array(
 					'post_type'      => 'at_biz_dir',
 					'posts_per_page' => $settings['results_per_page'],
 					'post_status'    => 'publish',
 				),
-				$search_query
+				get_search_query( false )
 			);
 
 			if ( ! empty( $category ) && strpos( $category, 'listing_cat_' ) === 0 ) {

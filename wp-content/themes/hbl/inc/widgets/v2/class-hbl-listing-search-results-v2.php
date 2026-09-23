@@ -415,8 +415,7 @@ class HBL_Listing_Search_Results_V2 extends Widget_Base {
 		);
 
 		if ( ! empty( $keyword ) ) {
-			$args            = hbl_listing_title_search_args( $args, $keyword );
-			$args['orderby'] = 'relevance';
+			$args = hbl_listing_search_args( $args, $keyword );
 		} else {
 			$args['orderby'] = 'date';
 			$args['order']   = 'DESC';

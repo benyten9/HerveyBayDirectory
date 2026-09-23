@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HBL_VERSION', '1.2.71' );
+define( 'HBL_VERSION', '1.2.72' );
 define( 'HBL_THEME_DIR', get_template_directory() );
 define( 'HBL_THEME_URI', get_template_directory_uri() );
 define( 'HBL_THEME_PATH', get_template_directory() );
@@ -676,7 +676,7 @@ function hbl_render_dashboard_widget( $settings = array() ) {
 		'settings'   => $settings,
 	) );
 
-	if ( $widget ) {
+	if ( $widget instanceof \Elementor\Widget_Base ) {
 		$widget->render_content();
 	}
 }
@@ -3629,56 +3629,121 @@ add_action( 'wp_ajax_hbl_submit_review', 'hbl_submit_review' );
 add_action( 'wp_ajax_nopriv_hbl_submit_review', 'hbl_submit_review' );
 
 /**
- * Restrict a listing keyword search to the listing title (business name).
+ * Listing keyword search across title, description, categories and tags.
  *
- * When $rank_by_match is true, results are ordered by how closely the title
- * matches the keyword (exact name, then starts with, then word-start, then
- * contains) ahead of the query's own ordering. Pass false when the visitor
- * picked an explicit sort (A–Z, Newest…) so their choice wins.
+ * A listing matches when every word of the keyword appears in its title, in
+ * its description, in the name of one of its categories, or in the name of
+ * one of its tags (a keyword wrapped in quotes is matched as one phrase).
+ * Results are grouped title → description → category → tag, and sorted
+ * within each group by $order: 'title_asc' (A–Z), 'title_desc' or 'date_desc'.
  */
-function hbl_listing_title_search_args( array $args, $keyword, $rank_by_match = true ) {
+function hbl_listing_search_args( array $args, $keyword, $order = 'title_asc' ) {
 	$keyword = trim( (string) $keyword );
 
 	if ( '' === $keyword ) {
 		return $args;
 	}
 
-	$args['s']              = $keyword;
-	$args['search_columns'] = array( 'post_title' );
-
-	if ( $rank_by_match ) {
-		$args['hbl_title_match'] = $keyword;
-	}
+	unset( $args['s'] );
+	$args['hbl_listing_search']       = $keyword;
+	$args['hbl_listing_search_order'] = $order;
 
 	return $args;
 }
 
-function hbl_listing_title_match_orderby( $orderby, $query ) {
-	$keyword = $query->get( 'hbl_title_match' );
+function hbl_listing_search_conditions( $keyword ) {
+	global $wpdb;
+
+	$keyword = trim( $keyword );
+	if ( preg_match( '/^"(.+)"$/', $keyword, $matches ) ) {
+		$words = array( trim( $matches[1] ) );
+	} else {
+		$words = preg_split( '/\s+/', str_replace( '"', ' ', $keyword ) );
+	}
+	$words = array_filter( $words, 'strlen' );
+
+	if ( empty( $words ) ) {
+		return array();
+	}
+
+	$title = array();
+	$desc  = array();
+	$name  = array();
+	foreach ( $words as $word ) {
+		$like    = '%' . $wpdb->esc_like( $word ) . '%';
+		$title[] = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", $like );
+		$desc[]  = $wpdb->prepare( "({$wpdb->posts}.post_content LIKE %s OR {$wpdb->posts}.post_excerpt LIKE %s)", $like, $like );
+		$name[]  = $wpdb->prepare( 'hbl_t.name LIKE %s', $like );
+	}
+
+	$term_match = function ( $taxonomy ) use ( $wpdb, $name ) {
+		return $wpdb->prepare(
+			"EXISTS (SELECT 1 FROM {$wpdb->term_relationships} hbl_tr
+				INNER JOIN {$wpdb->term_taxonomy} hbl_tt ON hbl_tt.term_taxonomy_id = hbl_tr.term_taxonomy_id
+				INNER JOIN {$wpdb->terms} hbl_t ON hbl_t.term_id = hbl_tt.term_id
+				WHERE hbl_tr.object_id = {$wpdb->posts}.ID AND hbl_tt.taxonomy = %s AND ",
+			$taxonomy
+		) . implode( ' AND ', $name ) . ')';
+	};
+
+	return array(
+		'title'       => '(' . implode( ' AND ', $title ) . ')',
+		'description' => '(' . implode( ' AND ', $desc ) . ')',
+		'category'    => $term_match( 'at_biz_dir-category' ),
+		'tag'         => $term_match( 'at_biz_dir-tags' ),
+	);
+}
+
+function hbl_listing_search_where( $where, $query ) {
+	$keyword = $query->get( 'hbl_listing_search' );
+
+	if ( ! is_string( $keyword ) || '' === $keyword ) {
+		return $where;
+	}
+
+	$conditions = hbl_listing_search_conditions( $keyword );
+	if ( empty( $conditions ) ) {
+		return $where;
+	}
+
+	return $where . ' AND (' . implode( ' OR ', $conditions ) . ')';
+}
+add_filter( 'posts_where', 'hbl_listing_search_where', 10, 2 );
+
+function hbl_listing_search_orderby( $orderby, $query ) {
+	global $wpdb;
+
+	$keyword = $query->get( 'hbl_listing_search' );
 
 	if ( ! is_string( $keyword ) || '' === $keyword ) {
 		return $orderby;
 	}
 
-	global $wpdb;
-
-	$phrase = trim( $keyword, " \t\"'" );
-	if ( '' === $phrase ) {
+	$conditions = hbl_listing_search_conditions( $keyword );
+	if ( empty( $conditions ) ) {
 		return $orderby;
 	}
 
-	$like = $wpdb->esc_like( $phrase );
-	$rank = $wpdb->prepare(
-		"(CASE WHEN {$wpdb->posts}.post_title = %s THEN 0 WHEN {$wpdb->posts}.post_title LIKE %s THEN 1 WHEN {$wpdb->posts}.post_title LIKE %s THEN 2 WHEN {$wpdb->posts}.post_title LIKE %s THEN 3 ELSE 4 END) ASC",
-		$phrase,
-		$like . '%',
-		'% ' . $like . '%',
-		'%' . $like . '%'
-	);
+	$group = '(CASE WHEN ' . $conditions['title'] . ' THEN 0'
+		. ' WHEN ' . $conditions['description'] . ' THEN 1'
+		. ' WHEN ' . $conditions['category'] . ' THEN 2'
+		. ' ELSE 3 END) ASC';
 
-	return $orderby ? $rank . ', ' . $orderby : $rank;
+	switch ( $query->get( 'hbl_listing_search_order' ) ) {
+		case 'title_desc':
+			$within = "{$wpdb->posts}.post_title DESC";
+			break;
+		case 'date_desc':
+			$within = "{$wpdb->posts}.post_date DESC";
+			break;
+		default:
+			$within = "{$wpdb->posts}.post_title ASC";
+			break;
+	}
+
+	return $group . ', ' . $within;
 }
-add_filter( 'posts_orderby', 'hbl_listing_title_match_orderby', 10, 2 );
+add_filter( 'posts_orderby', 'hbl_listing_search_orderby', 10, 2 );
 
 function hbl_search_listings() {
 	check_ajax_referer( 'hbl_search_nonce', 'nonce' );
@@ -3691,12 +3756,11 @@ function hbl_search_listings() {
 
 	$post_type = defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir';
 
-	$args = hbl_listing_title_search_args(
+	$args = hbl_listing_search_args(
 		array(
 			'post_type'      => $post_type,
 			'post_status'    => 'publish',
 			'posts_per_page' => 10,
-			'orderby'        => 'relevance',
 		),
 		$query
 	);

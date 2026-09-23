@@ -271,10 +271,7 @@ class HBL_Listing_Search_Results extends Widget_Base {
 		);
 
 		if ( ! empty( $keyword ) ) {
-			$args = hbl_listing_title_search_args( $args, $keyword );
-			if ( 'relevance' === $settings['default_orderby'] ) {
-				$args['orderby'] = 'relevance';
-			}
+			$args = hbl_listing_search_args( $args, $keyword );
 		} else {
 			$args['orderby'] = 'date' === $settings['default_orderby'] || 'relevance' === $settings['default_orderby'] ? 'date' : $settings['default_orderby'];
 			$args['order'] = 'DESC';

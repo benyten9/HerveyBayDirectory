@@ -30,7 +30,11 @@ function hbl_directorist_v2_filter_listings() {
 	$args['update_post_term_cache'] = false;
 
 	if ( ! empty( $keyword ) ) {
-		$args = hbl_listing_title_search_args( $args, $keyword, 'recommended' === $sort );
+		$search_order = array(
+			'z-a'    => 'title_desc',
+			'newest' => 'date_desc',
+		);
+		$args = hbl_listing_search_args( $args, $keyword, isset( $search_order[ $sort ] ) ? $search_order[ $sort ] : 'title_asc' );
 	}
 
 	$args['tax_query'] = array();
@@ -98,7 +102,10 @@ function hbl_directorist_v2_filter_listings() {
 		add_filter( 'posts_where', $hbl_letter_filter_cb );
 	}
 	
-	switch ( $sort ) {
+	// A keyword search sets its own grouped ordering in hbl_listing_search_args().
+	switch ( ! empty( $keyword ) ? 'keyword' : $sort ) {
+		case 'keyword':
+			break;
 		case 'a-z':
 			$args['orderby'] = 'title';
 			$args['order'] = 'ASC';
