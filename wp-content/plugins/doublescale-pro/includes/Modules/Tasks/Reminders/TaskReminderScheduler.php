@@ -415,8 +415,8 @@ class TaskReminderScheduler {
 	 * @return string Notification message
 	 */
 	private function get_notification_message( $task ) {
-		$due_date = date_i18n( get_option( 'date_format' ), strtotime( $task->due_date ) );
-		$due_time = $task->due_time ? date_i18n( get_option( 'time_format' ), strtotime( $task->due_time ) ) : '';
+		$due_date = $task->due_date ? date_i18n( get_option( 'date_format' ), strtotime( $task->due_date ) ) : '';
+		$due_time = $due_date && $task->due_time ? date_i18n( get_option( 'time_format' ), strtotime( $task->due_time ) ) : '';
 
 		// Get entity info for context.
 		$entity_info = $this->get_entity_info( $task );
@@ -424,8 +424,10 @@ class TaskReminderScheduler {
 		// Build message.
 		$parts = array();
 
-		// Due date/time.
-		if ( $due_time ) {
+		// Due date/time (a task may have none).
+		if ( '' === $due_date ) {
+			$due_time = '';
+		} elseif ( $due_time ) {
 			/* translators: 1: due date, 2: due time */
 			$parts[] = sprintf( __( 'Due: %1$s at %2$s', 'doublescale'), $due_date, $due_time );
 		} else {

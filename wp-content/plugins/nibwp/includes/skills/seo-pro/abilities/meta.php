@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-meta', [
     'label'       => __('SEO Pro — Meta Generation', 'nibwp'),
-    'description' => __('Commit AI-generated, brand-voice SEO titles + meta descriptions (and optional focus keyword / OG overrides) for one or many posts. You synthesize the copy per the playbook; this ability validates length + uniqueness then writes via the active SEO engine. Always dry_run:true first, fix any failures, then dry_run:false.', 'nibwp'),
+    'description' => 'Commit AI-generated, brand-voice SEO titles + meta descriptions (and optional focus keyword / OG overrides) for one or many posts. You synthesize the copy per the playbook; this ability validates length + uniqueness then writes via the active SEO engine. Always dry_run:true first, fix any failures, then dry_run:false.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

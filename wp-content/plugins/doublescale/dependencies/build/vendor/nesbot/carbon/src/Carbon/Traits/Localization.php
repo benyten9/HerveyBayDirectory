@@ -8,14 +8,14 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\CarbonInterface;
-use Carbon\Exceptions\InvalidTypeException;
-use Carbon\Exceptions\NotLocaleAwareException;
-use Carbon\Language;
-use Carbon\Translator;
-use Carbon\TranslatorStrongTypeInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidTypeException;
+use DoubleScale\Vendor\Carbon\Exceptions\NotLocaleAwareException;
+use DoubleScale\Vendor\Carbon\Language;
+use DoubleScale\Vendor\Carbon\Translator;
+use DoubleScale\Vendor\Carbon\TranslatorStrongTypeInterface;
 use Closure;
 use DoubleScale\Vendor\Symfony\Component\Translation\TranslatorBagInterface;
 use DoubleScale\Vendor\Symfony\Component\Translation\TranslatorInterface;

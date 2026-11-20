@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Testing\Fakes;
+namespace DoubleScale\Vendor\Illuminate\Support\Testing\Fakes;
 
-use Illuminate\Contracts\Bus\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Contracts\Bus\Dispatcher;
 use DoubleScale\Vendor\PHPUnit\Framework\Assert as PHPUnit;
 class BusFake implements Dispatcher
 {

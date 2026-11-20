@@ -74,7 +74,9 @@ if ( ! empty( $video_items ) ) {
 		}
 
 		if ( isset( $item->snippet->title ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-			$video_xml .= '<video:title><![CDATA[' . $item->snippet->title . ']]></video:title>';
+			// Escaped rather than wrapped in CDATA: the title comes from whoever
+			// uploaded the video, and `]]>` in it would close the section.
+			$video_xml .= '<video:title>' . htmlspecialchars( html_entity_decode( (string) $item->snippet->title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE | ENT_DISALLOWED, 'UTF-8' ) . '</video:title>'; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 			$video_xml .= "\n";
 		}
 
@@ -91,7 +93,7 @@ if ( ! empty( $video_items ) ) {
 		if ( isset( $item->id ) ) {
 			$video_xml .= '<video:content_loc><![CDATA[https://www.youtube.com/watch?v=' . $item->id . ']]></video:content_loc>';
 			$video_xml .= "\n";
-			$video_xml .= '<video:player_loc><![CDATA[https://www.youtube.com/watch?v=' . $item->id . ']]></video:player_loc>';
+			$video_xml .= '<video:player_loc><![CDATA[' . seopress_pro_get_youtube_embed_url( 'https://www.youtube.com/watch?v=' . $item->id ) . ']]></video:player_loc>';
 			$video_xml .= "\n";
 		}
 

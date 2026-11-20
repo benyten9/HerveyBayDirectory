@@ -64,6 +64,22 @@ class BookingValidator {
 	}
 
 	/**
+	 * Refuse a visitor's booking on an event the owner switched off.
+	 *
+	 * Kept apart from validate_event(): staff booking from the dashboard may
+	 * still use the event, and existing bookings stay manageable.
+	 *
+	 * @param EventModel $event Event.
+	 * @return void
+	 * @throws InvalidBookingInputException When the event is not taking bookings.
+	 */
+	public static function ensure_open_for_booking( $event ): void {
+		if ( ! $event->is_open_for_booking() ) {
+			throw new InvalidBookingInputException( esc_html__( 'This event is not accepting new bookings.', 'doublescale' ) );
+		}
+	}
+
+	/**
 	 * @param string $start_date Start date string.
 	 * @param string $timezone   Timezone identifier.
 	 * @return DateTime

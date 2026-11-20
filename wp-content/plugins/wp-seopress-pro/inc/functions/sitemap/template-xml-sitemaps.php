@@ -60,7 +60,7 @@ add_filter(
 				$seopress_sitemaps .= '</loc>';
 				$seopress_sitemaps .= "\n";
 				$seopress_sitemaps .= '<lastmod>';
-				$seopress_sitemaps .= date( 'c', strtotime( $get_latest_post->posts[0]->post_modified ) );
+				$seopress_sitemaps .= gmdate( 'c', strtotime( $get_latest_post->posts[0]->post_modified ) );
 				$seopress_sitemaps .= '</lastmod>';
 				$seopress_sitemaps .= "\n";
 				$seopress_sitemaps .= '</sitemap>';

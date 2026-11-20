@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/bricks-pro-refine-component', [
     'label'       => __('Bricks Pro — Refine existing template', 'nibwp'),
-    'description' => __('Discoverable entry for natural-language refinements to an existing Bricks template. Agent loads the template, applies the instruction, re-submits via html-to-component with mode=replace_template.', 'nibwp'),
+    'description' => 'Discoverable entry for natural-language refinements to an existing Bricks template. Agent loads the template, applies the instruction, re-submits via html-to-component with mode=replace_template.',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

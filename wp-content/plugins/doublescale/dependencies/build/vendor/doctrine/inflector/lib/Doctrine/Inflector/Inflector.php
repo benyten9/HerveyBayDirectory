@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Inflector;
 
 use RuntimeException;
 use function chr;
@@ -25,7 +25,7 @@ class Inflector
     private $singularizer;
     /** @var WordInflector */
     private $pluralizer;
-    public function __construct(\Doctrine\Inflector\WordInflector $singularizer, \Doctrine\Inflector\WordInflector $pluralizer)
+    public function __construct(WordInflector $singularizer, WordInflector $pluralizer)
     {
         $this->singularizer = $singularizer;
         $this->pluralizer = $pluralizer;

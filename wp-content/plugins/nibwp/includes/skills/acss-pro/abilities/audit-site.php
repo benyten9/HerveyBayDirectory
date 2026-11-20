@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/acss-pro-audit-site', [
     'label'       => __('ACSS Pro — Audit a URL for token drift', 'nibwp'),
-    'description' => __('Fetch a URL, parse the rendered CSS, and report drift from the current ACSS tokens: literal hex/rem values that should be token references, missing brand variants, contrast violations. Read-only.', 'nibwp'),
+    'description' => 'Fetch a URL, parse the rendered CSS, and report drift from the current ACSS tokens: literal hex/rem values that should be token references, missing brand variants, contrast violations. Read-only.',
     'category'    => 'acss-pro',
     'input_schema' => [
         'type'     => 'object',

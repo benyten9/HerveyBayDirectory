@@ -35,7 +35,7 @@ class ContactResolver {
 	 * @return ContactModel
 	 *
 	 * @throws \InvalidArgumentException When the email is not parseable.
-	 * @throws \Illuminate\Database\QueryException When the post-race lookup after a UNIQUE-violation also fails.
+	 * @throws \DoubleScale\Vendor\Illuminate\Database\QueryException When the post-race lookup after a UNIQUE-violation also fails.
 	 */
 	public function find_or_create( $email, $first_name = null, $last_name = null ) {
 		$email = strtolower( trim( (string) $email ) );
@@ -72,7 +72,7 @@ class ContactResolver {
 					'source'     => 'support',
 				)
 			);
-		} catch ( \Illuminate\Database\QueryException $e ) {
+		} catch ( \DoubleScale\Vendor\Illuminate\Database\QueryException $e ) {
 			// Recover from a duplicate-key race on the email UNIQUE index — a
 			// concurrent inbound (e.g. two IMAP polls overlapping, two
 			// portal submits) created the contact between our lookup and

@@ -10,7 +10,7 @@ namespace DoubleScale\Vendor;
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-use Carbon\CarbonImmutable;
+use DoubleScale\Vendor\Carbon\CarbonImmutable;
 require_once __DIR__ . '/vendor/autoload.php';
 function getMaxHistoryMonthsByAmount($amount) : int
 {

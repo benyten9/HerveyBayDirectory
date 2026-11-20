@@ -38,9 +38,25 @@ class MetaWhatsappErrorCodes {
 
 	/**
 	 * Spam rate limit reached
-	 * Too many messages have been blocked or flagged as spam.
+	 * Meta has restricted how many messages the SENDING number may send,
+	 * because too many earlier messages were blocked or flagged as spam. It is
+	 * a verdict on the business account, not on the recipient.
 	 */
 	const SPAM_RATE_LIMIT = 131048;
+
+	/**
+	 * Per-user marketing message limit.
+	 *
+	 * Meta caps how many marketing template messages a person receives from
+	 * ALL businesses in a period, and drops the ones over that cap with
+	 * "This message was not delivered to maintain healthy ecosystem
+	 * engagement." It is a verdict on the recipient's recent marketing volume,
+	 * not on the sending number, and has nothing to do with the account's
+	 * messaging tier: a 100,000-recipient account sending to 90 people can see
+	 * it. The same person can be reached again once their own window moves, so
+	 * resending immediately fails again and only burns quality.
+	 */
+	const MARKETING_FREQUENCY_CAP = 131049;
 
 	/**
 	 * Message undeliverable
@@ -89,8 +105,19 @@ class MetaWhatsappErrorCodes {
 	const OPT_OUT_CODES = array(
 		self::OFFERS_ANNOUNCEMENTS_BLOCKED,
 		self::USER_BLOCKED,
-		self::SPAM_RATE_LIMIT,
 		self::MESSAGE_UNDELIVERABLE,
+	);
+
+	/**
+	 * Error codes that mean Meta restricted the sending number itself.
+	 *
+	 * Not opt-outs: the recipient did nothing. Sending on after one of these is
+	 * what gets a number blocked, so a campaign must stop at the first.
+	 *
+	 * @var array
+	 */
+	const ACCOUNT_RESTRICTION_CODES = array(
+		self::SPAM_RATE_LIMIT,
 	);
 
 	/**
@@ -103,6 +130,19 @@ class MetaWhatsappErrorCodes {
 	);
 
 	/**
+	 * Codes where the recipient — not the account — must be left alone for a
+	 * while. Retriable in a day, never in a minute.
+	 *
+	 * @var array
+	 */
+	const RECIPIENT_COOLDOWN_CODES = array(
+		self::MARKETING_FREQUENCY_CAP,
+	);
+
+	/** How long a recipient is left alone after a cooldown code. */
+	const RECIPIENT_COOLDOWN = DAY_IN_SECONDS;
+
+	/**
 	 * Check if an error code indicates user opt-out
 	 *
 	 * @param int $error_code Meta Api error code.
@@ -110,6 +150,43 @@ class MetaWhatsappErrorCodes {
 	 */
 	public static function is_opt_out_error( int $error_code ): bool {
 		return in_array( $error_code, self::OPT_OUT_CODES, true );
+	}
+
+	/**
+	 * Whether Meta restricted the sending number (not the recipient).
+	 *
+	 * @param int|string $error_code Meta Api error code.
+	 * @return bool
+	 */
+	public static function is_account_restriction( $error_code ): bool {
+		return in_array( (int) $error_code, self::ACCOUNT_RESTRICTION_CODES, true );
+	}
+
+	/**
+	 * Whether this failure means "not this person, not yet".
+	 *
+	 * @param int|string $error_code Meta Api error code.
+	 * @return bool
+	 */
+	public static function is_recipient_cooldown( $error_code ): bool {
+		return in_array( (int) $error_code, self::RECIPIENT_COOLDOWN_CODES, true );
+	}
+
+	/**
+	 * Seconds a recipient is left alone after a cooldown code.
+	 *
+	 * @return int
+	 */
+	public static function recipient_cooldown_seconds(): int {
+		/**
+		 * Filters how long a recipient is skipped after Meta's per-user
+		 * marketing cap.
+		 *
+		 * @param int $seconds Cooldown length.
+		 */
+		$seconds = (int) apply_filters( 'doublescale_whatsapp_recipient_cooldown', self::RECIPIENT_COOLDOWN );
+
+		return max( 0, $seconds );
 	}
 
 	/**
@@ -169,8 +246,32 @@ class MetaWhatsappErrorCodes {
 			self::ACCOUNT_NOT_REGISTERED       => __( 'Your WhatsApp business number is not registered with Meta yet. Open Settings → Integrations → Meta WhatsApp and click "Register Number" to activate it.', 'doublescale' ),
 			self::INVALID_PARAMETER            => __( 'Invalid parameter in request.', 'doublescale' ),
 			self::RATE_LIMIT                   => __( 'Rate limit exceeded. Try again later.', 'doublescale' ),
+			self::MARKETING_FREQUENCY_CAP      => __( 'Meta held this marketing message back because of how many marketing messages this person has already received — from any business. Your number and your daily limit are fine. They can be messaged again later.', 'doublescale' ),
 		);
 
 		return $messages[ $error_code ] ?? __( 'Unknown error occurred.', 'doublescale' );
+	}
+
+	/**
+	 * Label for grouped failure causes in the campaign Messages tab.
+	 *
+	 * @param string|int $error_code Meta code, or a synthetic fallback.
+	 * @return string
+	 */
+	public static function get_label( $error_code ): string {
+		$code = (string) $error_code;
+		if ( '' === $code ) {
+			return __( 'Unknown reason', 'doublescale' );
+		}
+
+		if ( '130429_exhausted' === $code ) {
+			return __( 'Rate limit exceeded after retries.', 'doublescale' );
+		}
+
+		if ( ctype_digit( $code ) ) {
+			return self::get_error_message( (int) $code );
+		}
+
+		return __( 'Unknown reason', 'doublescale' );
 	}
 }

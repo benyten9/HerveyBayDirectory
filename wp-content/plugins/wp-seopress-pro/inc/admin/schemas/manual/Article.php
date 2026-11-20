@@ -195,7 +195,7 @@ function seopress_get_schema_metaboxe_article( $seopress_pro_rich_snippets_data,
 			name="seopress_pro_rich_snippets_data[<?php echo esc_attr( $key_schema ); ?>][seopress_pro_rich_snippets_article_img_height]"
 			value="<?php echo esc_attr( $seopress_pro_rich_snippets_article_img_height ); ?>" />
 		<span class="description"><?php esc_html_e( 'Minimum size: 696px wide, JPG, PNG or GIF, crawlable and indexable (default: post thumbnail if available)', 'wp-seopress-pro' ); ?></span>
-		<input id="seopress_pro_rich_snippets_article_img" class="<?php echo seopress_btn_secondary_classes(); ?> seopress_media_upload"
+		<input id="seopress_pro_rich_snippets_article_img" class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?> seopress_media_upload"
 			type="button"
 			value="<?php esc_html_e( 'Upload an Image', 'wp-seopress-pro' ); ?>" />
 	</p>

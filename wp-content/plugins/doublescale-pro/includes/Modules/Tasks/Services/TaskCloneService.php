@@ -57,7 +57,8 @@ class TaskCloneService {
 			'description'  => $source->description,
 			'entity_type'  => $source->entity_type,
 			'entity_id'    => $source->entity_id,
-			'assigned_to'  => $source->assigned_to,
+			// Someone who lost the record since gets no copy: its owner does.
+			'assigned_to'  => TaskAssigneeRule::allowed_or_owner( (int) $source->entity_type, (int) $source->entity_id, (int) $source->assigned_to ) ?: $source->assigned_to,
 			'task_type'    => $source->task_type,
 			'priority'     => $source->priority,
 			'status'       => TaskStatus::PENDING,
@@ -229,6 +230,12 @@ class TaskCloneService {
 			$reminder = $this->shift_occurrence_date( $source, $occurrence_due_date, $reminder );
 		}
 
+		// Same rule as the task: whoever lost the record hands the copy to its owner.
+		$assignee = (int) $subtask->assigned_to;
+		if ( $assignee > 0 ) {
+			$assignee = TaskAssigneeRule::allowed_or_owner( (int) $source->entity_type, (int) $source->entity_id, $assignee );
+		}
+
 		SubtaskModel::create(
 			array(
 				'task_id'          => $task_id,
@@ -237,7 +244,7 @@ class TaskCloneService {
 				'notes'            => $subtask->notes ? (string) $subtask->notes : null,
 				'is_completed'     => false,
 				'position'         => (int) $subtask->position,
-				'assigned_to'      => $subtask->assigned_to ? (int) $subtask->assigned_to : null,
+				'assigned_to'      => $assignee > 0 ? $assignee : null,
 				'due_date'         => $due_date,
 				'reminder_at'      => $reminder,
 				'reminder_sent_at' => null,

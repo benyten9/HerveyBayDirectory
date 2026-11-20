@@ -3,13 +3,13 @@
 namespace DoubleScale\Vendor;
 
 use DoubleScale\Vendor\PhpOption\Option;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Optional;
-use Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Optional;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
 use DoubleScale\Vendor\Dotenv\Environment\DotenvFactory;
-use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\HigherOrderTapProxy;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Htmlable;
+use DoubleScale\Vendor\Illuminate\Support\HigherOrderTapProxy;
 use DoubleScale\Vendor\Dotenv\Environment\Adapter\PutenvAdapter;
 use DoubleScale\Vendor\Dotenv\Environment\Adapter\EnvConstAdapter;
 use DoubleScale\Vendor\Dotenv\Environment\Adapter\ServerConstAdapter;

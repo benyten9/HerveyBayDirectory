@@ -13,7 +13,7 @@ namespace DoubleScale\Core\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UsermetaModel;
 
 /**
@@ -115,7 +115,7 @@ class UserModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function meta() {
 		return $this->hasMany( UsermetaModel::class, 'user_id', 'ID' );
@@ -126,9 +126,13 @@ class UserModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function capability() {
-		return $this->hasMany( UsermetaModel::class, 'user_id', 'ID' )->where( 'meta_key', 'wp_capabilities' );
+		global $wpdb;
+
+		// The roles of this site live under its own table prefix (`wp_` is only
+		// the default); a fixed `wp_capabilities` found no role on other sites.
+		return $this->hasMany( UsermetaModel::class, 'user_id', 'ID' )->where( 'meta_key', $wpdb->get_blog_prefix() . 'capabilities' );
 	}
 }

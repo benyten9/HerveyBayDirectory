@@ -5,7 +5,7 @@ Tags: business directory, listings, classifieds, directory plugin, directory
 Requires at least: 4.6
 Tested up to: 7.1
 Requires PHP: 7.0
-Stable tag: 8.9.6
+Stable tag: 8.11.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -299,6 +299,168 @@ Directorist is developer-friendly with plenty of hooks and filters. You can exte
 Directorist comes with an AI-powered directory builder. Use the Create with AI option, provide directory name, location and AI will build the directory for you.
 
 == Changelog ==
+
+= 8.11.3 - Nov 15, 2026 =
+
+**Improved**
+
+- Added Directorist Events and dCarList to the Themes & Extensions catalog.
+- Added MCP settings warnings when database checks prevent write operations.
+- Improved MCP support for write-only credential inputs and custom image fields.
+- Optimized MCP initialization to reduce unnecessary processing.
+- Improved keyboard navigation and accessibility in notification settings.
+- Updated WordPress.org screenshots to reflect the current admin interface.
+
+**Fixed**
+
+- Listing visibility and AI directory setup issues.
+- Custom Button fields disappearing from the listing card Action picker.
+- AJAX pagination losing page, taxonomy, language, sorting, and view context.
+- Order-created email delivery issues and duplicate payment notification settings.
+- Compatibility issues with prefixed MCP adapters causing WordPress editor errors.
+- Invalid Web Push templates being saved.
+- Listing deletion notifications losing owner and listing details.
+- Missing submission validation context affecting extension field and image limits.
+- Order tax percentage and bank transfer payment amount
+
+= 8.11.2 - Nov 10, 2026 =
+
+**Fixed**
+
+- Listing title and location fields disappearing from All Listings layouts after saving Directory Builder.
+- Account dropdown causing horizontal scrolling and extending beyond screen edges, including on mobile devices and RTL layouts.
+
+= 8.11.1 - Nov 8, 2026 =
+
+**Security**
+
+- Strengthened listing moderation checks to prevent administrator approval bypass through REST API and MCP status updates. Thanks to Vuxvinh through WPScan for responsibly reporting this issue.
+
+= 8.11 - Nov 4, 2026 =
+
+**New**
+- Added MCP (Model Context Protocol) support, allowing AI assistants to manage listings, directories, settings, orders, and more
+
+**Security**
+
+- Escaped listing author output in the admin listings table to prevent stored XSS.
+- Added ownership validation when processing listing attachments. Thanks to Jashid Sany through WPScan for responsibly reporting this issue.
+- Restricted listing edit-form data to authorized users. Thanks to Nicat Sultanov through WPScan for responsibly reporting this issue.
+- Restricted payment receipts to authorized users. Thanks to Ilqar Rahimli through WPScan for responsibly reporting this issue.
+- Added order authorization checks for payment retries. Thanks to Ilqar Rahimli through WPScan for responsibly reporting this issue.
+- Strengthened listing authorization for featured checkout. Thanks to GivMeInJ through WPScan for responsibly reporting this issue.
+- Prevented listing status updates from bypassing administrator approval. Thanks to Vuxvinh through WPScan for responsibly reporting this issue.
+- Added per-user permission checks to email verification bulk actions, including multisite. Thanks to Muni Nitish Kumar Yaddala through WPScan for responsibly reporting this issue.
+
+= 8.10.7 - Nov 1, 2026 =
+
+**Security**
+
+- Escaped single listing shortcode placeholder output to prevent stored XSS.
+
+= 8.10.6 - Oct 29, 2026 =
+
+**Improved**
+
+- Improved REST API support with checkout provider data and authenticated user order creation, lookup, and pagination. (#3132)
+- Improved Themes & Extensions catalog with Paystack Payment Gateway availability. (#3131)
+- Improved featured listing payment settings with support for extension-provided payment types. (#3101)
+- Improved payment gateway settings extensibility with a filter for Sandbox/Live environment selectors. (#3103)
+
+**Fixed**
+
+- Extension update detection and downloads when package URLs or subscription metadata are missing. (#3013)
+- Missing account verification emails for users created through guest listing submissions. (#3084)
+- Polylang directory type mapping, translated builder configuration, and category/location associations. (#3088)
+- Frontend address and ZIP radius searches ignoring the selected directory's distance unit. (#3093)
+- Instant search results not refreshing after selecting a Google Places address. (#3094)
+- Location list widget pagination and nested location toggles after changing pages. (#3095)
+- Listing deletion emails not being sent to owners and admins from dashboard and admin actions. (#3098)
+- Listing renewal emails sharing admin and owner templates, missing admin delivery, and inconsistent email layouts. (#3099)
+- REST API fatal errors when updating listings or retrieving single-listing builder data. (#3100)
+- Selected directory and listing view being lost after clearing search filters. (#3104)
+- Conditionally hidden field values and gallery thumbnails being removed during admin listing edits. (#3106)
+- Negative values and signed bounds being handled incorrectly in custom Number range filters. (#3107)
+- Missing multilingual rewrite rules and repeated frontend rewrite flushes with WPML. (#3108)
+- Custom listing card fields disappearing after saving or reloading Directory Builder. (#3109)
+- Enquiry reply email links and Received unread badges not updating correctly. (#3110)
+- Settings JSON imports failing when fields from unavailable extensions are present. (#3112)
+- Category-dependent search fields affecting other search forms on the same page. (#3113)
+- Enquiry dashboard labels and guest-facing text using the wrong language. (#3115)
+- Inactive conditional fields remaining visible on single listing pages. (#3118)
+- Google Places autocomplete and required address validation in listing forms. (#3119)
+- Empty search field groups not expanding in Directory Builder. (#3120)
+- Directory Builder preview URLs losing directory selection with Plain permalinks and early taxonomy lookup warnings. (#3121)
+- Duplicate listing expiry notifications and premature renewal reminders. (#3122)
+- Redundant featured metadata joins slowing filtered listing archives and search queries. (#3123)
+- Checkout and payment receipt login notices appearing outside the page content for guests. (#3125)
+- Leading and trailing whitespace causing invalid contact field values and incorrect listing links. (#3130)
+
+= 8.10.5 - Oct 18, 2026 =
+
+**Improved**
+
+- Improved FormGent enquiries with Send and Received tabs in the user dashboard. (#3040)
+
+**Fixed**
+
+- Pricing Plans bank transfer order creation and completion emails not being sent to buyers and admins. (#3087)
+- Installed Mailchimp extension updates not being detected. (#3083)
+- M-Pesa extension installation status and updates not being recognized correctly. (#3082)
+- Installed Listing Importer extension showing the Install button again in Themes & Extensions. (#3081)
+- Category-dependent fields disappearing after selecting a location in listing forms. (#3079)
+- Long listing rejection reasons being clipped in the user dashboard. (#3070)
+- Deactivated or deleted payment gateways remaining visible at checkout. (#3044)
+
+= 8.10.4 - Oct 11, 2026 =
+
+**Improved**
+- Improved Themes & Extensions catalog, account connection, extension recommendations, and activation guidance. (#3067)
+- Improved gateway webhook registration with inline feedback and same-page settings flow. (#3069)
+- Updated licensing links and account connection copy. (#3072)
+
+**Fixed**
+- Payment setup progress when all gateways are disabled. (#3067)
+- Missing accessible labels on sign-in fields. (#3068)
+- Empty or unsaved webhook states showing incorrect registration status. (#3069)
+
+= 8.10.3 - Oct 6, 2026 =
+
+**Security**
+- Hardened listing tag submission and taxonomy dropdown rendering to prevent stored XSS. (#3056)
+- Strengthened REST API item permissions to prevent unauthorized access to non-public listing resources. (#3056)
+- Escaped single listing map info window phone and direction URL output to prevent stored XSS. (#3056)
+
+**Fixed**
+- Google Maps initialization before required map libraries finish loading. (#3055)
+- Malformed archive card layouts not recovering correctly. (#3033)
+- Listing address autocomplete not syncing with the map pin. (#3032)
+- Frontend listing submissions not persisting selected taxonomies. (#3031)
+- Review visibility in the featured listing widget. (#2998)
+- Deprecated PHP warning when rendering taxonomy list subterms with empty category or location children.
+
+= 8.10 - Oct 1, 2026 =
+
+**Added**
+- Introduced a new admin dashboard for Themes & Extensions with account licensing overview, setup progress, activity insights, quick actions, and extension recommendations. (#2932)
+
+**Improved**
+- Improved the setup wizard with an AI-powered directory setup experience. (#3026)
+
+**Fixed**
+- Admin notification templates for listing and order events not applying customized admin email content. (#3042)
+- Mobile sidebar filter toggle missing when View As is disabled. (#3043)
+- Recurring listings expiring despite active subscriptions. (#3035)
+- Expired listing renewals bypassing approval and publish expiry reset. (#3025)
+- Pending review submissions missing a dismissible confirmation notice. (#3024)
+- Frontend dashboard order translations. (#3023)
+- Repeated custom fields in listing card layouts. (#3010)
+- Category conditional logic in add-listing forms. (#3009)
+- CSV category assignments when terms share names across taxonomies. (#3008)
+- Map address search not matching reordered postal codes. (#3007)
+- Blank FormGent enquiries dashboard on WordPress 7.1. (#3005)
+- CSV import validation for WordPress temporary upload filenames. (#3004)
+- Preserved the selected directory type context for listing cards on author profile pages. (#3052)
 
 = 8.9.6 - Sep 20, 2026 =
 

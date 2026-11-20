@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Job title', 'wp-seopress-pro' ); ?>
 			<code>title</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_name', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_name', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Job title', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Job description', 'wp-seopress-pro' ); ?>
 			<code>description</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_desc', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_desc', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Job description', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -39,7 +39,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Published date', 'wp-seopress-pro' ); ?>
 			<code>datePosted</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_date_posted', 'date' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_date_posted', 'date' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The original date that employer posted the job in ISO 8601 format. For example, "2017-01-24" or "2017-01-24T19:33:17+00:00".', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -47,7 +47,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Expiration date', 'wp-seopress-pro' ); ?>
 			<code>validThrough</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_valid_through', 'date' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_valid_through', 'date' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The date when the job posting will expire in ISO 8601 format. For example, "2017-02-24" or "2017-02-24T19:33:17+00:00".', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -55,7 +55,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Type of employment', 'wp-seopress-pro' ); ?>
 			<code>employmentType</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_employment_type', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_employment_type', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description">
 			<?php
 				/* translators: do not translate authorized values, e.g. FULL_TIME  */
@@ -67,7 +67,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_jobs_identifier_name_meta"><?php esc_html_e( 'Identifier name', 'wp-seopress-pro' ); ?>
 			<code>identifierName</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_identifier_name', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_identifier_name', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The hiring organization\'s unique identifier name for the job', 'wp-seopress-pro' ); ?></span>
 	</p>
 
@@ -75,7 +75,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_jobs_identifier_value_meta"><?php esc_html_e( 'Identifier value', 'wp-seopress-pro' ); ?>
 			<code>identifierValue</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_identifier_value', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_identifier_value', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The hiring organization\'s value identifier value for the job', 'wp-seopress-pro' ); ?></span>
 	</p>
 	
@@ -87,21 +87,21 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_jobs_hiring_organization_meta"><?php esc_html_e( 'Organization that hires', 'wp-seopress-pro' ); ?>
 			<code>hiringOrganization</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_hiring_organization', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_hiring_organization', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The organization offering the job position. This should be the name of the company.', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_hiring_same_as_meta"><?php esc_html_e( 'Organization website', 'wp-seopress-pro' ); ?>
 			<code>hiringSameAs</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_hiring_same_as', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_hiring_same_as', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Enter the URL like https://example.com/', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_hiring_logo_meta"><?php esc_html_e( 'Image', 'wp-seopress-pro' ); ?>
 			<code>hiringLogo</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_hiring_logo', 'image' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_hiring_logo', 'image' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Default: Logo from your Knowledge Graph (SEO > Social Networks > Knowledge Graph)', 'wp-seopress-pro' ); ?></span>
 	</p>
 	
@@ -111,42 +111,42 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_jobs_address_street_meta"><?php esc_html_e( 'Street address', 'wp-seopress-pro' ); ?>
 			<code>addressStreet</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_address_street', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_address_street', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Street address', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_address_locality_meta"><?php esc_html_e( 'Locality address', 'wp-seopress-pro' ); ?>
 			<code>addressLocality</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_address_locality', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_address_locality', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Locality address', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_address_region_meta"><?php esc_html_e( 'Region', 'wp-seopress-pro' ); ?>
 			<code>addressRegion</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_address_region', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_address_region', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Region', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_postal_code_meta"><?php esc_html_e( 'Postal code', 'wp-seopress-pro' ); ?>
 			<code>postalCode</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_postal_code', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_postal_code', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Postal code', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_country_meta"><?php esc_html_e( 'Country', 'wp-seopress-pro' ); ?>
 			<code>addressCountry</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_country', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_country', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Country', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_remote_meta"><?php esc_html_e( 'Remote job?', 'wp-seopress-pro' ); ?>
 			<code>remote</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_remote', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_remote', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description">
 			<?php esc_html_e( 'If a value exists (e.g. "yes"), the job offer will be marked as fully remote. Don\'t mark up jobs that allow occasional work-from-home, jobs for which remote work is a negotiable benefit, or have other arrangements that are not 100% remote. The "gig economy" nature of a job doesn\'t imply that it is or is not remote.', 'wp-seopress-pro' ); ?>
 		</span>
@@ -155,13 +155,13 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_jobs_location_requirement_meta"><?php esc_html_e( 'Location requirement for remote job', 'wp-seopress-pro' ); ?>
 			<code>applicantLocationRequirements</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_location_requirement', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_location_requirement', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_direct_apply_meta"><?php esc_html_e( 'Direct apply?', 'wp-seopress-pro' ); ?>
 			<code>direct_apply</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_direct_apply', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_direct_apply', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description">
 			<?php
 			/* translators: do not translate expected values, true / false  */
@@ -173,21 +173,21 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_jobs_salary_meta"><?php esc_html_e( 'Salary', 'wp-seopress-pro' ); ?>
 			<code>salary</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_salary', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_salary', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. 50.00', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_salary_currency_meta"><?php esc_html_e( 'Currency', 'wp-seopress-pro' ); ?>
 			<code>salaryCurrency</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_salary_currency', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_salary_currency', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. USD', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_jobs_salary_unit_meta"><?php esc_html_e( 'Select your unit text', 'wp-seopress-pro' ); ?>
 			<code>salaryUnit</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_salary_unit', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_jobs_salary_unit', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Authorized values: "HOUR", "DAY", "WEEK", "MONTH", "YEAR"', 'wp-seopress-pro' ); ?></span>
 	</p>
 </div>

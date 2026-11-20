@@ -19,11 +19,14 @@ class MMB_Stats extends MMB_Core
         if (!$this->mmb_multisite) {
             $siteStatistics['users'] = (int)$wpdb->get_var("SELECT COUNT(*) FROM {$basePrefix}users");
         } else {
-            $siteStatistics['users'] = count(get_users(
-                array(
-                    'blog_id' => $wpdb->blogid,
-                )
-            ));
+            // On multisite, count the blog's members with count_users() instead of
+            // count(get_users(...)). get_users() hydrated a WP_User object for every member and
+            // primed the full usermeta cache via update_meta_cache(), which exhausted PHP memory
+            // on large networks (~11.5k users / ~480k usermeta rows used 450 MB+ and fatally
+            // errored in wp-includes/meta.php). count_users() returns the same member count from
+            // an aggregate query without loading user objects or metadata. See MNGWP-3305.
+            $userCounts              = count_users('time', $wpdb->blogid);
+            $siteStatistics['users'] = (int)$userCounts['total_users'];
         }
 
         $siteStatistics['approvedComments'] = (int)$wpdb->get_var("SELECT COUNT(*) FROM {$prefix}comments c INNER JOIN {$prefix}posts p ON c.comment_post_ID = p.ID WHERE comment_approved = '1' AND p.post_status = 'publish'");

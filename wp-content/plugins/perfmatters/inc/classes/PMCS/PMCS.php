@@ -108,7 +108,7 @@ class PMCS
         add_action('admin_enqueue_scripts', function() {
 
             //pmcs styles
-            wp_enqueue_style('pmcs', PERFMATTERS_URL . 'css/pmcs.css', [], PERFMATTERS_VERSION);
+            wp_enqueue_style('pmcs', PERFMATTERS_URL . 'css/pmcs.css', array('perfmatters-styles'), PERFMATTERS_VERSION);
 
             //pmcs script args
             $pmcs_js_args = array(
@@ -560,14 +560,15 @@ class PMCS
 	public static function admin_notice($id, $message, $type, $dismissible = true)
 	{
 		add_action('pmcs_admin_notice', function () use ($id, $message, $type, $dismissible) {
-			wp_admin_notice(
-				wp_kses_post($message),
-				array(
-					'id'                 => $id,
-					'type'               => $type,
-					'dismissible'        => $dismissible,
-					'additional_classes' => array( 'inline' ),
-				)
+			$classes = 'notice notice-' . sanitize_html_class($type) . ' inline';
+			if($dismissible) {
+				$classes .= ' is-dismissible';
+			}
+			printf(
+				'<div id="%1$s" class="%2$s"><p>%3$s</p></div>',
+				esc_attr($id),
+				esc_attr($classes),
+				wp_kses_post($message)
 			);
 		});
 
@@ -712,7 +713,9 @@ class PMCS
 
             $doc_block_string.= PHP_EOL . '* @' . $key . ': ' . $sanitized_value;
         }
-        $doc_block_string.= PHP_EOL . '*/' . PHP_EOL . '?>' . PHP_EOL . '<?php if(!defined("ABSPATH")) {return;} // <Internal Doc End> ?>' . PHP_EOL;
+
+        //the guard lives in the body after this marker for every snippet type
+        $doc_block_string.= PHP_EOL . '*/' . PHP_EOL . '// <Internal Doc End>' . PHP_EOL;
 
         return $doc_block_string;
     }
@@ -744,7 +747,7 @@ class PMCS
             return [null, null];
         }
 
-        $parts = preg_split('/\/\/ <Internal Doc End> \?>\R/u', $file_content[1], 2);
+        $parts = preg_split('/\/\/ <Internal Doc End>(?: \?>)?\R/u', $file_content[1], 2);
 
         //backward compat for snippets saved with a fixed PHP_EOL delimiter
         if(count($parts) < 2) {
@@ -753,6 +756,13 @@ class PMCS
 
         $doc_block_string = $parts[0];
         $code = $parts[1] ?? '';
+
+        $is_php = true;
+        if(preg_match('/\*\s*@type:\s*([a-z]+)/i', $doc_block_string, $type_match)) {
+            $is_php = strtolower($type_match[1]) === 'php';
+        }
+
+        $code = $is_php ? PhpGuard::strip($code) : PhpGuard::unwrap($code);
 
         if($code_only) {
             return $code;
@@ -840,12 +850,17 @@ class PMCS
 
         //add minified file version
         if(!empty($meta['optimizations']['minify'])) {
+			try {
+				$minifier_class = "\\MatthiasMullie\\Minify\\" . strtoupper($meta['type']);
+				$minifier = new $minifier_class($type_dir . '/' . $type_file_name);
+				$minifier->minify($type_file_minified);
 
-			$minifier_class = "\\MatthiasMullie\\Minify\\" . strtoupper($meta['type']);
-			$minifier = new $minifier_class($type_dir . '/' . $type_file_name);
-		    $minifier->minify($type_file_minified);
-
-		    return $type_file_name_minified;
+				return $type_file_name_minified;
+			}
+			catch(\MatthiasMullie\Minify\Exceptions\IOException $e) {
+				error_log('Perfmatters: ' . $e->getMessage());
+				// fall through and use the non-minified file
+			}
         }
 
         //remove minified file
@@ -1163,7 +1178,8 @@ PHP;
                                 $code = file_get_contents($cached_file_path);
                                 if($code) {
                                 	$tag = $snippet['type'] == 'js' ? 'script' : 'style';
-                                	echo '<script id="pmcs-' . $script_name . '-' . $snippet['type'] . '">' . $code . '</script>';
+                                	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted snippet file contents.
+                                	echo '<script id="pmcs-' . esc_attr($script_name) . '-' . esc_attr($snippet['type']) . '">' . $code . '</script>';
                                 }
                             }
 
@@ -1279,14 +1295,15 @@ PHP;
                             //file
                             if($method == 'file') {
                                 wp_register_style('pmcs-' . $script_name, $cached_file_url, [], strtotime($snippet['modified']));
-                                echo '<link rel="stylesheet" id="pmcs-' . $script_name . '-css" href="' . $cached_file_url . '" media="all">';
+                                echo '<link rel="stylesheet" id="pmcs-' . esc_attr($script_name) . '-css" href="' . esc_url($cached_file_url) . '" media="all">';
                             }
 
                             //inline
                             else {
                                 $code = file_get_contents($cached_file_path);
                                 if($code) {
-                                    echo '<style id="pmcs-' . $script_name . '-css">' . $code . '</style>';
+                                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted snippet file contents.
+                                    echo '<style id="pmcs-' . esc_attr($script_name) . '-css">' . $code . '</style>';
                                 }
                             }
 
@@ -1455,6 +1472,7 @@ PHP;
         if($time_diff >= 0 && $time_diff < YEAR_IN_SECONDS) {
             
             //human_time_diff with local timestamps
+            /* translators: %s: human-readable time difference */
             $human_time = sprintf(__('%s ago', 'perfmatters'), human_time_diff($target_local_timestamp, $now_local_timestamp));
         }
 

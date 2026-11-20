@@ -48,7 +48,7 @@ function seopress_pro_ca_before() {
 			<span class="description"><?php esc_html_e( 'Click on a suggestion below to add it as a target keyword.', 'wp-seopress-pro' ); ?></span>
 		</p>
 		<button id="seopress_get_suggestions" type="button"
-			class="<?php echo seopress_btn_secondary_classes(); ?>">
+			class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?>">
 			<?php esc_html_e( 'Get suggestions!', 'wp-seopress-pro' ); ?>
 		</button>
 
@@ -73,9 +73,9 @@ function seopress_pro_ca_before() {
 				if (kws) {
 					var script = document.createElement('script');
 					script.src =
-						'https://www.google.com/complete/search?client=firefox&format=rich&hl=<?php echo $locale; ?>&q=' +
+						'https://www.google.com/complete/search?client=firefox&format=rich&hl=<?php echo esc_js( $locale ); ?>&q=' +
 						kws +
-						'&gl=<?php echo $country_code; ?>&callback=seopress_google_suggest';
+						'&gl=<?php echo esc_js( $country_code ); ?>&callback=seopress_google_suggest';
 					document.body.appendChild(script);
 				}
 			});

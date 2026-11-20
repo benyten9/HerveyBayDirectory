@@ -22,6 +22,7 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use DoubleScale\Modules\Portal\Services\ClientSeen;
 
 /**
  * RestPublicProposalController class.
@@ -104,12 +105,15 @@ class RestPublicProposalController extends RestController {
 			return $proposal;
 		}
 
-		if ( ProposalStatus::SENT === (string) $proposal->status ) {
+		// Opened by the client: a teammate checking the link does not count.
+		$by_client = ! ClientSeen::is_team_viewer();
+
+		if ( $by_client && ProposalStatus::SENT === (string) $proposal->status ) {
 			$proposal->status = ProposalStatus::OPEN;
 			$proposal->save();
 		}
 
-		if ( empty( $proposal->viewed_at ) ) {
+		if ( $by_client && empty( $proposal->viewed_at ) ) {
 			$proposal->viewed_at = current_time( 'mysql' );
 			$proposal->save();
 		}

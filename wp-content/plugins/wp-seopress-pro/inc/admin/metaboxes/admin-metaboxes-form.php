@@ -19,7 +19,7 @@ function seopress_pro_render_ai_button( $data_meta, $tooltip_text ) {
 	?>
 	<span class="seopress-d-flex">
 		<button class="seopress_ai_generate_seo_meta seopress-ai-icon-button"
-			data-lang="<?php echo seopress_get_current_lang(); ?>"
+			data-lang="<?php echo esc_attr( seopress_get_current_lang() ); ?>"
 			data_meta="<?php echo esc_attr( $data_meta ); ?>"
 			type="button"
 			title="<?php echo esc_attr( $tooltip_text ); ?>"
@@ -230,7 +230,7 @@ function seopress_pro_seo_metabox_after_content( $typenow, $pagenow, $data_attr,
 					<span class="description"><?php esc_html_e( 'If your post is set to noindex, it will be automatically excluded from the sitemap.', 'wp-seopress-pro' ); ?></span>
 				</p>
 				<div id="wrap-videos"
-					data-count="<?php echo $total; ?>">
+					data-count="<?php echo absint( $total ); ?>">
 					<?php
 					foreach ( $seopress_video[0] as $key => $value ) {
 						$check_url             = isset( $seopress_video[0][ $key ]['url'] ) ? $seopress_video[0][ $key ]['url'] : '';
@@ -427,8 +427,12 @@ function seopress_pro_seo_metabox_save( $post_id, $seo_tabs ) {
 		} else {
 			delete_post_meta( $post_id, '_seopress_video_disabled', '' );
 		}
-		if ( ! empty( $_POST['seopress_video'] ) ) {
-			update_post_meta( $post_id, '_seopress_video', $_POST['seopress_video'] );
+		if ( ! empty( $_POST['seopress_video'] ) && is_array( $_POST['seopress_video'] ) ) {
+			// Every field is plain text, as on the REST route and the Block
+			// Editor meta. This path stored the request as is, so an Author
+			// could put markup in the video sitemap.
+			$videos = map_deep( wp_unslash( $_POST['seopress_video'] ), 'sanitize_text_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by map_deep().
+			update_post_meta( $post_id, '_seopress_video', wp_slash( $videos ) );
 		} else {
 			delete_post_meta( $post_id, '_seopress_video' );
 		}

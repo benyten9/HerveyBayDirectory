@@ -361,9 +361,13 @@ function perfmatters_settings() {
             'id' => 'heartbeat_frequency',
             'input' => 'select',
             'options' => array(
+                /* translators: %s: number of seconds */
                 ''   => sprintf(__('%s Seconds', 'perfmatters'), '15') . ' (' . __('Default', 'perfmatters') . ')',
+                /* translators: %s: number of seconds */
                 '30' => sprintf(__('%s Seconds', 'perfmatters'), '30'),
+                /* translators: %s: number of seconds */
                 '45' => sprintf(__('%s Seconds', 'perfmatters'), '45'),
+                /* translators: %s: number of seconds */
                 '60' => sprintf(__('%s Seconds', 'perfmatters'), '60')
             ),
             'tooltip' => __('Controls how often the WordPress Heartbeat API is allowed to run.', 'perfmatters')
@@ -1228,7 +1232,7 @@ function perfmatters_settings() {
                     'moderate'     => __('Moderate', 'perfmatters'),
                     'eager'        => __('Eager', 'perfmatters')
                 ),
-                'tooltip' => __('Change how agressive speculative loading will behave.', 'perfmatters'),
+                'tooltip' => __('Change how aggressive speculative loading will behave.', 'perfmatters'),
                 'class' => 'preload-speculative_mode perfmatters-select-control-disabled perfmatters-control-reverse' . (!empty($perfmatters_options['preload']['speculative_mode']) && $perfmatters_options['preload']['speculative_mode'] == 'disabled' ? ' hidden' : '')
             )
         );
@@ -1846,6 +1850,269 @@ function perfmatters_settings() {
         )
     );
 
+    //page cache
+    add_settings_section('cache_page', __('Page Cache', 'perfmatters'), '__return_false', 'perfmatters_options');
+
+    if(Perfmatters\Cache::disk_available()) {
+
+        //enable page cache
+        add_settings_field(
+            'page',
+            perfmatters_title(__('Enable Page Cache', 'perfmatters'), 'cache-page', 'https://perfmatters.io/docs/page-cache/#enable'),
+            'perfmatters_print_input',
+            'perfmatters_options',
+            'cache_page',
+            array(
+                'section' => 'cache',
+                'id' => 'page',
+                'class' => 'perfmatters-input-controller',
+                'tooltip' => __('Cache public pages as static HTML and serve them to visitors.', 'perfmatters')
+            )
+        );
+
+        //cache expires
+        add_settings_field(
+            'page_ttl',
+            perfmatters_title(__('Cache Expires', 'perfmatters'), 'cache-page_ttl', 'https://perfmatters.io/docs/page-cache/#expires'),
+            'perfmatters_print_input',
+            'perfmatters_options',
+            'cache_page',
+            array(
+                'section' => 'cache',
+                'id' => 'page_ttl',
+                'input' => 'select',
+                'options' => Perfmatters\Cache\Config::cache_ttl_choices(),
+                'class' => 'cache-page ' . (empty($perfmatters_options['cache']['page']) ? ' hidden' : ''),
+                'tooltip' => __('Choose how long cached HTML is kept before it is deleted.', 'perfmatters')
+            )
+        );
+
+        //separate mobile cache
+        add_settings_field(
+            'page_mobile',
+            perfmatters_title(__('Separate Mobile', 'perfmatters'), 'cache-page_mobile', 'https://perfmatters.io/docs/page-cache/#mobile'),
+            'perfmatters_print_input',
+            'perfmatters_options',
+            'cache_page',
+            array(
+                'section' => 'cache',
+                'id' => 'page_mobile',
+                'class' => 'cache-page ' . (empty($perfmatters_options['cache']['page']) ? ' hidden' : ''),
+                'tooltip' => __('Store a separate HTML file for mobile visitors. Most responsive themes can leave this off.', 'perfmatters')
+            )
+        );
+    }
+    else {
+
+        //placeholder row — real Enable field stays off the form while disk cannot run
+        add_settings_field(
+            'page_disabled',
+            perfmatters_title(__('Page Cache Disabled', 'perfmatters'), 'cache-page-disabled', 'https://perfmatters.io/docs/page-cache/#enable'),
+            array('Perfmatters\Cache', 'print_page_disabled_field'),
+            'perfmatters_options',
+            'cache_page',
+            array(
+                'class' => 'perfmatters-cache-page-disabled-row'
+            )
+        );
+    }
+
+    //cache warmer
+    add_settings_section('cache_warmer', __('Warmer', 'perfmatters'), '__return_false', 'perfmatters_options');
+    
+    //cache warmer
+    add_settings_field(
+        'warmer',
+        perfmatters_title(__('Cache Warmer', 'perfmatters'), 'cache-warmer', 'https://perfmatters.io/docs/warm-cache/#enable'),
+        'perfmatters_print_input',
+        'perfmatters_options',
+        'cache_warmer',
+        array(
+            'section' => 'cache',
+            'id' => 'warmer',
+            'class' => 'perfmatters-input-controller',
+            'tooltip' => __('Request public pages ahead of visitors so the next visit is served from cache. Works with Perfmatters page cache, host page cache, or a CDN (Cloudflare).', 'perfmatters')
+        )
+    );
+
+    //warmer schedule
+    add_settings_field(
+        'warmer_schedule',
+        perfmatters_title(__('Schedule', 'perfmatters'), 'cache-warmer_schedule', 'https://perfmatters.io/docs/warm-cache/#schedule'),
+        'perfmatters_print_input',
+        'perfmatters_options',
+        'cache_warmer',
+        array(
+            'section' => 'cache',
+            'id' => 'warmer_schedule',
+            'input' => 'select',
+            'options' => array(
+                '' => __('None', 'perfmatters') . ' (' . __('Default', 'perfmatters') . ')',
+                'hourly' => __('Hourly', 'perfmatters'),
+                'twicedaily' => __('Twice Daily', 'perfmatters'),
+                'daily' => __('Daily', 'perfmatters'),
+                'weekly' => __('Weekly', 'perfmatters')
+            ),
+            'class' => 'cache-warmer ' . (empty($perfmatters_options['cache']['warmer']) ? ' hidden' : ''),
+            'tooltip' => __('Choose how often the warmer runs a full crawl.', 'perfmatters')
+        )
+    );
+
+    //warmer sources
+    add_settings_field(
+        'warmer_sources',
+        perfmatters_title(__('Sources', 'perfmatters'), 'cache-warmer_sources', 'https://perfmatters.io/docs/warm-cache/#sources'),
+        'perfmatters_print_warmer_sources',
+        'perfmatters_options',
+        'cache_warmer',
+        array(
+            'class' => 'cache-warmer ' . (empty($perfmatters_options['cache']['warmer']) ? ' hidden' : ''),
+            'tooltip' => __('Choose which content the warmer requests.', 'perfmatters')
+        )
+    );
+
+    //cloudflare
+    add_settings_section('cache_cloudflare', __('Cloudflare', 'perfmatters'), '__return_false', 'perfmatters_options');
+
+    //cloudflare edge cache (HTML + static Cache Rules)
+    add_settings_field(
+        'cloudflare',
+        perfmatters_title(__('Cloudflare Edge Cache', 'perfmatters'), 'cache-cloudflare', 'https://perfmatters.io/docs/cloudflare-edge-cache/#enable'),
+        'perfmatters_print_cloudflare',
+        'perfmatters_options',
+        'cache_cloudflare',
+        array(
+            'section' => 'cache',
+            'id' => 'cloudflare',
+            'class' => 'perfmatters-input-controller',
+            'tooltip' => __('Cache HTML and static assets at Cloudflare edge.', 'perfmatters')
+        )
+    );
+
+    //cloudflare api token
+    add_settings_field(
+        'cf_api_token',
+        perfmatters_title(__('API Token', 'perfmatters'), 'cache-cf_api_token', 'https://perfmatters.io/docs/cloudflare-edge-cache/#api-token'),
+        'perfmatters_print_cf_api_token',
+        'perfmatters_options',
+        'cache_cloudflare',
+        array(
+            'section' => 'cache',
+            'id' => 'cf_api_token',
+            'class' => 'cache-cloudflare ' . (empty($perfmatters_options['cache']['cloudflare']) ? ' hidden' : ''),
+            'tooltip' => __('Enter a Cloudflare API token for this zone.', 'perfmatters')
+        )
+    );
+
+    //cloudflare zone id
+    add_settings_field(
+        'cf_zone_id',
+        perfmatters_title(__('Zone ID', 'perfmatters'), 'cache-cf_zone_id', 'https://perfmatters.io/docs/cloudflare-edge-cache/#zone-id'),
+        'perfmatters_print_cf_zone_id',
+        'perfmatters_options',
+        'cache_cloudflare',
+        array(
+            'section' => 'cache',
+            'id' => 'cf_zone_id',
+            'input' => 'text',
+            'placeholder' => 'auto',
+            'class' => 'cache-cloudflare ' . (empty($perfmatters_options['cache']['cloudflare']) ? ' hidden' : ''),
+            'tooltip' => __('Leave blank to detect this site\'s Cloudflare zone. Enter an ID when the token can access more than one zone.', 'perfmatters')
+        )
+    );
+
+    //cloudflare edge html expires (CDN-Cache-Control max-age; Cache Rules stay bypass_by_default)
+    add_settings_field(
+        'cf_edge_ttl',
+        perfmatters_title(__('Expires', 'perfmatters'), 'cache-cf_edge_ttl', 'https://perfmatters.io/docs/cloudflare-edge-cache/#expires'),
+        'perfmatters_print_input',
+        'perfmatters_options',
+        'cache_cloudflare',
+        array(
+            'section' => 'cache',
+            'id' => 'cf_edge_ttl',
+            'input' => 'select',
+            'options' => Perfmatters\Cache\Cloudflare::edge_ttl_choices(),
+            'class' => 'cache-cloudflare ' . (empty($perfmatters_options['cache']['cloudflare']) ? ' hidden' : ''),
+            'tooltip' => __('Choose how long Cloudflare keeps HTML at the edge.', 'perfmatters')
+        )
+    );
+
+    //cache rules
+    add_settings_section('cache_rules', '', '__return_false', 'perfmatters_options');
+
+    //excluded urls
+    add_settings_field(
+        'excluded_urls',
+        perfmatters_title(__('Excluded URLs', 'perfmatters'), 'cache-excluded_urls', 'https://perfmatters.io/docs/cache-rules/#excluded-urls'),
+        'perfmatters_print_input',
+        'perfmatters_options',
+        'cache_rules',
+        array(
+            'section' => 'cache',
+            'id' => 'excluded_urls',
+            'input' => 'textarea',
+            'textareatype' => 'oneperline',
+            'placeholder' => "/members/\n/campaign/",
+            'tooltip' => __('Exclude specific paths from caching. A request is skipped when its path contains the line. Format: one per line', 'perfmatters')
+        )
+    );
+
+    //bypass cookies
+    add_settings_field(
+        'bypass_cookies',
+        perfmatters_title(__('Bypass Cookies', 'perfmatters'), 'cache-bypass_cookies', 'https://perfmatters.io/docs/cache-rules/#bypass-cookies'),
+        'perfmatters_print_input',
+        'perfmatters_options',
+        'cache_rules',
+        array(
+            'section' => 'cache',
+            'id' => 'bypass_cookies',
+            'input' => 'textarea',
+            'textareatype' => 'oneperline',
+            'placeholder' => "membership_\nwishlist_",
+            'tooltip' => __('Exclude requests that send these cookies. A request is skipped when a cookie name starts with the line. Format: one per line', 'perfmatters')
+        )
+    );
+
+    //purge urls
+    add_settings_field(
+        'purge_urls',
+        perfmatters_title(__('Always Purge URLs', 'perfmatters'), 'cache-purge_urls', 'https://perfmatters.io/docs/cache-rules/#always-purge-urls'),
+        'perfmatters_print_input',
+        'perfmatters_options',
+        'cache_rules',
+        array(
+            'section' => 'cache',
+            'id' => 'purge_urls',
+            'input' => 'textarea',
+            'textareatype' => 'oneperline',
+            'placeholder' => "/recent/\n/landing/",
+            'tooltip' => __('Purge these pages whenever any post or page is updated. Format: one per line', 'perfmatters')
+        )
+    );
+
+    //disk-only cache key variants — same omit pattern as Page Cache fields when disk is unavailable
+    if(Perfmatters\Cache::disk_available()) {
+
+        //query strings
+        add_settings_field(
+            'query_strings',
+            perfmatters_title(__('Cache Query Strings', 'perfmatters'), 'cache-query_strings', 'https://perfmatters.io/docs/cache-rules/#cache-query-strings'),
+            'perfmatters_print_input',
+            'perfmatters_options',
+            'cache_rules',
+            array(
+                'section' => 'cache',
+                'id' => 'query_strings',
+                'input' => 'textarea',
+                'textareatype' => 'oneperline',
+                'placeholder' => "orderby\nfilter",
+                'tooltip' => __('Store a separate cache file for these query parameters. Parameters that are not listed skip the cache. Format: one per line', 'perfmatters')
+            )
+        );
+    }
+
     register_setting('perfmatters_options', 'perfmatters_options', 'perfmatters_sanitize_options');
 
     //tools plugin section
@@ -2242,6 +2509,12 @@ function perfmatters_default_options() {
         'cdn' => array(
             'cdn_directories' => 'wp-content,wp-includes',
             'cdn_exclusions' => '.php'
+        ),
+        'cache' => array(
+            'warmer_sources' => array(
+                'posts' => 1,
+                'pages' => 1
+            )
         )
 	);
     perfmatters_network_defaults($defaults, 'perfmatters_options');
@@ -2274,8 +2547,8 @@ function perfmatters_network_defaults(&$defaults, $option) {
 }
 
 //print settings header
-function perfmatters_settings_header($text, $dashicon = '') {
-    echo '<h2 class="perfmatters-settings-header">' . ($dashicon ? '<span class="dashicons ' . $dashicon . '"></span>' : '') . $text . '</h2>';
+function perfmatters_settings_header($text, $dashicon = '', $beta = false) {
+    echo '<h2 class="perfmatters-settings-header">' . ($dashicon ? '<span class="dashicons ' . esc_attr($dashicon) . '"></span>' : '') . esc_html($text) . ($beta ? '<span class="perfmatters-beta">BETA</span>' : '') . '</h2>';
 }
 
 //print settings section
@@ -2289,7 +2562,7 @@ function perfmatters_settings_section($page, $section, $dashicon = '', $class = 
         
         echo '<div class="perfmatters-settings-section">';
             if(!empty($wp_settings_sections[$page][$section]['title'])) {
-                echo '<h2>' . ($dashicon ? '<span class="dashicons ' . $dashicon . '"></span>' : '') . __($wp_settings_sections[$page][$section]['title'], 'perfmatters') . '</h2>';
+                echo '<h2>' . ($dashicon ? '<span class="dashicons ' . esc_attr($dashicon) . '"></span>' : '') . esc_html($wp_settings_sections[$page][$section]['title']) . '</h2>';
             }
             if(!empty($wp_settings_fields[$page][$section])) {
                 echo '<table class="form-table">';
@@ -2337,18 +2610,19 @@ function perfmatters_print_input($args) {
 
     //text
     if(!empty($args['input']) && ($args['input'] == 'text' || $args['input'] == 'color')) {
-        echo "<input type='text' id='" . $selection_id . "' name='" . $option . "[" . $args['id'] . "]' value='" . (!empty($options[$args['id']]) ? $options[$args['id']] : '') . "' placeholder='" . (!empty($args['placeholder']) ? $args['placeholder'] : '') . "'" . (!empty($args['validate']) ? " perfmatters_validate='" . $args['validate'] . "'" : "") . " />";
+        echo "<input type='text' id='" . esc_attr($selection_id) . "' name='" . esc_attr($option . '[' . $args['id'] . ']') . "' value='" . esc_attr(!empty($options[$args['id']]) ? $options[$args['id']] : '') . "' placeholder='" . esc_attr(!empty($args['placeholder']) ? $args['placeholder'] : '') . "'" . (!empty($args['validate']) ? " perfmatters_validate='" . esc_attr($args['validate']) . "'" : "") . " />";
     }
 
-    //select
+    //select — missing/blank both match value '' so mid-list defaults (e.g. Edge Cache Expires) stay selected
     elseif(!empty($args['input']) && $args['input'] == 'select') {
-        echo "<select id='" . $selection_id . "' name='" . $option . "[" . $args['id'] . "]'>";
+        $selected = array_key_exists($args['id'], $options) ? $options[$args['id']] : '';
+        echo "<select id='" . esc_attr($selection_id) . "' name='" . esc_attr($option . '[' . $args['id'] . ']') . "'>";
             foreach($args['options'] as $value => $title) {
-                echo "<option value='" . $value . "' "; 
-                if(!empty($options[$args['id']]) && $options[$args['id']] == $value) {
+                echo "<option value='" . esc_attr($value) . "' ";
+                if((string) $selected === (string) $value) {
                     echo "selected";
-                } 
-                echo ">" . $title . "</option>";
+                }
+                echo ">" . esc_html($title) . "</option>";
             }
         echo "</select>";
     }
@@ -2365,15 +2639,15 @@ function perfmatters_print_input($args) {
 
     //text area
     elseif(!empty($args['input']) && $args['input'] == 'textarea') {
-        echo "<textarea id='" . $selection_id . "' name='" . $option . "[" . $args['id'] . "]' placeholder='" . (!empty($args['placeholder']) ? $args['placeholder'] : '') . "'" . (!empty($args['textareatype']) && $args['textareatype'] == 'codemirror' ? " class='perfmatters-codemirror'" : "" ) . ">";
+        echo "<textarea id='" . esc_attr($selection_id) . "' name='" . esc_attr($option . '[' . $args['id'] . ']') . "' placeholder='" . esc_attr(!empty($args['placeholder']) ? $args['placeholder'] : '') . "'" . (!empty($args['textareatype']) && $args['textareatype'] == 'codemirror' ? " class='perfmatters-codemirror'" : "" ) . ">";
             if(!empty($options[$args['id']])) {
                 if(!empty($args['textareatype']) && $args['textareatype'] == 'oneperline') {
                     foreach($options[$args['id']] as $line) {
-                        echo $line . "\n";
+                        echo esc_textarea($line) . "\n";
                     }
                 }
                 else {
-                    echo $options[$args['id']];
+                    echo esc_textarea($options[$args['id']]);
                 }
             }
         echo "</textarea>";
@@ -2386,16 +2660,16 @@ function perfmatters_print_input($args) {
         $has_manual_tooltip = !$is_toggle && !empty($tools['accessibility_mode']) && !empty($args['tooltip']);
 
         if($is_toggle) {
-            echo "<label for='" . $selection_id . "' class='perfmatters-switch'>";
+            echo "<label for='" . esc_attr($selection_id) . "' class='perfmatters-switch'>";
         }
         elseif($has_manual_tooltip) {
             echo "<div class='perfmatters-checkbox-tooltip-offset'>";
         }
         
-            echo "<input type='checkbox' id='" . $selection_id . "' name='" . $option . "[" . $args['id'] . "]' value='1' style='display: inline-block; margin: 0px;' ";
+            echo "<input type='checkbox' id='" . esc_attr($selection_id) . "' name='" . esc_attr($option . '[' . $args['id'] . ']') . "' value='1' style='display: inline-block; margin: 0px;' ";
             checked(!empty($options[$args['id']]));
             if(!empty($args['confirmation'])) {
-                echo " onChange=\"this.checked=this.checked?confirm('" . $args['confirmation'] . "'):false;\"";
+                echo " onChange=\"this.checked=this.checked?confirm('" . esc_js($args['confirmation']) . "'):false;\"";
             }
             echo ">";
             
@@ -2479,13 +2753,13 @@ function perfmatters_print_quick_exclusions($args) {
                     $opened = !empty($options['assets']['delay_js_quick_exclusions'][$type]) ? ' perfmatters-opened' : '';
 
                     //quick exclusion section
-                    echo '<div class="perfmatters-quick-exclusion' . $opened . '">';
+                    echo '<div class="perfmatters-quick-exclusion' . esc_attr($opened) . '">';
 
                         //title bar
                         echo '<div class="perfmatters-quick-exclusion-title-bar" style="display: flex; justify-content: space-between;">';
                             echo '<div style="display: flex; align-items: center;">';
-                                echo '<span class="dashicons dashicons-' . $data['dashicon'] . '" style="margin-right: 5px;"></span>';
-                                echo $data['title'];
+                                echo '<span class="dashicons dashicons-' . esc_attr($data['dashicon']) . '" style="margin-right: 5px;"></span>';
+                                echo esc_html($data['title']);
                             echo '</div>';
 
                             echo '<span class="perfmatters-quick-exclusion-toggle dashicons dashicons-plus"></span>';
@@ -2496,8 +2770,8 @@ function perfmatters_print_quick_exclusions($args) {
                         echo '<div class="perfmatters-quick-exclusion-items">';
                             foreach($data['items'] as $item) {
                                 echo '<div style="margin-top: 5px;">';
-                                    echo '<input type="checkbox" name="perfmatters_options[assets][delay_js_quick_exclusions][' . $type . '][' . $item . ']" value="1" ' . (!empty($options['assets'][$args['id']][$type][$item]) ? 'checked ' : '') . '/>';
-                                    echo $master[$type][$item]['title'];
+                                    echo '<input type="checkbox" name="perfmatters_options[assets][delay_js_quick_exclusions][' . esc_attr($type) . '][' . esc_attr($item) . ']" value="1" ' . (!empty($options['assets'][$args['id']][$type][$item]) ? 'checked ' : '') . '/>';
+                                    echo esc_html($master[$type][$item]['title']);
                                 echo '</div >';
                             }
                         echo '</div>';
@@ -2542,7 +2816,7 @@ function perfmatters_print_input_rows($args) {
         echo '</div>';
 
         //add new row
-        echo '<a href="#" class="perfmatters-add-input-row button button-secondary" rel="' . $rowCount . '">' . __('Add New', 'perfmatters') . '</a>';
+        echo '<a href="#" class="perfmatters-add-input-row button button-secondary" rel="' . esc_attr($rowCount) . '">' . esc_html__('Add New', 'perfmatters') . '</a>';
 
     echo '</div>';
 
@@ -2558,7 +2832,7 @@ function perfmatters_print_preload_row($rowCount = 0, $line = array()) {
     echo '<div class="perfmatters-input-row"' . (empty($line['url']) ? ' style="display: none;"' : '') . '>';
 
         echo '<div style="display: flex; width: 100%; align-items: center;">';
-            echo '<input type="text" id="preload-' . $rowCount . '-url" name="perfmatters_options[preload][preload][' . $rowCount . '][url]" value="' . (isset($line['url']) ? $line['url'] : '') . '" placeholder="https://example.com/font.woff2" />';
+            echo '<input type="text" id="preload-' . esc_attr($rowCount) . '-url" name="perfmatters_options[preload][preload][' . esc_attr($rowCount) . '][url]" value="' . esc_attr(isset($line['url']) ? $line['url'] : '') . '" placeholder="https://example.com/font.woff2" />';
 
             $types = array(
                 'fetch'  => 'Fetch',
@@ -2569,34 +2843,34 @@ function perfmatters_print_preload_row($rowCount = 0, $line = array()) {
                 'track'  => 'Track'
             );
 
-            echo '<select id="preload-' . $rowCount . '-as" name="perfmatters_options[preload][preload][' . $rowCount . '][as]" style="margin-left: 5px;">';
-                echo '<option value="">' . __('Select Type', 'perfmatters') . '</option>';
+            echo '<select id="preload-' . esc_attr($rowCount) . '-as" name="perfmatters_options[preload][preload][' . esc_attr($rowCount) . '][as]" style="margin-left: 5px;">';
+                echo '<option value="">' . esc_html__('Select Type', 'perfmatters') . '</option>';
                 foreach($types as $value => $label) {
-                    echo '<option value="' . $value . '"' . (isset($line['as']) && $line['as'] == $value ? ' selected="selected"' : '') . '>' . $label . '</option>';
+                    echo '<option value="' . esc_attr($value) . '"' . (isset($line['as']) && $line['as'] == $value ? ' selected="selected"' : '') . '>' . esc_html($label) . '</option>';
                 }
             echo '</select>';
 
-            echo '<a href="#" class="perfmatters-expand-input-row" title="' . __('Settings', 'perfmatters') . '" style="margin-left: 8px; text-decoration: none;"><span class="dashicons dashicons-admin-generic"></span></a>';
-            echo '<a href="#" class="perfmatters-delete-input-row" title="' . __('Remove', 'perfmatters') . '"><span class="dashicons dashicons-trash"></span></a>';
+            echo '<a href="#" class="perfmatters-expand-input-row" title="' . esc_attr__('Settings', 'perfmatters') . '" style="margin-left: 8px; text-decoration: none;"><span class="dashicons dashicons-admin-generic"></span></a>';
+            echo '<a href="#" class="perfmatters-delete-input-row" title="' . esc_attr__('Remove', 'perfmatters') . '"><span class="dashicons dashicons-trash"></span></a>';
         echo '</div>';
 
         echo '<div class="perfmatters-input-row-extra">';
 
-            echo '<select id="preload-' . $rowCount . '-device" name="perfmatters_options[preload][preload][' . $rowCount . '][device]">';
-                echo '<option value="">' . __('All Devices', 'perfmatters') . '</option>';
-                echo '<option value="desktop"' . (isset($line['device']) && $line['device'] == 'desktop' ? ' selected="selected"' : '') . '>' . __('Desktop', 'perfmatters') . '</option>';
-                echo '<option value="mobile"' . (isset($line['device']) && $line['device'] == 'mobile' ? ' selected="selected"' : '') . '>' . __('Mobile', 'perfmatters') . '</option>';
+            echo '<select id="preload-' . esc_attr($rowCount) . '-device" name="perfmatters_options[preload][preload][' . esc_attr($rowCount) . '][device]">';
+                echo '<option value="">' . esc_html__('All Devices', 'perfmatters') . '</option>';
+                echo '<option value="desktop"' . (isset($line['device']) && $line['device'] == 'desktop' ? ' selected="selected"' : '') . '>' . esc_html__('Desktop', 'perfmatters') . '</option>';
+                echo '<option value="mobile"' . (isset($line['device']) && $line['device'] == 'mobile' ? ' selected="selected"' : '') . '>' . esc_html__('Mobile', 'perfmatters') . '</option>';
             echo '</select>';
 
-            echo '<label class="perfmatters-inline-label-input"><span>' . __('Location', 'perfmatters') . '</span>';
-                echo '<input type="text" id="preload-' . $rowCount . '-locations" name="perfmatters_options[preload][preload][' . $rowCount . '][locations]" value="' . (isset($line['locations']) ? $line['locations'] : '') . '" placeholder="front,blog,23,19" />';
+            echo '<label class="perfmatters-inline-label-input"><span>' . esc_html__('Location', 'perfmatters') . '</span>';
+                echo '<input type="text" id="preload-' . esc_attr($rowCount) . '-locations" name="perfmatters_options[preload][preload][' . esc_attr($rowCount) . '][locations]" value="' . esc_attr(isset($line['locations']) ? $line['locations'] : '') . '" placeholder="front,blog,23,19" />';
             echo '</label>';
 
-            echo '<label class="perfmatters-inline-label-input"><span>' . __('Priority', 'perfmatters') . '</span>';
-                echo '<select id="preload-' . $rowCount . '-priority" name="perfmatters_options[preload][preload][' . $rowCount . '][priority]" />';
-                    echo '<option value="">' . __('Auto', 'perfmatters') . '</option>';
-                    echo '<option value="high"' . (isset($line['priority']) && $line['priority'] == 'high' ? ' selected="selected"' : '') . '>' . __('High', 'perfmatters') . '</option>';
-                    echo '<option value="low"' . (isset($line['priority']) && $line['priority'] == 'low' ? ' selected="selected"' : '') . '>' . __('Low', 'perfmatters') . '</option>';
+            echo '<label class="perfmatters-inline-label-input"><span>' . esc_html__('Priority', 'perfmatters') . '</span>';
+                echo '<select id="preload-' . esc_attr($rowCount) . '-priority" name="perfmatters_options[preload][preload][' . esc_attr($rowCount) . '][priority]" />';
+                    echo '<option value="">' . esc_html__('Auto', 'perfmatters') . '</option>';
+                    echo '<option value="high"' . (isset($line['priority']) && $line['priority'] == 'high' ? ' selected="selected"' : '') . '>' . esc_html__('High', 'perfmatters') . '</option>';
+                    echo '<option value="low"' . (isset($line['priority']) && $line['priority'] == 'low' ? ' selected="selected"' : '') . '>' . esc_html__('Low', 'perfmatters') . '</option>';
 
                 echo '</select>';
             echo '</label>';
@@ -2619,9 +2893,9 @@ function perfmatters_print_early_hint_types($args) {
 
     echo "<div style='margin: 5px auto;' id='perfmatters-early-hint-types'>";
         foreach($types as $key => $name) {
-            echo "<label for='perfmatters-early-hint-types-" . $key . "' style='margin-right: 10px; text-wrap: nowrap;'>";
-                echo "<input type='checkbox' name='perfmatters_options[preload][early_hint_types][]' id='perfmatters-early-hint-types-" . $key . "' " . (!empty($options['preload']['early_hint_types']) && in_array($key, $options['preload']['early_hint_types']) ? ' checked' : '') . " value='" . $key . "' />";
-                echo $name;
+            echo "<label for='perfmatters-early-hint-types-" . esc_attr($key) . "' style='margin-right: 10px; text-wrap: nowrap;'>";
+                echo "<input type='checkbox' name='perfmatters_options[preload][early_hint_types][]' id='perfmatters-early-hint-types-" . esc_attr($key) . "' " . (!empty($options['preload']['early_hint_types']) && in_array($key, $options['preload']['early_hint_types']) ? ' checked' : '') . " value='" . esc_attr($key) . "' />";
+                echo esc_html($name);
             echo "</label>";
         }
     echo "</div>";
@@ -2638,39 +2912,39 @@ function perfmatters_print_fetch_priority_row($rowCount = 0, $line = array()) {
     echo '<div class="perfmatters-input-row"' . (empty($line['selector']) ? ' style="display: none;"' : '') . '>';
 
         echo '<div style="display: flex; width: 100%; align-items: center;">';
-            echo '<input type="text" id="fetch-priority-' . $rowCount . '-url" name="perfmatters_options[preload][fetch_priority][' . $rowCount . '][selector]" value="' . (isset($line['selector']) ? esc_attr($line['selector']) : '') . '" placeholder="example-class" style="" />';
+            echo '<input type="text" id="fetch-priority-' . esc_attr($rowCount) . '-url" name="perfmatters_options[preload][fetch_priority][' . esc_attr($rowCount) . '][selector]" value="' . (isset($line['selector']) ? esc_attr($line['selector']) : '') . '" placeholder="example-class" style="" />';
 
             $types = array(
                 'high' => 'High',
                 'low'  => 'Low'
             );
 
-            echo '<select id="fetch-priority-' . $rowCount . '-as" name="perfmatters_options[preload][fetch_priority][' . $rowCount . '][priority]" style="margin-left: 5px;">';
-                echo '<option value="">' . __('Select Priority', 'perfmatters') . '</option>';
+            echo '<select id="fetch-priority-' . esc_attr($rowCount) . '-as" name="perfmatters_options[preload][fetch_priority][' . esc_attr($rowCount) . '][priority]" style="margin-left: 5px;">';
+                echo '<option value="">' . esc_html__('Select Priority', 'perfmatters') . '</option>';
                 foreach($types as $value => $label) {
-                    echo '<option value="' . $value . '"' . (isset($line['priority']) && $line['priority'] == $value ? ' selected="selected"' : '') . '>' . $label . '</option>';
+                    echo '<option value="' . esc_attr($value) . '"' . (isset($line['priority']) && $line['priority'] == $value ? ' selected="selected"' : '') . '>' . esc_html($label) . '</option>';
                 }
             echo '</select>';
 
-            echo '<a href="#" class="perfmatters-expand-input-row" title="' . __('Settings', 'perfmatters') . '" style="margin-left: 8px; text-decoration: none;"><span class="dashicons dashicons-admin-generic"></span></a>';
-            echo '<a href="#" class="perfmatters-delete-input-row" title="' . __('Remove', 'perfmatters') . '"><span class="dashicons dashicons-trash"></span></a>';
+            echo '<a href="#" class="perfmatters-expand-input-row" title="' . esc_attr__('Settings', 'perfmatters') . '" style="margin-left: 8px; text-decoration: none;"><span class="dashicons dashicons-admin-generic"></span></a>';
+            echo '<a href="#" class="perfmatters-delete-input-row" title="' . esc_attr__('Remove', 'perfmatters') . '"><span class="dashicons dashicons-trash"></span></a>';
 
         echo '</div>';
 
         echo '<div class="perfmatters-input-row-extra">';
 
-            echo '<select id="fetch-priority-' . $rowCount . '-device" name="perfmatters_options[preload][fetch_priority][' . $rowCount . '][device]" style="">';
-                echo '<option value="">' . __('All Devices', 'perfmatters') . '</option>';
-                echo '<option value="desktop"' . (isset($line['device']) && $line['device'] == 'desktop' ? ' selected="selected"' : '') . '>' . __('Desktop', 'perfmatters') . '</option>';
-                echo '<option value="mobile"' . (isset($line['device']) && $line['device'] == 'mobile' ? ' selected="selected"' : '') . '>' . __('Mobile', 'perfmatters') . '</option>';
+            echo '<select id="fetch-priority-' . esc_attr($rowCount) . '-device" name="perfmatters_options[preload][fetch_priority][' . esc_attr($rowCount) . '][device]" style="">';
+                echo '<option value="">' . esc_html__('All Devices', 'perfmatters') . '</option>';
+                echo '<option value="desktop"' . (isset($line['device']) && $line['device'] == 'desktop' ? ' selected="selected"' : '') . '>' . esc_html__('Desktop', 'perfmatters') . '</option>';
+                echo '<option value="mobile"' . (isset($line['device']) && $line['device'] == 'mobile' ? ' selected="selected"' : '') . '>' . esc_html__('Mobile', 'perfmatters') . '</option>';
             echo '</select>';
 
-            echo '<label class="perfmatters-inline-label-input" style="margin-left: 5px;"><span>' . __('Location', 'perfmatters') . '</span>';
-                echo '<input type="text" id="fetch-priority-' . $rowCount . '-locations" name="perfmatters_options[preload][fetch_priority][' . $rowCount . '][locations]" value="' . (isset($line['locations']) ? $line['locations'] : '') . '" placeholder="front,blog,23,19" />';
+            echo '<label class="perfmatters-inline-label-input" style="margin-left: 5px;"><span>' . esc_html__('Location', 'perfmatters') . '</span>';
+                echo '<input type="text" id="fetch-priority-' . esc_attr($rowCount) . '-locations" name="perfmatters_options[preload][fetch_priority][' . esc_attr($rowCount) . '][locations]" value="' . esc_attr(isset($line['locations']) ? $line['locations'] : '') . '" placeholder="front,blog,23,19" />';
             echo '</label>';
 
-            echo '<label for="fetch-priority-' . $rowCount . '-parent">';
-                echo '<input type="checkbox" id="fetch-priority-' . $rowCount . '-parent" name="perfmatters_options[preload][fetch_priority][' . $rowCount . '][parent]"' . (!empty($line['parent']) ? ' checked' : '') . ' value="1" /> Search by Parent Selector';
+            echo '<label for="fetch-priority-' . esc_attr($rowCount) . '-parent">';
+                echo '<input type="checkbox" id="fetch-priority-' . esc_attr($rowCount) . '-parent" name="perfmatters_options[preload][fetch_priority][' . esc_attr($rowCount) . '][parent]"' . (!empty($line['parent']) ? ' checked' : '') . ' value="1" /> Search by Parent Selector';
             echo '</label>';
 
         echo '</div>';
@@ -2693,13 +2967,13 @@ function perfmatters_print_preconnect_row($rowCount = 0, $line = '') {
     //print row
     echo '<div class="perfmatters-input-row"' . (empty($url) ? ' style="display: none;"' : '') . '>';
         echo '<div class="perfmatters-input-row-hero">';
-            echo '<input type="text" id="preconnect-' . $rowCount . '-url" name="perfmatters_options[preload][preconnect][' . $rowCount . '][url]" value="' . ($url ?? ''). '" placeholder="https://example.com" />';
-            echo '<a href="#" class="perfmatters-expand-input-row" title="' . __('Settings', 'perfmatters') . '" style="margin-left: 8px; text-decoration: none;"><span class="dashicons dashicons-admin-generic"></span></a>';
-            echo '<a href="#" class="perfmatters-delete-input-row" title="' . __('Remove', 'perfmatters') . '"><span class="dashicons dashicons-trash"></span></a>';
+            echo '<input type="text" id="preconnect-' . esc_attr($rowCount) . '-url" name="perfmatters_options[preload][preconnect][' . esc_attr($rowCount) . '][url]" value="' . esc_attr($url ?? '') . '" placeholder="https://example.com" />';
+            echo '<a href="#" class="perfmatters-expand-input-row" title="' . esc_attr__('Settings', 'perfmatters') . '" style="margin-left: 8px; text-decoration: none;"><span class="dashicons dashicons-admin-generic"></span></a>';
+            echo '<a href="#" class="perfmatters-delete-input-row" title="' . esc_attr__('Remove', 'perfmatters') . '"><span class="dashicons dashicons-trash"></span></a>';
         echo '</div>';
         echo '<div class="perfmatters-input-row-extra">';
-            echo '<label for="preconnect-' . $rowCount . '-crossorigin" style="margin-left: 0px;">';
-                echo "<input type='checkbox' id='preconnect-" . $rowCount . "-crossorigin' name='perfmatters_options[preload][preconnect][" . $rowCount . "][crossorigin]' " . (!empty($crossorigin) ? "checked" : "") . " value='1' /> CrossOrigin";
+            echo '<label for="preconnect-' . esc_attr($rowCount) . '-crossorigin" style="margin-left: 0px;">';
+                echo "<input type='checkbox' id='preconnect-" . esc_attr($rowCount) . "-crossorigin' name='perfmatters_options[preload][preconnect][" . esc_attr($rowCount) . "][crossorigin]' " . (!empty($crossorigin) ? "checked" : "") . " value='1' /> CrossOrigin";
             echo '</label>';
         echo '</div>';
     echo '</div>';
@@ -2746,9 +3020,9 @@ function perfmatters_print_subsets($args) {
     //checkboxes
     echo '<div id="perfmatters-subsets">';
         foreach($subset_options as $key => $name) {
-            echo '<label for="perfmatters-subsets-' . $key . '" style="margin-right: 10px; text-wrap: nowrap;">';
-                echo '<input type="checkbox" name="perfmatters_options[fonts][subsets][]" id="perfmatters-subsets-' . $key . '" value="' . $key . '"' . (!empty($perfmatters['fonts']['subsets']) && in_array($key, $perfmatters['fonts']['subsets']) ? ' checked' : '') . ' />';
-                echo $name;
+            echo '<label for="perfmatters-subsets-' . esc_attr($key) . '" style="margin-right: 10px; text-wrap: nowrap;">';
+                echo '<input type="checkbox" name="perfmatters_options[fonts][subsets][]" id="perfmatters-subsets-' . esc_attr($key) . '" value="' . esc_attr($key) . '"' . (!empty($perfmatters['fonts']['subsets']) && in_array($key, $perfmatters['fonts']['subsets']) ? ' checked' : '') . ' />';
+                echo esc_html($name);
             echo '</label>';
         }
     echo '</div>';
@@ -2757,6 +3031,217 @@ function perfmatters_print_subsets($args) {
     if(!empty($args['tooltip'])) {
         perfmatters_tooltip($args['tooltip']);
     }
+}
+
+//which public url groups the warmer collects
+function perfmatters_print_warmer_sources($args) {
+	$cache = Perfmatters\Config::$options['cache'] ?? array();
+	$sources = (isset($cache['warmer_sources']) && is_array($cache['warmer_sources'])) ? $cache['warmer_sources'] : array();
+	$post_types = Perfmatters\Cache\Config::warmer_post_types();
+
+	$labels = array(
+		'posts' => __('Posts', 'perfmatters'),
+		'pages' => __('Pages', 'perfmatters'),
+		'categories' => __('Categories', 'perfmatters'),
+		'tags' => __('Tags', 'perfmatters'),
+		'authors' => __('Authors', 'perfmatters'),
+		'archives' => __('Archives', 'perfmatters'),
+		'attachments' => __('Attachments', 'perfmatters')
+	);
+
+	echo '<div class="perfmatters-cache-warmer-scan">';
+		perfmatters_action_button('scan_warmer_sources', __('Scan Now', 'perfmatters'), 'secondary');
+	echo '</div>';
+
+	echo "<div id='perfmatters-cache-warmer-sources'>";
+
+		//homepage is always warmed — locked display-only, omitted from Scan Now badges
+		perfmatters_print_warmer_source_row('warmer-source-home', '', __('Homepage', 'perfmatters'), true, true);
+
+        foreach($labels as $key => $label) {
+            perfmatters_print_warmer_source_row(
+                'warmer-source-' . $key,
+                'perfmatters_options[cache][warmer_sources][' . $key . ']',
+                $label,
+                !empty($sources[$key])
+            );
+        }
+
+        foreach($post_types as $name => $object) {
+            $label = isset($object->labels->name) ? $object->labels->name : $name;
+
+            perfmatters_print_warmer_source_row(
+                'warmer-source-' . $name,
+                'perfmatters_options[cache][warmer_sources][post_types][' . $name . ']',
+                $label,
+                !empty($sources['post_types'][$name])
+            );
+        }
+
+	echo '</div>';
+
+	if(!empty($args['tooltip'])) {
+		perfmatters_tooltip($args['tooltip']);
+	}
+}
+
+function perfmatters_print_warmer_source_row($id, $name, $label, $checked, $locked = false) {
+	echo "<label for='" . esc_attr($id) . "'" . ($locked ? " class='is-locked'" : '') . '>';
+		echo '<span>';
+			echo "<input type='checkbox' id='" . esc_attr($id) . "' value='1' ";
+			if($name !== '') {
+				echo "name='" . esc_attr($name) . "' ";
+			}
+			checked($checked);
+			if($locked) {
+				echo ' disabled="disabled"';
+			}
+			echo ' /> ' . esc_html($label);
+		echo '</span>';
+		if(!$locked) {
+			echo '<span class="perfmatters-option-data"></span>';
+		}
+	echo '</label>';
+}
+
+//Cloudflare toggle via print_input, plus connection / Sync Rules messaging when enabled
+function perfmatters_print_cloudflare($args) {
+	perfmatters_print_input($args);
+
+	$options = Perfmatters\Config::$options['cache'] ?? array();
+
+	if(empty($options['cloudflare'])) {
+		return;
+	}
+
+	$status = Perfmatters\Cache\Cloudflare::status();
+	$state = isset($status['state']) ? $status['state'] : 'disabled';
+	$domain = !empty($status['zone_domain']) ? $status['zone_domain'] : '';
+	$host_proxied = isset($status['host_proxied']) ? (int) $status['host_proxied'] : -1;
+
+	//same class as the API Token / Zone rows so the input controller can hide this on toggle (before Save)
+	echo '<div class="cache-cloudflare">';
+
+	//status can stay "ready" after the token is removed — require credentials before claiming connected
+	if($state === 'ready' && $domain !== '' && Perfmatters\Cache\Cloudflare::has_token()) {
+		echo '<p class="description"><span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' . esc_html(sprintf(
+			/* translators: %s: Cloudflare zone domain name */
+			__('Connected to %s. Cache rules are active.', 'perfmatters'),
+			$domain
+		)) . '</p>';
+
+		if($host_proxied === 1) {
+			echo '<p class="description"><span class="dashicons dashicons-yes" style="color:#46b450;"></span> ' . esc_html(sprintf(
+				/* translators: %s: site hostname */
+				__('%s is proxied (orange cloud) in Cloudflare DNS.', 'perfmatters'),
+				Perfmatters\Cache\Config::site_host()
+			)) . '</p>';
+		}
+		elseif($host_proxied === 0) {
+			echo '<p class="description" style="color:#d63638;"><span class="dashicons dashicons-warning"></span> ' . esc_html(sprintf(
+				/* translators: %s: site hostname */
+				__('%s is DNS-only (gray cloud). Set the A/AAAA/CNAME to proxied (orange cloud) or visitors will not hit cache rules.', 'perfmatters'),
+				Perfmatters\Cache\Config::site_host()
+			)) . '</p>';
+		}
+		else {
+			echo '<p class="description" style="color:#dba617;"><span class="dashicons dashicons-warning"></span> ' . esc_html(sprintf(
+				/* translators: %s: site hostname */
+				__('Could not verify whether %s is proxied. Add Zone → DNS → Read on the API token and click Sync Rules, and confirm an A/AAAA/CNAME for this hostname exists in the zone.', 'perfmatters'),
+				Perfmatters\Cache\Config::site_host()
+			)) . '</p>';
+		}
+
+		if(!empty($status['message'])) {
+			echo '<p class="description">' . esc_html($status['message']) . '</p>';
+		}
+	}
+	elseif($state === 'error' && !empty($status['message']) && Perfmatters\Cache\Cloudflare::has_token()) {
+		echo '<p class="description" style="color:#d63638;"><span class="dashicons dashicons-warning"></span> ' . esc_html($status['message']) . '</p>';
+	}
+	elseif($state === 'disabled' || !Perfmatters\Cache\Cloudflare::has_token()) {
+		echo '<p class="description">' . esc_html__('Save an API token to create cache rules for this domain.', 'perfmatters') . '</p>';
+	}
+
+	//manual re-sync / retry — only useful when credentials exist
+	if(Perfmatters\Cache\Cloudflare::has_token()) {
+		echo '<div class="perfmatters-cache-cf-sync" style="margin: 10px 0 0;">';
+			perfmatters_action_button('sync_cloudflare_rules', __('Sync Rules', 'perfmatters'), 'secondary');
+		echo '</div>';
+	}
+
+	echo '</div>';
+}
+
+//password field — never echo the stored token (lives outside perfmatters_options[cache])
+//PERFMATTERS_CLOUDFLARE_API_TOKEN in wp-config locks the field (same idea as PERFMATTERS_LICENSE_KEY)
+//saved DB token mirrors License Key: masked disabled input + Remove Token
+function perfmatters_print_cf_api_token($args) {
+	$id = !empty($args['section']) ? $args['section'] . '-' . $args['id'] : $args['id'];
+	$name = 'perfmatters_options' . (!empty($args['section']) ? '[' . $args['section'] . ']' : '') . '[' . $args['id'] . ']';
+	$from_constant = Perfmatters\Cache\Cloudflare::token_from_constant();
+	$has_option = Perfmatters\Cache\Cloudflare::has_option_token();
+
+	if($from_constant) {
+		echo "<input type='password' id='" . esc_attr($id) . "' value='' placeholder='" . esc_attr__('••••••••••••••••', 'perfmatters') . "' disabled='disabled' autocomplete='off'>";
+		echo '<p class="description">' . esc_html(sprintf(
+			/* translators: %s: PHP constant name */
+			__('Using %s from wp-config.php.', 'perfmatters'),
+			'PERFMATTERS_CLOUDFLARE_API_TOKEN'
+		)) . '</p>';
+
+		if(!empty($args['tooltip'])) {
+			perfmatters_tooltip($args['tooltip']);
+		}
+
+		return;
+	}
+
+	if($has_option) {
+		echo '<div class="perfmatters-cache-cf-token-row">';
+			echo "<input type='text' id='" . esc_attr($id) . "' class='perfmatters-cache-cf-token-has-value' value='" . esc_attr(Perfmatters\Cache\Cloudflare::option_token_mask()) . "' disabled='disabled' autocomplete='off' />";
+			perfmatters_action_button(
+				'remove_cloudflare_token',
+				__('Remove Token', 'perfmatters'),
+				'warning',
+				__('Remove the saved Cloudflare API token and delete Perfmatters cache rules from this zone?', 'perfmatters')
+			);
+		echo '</div>';
+
+		if(!empty($args['tooltip'])) {
+			perfmatters_tooltip($args['tooltip']);
+		}
+
+		return;
+	}
+
+	//new-password + vendor ignore attrs — plain autocomplete=off is ignored by 1Password/LastPass on type=password
+	echo "<input type='password' id='" . esc_attr($id) . "' name='" . esc_attr($name) . "' value='' autocomplete='new-password' data-1p-ignore='true' data-lpignore='true' data-protonpass-ignore='true' data-bwignore='true'>";
+
+	if(!empty($args['tooltip'])) {
+		perfmatters_tooltip($args['tooltip']);
+	}
+}
+
+//text input via print_input; swap tooltip for auto-detect status when a zone was matched
+function perfmatters_print_cf_zone_id($args) {
+	$options = Perfmatters\Config::$options['cache'] ?? array();
+	$value = isset($options['cf_zone_id']) ? $options['cf_zone_id'] : '';
+	$status = Perfmatters\Cache\Cloudflare::status();
+
+	//only show a matched zone while credentials exist — otherwise contradicts the Setup card
+	if($value === '' && !empty($status['zone_id']) && Perfmatters\Cache\Cloudflare::has_token()) {
+		perfmatters_print_input($args);
+		echo '<p class="description">' . esc_html(sprintf(
+			/* translators: 1: zone domain, 2: zone id */
+			__('Using %1$s (%2$s). Leave blank to keep auto-detect.', 'perfmatters'),
+			!empty($status['zone_domain']) ? $status['zone_domain'] : __('matched zone', 'perfmatters'),
+			$status['zone_id']
+		)) . '</p>';
+		return;
+	}
+
+	perfmatters_print_input($args);
 }
 
 //print purge meta options
@@ -2779,9 +3264,9 @@ function perfmatters_print_purge_meta($args) {
 
     echo "<div style='margin: 10px auto; line-height: 20px;' id='perfmatters-purge-meta'>";
         foreach($meta_options as $key => $name) {
-            echo "<label for='perfmatters-purge-meta-" . $key . "' style='margin-right: 10px; text-wrap: nowrap;'>";
-                echo "<input type='checkbox' name='perfmatters_tools_temp[purge_meta_options][]' id='perfmatters-purge-meta-" . $key . "' value='" . $key . "' />";
-                echo $name;
+            echo "<label for='perfmatters-purge-meta-" . esc_attr($key) . "' style='margin-right: 10px; text-wrap: nowrap;'>";
+                echo "<input type='checkbox' name='perfmatters_tools_temp[purge_meta_options][]' id='perfmatters-purge-meta-" . esc_attr($key) . "' value='" . esc_attr($key) . "' />";
+                echo esc_html($name);
             echo "</label>";
         }
     echo "</div>";
@@ -2831,6 +3316,12 @@ function perfmatters_normalize_one_per_line_options(&$values) {
         ),
         'preload' => array(
             'dns_prefetch'
+        ),
+        'cache' => array(
+            'excluded_urls',
+            'bypass_cookies',
+            'purge_urls',
+            'query_strings'
         )
     );
 
@@ -2875,6 +3366,10 @@ function perfmatters_sanitize_options($values) {
         }
     }
 
+    if(isset($values['cache']) && is_array($values['cache'])) {
+        $values['cache'] = Perfmatters\Cache\Config::sanitize($values['cache']);
+    }
+
     return $values;
 }
 
@@ -2901,7 +3396,11 @@ function perfmatters_sanitize_one_per_line(&$value) {
 function perfmatters_tooltip($tooltip) {
     if(!empty($tooltip)) {
         $tools = get_option('perfmatters_tools');
-        echo "<span class='perfmatters-tooltip-text" . (!empty($tools['accessibility_mode']) ? "-am" : "") . "'>" . $tooltip . "<span class='perfmatters-tooltip-subtext'>" . sprintf(__("Click %s to view documentation.", 'perfmatters'), "<span class='perfmatters-tooltip-icon'>?</span>") . "</span></span>";
+        echo "<span class='perfmatters-tooltip-text" . (!empty($tools['accessibility_mode']) ? "-am" : "") . "'>" . esc_html($tooltip) . "<span class='perfmatters-tooltip-subtext'>" . sprintf(
+            /* translators: %s: question mark icon */
+            esc_html__("Click %s to view documentation.", 'perfmatters'),
+            "<span class='perfmatters-tooltip-icon'>?</span>"
+        ) . "</span></span>";
     }
 }
 
@@ -2914,16 +3413,16 @@ function perfmatters_title($title, $id = false, $link = false) {
 
             //label + title
             if(!empty($id)) {
-                $var.= "<label for='" . $id . "'>" . $title . "</label>";
+                $var.= "<label for='" . esc_attr($id) . "'>" . esc_html($title) . "</label>";
             }
             else {
-                $var.= $title;
+                $var.= esc_html($title);
             }
 
             //tooltip icon + link
             if(!empty($link)) {
                 $tools = get_option('perfmatters_tools');
-                $var.= "<a" . (!empty($link) ? " href='" . $link . "'" : "") . " class='perfmatters-tooltip'" . (!empty($tools['accessibility_mode']) ? " title='" . __("View Documentation", 'perfmatters') . "'" : "") . " target='_blank'>?</a>";
+                $var.= "<a" . (!empty($link) ? " href='" . esc_url($link) . "'" : "") . " class='perfmatters-tooltip'" . (!empty($tools['accessibility_mode']) ? " title='" . esc_attr__("View Documentation", 'perfmatters') . "'" : "") . " target='_blank'>?</a>";
             }
 
         $var.= "</span>";
@@ -2932,20 +3431,23 @@ function perfmatters_title($title, $id = false, $link = false) {
     }
 }
 
-//action button
-function perfmatters_action_button($action, $label, $type = 'primary', $confirmation = '') {
+//action button — $message_mode: inline (default) or toast (#perfmatters-action-toast)
+function perfmatters_action_button($action, $label, $type = 'primary', $confirmation = '', $button_attrs = '', $message_mode = 'inline') {
+	$toast = ($message_mode === 'toast');
+	//warning matches License Remove (perfmatters-button-warning); others stay button-primary / button-secondary
+	$button_class = ($type === 'warning')
+		? 'button perfmatters-button-warning'
+		: 'button button-' . sanitize_html_class($type);
 
     echo '<div class="perfmatters-button-container">';
-        echo '<button name="submit" class="button button-' . $type . '" data-pm-action="' . esc_attr($action) . '"' . (!empty($confirmation) ? ' data-pm-confirmation="' . esc_attr($confirmation) . '"' : '') . ' style="display: flex; align-items: center;">';
-            echo '<span class="perfmatters-button-text">' . $label . '</span>';
+        echo '<button type="button" name="submit" class="' . esc_attr($button_class) . '" data-pm-action="' . esc_attr($action) . '"' . ($toast ? ' data-pm-message="toast"' : '') . (!empty($confirmation) ? ' data-pm-confirmation="' . esc_attr($confirmation) . '"' : '') . (!empty($button_attrs) ? ' ' . $button_attrs : '') . ' style="display: flex; align-items: center;">';
+            echo '<span class="perfmatters-button-text">' . esc_html($label) . '</span>';
             echo '<svg class="perfmatters-button-spinner" viewBox="0 0 100 100" role="presentation" focusable="false" style="background: rgba(0,0,0,.1); border-radius: 100%; width: 16px; height: 28px; margin: 0px 2px; overflow: visible; opacity: 1; background-color: transparent; display: none;"><circle cx="50" cy="50" r="50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #fff;"></circle><path d="m 50 0 a 50 50 0 0 1 50 50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #4A89DD; stroke-linecap: round; transform-origin: 50% 50%; animation: 1.4s linear 0s infinite normal both running perfmatters-spinner;"></path></svg>';
         echo '</button>';
-        echo '<div class="perfmatters-button-message" style="display: none; margin-left: 10px;">';
 
-            if(($message_text = perfmatters_get_reload_notice_text($action)) !== '') {
-                echo '<span class="perfmatters-reload-notice">' . esc_html($message_text) . '</span>';
-            }
-
-        echo '</div>';
+		if(!$toast) {
+			//reload confirmations use #perfmatters-action-toast only (avoid inline + toast together)
+			echo '<div class="perfmatters-button-message" style="display: none; margin-left: 10px;"></div>';
+		}
     echo '</div>';
 }

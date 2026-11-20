@@ -47,7 +47,7 @@ function nibwp_hf_err(string $code, string $message): WP_Error
 function nibwp_hf_guard(): ?WP_Error
 {
     if (!nibwp_hf_available()) {
-        return nibwp_hf_err('nibwp_hf_missing', __('HappyForms is not active on this site.', domain: 'nibwp'));
+        return nibwp_hf_err('nibwp_hf_missing', __('HappyForms is not active on this site.', 'nibwp'));
     }
 
     return null;
@@ -80,18 +80,18 @@ function nibwp_hf_controller()
 function nibwp_hf_form(int $form_id)
 {
     if ($form_id <= 0) {
-        return nibwp_hf_err('nibwp_hf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_hf_err('nibwp_hf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $controller = nibwp_hf_controller();
     if ($controller === null) {
-        return nibwp_hf_err('nibwp_hf_no_controller', __('The HappyForms form controller is unavailable.', domain: 'nibwp'));
+        return nibwp_hf_err('nibwp_hf_no_controller', __('The HappyForms form controller is unavailable.', 'nibwp'));
     }
 
     $post = $controller->get($form_id);
 
     if (!$post) {
-        return nibwp_hf_err('nibwp_hf_not_found', __('No HappyForms form with that ID.', domain: 'nibwp'));
+        return nibwp_hf_err('nibwp_hf_not_found', __('No HappyForms form with that ID.', 'nibwp'));
     }
 
     $form = method_exists($controller, 'to_array') ? $controller->to_array($post) : (array) $post;
@@ -124,8 +124,8 @@ function nibwp_hf_stores_responses(array $form): bool
 /* ── Ability 1 — info ───────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-info', [
-    'label'       => __('HappyForms — Info', domain: 'nibwp'),
-    'description' => __('Detect HappyForms, its version and how many forms and stored submissions exist (read-only).', domain: 'nibwp'),
+    'label'       => __('HappyForms — Info', 'nibwp'),
+    'description' => 'Detect HappyForms, its version and how many forms and stored submissions exist (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -159,7 +159,7 @@ function nibwp_hf_info(array $input): array|WP_Error
             'post_type'   => NIBWP_HF_POST_TYPE,
             'form_count'  => (int) ($forms->publish ?? 0),
             'stored_submissions' => $messages === null ? null : (int) ($messages->publish ?? 0),
-            'note' => __('Fields are called "parts" in HappyForms. Submissions are only kept for forms configured to store them.', domain: 'nibwp'),
+            'note' => __('Fields are called "parts" in HappyForms. Submissions are only kept for forms configured to store them.', 'nibwp'),
         ];
     });
 }
@@ -167,8 +167,8 @@ function nibwp_hf_info(array $input): array|WP_Error
 /* ── Ability 2 — forms ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-forms', [
-    'label'       => __('HappyForms — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, rename and duplicate HappyForms forms, and get the shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('HappyForms — Forms', 'nibwp'),
+    'description' => 'List, read, create, rename and duplicate HappyForms forms, and get the shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -207,7 +207,7 @@ function nibwp_hf_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename', 'duplicate', 'shortcode'], strict: true) && $form_id <= 0) {
-        return nibwp_hf_err('nibwp_hf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_hf_err('nibwp_hf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_hf_try(static function () use ($action, $form_id, $input) {
@@ -239,10 +239,10 @@ function nibwp_hf_forms(array $input): array|WP_Error
 
         if ($action === 'create') {
             if (!method_exists($controller, 'create')) {
-                throw new \RuntimeException(__('This HappyForms version does not expose creating a form.', domain: 'nibwp'));
+                throw new \RuntimeException(__('This HappyForms version does not expose creating a form.', 'nibwp'));
             }
 
-            $new_id = $controller->create(['post_title' => (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp'))]);
+            $new_id = $controller->create(['post_title' => (string) ($input['title'] ?? __('Untitled form', 'nibwp'))]);
 
             return ['form_id' => (int) $new_id, 'created' => true];
         }
@@ -272,7 +272,7 @@ function nibwp_hf_forms(array $input): array|WP_Error
             case 'rename':
                 $title = trim((string) ($input['title'] ?? ''));
                 if ($title === '') {
-                    throw new \RuntimeException(__('A title is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A title is required.', 'nibwp'));
                 }
                 wp_update_post(['ID' => $form_id, 'post_title' => $title]);
 
@@ -280,7 +280,7 @@ function nibwp_hf_forms(array $input): array|WP_Error
 
             case 'duplicate':
                 if (!method_exists($controller, 'duplicate')) {
-                    throw new \RuntimeException(__('This HappyForms version does not expose duplicating a form.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('This HappyForms version does not expose duplicating a form.', 'nibwp'));
                 }
                 $new_id = $controller->duplicate($form_id);
 
@@ -290,15 +290,15 @@ function nibwp_hf_forms(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'shortcode' => sprintf('[happyforms id="%d"]', $form_id)];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
 /* ── Ability 3 — parts ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-parts', [
-    'label'       => __('HappyForms — Parts', domain: 'nibwp'),
-    'description' => __('Read the parts of a form — what other plugins would call its fields (read-only).', domain: 'nibwp'),
+    'label'       => __('HappyForms — Parts', 'nibwp'),
+    'description' => 'Read the parts of a form — what other plugins would call its fields (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -359,8 +359,8 @@ function nibwp_hf_parts(array $input): array|WP_Error
 /* ── Ability 4 — settings ───────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-settings', [
-    'label'       => __('HappyForms — Settings', domain: 'nibwp'),
-    'description' => __('Read a form\'s settings, including where its email alerts go and whether submissions are stored.', domain: 'nibwp'),
+    'label'       => __('HappyForms — Settings', 'nibwp'),
+    'description' => 'Read a form\'s settings, including where its email alerts go and whether submissions are stored.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -411,7 +411,7 @@ function nibwp_hf_settings(array $input): array|WP_Error
             'email_recipients' => $recipients,
             'stores_responses' => nibwp_hf_stores_responses($form),
             'warning'  => (empty($recipients) && !nibwp_hf_stores_responses($form))
-                ? __('This form neither emails anyone nor stores its submissions. Anything sent through it is lost.', domain: 'nibwp')
+                ? __('This form neither emails anyone nor stores its submissions. Anything sent through it is lost.', 'nibwp')
                 : '',
         ];
     });
@@ -420,8 +420,8 @@ function nibwp_hf_settings(array $input): array|WP_Error
 /* ── Ability 5 — submissions ────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-submissions', [
-    'label'       => __('HappyForms — Submissions', domain: 'nibwp'),
-    'description' => __('List and read the submissions HappyForms has stored (read-only).', domain: 'nibwp'),
+    'label'       => __('HappyForms — Submissions', 'nibwp'),
+    'description' => 'List and read the submissions HappyForms has stored (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -461,7 +461,7 @@ function nibwp_hf_submissions(array $input): array|WP_Error
     if (!post_type_exists('happyforms_message')) {
         return nibwp_hf_err(
             'nibwp_hf_no_storage',
-            __('HappyForms is not storing submissions on this site, so there is no history to read.', domain: 'nibwp')
+            __('HappyForms is not storing submissions on this site, so there is no history to read.', 'nibwp')
         );
     }
 
@@ -471,12 +471,12 @@ function nibwp_hf_submissions(array $input): array|WP_Error
         if ($action === 'get') {
             $id = (int) ($input['submission_id'] ?? 0);
             if ($id <= 0) {
-                throw new \RuntimeException(__('A valid submission ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid submission ID is required.', 'nibwp'));
             }
 
             $post = get_post($id);
             if (!$post || $post->post_type !== 'happyforms_message') {
-                throw new \RuntimeException(__('No such submission.', domain: 'nibwp'));
+                throw new \RuntimeException(__('No such submission.', 'nibwp'));
             }
 
             return [
@@ -519,8 +519,8 @@ function nibwp_hf_submissions(array $input): array|WP_Error
 /* ── Ability 6 — audit ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-audit', [
-    'label'       => __('HappyForms — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the fault that loses enquiries outright: neither emailing anyone nor storing what is submitted (read-only).', domain: 'nibwp'),
+    'label'       => __('HappyForms — Audit', 'nibwp'),
+    'description' => 'Check every form for the fault that loses enquiries outright: neither emailing anyone nor storing what is submitted (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -575,8 +575,8 @@ function nibwp_hf_audit(array $input): array|WP_Error
                     'title'    => (string) $post->post_title,
                     'severity' => 'blocker',
                     'code'     => 'no_email_no_storage',
-                    'message'  => __('This form neither emails anyone nor stores submissions. Every enquiry sent through it is lost with no record anywhere.', domain: 'nibwp'),
-                    'fix'      => __('Set an email recipient or enable response storage in the HappyForms customizer.', domain: 'nibwp'),
+                    'message'  => __('This form neither emails anyone nor stores submissions. Every enquiry sent through it is lost with no record anywhere.', 'nibwp'),
+                    'fix'      => __('Set an email recipient or enable response storage in the HappyForms customizer.', 'nibwp'),
                 ];
             } elseif (empty($recipients)) {
                 $findings[] = [
@@ -584,8 +584,8 @@ function nibwp_hf_audit(array $input): array|WP_Error
                     'title'    => (string) $post->post_title,
                     'severity' => 'warning',
                     'code'     => 'no_email_recipient',
-                    'message'  => __('No email recipient. Submissions are stored but nobody is notified.', domain: 'nibwp'),
-                    'fix'      => __('Add a recipient in the HappyForms customizer.', domain: 'nibwp'),
+                    'message'  => __('No email recipient. Submissions are stored but nobody is notified.', 'nibwp'),
+                    'fix'      => __('Add a recipient in the HappyForms customizer.', 'nibwp'),
                 ];
             }
 
@@ -595,8 +595,8 @@ function nibwp_hf_audit(array $input): array|WP_Error
                     'title'    => (string) $post->post_title,
                     'severity' => 'warning',
                     'code'     => 'no_parts',
-                    'message'  => __('The form has no parts, so there is nothing to submit.', domain: 'nibwp'),
-                    'fix'      => __('Add parts in the HappyForms customizer.', domain: 'nibwp'),
+                    'message'  => __('The form has no parts, so there is nothing to submit.', 'nibwp'),
+                    'fix'      => __('Add parts in the HappyForms customizer.', 'nibwp'),
                 ];
             }
         }
@@ -615,8 +615,8 @@ function nibwp_hf_audit(array $input): array|WP_Error
 /* ── Ability 7 — delete ─────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/happyforms-delete', [
-    'label'       => __('HappyForms — Delete', domain: 'nibwp'),
-    'description' => __('Trash or permanently delete a HappyForms form.', domain: 'nibwp'),
+    'label'       => __('HappyForms — Delete', 'nibwp'),
+    'description' => 'Trash or permanently delete a HappyForms form.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -660,7 +660,7 @@ function nibwp_hf_delete(array $input): array|WP_Error
     if ($action === 'delete' && !(bool) ($input['confirm'] ?? false)) {
         return nibwp_hf_err(
             'nibwp_hf_unconfirmed',
-            __('This permanently destroys the form. Trashing is reversible; re-issue with confirm true if deletion is intended.', domain: 'nibwp')
+            __('This permanently destroys the form. Trashing is reversible; re-issue with confirm true if deletion is intended.', 'nibwp')
         );
     }
 

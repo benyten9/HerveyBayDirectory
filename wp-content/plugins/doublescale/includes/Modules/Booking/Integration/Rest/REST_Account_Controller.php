@@ -196,6 +196,28 @@ class REST_Account_Controller extends REST_Controller {
 	}
 
 	/**
+	 * An account as the admin screen gets it: without the OAuth tokens and
+	 * stored passwords, which only the server uses to talk to the calendar.
+	 *
+	 * @param mixed $account Stored account.
+	 * @return mixed
+	 */
+	public function public_account( $account ) {
+		if ( is_array( $account ) ) {
+			unset( $account['tokens'], $account['credentials'] );
+		}
+
+		return $account;
+	}
+
+	/**
+	 * @return WP_Error
+	 */
+	protected function calendar_not_found() {
+		return new WP_Error( 'rest_calendar_not_found', __( 'Calendar not found', 'doublescale' ), array( 'status' => 404 ) );
+	}
+
+	/**
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
@@ -203,6 +225,9 @@ class REST_Account_Controller extends REST_Controller {
 		try {
 			$host_id = $request->get_param( 'calendar_id' );
 			$this->integration->set_host( $host_id );
+			if ( ! $this->integration->host ) {
+				return $this->calendar_not_found();
+			}
 			$accounts = $this->integration->accounts->get_accounts();
 			$entities = $this->get_entities();
 			if ( ! empty( $entities ) && $this->integration->remote_data ) {
@@ -217,7 +242,7 @@ class REST_Account_Controller extends REST_Controller {
 				}
 			}
 
-			return new WP_REST_Response( $accounts, 200 );
+			return new WP_REST_Response( array_map( array( $this, 'public_account' ), (array) $accounts ), 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_invalid_request', $e->getMessage(), array( 'status' => 400 ) );
 		}
@@ -232,9 +257,12 @@ class REST_Account_Controller extends REST_Controller {
 			$account_id = $request->get_param( 'id' );
 			$host_id    = $request->get_param( 'calendar_id' );
 			$this->integration->set_host( $host_id );
+			if ( ! $this->integration->host ) {
+				return $this->calendar_not_found();
+			}
 			$account = $this->integration->accounts->get_account( $account_id );
 
-			return new WP_REST_Response( $account, 200 );
+			return new WP_REST_Response( $this->public_account( $account ), 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_invalid_request', $e->getMessage(), array( 'status' => 400 ) );
 		}
@@ -250,6 +278,9 @@ class REST_Account_Controller extends REST_Controller {
 			$host_id    = $request->get_param( 'calendar_id' );
 			$config     = $request->get_param( 'config' );
 			$this->integration->set_host( $host_id );
+			if ( ! $this->integration->host ) {
+				return $this->calendar_not_found();
+			}
 			$account = $this->integration->accounts->update_account(
 				$account_id,
 				array(
@@ -257,7 +288,7 @@ class REST_Account_Controller extends REST_Controller {
 				)
 			);
 
-			return new WP_REST_Response( $account, 200 );
+			return new WP_REST_Response( $this->public_account( $account ), 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'rest_invalid_request', $e->getMessage(), array( 'status' => 400 ) );
 		}
@@ -272,6 +303,9 @@ class REST_Account_Controller extends REST_Controller {
 			$account_id = $request->get_param( 'id' );
 			$host_id    = $request->get_param( 'calendar_id' );
 			$this->integration->set_host( $host_id );
+			if ( ! $this->integration->host ) {
+				return $this->calendar_not_found();
+			}
 			$this->integration->accounts->delete_account( $account_id );
 
 			return new WP_REST_Response( null, 204 );
@@ -285,7 +319,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_items_permissions_check( $request ) {
-		return $this->integration_permissions_check();
+		return $this->integration_permissions_check( $request );
 	}
 
 	/**
@@ -293,7 +327,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_item_permissions_check( $request ) {
-		return $this->integration_permissions_check();
+		return $this->integration_permissions_check( $request );
 	}
 
 	/**
@@ -301,7 +335,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function update_item_permissions_check( $request ) {
-		return $this->integration_permissions_check();
+		return $this->integration_permissions_check( $request );
 	}
 
 	/**
@@ -309,7 +343,7 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return $this->integration_permissions_check();
+		return $this->integration_permissions_check( $request );
 	}
 
 	/**
@@ -317,18 +351,23 @@ class REST_Account_Controller extends REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function get_entity_permissions_check( $request ) {
-		return $this->integration_permissions_check();
+		return $this->integration_permissions_check( $request );
 	}
 
 	/**
-	 * Shared capability check for account routes.
+	 * Shared check for account routes: the calendar in the URL must be one
+	 * the user may manage (their own, or any with "manage all calendars").
+	 * An account holds the OAuth tokens of that host's Google, Outlook or Zoom
+	 * account, so "manages own calendars" alone is not enough: it let anyone
+	 * with a calendar read, change and delete a colleague's accounts.
+	 *
+	 * @param WP_REST_Request|null $request Request.
+	 * @return bool|WP_Error
 	 */
-	protected function integration_permissions_check() {
-		if (
-			current_user_can( 'manage_options' )
-			|| current_user_can( 'doublescale_booking_manage_own_calendars' )
-			|| current_user_can( 'doublescale_booking_manage_all_calendars' )
-		) {
+	protected function integration_permissions_check( $request = null ) {
+		$calendar_id = $request instanceof \WP_REST_Request ? absint( $request->get_param( 'calendar_id' ) ) : 0;
+
+		if ( $calendar_id && \DoubleScale\Modules\Booking\Capabilities::can_manage_calendar( $calendar_id ) ) {
 			return true;
 		}
 

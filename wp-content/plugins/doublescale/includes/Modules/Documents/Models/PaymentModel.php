@@ -9,7 +9,7 @@ namespace DoubleScale\Modules\Documents\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
 
 /**
@@ -53,14 +53,14 @@ class PaymentModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function invoice() {
 		return $this->belongsTo( InvoiceModel::class, 'invoice_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function recorded_by() {
 		return $this->belongsTo( UserModel::class, 'recorded_by_user_id', 'ID' );

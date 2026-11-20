@@ -56,7 +56,7 @@ class PrintLocalBusiness implements ExecuteHooksFrontend {
 			return;
 		}
 
-		if ( 'localbusiness' === get_post_meta( get_the_ID(), '_seopress_pro_rich_snippets_type', true ) ) {
+		if ( 'localbusiness' === get_post_meta( seopress_pro_get_the_id(), '_seopress_pro_rich_snippets_type', true ) ) {
 			return;
 		}
 
@@ -80,7 +80,7 @@ class PrintLocalBusiness implements ExecuteHooksFrontend {
 			$context
 		);
 
-		?><script type="application/ld+json"><?php echo apply_filters( 'seopress_schemas_local_business_html', $jsons[0] ); ?></script>
+		?><script type="application/ld+json"><?php echo apply_filters( 'seopress_schemas_local_business_html', $jsons[0] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties. ?></script>
 		<?php
 	}
 }

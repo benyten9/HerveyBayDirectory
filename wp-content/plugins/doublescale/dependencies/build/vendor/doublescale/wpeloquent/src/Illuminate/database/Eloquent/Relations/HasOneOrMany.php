@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-abstract class HasOneOrMany extends \Illuminate\Database\Eloquent\Relations\Relation
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+abstract class HasOneOrMany extends Relation
 {
     /**
      * The foreign key of the parent model.

@@ -163,6 +163,7 @@ class Transfer
         header('Pragma: public');
         header('Content-Length: ' . strlen($content));
 
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON download body (Content-Type: application/json).
         echo $content;
 
         if($temp_file_path && is_file($temp_file_path)) {

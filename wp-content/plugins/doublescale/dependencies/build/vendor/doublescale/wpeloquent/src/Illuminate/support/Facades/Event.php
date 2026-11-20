@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Testing\Fakes\EventFake;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\Testing\Fakes\EventFake;
 /**
  * @method static void listen(string|array $events, mixed $listener)
  * @method static bool hasListeners(string $eventName)
@@ -21,7 +21,7 @@ use Illuminate\Support\Testing\Fakes\EventFake;
  *
  * @see \Illuminate\Events\Dispatcher
  */
-class Event extends \Illuminate\Support\Facades\Facade
+class Event extends Facade
 {
     /**
      * Replace the bound instance with a fake.

@@ -696,6 +696,17 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 	color: var(--colorAlert, #eb0f00);
 }
 
+.seopress-site-audit-health-score.is-none,
+.seopress-site-audit-history-score.is-none {
+	color: #757575;
+	font-weight: 400;
+}
+
+.seopress-site-audit-fetch-failures {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
 /* ── Delta badge next to the health score ── */
 
 .seopress-site-audit-health-delta {

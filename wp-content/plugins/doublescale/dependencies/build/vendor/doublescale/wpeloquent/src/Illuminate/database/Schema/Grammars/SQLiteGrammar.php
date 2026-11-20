@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Database\Schema\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema\Grammars;
 
 use RuntimeException;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Fluent;
-use Doctrine\DBAL\Schema\Index;
-use Illuminate\Database\Connection;
-use Illuminate\Database\Schema\Blueprint;
-class SQLiteGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\Index;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Blueprint;
+class SQLiteGrammar extends Grammar
 {
     /**
      * The possible column modifiers.

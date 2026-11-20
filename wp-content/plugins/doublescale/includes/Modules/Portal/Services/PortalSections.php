@@ -57,6 +57,8 @@ final class PortalSections {
 	 */
 	public static function for_contact( ?ContactModel $contact ): array {
 		$resolved = array();
+		$access   = PortalAccess::for_contact( $contact );
+		$index    = PortalFeatures::index();
 
 		foreach ( self::all() as $section ) {
 			$slug = isset( $section['slug'] ) ? sanitize_key( (string) $section['slug'] ) : '';
@@ -65,6 +67,11 @@ final class PortalSections {
 			}
 
 			if ( ! self::is_available( $section ) ) {
+				continue;
+			}
+
+			// Hidden for this customer (Settings → Client Portal, or their own access).
+			if ( ! PortalAccessGate::visible( 'sections', $slug, $access, $index ) ) {
 				continue;
 			}
 
@@ -88,6 +95,30 @@ final class PortalSections {
 		);
 
 		return $resolved;
+	}
+
+	/**
+	 * Slugs of the sections this contact can open, without badge counts.
+	 * The portal reads it so its widgets never ask a switched-off module
+	 * (whose routes are not registered) for data.
+	 *
+	 * @param ContactModel|null $contact Resolved contact (may be null).
+	 * @return string[]
+	 */
+	public static function slugs_for_contact( ?ContactModel $contact ): array {
+		$slugs  = array();
+		$access = PortalAccess::for_contact( $contact );
+		$index  = PortalFeatures::index();
+		foreach ( self::all() as $section ) {
+			$slug = isset( $section['slug'] ) ? sanitize_key( (string) $section['slug'] ) : '';
+			if ( '' === $slug || ! self::is_available( $section ) ) {
+				continue;
+			}
+			if ( PortalAccessGate::visible( 'sections', $slug, $access, $index ) ) {
+				$slugs[] = $slug;
+			}
+		}
+		return array_values( array_unique( $slugs ) );
 	}
 
 	/**

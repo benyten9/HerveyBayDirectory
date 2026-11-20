@@ -24,7 +24,7 @@ class PlanProration {
     public function calculate_result( ?stdClass $current_package, ?stdClass $current_plan, stdClass $new_plan ): ProrationResult {
         // No current package — always allow at full price with no adjustments.
         if ( ! $current_package || ! $current_plan ) {
-            return ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
+            return ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
         }
 
         $current_is_free    = $this->is_free( $current_plan );
@@ -35,7 +35,7 @@ class PlanProration {
 
         // Free (any) → Any — always allowed, no adjustment.
         if ( $current_is_free ) {
-            return ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
+            return ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
         }
 
         // Paid (any) → Free
@@ -59,7 +59,7 @@ class PlanProration {
                 // Paid Limited → Paid Limited
                 if ( $current_is_expired ) {
                     // Expired — allow at full price, no adjustment.
-                    return ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
+                    return ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
                 }
 
                 // Not expired — Proration based on price per day.
@@ -69,12 +69,12 @@ class PlanProration {
             // Paid Limited → Paid Unlimited
             if ( $current_is_expired ) {
                 // Expired limited plan — allow at full price, no credit.
-                return ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
+                return ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
             }
 
             $unused_amount = $this->calculate_unused_amount( $current_package, $current_plan );
 
-            if ( $unused_amount > (float) $new_plan->price ) {
+            if ( $unused_amount > directorist_get_plan_effective_price( $new_plan ) ) {
                 // Unused credit exceeds new plan price — must cancel first.
                 return ProrationResult::deny(
                     __( 'Your unused plan credit exceeds the new plan price. Please cancel your current plan first.', 'directorist-pricing-plans' )
@@ -82,7 +82,7 @@ class PlanProration {
             }
 
             // (unused == new price, pay 0) or (unused < new price, deduct).
-            $adjusted_price = max( 0.0, (float) $new_plan->price - $unused_amount );
+            $adjusted_price = max( 0.0, directorist_get_plan_effective_price( $new_plan ) - $unused_amount );
 
             return ProrationResult::allow( $adjusted_price, null, $unused_amount );
         }
@@ -95,8 +95,8 @@ class PlanProration {
         }
 
         // Paid Unlimited → Paid Unlimited
-        $old_price = (float) $current_plan->price;
-        $new_price = (float) $new_plan->price;
+        $old_price = directorist_get_plan_effective_price( $current_plan );
+        $new_price = directorist_get_plan_effective_price( $new_plan );
 
         if ( $new_price < $old_price ) {
             // New price is lower — must cancel first.
@@ -154,11 +154,11 @@ class PlanProration {
         $duration_days  = $this->diff_in_days( $started_at, $period_end );
         $remaining_days = $this->diff_in_days( $now, $period_end );
 
-        if ( $duration_days <= 0 || (float) $current_plan->price <= 0 ) {
+        if ( $duration_days <= 0 || directorist_get_plan_effective_price( $current_plan ) <= 0 ) {
             return 0.0;
         }
 
-        $price_per_day = (float) $current_plan->price / $duration_days;
+        $price_per_day = directorist_get_plan_effective_price( $current_plan ) / $duration_days;
 
         return round( $price_per_day * $remaining_days, 2 );
     }
@@ -176,11 +176,11 @@ class PlanProration {
 
         $duration_days = $this->interval_to_days( $new_plan );
 
-        if ( $duration_days <= 0 || (float) $new_plan->price <= 0 ) {
+        if ( $duration_days <= 0 || directorist_get_plan_effective_price( $new_plan ) <= 0 ) {
             return 0;
         }
 
-        $new_price_per_day = (float) $new_plan->price / $duration_days;
+        $new_price_per_day = directorist_get_plan_effective_price( $new_plan ) / $duration_days;
 
         return (int) floor( $unused_amount / $new_price_per_day );
     }
@@ -236,7 +236,7 @@ class PlanProration {
             $unused_amount  = $this->calculate_unused_amount( $current_package, $current_plan );
             $extending_days = $this->calculate_extending_days( $unused_amount, $new_plan );
 
-            return ProrationResult::allow( $new_plan->price, null, $unused_amount, $extending_days );
+            return ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, $unused_amount, $extending_days );
         }
 
         // Cross-grade: same price per day — no charge, keep the existing expiry date.
@@ -252,11 +252,11 @@ class PlanProration {
     private function get_price_per_day_from_plan( stdClass $plan ): float {
         $duration_days = $this->interval_to_days( $plan );
 
-        if ( $duration_days <= 0 || (float) $plan->price <= 0 ) {
+        if ( $duration_days <= 0 || directorist_get_plan_effective_price( $plan ) <= 0 ) {
             return 0.0;
         }
 
-        return (float) $plan->price / $duration_days;
+        return directorist_get_plan_effective_price( $plan ) / $duration_days;
     }
 
     /**

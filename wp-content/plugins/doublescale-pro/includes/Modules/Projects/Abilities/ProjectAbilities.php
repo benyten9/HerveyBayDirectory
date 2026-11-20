@@ -13,6 +13,7 @@ use DoubleScale\Core\Abilities\AbilityCategories;
 use DoubleScale\Core\Abilities\AbilityInput;
 use DoubleScale\Core\Abilities\AbilityResult;
 use DoubleScale\Core\Abilities\AbilityScope;
+use DoubleScale\Pro\Modules\Projects\Services\ProjectTeam;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
@@ -43,7 +44,7 @@ final class ProjectAbilities {
 			'doublescale/list-projects'         => array(
 				'module_slug'      => 'projects',
 				'label'            => __( 'List projects', 'doublescale' ),
-				'description'      => __( 'List projects with status, owner, linked contact, budget, progress, and due date. Unless you can manage all projects you see only projects you own.', 'doublescale' ),
+				'description'      => __( 'List projects with status, owner, linked contact, budget, progress, and due date. Unless you can manage all projects you see only projects you own or are on the team of.', 'doublescale' ),
 				'category'         => AbilityCategories::PROJECTS,
 				'permission'       => $permission,
 				'input_schema'     => array(
@@ -234,7 +235,7 @@ final class ProjectAbilities {
 		$by_status = array();
 		foreach ( ProjectStatusModel::query()->get() as $status ) {
 			$query = ProjectModel::query()->where( 'status_id', (int) $status->id );
-			AbilityScope::apply( $query, 'owner_id', $sees_all );
+			self::scope( $query, $sees_all );
 
 			$by_status[] = array(
 				'status_id' => (int) $status->id,
@@ -244,7 +245,7 @@ final class ProjectAbilities {
 		}
 
 		$total_query = ProjectModel::query();
-		AbilityScope::apply( $total_query, 'owner_id', $sees_all );
+		self::scope( $total_query, $sees_all );
 
 		// Overdue means past its due date and not in a status that counts as
 		// complete — a finished project with a past due date is not late.
@@ -261,7 +262,7 @@ final class ProjectAbilities {
 			$overdue_query->whereNotIn( 'status_id', $complete_ids );
 		}
 
-		AbilityScope::apply( $overdue_query, 'owner_id', $sees_all );
+		self::scope( $overdue_query, $sees_all );
 
 		return array(
 			'total'     => (int) $total_query->count(),
@@ -460,6 +461,20 @@ final class ProjectAbilities {
 	}
 
 	/**
+	 * Limit a query to the projects the caller owns or is on the team of.
+	 * Applied last so no caller filter can widen it.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query    Project query.
+	 * @param bool                                  $sees_all Whether the caller sees every project.
+	 * @return void
+	 */
+	private static function scope( $query, bool $sees_all ): void {
+		if ( ! $sees_all ) {
+			$query->involving( get_current_user_id() );
+		}
+	}
+
+	/**
 	 * List projects.
 	 *
 	 * @since 1.0.0
@@ -487,7 +502,7 @@ final class ProjectAbilities {
 
 		// Applied last so no caller filter can widen it.
 		$sees_all = self::sees_all();
-		AbilityScope::apply( $query, 'owner_id', $sees_all );
+		self::scope( $query, $sees_all );
 
 		$total = (int) $query->count();
 
@@ -533,17 +548,13 @@ final class ProjectAbilities {
 			return AbilityResult::not_found( __( 'No project found with that id.', 'doublescale' ) );
 		}
 
-		$forbidden = AbilityScope::assert_owns(
-			$project,
-			'owner_id',
-			self::sees_all(),
-			__( 'This project is not assigned to you.', 'doublescale' )
-		);
-		if ( $forbidden ) {
-			return $forbidden;
+		$me = get_current_user_id();
+		if ( ! self::sees_all() && (int) $project->owner_id !== $me && ! ProjectTeam::is_member( (int) $project->id, $me ) ) {
+			return AbilityResult::forbidden( __( 'This project is not assigned to you, and you are not on its team.', 'doublescale' ) );
 		}
 
 		$data = self::shape_project( $project );
+		$data['team_member_ids'] = ProjectTeam::member_ids( (int) $project->id );
 
 		$body                = AbilityResult::truncate( (string) ( $project->description ?? '' ) );
 		$data['description'] = $body['text'];
@@ -623,7 +634,8 @@ final class ProjectAbilities {
 					'email' => $contact->email,
 				)
 				: null,
-			'budget'   => null !== $project->budget ? (float) $project->budget : null,
+			// Team members who do not own it never see its money.
+			'budget'   => null !== $project->budget && ( self::sees_all() || (int) $project->owner_id === get_current_user_id() ) ? (float) $project->budget : null,
 			'progress' => null !== $project->progress ? (int) $project->progress : null,
 			'due_date' => $project->due_date,
 		);

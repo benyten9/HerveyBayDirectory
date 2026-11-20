@@ -8,7 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
 use Closure;
 use DateTimeInterface;
@@ -239,7 +239,7 @@ use ReflectionMethod;
  */
 class Factory
 {
-    protected $className = \Carbon\Carbon::class;
+    protected $className = Carbon::class;
     protected $settings = [];
     public function __construct(array $settings = [], ?string $className = null)
     {
@@ -299,6 +299,6 @@ class Factory
             }
         }
         $result = $this->className::$name(...$arguments);
-        return $result instanceof \Carbon\CarbonInterface && !empty($settings) ? $result->settings($settings) : $result;
+        return $result instanceof CarbonInterface && !empty($settings) ? $result->settings($settings) : $result;
     }
 }

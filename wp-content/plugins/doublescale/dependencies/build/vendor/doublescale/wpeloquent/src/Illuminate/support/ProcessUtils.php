@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 /**
  * ProcessUtils is a bunch of utility methods.

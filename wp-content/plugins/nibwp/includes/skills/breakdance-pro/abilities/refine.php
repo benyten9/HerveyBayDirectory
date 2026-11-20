@@ -17,7 +17,7 @@ require_once __DIR__ . "/../lib/validator.php";
 
 wp_register_ability('nibwp/breakdance-pro-refine', [
     'label'       => __('Breakdance Pro — Refine a section', 'nibwp'),
-    'description' => __('Change specific nodes on an existing Breakdance page — properties, element type, or removal — validated against the site\'s registry, leaving everything else exactly as it was.', 'nibwp'),
+    'description' => 'Change specific nodes on an existing Breakdance page — properties, element type, or removal — validated against the site\'s registry, leaving everything else exactly as it was.',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -179,7 +179,7 @@ function nibwp_bdpro_refine_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-feedback', [
     'label'       => __('Breakdance Pro — Feedback', 'nibwp'),
-    'description' => __('Record whether a Breakdance Pro build was good or bad, with a note, so the skill improves.', 'nibwp'),
+    'description' => 'Record whether a Breakdance Pro build was good or bad, with a note, so the skill improves.',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',

@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2026-08-23 06:36+0000",
+    "translation-revision-date": "2026-10-01 11:31+0000",
     "generator": "doublescale\/jed-json-compiler",
     "source": "build\/renderer\/index.js",
     "domain": "messages",
@@ -83,6 +83,9 @@
             ],
             "%1$d minutes, %2$d seconds": [
                 "%1$d minutos, %2$d segundos"
+            ],
+            "%1$d of %2$d processed": [
+                "%1$d de %2$d processados"
             ],
             "%1$d of %2$d selected": [
                 "%1$d de %2$d selecionado(s)"
@@ -5418,8 +5421,8 @@
             "Cron Jobs": [
                 "Tarefas Agendadas"
             ],
-            "Csv": [
-                "Csv"
+            "CSV": [
+                "CSV"
             ],
             "CTA": [
                 "CTA"
@@ -12306,11 +12309,17 @@
             "More coming soon": [
                 "Em breve, mais novidades"
             ],
+            "More lists (%d)": [
+                "Mais listas (%d)"
+            ],
             "More options": [
                 "Mais opções"
             ],
             "More pages": [
                 "Mais páginas"
+            ],
+            "More tags (%d)": [
+                "Mais tags (%d)"
             ],
             "More than": [
                 "Mais que"

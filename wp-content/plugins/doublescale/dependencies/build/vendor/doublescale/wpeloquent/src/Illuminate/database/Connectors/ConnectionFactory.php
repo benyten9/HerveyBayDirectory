@@ -1,16 +1,16 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 use PDOException;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use InvalidArgumentException;
-use Illuminate\Database\Connection;
-use Illuminate\Database\MySqlConnection;
-use Illuminate\Database\SQLiteConnection;
-use Illuminate\Database\PostgresConnection;
-use Illuminate\Database\SqlServerConnection;
-use Illuminate\Contracts\Container\Container;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Illuminate\Database\MySqlConnection;
+use DoubleScale\Vendor\Illuminate\Database\SQLiteConnection;
+use DoubleScale\Vendor\Illuminate\Database\PostgresConnection;
+use DoubleScale\Vendor\Illuminate\Database\SqlServerConnection;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container;
 class ConnectionFactory
 {
     /**
@@ -203,13 +203,13 @@ class ConnectionFactory
         }
         switch ($config['driver']) {
             case 'mysql':
-                return new \Illuminate\Database\Connectors\MySqlConnector();
+                return new MySqlConnector();
             case 'pgsql':
-                return new \Illuminate\Database\Connectors\PostgresConnector();
+                return new PostgresConnector();
             case 'sqlite':
-                return new \Illuminate\Database\Connectors\SQLiteConnector();
+                return new SQLiteConnector();
             case 'sqlsrv':
-                return new \Illuminate\Database\Connectors\SqlServerConnector();
+                return new SqlServerConnector();
         }
         throw new InvalidArgumentException("Unsupported driver [{$config['driver']}]");
     }

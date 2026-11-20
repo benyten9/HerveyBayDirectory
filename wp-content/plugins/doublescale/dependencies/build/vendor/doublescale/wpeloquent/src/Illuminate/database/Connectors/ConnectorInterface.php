@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 interface ConnectorInterface
 {

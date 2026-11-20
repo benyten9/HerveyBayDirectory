@@ -118,7 +118,7 @@ final class SchemaGuard {
 			return false;
 		}
 
-		$version = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '0';
+		$version = defined( 'DOUBLESCALE_SCHEMA_REV' ) ? \DOUBLESCALE_SCHEMA_REV : '0';
 
 		return (string) get_option( self::STAMP_OPTION, '' ) !== (string) $version;
 	}
@@ -133,7 +133,7 @@ final class SchemaGuard {
 			return;
 		}
 
-		$version = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '0';
+		$version = defined( 'DOUBLESCALE_SCHEMA_REV' ) ? \DOUBLESCALE_SCHEMA_REV : '0';
 
 		// Not autoloaded: it is read once per request at most, and only until
 		// the stamp matches.

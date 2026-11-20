@@ -37,7 +37,7 @@ function nibwp_sign_upload_payload(array $payload): string|WP_Error
 {
     $json = wp_json_encode($payload, JSON_UNESCAPED_SLASHES);
     if (!is_string($json)) {
-        return new WP_Error('upload_token_encode_failed', 'Could not encode upload token payload.');
+        return new WP_Error('upload_token_encode_failed', __('Could not encode upload token payload.', 'nibwp'));
     }
 
     $body = nibwp_base64url_encode($json);
@@ -55,24 +55,24 @@ function nibwp_verify_upload_token(string $token): array|WP_Error
 {
     $parts = explode('.', $token, limit: 2);
     if (count($parts) !== 2) {
-        return new WP_Error('invalid_upload_token', 'Invalid upload token.', ['status' => 401]);
+        return new WP_Error('invalid_upload_token', __('Invalid upload token.', 'nibwp'), ['status' => 401]);
     }
 
     [$body, $signature] = $parts;
     $expected = nibwp_base64url_encode(hash_hmac('sha256', $body, nibwp_upload_token_secret(), binary: true));
     if (!hash_equals($expected, $signature)) {
-        return new WP_Error('invalid_upload_token', 'Invalid upload token signature.', ['status' => 401]);
+        return new WP_Error('invalid_upload_token', __('Invalid upload token signature.', 'nibwp'), ['status' => 401]);
     }
 
     $json = nibwp_base64url_decode($body);
     if ($json === false) {
-        return new WP_Error('invalid_upload_token', 'Invalid upload token payload.', ['status' => 401]);
+        return new WP_Error('invalid_upload_token', __('Invalid upload token payload.', 'nibwp'), ['status' => 401]);
     }
 
     /** @var array<string, mixed>|null $decoded */
     $decoded = json_decode($json, associative: true);
     if (!is_array($decoded)) {
-        return new WP_Error('invalid_upload_token', 'Invalid upload token payload.', ['status' => 401]);
+        return new WP_Error('invalid_upload_token', __('Invalid upload token payload.', 'nibwp'), ['status' => 401]);
     }
 
     $payload = [
@@ -92,7 +92,7 @@ function nibwp_verify_upload_token(string $token): array|WP_Error
 
     $expires_at = (int) $payload['expires_at'];
     if ($expires_at < time()) {
-        return new WP_Error('upload_token_expired', 'Upload token has expired.', ['status' => 401]);
+        return new WP_Error('upload_token_expired', __('Upload token has expired.', 'nibwp'), ['status' => 401]);
     }
 
     return $payload;
@@ -106,12 +106,12 @@ function nibwp_verify_upload_token(string $token): array|WP_Error
 function nibwp_handle_signed_upload(WP_REST_Request $request)
 {
     if (!nibwp_is_enabled()) {
-        return new WP_Error('nibwp_disabled', 'NIBWP abilities are disabled.', ['status' => 403]);
+        return new WP_Error('nibwp_disabled', __('NIBWP abilities are disabled.', 'nibwp'), ['status' => 403]);
     }
 
     $token = nibwp_get_upload_token_from_request($request);
     if ($token === '') {
-        return new WP_Error('missing_upload_token', 'Missing upload token.', ['status' => 401]);
+        return new WP_Error('missing_upload_token', __('Missing upload token.', 'nibwp'), ['status' => 401]);
     }
 
     $payload = nibwp_verify_upload_token($token);
@@ -172,7 +172,8 @@ function nibwp_handle_signed_upload(WP_REST_Request $request)
         return new WP_Error(
             'attachment_registration_failed',
             sprintf(
-                'The file was uploaded to %s but could not be registered in the Media Library: %s',
+                /* translators: 1: path of the uploaded file, 2: the reason registration failed */
+                __('The file was uploaded to %1$s but could not be registered in the Media Library: %2$s', 'nibwp'),
                 $destination['path'],
                 $attachment->get_error_message(),
             ),
@@ -195,7 +196,7 @@ function nibwp_handle_signed_upload(WP_REST_Request $request)
 function nibwp_prepare_upload_destination(array $payload): array|WP_Error
 {
     if (!is_string($payload['path']) || $payload['path'] === '') {
-        return new WP_Error('invalid_upload_token', 'Upload token does not contain a valid path.', ['status' => 401]);
+        return new WP_Error('invalid_upload_token', __('Upload token does not contain a valid path.', 'nibwp'), ['status' => 401]);
     }
 
     $resolved = nibwp_resolve_path(path: $payload['path'], must_exist: false);
@@ -221,11 +222,25 @@ function nibwp_prepare_upload_destination(array $payload): array|WP_Error
         }
     }
 
+    // Same reasoning, one level up: the link writes a path of its creator's
+    // choosing onto the server, which is the authority create-upload-link is
+    // gated on. A link minted before that gate tightened, or by an account
+    // since demoted, must not still be a filesystem write. Checked here, before
+    // any directory is created or byte written, so a refusal leaves no trace.
+    if (!nibwp_user_can_filesystem((int) ($payload['user_id'] ?? 0))) {
+        return new WP_Error(
+            'upload_link_forbidden',
+            __('The account this upload link was created for may no longer write files on this server.', 'nibwp'),
+            ['status' => 403],
+        );
+    }
+
     $parent_dir = dirname($resolved);
     $directories_created = [];
     if (!is_dir($parent_dir)) {
         if ($payload['create_directories'] !== true) {
-            return new WP_Error('directory_not_found', sprintf('Parent directory does not exist: %s', $parent_dir));
+            /* translators: %s: directory path */
+            return new WP_Error('directory_not_found', sprintf(__('Parent directory does not exist: %s', 'nibwp'), $parent_dir));
         }
         $directories_created = nibwp_ensure_parent_dir($parent_dir);
         if (is_wp_error($directories_created)) {
@@ -234,7 +249,8 @@ function nibwp_prepare_upload_destination(array $payload): array|WP_Error
     }
 
     if (!is_writable($parent_dir)) {
-        return new WP_Error('directory_not_writable', sprintf('Parent directory is not writable: %s', $parent_dir));
+        /* translators: %s: directory path */
+        return new WP_Error('directory_not_writable', sprintf(__('Parent directory is not writable: %s', 'nibwp'), $parent_dir));
     }
 
     return [
@@ -294,15 +310,21 @@ function nibwp_check_upload_attachment_target(string $resolved, int $user_id): b
         $uploads = wp_upload_dir(null, false);
 
         return new WP_Error('attachment_outside_uploads', sprintf(
-            'Only files inside the uploads directory (%s) can be registered in the Media Library. Choose a path inside it, or upload without register_attachment.',
+            /* translators: 1: uploads directory path, 2: the upload link option name */
+            __('Only files inside the uploads directory (%1$s) can be registered in the Media Library. Choose a path inside it, or upload without %2$s.', 'nibwp'),
             is_array($uploads) && is_string($uploads['basedir'] ?? null) ? $uploads['basedir'] : '',
+            'register_attachment',
         ), ['status' => 400]);
     }
 
     if ($user_id <= 0 || !user_can($user_id, 'upload_files')) {
         return new WP_Error(
             'attachment_upload_forbidden',
-            'Registering a file in the Media Library requires the upload_files capability.',
+            sprintf(
+                /* translators: %s: WordPress capability name */
+                __('Registering a file in the Media Library requires the %s capability.', 'nibwp'),
+                'upload_files',
+            ),
             ['status' => 403],
         );
     }
@@ -313,7 +335,8 @@ function nibwp_check_upload_attachment_target(string $resolved, int $user_id): b
     $filetype = wp_check_filetype(basename($resolved), get_allowed_mime_types($user_id));
     if (empty($filetype['ext']) || empty($filetype['type'])) {
         return new WP_Error('attachment_type_not_allowed', sprintf(
-            'This file type is not allowed in the Media Library: %s',
+            /* translators: %s: file name */
+            __('This file type is not allowed in the Media Library: %s', 'nibwp'),
             basename($resolved),
         ), ['status' => 400]);
     }
@@ -331,13 +354,13 @@ function nibwp_register_uploaded_attachment(string $path, array $payload, bool $
 {
     $relative = nibwp_upload_relative_path($path);
     if ($relative === null) {
-        return new WP_Error('attachment_outside_uploads', 'The file is not inside the uploads directory.');
+        return new WP_Error('attachment_outside_uploads', __('The file is not inside the uploads directory.', 'nibwp'));
     }
 
     $user_id = (int) $payload['user_id'];
     $filetype = wp_check_filetype(basename($path), get_allowed_mime_types($user_id));
     if (empty($filetype['type'])) {
-        return new WP_Error('attachment_type_not_allowed', 'This file type is not allowed in the Media Library.');
+        return new WP_Error('attachment_type_not_allowed', __('This file type is not allowed in the Media Library.', 'nibwp'));
     }
 
     $uploads = wp_upload_dir(null, false);
@@ -370,7 +393,7 @@ function nibwp_register_uploaded_attachment(string $path, array $payload, bool $
             return $attachment_id;
         }
         if (!is_int($attachment_id) || $attachment_id <= 0) {
-            return new WP_Error('attachment_insert_failed', 'WordPress did not return an attachment ID.');
+            return new WP_Error('attachment_insert_failed', __('WordPress did not return an attachment ID.', 'nibwp'));
         }
     }
 
@@ -420,7 +443,7 @@ function nibwp_open_upload_source(WP_REST_Request $request): array|WP_Error
 
     $stream = fopen('php://input', mode: 'rb');
     if ($stream === false) {
-        return new WP_Error('upload_read_failed', 'Could not read upload request body.');
+        return new WP_Error('upload_read_failed', __('Could not read upload request body.', 'nibwp'));
     }
 
     return [
@@ -466,12 +489,12 @@ function nibwp_open_multipart_upload_source(array $file): array|WP_Error
         $tmp_name = $file['tmp_name'];
     }
     if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
-        return new WP_Error('invalid_upload', 'The multipart upload did not contain a valid uploaded file.');
+        return new WP_Error('invalid_upload', __('The multipart upload did not contain a valid uploaded file.', 'nibwp'));
     }
 
     $stream = fopen($tmp_name, mode: 'rb');
     if ($stream === false) {
-        return new WP_Error('upload_read_failed', 'Could not read uploaded file.');
+        return new WP_Error('upload_read_failed', __('Could not read uploaded file.', 'nibwp'));
     }
 
     $name = '';
@@ -497,9 +520,11 @@ function nibwp_create_upload_stream($source, string $resolved, int $max_bytes): 
     $target = fopen($resolved, mode: 'xb');
     if ($target === false) {
         if (file_exists($resolved)) {
-            return new WP_Error('file_exists', sprintf('Destination already exists: %s', $resolved));
+            /* translators: %s: file path */
+            return new WP_Error('file_exists', sprintf(__('Destination already exists: %s', 'nibwp'), $resolved));
         }
-        return new WP_Error('upload_write_failed', sprintf('Could not open destination for writing: %s', $resolved));
+        /* translators: %s: file path */
+        return new WP_Error('upload_write_failed', sprintf(__('Could not open destination for writing: %s', 'nibwp'), $resolved));
     }
 
     $bytes_written = nibwp_copy_limited_stream(source: $source, target: $target, max_bytes: $max_bytes);
@@ -530,7 +555,8 @@ function nibwp_overwrite_upload_stream($source, string $resolved, int $max_bytes
     $temporary_path = tempnam(dirname($resolved), prefix: '.nibwp-upload-');
     if ($temporary_path === false) {
         return new WP_Error('upload_temp_failed', sprintf(
-            'Could not create temporary upload file in: %s',
+            /* translators: %s: directory path */
+            __('Could not create temporary upload file in: %s', 'nibwp'),
             dirname($resolved),
         ));
     }
@@ -538,7 +564,8 @@ function nibwp_overwrite_upload_stream($source, string $resolved, int $max_bytes
     $target = fopen($temporary_path, mode: 'wb');
     if ($target === false) {
         unlink($temporary_path);
-        return new WP_Error('upload_write_failed', sprintf('Could not open destination for writing: %s', $resolved));
+        /* translators: %s: file path */
+        return new WP_Error('upload_write_failed', sprintf(__('Could not open destination for writing: %s', 'nibwp'), $resolved));
     }
 
     $bytes_written = nibwp_copy_limited_stream(source: $source, target: $target, max_bytes: $max_bytes);
@@ -551,7 +578,8 @@ function nibwp_overwrite_upload_stream($source, string $resolved, int $max_bytes
 
     if (!rename($temporary_path, $resolved)) {
         unlink($temporary_path);
-        return new WP_Error('upload_move_failed', sprintf('Could not move uploaded file into place: %s', $resolved));
+        /* translators: %s: file path */
+        return new WP_Error('upload_move_failed', sprintf(__('Could not move uploaded file into place: %s', 'nibwp'), $resolved));
     }
 
     chmod(filename: $resolved, permissions: 0644);
@@ -575,7 +603,7 @@ function nibwp_copy_limited_stream($source, $target, int $max_bytes): int|WP_Err
     while (!feof($source)) {
         $chunk = fread($source, length: 1_048_576);
         if ($chunk === false) {
-            return new WP_Error('upload_read_failed', 'Could not read upload stream.');
+            return new WP_Error('upload_read_failed', __('Could not read upload stream.', 'nibwp'));
         }
         if ($chunk === '') {
             continue;
@@ -584,13 +612,14 @@ function nibwp_copy_limited_stream($source, $target, int $max_bytes): int|WP_Err
         $bytes_written += strlen($chunk);
         if ($bytes_written > $max_bytes) {
             return new WP_Error('upload_too_large', sprintf(
-                'Upload exceeds the signed URL limit of %d bytes.',
+                /* translators: %d: maximum upload size in bytes */
+                __('Upload exceeds the signed URL limit of %d bytes.', 'nibwp'),
                 $max_bytes,
             ));
         }
 
         if (fwrite($target, $chunk) === false) {
-            return new WP_Error('upload_write_failed', 'Could not write upload stream.');
+            return new WP_Error('upload_write_failed', __('Could not write upload stream.', 'nibwp'));
         }
     }
 
@@ -603,13 +632,13 @@ function nibwp_copy_limited_stream($source, $target, int $max_bytes): int|WP_Err
 function nibwp_upload_error_message(int $error): string
 {
     return match ($error) {
-        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Uploaded file exceeds the configured PHP upload size limit.',
-        UPLOAD_ERR_PARTIAL => 'The file was only partially uploaded.',
-        UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
-        UPLOAD_ERR_NO_TMP_DIR => 'The server is missing a temporary upload directory.',
-        UPLOAD_ERR_CANT_WRITE => 'The server could not write the uploaded file to disk.',
-        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.',
-        default => 'The upload failed.',
+        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => __('Uploaded file exceeds the configured PHP upload size limit.', 'nibwp'),
+        UPLOAD_ERR_PARTIAL => __('The file was only partially uploaded.', 'nibwp'),
+        UPLOAD_ERR_NO_FILE => __('No file was uploaded.', 'nibwp'),
+        UPLOAD_ERR_NO_TMP_DIR => __('The server is missing a temporary upload directory.', 'nibwp'),
+        UPLOAD_ERR_CANT_WRITE => __('The server could not write the uploaded file to disk.', 'nibwp'),
+        UPLOAD_ERR_EXTENSION => __('A PHP extension stopped the file upload.', 'nibwp'),
+        default => __('The upload failed.', 'nibwp'),
     };
 }
 

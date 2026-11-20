@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 use LogicException;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Queue\QueueableEntity;
-use Illuminate\Contracts\Queue\QueueableCollection;
-use Illuminate\Support\Collection as BaseCollection;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\QueueableEntity;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\QueueableCollection;
+use DoubleScale\Vendor\Illuminate\Support\Collection as BaseCollection;
 class Collection extends BaseCollection implements QueueableCollection
 {
     /**
@@ -20,7 +20,7 @@ class Collection extends BaseCollection implements QueueableCollection
      */
     public function find($key, $default = null)
     {
-        if ($key instanceof \Illuminate\Database\Eloquent\Model) {
+        if ($key instanceof Model) {
             $key = $key->getKey();
         }
         if ($key instanceof Arrayable) {
@@ -156,7 +156,7 @@ class Collection extends BaseCollection implements QueueableCollection
         if (\func_num_args() > 1 || $this->useAsCallable($key)) {
             return parent::contains(...\func_get_args());
         }
-        if ($key instanceof \Illuminate\Database\Eloquent\Model) {
+        if ($key instanceof Model) {
             return parent::contains(function ($model) use($key) {
                 return $model->is($key);
             });
@@ -200,7 +200,7 @@ class Collection extends BaseCollection implements QueueableCollection
     {
         $result = parent::map($callback);
         return $result->contains(function ($item) {
-            return !$item instanceof \Illuminate\Database\Eloquent\Model;
+            return !$item instanceof Model;
         }) ? $result->toBase() : $result;
     }
     /**

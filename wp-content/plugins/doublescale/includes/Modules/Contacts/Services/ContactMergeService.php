@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Core\Constants\TaskEntityType;
+use DoubleScale\Core\Scope\OwnerScope;
 use WP_Error;
 
 /**
@@ -111,17 +112,19 @@ final class ContactMergeService {
 	/**
 	 * Preview whether two contacts can be merged and what would change.
 	 *
-	 * @param int $primary_id Primary contact ID (kept).
-	 * @param int $source_id  Source contact ID (absorbed).
+	 * @param int                   $primary_id Primary contact ID (kept).
+	 * @param int                   $source_id  Source contact ID (absorbed).
+	 * @param array<string, string> $overrides  Identifiers the primary is being saved with (an edit that
+	 *                                          revealed the duplicate): judged as the primary's values.
 	 * @return array|\WP_Error
 	 */
-	public function preview( $primary_id, $source_id ) {
+	public function preview( $primary_id, $source_id, array $overrides = array() ) {
 		$loaded = $this->load_pair( $primary_id, $source_id );
 		if ( is_wp_error( $loaded ) ) {
 			return $loaded;
 		}
 
-		$primary = $loaded['primary'];
+		$primary = $this->with_identifier_overrides( $loaded['primary'], $overrides );
 		$source  = $loaded['source'];
 
 		return array(
@@ -215,12 +218,15 @@ final class ContactMergeService {
 	/**
 	 * Execute the merge. Source is removed only after relationships move.
 	 *
-	 * @param int $primary_id Primary contact ID.
-	 * @param int $source_id  Source contact ID.
+	 * @param int                   $primary_id Primary contact ID.
+	 * @param int                   $source_id  Source contact ID.
+	 * @param array<string, string> $overrides  Identifiers the primary is being saved with; written once
+	 *                                          the source is gone (they are unique per contact).
 	 * @return array|\WP_Error Public primary contact row on success.
 	 */
-	public function merge( $primary_id, $source_id ) {
-		$preview = $this->preview( $primary_id, $source_id );
+	public function merge( $primary_id, $source_id, array $overrides = array() ) {
+		$overrides = $this->clean_identifier_overrides( $overrides );
+		$preview   = $this->preview( $primary_id, $source_id, $overrides );
 		if ( is_wp_error( $preview ) ) {
 			return $preview;
 		}
@@ -251,6 +257,23 @@ final class ContactMergeService {
 			$this->union_taxonomies( (int) $source['id'], (int) $primary['id'] );
 			$this->union_custom_fields( (int) $source['id'], (int) $primary['id'], $cf_conflicts );
 			$preview['conflicts'] = array_merge( $preview['conflicts'], $cf_conflicts );
+
+			/**
+			 * Fires inside the merge transaction, before contact meta is combined.
+			 *
+			 * The generic rule keeps the primary's value of every key. A module
+			 * whose meta must follow another rule settles its own keys here, e.g.
+			 * Client Portal access, which belongs to whichever side's email the
+			 * merged contact keeps.
+			 *
+			 * @param int                   $primary_id Primary contact ID.
+			 * @param int                   $source_id  Source contact ID.
+			 * @param array<string, mixed>  $primary    Primary row as loaded.
+			 * @param array<string, mixed>  $source     Source row as loaded.
+			 * @param array<string, string> $overrides  Identifiers the primary is being saved with.
+			 */
+			do_action( 'doublescale_contact_merge_before_meta', (int) $primary['id'], (int) $source['id'], $primary, $source, $overrides );
+
 			$this->union_meta( (int) $source['id'], (int) $primary['id'] );
 			$this->repoint_activities( (int) $source['id'], (int) $primary['id'] );
 			$this->repoint_tasks( (int) $source['id'], (int) $primary['id'] );
@@ -265,6 +288,13 @@ final class ContactMergeService {
 			$this->preserve_source_hash( (int) $primary['id'], (string) $source['hash_id'] );
 			$this->insert_merge_note( (int) $primary['id'], $source, $preview );
 			$this->delete_source_shell( (int) $source['id'] );
+
+			// The edit that revealed the duplicate: its identifiers can be saved now the source is gone.
+			if ( $overrides ) {
+				global $wpdb;
+				$wpdb->update( $wpdb->prefix . 'doublescale_contacts', $overrides, array( 'id' => (int) $primary['id'] ) );
+				$merged_row = array_merge( $merged_row, $overrides );
+			}
 
 			/**
 			 * Fires inside the merge transaction, after data is moved and before commit.
@@ -290,6 +320,34 @@ final class ContactMergeService {
 		}
 
 		return $this->public_contact( $merged_row );
+	}
+
+	/**
+	 * Keep only non-empty identifier fields from submitted data.
+	 *
+	 * @param array<string, mixed> $overrides Submitted values.
+	 * @return array<string, string>
+	 */
+	private function clean_identifier_overrides( array $overrides ) {
+		$clean = array();
+		foreach ( self::IDENTIFIER_FIELDS as $field ) {
+			if ( isset( $overrides[ $field ] ) && ! self::is_empty_value( $overrides[ $field ] ) ) {
+				$value           = trim( (string) $overrides[ $field ] );
+				$clean[ $field ] = 'email' === $field ? strtolower( $value ) : $value;
+			}
+		}
+		return $clean;
+	}
+
+	/**
+	 * The primary row as it is being saved: its identifiers replaced by the submitted ones.
+	 *
+	 * @param array<string, mixed>  $primary   Primary row.
+	 * @param array<string, string> $overrides Submitted identifiers.
+	 * @return array<string, mixed>
+	 */
+	private function with_identifier_overrides( array $primary, array $overrides ) {
+		return array_merge( $primary, $this->clean_identifier_overrides( $overrides ) );
 	}
 
 	/**
@@ -364,6 +422,17 @@ final class ContactMergeService {
 
 		if ( ! $primary || ! $source ) {
 			return new WP_Error( 'merge_not_found', __( 'One of the contacts could not be found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		// A scoped agent merges only contacts they OWN: a merge moves everything
+		// from one record into the other, so collaborating is not enough. The
+		// error is the same 404 as "not found", so nothing about the other
+		// agent's contact is confirmed.
+		if ( class_exists( OwnerScope::class ) ) {
+			$scope = OwnerScope::current();
+			if ( ! $scope->owns_contact( (object) $primary ) || ! $scope->owns_contact( (object) $source ) ) {
+				return new WP_Error( 'merge_not_found', __( 'One of the contacts could not be found.', 'doublescale' ), array( 'status' => 404 ) );
+			}
 		}
 
 		return array(
@@ -1021,6 +1090,15 @@ final class ContactMergeService {
 				);
 			}
 		}
+
+		/**
+		 * Lines of the note a merge leaves on the merged contact.
+		 *
+		 * @param array<int, string>   $lines      Note lines.
+		 * @param int                  $primary_id Primary contact ID.
+		 * @param array<string, mixed> $source     Source row.
+		 */
+		$lines = (array) apply_filters( 'doublescale_contact_merge_note_lines', $lines, (int) $primary_id, $source );
 
 		$now  = current_time( 'mysql', true );
 		$body = implode( "\n", $lines );

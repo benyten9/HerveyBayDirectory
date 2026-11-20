@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Automations\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Tracking\Models\TrackingTemplateModel;
 
 /**
@@ -118,7 +118,7 @@ class AutomationStepModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function automation() {
 		return $this->belongsTo( AutomationModel::class, 'automation_id', 'id' );
@@ -129,7 +129,7 @@ class AutomationStepModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function contacts() {
 		return $this->hasMany( AutomationContactModel::class, 'step_id', 'id' );
@@ -140,7 +140,7 @@ class AutomationStepModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function processes() {
 		return $this->hasMany( AutomationContactProcessesModel::class, 'step_id', 'id' );
@@ -151,7 +151,7 @@ class AutomationStepModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function parent() {
 		return $this->belongsTo( self::class, 'parent_id', 'id' );
@@ -162,7 +162,7 @@ class AutomationStepModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function children() {
 		return $this->hasMany( self::class, 'parent_id', 'id' );

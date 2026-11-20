@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\Sales\Services;
 
 defined( 'ABSPATH' ) || exit;
 
-use DoubleScale\Modules\Campaigns\Services\WhatsappConversationWindow;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\ConversationWindow;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry;
 use DoubleScale\Core\Constants\CampaignChannel;
@@ -155,11 +155,7 @@ final class WhatsappDocumentSender {
 	 * @return WP_Error|null
 	 */
 	private static function conversation_window_error( int $contact_id ): ?WP_Error {
-		if ( ! class_exists( WhatsappConversationWindow::class ) ) {
-			return null;
-		}
-
-		$window = WhatsappConversationWindow::check( $contact_id );
+		$window = ConversationWindow::check( $contact_id );
 		if ( ! empty( $window['active'] ) ) {
 			return null;
 		}

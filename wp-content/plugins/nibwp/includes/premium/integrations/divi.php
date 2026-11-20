@@ -190,7 +190,7 @@ function nibwp_divi_layout_meta_keys(): array
 
 wp_register_ability('nibwp/divi-info', [
     'label'       => __('Divi — Info', 'nibwp'),
-    'description' => __('Detect Divi (theme or Builder plugin) + Extra, the builder version, the content engine (Divi 4 shortcode vs Divi 5 serialized), Theme Builder / Projects / Role Editor support, available post types, and counts of layouts, theme-builder templates and builder-enabled posts.', 'nibwp'),
+    'description' => 'Detect Divi (theme or Builder plugin) + Extra, the builder version, the content engine (Divi 4 shortcode vs Divi 5 serialized), Theme Builder / Projects / Role Editor support, available post types, and counts of layouts, theme-builder templates and builder-enabled posts.',
     'category'    => 'divi',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -245,7 +245,7 @@ function nibwp_divi_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-content', [
     'label'       => __('Divi — Content', 'nibwp'),
-    'description' => __('Read/write the Divi builder content of a post or page. Actions: get, set_content, enable_builder, disable_builder, get_meta, set_meta, duplicate. Content is stored raw in the detected format (Divi 4 shortcodes or Divi 5 serialized) — supply content in the format that matches content_engine from divi-info.', 'nibwp'),
+    'description' => 'Read/write the Divi builder content of a post or page. Actions: get, set_content, enable_builder, disable_builder, get_meta, set_meta, duplicate. Content is stored raw in the detected format (Divi 4 shortcodes or Divi 5 serialized) — supply content in the format that matches content_engine from divi-info.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',
@@ -362,7 +362,7 @@ function nibwp_divi_content_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-theme-options', [
     'label'       => __('Divi — Theme Options', 'nibwp'),
-    'description' => __('Read/write Divi theme options (ePanel: logo, layout, colors, typography, performance, integration) via Divi\'s own option layer, plus the Divi Builder plugin options. Actions: get, update, get_key, set_key, builder_options.', 'nibwp'),
+    'description' => 'Read/write Divi theme options (ePanel: logo, layout, colors, typography, performance, integration) via Divi\'s own option layer, plus the Divi Builder plugin options. Actions: get, update, get_key, set_key, builder_options.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',
@@ -436,7 +436,7 @@ function nibwp_divi_theme_options_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-colors', [
     'label'       => __('Divi — Colors', 'nibwp'),
-    'description' => __('Read/write the Divi Global Colors palette (the swatches surfaced across the builder). Actions: get, set, add, update, remove.', 'nibwp'),
+    'description' => 'Read/write the Divi Global Colors palette (the swatches surfaced across the builder). Actions: get, set, add, update, remove.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',
@@ -510,7 +510,7 @@ function nibwp_divi_colors_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-library', [
     'label'       => __('Divi — Library', 'nibwp'),
-    'description' => __('Manage the Divi Library of saved layouts (et_pb_layout): sections, rows, modules and full layouts, with categories. Actions: list, get, create, update, delete, categories.', 'nibwp'),
+    'description' => 'Manage the Divi Library of saved layouts (et_pb_layout): sections, rows, modules and full layouts, with categories. Actions: list, get, create, update, delete, categories.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',
@@ -637,7 +637,7 @@ function nibwp_divi_library_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-theme-builder', [
     'label'       => __('Divi — Theme Builder', 'nibwp'),
-    'description' => __('Inspect and edit Divi Theme Builder layouts: the header/body/footer layout post types and template containers. Actions: list, get_layout, create_layout, update_layout, delete_layout. Full template assignment (which pages a template applies to) is best finalised in the Divi UI — get returns the raw template meta so conditions can be read.', 'nibwp'),
+    'description' => 'Inspect and edit Divi Theme Builder layouts: the header/body/footer layout post types and template containers. Actions: list, get_layout, create_layout, update_layout, delete_layout. Full template assignment (which pages a template applies to) is best finalised in the Divi UI — get returns the raw template meta so conditions can be read.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',
@@ -750,7 +750,7 @@ function nibwp_divi_theme_builder_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-presets', [
     'label'       => __('Divi — Presets', 'nibwp'),
-    'description' => __('Read the Divi global module Presets (per-module default styles) and overwrite the raw presets store. Actions: get, get_module, set_raw. Presets are a large structured object — get first, edit, then set_raw the whole structure.', 'nibwp'),
+    'description' => 'Read the Divi global module Presets (per-module default styles) and overwrite the raw presets store. Actions: get, get_module, set_raw. Presets are a large structured object — get first, edit, then set_raw the whole structure.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',
@@ -813,7 +813,7 @@ function nibwp_divi_presets_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/divi-roles', [
     'label'       => __('Divi — Roles', 'nibwp'),
-    'description' => __('Read/write the Divi Role Editor capabilities (which roles can use the builder, edit settings, see specific tabs/modules). Actions: get, set, reset.', 'nibwp'),
+    'description' => 'Read/write the Divi Role Editor capabilities (which roles can use the builder, edit settings, see specific tabs/modules). Actions: get, set, reset.',
     'category'    => 'divi',
     'input_schema' => [
         'type' => 'object',

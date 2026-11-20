@@ -195,7 +195,7 @@ class ConditionEvaluator {
 				if ( ! class_exists( \DoubleScale\Modules\LeadScoring\LeadScoringManager::class, true ) ) {
 					return false;
 				}
-				if ( function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'leadscoring' ) ) {
+				if ( ! doublescale_module_data_ready( 'leadscoring' ) ) {
 					return false;
 				}
 				return $this->evaluate_lead_score_points_condition( $contact, $operator, $value );
@@ -204,7 +204,7 @@ class ConditionEvaluator {
 				if ( ! class_exists( \DoubleScale\Modules\LeadScoring\LeadScoringManager::class, true ) ) {
 					return false;
 				}
-				if ( function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'leadscoring' ) ) {
+				if ( ! doublescale_module_data_ready( 'leadscoring' ) ) {
 					return false;
 				}
 				return $this->evaluate_lead_score_level_condition( $contact, $operator, $value );
@@ -365,6 +365,15 @@ class ConditionEvaluator {
 					}
 				}
 				return true;
+
+			case 'unsubscribed_from':
+				// On ANY of the lists without being subscribed to it.
+				foreach ( $contact->lists as $list ) {
+					if ( in_array( (int) $list->id, $check_list_ids, true ) && 'subscribed' !== ( $list->pivot->status ?? 'subscribed' ) ) {
+						return true;
+					}
+				}
+				return false;
 
 			default:
 				return false;
@@ -620,7 +629,7 @@ class ConditionEvaluator {
 				$check_ids[] = (string) (int) $v;
 				continue;
 			}
-			if ( class_exists( '\DoubleScale\Pro\Modules\LeadScoring\Models\LeadScoringRuleLevelModel' ) ) {
+			if ( doublescale_module_data_ready( 'leadscoring' ) && class_exists( '\DoubleScale\Pro\Modules\LeadScoring\Models\LeadScoringRuleLevelModel' ) ) {
 				$by_slug = \DoubleScale\Pro\Modules\LeadScoring\Models\LeadScoringRuleLevelModel::get_by_slug( (string) $v );
 				if ( $by_slug ) {
 					$check_ids[] = (string) (int) $by_slug->id;
@@ -719,7 +728,7 @@ class ConditionEvaluator {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts    Contacts collection
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts    Contacts collection
 	 * @param array                                    $conditions  Conditions to check (to determine what to load)
 	 *
 	 * @return void

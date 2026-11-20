@@ -35,7 +35,7 @@ class RestPublicCreditNoteController extends RestController {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -47,7 +47,7 @@ class RestPublicCreditNoteController extends RestController {
 
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})/pdf',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})/pdf',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -76,7 +76,11 @@ class RestPublicCreditNoteController extends RestController {
 			return $credit_note;
 		}
 
-		if ( empty( $credit_note->viewed_at ) ) {
+		// Opened by the client: a teammate checking the link does not count
+		// (free's rule; an older free has none, and every view counts as before).
+		$by_team = class_exists( \DoubleScale\Modules\Portal\Services\ClientSeen::class )
+			&& \DoubleScale\Modules\Portal\Services\ClientSeen::is_team_viewer();
+		if ( ! $by_team && empty( $credit_note->viewed_at ) ) {
 			$credit_note->viewed_at = current_time( 'mysql' );
 			$credit_note->save();
 		}

@@ -8,6 +8,8 @@
 
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
+require_once __DIR__ . '/Canonical.php';
+
 /**
  * Automatic rich snippets services option.
  *
@@ -51,18 +53,13 @@ function seopress_automatic_rich_snippets_services_option( $schema_datas ) {
 			'slogan'           => $service_slogan,
 		);
 
-		$service_canonical = '';
-		if ( get_post_meta( get_the_ID(), '_seopress_robots_canonical', true ) ) {
-			$service_canonical = get_post_meta( get_the_ID(), '_seopress_robots_canonical', true );
-		} else {
-			global $wp;
-			if ( isset( $wp->request ) ) {
-				$service_canonical = home_url( add_query_arg( array(), $wp->request ) );
-			}
-		}
+		$service_canonical = seopress_schema_current_canonical();
 
 		if ( ! empty( $service_canonical ) ) {
-			$json['@id'] = $service_canonical;
+			// The service, not the page it is described on. The breadcrumb
+			// trail publishes the bare canonical as the WebPage node, so
+			// without the fragment one URL would denote both.
+			$json['@id'] = $service_canonical . '#service';
 		}
 
 		if ( '' != $service_provider_name ) {
@@ -112,7 +109,7 @@ function seopress_automatic_rich_snippets_services_option( $schema_datas ) {
 			);
 		}
 
-		if ( isset( $product ) && true === comments_open( get_the_ID() ) ) {
+		if ( isset( $product ) && true === comments_open( seopress_pro_get_the_id() ) ) {
 			// Review.
 			$args = array(
 				'meta_key'    => 'rating',
@@ -122,7 +119,7 @@ function seopress_automatic_rich_snippets_services_option( $schema_datas ) {
 				'parent'      => 0,
 				'orderby'     => 'meta_value_num',
 				'order'       => 'DESC',
-				'post_id'     => get_the_ID(),
+				'post_id'     => seopress_pro_get_the_id(),
 				'post_type'   => 'product',
 			);
 
@@ -151,6 +148,11 @@ function seopress_automatic_rich_snippets_services_option( $schema_datas ) {
 			);
 		}
 
+		$provider_reference = \SEOPressPro\Helpers\ServiceProviderReference::resolve( $schema_datas['provider_source'] ?? '' );
+		if ( ! empty( $provider_reference ) ) {
+			$json['provider'] = $provider_reference;
+		}
+
 		$json = array_filter( $json );
 
 		$json = apply_filters( 'seopress_schemas_auto_service_json', $json );
@@ -159,6 +161,6 @@ function seopress_automatic_rich_snippets_services_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_service_html', $json );
 
-		echo $json;
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties.
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use InvalidArgumentException;
 class ConfigurationUrlParser
@@ -30,7 +30,7 @@ class ConfigurationUrlParser
             $config = ['url' => $config];
         }
         $url = $config['url'] ?? null;
-        $config = \Illuminate\Support\Arr::except($config, 'url');
+        $config = Arr::except($config, 'url');
         if (!$url) {
             return $config;
         }

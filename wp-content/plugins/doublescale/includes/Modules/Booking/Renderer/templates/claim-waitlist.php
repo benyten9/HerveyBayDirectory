@@ -11,8 +11,7 @@ $slot_time  = $booking_array['slot_time'] ?? 30;
 $location   = $booking_array['location_value'] ?? '';
 $timezone   = $booking_array['timezone'] ?? 'UTC';
 
-$global_settings = get_option( 'doublescale_booking_settings', array() );
-$time_format     = $global_settings['general']['time_format'] ?? '12';
+$time_format = (string) \DoubleScale\Modules\Booking\Helpers\BookingSettings::all()['general']['time_format'];
 
 try {
 	$start_dt = new DateTime( $start_time, new DateTimeZone( 'UTC' ) );
@@ -27,6 +26,7 @@ try {
 ?>
 
 <div class="doublescale-booking-meeting">
+	<?php require __DIR__ . '/parts/back-to-site.php'; ?>
 	<div class="details-container">
 		<div class="profile-picture">
 			<?php if ( $success ) : ?>

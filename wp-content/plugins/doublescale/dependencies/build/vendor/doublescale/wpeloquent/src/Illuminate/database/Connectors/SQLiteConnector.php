@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 use InvalidArgumentException;
-class SQLiteConnector extends \Illuminate\Database\Connectors\Connector implements \Illuminate\Database\Connectors\ConnectorInterface
+class SQLiteConnector extends Connector implements ConnectorInterface
 {
     /**
      * Establish a database connection.

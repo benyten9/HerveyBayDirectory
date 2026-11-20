@@ -16,8 +16,8 @@ if (!defined('ABSPATH')) {
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-export-content', [
-    'label' => __('Export Content to JSON', domain: 'nibwp'),
-    'description' => __('Exports posts, pages, or custom post types to a JSON-serializable array including meta fields, taxonomy terms, and featured images.', domain: 'nibwp'),
+    'label' => __('Export Content to JSON', 'nibwp'),
+    'description' => 'Exports posts, pages, or custom post types to a JSON-serializable array including meta fields, taxonomy terms, and featured images.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -162,8 +162,8 @@ function nibwp_migration_export_content(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-import-content', [
-    'label' => __('Import Content from JSON', domain: 'nibwp'),
-    'description' => __('Imports posts, pages, or CPTs from a JSON array (as produced by the export tool), including meta fields and taxonomy terms.', domain: 'nibwp'),
+    'label' => __('Import Content from JSON', 'nibwp'),
+    'description' => 'Imports posts, pages, or CPTs from a JSON array (as produced by the export tool), including meta fields and taxonomy terms.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -324,8 +324,8 @@ function nibwp_migration_import_content(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-export-options', [
-    'label' => __('Export WordPress Options', domain: 'nibwp'),
-    'description' => __('Exports WordPress options by name or prefix to a portable key-value format for migration between environments.', domain: 'nibwp'),
+    'label' => __('Export WordPress Options', 'nibwp'),
+    'description' => 'Exports WordPress options by name or prefix to a portable key-value format for migration between environments.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -409,8 +409,8 @@ function nibwp_migration_export_options(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-import-options', [
-    'label' => __('Import WordPress Options', domain: 'nibwp'),
-    'description' => __('Imports WordPress options from a key-value map, with support for dry-run preview and overwrite control.', domain: 'nibwp'),
+    'label' => __('Import WordPress Options', 'nibwp'),
+    'description' => 'Imports WordPress options from a key-value map, with support for dry-run preview and overwrite control.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -494,8 +494,8 @@ function nibwp_migration_import_options(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-search-replace-urls', [
-    'label' => __('Search & Replace URLs in Database', domain: 'nibwp'),
-    'description' => __('Performs a serialization-safe search and replace of URLs across all major WordPress database tables. Essential for domain migrations.', domain: 'nibwp'),
+    'label' => __('Search & Replace URLs in Database', 'nibwp'),
+    'description' => 'Performs a serialization-safe search and replace of URLs across all major WordPress database tables. Essential for domain migrations.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -661,8 +661,8 @@ function nibwp_migration_sr_replace_recursive(mixed $data, string $search, strin
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-clone-post', [
-    'label' => __('Deep Clone a Post', domain: 'nibwp'),
-    'description' => __('Creates a complete duplicate of a post including all meta fields, taxonomy terms, and featured image. Optionally clones child posts.', domain: 'nibwp'),
+    'label' => __('Deep Clone a Post', 'nibwp'),
+    'description' => 'Creates a complete duplicate of a post including all meta fields, taxonomy terms, and featured image. Optionally clones child posts.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -795,8 +795,8 @@ function nibwp_migration_clone_post(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-export-menus', [
-    'label' => __('Export Navigation Menus', domain: 'nibwp'),
-    'description' => __('Exports WordPress navigation menus with all items, parent relationships, classes, and URLs to a portable format.', domain: 'nibwp'),
+    'label' => __('Export Navigation Menus', 'nibwp'),
+    'description' => 'Exports WordPress navigation menus with all items, parent relationships, classes, and URLs to a portable format.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',
@@ -897,8 +897,8 @@ function nibwp_migration_export_menus(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/migration-import-menus', [
-    'label' => __('Import Navigation Menus', domain: 'nibwp'),
-    'description' => __('Imports navigation menus from the export format, creating menus and menu items with proper parent-child relationships.', domain: 'nibwp'),
+    'label' => __('Import Navigation Menus', 'nibwp'),
+    'description' => 'Imports navigation menus from the export format, creating menus and menu items with proper parent-child relationships.',
     'category' => 'migration',
     'input_schema' => [
         'type' => 'object',

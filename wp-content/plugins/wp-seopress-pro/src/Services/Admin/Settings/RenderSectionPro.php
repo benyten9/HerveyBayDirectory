@@ -2,29 +2,45 @@
 
 namespace SEOPressPro\Services\Admin\Settings;
 
-defined( 'ABSPATH' ) or exit( 'Cheatin&#8217; uh?' );
+defined( 'ABSPATH' ) || exit;
 
+/** Shared renderer for PRO settings section headings and descriptions. */
 class RenderSectionPro {
-
 	/**
-	 * @since 4.5.0
+	 * Render a known section, including its existing navigation and toggle.
 	 *
-	 * @param string $key
+	 * @param string $key Section key.
+	 * @return void
 	 */
 	public function render( $key ) {
 		$docs = function_exists( 'seopress_get_docs_links' ) ? seopress_get_docs_links() : '';
 
-		$breadcrumbs_desc = __( 'Configure your breadcrumbs, using schema.org markup, allowing it to appear in Google\'s search results.', 'wp-seopress-pro' ) . ' <a class="seopress-help" href="https://developers.google.com/search/docs/data-types/breadcrumb" target="_blank" title="' . __( 'Google developers website (new window)', 'wp-seopress-pro' ) . '">' . __( 'Lean more on Google developers website', 'wp-seopress-pro' ) . '</a><span class="seopress-help dashicons dashicons-external"></span>';
+		$breadcrumbs_desc = '<div class="seopress-sub-tabs"><a href="#seopress-breadcrumbs-enable">' . esc_attr__( 'Enable', 'wp-seopress-pro' ) . '</a> | <a href="#seopress-breadcrumbs-customize">' . esc_attr__( 'Customize', 'wp-seopress-pro' ) . '</a> | <a href="#seopress-breadcrumbs-translations">' . esc_attr__( 'Translations', 'wp-seopress-pro' ) . '</a> | <a href="#seopress-breadcrumbs-misc">' . esc_attr__( 'Misc', 'wp-seopress-pro' ) . '</a></div> ' . __( 'Configure your breadcrumbs, using schema.org markup, allowing it to appear in Google\'s search results.', 'wp-seopress-pro' ) . '
+		<a class="seopress-help" href="https://developers.google.com/search/docs/data-types/breadcrumb" target="_blank" title="' . __( 'Google developers website (new window)', 'wp-seopress-pro' ) . '">
+		' . __( 'Lean more on Google developers website', 'wp-seopress-pro' ) . '
+		</a>
+		<span class="seopress-help dashicons dashicons-external"></span>';
+
+		$ai_desc = __( 'Use the power of <strong>AI</strong> to improve your productivity.', 'wp-seopress-pro' ) . '
+		<div class="seopress-sub-tabs">
+			<a href="#seopress-ai-general">' . esc_attr__( 'General', 'wp-seopress-pro' ) . '</a> |
+			<a href="#seopress-ai-claude">' . esc_attr__( 'Claude', 'wp-seopress-pro' ) . '</a> |
+			<a href="#seopress-ai-deepseek">' . esc_attr__( 'DeepSeek', 'wp-seopress-pro' ) . '</a> |
+			<a href="#seopress-ai-gemini">' . esc_attr__( 'Gemini', 'wp-seopress-pro' ) . '</a> |
+			<a href="#seopress-ai-mistral">' . esc_attr__( 'Mistral', 'wp-seopress-pro' ) . '</a> |
+			<a href="#seopress-ai-openai">' . esc_attr__( 'OpenAI', 'wp-seopress-pro' ) . '</a> |
+			<a href="#seopress-ai-logs">' . esc_attr__( 'Logs', 'wp-seopress-pro' ) . '</a>
+		</div>';
 
 		$sections = array(
 			'local-business' => array(
 				'toggle' => 1,
 				'title'  => __( 'Local Business', 'wp-seopress-pro' ),
 				'desc'   => sprintf(
-					/* translators: 1: Local Business widget URL, 2: Google EAT URL */
+					/* translators: %1$s widgets admin URL, %2$s documentation URL */
 					__( 'Local Business data type for Google. This schema will be displayed on the homepage. <br>You can also display these informations using our <a href="%1$s">Local Business widget</a> or Local Business block to optimize your site for <a class="seopress-help" href="%2$s" target="_blank" title="Optimizing WordPress sites for Google EAT (new window)">Google EAT</a><span class="seopress-help dashicons dashicons-external"></span>.', 'wp-seopress-pro' ),
-					admin_url( 'widgets.php' ),
-					$docs['lb']['eat']
+					esc_url( admin_url( 'widgets.php' ) ),
+					esc_url( $docs['lb']['eat'] )
 				),
 			),
 			'edd'            => array(
@@ -40,7 +56,7 @@ class RenderSectionPro {
 			'alerts'         => array(
 				'toggle' => 1,
 				'title'  => __( 'SEO Alerts', 'wp-seopress-pro' ),
-				'desc'   => __( 'Receive alerts by email/Slack about your SEO before it\'s too late.', 'wp-seopress-pro' ),
+				'desc'   => __( 'Receive alerts by email/Slack about important SEO issues before it\'s too late. We check major problems twice a day.', 'wp-seopress-pro' ),
 			),
 			'dublin-core'    => array(
 				'toggle' => 1,
@@ -50,7 +66,11 @@ class RenderSectionPro {
 			'rich-snippets'  => array(
 				'toggle' => 1,
 				'title'  => __( 'Structured Data Types (schema.org)', 'wp-seopress-pro' ),
-				'desc'   => __( 'Add Structured Data Types support, mark your content, and get better Google Search Results.', 'wp-seopress-pro' ),
+				'desc'   => sprintf(
+					/* translators: %s documentation URL */
+					__( 'Add Structured Data Types support, mark your content, and get better Google Search Results. <a class="seopress-help" href="%s" target="_blank">Learn More</a><span class="seopress-help dashicons dashicons-external"></span>', 'wp-seopress-pro' ),
+					esc_url( $docs['schemas']['ebook'] )
+				),
 			),
 			'page-speed'     => array(
 				'title' => __( 'PageSpeed Insights', 'wp-seopress-pro' ),
@@ -65,6 +85,11 @@ class RenderSectionPro {
 				'toggle' => 1,
 				'title'  => __( 'robots.txt', 'wp-seopress-pro' ),
 				'desc'   => __( 'Configure your virtual robots.txt file.', 'wp-seopress-pro' ),
+			),
+			'llms'           => array(
+				'toggle' => 1,
+				'title'  => __( 'llms.txt', 'wp-seopress-pro' ),
+				'desc'   => __( 'Configure your virtual llms.txt file.', 'wp-seopress-pro' ),
 			),
 			'news'           => array(
 				'toggle' => 1,
@@ -82,11 +107,7 @@ class RenderSectionPro {
 			),
 			'rss'            => array(
 				'title' => __( 'RSS feeds', 'wp-seopress-pro' ),
-				'desc'  => sprintf(
-					/* translators: 1: RSS feed URL */
-					__( 'Configure WordPress default feeds. <br><br><a href="%1$s" class="btn btnSecondary" target="_blank">View my RSS feed</a>', 'wp-seopress-pro' ),
-					get_home_url() . '/feed'
-				),
+				'desc'  => /* translators: %s home URL */ sprintf( __( 'Configure WordPress default feeds. <br><br><a href="%s" class="btn btnTertiary" target="_blank">View my RSS feed</a>', 'wp-seopress-pro' ), esc_url( get_home_url() . '/feed' ) ),
 			),
 			'white-label'    => array(
 				'toggle' => 1,
@@ -101,66 +122,63 @@ class RenderSectionPro {
 			'ai'             => array(
 				'toggle' => 1,
 				'title'  => __( 'AI', 'wp-seopress-pro' ),
-				'desc'   => __( 'Use the power of AI to improve your productivity.', 'wp-seopress-pro' ),
+				'desc'   => $ai_desc,
 			),
 		);
 
+		if ( ! is_string( $key ) || ! isset( $sections[ $key ] ) ) {
+			return;
+		}
+
 		if ( ! empty( $sections ) ) {
-			if ( '1' == seopress_get_toggle_option( $key ) ) {
+			if ( '1' === (string) seopress_get_toggle_option( $key ) ) {
 				$seopress_get_toggle_option = '1';
 			} else {
 				$seopress_get_toggle_option = '0';
 			} ?>
-<div class="sp-section-header">
-	<h2>
-			<?php echo esc_html( $sections[ $key ]['title'] ); ?>
-	</h2>
+			<div class="sp-section-header">
+				<h2>
+					<?php echo esc_html( $sections[ $key ]['title'] ); ?>
+				</h2>
+				<?php if ( ! empty( $sections[ $key ]['toggle'] ) && 1 === $sections[ $key ]['toggle'] ) { ?>
+					<div class="wrap-toggle-checkboxes">
+						<input type="checkbox" name="toggle-<?php echo esc_attr( $key ); ?>" id="toggle-<?php echo esc_attr( $key ); ?>" class="toggle" data-toggle="<?php echo absint( $seopress_get_toggle_option ); ?>">
+						<label for="toggle-<?php echo esc_attr( $key ); ?>"></label>
 
-			<?php if ( ! empty( $sections[ $key ]['toggle'] ) && 1 == $sections[ $key ]['toggle'] ) { ?>
-	<div class="wrap-toggle-checkboxes">
-		<input type="checkbox" name="toggle-<?php echo esc_attr( $key ); ?>"
-			id="toggle-<?php echo esc_attr( $key ); ?>" class="toggle"
-			data-toggle="<?php echo esc_attr( $seopress_get_toggle_option ); ?>">
-		<label for="toggle-<?php echo esc_attr( $key ); ?>"></label>
+						<?php
+						if ( '1' === $seopress_get_toggle_option ) {
+							?>
+							<span id="<?php echo esc_attr( $key ); ?>-state-default" class="feature-state">
+								<span class="dashicons dashicons-arrow-left-alt"></span>
+								<?php esc_html_e( 'Click to disable this feature', 'wp-seopress-pro' ); ?>
+							</span>
+							<span id="<?php echo esc_attr( $key ); ?>-state" class="feature-state feature-state-off">
+								<span class="dashicons dashicons-arrow-left-alt"></span>
+								<?php esc_html_e( 'Click to enable this feature', 'wp-seopress-pro' ); ?>
+							</span>
+						<?php } else { ?>
+							<span id="<?php echo esc_attr( $key ); ?>-state-default" class="feature-state">
+								<span class="dashicons dashicons-arrow-left-alt"></span>
+								<?php esc_html_e( 'Click to enable this feature', 'wp-seopress-pro' ); ?>
+							</span>
+							<span id="<?php echo esc_attr( $key ); ?>-state" class="feature-state feature-state-off">
+								<span class="dashicons dashicons-arrow-left-alt"></span>
+								<?php esc_html_e( 'Click to disable this feature', 'wp-seopress-pro' ); ?>
+							</span>
+							<?php
+						}
+						?>
+					</div>
+				<?php } ?>
+			</div>
 
-				<?php
-				if ( '1' == $seopress_get_toggle_option ) {
-					?>
-		<span id="<?php echo esc_attr( $key ); ?>-state-default"
-			class="feature-state">
-			<span class="dashicons dashicons-arrow-left-alt"></span>
-					<?php esc_html_e( 'Click to disable this feature', 'wp-seopress-pro' ); ?>
-		</span>
-		<span id="<?php echo esc_attr( $key ); ?>-state"
-			class="feature-state feature-state-off">
-			<span class="dashicons dashicons-arrow-left-alt"></span>
-					<?php esc_html_e( 'Click to enable this feature', 'wp-seopress-pro' ); ?>
-		</span>
-		<?php } else { ?>
-		<span id="<?php echo esc_attr( $key ); ?>-state-default"
-			class="feature-state">
-			<span class="dashicons dashicons-arrow-left-alt"></span>
-					<?php esc_html_e( 'Click to enable this feature', 'wp-seopress-pro' ); ?>
-		</span>
-		<span id="<?php echo esc_attr( $key ); ?>-state"
-			class="feature-state feature-state-off">
-			<span class="dashicons dashicons-arrow-left-alt"></span>
-					<?php esc_html_e( 'Click to disable this feature', 'wp-seopress-pro' ); ?>
-		</span>
-		<?php } ?>
-	</div>
-	<?php } ?>
-</div>
-<p>
-			<?php echo wp_kses_post( $sections[ $key ]['desc'] ); ?>
-</p>
-<p>
-			<?php
-			if ( isset( $sections[ $key ]['alert'] ) ) {
-				echo '<div class="seopress-notice"><p>' . wp_kses_post( $sections[ $key ]['alert'] ) . '</p></div>';
-			}
-			?>
-</p>
+			<p><?php echo wp_kses_post( $sections[ $key ]['desc'] ); ?></p>
+
+			<?php if ( isset( $sections[ $key ]['alert'] ) ) { ?>
+				<div class="seopress-notice">
+					<p><?php echo wp_kses_post( $sections[ $key ]['alert'] ); ?></p>
+				</div>
+			<?php } ?>
 			<?php
 		}
 	}

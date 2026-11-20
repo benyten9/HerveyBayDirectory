@@ -42,6 +42,7 @@ class CheckoutServiceProvider implements Provider {
     private ?ProrationResult $proration_result = null;
 
     public function boot() {
+        add_action( 'directorist_before_order_create', [ $this, 'normalize_free_plan_order_amounts' ] );
         add_filter( 'directorist_checkout_process_payment', [$this, 'checkout_process_payment'], 10, 3 );
         add_filter( 'directorist_checkout_types', [$this, 'add_checkout_type'] );
         add_action( 'directorist_checkout_validation', [$this, 'validate_checkout'], 10, 2 );
@@ -64,6 +65,22 @@ class CheckoutServiceProvider implements Provider {
         add_filter( 'directorist_rest_legacy_order_data', [ $this, 'handle_legacy_order_data' ], 10, 2 );
         add_filter( 'directorist_rest_legacy_order_remaining_listings', [ $this, 'handle_legacy_order_remaining_listings' ], 10, 2 );
         add_filter( 'directorist_rest_legacy_order_remaining_featured_listings', [ $this, 'handle_legacy_order_remaining_featured_listings' ], 10, 2 );
+    }
+
+    /**
+     * Ignore retained pricing and tax values when creating an order for a free plan.
+     */
+    public function normalize_free_plan_order_amounts( OrderDTO $order_dto ): void {
+        if ( ! $order_dto->is_initialized( 'ref_type' ) || ! $order_dto->is_initialized( 'ref' )
+            || OrderRefType::PRICING_PLAN !== $order_dto->get_ref_type() ) {
+            return;
+        }
+
+        $plan = directorist_get_pricing_plan_by_id( (int) $order_dto->get_ref() );
+
+        if ( $plan && FeeType::FREE === $plan->fee_type ) {
+            $order_dto->set_amount( 0 )->set_sub_total( 0 )->set_tax_rate( 0 );
+        }
     }
 
     public function checkout_process_payment( bool $process_payment, OrderDTO $order_dto, WP_REST_Request $request ) {
@@ -117,6 +134,7 @@ class CheckoutServiceProvider implements Provider {
     }
 
     public function handle_listing_submission_response_data( array $data, array $request ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         if ( ! empty( $data['edited_listing'] ) ) {
             return $data;
         }
@@ -227,8 +245,8 @@ class CheckoutServiceProvider implements Provider {
                         ->set_ref( (string) $selected_plan->id )
                         ->set_ref_type( OrderRefType::PRICING_PLAN )
                         ->set_currency( atbdp_get_payment_currency() )
-                        ->set_amount( $selected_plan->price )
-                        ->set_sub_total( $selected_plan->price )
+                        ->set_amount( directorist_get_plan_effective_price( $selected_plan ) )
+                        ->set_sub_total( directorist_get_plan_effective_price( $selected_plan ) )
                 );
 
                 $this->plan_order_meta_repository()->upsert_by_order_id(
@@ -319,6 +337,7 @@ class CheckoutServiceProvider implements Provider {
     }
 
     public function validate_checkout( string $checkout_type, WP_REST_Request $request ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         if ( $checkout_type !== self::CHECKOUT_TYPE ) return;
 
         $validator = new DirectoristValidator( $request, new Mime );
@@ -705,7 +724,7 @@ class CheckoutServiceProvider implements Provider {
             $is_recurring       = false; // When a specific period end date is set due to proration, treat it as a one-time order rather than a recurring subscription, since the next billing date may not be determinable at this point.
         }
 
-        if ( $proration_result->get_adjusted_price() !== (float) $plan->price ) {
+        if ( $proration_result->get_adjusted_price() !== directorist_get_plan_effective_price( $plan ) ) {
             $is_recurring = false; // When proration results in a price adjustment, treat the order as a one-time purchase for the adjusted amount, rather than a recurring subscription, since the future billing amounts may not be determinable at this point.
         }
 
@@ -981,7 +1000,7 @@ class CheckoutServiceProvider implements Provider {
         $order_meta      = $order_meta_repo->get_by_order_id( $order->get_id() );
 
         if ( $order_meta && (int) $order_meta->is_trial === 1 ) {
-            $price = $plan->price;
+            $price = directorist_get_plan_effective_price( $plan );
         }
 
         $order_items[] = [
@@ -1118,7 +1137,28 @@ class CheckoutServiceProvider implements Provider {
             throw new Exception( __( 'The listing was not found.', 'directorist-pricing-plans' ), 404 );
         }
 
-        if ( (int) $listing->post_author !== $user_id ) {
+        $can_purchase_for_listing = (int) $listing->post_author === $user_id;
+
+        /**
+         * Filter whether a user can purchase a plan for a listing they do not own.
+         *
+         * Integrations must perform their own authorization checks before allowing
+         * the purchase.
+         *
+         * @param bool     $can_purchase_for_listing Whether the user can purchase the plan.
+         * @param int      $listing_id               Listing ID.
+         * @param int      $user_id                  User ID.
+         * @param \WP_Post $listing                  Listing post object.
+         */
+        $can_purchase_for_listing = (bool) apply_filters(
+            'directorist_pricing_plans_can_purchase_plan_for_listing',
+            $can_purchase_for_listing,
+            $listing_id,
+            $user_id,
+            $listing
+        );
+
+        if ( ! $can_purchase_for_listing ) {
             throw new Exception( __( 'You are not allowed to purchase a plan for this listing.', 'directorist-pricing-plans' ), 403 );
         }
 
@@ -1147,7 +1187,7 @@ class CheckoutServiceProvider implements Provider {
         }
 
         if ( ! $this->should_apply_proration() ) {
-            $this->proration_result = ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
+            $this->proration_result = ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
             return $this->proration_result;
         }
 
@@ -1155,14 +1195,14 @@ class CheckoutServiceProvider implements Provider {
         $new_plan_type = $new_plan->type ?? PlanType::PACKAGE;
 
         if ( PlanType::PAY_PER_LISTING === $new_plan_type ) {
-            $this->proration_result = ProrationResult::allow( (float) $new_plan->price, null, 0.0 );
+            $this->proration_result = ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
             return $this->proration_result;
         }
 
         $current_package = directorist_get_current_package( $new_plan->directory_type_id );
 
         if ( $current_package && $current_package->is_trial ) {
-            return ProrationResult::allow( $new_plan->price, null, 0.0 );
+            return ProrationResult::allow( directorist_get_plan_effective_price( $new_plan ), null, 0.0 );
         }
 
         $current_plan = $current_package ? directorist_get_pricing_plan_by_id( (int) $current_package->plan_id ) : null;

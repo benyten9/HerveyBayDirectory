@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * AttachmentModel class.
@@ -37,6 +37,7 @@ class AttachmentModel extends Model {
 		'activity_id',
 		'user_id',
 		'contact_id',
+		'company_id',
 		'file_name',
 		'file_path',
 		'file_type',
@@ -61,37 +62,37 @@ class AttachmentModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function activity() {
 		return $this->belongsTo( ActivityModel::class, 'activity_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function user() {
 		return $this->belongsTo( UserModel::class, 'user_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeTemp( $query ) {
 		return $query->where( 'status', 'temp' );
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeActive( $query ) {
 		return $query->where( 'status', 'active' );
@@ -99,8 +100,8 @@ class AttachmentModel extends Model {
 
 	/**
 	 * @param string $attachable_type Owner type string.
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForType( $query, string $attachable_type ) {
 		return $query->where( 'attachable_type', $attachable_type );

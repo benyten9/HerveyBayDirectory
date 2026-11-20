@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use SEOPress\Core\Hooks\ExecuteHooks;
 use SEOPress\Helpers\InstallDate;
+use SEOPress\Helpers\WhiteLabel;
 
 /**
  * REST endpoint backing the "Rate SEOPress 5 stars" prompt.
@@ -144,16 +145,31 @@ class ReviewPrompt implements ExecuteHooks {
 			return false;
 		}
 
+		// White Label: there is no way to ask for a review without naming the
+		// product — the wordpress.org link alone gives it away — so the prompt
+		// is suppressed rather than renamed. Kept as the filter default so an
+		// explicit opt-in still wins.
+		$show = ! WhiteLabel::isEnabled();
+
+		// A top banner promotion (Black Friday for example) already takes the
+		// top of the screen: keep a single notice there. The prompt comes back
+		// once the promotion leaves the feed or the user dismisses it.
+		if ( $show && self::has_top_banner() ) {
+			$show = false;
+		}
+
 		/**
-		 * Filter whether the 5-star review prompt is shown. PRO White Label
-		 * (or any site owner) can hook this to suppress it entirely.
+		 * Filter whether the 5-star review prompt is shown.
+		 *
+		 * Defaults to false while White Label is on or while a top banner
+		 * promotion is displayed.
 		 *
 		 * @since 10.0.0
 		 *
 		 * @param bool $show    Whether to show the prompt.
 		 * @param int  $user_id Current user ID.
 		 */
-		return (bool) apply_filters( 'seopress_show_review_prompt', true, $user_id );
+		return (bool) apply_filters( 'seopress_show_review_prompt', $show, $user_id );
 	}
 
 	/**
@@ -167,5 +183,28 @@ class ReviewPrompt implements ExecuteHooks {
 	 */
 	private static function is_old_enough() {
 		return InstallDate::daysSince() >= self::MIN_INSTALL_DAYS;
+	}
+
+	/**
+	 * Whether a top banner promotion is displayed to the current user.
+	 *
+	 * Same source as the admin header banner (see ModuleAdminHeader), so both
+	 * agree on campaigns, conditions and dismissals.
+	 *
+	 * @return bool
+	 */
+	private static function has_top_banner() {
+		// The constant hides the SEOPress chrome, banner included. Return
+		// early so an expired feed cache does not trigger a remote request.
+		if ( defined( 'SEOPRESS_WL_ADMIN_HEADER' ) && false === SEOPRESS_WL_ADMIN_HEADER ) {
+			return false;
+		}
+
+		$service = seopress_get_service( 'PromotionService' );
+		if ( ! $service || ! method_exists( $service, 'getPromotion' ) ) {
+			return false;
+		}
+
+		return null !== $service->getPromotion( 'top_banner' );
 	}
 }

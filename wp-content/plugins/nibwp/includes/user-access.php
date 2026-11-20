@@ -263,6 +263,9 @@ function nibwp_user_access_page_choices(bool $include_owner_only = false): array
     if (function_exists('nibwp_render_jobs_page')) {
         $choices['nibwp-jobs'] = __('Jobs', 'nibwp');
     }
+    if (function_exists('nibwp_paper_render_page')) {
+        $choices['nibwp-paper'] = __('Paper.design', 'nibwp');
+    }
     if (function_exists('nibwp_figma_render_page')) {
         $choices['nibwp-figma'] = __('Figma', 'nibwp');
     }

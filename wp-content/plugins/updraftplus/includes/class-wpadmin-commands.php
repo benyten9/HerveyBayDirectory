@@ -164,7 +164,7 @@ class UpdraftPlus_WPAdmin_Commands extends UpdraftPlus_Commands {
 				$foreign_known = apply_filters('updraftplus_accept_archivename', array());
 				if (!is_array($foreign_known) || empty($foreign_known[$backups[$timestamp]['meta_foreign']])) {
 					/* translators: %s: Backup source information */
-					$err[] = sprintf(__('Backup created by unknown source (%s) - cannot be restored.', 'updraftplus'), $backups[$timestamp]['meta_foreign']);
+					$err[] = sprintf(__('Backup created by unknown source (%s) - cannot be restored.', 'updraftplus'), esc_html($backups[$timestamp]['meta_foreign']));
 				} else {
 					// For some reason, on PHP 5.5 passing by reference in a single array stopped working with apply_filters_ref_array (though not with do_action_ref_array).
 					$backupable_plus_db = apply_filters_ref_array("updraftplus_importforeign_backupable_plus_db", array($backupable_plus_db, array($foreign_known[$backups[$timestamp]['meta_foreign']], &$mess, &$warn, &$err)));
@@ -189,16 +189,16 @@ class UpdraftPlus_WPAdmin_Commands extends UpdraftPlus_Commands {
 					}
 					if (!file_exists($updraft_dir.'/'.$file)) {
 						/* translators: %s: File path */
-						$err[] = sprintf(__('File not found (you need to upload it): %s', 'updraftplus'), $updraft_dir.'/'.$file);
+						$err[] = sprintf(__('File not found (you need to upload it): %s', 'updraftplus'), esc_html($updraft_dir.'/'.$file));
 					} elseif (filesize($updraft_dir.'/'.$file) == 0) {
 						/* translators: %s: File name */
-						$err[] = sprintf(__('File was found, but is zero-sized (you need to re-upload it): %s', 'updraftplus'), $file);
+						$err[] = sprintf(__('File was found, but is zero-sized (you need to re-upload it): %s', 'updraftplus'), esc_html($file));
 					} else {
 						$itext = (0 == $index) ? '' : $index;
 						if (!empty($backups[$timestamp][$type.$itext.'-size']) && filesize($updraft_dir.'/'.$file) != $backups[$timestamp][$type.$itext.'-size']) {
 							if (empty($warn['doublecompressfixed'])) {
 								/* translators: 1: File name, 2: Actual file size, 3: Expected file size */
-								$warn[] = sprintf(__('File (%1$s) was found, but has a different size (%2$s) from what was expected (%3$s) - it may be corrupt.', 'updraftplus'), $file, filesize($updraft_dir.'/'.$file), $backups[$timestamp][$type.$itext.'-size']);
+								$warn[] = sprintf(__('File (%1$s) was found, but has a different size (%2$s) from what was expected (%3$s) - it may be corrupt.', 'updraftplus'), esc_html($file), filesize($updraft_dir.'/'.$file), esc_html($backups[$timestamp][$type.$itext.'-size']));
 							}
 						}
 						do_action_ref_array("updraftplus_checkzip_$type", array($updraft_dir.'/'.$file, &$mess, &$warn, &$err));
@@ -341,6 +341,16 @@ class UpdraftPlus_WPAdmin_Commands extends UpdraftPlus_Commands {
 	 */
 	public function dismiss_season() {
 		UpdraftPlus_Options::update_updraft_option('dismissed_season_notices_until', time() + 366*86400);
+		return array();
+	}
+
+	/**
+	 * This function is called via AJAX and updates the social media notice dismissal time to 84 days from when it was dismissed
+	 *
+	 * @return array - an empty array
+	 */
+	public function dismiss_social_media() {
+		UpdraftPlus_Options::update_updraft_option('updraftplus_dismissed_social_media_notice', time() + 84*86400);
 		return array();
 	}
 
@@ -829,25 +839,6 @@ class UpdraftPlus_WPAdmin_Commands extends UpdraftPlus_Commands {
 			$action_data['similar_type_collate'] = $similar_type_collate;
 		}
 		return $action_data;
-	}
-
-	/**
-	 * Set the Tour status
-	 *
-	 * @param array $params - the $_REQUEST. We're looking for 'current_step'
-	 * @return bool
-	 */
-	public function set_tour_status($params) {
-		return class_exists('UpdraftPlus_Tour') ? UpdraftPlus_Tour::get_instance()->set_tour_status($params) : false;
-	}
-
-	/**
-	 * Resets the tour status
-	 *
-	 * @return bool
-	 */
-	public function reset_tour_status() {
-		return class_exists('UpdraftPlus_Tour') ? UpdraftPlus_Tour::get_instance()->reset_tour_status() : false;
 	}
 
 	/**

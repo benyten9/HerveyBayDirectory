@@ -19,7 +19,7 @@ require_once __DIR__ . '/../lib/registry.php';
 // ── list-widgets ───────────────────────────────────────────────────────────
 wp_register_ability('nibwp/elementor-pro-list-widgets', [
     'label'       => __('Elementor Pro — list available widgets', 'nibwp'),
-    'description' => __('The real widget types registered on THIS site (core + Pro + add-ons), plus Pro status, active breakpoints, and whether flexbox containers are on. Call before authoring; never invent a widgetType.', 'nibwp'),
+    'description' => 'The real widget types registered on THIS site (core + Pro + add-ons), plus Pro status, active breakpoints, and whether flexbox containers are on. Call before authoring; never invent a widgetType.',
     'category'    => 'elementor-pro',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'execute_callback'    => 'nibwp_elementor_pro_list_widgets',
@@ -51,7 +51,7 @@ function nibwp_elementor_pro_list_widgets(array $input): array|WP_Error
 // ── widget-schema ──────────────────────────────────────────────────────────
 wp_register_ability('nibwp/elementor-pro-widget-schema', [
     'label'       => __('Elementor Pro — widget control schema', 'nibwp'),
-    'description' => __('The real control ids + types + defaults + responsive flags for one widget on THIS site. A setting keyed by anything other than a real control id is silently ignored by Elementor, so confirm names here before authoring.', 'nibwp'),
+    'description' => 'The real control ids + types + defaults + responsive flags for one widget on THIS site. A setting keyed by anything other than a real control id is silently ignored by Elementor, so confirm names here before authoring.',
     'category'    => 'elementor-pro',
     'input_schema' => [
         'type' => 'object',

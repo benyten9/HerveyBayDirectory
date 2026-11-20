@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Validation\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Validation\Concerns;
 
 use DateTime;
 use Countable;
@@ -8,14 +8,14 @@ use Exception;
 use Throwable;
 use DateTimeZone;
 use DateTimeInterface;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Validation\Rules\Exists;
-use Illuminate\Validation\Rules\Unique;
-use Illuminate\Validation\ValidationData;
+use DoubleScale\Vendor\Illuminate\Support\Carbon;
+use DoubleScale\Vendor\Illuminate\Support\Facades\Date;
+use DoubleScale\Vendor\Illuminate\Validation\Rules\Exists;
+use DoubleScale\Vendor\Illuminate\Validation\Rules\Unique;
+use DoubleScale\Vendor\Illuminate\Validation\ValidationData;
 use DoubleScale\Vendor\Egulias\EmailValidator\EmailValidator;
 use DoubleScale\Vendor\Symfony\Component\HttpFoundation\File\File;
 use DoubleScale\Vendor\Egulias\EmailValidator\Validation\RFCValidation;

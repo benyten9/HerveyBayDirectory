@@ -1,6 +1,6 @@
 <?php
 
-namespace Carbon\Doctrine;
+namespace DoubleScale\Vendor\Carbon\Doctrine;
 
 class DateTimeDefaultPrecision
 {

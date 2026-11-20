@@ -87,6 +87,17 @@ abstract class RestController extends WP_REST_Controller {
 	}
 
 	/**
+	 * REST guard for another module's data (module off, or its tables not
+	 * there): the same 404 module_disabled as {@see require_module()}.
+	 *
+	 * @param string $slug Module slug whose data the route reads.
+	 * @return WP_Error|null Null when the data can be read.
+	 */
+	protected function require_module_data( string $slug ): ?WP_Error {
+		return doublescale_module_data_error( $slug );
+	}
+
+	/**
 	 * Apply a request's sort parameters to a list query.
 	 *
 	 * Sorting has to happen in SQL rather than in the browser: the client only

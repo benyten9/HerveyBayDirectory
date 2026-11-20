@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static string version()
@@ -44,7 +44,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Contracts\Foundation\Application
  */
-class App extends \Illuminate\Support\Facades\Facade
+class App extends Facade
 {
     /**
      * Get the registered name of the component.

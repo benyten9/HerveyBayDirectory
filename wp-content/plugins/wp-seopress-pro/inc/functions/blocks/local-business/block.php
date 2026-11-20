@@ -118,7 +118,7 @@ function seopress_pro_get_local_business_opening_hours( $hide_closed_days = fals
 	$format_time = function ( $hours, $mins ) use ( $display_format, $separator ) {
 		if ( '12h' === $display_format ) {
 			$time           = $hours . ':' . $mins;
-			$formatted_time = date( 'g:i A', strtotime( $time ) );
+			$formatted_time = gmdate( 'g:i A', strtotime( $time ) );
 			// Replace the colon with the custom separator.
 			$formatted_time = str_replace( ':', $separator, $formatted_time );
 			return $formatted_time;

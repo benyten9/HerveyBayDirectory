@@ -10,6 +10,7 @@ namespace DoubleScale\Pro\Modules\Automations\Actions\Project;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Automations\Models\AutomationStepModel;
+use DoubleScale\Pro\Modules\Projects\Services\ProjectTeam;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -58,6 +59,10 @@ class UpdateProjectOwner extends BaseProjectAction {
 
 		$owner = (int) $step->get_setting( 'owner' );
 		if ( $owner <= 0 ) {
+			return false;
+		}
+		// Nobody owns a project they cannot open.
+		if ( ! ProjectTeam::is_eligible( $owner ) ) {
 			return false;
 		}
 

@@ -91,6 +91,9 @@ if ( ! class_exists( 'SWBDPCHelperFunctions' ) ) {
         }
 
         public static function validate_coupon( $coupon_code, $amount, $plan_id = 0, $user_id = 0 ) {
+            if ( 1 !== (int) get_directorist_option( 'swbdp_coupon_is_enable', 1 ) ) {
+                return new WP_Error( 'directorist_coupon_unavailable', 'Coupon validation is unavailable.' );
+            }
             $coupon_code = sanitize_text_field( wp_unslash( $coupon_code ) );
             $amount      = (float) $amount;
             $plan_id     = absint( $plan_id );
@@ -119,7 +122,7 @@ if ( ! class_exists( 'SWBDPCHelperFunctions' ) ) {
             $coupon_rate = (float) get_post_meta( $coupon_id, 'swbdpc_coupon_amount', true );
             $coupon_type = get_post_meta( $coupon_id, 'swbdpc_coupon_type', true );
 
-            if ( $coupon_rate <= 0 ) {
+            if ( ! is_finite( $coupon_rate ) || $coupon_rate <= 0 || ( 'percentage_dis' === $coupon_type && $coupon_rate > 100 ) ) {
                 return new WP_Error( 'directorist_coupon_invalid_discount', __( 'Invalid coupon discount amount.', 'directorist-coupon' ), array( 'status' => 400 ) );
             }
 
@@ -139,6 +142,10 @@ if ( ! class_exists( 'SWBDPCHelperFunctions' ) ) {
 
                 if ( ! $plan_id || ! in_array( $plan_id, $fixed_products, true ) ) {
                     return new WP_Error( 'directorist_coupon_plan_invalid', __( 'This coupon is not applicable for this plan!', 'directorist-coupon' ), array( 'status' => 400 ) );
+                }
+
+                if ( is_wp_error( SWBDPCCouponService::plan( $plan_id ) ) ) {
+                    return new WP_Error( 'directorist_coupon_plan_invalid', 'This coupon is unavailable for this plan.' );
                 }
 
                 $discount_type = DiscountType::FLAT;

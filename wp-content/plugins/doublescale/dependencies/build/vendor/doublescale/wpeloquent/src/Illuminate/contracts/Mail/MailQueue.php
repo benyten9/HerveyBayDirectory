@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Mail;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Mail;
 
 interface MailQueue
 {

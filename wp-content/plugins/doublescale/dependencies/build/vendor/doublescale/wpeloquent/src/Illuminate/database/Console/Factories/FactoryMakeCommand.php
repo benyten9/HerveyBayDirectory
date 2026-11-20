@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Console\Factories;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Factories;
 
-use Illuminate\Console\GeneratorCommand;
+use DoubleScale\Vendor\Illuminate\Console\GeneratorCommand;
 use DoubleScale\Vendor\Symfony\Component\Console\Input\InputOption;
 class FactoryMakeCommand extends GeneratorCommand
 {

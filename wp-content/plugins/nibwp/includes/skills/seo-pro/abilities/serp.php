@@ -10,7 +10,7 @@ require_once __DIR__ . '/../lib/external.php';
 
 wp_register_ability('nibwp/seo-pro-serp', [
     'label'       => __('SEO Pro — SERP Intent Brief', 'nibwp'),
-    'description' => __('Build a content brief for a keyword from live SERP data: the People-Also-Ask questions, related searches, and the headings/angle of the ranking pages. Actions: brief, configure (store a SERP provider key — SerpApi). Requires a provider key.', 'nibwp'),
+    'description' => 'Build a content brief for a keyword from live SERP data: the People-Also-Ask questions, related searches, and the headings/angle of the ranking pages. Actions: brief, configure (store a SERP provider key — SerpApi). Requires a provider key.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

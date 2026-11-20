@@ -10,7 +10,7 @@ require_once __DIR__ . '/../lib/external.php';
 
 wp_register_ability('nibwp/seo-pro-gsc', [
     'label'       => __('SEO Pro — Search Console', 'nibwp'),
-    'description' => __('Surface optimization opportunities from Google Search Console: pages with high impressions but low CTR or ranking just off page one. Actions: opportunities, configure (store the OAuth access token + property URL). Requires a connected Google account.', 'nibwp'),
+    'description' => 'Surface optimization opportunities from Google Search Console: pages with high impressions but low CTR or ranking just off page one. Actions: opportunities, configure (store the OAuth access token + property URL). Requires a connected Google account.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

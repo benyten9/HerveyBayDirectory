@@ -15,8 +15,11 @@ if ( ! class_exists( 'WP_Importer' ) ) {
 // so we cannot rely on options-import-export.php having run.
 require_once dirname( dirname( __DIR__ ) ) . '/functions/helpers-csv.php';
 
-// SEOPRESS_Importer::is_file_within_allowed_dirs(), used by handle_upload().
-if ( ! class_exists( 'SEOPRESS_Importer', false ) ) {
+// seopress_import_files_dir() and friends, for the same reason.
+require_once dirname( dirname( __DIR__ ) ) . '/functions/helpers-import-files.php';
+
+// SEOPRESS_CSV_Importer::is_file_within_allowed_dirs(), used by handle_upload().
+if ( ! class_exists( 'SEOPRESS_CSV_Importer', false ) ) {
 	include_once __DIR__ . '/class-csv-importer.php';
 }
 
@@ -108,6 +111,31 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 	}
 
 	/**
+	 * Point wp_handle_upload() at the import directory.
+	 *
+	 * Hooked around the one call that needs it and removed straight after, so
+	 * nothing else uploading during the same request is affected.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param array $dirs Values from wp_upload_dir().
+	 *
+	 * @return array
+	 */
+	public static function filter_upload_dir( $dirs ) {
+		$private = seopress_import_files_dir( true, $dirs );
+		if ( is_wp_error( $private ) ) {
+			$dirs['error'] = $private->get_error_message();
+			return $dirs;
+		}
+		$dirs['subdir'] = '';
+		$dirs['path']   = $private['path'];
+		$dirs['url']    = '';
+
+		return $dirs;
+	}
+
+	/**
 	 * Get all the valid filetypes for a CSV file.
 	 *
 	 * @return array
@@ -152,6 +180,14 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 
 		$this->step                   = isset( $_REQUEST['step'] ) ? sanitize_key( $_REQUEST['step'] ) : current( array_keys( $this->steps ) );
 		$this->file                   = isset( $_REQUEST['file'] ) ? wp_normalize_path( seopress_clean( wp_unslash( $_REQUEST['file'] ) ) ) : '';
+
+		// The path travels through the request from step to step. The importer
+		// refuses to read outside the allowed directories, but the steps before
+		// it already checked the file exists and echoed the path back, so the
+		// check runs as soon as the path is known.
+		if ( '' !== $this->file && ! SEOPRESS_CSV_Importer::is_file_within_allowed_dirs( $this->file ) ) {
+			$this->file = '';
+		}
 		$this->delimiter              = ! empty( $_REQUEST['delimiter'] ) ? seopress_clean( wp_unslash( $_REQUEST['delimiter'] ) ) : 'auto';
 		$this->import_ignore_metadata = ! empty( $_REQUEST['import_ignore_metadata'] ) ? esc_attr( $_REQUEST['import_ignore_metadata'] ) : false;
 
@@ -222,7 +258,7 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			if ( $step_key === $this->step ) {
 				?>
 		<li class="active">
-			<div class="icon" data-step="<?php echo $i; ?>"></div>
+			<div class="icon" data-step="<?php echo absint( $i ); ?>"></div>
 			<span><?php echo esc_html( $step['name'] ); ?></span>
 			<div class="divider"></div>
 		</li>
@@ -230,7 +266,7 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			} elseif ( $is_completed ) {
 				?>
 		<li class="done">
-			<div class="icon" data-step="<?php echo $i; ?>"></div>
+			<div class="icon" data-step="<?php echo absint( $i ); ?>"></div>
 			<a
 				href="<?php echo esc_url( add_query_arg( 'step', $step_key, remove_query_arg( 'activate_error' ) ) ); ?>">
 				<?php echo esc_html( $step['name'] ); ?>
@@ -241,7 +277,7 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			} else {
 				?>
 		<li>
-			<div class="icon" data-step="<?php echo $i; ?>"></div>
+			<div class="icon" data-step="<?php echo absint( $i ); ?>"></div>
 			<span><?php echo esc_html( $step['name'] ); ?></span>
 			<div class="divider"></div>
 		</li>
@@ -518,6 +554,7 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 		$delimiter = $this->resolve_delimiter( $this->file );
 
 		if ( is_wp_error( $delimiter ) ) {
+			seopress_delete_import_file( $this->file );
 			$this->add_error( $delimiter->get_error_message() );
 
 			return;
@@ -546,36 +583,44 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 				return new WP_Error( 'seopress_metadata_csv_importer_upload_file_invalid', esc_html__( 'Invalid file type. The importer supports CSV and TXT file formats.', 'wp-seopress-pro' ) );
 			}
 
+			$dir = seopress_import_files_dir();
+
+			if ( is_wp_error( $dir ) ) {
+				return $dir;
+			}
+
+			// A wizard abandoned at the mapping step leaves its file behind
+			// until the daily cleanup runs. Starting another import is the
+			// natural moment to clear the previous one, and on a site whose
+			// WP-Cron never fires it is the only moment there is.
+			seopress_cleanup_import_files();
+
 			$overrides = array(
-				'test_form' => false,
-				'mimes'     => self::get_valid_csv_filetypes(),
+				'test_form'                => false,
+				'mimes'                    => self::get_valid_csv_filetypes(),
+				// Avoid collisions between concurrent private imports.
+				'unique_filename_callback' => 'seopress_import_file_name',
 			);
 			$import    = $_FILES['import'];
-			$upload    = wp_handle_upload( $import, $overrides );
+
+			add_filter( 'upload_dir', array( __CLASS__, 'filter_upload_dir' ) );
+			try {
+				$upload = wp_handle_upload( $import, $overrides );
+			} finally {
+				remove_filter( 'upload_dir', array( __CLASS__, 'filter_upload_dir' ) );
+			}
 
 			if ( isset( $upload['error'] ) ) {
 				return new WP_Error( 'seopress_metadata_csv_importer_upload_error', $upload['error'] );
 			}
 
-			// Construct the object array.
-			$object = array(
-				'post_title'     => basename( $upload['file'] ),
-				'post_content'   => $upload['url'],
-				'post_mime_type' => $upload['type'],
-				'guid'           => $upload['url'],
-				'context'        => 'import',
-				'post_status'    => 'private',
-			);
-
-			// Save the data.
-			$id = wp_insert_attachment( $object, $upload['file'] );
-
 			/*
-			 * Schedule a cleanup for one day from now in case of failed
-			 * import or missing wp_import_cleanup() call.
+			 * No attachment is created for it. The file is addressed by path
+			 * from here on, the attachment only ever existed to hang WordPress's
+			 * `importer_scheduled_cleanup` event off, and being an attachment is
+			 * what put a working copy of the site's metadata in the media
+			 * library for every editor to find. The daily cleanup takes over.
 			 */
-			wp_schedule_single_event( time() + DAY_IN_SECONDS, 'importer_scheduled_cleanup', array( $id ) );
-
 			return wp_normalize_path( $upload['file'] );
 		} elseif ( file_exists( ABSPATH . $file_url ) ) {
 			if ( ! self::is_file_valid_csv( ABSPATH . $file_url ) ) {
@@ -584,7 +629,11 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 
 			// The path is relative to ABSPATH but nothing stops it climbing out
 			// of it, and the extension was the only thing being checked.
-			if ( ! SEOPRESS_Importer::is_file_within_allowed_dirs( ABSPATH . $file_url ) ) {
+			//
+			// The check lives on the concrete importer, not on the abstract
+			// class it extends, so calling it on the parent was a fatal error
+			// waiting for the first request to reach this branch.
+			if ( ! SEOPRESS_CSV_Importer::is_file_within_allowed_dirs( ABSPATH . $file_url ) ) {
 				return new WP_Error( 'seopress_metadata_csv_importer_file_outside_uploads', esc_html__( 'The file to import must live in the uploads directory.', 'wp-seopress-pro' ) );
 			}
 
@@ -693,7 +742,7 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 					$mapped_value = $mapped_items[ $index ];
 					$hidden       = in_array( $name, array( 'post_type', 'taxonomy' ) ) ? ' style="display:none"' : '';
 					?>
-				<tr<?php echo $hidden; ?>>
+				<tr<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The value is one of two hardcoded literals set just above. ?>>
 					<td class="seopress-importer-mapping-table-name">
 						<?php echo esc_html( $name ); ?>
 						<?php if ( ! empty( $sample[ $index ] ) ) { ?>
@@ -886,9 +935,9 @@ class SEOPRESS_CSV_Setup_Wizard_Controller {
 			echo '<ul>';
 			foreach ( $results as $key => $result ) {
 				if ( $key === 'log' ) {
-					echo '<li><br>' . $result . '</li>';
+					echo '<li><br>' . wp_kses_post( $result ) . '</li>';
 				} else {
-					echo '<li><span class="dashicons dashicons-minus"></span>' . $result . '</li>';
+					echo '<li><span class="dashicons dashicons-minus"></span>' . wp_kses_post( $result ) . '</li>';
 				}
 			}
 			echo '<ul>';

@@ -10,12 +10,9 @@ if (!defined('ABSPATH')) {
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/elementor-create-page', [
-    'label' => __('Elementor – Create / Update Page', domain: 'nibwp'),
-    'description' => __(
-        'Creates a new WordPress page (or updates an existing one) with structured Elementor section data. '
+    'label' => __('Elementor – Create / Update Page', 'nibwp'),
+    'description' => 'Creates a new WordPress page (or updates an existing one) with structured Elementor section data. '
         . 'The page is saved with Elementor edit-mode enabled so it opens directly in the Elementor editor.',
-        domain: 'nibwp',
-    ),
     'category' => 'elementor',
     'input_schema' => [
         'type' => 'object',
@@ -159,13 +156,13 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
     if (!defined('ELEMENTOR_VERSION')) {
         return new WP_Error(
             'elementor_not_active',
-            __('Elementor is not active on this site.', domain: 'nibwp'),
+            __('Elementor is not active on this site.', 'nibwp'),
         );
     }
 
     $page_title = trim((string) ($input['page_title'] ?? ''));
     if ($page_title === '') {
-        return new WP_Error('missing_title', __('page_title is required.', domain: 'nibwp'));
+        return new WP_Error('missing_title', __('page_title is required.', 'nibwp'));
     }
 
     // Only a default for a page being created. On an update, silence means
@@ -180,7 +177,7 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
     if ($post_id > 0) {
         $existing = get_post($post_id);
         if (!$existing) {
-            return new WP_Error('post_not_found', sprintf(__('Post %d not found.', domain: 'nibwp'), $post_id));
+            return new WP_Error('post_not_found', sprintf(__('Post %d not found.', 'nibwp'), $post_id));
         }
         wp_update_post([
             'ID' => $post_id,
@@ -212,7 +209,7 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
     $encoded = wp_json_encode($elementor_data);
 
     if ($encoded === false) {
-        return new WP_Error('json_encode_failed', __('Failed to encode Elementor data as JSON.', domain: 'nibwp'));
+        return new WP_Error('json_encode_failed', __('Failed to encode Elementor data as JSON.', 'nibwp'));
     }
 
     // wp_slash is not optional. update_metadata() runs wp_unslash() over the
@@ -237,11 +234,8 @@ function nibwp_elementor_create_page(array $input): array|WP_Error
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/elementor-create-widget', [
-    'label' => __('Elementor – Create Custom Widget', domain: 'nibwp'),
-    'description' => __(
-        'Generates a custom Elementor widget PHP class and writes it to the NIBWP sandbox directory so it is auto-loaded on every request.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Elementor – Create Custom Widget', 'nibwp'),
+    'description' => 'Generates a custom Elementor widget PHP class and writes it to the NIBWP sandbox directory so it is auto-loaded on every request.',
     'category' => 'elementor',
     'input_schema' => [
         'type' => 'object',
@@ -345,7 +339,7 @@ function nibwp_elementor_create_widget(array $input): array|WP_Error
     if (!defined('ELEMENTOR_VERSION')) {
         return new WP_Error(
             'elementor_not_active',
-            __('Elementor is not active on this site.', domain: 'nibwp'),
+            __('Elementor is not active on this site.', 'nibwp'),
         );
     }
 
@@ -353,11 +347,11 @@ function nibwp_elementor_create_widget(array $input): array|WP_Error
     $widget_title = trim((string) ($input['widget_title'] ?? ''));
 
     if ($widget_name === '' || $widget_title === '') {
-        return new WP_Error('missing_fields', __('widget_name and widget_title are required.', domain: 'nibwp'));
+        return new WP_Error('missing_fields', __('widget_name and widget_title are required.', 'nibwp'));
     }
 
     if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $widget_name)) {
-        return new WP_Error('invalid_name', __('widget_name must be lowercase alphanumeric with hyphens.', domain: 'nibwp'));
+        return new WP_Error('invalid_name', __('widget_name must be lowercase alphanumeric with hyphens.', 'nibwp'));
     }
 
     $widget_icon = (string) ($input['widget_icon'] ?? 'eicon-code');
@@ -473,7 +467,7 @@ PHP;
     $written = file_put_contents($file_path, $php, LOCK_EX);
 
     if ($written === false) {
-        return new WP_Error('write_failed', sprintf(__('Failed to write widget file: %s', domain: 'nibwp'), $file_path));
+        return new WP_Error('write_failed', sprintf(__('Failed to write widget file: %s', 'nibwp'), $file_path));
     }
 
     return [
@@ -487,11 +481,8 @@ PHP;
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/elementor-global-styles', [
-    'label' => __('Elementor – Global Styles', domain: 'nibwp'),
-    'description' => __(
-        'Manages Elementor global colors and fonts via the Kit system. Supports getting, setting, and adding global style items.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Elementor – Global Styles', 'nibwp'),
+    'description' => 'Manages Elementor global colors and fonts via the Kit system. Supports getting, setting, and adding global style items.',
     'category' => 'elementor',
     'input_schema' => [
         'type' => 'object',
@@ -579,7 +570,7 @@ function nibwp_elementor_global_styles(array $input): array|WP_Error
     if (!defined('ELEMENTOR_VERSION')) {
         return new WP_Error(
             'elementor_not_active',
-            __('Elementor is not active on this site.', domain: 'nibwp'),
+            __('Elementor is not active on this site.', 'nibwp'),
         );
     }
 
@@ -587,19 +578,19 @@ function nibwp_elementor_global_styles(array $input): array|WP_Error
     $type = (string) ($input['type'] ?? '');
 
     if (!in_array($action, ['get', 'set', 'add'], true)) {
-        return new WP_Error('invalid_action', __('action must be one of: get, set, add.', domain: 'nibwp'));
+        return new WP_Error('invalid_action', __('action must be one of: get, set, add.', 'nibwp'));
     }
     if (!in_array($type, ['colors', 'fonts'], true)) {
-        return new WP_Error('invalid_type', __('type must be one of: colors, fonts.', domain: 'nibwp'));
+        return new WP_Error('invalid_type', __('type must be one of: colors, fonts.', 'nibwp'));
     }
 
     if (in_array($action, ['set', 'add'], true) && empty($input['items'])) {
-        return new WP_Error('missing_items', __('items array is required for set/add actions.', domain: 'nibwp'));
+        return new WP_Error('missing_items', __('items array is required for set/add actions.', 'nibwp'));
     }
 
     $kit_id = (int) get_option('elementor_active_kit');
     if ($kit_id <= 0) {
-        return new WP_Error('no_kit', __('No active Elementor Kit found.', domain: 'nibwp'));
+        return new WP_Error('no_kit', __('No active Elementor Kit found.', 'nibwp'));
     }
 
     $page_settings = (array) get_post_meta($kit_id, '_elementor_page_settings', true);
@@ -651,11 +642,8 @@ function nibwp_elementor_global_styles(array $input): array|WP_Error
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/elementor-manage-templates', [
-    'label' => __('Elementor – Manage Templates', domain: 'nibwp'),
-    'description' => __(
-        'List, create, or retrieve Elementor templates from the template library (elementor_library post type).',
-        domain: 'nibwp',
-    ),
+    'label' => __('Elementor – Manage Templates', 'nibwp'),
+    'description' => 'List, create, or retrieve Elementor templates from the template library (elementor_library post type).',
     'category' => 'elementor',
     'input_schema' => [
         'type' => 'object',
@@ -743,14 +731,14 @@ function nibwp_elementor_manage_templates(array $input): array|WP_Error
     if (!defined('ELEMENTOR_VERSION')) {
         return new WP_Error(
             'elementor_not_active',
-            __('Elementor is not active on this site.', domain: 'nibwp'),
+            __('Elementor is not active on this site.', 'nibwp'),
         );
     }
 
     $action = (string) ($input['action'] ?? '');
 
     if (!in_array($action, ['list', 'create', 'get'], true)) {
-        return new WP_Error('invalid_action', __('action must be one of: list, create, get.', domain: 'nibwp'));
+        return new WP_Error('invalid_action', __('action must be one of: list, create, get.', 'nibwp'));
     }
 
     // ---- LIST ----
@@ -782,12 +770,12 @@ function nibwp_elementor_manage_templates(array $input): array|WP_Error
     if ($action === 'get') {
         $template_id = (int) ($input['template_id'] ?? 0);
         if ($template_id <= 0) {
-            return new WP_Error('missing_template_id', __('template_id is required for the get action.', domain: 'nibwp'));
+            return new WP_Error('missing_template_id', __('template_id is required for the get action.', 'nibwp'));
         }
 
         $post = get_post($template_id);
         if (!$post || $post->post_type !== 'elementor_library') {
-            return new WP_Error('not_found', sprintf(__('Elementor template %d not found.', domain: 'nibwp'), $template_id));
+            return new WP_Error('not_found', sprintf(__('Elementor template %d not found.', 'nibwp'), $template_id));
         }
 
         $raw_data = get_post_meta($template_id, '_elementor_data', true);
@@ -811,7 +799,7 @@ function nibwp_elementor_manage_templates(array $input): array|WP_Error
     $template_type = trim((string) ($input['template_type'] ?? 'page'));
 
     if ($title === '') {
-        return new WP_Error('missing_title', __('title is required for the create action.', domain: 'nibwp'));
+        return new WP_Error('missing_title', __('title is required for the create action.', 'nibwp'));
     }
 
     $post_id = wp_insert_post([
@@ -859,11 +847,8 @@ function nibwp_elementor_manage_templates(array $input): array|WP_Error
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/elementor-list-pages', [
-    'label' => __('Elementor – List Pages / Posts', domain: 'nibwp'),
-    'description' => __(
-        'List every post or page that was built with Elementor (presence of `_elementor_data` meta). Supports filters by post_type, status, search, and pagination.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Elementor – List Pages / Posts', 'nibwp'),
+    'description' => 'List every post or page that was built with Elementor (presence of `_elementor_data` meta). Supports filters by post_type, status, search, and pagination.',
     'category' => 'elementor',
     'input_schema' => [
         'type' => 'object',
@@ -954,11 +939,8 @@ function nibwp_elementor_list_pages(array $input): array|WP_Error
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/elementor-get-page-structure', [
-    'label' => __('Elementor – Get Page Structure', domain: 'nibwp'),
-    'description' => __(
-        'Read the raw Elementor data tree for an existing post (sections / columns / widgets) plus the page template and edit mode. Use this to inspect a page before mutating it.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Elementor – Get Page Structure', 'nibwp'),
+    'description' => 'Read the raw Elementor data tree for an existing post (sections / columns / widgets) plus the page template and edit mode. Use this to inspect a page before mutating it.',
     'category' => 'elementor',
     'input_schema' => [
         'type' => 'object',

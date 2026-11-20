@@ -1,139 +1,265 @@
-* {
-	margin: 0;
-	padding: 0;
+/*
+ * Public subscription pages (unsubscribe form, email preferences, and the
+ * confirmation): the shared layout. The form page loads this file first and
+ * adds unsubscribe-form.css on top.
+ */
+:root {
+	--ds-ink: #16112e;
+	--ds-muted: #6b6787;
+	--ds-line: #e9e6f2;
+	--ds-soft: #f8f7fc;
+	--ds-brand: #4b32b8;
+	--ds-brand-dark: #2d1b69;
+	--ds-brand-soft: #f1eefc;
+	--ds-danger: #c2410c;
+	--ds-danger-soft: #fff4ed;
+	--ds-success: #059669;
+	--ds-success-soft: #ecfdf5;
+}
+
+*,
+*::before,
+*::after {
 	box-sizing: border-box;
 }
 
+html,
 body {
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	min-height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+/* !important: wp_head() also prints the site theme's body styles. */
+html body {
+	min-height: 100vh !important;
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	margin: 0 !important;
+	padding: 48px 16px 32px !important;
+	background:
+		radial-gradient(900px 420px at 50% -120px, rgba(75, 50, 184, 0.10), transparent 70%),
+		#f5f4fa !important;
+	color: var(--ds-ink) !important;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+	font-size: 15px !important;
+	line-height: 1.55 !important;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* The sender: site logo or icon, and its name. */
+.ds-brand {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 20px;
+	gap: 10px;
+	margin-bottom: 24px;
+	color: var(--ds-ink);
+	font-size: 16px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.ds-brand img {
+	display: block;
+	max-height: 40px;
+	width: auto;
+}
+
+.ds-brand__mark {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	background: var(--ds-brand-dark);
+	color: #fff;
+	font-size: 16px;
+	font-weight: 700;
 }
 
 .unsubscribe-container {
-	background: white;
-	border-radius: 16px;
-	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-	max-width: 500px;
 	width: 100%;
-	padding: 48px 40px;
+	max-width: 520px;
+	padding: 36px 36px 32px;
+	border: 1px solid var(--ds-line);
+	border-radius: 20px;
+	background: #fff;
+	box-shadow: 0 1px 2px rgba(22, 17, 46, 0.04), 0 18px 40px -24px rgba(45, 27, 105, 0.35);
 	text-align: center;
-	animation: slideUp 0.5s ease-out;
+	animation: ds-rise 0.35s ease-out both;
 }
 
-@keyframes slideUp {
+@keyframes ds-rise {
 	from {
 		opacity: 0;
-		transform: translateY(30px);
+		transform: translateY(12px);
 	}
 	to {
 		opacity: 1;
-		transform: translateY(0);
+		transform: none;
 	}
 }
 
+.unsubscribe-container h1,
+.unsubscribe-container h3 {
+	margin: 0 0 8px;
+	color: var(--ds-ink);
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+}
+
+/* Confirmation page */
 .success-icon {
-	width: 80px;
-	height: 80px;
-	margin: 0 auto 24px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	animation: scaleIn 0.5s ease-out 0.2s both;
+	width: 64px;
+	height: 64px;
+	margin: 0 auto 20px;
+	border-radius: 50%;
+	background: var(--ds-success-soft);
+	color: var(--ds-success);
+	animation: ds-pop 0.4s ease-out 0.1s both;
 }
 
-@keyframes scaleIn {
+@keyframes ds-pop {
 	from {
-		transform: scale(0);
+		transform: scale(0.6);
+		opacity: 0;
 	}
 	to {
-		transform: scale(1);
+		transform: none;
+		opacity: 1;
 	}
 }
 
 .success-icon svg {
-	width: 40px;
-	height: 40px;
-	stroke: white;
-	stroke-width: 3;
+	width: 38px;
+	height: 38px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 4.5;
 	stroke-linecap: round;
 	stroke-linejoin: round;
-	fill: none;
 }
 
 .checkmark {
 	stroke-dasharray: 50;
 	stroke-dashoffset: 50;
-	animation: drawCheck 0.5s ease-out 0.5s forwards;
+	animation: ds-draw 0.45s ease-out 0.35s forwards;
 }
 
-@keyframes drawCheck {
+@keyframes ds-draw {
 	to {
 		stroke-dashoffset: 0;
 	}
 }
 
-h1 {
-	font-size: 28px;
-	font-weight: 700;
-	color: #1a202c;
-	margin-bottom: 16px;
-}
-
 .message {
-	font-size: 16px;
-	color: #4a5568;
-	line-height: 1.6;
-	margin-bottom: 32px;
+	margin: 0 0 12px;
+	color: var(--ds-muted);
+	font-size: 15px;
 }
 
 .home-button {
-	display: inline-block;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	color: white;
-	padding: 14px 32px;
-	border-radius: 8px;
-	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	margin-top: 12px;
+	padding: 0 22px;
+	border-radius: 10px;
+	background: var(--ds-brand-dark);
+	color: #fff;
+	font-size: 15px;
 	font-weight: 600;
-	font-size: 16px;
-	transition: transform 0.2s, box-shadow 0.2s;
-	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+	text-decoration: none;
+	transition: background 0.15s ease;
 }
 
-.home-button:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
-	color: white;
-}
-
-.home-button:active {
-	transform: translateY(0);
+.home-button:hover,
+.home-button:focus {
+	background: var(--ds-brand);
+	color: #fff;
 }
 
 .footer-note {
-	margin-top: 32px;
-	padding-top: 24px;
-	border-top: 1px solid #e2e8f0;
-	font-size: 14px;
-	color: #718096;
+	margin: 24px 0 0;
+	padding-top: 20px;
+	border-top: 1px solid var(--ds-line);
+	color: var(--ds-muted);
+	font-size: 13px;
 }
 
-@media (max-width: 480px) {
+.ds-resubscribe {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+}
+
+.ds-link-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--ds-brand);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ds-link-button:hover {
+	text-decoration: underline;
+}
+
+.ds-link-button:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+
+.ds-resubscribe-error {
+	flex-basis: 100%;
+	color: #b91c1c;
+}
+
+/* Under the card: why this page exists. */
+.ds-page-note {
+	max-width: 520px;
+	margin: 20px 0 0;
+	color: #8e8aa6;
+	font-size: 12px;
+	text-align: center;
+}
+
+@media (max-width: 560px) {
+	html body {
+		padding-top: 28px !important;
+	}
+
 	.unsubscribe-container {
-		padding: 32px 24px;
+		padding: 28px 20px 24px;
+		border-radius: 16px;
 	}
 
-	h1 {
-		font-size: 24px;
+	.unsubscribe-container h1,
+	.unsubscribe-container h3 {
+		font-size: 21px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.unsubscribe-container,
+	.success-icon,
+	.checkmark {
+		animation: none;
 	}
 
-	.message {
-		font-size: 15px;
+	.checkmark {
+		stroke-dashoffset: 0;
 	}
 }

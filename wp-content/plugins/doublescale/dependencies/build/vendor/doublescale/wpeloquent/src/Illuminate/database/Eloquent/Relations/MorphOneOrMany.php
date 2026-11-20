@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-abstract class MorphOneOrMany extends \Illuminate\Database\Eloquent\Relations\HasOneOrMany
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+abstract class MorphOneOrMany extends HasOneOrMany
 {
     /**
      * The foreign key type for the relationship.

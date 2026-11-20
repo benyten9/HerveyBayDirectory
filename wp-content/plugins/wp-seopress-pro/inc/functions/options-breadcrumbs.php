@@ -8,6 +8,22 @@
 
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
+/*
+ * The breadcrumb list identifies itself with the canonical of the page it
+ * describes, which this resolves.
+ *
+ * Required here rather than relied upon: `seopress_schema_current_canonical()`
+ * is otherwise only defined when options-automatic-rich-snippets.php loads one
+ * of the automatic schema files, which needs the rich snippets toggle on,
+ * "Enable Structured Data Types" on, a singular page and no per-post
+ * `_disable_all`. Everywhere else, and on every site with structured data off,
+ * the function did not exist and the list went out with no identity at all:
+ * category and taxonomy archives, author pages, the blog index, the
+ * WooCommerce shop. It only ever worked because both callbacks sit on wp_head
+ * priority 2 and happened to run in the right order.
+ */
+require_once __DIR__ . '/schemas/Canonical.php';
+
 /**
  * Display post parent items.
  *
@@ -44,6 +60,105 @@ function seopress_breadcrumbs_post_parent( $post, $crumbs ) {
 }
 
 /**
+ * The primary term steering the breadcrumb trail for a taxonomy.
+ *
+ * The trail read `_seopress_robots_primary_cat` whatever the taxonomy was,
+ * which is the only key the primary term selector wrote before Free 10.4.0.
+ * A site whose breadcrumb taxonomy is its own `doc_cat` or `genre` therefore
+ * had a selector that changed nothing: the value went to
+ * `_seopress_robots_primary_term_doc_cat` and nothing read it.
+ *
+ * `PrimaryTerm::get_primary_term()` answers the right key for the taxonomy,
+ * legacy one included, and already refuses a term that no longer exists, no
+ * longer belongs to the taxonomy or is no longer assigned to the post, which
+ * is what the inline checks here were doing.
+ *
+ * Guarded: PRO can run against a Free version that predates the helper, and
+ * the legacy read is what that version wrote.
+ *
+ * @since 10.4.0
+ *
+ * @param \WP_Post|int $post     The post.
+ * @param string       $taxonomy The taxonomy the trail is built from.
+ *
+ * @return \WP_Term|null
+ */
+function seopress_breadcrumbs_primary_term( $post, $taxonomy ) {
+	$post = get_post( $post );
+
+	if ( ! $post instanceof WP_Post || empty( $taxonomy ) ) {
+		return null;
+	}
+
+	$helper = '\SEOPress\Helpers\Metas\PrimaryTerm';
+
+	// is_callable() rather than class_exists(): it autoloads too, and answers
+	// false if the method is gone, where a call would be a fatal on every
+	// page showing the trail.
+	if ( ! is_callable( array( $helper, 'get_primary_term' ) ) || ! is_callable( array( $helper, 'get_meta_key' ) ) ) {
+		return seopress_breadcrumbs_legacy_primary_term( $post, $taxonomy );
+	}
+
+	$term = $helper::get_primary_term( $post->ID, $taxonomy );
+
+	if ( $term instanceof WP_Term ) {
+		return $term;
+	}
+
+	// Before 10.4.0 the legacy key steered whatever the breadcrumb taxonomy
+	// was, and it is still written for any post type by the CSV import, the
+	// robots REST route and sites using `seopress_primary_category_list` to
+	// offer their own taxonomy. Keep reading it while this taxonomy has no
+	// key of its own.
+	$key = $helper::get_meta_key( $taxonomy, $post->post_type );
+
+	if ( $helper::LEGACY_META_KEY !== $key && ! metadata_exists( 'post', $post->ID, $key ) ) {
+		return seopress_breadcrumbs_legacy_primary_term( $post, $taxonomy );
+	}
+
+	return null;
+}
+
+/**
+ * The primary term as a Free older than 10.4.0 stored it.
+ *
+ * One key for every taxonomy, read whatever the breadcrumb taxonomy is and
+ * validated against it. Used with a Free that predates the helper, and with
+ * the helper for a taxonomy that has no key of its own yet.
+ *
+ * @since 10.4.0
+ *
+ * @param \WP_Post|int $post     The post.
+ * @param string       $taxonomy The taxonomy the trail is built from.
+ *
+ * @return \WP_Term|null
+ */
+function seopress_breadcrumbs_legacy_primary_term( $post, $taxonomy ) {
+	$post = get_post( $post );
+
+	if ( ! $post instanceof WP_Post || empty( $taxonomy ) ) {
+		return null;
+	}
+
+	$stored = get_post_meta( $post->ID, '_seopress_robots_primary_cat', true );
+
+	// A real guard, not only an early exit: has_term() answers true for an
+	// empty term list as soon as the post has any term, so a 0 would get
+	// past it. Only the get_term() check below would then catch it.
+	if ( ! is_scalar( $stored ) || ! is_numeric( $stored ) || 0 >= (int) $stored ) {
+		return null;
+	}
+
+	if ( ! has_term( (int) $stored, $taxonomy, $post->ID ) ) {
+		return null;
+	}
+
+	$term = get_term( (int) $stored, $taxonomy );
+
+	return $term instanceof WP_Term ? $term : null;
+}
+
+/**
  * Display Term archive link.
  *
  * @param object $post The post object.
@@ -59,46 +174,13 @@ function seopress_breadcrumbs_term_link( $post, $crumbs, $options ) {
 	$terms_crumbs = array();
 
 	if ( 'none' != $taxonomy && null != $taxonomy ) { // If taxonomy set from breadcrumbs option.
-		if ( get_post_meta( $post->ID, '_seopress_robots_primary_cat', true ) ) {
-			$_seopress_robots_primary_cat = get_post_meta( $post->ID, '_seopress_robots_primary_cat', true );
+		$primary_term = seopress_breadcrumbs_primary_term( $post, $taxonomy );
 
-			if ( isset( $_seopress_robots_primary_cat ) && '' != $_seopress_robots_primary_cat && 'none' != $_seopress_robots_primary_cat ) {
-				$tax = get_term( $_seopress_robots_primary_cat, $taxonomy );
-				if ( ! is_wp_error( $tax ) && $tax && isset( $tax->term_id ) ) {
-					$terms = wp_get_post_terms(
-						$post->ID,
-						$taxonomy,
-						array(
-							'orderby'  => 'parent',
-							'order'    => 'DESC',
-							'child_of' => $tax->term_id,
-						)
-					);
-					$terms = function_exists( 'seopress_maybe_mangled_object_vars' ) ? seopress_maybe_mangled_object_vars( $terms ) : $terms; // Prevent PHP 8.1 warning.
-
-					$parent_term = get_term( $tax->term_id, $taxonomy );
-					if ( $parent_term && ! is_wp_error( $parent_term ) ) {
-						array_unshift( $terms, $parent_term );
-					}
-
-					$parent = current( $terms );
-
-					if ( false !== $parent ) {
-						$tax = $parent;
-					}
-				}
-			} else {
-				$terms = wp_get_post_terms(
-					$post->ID,
-					$taxonomy,
-					array(
-						'orderby' => 'parent',
-						'order'   => 'DESC',
-					)
-				);
-				$terms = function_exists( 'seopress_maybe_mangled_object_vars' ) ? seopress_maybe_mangled_object_vars( $terms ) : $terms; // Prevent PHP 8.1 warning.
-				$tax   = current( $terms );
-			}
+		if ( null !== $primary_term ) {
+			// The query for its children that used to run here could not change
+			// the result: the primary term was unshifted in front of them and
+			// current() always returned it.
+			$tax = $primary_term;
 		} else {
 			$terms = wp_get_post_terms(
 				$post->ID,
@@ -175,7 +257,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 		$inline_css                             = "<style>.breadcrumb {list-style:none;margin:0;padding-inline-start:0;}.breadcrumb li {margin:0;display:inline-block;position:relative;}.breadcrumb li::after{content:'" . $seopress_display_breadcrumbs_separator . "';margin-left:5px;margin-right:5px;}.breadcrumb li:last-child::after{display:none}</style>";
 		$inline_css                             = apply_filters( 'seopress_pro_breadcrumbs_css', $inline_css );
 		if ( $echo ) {
-			echo $inline_css;
+			echo $inline_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Inline stylesheet assembled above.
 		}
 		return $inline_css;
 	}
@@ -901,6 +983,16 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 						'name'     => 'Breadcrumb',
 						'@type'    => 'BreadcrumbList',
 					);
+
+					// The list had no identity of its own, although its items
+					// already followed a `<url>#fragment` convention. Without one,
+					// nothing on the page can reference the trail, and a second
+					// BreadcrumbList from a theme or another plugin is
+					// indistinguishable from this one.
+					$breadcrumb_canonical = seopress_schema_current_canonical();
+					if ( is_string( $breadcrumb_canonical ) && '' !== $breadcrumb_canonical ) {
+						$sp_breadcrumbs_json['@id'] = $breadcrumb_canonical . '#breadcrumb';
+					}
 				} else {
 					$sp_breadcrumbs_json = array(
 						'@context' => seopress_check_ssl() . 'schema.org',
@@ -916,8 +1008,16 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 				// it filterable so setups that reorder or prepend their own crumbs
 				// via that filter can keep the Home item in the structured data.
 				//
+				// Google does not require the top level path, so dropping it
+				// costs nothing on a trail with depth: "News > Article" says what
+				// "Home > News > Article" said. It costs everything on a page with
+				// no ancestors, where Home is all that stands between the current
+				// page and an empty trail: removing it leaves a single item naming
+				// the page the visitor is already on, and Google asks for at least
+				// two. So keep Home whenever it is the only other item.
+				//
 				// @param bool $remove_home Whether to strip the first (Home) crumb. Default true.
-				if ( apply_filters( 'seopress_pro_breadcrumbs_json_remove_home', true ) ) {
+				if ( count( $crumbs ) > 2 && apply_filters( 'seopress_pro_breadcrumbs_json_remove_home', true ) ) {
 					array_shift( $crumbs );
 				}
 
@@ -932,13 +1032,23 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 
 				foreach ( $crumbs as $key => $crumb ) {
 
+					// A schema "name" is text, not markup. The Home label is the one
+					// crumb deliberately left unsanitized, so a site can put an SVG icon
+					// or a <span> in it for the HTML trail (see
+					// seopress_pro_sanitize_options_fields()). An icon has nothing to say
+					// to a parser, and Google reads the tags as part of the crumb's name.
+					// Titles arrive carrying whatever whitespace an editor left in them,
+					// and the same call settles that: wp_strip_all_tags() collapses the
+					// runs and trims what is left, so a name is one line of text.
+					$crumb_name = isset( $crumb[0] ) ? wp_strip_all_tags( $crumb[0], true ) : '';
+
 					$sp_breadcrumbs_json['itemListElement'][ $key ] = array(
 						'@type'    => 'ListItem',
 						'position' => $key + 1,
 					);
 
 					if ( true === $old_markup ) {
-						$sp_breadcrumbs_json['itemListElement'][ $key ]['name'] = $crumb[0];
+						$sp_breadcrumbs_json['itemListElement'][ $key ]['name'] = $crumb_name;
 					}
 
 					// Check if URL is available.
@@ -948,25 +1058,35 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 							// JSON-LD, so the node had no identifier at all. Google
 							// reported "Missing field 'id' (in 'itemListElement.item')"
 							// and dropped the breadcrumb from rich results.
+							//
+							// The identifier is the crumb's own URL, with no
+							// fragment. Google documents "item" as the URL of the
+							// page the crumb stands for, and a "#webpage" fragment
+							// names a node about that page rather than the page.
+							// Our own output disagreed with itself over it: the
+							// Article schema identifies the current page as
+							// `<canonical>` through mainEntityOfPage, while its
+							// crumb called the same page `<canonical>#webpage`, so
+							// one page had two identities in one document.
 							$sp_breadcrumbs_json['itemListElement'][ $key ]['item'] = array(
 								'@type' => 'WebPage',
-								'@id'   => $crumb[1] . '#webpage',
+								'@id'   => $crumb[1],
 								'url'   => $crumb[1],
-								'name'  => $crumb[0],
+								'name'  => $crumb_name,
 							);
 						} else {
 							$sp_breadcrumbs_json['itemListElement'][ $key ]['item'] = $crumb[1];
 						}
-					} elseif ( false === $old_markup && ! empty( $crumb[0] ) ) {
+					} elseif ( false === $old_markup && '' !== $crumb_name ) {
 						// No URL for this crumb (e.g. CPT archive without an exposed
 						// permalink). Google requires an "item" field on every
 						// intermediate ListItem; only the terminal one may omit it.
 						if ( $key === $last_crumb_key ) {
-							$sp_breadcrumbs_json['itemListElement'][ $key ]['name'] = $crumb[0];
+							$sp_breadcrumbs_json['itemListElement'][ $key ]['name'] = $crumb_name;
 						} else {
 							$sp_breadcrumbs_json['itemListElement'][ $key ]['item'] = array(
 								'@type' => 'Thing',
-								'name'  => $crumb[0],
+								'name'  => $crumb_name,
 							);
 						}
 					}
@@ -989,7 +1109,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 			if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() ) {
 				if ( true === $echo ) {
 					do_action( 'seopress_breadcrumbs_before_html' );
-					echo $sp_breadcrumbs;
+					echo $sp_breadcrumbs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Breadcrumb markup assembled by the plugin, filterable by third parties.
 					do_action( 'seopress_breadcrumbs_after_html' );
 				} elseif ( false === $echo ) {
 					return do_action( 'seopress_breadcrumbs_before_html' ) . $sp_breadcrumbs . do_action( 'seopress_breadcrumbs_after_html' );
@@ -1018,7 +1138,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 		 * @return void
 		 */
 		function seopress_jsonld_breadcrumbs() {
-			echo seopress_display_breadcrumbs( 'json' );
+			echo seopress_display_breadcrumbs( 'json' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Breadcrumb markup assembled by the plugin, filterable by third parties.
 		}
 	}
 
@@ -1028,12 +1148,14 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getBreadcrumbsEnable() || 
 	 * @return void
 	 */
 	function seopress_storefront_display_breadcrumbs() {
+		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Breadcrumb markup assembled by the plugin, filterable by third parties.
 		echo '
 		<div class="storefront-breadcrumb">
 			<div class="col-full">
 				' . seopress_display_breadcrumbs( false ) . '
 			</div>
 		</div>';
+		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Notifications;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Notifications;
 
 interface Factory
 {

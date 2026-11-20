@@ -62,6 +62,16 @@ final class Module extends AbstractSalesChildModule {
 		return false;
 	}
 
+	/**
+	 * Recurring invoices are invoice data: nothing to do while Invoices &
+	 * Proposals (Documents) is off or its tables do not exist.
+	 *
+	 * @return bool
+	 */
+	private function invoices_ready(): bool {
+		return doublescale_module_data_ready( 'documents' );
+	}
+
 	public function restControllers(): array {
 		return array(
 			Rest\Controllers\RestInvoiceRecurrenceController::class,
@@ -70,6 +80,10 @@ final class Module extends AbstractSalesChildModule {
 
 	protected function boot_child( Container $container ): void {
 		unset( $container );
+
+		if ( ! $this->invoices_ready() ) {
+			return;
+		}
 
 		add_action( 'init', array( $this, 'register_schedules' ) );
 		add_filter( 'doublescale_sales_invoice_admin_shape', array( $this, 'attach_recurrence' ), 10, 2 );

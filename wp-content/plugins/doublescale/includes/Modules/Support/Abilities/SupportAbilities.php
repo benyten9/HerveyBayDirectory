@@ -15,6 +15,7 @@ use DoubleScale\Core\Abilities\AbilityResult;
 use DoubleScale\Core\Abilities\AbilityScope;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Support\Constants\TicketPriority;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
@@ -403,13 +404,24 @@ final class SupportAbilities {
 		$limit = AbilityResult::limit( $input, 25, 50 );
 		$types = self::resolve_kinds( $input['kinds'] ?? null );
 
-		$query = ActivityModel::forTicket( $ticket->id )
+		// Not forTicket(): its "oldest first" comes before the order below,
+		// which then took the thread's first messages instead of its latest.
+		$ticket_id = (int) $ticket->id;
+		$query     = ActivityModel::query()
+			->whereHas(
+				'associations',
+				static function ( $q ) use ( $ticket_id ) {
+					$q->where( 'entity_type', ActivityAssociationModel::ENTITY_TYPE_TICKET )
+						->where( 'entity_id', $ticket_id );
+				}
+			)
 			->whereIn( 'activity_type', $types )
 			->with( 'user' );
 
 		$total = (int) $query->count();
 
 		$rows = $query->orderBy( 'activity_date', 'desc' )
+			->orderBy( 'id', 'desc' )
 			->limit( $limit )
 			->get();
 

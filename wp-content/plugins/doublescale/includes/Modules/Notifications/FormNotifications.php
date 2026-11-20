@@ -13,6 +13,8 @@ use DoubleScale\Modules\Notifications\Services\NotificationService;
 use DoubleScale\Modules\Notifications\Services\NotificationCategories;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * FormNotifications class
  *

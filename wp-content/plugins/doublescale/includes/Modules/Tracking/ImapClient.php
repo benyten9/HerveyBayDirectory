@@ -754,7 +754,8 @@ class ImapClient {
 	 * Prefers HTML, falls back to plain text.
 	 *
 	 * Uses message number (not UID) because php-imap2's fetchbody does not
-	 * work correctly with FT_UID flag.
+	 * work correctly with FT_UID flag. Read with {@see self::fetch_part()},
+	 * which never marks the message as read.
 	 *
 	 * @param int $msgno IMAP message number.
 	 * @return string Email body content.
@@ -768,7 +769,7 @@ class ImapClient {
 
 		// Simple (non-multipart) message.
 		if ( empty( $structure->parts ) ) {
-			$body = imap2_fetchbody( $this->connection, $msgno, '1' );
+			$body = $this->fetch_part( $msgno, '1' );
 			return $this->decode_body( $body, $structure->encoding ?? 0 );
 		}
 
@@ -780,6 +781,50 @@ class ImapClient {
 
 		// Prefer HTML body, fall back to plain text.
 		return ! empty( $html_body ) ? $html_body : nl2br( esc_html( $plain_body ) );
+	}
+
+	/**
+	 * One part of a message, read without marking the message as read.
+	 *
+	 * Downloading a body with a plain IMAP `BODY[...]` sets the message's
+	 * \Seen flag on the server: a customer's own Gmail or Outlook inbox would
+	 * show mail as read before they opened it. ext-imap honours FT_PEEK;
+	 * php-imap2 ignores it (its fetchBody() always sends `BODY[...]`), so its
+	 * client is asked for `BODY.PEEK[...]` directly. The server's answer is
+	 * keyed `BODY[...]` as usual, so the part is read from `bodypart`.
+	 *
+	 * Never falls back to a fetch that marks the message read: a part that
+	 * can't be peeked comes back empty.
+	 *
+	 * @param int    $msgno   IMAP message number.
+	 * @param string $section MIME section, e.g. "1" or "1.2".
+	 * @return string|false The part's raw content, or false.
+	 */
+	private function fetch_part( $msgno, $section ) {
+		if ( ! $this->connection ) {
+			return false;
+		}
+
+		if ( $this->is_native_imap_connection() && function_exists( 'imap_fetchbody' ) ) {
+			return imap_fetchbody( $this->connection, (int) $msgno, (string) $section, FT_PEEK );
+		}
+
+		if ( is_object( $this->connection ) && method_exists( $this->connection, 'getClient' ) && method_exists( $this->connection, 'getMailboxName' ) ) {
+			$client = $this->connection->getClient();
+			if ( ! is_object( $client ) || ! method_exists( $client, 'fetch' ) ) {
+				return false;
+			}
+			$messages = $client->fetch( $this->connection->getMailboxName(), (int) $msgno, false, array( 'BODY.PEEK[' . $section . ']' ) );
+			if ( is_array( $messages ) && isset( $messages[ $msgno ] ) && is_object( $messages[ $msgno ] ) ) {
+				$parts = isset( $messages[ $msgno ]->bodypart ) && is_array( $messages[ $msgno ]->bodypart ) ? $messages[ $msgno ]->bodypart : array();
+				if ( isset( $parts[ $section ] ) ) {
+					return (string) $parts[ $section ];
+				}
+			}
+			return false;
+		}
+
+		return false;
 	}
 
 	/**
@@ -811,7 +856,7 @@ class ImapClient {
 				continue;
 			}
 
-			$body    = imap2_fetchbody( $this->connection, $msgno, $section );
+			$body    = $this->fetch_part( $msgno, $section );
 			$decoded = $this->decode_body( $body, $part->encoding ?? 0 );
 
 			if ( 'HTML' === $subtype && empty( $html_body ) ) {
@@ -898,7 +943,7 @@ class ImapClient {
 				continue;
 			}
 
-			$raw     = imap2_fetchbody( $this->connection, $msgno, $section );
+			$raw     = $this->fetch_part( $msgno, $section );
 			$content = $this->decode_body( $raw, $part->encoding ?? 0 );
 			if ( '' === $content ) {
 				continue;

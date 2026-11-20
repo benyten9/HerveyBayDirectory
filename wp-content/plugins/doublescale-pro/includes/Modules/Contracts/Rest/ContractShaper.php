@@ -125,7 +125,8 @@ final class ContractShaper {
 	 */
 	public static function can_sign( ContractModel $contract, ?bool $is_expired = null ): bool {
 		$is_expired = null === $is_expired ? self::is_expired( $contract ) : $is_expired;
-		if ( $is_expired ) {
+		// Signed once: the team moving it to Active never asks for it again.
+		if ( $is_expired || ! empty( $contract->signed_at ) ) {
 			return false;
 		}
 

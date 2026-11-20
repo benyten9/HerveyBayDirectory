@@ -199,7 +199,7 @@ class GetSEOIssues implements ExecuteHooks {
 
 		$sql = $wpdb->prepare( "SELECT * FROM $table_name WHERE post_id = %d", absint( $id ) );
 
-		$data = $wpdb->get_results( $sql );
+		$data = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 		wp_send_json_success( $data );
 		return;
@@ -248,7 +248,7 @@ class GetSEOIssues implements ExecuteHooks {
 			$sql .= ' WHERE ' . implode( ' AND ', $where_clauses );
 		}
 
-		$data = $wpdb->get_results( $sql );
+		$data = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Every WHERE clause is prepared individually above, only the fragments are concatenated.
 
 		wp_send_json_success( $data );
 		return;

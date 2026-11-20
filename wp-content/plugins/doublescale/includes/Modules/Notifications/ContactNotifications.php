@@ -12,6 +12,9 @@ namespace DoubleScale\Modules\Notifications;
 use DoubleScale\Modules\Notifications\Services\NotificationService;
 use DoubleScale\Modules\Notifications\Services\NotificationCategories;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Core\UserRoles\Permissions;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * ContactNotifications class
@@ -21,15 +24,24 @@ use DoubleScale\Modules\Contacts\Models\ContactModel;
  * - Contact unsubscribed
  * - Contact bounced (hard bounce)
  * - Contact export completed
+ * - Client uploaded or removed a file in the client portal
  *
  * @listens doublescale_contact_subscribe Fired from ContactModel
  * @listens doublescale_contact_unsubscribe Fired from ContactModel
  * @listens doublescale_contact_bounced Fired from BounceHandler
  * @listens doublescale_export_completed Fired from Export class
+ * @listens doublescale_contact_file_attached Fired from PortalFileService (actor: contact)
+ * @listens doublescale_contact_file_removed Fired from PortalFileService (actor: contact)
  *
  * @since 1.2.0
  */
 class ContactNotifications {
+
+	/**
+	 * Background job that tells the team about a client's portal file: the
+	 * client's upload never waits for one email per manager.
+	 */
+	public const PORTAL_FILE_HOOK = 'doublescale_notify_portal_file';
 
 	/**
 	 * Constructor - register hooks
@@ -41,6 +53,9 @@ class ContactNotifications {
 		add_action( 'doublescale_contact_unsubscribe', array( $this, 'on_contact_unsubscribed' ), 10, 1 );
 		add_action( 'doublescale_contact_bounced', array( $this, 'on_contact_bounced' ), 10, 3 );
 		add_action( 'doublescale_export_completed', array( $this, 'on_export_completed' ), 10, 3 );
+		add_action( 'doublescale_contact_file_attached', array( $this, 'on_portal_file_attached' ), 10, 3 );
+		add_action( 'doublescale_contact_file_removed', array( $this, 'on_portal_file_removed' ), 10, 3 );
+		add_action( self::PORTAL_FILE_HOOK, array( $this, 'send_portal_file_notice' ), 10, 3 );
 	}
 
 	/**
@@ -92,6 +107,99 @@ class ContactNotifications {
 			$this->get_contact_link( $contact ),
 			NotificationCategories::CONTACTS_UNSUBSCRIBED
 		);
+	}
+
+	/**
+	 * Handle a file the client uploaded in the client portal
+	 *
+	 * Admin uploads fire the same hook without the contact actor: only the
+	 * client's own uploads notify.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param ContactModel $contact    The contact.
+	 * @param object       $attachment The attachment row.
+	 * @param array        $context    Context; actor 'contact' for portal uploads.
+	 */
+	public function on_portal_file_attached( $contact, $attachment, $context = array() ) {
+		if ( ! $contact || 'contact' !== ( $context['actor'] ?? '' ) ) {
+			return;
+		}
+
+		$this->notify_portal_file(
+			__( 'New file from a client', 'doublescale' ),
+			/* translators: 1: contact name, 2: file name */
+			sprintf( __( '%1$s uploaded "%2$s" in the client portal.', 'doublescale' ), $this->get_contact_name( $contact ), $attachment->file_name ?? '' ),
+			$contact
+		);
+	}
+
+	/**
+	 * Handle a file the client removed in the client portal
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param ContactModel $contact    The contact.
+	 * @param object       $attachment The attachment row (about to be deleted).
+	 * @param array        $context    Context; actor 'contact' for portal removals.
+	 */
+	public function on_portal_file_removed( $contact, $attachment, $context = array() ) {
+		if ( ! $contact || 'contact' !== ( $context['actor'] ?? '' ) ) {
+			return;
+		}
+
+		$this->notify_portal_file(
+			__( 'A client removed a file', 'doublescale' ),
+			/* translators: 1: contact name, 2: file name */
+			sprintf( __( '%1$s removed "%2$s" from the client portal.', 'doublescale' ), $this->get_contact_name( $contact ), $attachment->file_name ?? '' ),
+			$contact
+		);
+	}
+
+	/**
+	 * Notify administrators and CRM managers about a client portal file,
+	 * linking to the contact's Attachments tab.
+	 *
+	 * @since 1.5.1
+	 *
+	 * @param string       $title   Notification title.
+	 * @param string       $message Notification message.
+	 * @param ContactModel $contact The contact.
+	 */
+	private function notify_portal_file( $title, $message, $contact ) {
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action( self::PORTAL_FILE_HOOK, array( (int) $contact->id, (string) $title, (string) $message ), 'doublescale' );
+			return;
+		}
+		$this->send_portal_file_notice( (int) $contact->id, $title, $message );
+	}
+
+	/**
+	 * Tell administrators and CRM managers (bell, email as each chose).
+	 *
+	 * @param int    $contact_id Contact.
+	 * @param string $title      Notification title.
+	 * @param string $message    Notification message.
+	 * @return void
+	 */
+	public function send_portal_file_notice( $contact_id, $title, $message ) {
+		$contact_id = (int) $contact_id;
+		$links      = array(
+			'web'    => admin_url( 'admin.php?page=doublescale&path=contacts/' . $contact_id . '/attachments' ),
+			'mobile' => '/contacts/' . $contact_id,
+		);
+
+		$users = get_users(
+			array(
+				'capability__in' => array( 'doublescale_access' ),
+				'fields'         => 'ID',
+			)
+		);
+		foreach ( $users as $user_id ) {
+			if ( Permissions::has_crm_manager_access( (int) $user_id ) ) {
+				NotificationService::create( (int) $user_id, $title, $message, $links, NotificationCategories::CONTACTS_PORTAL_FILES );
+			}
+		}
 	}
 
 	/**

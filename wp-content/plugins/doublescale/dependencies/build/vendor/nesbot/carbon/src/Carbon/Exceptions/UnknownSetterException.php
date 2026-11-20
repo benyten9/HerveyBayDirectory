@@ -8,11 +8,11 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Exceptions;
+namespace DoubleScale\Vendor\Carbon\Exceptions;
 
 use InvalidArgumentException as BaseInvalidArgumentException;
 use Throwable;
-class UnknownSetterException extends BaseInvalidArgumentException implements \Carbon\Exceptions\BadMethodCallException
+class UnknownSetterException extends BaseInvalidArgumentException implements BadMethodCallException
 {
     /**
      * The setter.

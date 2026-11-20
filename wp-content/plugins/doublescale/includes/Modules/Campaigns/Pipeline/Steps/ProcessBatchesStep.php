@@ -90,12 +90,31 @@ class ProcessBatchesStep implements PipelineStepInterface {
 				break;
 			}
 
+			// Shared daily cap used up, or workflow messages go first: pause
+			// here and resume later instead of failing anyone.
+			$wait = self::wait_reason( $ctx );
+			if ( $wait ) {
+				$ctx->wait_until( $wait['at'], $wait['reason'] );
+				return;
+			}
+
+			// Never send past today's cap: a page holds at most what is left of it.
+			$page_size = $batch_size;
+			if ( $ctx->rate_limiter && method_exists( $ctx->rate_limiter, 'get_daily_limit' ) ) {
+				$daily_limit = $ctx->rate_limiter->get_daily_limit( $ctx->channel );
+				if ( null !== $daily_limit ) {
+					$page_size = max( 1, min( $batch_size, $daily_limit - $ctx->rate_limiter->get_daily_count( $ctx->channel ) ) );
+				}
+			}
+
 			// Fetch the next batch of contacts.
+			// A Campaign Agent's campaign reaches only the contacts they own.
 			$contacts = $ctx->contact_filter->get_contacts_for_processing(
 				$ctx->channel,
 				$ctx->filters,
 				$ctx->offset,
-				$batch_size
+				$page_size,
+				\DoubleScale\Core\UserRoles\Permissions::campaign_audience_owner( (int) ( $ctx->campaign->created_by ?? 0 ) )
 			);
 
 			if ( $contacts->isEmpty() ) {
@@ -120,5 +139,37 @@ class ProcessBatchesStep implements PipelineStepInterface {
 		}
 
 		$next();
+	}
+
+	/**
+	 * Whether the campaign should pause before its next page, and until when.
+	 *
+	 * @param CampaignContext $ctx Campaign context.
+	 * @return array{at:int, reason:string}|null
+	 */
+	public static function wait_reason( CampaignContext $ctx ) {
+		$limiter = $ctx->rate_limiter;
+		if ( $limiter && method_exists( $limiter, 'is_daily_cap_reached' ) && $limiter->is_daily_cap_reached( $ctx->channel ) ) {
+			return array(
+				'at'     => $limiter->next_reset_at()->getTimestamp() + MINUTE_IN_SECONDS,
+				'reason' => 'daily_limit_reached',
+			);
+		}
+
+		/**
+		 * Whether a campaign should give way this run (Pro: workflow messages
+		 * waiting in the send queue go first on the shared limits).
+		 *
+		 * @param bool   $yield   Default false.
+		 * @param string $channel email|sms|whatsapp.
+		 */
+		if ( apply_filters( 'doublescale_campaign_should_yield', false, (string) $ctx->channel ) ) {
+			return array(
+				'at'     => time() + MINUTE_IN_SECONDS,
+				'reason' => 'workflow_messages_first',
+			);
+		}
+
+		return null;
 	}
 }

@@ -198,9 +198,10 @@ class Account_API {
 	/**
 	 * Get user accounts
 	 *
+	 * @param bool $retried Whether this is the call after a token refresh.
 	 * @return object|WP_Error
 	 */
-	public function get_accounts() {
+	public function get_accounts( $retried = false ) {
 		$response = wp_remote_get(
 			"https://mail.zoho.{$this->region}/api/accounts",
 			array(
@@ -220,12 +221,12 @@ class Account_API {
 		$body          = wp_remote_retrieve_body( $response );
 		$response_code = wp_remote_retrieve_response_code( $response );
 
-		if ( $response_code == 401 ) {
-			$refreshed = $this->refresh_tokens();
-			if ( ! $refreshed ) {
+		if ( 401 === (int) $response_code ) {
+			// One refresh, then ask again once: a token Zoho keeps rejecting is an error, not a loop.
+			if ( $retried || ! $this->refresh_tokens() ) {
 				return new WP_Error( 'refresh_error', __( 'Could not refresh tokens.', 'doublescale' ) );
 			}
-			return $this->get_profile();
+			return $this->get_accounts( true );
 		}
 
 		if ( empty( $body ) ) {

@@ -209,7 +209,7 @@ class SaasFormAutomationWebhookSync {
 	 * @return bool
 	 */
 	private static function form_connection_exists( $slug, $form_id ) {
-		if ( ! class_exists( FormModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'forms' ) ) {
 			return false;
 		}
 

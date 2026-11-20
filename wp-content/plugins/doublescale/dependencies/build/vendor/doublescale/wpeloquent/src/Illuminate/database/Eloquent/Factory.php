@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 use ArrayAccess;
 use DoubleScale\Vendor\Faker\Generator as Faker;
@@ -226,7 +226,7 @@ class Factory implements ArrayAccess
      */
     public function of($class, $name = 'default')
     {
-        return new \Illuminate\Database\Eloquent\FactoryBuilder($class, $name, $this->definitions, $this->states, $this->afterMaking, $this->afterCreating, $this->faker);
+        return new FactoryBuilder($class, $name, $this->definitions, $this->states, $this->afterMaking, $this->afterCreating, $this->faker);
     }
     /**
      * Load factories from path.

@@ -30,6 +30,33 @@ class Redirections implements ExecuteHooks {
 	public function register() {
 		register_rest_route(
 			'seopress/v1',
+			'/redirections/post-conflict',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'process_post_conflict' ),
+				'permission_callback' => array( $this, 'permission_post_conflict' ),
+				'args'                => array(
+					'post_id' => array(
+						'required'          => true,
+						'validate_callback' => function ( $value ) {
+							return is_numeric( $value ) && 0 < (int) $value;
+						},
+						'sanitize_callback' => 'absint',
+					),
+					'url' => array(
+						'required'          => true,
+						'validate_callback' => function ( $value ) {
+							return is_string( $value ) && strlen( $value ) <= 2048
+								&& in_array( wp_parse_url( $value, PHP_URL_SCHEME ), array( 'http', 'https' ), true )
+								&& wp_parse_url( home_url(), PHP_URL_HOST ) === wp_parse_url( $value, PHP_URL_HOST );
+						},
+						'sanitize_callback' => 'esc_url_raw',
+					),
+				),
+			)
+		);
+		register_rest_route(
+			'seopress/v1',
 			'/redirections',
 			array(
 				'methods'             => 'GET',
@@ -816,7 +843,12 @@ class Redirections implements ExecuteHooks {
 			// an empty string and the redirection was created with no origin at
 			// all — silently, with a 201 and an `(empty)` row in the list.
 			// Pasting the URL of any page whose slug is not ASCII was enough.
-			$origin = seopress_pro_redirection_origin_path( $origin );
+			$raw_origin = $origin;
+			$origin     = seopress_pro_redirection_origin_path( $origin );
+			// Keep an explicit homepage distinct from invalid or blank origins.
+			if ( '' === trim( seopress_pro_strip_home_path( $origin ), '/' ) && ( '' !== $origin || '/' === $raw_origin || wp_parse_url( $raw_origin, PHP_URL_HOST ) ) ) {
+				$origin = '/';
+			}
 		}
 
 		// Do NOT use sanitize_text_field() here: it runs _sanitize_text_fields(),
@@ -1126,6 +1158,26 @@ class Redirections implements ExecuteHooks {
 		return new \WP_REST_Response( $result );
 	}
 
+	/** Allow authors to check their own content without exposing redirect records. */
+	public function permission_post_conflict( \WP_REST_Request $request ) {
+		$post = get_post( (int) $request->get_param( 'post_id' ) );
+		return $post && is_post_type_viewable( $post->post_type ) && current_user_can( 'edit_post', $post->ID );
+	}
+
+	/** Check the first matching rule, without making any HTTP request. */
+	public function process_post_conflict( \WP_REST_Request $request ) {
+		if ( ! $this->permission_post_conflict( $request ) ) {
+			return new \WP_Error( 'rest_forbidden', __( 'You cannot edit this post.', 'wp-seopress-pro' ), array( 'status' => rest_authorization_required_code() ) );
+		}
+		$match = null;
+		if ( '1' === seopress_get_toggle_option( '404' ) ) {
+			$match = $this->find_matching_redirection( $this->normalize_origin( (string) $request->get_param( 'url' ) ) );
+		}
+		$conflict = $match && ( in_array( $match['type'], array( '410', '451' ), true )
+			|| ( in_array( $match['type'], array( '301', '302', '307' ), true ) && '' !== trim( $match['destination'] ) ) );
+		return new \WP_REST_Response( array( 'conflict' => (bool) $conflict ) );
+	}
+
 	/**
 	 * Find a matching redirection for a given path, following redirect chains.
 	 *
@@ -1176,73 +1228,47 @@ class Redirections implements ExecuteHooks {
 	}
 
 	/**
-	 * Find the first redirection that matches a given path.
+	 * Find a stored homepage rule without treating empty titles as origins.
 	 *
-	 * Tries exact match first, then falls back to regex patterns.
+	 * Legacy hostname rules retain precedence over the explicit slash origin.
 	 *
-	 * @param string $path Normalized path.
-	 *
-	 * @return array|null { id, origin, destination, type, regex, matched_by, replaced }
+	 * @param bool $has_query Whether the requested homepage has parameters.
+	 * @return \WP_Post[] At most one enabled post.
 	 */
-	/**
-	 * Enabled redirections whose origin is the site root.
-	 *
-	 * `WP_Query` cannot express "an empty title": passing one drops the clause
-	 * and returns everything, which is the whole bug this guards against. The
-	 * lookup is therefore spelled out, and covers the two shapes the root is
-	 * stored under, an empty title and a bare slash.
-	 *
-	 * @since 10.2.0
-	 *
-	 * @return \WP_Post[] At most one post, to mirror the caller's expectations.
-	 */
-	private function find_root_redirections() {
-		global $wpdb;
+	private function find_root_redirections( $has_query = false ) {
+		$host       = wp_parse_url( home_url(), PHP_URL_HOST );
+		$candidates = $host ? array( $host . '/', $host, '/' ) : array( '/' );
 
-		$id = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- no cache layer for this admin-only tester.
-			"SELECT p.ID
-			FROM {$wpdb->posts} AS p
-			INNER JOIN {$wpdb->postmeta} AS pm ON pm.post_id = p.ID
-			WHERE p.post_type = 'seopress_404'
-			AND p.post_status = 'publish'
-			AND p.post_title IN ( '', '/' )
-			AND pm.meta_key = '_seopress_redirections_enabled'
-			AND pm.meta_value = 'yes'
-			ORDER BY p.ID ASC
-			LIMIT 1"
-		);
-
-		if ( ! $id ) {
-			return array();
+		foreach ( $candidates as $candidate ) {
+			$posts = get_posts(
+				array(
+					'post_type'      => 'seopress_404',
+					'post_status'    => 'publish',
+					'title'          => $candidate,
+					'posts_per_page' => 1,
+					'meta_key'       => '_seopress_redirections_enabled',
+					'meta_value'     => 'yes',
+				)
+			);
+			if ( ! empty( $posts ) ) {
+				$mode = get_post_meta( $posts[0]->ID, '_seopress_redirections_param', true );
+				if ( $has_query && ( '' === $mode || 'exact_match' === $mode ) ) {
+					return array();
+				}
+				return $posts;
+			}
 		}
-
-		$post = get_post( (int) $id );
-
-		return $post instanceof \WP_Post ? array( $post ) : array();
+		return array();
 	}
 
 	private function find_matching_redirection( $path ) {
-		// Exact match first.
-		//
-		// `WP_Query` applies its `title` clause only when the value is not an
-		// empty string. `normalize_origin()` trims the leading slash to line the
-		// input up with how origins are stored, so the root path arrives here as
-		// an empty string: the criterion then disappeared and the query
-		// degraded into "the first published enabled redirection". Testing `/`
-		// reported a match against an entry that had nothing to do with it, and
-		// disabling that entry simply promoted the next one.
-		//
-		// The root is a legitimate origin to store, and it exists under two
-		// shapes: `processCreate()` normalises `/` down to an empty title, while
-		// older rows and imports keep the slash. Both are looked up explicitly.
-		//
-		// The install path is optional in a stored origin, so the tester has to
-		// look the input up under every shape the front end does — otherwise it
-		// reports no match on a redirection that fires, or the reverse, which is
-		// worse than no tester at all. See seopress_pro_origin_path_variants().
-		$exact = array();
+		// Blank origins must never become a wildcard WP_Query title lookup.
+		$exact     = array();
+		$root_path = seopress_pro_strip_home_path( seopress_pro_strip_query_string( $path ) );
+		$is_root   = '' !== $path && '' === trim( $root_path, '/' );
+		$has_query = false !== strpos( $path, '?' );
 
-		if ( '' === $path ) {
+		if ( $is_root && ! $has_query ) {
 			$exact = $this->find_root_redirections();
 		} else {
 			foreach ( seopress_pro_origin_path_variants( $path ) as $candidate ) {
@@ -1271,17 +1297,25 @@ class Redirections implements ExecuteHooks {
 				}
 			}
 		}
+		if ( empty( $exact ) && $is_root && $has_query ) {
+			$exact = $this->find_root_redirections( true );
+		}
 		if ( ! empty( $exact ) ) {
-			$p    = $exact[0];
-			$type = get_post_meta( $p->ID, '_seopress_redirections_type', true );
+			$p           = $exact[0];
+			$type        = get_post_meta( $p->ID, '_seopress_redirections_type', true );
+			$destination = get_post_meta( $p->ID, '_seopress_redirections_value', true );
+			if ( $is_root && $has_query && 'with_ignored_param' === get_post_meta( $p->ID, '_seopress_redirections_param', true ) ) {
+				$query       = substr( $path, strpos( $path, '?' ) + 1 );
+				$destination = add_query_arg( $query, '', $destination );
+			}
 			return array(
 				'id'            => (int) $p->ID,
 				'origin'        => $p->post_title,
-				'destination'   => get_post_meta( $p->ID, '_seopress_redirections_value', true ),
+				'destination'   => $destination,
 				'type'          => ! empty( $type ) ? $type : '301',
 				'regex'         => false,
 				'matched_by'    => 'exact',
-				'replaced'      => get_post_meta( $p->ID, '_seopress_redirections_value', true ),
+				'replaced'      => $destination,
 				'logged_status' => $this->get_logged_status( $p->ID ),
 			);
 		}
@@ -1307,59 +1341,65 @@ class Redirections implements ExecuteHooks {
 				),
 			)
 		);
-		// The front-end matches patterns against the request URI, which always
-		// carries a leading slash. Exact-match titles are stored without one, so
-		// $path has had it trimmed; put it back for the regex comparison only.
-		// Otherwise a pattern anchored on `/` would redirect on the site while
-		// this tester reported no match, which is worse than no tester at all.
-		//
-		// And under both shapes, like checkRegexRedirect(): a pattern anchored on
-		// a subsite (`^/fr/support/`) matches only the one that kept that path.
-		$regex_paths = array();
-		foreach ( seopress_pro_origin_path_variants( $path ) as $candidate ) {
-			$regex_paths[ '/' . ltrim( $candidate, '/' ) ] = true;
+		// Model WP::parse_request(): trim the path before decoding, leaving the
+		// query in place. Otherwise a catch-all captures a slash the frontend
+		// never sees, and a newer slash rule can incorrectly outrank an old match.
+		$separator  = strpos( $path, '?' );
+		$query      = false === $separator ? '' : substr( $path, $separator + 1 );
+		$path       = false === $separator ? $path : substr( $path, 0, $separator );
+		$with_query = array();
+		$paths      = array();
+		foreach ( seopress_pro_origin_path_variants( trim( $path, '/' ) ) as $candidate ) {
+			$url = add_query_arg( $query, '', '/' . trim( $candidate, '/' ) );
+			// Pasted Unicode is not necessarily encoded like a browser request.
+			// Protect UTF-8 bytes from parse_url() before decoding the components.
+			$url = preg_replace_callback(
+				'/[\x80-\xFF]+/',
+				static function ( $matches ) {
+					return rawurlencode( $matches[0] );
+				},
+				$url
+			);
+			$parts        = seopress_pro_parse_url_decoded( $url );
+			$uri          = ! empty( $parts['path'] ) ? $parts['path'] : '/';
+			$with_query[] = apply_filters( 'redirection_get_current_url', $uri . ( ! empty( $parts['query'] ) ? '?' . $parts['query'] : '' ) );
+			if ( '' !== $query ) {
+				$paths[] = apply_filters( 'redirection_get_current_url', $uri );
+			}
 		}
-		$regex_paths = array_keys( $regex_paths );
+		$candidate_groups = array( array_unique( $with_query ) );
+		if ( '' !== $query ) {
+			$candidate_groups[] = array_unique( $paths );
+		}
 
-		foreach ( $regex_posts as $p ) {
-			$pattern = $p->post_title;
-			if ( '' === $pattern ) {
-				continue;
+		// Keep session-scoped rules visible in the diagnostic, but share the
+		// frontend's rule selection, fallback priority and capture handling.
+		$regex_posts = array_filter(
+			$regex_posts,
+			static function ( $post ) {
+				return '' !== $post->post_title;
 			}
-			// Built by the front-end service itself, so this tester cannot drift
-			// away from what visitors will actually get.
-			$delimited = ( new \SEOPressPro\Services\Redirection() )->buildRegexPattern( $pattern );
-
-			$matched = 0;
-			$matches = array();
-			foreach ( $regex_paths as $regex_path ) {
-				// Silence warnings on invalid user patterns — we just want to know if it matches.
-				$matched = @preg_match( $delimited, $regex_path, $matches ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-				if ( 1 === $matched ) {
-					break;
-				}
+		);
+		$service = new \SEOPressPro\Services\Redirection();
+		$result  = $service->match_regex_candidates( $candidate_groups, $regex_posts );
+		if ( null !== $result ) {
+			$p        = $result['redirection'];
+			$dest     = get_post_meta( $p->ID, '_seopress_redirections_value', true );
+			$replaced = $dest;
+			foreach ( $result['matches'] as $i => $capture ) {
+				$replaced = str_replace( '$' . $i, $capture, $replaced );
 			}
-
-			if ( 1 === $matched ) {
-				$dest     = get_post_meta( $p->ID, '_seopress_redirections_value', true );
-				$replaced = $dest;
-				if ( ! empty( $matches ) && is_string( $dest ) ) {
-					foreach ( $matches as $i => $capture ) {
-						$replaced = str_replace( '$' . $i, $capture, $replaced );
-					}
-				}
-				$type = get_post_meta( $p->ID, '_seopress_redirections_type', true );
-				return array(
-					'id'            => (int) $p->ID,
-					'origin'        => $pattern,
-					'destination'   => $dest,
-					'type'          => ! empty( $type ) ? $type : '301',
-					'regex'         => true,
-					'matched_by'    => 'regex',
-					'replaced'      => $replaced,
-					'logged_status' => $this->get_logged_status( $p->ID ),
-				);
-			}
+			$type = get_post_meta( $p->ID, '_seopress_redirections_type', true );
+			return array(
+				'id'            => (int) $p->ID,
+				'origin'        => $p->post_title,
+				'destination'   => $dest,
+				'type'          => ! empty( $type ) ? $type : '301',
+				'regex'         => true,
+				'matched_by'    => 'regex',
+				'replaced'      => $replaced,
+				'logged_status' => $this->get_logged_status( $p->ID ),
+			);
 		}
 
 		return null;

@@ -394,7 +394,7 @@ add_filter( 'manage_edit-seopress_schemas_columns', 'seopress_schemas_columns' )
 function seopress_schemas_display_column( $column, $post_id ) {
 	if ( 'seopress_schemas_type' == $column ) {
 		if ( get_post_meta( $post_id, '_seopress_pro_rich_snippets_type', true ) ) {
-			echo get_post_meta( $post_id, '_seopress_pro_rich_snippets_type', true );
+			echo esc_html( get_post_meta( $post_id, '_seopress_pro_rich_snippets_type', true ) );
 		}
 	}
 	if ( 'seopress_schemas_cpt' == $column ) {
@@ -437,7 +437,7 @@ function seopress_schemas_display_column( $column, $post_id ) {
 				$html .= esc_html__( 'or', 'wp-seopress-pro' );
 			}
 			$html = trim( $html, esc_html__( 'or', 'wp-seopress-pro' ) );
-			echo $html;
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Admin markup assembled above, its dynamic parts already escaped.
 		}
 	}
 }
@@ -564,11 +564,11 @@ function seopress_schemas_cpt( $post ) {
 		// Custom field.
 		$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_cf', true );
 
-		$seopress_schemas_cf  = '<select name="' . $post_meta_name . '_cf" class="cf">';
+		$seopress_schemas_cf  = '<select name="' . esc_attr( $post_meta_name ) . '_cf" class="cf">';
 		$seopress_schemas_cf .= '<option value=""></option>';
 
 		foreach ( $seopress_get_custom_fields as $value ) {
-			$seopress_schemas_cf .= '<option ' . selected( $value, $post_meta_value, false ) . ' value="' . $value . '">' . $value . '</option>';
+			$seopress_schemas_cf .= '<option ' . selected( $value, $post_meta_value, false ) . ' value="' . esc_attr( $value ) . '">' . esc_html( $value ) . '</option>';
 		}
 
 		$seopress_schemas_cf .= '</select>';
@@ -576,7 +576,7 @@ function seopress_schemas_cpt( $post ) {
 		// Custom taxonomy.
 		$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_tax', true );
 
-		$seopress_schemas_tax = '<select name="' . $post_meta_name . '_tax" class="tax">';
+		$seopress_schemas_tax = '<select name="' . esc_attr( $post_meta_name ) . '_tax" class="tax">';
 
 		$serviceWpData           = seopress_get_service( 'WordPressData' );
 		$seopress_get_taxonomies = array();
@@ -586,7 +586,7 @@ function seopress_schemas_cpt( $post ) {
 
 		$seopress_schemas_tax .= '<option value=""></option>';
 		foreach ( $seopress_get_taxonomies as $key => $value ) {
-			$seopress_schemas_tax .= '<option ' . selected( $key, $post_meta_value, false ) . ' value="' . $key . '">' . $key . '</option>';
+			$seopress_schemas_tax .= '<option ' . selected( $key, $post_meta_value, false ) . ' value="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
 		}
 		$seopress_schemas_tax .= '</select>';
 
@@ -599,10 +599,10 @@ function seopress_schemas_cpt( $post ) {
 			if ( 'lb' === $case ) {
 				$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_lb', true );
 
-				$seopress_schemas_lb = '<select name="' . $post_meta_name . '_lb" class="lb">';
+				$seopress_schemas_lb = '<select name="' . esc_attr( $post_meta_name ) . '_lb" class="lb">';
 
 				foreach ( seopress_lb_types_list() as $type_value => $type_i18n ) {
-					$seopress_schemas_lb .= '<option ' . selected( $type_value, $post_meta_value, false ) . ' value="' . $type_value . '">' . $type_i18n . '</option>';
+					$seopress_schemas_lb .= '<option ' . selected( $type_value, $post_meta_value, false ) . ' value="' . esc_attr( $type_value ) . '">' . esc_html( $type_i18n ) . '</option>';
 				}
 				$seopress_schemas_lb .= '</select>';
 			}
@@ -616,7 +616,7 @@ function seopress_schemas_cpt( $post ) {
 
 					$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_global', true );
 
-					$seopress_schemas_manual_global = '<input type="text" id="' . $post_meta_name . '_manual_global" name="' . $post_meta_name . '_manual_global" class="manual_global" placeholder="' . esc_html__( 'Enter a global value here', 'wp-seopress-pro' ) . '" aria-label="' . __( 'Manual value', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />';
+					$seopress_schemas_manual_global = '<input type="text" id="' . esc_attr( $post_meta_name ) . '_manual_global" name="' . esc_attr( $post_meta_name ) . '_manual_global" class="manual_global" placeholder="' . esc_html__( 'Enter a global value here', 'wp-seopress-pro' ) . '" aria-label="' . esc_attr__( 'Manual value', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />';
 
 					break;
 				case 'lb':
@@ -627,7 +627,7 @@ function seopress_schemas_cpt( $post ) {
 
 					$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_global', true );
 
-					$seopress_schemas_manual_global = '<input type="text" id="' . $post_meta_name . '_manual_global" name="' . $post_meta_name . '_manual_global" class="manual_global" placeholder="' . esc_html__( 'Enter a global value here', 'wp-seopress-pro' ) . '" aria-label="' . __( 'Manual value', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />';
+					$seopress_schemas_manual_global = '<input type="text" id="' . esc_attr( $post_meta_name ) . '_manual_global" name="' . esc_attr( $post_meta_name ) . '_manual_global" class="manual_global" placeholder="' . esc_html__( 'Enter a global value here', 'wp-seopress-pro' ) . '" aria-label="' . esc_attr__( 'Manual value', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />';
 
 					// LB types case.
 					$seopress_schemas_mapping_case['Local Business'] = array(
@@ -659,19 +659,19 @@ function seopress_schemas_cpt( $post ) {
 
 						$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_img_global', true );
 
-						$seopress_schemas_manual_img_global = '<input type="text" id="' . $post_meta_name . '_manual_img_global" name="' . $post_meta_name . '_manual_img_global" class="manual_img_global" placeholder="' . esc_html__( 'Enter a global value here', 'wp-seopress-pro' ) . '" aria-label="' . __( 'Manual Image URL', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />';
+						$seopress_schemas_manual_img_global = '<input type="text" id="' . esc_attr( $post_meta_name ) . '_manual_img_global" name="' . esc_attr( $post_meta_name ) . '_manual_img_global" class="manual_img_global" placeholder="' . esc_html__( 'Enter a global value here', 'wp-seopress-pro' ) . '" aria-label="' . esc_attr__( 'Manual Image URL', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />';
 
 						$post_meta_value  = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_img_library_global', true );
 						$post_meta_value2 = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_img_library_global_width', true );
 						$post_meta_value3 = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_img_library_global_height', true );
 
-						$seopress_schemas_manual_img_library_global = '<input type="text" id="' . $post_meta_name . '_manual_img_library_global" name="' . $post_meta_name . '_manual_img_library_global" class="manual_img_library_global" placeholder="' . esc_html__( 'Select your global image from the media library', 'wp-seopress-pro' ) . '" aria-label="' . __( 'Manual Image URL', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />
+						$seopress_schemas_manual_img_library_global = '<input type="text" id="' . esc_attr( $post_meta_name ) . '_manual_img_library_global" name="' . esc_attr( $post_meta_name ) . '_manual_img_library_global" class="manual_img_library_global" placeholder="' . esc_html__( 'Select your global image from the media library', 'wp-seopress-pro' ) . '" aria-label="' . esc_attr__( 'Manual Image URL', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />
 
-						<input id="' . $post_meta_name . '_manual_img_library_global_width" type="hidden" name="' . $post_meta_name . '_manual_img_library_global_width" class="manual_img_library_global_width" value="' . $post_meta_value2 . '" />
+						<input id="' . esc_attr( $post_meta_name ) . '_manual_img_library_global_width" type="hidden" name="' . esc_attr( $post_meta_name ) . '_manual_img_library_global_width" class="manual_img_library_global_width" value="' . esc_attr( $post_meta_value2 ) . '" />
 
-						<input id="' . $post_meta_name . '_manual_img_library_global_height" type="hidden" name="' . $post_meta_name . '_manual_img_library_global_height" class="manual_img_library_global_height" value="' . $post_meta_value3 . '" />
+						<input id="' . esc_attr( $post_meta_name ) . '_manual_img_library_global_height" type="hidden" name="' . esc_attr( $post_meta_name ) . '_manual_img_library_global_height" class="manual_img_library_global_height" value="' . esc_attr( $post_meta_value3 ) . '" />
 
-						<input id="' . $post_meta_name . '_manual_img_library_global_btn" class="btn btnSecondary manual_img_library_global" type="button" value="' . esc_html__( 'Upload an Image', 'wp-seopress-pro' ) . '" />';
+						<input id="' . esc_attr( $post_meta_name ) . '_manual_img_library_global_btn" class="btn btnSecondary manual_img_library_global" type="button" value="' . esc_html__( 'Upload an Image', 'wp-seopress-pro' ) . '" />';
 
 					break;
 				case 'events':
@@ -701,7 +701,7 @@ function seopress_schemas_cpt( $post ) {
 
 						$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_date_global', true );
 
-						$seopress_schemas_manual_date_global = '<input type="text" class="seopress-date-picker manual_date_global" autocomplete="false" name="' . $post_meta_name . '_manual_date_global" class="manual_global" placeholder="' . esc_html__( 'e.g. YYYY-MM-DD', 'wp-seopress-pro' ) . '" aria-label="' . esc_html__( 'Global date', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />';
+						$seopress_schemas_manual_date_global = '<input type="text" class="seopress-date-picker manual_date_global" autocomplete="false" name="' . esc_attr( $post_meta_name ) . '_manual_date_global" class="manual_global" placeholder="' . esc_html__( 'e.g. YYYY-MM-DD', 'wp-seopress-pro' ) . '" aria-label="' . esc_html__( 'Global date', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />';
 					break;
 				case 'time':
 						// Time case.
@@ -712,7 +712,7 @@ function seopress_schemas_cpt( $post ) {
 
 						$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_time_global', true );
 
-						$seopress_schemas_manual_time_global = '<input type="time" step="2" placeholder="' . esc_html__( 'HH:MM', 'wp-seopress-pro' ) . '" id="' . $post_meta_name . '_manual_time_global" name="' . $post_meta_name . '_manual_time_global" class="manual_time_global" aria-label="' . esc_html__( 'Time', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />';
+						$seopress_schemas_manual_time_global = '<input type="time" step="2" placeholder="' . esc_html__( 'HH:MM', 'wp-seopress-pro' ) . '" id="' . esc_attr( $post_meta_name ) . '_manual_time_global" name="' . esc_attr( $post_meta_name ) . '_manual_time_global" class="manual_time_global" aria-label="' . esc_html__( 'Time', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />';
 					break;
 				case 'rating':
 						// Rating case.
@@ -723,7 +723,7 @@ function seopress_schemas_cpt( $post ) {
 
 						$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_rating_global', true );
 
-						$seopress_schemas_manual_rating_global = '<input type="number" id="' . $post_meta_name . '_manual_rating_global" name="' . $post_meta_name . '_manual_rating_global" min="1" step="0.1" class="manual_rating_global" aria-label="' . esc_html__( 'Rating', 'wp-seopress-pro' ) . '" value="' . $post_meta_value . '" />';
+						$seopress_schemas_manual_rating_global = '<input type="number" id="' . esc_attr( $post_meta_name ) . '_manual_rating_global" name="' . esc_attr( $post_meta_name ) . '_manual_rating_global" min="1" step="0.1" class="manual_rating_global" aria-label="' . esc_html__( 'Rating', 'wp-seopress-pro' ) . '" value="' . esc_attr( $post_meta_value ) . '" />';
 					break;
 				case 'custom':
 						// Custom case.
@@ -735,7 +735,8 @@ function seopress_schemas_cpt( $post ) {
 
 						$post_meta_value = get_post_meta( $post->ID, '_' . $post_meta_name . '_manual_custom_global', true );
 
-						$seopress_schemas_manual_custom_global = '<textarea rows="25" id="' . $post_meta_name . '_manual_custom_global" name="' . $post_meta_name . '_manual_custom_global" class="manual_custom_global" aria-label="' . __( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . htmlspecialchars( $post_meta_value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '" placeholder="' . esc_html__(
+						// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- example.com URL inside a JSON-LD sample used as a textarea placeholder, nothing is ever fetched from it.
+						$seopress_schemas_manual_custom_global = '<textarea rows="25" id="' . esc_attr( $post_meta_name ) . '_manual_custom_global" name="' . esc_attr( $post_meta_name ) . '_manual_custom_global" class="manual_custom_global" aria-label="' . esc_attr__( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . htmlspecialchars( $post_meta_value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '" placeholder="' . esc_html__(
 							'e.g. <script type="application/ld+json">{
                             "@context": "https://schema.org/",
                             "@type": "Review",
@@ -771,6 +772,7 @@ function seopress_schemas_cpt( $post ) {
                         }</script>',
 							'wp-seopress-pro'
 						) . '">' . htmlspecialchars( $post_meta_value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</textarea>';
+						// phpcs:enable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 					break;
 			}
 		}
@@ -779,11 +781,11 @@ function seopress_schemas_cpt( $post ) {
 
 		$seopress_schemas_mapping_case = apply_filters( 'seopress_schemas_mapping_select', $seopress_schemas_mapping_case );
 
-		$html = '<select name="' . $post_meta_name . '" class="dyn">';
+		$html = '<select name="' . esc_attr( $post_meta_name ) . '" class="dyn">';
 		foreach ( $seopress_schemas_mapping_case as $key => $value ) {
-			$html .= '<optgroup label="' . $key . '">';
+			$html .= '<optgroup label="' . esc_attr( $key ) . '">';
 			foreach ( $value as $_key => $_value ) {
-				$html .= '<option ' . selected( $_key, $post_meta_value, false ) . ' value="' . $_key . '">' . $_value . '</option>';
+				$html .= '<option ' . selected( $_key, $post_meta_value, false ) . ' value="' . esc_attr( $_key ) . '">' . esc_html( $_value ) . '</option>';
 			}
 			$html .= '</optgroup>';
 		}
@@ -930,6 +932,12 @@ function seopress_schemas_cpt( $post ) {
 									'desc'  => esc_html__( 'For service offerings.', 'wp-seopress-pro' ),
 								),
 								array(
+									'value' => 'book',
+									'label' => esc_html__( 'Book', 'wp-seopress-pro' ),
+									'icon' => 'dashicons-book',
+									'desc' => esc_html__( 'For books and publications.', 'wp-seopress-pro' ),
+								),
+								array(
 									'value' => 'softwareapp',
 									'label' => esc_html__( 'Software Application', 'wp-seopress-pro' ),
 									'icon'  => 'dashicons-admin-generic',
@@ -990,43 +998,43 @@ function seopress_schemas_cpt( $post ) {
 								foreach ( $snippets_rules as $_group => $_rules ) {
 									$_group = $_g++;
 									$_n     = 0;
-									echo '<div data-group="' . $_group . '">';
+									echo '<div data-group="' . esc_attr( $_group ) . '">';
 									foreach ( $_rules as $_index => $_rule ) {
 										$_index = $_n++;
 
-										echo '<p data-group="' . $_group . '">';
+										echo '<p data-group="' . esc_attr( $_group ) . '">';
 
 										// Filters.
-										echo "\t<select id=\"{$_id_name_for}[g{$_group}][i{$_index}][filter]\" name=\"{$_id_name_for}[g{$_group}][i{$_index}][filter]\" class=\"small-text\">\n";
+										printf( "\t<select id=\"%1\$s[g%2\$s][i%3\$s][filter]\" name=\"%1\$s[g%2\$s][i%3\$s][filter]\" class=\"small-text\">\n", esc_attr( $_id_name_for ), esc_attr( $_group ), esc_attr( $_index ) );
 										foreach ( $_available_rules_filters as $_filter => $_filter_label ) {
-											echo "\t\t" . '<option value="' . $_filter . '" ' . selected( $_rule['filter'], $_filter, false ) . '>' . $_filter_label . '</option>' . "\n";
+											echo "\t\t" . '<option value="' . esc_attr( $_filter ) . '" ' . selected( $_rule['filter'], $_filter, false ) . '>' . esc_html( $_filter_label ) . '</option>' . "\n";
 										}
 										echo '</select>';
 
 										// Condition.
-										echo "\t<select id=\"{$_id_name_for}[g{$_group}][i{$_index}][cond]\" name=\"{$_id_name_for}[g{$_group}][i{$_index}][cond]\" class=\"small-text\">\n";
+										printf( "\t<select id=\"%1\$s[g%2\$s][i%3\$s][cond]\" name=\"%1\$s[g%2\$s][i%3\$s][cond]\" class=\"small-text\">\n", esc_attr( $_id_name_for ), esc_attr( $_group ), esc_attr( $_index ) );
 										foreach ( $_available_rules_conditions as $_cond => $_cond_label ) {
-											echo "\t\t" . '<option value="' . $_cond . '" ' . selected( $_rule['cond'], $_cond, false ) . '>' . $_cond_label . '</option>' . "\n";
+											echo "\t\t" . '<option value="' . esc_attr( $_cond ) . '" ' . selected( $_rule['cond'], $_cond, false ) . '>' . esc_html( $_cond_label ) . '</option>' . "\n";
 										}
 										echo '</select>';
 
 										// CPT.
 										$class = 'post_type' === $_rule['filter'] ? '' : 'hidden';
-										echo "\t<select id=\"{$_id_name_for}[g{$_group}][i{$_index}][cpt]\" name=\"{$_id_name_for}[g{$_group}][i{$_index}][cpt]\" class=\"{$class}\">\n";
+										printf( "\t<select id=\"%1\$s[g%2\$s][i%3\$s][cpt]\" name=\"%1\$s[g%2\$s][i%3\$s][cpt]\" class=\"%4\$s\">\n", esc_attr( $_id_name_for ), esc_attr( $_group ), esc_attr( $_index ), esc_attr( $class ) );
 										$postTypes = seopress_get_service( 'WordPressData' )->getPostTypes();
 										foreach ( $postTypes as $_cpt_slug => $_post_type_obj ) {
-											echo "\t\t" . '<option ' . selected( $_rule['cpt'], $_cpt_slug, false ) . ' value="' . $_cpt_slug . '">' . $_post_type_obj->labels->name . '</option>' . "\n";
+											echo "\t\t" . '<option ' . selected( $_rule['cpt'], $_cpt_slug, false ) . ' value="' . esc_attr( $_cpt_slug ) . '">' . esc_html( $_post_type_obj->labels->name ) . '</option>' . "\n";
 										}
 										echo '</select>';
 
 										// TAXO.
 										$class = 'taxonomy' === $_rule['filter'] ? '' : 'hidden';
-										echo "\t<select id=\"{$_id_name_for}[g{$_group}][i{$_index}][taxo]\" name=\"{$_id_name_for}[g{$_group}][i{$_index}][taxo]\" class=\"{$class}\">\n";
+										printf( "\t<select id=\"%1\$s[g%2\$s][i%3\$s][taxo]\" name=\"%1\$s[g%2\$s][i%3\$s][taxo]\" class=\"%4\$s\">\n", esc_attr( $_id_name_for ), esc_attr( $_group ), esc_attr( $_index ), esc_attr( $class ) );
 										foreach ( seopress_get_service( 'WordPressData' )->getTaxonomies( true ) as $_tax_slug => $_tax ) {
-											echo "\t\t" . '<optgroup label="' . $_tax->label . '">' . "\n";
+											echo "\t\t" . '<optgroup label="' . esc_attr( $_tax->label ) . '">' . "\n";
 											if ( isset( $_tax->terms ) ) { // Free version is up to date.
 												foreach ( $_tax->terms as $_term ) {
-													echo "\t\t" . '<option ' . selected( $_rule['taxo'], $_term->term_id, false ) . ' value="' . $_term->term_id . '">' . esc_html( $_term->name ) . '</option>' . "\n";
+													echo "\t\t" . '<option ' . selected( $_rule['taxo'], $_term->term_id, false ) . ' value="' . esc_attr( $_term->term_id ) . '">' . esc_html( $_term->name ) . '</option>' . "\n";
 												}
 											}
 											echo '</optgroup>';
@@ -1036,11 +1044,11 @@ function seopress_schemas_cpt( $post ) {
 										// INPUT.
 										$class       = 'postId' === $_rule['filter'] ? '' : 'hidden';
 										$valuePostId = isset( $_rule['postId'] ) ? $_rule['postId'] : '';
-										echo "\t<input type=\"text\" id=\"{$_id_name_for}[g{$_group}][i{$_index}][postId]\" name=\"{$_id_name_for}[g{$_group}][i{$_index}][postId]\" class=\"{$class}\" value=\"{$valuePostId}\" />\n";
+										printf( "\t<input type=\"text\" id=\"%1\$s[g%2\$s][i%3\$s][postId]\" name=\"%1\$s[g%2\$s][i%3\$s][postId]\" class=\"%4\$s\" value=\"%5\$s\" />\n", esc_attr( $_id_name_for ), esc_attr( $_group ), esc_attr( $_index ), esc_attr( $class ), esc_attr( $valuePostId ) );
 
 										// Buttons.
-										echo ' <span class="dashicons dashicons-plus-alt ' . $_id_name_for . '_and" data-group="' . $_group . '"></span>';
-										echo ' <span class="hidden dashicons dashicons-no-alt ' . $_id_name_for . '_del" data-group="' . $_group . '"></span>';
+										echo ' <span class="dashicons dashicons-plus-alt ' . esc_attr( $_id_name_for ) . '_and" data-group="' . esc_attr( $_group ) . '"></span>';
+										echo ' <span class="hidden dashicons dashicons-no-alt ' . esc_attr( $_id_name_for ) . '_del" data-group="' . esc_attr( $_group ) . '"></span>';
 
 										echo '</p>';
 									}
@@ -1050,7 +1058,7 @@ function seopress_schemas_cpt( $post ) {
 								?>
 							<p>
 								<button type="button" class="button button-secondary"
-									id="<?php echo $_id_name_for; ?>_add">
+									id="<?php echo esc_attr( $_id_name_for ); ?>_add">
 									<?php esc_html_e( 'Add a rule', 'wp-seopress-pro' ); ?>
 								</button>
 							</p>
@@ -1070,6 +1078,7 @@ function seopress_schemas_cpt( $post ) {
 						require_once __DIR__ . '/automatic/Event.php';
 						require_once __DIR__ . '/automatic/Product.php';
 						require_once __DIR__ . '/automatic/SoftwareApp.php';
+						require_once __DIR__ . '/automatic/Book.php';
 						require_once __DIR__ . '/automatic/Service.php';
 						require_once __DIR__ . '/automatic/Review.php';
 						require_once __DIR__ . '/automatic/Custom.php';
@@ -1080,7 +1089,7 @@ function seopress_schemas_cpt( $post ) {
 						<p>
 							<?php
 								// translators: %s documentation URL.
-								printf( __( 'How to add your own <a href="%s" target="_blank">predefined dynamic variables</a>.', 'wp-seopress-pro' ), esc_url( $docs['schemas']['variables'] ) );
+								printf( wp_kses_post( __( 'How to add your own <a href="%s" target="_blank">predefined dynamic variables</a>.', 'wp-seopress-pro' ) ), esc_url( $docs['schemas']['variables'] ) );
 							?>
 							<span class="seopress-help dashicons dashicons-external"></span>
 						</p>
@@ -1088,7 +1097,7 @@ function seopress_schemas_cpt( $post ) {
 						<p>
 							<?php
 								// translators: %s documentation URL.
-								printf( __( 'I don’t see <a href="%s" target="_blank">all my custom fields from the list</a>!', 'wp-seopress-pro' ), esc_url( $docs['schemas']['custom_fields'] ) );
+								printf( __( 'I don’t see <a href="%s" target="_blank">all my custom fields from the list</a>!', 'wp-seopress-pro' ), esc_url( $docs['schemas']['custom_fields'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Translated sentence holding a single link whose URL is escaped with esc_url().
 							?>
 							<span class="seopress-help dashicons dashicons-external"></span>
 						</p>
@@ -1152,7 +1161,10 @@ function seopress_save_inputs_schema_automatic( $inputs, $postId ) {
 			if ( $_POST[ $key ] === 'none' ) {
 				delete_post_meta( $postId, $item['key'] );
 			} elseif ( $item['key'] === '_seopress_pro_rich_snippets_lb_opening_hours' ) {
-				update_post_meta( $postId, $item['key'], $_POST[ $key ] );
+				// An array of days and half-days; every leaf is plain text, as on
+				// the REST route (SchemaAutomatic::sanitize_meta_value()).
+				$opening_hours = is_array( $_POST[ $key ] ) ? map_deep( wp_unslash( $_POST[ $key ] ), 'sanitize_text_field' ) : sanitize_text_field( wp_unslash( $_POST[ $key ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by map_deep().
+				update_post_meta( $postId, $item['key'], wp_slash( $opening_hours ) );
 			} elseif ( $_POST[ $key ] === '' || $_POST[ $key ] === null ) {
 				delete_post_meta( $postId, $item['key'] );
 			} else {
@@ -1189,12 +1201,22 @@ function seopress_schemas_save_metabox( $post_id, $post ) {
 		return $post_id;
 	}
 
-	if ( isset( $_POST['seopress_pro_rich_snippets_rules'] ) ) {
-		update_post_meta( $post_id, '_seopress_pro_rich_snippets_rules', $_POST['seopress_pro_rich_snippets_rules'] );
+	if ( isset( $_POST['seopress_pro_rich_snippets_rules'] ) && is_array( $_POST['seopress_pro_rich_snippets_rules'] ) ) {
+		// Same as the REST route: groups of rules whose values are plain text.
+		$rules = map_deep( wp_unslash( $_POST['seopress_pro_rich_snippets_rules'] ), 'sanitize_text_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by map_deep().
+		update_post_meta( $post_id, '_seopress_pro_rich_snippets_rules', wp_slash( $rules ) );
 	}
 	if ( isset( $_POST['seopress_pro_rich_snippets_type'] ) ) {
 		update_post_meta( $post_id, '_seopress_pro_rich_snippets_type', esc_html( $_POST['seopress_pro_rich_snippets_type'] ) );
 	}
+
+	$book_inputs = array();
+	foreach ( \SEOPressPro\Helpers\Schemas\Book::meta_keys() as $meta_key ) {
+		foreach ( array( '', '_cf', '_tax', '_manual_global' ) as $suffix ) {
+			$book_inputs[ ltrim( $meta_key, '_' ) . $suffix ] = array( 'key' => $meta_key . $suffix );
+		}
+	}
+	seopress_save_inputs_schema_automatic( $book_inputs, $post_id );
 
 	// Article.
 	$inputsArticle = array(
@@ -2866,6 +2888,9 @@ function seopress_schemas_save_metabox( $post_id, $post ) {
 		'seopress_pro_rich_snippets_service_area_manual_global' => array(
 			'key' => '_seopress_pro_rich_snippets_service_area_manual_global',
 		),
+		'seopress_pro_rich_snippets_service_provider_source' => array(
+			'key' => '_seopress_pro_rich_snippets_service_provider_source',
+		),
 		'seopress_pro_rich_snippets_service_provider_name' => array(
 			'key' => '_seopress_pro_rich_snippets_service_provider_name',
 		),
@@ -3125,10 +3150,13 @@ function seopress_schemas_save_metabox( $post_id, $post ) {
 		update_post_meta( $post_id, '_seopress_pro_rich_snippets_custom', esc_html( $_POST['seopress_pro_rich_snippets_custom'] ) );
 	}
 	if ( isset( $_POST['seopress_pro_rich_snippets_custom_manual_custom_global'] ) && ! empty( $_POST['seopress_pro_rich_snippets_custom_manual_custom_global'] ) ) {
+		// Printed into wp_head() on every post the template applies to: keep the
+		// JSON-LD script tag and nothing else, as the REST route does. A site
+		// administrator on a network has no unfiltered_html.
 		update_post_meta(
 			$post_id,
 			'_seopress_pro_rich_snippets_custom_manual_custom_global',
-			$_POST['seopress_pro_rich_snippets_custom_manual_custom_global']
+			wp_slash( seopress_pro_kses_json_ld( wp_unslash( $_POST['seopress_pro_rich_snippets_custom_manual_custom_global'] ) ) ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by seopress_pro_kses_json_ld().
 		);
 	}
 }

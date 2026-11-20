@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Booking\Managers\IntegrationsManager;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 /**
  * Integrations Helper class

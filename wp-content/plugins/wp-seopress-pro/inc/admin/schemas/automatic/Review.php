@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Review item name', 'wp-seopress-pro' ); ?>
 			<code>item</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_item', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_item', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The item name reviewed', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -31,14 +31,14 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Review item type', 'wp-seopress-pro' ); ?>
 			<code>itemType</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_item_type', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_item_type', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php echo wp_kses_post( __( '<strong>Authorized values:</strong> "CreativeWorkSeason", "CreativeWorkSeries", "Episode", "Game", "MediaObject", "MusicPlaylist", "MusicRecording", "Organization"', 'wp-seopress-pro' ) ); ?></span>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_review_img_meta"><?php esc_html_e( 'Review item image', 'wp-seopress-pro' ); ?>
 			<code>image</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_img', 'image' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_img', 'image' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Review item image URL', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -46,7 +46,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Your rating', 'wp-seopress-pro' ); ?>
 			<code>ratingValue</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_rating', 'rating' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_rating', 'rating' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Your rating: scale from 1 to 5', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -54,7 +54,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Max best rating', 'wp-seopress-pro' ); ?>
 			<code>bestRating</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_max_rating', 'rating' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_max_rating', 'rating' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Only required if your scale is different from 1 to 5.', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -62,7 +62,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Review body', 'wp-seopress-pro' ); ?>
 			<code>reviewBody</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_body', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_review_body', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Your review body', 'wp-seopress-pro' ); ?></span>
 	</p>
 </div>

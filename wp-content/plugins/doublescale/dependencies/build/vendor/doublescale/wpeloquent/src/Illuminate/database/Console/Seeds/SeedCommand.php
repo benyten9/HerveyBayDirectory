@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Database\Console\Seeds;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Seeds;
 
-use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Console\ConfirmableTrait;
+use DoubleScale\Vendor\Illuminate\Console\Command;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Console\ConfirmableTrait;
 use DoubleScale\Vendor\Symfony\Component\Console\Input\InputOption;
-use Illuminate\Database\ConnectionResolverInterface as Resolver;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionResolverInterface as Resolver;
 class SeedCommand extends Command
 {
     use ConfirmableTrait;

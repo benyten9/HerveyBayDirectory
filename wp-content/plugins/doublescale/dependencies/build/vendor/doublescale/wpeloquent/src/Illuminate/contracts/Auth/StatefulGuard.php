@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Auth;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Auth;
 
-interface StatefulGuard extends \Illuminate\Contracts\Auth\Guard
+interface StatefulGuard extends Guard
 {
     /**
      * Attempt to authenticate a user using the given credentials.
@@ -26,7 +26,7 @@ interface StatefulGuard extends \Illuminate\Contracts\Auth\Guard
      * @param  bool  $remember
      * @return void
      */
-    public function login(\Illuminate\Contracts\Auth\Authenticatable $user, $remember = \false);
+    public function login(Authenticatable $user, $remember = \false);
     /**
      * Log the given user ID into the application.
      *

@@ -34,7 +34,7 @@ if (!class_exists('Claim_Post_Type_Manager')) :
                                 $field_data = [
                                     'class' => $class,
                                     'verified_text' => $verified_text,
-                                    'hover_text' => __('Verified by it\'s Owner', 'directorist-claim-listing'),
+                                    'hover_text' => __('Verified by its owner.', 'directorist-claim-listing'),
                                 ];
                              DCL_Base()->load_template('verified-badge', array('field_data' => $field_data));
                         }
@@ -146,39 +146,20 @@ if (!class_exists('Claim_Post_Type_Manager')) :
 
         public function dcl_save_metabox($post_id, $post)
         {
-
-            if (!isset($_POST['post_type'])) {
-                return $post_id;
-            }
-
-// If this is an autosave, our form has not been submitted, so we don't want to do anything
-            if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-                return $post_id;
-            }
-
-// Check the logged in user has permission to edit this post
-            if (!current_user_can('edit_post', $post_id)) {
-                return $post_id;
-            }
-            if (isset($_POST['dcl_listing_claim_details_nonce'])) {
-
-                // Verify that the nonce is valid
-                if (wp_verify_nonce($_POST['dcl_listing_claim_details_nonce'], 'dcl_save_listing_claim_details')) {
-                    $claim_fee = isset($_POST['claim_fee']) ? esc_attr($_POST['claim_fee']) : '';
-                    $claimed_by_admin = isset($_POST['claimed_by_admin']) ? esc_attr($_POST['claimed_by_admin']) : '';
-                    $claim_charge = isset($_POST['claim_charge']) ? (int)$_POST['claim_charge'] : '';
-                    update_post_meta($post_id, '_claim_fee', $claim_fee);
-                    update_post_meta($post_id, '_claim_charge', $claim_charge);
-                    update_post_meta($post_id, '_claimed_by_admin', $claimed_by_admin);
-                }
-            }
-
+            return DCL_Claim_Native::save_listing( $post_id, $post );
         }
 
         public function directorist_single_section_template( $template, $field_data ) {
-           
-            if( 'claim_listing' === $field_data['widget_name'] ) {
-                $template .= DCL_Base()->load_template( 'claim-listing-template', [ 'field_data' => $field_data ] );
+
+            if ( 'claim_listing' === $field_data['widget_name'] ) {
+                $html = directorist_render_claim_listing( (int) get_the_ID(), [
+                    'icon'                 => $field_data['icon'] ?? '',
+                    'label'                => $field_data['label'] ?? '',
+                    'custom_block_classes'  => $field_data['custom_block_classes'] ?? '',
+                ] );
+                if ( ! empty( $html ) ) {
+                    $template .= $html;
+                }
             }
 
             return $template;

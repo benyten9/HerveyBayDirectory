@@ -154,7 +154,7 @@ abstract class BaseProjectTrigger extends Trigger {
 			return $options;
 		}
 
-		if ( ! class_exists( ProjectStatusModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'projects' ) ) {
 			return $options;
 		}
 

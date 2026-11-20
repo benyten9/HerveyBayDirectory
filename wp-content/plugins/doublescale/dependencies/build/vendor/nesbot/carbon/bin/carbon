@@ -2,7 +2,7 @@
 <?php 
 namespace DoubleScale\Vendor;
 
-use Carbon\Cli\Invoker;
+use DoubleScale\Vendor\Carbon\Cli\Invoker;
 $dir = __DIR__ . '/..';
 if (!\file_exists($dir . '/autoload.php')) {
     $dir = __DIR__ . '/../vendor';

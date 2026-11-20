@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Exception;
 use DoubleScale\Modules\Automations\Abstracts\Goal;
+use DoubleScale\Modules\Automations\Engine\GoalSettings;
 
 /**
  * Goals class
@@ -98,7 +99,7 @@ final class GoalsManager {
 			$this->sources[ $goal->source ]['groups'][ $goal->group ]['goals'][ $goal->slug ] = array(
 				'label'       => $goal->name,
 				'description' => $goal->description,
-				'fields'      => $goal->get_fields(),
+				'fields'      => self::deferred_fields( $goal ),
 				'triggers'    => $triggers,
 				'is_disabled' => $is_disabled,
 				'is_pro'      => $goal->is_pro,
@@ -143,7 +144,7 @@ final class GoalsManager {
 		$this->sources[ $goal->source ]['groups'][ $goal->group ]['goals'][ $goal->slug ] = array(
 			'label'       => $goal->name,
 			'description' => $goal->description,
-			'fields'      => $goal->get_fields(),
+			'fields'      => self::deferred_fields( $goal ),
 			'triggers'    => $triggers,
 			'is_disabled' => $is_disabled,
 			'is_pro'      => $goal->is_pro,
@@ -201,13 +202,13 @@ final class GoalsManager {
 					'coupon' => array(
 						'label'       => __( 'Coupon', 'doublescale' ),
 						'goals'       => array(),
-						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 					),
 					'cart'   => array(
 						'label'       => __( 'Cart', 'doublescale' ),
 						'goals'       => array(),
 						'triggers'    => array( 'wc_abandoned_cart_created' ),
-						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 					),
 				),
 			),
@@ -218,6 +219,17 @@ final class GoalsManager {
 						'label'       => __( 'Order', 'doublescale' ),
 						'goals'       => array(),
 						'is_disabled' => ! defined( 'SURECART_PLUGIN_FILE' ),
+					),
+				),
+			),
+			'fluentcart'  => array(
+				'label'  => __( 'FluentCart', 'doublescale' ),
+				'groups' => array(
+					'order' => array(
+						'label'           => __( 'Order', 'doublescale' ),
+						'goals'           => array(),
+						'is_disabled'     => ! \DoubleScale\Core\Services\FluentCartOrders::is_active(),
+						'disabled_reason' => 'fluentcart_inactive',
 					),
 				),
 			),
@@ -232,6 +244,23 @@ final class GoalsManager {
 	 * @return array
 	 */
 	public function get_sources() {
+		$this->sources = DeferredValue::resolve( $this->sources );
+
 		return $this->sources;
+	}
+
+	/**
+	 * A goal's fields, built when the editor reads the catalogue.
+	 *
+	 * @param Goal $goal Goal.
+	 *
+	 * @return DeferredValue
+	 */
+	private static function deferred_fields( Goal $goal ): DeferredValue {
+		return new DeferredValue(
+			static function () use ( $goal ) {
+				return array_merge( (array) $goal->get_fields(), GoalSettings::fields() );
+			}
+		);
 	}
 }

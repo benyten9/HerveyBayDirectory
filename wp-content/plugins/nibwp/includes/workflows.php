@@ -507,6 +507,46 @@ function nibwp_workflows_starters(): array
             'category'=> 'convert-etchwp',
             'icon'    => 'replace',
         ],
+        'save-to-etchedy-library' => [
+            'title'   => 'Save a component to the Etchedy library',
+            'summary' => 'Store a built component in the Etchedy library so any site can reuse it — properties with defaults, nothing tied to this site, ACSS tokens, dry-run validated before it is written.',
+            'when'    => 'A component was built and the user wants to keep it: "save this hero to my Etchedy library".',
+            'tools'   => ['etchedy', 'etchedy-pro', 'etchwp', 'etchwp-pro', 'automaticcss'],
+            'category'=> 'build-sites',
+            'icon'    => 'database',
+        ],
+        'reuse-etchedy-component' => [
+            'title'   => 'Place an Etchedy component on a page',
+            'summary' => 'Pull a stored component from the Etchedy library onto a page with its text, links and images overridden for this placement — the library copy is never changed.',
+            'when'    => 'Using a saved hero, pricing table or section from the library on an existing or new page.',
+            'tools'   => ['etchedy', 'etchedy-pro', 'etchwp', 'etchwp-pro'],
+            'category'=> 'build-sites',
+            'icon'    => 'layout-template',
+        ],
+        'build-page-from-etchedy-library' => [
+            'title'   => 'Build a page from the Etchedy library',
+            'summary' => 'Assemble a page section by section from stored Etchedy components, with per-page content; build and save anything the library is missing so the next page can reuse it.',
+            'when'    => 'Producing pages that must look like one site from the components the client already has.',
+            'tools'   => ['etchedy', 'etchedy-pro', 'etchwp', 'etchwp-pro', 'automaticcss', 'acf'],
+            'category'=> 'build-sites',
+            'icon'    => 'layout',
+        ],
+        'organise-etchedy-library' => [
+            'title'   => 'Organise the Etchedy library',
+            'summary' => 'Rename, move, duplicate and delete components safely: renames keep their id, moves copy before they delete, content is never touched by accident.',
+            'when'    => 'Tidying a client library: renaming, re-filing into folders, copying a variant, removing what is unused.',
+            'tools'   => ['etchedy', 'etchedy-pro'],
+            'category'=> 'maintenance',
+            'icon'    => 'list-checks',
+        ],
+        'audit-etchedy-library' => [
+            'title'   => 'Audit the Etchedy library',
+            'summary' => 'Check stored components against today\'s build and portability rules, read-only, then fix what fails with the user\'s say-so.',
+            'when'    => 'Before handing over or reusing a library, or after the design system or rules changed.',
+            'tools'   => ['etchedy', 'etchedy-pro', 'etchwp-pro', 'automaticcss'],
+            'category'=> 'maintenance',
+            'icon'    => 'shield-check',
+        ],
         'convert-to-kadence' => [
             'title'   => 'Convert a design to Kadence Blocks',
             'summary' => 'Rebuild HTML, a URL, or a screenshot as native Kadence Blocks via the Kadence Pro skill — real blocks (rowlayout/column/advancedheading/singlebtn/infobox…), correct nesting, unique IDs, attribute styling, validated + scored, persisted to a page, template, or pattern.',
@@ -996,7 +1036,7 @@ add_action('wp_abilities_api_init', static function (): void {
 
     wp_register_ability('nibwp/list-workflows', [
         'label'       => __('List workflows', 'nibwp'),
-        'description' => __('List saved NIBWP workflows (operating playbooks) with their summary, when-to-use, whether they are PINNED (always-on), and the tools each one targets (with detection status). Unpinned workflows are still used — the agent auto-loads them when a task matches their when-to-use.', 'nibwp'),
+        'description' => 'List saved NIBWP workflows (operating playbooks) with their summary, when-to-use, whether they are PINNED (always-on), and the tools each one targets (with detection status). Unpinned workflows are still used — the agent auto-loads them when a task matches their when-to-use.',
         'category'    => 'nibwp',
         'input_schema'  => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
         'output_schema' => ['type' => 'object'],
@@ -1007,7 +1047,7 @@ add_action('wp_abilities_api_init', static function (): void {
 
     wp_register_ability('nibwp/get-workflow', [
         'label'       => __('Get workflow', 'nibwp'),
-        'description' => __('Load the full markdown playbook + metadata for one workflow, by id or slug.', 'nibwp'),
+        'description' => 'Load the full markdown playbook + metadata for one workflow, by id or slug.',
         'category'    => 'nibwp',
         'input_schema'  => ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'slug' => ['type' => 'string']], 'additionalProperties' => false],
         'output_schema' => ['type' => 'object'],
@@ -1018,7 +1058,7 @@ add_action('wp_abilities_api_init', static function (): void {
 
     wp_register_ability('nibwp/save-workflow', [
         'label'       => __('Save workflow', 'nibwp'),
-        'description' => __('Create a new NIBWP workflow (operating playbook) — capture a process you just agreed on. Provide a title + the markdown body (principles, process, strict rules, reporting, patterns). Optionally set when-to-use, target tools, and activate it.', 'nibwp'),
+        'description' => 'Create a new NIBWP workflow (operating playbook) — capture a process you just agreed on. Provide a title + the markdown body (principles, process, strict rules, reporting, patterns). Optionally set when-to-use, target tools, and activate it.',
         'category'    => 'nibwp',
         'input_schema'  => [
             'type' => 'object',
@@ -1042,7 +1082,7 @@ add_action('wp_abilities_api_init', static function (): void {
 
     wp_register_ability('nibwp/update-workflow', [
         'label'       => __('Update workflow', 'nibwp'),
-        'description' => __('Edit an existing workflow (by id or slug) — change the body, rules, summary, when-to-use, tools, or active state. A revision is kept so changes can be rolled back.', 'nibwp'),
+        'description' => 'Edit an existing workflow (by id or slug) — change the body, rules, summary, when-to-use, tools, or active state. A revision is kept so changes can be rolled back.',
         'category'    => 'nibwp',
         'input_schema'  => [
             'type' => 'object',
@@ -1067,7 +1107,7 @@ add_action('wp_abilities_api_init', static function (): void {
 
     wp_register_ability('nibwp/activate-workflow', [
         'label'       => __('Pin / unpin workflow', 'nibwp'),
-        'description' => __('Pin or unpin a workflow. PINNED = always-on: its playbook is injected as strict context on EVERY request. A workflow does NOT need to be pinned to be used — unpinned ones auto-load when a task matches their when-to-use. Pass exclusive:true to make it the only pinned one.', 'nibwp'),
+        'description' => 'Pin or unpin a workflow. PINNED = always-on: its playbook is injected as strict context on EVERY request. A workflow does NOT need to be pinned to be used — unpinned ones auto-load when a task matches their when-to-use. Pass exclusive:true to make it the only pinned one.',
         'category'    => 'nibwp',
         'input_schema'  => [
             'type' => 'object',

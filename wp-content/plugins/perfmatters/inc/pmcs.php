@@ -13,7 +13,7 @@ echo '<div class="perfmatters-settings-section">';
 
 		echo '<form method="POST">';
 
-			echo '<input type="hidden" name="nonce" value="' . wp_create_nonce('pmcs-nonce') . '" />';
+			echo '<input type="hidden" name="nonce" value="' . esc_attr(wp_create_nonce('pmcs-nonce')) . '" />';
 			echo '<input type="hidden" name="file_name" value="' . esc_attr($_GET['snippet'] !== 'create' ? $_GET['snippet'] : '') . '" />';
 
 			if(!$pmcs_error && $_GET['snippet'] !== 'create') {
@@ -128,8 +128,8 @@ echo '<div class="perfmatters-settings-section">';
 
 							foreach(['php', 'js', 'css', 'html'] as $type) {
 								echo '<div>';
-						    		echo '<input type="radio" id="code-type-' . $type . '" name="type" value="' . $type . '"' . ($snippet_type == $type ? ' checked' : '') . '>';
-						    		echo '<label for="code-type-' . $type . '">' . strtoupper($type) . '</label>';
+						    		echo '<input type="radio" id="code-type-' . esc_attr($type) . '" name="type" value="' . esc_attr($type) . '"' . ($snippet_type == $type ? ' checked' : '') . '>';
+						    		echo '<label for="code-type-' . esc_attr($type) . '">' . esc_html(strtoupper($type)) . '</label>';
 						    	echo '</div>';
 							}
 
@@ -174,7 +174,7 @@ echo '<div class="perfmatters-settings-section">';
 						if(!empty($snippet['author'])) {
 							echo '<div title="' . esc_attr__('Author', 'perfmatters') . '">';
 								echo '<span class="dashicons dashicons-admin-users" style="margin-right: 3px;"></span>';
-								echo get_the_author_meta('display_name', $snippet['author']);;
+								echo esc_html(get_the_author_meta('display_name', $snippet['author']));
 							echo '</div>';
 						}
 						
@@ -186,7 +186,7 @@ echo '<div class="perfmatters-settings-section">';
 								$time_format = get_option('time_format');
 								$custom_format = $date_format . ' \a\t ' . $time_format;
 								$pretty_date = mysql2date($custom_format, $snippet['modified'], true);
-								echo $pretty_date;
+								echo esc_html($pretty_date);
 							echo '</div>';
 						}
 							
@@ -201,7 +201,7 @@ echo '<div class="perfmatters-settings-section">';
 						echo '<label>' . esc_html__('Optimizations', 'perfmatters') . '</label>';
 						echo '<a href="https://perfmatters.io/docs/code-snippets/#optimizations" class="perfmatters-tooltip" target="_blank"' . (!empty($tools['accessibility_mode']) ? " title='" . esc_attr__("View Documentation", 'perfmatters') . "'" : "") . '>?</a>';
 						echo '<div class="perfmatters-tooltip-container">';
-							echo perfmatters_tooltip(__('Apply various Perfmatters optimizations to your code snippet to boost performance.', 'perfmatters'));
+							perfmatters_tooltip(__('Apply various Perfmatters optimizations to your code snippet to boost performance.', 'perfmatters'));
 						echo '</div>';
 					echo '</div>';
 
@@ -255,7 +255,7 @@ echo '<div class="perfmatters-settings-section">';
 
 						//load in block editor
 						echo '<div data-code-type="css" data-location="wp_head,wp_footer">';
-							echo '<label style="margin: 0px; font-weight: normal;" title="' . esc_attr__('Also enqueue this CSS in the WordPress block editor canvas.', 'perfmatters') . '">';
+							echo '<label style="margin: 0px; font-weight: normal;">';
 								echo esc_html__('Load in Block Editor', 'perfmatters');
 								echo '<input type="checkbox" name="optimizations[block_editor]" id="pmcs-block-editor" value="1"' . (!empty($snippet['optimizations']['block_editor']) ? ' checked' : '') . ' style="margin: 0px 0px 0px 7px;">';
 							echo '</label>';
@@ -295,7 +295,7 @@ echo '<div class="perfmatters-settings-section">';
 							echo '<label>' . esc_html__('Conditions', 'perfmatters') . '</label>';
 							echo '<a href="https://perfmatters.io/docs/code-snippets/#conditions" class="perfmatters-tooltip" target="_blank"' . (!empty($tools['accessibility_mode']) ? " title='" . esc_attr__("View Documentation", 'perfmatters') . "'" : "") . '>?</a>';
 							echo '<div class="perfmatters-tooltip-container">';
-								echo perfmatters_tooltip('Choose where and for whom your code snippet is allowed to run.');
+								perfmatters_tooltip(__('Choose where and for whom your code snippet is allowed to run.', 'perfmatters'));
 							echo '</div>';
 					echo '</div>';
 
@@ -327,7 +327,7 @@ echo '<div class="perfmatters-settings-section">';
 
 								echo '</div>';
 
-								echo '<a class="perfmatters-add-input-row button button-secondary" rel="' . $row_count . '">' . esc_html__('Add Condition', 'perfmatters') . '</a>';
+								echo '<a class="perfmatters-add-input-row button button-secondary" rel="' . esc_attr($row_count) . '">' . esc_html__('Add Condition', 'perfmatters') . '</a>';
 
 							echo '</div>';
 						echo '</div>';
@@ -354,7 +354,7 @@ echo '<div class="perfmatters-settings-section">';
 
 								echo '</div>';
 
-								echo '<a class="perfmatters-add-input-row button button-secondary" rel="' . $row_count . '">' . esc_html__('Add Condition', 'perfmatters') . '</a>';
+								echo '<a class="perfmatters-add-input-row button button-secondary" rel="' . esc_attr($row_count) . '">' . esc_html__('Add Condition', 'perfmatters') . '</a>';
 
 							echo '</div>';
 
@@ -384,7 +384,7 @@ echo '<div class="perfmatters-settings-section">';
 
 								echo '</div>';
 
-								echo '<a class="perfmatters-add-input-row button button-secondary" rel="' . $row_count . '">' . esc_html__('Add Condition', 'perfmatters') . '</a>';
+								echo '<a class="perfmatters-add-input-row button button-secondary" rel="' . esc_attr($row_count) . '">' . esc_html__('Add Condition', 'perfmatters') . '</a>';
 
 							echo '</div>';
 						echo '</div>';

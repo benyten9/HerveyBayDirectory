@@ -124,13 +124,9 @@ class Manager {
 		}
 
 		$this->importers[ $importer->slug ] = $importer;
-		$this->options[ $importer->slug ]   = array(
-			'name'           => $importer->name,
-			'is_integration' => $importer->is_integration(),
-			'credentials'    => $importer->get_credentials(),
-			'is_active'      => $importer->is_active(),
-			'fields'         => ! $importer->is_integration() ? $importer->get_fields() : array(),
-		);
+		// Details are built by get_options() when the import screen asks: some
+		// importers list posts or products, which cost queries on every request.
+		unset( $this->options[ $importer->slug ] );
 	}
 
 	/**
@@ -148,6 +144,17 @@ class Manager {
 	 * @return array
 	 */
 	public function get_options() {
+		foreach ( $this->importers as $slug => $importer ) {
+			if ( ! isset( $this->options[ $slug ] ) ) {
+				$this->options[ $slug ] = array(
+					'name'           => $importer->name,
+					'is_integration' => $importer->is_integration(),
+					'credentials'    => $importer->get_credentials(),
+					'is_active'      => $importer->is_active(),
+					'fields'         => ! $importer->is_integration() ? $importer->get_fields() : array(),
+				);
+			}
+		}
 		return $this->options;
 	}
 

@@ -34,7 +34,19 @@ class GetMatomoStats implements ExecuteHooks {
 	public function processGet( \WP_REST_Request $request ) {
 		$data = get_transient( 'seopress_results_matomo' );
 
-		if ( empty( $data ) ) {
+		// A failed sync caches a marker for a few minutes, not the message: the
+		// message is translated here, for the person asking.
+		$failed = function_exists( 'seopress_matomo_cache_is_failure' ) && seopress_matomo_cache_is_failure( $data );
+
+		if ( empty( $data ) || $failed ) {
+			// An empty answer used to be the only thing this route could say, so a
+			// refused token and a site with no visitors were indistinguishable.
+			$error = function_exists( 'seopress_matomo_get_sync_error' ) ? seopress_matomo_get_sync_error() : null;
+
+			if ( null !== $error ) {
+				return new \WP_REST_Response( array( 'error' => $error ) );
+			}
+
 			return new \WP_REST_Response( 'No data found' );
 		}
 

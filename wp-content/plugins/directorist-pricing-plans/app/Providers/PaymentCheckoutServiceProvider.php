@@ -82,7 +82,7 @@ class PaymentCheckoutServiceProvider implements Provider {
             return $order_dto;
         }
 
-        $order_dto->set_sub_total( $plan->price );
+        $order_dto->set_sub_total( directorist_get_plan_effective_price( $plan ) );
 
         return $order_dto;
     }
@@ -347,7 +347,7 @@ class PaymentCheckoutServiceProvider implements Provider {
             return $order;
         }
 
-        $order->sub_total = $plan->price;
+        $order->sub_total = directorist_get_plan_effective_price( $plan );
 
         return $order;
     }
@@ -389,7 +389,7 @@ class PaymentCheckoutServiceProvider implements Provider {
             return $total;
         }
 
-        $order->sub_total = $plan->price;
+        $order->sub_total = directorist_get_plan_effective_price( $plan );
 
         return directorist_order_total_amount( $order );
     }

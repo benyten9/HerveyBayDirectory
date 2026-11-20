@@ -8,24 +8,24 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-use Carbon\Exceptions\BadFluentConstructorException;
-use Carbon\Exceptions\BadFluentSetterException;
-use Carbon\Exceptions\InvalidCastException;
-use Carbon\Exceptions\InvalidIntervalException;
-use Carbon\Exceptions\OutOfRangeException;
-use Carbon\Exceptions\ParseErrorException;
-use Carbon\Exceptions\UnitNotConfiguredException;
-use Carbon\Exceptions\UnknownGetterException;
-use Carbon\Exceptions\UnknownSetterException;
-use Carbon\Exceptions\UnknownUnitException;
-use Carbon\Traits\IntervalRounding;
-use Carbon\Traits\IntervalStep;
-use Carbon\Traits\MagicParameter;
-use Carbon\Traits\Mixin;
-use Carbon\Traits\Options;
-use Carbon\Traits\ToStringFormat;
+use DoubleScale\Vendor\Carbon\Exceptions\BadFluentConstructorException;
+use DoubleScale\Vendor\Carbon\Exceptions\BadFluentSetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidCastException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidIntervalException;
+use DoubleScale\Vendor\Carbon\Exceptions\OutOfRangeException;
+use DoubleScale\Vendor\Carbon\Exceptions\ParseErrorException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnitNotConfiguredException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownGetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownSetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownUnitException;
+use DoubleScale\Vendor\Carbon\Traits\IntervalRounding;
+use DoubleScale\Vendor\Carbon\Traits\IntervalStep;
+use DoubleScale\Vendor\Carbon\Traits\MagicParameter;
+use DoubleScale\Vendor\Carbon\Traits\Mixin;
+use DoubleScale\Vendor\Carbon\Traits\Options;
+use DoubleScale\Vendor\Carbon\Traits\ToStringFormat;
 use Closure;
 use DateInterval;
 use DoubleScale\Vendor\DateMalformedIntervalStringException;
@@ -184,7 +184,7 @@ use Throwable;
  * @method $this ceilMicrosecond(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  * @method $this ceilMicroseconds(int|float $precision = 1) Ceil the current instance microsecond with given precision.
  */
-class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInterface
+class CarbonInterval extends DateInterval implements CarbonConverterInterface
 {
     use IntervalRounding;
     use IntervalStep;
@@ -278,7 +278,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
     }
     protected static function getDefaultCascadeFactors() : array
     {
-        return ['milliseconds' => [\Carbon\Carbon::MICROSECONDS_PER_MILLISECOND, 'microseconds'], 'seconds' => [\Carbon\Carbon::MILLISECONDS_PER_SECOND, 'milliseconds'], 'minutes' => [\Carbon\Carbon::SECONDS_PER_MINUTE, 'seconds'], 'hours' => [\Carbon\Carbon::MINUTES_PER_HOUR, 'minutes'], 'dayz' => [\Carbon\Carbon::HOURS_PER_DAY, 'hours'], 'weeks' => [\Carbon\Carbon::DAYS_PER_WEEK, 'dayz'], 'months' => [\Carbon\Carbon::WEEKS_PER_MONTH, 'weeks'], 'years' => [\Carbon\Carbon::MONTHS_PER_YEAR, 'months']];
+        return ['milliseconds' => [Carbon::MICROSECONDS_PER_MILLISECOND, 'microseconds'], 'seconds' => [Carbon::MILLISECONDS_PER_SECOND, 'milliseconds'], 'minutes' => [Carbon::SECONDS_PER_MINUTE, 'seconds'], 'hours' => [Carbon::MINUTES_PER_HOUR, 'minutes'], 'dayz' => [Carbon::HOURS_PER_DAY, 'hours'], 'weeks' => [Carbon::DAYS_PER_WEEK, 'dayz'], 'months' => [Carbon::WEEKS_PER_MONTH, 'weeks'], 'years' => [Carbon::MONTHS_PER_YEAR, 'months']];
     }
     private static function standardizeUnit($unit)
     {
@@ -417,7 +417,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             }
         }
         if ($microseconds !== null) {
-            $this->f = $microseconds / \Carbon\Carbon::MICROSECONDS_PER_SECOND;
+            $this->f = $microseconds / Carbon::MICROSECONDS_PER_SECOND;
         }
     }
     /**
@@ -457,7 +457,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
         if ($factor) {
             return $factor;
         }
-        static $defaults = ['month' => ['year' => \Carbon\Carbon::MONTHS_PER_YEAR], 'week' => ['month' => \Carbon\Carbon::WEEKS_PER_MONTH], 'day' => ['week' => \Carbon\Carbon::DAYS_PER_WEEK], 'hour' => ['day' => \Carbon\Carbon::HOURS_PER_DAY], 'minute' => ['hour' => \Carbon\Carbon::MINUTES_PER_HOUR], 'second' => ['minute' => \Carbon\Carbon::SECONDS_PER_MINUTE], 'millisecond' => ['second' => \Carbon\Carbon::MILLISECONDS_PER_SECOND], 'microsecond' => ['millisecond' => \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND]];
+        static $defaults = ['month' => ['year' => Carbon::MONTHS_PER_YEAR], 'week' => ['month' => Carbon::WEEKS_PER_MONTH], 'day' => ['week' => Carbon::DAYS_PER_WEEK], 'hour' => ['day' => Carbon::HOURS_PER_DAY], 'minute' => ['hour' => Carbon::MINUTES_PER_HOUR], 'second' => ['minute' => Carbon::SECONDS_PER_MINUTE], 'millisecond' => ['second' => Carbon::MILLISECONDS_PER_SECOND], 'microsecond' => ['millisecond' => Carbon::MICROSECONDS_PER_MILLISECOND]];
         return $defaults[$source][$target] ?? null;
     }
     /**
@@ -467,7 +467,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function getDaysPerWeek()
     {
-        return static::getFactor('dayz', 'weeks') ?: \Carbon\Carbon::DAYS_PER_WEEK;
+        return static::getFactor('dayz', 'weeks') ?: Carbon::DAYS_PER_WEEK;
     }
     /**
      * Returns current config for hours per day.
@@ -476,7 +476,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function getHoursPerDay()
     {
-        return static::getFactor('hours', 'dayz') ?: \Carbon\Carbon::HOURS_PER_DAY;
+        return static::getFactor('hours', 'dayz') ?: Carbon::HOURS_PER_DAY;
     }
     /**
      * Returns current config for minutes per hour.
@@ -485,7 +485,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function getMinutesPerHour()
     {
-        return static::getFactor('minutes', 'hours') ?: \Carbon\Carbon::MINUTES_PER_HOUR;
+        return static::getFactor('minutes', 'hours') ?: Carbon::MINUTES_PER_HOUR;
     }
     /**
      * Returns current config for seconds per minute.
@@ -494,7 +494,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function getSecondsPerMinute()
     {
-        return static::getFactor('seconds', 'minutes') ?: \Carbon\Carbon::SECONDS_PER_MINUTE;
+        return static::getFactor('seconds', 'minutes') ?: Carbon::SECONDS_PER_MINUTE;
     }
     /**
      * Returns current config for microseconds per second.
@@ -503,7 +503,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function getMillisecondsPerSecond()
     {
-        return static::getFactor('milliseconds', 'seconds') ?: \Carbon\Carbon::MILLISECONDS_PER_SECOND;
+        return static::getFactor('milliseconds', 'seconds') ?: Carbon::MILLISECONDS_PER_SECOND;
     }
     /**
      * Returns current config for microseconds per second.
@@ -512,7 +512,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function getMicrosecondsPerMillisecond()
     {
-        return static::getFactor('microseconds', 'milliseconds') ?: \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND;
+        return static::getFactor('microseconds', 'milliseconds') ?: Carbon::MICROSECONDS_PER_MILLISECOND;
     }
     /**
      * Create a new CarbonInterval instance from specific values.
@@ -629,7 +629,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             $interval->localStrictModeEnabled = $localStrictModeEnabled;
             return $result;
         } catch (BadFluentSetterException $exception) {
-            if (\Carbon\Carbon::isStrictModeEnabled()) {
+            if (Carbon::isStrictModeEnabled()) {
                 throw new BadFluentConstructorException($method, 0, $exception);
             }
             return null;
@@ -717,15 +717,15 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             switch ($unit === 'µs' ? 'µs' : \strtolower($unit)) {
                 case 'millennia':
                 case 'millennium':
-                    $years += $intValue * \Carbon\CarbonInterface::YEARS_PER_MILLENNIUM;
+                    $years += $intValue * CarbonInterface::YEARS_PER_MILLENNIUM;
                     break;
                 case 'century':
                 case 'centuries':
-                    $years += $intValue * \Carbon\CarbonInterface::YEARS_PER_CENTURY;
+                    $years += $intValue * CarbonInterface::YEARS_PER_CENTURY;
                     break;
                 case 'decade':
                 case 'decades':
-                    $years += $intValue * \Carbon\CarbonInterface::YEARS_PER_DECADE;
+                    $years += $intValue * CarbonInterface::YEARS_PER_DECADE;
                     break;
                 case 'year':
                 case 'years':
@@ -736,7 +736,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
                     break;
                 case 'quarter':
                 case 'quarters':
-                    $months += $intValue * \Carbon\CarbonInterface::MONTHS_PER_QUARTER;
+                    $months += $intValue * CarbonInterface::MONTHS_PER_QUARTER;
                     break;
                 case 'month':
                 case 'months':
@@ -803,7 +803,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
                     throw new InvalidIntervalException(\sprintf('Invalid part %s in definition %s', $part, $intervalDefinition));
             }
         }
-        return new static($years, $months, $weeks, $days, $hours, $minutes, $seconds, $milliseconds * \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND + $microseconds);
+        return new static($years, $months, $weeks, $days, $hours, $minutes, $seconds, $milliseconds * Carbon::MICROSECONDS_PER_MILLISECOND + $microseconds);
     }
     /**
      * Creates a CarbonInterval from string using a different locale.
@@ -815,7 +815,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function parseFromLocale($interval, $locale = null)
     {
-        return static::fromString(\Carbon\Carbon::translateTimeString($interval, $locale ?: static::getLocale(), 'en'));
+        return static::fromString(Carbon::translateTimeString($interval, $locale ?: static::getLocale(), 'en'));
     }
     private static function castIntervalToClass(DateInterval $interval, string $className, array $skip = [])
     {
@@ -894,7 +894,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
     public static function make($interval, $unit = null, bool $skipCopy = \false)
     {
         if ($unit) {
-            $interval = "{$interval} " . \Carbon\Carbon::pluralUnit($unit);
+            $interval = "{$interval} " . Carbon::pluralUnit($unit);
         }
         if ($interval instanceof DateInterval) {
             return static::instance($interval, [], $skipCopy);
@@ -983,12 +983,12 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
                 return $this->s;
             case 'milli':
             case 'milliseconds':
-                return (int) (\round($this->f * \Carbon\Carbon::MICROSECONDS_PER_SECOND) / \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND);
+                return (int) (\round($this->f * Carbon::MICROSECONDS_PER_SECOND) / Carbon::MICROSECONDS_PER_MILLISECOND);
             case 'micro':
             case 'microseconds':
-                return (int) \round($this->f * \Carbon\Carbon::MICROSECONDS_PER_SECOND);
+                return (int) \round($this->f * Carbon::MICROSECONDS_PER_SECOND);
             case 'microExcludeMilli':
-                return (int) \round($this->f * \Carbon\Carbon::MICROSECONDS_PER_SECOND) % \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND;
+                return (int) \round($this->f * Carbon::MICROSECONDS_PER_SECOND) % Carbon::MICROSECONDS_PER_MILLISECOND;
             case 'weeks':
                 return (int) ($this->d / (int) static::getDaysPerWeek());
             case 'daysExcludeWeeks':
@@ -1027,7 +1027,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
     {
         $properties = \is_array($name) ? $name : [$name => $value];
         foreach ($properties as $key => $value) {
-            switch (\Carbon\Carbon::singularUnit(\rtrim($key, 'z'))) {
+            switch (Carbon::singularUnit(\rtrim($key, 'z'))) {
                 case 'year':
                     $this->checkIntegerValue($key, $value);
                     $this->y = $value;
@@ -1075,14 +1075,14 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
                     break;
                 case 'milli':
                 case 'millisecond':
-                    $this->microseconds = $value * \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND + $this->microseconds % \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND;
+                    $this->microseconds = $value * Carbon::MICROSECONDS_PER_MILLISECOND + $this->microseconds % Carbon::MICROSECONDS_PER_MILLISECOND;
                     break;
                 case 'micro':
                 case 'microsecond':
-                    $this->f = $value / \Carbon\Carbon::MICROSECONDS_PER_SECOND;
+                    $this->f = $value / Carbon::MICROSECONDS_PER_SECOND;
                     break;
                 default:
-                    if ($this->localStrictModeEnabled ?? \Carbon\Carbon::isStrictModeEnabled()) {
+                    if ($this->localStrictModeEnabled ?? Carbon::isStrictModeEnabled()) {
                         throw new UnknownSetterException($key);
                     }
                     $this->{$key} = $value;
@@ -1234,14 +1234,14 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             return $roundedValue;
         }
         if (\preg_match('/^(?<method>add|sub)(?<unit>[A-Z].*)$/', $method, $match)) {
-            $value = $this->getMagicParameter($parameters, 0, \Carbon\Carbon::pluralUnit($match['unit']), 0);
+            $value = $this->getMagicParameter($parameters, 0, Carbon::pluralUnit($match['unit']), 0);
             return $this->{$match['method']}($value, $match['unit']);
         }
-        $value = $this->getMagicParameter($parameters, 0, \Carbon\Carbon::pluralUnit($method), 1);
+        $value = $this->getMagicParameter($parameters, 0, Carbon::pluralUnit($method), 1);
         try {
             $this->set($method, $value);
         } catch (UnknownSetterException $exception) {
-            if ($this->localStrictModeEnabled ?? \Carbon\Carbon::isStrictModeEnabled()) {
+            if ($this->localStrictModeEnabled ?? Carbon::isStrictModeEnabled()) {
                 throw new BadFluentSetterException($method, 0, $exception);
             }
         }
@@ -1256,7 +1256,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             return ['parts' => $short, 'short' => \false];
         }
         if (\is_bool($syntax)) {
-            return ['short' => $syntax, 'syntax' => \Carbon\CarbonInterface::DIFF_ABSOLUTE];
+            return ['short' => $syntax, 'syntax' => CarbonInterface::DIFF_ABSOLUTE];
         }
         return [];
     }
@@ -1282,7 +1282,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             return \is_string($value) && $value !== '';
         }));
         if ($syntax === null) {
-            $syntax = \Carbon\CarbonInterface::DIFF_ABSOLUTE;
+            $syntax = CarbonInterface::DIFF_ABSOLUTE;
         }
         if ($parts === -1) {
             $parts = \INF;
@@ -1296,7 +1296,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             $join = [$default, $this->getTranslationMessage('list.1') ?? $default];
         }
         if ($altNumbers && $altNumbers !== \true) {
-            $language = new \Carbon\Language($this->locale);
+            $language = new Language($this->locale);
             $altNumbers = \in_array($language->getCode(), (array) $altNumbers, \true);
         }
         if (\is_array($join)) {
@@ -1326,13 +1326,13 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
     }
     protected static function getRoundingMethodFromOptions(int $options) : ?string
     {
-        if ($options & \Carbon\CarbonInterface::ROUND) {
+        if ($options & CarbonInterface::ROUND) {
             return 'round';
         }
-        if ($options & \Carbon\CarbonInterface::CEIL) {
+        if ($options & CarbonInterface::CEIL) {
             return 'ceil';
         }
-        if ($options & \Carbon\CarbonInterface::FLOOR) {
+        if ($options & CarbonInterface::FLOOR) {
             return 'floor';
         }
         return null;
@@ -1434,9 +1434,9 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
     {
         [$syntax, $short, $parts, $options, $join, $aUnit, $altNumbers, $interpolations, $minimumUnit, $skip] = $this->getForHumansParameters($syntax, $short, $parts, $options);
         $interval = [];
-        $syntax = (int) ($syntax ?? \Carbon\CarbonInterface::DIFF_ABSOLUTE);
-        $absolute = $syntax === \Carbon\CarbonInterface::DIFF_ABSOLUTE;
-        $relativeToNow = $syntax === \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW;
+        $syntax = (int) ($syntax ?? CarbonInterface::DIFF_ABSOLUTE);
+        $absolute = $syntax === CarbonInterface::DIFF_ABSOLUTE;
+        $relativeToNow = $syntax === CarbonInterface::DIFF_RELATIVE_TO_NOW;
         $count = 1;
         $unit = $short ? 's' : 'second';
         $isFuture = $this->invert === 1;
@@ -1509,7 +1509,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
                 $unit = $short ? $diffIntervalData['unitShort'] : $diffIntervalData['unit'];
                 $count = $diffIntervalData['value'];
                 $interval[] = [$short, $diffIntervalData];
-            } elseif ($options & \Carbon\CarbonInterface::SEQUENTIAL_PARTS_ONLY && \count($interval) > 0) {
+            } elseif ($options & CarbonInterface::SEQUENTIAL_PARTS_ONLY && \count($interval) > 0) {
                 break;
             }
             // break the loop after we get the required number of parts in array
@@ -1527,14 +1527,14 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             $item = $transChoice($item[0], $item[1], $index, $actualParts);
         }
         if (\count($interval) === 0) {
-            if ($relativeToNow && $options & \Carbon\CarbonInterface::JUST_NOW) {
+            if ($relativeToNow && $options & CarbonInterface::JUST_NOW) {
                 $key = 'diff_now';
                 $translation = $this->translate($key, $interpolations, null, $translator);
                 if ($translation !== $key) {
                     return $translation;
                 }
             }
-            $count = $options & \Carbon\CarbonInterface::NO_ZERO_DIFF ? 1 : 0;
+            $count = $options & CarbonInterface::NO_ZERO_DIFF ? 1 : 0;
             $unit = $fallbackUnit[$short ? 1 : 0];
             $interval[] = $this->translate($unit, $interpolations, $count, $translator, $altNumbers);
         }
@@ -1548,14 +1548,14 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
         $transId = $relativeToNow ? $isFuture ? 'from_now' : 'ago' : ($isFuture ? 'after' : 'before');
         if ($parts === 1) {
             if ($relativeToNow && $unit === 'day') {
-                if ($count === 1 && $options & \Carbon\CarbonInterface::ONE_DAY_WORDS) {
+                if ($count === 1 && $options & CarbonInterface::ONE_DAY_WORDS) {
                     $key = $isFuture ? 'diff_tomorrow' : 'diff_yesterday';
                     $translation = $this->translate($key, $interpolations, null, $translator);
                     if ($translation !== $key) {
                         return $translation;
                     }
                 }
-                if ($count === 2 && $options & \Carbon\CarbonInterface::TWO_DAY_WORDS) {
+                if ($count === 2 && $options & CarbonInterface::TWO_DAY_WORDS) {
                     $key = $isFuture ? 'diff_after_tomorrow' : 'diff_before_yesterday';
                     $translation = $this->translate($key, $interpolations, null, $translator);
                     if ($translation !== $key) {
@@ -1616,7 +1616,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
                 \array_unshift($params, $tz);
             }
         }
-        return \Carbon\CarbonPeriod::create($this, ...$params);
+        return CarbonPeriod::create($this, ...$params);
     }
     /**
      * Invert the interval.
@@ -1847,7 +1847,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
     public static function getDateIntervalSpec(DateInterval $interval, bool $microseconds = \false, array $skip = [])
     {
         $date = \array_filter([static::PERIOD_YEARS => \abs($interval->y), static::PERIOD_MONTHS => \abs($interval->m), static::PERIOD_DAYS => \abs($interval->d)]);
-        if ($interval->days >= \Carbon\CarbonInterface::DAYS_PER_WEEK * \Carbon\CarbonInterface::WEEKS_PER_MONTH && (!isset($date[static::PERIOD_YEARS]) || \count(\array_intersect(['y', 'year', 'years'], $skip))) && (!isset($date[static::PERIOD_MONTHS]) || \count(\array_intersect(['m', 'month', 'months'], $skip)))) {
+        if ($interval->days >= CarbonInterface::DAYS_PER_WEEK * CarbonInterface::WEEKS_PER_MONTH && (!isset($date[static::PERIOD_YEARS]) || \count(\array_intersect(['y', 'year', 'years'], $skip))) && (!isset($date[static::PERIOD_MONTHS]) || \count(\array_intersect(['m', 'month', 'months'], $skip)))) {
             $date = [static::PERIOD_DAYS => \abs($interval->days)];
         }
         $seconds = \abs($interval->s);
@@ -1886,7 +1886,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
      */
     public static function compareDateIntervals(DateInterval $first, DateInterval $second)
     {
-        $current = \Carbon\Carbon::now();
+        $current = Carbon::now();
         $passed = $current->avoidMutation()->add($second);
         $current->add($first);
         if ($current < $passed) {
@@ -2014,7 +2014,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
         $unitFound = \false;
         $factors = self::getFlipCascadeFactors();
         $daysPerWeek = (int) static::getDaysPerWeek();
-        $values = ['years' => $this->years, 'months' => $this->months, 'weeks' => (int) ($this->d / $daysPerWeek), 'dayz' => \fmod($this->d, $daysPerWeek), 'hours' => $this->hours, 'minutes' => $this->minutes, 'seconds' => $this->seconds, 'milliseconds' => (int) ($this->microseconds / \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND), 'microseconds' => $this->microseconds % \Carbon\Carbon::MICROSECONDS_PER_MILLISECOND];
+        $values = ['years' => $this->years, 'months' => $this->months, 'weeks' => (int) ($this->d / $daysPerWeek), 'dayz' => \fmod($this->d, $daysPerWeek), 'hours' => $this->hours, 'minutes' => $this->minutes, 'seconds' => $this->seconds, 'milliseconds' => (int) ($this->microseconds / Carbon::MICROSECONDS_PER_MILLISECOND), 'microseconds' => $this->microseconds % Carbon::MICROSECONDS_PER_MILLISECOND];
         if (isset($factors['dayz']) && $factors['dayz'][0] !== 'weeks') {
             $values['dayz'] += $values['weeks'] * $daysPerWeek;
             $values['weeks'] = 0;
@@ -2309,7 +2309,7 @@ class CarbonInterval extends DateInterval implements \Carbon\CarbonConverterInte
             $inverted = $value < 0;
             return $this->copyProperties(self::fromString(\number_format(\abs($value), 12, '.', '') . ' ' . $unit)->invert($inverted)->cascade());
         }
-        $base = \Carbon\CarbonImmutable::parse('2000-01-01 00:00:00', 'UTC')->roundUnit($unit, $precision, $function);
+        $base = CarbonImmutable::parse('2000-01-01 00:00:00', 'UTC')->roundUnit($unit, $precision, $function);
         $next = $base->add($this);
         $inverted = $next < $base;
         if ($inverted) {

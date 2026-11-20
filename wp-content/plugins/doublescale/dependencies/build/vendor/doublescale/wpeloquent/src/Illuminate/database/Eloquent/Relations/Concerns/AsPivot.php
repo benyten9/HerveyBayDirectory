@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Concerns;
 
-use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 trait AsPivot
 {
     /**

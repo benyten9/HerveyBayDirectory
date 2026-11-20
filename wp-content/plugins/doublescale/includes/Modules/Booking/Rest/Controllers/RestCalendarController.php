@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 use WP_Error;
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -683,7 +683,7 @@ class RestCalendarController extends RestController {
 			foreach ( $calendar_team as $teamId ) {
 				$user = UserModel::where( 'ID', $teamId )->first();
 				if ( $user ) {
-					$user_avatar_url = get_avatar_url( $user->ID );
+					$user_avatar_url = \DoubleScale\Modules\Booking\BookingUtils::host_image_url( $user->ID );
 					$users[]         = array(
 						'ID'           => $user->ID,
 						'display_name' => $user->display_name,

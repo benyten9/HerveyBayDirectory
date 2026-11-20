@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 use PDO;
-use Illuminate\Support\Arr;
-class SqlServerConnector extends \Illuminate\Database\Connectors\Connector implements \Illuminate\Database\Connectors\ConnectorInterface
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+class SqlServerConnector extends Connector implements ConnectorInterface
 {
     /**
      * The PDO connection options.

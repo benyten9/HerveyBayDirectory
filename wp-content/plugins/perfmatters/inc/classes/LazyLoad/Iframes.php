@@ -216,9 +216,23 @@ class Iframes
 
 	//shared video placeholder renderer for youtube/elementor prepared data
 	private static function lazyload_video_placeholder($iframe, $iframe_atts, $video_url, $video_id, $query, $thumbnail_src, $thumbnail_width = null, $thumbnail_height = null, $provider = 'video') {
-		$lazy_video = '<div class="perfmatters-lazy-video" data-provider="' . esc_attr($provider) . '" data-src="' . esc_attr($video_url) . '" data-id="' . esc_attr($video_id) . '" data-query="' . esc_attr($query) . '" data-referrerpolicy="' . ($iframe_atts['referrerpolicy'] ?? '') . '" onclick="perfmattersLazyLoadVideo(this);">';
+		//carry the original iframe title through so the placeholder and the loaded player keep the video's name
+		$video_title = !empty($iframe_atts['title']) ? trim(htmlspecialchars_decode($iframe_atts['title'])) : '';
+
+		//accessible name for the placeholder button
+		if(!empty($video_title)) {
+			/* translators: %s: title of the embedded video */
+			$label = sprintf(__('Play video: %s', 'perfmatters'), $video_title);
+		}
+		else {
+			/* translators: %s: video provider name, e.g. Youtube */
+			$label = sprintf(__('Play %s video', 'perfmatters'), ucfirst($provider));
+		}
+
+		$lazy_video = '<div class="perfmatters-lazy-video" role="button" tabindex="0" aria-label="' . esc_attr($label) . '" data-provider="' . esc_attr($provider) . '" data-src="' . esc_attr($video_url) . '" data-id="' . esc_attr($video_id) . '" data-query="' . esc_attr($query) . '" data-referrerpolicy="' . ($iframe_atts['referrerpolicy'] ?? '') . '"' . (!empty($video_title) ? ' data-title="' . esc_attr($video_title) . '"' : '') . ' onclick="perfmattersLazyLoadVideo(this);" onkeydown="perfmattersLazyLoadVideoKeyDown(event, this);">';
 			$lazy_video.= '<div>';
-				$lazy_video.= '<img src="' . esc_url($thumbnail_src) . '" alt="' . esc_attr(ucfirst($provider)) . ' ' . __('video', 'perfmatters') . '"';
+				//placeholder image is decorative, the wrapping button carries the accessible name
+				$lazy_video.= '<img src="' . esc_url($thumbnail_src) . '" alt=""';
 				if(!empty($thumbnail_width) && !empty($thumbnail_height)) {
 					$lazy_video.= ' width="' . (int) $thumbnail_width . '" height="' . (int) $thumbnail_height . '"';
 				}
@@ -241,18 +255,22 @@ class Iframes
 			return $html;
 		}
 
-		//match all videos
-		preg_match_all('#<video(\s.+)>.*</video>#iUs', $buffer, $videos, PREG_SET_ORDER);
+		//match all videos, including a bare <video> with no attributes
+		preg_match_all('#<video(\s[^>]*)?>(.*?)</video>#is', $buffer, $videos, PREG_SET_ORDER);
 
 		if(!empty($videos)) {
 			foreach($videos as $video) {
+				
+				//optional group is empty when the opening tag has no attributes
+				$atts_string = $video[1] ?? '';
+
 				//get video attributes array
-				$video_atts = Utilities::get_atts_array($video[1]);
+				$video_atts = Utilities::get_atts_array($atts_string);
 
 				//dont check excluded if forced attribute was found
-				if(!Utilities::match_in_array($video[1], Attributes::forced())) {
-					//skip if exluded attribute was found
-					if(Utilities::match_in_array($video[1], Attributes::excluded())) {
+				if(!Utilities::match_in_array($video[0], Attributes::forced())) {
+					//skip if excluded attribute was found
+					if(Utilities::match_in_array($video[0], Attributes::excluded())) {
 						continue;
 					}
 
@@ -262,8 +280,8 @@ class Iframes
 					}
 				}
 
-				//skip if no src is found
-				if(empty($video_atts['src'])) {
+				//skip if no src on video and no source tags
+				if(empty($video_atts['src']) && stripos($video[0], '<source') === false) {
 					continue;
 				}
 
@@ -271,8 +289,10 @@ class Iframes
 				$video_atts['class'] = !empty($video_atts['class']) ? $video_atts['class'] . ' ' . 'perfmatters-lazy' : 'perfmatters-lazy';
 
 				//migrate src
-				$video_atts['data-src'] = $video_atts['src'];
-				unset($video_atts['src']);
+				if(!empty($video_atts['src'])) {
+					$video_atts['data-src'] = $video_atts['src'];
+					unset($video_atts['src']);
+				}
 
 				//migrate poster
 				if(!empty($video_atts['poster'])) {
@@ -280,8 +300,11 @@ class Iframes
 					unset($video_atts['poster']);
 				}
 
-				//replace video attributes string
-				$video_lazyload  = str_replace($video[1], ' ' . Utilities::get_atts_string($video_atts), $video[0]);
+				//rebuild the opening tag so a bare <video> and one with attributes take the same path
+				$video_lazyload = preg_replace('/<video\b[^>]*>/i', '<video ' . Utilities::get_atts_string($video_atts) . '>', $video[0], 1);
+
+				//migrate source tag src attributes
+				$video_lazyload = preg_replace('/(<source[^>]*\s)src=/i', '${1}data-src=', $video_lazyload);
 
 				//add noscript original video
 				if(\Perfmatters\LazyLoad::is_lazyload_noscript_enabled()) {

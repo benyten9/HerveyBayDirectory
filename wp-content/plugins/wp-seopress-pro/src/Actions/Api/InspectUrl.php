@@ -65,8 +65,30 @@ class InspectUrl implements ExecuteHooks {
 			array(
 				'google_api_key_is_empty' => empty( $google_api_key ),
 				'data'                    => $data,
+				'performance'             => $this->get_saved_performance( $postId ),
 			)
 		);
+	}
+
+	/**
+	 * Read the last synchronized metrics without making a Search Console call.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array|null Null when no usable metrics have been saved.
+	 */
+	private function get_saved_performance( $post_id ) {
+		$metrics  = array();
+		$has_data = false;
+		foreach ( array( 'clicks', 'impressions', 'ctr', 'position' ) as $key ) {
+			$value = get_post_meta( $post_id, '_seopress_search_console_analysis_' . $key, true );
+			$valid = is_numeric( $value ) && is_finite( (float) $value ) && 0 <= (float) $value;
+			if ( 'ctr' === $key && $valid && 1 < (float) $value ) {
+				$valid = false;
+			}
+			$metrics[ $key ] = $valid ? (float) $value : null;
+			$has_data       = $has_data || $valid;
+		}
+		return $has_data ? $metrics : null;
 	}
 
 	public function processPost( \WP_REST_Request $request ) {

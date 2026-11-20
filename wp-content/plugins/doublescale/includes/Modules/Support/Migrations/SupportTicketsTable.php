@@ -48,6 +48,14 @@ class SupportTicketsTable extends Migration {
 	 * - `tag_ids`        — JSON array of `doublescale_tags.id`. Filtered via JSON_CONTAINS.
 	 * - `custom_data`    — JSON map of per-ticket custom-field values
 	 *                      (field definitions live in `doublescale_settings['support']['custom_fields']`).
+	 * - `first_response_at` — when the team first replied (set once); `resolved_at` —
+	 *                      when it was last marked solved or closed (cleared when it opens
+	 *                      again). Both feed the response and resolution time reports.
+	 * - `satisfaction`, `satisfaction_comment`, `satisfaction_at`, `satisfaction_source`
+	 *                    — the customer's latest 1-5 rating, their words, when, and where
+	 *                      it came from (email or chat).
+	 * - `merged_into_id` — the ticket this one was merged into (closed then).
+	 *   Sites from before get these from {@see SupportTicketsTableTimingColumns}.
 	 *
 	 * @return string
 	 */
@@ -66,20 +74,34 @@ class SupportTicketsTable extends Migration {
 			priority VARCHAR(20) NOT NULL DEFAULT 'normal',
 			mailbox_id BIGINT(20) UNSIGNED NOT NULL,
 			contact_id BIGINT(20) UNSIGNED NOT NULL,
+			company_id BIGINT(20) UNSIGNED NULL,
+			project_id BIGINT(20) UNSIGNED NULL,
 			agent_user_id BIGINT(20) UNSIGNED NULL,
 			product VARCHAR(100) NULL,
 			message_id VARCHAR(191) NULL,
 			response_count INT UNSIGNED NOT NULL DEFAULT 0,
 			tag_ids JSON NULL,
 			custom_data JSON NULL,
+			first_response_at DATETIME NULL,
+			resolved_at DATETIME NULL,
+			satisfaction TINYINT(1) NULL,
+			satisfaction_comment TEXT NULL,
+			satisfaction_at DATETIME NULL,
+			satisfaction_source VARCHAR(20) NULL,
+			merged_into_id BIGINT(20) UNSIGNED NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY hash (hash),
 			KEY idx_contact_status (contact_id, status),
+			KEY idx_company (company_id),
+			KEY idx_project (project_id),
 			KEY idx_agent_status (agent_user_id, status),
 			KEY idx_mailbox_status (mailbox_id, status, created_at),
 			KEY idx_message_id (message_id),
-			KEY idx_created (created_at)";
+			KEY idx_created (created_at),
+			KEY idx_first_response (first_response_at),
+			KEY idx_resolved (resolved_at),
+			KEY idx_merged (merged_into_id)";
 	}
 }

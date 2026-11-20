@@ -7,13 +7,16 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 	echo esc_html($title);
 ?></strong>: 
 <?php
-	echo wp_kses_post($text);
+	echo (isset($button_meta) && 'inline' == $button_meta) ? wp_kses($text, array('br' => array())) : wp_kses_post($text);
+
+	// Inline link notices (e.g. Black Friday): the inline link and text2 after the text, as in horizontal-notice.php
+	if (isset($button_meta) && 'inline' == $button_meta) echo ' <br><a href="'.esc_attr(apply_filters('updraftplus_com_link', !empty($button_report_link) ? $button_report_link : $button_link)).'">'.esc_html($button_text).'</a> '.wp_kses_post($text2).' ';
 
 	if (isset($discount_code)) echo ' <b>'.esc_html($discount_code).'</b>';
 	
-	if (!empty($button_link) && (!empty($button_meta) || !empty($button_text))) {
+	if ((!empty($button_report_link) || !empty($button_link)) && (!empty($button_meta) || !empty($button_text))) {
 ?>
-<a class="updraft_notice_link" href="<?php echo esc_attr(apply_filters('updraftplus_com_link', $button_link));?>"><?php
+<a class="updraft_notice_link" href="<?php echo esc_attr(apply_filters('updraftplus_com_link', !empty($button_report_link) ? $button_report_link : $button_link));?>"><?php
 global $updraftplus_admin;
 $updraftplus_admin->include_template(
 	'wp-admin/notices/button-label.php',

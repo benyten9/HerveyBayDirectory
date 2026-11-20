@@ -13,7 +13,7 @@
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Zoom;
 
 use DoubleScale\Modules\Booking\Integration\API as Abstract_API;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use Exception;
 
 /**

@@ -1,13 +1,13 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
 use Closure;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Exists;
-use Illuminate\Validation\Rules\Unique;
-use Illuminate\Contracts\Validation\Rule as RuleContract;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Validation\Rules\Exists;
+use DoubleScale\Vendor\Illuminate\Validation\Rules\Unique;
+use DoubleScale\Vendor\Illuminate\Contracts\Validation\Rule as RuleContract;
 class ValidationRuleParser
 {
     /**
@@ -86,7 +86,7 @@ class ValidationRuleParser
     protected function prepareRule($rule)
     {
         if ($rule instanceof Closure) {
-            $rule = new \Illuminate\Validation\ClosureValidationRule($rule);
+            $rule = new ClosureValidationRule($rule);
         }
         if (!\is_object($rule) || $rule instanceof RuleContract || $rule instanceof Exists && $rule->queryCallbacks() || $rule instanceof Unique && $rule->queryCallbacks()) {
             return $rule;
@@ -104,7 +104,7 @@ class ValidationRuleParser
     protected function explodeWildcardRules($results, $attribute, $rules)
     {
         $pattern = \str_replace('\\*', '[^\\.]*', \preg_quote($attribute));
-        $data = \Illuminate\Validation\ValidationData::initializeAndGatherData($attribute, $this->data);
+        $data = ValidationData::initializeAndGatherData($attribute, $this->data);
         foreach ($data as $key => $value) {
             if (Str::startsWith($key, $attribute) || (bool) \preg_match('/^' . $pattern . '\\z/', $key)) {
                 foreach ((array) $rules as $rule) {

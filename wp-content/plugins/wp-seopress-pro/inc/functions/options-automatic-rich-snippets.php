@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) { // Is Rich Snippets enabled.
 	if ( is_single() || is_singular() ) {
 		// If Disable all automatic schemas doesn't exist, then continue.
-		if ( ! get_post_meta( get_the_ID(), '_seopress_pro_rich_snippets_disable_all', true ) ) {
+		if ( ! get_post_meta( seopress_pro_get_the_id(), '_seopress_pro_rich_snippets_disable_all', true ) ) {
 			/**
 			 * Automatic rich snippets manual option.
 			 *
@@ -70,7 +70,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 							}
 						} elseif ( 'manual_global' == $post_meta_value ) {
 							if ( '' != $manual_global ) {
-								$_post_meta_value = $manual_global;
+								$_post_meta_value = \SEOPressPro\Helpers\LocalBusinessSchemaValue::resolve( $manual_global );
 							}
 						} elseif ( 'manual_img_global' == $post_meta_value ) {
 							if ( '' != $manual_img_global ) {
@@ -118,6 +118,11 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 							$_post_meta_value = str_replace( $sp_schemas_dyn_variables, $sp_schemas_dyn_variables_replace, $post_meta_value );
 						}
 
+						// Preserve an explicit opt-out separately from an unresolved date.
+						if ( 'product' === $schema_name && 'price_valid_date' === $key ) {
+							$schema_datas['price_valid_date_disabled'] = 'none' === $post_meta_value;
+						}
+
 						// Push value to array.
 						$schema_datas[ $key ] = $_post_meta_value;
 					}
@@ -136,12 +141,16 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 			require_once __DIR__ . '/schemas/Event.php';
 			require_once __DIR__ . '/schemas/Product.php';
 			require_once __DIR__ . '/schemas/SoftwareApp.php';
+			require_once __DIR__ . '/schemas/Book.php';
 			require_once __DIR__ . '/schemas/Service.php';
 			require_once __DIR__ . '/schemas/Review.php';
 			require_once __DIR__ . '/schemas/Custom.php';
 
-			// Dynamic variables.
-			global $post;
+			// Dynamic variables. Not the global $post: this file is required on
+			// wp_head, after page builders have rendered their query loops, and a
+			// builder that does not restore the global leaves us with the last
+			// post of the loop. See seopress_pro_get_the_post().
+			$post = seopress_pro_get_the_post();
 			global $product;
 
 			// Excerpt length.
@@ -152,7 +161,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 			$seopress_excerpt = '';
 			if ( ! is_404() && '' != $post ) {
 				if ( has_excerpt( $post->ID ) ) {
-					$seopress_excerpt = get_the_excerpt();
+					$seopress_excerpt = get_the_excerpt( $post );
 				}
 			}
 			if ( '' != $seopress_excerpt ) {
@@ -244,28 +253,18 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 				$get_barcode = get_post_meta( $product->get_id(), 'sp_wc_barcode_field', true );
 			}
 
-			// Stock.
+			// Stock. is_in_stock() is true for a product on backorder, managed or
+			// not, so check is_on_backorder() first.
 			$get_stock = '';
-			if ( isset( $product ) && is_object( $product ) && method_exists( $product, 'managing_stock' ) && true === $product->managing_stock() ) { // If managing stock.
-				if ( method_exists( $product, 'is_in_stock' ) && true === $product->is_in_stock() ) {
+			if ( isset( $product ) && is_object( $product ) && method_exists( $product, 'is_in_stock' ) ) {
+				if ( method_exists( $product, 'is_on_backorder' ) && $product->is_on_backorder() ) {
+					$get_stock = seopress_check_ssl() . 'schema.org/BackOrder';
+				} elseif ( $product->is_in_stock() ) {
 					$get_stock = seopress_check_ssl() . 'schema.org/InStock';
-				} else { // If out of stock.
-					$get_stock = seopress_check_ssl() . 'schema.org/OutOfStock';
-				}
-			} elseif ( isset( $product ) && is_object( $product ) && method_exists( $product, 'managing_stock' ) && false === $product->managing_stock() && method_exists( $product, 'get_stock_status' ) && $product->get_stock_status() ) {
-				if ( 'instock' == $product->get_stock_status() ) {
-					$get_stock = seopress_check_ssl() . 'schema.org/InStock';
-				} else { // If out of stock.
+				} else {
 					$get_stock = seopress_check_ssl() . 'schema.org/OutOfStock';
 				}
 			}
-
-			// YouTube video data (lazy-resolved; empty array when no YouTube URL in content
-			// or when the Data API call fails). Used by the Video schema auto-fill and by
-			// the %%youtube_video_*%% dynamic variables.
-			$seopress_youtube_video_data = function_exists( 'seopress_pro_get_post_youtube_video_data' )
-				? seopress_pro_get_post_youtube_video_data( isset( $post->ID ) ? $post->ID : null )
-				: array();
 
 			$sp_schemas_dyn_variables = array(
 				'site_title',
@@ -308,17 +307,22 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 				get_bloginfo( 'name' ),
 				get_bloginfo( 'description' ),
 				get_home_url(),
-				get_the_ID(),
-				the_title_attribute( 'echo=0' ),
+				seopress_pro_get_the_id(),
+				the_title_attribute(
+					array(
+						'echo' => 0,
+						'post' => $post,
+					)
+				),
 				$seopress_get_the_excerpt,
 				$seopress_get_the_content,
-				get_permalink(),
+				get_permalink( $post ),
 				$the_author_meta,
-				get_the_date( 'c' ),
-				get_the_modified_date( 'c' ),
+				get_the_date( 'c', $post ),
+				get_the_modified_date( 'c', $post ),
 				seopress_get_service( 'SocialOption' )->getSocialKnowledgeImage(),
 				get_the_post_thumbnail_url( $post, apply_filters( 'seopress_schemas_post_thumbnail_size', 'full' ) ),
-				get_avatar_url( get_the_author_meta( 'ID' ) ),
+				get_avatar_url( get_post_field( 'post_author', $post ) ),
 				$get_regular_price,
 				$get_sale_price,
 				$get_sale_price_with_tax,
@@ -329,14 +333,15 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 				$get_barcode,
 				$product_cat_term_list,
 				$get_stock,
-				isset( $seopress_youtube_video_data['name'] ) ? $seopress_youtube_video_data['name'] : '',
-				isset( $seopress_youtube_video_data['description'] ) ? $seopress_youtube_video_data['description'] : '',
-				isset( $seopress_youtube_video_data['img'] ) ? $seopress_youtube_video_data['img'] : '',
-				isset( $seopress_youtube_video_data['duration'] ) ? $seopress_youtube_video_data['duration'] : '',
-				isset( $seopress_youtube_video_data['upload_date'] ) ? $seopress_youtube_video_data['upload_date'] : '',
-				isset( $seopress_youtube_video_data['view_count'] ) ? $seopress_youtube_video_data['view_count'] : '',
-				isset( $seopress_youtube_video_data['content_url'] ) ? $seopress_youtube_video_data['content_url'] : '',
-				isset( $seopress_youtube_video_data['embed_url'] ) ? $seopress_youtube_video_data['embed_url'] : '',
+				// youtube_video_*: filled below, once the schemas printed on this post are known.
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
+				'',
 			);
 
 			$sp_schemas_dyn_variables_replace = apply_filters( 'seopress_schemas_dyn_variables_replace', $sp_schemas_dyn_variables_replace );
@@ -361,6 +366,34 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 				}
 			}
 			wp_reset_postdata();
+
+			// YouTube video data is only resolved when a schema printed on this post
+			// uses it: the auto-filled Video schema, or a field mapped to a
+			// youtube_video_* variable. Scanning the content for a video on every
+			// page would cost for nothing on most sites. The data itself was stored
+			// when the post was saved; nothing is fetched here.
+			$seopress_youtube_video_data = array();
+			if ( ! empty( $sp_schemas_ids ) && isset( $current_post->ID ) && function_exists( 'seopress_pro_schemas_use_youtube_video_data' ) && seopress_pro_schemas_use_youtube_video_data( $sp_schemas_ids ) ) {
+				$seopress_youtube_video_data = seopress_pro_get_post_youtube_video_data( $current_post->ID );
+
+				$seopress_youtube_video_variables = array(
+					'youtube_video_title'       => 'name',
+					'youtube_video_description' => 'description',
+					'youtube_video_thumbnail'   => 'img',
+					'youtube_video_duration'    => 'duration',
+					'youtube_video_upload_date' => 'upload_date',
+					'youtube_video_view_count'  => 'view_count',
+					'youtube_video_content_url' => 'content_url',
+					'youtube_video_embed_url'   => 'embed_url',
+				);
+
+				foreach ( $seopress_youtube_video_variables as $variable => $field ) {
+					$index = array_search( $variable, $sp_schemas_dyn_variables, true );
+					if ( false !== $index && isset( $seopress_youtube_video_data[ $field ] ) ) {
+						$sp_schemas_dyn_variables_replace[ $index ] = $seopress_youtube_video_data[ $field ];
+					}
+				}
+			}
 
 			if ( ! empty( $sp_schemas_ids ) ) {
 				foreach ( $sp_schemas_ids as $id ) {
@@ -560,7 +593,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 						// toggle is set on this specific Video schema entry), fill any empty
 						// fields with metadata fetched from the first YouTube video found
 						// in the current post's content.
-						$videos_yt_autofill_global = '1' === seopress_pro_get_service( 'SitemapOptionPro' )->getVideoSchemaYouTubeEnable();
+						$videos_yt_autofill_global = '1' === seopress_pro_get_service( 'OptionPro' )->getVideoSchemaYouTubeEnable();
 						$videos_yt_autofill_schema = '1' === get_post_meta( $id, '_seopress_pro_rich_snippets_videos_youtube_autofill', true );
 
 						if ( ( $videos_yt_autofill_global || $videos_yt_autofill_schema ) && ! empty( $seopress_youtube_video_data ) ) {
@@ -659,6 +692,11 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 						seopress_automatic_rich_snippets_products_option( $schema_datas );
 					}
 
+					if ( 'book' === $seopress_pro_rich_snippets_type ) {
+						$schema_datas = seopress_automatic_rich_snippets_manual_option( $id, 'book', \SEOPressPro\Helpers\Schemas\Book::meta_keys(), $seopress_pro_schemas, $sp_schemas_dyn_variables, $sp_schemas_dyn_variables_replace );
+						seopress_automatic_rich_snippets_book_option( $schema_datas );
+					}
+
 					// Software Application.
 					if ( 'softwareapp' == $seopress_pro_rich_snippets_type ) {
 						// Schema type.
@@ -692,6 +730,7 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 							'description'       => '_seopress_pro_rich_snippets_service_description',
 							'img'               => '_seopress_pro_rich_snippets_service_img',
 							'area'              => '_seopress_pro_rich_snippets_service_area',
+							'provider_source'   => '_seopress_pro_rich_snippets_service_provider_source',
 							'provider_name'     => '_seopress_pro_rich_snippets_service_provider_name',
 							'lb_img'            => '_seopress_pro_rich_snippets_service_lb_img',
 							'provider_mobility' => '_seopress_pro_rich_snippets_service_provider_mobility',

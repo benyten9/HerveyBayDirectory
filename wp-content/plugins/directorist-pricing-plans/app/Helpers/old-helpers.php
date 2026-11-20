@@ -349,7 +349,7 @@ if ( ! function_exists( 'atpp_total_price' ) ) {
     function atpp_total_price( $plan_id ) {
         directorist_pricing_plans_deprecated_function( __FUNCTION__ );
         $plan = directorist_pricing_plans_legacy_plan( $plan_id );
-        return $plan ? (float) $plan->price : 0;
+        return $plan ? directorist_get_plan_effective_price( $plan ) : 0;
     }
 }
 
@@ -367,7 +367,7 @@ if ( ! function_exists( 'atpp_total_tax' ) ) {
         directorist_pricing_plans_deprecated_function( __FUNCTION__, 'directorist_get_plan_tax_amount' );
         $plan = directorist_pricing_plans_legacy_plan( $plan_id );
         try {
-            $tax = $plan ? directorist_get_plan_tax_amount( $plan, (float) $plan->price ) : 0;
+            $tax = $plan ? directorist_get_plan_tax_amount( $plan, directorist_get_plan_effective_price( $plan ) ) : 0;
         } catch ( Throwable $e ) {
             $tax = 0;
         }

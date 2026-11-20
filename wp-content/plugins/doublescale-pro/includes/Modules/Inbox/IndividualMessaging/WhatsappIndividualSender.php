@@ -26,7 +26,7 @@ use DoubleScale\Modules\Campaigns\Models\TemplateModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel;
 use DoubleScale\Core\MergeTags\MergeTagsManager;
 use DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry;
-use DoubleScale\Modules\Tracking\Whatsapp;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappTracking;
 use DoubleScale\Pro\Traits\WhatsappTemplatePreparation;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Core\Constants\TrackingStatus;
@@ -87,7 +87,7 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 	 * @return string Tracking class name
 	 */
 	protected function get_tracking_class() {
-		return WhatsApp::class;
+		return WhatsappTracking::class;
 	}
 
 	/**
@@ -242,7 +242,7 @@ class WhatsappIndividualSender extends AbstractIndividualMessageSender {
 
 			// Check 24h conversation window only for template-restricted providers (Meta).
 			if ( $provider->requires_template( $this->get_channel_type() ) ) {
-				$window = \DoubleScale\Modules\Campaigns\Services\WhatsappConversationWindow::check( $contact_id );
+				$window = \DoubleScale\Pro\Modules\Campaigns\Whatsapp\ConversationWindow::check( $contact_id );
 				if ( ! $window['active'] ) {
 					$reason = $window['reason'] === 'no_inbound_messages'
 						? __( 'No incoming WhatsApp messages from this contact. Send a template message first to start the conversation.', 'doublescale')

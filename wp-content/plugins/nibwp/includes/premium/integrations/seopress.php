@@ -113,7 +113,7 @@ function nibwp_seopress_dump_meta(int $id): array
 
 wp_register_ability('nibwp/seopress-info', [
     'label'       => __('SEOPress — Info', 'nibwp'),
-    'description' => __('Detect SEOPress (free + Pro), its version, the enabled feature toggles, and which global option groups are configured.', 'nibwp'),
+    'description' => 'Detect SEOPress (free + Pro), its version, the enabled feature toggles, and which global option groups are configured.',
     'category'    => 'seo',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -149,7 +149,7 @@ function nibwp_seopress_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-post', [
     'label'       => __('SEOPress — Post SEO', 'nibwp'),
-    'description' => __('Read/write a post or term SEO: title, meta description, canonical URL, robots (noindex/nofollow/noimageindex/noarchive/nosnippet), target keywords and primary category. Actions: get, set, bulk_set. Booleans map to SEOPress robots meta (true = rule ON, e.g. noindex).', 'nibwp'),
+    'description' => 'Read/write a post or term SEO: title, meta description, canonical URL, robots (noindex/nofollow/noimageindex/noarchive/nosnippet), target keywords and primary category. Actions: get, set, bulk_set. Booleans map to SEOPress robots meta (true = rule ON, e.g. noindex).',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -270,7 +270,7 @@ function nibwp_seopress_post_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-social-post', [
     'label'       => __('SEOPress — Post Social', 'nibwp'),
-    'description' => __('Read/write a post\'s social preview: Open Graph (Facebook) title, description, image, and Twitter title, description, image. Actions: get, set.', 'nibwp'),
+    'description' => 'Read/write a post\'s social preview: Open Graph (Facebook) title, description, image, and Twitter title, description, image. Actions: get, set.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -334,7 +334,7 @@ function nibwp_seopress_social_post_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-titles', [
     'label'       => __('SEOPress — Titles & Metas', 'nibwp'),
-    'description' => __('Read/write the global Titles & Metas settings: the home title/description, the title separator, and per-post-type / per-taxonomy title + description templates and noindex flags. Actions: get, update. Common keys: seopress_titles_sep, seopress_titles_home_site_title, seopress_titles_home_site_desc, seopress_titles_single_titles[cpt][title|description|noindex], seopress_titles_tax_titles[tax][...].', 'nibwp'),
+    'description' => 'Read/write the global Titles & Metas settings: the home title/description, the title separator, and per-post-type / per-taxonomy title + description templates and noindex flags. Actions: get, update. Common keys: seopress_titles_sep, seopress_titles_home_site_title, seopress_titles_home_site_desc, seopress_titles_single_titles[cpt][title|description|noindex], seopress_titles_tax_titles[tax][...].',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -362,7 +362,7 @@ function nibwp_seopress_titles_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-social', [
     'label'       => __('SEOPress — Social', 'nibwp'),
-    'description' => __('Read/write the global Social settings: Open Graph defaults, the Knowledge Graph (person/organization name, type, logo), social profile URLs (Facebook, Twitter, Instagram, LinkedIn, YouTube, Pinterest), Twitter card type and the Facebook app id. Actions: get, update.', 'nibwp'),
+    'description' => 'Read/write the global Social settings: Open Graph defaults, the Knowledge Graph (person/organization name, type, logo), social profile URLs (Facebook, Twitter, Instagram, LinkedIn, YouTube, Pinterest), Twitter card type and the Facebook app id. Actions: get, update.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -390,7 +390,7 @@ function nibwp_seopress_social_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-sitemap', [
     'label'       => __('SEOPress — XML Sitemap', 'nibwp'),
-    'description' => __('Read/write the XML & HTML sitemap settings: enable the XML sitemap, which post types and taxonomies are included, author/image/video sitemaps and the HTML sitemap. Actions: get, update. Common keys: seopress_xml_sitemap_general_enable (1), seopress_xml_sitemap_post_types_list[cpt][include], seopress_xml_sitemap_taxonomies_list[tax][include], seopress_xml_sitemap_img_enable, seopress_xml_sitemap_html_enable.', 'nibwp'),
+    'description' => 'Read/write the XML & HTML sitemap settings: enable the XML sitemap, which post types and taxonomies are included, author/image/video sitemaps and the HTML sitemap. Actions: get, update. Common keys: seopress_xml_sitemap_general_enable (1), seopress_xml_sitemap_post_types_list[cpt][include], seopress_xml_sitemap_taxonomies_list[tax][include], seopress_xml_sitemap_img_enable, seopress_xml_sitemap_html_enable.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -418,7 +418,7 @@ function nibwp_seopress_sitemap_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-advanced', [
     'label'       => __('SEOPress — Advanced', 'nibwp'),
-    'description' => __('Read/write the Advanced settings: search-engine verification codes (Google, Bing, Pinterest, Yandex, Baidu), header cleanup (remove WP generator, shortlink, RSD, WLW, oEmbed, X-Pingback), automatic image alt text, category URL handling and attachment redirects. Actions: get, update. Common keys: seopress_advanced_advanced_google, seopress_advanced_advanced_bing, seopress_advanced_advanced_image_auto_alt_txt, seopress_advanced_advanced_wp_generator.', 'nibwp'),
+    'description' => 'Read/write the Advanced settings: search-engine verification codes (Google, Bing, Pinterest, Yandex, Baidu), header cleanup (remove WP generator, shortlink, RSD, WLW, oEmbed, X-Pingback), automatic image alt text, category URL handling and attachment redirects. Actions: get, update. Common keys: seopress_advanced_advanced_google, seopress_advanced_advanced_bing, seopress_advanced_advanced_image_auto_alt_txt, seopress_advanced_advanced_wp_generator.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -466,7 +466,7 @@ function nibwp_seopress_global_module(array $input, string $optionName): array|W
 
 wp_register_ability('nibwp/seopress-toggles', [
     'label'       => __('SEOPress — Feature Toggles', 'nibwp'),
-    'description' => __('Read/write which SEOPress modules are enabled (the seopress_toggle option). Actions: get, set. Toggle keys include toggle-titles, toggle-xml-sitemap, toggle-social, toggle-advanced, toggle-robots, toggle-breadcrumbs, toggle-404, toggle-instant-indexing, toggle-rich-snippets, toggle-google-analytics.', 'nibwp'),
+    'description' => 'Read/write which SEOPress modules are enabled (the seopress_toggle option). Actions: get, set. Toggle keys include toggle-titles, toggle-xml-sitemap, toggle-social, toggle-advanced, toggle-robots, toggle-breadcrumbs, toggle-404, toggle-instant-indexing, toggle-rich-snippets, toggle-google-analytics.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -517,7 +517,7 @@ function nibwp_seopress_toggles_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/seopress-redirections', [
     'label'       => __('SEOPress — Redirections (Pro)', 'nibwp'),
-    'description' => __('Manage SEOPress Pro redirections (stored per redirect post). Actions: list, get, set, disable. A redirect targets a URL with an HTTP type (301, 302, 307, 410, 451).', 'nibwp'),
+    'description' => 'Manage SEOPress Pro redirections (stored per redirect post). Actions: list, get, set, disable. A redirect targets a URL with an HTTP type (301, 302, 307, 410, 451).',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

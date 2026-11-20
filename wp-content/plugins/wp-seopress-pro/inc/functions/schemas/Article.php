@@ -8,6 +8,8 @@
 
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
+require_once __DIR__ . '/Canonical.php';
+
 /**
  * Automatic rich snippets articles option.
  *
@@ -32,19 +34,11 @@ function seopress_automatic_rich_snippets_articles_option( $schema_datas ) {
 		$json = array(
 			'@context'      => seopress_check_ssl() . 'schema.org/',
 			'@type'         => $article_type,
-			'datePublished' => get_the_date( 'c' ),
-			'dateModified'  => get_the_modified_date( 'c' ),
+			'datePublished' => get_the_date( 'c', seopress_pro_get_the_id() ),
+			'dateModified'  => get_the_modified_date( 'c', seopress_pro_get_the_id() ),
 		);
 
-		$article_canonical = '';
-		if ( get_post_meta( get_the_ID(), '_seopress_robots_canonical', true ) ) {
-			$article_canonical = get_post_meta( get_the_ID(), '_seopress_robots_canonical', true );
-		} else {
-			global $wp;
-			if ( isset( $wp->request ) ) {
-				$article_canonical = user_trailingslashit( home_url( add_query_arg( array(), $wp->request ) ) );
-			}
-		}
+		$article_canonical = seopress_schema_current_canonical();
 
 		if ( ! empty( $article_canonical ) ) {
 			$json['mainEntityOfPage'] = array(
@@ -114,6 +108,15 @@ function seopress_automatic_rich_snippets_articles_option( $schema_datas ) {
 				'@type' => 'Organization',
 				'name'  => seopress_get_service( 'SocialOption' )->getSocialKnowledgeName(),
 			);
+
+			// Same business as the Knowledge Graph node the free plugin prints,
+			// so both carry one identifier instead of standing as two nodes
+			// nothing connects. Empty whenever they would not match.
+			$publisher_id = \SEOPressPro\Helpers\PublisherEntity::get_id();
+			if ( '' !== $publisher_id ) {
+				$json['publisher']['@id'] = $publisher_id;
+			}
+
 			if ( ! empty( seopress_pro_get_service( 'OptionPro' )->getArticlesPublisherLogo() ) ) {
 				$json['publisher']['logo'] = array(
 					'@type'  => 'ImageObject',
@@ -147,13 +150,15 @@ function seopress_automatic_rich_snippets_articles_option( $schema_datas ) {
 				array_push( $accounts, $facebook );
 			}
 			if ( '' != $twitter ) {
-				// The stored value is normalized to "@handle" on save
-				// (free plugin, Sanitize.php). Strip the leading @ before
-				// composing the URL so we emit "https://x.com/handle" and
-				// not "https://x.com/@handle". Align the domain with the
-				// free plugin's social_account_twitter tag (x.com).
-				$twitter = 'https://x.com/' . ltrim( trim( $twitter ), '@' );
-				array_push( $accounts, $twitter );
+				// The stored value is "@handle", or "@https://twitter.com/handle"
+				// when a URL was typed in the setting. Read the bare handle so
+				// we emit "https://x.com/handle", never the URL appended to the
+				// domain, and skip the entry when no handle is left. Same domain
+				// as the free plugin's social_account_twitter tag (x.com).
+				$twitter = \SEOPressPro\Helpers\XHandle::profile_url( $twitter );
+				if ( '' !== $twitter ) {
+					array_push( $accounts, $twitter );
+				}
 			}
 			if ( '' != $pinterest ) {
 				array_push( $accounts, $pinterest );
@@ -218,6 +223,6 @@ function seopress_automatic_rich_snippets_articles_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_article_html', $json );
 
-		echo $json;
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties.
 	}
 }

@@ -1,11 +1,11 @@
 <?php
 
-namespace Carbon\Doctrine;
+namespace DoubleScale\Vendor\Carbon\Doctrine;
 
-use Carbon\Carbon;
-use Doctrine\DBAL\Types\VarDateTimeType;
-class DateTimeType extends VarDateTimeType implements \Carbon\Doctrine\CarbonDoctrineType
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Doctrine\DBAL\Types\VarDateTimeType;
+class DateTimeType extends VarDateTimeType implements CarbonDoctrineType
 {
     /** @use CarbonTypeConverter<Carbon> */
-    use \Carbon\Doctrine\CarbonTypeConverter;
+    use CarbonTypeConverter;
 }

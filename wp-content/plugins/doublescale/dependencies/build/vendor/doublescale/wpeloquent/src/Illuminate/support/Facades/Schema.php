@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static \Illuminate\Database\Schema\Builder create(string $table, \Closure $callback)
@@ -18,7 +18,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Database\Schema\Builder
  */
-class Schema extends \Illuminate\Support\Facades\Facade
+class Schema extends Facade
 {
     /**
      * Get a schema builder instance for a connection.

@@ -25,7 +25,7 @@ class PersonAddress extends Location {
 	 *
 	 * @var string
 	 */
-	public $title = 'Person Address';
+	public $title = 'In person';
 
 	/**
 	 * Slug

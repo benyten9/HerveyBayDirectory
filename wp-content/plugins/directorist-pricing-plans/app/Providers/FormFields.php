@@ -6,6 +6,8 @@ defined( "ABSPATH" ) || exit;
 
 use stdClass;
 use Directorist\Directorist_Listing_Form;
+use Directorist\Fields\Fields;
+use DirectoristPricingPlan\App\Fields\ImageUploadField;
 use DirectoristPricingPlan\WpMVC\Contracts\Provider;
 use DirectoristPricingPlan\App\Repositories\Admin\PlanFeatureRepository;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
@@ -47,6 +49,8 @@ class FormFields implements Provider {
     protected bool $is_rendering_submission_category = false;
 
     public function boot() {
+        Fields::register( new ImageUploadField() );
+        add_filter( 'directorist_listing_form_fields_class_map', [ $this, 'image_upload_field_class_map' ] );
         add_filter( 'directorist_submission_form_fields', [ $this, 'submission_form_fields' ], 10, 2 );
         add_filter( 'directorist_form_field_data', [ $this, 'directorist_form_field_data' ], 10, 1 );
         add_filter( 'get_terms_args', [ $this, 'filter_excluded_category_terms' ], 10, 2 );
@@ -63,6 +67,39 @@ class FormFields implements Provider {
         add_filter( 'directorist_template_file_path', [ $this, 'directorist_template_file_path' ], 10, 3 );
         add_filter( 'atbdp_add_listing_form_validation_logic', [ $this, 'skip_listing_type_validation_when_featured_unavailable' ], 10, 3 );
         add_action( 'directorist_listing_plan_reassigned', [ $this, 'clear_plan_feature_cache' ] );
+    }
+
+    public function image_upload_field_class_map( array $map ): array {
+        $map['image_upload'] = 'pricing_plan_image_upload';
+
+        return $map;
+    }
+
+    /**
+     * Resolve image entitlements from the assigned plan on edits, or the selected plan on submission.
+     */
+    public function get_image_upload_feature( array $posted_data ): ?stdClass {
+        $directory_type_id = (int) ( $posted_data['directory_id'] ?? 0 );
+        $listing_id        = (int) ( $posted_data['listing_id'] ?? 0 );
+
+        if ( $listing_id ) {
+            $owner_id = (int) get_post_field( 'post_author', $listing_id );
+            $plan     = $this->get_plan_for_listing( $listing_id, $owner_id, $directory_type_id );
+        } else {
+            $plan = $this->get_plan_from_submission_data( $posted_data );
+        }
+
+        if ( ! $plan || (int) $plan->directory_type_id !== $directory_type_id ) {
+            return null;
+        }
+
+        foreach ( $this->get_plan_features( $plan ) as $feature ) {
+            if ( 'listing_img' === $feature->key ) {
+                return $feature;
+            }
+        }
+
+        return null;
     }
 
     public function clear_plan_feature_cache(): void {
@@ -535,7 +572,13 @@ class FormFields implements Provider {
         return $header_data;
     }
 
-    public function filter_single_listing_widgets( array &$selected_widgets, array $plan_feature_keys, array $plan_features, array $alias ): array {
+    public function filter_single_listing_widgets( &$selected_widgets, array $plan_feature_keys, array $plan_features, array $alias ): array {
+        if ( ! is_array( $selected_widgets ) ) {
+            $selected_widgets = [];
+
+            return $selected_widgets;
+        }
+
         foreach ( $selected_widgets as $widget_index => $widget ) {
             $widget_key    = ! empty( $widget['widget_key'] ) ? $widget['widget_key'] : '';
             $widget_key    = ! empty( $alias[ $widget_key ] ) ? $alias[ $widget_key ] : $widget_key;
@@ -610,31 +653,18 @@ class FormFields implements Provider {
     }
 
     public function image_upload_config( $config, Directorist_Listing_Form $listing_form ) {
-        $listing_id = (int) $listing_form->get_add_listing_id();
-
-        if ( $listing_id && ! directorist_get_listing_package( $listing_id ) ) {
-            return $config;
-        }
-
+        $listing_id        = (int) $listing_form->get_add_listing_id();
         $directory_type_id = (int) $listing_form->get_current_listing_type();
-        $listing_owner_id  = (int) $listing_form->get_listing_owner_id();
-        
-        $plan_features = $this->get_plan_features_for_user( $listing_owner_id, $directory_type_id );
+        $plan              = $listing_id ? null : $this->get_current_plan( $directory_type_id );
+        $current_feature   = $this->get_image_upload_feature(
+            [
+                'listing_id'   => $listing_id,
+                'directory_id' => $directory_type_id,
+                'plan_id'      => $plan ? $plan->id : 0,
+            ]
+        );
 
-        if ( empty( $plan_features ) ) {
-            return $config;
-        }
-
-        $plan_feature_keys = array_column( $plan_features, 'key' );
-        $feature_index     = array_search( 'listing_img', $plan_feature_keys );
-
-        if ( $feature_index === false ) {
-            return $config;
-        }
-
-        $current_feature = $plan_features[ $feature_index ];
-
-        if ( ! isset( $current_feature->data['limit'] ) ) {
+        if ( ! $current_feature || ! isset( $current_feature->data['limit'] ) ) {
             return $config;
         }
 

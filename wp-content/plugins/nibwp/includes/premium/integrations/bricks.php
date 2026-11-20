@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/bricks-create-template', [
-    'label' => __('Bricks – Create / Update Template', domain: 'nibwp'),
-    'description' => __(
-        'Creates or updates a Bricks builder template (header, footer, content, section, or archive) with structured element data.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Bricks – Create / Update Template', 'nibwp'),
+    'description' => 'Creates or updates a Bricks builder template (header, footer, content, section, or archive) with structured element data.',
     'category' => 'bricks',
     'input_schema' => [
         'type' => 'object',
@@ -191,13 +188,13 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
     if (!defined('BRICKS_VERSION')) {
         return new WP_Error(
             'bricks_not_active',
-            __('Bricks is not active on this site.', domain: 'nibwp'),
+            __('Bricks is not active on this site.', 'nibwp'),
         );
     }
 
     $title = trim((string) ($input['title'] ?? ''));
     if ($title === '') {
-        return new WP_Error('missing_title', __('title is required.', domain: 'nibwp'));
+        return new WP_Error('missing_title', __('title is required.', 'nibwp'));
     }
 
     // Nothing to build is a failure, and it has to be said before the template
@@ -208,7 +205,7 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
     if (empty($input['elements']) || !is_array($input['elements'])) {
         return new WP_Error(
             'bricks_no_elements',
-            __('elements is missing or empty: there is nothing to build. Nothing was created or changed.', domain: 'nibwp')
+            __('elements is missing or empty: there is nothing to build. Nothing was created or changed.', 'nibwp')
         );
     }
 
@@ -221,7 +218,7 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
     if (!in_array($template_type, $allowed_types, true)) {
         return new WP_Error(
             'invalid_template_type',
-            sprintf(__('template_type must be one of: %s', domain: 'nibwp'), implode(', ', $allowed_types)),
+            sprintf(__('template_type must be one of: %s', 'nibwp'), implode(', ', $allowed_types)),
         );
     }
 
@@ -236,7 +233,7 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
         if (!$existing || $existing->post_type !== 'bricks_template') {
             return new WP_Error(
                 'template_not_found',
-                sprintf(__('Bricks template %d not found.', domain: 'nibwp'), $template_id),
+                sprintf(__('Bricks template %d not found.', 'nibwp'), $template_id),
             );
         }
         wp_update_post([
@@ -313,11 +310,8 @@ function nibwp_bricks_create_template(array $input): array|WP_Error
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/bricks-update-element', [
-    'label' => __('Bricks – Update One Element', domain: 'nibwp'),
-    'description' => __(
-        'Changes settings on a single existing Bricks element, on a page or a template, leaving the rest of the tree untouched.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Bricks – Update One Element', 'nibwp'),
+    'description' => 'Changes settings on a single existing Bricks element, on a page or a template, leaving the rest of the tree untouched.',
     'category' => 'bricks',
     'input_schema' => [
         'type' => 'object',
@@ -450,7 +444,7 @@ function nibwp_bricks_regenerate_css(int $post_id, string $meta_key): void
 function nibwp_bricks_update_element(array $input): array|WP_Error
 {
     if (!defined('BRICKS_VERSION')) {
-        return new WP_Error('bricks_not_active', __('Bricks is not active on this site.', domain: 'nibwp'));
+        return new WP_Error('bricks_not_active', __('Bricks is not active on this site.', 'nibwp'));
     }
 
     $post_id    = (int) ($input['post_id'] ?? 0);
@@ -459,23 +453,23 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
     $dry_run    = array_key_exists('dry_run', $input) ? (bool) $input['dry_run'] : true;
 
     if ($post_id <= 0 || $element_id === '') {
-        return new WP_Error('bricks_bad_target', __('post_id and element_id are both required.', domain: 'nibwp'));
+        return new WP_Error('bricks_bad_target', __('post_id and element_id are both required.', 'nibwp'));
     }
     if (!is_array($patch) || $patch === []) {
         return new WP_Error(
             'bricks_empty_patch',
-            __('settings_patch is missing or empty, so there is nothing to change. Nothing was written.', domain: 'nibwp')
+            __('settings_patch is missing or empty, so there is nothing to change. Nothing was written.', 'nibwp')
         );
     }
 
     $post = get_post($post_id);
     if (!$post instanceof WP_Post) {
-        return new WP_Error('bricks_post_missing', sprintf(__('Post %d does not exist.', domain: 'nibwp'), $post_id));
+        return new WP_Error('bricks_post_missing', sprintf(__('Post %d does not exist.', 'nibwp'), $post_id));
     }
     // The generic ability capability is not enough on its own: this writes to
     // one specific post, so the check has to name it.
     if (!current_user_can('edit_post', $post_id)) {
-        return new WP_Error('bricks_no_caps', sprintf(__('You are not allowed to edit post %d.', domain: 'nibwp'), $post_id));
+        return new WP_Error('bricks_no_caps', sprintf(__('You are not allowed to edit post %d.', 'nibwp'), $post_id));
     }
 
     // Find the element, without assuming which key holds the tree.
@@ -498,7 +492,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
             return new WP_Error(
                 'bricks_ambiguous_element',
                 sprintf(
-                    __('Element id "%1$s" appears %2$d times in %3$s on post %4$d. That tree is malformed — ids must be unique within a post — so nothing was changed.', domain: 'nibwp'),
+                    __('Element id "%1$s" appears %2$d times in %3$s on post %4$d. That tree is malformed — ids must be unique within a post — so nothing was changed.', 'nibwp'),
                     $element_id,
                     count($hits),
                     $key,
@@ -514,7 +508,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
         return new WP_Error(
             'bricks_element_not_found',
             sprintf(
-                __('No element with id "%1$s" on post %2$d. Element ids are unique only within a post, so an id read from another page will not be found here — re-read this post\'s tree and take the id from it.', domain: 'nibwp'),
+                __('No element with id "%1$s" on post %2$d. Element ids are unique only within a post, so an id read from another page will not be found here — re-read this post\'s tree and take the id from it.', 'nibwp'),
                 $element_id,
                 $post_id
             )
@@ -536,7 +530,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
             'after'      => $after,
             'changed'    => [],
             'validation' => ['passed' => true, 'failed' => [], 'warnings' => []],
-            'summary'    => __('The patch matches what is already stored, so nothing was written.', domain: 'nibwp'),
+            'summary'    => __('The patch matches what is already stored, so nothing was written.', 'nibwp'),
         ];
     }
 
@@ -553,7 +547,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
     if (empty($validation['passed'])) {
         return new WP_Error(
             'bricks_patch_invalid',
-            __('The patched element does not validate, so nothing was written.', domain: 'nibwp'),
+            __('The patched element does not validate, so nothing was written.', 'nibwp'),
             ['failed' => $validation['failed'] ?? [], 'warnings' => $validation['warnings'] ?? []]
         );
     }
@@ -572,7 +566,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
     if ($dry_run) {
         $result['summary'] = sprintf(
             /* translators: 1: comma-separated setting names, 2: element id */
-            __('Would change %1$s on element %2$s. Re-run with dry_run=false to write.', domain: 'nibwp'),
+            __('Would change %1$s on element %2$s. Re-run with dry_run=false to write.', 'nibwp'),
             implode(', ', $changed),
             $element_id
         );
@@ -598,7 +592,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
     if ($landed !== $after['settings']) {
         return new WP_Error(
             'bricks_write_unconfirmed',
-            __('The element was written but reading it back did not return the patched settings. Nothing further was changed; inspect the post before retrying.', domain: 'nibwp')
+            __('The element was written but reading it back did not return the patched settings. Nothing further was changed; inspect the post before retrying.', 'nibwp')
         );
     }
 
@@ -607,7 +601,7 @@ function nibwp_bricks_update_element(array $input): array|WP_Error
     $result['written'] = true;
     $result['summary'] = sprintf(
         /* translators: 1: comma-separated setting names, 2: element id */
-        __('Changed %1$s on element %2$s.', domain: 'nibwp'),
+        __('Changed %1$s on element %2$s.', 'nibwp'),
         implode(', ', $changed),
         $element_id
     );
@@ -675,11 +669,8 @@ function nibwp_bricks_changed_keys(array $before, array $after): array
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/bricks-create-element', [
-    'label' => __('Bricks – Create Custom Element', domain: 'nibwp'),
-    'description' => __(
-        'Generates a custom Bricks element PHP class and writes it to the NIBWP sandbox directory so it is auto-loaded on every request.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Bricks – Create Custom Element', 'nibwp'),
+    'description' => 'Generates a custom Bricks element PHP class and writes it to the NIBWP sandbox directory so it is auto-loaded on every request.',
     'category' => 'bricks',
     'input_schema' => [
         'type' => 'object',
@@ -787,7 +778,7 @@ function nibwp_bricks_create_element(array $input): array|WP_Error
     if (!defined('BRICKS_VERSION')) {
         return new WP_Error(
             'bricks_not_active',
-            __('Bricks is not active on this site.', domain: 'nibwp'),
+            __('Bricks is not active on this site.', 'nibwp'),
         );
     }
 
@@ -795,11 +786,11 @@ function nibwp_bricks_create_element(array $input): array|WP_Error
     $element_label = trim((string) ($input['element_label'] ?? ''));
 
     if ($element_name === '' || $element_label === '') {
-        return new WP_Error('missing_fields', __('element_name and element_label are required.', domain: 'nibwp'));
+        return new WP_Error('missing_fields', __('element_name and element_label are required.', 'nibwp'));
     }
 
     if (!preg_match('/^[a-z0-9][a-z0-9-]*$/', $element_name)) {
-        return new WP_Error('invalid_name', __('element_name must be lowercase alphanumeric with hyphens.', domain: 'nibwp'));
+        return new WP_Error('invalid_name', __('element_name must be lowercase alphanumeric with hyphens.', 'nibwp'));
     }
 
     $element_icon = (string) ($input['element_icon'] ?? 'ti-layout-media-center-alt');
@@ -912,7 +903,7 @@ PHP;
     $written = file_put_contents($file_path, $php, LOCK_EX);
 
     if ($written === false) {
-        return new WP_Error('write_failed', sprintf(__('Failed to write element file: %s', domain: 'nibwp'), $file_path));
+        return new WP_Error('write_failed', sprintf(__('Failed to write element file: %s', 'nibwp'), $file_path));
     }
 
     return [
@@ -926,11 +917,8 @@ PHP;
 // ---------------------------------------------------------------------------
 
 wp_register_ability('nibwp/bricks-manage-styles', [
-    'label' => __('Bricks – Manage Global Styles', domain: 'nibwp'),
-    'description' => __(
-        'Manages Bricks global CSS classes and styles. Supports listing, creating, updating, and deleting global classes.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Bricks – Manage Global Styles', 'nibwp'),
+    'description' => 'Manages Bricks global CSS classes and styles. Supports listing, creating, updating, and deleting global classes.',
     'category' => 'bricks',
     'input_schema' => [
         'type' => 'object',
@@ -1051,13 +1039,13 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
     if (!defined('BRICKS_VERSION')) {
         return new WP_Error(
             'bricks_not_active',
-            __('Bricks is not active on this site.', domain: 'nibwp'),
+            __('Bricks is not active on this site.', 'nibwp'),
         );
     }
 
     $action = (string) ($input['action'] ?? '');
     if (!in_array($action, ['list', 'create', 'update', 'delete'], true)) {
-        return new WP_Error('invalid_action', __('action must be one of: list, create, update, delete.', domain: 'nibwp'));
+        return new WP_Error('invalid_action', __('action must be one of: list, create, update, delete.', 'nibwp'));
     }
 
     $option_key = 'bricks_global_classes';
@@ -1083,7 +1071,7 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
     if ($action === 'delete') {
         $style_id = (string) ($input['style_id'] ?? '');
         if ($style_id === '') {
-            return new WP_Error('missing_style_id', __('style_id is required for the delete action.', domain: 'nibwp'));
+            return new WP_Error('missing_style_id', __('style_id is required for the delete action.', 'nibwp'));
         }
 
         $found = false;
@@ -1098,7 +1086,7 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
         if (!$found) {
             return new WP_Error(
                 'style_not_found',
-                sprintf(__('Global class with ID "%s" not found.', domain: 'nibwp'), $style_id),
+                sprintf(__('Global class with ID "%s" not found.', 'nibwp'), $style_id),
             );
         }
 
@@ -1111,7 +1099,7 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
     if ($action === 'create') {
         $name = trim((string) ($input['name'] ?? ''));
         if ($name === '') {
-            return new WP_Error('missing_name', __('name is required for the create action.', domain: 'nibwp'));
+            return new WP_Error('missing_name', __('name is required for the create action.', 'nibwp'));
         }
 
         // Check for duplicate names.
@@ -1119,7 +1107,7 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
             if (($existing['name'] ?? '') === $name) {
                 return new WP_Error(
                     'duplicate_name',
-                    sprintf(__('A global class named "%s" already exists.', domain: 'nibwp'), $name),
+                    sprintf(__('A global class named "%s" already exists.', 'nibwp'), $name),
                 );
             }
         }
@@ -1139,7 +1127,7 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
     // ---- UPDATE ----
     $style_id = (string) ($input['style_id'] ?? '');
     if ($style_id === '') {
-        return new WP_Error('missing_style_id', __('style_id is required for the update action.', domain: 'nibwp'));
+        return new WP_Error('missing_style_id', __('style_id is required for the update action.', 'nibwp'));
     }
 
     $found = false;
@@ -1166,7 +1154,7 @@ function nibwp_bricks_manage_styles(array $input): array|WP_Error
     if (!$found) {
         return new WP_Error(
             'style_not_found',
-            sprintf(__('Global class with ID "%s" not found.', domain: 'nibwp'), $style_id),
+            sprintf(__('Global class with ID "%s" not found.', 'nibwp'), $style_id),
         );
     }
 

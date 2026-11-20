@@ -69,7 +69,7 @@ class PlanRepository extends Repository {
                 $plan->is_active = in_array( (int) $plan->id, $active_plan_ids, true );
 
                 if ( $plan->fee_type === FeeType::FREE ) {
-                    $plan->price = 0;
+                    $plan->price = directorist_get_plan_effective_price( $plan );
                 }
 
                 // Add can_start_trial flag
@@ -106,7 +106,7 @@ class PlanRepository extends Repository {
             ->set_allowed_featured_listings( $plan->allowed_featured_listings )
             ->set_is_allowed_unlimited_featured_listings( $plan->is_allowed_unlimited_featured_listings )
             ->set_fee_type( $plan->fee_type )
-            ->set_price( $plan->price )
+            ->set_price( directorist_get_plan_effective_price( $plan ) )
             ->set_is_taxable( $plan->is_taxable )
             ->set_tax_type( $plan->tax_type )
             ->set_tax_rate( $plan->tax_rate )

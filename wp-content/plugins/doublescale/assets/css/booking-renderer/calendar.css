@@ -26,8 +26,25 @@
 	display: block;
 }
 
+.calendar-header .calendar-info {
+	border: 0;
+	padding: 0;
+	margin-bottom: 4px;
+	color: #6b6785;
+	max-width: 460px;
+	line-height: 1.55;
+}
+
 .events-container {
 	padding: 20px 0;
+	text-align: left;
+}
+
+.event-title {
+	font-size: 18px;
+	font-weight: 600;
+	color: #1a1a1a;
+	margin: 0;
 }
 
 .event-card {
@@ -86,6 +103,7 @@
 
 .event-actions {
 	margin-left: 20px;
+	align-self: center;
 }
 
 .book-now-btn {

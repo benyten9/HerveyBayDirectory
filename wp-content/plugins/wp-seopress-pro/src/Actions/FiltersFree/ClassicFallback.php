@@ -12,7 +12,7 @@ use SEOPress\Core\Hooks\ExecuteHooks;
  * Register the Pro post-meta keys saved by the free plugin's Classic
  * Editor `save_post` fallback (introduced in wp-seopress 9.8). When the
  * REST API is blocked, the React metabox tabs render hidden inputs
- * mirroring their Formik state inside `<form id="post">`; the free
+ * mirroring their form state inside `<form id="post">`; the free
  * `ModuleMetabox::saveClassicEditorMetaFallback()` reads them and writes
  * the matching post_meta. The free handler ships a default map with the
  * free fields; this class adds Schemas Manual, Schemas Automatic,

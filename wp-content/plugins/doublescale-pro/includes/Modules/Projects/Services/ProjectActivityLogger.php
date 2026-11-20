@@ -36,6 +36,54 @@ class ProjectActivityLogger {
 		add_action( 'doublescale_project_file_removed', array( $this, 'on_file_removed' ), 10, 2 );
 		add_action( 'doublescale_project_converted_from_deal', array( $this, 'on_converted_from_deal' ), 10, 2 );
 		add_action( 'doublescale_project_comment_posted', array( $this, 'on_comment_posted' ), 10, 3 );
+		add_action( 'doublescale_project_member_added', array( $this, 'on_member_added' ), 10, 3 );
+		add_action( 'doublescale_project_member_removed', array( $this, 'on_member_removed' ), 10, 3 );
+	}
+
+	/**
+	 * @param int    $project_id Project id.
+	 * @param int    $user_id    New member.
+	 * @param string $reason     Why they were added ("manual", "task:12", …).
+	 */
+	public function on_member_added( $project_id, $user_id, $reason = '' ): void {
+		$project = ProjectModel::find( (int) $project_id );
+		if ( ! $project ) {
+			return;
+		}
+
+		$this->log_project_event(
+			$project,
+			'member_added',
+			array(
+				'user_id'   => (int) $user_id,
+				'user_name' => self::resolve_user_label( (int) $user_id ),
+				'reason'    => (string) $reason,
+			)
+		);
+	}
+
+	/**
+	 * @param int    $project_id Project id.
+	 * @param int    $user_id    Former member.
+	 * @param string $context    'manual', or bookkeeping that leaves no trace.
+	 */
+	public function on_member_removed( $project_id, $user_id, $context = '' ): void {
+		if ( in_array( (string) $context, ProjectTeam::INTERNAL_CONTEXTS, true ) ) {
+			return;
+		}
+		$project = ProjectModel::find( (int) $project_id );
+		if ( ! $project ) {
+			return;
+		}
+
+		$this->log_project_event(
+			$project,
+			'member_removed',
+			array(
+				'user_id'   => (int) $user_id,
+				'user_name' => self::resolve_user_label( (int) $user_id ),
+			)
+		);
 	}
 
 	/**

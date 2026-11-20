@@ -10,7 +10,7 @@ namespace DoubleScale\Pro\Modules\Tasks\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * TaskLabelModel class
@@ -79,7 +79,7 @@ class TaskLabelModel extends Model {
 	/**
 	 * Tasks carrying this label.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function tasks() {
 		return $this->belongsToMany(

@@ -62,7 +62,7 @@ class Form extends Abstracts_Form {
 	 * @since 1.0.0
 	 */
 	public function is_enabled() {
-		return doublescale_is_plugin_active( 'contact-form-7/wp-contact-form-7.php' );
+		return doublescale_is_plugin_active( 'contact-form-7' );
 	}
 
 	/**

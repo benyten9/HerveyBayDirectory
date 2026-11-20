@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
 use Closure;
 use LogicException;
 use RuntimeException;
-use Doctrine\DBAL\Types\Type;
-use Illuminate\Database\Connection;
+use DoubleScale\Vendor\Doctrine\DBAL\Types\Type;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
 class Builder
 {
     /**
@@ -235,7 +235,7 @@ class Builder
      * @param  \Illuminate\Database\Schema\Blueprint  $blueprint
      * @return void
      */
-    protected function build(\Illuminate\Database\Schema\Blueprint $blueprint)
+    protected function build(Blueprint $blueprint)
     {
         $blueprint->build($this->connection, $this->grammar);
     }
@@ -252,7 +252,7 @@ class Builder
         if (isset($this->resolver)) {
             return \call_user_func($this->resolver, $table, $callback, $prefix);
         }
-        return new \Illuminate\Database\Schema\Blueprint($table, $callback, $prefix);
+        return new Blueprint($table, $callback, $prefix);
     }
     /**
      * Register a custom Doctrine mapping type.

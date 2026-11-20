@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 // =============================================================================
 
 wp_register_ability('nibwp/content-schedule-post', [
-    'label' => __('Content – Schedule Post', domain: 'nibwp'),
-    'description' => __(
-        'Schedule a new or existing post for future publication at a specific date and time.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Content – Schedule Post', 'nibwp'),
+    'description' => 'Schedule a new or existing post for future publication at a specific date and time.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -220,11 +217,8 @@ function nibwp_content_schedule_post(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/content-list-scheduled', [
-    'label' => __('Content – List Scheduled Posts', domain: 'nibwp'),
-    'description' => __(
-        'List all posts scheduled for future publication.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Content – List Scheduled Posts', 'nibwp'),
+    'description' => 'List all posts scheduled for future publication.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -327,11 +321,8 @@ function nibwp_content_list_scheduled(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/content-reschedule', [
-    'label' => __('Content – Reschedule Post', domain: 'nibwp'),
-    'description' => __(
-        'Change the scheduled publication date of a future post.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Content – Reschedule Post', 'nibwp'),
+    'description' => 'Change the scheduled publication date of a future post.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -431,11 +422,8 @@ function nibwp_content_reschedule(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/content-calendar', [
-    'label' => __('Content – Editorial Calendar', domain: 'nibwp'),
-    'description' => __(
-        'Get an editorial calendar view with posts grouped by date.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Content – Editorial Calendar', 'nibwp'),
+    'description' => 'Get an editorial calendar view with posts grouped by date.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -586,11 +574,8 @@ function nibwp_content_calendar(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/content-bulk-schedule', [
-    'label' => __('Content – Bulk Schedule', domain: 'nibwp'),
-    'description' => __(
-        'Schedule multiple posts at once with automatic interval spacing.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Content – Bulk Schedule', 'nibwp'),
+    'description' => 'Schedule multiple posts at once with automatic interval spacing.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -768,11 +753,8 @@ function nibwp_content_bulk_schedule(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/content-draft-manager', [
-    'label' => __('Content – Draft Manager', domain: 'nibwp'),
-    'description' => __(
-        'Manage drafts with editorial notes, priority levels, and conversion to scheduled posts.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Content – Draft Manager', 'nibwp'),
+    'description' => 'Manage drafts with editorial notes, priority levels, and conversion to scheduled posts.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',

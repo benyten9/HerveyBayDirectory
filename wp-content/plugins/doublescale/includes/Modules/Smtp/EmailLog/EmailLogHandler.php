@@ -20,7 +20,6 @@ use DoubleScale\Modules\Smtp\Models\SmtpEmailLogModel;
 use DoubleScale\Modules\Smtp\Settings;
 use DoubleScale\Modules\Smtp\Providers\Mailers;
 use DoubleScale\Modules\Smtp\EmailLog\EmailLogContext;
-use Illuminate\Database\Capsule\Manager as Capsule;
 
 /**
  * Handles log entries by writing to database.
@@ -151,15 +150,6 @@ class EmailLogHandler {
 	}
 
 	/**
-	 * Whether DoubleScale sends should log a reference instead of the body.
-	 *
-	 * @return bool
-	 */
-	public static function stores_body_by_reference() {
-		return (bool) apply_filters( 'doublescale_smtp_log_body_by_reference', Settings::get( 'log_body_by_reference', true ) );
-	}
-
-	/**
 	 * Adds the email log entry to the database.
 	 *
 	 * @param string $subject        The subject of the email.
@@ -183,13 +173,13 @@ class EmailLogHandler {
 	public static function add( $subject, $body, $headers, $attachments, $from, $recipients, $status, $provider, $connection_id, $account_id, $response, $initiator_name, $initiator_slug, $initiator_type, $context, $resend_count = 0 ) {
 		$has_tracking_column = self::ensure_tracking_column();
 		$tracking_id         = $has_tracking_column ? self::tracking_id_from_context( $context ) : 0;
-		if ( $tracking_id > 0 && self::stores_body_by_reference() ) {
+		if ( $tracking_id > 0 ) {
 			// Body lives on the tracking record; keep the row small. Everything
 			// operational (recipients, status, provider response) is still stored.
 			$body = '';
 			unset( $context['tracking_id'] );
 		} else {
-			$tracking_id = $tracking_id > 0 ? $tracking_id : null;
+			$tracking_id = null;
 		}
 		$headers     = serialize( $headers );
 		$attachments = serialize( $attachments );
@@ -430,7 +420,7 @@ class EmailLogHandler {
 	/**
 	 * Restrict query by outcome tab (succeeded / failed support legacy status strings).
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
 	 * @param string|false                          $status Normalized status or false for all.
 	 */
 	protected static function apply_status_filter( $query, $status ) {
@@ -453,13 +443,15 @@ class EmailLogHandler {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return bool True if flush was successful.
+	 * A plain DELETE, not TRUNCATE: the model's table name already carries the
+	 * prefix (Capsule would add it twice), and TRUNCATE needs the DROP grant
+	 * that many hosts withhold.
+	 *
+	 * @return int|false Rows deleted, or false on failure.
 	 */
 	public static function flush() {
 		try {
-			$table = ( new SmtpEmailLogModel() )->getTable();
-			Capsule::connection()->table( $table )->truncate();
-			return true;
+			return (int) SmtpEmailLogModel::query()->delete();
 		} catch ( \Throwable $e ) {
 			return false;
 		}
@@ -644,7 +636,7 @@ class EmailLogHandler {
 	 */
 	public static function compact_legacy_bodies( $chunk = 500, $max_chunks = 20 ) {
 		global $wpdb;
-		if ( ! self::stores_body_by_reference() || ! self::ensure_tracking_column() ) {
+		if ( ! self::ensure_tracking_column() ) {
 			return 0;
 		}
 		$table     = $wpdb->prefix . 'doublescale_smtp_email_log';

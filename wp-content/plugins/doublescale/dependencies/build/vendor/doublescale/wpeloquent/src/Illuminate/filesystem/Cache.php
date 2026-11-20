@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Filesystem;
+namespace DoubleScale\Vendor\Illuminate\Filesystem;
 
-use Illuminate\Contracts\Cache\Repository;
+use DoubleScale\Vendor\Illuminate\Contracts\Cache\Repository;
 use League\Flysystem\Cached\Storage\AbstractCache;
 class Cache extends AbstractCache
 {

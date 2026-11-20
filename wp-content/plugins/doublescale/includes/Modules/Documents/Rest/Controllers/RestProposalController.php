@@ -9,6 +9,7 @@ namespace DoubleScale\Modules\Documents\Rest\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Modules\Sales\Capabilities;
@@ -242,7 +243,7 @@ class RestProposalController extends RestController {
 
 		$query = ProposalModel::query()->with( array( 'contact', 'assigned_user' ) );
 
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! Capabilities::sees_all_records() ) {
 			$query->where( 'assigned_user_id', get_current_user_id() );
 		}
 
@@ -456,6 +457,14 @@ class RestProposalController extends RestController {
 			return $payload;
 		}
 
+		// An agent limited to their own contacts can't point a document at a colleague's.
+		$contact_error = OwnerScope::contact_reference_error( (int) ( $payload['contact_id'] ?? 0 ) );
+		if ( $contact_error ) {
+			return $contact_error;
+		}
+
+		$payload['company_id'] = doublescale_record_company_id( $payload['contact_id'] ?? 0, $payload['company_id'] ?? null );
+
 		if ( ! isset( $payload['template'] ) ) {
 			$payload['template'] = DocumentTemplate::normalize(
 				SalesSettings::get( 'default_proposal_template', DocumentTemplate::DEFAULT )
@@ -524,6 +533,19 @@ class RestProposalController extends RestController {
 		$payload = $this->sanitize_payload( $request, false );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
+		}
+
+		$contact_error = OwnerScope::contact_reference_error( (int) ( $payload['contact_id'] ?? 0 ) );
+		if ( $contact_error ) {
+			return $contact_error;
+		}
+
+		// Sharing follows the contact: re-check on a new contact or company.
+		if ( array_key_exists( 'company_id', $payload ) || array_key_exists( 'contact_id', $payload ) ) {
+			$payload['company_id'] = doublescale_record_company_id(
+				$payload['contact_id'] ?? $proposal->contact_id,
+				array_key_exists( 'company_id', $payload ) ? $payload['company_id'] : $proposal->company_id
+			);
 		}
 
 		if ( array_key_exists( 'currency', $payload ) ) {
@@ -606,6 +628,8 @@ class RestProposalController extends RestController {
 			return $gate;
 		}
 
+		$previous_status = (string) $proposal->status;
+
 		$invoice = ( new ConvertProposalToInvoice() )->convert( $proposal );
 		if ( is_wp_error( $invoice ) ) {
 			if ( 'already_converted' === $invoice->get_error_code() ) {
@@ -630,6 +654,20 @@ class RestProposalController extends RestController {
 			return $invoice;
 		}
 		$proposal->refresh();
+
+		// Converting marks the proposal accepted on the client's behalf. When it
+		// was not accepted yet, record that the way a manual "Accepted" status
+		// change does, so "Proposal accepted" automations and the rep's notice
+		// are not skipped. Accepted before converted, as on the public accept.
+		if ( ProposalStatus::ACCEPTED !== $previous_status && ProposalStatus::ACCEPTED === (string) $proposal->status ) {
+			if ( empty( $proposal->accepted_at ) ) {
+				$proposal->accepted_at = current_time( 'mysql' );
+				$proposal->save();
+			}
+			$this->log_manual_status_change( $proposal, $previous_status, ProposalStatus::ACCEPTED );
+			do_action( 'doublescale_sales_proposal_accepted', $proposal );
+			( new SalesRepNotifications() )->notify_proposal_event( $proposal, 'accepted' );
+		}
 
 		do_action( 'doublescale_sales_proposal_converted_to_invoice', $proposal, $invoice );
 
@@ -901,6 +939,11 @@ class RestProposalController extends RestController {
 				return $currency;
 			}
 			$payload['currency'] = $currency;
+		}
+
+		// Checked against the contact's company in create/update.
+		if ( array_key_exists( 'company_id', $params ) ) {
+			$payload['company_id'] = (int) $params['company_id'] ?: null;
 		}
 
 		if ( array_key_exists( 'contact_id', $params ) ) {

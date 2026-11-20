@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Booking\MergeTags\Booking;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Abstracts\MergeTag;
 use DoubleScale\Modules\Booking\Models\BookingModel;
 
@@ -114,8 +114,7 @@ class BookingStartDate extends MergeTag {
 	 * @return string
 	 */
 	private function get_default_format() {
-		$global_settings = get_option( 'doublescale_booking_settings', array() );
-		$time_format     = $global_settings['general']['time_format'] ?? '12';
+		$time_format = (string) \DoubleScale\Modules\Booking\Helpers\BookingSettings::all()['general']['time_format'];
 
 		// Return appropriate PHP date format based on time format setting
 		return $time_format === '24' ? 'F j, Y, H:i' : 'F j, Y, g:i A';

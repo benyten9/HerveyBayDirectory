@@ -118,9 +118,9 @@ if (!function_exists('nibwp_premium_integrations')) {
     {
         return [
             // Page builders & frameworks.
-            'elementor', 'bricks', 'builderius', 'etchwp', 'automaticcss', 'breakdance',
+            'elementor', 'elementor-addons', 'bricks', 'rometheme', 'wpb-addons', 'mega-elements', 'lastudio-kit', 'htmega', 'move-addons', 'ht-slider', 'elementinvader', 'anywhere-elementor', 'unlimited-elements', 'qi-addons', 'plus-addons', 'jeg-kit', 'addon-elements', 'royal-addons', 'premium-addons', 'happy-addons', 'elementskit', 'eael', 'hfe', 'builderius', 'etchwp', 'automaticcss', 'breakdance',
             // Design tools.
-            'figma',
+            'figma', 'paper', 'etchedy',
             // Custom fields & content types.
             'acf', 'jetengine', 'metabox', 'pods', 'acpt', 'ase',
             // CRM / e-commerce add-ons (WooCommerce stays free).
@@ -130,7 +130,7 @@ if (!function_exists('nibwp_premium_integrations')) {
             // Directory / classifieds.
             'directorist',
             // Forms.
-            'forms', 'wsform', 'cf7', 'gravityforms', 'fluentform', 'wpforms', 'jetformbuilder', 'formidable', 'forminator', 'happyforms', 'ninjaforms',
+            'forms', 'wsform', 'cf7', 'gravityforms', 'fluentform', 'wpforms', 'jetformbuilder', 'formidable', 'forminator', 'happyforms', 'ninjaforms', 'bitform',
             // Membership / LMS.
             'learndash', 'lifterlms', 'memberpress', 'tutorlms',
             // Community / events.
@@ -139,8 +139,34 @@ if (!function_exists('nibwp_premium_integrations')) {
             'givewp',
             // Utilities.
             'redirection', 'tablepress', 'translatepress', 'wpml', 'weglot',
+            // Affiliate links.
+            'thirstyaffiliates',
+            'ultimate-member',
+            'wp-mail-smtp',
+            // Security.
+            'wordfence',
+            'themify',
+            'blocksy',
+            'events-manager',
+            'eventin',
+            'mailoptin',
+            'eventprime',
+            'siteorigin',
+            'seedprod',
+            'suretriggers',
+            'sureforms',
+            'suredash',
+            'surerank',
+            'gutenverse',
+            'generateblocks',
+            'stackable',
+            'license-manager',
+            'survey-maker',
+            'metform',
+            'everest-forms',
+            'mailpoet',
             // SEO.
-            'seo', 'seopress', 'slimseo',
+            'seo', 'seopress', 'slimseo', 'rankmath', 'yoast',
             // Recruitment.
             'wp-job-manager',
             // Themes.

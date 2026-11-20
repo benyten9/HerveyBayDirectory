@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Support\Testing\Fakes;
+namespace DoubleScale\Vendor\Illuminate\Support\Testing\Fakes;
 
 use BadMethodCallException;
-use Illuminate\Queue\QueueManager;
-use Illuminate\Contracts\Queue\Queue;
+use DoubleScale\Vendor\Illuminate\Queue\QueueManager;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\Queue;
 use DoubleScale\Vendor\PHPUnit\Framework\Assert as PHPUnit;
 class QueueFake extends QueueManager implements Queue
 {

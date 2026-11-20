@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 use DoubleScale\Vendor\Faker\Generator as Faker;
 use InvalidArgumentException;
-use Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
 class FactoryBuilder
 {
     use Macroable;
@@ -154,7 +154,7 @@ class FactoryBuilder
     public function create(array $attributes = [])
     {
         $results = $this->make($attributes);
-        if ($results instanceof \Illuminate\Database\Eloquent\Model) {
+        if ($results instanceof Model) {
             $this->store(collect([$results]));
             $this->callAfterCreating(collect([$results]));
         } else {
@@ -242,7 +242,7 @@ class FactoryBuilder
      */
     protected function makeInstance(array $attributes = [])
     {
-        return \Illuminate\Database\Eloquent\Model::unguarded(function () use($attributes) {
+        return Model::unguarded(function () use($attributes) {
             $instance = new $this->class($this->getRawAttributes($attributes));
             if (isset($this->connection)) {
                 $instance->setConnection($this->connection);
@@ -302,7 +302,7 @@ class FactoryBuilder
             if ($attribute instanceof static) {
                 $attribute = $attribute->create()->getKey();
             }
-            if ($attribute instanceof \Illuminate\Database\Eloquent\Model) {
+            if ($attribute instanceof Model) {
                 $attribute = $attribute->getKey();
             }
         }

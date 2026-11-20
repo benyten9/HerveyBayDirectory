@@ -8,15 +8,15 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
-use Carbon\Exceptions\InvalidDateException;
-use Carbon\Exceptions\InvalidFormatException;
-use Carbon\Exceptions\OutOfRangeException;
-use Carbon\Translator;
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Carbon\CarbonImmutable;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidDateException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidFormatException;
+use DoubleScale\Vendor\Carbon\Exceptions\OutOfRangeException;
+use DoubleScale\Vendor\Carbon\Translator;
 use Closure;
 use DoubleScale\Vendor\DateMalformedStringException;
 use DateTimeImmutable;
@@ -35,7 +35,7 @@ use ReturnTypeWillChange;
  */
 trait Creator
 {
-    use \Carbon\Traits\ObjectInitialisation;
+    use ObjectInitialisation;
     /**
      * The errors that can occur.
      *

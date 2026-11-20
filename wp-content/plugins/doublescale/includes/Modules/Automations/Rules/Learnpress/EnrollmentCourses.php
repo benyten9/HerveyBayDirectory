@@ -213,7 +213,7 @@ class EnrollmentCourses extends Rule {
 add_action(
 	'init',
 	function () {
-		if ( \doublescale_is_plugin_active( 'learnpress/learnpress.php' ) ) {
+		if ( \doublescale_is_plugin_active( 'learnpress' ) ) {
 			RulesManager::instance()->register( new EnrollmentCourses() );
 		}
 	},

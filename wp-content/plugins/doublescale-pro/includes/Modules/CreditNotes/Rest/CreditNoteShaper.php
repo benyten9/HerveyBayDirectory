@@ -9,6 +9,7 @@ namespace DoubleScale\Pro\Modules\CreditNotes\Rest;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Pro\Modules\CreditNotes\Constants\CreditNoteStatus;
 use DoubleScale\Pro\Modules\CreditNotes\Models\CreditNoteApplicationModel;
 use DoubleScale\Pro\Modules\CreditNotes\Models\CreditNoteModel;
 use DoubleScale\Pro\Modules\CreditNotes\Services\CreditNoteUrl;
@@ -169,6 +170,10 @@ class CreditNoteShaper {
 	 * @return float
 	 */
 	public static function remaining( CreditNoteModel $credit_note ): float {
+		// A void note has nothing left to use.
+		if ( CreditNoteStatus::VOID === (string) $credit_note->status ) {
+			return 0.0;
+		}
 		return max( 0, round( (float) $credit_note->total - (float) $credit_note->amount_applied, 2 ) );
 	}
 }

@@ -79,14 +79,9 @@ abstract class AbstractModule implements ModuleInterface {
 		}
 
 		if ( $controllers = $this->restControllers() ) {
-			add_action(
-				'rest_api_init',
-				static function () use ( $controllers ) {
-					foreach ( $controllers as $class ) {
-						( new $class() )->register_routes();
-					}
-				}
-			);
+			// Registers on rest_api_init; a DoubleScale API call builds only the
+			// controllers of the modules that own its route (see RestRouteRegistry).
+			RestRouteRegistry::add( static::class, $controllers );
 		}
 	}
 
@@ -232,6 +227,19 @@ abstract class AbstractModule implements ModuleInterface {
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
+		// Merge tags are read only when a message is rendered or the editor lists
+		// them: include the files on first read (see DefersRegistration).
+		\DoubleScale\Core\MergeTags\MergeTagsManager::instance()->defer(
+			static function () use ( $dir ) {
+				self::require_merge_tag_files( $dir );
+			}
+		);
+	}
+
+	/**
+	 * @param string $dir A module's MergeTags directory.
+	 */
+	private static function require_merge_tag_files( string $dir ): void {
 		$it = new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS );
 		$ri = new \RecursiveIteratorIterator( $it );
 		$re = new \RegexIterator( $ri, '/\\.php$/' );

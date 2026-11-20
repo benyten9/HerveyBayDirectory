@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Query;
+namespace DoubleScale\Vendor\Illuminate\Database\Query;
 
 use Closure;
-class JoinClause extends \Illuminate\Database\Query\Builder
+class JoinClause extends Builder
 {
     /**
      * The type of join being performed.
@@ -49,7 +49,7 @@ class JoinClause extends \Illuminate\Database\Query\Builder
      * @param  string  $table
      * @return void
      */
-    public function __construct(\Illuminate\Database\Query\Builder $parentQuery, $type, $table)
+    public function __construct(Builder $parentQuery, $type, $table)
     {
         $this->type = $type;
         $this->table = $table;

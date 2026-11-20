@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Debug;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Debug;
 
 use Exception;
 interface ExceptionHandler

@@ -8,6 +8,7 @@
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Outlook;
 
 use DoubleScale\Modules\Booking\Integration\API as Abstract_API;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -205,6 +206,25 @@ class API extends Abstract_API {
 	 * @return array{success: bool, code: mixed, data: mixed}
 	 */
 	public function check_teams_capabilities() {
+		// Microsoft's own answer: a calendar that allows "teamsForBusiness" can
+		// create Teams meetings. Works without reading licence details.
+		$calendars = $this->get_calendars();
+		if ( ! empty( $calendars['success'] ) ) {
+			foreach ( (array) Arr::get( $calendars, 'data.value', array() ) as $calendar ) {
+				$providers = (array) Arr::get( $calendar, 'allowedOnlineMeetingProviders', array() );
+				if ( in_array( 'teamsForBusiness', $providers, true ) ) {
+					return $this->prepare_response(
+						true,
+						200,
+						array(
+							'has_teams_capability' => true,
+							'message'              => __( 'Teams meeting creation is available with your current license.', 'doublescale' ),
+						)
+					);
+				}
+			}
+		}
+
 		$response = $this->get( 'me/licenseDetails' );
 
 		if ( ! $response['success'] ) {
@@ -212,7 +232,7 @@ class API extends Abstract_API {
 				false,
 				$response['code'],
 				array(
-					'message' => __( 'Failed to fetch license details', 'doublescale' ),
+					'message' => __( 'Could not confirm Teams for this Microsoft account. Microsoft Teams meetings need a Microsoft 365 work or school account with Teams.', 'doublescale' ),
 				)
 			);
 		}

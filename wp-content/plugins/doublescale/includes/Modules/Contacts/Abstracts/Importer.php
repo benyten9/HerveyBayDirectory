@@ -22,6 +22,8 @@ use DoubleScale\Core\Settings\PhoneAsWhatsappSetting;
 use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Core\Validators\PhoneValidator;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Contacts\Services\ContactOwnershipGuard;
+use DoubleScale\Modules\Contacts\Services\LeadRouter;
 use DoubleScale\Modules\Contacts\Models\ListModel;
 use DoubleScale\Modules\Contacts\Models\TagModel;
 
@@ -130,6 +132,13 @@ abstract class Importer {
 	protected $update_existing;
 
 	/**
+	 * Manager-chosen owner for imported contacts (0 = route normally).
+	 *
+	 * @var int
+	 */
+	protected $assign_owner_id = 0;
+
+	/**
 	 * Status
 	 *
 	 * @var string
@@ -182,6 +191,7 @@ abstract class Importer {
 
 		// Set the args
 		$this->update_existing       = $args['update_existing'] ?? false;
+		$this->assign_owner_id       = (int) ( $args['assign_owner_id'] ?? 0 );
 		$this->status                = $args['status'] ?? 'unverified';
 		$this->send_double_optin     = $args['send_double_optin'] ?? false;
 		$this->lists_mapping         = $args['lists_mapping'] ?? array();
@@ -314,13 +324,37 @@ abstract class Importer {
 				)
 			);
 			$existing = $contact ? true : false;
+
+			// An agent cannot take over a contact someone else owns: the row is
+			// skipped without describing the record. Unassigned rows are claimable.
+			if ( $existing && class_exists( ContactOwnershipGuard::class ) ) {
+				$claim = ContactOwnershipGuard::assert_can_claim( $contact );
+				if ( is_wp_error( $claim ) ) {
+					return 'skipped';
+				}
+			}
+
 			if ( ! $contact ) {
 				$contact = new ContactModel();
+				// Imports land under the importer (an agent) or the manager's chosen owner.
+				if ( class_exists( LeadRouter::class ) ) {
+					$contact->owner_id = LeadRouter::resolve( 'import', array( 'owner_id' => (int) $this->assign_owner_id ) );
+				}
 			}
 
 			// Skip if contact exists and update_existing is false
 			if ( $existing && ! $this->update_existing ) {
 				return 'skipped';
+			}
+
+			// Updating an unassigned contact gives it an owner: the agent who
+			// imports it claims it; a manager's "Assign to" choice applies too.
+			if ( $existing && (int) $contact->owner_id <= 0 ) {
+				if ( ContactOwnershipGuard::claims( $contact ) ) {
+					$contact->owner_id = (int) get_current_user_id();
+				} elseif ( (int) $this->assign_owner_id > 0 && LeadRouter::is_valid_owner( (int) $this->assign_owner_id ) ) {
+					$contact->owner_id = (int) $this->assign_owner_id;
+				}
 			}
 
 			if ( ( $this->update_existing && $existing ) || ! $existing ) {

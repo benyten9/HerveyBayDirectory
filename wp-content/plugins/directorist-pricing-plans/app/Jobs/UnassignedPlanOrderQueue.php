@@ -128,7 +128,7 @@ class UnassignedPlanOrderQueue extends BaseSequence {
         $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
         $order_dto       = ( new OrderDTO )->set_user_id( $user_id )->set_ref( $plan->id )->set_ref_type( OrderRefType::PRICING_PLAN )->set_currency( $currency )->set_status( $order_status );
 
-        $order_dto->set_amount( $plan->price )->set_sub_total( $plan->price );
+        $order_dto->set_amount( directorist_get_plan_effective_price( $plan ) )->set_sub_total( directorist_get_plan_effective_price( $plan ) );
 
         if ( $listing_id ) {
             $order_dto->set_listing_id( $listing_id );

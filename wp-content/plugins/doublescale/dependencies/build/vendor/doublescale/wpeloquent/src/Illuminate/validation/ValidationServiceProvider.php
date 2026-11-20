@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Support\DeferrableProvider;
+use DoubleScale\Vendor\Illuminate\Support\ServiceProvider;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\DeferrableProvider;
 class ValidationServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     /**
@@ -24,7 +24,7 @@ class ValidationServiceProvider extends ServiceProvider implements DeferrablePro
     protected function registerValidationFactory()
     {
         $this->app->singleton('validator', function ($app) {
-            $validator = new \Illuminate\Validation\Factory($app['translator'], $app);
+            $validator = new Factory($app['translator'], $app);
             // The validation presence verifier is responsible for determining the existence of
             // values in a given data collection which is typically a relational database or
             // other persistent data stores. It is used to check for "uniqueness" as well.
@@ -42,7 +42,7 @@ class ValidationServiceProvider extends ServiceProvider implements DeferrablePro
     protected function registerPresenceVerifier()
     {
         $this->app->singleton('validation.presence', function ($app) {
-            return new \Illuminate\Validation\DatabasePresenceVerifier($app['db']);
+            return new DatabasePresenceVerifier($app['db']);
         });
     }
     /**

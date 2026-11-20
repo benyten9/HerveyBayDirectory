@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Inflector;
 
-use Doctrine\Inflector\Rules\Ruleset;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Ruleset;
 use function array_merge;
 /**
  * Inflects based on multiple rulesets.
@@ -14,7 +14,7 @@ use function array_merge;
  * - The first ruleset that returns a different value for a regular word wins
  * - If none of the above match, the word is left as-is
  */
-class RulesetInflector implements \Doctrine\Inflector\WordInflector
+class RulesetInflector implements WordInflector
 {
     /** @var Ruleset[] */
     private $rulesets;

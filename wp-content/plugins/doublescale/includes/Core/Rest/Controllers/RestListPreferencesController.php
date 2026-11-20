@@ -143,6 +143,6 @@ class RestListPreferencesController extends RestController {
 	 * @return bool
 	 */
 	public function permissions_check( WP_REST_Request $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_agent_access();
 	}
 }

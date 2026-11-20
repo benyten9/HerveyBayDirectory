@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use Closure;
 interface ConnectionInterface

@@ -70,9 +70,22 @@ final class InvoiceNotifications {
 		$emails->from_address = $identity['from_address'];
 		$emails->from_name    = $identity['from_name'];
 		$emails->reply_to     = $identity['reply_to'];
+		// A shared invoice: the company's billing contacts get a copy.
+		/**
+		 * Filters who is copied on a invoice email (a company invoice's billing contacts).
+		 *
+		 * @param string[] $cc         Addresses.
+		 * @param int      $contact_id The invoice's contact.
+		 * @param int|null $company_id The invoice's company.
+		 * @param string   $to         The address it is sent to.
+		 */
+		$cc = array_values( array_filter( (array) apply_filters( 'doublescale_document_cc', array(), (int) $invoice->contact_id, $invoice->company_id ? (int) $invoice->company_id : null, $to ) ) );
+		if ( $cc ) {
+			$emails->cc = implode( ',', $cc );
+		}
 
 		try {
-			return (bool) $emails->send( $to, $subject, $body );
+			return (bool) $emails->send( $to, $subject, $body, $this->attachments( $invoice ) );
 		} catch ( \Throwable $e ) {
 			if ( function_exists( 'doublescale_get_logger' ) ) {
 				doublescale_get_logger()->error(
@@ -86,6 +99,34 @@ final class InvoiceNotifications {
 			}
 			return false;
 		}
+	}
+
+	/**
+	 * Files to attach to the invoice email (Pro attaches the XRechnung XML).
+	 *
+	 * Anything that is not a readable file path is dropped, so a misbehaving
+	 * add-on can never stop the invoice from being sent.
+	 *
+	 * @param InvoiceModel $invoice Invoice.
+	 * @return string[]
+	 */
+	private function attachments( InvoiceModel $invoice ): array {
+		/**
+		 * Filter the files attached to the invoice email.
+		 *
+		 * @param string[]     $attachments Absolute file paths.
+		 * @param InvoiceModel $invoice     The invoice being sent.
+		 */
+		$attachments = apply_filters( 'doublescale_sales_invoice_email_attachments', array(), $invoice );
+
+		return array_values(
+			array_filter(
+				is_array( $attachments ) ? $attachments : array(),
+				static function ( $path ): bool {
+					return is_string( $path ) && '' !== $path && is_readable( $path );
+				}
+			)
+		);
 	}
 
 	/**

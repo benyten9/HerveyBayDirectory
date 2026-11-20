@@ -2,7 +2,7 @@
 
 namespace DoubleScale\Vendor\Egulias\EmailValidator;
 
-use Doctrine\Common\Lexer\AbstractLexer;
+use DoubleScale\Vendor\Doctrine\Common\Lexer\AbstractLexer;
 class EmailLexer extends AbstractLexer
 {
     //ASCII values

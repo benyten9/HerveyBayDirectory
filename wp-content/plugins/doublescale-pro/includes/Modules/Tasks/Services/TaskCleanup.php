@@ -37,6 +37,13 @@ class TaskCleanup {
 		);
 
 		add_action(
+			'doublescale_company_deleted',
+			function ( $company_id ) {
+				$this->delete_for_entity( TaskEntityType::COMPANY, (int) $company_id );
+			}
+		);
+
+		add_action(
 			'doublescale_deal_deleted',
 			function ( $deal_id ) {
 				$this->delete_for_entity( TaskEntityType::DEAL, (int) $deal_id );

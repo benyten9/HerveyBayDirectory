@@ -71,6 +71,7 @@ class LinkTriggers {
 			}
 
 			$campaign_email = $this->find_email_tracking_row( $track_id );
+			$opened_now     = false;
 			if ( $campaign_email ) {
 				$campaign_email->update(
 					array(
@@ -86,6 +87,7 @@ class LinkTriggers {
 							'opened_at' => current_time( 'mysql', true ),
 						)
 					);
+					$opened_now = true;
 				}
 			}
 
@@ -105,6 +107,14 @@ class LinkTriggers {
 				$redirect_url = self::resolve_redirect_url( (string) $redirect_url, $contact );
 				$this->sync_contact_data( $link_trigger, $contact );
 				do_action( 'doublescale_link_trigger_clicked', $link_trigger, $contact );
+			}
+
+			// With images blocked, this click is the first sign the email was opened,
+			// so it is announced as an open — same arguments as free's
+			// Email::record_open(). Last, so a listener that fails cannot cost the
+			// link trigger its own tags and automations.
+			if ( $opened_now && $contact ) {
+				do_action( 'doublescale_mail_open', $contact, $campaign_email, 'click' );
 			}
 			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		} catch ( \Throwable $e ) {

@@ -60,6 +60,34 @@ class Install {
 
 		self::repair_missing_schema_tables();
 		self::maybe_sync_declared_columns();
+		self::protect_attachment_storage();
+	}
+
+	/**
+	 * Lock the default attachment folder against direct web access. Sites
+	 * stored contact, deal and project files there before it was locked; every
+	 * download already goes through the signed `?ds_file=` handler.
+	 *
+	 * @return void
+	 */
+	private static function protect_attachment_storage(): void {
+		if ( ! class_exists( \DoubleScale\Core\Services\AttachmentService::class ) ) {
+			return;
+		}
+
+		try {
+			\DoubleScale\Core\Services\AttachmentService::protect_default_storage();
+		} catch ( \Throwable $e ) {
+			if ( function_exists( 'doublescale_get_logger' ) ) {
+				doublescale_get_logger()->error(
+					'Could not protect the attachments folder',
+					array(
+						'source' => 'install',
+						'error'  => $e->getMessage(),
+					)
+				);
+			}
+		}
 	}
 
 	/**
@@ -68,7 +96,7 @@ class Install {
 	 * @return void
 	 */
 	private static function maybe_sync_declared_columns(): void {
-		$revision = defined( 'DOUBLESCALE_VERSION' ) ? DOUBLESCALE_VERSION : '0';
+		$revision = defined( 'DOUBLESCALE_SCHEMA_REV' ) ? DOUBLESCALE_SCHEMA_REV : '0';
 		if ( (string) get_option( 'doublescale_schema_sync_rev', '' ) === $revision ) {
 			return;
 		}
@@ -79,7 +107,68 @@ class Install {
 
 	public static function init(): void {
 		add_action( 'init', array( __CLASS__, 'check_version' ), 5 );
+		add_action( 'init', array( __CLASS__, 'maybe_create_tables_for_older_pro' ), 6 );
 		add_action( 'admin_notices', array( __CLASS__, 'maybe_show_deferred_migration_notices' ) );
+	}
+
+	/**
+	 * Temporary safety net for DoubleScale Pro before 1.5.8. Remove once those
+	 * Pro versions are no longer supported.
+	 *
+	 * Since 1.9.9 a module's tables exist only once it has been switched on.
+	 * Pro before 1.5.8 still reads the tables of switched-off modules (deleting
+	 * a project clears its tickets, the credit notes report reads invoices),
+	 * and DoubleScale 1.9.8 created every table, which hid that. A site that
+	 * updates DoubleScale before Pro would hit those errors, so while such an
+	 * older Pro is active the tables are created as 1.9.8 did. Once Pro is
+	 * updated nothing happens here. Tables are never deleted either way.
+	 *
+	 * Pro 1.5.8+ is recognised by doublescale_pro_module_data_models() (it
+	 * follows the cross-module rule), not by its version number.
+	 *
+	 * @return void
+	 */
+	public static function maybe_create_tables_for_older_pro(): void {
+		if ( ! defined( 'DOUBLESCALE_PRO_VERSION' ) || function_exists( 'doublescale_pro_module_data_models' ) ) {
+			return;
+		}
+
+		$done = DOUBLESCALE_VERSION . '|' . DOUBLESCALE_PRO_VERSION;
+		if ( get_option( 'doublescale_older_pro_tables' ) === $done ) {
+			return;
+		}
+
+		// The Sales modules declare no migrations while Sales is off.
+		$declare_sales = static function () {
+			return true;
+		};
+		add_filter( 'doublescale_sales_documents_ready', $declare_sales, PHP_INT_MAX );
+		try {
+			foreach ( self::migration_registry()->all_sorted_by_dependencies() as $module ) {
+				if ( $module->is_enabled() ) {
+					continue;
+				}
+				try {
+					MigrationRunner::run_for_module( $module, true );
+				} catch ( \Throwable $e ) {
+					// One module's schema must not stop the others.
+					if ( function_exists( 'doublescale_get_logger' ) ) {
+						doublescale_get_logger()->error(
+							'Could not create the tables of a switched-off module for an older Pro',
+							array(
+								'source' => 'install',
+								'module' => $module->slug(),
+								'error'  => $e->getMessage(),
+							)
+						);
+					}
+				}
+			}
+		} finally {
+			remove_filter( 'doublescale_sales_documents_ready', $declare_sales, PHP_INT_MAX );
+		}
+
+		update_option( 'doublescale_older_pro_tables', $done );
 	}
 
 	public static function check_version(): void {
@@ -125,6 +214,9 @@ class Install {
 	}
 
 	public static function install(): void {
+		// Before the version below is written: a site with none yet is new.
+		\DoubleScale\Core\ModuleNews::stamp_first_version();
+
 		if ( 'yes' === get_transient( 'doublescale_installing' ) ) {
 			return;
 		}
@@ -156,7 +248,7 @@ class Install {
 		}
 
 		self::update_doublescale_version();
-		update_option( 'doublescale_schema_sync_rev', defined( 'DOUBLESCALE_VERSION' ) ? DOUBLESCALE_VERSION : '0' );
+		update_option( 'doublescale_schema_sync_rev', defined( 'DOUBLESCALE_SCHEMA_REV' ) ? DOUBLESCALE_SCHEMA_REV : '0' );
 
 		delete_transient( 'doublescale_installing' );
 	}

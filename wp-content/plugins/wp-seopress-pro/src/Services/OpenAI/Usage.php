@@ -6,6 +6,22 @@ defined( 'ABSPATH' ) || exit;
 
 class Usage {
 	public const NAME_SERVICE                  = 'Usage';
+
+	/**
+	 * The constant each supported provider's API key can be defined in.
+	 *
+	 * Also the list of supported providers: the key was looked up in
+	 * `'SEOPRESS_' . strtoupper( $provider ) . '_KEY'`, so a request naming
+	 * `license` read SEOPRESS_LICENSE_KEY and sent it to the OpenAI endpoint.
+	 */
+	public const PROVIDER_KEY_CONSTANTS = array(
+		'openai'   => 'SEOPRESS_OPENAI_KEY',
+		'deepseek' => 'SEOPRESS_DEEPSEEK_KEY',
+		'gemini'   => 'SEOPRESS_GEMINI_KEY',
+		'mistral'  => 'SEOPRESS_MISTRAL_KEY',
+		'claude'   => 'SEOPRESS_CLAUDE_KEY',
+		'seopress' => 'SEOPRESS_CREDITS_KEY',
+	);
 	private const OPENAI_URL_USAGE             = 'https://api.openai.com/v1/usage';
 	private const OPENAI_URL_MODELS            = 'https://api.openai.com/v1/models';
 	private const OPENAI_URL_CHAT_COMPLETIONS  = 'https://api.openai.com/v1/chat/completions';
@@ -13,6 +29,7 @@ class Usage {
 	private const DEEPSEEK_URL_BALANCE         = 'https://api.deepseek.com/user/balance';
 	private const DEEPSEEK_URL_COMPLETIONS     = 'https://api.deepseek.com/beta/completions';
 	private const GEMINI_URL_GENERATE_CONTENT  = 'https://generativelanguage.googleapis.com/v1beta/models/';
+	private const MISTRAL_URL_MODELS           = 'https://api.mistral.ai/v1/models';
 	private const MISTRAL_URL_CHAT_COMPLETIONS = 'https://api.mistral.ai/v1/chat/completions';
 	private const CLAUDE_URL_MESSAGES          = 'https://api.anthropic.com/v1/messages';
 	private const SEOPRESS_PROXY_URL          = 'https://api.seopress.org';
@@ -38,6 +55,7 @@ class Usage {
 				$endpoints['generate_content'] = self::GEMINI_URL_GENERATE_CONTENT;
 				break;
 			case 'mistral':
+				$endpoints['models']           = self::MISTRAL_URL_MODELS;
 				$endpoints['chat_completions'] = self::MISTRAL_URL_CHAT_COMPLETIONS;
 				break;
 			case 'claude':
@@ -131,6 +149,11 @@ class Usage {
 
 		$api_key = '';
 
+		// Only a supported provider has a key, and only in its own constant.
+		if ( ! is_string( $provider ) || ! isset( self::PROVIDER_KEY_CONSTANTS[ strtolower( $provider ) ] ) ) {
+			return '';
+		}
+
 		// SEOPress Credits uses a dedicated constant name.
 		if ( 'seopress' === strtolower( $provider ) ) {
 			if ( defined( 'SEOPRESS_CREDITS_KEY' ) && ! empty( constant( 'SEOPRESS_CREDITS_KEY' ) ) && is_string( constant( 'SEOPRESS_CREDITS_KEY' ) ) ) {
@@ -140,7 +163,7 @@ class Usage {
 		}
 
 		// 1. Check for provider-specific constants first.
-		$constant_name = 'SEOPRESS_' . strtoupper( $provider ) . '_KEY';
+		$constant_name = self::PROVIDER_KEY_CONSTANTS[ strtolower( $provider ) ];
 		if ( defined( $constant_name ) && ! empty( constant( $constant_name ) ) && is_string( constant( $constant_name ) ) ) {
 			$api_key = constant( $constant_name );
 		} else {
@@ -305,27 +328,22 @@ class Usage {
 				)
 			);
 		} elseif ( strtolower( $provider ) === 'mistral' ) {
-			// Mistral: Use a simple chat completions request to validate the key.
-			$url      = $endpoints['chat_completions'];
-			$response = wp_remote_post(
+			/*
+			 * `/v1/models` is the "is this key valid" probe, the same one the
+			 * OpenAI branch above uses. Generating instead answered a different
+			 * question: a workspace without Pay-As-You-Go enabled has a quota of
+			 * zero requests per minute, so every completion is refused with a
+			 * 429 while the key itself is perfectly valid. This endpoint answers
+			 * 200 in that state, costs no tokens, and does not eat into the
+			 * quota it is checking.
+			 */
+			$url      = $endpoints['models'];
+			$response = wp_remote_get(
 				$url,
 				array(
 					'headers' => array(
 						'Authorization' => 'Bearer ' . $api_key,
-						'Content-Type'  => 'application/json',
 						'Referer'       => trailingslashit( home_url() ),
-					),
-					'body'    => wp_json_encode(
-						array(
-							'model'      => $this->getDefaultModel( $provider ),
-							'messages'   => array(
-								array(
-									'role'    => 'user',
-									'content' => 'Hello',
-								),
-							),
-							'max_tokens' => 10,
-						)
 					),
 					'timeout' => 30,
 				)
@@ -411,19 +429,15 @@ class Usage {
 
 					return array(
 						'code'    => 'error',
-						'message' => sprintf(
-							/* translators: %1$s: provider name, %2$s: error code, %3$s: error details */
-							__( 'Your %1$s API key is invalid or has expired. Error %2$s: %3$s', 'wp-seopress-pro' ),
-							$provider_name,
-							esc_html( $httpCode ),
-							esc_html( $error_message )
-						),
+						'message' => $this->describeApiFailure( $response, $httpCode, $provider_name ),
 					);
 				}
 			}
 		} elseif ( $this->isClaudeProvider( $provider ) ) {
 			// Claude: Use a simple messages request to validate the key.
-			$url      = $endpoints['messages'];
+			$url         = $endpoints['messages'];
+			$completions = seopress_pro_get_service( 'Completions' );
+			$model       = $completions ? $completions->getAIModel( $provider ) : $this->getDefaultModel( $provider );
 			$response = wp_remote_post(
 				$url,
 				array(
@@ -433,18 +447,7 @@ class Usage {
 						'Content-Type'      => 'application/json',
 						'Referer'           => trailingslashit( home_url() ),
 					),
-					'body'    => wp_json_encode(
-						array(
-							'model'      => $this->getDefaultModel( $provider ),
-							'max_tokens' => 10,
-							'messages'   => array(
-								array(
-									'role'    => 'user',
-									'content' => 'Hello',
-								),
-							),
-						)
-					),
+					'body'    => wp_json_encode( $this->build_claude_validation_body( $model ) ),
 					'timeout' => 30,
 				)
 			);
@@ -489,14 +492,126 @@ class Usage {
 		} else {
 			return array(
 				'code'    => 'error',
-				'message' => sprintf(
-					/* translators: %1$s: provider name, %2$s: error code */
-					__( 'Your %1$s API key is invalid or has expired. Error: %2$s', 'wp-seopress-pro' ),
-					$provider_name,
-					esc_html( $httpCode )
-				),
+				'message' => $this->describeApiFailure( $response, $httpCode, $provider_name ),
 			);
 		}
+	}
+
+	/**
+	 * Turn a failed provider response into a message that names the actual cause.
+	 *
+	 * Every non-200 used to be reported as "your API key is invalid or has
+	 * expired", which is wrong for most of them and actively misleading for a
+	 * 429: the key authenticates fine, the request is refused on quota grounds.
+	 * Two customers were sent to check a key that was never the problem.
+	 *
+	 * Providers already say what is wrong, in the status code, in the rate limit
+	 * headers and in the error body. This reads all three instead of discarding
+	 * them, and it defers the body to Completions::formatApiErrorDetails(),
+	 * which already knows about CDN error pages, empty bodies, plain text and
+	 * over-long messages.
+	 *
+	 * @param array|WP_Error $response      The HTTP response.
+	 * @param int            $httpCode      The status code.
+	 * @param string         $provider_name Human readable provider name.
+	 * @return string
+	 */
+	private function describeApiFailure( $response, $httpCode, $provider_name ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- camelCase matches the rest of this class.
+		$details = seopress_pro_get_service( 'Completions' )->formatApiErrorDetails(
+			$httpCode,
+			wp_remote_retrieve_body( $response )
+		);
+
+		if ( 429 === (int) $httpCode ) {
+			/*
+			 * Mistral reports a per-minute allowance of zero on a workspace that
+			 * has never enabled billing, which is a different problem from
+			 * having burned through a real allowance. Saying so saves the user
+			 * from hunting for a rate limit they never hit.
+			 *
+			 * is_numeric() first: a header reading `unlimited` casts to 0 and
+			 * would otherwise advertise the opposite of the truth.
+			 */
+			$limit = wp_remote_retrieve_header( $response, 'x-ratelimit-limit-req-minute' );
+
+			if ( is_numeric( $limit ) && 0 === (int) $limit ) {
+				return sprintf(
+					/* translators: %s: provider name */
+					__( 'Your %s account has no quota allocated. Enable billing (pay-as-you-go) in your provider console, then try again.', 'wp-seopress-pro' ),
+					$provider_name
+				);
+			}
+
+			return $this->appendDetails(
+				sprintf(
+					/* translators: %s: provider name */
+					__( 'The %s request was rate limited or your quota is exhausted. Check your plan and usage in your provider console.', 'wp-seopress-pro' ),
+					$provider_name
+				),
+				$details
+			);
+		}
+
+		if ( 401 === (int) $httpCode ) {
+			return sprintf(
+				/* translators: %1$s: provider name, %2$s: error code */
+				__( 'Your %1$s API key is invalid or has expired. Error: %2$s', 'wp-seopress-pro' ),
+				$provider_name,
+				esc_html( $httpCode )
+			);
+		}
+
+		if ( 403 === (int) $httpCode ) {
+			/*
+			 * A forbidden response does not establish that the key is valid:
+			 * a provider or intermediary may reject the request before authentication. Gemini answers 403 when the Generative Language API is
+			 * not enabled on the project, and when the key carries an HTTP
+			 * referrer restriction that our own Referer header trips. Both say
+			 * so in the body, so it has to survive.
+			 */
+			return $this->appendDetails(
+				sprintf(
+					/* translators: %s: provider name */
+					__( 'The %s request was forbidden. Check the key permissions, project settings and provider restrictions.', 'wp-seopress-pro' ),
+					$provider_name
+				),
+				$details
+			);
+		}
+
+		return $this->appendDetails(
+			sprintf(
+				/* translators: %1$s: provider name, %2$s: error code */
+				__( 'The %1$s API refused the request. Error: %2$s.', 'wp-seopress-pro' ),
+				$provider_name,
+				esc_html( $httpCode )
+			),
+			$details
+		);
+	}
+
+	/**
+	 * Append the provider's own explanation, when there is one.
+	 *
+	 * Two separate sentences rather than one format string with an empty
+	 * placeholder: a body that is not decodable JSON (Mistral answers a bare
+	 * `Rate limit exceeded`) left the message trailing a dangling "Details:".
+	 *
+	 * @param string $message The sentence describing the failure.
+	 * @param string $details The provider's explanation, possibly empty.
+	 * @return string
+	 */
+	private function appendDetails( $message, $details ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- camelCase matches the rest of this class.
+		if ( '' === trim( (string) $details ) ) {
+			return $message;
+		}
+
+		return sprintf(
+			/* translators: %1$s: description of the failure, %2$s: error details returned by the provider */
+			__( '%1$s Details: %2$s', 'wp-seopress-pro' ),
+			$message,
+			esc_html( $details )
+		);
 	}
 
 	public function checkLicenseKeyExpiration( $provider ) {
@@ -554,16 +669,7 @@ class Usage {
 		} elseif ( $this->isClaudeProvider( $provider ) ) {
 			// Claude uses x-api-key header and different format
 			$url  = $endpoints['messages'];
-			$body = array(
-				'model'      => $model_name,
-				'max_tokens' => 10,
-				'messages'   => array(
-					array(
-						'role'    => 'user',
-						'content' => 'test',
-					),
-				),
-			);
+			$body = $this->build_claude_validation_body( $model_name );
 			$args = array(
 				'body'        => wp_json_encode( $body ),
 				'timeout'     => '30',
@@ -674,36 +780,62 @@ class Usage {
 			$error_message = '';
 
 			// Check if the error is related to model access
-			if ( isset( $error_data['error']['message'] ) ) {
+			if ( isset( $error_data['error']['message'] ) && is_string( $error_data['error']['message'] ) ) {
 				$error_message = $error_data['error']['message'];
 			}
 
-			// Check for common model access issues
-			if ( strpos( $error_message, 'model' ) !== false || strpos( $error_message, 'does not exist' ) !== false || $httpCode === 404 ) {
+			// Authentication, quota and server failures take precedence over model wording.
+			if ( in_array( (int) $httpCode, array( 400, 403, 404 ), true ) && ( false !== stripos( $error_message, 'model' ) || 404 === (int) $httpCode ) ) {
+				$message = sprintf(
+					/* translators: %1$s: provider name, %2$s: model name, %3$d: HTTP status code */
+					__( '%1$s could not use the model %2$s. Error: %3$d. Check that the model is available and allowed by your API key permissions and project settings, or select another model available to your account.', 'wp-seopress-pro' ),
+					$provider_name,
+					'<strong>' . esc_html( $model_name ) . '</strong>',
+					(int) $httpCode
+				);
+				$details = seopress_pro_get_service( 'Completions' )->formatApiErrorDetails( $httpCode, $response_body );
+
 				return array(
 					'code'    => 'error',
-					'message' => sprintf(
-						/* translators: %1$s: provider name, %2$s: model name, %3$s: error code */
-						__( 'Your %1$s API key is valid, but the model %2$s is not available for your account. Error: %3$s. Please select a different model or upgrade your account to access this model.', 'wp-seopress-pro' ),
-						$provider_name,
-						'<strong>' . esc_html( $model_name ) . '</strong>',
-						esc_html( $httpCode )
-					),
+					'message' => $this->appendDetails( $message, $details ),
 				);
 			}
 
+			/*
+			 * Two sentences concatenated outside __(), not one format string
+			 * fed another translated sentence: a translator handed an opaque
+			 * `%1$s` leading the string cannot agree or reorder around it.
+			 */
+			$link = sprintf(
+				/* translators: %1$s: usage url, %2$s: provider name */
+				__( 'Go to your <a href="%1$s" target="_blank">%2$s Usage page</a> to check this.', 'wp-seopress-pro' ),
+				esc_url( $this->getProviderUsageUrl( $provider ) ),
+				$provider_name
+			);
+
 			return array(
 				'code'    => 'error',
-				'message' => sprintf(
-					/* translators: %1$s: provider name, %2$s: error code, %3$s: usage url, %4$s: provider name */
-					__( 'Your %1$s API key is invalid or has expired. Error: %2$s. Go to your <a href="%3$s" target="_blank">%4$s Usage page</a> to check this.', 'wp-seopress-pro' ),
-					$provider_name,
-					esc_html( $httpCode ),
-					$this->getProviderUsageUrl( $provider ),
-					$provider_name
-				),
+				'message' => $this->describeApiFailure( $response, $httpCode, $provider_name ) . ' ' . $link,
 			);
 		}
+	}
+
+	/**
+	 * Keep connection probes within their short output budget.
+	 *
+	 * @param string $model Selected model identifier.
+	 * @return array
+	 */
+	private function build_claude_validation_body( $model ) {
+		$body = array(
+			'model'      => $model,
+			'max_tokens' => 10,
+			'messages'   => array( array( 'role' => 'user', 'content' => 'Hello' ) ),
+		);
+		if ( 'claude-sonnet-5' === $model ) {
+			$body['thinking'] = array( 'type' => 'disabled' );
+		}
+		return $body;
 	}
 
 	/**
@@ -747,9 +879,9 @@ class Usage {
 			case 'mistral':
 				return 'mistral-small-latest';
 			case 'claude':
-				return 'claude-sonnet-4-6';
+				return 'claude-sonnet-5';
 			case 'seopress':
-				return 'openai/gpt-4.1';
+				return 'openai/gpt-5.1';
 			default:
 				return 'gpt-5.6-terra';
 		}

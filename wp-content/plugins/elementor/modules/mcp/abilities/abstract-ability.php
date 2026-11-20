@@ -2,6 +2,10 @@
 
 namespace Elementor\Modules\Mcp\Abilities;
 
+use Elementor\MCP\Composer\Admin\McpSettingsController;
+use Elementor\Modules\Mcp\Abilities\Appliers\V3\Maps\Kit_Settings_Host;
+use Elementor\Modules\Mcp\Events\Pro_Feature_Suggestion_Tracker;
+use Elementor\Modules\Mcp\Site_Flag;
 use Elementor\Modules\Mcp\Utils\Editor_Sync_State;
 use Elementor\Modules\Mcp\Utils\Mcp_V4_Gate;
 
@@ -24,12 +28,16 @@ abstract class Abstract_Ability {
 	abstract public function execute( $input = [] );
 
 	final public function execute_guarded( $input = [] ) {
+		if ( ! is_array( $input ) ) {
+			$input = is_object( $input ) ? (array) $input : [];
+		}
+
 		$availability = $this->is_available();
 		if ( is_wp_error( $availability ) ) {
 			return $availability;
 		}
 
-		$is_mutating = self::KIND_TOOL === $this->get_kind() && $this->is_destructive();
+		$is_mutating = self::KIND_TOOL === $this->get_kind() && $this->is_page_mutating();
 
 		if ( $is_mutating ) {
 			$guard = apply_filters( 'elementor/mcp/pre_execute_guard', null, $input );
@@ -38,16 +46,40 @@ abstract class Abstract_Ability {
 			}
 		}
 
+		Pro_Feature_Suggestion_Tracker::reset();
+
 		$result  = $this->execute( $input );
 		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
 
-		$is_failed = is_wp_error( $result ) || ( is_array( $result ) && 'error' === ( $result['status'] ?? '' ) );
+		Pro_Feature_Suggestion_Tracker::flush( $this->get_id(), $result );
+		Kit_Settings_Host::discard_pending();
 
-		if ( $is_mutating && $post_id > 0 && ! $is_failed ) {
+		$is_failed = is_wp_error( $result ) || ( is_array( $result ) && 'error' === ( $result['status'] ?? '' ) );
+		$is_dry_run = ! empty( $input['dry_run'] );
+
+		if ( $is_mutating && $post_id > 0 && ! $is_failed && ! $is_dry_run ) {
 			Editor_Sync_State::set_mcp_mutation( $post_id );
+			$result = Editor_Sync_State::add_open_editor_notice( $result, $post_id );
+		}
+
+		$record_input = is_array( $input ) ? $input : [];
+		if ( $this->should_record_site_capability( $record_input, $result ) ) {
+			$capability = Site_Flag::capability_for_ability( $this->get_id() );
+			if ( $capability ) {
+				Site_Flag::mark( $capability );
+			}
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Validates input against the ability's input schema, the same way the WordPress Abilities API does.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public function validate_input_against_schema( $input ) {
+		return rest_validate_value_from_schema( $input, $this->definition()->to_array()['input_schema'], 'input' );
 	}
 
 	public function check_permission(): bool {
@@ -61,7 +93,7 @@ abstract class Abstract_Ability {
 
 		$meta = is_array( $definition['meta'] ?? null ) ? $definition['meta'] : [];
 		$mcp = is_array( $meta['mcp'] ?? null ) ? $meta['mcp'] : [];
-		$mcp['public'] = true;
+		$mcp['public'] = McpSettingsController::is_enabled();
 		if ( isset( $mcp['description'] ) ) {
 			$mcp['description'] = $this->maybe_append_unavailable_notice( (string) $mcp['description'] );
 		}
@@ -132,12 +164,32 @@ abstract class Abstract_Ability {
 		return true;
 	}
 
+	protected function should_record_site_capability( $input, $result ): bool {
+		if ( null === Site_Flag::capability_for_ability( $this->get_id() ) ) {
+			return false;
+		}
+
+		if ( ! empty( $input['dry_run'] ) ) {
+			return false;
+		}
+
+		if ( is_wp_error( $result ) ) {
+			return false;
+		}
+
+		if ( is_array( $result ) && 'error' === ( $result['status'] ?? '' ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
 	private function is_resource(): bool {
 		return self::KIND_RESOURCE === ( $this->mcp_meta()['type'] ?? null );
 	}
 
-	private function is_destructive(): bool {
-		return false !== ( $this->definition()->meta['annotations']['destructive'] ?? true );
+	private function is_page_mutating(): bool {
+		return true === ( $this->definition()->meta['mutates_page'] ?? false );
 	}
 
 	protected function definition(): Ability_Definition {

@@ -47,6 +47,12 @@ class AbilitiesApiPro implements ExecuteHooks {
 	 * @return void
 	 */
 	public function ensureCategory() {
+		// These methods are public callbacks: guard the WP 6.9+ API here too, not
+		// only in hooks(), so a direct call on an older WordPress cannot fatal.
+		if ( ! function_exists( 'wp_register_ability_category' ) ) {
+			return;
+		}
+
 		// Use the registry's is_registered() rather than wp_get_ability_category():
 		// the latter calls get_registered(), which emits a "_doing_it_wrong" notice
 		// when the category is not registered yet, which is exactly the case the
@@ -73,6 +79,10 @@ class AbilitiesApiPro implements ExecuteHooks {
 	 * @return void
 	 */
 	public function registerAbilities() {
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+
 		// 1. List redirections.
 		wp_register_ability(
 			'seopress/list-redirections',
@@ -377,7 +387,7 @@ class AbilitiesApiPro implements ExecuteHooks {
 					'type'        => 'object',
 					'description' => __( 'The generated SEO title.', 'wp-seopress-pro' ),
 				),
-				'permission_callback' => array( $this, 'canEditPost' ),
+				'permission_callback' => array( $this, 'canGenerateWithAi' ),
 				'execute_callback'    => array( $this, 'generateTitle' ),
 				'meta'                => $this->abilityMeta(
 					array(
@@ -414,7 +424,7 @@ class AbilitiesApiPro implements ExecuteHooks {
 					'type'        => 'object',
 					'description' => __( 'The generated meta description.', 'wp-seopress-pro' ),
 				),
-				'permission_callback' => array( $this, 'canEditPost' ),
+				'permission_callback' => array( $this, 'canGenerateWithAi' ),
 				'execute_callback'    => array( $this, 'generateDescription' ),
 				'meta'                => $this->abilityMeta(
 					array(
@@ -449,9 +459,11 @@ class AbilitiesApiPro implements ExecuteHooks {
 					'description' => __( 'The generated alt text and caption.', 'wp-seopress-pro' ),
 				),
 				'permission_callback' => function ( $input ) {
-					$attachment_id = isset( $input['attachment_id'] ) ? (int) $input['attachment_id'] : 0;
-
-					return $attachment_id > 0 && current_user_can( 'edit_post', $attachment_id );
+					// The same callback as the other two generation abilities,
+					// told which input key carries the object, so a refusal
+					// here answers the same WP_Error rather than a bare false
+					// that leaves a client with no reason. See SEC-05.
+					return $this->canGenerateWithAi( $input, 'attachment_id' );
 				},
 				'execute_callback'    => array( $this, 'generateAltText' ),
 				'meta'                => $this->abilityMeta(
@@ -531,8 +543,16 @@ class AbilitiesApiPro implements ExecuteHooks {
 					'type'        => 'object',
 					'description' => __( 'The created or matched attachment.', 'wp-seopress-pro' ),
 				),
-				'permission_callback' => function () {
-					return current_user_can( 'upload_files' );
+				'permission_callback' => function ( $input = array() ) {
+					if ( ! current_user_can( 'upload_files' ) ) {
+						return false;
+					}
+
+					// The new attachment is created as a child of post_id, which
+					// upload_files alone does not entitle anyone to.
+					$post_id = is_array( $input ) && isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+
+					return 0 === $post_id ? true : $this->canEditPost( $input );
 				},
 				'execute_callback'    => array( $this, 'uploadImage' ),
 				'meta'                => $this->abilityMeta(
@@ -540,6 +560,58 @@ class AbilitiesApiPro implements ExecuteHooks {
 						'readonly'    => false,
 						'destructive' => true,
 						'idempotent'  => false,
+					)
+				),
+			)
+		);
+
+		// 13. Generate an SEO title for a term with AI.
+		wp_register_ability(
+			'seopress/generate-term-seo-title',
+			array(
+				'label'               => __( 'Generate an SEO title for a term', 'wp-seopress-pro' ),
+				'description'         => __( 'Generate an AI-optimized SEO title suggestion for a taxonomy term, such as a product category, a category or a tag. The suggestion is returned only and is not saved: save it with the term title and description update tool.', 'wp-seopress-pro' ),
+				'category'            => self::CATEGORY,
+				'input_schema'        => $this->termGenerationInputSchema(),
+				'output_schema'       => array(
+					'type'        => 'object',
+					'description' => __( 'The generated SEO title.', 'wp-seopress-pro' ),
+					'properties'  => array(
+						'title' => array( 'type' => 'string' ),
+					),
+				),
+				'permission_callback' => array( $this, 'canGenerateTermWithAi' ),
+				'execute_callback'    => array( $this, 'generateTermTitle' ),
+				'meta'                => $this->abilityMeta(
+					array(
+						'readonly'   => true,
+						'idempotent' => false,
+					)
+				),
+			)
+		);
+
+		// 14. Generate a meta description for a term with AI.
+		wp_register_ability(
+			'seopress/generate-term-meta-description',
+			array(
+				'label'               => __( 'Generate a meta description for a term', 'wp-seopress-pro' ),
+				'description'         => __( 'Generate an AI-optimized meta description suggestion for a taxonomy term, such as a product category, a category or a tag. The suggestion is returned only and is not saved: save it with the term title and description update tool.', 'wp-seopress-pro' ),
+				'category'            => self::CATEGORY,
+				'input_schema'        => $this->termGenerationInputSchema(),
+				'output_schema'       => array(
+					'type'        => 'object',
+					'description' => __( 'The generated meta description.', 'wp-seopress-pro' ),
+					'properties'  => array(
+						'description' => array( 'type' => 'string' ),
+					),
+				),
+				'permission_callback' => array( $this, 'canGenerateTermWithAi' ),
+				'execute_callback'    => array( $this, 'generateTermDescription' ),
+				'meta'                => $this->abilityMeta(
+					array(
+						'readonly'   => true,
+						'idempotent' => false,
 					)
 				),
 			)
@@ -555,8 +627,8 @@ class AbilitiesApiPro implements ExecuteHooks {
 	 *
 	 * @return bool|\WP_Error
 	 */
-	public function canEditPost( $input ) {
-		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+	public function canEditPost( $input, $key = 'post_id' ) {
+		$post_id = isset( $input[ $key ] ) ? (int) $input[ $key ] : 0;
 
 		if ( $post_id < 1 || ! get_post( $post_id ) ) {
 			return new \WP_Error(
@@ -573,6 +645,167 @@ class AbilitiesApiPro implements ExecuteHooks {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether the caller may run an AI generation on the given object.
+	 *
+	 * Editing the object is necessary and not sufficient. The settings carry a
+	 * list of roles allowed to use AI, and every ordinary generation route
+	 * enforces it through seopress_ai_generation_check(). The abilities checked
+	 * the capability alone, so a role deliberately excluded from AI could still
+	 * reach the providers through the Abilities API or MCP and spend the site's
+	 * key. See SEC-05.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $input The ability input.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public function canGenerateWithAi( $input, $key = 'post_id' ) {
+		$allowed = $this->canEditPost( $input, $key );
+
+		if ( true !== $allowed ) {
+			return $allowed;
+		}
+
+		if ( ! function_exists( 'seopress_ai_generation_check' ) ) {
+			return true;
+		}
+
+		$post_id = isset( $input[ $key ] ) ? (int) $input[ $key ] : 0;
+
+		if ( seopress_ai_generation_check( $post_id, 'edit_post', 'ability' ) ) {
+			return true;
+		}
+
+		return new \WP_Error(
+			'seopress_ability_ai_forbidden',
+			__( 'Your role is not allowed to use AI generation features.', 'wp-seopress-pro' )
+		);
+	}
+
+	/**
+	 * Whether the caller may run an AI generation on the given term.
+	 *
+	 * The checks of the term metabox's AJAX generation handler, in the same
+	 * order: the term exists, the user may edit it, and the AI role gate of
+	 * Advanced > Security lets them through. On top, the taxonomy has to be
+	 * one the term SEO metabox is offered on.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $input The ability input.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public function canGenerateTermWithAi( $input ) {
+		$term_id = isset( $input['term_id'] ) ? (int) $input['term_id'] : 0;
+		$term    = $term_id > 0 ? get_term( $term_id ) : null;
+
+		if ( ! $term instanceof \WP_Term ) {
+			return new \WP_Error(
+				'seopress_ability_invalid_term',
+				__( 'The provided term does not exist.', 'wp-seopress-pro' )
+			);
+		}
+
+		if ( ! current_user_can( 'edit_term', $term->term_id ) ) {
+			return new \WP_Error(
+				'seopress_ability_forbidden',
+				__( 'You are not allowed to edit this term.', 'wp-seopress-pro' )
+			);
+		}
+
+		// The free plugin decides which taxonomies have a term SEO metabox.
+		// An older free version lacks the helper: fall back on the public,
+		// viewable taxonomies it builds that list from.
+		$supported = function_exists( 'seopress_abilities_taxonomy_supported' )
+			? seopress_abilities_taxonomy_supported( $term->taxonomy )
+			: is_taxonomy_viewable( $term->taxonomy );
+
+		if ( ! $supported ) {
+			return new \WP_Error(
+				'seopress_ability_unsupported_taxonomy',
+				__( 'The SEO metadata of this taxonomy cannot be edited: it is not public, or its SEO metabox is disabled.', 'wp-seopress-pro' )
+			);
+		}
+
+		if ( function_exists( 'seopress_ai_generation_check' ) && ! seopress_ai_generation_check( $term->term_id, 'edit_term', 'ability' ) ) {
+			return new \WP_Error(
+				'seopress_ability_ai_forbidden',
+				__( 'Your role is not allowed to use AI generation features.', 'wp-seopress-pro' )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Generate an AI SEO title suggestion for a term.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $input The ability input.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function generateTermTitle( $input ) {
+		$result = $this->generateForTerm( $input, 'title' );
+
+		if ( ! empty( $result['title'] ) ) {
+			return array( 'title' => $result['title'] );
+		}
+
+		return new \WP_Error(
+			'seopress_ability_generation_failed',
+			! empty( $result['message'] ) ? $result['message'] : __( 'The title could not be generated.', 'wp-seopress-pro' )
+		);
+	}
+
+	/**
+	 * Generate an AI meta description suggestion for a term.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $input The ability input.
+	 *
+	 * @return array|\WP_Error
+	 */
+	public function generateTermDescription( $input ) {
+		$result = $this->generateForTerm( $input, 'desc' );
+
+		if ( ! empty( $result['desc'] ) ) {
+			return array( 'description' => $result['desc'] );
+		}
+
+		return new \WP_Error(
+			'seopress_ability_generation_failed',
+			! empty( $result['message'] ) ? $result['message'] : __( 'The meta description could not be generated.', 'wp-seopress-pro' )
+		);
+	}
+
+	/**
+	 * Run the term generation the term metabox uses, for one field.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array  $input The ability input.
+	 * @param string $meta  "title" or "desc".
+	 *
+	 * @return array The generateTermTitlesDesc() result.
+	 */
+	protected function generateForTerm( $input, $meta ) {
+		$term_id = isset( $input['term_id'] ) ? (int) $input['term_id'] : 0;
+		$term    = get_term( $term_id );
+		$lang    = ! empty( $input['lang'] ) ? sanitize_text_field( $input['lang'] ) : '';
+
+		if ( ! $term instanceof \WP_Term ) {
+			return array();
+		}
+
+		return seopress_pro_get_service( 'Completions' )->generateTermTitlesDesc( $term->term_id, $term->taxonomy, $meta, $lang );
 	}
 
 	/**
@@ -637,12 +870,31 @@ class AbilitiesApiPro implements ExecuteHooks {
 	public function generateAltText( $input ) {
 		$attachment_id = isset( $input['attachment_id'] ) ? (int) $input['attachment_id'] : 0;
 
-		$result = seopress_pro_get_service( 'Completions' )->generateImgAltText( $attachment_id, 'alt_text' );
+		// The last argument is what makes this ability honest. Its description
+		// promises the suggestion is returned and not saved, and it is annotated
+		// readonly, which is what an MCP connection granted the read-only scope
+		// is served on and what a client reads before deciding whether to ask
+		// the user. Without it the call wrote the alt text, the caption and the
+		// description, so a connection the user had limited to reading mutated
+		// three fields of their media without a prompt.
+		$result = seopress_pro_get_service( 'Completions' )->generateImgAltText(
+			$attachment_id,
+			'alt_text',
+			'en_US',
+			true,
+			null,
+			null,
+			false
+		);
 
 		if ( ! empty( $result['alt_text'] ) ) {
+			// The description is generated, and billed, in the same call. It
+			// used to be dropped here, so the caller paid for three fields and
+			// received two.
 			return array(
-				'alt_text' => $result['alt_text'],
-				'caption'  => isset( $result['caption'] ) ? $result['caption'] : '',
+				'alt_text'    => $result['alt_text'],
+				'caption'     => isset( $result['caption'] ) ? $result['caption'] : '',
+				'description' => isset( $result['description'] ) ? $result['description'] : '',
 			);
 		}
 
@@ -869,6 +1121,32 @@ class AbilitiesApiPro implements ExecuteHooks {
 				),
 			),
 			'required'             => array( 'id' ),
+			'additionalProperties' => false,
+		);
+	}
+
+	/**
+	 * Input schema of the term generation abilities.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return array
+	 */
+	protected function termGenerationInputSchema() {
+		return array(
+			'type'                 => 'object',
+			'properties'           => array(
+				'term_id' => array(
+					'type'        => 'integer',
+					'minimum'     => 1,
+					'description' => __( 'The ID of the term (category, tag, product category or custom taxonomy term).', 'wp-seopress-pro' ),
+				),
+				'lang'    => array(
+					'type'        => 'string',
+					'description' => __( 'Optional language/locale (e.g. en_US). Defaults to the site language.', 'wp-seopress-pro' ),
+				),
+			),
+			'required'             => array( 'term_id' ),
 			'additionalProperties' => false,
 		);
 	}

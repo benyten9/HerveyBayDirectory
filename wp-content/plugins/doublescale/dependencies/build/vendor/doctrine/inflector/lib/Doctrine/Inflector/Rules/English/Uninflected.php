@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules\English;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules\English;
 
-use Doctrine\Inflector\Rules\Pattern;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Pattern;
 final class Uninflected
 {
     /**

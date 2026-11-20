@@ -24,7 +24,7 @@ use DoubleScale\Modules\Booking\Models\BookingModel;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Modules\Booking\Managers\LocationsManager;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 
 // phpcs:disable WordPress.Security.NonceVerification.Missing -- public booking AJAX endpoints (wp_ajax_nopriv_*). Nonce verification is available via verify_booking_nonce() which each handler can call; security on these endpoints is enforced via the BookingValidator (hash lookup + state checks), since the booking page is publicly reachable and visitors are unauthenticated.
@@ -81,6 +81,7 @@ class BookingAjax {
 		try {
 			$id    = isset( $_POST['id'] ) ? intval( wp_unslash( $_POST['id'] ) ) : null;
 			$event = $this->bookingValidatorClass::validate_event( $id );
+			$this->bookingValidatorClass::ensure_open_for_booking( $event );
 
 			$payment_method = isset( $_POST['payment_method'] ) ? sanitize_text_field( wp_unslash( $_POST['payment_method'] ) ) : null;
 
@@ -231,22 +232,10 @@ class BookingAjax {
 				)
 			);
 
-			$advanced_settings = $booking->getAdvancedSettings();
-			$redirect_enabled  = ! empty( $advanced_settings['redirect_after_submit'] );
-			$redirect_url      = isset( $advanced_settings['redirect_url'] ) ? trim( (string) $advanced_settings['redirect_url'] ) : '';
-
-			if ( $redirect_enabled && '' !== $redirect_url ) {
-				$redirect_query_string = isset( $advanced_settings['redirect_query_string'] ) ? (string) $advanced_settings['redirect_query_string'] : '';
-				if ( '' !== $redirect_query_string ) {
-					$merge_tags_manager    = \DoubleScale\Modules\Booking\Managers\MergeTagsManager::instance();
-					$redirect_query_string = (string) $merge_tags_manager->process_merge_tags( $redirect_query_string, $booking );
-				}
-
-				if ( '' !== $redirect_query_string ) {
-					$separator    = ( false === strpos( $redirect_url, '?' ) ) ? '?' : '&';
-					$redirect_url = $redirect_url . $separator . ltrim( $redirect_query_string, '?&' );
-				}
-
+			$redirect_url = $booking->get_redirect_after_booking_url();
+			if ( '' !== $redirect_url ) {
+				// The booking form, and Pro's payment step after a paid
+				// booking, send the visitor here instead of the confirmation.
 				$booking->booking_redirect_url = $redirect_url;
 			}
 			wp_send_json_success( array( 'booking' => $booking ) );
@@ -345,6 +334,13 @@ class BookingAjax {
 				throw new \Exception( __( 'Booking is already cancelled', 'doublescale' ) );
 			}
 
+			// The portal's rules: not once it is over or under way, nor inside
+			// the event's no-cancel window.
+			$policy = AttendeeChangePolicy::for_booking( $booking, AttendeeChangePolicy::CANCEL );
+			if ( ! $policy['allowed'] ) {
+				throw new \Exception( $policy['message'] );
+			}
+
 			if ( $cancellation_reason ) {
 				$booking->update_meta( 'cancellation_reason', $cancellation_reason );
 			}
@@ -407,6 +403,11 @@ class BookingAjax {
 
 			if ( $booking->isCancelled() ) {
 				throw new \Exception( __( 'Booking is already cancelled', 'doublescale' ) );
+			}
+
+			$policy = AttendeeChangePolicy::for_booking( $booking, AttendeeChangePolicy::RESCHEDULE );
+			if ( ! $policy['allowed'] ) {
+				throw new \Exception( $policy['message'] );
 			}
 
 			// Check if the booking is same as the current booking

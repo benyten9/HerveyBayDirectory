@@ -391,7 +391,11 @@ function nibwp_oauth_discovery_probe(bool $fresh = false): array
                 $result = [
                     'ok'      => false,
                     'reason'  => 'auth_header_stripped',
-                    'message' => __('This server drops the Authorization header before WordPress sees it, so signed-in clients could never authenticate. On Apache the Status page offers a one-click fix; on nginx ask the host to add: fastcgi_param HTTP_AUTHORIZATION $http_authorization; An application password sent the same way is affected too — fix this either way.', 'nibwp'),
+                    'message' => sprintf(
+                        /* translators: %s: nginx configuration line the host has to add */
+                        __('This server drops the Authorization header before WordPress sees it, so signed-in clients could never authenticate. On Apache the Status page offers a one-click fix; on nginx ask the host to add: %s An application password sent the same way is affected too — fix this either way.', 'nibwp'),
+                        'fastcgi_param HTTP_AUTHORIZATION $http_authorization;'
+                    ),
                 ];
                 set_transient('nibwp_oauth_discovery', $result, 15 * MINUTE_IN_SECONDS);
 
@@ -517,6 +521,17 @@ function nibwp_oauth_remote_configs(string $mcp_url, string $name): array
     $cursor_link = 'cursor://anysphere.cursor-deeplink/mcp/install?name=' . rawurlencode($name)
         . '&config=' . rawurlencode(base64_encode((string) wp_json_encode(['url' => $mcp_url])));
 
+    // Where VS Code, and Copilot through it, keep the server list. The command
+    // name is VS Code's own and stays as its palette spells it.
+    $vscode_paths = [
+        __('Workspace', 'nibwp') => '.vscode/mcp.json',
+        _x('User', 'VS Code configuration scope', 'nibwp') => sprintf(
+            /* translators: %s: VS Code command palette entry */
+            __('Run “%s”', 'nibwp'),
+            'MCP: Open User Configuration'
+        ),
+    ];
+
     $configs = [];
 
     // Assistants that connect from their own cloud. Offered only when they could
@@ -583,7 +598,10 @@ function nibwp_oauth_remote_configs(string $mcp_url, string $name): array
         'cursor' => [
             'code' => $mcp_servers,
             'hint' => __('Press the button: Cursor opens its <strong>Tools and MCP</strong> page with this server listed, and you press <strong>Install</strong> then <strong>Connect</strong>. If nothing opens, Cursor has not registered its link handler on this machine — add the block below to <code>mcp.json</code> instead, which always works.', 'nibwp'),
-            'paths' => ['Global' => '~/.cursor/mcp.json', 'Project' => '.cursor/mcp.json'],
+            'paths' => [
+                __('Global', 'nibwp') => '~/.cursor/mcp.json',
+                __('Project', 'nibwp') => '.cursor/mcp.json',
+            ],
             'isShell' => false,
             'action' => [
                 'label' => __('Add to Cursor', 'nibwp'),
@@ -593,7 +611,7 @@ function nibwp_oauth_remote_configs(string $mcp_url, string $name): array
         'vscode' => [
             'code' => $servers,
             'hint' => __('Use the button, or add this to <code>mcp.json</code> yourself.', 'nibwp'),
-            'paths' => ['Workspace' => '.vscode/mcp.json', 'User' => 'Run “MCP: Open User Configuration”'],
+            'paths' => $vscode_paths,
             'isShell' => false,
             'action' => [
                 'label' => __('Add to VS Code', 'nibwp'),
@@ -603,7 +621,7 @@ function nibwp_oauth_remote_configs(string $mcp_url, string $name): array
         'github-copilot' => [
             'code' => $servers,
             'hint' => __('Copilot reads VS Code\'s MCP configuration, so the same button works.', 'nibwp'),
-            'paths' => ['Workspace' => '.vscode/mcp.json', 'User' => 'Run “MCP: Open User Configuration”'],
+            'paths' => $vscode_paths,
             'isShell' => false,
             'action' => [
                 'label' => __('Add to VS Code', 'nibwp'),
@@ -923,7 +941,11 @@ function nibwp_oauth_render_connections(): void
                             printf(
                                 /* translators: 1: how long ago it was connected, 2: last used */
                                 esc_html__('Connected %1$s · %2$s', 'nibwp'),
-                                esc_html(human_time_diff($conn['created']) . __(' ago', 'nibwp')),
+                                esc_html(sprintf(
+                                    /* translators: %s: human time difference */
+                                    __('%s ago', 'nibwp'),
+                                    human_time_diff($conn['created'])
+                                )),
                                 $conn['last_used'] > 0
                                     ? esc_html(sprintf(
                                         /* translators: %s: human time difference */
@@ -1044,8 +1066,11 @@ function nibwp_oauth_render_connect_tabs(
 
             function shadows() {
                 var max = strip.scrollWidth - strip.clientWidth;
-                wrap.classList.toggle('has-scroll-left', strip.scrollLeft > 2);
-                wrap.classList.toggle('has-scroll-right', strip.scrollLeft < max - 2);
+                // Right to left, scrollLeft runs from 0 at the start down to -max at
+                // the end, and the RTL stylesheet swaps the fades, so the distance
+                // from the start is what both classes need.
+                wrap.classList.toggle('has-scroll-left', Math.abs(strip.scrollLeft) > 2);
+                wrap.classList.toggle('has-scroll-right', Math.abs(strip.scrollLeft) < max - 2);
             }
 
             function step() {

@@ -9,6 +9,7 @@ $status              = $booking_array['status'] ?? '';
 ?>
 
 <div class="doublescale-booking-meeting">
+	<?php require __DIR__ . '/parts/back-to-site.php'; ?>
 	<div class="details-container">
 		<div class="profile-picture">
 			<img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="<?php esc_attr_e( 'cancellation', 'doublescale' ); ?>" />

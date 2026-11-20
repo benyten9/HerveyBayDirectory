@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-use Illuminate\Contracts\Support\Htmlable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Htmlable;
 class HtmlString implements Htmlable
 {
     /**

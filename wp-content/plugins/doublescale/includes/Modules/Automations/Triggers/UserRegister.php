@@ -93,6 +93,23 @@ class UserRegister extends Trigger {
 				'user_id' => $user_id,
 			),
 		);
+
+		// The new contact gets the user's name, so {{contact:first_name}} greets them
+		// by it. Only names the user has: an existing contact's name is never blanked.
+		$first = (string) ( $user_data['first_name'] ?? get_user_meta( $user_id, 'first_name', true ) );
+		$last  = (string) ( $user_data['last_name'] ?? get_user_meta( $user_id, 'last_name', true ) );
+		if ( '' === $first && '' === $last && ! empty( $user_data['display_name'] ) && $user_data['display_name'] !== ( $user_data['user_login'] ?? '' ) ) {
+			$parts = explode( ' ', trim( (string) $user_data['display_name'] ), 2 );
+			$first = $parts[0];
+			$last  = $parts[1] ?? '';
+		}
+		if ( '' !== $first ) {
+			$data['first_name'] = $first;
+		}
+		if ( '' !== $last ) {
+			$data['last_name'] = $last;
+		}
+
 		$this->process( $data );
 	}
 }

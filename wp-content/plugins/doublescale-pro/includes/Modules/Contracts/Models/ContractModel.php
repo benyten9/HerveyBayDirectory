@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\Contracts\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Pro\Modules\Contracts\Constants\ContractStatus;
@@ -72,28 +72,28 @@ class ContractModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function assigned_user() {
 		return $this->belongsTo( UserModel::class, 'assigned_user_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function type() {
 		return $this->belongsTo( ContractTypeModel::class, 'contract_type_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function attachments() {
 		return $this->hasMany( ContractAttachmentModel::class, 'attachable_id', 'id' )
@@ -101,9 +101,9 @@ class ContractModel extends Model {
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $status Status value.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByStatus( $query, $status ) {
 		return $query->where( 'status', $status );
@@ -144,7 +144,7 @@ class ContractModel extends Model {
 	 */
 	public static function get_by_hash( $hash ) {
 		$hash = trim( (string) $hash );
-		if ( '' === $hash || ! preg_match( '/^[a-f0-9]{32}$/', $hash ) ) {
+		if ( '' === $hash || ! preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ) {
 			return null;
 		}
 		return self::query()->where( 'hash', $hash )->first();

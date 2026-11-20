@@ -90,7 +90,7 @@ class DCL_Claim_Now extends WP_Widget {
                     <div class="directorist-modal__content">
                         <div class="row align-items-center">
                             <div class="col-lg-12">
-                                <form id="directorist-claimer__form" class="directorist-claimer__form">
+                                <form id="directorist-claimer__form" class="directorist-claimer__form" data-listing-id="<?php echo esc_attr( $listing_id ); ?>">
                                     <div class="directorist-modal__header">
                                         <h3 class="directorist-modal-title" id="directorist-claimer__claim-label"><?php _e('Claim This Listing', 'directorist-claim-listing'); ?></h3>
                                             <a href="#" class="directorist-modal-close directorist-modal-close-js"><span aria-hidden="true">&times;</span></a>

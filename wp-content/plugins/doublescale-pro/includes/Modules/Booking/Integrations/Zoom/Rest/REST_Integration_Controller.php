@@ -8,7 +8,7 @@
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Zoom\Rest;
 
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Integration\Rest\REST_Integration_Controller as Abstract_REST_Integration_Controller;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use WP_Error;

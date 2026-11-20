@@ -65,7 +65,10 @@ class BrokenLinks implements ExecuteHooks {
 						'validate_callback' => function ( $param ) {
 							return is_string( $param );
 						},
-						'sanitize_callback' => 'sanitize_text_field',
+						// Not sanitize_text_field(): the searchable column is the
+						// broken URL, and that sanitizer deletes every %XX octet,
+						// so a percent-encoded URL could never be searched for.
+						'sanitize_callback' => 'seopress_pro_plain_text',
 					),
 					'status'   => array(
 						'validate_callback' => function ( $param ) {
@@ -379,7 +382,10 @@ class BrokenLinks implements ExecuteHooks {
 				'offset'    => (int) get_option( 'seopress_pro_broken_links_offset', 0 ),
 				'total'     => (int) get_option( 'seopress_pro_broken_links_count_posts', 0 ),
 				'processed' => (int) get_option( 'seopress_pro_broken_links_post_count', 0 ),
-				'log'       => sanitize_text_field( get_option( 'seopress_pro_broken_links_log', '' ) ),
+				// The log is a "<post title> - <permalink>" line, so it carries
+				// both a URL whose %XX octets must survive and a title whose
+				// entities have to be decoded before React renders it as text.
+				'log'       => seopress_pro_plain_text( get_option( 'seopress_pro_broken_links_log', '' ) ),
 				'lastScan'  => sanitize_text_field( get_option( 'seopress_bot_log', '' ) ),
 				'duration'  => (int) get_option( 'seopress_pro_broken_links_scan_duration', 0 ),
 			)
@@ -462,16 +468,21 @@ class BrokenLinks implements ExecuteHooks {
 		);
 
 		foreach ( $query->posts as $post ) {
-			$rows[] = array(
-				$post->post_title,
-				get_post_meta( $post->ID, 'seopress_bot_status', true ),
-				get_post_meta( $post->ID, 'seopress_bot_count', true ),
-				get_post_meta( $post->ID, 'seopress_bot_type', true ),
-				get_post_meta( $post->ID, 'seopress_bot_a_title', true ),
-				get_post_meta( $post->ID, 'seopress_bot_source_url', true ),
-				get_post_meta( $post->ID, 'seopress_bot_source_title', true ),
-				get_post_meta( $post->ID, 'seopress_bot_cpt', true ),
-				$post->post_date,
+			// Every cell but the date comes from post content or a remote
+			// response, so neutralize anything a spreadsheet would evaluate.
+			$rows[] = array_map(
+				'seopress_pro_escape_csv_value',
+				array(
+					$post->post_title,
+					get_post_meta( $post->ID, 'seopress_bot_status', true ),
+					get_post_meta( $post->ID, 'seopress_bot_count', true ),
+					get_post_meta( $post->ID, 'seopress_bot_type', true ),
+					seopress_pro_plain_text( get_post_meta( $post->ID, 'seopress_bot_a_title', true ) ),
+					get_post_meta( $post->ID, 'seopress_bot_source_url', true ),
+					seopress_pro_plain_text( get_post_meta( $post->ID, 'seopress_bot_source_title', true ) ),
+					get_post_meta( $post->ID, 'seopress_bot_cpt', true ),
+					$post->post_date,
+				)
 			);
 		}
 
@@ -497,6 +508,36 @@ class BrokenLinks implements ExecuteHooks {
 	}
 
 	/**
+	 * The URL a broken link row can point its anchor at.
+	 *
+	 * Only an absolute URL with an allowed scheme, or a root-relative path, is
+	 * followable from the admin. A document-relative href is relative to the
+	 * post it was found in, not to the admin screen, so it gets no link rather
+	 * than a wrong one.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param string $url The broken URL, as stored.
+	 *
+	 * @return string
+	 */
+	private function getFollowableUrl( $url ) {
+		$url = (string) $url;
+
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$is_root_relative = '/' === $url[0] && ( ! isset( $url[1] ) || '/' !== $url[1] );
+
+		if ( ! $is_root_relative && ! wp_parse_url( $url, PHP_URL_SCHEME ) ) {
+			return '';
+		}
+
+		return esc_url_raw( $url );
+	}
+
+	/**
 	 * Format a seopress_bot post for API response.
 	 *
 	 * @since 9.8.0
@@ -508,15 +549,21 @@ class BrokenLinks implements ExecuteHooks {
 	private function formatPost( $post ) {
 		return array(
 			'id'          => $post->ID,
-			'url'         => esc_html( $post->post_title ),
+			// `url` is the link exactly as found in the content, shown as text:
+			// an escaper here would write the & of a query string as &#038;, and
+			// esc_url_raw() would blank a scheme it does not know (whatsapp:,
+			// skype:) or turn "contact.html" into "http://contact.html". The
+			// clickable version goes in `href`, empty when there is none.
+			'url'         => (string) $post->post_title,
+			'href'        => $this->getFollowableUrl( $post->post_title ),
 			'status'      => sanitize_text_field( get_post_meta( $post->ID, 'seopress_bot_status', true ) ),
 			'type'        => sanitize_text_field( get_post_meta( $post->ID, 'seopress_bot_type', true ) ),
 			'count'       => absint( get_post_meta( $post->ID, 'seopress_bot_count', true ) ),
 			'sourceId'    => absint( get_post_meta( $post->ID, 'seopress_bot_source_id', true ) ),
-			'sourceUrl'   => esc_url( get_post_meta( $post->ID, 'seopress_bot_source_url', true ) ),
-			'sourceTitle' => sanitize_text_field( get_post_meta( $post->ID, 'seopress_bot_source_title', true ) ),
+			'sourceUrl'   => esc_url_raw( get_post_meta( $post->ID, 'seopress_bot_source_url', true ) ),
+			'sourceTitle' => seopress_pro_plain_text( get_post_meta( $post->ID, 'seopress_bot_source_title', true ) ),
 			'sourceCpt'   => sanitize_text_field( get_post_meta( $post->ID, 'seopress_bot_cpt', true ) ),
-			'anchor'      => sanitize_text_field( get_post_meta( $post->ID, 'seopress_bot_a_title', true ) ),
+			'anchor'      => seopress_pro_plain_text( get_post_meta( $post->ID, 'seopress_bot_a_title', true ) ),
 			'dateCreated' => $post->post_date,
 		);
 	}

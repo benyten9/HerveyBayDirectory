@@ -181,6 +181,6 @@ class Integration extends Integration_Abstract {
 	 * @return string
 	 */
 	public function get_icon_url(): string {
-		return $this->plugin_asset_url( 'assets/images/mollie/mollie.svg' );
+		return $this->plugin_asset_url( 'assets/images/mollie/mollie.png' );
 	}
 }

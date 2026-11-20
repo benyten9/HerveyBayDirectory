@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Concerns;
 
 use Closure;
 use RuntimeException;
-use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Query\Builder as QueryBuilder;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\MorphTo;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Relation;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder as QueryBuilder;
 trait QueriesRelationships
 {
     /**

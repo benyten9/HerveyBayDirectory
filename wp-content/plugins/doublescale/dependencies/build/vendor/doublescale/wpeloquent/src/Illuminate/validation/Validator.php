@@ -1,22 +1,22 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
 use RuntimeException;
 use BadMethodCallException;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Fluent;
-use Illuminate\Support\MessageBag;
-use Illuminate\Contracts\Container\Container;
-use Illuminate\Contracts\Translation\Translator;
-use Illuminate\Contracts\Validation\ImplicitRule;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Support\MessageBag;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container;
+use DoubleScale\Vendor\Illuminate\Contracts\Translation\Translator;
+use DoubleScale\Vendor\Illuminate\Contracts\Validation\ImplicitRule;
 use DoubleScale\Vendor\Symfony\Component\HttpFoundation\File\UploadedFile;
-use Illuminate\Contracts\Validation\Rule as RuleContract;
-use Illuminate\Contracts\Validation\Validator as ValidatorContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Validation\Rule as RuleContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Validation\Validator as ValidatorContract;
 class Validator implements ValidatorContract
 {
-    use \Illuminate\Validation\Concerns\FormatsMessages, \Illuminate\Validation\Concerns\ValidatesAttributes;
+    use Concerns\FormatsMessages, Concerns\ValidatesAttributes;
     /**
      * The Translator implementation.
      *
@@ -259,7 +259,7 @@ class Validator implements ValidatorContract
     public function validate()
     {
         if ($this->fails()) {
-            throw new \Illuminate\Validation\ValidationException($this);
+            throw new ValidationException($this);
         }
         return $this->validated();
     }
@@ -273,7 +273,7 @@ class Validator implements ValidatorContract
     public function validated()
     {
         if ($this->invalid()) {
-            throw new \Illuminate\Validation\ValidationException($this);
+            throw new ValidationException($this);
         }
         $results = [];
         $missingValue = Str::random(10);
@@ -295,7 +295,7 @@ class Validator implements ValidatorContract
     protected function validateAttribute($attribute, $rule)
     {
         $this->currentRule = $rule;
-        [$rule, $parameters] = \Illuminate\Validation\ValidationRuleParser::parse($rule);
+        [$rule, $parameters] = ValidationRuleParser::parse($rule);
         if ($rule == '') {
             return;
         }
@@ -429,7 +429,7 @@ class Validator implements ValidatorContract
         if (!$this->hasRule($attribute, ['Sometimes'])) {
             return \true;
         }
-        $data = \Illuminate\Validation\ValidationData::initializeAndGatherData($attribute, $this->data);
+        $data = ValidationData::initializeAndGatherData($attribute, $this->data);
         return \array_key_exists($attribute, $data) || \array_key_exists($attribute, $this->data);
     }
     /**
@@ -611,7 +611,7 @@ class Validator implements ValidatorContract
         }
         $rules = (array) $rules;
         foreach ($this->rules[$attribute] as $rule) {
-            [$rule, $parameters] = \Illuminate\Validation\ValidationRuleParser::parse($rule);
+            [$rule, $parameters] = ValidationRuleParser::parse($rule);
             if (\in_array($rule, $rules)) {
                 return [$rule, $parameters];
             }
@@ -690,7 +690,7 @@ class Validator implements ValidatorContract
         // The primary purpose of this parser is to expand any "*" rules to the all
         // of the explicit rules needed for the given data. For example the rule
         // names.* would get expanded to names.0, names.1, etc. for this data.
-        $response = (new \Illuminate\Validation\ValidationRuleParser($this->data))->explode($rules);
+        $response = (new ValidationRuleParser($this->data))->explode($rules);
         $this->rules = \array_merge_recursive($this->rules, $response->rules);
         $this->implicitAttributes = \array_merge($this->implicitAttributes, $response->implicitAttributes);
     }
@@ -721,7 +721,7 @@ class Validator implements ValidatorContract
     public function addExtensions(array $extensions)
     {
         if ($extensions) {
-            $keys = \array_map('\\Illuminate\\Support\\Str::snake', \array_keys($extensions));
+            $keys = \array_map('\\DoubleScale\\Vendor\\Illuminate\\Support\\Str::snake', \array_keys($extensions));
             $extensions = \array_combine($keys, \array_values($extensions));
         }
         $this->extensions = \array_merge($this->extensions, $extensions);
@@ -796,7 +796,7 @@ class Validator implements ValidatorContract
     public function addReplacers(array $replacers)
     {
         if ($replacers) {
-            $keys = \array_map('\\Illuminate\\Support\\Str::snake', \array_keys($replacers));
+            $keys = \array_map('\\DoubleScale\\Vendor\\Illuminate\\Support\\Str::snake', \array_keys($replacers));
             $replacers = \array_combine($keys, \array_values($replacers));
         }
         $this->replacers = \array_merge($this->replacers, $replacers);
@@ -911,7 +911,7 @@ class Validator implements ValidatorContract
      * @param  \Illuminate\Validation\PresenceVerifierInterface  $presenceVerifier
      * @return void
      */
-    public function setPresenceVerifier(\Illuminate\Validation\PresenceVerifierInterface $presenceVerifier)
+    public function setPresenceVerifier(PresenceVerifierInterface $presenceVerifier)
     {
         $this->presenceVerifier = $presenceVerifier;
     }

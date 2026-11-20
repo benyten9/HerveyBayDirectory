@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-use Illuminate\Console\Application as Artisan;
-use Illuminate\Contracts\Support\DeferrableProvider;
+use DoubleScale\Vendor\Illuminate\Console\Application as Artisan;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\DeferrableProvider;
 abstract class ServiceProvider
 {
     /**

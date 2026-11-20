@@ -18,7 +18,7 @@ use DoubleScale\Modules\Booking\Services\BookingService;
 use DoubleScale\Modules\Booking\Models\BookedSlotModel;
 use DoubleScale\Modules\Booking\Models\BookingHostsModel;
 use DoubleScale\Modules\Booking\Models\BookingModel;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 class ClaimWaitlistPageRenderer extends BaseTemplateRenderer {
 

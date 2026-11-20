@@ -7,6 +7,7 @@ defined( "ABSPATH" ) || exit;
 use WP_REST_Request;
 use Directorist\Helpers\DateTime;
 use Directorist\Enums\Order\Status as OrderStatus;
+use DirectoristPricingPlan\App\Services\PackageRepairService;
 use DirectoristPricingPlan\WpMVC\Routing\Response;
 use DirectoristPricingPlan\WpMVC\Exceptions\Exception;
 use DirectoristPricingPlan\WpMVC\RequestValidator\Validator;
@@ -146,79 +147,15 @@ class PackageController extends Controller {
             throw new Exception( esc_html__( 'You are not allowed to recover packages.', 'directorist-pricing-plans' ), 403 );
         }
 
-        $submitted_assignments = $request->get_param( 'assignments' );
-
-        if ( empty( $submitted_assignments ) ) {
-            throw new Exception( esc_html__( 'Plan assignments are required.', 'directorist-pricing-plans' ), 400 );
-        }
-
-        $assignments = [];
-
-        foreach ( $submitted_assignments as $assignment ) {
-            if ( ! is_array( $assignment ) ) {
-                throw new Exception( esc_html__( 'Invalid plan assignment.', 'directorist-pricing-plans' ), 400 );
-            }
-
-            $missing_plan_id = absint( $assignment['missing_plan_id'] ?? 0 );
-            $new_plan_id     = absint( $assignment['new_plan_id'] ?? 0 );
-
-            if ( ! $missing_plan_id || ! $new_plan_id || isset( $assignments[ $missing_plan_id ] ) ) {
-                throw new Exception( esc_html__( 'Every missing plan must have one valid replacement.', 'directorist-pricing-plans' ), 400 );
-            }
-
-            $assignments[ $missing_plan_id ] = $new_plan_id;
-        }
-
-        $missing_groups = $this->package_repository->get_missing_plan_groups();
-        $missing_by_id  = [];
-
-        foreach ( $missing_groups as $missing_group ) {
-            $missing_plan_id = (int) $missing_group->plan_id;
-
-            if ( 1 !== (int) $missing_group->directory_type_count ) {
-                throw new Exception(
-                    sprintf(
-                        esc_html__( 'Packages referencing missing plan #%d have inconsistent directory types.', 'directorist-pricing-plans' ),
-                        $missing_plan_id
-                    ),
-                    409
-                );
-            }
-
-            $missing_by_id[ $missing_plan_id ] = (int) $missing_group->directory_type_id;
-        }
-
-        $submitted_ids = array_keys( $assignments );
-        $missing_ids   = array_keys( $missing_by_id );
-        sort( $submitted_ids );
-        sort( $missing_ids );
-
-        if ( $submitted_ids !== $missing_ids ) {
-            throw new Exception( esc_html__( 'Missing plan data has changed. Refresh the page and try again.', 'directorist-pricing-plans' ), 409 );
-        }
-
-        /** @var PlanRepository $plan_repository */
-        $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
-
-        foreach ( $assignments as $missing_plan_id => $new_plan_id ) {
-            $new_plan = $plan_repository->get_by_id( $new_plan_id );
-
-            if ( ! $new_plan || 1 !== (int) $new_plan->is_published ) {
-                throw new Exception( esc_html__( 'A selected replacement plan is no longer available.', 'directorist-pricing-plans' ), 400 );
-            }
-
-            if ( (int) $new_plan->directory_type_id !== $missing_by_id[ $missing_plan_id ] ) {
-                throw new Exception( esc_html__( 'A selected replacement plan belongs to a different directory type.', 'directorist-pricing-plans' ), 400 );
-            }
-        }
-
-        $updated = $this->package_repository->recover_missing_plans( $assignments );
+        $updated = directorist_pricing_plans_singleton( PackageRepairService::class )
+            ->repair( $request->get_param( 'assignments' ) );
 
         return Response::send(
             [
-                'message'          => esc_html__( 'Missing package plans were recovered successfully.', 'directorist-pricing-plans' ),
+                'message'          => esc_html__( 'Selected packages were repaired successfully.', 'directorist-pricing-plans' ),
                 'updated_packages' => $updated['packages'],
                 'updated_orders'   => $updated['orders'],
+                'updated_listings' => $updated['listings'],
             ]
         );
     }
@@ -398,7 +335,7 @@ class PackageController extends Controller {
             $is_cancelled = apply_filters( "directorist_pricing_plan_subscription_canceled", true, $this->package_repository->to_dto( $package ), 'admin' );
             
             if ( ! $is_cancelled ) {
-                throw new Exception( esc_html__( "Package was not cancelled, please try again.", 'directorist-pricing-plans' ) );
+                throw new Exception( esc_html__( 'The payment gateway could not cancel the subscription. The package was not changed. Check the PHP error log for details.', 'directorist-pricing-plans' ), 502 );
             }
         }
 
@@ -440,7 +377,7 @@ class PackageController extends Controller {
             $is_cancelled = apply_filters( "directorist_pricing_plan_subscription_canceled_at_period_end", true, $this->package_repository->to_dto( $package ), 'admin' );
 
             if ( ! $is_cancelled ) {
-                throw new Exception( esc_html__( "Package was not cancelled, please try again.", 'directorist-pricing-plans' ) );
+                throw new Exception( esc_html__( 'The payment gateway could not schedule cancellation at period end. The package was not changed. Check the PHP error log for details.', 'directorist-pricing-plans' ), 502 );
             }
         }
 
@@ -492,8 +429,7 @@ class PackageController extends Controller {
             throw new Exception( esc_html__( 'Only expired packages can be renewed.', 'directorist-pricing-plans' ), 400 );
         }
 
-        if (
-            PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE )
+        if ( PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE )
             || ! empty( $package->is_recurring )
         ) {
             throw new Exception( esc_html__( 'This package type cannot be renewed manually.', 'directorist-pricing-plans' ), 400 );
@@ -535,8 +471,7 @@ class PackageController extends Controller {
             throw new Exception( esc_html__( 'Only active packages can be updated.', 'directorist-pricing-plans' ), 400 );
         }
 
-        if (
-            PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE )
+        if ( PlanType::PACKAGE !== ( $plan->type ?? PlanType::PACKAGE )
             || ! empty( $package->is_recurring )
         ) {
             throw new Exception( esc_html__( 'This package type does not support manual next billing date updates.', 'directorist-pricing-plans' ), 400 );

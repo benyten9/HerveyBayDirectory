@@ -1038,7 +1038,13 @@ function nibwp_status_check_oauth(array $probe): ?array
             );
         }
 
-        $lines[] = sprintf('%s — %s: %s', (string) $p['label'], $state, (string) $p['url']);
+        $lines[] = sprintf(
+            /* translators: 1: name of the sign-in discovery address, 2: what it returned, 3: URL */
+            __('%1$s — %2$s: %3$s', 'nibwp'),
+            (string) $p['label'],
+            $state,
+            (string) $p['url']
+        );
     }
 
     $detail = implode("
@@ -1491,7 +1497,12 @@ function nibwp_status_check_security_plugins(array $probe): array
     $rest_broken = empty($probe['rest_ok']) || ($probe['auth_header_seen'] === false);
     $lines = [];
     foreach ($found as $name => $note) {
-        $lines[] = $name . ' — ' . $note;
+        $lines[] = sprintf(
+            /* translators: 1: security plugin name, 2: where to look in its settings */
+            __('%1$s — %2$s', 'nibwp'),
+            $name,
+            $note
+        );
     }
 
     return nibwp_status_result(

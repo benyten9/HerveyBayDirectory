@@ -62,8 +62,24 @@ jQuery(document).ready(function ($) {
                         data: data,
                         options: {
                             scales: {
+                                // A few dated ticks under the line, so a
+                                // reading can be placed in time rather than
+                                // only between the two ends of the range
+                                // (#789). Chart.js skips what does not fit.
+                                //
+                                // Its skip estimates the tick count as if the
+                                // labels spanned the whole axis, then steps
+                                // from the first one, so with the default
+                                // 3px padding full dates touched at common
+                                // widget widths. 40px keeps them apart in
+                                // en, fr, de, es, pt and it from 250 to 800px.
                                 x: {
-                                    display: false
+                                    ticks: {
+                                        maxTicksLimit: 5,
+                                        maxRotation: 0,
+                                        autoSkip: true,
+                                        autoSkipPadding: 40
+                                    }
                                 }
                             }
                         }

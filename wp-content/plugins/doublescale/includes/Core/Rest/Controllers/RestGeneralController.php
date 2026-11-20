@@ -13,6 +13,7 @@ namespace DoubleScale\Core\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Core\Scope\OwnerScope;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -63,22 +64,15 @@ class RestGeneralController extends RestController {
 	}
 
 	/**
-	 * Whether dashboard aggregates for a module slug may run.
-	 * Unregistered slugs (e.g. Pro-only modules on free) return false.
+	 * Whether dashboard figures from a module may be read: the module is on
+	 * and its tables exist ({@see doublescale_module_data_ready()}). A module
+	 * that is off, or not installed (Pro modules on a free-only site), adds no
+	 * figures; its cards are left out.
 	 *
 	 * @param string $slug Module slug.
 	 */
 	private function dashboard_aggregate_allowed( string $slug ): bool {
-		if ( ! function_exists( 'doublescale_module_slug_to_class_map' ) || ! function_exists( 'doublescale_is_module_active' ) ) {
-			return true;
-		}
-
-		$classes = doublescale_module_slug_to_class_map();
-		if ( ! isset( $classes[ $slug ] ) ) {
-			return false;
-		}
-
-		return doublescale_is_module_active( $slug );
+		return doublescale_module_data_ready( $slug );
 	}
 
 	/**
@@ -117,61 +111,98 @@ class RestGeneralController extends RestController {
 	 * @return WP_REST_Response
 	 */
 	public function get_dashboard( WP_REST_Request $request ) {
-		$total_contacts               = 0;
-		$total_tags                   = 0;
-		$total_lists                  = 0;
-		$recent_contacts              = array();
-		$recent_unsubscribed_contacts = array();
+		// Null = not this person's to see; the dashboard leaves that card out.
+		$total_contacts               = null;
+		$total_tags                   = null;
+		$total_lists                  = null;
+		$recent_contacts              = null;
+		$recent_unsubscribed_contacts = null;
+		$new_contacts_30d             = null;
+		$new_contacts_prev_30d        = null;
 
-		if ( $this->dashboard_aggregate_allowed( 'contacts' ) ) {
-			$total_contacts               = ContactModel::count();
+		// Trend windows: the last 30 days and the 30 before them.
+		$now        = current_time( 'timestamp' );
+		$since_30d  = gmdate( 'Y-m-d H:i:s', $now - 30 * DAY_IN_SECONDS );
+		$since_60d  = gmdate( 'Y-m-d H:i:s', $now - 60 * DAY_IN_SECONDS );
+
+		// Every figure is what this person may see: an agent's dashboard counts
+		// their own records, and only campaign managers see campaign and email totals.
+		$user_id   = (int) get_current_user_id();
+		$campaigns = Permissions::can_manage_campaigns( $user_id );
+		// Contact figures for the CRM, sales and campaign roles. Helpdesk,
+		// Booking, Project and Automation staff reach contacts through their
+		// own work; their dashboard is their calendar and tasks.
+		$crm_contacts = Permissions::has_agent_access( $user_id )
+			|| Permissions::is_campaign_manager( $user_id )
+			|| Permissions::is_campaign_agent( $user_id );
+
+		if ( $crm_contacts && $this->dashboard_aggregate_allowed( 'contacts' ) ) {
+			// A scoped agent's dashboard counts their own contacts, not the site's.
+			$scope                        = OwnerScope::current();
+			$total_contacts               = $scope->apply_contact_visibility( ContactModel::query() )->count();
 			$total_tags                   = TagModel::count();
 			$total_lists                  = ListModel::count();
-			$recent_contacts              = ContactModel::orderBy( 'id', 'desc' )->limit( 5 )->get();
-			$recent_unsubscribed_contacts = ContactModel::where( 'email_status', 'unsubscribed' )->orderBy( 'id', 'desc' )->limit( 5 )->get();
+			$recent_contacts              = $scope->apply_contact_visibility( ContactModel::query() )->orderBy( 'id', 'desc' )->limit( 5 )->get();
+			$recent_unsubscribed_contacts = $scope->apply_contact_visibility( ContactModel::where( 'email_status', 'unsubscribed' ) )->orderBy( 'id', 'desc' )->limit( 5 )->get();
+			$new_contacts_30d             = $scope->apply_contact_visibility( ContactModel::where( 'created_at', '>=', $since_30d ) )->count();
+			$new_contacts_prev_30d        = $scope->apply_contact_visibility( ContactModel::where( 'created_at', '>=', $since_60d )->where( 'created_at', '<', $since_30d ) )->count();
 		}
 
-		$total_sent_emails     = 0;
-		$total_email_templates = 0;
+		$total_sent_emails     = $campaigns ? 0 : null;
+		$total_email_templates = $campaigns ? 0 : null;
+		$sent_emails_30d       = $campaigns ? 0 : null;
+		$sent_emails_prev_30d  = $campaigns ? 0 : null;
 		$recent_emails         = array();
 
-		if ( $this->dashboard_aggregate_allowed( 'tracking' ) && class_exists( CommunicationTrackingModel::class ) ) {
-			$total_sent_emails = CommunicationTrackingModel::emails()->where( 'status', TrackingStatus::SENT )->count();
+		if ( $campaigns && $this->dashboard_aggregate_allowed( 'tracking' ) && class_exists( CommunicationTrackingModel::class ) ) {
+			$total_sent_emails    = CommunicationTrackingModel::emails()->where( 'status', TrackingStatus::SENT )->count();
+			$sent_emails_30d      = CommunicationTrackingModel::emails()->where( 'status', TrackingStatus::SENT )->where( 'created_at', '>=', $since_30d )->count();
+			$sent_emails_prev_30d = CommunicationTrackingModel::emails()->where( 'status', TrackingStatus::SENT )->where( 'created_at', '>=', $since_60d )->where( 'created_at', '<', $since_30d )->count();
 			$recent_emails     = CommunicationTrackingModel::emails()->with( 'template' )->orderBy( 'id', 'desc' )->limit( 5 )->get();
 		}
 
 		if (
-			$this->dashboard_aggregate_allowed( 'campaigns' )
+			$campaigns
+			&& $this->dashboard_aggregate_allowed( 'campaigns' )
 			&& class_exists( '\DoubleScale\Modules\Campaigns\Models\TemplateModel' )
 		) {
 			$total_email_templates = \DoubleScale\Modules\Campaigns\Models\TemplateModel::where( 'type', CampaignChannel::CHANNEL_EMAIL )->count();
 		}
 
-		$top_campaigns = array();
+		$top_campaigns = $campaigns ? array() : null;
 
 		if (
-			$this->dashboard_aggregate_allowed( 'campaigns' )
+			$campaigns
+			&& $this->dashboard_aggregate_allowed( 'campaigns' )
 			&& class_exists( '\DoubleScale\Modules\Campaigns\Models\CampaignModel' )
 		) {
 			$top_campaigns = \DoubleScale\Modules\Campaigns\Models\CampaignModel::orderBy( 'id', 'desc' )->limit( 5 )->get();
 		}
 
-		$total_automations = 0;
-		$top_automations   = array();
+		$total_automations = null;
+		$top_automations   = null;
 
-		if ( $this->dashboard_aggregate_allowed( 'automations' ) && class_exists( AutomationModel::class ) ) {
-			$total_automations = AutomationModel::where( 'status', 'active' )->count();
-			$top_automations   = AutomationModel::orderBy( 'id', 'desc' )->limit( 5 )->get();
+		if ( Permissions::can_access_automations( $user_id ) && $this->dashboard_aggregate_allowed( 'automations' ) && class_exists( AutomationModel::class ) ) {
+			// An automation agent counts the workflows they built.
+			$mine = static function () use ( $user_id ) {
+				$query = AutomationModel::query();
+				return Permissions::can_manage_all_automations( $user_id ) ? $query : $query->where( 'created_by', $user_id );
+			};
+			$total_automations = $mine()->where( 'status', 'active' )->count();
+			$top_automations   = $mine()->orderBy( 'id', 'desc' )->limit( 5 )->get();
 		}
 
-		$deals                         = 0;
-		$deals_closed_won              = 0;
-		$deals_won_value               = 0;
-		$deals_won_value_by_currency   = array();
+		// The pipeline is the sales roles' (null for everyone else).
+		$sells                         = Permissions::has_agent_access( $user_id );
+		$deals                         = $sells ? 0 : null;
+		$deals_closed_won              = $sells ? 0 : null;
+		$deals_won_value               = $sells ? 0 : null;
+		$deals_won_value_by_currency   = $sells ? array() : null;
 
 		$deal_model = $this->resolve_deal_model_class();
 		if (
-			$deal_model
+			$sells
+			&& $deal_model
 			&& $this->dashboard_aggregate_allowed( 'deals' )
 			&& (
 				! function_exists( 'doublescale_is_module_storage_ready' )
@@ -179,9 +210,15 @@ class RestGeneralController extends RestController {
 			)
 		) {
 			try {
-				$deals            = $deal_model::count();
-				$deals_closed_won = $deal_model::where( 'status', 'won' )->count();
-				$won              = $deal_model::where( 'status', 'won' )->get();
+				// An agent counts the deals they own.
+				$own   = ! Permissions::sees_all_records( 'deals', $user_id );
+				$query = static function () use ( $deal_model, $own, $user_id ) {
+					$q = $deal_model::query();
+					return $own ? $q->where( 'owner_id', $user_id ) : $q;
+				};
+				$deals            = $query()->count();
+				$deals_closed_won = $query()->where( 'status', 'won' )->count();
+				$won              = $query()->where( 'status', 'won' )->get();
 				$deals_won_value_by_currency = CurrencyResolver::sum_by_currency( $won, 'value' );
 				$global                      = CurrencyResolver::global_currency();
 				// @deprecated Keep the scalar as the global-currency bucket only
@@ -195,10 +232,13 @@ class RestGeneralController extends RestController {
 			}
 		}
 
-		$projects      = 0;
-		$project_model = $this->resolve_project_model_class();
+		// Projects for the people who open them (null for everyone else).
+		$works_projects = Permissions::has_project_access( $user_id );
+		$projects       = $works_projects ? 0 : null;
+		$project_model  = $this->resolve_project_model_class();
 		if (
-			$project_model
+			$works_projects
+			&& $project_model
 			&& $this->dashboard_aggregate_allowed( 'projects' )
 			&& (
 				! function_exists( 'doublescale_is_module_storage_ready' )
@@ -206,7 +246,14 @@ class RestGeneralController extends RestController {
 			)
 		) {
 			try {
-				$projects = $project_model::count();
+				if ( Permissions::sees_all_records( 'projects', $user_id ) ) {
+					$projects = $project_model::count();
+				} elseif ( method_exists( $project_model, 'scopeInvolving' ) ) {
+					// Pro with project teams: the projects they own or work on.
+					$projects = $project_model::query()->involving( $user_id )->count();
+				} else {
+					$projects = $project_model::where( 'owner_id', $user_id )->count();
+				}
 			} catch ( \Throwable $e ) {
 				$projects = 0;
 			}
@@ -215,6 +262,10 @@ class RestGeneralController extends RestController {
 		$response = array(
 			'total_contacts'               => $total_contacts,
 			'total_sent_emails'            => $total_sent_emails,
+			'sent_emails_30d'              => $sent_emails_30d,
+			'sent_emails_prev_30d'         => $sent_emails_prev_30d,
+			'new_contacts_30d'             => $new_contacts_30d,
+			'new_contacts_prev_30d'        => $new_contacts_prev_30d,
 			'total_tags'                   => $total_tags,
 			'total_lists'                  => $total_lists,
 			'total_automations'            => $total_automations,
@@ -232,9 +283,11 @@ class RestGeneralController extends RestController {
 		);
 
 		if (
-			doublescale_is_plugin_active( 'woocommerce/woocommerce.php' )
+			doublescale_is_plugin_active( 'woocommerce' )
 			&& $this->dashboard_aggregate_allowed( 'automations' )
 			&& class_exists( AbandonedCartModel::class )
+			// Cart recovery's table (Pro creates it while Automations is on).
+			&& doublescale_table_exists( 'abandoned_carts' )
 		) {
 			$total_orders           = AbandonedCartModel::where( 'order_id', '>', 0 )->count();
 			// WooCommerce carts are one store currency — summing `total` is safe.
@@ -261,6 +314,9 @@ class RestGeneralController extends RestController {
 	 * @return bool|\WP_Error
 	 */
 	public function get_dashboard_permissions_check( WP_REST_Request $request ) {
-		return Permissions::has_sales_rep_access();
+		// Every team role has a dashboard (their calendar and tasks at least);
+		// each figure in it is limited to what that person may see.
+		$user_id = (int) get_current_user_id();
+		return user_can( $user_id, 'manage_options' ) || Permissions::check_user_has_role( $user_id );
 	}
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 use PDO;
 use Exception;
 use Throwable;
-use Doctrine\DBAL\Driver\PDOConnection;
-use Illuminate\Database\DetectsLostConnections;
+use DoubleScale\Vendor\Doctrine\DBAL\Driver\PDOConnection;
+use DoubleScale\Vendor\Illuminate\Database\DetectsLostConnections;
 class Connector
 {
     use DetectsLostConnections;

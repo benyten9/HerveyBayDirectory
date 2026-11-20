@@ -22,8 +22,8 @@ class Error
         //capture directory path once at boot to prevent method calls during crashes
         self::$storage_dir = (string)PMCS::get_storage_dir();
 
-        //wordpress recovery mode filter
-        add_filter('wp_php_error_args', array(__CLASS__, 'handle_fatal_error'), 1, 2);
+        //wordpress passes (wp_die args, error); handle_fatal_error() expects the error first
+        add_filter('wp_php_error_args', array(__CLASS__, 'filter_php_error_args'), 1, 2);
 
         //global exception handler
         self::$previous_handler = set_exception_handler(array(__CLASS__, 'exception_handler'));
@@ -107,6 +107,16 @@ class Error
         exit(1);
     }
 
+    //wp_php_error_args callback. deactivate a snippet compile error without replacing wp_die() args
+    public static function filter_php_error_args($args, $error)
+    {
+        if(is_array($error)) {
+            self::handle_fatal_error($error, is_array($args) ? $args : array());
+        }
+
+        return $args;
+    }
+
     //handle fatal error
     public static function handle_fatal_error($error, $args = [])
     {
@@ -169,7 +179,7 @@ class Error
                 if(!empty($error['line'])) {
 
                     //adjust for dockblock offset
-                    $offset = Snippet::get_docblock_line_count($error['file']);
+                    $offset = Snippet::get_docblock_line_count($error['file'], (int) $error['line']);
                     $message.= ' on line ' . max(1, $error['line'] - $offset);
                 }
 
@@ -186,10 +196,5 @@ class Error
 
         self::$is_processing = false;
         return $args;
-    }
-
-    //set processing status
-    public static function set_processing($status) {
-        self::$is_processing = (bool)$status;
     }
 }

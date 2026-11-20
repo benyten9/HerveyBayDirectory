@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Database\Eloquent\Collection;
-class MorphMany extends \Illuminate\Database\Eloquent\Relations\MorphOneOrMany
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+class MorphMany extends MorphOneOrMany
 {
     /**
      * Get the results of the relationship.

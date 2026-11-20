@@ -55,6 +55,9 @@ final class DuplicateInvoice {
 				// do not add a getCurrencyAttribute() accessor — NULL must stay
 				// NULL (inherit) and an explicit EUR must stay EUR.
 				'currency'              => ( null === $source->currency || '' === $source->currency ) ? null : $source->currency,
+				// The Leitweg-ID identifies the buyer's receiving office, not
+				// this document, so it carries over like the customer does.
+				'buyer_reference'       => $source->buyer_reference ? (string) $source->buyer_reference : null,
 				'allowed_payment_modes' => is_array( $source->allowed_payment_modes ) ? $source->allowed_payment_modes : array(),
 				'discount_type'         => (string) $source->discount_type,
 				'discount_value'        => (float) $source->discount_value,

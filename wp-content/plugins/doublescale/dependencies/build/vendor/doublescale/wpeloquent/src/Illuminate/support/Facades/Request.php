@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static \Illuminate\Http\Request instance()
@@ -44,7 +44,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Http\Request
  */
-class Request extends \Illuminate\Support\Facades\Facade
+class Request extends Facade
 {
     /**
      * Get the registered name of the component.

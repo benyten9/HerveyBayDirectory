@@ -592,7 +592,7 @@ body.nw-dark .nw-onb-client-select, html.nw-dark .nw-onb-client-select {
     margin: 0; padding: 12px 14px;
     font-family: var(--nw-mono, monospace); font-size: 12px; line-height: 1.5;
     color: var(--nw-text); background: transparent;
-    max-height: 260px; overflow: auto; text-align: left;
+    max-height: 260px; overflow: auto; /*rtl:ignore*/ text-align: left;
     white-space: pre-wrap; word-break: break-word;
 }
 /* Step 3 — plain-English how-to */
@@ -1695,7 +1695,10 @@ body[class*="nibwp_page_"] #wpbody-content > .wrap {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    /* The list names actual actions now, not one hub ability, so it needs the
+       whole width and is allowed to wrap under the count. */
+    flex-wrap: wrap;
+    gap: 4px 8px;
 }
 .nibwp-ability-count {
     font-size: 12px;
@@ -1703,9 +1706,12 @@ body[class*="nibwp_page_"] #wpbody-content > .wrap {
     font-weight: 500;
 }
 .nibwp-ability-list {
+    flex-basis: 100%;
     font-size: 11px;
+    line-height: 1.5;
     color: var(--nw-text-muted-2);
     font-family: var(--nw-mono);
+    overflow-wrap: anywhere;
 }
 
 /* ══════════════════════════════════════════════
@@ -2710,13 +2716,14 @@ html.nw-dark .nibwp-production-warning__icon { color: #e4b048; }
     color: var(--nw-text-muted-2);
     flex-shrink: 0;
     opacity: 0;
-    transform: translateX(-4px);
+    /* An onward arrow faces the reading direction. */
+    transform: translateX(-4px) /*rtl:translateX(4px) scaleX(-1)*/;
     transition: opacity 0.15s, transform 0.15s;
 }
 .nw-help-topic:hover .nw-help-topic__arrow,
 .nw-help-action:hover .nw-help-topic__arrow {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) /*rtl:translateX(0) scaleX(-1)*/;
     color: var(--nw-brand);
 }
 
@@ -5075,3 +5082,50 @@ html.nw-dark .nw-confirm__head.is-warn .nw-confirm__icon {
     line-height: 1.55;
     color: var(--nw-text);
 }
+
+/* ── Right-to-left: text that is not prose ──────────────────────────────
+   URLs, endpoints, keys, config snippets and ability names read left to right
+   in any UI language. Without this an Arabic or Hebrew admin reorders the
+   punctuation of a JSON block or a URL. `isolate` keeps an inline token from
+   pulling the words around it into its own direction. Left as written in both
+   files; in the LTR one it changes nothing. */
+/*rtl:begin:ignore*/
+.nw-app code, .nw-app kbd, .nw-app samp, .nw-app pre,
+.nibwp-wrap code, .nibwp-wrap kbd, .nibwp-wrap samp, .nibwp-wrap pre,
+.nw-modal code, .nw-modal pre,
+.nw-kbd,
+.nibwp-connect-value,
+.nibwp-activity-name,
+.nibwp-audit-tool-name,
+.nibwp-ability-list,
+.nibwp-memory-key,
+.nibwp-placeholder,
+.nw-oc-conn__meta,
+.nw-wf-sug__key {
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+.nw-app pre, .nibwp-wrap pre, .nw-modal pre,
+.nibwp-config-block pre,
+.nibwp-paste-content pre,
+.nw-code-block pre,
+.nw-app input[type="url"],
+.nibwp-license-hero__input,
+.nibwp-license-paste input,
+.nw-lock-popup__paste input,
+.nw-license-form__row input,
+.nw-pw__input--mono {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: left;
+}
+/*rtl:end:ignore*/
+
+/* Directional icons in markup ("next", "back", "onward"): add this class and
+   the icon turns round in right-to-left languages. Not for logos, media
+   controls or ticks, which keep their shape in every language. */
+.nw-rtl-flip { transform: none /*rtl:scaleX(-1)*/; }
+/* A text arrow is inline, and transforms skip inline boxes. */
+/*rtl:raw:
+span.nw-rtl-flip { display: inline-block; }
+*/

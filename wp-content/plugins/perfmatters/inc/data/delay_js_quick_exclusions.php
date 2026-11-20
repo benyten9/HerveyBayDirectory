@@ -42,6 +42,15 @@ return array(
 				'huOptions'
     		)
     	),
+		'cookie-rocks' => array(
+    		'id' => 'cookie-rocks/cookie-rocks.php',
+    		'title' => 'Cookie Rocks',
+    		'exclusions' => array(
+    			'cookie-rocks',
+				'cookieRocks',
+				'crHead'
+    		)
+    	),
     	'cookieyes' => array(
     		'id' => 'cookie-law-info/cookie-law-info.php',
     		'title' => 'CookieYes',
@@ -301,6 +310,8 @@ return array(
 				'/elementor-pro/assets/js/frontend.min.js',
                 'frontend-modules.min.js',
                 'elements-handlers.min.js',
+                'hooks.min.js',
+                'i18n.min.js',
                 'elementorFrontendConfig',
                 'ElementorProFrontendConfig',
                 'imagesloaded.min.js',
@@ -315,6 +326,8 @@ return array(
                 'webpack-pro.runtime.min.js',
 				'webpack.runtime.min.js',
 				'elements-handlers.min.js',
+				'hooks.min.js',
+				'i18n.min.js',
 				'jquery.smartmenus.min.js'
             )   
         ),

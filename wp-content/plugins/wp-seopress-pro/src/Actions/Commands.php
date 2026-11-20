@@ -13,8 +13,10 @@ class Commands implements ExecuteHooks {
 	public function init() {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'seopress settings', '\SEOPressPro\CommandLine\Settings' );
+			WP_CLI::add_command( 'seopress content-analysis', '\SEOPressPro\CommandLine\ContentAnalysis' );
 			WP_CLI::add_command( 'seopress ai', '\SEOPressPro\CommandLine\AI' );
 			WP_CLI::add_command( 'seopress-pro license', '\SEOPressPro\CommandLine\License' );
+			WP_CLI::add_command( 'seopress-pro redirections', '\SEOPressPro\CommandLine\Redirections' );
 		}
 	}
 }

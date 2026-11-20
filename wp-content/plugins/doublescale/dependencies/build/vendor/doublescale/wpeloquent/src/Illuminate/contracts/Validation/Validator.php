@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Validation;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Validation;
 
-use Illuminate\Contracts\Support\MessageProvider;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\MessageProvider;
 interface Validator extends MessageProvider
 {
     /**

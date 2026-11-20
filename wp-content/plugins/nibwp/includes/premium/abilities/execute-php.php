@@ -11,16 +11,13 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/execute-php', [
-    'label' => __('Execute PHP Code (last resort)', domain: 'nibwp'),
-    'description' => __(
-        'LAST RESORT for anything a skill owns. Executes arbitrary PHP on the WordPress server, with $wpdb, every WordPress function and all loaded plugins available. '
+    'label' => __('Execute PHP Code (last resort)', 'nibwp'),
+    'description' => 'LAST RESORT for anything a skill owns. Executes arbitrary PHP on the WordPress server, with $wpdb, every WordPress function and all loaded plugins available. '
         . 'Before writing page content, blocks, templates, global styles or builder data, check response.mandatory_routing[]: if a skill trigger matches the request, that skill OWNS it and you must run its pipeline instead. '
         . 'Writing the same thing in PHP by hand produces markup the page builder cannot edit, skips the dry-run and approval the skill performs, and leaves nothing to roll back. '
         . 'If a skill in response.unavailable_skills[] covers the request, tell the user it cannot run here and name the missing dependency — do not rebuild its job by hand. '
         . 'For everything else — inspection, queries, options, post meta, bulk data, and any work no skill claims — this is the correct tool and you should use it. '
         . 'Pass "reason" when the call touches a builder or a skill\'s territory.',
-        domain: 'nibwp',
-    ),
     'category' => 'code-execution',
     'input_schema' => [
         'type' => 'object',
@@ -94,7 +91,10 @@ wp_register_ability('nibwp/execute-php', [
         ],
     ],
     'execute_callback' => 'nibwp_execute_php',
-    'permission_callback' => 'nibwp_permission_callback',
+    // Arbitrary PHP reads any file the web server can, so a file gate that did
+    // not cover this one would not be a gate at all. On Multisite that is
+    // network authority. See nibwp_filesystem_permission_callback().
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Database\Schema\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema\Grammars;
 
 use RuntimeException;
-use Illuminate\Support\Fluent;
-use Doctrine\DBAL\Schema\TableDiff;
-use Illuminate\Database\Connection;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Database\Grammar as BaseGrammar;
-use Doctrine\DBAL\Schema\AbstractSchemaManager as SchemaManager;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\TableDiff;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Blueprint;
+use DoubleScale\Vendor\Illuminate\Database\Grammar as BaseGrammar;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\AbstractSchemaManager as SchemaManager;
 abstract class Grammar extends BaseGrammar
 {
     /**
@@ -34,7 +34,7 @@ abstract class Grammar extends BaseGrammar
      */
     public function compileRenameColumn(Blueprint $blueprint, Fluent $command, Connection $connection)
     {
-        return \Illuminate\Database\Schema\Grammars\RenameColumn::compile($this, $blueprint, $command, $connection);
+        return RenameColumn::compile($this, $blueprint, $command, $connection);
     }
     /**
      * Compile a change column command into a series of SQL statements.
@@ -48,7 +48,7 @@ abstract class Grammar extends BaseGrammar
      */
     public function compileChange(Blueprint $blueprint, Fluent $command, Connection $connection)
     {
-        return \Illuminate\Database\Schema\Grammars\ChangeColumn::compile($this, $blueprint, $command, $connection);
+        return ChangeColumn::compile($this, $blueprint, $command, $connection);
     }
     /**
      * Compile a foreign key command.

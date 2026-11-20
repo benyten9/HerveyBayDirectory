@@ -64,7 +64,7 @@ class TwilioMessageProvider extends AbstractMessageProvider {
 	 */
 	protected $tracking_classes = array(
 		'sms' => '\DoubleScale\Modules\Tracking\Sms',
-		// 'whatsapp' => '\DoubleScale\Modules\Tracking\Whatsapp', // TWILIO_WHATSAPP_DISABLED
+		// 'whatsapp' => '\DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappTracking', // TWILIO_WHATSAPP_DISABLED
 	);
 
 	/**

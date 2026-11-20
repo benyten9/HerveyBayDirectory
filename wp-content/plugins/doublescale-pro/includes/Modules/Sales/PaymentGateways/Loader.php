@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Pro\Compat\PaymentModeSlugs;
+use DoubleScale\Pro\Modules\Integrations\Stripe\Integration as StripeIntegration;
 use DoubleScale\Pro\Modules\Pro\Payment\AuthorizeNetGateway;
 use DoubleScale\Pro\Modules\Pro\Payment\MollieGateway;
 use DoubleScale\Pro\Modules\Pro\Payment\PayPalGateway;
@@ -96,6 +97,13 @@ final class Loader {
 						'Connect your site to SureCart under SureCart → Settings → Connection.',
 						'doublescale'
 					);
+				}
+
+				if ( 'stripe' === $slug ) {
+					$problem = StripeIntegration::instance()->publishable_key_problem();
+					if ( '' !== $problem ) {
+						return __( 'Check the Publishable Key in Integrations → Stripe.', 'doublescale' ) . ' ' . $problem;
+					}
 				}
 
 				return $hint;

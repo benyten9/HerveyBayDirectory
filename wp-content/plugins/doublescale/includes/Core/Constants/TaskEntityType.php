@@ -35,6 +35,18 @@ class TaskEntityType {
 	const PROJECT = 3;
 
 	/**
+	 * Company - Task about a client company (Pro feature)
+	 */
+	const COMPANY = 4;
+
+	/**
+	 * A record of a custom type (Custom Objects add-on): the add-on answers
+	 * who may open it and what it is called through the
+	 * `doublescale_task_record_*` filters.
+	 */
+	const RECORD = 5;
+
+	/**
 	 * Get all entity types
 	 *
 	 * @return array Associative array of type constants to labels
@@ -44,6 +56,8 @@ class TaskEntityType {
 			self::CONTACT => __( 'Contact', 'doublescale' ),
 			self::DEAL    => __( 'Deal', 'doublescale' ),
 			self::PROJECT => __( 'Project', 'doublescale' ),
+			self::COMPANY => __( 'Company', 'doublescale' ),
+			self::RECORD  => __( 'Record', 'doublescale' ),
 		);
 	}
 
@@ -88,12 +102,24 @@ class TaskEntityType {
 	public static function get_available() {
 		$types = self::get_all();
 
-		if ( ! class_exists( 'DoubleScale\\Pro\\Modules\\Deals\\Models\\DealModel', false ) ) {
+		// A task links to a deal or a project only while that module's data
+		// can be read (doublescale_module_data_ready).
+		if ( ! doublescale_module_data_ready( 'deals' ) ) {
 			unset( $types[ self::DEAL ] );
 		}
 
-		if ( ! class_exists( 'DoubleScale\\Pro\\Modules\\Projects\\Models\\ProjectModel', false ) ) {
+		if ( ! doublescale_module_data_ready( 'projects' ) ) {
 			unset( $types[ self::PROJECT ] );
+		}
+
+		/**
+		 * Whether tasks can be about records of custom types (the Custom
+		 * Objects add-on turns this on).
+		 *
+		 * @param bool $available Default false.
+		 */
+		if ( ! apply_filters( 'doublescale_task_record_entity_available', false ) ) {
+			unset( $types[ self::RECORD ] );
 		}
 
 		return $types;

@@ -41,6 +41,68 @@ class LeadScoringManager {
 	private function __construct() {
 	}
 
+	/** Cron hook that recalculates the next batch of contacts' scores. */
+	const RECALCULATE_HOOK = 'doublescale_lead_score_recalculate';
+
+	/** Contacts scored per batch. */
+	const RECALCULATE_BATCH = 200;
+
+	/**
+	 * After a lead-scoring rule or level is created, changed or deleted over REST,
+	 * recalculate every contact's score: the first batch now (so the change shows
+	 * at once on smaller sites), the rest in the background.
+	 *
+	 * @param \WP_HTTP_Response $response Response.
+	 * @param \WP_REST_Server   $server   Server.
+	 * @param \WP_REST_Request  $request  Request.
+	 * @return \WP_HTTP_Response
+	 */
+	public static function recalculate_after_rest_change( $response, $server, $request ) {
+		if ( ! $request instanceof \WP_REST_Request || 'GET' === $request->get_method() ) {
+			return $response;
+		}
+		if ( ! preg_match( '#/lead-scoring-(rules|levels)(/|$)#', (string) $request->get_route() ) ) {
+			return $response;
+		}
+		if ( ! $response instanceof \WP_HTTP_Response || $response->get_status() >= 300 ) {
+			return $response;
+		}
+
+		wp_clear_scheduled_hook( self::RECALCULATE_HOOK );
+		self::recalculate_batch( 0 );
+
+		return $response;
+	}
+
+	/**
+	 * Recalculate one batch of contacts' scores, then schedule the next batch.
+	 *
+	 * @param int $after_id Continue after this contact ID.
+	 * @return void
+	 */
+	public static function recalculate_batch( $after_id = 0 ) {
+		global $wpdb;
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- batch walk by id.
+				"SELECT id FROM {$wpdb->prefix}doublescale_contacts WHERE id > %d ORDER BY id ASC LIMIT %d",
+				(int) $after_id,
+				self::RECALCULATE_BATCH
+			)
+		);
+
+		foreach ( $ids as $id ) {
+			$contact = ContactModel::find( (int) $id );
+			if ( $contact ) {
+				self::get_lead_score( $contact );
+			}
+		}
+
+		if ( count( $ids ) === self::RECALCULATE_BATCH ) {
+			wp_schedule_single_event( time() + 5, self::RECALCULATE_HOOK, array( (int) end( $ids ) ) );
+		}
+	}
+
 	/**
 	 * Get the lead score points for a contact
 	 *
@@ -139,8 +201,13 @@ class LeadScoringManager {
 		$cur_level_id = doublescale_get_contact_meta( $contact->id, 'lead_score_level_id', true );
 		$cur_level    = $cur_level_id ? LeadScoringRuleLevelModel::find( $cur_level_id ) : null;
 
-		// If the points didn't change and we have a valid cached level, skip recalculation
-		if ( $cur_level && $cur_level->exists && (int) $points === (int) $cur_points ) {
+		// Get the level for the current score (highest tier where tier.points <= score)
+		$new_level = LeadScoringRuleLevelModel::get_level_for_score( $points );
+
+		// Nothing to write when the points and the level are both unchanged (levels can
+		// change without the points changing: a tier added, or its threshold moved)
+		if ( $cur_level && $cur_level->exists && (int) $points === (int) $cur_points
+			&& $new_level && (int) $new_level->id === (int) $cur_level->id ) {
 			$return                = array(
 				'points' => $points,
 				'level'  => $cur_level,
@@ -149,9 +216,6 @@ class LeadScoringManager {
 
 			return $return;
 		}
-
-		// Get the level for the current score (highest tier where tier.points <= score)
-		$new_level = LeadScoringRuleLevelModel::get_level_for_score( $points );
 
 		// Always persist calculated points so segments / filters stay in sync
 		doublescale_update_contact_meta( $contact->id, 'lead_score_points', $points );

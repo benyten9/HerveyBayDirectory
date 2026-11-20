@@ -18,6 +18,7 @@ use DoubleScale\Pro\Modules\Inbox\Incoming\MessagingIncoming;
 use DoubleScale\Pro\Modules\Inbox\Oauth\EmailOauth;
 use DoubleScale\Modules\Tracking\ImapClient;
 use DoubleScale\Core\Settings\Settings;
+use DoubleScale\Core\UserRoles\Permissions;
 use WP_REST_Response;
 use WP_Error;
 
@@ -128,7 +129,7 @@ class RestSettingsControllerPro {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_bounce_webhooks' ),
-				'permission_callback' => array( $this, 'permissions_check' ),
+				'permission_callback' => array( $this, 'manage_shared_email_check' ),
 				'args'                => array(
 					'provider' => array(
 						'description'       => __( 'Optional email provider slug to filter results (e.g., sendgrid, mailgun, postmark). If not provided, returns all providers.', 'doublescale' ),
@@ -152,7 +153,7 @@ class RestSettingsControllerPro {
 				array(
 					'methods'             => 'GET',
 					'callback'            => array( $this, 'get_email_inbound_settings' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
+					'permission_callback' => array( $this, 'read_shared_email_identity_check' ),
 				),
 				array(
 					'methods'             => 'POST',
@@ -201,7 +202,7 @@ class RestSettingsControllerPro {
 				array(
 					'methods'             => 'GET',
 					'callback'            => array( $this, 'get_email_oauth_apps' ),
-					'permission_callback' => array( $this, 'permissions_check' ),
+					'permission_callback' => array( $this, 'manage_shared_email_check' ),
 				),
 				array(
 					'methods'             => 'POST',
@@ -267,7 +268,7 @@ class RestSettingsControllerPro {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_messaging_webhooks' ),
-				'permission_callback' => array( $this, 'permissions_check' ),
+				'permission_callback' => array( $this, 'manage_shared_email_check' ),
 				'args'                => array(
 					'channel' => array(
 						'description'       => __( 'Optional channel to filter results (e.g., sms, whatsapp). If not provided, returns all channels.', 'doublescale' ),
@@ -1824,6 +1825,21 @@ class RestSettingsControllerPro {
 		\DoubleScale\Pro\Modules\Notifications\Services\PushNotificationService::ensure_config();
 		$config = get_option( 'doublescale_firebase_config', array() );
 
+		// Everyone's notification page asks whether push is on; only managers
+		// see how it is set up.
+		if ( ! current_user_can( 'doublescale_manage_settings' ) ) {
+			return new WP_REST_Response(
+				array(
+					'enabled'               => (bool) get_option( 'doublescale_push_enabled', false ),
+					'configured'            => ! empty( $config['service_account'] ),
+					'credentials_available' => false,
+					'project_id'            => '',
+					'configured_at'         => '',
+				),
+				200
+			);
+		}
+
 		// Check whether the bundled credential files exist on disk.
 		$enc_path = DOUBLESCALE_PLUGIN_DIR . 'includes/Firebase/service-account.enc';
 		$key_path = DOUBLESCALE_PLUGIN_DIR . 'includes/Firebase/bundle.key';
@@ -2175,6 +2191,17 @@ class RestSettingsControllerPro {
 	 */
 	public function permissions_check() {
 		return current_user_can( 'doublescale_access' );
+	}
+
+	/**
+	 * Permission callback for reading the shared mailbox's sending identity (the
+	 * email composer's From): customer-facing staff, not the Help Center or Team
+	 * Member roles, which hold `doublescale_access` for the admin shell only.
+	 *
+	 * @return bool
+	 */
+	public function read_shared_email_identity_check() {
+		return Permissions::has_crm_or_support_access();
 	}
 
 	/**

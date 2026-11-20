@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Inflector;
 
 final class Language
 {

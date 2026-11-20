@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static string current()
@@ -19,7 +19,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Routing\UrlGenerator
  */
-class URL extends \Illuminate\Support\Facades\Facade
+class URL extends Facade
 {
     /**
      * Get the registered name of the component.

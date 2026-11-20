@@ -11,6 +11,7 @@ namespace DoubleScale\Modules\Campaigns\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Tracking\DeliveryRates;
 use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Contacts\Models\ContactUnsubscribeModel;
@@ -54,7 +55,7 @@ class CampaignAnalytics {
 	 *
 	 * @param string $type Campaign type ('email', 'sms', 'whatsapp') or integer constant
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	protected function get_model_query( $type ) {
 		// Convert string to integer if needed (for backward compatibility)
@@ -232,7 +233,7 @@ class CampaignAnalytics {
 		// Optimized: Single query with aggregate functions
 		$result = $query->where( 'source_id', $campaign_id )
 			->where( 'source_type', MessageSourceTypes::CAMPAIGN )
-			->selectRaw( 'COUNT(*) as total, SUM(CASE WHEN status = ' . TrackingStatus::SENT . ' THEN 1 ELSE 0 END) as sent, SUM(CASE WHEN status = ' . TrackingStatus::FAILED . ' THEN 1 ELSE 0 END) as failed, SUM(CASE WHEN status = ' . TrackingStatus::PENDING . ' THEN 1 ELSE 0 END) as pending' )
+			->selectRaw( 'COUNT(*) as total, SUM(CASE WHEN status = ' . TrackingStatus::SENT . ' THEN 1 ELSE 0 END) as sent, SUM(CASE WHEN status = ' . TrackingStatus::FAILED . ' THEN 1 ELSE 0 END) as failed, SUM(CASE WHEN status = ' . TrackingStatus::PENDING . ' THEN 1 ELSE 0 END) as pending, SUM(CASE WHEN status = ' . TrackingStatus::SCHEDULED . ' THEN 1 ELSE 0 END) as scheduled' )
 			->first();
 
 		$stats = array(
@@ -240,6 +241,10 @@ class CampaignAnalytics {
 			'sent'    => (int) $result->sent,
 			'failed'  => (int) $result->failed,
 			'pending' => (int) $result->pending,
+			// Queued for a retry. Without its own bucket these rows appear in
+			// no counter at all, so the overview shows a total its own
+			// breakdown cannot account for.
+			'scheduled' => (int) $result->scheduled,
 		);
 
 		return $this->add_type_specific_stats( $stats, $type, $campaign_id );
@@ -406,10 +411,10 @@ class CampaignAnalytics {
 	 * @return array Statistics with calculated rates
 	 */
 	protected function calculate_sms_rates( $stats ) {
-		// Calculate delivery rate (delivered / sent)
-		$stats['delivery_rate'] = $stats['sent'] > 0
-			? round( ( $stats['delivered'] / $stats['sent'] ) * 100, 2 )
-			: 0;
+		// Share of the messages attempted that were delivered. `sent` holds
+		// only messages not yet confirmed delivered, so delivered / sent read
+		// 0% or past 100% (see DeliveryRates).
+		$stats['delivery_rate'] = DeliveryRates::from_counts( $stats['sent'], $stats['delivered'], 0, $stats['failed'] ?? 0 )['delivery_rate'];
 
 		// Calculate click rate (clicked / sent)
 		$stats['click_rate'] = $stats['sent'] > 0
@@ -427,15 +432,12 @@ class CampaignAnalytics {
 	 * @return array Statistics with calculated rates
 	 */
 	protected function calculate_whatsapp_rates( $stats ) {
-		// Calculate delivery rate (delivered / sent)
-		$stats['delivery_rate'] = $stats['sent'] > 0
-			? round( ( $stats['delivered'] / $stats['sent'] ) * 100, 2 )
-			: 0;
-
-		// Calculate read rate (read / delivered)
-		$stats['read_rate'] = $stats['delivered'] > 0
-			? round( ( $stats['read'] / $stats['delivered'] ) * 100, 2 )
-			: 0;
+		// Shares of the messages attempted: a read message was delivered too.
+		// The counts are exclusive per status, so delivered / sent and
+		// read / delivered showed 0% for a delivered or read campaign.
+		$rates                  = DeliveryRates::from_counts( $stats['sent'], $stats['delivered'], $stats['read'], $stats['failed'] ?? 0 );
+		$stats['delivery_rate'] = $rates['delivery_rate'];
+		$stats['read_rate']     = $rates['read_rate'];
 
 		// Calculate click rate (clicked / sent)
 		$stats['click_rate'] = $stats['sent'] > 0

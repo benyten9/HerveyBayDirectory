@@ -1,8 +1,8 @@
 <?php
 
-namespace WPEloquent\WP;
+namespace DoubleScale\Vendor\WPEloquent\WP;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 class User extends Model
 {
     protected $table = 'users';
@@ -10,6 +10,6 @@ class User extends Model
     protected $timestamp = \false;
     public function meta()
     {
-        return $this->hasMany('WPEloquent\\WP\\UserMeta', 'user_id');
+        return $this->hasMany('DoubleScale\\Vendor\\WPEloquent\\WP\\UserMeta', 'user_id');
     }
 }

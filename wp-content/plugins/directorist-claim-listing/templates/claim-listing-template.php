@@ -66,7 +66,7 @@
     <div class="directorist-modal directorist-modal-js directorist-fade directorist-claim-listing-modal directorist-claimer">
         <div class="directorist-modal__dialog directorist-modal__dialog-lg">
             <div class="directorist-modal__content">
-                <form id="directorist-claimer__form" class="directorist-claimer__form">
+                <form id="directorist-claimer__form" class="directorist-claimer__form" data-listing-id="<?php echo esc_attr( $listing_id ); ?>">
                     <div class="directorist-modal__header">
                         <h3 class="directorist-modal-title" id="directorist-claim-label"><?php _e('Claim This Listing', 'directorist-claim-listing'); ?></h3>
                         <a href="#" class="directorist-modal-close directorist-modal-close-js"><span aria-hidden="true">&times;</span></a>

@@ -27,7 +27,7 @@ if ( ! function_exists( 'seopress_get_csv_sample_lines' ) ) {
 			return array();
 		}
 
-		$handle = fopen( $file_path, 'r' );
+		$handle = fopen( $file_path, 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- The CSV is read in chunks with ftell()/fgetcsv() so large files fit in memory; WP_Filesystem would load it whole.
 
 		if ( false === $handle ) {
 			return array();
@@ -51,7 +51,7 @@ if ( ! function_exists( 'seopress_get_csv_sample_lines' ) ) {
 			$lines[] = $line;
 		}
 
-		fclose( $handle );
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- The CSV is read in chunks with ftell()/fgetcsv() so large files fit in memory; WP_Filesystem would load it whole.
 
 		return $lines;
 	}

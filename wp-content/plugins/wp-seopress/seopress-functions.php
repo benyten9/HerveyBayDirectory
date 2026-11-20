@@ -21,6 +21,71 @@ function seopress_get_service( $service ) {
 	return Kernel::getContainer()->getServiceByName( $service );
 }
 
+/**
+ * Get the ID of the post being requested.
+ *
+ * get_the_ID() reads the global $post, which page builders overwrite while they
+ * iterate a query loop. Some of them do that before wp_head is flushed - Bricks,
+ * for instance, renders every loop on wp_enqueue_scripts to collect the inline
+ * CSS of the looped elements - so a builder that does not restore the global
+ * leaves us with the last post of the loop instead of the one the URL asked
+ * for. Reading the ID from the main query keeps the head output tied to the
+ * requested page.
+ *
+ * Only singular requests are realigned: everywhere else the global is either
+ * meaningless or already the value the caller wants.
+ *
+ * @since 10.3.0
+ *
+ * @return int The requested post ID, 0 when there is none.
+ */
+function seopress_get_the_id() {
+	if ( did_action( 'wp' ) && is_singular() ) {
+		$queried_id = get_queried_object_id();
+
+		if ( $queried_id ) {
+			return (int) $queried_id;
+		}
+	}
+
+	return (int) get_the_ID();
+}
+
+/**
+ * Get the post being requested.
+ *
+ * Companion to seopress_get_the_id() for the callers that need the object. Falls
+ * back to the global $post so the virtual posts some plugins push into the loop
+ * (BuddyPress and bbPress theme compatibility, for instance) keep working: those
+ * carry no real ID for get_post() to resolve.
+ *
+ * @since 10.3.0
+ * @since 10.3.1 Returns the main query's object, which carries the autosave
+ *               during a preview.
+ *
+ * @return WP_Post|null The requested post, null when there is none.
+ */
+function seopress_get_the_post() {
+	$post_id = seopress_get_the_id();
+
+	// The main query's own object first: during a preview, _set_preview() puts
+	// the autosave in that object only, and get_post() would rebuild the
+	// published version from the cache. Functions that pass the result to
+	// setup_postdata() would then replace the previewed content (#2129).
+	$queried = did_action( 'wp' ) ? get_queried_object() : null;
+	if ( $post_id && $queried instanceof WP_Post && $post_id === (int) $queried->ID ) {
+		return $queried;
+	}
+
+	$post = $post_id ? get_post( $post_id ) : null;
+
+	if ( null === $post && isset( $GLOBALS['post'] ) ) {
+		$post = $GLOBALS['post'];
+	}
+
+	return $post;
+}
+
 if ( ! function_exists( 'array_key_last' ) ) {
 	/**
 	 * Get last key of an array if PHP < 7.3
@@ -154,6 +219,177 @@ function seopress_remove_wpml_home_url_filter( $home_url, $url, $path, $orig_sch
 }
 
 /**
+ * Language WPML has recorded for a sitemap entry.
+ *
+ * WPML documents `element_id` as the term_taxonomy_id for taxonomies and the
+ * post ID for posts, and prefixes the type itself (`page` becomes `post_page`,
+ * `category` becomes `tax_category`) before looking the row up in
+ * `icl_translations`. Passing a term_id where a term_taxonomy_id is expected
+ * matches nothing and returns null, which reads exactly like an untranslated
+ * entry.
+ *
+ * Reaches WPML only through its filter, so it returns an empty string on a site
+ * without WPML and the whole contract stays exercisable in tests.
+ *
+ * @since 10.3.0
+ *
+ * @param int    $element_id   Post ID, or term_taxonomy_id for a taxonomy term.
+ * @param string $element_type Post type or taxonomy name, unprefixed.
+ *
+ * @return string Language code, empty string when nothing matched.
+ */
+function seopress_wpml_get_element_language( $element_id, $element_type ) {
+	$language_code = apply_filters(
+		'wpml_element_language_code',
+		null,
+		array(
+			'element_id'   => (int) $element_id,
+			'element_type' => $element_type,
+		)
+	);
+
+	return is_string( $language_code ) ? $language_code : '';
+}
+
+/**
+ * Whether WPML keeps a language off the front end.
+ *
+ * WPML takes a language off a site in two different ways and only one of them
+ * used to be covered here. Hiding a language leaves it active and adds its code
+ * to the `hidden_languages` setting. Removing one flips `icl_languages.active`
+ * to 0 and drops the code from `active_languages`, while leaving
+ * `hidden_languages` untouched. Removing a language does not delete its
+ * content: the translated posts stay published and keep their language code in
+ * `icl_translations`, so the sitemap query returns them and Search Console
+ * reports "Page with redirect" on URLs that no longer resolve.
+ *
+ * Both settings are read through the `wpml_setting` filter rather than off
+ * SitePress, which keeps the contract exercisable without WPML installed.
+ *
+ * Deliberately not `wpml_active_languages`: that filter resolves to
+ * SitePress::get_ls_languages(), which is built for the language switcher. It
+ * clones and reassigns the global $wp_query, calls switch_lang() and
+ * get_permalink() once per language, and drops languages according to the page
+ * being displayed. None of that belongs in a loop rendering thousands of URLs.
+ *
+ * @since 10.3.0
+ *
+ * @param string $language_code Language code of the entry, as WPML reports it.
+ *
+ * @return bool True when entries in that language must be left out.
+ */
+function seopress_wpml_is_language_excluded( $language_code ) {
+	// Without WPML no entry carries a language, so this is the only test that
+	// ever runs and the two settings below are never read.
+	if ( '' === (string) $language_code ) {
+		return false;
+	}
+
+	$hidden_languages = apply_filters( 'wpml_setting', array(), 'hidden_languages' );
+
+	if ( is_array( $hidden_languages ) && in_array( $language_code, $hidden_languages, true ) ) {
+		return true;
+	}
+
+	$active_languages = apply_filters( 'wpml_setting', array(), 'active_languages' );
+
+	// An empty list means WPML answered with nothing, not that every language
+	// is gone. Excluding on that would silently empty the sitemap of a
+	// multilingual site, so keep the entry.
+	if ( ! is_array( $active_languages ) || empty( $active_languages ) ) {
+		return false;
+	}
+
+	return ! in_array( $language_code, $active_languages, true );
+}
+
+/**
+ * Whether the active WPML build treats language switches as nested scopes.
+ *
+ * WPML 5.0 turned `wpml_switch_language` into a stack: a language code opens a
+ * scope and only null closes one. Handing it back the language you came from
+ * does not come back, it opens a second scope, and the site stays switched
+ * while the current language looks right for the rest of the request. WPML 4.x
+ * has no stack: null restores the language captured at the first switch of the
+ * request, so closing by name is what keeps a nested switch correct there.
+ *
+ * Read off the constant rather than probed, because nothing in the 5.0 API
+ * distinguishes the two models at runtime. Filterable so the contract stays
+ * exercisable without WPML installed, which is how the sitemap switch is
+ * tested.
+ *
+ * @since 10.3.0
+ *
+ * @see https://wpml.org/errata/restoring-the-language-by-name-leaves-wpml-switched/
+ *
+ * @return bool True when only null closes a language scope.
+ */
+function seopress_wpml_uses_scoped_language_switch() {
+	$scoped = defined( 'ICL_SITEPRESS_VERSION' ) && version_compare( ICL_SITEPRESS_VERSION, '5.0', '>=' );
+
+	/**
+	 * Filter whether WPML language scopes are closed with null.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param bool $scoped Whether the active WPML closes scopes with null.
+	 */
+	return (bool) apply_filters( 'seopress_wpml_scoped_language_switch', $scoped );
+}
+
+/**
+ * Open a WPML language scope.
+ *
+ * Always pair with seopress_wpml_close_language_switch() in a `finally`, so an
+ * exception raised by whatever runs inside the scope cannot leave the site
+ * switched.
+ *
+ * @since 10.3.0
+ *
+ * @param string $language Language code to switch to, or 'all'.
+ *
+ * @return string|null Token to close the scope with, or null when nothing was
+ *                     switched and there is nothing to close.
+ */
+function seopress_wpml_open_language_switch( $language ) {
+	if ( ! is_string( $language ) || '' === $language ) {
+		return null;
+	}
+
+	$previous = apply_filters( 'wpml_current_language', null );
+
+	do_action( 'wpml_switch_language', $language );
+
+	// The token doubles as the language to restore on WPML 4.x. An empty string
+	// means the scope is open but WPML named no language to come back to, which
+	// the close below answers with null rather than by dropping the scope.
+	return is_string( $previous ) ? $previous : '';
+}
+
+/**
+ * Close a WPML language scope opened by seopress_wpml_open_language_switch().
+ *
+ * @since 10.3.0
+ *
+ * @param string|null $previous Token returned when the scope was opened.
+ *
+ * @return void
+ */
+function seopress_wpml_close_language_switch( $previous ) {
+	if ( ! is_string( $previous ) ) {
+		return;
+	}
+
+	if ( '' === $previous || seopress_wpml_uses_scoped_language_switch() ) {
+		do_action( 'wpml_switch_language', null );
+
+		return;
+	}
+
+	do_action( 'wpml_switch_language', $previous );
+}
+
+/**
  * Switch WPML to a post's own language while a sitemap is being generated.
  *
  * Hooked on `the_post`, so it runs once per entry. Two things matter here, and
@@ -178,13 +414,23 @@ function seopress_remove_wpml_home_url_filter( $home_url, $url, $path, $orig_sch
  * Named rather than a closure so it can be detached with remove_action(), and
  * filterable so it can be turned off without touching the hook at all.
  *
+ * On WPML 5.0 each switch opens a scope instead of replacing the current
+ * language, so a sitemap that never closes one stacks a scope per language
+ * change and never unwinds. The open scope is therefore remembered and closed
+ * before the next one is opened, which holds the depth at one, and a `shutdown`
+ * callback closes the last one. The skip above keeps that cheap: entries
+ * sharing a language neither close nor reopen anything.
+ *
  * @since 10.2.0
+ * @since 10.3.0 Closes the previous scope before opening the next one.
  *
  * @param WP_Post $post The post being rendered.
  *
  * @return void
  */
 function seopress_sitemap_switch_wpml_language( $post ) {
+	global $seopress_sitemap_wpml_scope;
+
 	if ( ! is_a( $post, 'WP_Post' ) ) {
 		return;
 	}
@@ -220,7 +466,55 @@ function seopress_sitemap_switch_wpml_language( $post ) {
 		return;
 	}
 
-	do_action( 'wpml_switch_language', $language );
+	if ( ! isset( $seopress_sitemap_wpml_scope ) ) {
+		// Nothing else unwinds this one: the sitemap echoes its XML and the
+		// request ends. `shutdown` still runs after an exit(), which is how the
+		// renderers finish.
+		add_action( 'shutdown', 'seopress_sitemap_close_wpml_language', 0 );
+
+		$seopress_sitemap_wpml_scope = seopress_wpml_open_language_switch( $language );
+
+		return;
+	}
+
+	if ( ! seopress_wpml_uses_scoped_language_switch() ) {
+		// WPML 4.x replaces the current language outright, and the scope
+		// remembered above already names the language the request started in.
+		// Switching again costs one cookie write; closing first would cost two,
+		// which is the whole point of the skip above.
+		do_action( 'wpml_switch_language', $language );
+
+		return;
+	}
+
+	// WPML 5.0 stacks scopes, so the open one has to be closed or the depth
+	// grows with every language change across the sitemap.
+	seopress_wpml_close_language_switch( $seopress_sitemap_wpml_scope );
+
+	$seopress_sitemap_wpml_scope = seopress_wpml_open_language_switch( $language );
+}
+
+/**
+ * Close the language scope left open by the sitemap switch above.
+ *
+ * Registered on `shutdown` the first time a scope is opened, and safe to call
+ * at any point: it is a no-op when no scope is open.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_sitemap_close_wpml_language() {
+	global $seopress_sitemap_wpml_scope;
+
+	if ( ! isset( $seopress_sitemap_wpml_scope ) ) {
+		return;
+	}
+
+	$previous                    = $seopress_sitemap_wpml_scope;
+	$seopress_sitemap_wpml_scope = null;
+
+	seopress_wpml_close_language_switch( $previous );
 }
 
 /**
@@ -257,9 +551,10 @@ function seopress_get_custom_fields() {
 			SELECT DISTINCT meta_key
 			FROM $wpdb->postmeta
 			GROUP BY meta_key
-			HAVING meta_key NOT LIKE '\_%%'
+			HAVING meta_key NOT LIKE %s
 			ORDER BY meta_key
 			LIMIT %d",
+				$wpdb->esc_like( '_' ) . '%',
 				$limit
 			)
 		);
@@ -437,6 +732,122 @@ function seopress_is_absolute( $url ) {
 	$pattern = "%^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu";
 
 	return (bool) preg_match( $pattern, $url );
+}
+
+/**
+ * Sanitize a textarea holding one entry per line, most of them URLs.
+ *
+ * `sanitize_textarea_field()` must not be used here: it deletes every
+ * percent-encoded octet. That matters far beyond hand-encoded input, because
+ * WordPress stores non-Latin slugs percent-encoded itself
+ * (`sanitize_title_with_dashes()` runs the title through `utf8_uri_encode()`),
+ * so a Korean, Japanese or Cyrillic permalink is almost entirely made of `%XX`
+ * sequences and comes back as a string of hyphens.
+ *
+ * `esc_url_raw()` leaves both forms alone, the percent-encoded one and the raw
+ * UTF-8 one, but two of its habits have to be worked around:
+ *
+ *   - it drops newlines, so running it on the whole textarea would collapse
+ *     the list into a single unusable URL. Hence line by line.
+ *   - it invents an `http://` scheme for anything that does not already look
+ *     like a URL. The extra social accounts list holds handles as well as
+ *     URLs (the Yoast import writes `@user@instance` verbatim), and turning
+ *     one into `http://@user@instance` would put it in the knowledge graph
+ *     that way. So only a line that is already URL-shaped goes through it;
+ *     the rest is kept as written, minus any markup.
+ *
+ * A line `esc_url_raw()` refuses outright is dropped: that is a scheme the
+ * site must not store, not a handle.
+ *
+ * Blank lines are dropped rather than kept: they used to travel all the way
+ * into the payload sent to the indexing APIs, and they count against the
+ * hundred-URL batch limit.
+ *
+ * @since 10.3
+ *
+ * @param string $urls Newline-separated list.
+ *
+ * @return string Sanitized list, one entry per line.
+ */
+function seopress_sanitize_urls_list( $urls ) {
+	if ( ! is_string( $urls ) || '' === trim( $urls ) ) {
+		return '';
+	}
+
+	$sanitized = array();
+
+	foreach ( preg_split( '/\r\n|\r|\n/', $urls ) as $line ) {
+		$line = trim( $line );
+
+		if ( '' === $line ) {
+			continue;
+		}
+
+		// A scheme, or the start of a path, query or fragment: the shapes
+		// esc_url() itself treats as already being a URL.
+		if ( preg_match( '#^(?:[a-z][a-z0-9+.\-]*:|[/?\#])#i', $line ) ) {
+			$entry = esc_url_raw( $line );
+		} else {
+			$entry = trim( preg_replace( '/[\x00-\x1F\x7F]+/', ' ', wp_strip_all_tags( $line ) ) );
+		}
+
+		if ( '' === $entry ) {
+			continue;
+		}
+
+		$sanitized[] = $entry;
+	}
+
+	return implode( "\n", $sanitized );
+}
+
+/**
+ * Resolve a list of attachment IDs into the image URLs a sitemap may publish.
+ *
+ * A WooCommerce gallery stores the IDs it was given and keeps them after the
+ * image is deleted from the Media Library, so `get_gallery_image_ids()` hands
+ * back IDs that resolve to nothing. `wp_get_attachment_url()` answers `false`
+ * for every one of those cases: a deleted attachment, an ID that belongs to a
+ * post rather than an attachment, zero, a negative number, a non-numeric
+ * string, null. Passing that `false` through `esc_attr()` produced an empty
+ * string, and the sitemap published `<image:loc><![CDATA[]]></image:loc>`,
+ * which is invalid against the sitemap image schema. Reported as #1951.
+ *
+ * Duplicates are dropped as well: a gallery can list the same attachment
+ * twice, and announcing one image twice for one page says nothing more than
+ * announcing it once.
+ *
+ * The content-image branch of the same template has always skipped what it
+ * could not resolve, through seopress_sitemap_resolve_image_url(). This is
+ * the equivalent for attachment IDs.
+ *
+ * @since 10.2.1
+ *
+ * @param mixed $attachment_ids Attachment IDs, normally from get_gallery_image_ids().
+ *
+ * @return string[] Resolvable image URLs, in order, without duplicates.
+ */
+function seopress_sitemap_attachment_image_urls( $attachment_ids ) {
+	$urls = array();
+
+	if ( empty( $attachment_ids ) || ! is_array( $attachment_ids ) ) {
+		return $urls;
+	}
+
+	foreach ( $attachment_ids as $attachment_id ) {
+		$url = wp_get_attachment_url( $attachment_id );
+
+		// false for anything that does not resolve to an attachment.
+		if ( ! is_string( $url ) || '' === trim( $url ) ) {
+			continue;
+		}
+
+		if ( ! in_array( $url, $urls, true ) ) {
+			$urls[] = $url;
+		}
+	}
+
+	return $urls;
 }
 
 /**
@@ -677,8 +1088,11 @@ function seopress_get_empty_templates( $type, $metadata, $notice = true ) {
 
 	if ( ! empty( $cpt_titles_empty ) ) {
 		$list .= '<ul>';
-		foreach ( $cpt_titles_empty as $cpt ) {
-			$list .= '<li>' . $cpt . '</li>';
+		// A key can be collected twice (missing entry, then empty value).
+		foreach ( array_unique( $cpt_titles_empty ) as $cpt ) {
+			// Show the name users know ("Posts"), not the internal slug.
+			$label = isset( $templates[ $cpt ]->labels->name ) ? $templates[ $cpt ]->labels->name : $cpt;
+			$list .= '<li>' . esc_html( $label ) . '</li>';
 		}
 		$list .= '</ul>';
 
@@ -828,6 +1242,378 @@ function seopress_remove_utf8_bom( $text ) {
 }
 
 /**
+ * Render a stored custom-field value as the text a variable can carry.
+ *
+ * A custom field is not always a string. ACF stores a Relationship, a Post
+ * Object with several values, a Checkbox, a multiple Select, a Gallery and a
+ * Repeater as an array, and any plugin may have stored one too. Those values
+ * used to be replaced by an empty string, so a populated field rendered as
+ * nothing at all, in a title, a meta description or a custom schema alike.
+ *
+ * Scalar entries are joined; anything nested is skipped rather than flattened,
+ * because a repeater row has no meaningful single-line form and inventing one
+ * would be worse than leaving it out. A caller that needs the structure reads
+ * the third argument of the per-tag filter instead.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $value Stored meta value.
+ *
+ * @return string Text form, empty when nothing can be rendered.
+ */
+function seopress_custom_field_to_string( $value ) {
+	if ( is_scalar( $value ) ) {
+		return (string) $value;
+	}
+
+	if ( ! is_array( $value ) ) {
+		return '';
+	}
+
+	$parts = array();
+	foreach ( $value as $entry ) {
+		if ( is_scalar( $entry ) && '' !== (string) $entry ) {
+			$parts[] = (string) $entry;
+		}
+	}
+
+	if ( empty( $parts ) ) {
+		return '';
+	}
+
+	/**
+	 * Filter the separator joining the entries of an array custom field.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param string $separator Default ", ".
+	 * @param array  $value     Stored meta value.
+	 */
+	$separator = apply_filters( 'seopress_custom_field_array_separator', ', ', $value );
+
+	return implode( (string) $separator, $parts );
+}
+
+/**
+ * Whether a meta key may be printed through a dynamic variable.
+ *
+ * %%_cf_<key>%% and %%_ucf_<key>%% take any key, and anyone allowed to fill in
+ * an SEO title or description chooses it: an Editor writing
+ * %%_ucf_session_tokens%% in the description of a post an administrator wrote
+ * printed that administrator's session tokens in the page head, and in the
+ * Open Graph and X tags. The same went for the hidden (underscore) post meta
+ * other plugins keep out of sight on purpose.
+ *
+ * Refused by default:
+ * - protected meta (a leading underscore, or whatever `is_protected_meta`
+ *   says), apart from the WooCommerce and The Events Calendar fields their
+ *   pages show anyway (SKU, prices, stock, GTIN, rating, event dates, cost);
+ * - keys that name a credential or a role: session tokens, capabilities, user
+ *   level, and anything that contains token, secret, password, nonce, api
+ *   key or two-factor;
+ * - for user meta, the billing and shipping details WooCommerce stores
+ *   against the account.
+ *
+ * A site that needs a key refused here, or wants an allow-list instead,
+ * decides with the `seopress_meta_tag_key_is_allowed` filter.
+ *
+ * @since 10.4.0
+ *
+ * @param string $key  Meta key, as written after _cf_ or _ucf_.
+ * @param string $type Meta type: 'post', 'term' or 'user'.
+ *
+ * @return bool
+ */
+function seopress_meta_tag_key_is_allowed( $key, $type = 'post' ) {
+	$key     = (string) $key;
+	$type    = in_array( $type, array( 'post', 'term', 'user' ), true ) ? $type : 'post';
+	$allowed = '' !== $key;
+
+	if ( $allowed ) {
+		$normalized = strtolower( $key );
+
+		// Hidden keys holding what the page shows anyway: WooCommerce product
+		// data and The Events Calendar dates, venue and cost.
+		$public_protected = array(
+			'_sku',
+			'_price',
+			'_regular_price',
+			'_sale_price',
+			'_stock',
+			'_stock_status',
+			'_global_unique_id',
+			'_wc_average_rating',
+			'_wc_review_count',
+			'_eventstartdate',
+			'_eventenddate',
+			'_eventcost',
+			'_eventurl',
+			'_eventvenueid',
+			'_eventorganizerid',
+		);
+
+		if ( is_protected_meta( $key, $type ) && ! ( 'user' !== $type && in_array( $normalized, $public_protected, true ) ) ) {
+			$allowed = false;
+		}
+
+		$sensitive = array( 'token', 'capabilities', 'user_level', 'secret', 'password', 'passwd', 'nonce', 'api_key', 'apikey', 'two_factor', '2fa', 'activation_key' );
+		if ( 'user' === $type ) {
+			$sensitive = array_merge( $sensitive, array( 'billing_', 'shipping_', 'community-events-location' ) );
+		}
+
+		foreach ( $sensitive as $needle ) {
+			if ( false !== strpos( $normalized, $needle ) ) {
+				$allowed = false;
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Filter whether a meta key may be printed through %%_cf_*%% or %%_ucf_*%%.
+	 *
+	 * Return true to allow a key refused by default, false to refuse one, or
+	 * compare $key against a list of your own to switch to an allow-list.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param bool   $allowed Whether the key may be printed.
+	 * @param string $key     Meta key.
+	 * @param string $type    Meta type: 'post', 'term' or 'user'.
+	 */
+	return (bool) apply_filters( 'seopress_meta_tag_key_is_allowed', $allowed, $key, $type );
+}
+
+/**
+ * Read a meta value for a dynamic variable, or nothing when the key is refused.
+ *
+ * Every place that resolves %%_cf_*%% or %%_ucf_*%% goes through here, so the
+ * check in seopress_meta_tag_key_is_allowed() cannot be skipped by one of them.
+ *
+ * @since 10.4.0
+ *
+ * @param string $type      Meta type: 'post', 'term' or 'user'.
+ * @param int    $object_id Post, term or user id.
+ * @param string $key       Meta key.
+ *
+ * @return mixed The stored value (single), '' when refused or missing.
+ */
+function seopress_get_meta_tag_value( $type, $object_id, $key ) {
+	$object_id = (int) $object_id;
+
+	if ( $object_id <= 0 || ! seopress_meta_tag_key_is_allowed( $key, $type ) ) {
+		return '';
+	}
+
+	return get_metadata( $type, $object_id, $key, true );
+}
+
+/**
+ * Whether the current user may point a redirection at this target.
+ *
+ * Any user who can edit a post could enable its redirection, and nothing limited
+ * where it went: an Author could turn a URL of this site into a link to any
+ * domain, which is what an open redirect is and what phishing mails borrow a
+ * trusted domain for. A target on this site (or on a host allowed by the
+ * allowed_redirect_hosts filter) is always fine. An external one needs
+ * manage_options or unfiltered_html: a user who may publish scripts can already
+ * send visitors anywhere, so it gives them nothing new.
+ *
+ * Keeping the target already stored is not setting it, so a user who may not
+ * choose an external target can still save a post an administrator redirected.
+ * Nothing is checked when no user is logged in: cron, WP-CLI and imports write
+ * redirections on the site owner's behalf.
+ *
+ * @since 10.4.0
+ *
+ * @param string $url     Redirection target, sanitized as a URL.
+ * @param string $current Target stored at the moment, if any.
+ *
+ * @return bool
+ */
+function seopress_redirection_target_is_allowed( $url, $current = '' ) {
+	$url = (string) $url;
+
+	if ( '' === $url || '' !== wp_validate_redirect( $url, '' ) ) {
+		return true;
+	}
+
+	if ( (string) $current === $url || 0 === get_current_user_id() ) {
+		return true;
+	}
+
+	$allowed = current_user_can( 'manage_options' ) || current_user_can( 'unfiltered_html' );
+
+	/**
+	 * Filter whether the current user may redirect a post or a term to another site.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param bool   $allowed Default: the user has manage_options or unfiltered_html.
+	 * @param string $url     Redirection target.
+	 */
+	return (bool) apply_filters( 'seopress_redirection_external_target_allowed', $allowed, $url );
+}
+
+/**
+ * Drop a write of a redirection target the current user may not set.
+ *
+ * Hooked on the meta write itself, so every way of saving a post or term
+ * redirection goes through here: the classic metabox, the term form, the REST
+ * routes, the block editor, Quick Edit and the abilities. The redirection
+ * manager (seopress_404) is left alone: it has its own capability.
+ *
+ * Returning true reports the write as handled while leaving the stored value
+ * as it was, like the role restriction does, so the rest of the save goes
+ * through.
+ *
+ * @since 10.4.0
+ *
+ * @param null|bool $check      Short-circuit value, null to proceed.
+ * @param int       $object_id  Post or term id.
+ * @param string    $meta_key   Meta key.
+ * @param mixed     $meta_value Value being written, already sanitized.
+ *
+ * @return null|bool
+ */
+function seopress_discard_refused_redirection_target( $check, $object_id, $meta_key, $meta_value ) {
+	if ( null !== $check || '_seopress_redirections_value' !== $meta_key || ! is_string( $meta_value ) ) {
+		return $check;
+	}
+
+	$type = 0 === strpos( current_filter(), 'add_term_' ) || 0 === strpos( current_filter(), 'update_term_' ) ? 'term' : 'post';
+
+	if ( 'post' === $type && 'seopress_404' === get_post_type( $object_id ) ) {
+		return $check;
+	}
+
+	$current = get_metadata( $type, $object_id, $meta_key, true );
+
+	return seopress_redirection_target_is_allowed( $meta_value, is_string( $current ) ? $current : '' ) ? $check : true;
+}
+add_filter( 'add_post_metadata', 'seopress_discard_refused_redirection_target', 10, 4 );
+add_filter( 'update_post_metadata', 'seopress_discard_refused_redirection_target', 10, 4 );
+add_filter( 'add_term_metadata', 'seopress_discard_refused_redirection_target', 10, 4 );
+add_filter( 'update_term_metadata', 'seopress_discard_refused_redirection_target', 10, 4 );
+
+/**
+ * Same check for the meta-id based write XML-RPC's set_custom_fields() uses.
+ *
+ * @since 10.4.0
+ *
+ * @param null|bool $check      Short-circuit value, null to proceed.
+ * @param int       $meta_id    Meta row id.
+ * @param mixed     $meta_value Value being written.
+ * @param string    $meta_key   Meta key being written.
+ *
+ * @return null|bool
+ */
+function seopress_discard_refused_redirection_target_by_mid( $check, $meta_id, $meta_value, $meta_key ) {
+	if ( null !== $check || '_seopress_redirections_value' !== $meta_key ) {
+		return $check;
+	}
+
+	$meta = get_metadata_by_mid( 'post', $meta_id );
+
+	if ( ! $meta || ! isset( $meta->post_id ) ) {
+		return $check;
+	}
+
+	return seopress_discard_refused_redirection_target( $check, (int) $meta->post_id, $meta_key, $meta_value );
+}
+add_filter( 'update_post_metadata_by_mid', 'seopress_discard_refused_redirection_target_by_mid', 10, 4 );
+
+/**
+ * Encode a value for use inside a JavaScript string literal.
+ *
+ * The analytics builders assemble their inline snippets by concatenation, so
+ * every value they interpolate sits in executable context. A display name, a
+ * category or a tag is content someone typed, and a single quote in it closes
+ * the string and starts a statement. esc_html() is not the answer either: it
+ * produces HTML entities, which a <script> element does not decode, so the
+ * value reaches the analytics provider mangled while still not being safe.
+ *
+ * wp_json_encode() supplies its own quotes, so callers interpolate the result
+ * directly rather than wrapping it. The HEX flags additionally keep `<`, `&`,
+ * `'` and `"` out of the output, which is what stops a value from closing the
+ * script element itself.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $value Value to encode.
+ *
+ * @return string JSON string literal, quotes included.
+ */
+function seopress_js_string( $value ) {
+	$encoded = wp_json_encode(
+		(string) $value,
+		JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+	);
+
+	return false === $encoded ? '""' : $encoded;
+}
+
+/**
+ * Clean a pipe-separated list of link tracking patterns.
+ *
+ * The download and affiliate tracking settings are typed as `pdf|docx|zip`
+ * and `/go/|/out/`, then matched against link URLs in the browser. Each token
+ * is reduced to the characters a file extension or a URL path can hold, so
+ * nothing typed there can carry regular expression syntax or close the inline
+ * script it ends up in (#2110).
+ *
+ * @since 10.4.0
+ *
+ * @param mixed $value Submitted or stored setting value.
+ *
+ * @return string Cleaned tokens joined by pipes, empty and duplicate ones dropped.
+ */
+function seopress_sanitize_tracking_patterns( $value ) {
+	if ( ! is_string( $value ) ) {
+		return '';
+	}
+
+	$tokens = array();
+	foreach ( explode( '|', $value ) as $token ) {
+		$token = preg_replace( '#[^A-Za-z0-9._~%/-]#', '', $token );
+		if ( '' !== $token ) {
+			$tokens[] = $token;
+		}
+	}
+
+	return implode( '|', array_unique( $tokens ) );
+}
+
+/**
+ * Turn a link tracking setting into a regular expression alternation.
+ *
+ * The value is cleaned again here rather than trusted, so a pattern stored
+ * before the sanitizer covered it is still treated as literal text. Each token
+ * loses its surrounding slashes, which the affiliate pattern adds itself, and
+ * is escaped for a JavaScript RegExp source.
+ *
+ * @since 10.4.0
+ *
+ * @param mixed  $value       Stored setting value.
+ * @param string $strip_chars Characters stripped from both ends of each token:
+ *                            the download pattern adds the dot before the
+ *                            extension itself, so `.pdf` must lose it too (#2103).
+ *
+ * @return string Escaped alternation, e.g. `pdf|tar\.gz`, or '' when nothing usable is left.
+ */
+function seopress_tracking_patterns_regex( $value, $strip_chars = '/' ) {
+	$tokens = array();
+	foreach ( explode( '|', seopress_sanitize_tracking_patterns( $value ) ) as $token ) {
+		$token = trim( $token, $strip_chars );
+		if ( '' !== $token ) {
+			$tokens[] = preg_replace( '#[.*+?^${}()|[\]\\\\/]#', '\\\\$0', $token );
+		}
+	}
+
+	return implode( '|', array_unique( $tokens ) );
+}
+
+/**
  * Filter the capability to allow other roles to use the plugin.
  *
  * @return string
@@ -849,13 +1635,13 @@ function seopress_capability( $cap, $context = '' ) {
  * Whether the current user is blocked from editing a metabox area by the
  * Advanced > Security role restrictions.
  *
- * Server-side mirror of the React `isTabBlockedForUser()` helper
- * (app/react/constants/tabs.js): a user is blocked for an area when any of
- * their roles is flagged ("1") for that area in the matching option. The tab
- * bar and content panel already hide blocked areas client-side; this lets the
+ * A user is blocked for an area when any of their roles is flagged ("1") for
+ * that area in the matching option. The result is localized as
+ * SEOPRESS_DATA.ROLES_BLOCKED_FOR_USER, which the React `isTabBlockedForUser()`
+ * helper (app/react/constants/tabs.js) reads to hide the blocked tabs. The
  * REST endpoints, the Gutenberg meta auth callback and the Classic Editor save
- * fallback enforce the same restriction server-side, so a crafted request
- * cannot persist fields the UI hides.
+ * fallback call it too, so a crafted request cannot persist fields the UI
+ * hides.
  *
  * Super admins are never blocked: the settings screen excludes the
  * administrator role, so they can never be a legitimate target.
@@ -891,6 +1677,39 @@ function seopress_metabox_role_is_blocked( $type ) {
 
 	foreach ( (array) $user->roles as $role ) {
 		if ( isset( $blocked_roles[ $role ] ) && '1' === (string) $blocked_roles[ $role ] ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Whether the current user may read a post's data through a metabox route.
+ *
+ * The write routes refuse a user the Advanced > Security role restrictions
+ * block; the read routes only asked for edit_post, so a blocked role could
+ * still fetch the fields the metabox hides from it. A route lists the areas
+ * that display its data: reading is allowed as soon as one of them is open to
+ * the user. The title, description and robots settings are shown by the SEO
+ * metabox and used by the content analysis, so a user who still has the
+ * content analysis keeps reading them.
+ *
+ * @since 10.4.0
+ *
+ * @param int                $post_id Post id.
+ * @param array<int, string> $areas   Areas that display the data: 'GLOBAL'
+ *                                    and/or 'CONTENT_ANALYSIS'.
+ *
+ * @return bool
+ */
+function seopress_metabox_can_read_post( $post_id, $areas = array( 'GLOBAL' ) ) {
+	if ( ! current_user_can( 'edit_post', (int) $post_id ) ) {
+		return false;
+	}
+
+	foreach ( (array) $areas as $area ) {
+		if ( ! seopress_metabox_role_is_blocked( $area ) ) {
 			return true;
 		}
 	}
@@ -974,6 +1793,53 @@ function seopress_abilities_api_meta( $annotations = array() ) {
 		),
 		'annotations'  => $annotations,
 	);
+}
+
+/**
+ * Whether the SEO metadata of a taxonomy's terms may be handled by an ability.
+ *
+ * The same taxonomies the term SEO metabox is shown on: public and viewable
+ * ones (see WordPressData::getTaxonomies()), minus a taxonomy whose metabox
+ * is hidden in Titles & Metas, then the metabox's own filter. An ability
+ * reaching a taxonomy the admin screen never offers would write metas nothing
+ * reads and nobody can see.
+ *
+ * @since 10.4.0
+ *
+ * @param string $taxonomy The taxonomy name.
+ *
+ * @return bool
+ */
+function seopress_abilities_taxonomy_supported( $taxonomy ) {
+	if ( ! is_string( $taxonomy ) || '' === $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
+		return false;
+	}
+
+	return array_key_exists( $taxonomy, seopress_abilities_supported_taxonomies() );
+}
+
+/**
+ * The taxonomies whose terms the SEO abilities handle.
+ *
+ * @since 10.4.0
+ *
+ * @see seopress_abilities_taxonomy_supported()
+ *
+ * @return \WP_Taxonomy[] Keyed by taxonomy name.
+ */
+function seopress_abilities_supported_taxonomies() {
+	$taxonomies = seopress_get_service( 'WordPressData' )->getTaxonomies();
+
+	foreach ( array_keys( $taxonomies ) as $name ) {
+		if ( '1' === seopress_get_service( 'TitleOption' )->getTaxEnable( $name ) ) {
+			unset( $taxonomies[ $name ] );
+		}
+	}
+
+	// The filter the term metabox applies to the same list, see seopress_init_term_metabox().
+	$taxonomies = apply_filters( 'seopress_metaboxe_term_seo', $taxonomies );
+
+	return is_array( $taxonomies ) ? $taxonomies : array();
 }
 
 /**
@@ -1114,7 +1980,7 @@ function sp_submit_button( $value = '', $classes = 'btn btnPrimary', $type = 'su
 	// Use esc_attr_e to escape attributes in the output.
 	$html = '<p class="submit"><input id="submit" name="submit" type="' . esc_attr( $type ) . '" class="' . esc_attr( $classes ) . '" value="' . esc_attr( $value ) . '"/></p>';
 
-	echo $html;
+	echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Admin markup assembled above, its dynamic parts already escaped.
 }
 
 
@@ -1154,15 +2020,9 @@ function seopress_btn_secondary_classes() {
  * @return string|null Toggle option value if exists, null otherwise.
  */
 function seopress_get_toggle_option( $feature ) {
-	$seopress_get_toggle_option = get_option( 'seopress_toggle' );
-	if ( ! empty( $seopress_get_toggle_option ) ) {
-		foreach ( $seopress_get_toggle_option as $key => $seopress_get_toggle_value ) {
-			$options[ $key ] = $seopress_get_toggle_value;
-			if ( isset( $seopress_get_toggle_option[ 'toggle-' . $feature ] ) ) {
-				return $seopress_get_toggle_option[ 'toggle-' . $feature ];
-			}
-		}
-	}
+	$options = get_option( 'seopress_toggle' );
+
+	return is_array( $options ) ? ( $options[ 'toggle-' . $feature ] ?? null ) : null;
 }
 
 /**

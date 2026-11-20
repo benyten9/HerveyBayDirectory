@@ -276,7 +276,11 @@ class UpdateContactFields extends Action {
 		}
 
 		try {
-			$custom_fields = \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::where( 'scope', 'contact' )->get();
+			$model = \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class;
+			// In the order the admin set (Pro sorts its cached list; older Pro: as stored).
+			$custom_fields = method_exists( $model, 'cached_for_scope' )
+				? $model::cached_for_scope( 'contact' )
+				: $model::where( 'scope', 'contact' )->get();
 			foreach ( $custom_fields as $custom_field ) {
 				$targets[ 'cf_' . $custom_field->id ] = $custom_field->name;
 			}

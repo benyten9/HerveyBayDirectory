@@ -32,13 +32,13 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Question', 'wp-seopress-pro' ); ?>
 			<code>name</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_faq_q', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_faq_q', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 	</p>
 	<p>
 		<label for="seopress_pro_rich_snippets_faq_a_meta">
 			<?php esc_html_e( 'Answer', 'wp-seopress-pro' ); ?>
 			<code>text</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_faq_a', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_faq_a', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 	</p>
 </div>

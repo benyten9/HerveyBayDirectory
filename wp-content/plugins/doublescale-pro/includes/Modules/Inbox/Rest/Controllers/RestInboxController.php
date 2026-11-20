@@ -15,7 +15,11 @@
 
 namespace DoubleScale\Pro\Modules\Inbox\Rest\Controllers;
 
+use DoubleScale\Core\Scope\OwnerScope;
+use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -133,7 +137,7 @@ class RestInboxController extends WP_REST_Controller {
 	 * @return bool|WP_Error
 	 */
 	public function permissions_check() {
-		if ( ! current_user_can( 'doublescale_access' ) ) {
+		if ( ! self::can_read_inbox() ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access the inbox.', 'doublescale'),
@@ -141,6 +145,25 @@ class RestInboxController extends WP_REST_Controller {
 			);
 		}
 		return true;
+	}
+
+	/**
+	 * Who may read the inbox: the roles that read contacts (CRM, Sales,
+	 * Support, Booking ...). `doublescale_access` alone is not enough: the
+	 * Help Center and Team Member roles hold it without any customer access,
+	 * and the inbox holds customers' emails, SMS and WhatsApp messages.
+	 *
+	 * @return bool
+	 */
+	private static function can_read_inbox(): bool {
+		if ( ! current_user_can( 'doublescale_access' ) ) {
+			return false;
+		}
+		if ( method_exists( Permissions::class, 'has_crm_or_support_access' ) ) {
+			return (bool) Permissions::has_crm_or_support_access();
+		}
+
+		return (bool) Permissions::can_read_contacts();
 	}
 
 	/**
@@ -157,7 +180,7 @@ class RestInboxController extends WP_REST_Controller {
 	 * @param int         $user_id Current WordPress user ID.
 	 * @param string|null $channel Optional channel filter ('email', 'sms', 'whatsapp').
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	private function get_inbox_base_query( $user_id, $channel = null ) {
 		if ( $channel && isset( self::CHANNEL_TYPE_MAP[ $channel ] ) ) {
@@ -166,7 +189,7 @@ class RestInboxController extends WP_REST_Controller {
 			$types = self::INBOUND_TYPES;
 		}
 
-		return ActivityModel::query()
+		$query = ActivityModel::query()
 			->byType( $types )
 			->where(
 				function ( $q ) use ( $user_id ) {
@@ -174,6 +197,22 @@ class RestInboxController extends WP_REST_Controller {
 						->orWhere( 'user_id', $user_id );
 				}
 			);
+
+		// A scoped agent (Contact visibility setting) reads only the messages
+		// of the contacts they may see, like the contact routes.
+		$scope = OwnerScope::current();
+		if ( ! $scope->sees_all( 'contacts' ) ) {
+			$visible = $scope->apply_contact_visibility( ContactModel::query() )->select( 'id' );
+			$query->whereHas(
+				'associations',
+				function ( $q ) use ( $visible ) {
+					$q->where( 'entity_type', ActivityAssociationModel::ENTITY_TYPE_CONTACT )
+						->whereIn( 'entity_id', $visible );
+				}
+			);
+		}
+
+		return $query;
 	}
 
 	/**
@@ -345,7 +384,7 @@ class RestInboxController extends WP_REST_Controller {
 	 * @param int         $page     1-based page number.
 	 * @param int         $per_page Page size.
 	 *
-	 * @return \Illuminate\Support\Collection<int, ActivityModel>
+	 * @return \DoubleScale\Vendor\Illuminate\Support\Collection<int, ActivityModel>
 	 */
 	private function fetch_inbox_page_activities( $user_id, $channel, $page, $per_page ) {
 		$page_ids = $this->get_inbox_base_query( $user_id, $channel )

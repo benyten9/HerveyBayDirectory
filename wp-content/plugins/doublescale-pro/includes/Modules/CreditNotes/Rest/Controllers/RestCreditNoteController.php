@@ -198,6 +198,8 @@ class RestCreditNoteController extends RestController {
 			return $disabled;
 		}
 
+		( new CreditNoteApplications() )->reap_orphan_applications();
+
 		$query = CreditNoteModel::query()->with( array( 'contact', 'sale_agent', 'invoice' ) );
 		$this->apply_filters( $query, $request );
 
@@ -236,7 +238,7 @@ class RestCreditNoteController extends RestController {
 		}
 
 		$query = CreditNoteModel::query();
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_sales_records() ) {
 			$query->where( 'sale_agent_user_id', get_current_user_id() );
 		}
 
@@ -330,6 +332,9 @@ class RestCreditNoteController extends RestController {
 		if ( $forbidden ) {
 			return $forbidden;
 		}
+
+		$credit_note = ( new CreditNoteApplications() )->sync( $credit_note );
+		$credit_note->load( array( 'contact', 'sale_agent', 'invoice', 'applications.invoice' ) );
 
 		return new WP_REST_Response( CreditNoteShaper::shape( $credit_note, true ), 200 );
 	}
@@ -617,7 +622,7 @@ class RestCreditNoteController extends RestController {
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
 	 * @param WP_REST_Request                       $request Request.
 	 * @return void
 	 */
@@ -636,7 +641,7 @@ class RestCreditNoteController extends RestController {
 			$query->where( 'contact_id', (int) $contact_id );
 		}
 
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_sales_records() ) {
 			$query->where( 'sale_agent_user_id', get_current_user_id() );
 		}
 

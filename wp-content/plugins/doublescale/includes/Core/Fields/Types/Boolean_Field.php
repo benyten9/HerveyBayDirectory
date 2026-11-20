@@ -46,7 +46,16 @@ class Boolean_Field extends FieldType {
 	 * @return mixed
 	 */
 	public function sanitize_field( $value ) {
-		return $value === 'true' || $value === true ? 'true' : 'false';
+		if ( true === $value ) {
+			return 'true';
+		}
+
+		// Checkboxes and consent fields send "1", "on", "yes" or "checked", not the word "true".
+		if ( is_string( $value ) || is_int( $value ) ) {
+			return in_array( strtolower( trim( (string) $value ) ), array( 'true', '1', 'yes', 'on', 'checked' ), true ) ? 'true' : 'false';
+		}
+
+		return 'false';
 	}
 
 	/**

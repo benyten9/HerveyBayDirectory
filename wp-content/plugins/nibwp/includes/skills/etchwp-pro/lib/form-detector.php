@@ -73,6 +73,12 @@ function nibwp_etchwp_form_plugin_map(): array
             'shortcode_tag'     => 'happyforms',
             'shortcode_example' => '[happyforms id="N"]',
         ],
+        'bitform' => [
+            'label'             => 'Bit Form',
+            'probe'             => static fn() => defined('BITFORMS_VERSION'),
+            'shortcode_tag'     => 'bitform',
+            'shortcode_example' => '[bitform id="N"]',
+        ],
         'jetform' => [
             'label'             => 'JetFormBuilder',
             'probe'             => static fn() => class_exists('\\Jet_Form_Builder\\Plugin'),

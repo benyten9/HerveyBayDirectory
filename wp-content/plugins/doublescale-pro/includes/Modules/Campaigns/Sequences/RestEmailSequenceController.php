@@ -17,6 +17,7 @@ use DoubleScale\Modules\Campaigns\Models\CampaignModel as Email_Sequence_Model;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Modules\Campaigns\Services\TemplateDataPreparer;
+use DoubleScale\Pro\Modules\SequenceEnrollments\SequenceEnrollments;
 
 class RestEmailSequenceController extends RestController {
 
@@ -309,6 +310,10 @@ class RestEmailSequenceController extends RestController {
 		$to       = $request->get_param( 'to' ) ?? null;
 
 		$query = Email_Sequence_Model::where( 'type', $this->campaign_type );
+		// A Campaign Agent works on the sequences they created.
+		if ( ! $this->sees_all_sequences() ) {
+			$query->where( 'created_by', get_current_user_id() );
+		}
 
 		if ( $keywords ) {
 			$query->where( 'name', 'like', '%' . $keywords . '%' );
@@ -327,7 +332,7 @@ class RestEmailSequenceController extends RestController {
 		foreach ( $email_sequences as $email_sequence ) {
 			$email_count                      = $email_sequence->sequences_mail()->count();
 			$email_sequence->email_count      = $email_count;
-			$email_sequence->subscriber_count = ContactModel::whereIn( 'id', $email_sequence->settings['contact_ids'] ?? array() )->where( 'email_status', 'subscribed' )->count() . __( ' Subscribers', 'doublescale');
+			$email_sequence->subscriber_count = ContactModel::whereIn( 'id', SequenceEnrollments::active_ids( (int) $email_sequence->id ) )->where( 'email_status', 'subscribed' )->count() . __( ' Subscribers', 'doublescale');
 		}
 		return new WP_REST_Response( $email_sequences->toArray() + array( 'total_count' => $total_count ), 200 );
 	}
@@ -342,18 +347,19 @@ class RestEmailSequenceController extends RestController {
 	public function delete_items( $request ) {
 		try {
 			$email_sequence_ids = $request->get_param( 'email_sequence_ids' );
-			$email_sequences    = Email_Sequence_Model::whereIn( 'id', $email_sequence_ids )->get();
+			$email_sequences    = Email_Sequence_Model::whereIn( 'id', $email_sequence_ids )->when( ! $this->sees_all_sequences(), function ( $q ) { $q->where( 'created_by', get_current_user_id() ); } )->get();
 
 			if ( $email_sequences->isEmpty() ) {
 				return new WP_Error( 'error', sprintf( __( '%s Email sequences not found', 'doublescale'), ucfirst( $this->campaign_type ) ), array( 'status' => 404 ) );
 			}
 
-			$email_sequences = Email_Sequence_Model::whereIn( 'id', $email_sequence_ids )->get();
+			$email_sequences = Email_Sequence_Model::whereIn( 'id', $email_sequence_ids )->when( ! $this->sees_all_sequences(), function ( $q ) { $q->where( 'created_by', get_current_user_id() ); } )->get();
 			foreach ( $email_sequences as $email_sequence ) {
 				$email_sequence->delete();
 				foreach ( $email_sequence->sequences_mail as $sequence_mail ) {
 					$sequence_mail->delete();
 				}
+				SequenceEnrollments::delete_for_sequence( (int) $email_sequence->id );
 			}
 
 			return new WP_REST_Response( null, 204 );
@@ -418,7 +424,7 @@ class RestEmailSequenceController extends RestController {
 				return new WP_Error( 'error', sprintf( __( '%s Email sequence not found', 'doublescale'), ucfirst( $this->campaign_type ) ), array( 'status' => 404 ) );
 			}
 			$parent_email_sequence        = Email_Sequence_Model::find( $email_sequence->parent_id );
-			$total_contacts               = ContactModel::whereIn( 'id', $parent_email_sequence->settings['contact_ids'] ?? array() )->count();
+			$total_contacts               = ContactModel::whereIn( 'id', SequenceEnrollments::active_ids( (int) $parent_email_sequence->id ) )->count();
 			$email_sequence['sent_rate']  = round( ( $email_sequence->sent / ( $total_contacts > 0 ? $total_contacts : 1 ) * 100 ), 2 );
 			$email_sequence['open_rate']  = round( ( $email_sequence->opened / ( $email_sequence->sent > 0 ? $email_sequence->sent : 1 ) * 100 ), 2 );
 			$email_sequence['click_rate'] = round( ( $email_sequence->click / ( $email_sequence->sent > 0 ? $email_sequence->sent : 1 ) * 100 ), 2 );
@@ -476,15 +482,8 @@ class RestEmailSequenceController extends RestController {
 				return new WP_Error( 'error', sprintf( __( '%s Email sequence not found', 'doublescale'), ucfirst( $this->campaign_type ) ), array( 'status' => 404 ) );
 			}
 
-			// Get contact IDs from sequence settings
-			$contact_ids = $email_sequence->settings['contact_ids'] ?? array();
-
-			if ( empty( $contact_ids ) ) {
-				return new WP_REST_Response( array(), 200 );
-			}
-
-			// Fetch contacts with their details
-			$contacts = ContactModel::whereIn( 'id', $contact_ids )
+			// Contacts currently enrolled in the sequence.
+			$contacts = ContactModel::whereIn( 'id', SequenceEnrollments::active_ids( (int) $email_sequence->id ) )
 				->get();
 
 			// Format the response
@@ -652,6 +651,7 @@ class RestEmailSequenceController extends RestController {
 			foreach ( $email_sequence->sequences_mail as $sequence_mail ) {
 				$sequence_mail->delete();
 			}
+			SequenceEnrollments::delete_for_sequence( (int) $email_sequence->id );
 
 			return new WP_REST_Response( null, 204 );
 		} catch ( \Exception $e ) {
@@ -681,6 +681,8 @@ class RestEmailSequenceController extends RestController {
 			if ( $type_integer === $this->campaign_type ) {
 				$email_sequence_data = $email_sequence->toArray();
 				unset( $email_sequence_data['id'], $email_sequence_data['created_at'], $email_sequence_data['updated_at'] );
+				// A copy starts with nobody enrolled (enrolments live in sequence_contacts).
+				unset( $email_sequence_data['settings']['contact_ids'], $email_sequence_data['settings']['contact_enrollments'], $email_sequence_data['settings']['contact_exit_reasons'] );
 
 				$email_sequence_data['status'] = 'draft';
 				$email_sequence_data['name']   = $email_sequence_data['name'] . ' - Copy';
@@ -753,7 +755,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool
 	 */
 	public function remove_subscriber_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -849,7 +851,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to create a email sequence
 	 */
 	public function create_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -860,7 +862,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to get the email sequences
 	 */
 	public function get_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -871,7 +873,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to delete the email sequences
 	 */
 	public function delete_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -882,7 +884,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to get the email sequence
 	 */
 	public function get_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -893,7 +895,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to update the email sequence
 	 */
 	public function update_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -904,7 +906,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to delete the email sequence
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -915,7 +917,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to duplicate the email sequence
 	 */
 	public function duplicate_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 	/**
@@ -926,7 +928,7 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to get the email sequence reports
 	 */
 	public function get_item_reports_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
 	}
 
 
@@ -938,6 +940,40 @@ class RestEmailSequenceController extends RestController {
 	 * @return bool $permission Whether the user has permission to get the email sequence subscribers
 	 */
 	public function get_item_subscribers_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->sequence_permission( $request );
+	}
+
+	/**
+	 * Campaign managers see every sequence; a Campaign Agent their own.
+	 *
+	 * @return bool
+	 */
+	private function sees_all_sequences() {
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::can_manage_campaigns();
+	}
+
+	/**
+	 * Who may use a sequence route: anyone who runs campaigns, and for one
+	 * sequence, a Campaign Agent only when they created it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool|WP_Error
+	 */
+	private function sequence_permission( $request ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::can_use_campaigns() ) {
+			return false;
+		}
+
+		$id = (int) $request->get_param( 'id' );
+		if ( $id > 0 && ! $this->sees_all_sequences() ) {
+			$sequence = Email_Sequence_Model::find( $id );
+			// A step's own row points at its parent sequence.
+			$root = ( $sequence && $sequence->parent_id ) ? Email_Sequence_Model::find( $sequence->parent_id ) : $sequence;
+			if ( ! $root || (int) $root->created_by !== get_current_user_id() ) {
+				return new \WP_Error( 'rest_sequence_not_found', __( 'Sequence not found.', 'doublescale' ), array( 'status' => 404 ) );
+			}
+		}
+
+		return true;
 	}
 }

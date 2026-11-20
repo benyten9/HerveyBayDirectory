@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Contracts\Auth\Access\Gate as GateContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Auth\Access\Gate as GateContract;
 /**
  * @method static bool has(string $ability)
  * @method static \Illuminate\Contracts\Auth\Access\Gate define(string $ability, callable|string $callback)
@@ -21,7 +21,7 @@ use Illuminate\Contracts\Auth\Access\Gate as GateContract;
  *
  * @see \Illuminate\Contracts\Auth\Access\Gate
  */
-class Gate extends \Illuminate\Support\Facades\Facade
+class Gate extends Facade
 {
     /**
      * Get the registered name of the component.

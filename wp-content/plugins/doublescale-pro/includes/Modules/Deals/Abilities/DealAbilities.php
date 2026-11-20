@@ -39,7 +39,7 @@ final class DealAbilities {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function definitions(): array {
-		$permission = array( Permissions::class, 'has_sales_rep_access' );
+		$permission = array( \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::class, 'has_agent_access' );
 
 		return array(
 			'doublescale/list-deals'       => array(

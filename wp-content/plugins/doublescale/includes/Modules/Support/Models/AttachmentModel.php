@@ -46,7 +46,7 @@ class AttachmentModel extends CoreAttachmentModel {
 	/**
 	 * Parent ticket.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function ticket() {
 		return $this->belongsTo( TicketModel::class, 'attachable_id', 'id' );

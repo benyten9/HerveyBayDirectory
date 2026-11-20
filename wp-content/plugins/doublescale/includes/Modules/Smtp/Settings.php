@@ -171,8 +171,89 @@ class Settings {
 	 */
 	public static function update_many( $new_settings ) {
 		$old_settings = self::get_all();
-		$settings     = array_replace( $old_settings, $new_settings );
+		if ( isset( $new_settings['connections'] ) && is_array( $new_settings['connections'] ) ) {
+			$previous = isset( $old_settings['connections'] ) && is_array( $old_settings['connections'] )
+				? $old_settings['connections']
+				: array();
+			$new_settings['connections'] = self::stamp_connection_created_at( $new_settings['connections'], $previous );
+		}
+		$settings = array_replace( $old_settings, $new_settings );
 		return self::update_all( $settings );
+	}
+
+	/**
+	 * Stamp created_at on connections that have never stored a date.
+	 *
+	 * Existing dates win so edits do not reset the column. Used on save and to
+	 * backfill older connections the first time settings are loaded.
+	 *
+	 * @param array<string, mixed> $incoming New or current connection map.
+	 * @param array<string, mixed> $previous Previously stored map (same as incoming on backfill).
+	 * @return array<string, mixed>
+	 */
+	public static function stamp_connection_created_at( array $incoming, array $previous = array() ) {
+		$now = current_time( 'mysql' );
+
+		foreach ( $incoming as $id => $conn ) {
+			if ( ! is_array( $conn ) ) {
+				continue;
+			}
+
+			$prev     = isset( $previous[ $id ] ) && is_array( $previous[ $id ] ) ? $previous[ $id ] : array();
+			$existing = self::connection_created_at_value( $prev );
+			if ( '' === $existing ) {
+				$existing = self::connection_created_at_value( $conn );
+			}
+
+			$conn['created_at'] = '' !== $existing ? $existing : $now;
+			$incoming[ $id ]    = $conn;
+		}
+
+		return $incoming;
+	}
+
+	/**
+	 * Persist created_at on stored connections that predate the column.
+	 *
+	 * @return void
+	 */
+	public static function persist_missing_connection_created_at() {
+		$settings = self::get_all();
+		if ( empty( $settings['connections'] ) || ! is_array( $settings['connections'] ) ) {
+			return;
+		}
+
+		$needs_stamp = false;
+		foreach ( $settings['connections'] as $conn ) {
+			if ( ! is_array( $conn ) || '' === self::connection_created_at_value( $conn ) ) {
+				$needs_stamp = true;
+				break;
+			}
+		}
+		if ( ! $needs_stamp ) {
+			return;
+		}
+
+		$settings['connections'] = self::stamp_connection_created_at( $settings['connections'], $settings['connections'] );
+		self::update_all( $settings );
+	}
+
+	/**
+	 * @param array<string, mixed> $conn Connection row.
+	 * @return string
+	 */
+	private static function connection_created_at_value( array $conn ) {
+		foreach ( array( 'created_at', 'created_date' ) as $key ) {
+			if ( ! isset( $conn[ $key ] ) || is_array( $conn[ $key ] ) ) {
+				continue;
+			}
+			$value = trim( (string) $conn[ $key ] );
+			if ( '' !== $value && '0' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
 	}
 
 	/**

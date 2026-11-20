@@ -15,15 +15,15 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
-use DoubleScale\Modules\Contacts\Filters\Traits\DateWithinContactFilter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Modules\Contacts\Filters\Traits\LastEmailDateContactFilter;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * LastEmailClicked class
  */
 class LastEmailClicked extends Filter {
 
-	use DateWithinContactFilter;
+	use LastEmailDateContactFilter;
 
 	/**
 	 * Name
@@ -92,72 +92,7 @@ class LastEmailClicked extends Filter {
 		$operator = isset( $filter['operator'] ) ? $filter['operator'] : 'before';
 		$value    = isset( $filter['value'] ) ? $filter['value'] : '';
 
-		if ( 'within' === $operator ) {
-			return $this->apply_within_on_relation( $query, $value, 'campaign_emails', 'clicked_at' );
-		}
-
-		if ( is_array( $value ) ) {
-			$value = $value[0];
-		}
-
-		// Convert string to date
-		if ( is_array( $value ) ) {
-			$value = array_map(
-				function ( $val ) {
-					$date = new \DateTime( $val );
-					if ( $date ) {
-						return $date->format( 'Y-m-d' );
-					} else {
-						return $val;
-					}
-				},
-				$value
-			);
-		} else {
-			$date = new \DateTime( $value );
-			if ( $date ) {
-				$value = $date->format( 'Y-m-d' );
-			} else {
-				return $query;
-			}
-		}
-
-		switch ( $operator ) {
-			case 'before':
-				$query->whereHas(
-					'campaign_emails',
-					function ( $query ) use ( $value ) {
-						$query->whereDate( 'clicked_at', '<', $value );
-					}
-				);
-				break;
-			case 'after':
-				$query->whereHas(
-					'campaign_emails',
-					function ( $query ) use ( $value ) {
-						$query->whereDate( 'clicked_at', '>', $value );
-					}
-				);
-				break;
-			case 'on':
-				$query->whereHas(
-					'campaign_emails',
-					function ( $query ) use ( $value ) {
-						$query->whereDate( 'clicked_at', $value );
-					}
-				);
-				break;
-			case 'between':
-				$query->whereHas(
-					'campaign_emails',
-					function ( $query ) use ( $value ) {
-						$query->whereBetween( 'clicked_at', $value );
-					}
-				);
-				break;
-		}
-
-		return $query;
+		return $this->apply_last_email_date( $query, $operator, $value, 'campaign_emails', 'clicked_at' );
 	}
 }
 

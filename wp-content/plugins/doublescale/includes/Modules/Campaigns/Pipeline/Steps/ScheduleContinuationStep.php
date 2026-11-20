@@ -30,6 +30,11 @@ class ScheduleContinuationStep implements PipelineStepInterface {
 	 * @inheritDoc
 	 */
 	public function handle( CampaignContext $ctx, callable $next ) {
+		if ( $ctx->total > 0 && $ctx->offset >= $ctx->total && $ctx->has_deferred_retries() ) {
+			$ctx->abort();
+			return;
+		}
+
 		if ( $ctx->is_complete() ) {
 			$ctx->complete();
 		} else {

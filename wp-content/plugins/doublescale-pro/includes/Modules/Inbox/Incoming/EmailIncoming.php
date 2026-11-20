@@ -9,6 +9,7 @@
 
 namespace DoubleScale\Pro\Modules\Inbox\Incoming;
 
+use DoubleScale\Core\Communication\PollBackoff;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Tracking\ImapClient;
@@ -27,6 +28,11 @@ defined( 'ABSPATH' ) || exit;
  * Handles incoming email processing for CRM contacts via IMAP polling.
  */
 class EmailIncoming {
+
+	/**
+	 * @var array<string,int>|null Memo for known_contact_set().
+	 */
+	private $known_contact_set = null;
 
 	/**
 	 * Singleton instance
@@ -153,7 +159,8 @@ class EmailIncoming {
 
 			$reply_contact = $original_outbound->contact;
 			if ( $reply_contact ) {
-				do_action( 'doublescale_mail_open', $reply_contact );
+				// Same arguments as free's Email::record_open(): the opened email and how it was detected.
+				do_action( 'doublescale_mail_open', $reply_contact, $original_outbound, 'reply' );
 			}
 		}
 
@@ -199,13 +206,22 @@ class EmailIncoming {
 			$last_name  = isset( $name_parts[1] ) ? sanitize_text_field( $name_parts[1] ) : null;
 
 			try {
-				$contact = ContactModel::create(
-					array(
-						'email'      => sanitize_email( $data['from_email'] ),
-						'first_name' => $first_name,
-						'last_name'  => $last_name,
-						'status'     => 'subscribed',
-					)
+				// A personal mailbox's new sender belongs to that mailbox's owner
+				// (lead routing "inbound"); a shared inbox falls through to the
+				// site-wide rules.
+				$contact = \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::create_routed_contact(
+					'email',
+					array( 'mailbox_user_id' => (int) $user_id ),
+					static function () use ( $data, $first_name, $last_name ) {
+						return ContactModel::create(
+							array(
+								'email'      => sanitize_email( $data['from_email'] ),
+								'first_name' => $first_name,
+								'last_name'  => $last_name,
+								'status'     => 'subscribed',
+							)
+						);
+					}
 				);
 
 				doublescale_get_logger()->info(
@@ -616,6 +632,14 @@ class EmailIncoming {
 			return;
 		}
 
+		// Same STATUS-based change gate as the INBOX: unchanged folder → no
+		// SEARCH/FETCH at all.
+		$fingerprint = method_exists( $client, 'get_mailbox_fingerprint' ) ? $client->get_mailbox_fingerprint() : null;
+		if ( null !== $fingerprint && $fingerprint === get_option( 'doublescale_imap_sent_fingerprint', '' ) ) {
+			update_option( 'doublescale_imap_sent_last_poll', time(), false );
+			return;
+		}
+
 		// Separate lookback tracking for SENT folder.
 		$last_sent_poll = (int) get_option( 'doublescale_imap_sent_last_poll', 0 );
 		$max_lookback   = 7 * DAY_IN_SECONDS;
@@ -634,9 +658,14 @@ class EmailIncoming {
 		$lookback_days = max( 1, (int) ceil( ( time() - $since_time ) / DAY_IN_SECONDS ) );
 		$limit         = min( 20 * $lookback_days, 100 );
 
-		$emails = $client->fetch_recent( $since_date, $limit );
+		// Headers only; the body is loaded for the few messages that pass the
+		// sender/recipient/dedup checks below.
+		$emails = $client->fetch_recent( $since_date, $limit, false );
 		if ( empty( $emails ) ) {
 			update_option( 'doublescale_imap_sent_last_poll', time(), false );
+			if ( null !== $fingerprint ) {
+				update_option( 'doublescale_imap_sent_fingerprint', $fingerprint, false );
+			}
 			return;
 		}
 
@@ -669,6 +698,13 @@ class EmailIncoming {
 				continue;
 			}
 
+			// Already stored from a previous sync: skip before the body download.
+			if ( $this->is_message_ingested( $email ) ) {
+				continue;
+			}
+
+			$email = $this->load_email_body( $client, $email );
+
 			// Process once per matched contact recipient.
 			foreach ( $matched_recipients as $matched_email ) {
 				$email_copy              = $email;
@@ -693,6 +729,9 @@ class EmailIncoming {
 		}
 
 		update_option( 'doublescale_imap_sent_last_poll', time(), false );
+		if ( null !== $fingerprint ) {
+			update_option( 'doublescale_imap_sent_fingerprint', $fingerprint, false );
+		}
 
 		if ( $processed > 0 ) {
 			doublescale_get_logger()->info(
@@ -923,26 +962,30 @@ class EmailIncoming {
 			}
 		}
 
+		// Back off after consecutive failures: an unreachable mailbox must not
+		// cost a socket connect (and a full contact scan) every single minute.
+		$backoff = new PollBackoff( 'imap_inbound' );
+		if ( $backoff->should_skip() ) {
+			doublescale_get_logger()->debug(
+				'IMAP polling skipped: backing off after failures',
+				array(
+					'code'          => 'email_incoming_imap_backoff',
+					'provider'      => $provider,
+					'failures'      => $backoff->failures(),
+					'retry_in_secs' => $backoff->seconds_until_next(),
+				)
+			);
+			return;
+		}
+
 		$auto_create      = ! empty( $settings['auto_create_contacts'] );
 		$excluded_domains = $settings['excluded_domains'] ?? array();
 
-		// Pre-load all contact emails for O(1) lookup.
-		// When auto_create is OFF: only process emails from known contacts (safe default).
-		// When auto_create is ON: also process emails from unknown senders, filtered
-		// through is_excluded_sender() to block no-reply addresses and excluded domains.
-		$contact_emails = ContactModel::pluck( 'email' )
-			->filter(
-				function ( $email ) {
-					return is_string( $email ) && '' !== trim( $email );
-				}
-			)
-			->map(
-				function ( $email ) {
-					return strtolower( $email );
-				}
-			)
-			->all();
-		$contact_set    = array_flip( $contact_emails );
+		// Known-contact lookup set, built only once the mailbox has something
+		// new (see the fingerprint gate) — never before a connect attempt.
+		// Fresh per poll: the singleton outlives a queue runner's process.
+		$this->known_contact_set = null;
+		$contact_set             = null;
 
 		// Forward-only sync anchor: the inbox never ingests mail that predates the
 		// moment the mailbox was connected. On the first run for any install
@@ -971,10 +1014,40 @@ class EmailIncoming {
 
 			$client->connect();
 
+			// Cheap change gate: one STATUS round-trip. When UIDVALIDITY/UIDNEXT/
+			// MESSAGES match the previous successful poll nothing has arrived, so
+			// skip the SEARCH + full-body FETCH of the newest messages that used
+			// to run every minute regardless (the CPU spike hosts flag). The SENT
+			// folder sync has its own gate below. A null fingerprint (server or
+			// library without STATUS) falls through to the slow path unchanged.
+			$fingerprint = method_exists( $client, 'get_mailbox_fingerprint' ) ? $client->get_mailbox_fingerprint() : null;
+			if ( null !== $fingerprint && $fingerprint === get_option( 'doublescale_imap_inbox_fingerprint', '' ) ) {
+				delete_transient( 'doublescale_imap_consecutive_failures' );
+				$backoff->record_success();
+				update_option( 'doublescale_imap_last_successful_poll', time(), false );
+
+				doublescale_get_logger()->debug(
+					'IMAP polling skipped: mailbox unchanged',
+					array(
+						'code'        => 'email_incoming_imap_poll_unchanged',
+						'provider'    => $provider,
+						'fingerprint' => $fingerprint,
+					)
+				);
+
+				if ( ! empty( $settings['sync_sent'] ) ) {
+					$this->poll_sent_folder_if_changed( $client, $provider, $settings, $this->known_contact_set() );
+				}
+
+				return; // finally{} below disconnects.
+			}
+
 			// Fetch unseen emails since the sync anchor. Passing $since_date floors
 			// the unread set by date so a months-old unread message is NOT pulled in
 			// on the first poll — only unread mail at/after the connect moment.
-			$unseen_emails = $client->fetch_unseen( 20, $since_date );
+			// Headers only: bodies are loaded below for messages not yet ingested.
+			$unseen_emails = $client->fetch_unseen( 20, $since_date, false );
+			$contact_set   = $this->known_contact_set();
 
 			// Also fetch recently-arrived emails regardless of seen/unseen status.
 			// This catches replies that were marked as read by another client
@@ -983,7 +1056,7 @@ class EmailIncoming {
 			// so emails aren't lost if the poller was down for more than 24 hours.
 			$lookback_days = max( 1, (int) ceil( ( time() - $since_time ) / DAY_IN_SECONDS ) );
 			$recent_limit  = min( 20 * $lookback_days, 100 );
-			$recent_emails = $client->fetch_recent( $since_date, $recent_limit );
+			$recent_emails  = $client->fetch_recent( $since_date, $recent_limit, false );
 			$mailbox_status = method_exists( $client, 'get_mailbox_status' ) ? $client->get_mailbox_status() : array( 'nmsgs' => 0, 'unseen' => 0 );
 
 			// Merge both sets, deduplicating by UID (or message_id when UID is unavailable).
@@ -1012,9 +1085,10 @@ class EmailIncoming {
 			);
 			$emails = array_slice( $emails, 0, 20 );
 
-			$processed        = 0;
-			$skipped_anchor   = 0;
-			$skipped_unknown  = 0;
+			$processed         = 0;
+			$skipped_anchor    = 0;
+			$skipped_unknown   = 0;
+			$skipped_duplicate = 0;
 
 			foreach ( $emails as $email ) {
 				// Precise forward-only guard: the date floors above (SINCE / receivedDateTime ge)
@@ -1028,17 +1102,20 @@ class EmailIncoming {
 				}
 
 				$sender           = strtolower( $email['from_email'] ?? '' );
-				$should_mark_seen = true;
 				$is_known_contact = isset( $contact_set[ $sender ] );
 
 				if ( $is_known_contact || ( $auto_create && ! $this->is_excluded_sender( $sender, $excluded_domains ) ) ) {
 					try {
-						if ( $this->process_incoming_email( $email ) ) {
+						// Already ingested on an earlier poll: skip without ever
+						// downloading its body. process_incoming_email() repeats
+						// this check, but only after the expensive part.
+						if ( $this->is_message_ingested( $email ) ) {
+							++$skipped_duplicate;
+						} elseif ( $this->process_incoming_email( $this->load_email_body( $client, $email ) ) ) {
 							++$processed;
 						}
 					} catch ( \Exception $e ) {
-						// Exception = retriable failure — don't mark as seen so next poll retries.
-						$should_mark_seen = false;
+						// Retriable: not ingested, so the next poll tries it again.
 						doublescale_get_logger()->error(
 							'Failed to process incoming email',
 							array(
@@ -1048,19 +1125,21 @@ class EmailIncoming {
 							)
 						);
 					}
-					// false returns (dedup, validation, unknown sender) are permanent skips — still mark seen.
 				} else {
 					++$skipped_unknown;
 				}
-
-				if ( $should_mark_seen && ! empty( $email['uid'] ) ) {
-					$client->mark_as_seen( $email['uid'] );
-				}
+				// Never marked as read: this is the owner's real inbox (Gmail,
+				// Outlook…), and read/unread is theirs. Messages are found again
+				// by fetch_recent() and skipped by their Message-ID.
 			}
 
 			// Reset consecutive failure counter on successful poll.
 			delete_transient( 'doublescale_imap_consecutive_failures' );
+			$backoff->record_success();
 			update_option( 'doublescale_imap_last_successful_poll', time(), false );
+			if ( null !== $fingerprint ) {
+				update_option( 'doublescale_imap_inbox_fingerprint', $fingerprint, false );
+			}
 
 			doublescale_get_logger()->info(
 				'IMAP polling completed',
@@ -1074,26 +1153,17 @@ class EmailIncoming {
 					'recent'          => count( $recent_emails ),
 					'fetched'         => count( $emails ),
 					'processed'       => $processed,
-					'skipped_anchor'  => $skipped_anchor,
-					'skipped_unknown' => $skipped_unknown,
-					'since_date'      => $since_date,
-					'auto_create'     => $auto_create,
+					'skipped_anchor'    => $skipped_anchor,
+					'skipped_unknown'   => $skipped_unknown,
+					'skipped_duplicate' => $skipped_duplicate,
+					'since_date'        => $since_date,
+					'auto_create'       => $auto_create,
 				)
 			);
 
 			// Sync SENT folder if enabled (reuses the same connection).
 			if ( ! empty( $settings['sync_sent'] ) ) {
-				try {
-					$this->poll_sent_folder( $client, $provider, $settings, $contact_set );
-				} catch ( \Exception $e ) {
-					doublescale_get_logger()->warning(
-						'IMAP sent folder sync failed (INBOX sync succeeded)',
-						array(
-							'code'  => 'email_sent_sync_error',
-							'error' => $e->getMessage(),
-						)
-					);
-				}
+				$this->poll_sent_folder_if_changed( $client, $provider, $settings, $contact_set );
 			}
 		} catch ( \Throwable $e ) {
 			$is_config_error = ! $client; // Config errors throw before $client is created.
@@ -1117,12 +1187,14 @@ class EmailIncoming {
 				$fail_count = (int) get_transient( 'doublescale_imap_consecutive_failures' );
 				++$fail_count;
 				set_transient( 'doublescale_imap_consecutive_failures', $fail_count, HOUR_IN_SECONDS );
+				$retry_in = $backoff->record_failure( $e->getMessage() );
 
 				$log_context = array(
 					'code'                   => 'email_incoming_imap_error',
 					'provider'               => $provider,
 					'error'                  => $e->getMessage(),
 					'consecutive_failures'   => $fail_count,
+					'retry_in_secs'          => $retry_in,
 				);
 				if ( 1 === $fail_count || 5 === $fail_count || 0 === $fail_count % 10 ) {
 					doublescale_get_logger()->error( 'IMAP polling error', $log_context );
@@ -1143,6 +1215,33 @@ class EmailIncoming {
 	}
 
 	/**
+	 * Lower-cased set of every contact email, keyed for O(1) isset() checks.
+	 *
+	 * Memoised per request; built lazily because a poll that finds the mailbox
+	 * unchanged (or cannot connect) never needs it.
+	 *
+	 * @return array<string, int>
+	 */
+	private function known_contact_set() {
+		if ( null === $this->known_contact_set ) {
+			$emails = ContactModel::pluck( 'email' )
+				->filter(
+					function ( $email ) {
+						return is_string( $email ) && '' !== trim( $email );
+					}
+				)
+				->map(
+					function ( $email ) {
+						return strtolower( $email );
+					}
+				)
+				->all();
+			$this->known_contact_set = array_flip( $emails );
+		}
+		return $this->known_contact_set;
+	}
+
+	/**
 	 * Create an IMAP client based on the selected provider.
 	 *
 	 * @param string $provider 'custom', 'gmail', 'outlook', 'smtp_gmail', or 'smtp_outlook'.
@@ -1151,6 +1250,22 @@ class EmailIncoming {
 	 * @throws \RuntimeException If provider configuration is incomplete.
 	 */
 	private function create_imap_client( $provider, $settings ) {
+		/**
+		 * Replace the mailbox client the poller talks to.
+		 *
+		 * Anything returned must expose connect(), fetch_unseen(), fetch_recent(),
+		 * mark_as_seen(), open_folder() and disconnect() like ImapClient does.
+		 * Used by tests to drive the poller against a fake server.
+		 *
+		 * @param object|null $client   Client instance, or null to build the default one.
+		 * @param string      $provider Provider slug (custom|gmail|outlook).
+		 * @param array       $settings Inbound settings.
+		 */
+		$injected = apply_filters( 'doublescale_inbox_imap_client', null, $provider, $settings );
+		if ( is_object( $injected ) ) {
+			return $injected;
+		}
+
 		if ( 'custom' === $provider ) {
 			$imap = $settings['imap'] ?? array();
 
@@ -1278,6 +1393,65 @@ class EmailIncoming {
 	 * @param int   $sync_since Unix timestamp anchor (connect moment).
 	 * @return bool True when the message predates the anchor.
 	 */
+	/**
+	 * Whether a message with this Message-ID is already stored.
+	 *
+	 * Mirrors the dedup inside process_incoming_email(); used earlier so the
+	 * poller can skip the body download for mail it has already ingested.
+	 *
+	 * @param array $email Normalized email (headers are enough).
+	 * @return bool
+	 */
+	public function is_message_ingested( $email ) {
+		$message_id = isset( $email['message_id'] ) ? (string) $email['message_id'] : '';
+		if ( '' === $message_id ) {
+			return false;
+		}
+
+		return CommunicationTrackingModel::where( 'external_id', $message_id )
+			->where( 'mode', CommunicationTrackingModel::MODE_EMAIL )
+			->exists();
+	}
+
+	/**
+	 * Load body + attachments for a headers-only email when the client supports it.
+	 *
+	 * @param object $client IMAP or Graph client.
+	 * @param array  $email  Normalized email.
+	 * @return array
+	 */
+	private function load_email_body( $client, $email ) {
+		if ( method_exists( $client, 'load_body' ) ) {
+			return $client->load_body( $email );
+		}
+		return $email;
+	}
+
+	/**
+	 * Sync the SENT folder only when its STATUS fingerprint changed.
+	 *
+	 * Runs on the already-open connection; a failure here never fails the
+	 * INBOX poll that preceded it.
+	 *
+	 * @param object $client      IMAP client.
+	 * @param string $provider    Provider slug.
+	 * @param array  $settings    Inbound settings.
+	 * @param array  $contact_set Known contact emails.
+	 */
+	private function poll_sent_folder_if_changed( $client, $provider, $settings, $contact_set ) {
+		try {
+			$this->poll_sent_folder( $client, $provider, $settings, $contact_set );
+		} catch ( \Exception $e ) {
+			doublescale_get_logger()->warning(
+				'IMAP sent folder sync failed (INBOX sync succeeded)',
+				array(
+					'code'  => 'email_sent_sync_error',
+					'error' => $e->getMessage(),
+				)
+			);
+		}
+	}
+
 	private function is_before_sync_anchor( $email, $sync_since ) {
 		$raw = isset( $email['date'] ) ? (string) $email['date'] : '';
 		if ( '' === $raw ) {

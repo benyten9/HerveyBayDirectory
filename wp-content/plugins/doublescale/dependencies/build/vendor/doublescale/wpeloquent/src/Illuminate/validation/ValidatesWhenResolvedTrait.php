@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
 /**
  * Provides default implementation of ValidatesWhenResolved contract.
@@ -49,9 +49,9 @@ trait ValidatesWhenResolvedTrait
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    protected function failedValidation(\Illuminate\Validation\Validator $validator)
+    protected function failedValidation(Validator $validator)
     {
-        throw new \Illuminate\Validation\ValidationException($validator);
+        throw new ValidationException($validator);
     }
     /**
      * Determine if the request passes the authorization check.
@@ -74,6 +74,6 @@ trait ValidatesWhenResolvedTrait
      */
     protected function failedAuthorization()
     {
-        throw new \Illuminate\Validation\UnauthorizedException();
+        throw new UnauthorizedException();
     }
 }

@@ -12,13 +12,17 @@ namespace DoubleScale\Core\Settings\Rest;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Admin\AdminConfig;
 use DoubleScale\Core\Settings\Settings;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\UserRoles\UserRoles;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Constants\CampaignChannel;
+use DoubleScale\Modules\Campaigns\Services\ChannelEngineRegistry;
 
 /**
  * RestSettingsController class.
@@ -126,6 +130,12 @@ class RestSettingsController extends RestController {
 						'business_logo'    => array(
 							'type'    => 'string',
 							'default' => '',
+						),
+						// The colour clients see (portal, support portal); empty = the default.
+						'business_brand_color' => array(
+							'type'    => 'string',
+							'default' => '',
+							'pattern' => '^(#[0-9A-Fa-f]{6})?$',
 						),
 					),
 				),
@@ -249,7 +259,7 @@ class RestSettingsController extends RestController {
 						),
 						'wait_period'          => array(
 							'type'    => 'integer',
-							'default' => 1,
+							'default' => 30,
 						),
 						'cool_off_period'      => array(
 							'type'    => 'integer',
@@ -304,6 +314,22 @@ class RestSettingsController extends RestController {
 						'currency' => array(
 							'type'    => 'string',
 							'default' => 'USD',
+						),
+					),
+				),
+				// How long team notifications are kept (Settings → Notifications).
+				'notifications'    => array(
+					'type'                 => 'object',
+					'additionalProperties' => false,
+					'properties'           => array(
+						'retention_type' => array(
+							'type'    => 'string',
+							'default' => 'days',
+							'enum'    => array( 'days', 'never' ),
+						),
+						'retention_days' => array(
+							'type'    => 'string',
+							'default' => '30',
 						),
 					),
 				),
@@ -537,6 +563,10 @@ class RestSettingsController extends RestController {
 				UserRoles::SUPPORT_AGENT,
 				UserRoles::BOOKING_MANAGER,
 				UserRoles::BOOKING_AGENT,
+				UserRoles::AUTOMATION_MANAGER,
+				UserRoles::AUTOMATION_AGENT,
+				UserRoles::HELP_CENTER_MANAGER,
+				UserRoles::HELP_CENTER_AGENT,
 			);
 			$settings['ai']['access']['allowed_roles'] = array_values( array_intersect( (array) $allowed, $valid_roles ) );
 		}
@@ -557,6 +587,11 @@ class RestSettingsController extends RestController {
 		// Sanitize settings
 		$settings = $this->sanitize_settings( $settings );
 
+		// The brand colour: `#RRGGBB`, or empty (the default) for anything else.
+		if ( isset( $settings['business'] ) && is_array( $settings['business'] ) && array_key_exists( \DoubleScale\Core\Settings\BrandColor::KEY, $settings['business'] ) ) {
+			$settings['business'][ \DoubleScale\Core\Settings\BrandColor::KEY ] = (string) ( \DoubleScale\Core\Settings\BrandColor::sanitize( $settings['business'][ \DoubleScale\Core\Settings\BrandColor::KEY ] ) ?? '' );
+		}
+
 		// Cart tracking off must also disable blind CRM contact sync (UI hides that toggle).
 		if ( isset( $settings['cart'] ) && is_array( $settings['cart'] ) ) {
 			if ( empty( $settings['cart']['enable_cart_tracking'] ) ) {
@@ -564,9 +599,14 @@ class RestSettingsController extends RestController {
 			}
 		}
 
-		Settings::update_many( $settings );
+		Settings::update_from_request( $settings );
 
-		$response = array( 'success' => true );
+		// The admin page decides "is AI set up?" once, when it loads. Send the
+		// answer back so the AI builders reflect a key saved a moment ago.
+		$response = array(
+			'success'       => true,
+			'ai_configured' => AdminConfig::is_ai_configured(),
+		);
 		if ( ! empty( $warnings ) ) {
 			$response['warnings'] = $warnings;
 		}
@@ -854,7 +894,8 @@ class RestSettingsController extends RestController {
 			if ( $max_in_second > 10 ) {
 				return new WP_Error(
 					'invalid_rate_limit',
-					__( 'Max WhatsApp per second cannot exceed 10 (provider Api limit)', 'doublescale' ),
+					// DoubleScale's own cap, not Meta's: Meta allows at least 80/s.
+					__( 'Max WhatsApp per second cannot exceed 10 (DoubleScale sending limit)', 'doublescale' ),
 					array(
 						'status' => 400,
 					)
@@ -1033,16 +1074,28 @@ class RestSettingsController extends RestController {
 			'interval'   => 60,
 		);
 
-		// Sms campaigns (every 60 seconds) - Pro only.
-		if ( class_exists( \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class ) ) {
-			$sms_heartbeat = $campaigns_tasks->get_heartbeat_status( 'doublescale_sms_campaigns' );
-			$last_run      = $sms_heartbeat['last_run'] ?? null;
+		// Sms and WhatsApp campaigns (every 60 seconds). A row is listed only
+		// while an engine runs the channel (ChannelEngineRegistry): a drain
+		// nothing runs would only ever show as overdue. engine_owner says which
+		// plugin runs it, for support while the WhatsApp engine moves to Pro.
+		$channel_rows = array(
+			CampaignChannel::STR_SMS      => __( 'Scheduled Sms Sending Tasks', 'doublescale' ),
+			CampaignChannel::STR_WHATSAPP => __( 'Scheduled WhatsApp Sending Tasks', 'doublescale' ),
+		);
+
+		foreach ( $channel_rows as $channel => $human_name ) {
+			if ( ! ChannelEngineRegistry::has( $channel ) ) {
+				continue;
+			}
+
+			$heartbeat = $campaigns_tasks->get_heartbeat_status( "doublescale_{$channel}_campaigns" );
+			$last_run  = $heartbeat['last_run'] ?? null;
 
 			// Calculate next_scheduled on-the-fly.
 			if ( $last_run ) {
 				$next_run = strtotime( $last_run ) + 60;
 			} else {
-				$next_run = as_next_scheduled_action( 'doublescale_campaigns_doublescale_sms_campaigns' );
+				$next_run = as_next_scheduled_action( "doublescale_campaigns_doublescale_{$channel}_campaigns" );
 			}
 
 			if ( ! $next_run || true === $next_run ) {
@@ -1050,12 +1103,13 @@ class RestSettingsController extends RestController {
 			}
 
 			$events[] = array(
-				'hook'       => 'doublescale_campaigns_doublescale_sms_campaigns',
-				'is_overdue' => $this->is_task_overdue( $last_run, 90 ),
-				'human_name' => __( 'Scheduled Sms Sending Tasks', 'doublescale' ),
-				'next_run'   => $next_run ? human_time_diff( $next_run, time() ) : __( 'Unknown', 'doublescale' ),
-				'last_run'   => $last_run ? human_time_diff( strtotime( $last_run ), time() ) . ' ' . __( 'ago', 'doublescale' ) : __( 'Never', 'doublescale' ),
-				'interval'   => 60,
+				'hook'         => "doublescale_campaigns_doublescale_{$channel}_campaigns",
+				'is_overdue'   => $this->is_task_overdue( $last_run, 90 ),
+				'human_name'   => $human_name,
+				'next_run'     => $next_run ? human_time_diff( $next_run, time() ) : __( 'Unknown', 'doublescale' ),
+				'last_run'     => $last_run ? human_time_diff( strtotime( $last_run ), time() ) . ' ' . __( 'ago', 'doublescale' ) : __( 'Never', 'doublescale' ),
+				'interval'     => 60,
+				'engine_owner' => ChannelEngineRegistry::owner( $channel ),
 			);
 		}
 
@@ -1072,24 +1126,7 @@ class RestSettingsController extends RestController {
 		// 'last_run'   => $last_run ? human_time_diff( strtotime( $last_run ), time() ) . ' ' . __( 'ago', 'doublescale') : __( 'Never', 'doublescale'),
 		// 'interval'   => 60,
 		// 'run_count'  => $sequences_heartbeat['run_count'] ?? 0,
-		// );
-
-		// WhatsApp campaigns - Not shipping in this version.
-		// if ( class_exists( 'DoubleScale\Core\PluginKernel' ) ) {
-		// $whatsapp_heartbeat = $campaigns_tasks->get_heartbeat_status( 'doublescale_whatsapp_campaigns' );
-		// $next_run = isset( $whatsapp_heartbeat['next_scheduled'] ) ? strtotime( $whatsapp_heartbeat['next_scheduled'] ) : time() + 60;
-		// $last_run = $whatsapp_heartbeat['last_run'] ?? null;
-		//
-		// $events[] = array(
-		// 'hook'       => 'doublescale_campaigns_doublescale_whatsapp_campaigns',
-		// 'is_overdue' => $this->is_task_overdue( $last_run, 90 ),
-		// 'human_name' => __( 'Scheduled WhatsApp Sending Tasks', 'doublescale'),
-		// 'next_run'   => $next_run ? human_time_diff( $next_run, time() ) : __( 'Unknown', 'doublescale'),
-		// 'last_run'   => $last_run ? human_time_diff( strtotime( $last_run ), time() ) . ' ' . __( 'ago', 'doublescale') : __( 'Never', 'doublescale'),
-		// 'interval'   => 60,
-		// 'run_count'  => $whatsapp_heartbeat['run_count'] ?? 0,
-		// );
-		// }
+		// 		);
 
 		// Daily tasks.
 		$daily_tasks      = \DoubleScale\Core\PluginKernel::instance()->daily_tasks;
@@ -1208,11 +1245,14 @@ class RestSettingsController extends RestController {
 			'doublescale_daily_doublescale_daily4' => __( 'Daily Cleanup Tasks', 'doublescale' ),
 		);
 
-		// Add Pro hooks if SMS campaign processing is available.
-		if ( class_exists( \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class ) ) {
+		// A channel's drain can be run only while an engine runs the channel;
+		// otherwise the hook reaches nothing.
+		if ( ChannelEngineRegistry::has( CampaignChannel::STR_SMS ) ) {
 			$valid_hooks['doublescale_campaigns_doublescale_sms_campaigns'] = __( 'Scheduled Sms Sending Tasks', 'doublescale' );
-			// WhatsApp not shipping in this version.
-			// $valid_hooks['doublescale_campaigns_doublescale_whatsapp_campaigns'] = __( 'Scheduled WhatsApp Sending Tasks', 'doublescale');
+		}
+
+		if ( ChannelEngineRegistry::has( CampaignChannel::STR_WHATSAPP ) ) {
+			$valid_hooks['doublescale_campaigns_doublescale_whatsapp_campaigns'] = __( 'Scheduled WhatsApp Sending Tasks', 'doublescale' );
 		}
 
 		// Email sequences not shipping in this version.

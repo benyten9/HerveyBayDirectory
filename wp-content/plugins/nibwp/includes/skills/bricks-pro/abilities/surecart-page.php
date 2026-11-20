@@ -23,7 +23,7 @@ if (!function_exists('nibwp_surecart_templates') && file_exists($nibwp_sc_engine
  */
 wp_register_ability('nibwp/bricks-pro-surecart', [
     'label'       => __('Bricks Pro — SureCart Section', 'nibwp'),
-    'description' => __('Design a SureCart storefront section (buy-button, product, product-grid, pricing, checkout, dashboard) as a Bricks template — the SureCart blocks hosted in a styled Bricks section. Always dry_run:true first. Bind with price_id / product_id / products / collection_id.', 'nibwp'),
+    'description' => 'Design a SureCart storefront section (buy-button, product, product-grid, pricing, checkout, dashboard) as a Bricks template — the SureCart blocks hosted in a styled Bricks section. Always dry_run:true first. Bind with price_id / product_id / products / collection_id.',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

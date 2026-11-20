@@ -31,7 +31,11 @@ use DoubleScale\Modules\Activities\Models\ActivityCommentModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Activities\Services\ActivityManager;
 use DoubleScale\Pro\Modules\Tasks\Services\TaskStatusManager;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAccess;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAssigneeCandidates;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAssigneeRule;
 use DoubleScale\Pro\Modules\Tasks\Services\TaskCommentNotifier;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskMentions;
 use DoubleScale\Pro\Modules\Tasks\Services\TaskCloneService;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskLabelModel;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskStatusModel;
@@ -39,6 +43,7 @@ use DoubleScale\Pro\Modules\Tasks\Models\TaskRecurrenceModel;
 use DoubleScale\Pro\Modules\Tasks\Recurrences\TaskRecurrenceScheduler;
 use DoubleScale\Core\Models\AttachmentModel;
 use DoubleScale\Core\Services\AttachmentService;
+use DoubleScale\Pro\Modules\Projects\Services\PortalTaskThread;
 
 /**
  * RestTaskController is REST api controller class for tasks
@@ -67,9 +72,11 @@ class RestTaskController extends RestController {
 	private const TASK_ATTACHMENT_MAX_BYTES = 10485760;
 
 	/**
-	 * Maximum active attachments per task.
+	 * Maximum active attachments per task: high, a guard against a runaway
+	 * script rather than a quota (only the team uploads here; client uploads
+	 * have their own limits). Filter: `doublescale_attachment_max_count`.
 	 */
-	private const TASK_ATTACHMENT_MAX_COUNT = 20;
+	private const TASK_ATTACHMENT_MAX_COUNT = 500;
 
 	/**
 	 * Register the routes for the controller.
@@ -561,6 +568,18 @@ class RestTaskController extends RestController {
 					'callback'            => array( $this, 'delete_attachment' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 				),
+				// Show or hide a file from the client in the portal's task window.
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_attachment' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'client_visible' => array(
+							'type'     => 'boolean',
+							'required' => true,
+						),
+					),
+				),
 			)
 		);
 
@@ -659,6 +678,221 @@ class RestTaskController extends RestController {
 				),
 			)
 		);
+
+		// Who may be @mentioned in this task's comments.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/mentionable',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_mentionable' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+			)
+		);
+
+		// Who may take a task on a record: the task window's assignee picker.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/assignee-candidates',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_assignee_candidates' ),
+					'permission_callback' => array( $this, 'assignee_lookup_permissions_check' ),
+					// No record yet: everyone who could take a task at all.
+					'args'                => array_merge( $this->assignee_record_params( false ), $this->assignee_people_params() ),
+				),
+			)
+		);
+
+		// Whether one person may take it, and what saving also does for them.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/assignee-check',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_assignee_check' ),
+					'permission_callback' => array( $this, 'assignee_lookup_permissions_check' ),
+					'args'                => array_merge(
+						$this->assignee_record_params(),
+						array(
+							'user_id' => array(
+								'type'     => 'integer',
+								'required' => true,
+							),
+						)
+					),
+				),
+			)
+		);
+
+		// Automation steps: "Owner of the linked record", then the team.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/automation-assignees',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_automation_assignees' ),
+					'permission_callback' => array( $this, 'automation_assignees_permissions_check' ),
+					'args'                => $this->assignee_people_params(),
+				),
+			)
+		);
+	}
+
+	/**
+	 * @param bool $required Whether the record must be named.
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function assignee_record_params( bool $required = true ): array {
+		return array(
+			'entity_type' => array(
+				'type'     => 'integer',
+				'required' => $required,
+				'enum'     => array( TaskEntityType::CONTACT, TaskEntityType::DEAL, TaskEntityType::PROJECT, TaskEntityType::COMPANY, \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE ),
+			),
+			'entity_id'   => array(
+				'type'     => 'integer',
+				'required' => $required,
+			),
+		);
+	}
+
+	/**
+	 * @return array<string, array<string, mixed>>
+	 */
+	private function assignee_people_params(): array {
+		return array(
+			'search'   => array( 'type' => 'string' ),
+			'include'  => array( 'type' => 'string' ),
+			'page'     => array(
+				'type'    => 'integer',
+				'default' => 1,
+			),
+			'per_page' => array(
+				'type'    => 'integer',
+				'default' => 20,
+			),
+		);
+	}
+
+	/**
+	 * Ids named in an `include` param (picked values the picker resolves).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return int[]
+	 */
+	private function included_ids( $request ): array {
+		$raw = (string) $request->get_param( 'include' );
+		return '' === $raw ? array() : array_map( 'intval', explode( ',', $raw ) );
+	}
+
+	/**
+	 * The people who may take a task on this record.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_assignee_candidates( $request ) {
+		$entity_type = (int) $request->get_param( 'entity_type' );
+		$entity_id   = (int) $request->get_param( 'entity_id' );
+
+		// Before the record is chosen: whoever could take a task at all, so
+		// nobody whose roles never open Tasks is offered.
+		if ( $entity_type <= 0 || $entity_id <= 0 ) {
+			$people = TaskAssigneeCandidates::who_open_tasks( (string) $request->get_param( 'search' ), $this->included_ids( $request ) );
+			return new WP_REST_Response( TaskAssigneeCandidates::page( $people, (int) $request->get_param( 'page' ), (int) $request->get_param( 'per_page' ) ), 200 );
+		}
+
+		if ( ! TaskAssigneeCandidates::viewer_sees_record( $entity_type, $entity_id ) ) {
+			return new WP_Error( 'not_found', __( 'Record not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$people = TaskAssigneeCandidates::for_record( $entity_type, $entity_id, (string) $request->get_param( 'search' ), $this->included_ids( $request ) );
+
+		return new WP_REST_Response( TaskAssigneeCandidates::page( $people, (int) $request->get_param( 'page' ), (int) $request->get_param( 'per_page' ) ), 200 );
+	}
+
+	/**
+	 * Whether one person may take a task on this record, why not, and what
+	 * saving also does for them (joining the project team, sharing the contact).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_assignee_check( $request ) {
+		$entity_type = (int) $request->get_param( 'entity_type' );
+		$entity_id   = (int) $request->get_param( 'entity_id' );
+		$user_id     = (int) $request->get_param( 'user_id' );
+		if ( ! TaskAssigneeCandidates::viewer_sees_record( $entity_type, $entity_id ) ) {
+			return new WP_Error( 'not_found', __( 'Record not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$error = TaskAssigneeRule::error( $entity_type, $entity_id, $user_id );
+		$note  = $error ? '' : TaskAssigneeRule::note( $entity_type, $entity_id, $user_id );
+
+		return new WP_REST_Response(
+			array(
+				'allowed'      => null === $error,
+				'code'         => $error ? $error->get_error_code() : null,
+				'message'      => $error ? $error->get_error_message() : null,
+				'note'         => '' !== $note ? $note : null,
+				'note_message' => '' !== $note ? TaskAssigneeRule::note_message( $note, $user_id ) : null,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Automation steps pick "Owner of the linked record" or a team member
+	 * who opens Tasks; the record is checked when the step runs.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function get_automation_assignees( $request ) {
+		$include   = $this->included_ids( $request );
+		$search    = trim( (string) $request->get_param( 'search' ) );
+		$owner_row = TaskAssigneeCandidates::record_owner_row();
+
+		if ( ! empty( $include ) ) {
+			// Resolving picked values: only the ones asked for.
+			$ids        = array_values( array_filter( $include, static fn( $id ) => $id > 0 ) );
+			$people     = empty( $ids ) ? array() : TaskAssigneeCandidates::who_open_tasks( '', $ids );
+			$with_owner = in_array( TaskAssigneeCandidates::RECORD_OWNER, $include, true );
+		} else {
+			$people     = TaskAssigneeCandidates::who_open_tasks( $search );
+			$with_owner = strlen( $search ) < 2 || false !== stripos( $owner_row['display_name'], $search );
+		}
+
+		if ( $with_owner ) {
+			array_unshift( $people, $owner_row );
+		}
+
+		return new WP_REST_Response( TaskAssigneeCandidates::page( $people, (int) $request->get_param( 'page' ), (int) $request->get_param( 'per_page' ) ), 200 );
+	}
+
+	/**
+	 * Only people who hand tasks to others need to know who may take them.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public function assignee_lookup_permissions_check( $request ) {
+		return Permissions::can_assign_task_assignee();
+	}
+
+	/**
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public function automation_assignees_permissions_check( $request ) {
+		return Permissions::can_assign_task_assignee()
+			|| ( method_exists( Permissions::class, 'can_access_automations' ) && Permissions::can_access_automations() );
 	}
 
 	/**
@@ -725,7 +959,7 @@ class RestTaskController extends RestController {
 	 * Wrap a paginated task feed for REST responses.
 	 *
 	 * @param array<int, array<string, mixed>> $items     Shaped rows.
-	 * @param \Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator Paginator.
+	 * @param \DoubleScale\Vendor\Illuminate\Contracts\Pagination\LengthAwarePaginator $paginator Paginator.
 	 * @return array{items: array<int, array<string, mixed>>, pagination: array<string, int|bool>}
 	 */
 	private function prepare_task_feed_paginated_response( $items, $paginator ) {
@@ -789,7 +1023,7 @@ class RestTaskController extends RestController {
 				'entity_type'  => array(
 					'description' => __( 'Entity type: 1=Contact, 2=Deal.', 'doublescale'),
 					'type'        => 'integer',
-					'enum'        => array( TaskEntityType::CONTACT, TaskEntityType::DEAL, TaskEntityType::PROJECT ),
+					'enum'        => array( TaskEntityType::CONTACT, TaskEntityType::DEAL, TaskEntityType::PROJECT, TaskEntityType::COMPANY, \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE ),
 				),
 				'entity_id'    => array(
 					'description' => __( 'Entity ID (contact or deal).', 'doublescale'),
@@ -824,10 +1058,9 @@ class RestTaskController extends RestController {
 					'enum'        => array_keys( TaskPriority::get_all() ),
 				),
 				'due_date'     => array(
-					'description' => __( 'Due date (Y-m-d format).', 'doublescale'),
-					'type'        => 'string',
-					'format'      => 'date',
-					'required'    => true,
+					'description' => __( 'Due date (Y-m-d format). Optional; empty or null clears it.', 'doublescale'),
+					'type'        => array( 'string', 'null' ),
+					'required'    => false,
 				),
 				'due_time'     => array(
 					'description' => __( 'Due time (H:i:s format).', 'doublescale'),
@@ -903,7 +1136,7 @@ class RestTaskController extends RestController {
 			'entity_type' => array(
 				'description' => __( 'Filter by entity type (1=Contact, 2=Deal).', 'doublescale'),
 				'type'        => 'integer',
-				'enum'        => array( TaskEntityType::CONTACT, TaskEntityType::DEAL, TaskEntityType::PROJECT ),
+				'enum'        => array( TaskEntityType::CONTACT, TaskEntityType::DEAL, TaskEntityType::PROJECT, TaskEntityType::COMPANY, \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE ),
 			),
 			'entity_id'   => array(
 				'description' => __( 'Filter by entity ID (contact or deal).', 'doublescale'),
@@ -965,9 +1198,10 @@ class RestTaskController extends RestController {
 			// (can be contact OR deal). The contact_id/deal_id accessors handle this.
 			$query = TaskModel::with( array( 'assignedUser' ) );
 
-			// Sales reps see tasks assigned to them or with a subtask assigned to them.
-			if ( Permissions::is_sales_rep() ) {
-				$query->visibleToSalesRep( get_current_user_id() );
+			// Own-tasks-only users see tasks assigned to them, with a subtask
+			// assigned to them, or on a project they own or are on the team of.
+			if ( self::is_own_tasks_only() ) {
+				TaskAccess::apply_visibility( $query );
 			}
 
 			// Apply status filter (handles both DB statuses and calculated display statuses)
@@ -995,8 +1229,8 @@ class RestTaskController extends RestController {
 				}
 			}
 
-			// Only apply assigned_to filter if not a sales rep (they're already filtered)
-			if ( $assigned_to && ! Permissions::is_sales_rep() ) {
+			// Visibility is scoped above, so the filter can only narrow what they see.
+			if ( $assigned_to ) {
 				$query->where( 'assigned_to', $assigned_to );
 			}
 
@@ -1041,7 +1275,8 @@ class RestTaskController extends RestController {
 			}
 
 			// Order by due date ascending (earliest first), then priority
-			$query->orderBy( 'due_date', 'asc' )->byPriority();
+			// Tasks with a due date first (earliest first), the undated ones after them.
+			$query->orderByRaw( 'due_date IS NULL' )->orderBy( 'due_date', 'asc' )->byPriority();
 
 			// Get total count before pagination
 			$total_count = $query->count();
@@ -1129,6 +1364,11 @@ class RestTaskController extends RestController {
 				return $task_data;
 			}
 
+			$assignee_error = TaskAssigneeRule::error_for_task( $task_data );
+			if ( $assignee_error ) {
+				return $assignee_error;
+			}
+
 			// Create task
 			if ( empty( $task_data['status'] ) ) {
 				$task_data['status'] = TaskStatus::PENDING;
@@ -1208,10 +1448,23 @@ class RestTaskController extends RestController {
 				return $task_data;
 			}
 
+			// An agent works on a teammate's project task but never takes it over:
+			// the edit form always sends "assigned to me" for them.
+			if ( ! Permissions::can_assign_task_assignee() && ! TaskModel::salesRepOwns( $task ) ) {
+				unset( $task_data['assigned_to'] );
+			}
+
 			// Apply assignee restrictions (self-only for sales reps / project members).
 			$task_data = $this->apply_assignee_restrictions( $task_data );
 			if ( is_wp_error( $task_data ) ) {
 				return $task_data;
+			}
+
+			// A new assignee or a new record must fit the rule; an old task
+			// saved as it is still saves.
+			$assignee_error = TaskAssigneeRule::error_for_task( $task_data, $task );
+			if ( $assignee_error ) {
+				return $assignee_error;
 			}
 
 			// Apply kanban stage side effects before persisting.
@@ -1269,8 +1522,9 @@ class RestTaskController extends RestController {
 				return new WP_Error( 'not_found', __( 'Task not found.', 'doublescale'), array( 'status' => 404 ) );
 			}
 
-			// Sales reps can only delete tasks they own (not subtask-only access).
-			$access_check = $this->check_sales_rep_owner_access( $task );
+			// Own-tasks-only users delete their own tasks, and project owners
+			// their project's (team members never delete each other's work).
+			$access_check = $this->check_task_delete_access( $task );
 			if ( is_wp_error( $access_check ) ) {
 				return $access_check;
 			}
@@ -1425,11 +1679,12 @@ class RestTaskController extends RestController {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param SubtaskModel $subtask Subtask.
+	 * @param SubtaskModel   $subtask Subtask.
+	 * @param TaskModel|null $task    Its task, when the caller has it (saves a query).
 	 *
 	 * @return array
 	 */
-	private function prepare_subtask_for_response( $subtask ) {
+	private function prepare_subtask_for_response( $subtask, $task = null ) {
 		$data = array(
 			'id'           => (int) $subtask->id,
 			'task_id'      => (int) $subtask->task_id,
@@ -1442,6 +1697,10 @@ class RestTaskController extends RestController {
 			'due_date'     => $subtask->due_date ? (string) $subtask->due_date : null,
 			'reminder_at'  => $subtask->reminder_at ? (string) $subtask->reminder_at : null,
 		);
+
+		// Whether the reader may reassign or delete it (a teammate's is theirs).
+		$parent               = $task instanceof TaskModel ? $task : TaskModel::find( (int) $subtask->task_id );
+		$data['can_reassign'] = $parent ? TaskAccess::can_reassign_subtask( $parent, $subtask ) : true;
 
 		if ( $subtask->relationLoaded( 'assignedUser' ) && $subtask->assignedUser ) {
 			$user         = $subtask->assignedUser->toArray();
@@ -1507,8 +1766,8 @@ class RestTaskController extends RestController {
 				->orderBy( 'position' )
 				->get()
 				->map(
-					function ( $subtask ) {
-						return $this->prepare_subtask_for_response( $subtask );
+					function ( $subtask ) use ( $task ) {
+						return $this->prepare_subtask_for_response( $subtask, $task );
 					}
 				)
 				->values();
@@ -1550,6 +1809,11 @@ class RestTaskController extends RestController {
 			$assignee_validation = $this->validate_subtask_assignee( $request );
 			if ( is_wp_error( $assignee_validation ) ) {
 				return $assignee_validation;
+			}
+
+			$assignee_error = $this->subtask_assignee_rule_error( $task, absint( $request->get_param( 'assigned_to' ) ) );
+			if ( $assignee_error ) {
+				return $assignee_error;
 			}
 
 			$next_position = $this->next_subtask_position( $task->id, $group_id );
@@ -1639,9 +1903,19 @@ class RestTaskController extends RestController {
 			}
 
 			if ( $request->has_param( 'assigned_to' ) ) {
+				$new_assignee = $request->get_param( 'assigned_to' ) ? absint( $request->get_param( 'assigned_to' ) ) : 0;
+				if ( $new_assignee !== (int) $subtask->assigned_to && ! TaskAccess::can_reassign_subtask( $task, $subtask ) ) {
+					return $this->subtask_belongs_to_teammate_error();
+				}
 				$assignee_validation = $this->validate_subtask_assignee( $request, 'assigned_to' );
 				if ( is_wp_error( $assignee_validation ) ) {
 					return $assignee_validation;
+				}
+				if ( $new_assignee !== (int) $subtask->assigned_to ) {
+					$assignee_error = $this->subtask_assignee_rule_error( $task, $new_assignee );
+					if ( $assignee_error ) {
+						return $assignee_error;
+					}
 				}
 				$assigned_to = $request->get_param( 'assigned_to' );
 				$subtask->assigned_to = $assigned_to ? absint( $assigned_to ) : null;
@@ -1695,6 +1969,10 @@ class RestTaskController extends RestController {
 				return new WP_Error( 'not_found', __( 'Subtask not found.', 'doublescale'), array( 'status' => 404 ) );
 			}
 
+			if ( ! TaskAccess::can_reassign_subtask( $task, $subtask ) ) {
+				return $this->subtask_belongs_to_teammate_error();
+			}
+
 			$subtask_copy = $this->prepare_subtask_for_response( $subtask );
 			$subtask->delete();
 
@@ -1735,8 +2013,8 @@ class RestTaskController extends RestController {
 				->orderBy( 'position' )
 				->get()
 				->map(
-					function ( $subtask ) {
-						return $this->prepare_subtask_for_response( $subtask );
+					function ( $subtask ) use ( $task ) {
+						return $this->prepare_subtask_for_response( $subtask, $task );
 					}
 				)
 				->values();
@@ -2021,7 +2299,20 @@ class RestTaskController extends RestController {
 				return $task_data;
 			}
 
+			$assignee_error = TaskAssigneeRule::error_for_task( $task_data );
+			if ( $assignee_error ) {
+				return $assignee_error;
+			}
+
 			$new_task = TaskModel::create( $task_data );
+
+			/**
+			 * Fires when a subtask becomes a task of its own, before the subtask is deleted.
+			 *
+			 * @param int $subtask_id The subtask that was converted.
+			 * @param int $task_id    The new task.
+			 */
+			do_action( 'doublescale_subtask_converted_to_task', (int) $subtask->id, (int) $new_task->id );
 			$subtask->delete();
 
 			return new WP_REST_Response(
@@ -2122,6 +2413,15 @@ class RestTaskController extends RestController {
 			}
 
 			$subtask = SubtaskModel::create( $subtask_data );
+
+			/**
+			 * Fires when a task becomes a subtask of another task, before the task is deleted.
+			 *
+			 * @param int $task_id        The task that was converted.
+			 * @param int $parent_task_id The task it now belongs to.
+			 * @param int $subtask_id     The new subtask.
+			 */
+			do_action( 'doublescale_task_converted_to_subtask', (int) $task->id, (int) $parent_task_id, (int) $subtask->id );
 			$task->delete();
 			$subtask->load( 'assignedUser' );
 
@@ -2267,7 +2567,7 @@ class RestTaskController extends RestController {
 			return true;
 		}
 
-		if ( Permissions::is_sales_rep() && (int) absint( $user_id ) !== get_current_user_id() ) {
+		if ( self::is_own_tasks_only() && (int) absint( $user_id ) !== get_current_user_id() ) {
 			return new WP_Error(
 				'forbidden',
 				__( 'Sales reps can only assign subtasks to themselves.', 'doublescale'),
@@ -2281,6 +2581,22 @@ class RestTaskController extends RestController {
 		}
 
 		return true;
+	}
+
+	/**
+	 * A subtask's person must be able to work its task's record, like the
+	 * task's own assignee ({@see TaskAssigneeRule}). Nobody (0) is allowed.
+	 *
+	 * @param TaskModel $task    Parent task.
+	 * @param int       $user_id Wanted assignee.
+	 * @return WP_Error|null
+	 */
+	private function subtask_assignee_rule_error( $task, int $user_id ): ?WP_Error {
+		if ( $user_id <= 0 ) {
+			return null;
+		}
+
+		return TaskAssigneeRule::error( (int) $task->entity_type, (int) $task->entity_id, $user_id );
 	}
 
 	/**
@@ -2377,12 +2693,33 @@ class RestTaskController extends RestController {
 			do_action( 'doublescale_task_file_attached', $task, $attachment );
 
 			return new WP_REST_Response(
-				$service->shape_for_api( $attachment ),
+				$this->shape_task_attachment( $service, $attachment ),
 				201
 			);
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 400 ) );
 		}
+	}
+
+	/**
+	 * Show or hide a task file from the client (the portal's task window).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_attachment( $request ) {
+		$task = $this->get_task_for_subtask( $request, true );
+		if ( is_wp_error( $task ) ) {
+			return $task;
+		}
+		$attachment = $this->find_task_attachment( $task, (int) $request->get_param( 'attachment_id' ) );
+		if ( is_wp_error( $attachment ) ) {
+			return $attachment;
+		}
+
+		PortalTaskThread::set_client_visible( $attachment, rest_sanitize_boolean( $request->get_param( 'client_visible' ) ) );
+
+		return new WP_REST_Response( $this->shape_task_attachment( $this->attachment_service(), $attachment ), 200 );
 	}
 
 	/**
@@ -2482,11 +2819,16 @@ class RestTaskController extends RestController {
 				return new WP_Error( 'missing_body', __( 'Comment body is required.', 'doublescale'), array( 'status' => 400 ) );
 			}
 
+			// "Visible to client": only where the client can read the task's thread.
+			$for_client = rest_sanitize_boolean( $request->get_param( 'client_visible' ) )
+				&& PortalTaskThread::is_open( $task );
+
 			$activity = ActivityManager::instance()->add_note(
 				array(
 					'entity_type' => ActivityAssociationModel::ENTITY_TYPE_TASK,
 					'entity_id'   => $task->id,
 					'content'     => $body,
+					'meta'        => $for_client ? array( 'client_visible' => true ) : array(),
 				)
 			);
 
@@ -2496,6 +2838,9 @@ class RestTaskController extends RestController {
 
 			$activity->load( 'user' );
 			TaskCommentNotifier::notify( $task, $body, true );
+			if ( $for_client ) {
+				PortalTaskThread::tell_client_about_comment( $task, $activity );
+			}
 
 			return new WP_REST_Response( $this->prepare_comment_for_response( $activity, $task->id ), 201 );
 		} catch ( Exception $e ) {
@@ -2693,6 +3038,21 @@ class RestTaskController extends RestController {
 	}
 
 	/**
+	 * People who may be @mentioned on a task: its managers and its assignee.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_mentionable( $request ) {
+		$task = TaskModel::find( (int) $request->get_param( 'id' ) );
+		if ( ! $task ) {
+			return new WP_Error( 'not_found', __( 'Task not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		return new WP_REST_Response( TaskMentions::candidates( $task, get_current_user_id() ), 200 );
+	}
+
+	/**
 	 * List all activities (comments + audit events) for a task.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -2738,24 +3098,18 @@ class RestTaskController extends RestController {
 
 		$rows = array();
 		foreach ( $activities as $activity ) {
+			// Comments (notes) and their replies have their own Comments list
+			// beside this feed; repeating them here doubled every comment.
+			if ( 'note' === (string) $activity->activity_type ) {
+				continue;
+			}
+
 			$rows[] = array(
 				'sort_at' => (string) $activity->created_at,
 				// Tiebreaker for entries sharing a second — see the usort below.
 				'sort_id' => (int) $activity->id,
 				'entry'   => $this->prepare_activity_for_response( $activity, $task->id ),
 			);
-
-			if ( 'note' !== (string) $activity->activity_type || ! $activity->relationLoaded( 'comments' ) ) {
-				continue;
-			}
-
-			foreach ( $activity->comments as $reply ) {
-				$rows[] = array(
-					'sort_at' => (string) $reply->created_at,
-					'sort_id' => (int) $reply->id,
-					'entry'   => $this->prepare_activity_reply_for_response( $reply, $activity, $task->id ),
-				);
-			}
 		}
 
 		usort(
@@ -2905,14 +3259,26 @@ class RestTaskController extends RestController {
 			'id'             => (int) $activity->id,
 			'task_id'        => (int) $task_id,
 			'body'           => $content,
-			'formatted_body' => wp_kses_post( $content ),
+			'formatted_body' => self::format_comment_html( $content ),
 			'created_at'     => (string) $activity->created_at,
 			'updated_at'     => (string) $activity->updated_at,
 			'edited'         => (string) $activity->updated_at > (string) $activity->created_at,
+			// The client wrote it from the portal, or reads it there.
+			'author_type'    => PortalTaskThread::from_client( $activity ) ? 'client' : 'team',
+			'client_visible' => PortalTaskThread::in_thread( $activity ),
+			// When the client first read it in the portal (team comments only).
+			'client_seen_at' => isset( $data['client_seen_at'] ) ? (string) $data['client_seen_at'] : null,
 		);
 
 		if ( $activity->relationLoaded( 'user' ) && $activity->user ) {
 			$response['user'] = $this->prepare_activity_user_for_response( $activity->user );
+		} elseif ( PortalTaskThread::from_client( $activity ) ) {
+			// No WordPress user: the team sees the client's name.
+			$response['user'] = array(
+				'id'           => 0,
+				'display_name' => PortalTaskThread::client_name( $activity ),
+				'email'        => '',
+			);
 		}
 
 		$replies = array();
@@ -2940,7 +3306,7 @@ class RestTaskController extends RestController {
 			'id'             => (int) $reply->id,
 			'activity_id'    => (int) $reply->activity_id,
 			'body'           => $content,
-			'formatted_body' => wp_kses_post( $content ),
+			'formatted_body' => self::format_comment_html( $content ),
 			'created_at'     => (string) $reply->created_at,
 			'updated_at'     => (string) $reply->updated_at,
 			'edited'         => (string) $reply->updated_at > (string) $reply->created_at,
@@ -2953,48 +3319,6 @@ class RestTaskController extends RestController {
 		return $response;
 	}
 
-	/**
-	 * Shape a threaded reply for the task activity log.
-	 *
-	 * @param ActivityCommentModel $reply           Reply model.
-	 * @param ActivityModel        $parent_activity Parent note activity.
-	 * @param int                  $task_id         Task ID.
-	 * @return array
-	 */
-	private function prepare_activity_reply_for_response( $reply, $parent_activity, $task_id ) {
-		$content        = (string) $reply->content;
-		$parent_data    = $parent_activity->data ?? array();
-		$parent_content = (string) ( $parent_data['content'] ?? '' );
-		$parent_user_id = (int) ( $parent_activity->user_id ?? 0 );
-		$parent_name    = '';
-
-		if ( $parent_activity->relationLoaded( 'user' ) && $parent_activity->user ) {
-			$parent_arr  = $parent_activity->user->toArray();
-			$parent_name = (string) ( $parent_arr['display_name'] ?? '' );
-		}
-
-		$response = array(
-			'id'            => (int) $reply->id,
-			'timeline_id'   => 'reply-' . (int) $reply->id,
-			'task_id'       => (int) $task_id,
-			'activity_type' => 'comment_reply',
-			'event_key'     => null,
-			'data'          => array(
-				'content'                  => $content,
-				'parent_comment_id'        => (int) $parent_activity->id,
-				'parent_comment_author_id' => $parent_user_id,
-				'parent_comment_author'    => $parent_name,
-				'parent_comment_excerpt'   => wp_trim_words( wp_strip_all_tags( $parent_content ), 12, '…' ),
-			),
-			'created_at'    => (string) $reply->created_at,
-		);
-
-		if ( $reply->relationLoaded( 'user' ) && $reply->user ) {
-			$response['user'] = $this->prepare_activity_user_for_response( $reply->user );
-		}
-
-		return $response;
-	}
 
 	/**
 	 * Shape an activity entry for the task audit log.
@@ -3018,6 +3342,13 @@ class RestTaskController extends RestController {
 
 		if ( $activity->relationLoaded( 'user' ) && $activity->user ) {
 			$response['user'] = $this->prepare_activity_user_for_response( $activity->user );
+		} elseif ( 'note' === (string) $activity->activity_type && PortalTaskThread::from_client( $activity ) ) {
+			// "Jane Client commented", not "Someone".
+			$response['user'] = array(
+				'id'           => 0,
+				'display_name' => PortalTaskThread::client_name( $activity ),
+				'email'        => '',
+			);
 		}
 
 		return $response;
@@ -3072,11 +3403,16 @@ class RestTaskController extends RestController {
 				if ( ! empty( $value ) ) {
 					// Validate datetime format but don't sanitize with text sanitizer
 					$data[ $field ] = $value;
-				} elseif ( 'reminder_at' === $field ) {
-					// Allow clearing reminder_at by setting it to null
+				} elseif ( in_array( $field, array( 'reminder_at', 'due_date', 'due_time' ), true ) ) {
+					// Allow clearing the reminder, the due date and the due time (null).
 					$data[ $field ] = null;
 				}
 			}
+		}
+
+		// No due date, no due time.
+		if ( array_key_exists( 'due_date', $data ) && null === $data['due_date'] ) {
+			$data['due_time'] = null;
 		}
 
 		if ( ! empty( $data['due_time'] ) ) {
@@ -3113,6 +3449,11 @@ class RestTaskController extends RestController {
 		}
 		$data = array_merge( $data, $entity_result );
 
+		$project_error = $this->project_entity_error( $data, (int) $request->get_param( 'id' ) );
+		if ( $project_error ) {
+			return $project_error;
+		}
+
 		// Validate required fields for create operations
 		if ( ! $request->get_param( 'id' ) ) {
 			$validation_error = $this->validate_required_fields( $data );
@@ -3144,7 +3485,8 @@ class RestTaskController extends RestController {
 
 			// Validate contact exists
 			$contact = ContactModel::find( $entity_data['entity_id'] );
-			if ( ! $contact ) {
+			// An agent limited to their own contacts can't attach a task to a colleague's.
+			if ( ! $contact || \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::contact_reference_error( (int) $contact->id ) ) {
 				return new WP_Error( 'invalid_contact', __( 'Invalid contact ID.', 'doublescale'), array( 'status' => 400 ) );
 			}
 		} elseif ( $request->has_param( 'deals' ) && $request->get_param( 'deals' ) ) {
@@ -3152,22 +3494,34 @@ class RestTaskController extends RestController {
 			$entity_data['entity_type'] = TaskEntityType::DEAL;
 			$entity_data['entity_id']   = absint( $request->get_param( 'deals' ) );
 
-			if ( ! class_exists( \DoubleScale\Pro\Modules\Deals\Models\DealModel::class ) ) {
+			if ( ! doublescale_module_data_ready( 'deals' ) ) {
 				return new WP_Error( 'pro_required', __( 'Deal tasks require the Pipelines & Deals module.', 'doublescale' ), array( 'status' => 403 ) );
 			}
 
 			// Validate deal exists (if Pro model is available)
 			if ( class_exists( 'DoubleScale\\Pro\Modules\Deals\Models\DealModel' ) ) {
 				$deal = \DoubleScale\Pro\Modules\Deals\Models\DealModel::find( $entity_data['entity_id'] );
-				if ( ! $deal ) {
+				$private = $deal && \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::is_scoped_agent()
+					&& (int) $deal->owner_id !== (int) get_current_user_id()
+					&& ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals();
+				if ( ! $deal || $private ) {
 					return new WP_Error( 'invalid_deal', __( 'Invalid deal ID.', 'doublescale'), array( 'status' => 400 ) );
 				}
+			}
+		} elseif ( $request->has_param( 'companies' ) && $request->get_param( 'companies' ) ) {
+			// A task about a client company.
+			$entity_data['entity_type'] = TaskEntityType::COMPANY;
+			$entity_data['entity_id']   = absint( $request->get_param( 'companies' ) );
+
+			$valid = $this->validate_task_entity_reference( TaskEntityType::COMPANY, $entity_data['entity_id'] );
+			if ( is_wp_error( $valid ) ) {
+				return $valid;
 			}
 		} elseif ( $request->has_param( 'projects' ) && $request->get_param( 'projects' ) ) {
 			$entity_data['entity_type'] = TaskEntityType::PROJECT;
 			$entity_data['entity_id']   = absint( $request->get_param( 'projects' ) );
 
-			if ( ! class_exists( \DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class ) ) {
+			if ( ! doublescale_module_data_ready( 'projects' ) ) {
 				return new WP_Error( 'pro_required', __( 'Project tasks require the Projects module.', 'doublescale' ), array( 'status' => 403 ) );
 			}
 
@@ -3200,8 +3554,24 @@ class RestTaskController extends RestController {
 	 * @return true|WP_Error
 	 */
 	private function validate_task_entity_reference( $entity_type, $entity_id ) {
+		if ( \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE === (int) $entity_type ) {
+			// A record of a custom type the user can open (Custom Objects add-on).
+			if ( ! \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::readable( (int) $entity_id, get_current_user_id() ) ) {
+				return new WP_Error( 'invalid_record', __( 'Invalid record ID.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			return true;
+		}
+
+		if ( TaskEntityType::COMPANY === (int) $entity_type ) {
+			$model = '\\DoubleScale\\Pro\\Modules\\Companies\\Models\\CompanyModel';
+			if ( ! class_exists( $model ) || ! $model::find( (int) $entity_id ) || ! \DoubleScale\Core\UserRoles\Permissions::can_read_contacts() ) {
+				return new WP_Error( 'invalid_company', __( 'Invalid company ID.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			return true;
+		}
+
 		if ( TaskEntityType::PROJECT === (int) $entity_type ) {
-			if ( ! class_exists( \DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class ) ) {
+			if ( ! doublescale_module_data_ready( 'projects' ) ) {
 				return new WP_Error( 'pro_required', __( 'Project tasks require the Projects module.', 'doublescale' ), array( 'status' => 403 ) );
 			}
 
@@ -3266,7 +3636,7 @@ class RestTaskController extends RestController {
 	 * @return bool|WP_Error True if allowed, WP_Error if denied.
 	 */
 	private function check_sales_rep_view_access( $task ) {
-		if ( Permissions::is_sales_rep() && ! TaskModel::salesRepCanView( $task ) ) {
+		if ( self::is_own_tasks_only() && ! TaskAccess::can_view( $task ) ) {
 			return new WP_Error( 'not_found', __( 'Task not found.', 'doublescale'), array( 'status' => 404 ) );
 		}
 
@@ -3283,7 +3653,36 @@ class RestTaskController extends RestController {
 	 * @return bool|WP_Error True if allowed, WP_Error if denied.
 	 */
 	private function check_sales_rep_owner_access( $task ) {
-		if ( Permissions::is_sales_rep() && ! TaskModel::salesRepOwns( $task ) ) {
+		if ( self::is_own_tasks_only() && ! TaskAccess::can_edit( $task ) ) {
+			return new WP_Error( 'not_found', __( 'Task not found.', 'doublescale'), array( 'status' => 404 ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * A teammate's subtask: only they, the task's owner or the project's owner
+	 * change who works on it or delete it.
+	 *
+	 * @return WP_Error
+	 */
+	private function subtask_belongs_to_teammate_error(): WP_Error {
+		return new WP_Error(
+			'doublescale_subtask_belongs_to_teammate',
+			__( 'This subtask belongs to a teammate. Only they or the project owner can reassign or delete it.', 'doublescale' ),
+			array( 'status' => 403 )
+		);
+	}
+
+	/**
+	 * Check if the current user may delete a task.
+	 *
+	 * @param TaskModel $task The task to check access for.
+	 *
+	 * @return bool|WP_Error True if allowed, WP_Error if denied.
+	 */
+	private function check_task_delete_access( $task ) {
+		if ( self::is_own_tasks_only() && ! TaskAccess::can_delete( $task ) ) {
 			return new WP_Error( 'not_found', __( 'Task not found.', 'doublescale'), array( 'status' => 404 ) );
 		}
 
@@ -3305,7 +3704,7 @@ class RestTaskController extends RestController {
 	 * @return bool|WP_Error True if allowed, WP_Error if denied.
 	 */
 	private function check_sales_rep_subtask_mutation_access( $task, $subtask, $request ) {
-		if ( ! Permissions::is_sales_rep() || TaskModel::salesRepOwns( $task ) ) {
+		if ( ! self::is_own_tasks_only() || TaskAccess::can_edit( $task ) ) {
 			return true;
 		}
 
@@ -3337,7 +3736,7 @@ class RestTaskController extends RestController {
 	 * @return bool|WP_Error True if allowed, WP_Error if denied
 	 */
 	private function check_sales_rep_deal_access( $deal_id ) {
-		if ( ! class_exists( 'DoubleScale\\Pro\Modules\Deals\Models\DealModel' ) ) {
+		if ( ! doublescale_module_data_ready( 'deals' ) ) {
 			return true;
 		}
 
@@ -3361,15 +3760,23 @@ class RestTaskController extends RestController {
 	 * @return array|WP_Error Modified task data or WP_Error if access denied
 	 */
 	private function apply_assignee_restrictions( $task_data ) {
-		if ( ! Permissions::can_assign_task_assignee() ) {
+		// Only when the save sets the assignee (create always does): editing a
+		// teammate's project task must not take it over.
+		if ( ! Permissions::can_assign_task_assignee() && array_key_exists( 'assigned_to', $task_data ) ) {
 			$current_user_id = get_current_user_id();
 
-			if ( empty( $task_data['assigned_to'] ) || (int) $task_data['assigned_to'] !== $current_user_id ) {
+			if ( (int) $task_data['assigned_to'] !== $current_user_id ) {
 				$task_data['assigned_to'] = $current_user_id;
 			}
 		}
 
-		if ( Permissions::is_sales_rep() && isset( $task_data['entity_type'] ) && TaskEntityType::DEAL === (int) $task_data['entity_type'] ) {
+		// Same rule subtasks follow: the assignee must be a real user, or the
+		// task is assigned to nobody and shows up in no one's list.
+		if ( ! empty( $task_data['assigned_to'] ) && ! UserModel::find( (int) $task_data['assigned_to'] ) ) {
+			return new WP_Error( 'invalid_user', __( 'Invalid assignee user ID.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		if ( self::is_own_tasks_only() && isset( $task_data['entity_type'] ) && TaskEntityType::DEAL === (int) $task_data['entity_type'] ) {
 			$deal_access = $this->check_sales_rep_deal_access( $task_data['entity_id'] );
 			if ( is_wp_error( $deal_access ) ) {
 				return $deal_access;
@@ -3712,6 +4119,15 @@ class RestTaskController extends RestController {
 				return $task;
 			}
 
+			// A repeat counts from the due date.
+			if ( empty( $task->due_date ) ) {
+				return new WP_Error(
+					'task_repeat_needs_due_date',
+					__( 'Set a due date to repeat this task.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+
 			$prepared = $this->prepare_recurrence_data( $request );
 			if ( is_wp_error( $prepared ) ) {
 				return $prepared;
@@ -3997,13 +4413,15 @@ class RestTaskController extends RestController {
 		if ( $entity_type === TaskEntityType::CONTACT ) {
 			$task->load( 'contact' );
 		} elseif ( $entity_type === TaskEntityType::DEAL ) {
-			if ( class_exists( 'DoubleScale\\Pro\Modules\Deals\Models\DealModel' ) ) {
+			if ( doublescale_module_data_ready( 'deals' ) ) {
 				$task->load( 'deal' );
 			}
 		} elseif ( $entity_type === TaskEntityType::PROJECT ) {
-			if ( class_exists( 'DoubleScale\\Pro\Modules\Projects\Models\ProjectModel' ) ) {
+			if ( doublescale_module_data_ready( 'projects' ) ) {
 				$task->load( 'project' );
 			}
+		} elseif ( $entity_type === TaskEntityType::COMPANY ) {
+			$task->load( 'company' );
 		}
 	}
 
@@ -4021,6 +4439,24 @@ class RestTaskController extends RestController {
 	 */
 	private function prepare_task_for_response( $task, $include_attachments = false ) {
 		$data = $task->toArray();
+
+		// A task names its deal or project; their money and the rest stay on
+		// their own pages, behind their own access rules.
+		$named = array(
+			'deal'    => array( 'id', 'title', 'contact_id', 'owner_id', 'status' ),
+			'project' => array( 'id', 'title', 'contact_id', 'owner_id', 'status_id' ),
+			'company' => array( 'id', 'name' ),
+		);
+		foreach ( $named as $relation => $keep ) {
+			if ( isset( $data[ $relation ] ) && is_array( $data[ $relation ] ) ) {
+				$data[ $relation ] = array_intersect_key( $data[ $relation ], array_flip( $keep ) );
+			}
+		}
+
+		// A record of a custom type: its name and page, when the viewer may open it.
+		if ( \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE === (int) $task->entity_type ) {
+			$data['record'] = \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::summary( (int) $task->entity_id, get_current_user_id() );
+		}
 
 		// Normalize assigned_user to use lowercase 'id' for consistency with timeline endpoint
 		if ( isset( $data['assigned_user'] ) && is_array( $data['assigned_user'] ) ) {
@@ -4042,8 +4478,8 @@ class RestTaskController extends RestController {
 					}
 				)
 				->map(
-					function ( $subtask ) {
-						return $this->prepare_subtask_for_response( $subtask );
+					function ( $subtask ) use ( $task ) {
+						return $this->prepare_subtask_for_response( $subtask, $task );
 					}
 				)
 				->values()
@@ -4136,6 +4572,17 @@ class RestTaskController extends RestController {
 			$data['status_id'] = (int) $data['status_id'];
 		}
 
+		// What the reader may do, so screens follow the server instead of guessing.
+		$data['permissions'] = array(
+			'can_edit'   => TaskAccess::can_edit( $task ),
+			'can_delete' => TaskAccess::can_delete( $task ),
+		);
+
+		// Whether the client reads the task's thread in the portal, so the
+		// comment box and files offer "Visible to client". Lists too: the task
+		// window opens from a list row (one lookup per project, not per task).
+		$data['client_thread'] = PortalTaskThread::is_open( $task );
+
 		return $data;
 	}
 
@@ -4155,10 +4602,29 @@ class RestTaskController extends RestController {
 
 		$shaped = array();
 		foreach ( $rows as $attachment ) {
-			$shaped[] = $service->shape_for_api( $attachment );
+			$shaped[] = $this->shape_task_attachment( $service, $attachment );
 		}
 
 		return $shaped;
+	}
+
+	/**
+	 * A task file for the team: who uploaded it and whether the client sees it.
+	 *
+	 * @param AttachmentService $service    Attachment service.
+	 * @param AttachmentModel   $attachment File.
+	 * @return array<string, mixed>
+	 */
+	private function shape_task_attachment( AttachmentService $service, AttachmentModel $attachment ): array {
+		return array_merge(
+			$service->shape_for_api( $attachment ),
+			array(
+				'uploaded_by'      => $service->uploader_for_api( $attachment ),
+				'client_visible'   => PortalTaskThread::is_client_visible( $attachment ),
+				// When the client first opened it (free's ClientSeen stamps it).
+				'client_opened_at' => ( (array) $attachment->meta )['client_opened_at'] ?? null,
+			)
+		);
 	}
 
 	/**
@@ -4188,7 +4654,14 @@ class RestTaskController extends RestController {
 	 * @return WP_Error|null
 	 */
 	private function guard_task_attachment_count( int $existing_count ): ?WP_Error {
-		if ( $existing_count >= self::TASK_ATTACHMENT_MAX_COUNT ) {
+		/**
+		 * Most files one project, deal or task can hold.
+		 *
+		 * @param int    $max  Default 500.
+		 * @param string $type 'project', 'deal' or 'task'.
+		 */
+		$max = max( 1, (int) apply_filters( 'doublescale_attachment_max_count', self::TASK_ATTACHMENT_MAX_COUNT, 'task' ) );
+		if ( $existing_count >= $max ) {
 			return new WP_Error(
 				'too_many_files',
 				sprintf(
@@ -4196,10 +4669,10 @@ class RestTaskController extends RestController {
 					_n(
 						'You can attach at most %d file to this task.',
 						'You can attach at most %d files to this task.',
-						self::TASK_ATTACHMENT_MAX_COUNT,
+						$max,
 						'doublescale'
 					),
-					self::TASK_ATTACHMENT_MAX_COUNT
+					$max
 				),
 				array( 'status' => 400 )
 			);
@@ -4240,9 +4713,9 @@ class RestTaskController extends RestController {
 			// Build query with sales rep filtering
 			$query = TaskModel::whereIn( 'id', $ids );
 
-			// Sales reps can only delete their own tasks
-			if ( Permissions::is_sales_rep() ) {
-				$query->where( 'assigned_to', get_current_user_id() );
+			// Own-tasks-only users delete their own tasks (and their projects' when they own them).
+			if ( self::is_own_tasks_only() ) {
+				TaskAccess::apply_deletable( $query );
 			}
 
 			// Get tasks that will actually be deleted (for accurate count)
@@ -4298,9 +4771,9 @@ class RestTaskController extends RestController {
 			// Build query with sales rep filtering
 			$query = TaskModel::whereIn( 'id', $ids );
 
-			// Sales reps can only complete their own tasks
-			if ( Permissions::is_sales_rep() ) {
-				$query->where( 'assigned_to', get_current_user_id() );
+			// Own-tasks-only users complete their own tasks and their projects' tasks.
+			if ( self::is_own_tasks_only() ) {
+				TaskAccess::apply_editable( $query );
 			}
 
 			// Get tasks that will actually be updated (for accurate count)
@@ -4357,9 +4830,9 @@ class RestTaskController extends RestController {
 			// Build query with sales rep filtering
 			$query = TaskModel::whereIn( 'id', $ids );
 
-			// Sales reps can only update their own tasks
-			if ( Permissions::is_sales_rep() ) {
-				$query->where( 'assigned_to', get_current_user_id() );
+			// Own-tasks-only users reopen their own tasks and their projects' tasks.
+			if ( self::is_own_tasks_only() ) {
+				TaskAccess::apply_editable( $query );
 			}
 
 			// Get tasks that will actually be updated (for accurate count)
@@ -4466,7 +4939,8 @@ class RestTaskController extends RestController {
 	 * @return bool
 	 */
 	public function bulk_action_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		// bulk actions are scoped per role in each action (members touch only their own tasks)
+		return TaskAccess::has_task_role();
 	}
 
 	/**
@@ -4488,11 +4962,23 @@ class RestTaskController extends RestController {
 	 * @return bool
 	 */
 	private function user_can_access_tasks( WP_REST_Request $request, bool $require_manage ): bool {
-		if ( Permissions::has_sales_rep_access() ) {
+		// project staff work on tasks too: managers see all of them, members their own (is_own_tasks_only)
+		if ( TaskAccess::has_task_role() ) {
 			return true;
 		}
 
 		return $this->user_can_access_project_scoped_tasks( $request, $require_manage );
+	}
+
+	/**
+	 * Whether the current user works only on their own tasks: a Sales Rep, or a Project Member with no broader role.
+	 * They see tasks assigned to them (or with a subtask assigned to them), assign tasks only to themselves,
+	 * and complete or delete only their own.
+	 *
+	 * @return bool
+	 */
+	private static function is_own_tasks_only(): bool {
+		return TaskAccess::is_own_tasks_only();
 	}
 
 	/**
@@ -4551,6 +5037,34 @@ class RestTaskController extends RestController {
 	}
 
 	/**
+	 * A task goes on a project (created there, or moved there) only for the
+	 * people who work on that project.
+	 *
+	 * @param array<string, mixed> $data    Prepared task data.
+	 * @param int                  $task_id Task being updated (0 on create).
+	 *
+	 * @return WP_Error|null
+	 */
+	private function project_entity_error( array $data, int $task_id ): ?WP_Error {
+		if ( ! isset( $data['entity_type'] ) || TaskEntityType::PROJECT !== (int) $data['entity_type'] || empty( $data['entity_id'] ) ) {
+			return null;
+		}
+		if ( ! method_exists( Capabilities::class, 'can_contribute_project' ) || ! doublescale_is_module_active( 'projects' ) ) {
+			return null;
+		}
+
+		$stored = $task_id > 0 ? TaskModel::find( $task_id ) : null;
+		$moved  = ! $stored
+			|| TaskEntityType::PROJECT !== (int) $stored->entity_type
+			|| (int) $stored->entity_id !== (int) $data['entity_id'];
+		if ( ! $moved || Capabilities::can_contribute_project( (int) $data['entity_id'] ) ) {
+			return null;
+		}
+
+		return new WP_Error( 'doublescale_project_not_on_team', __( 'You can add tasks only to projects you work on.', 'doublescale' ), array( 'status' => 403 ) );
+	}
+
+	/**
 	 * Check if user can manage workspace task labels (CRUD).
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -4558,5 +5072,22 @@ class RestTaskController extends RestController {
 	 */
 	public function manage_labels_permissions_check( $request ) {
 		return Permissions::has_crm_manager_access();
+	}
+
+	/**
+	 * Comment HTML for display: safe HTML, with each @[Name](user:ID) mention shown as an "@Name" chip.
+	 *
+	 * @param string $content Stored comment HTML.
+	 * @return string
+	 */
+	private static function format_comment_html( string $content ): string {
+		$html = wp_kses_post( $content );
+		return (string) preg_replace_callback(
+			'/@\[([^\]]+)\]\(user:(\d+)\)/',
+			static function ( $m ) {
+				return '<span class="ds-mention" data-user-id="' . absint( $m[2] ) . '">@' . esc_html( $m[1] ) . '</span>';
+			},
+			$html
+		);
 	}
 }

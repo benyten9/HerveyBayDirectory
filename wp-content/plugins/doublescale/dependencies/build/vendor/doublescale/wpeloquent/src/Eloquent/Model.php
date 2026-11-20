@@ -1,11 +1,11 @@
 <?php
 
-namespace WPEloquent\Eloquent;
+namespace DoubleScale\Vendor\WPEloquent\Eloquent;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Translation\Translator;
-use Illuminate\Translation\ArrayLoader;
-use Illuminate\Validation\Factory as ValidatorFactory;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model as Eloquent;
+use DoubleScale\Vendor\Illuminate\Translation\Translator;
+use DoubleScale\Vendor\Illuminate\Translation\ArrayLoader;
+use DoubleScale\Vendor\Illuminate\Validation\Factory as ValidatorFactory;
 /**
  * Model Class
  *
@@ -30,7 +30,7 @@ abstract class Model extends Eloquent
      */
     public function __construct(array $attributes = array())
     {
-        static::$resolver = new \WPEloquent\Eloquent\Resolver();
+        static::$resolver = new Resolver();
         parent::__construct($attributes);
     }
     /**
@@ -40,7 +40,7 @@ abstract class Model extends Eloquent
      */
     public function getConnection()
     {
-        return \WPEloquent\Eloquent\Database::instance();
+        return Database::instance();
     }
     /**
      * Overide parent method to make sure prefixing is correct.
@@ -63,7 +63,7 @@ abstract class Model extends Eloquent
     protected function newBaseQueryBuilder()
     {
         $connection = $this->getConnection();
-        return new \WPEloquent\Eloquent\Builder($connection, $connection->getQueryGrammar(), $connection->getPostProcessor());
+        return new Builder($connection, $connection->getQueryGrammar(), $connection->getPostProcessor());
     }
     /**
      * Define a many-to-many relationship.

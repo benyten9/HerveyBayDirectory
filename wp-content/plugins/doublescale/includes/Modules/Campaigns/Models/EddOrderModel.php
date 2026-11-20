@@ -15,7 +15,7 @@ namespace DoubleScale\Modules\Campaigns\Models;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Models\ContactModel;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * EddOrderModel class
@@ -120,7 +120,7 @@ class EddOrderModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'email', 'email' );

@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use SEOPress\Actions\Api\Metas\AdvancedSettings;
 use SEOPress\Core\Hooks\ExecuteHooks;
 
 /**
@@ -110,7 +111,7 @@ class ModuleMetabox implements ExecuteHooks {
 	 * Persist SEO meta from the Classic Editor post form when the React
 	 * metabox cannot reach the REST API. The React tabs render hidden
 	 * inputs (associated with `<form id="post">` via the HTML `form`
-	 * attribute) that mirror their Formik state, so a normal post save
+	 * attribute) that mirror their form state, so a normal post save
 	 * still carries the values even if the REST PUTs to `/seopress/v1/...`
 	 * are blocked. Skipped during autosave/revision/REST and gated by a
 	 * dedicated nonce. The list of meta keys is filterable so the Pro
@@ -182,10 +183,19 @@ class ModuleMetabox implements ExecuteHooks {
 			$raw   = wp_unslash( $_POST[ $meta_key ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			$value = $this->sanitizeFallbackValue( $raw, $sanitizer );
 
-			if ( null === $value || '' === $value || ( is_array( $value ) && empty( $value ) ) ) {
+			$primary_taxonomy = class_exists( '\SEOPress\Helpers\Metas\PrimaryTerm' )
+				? \SEOPress\Helpers\Metas\PrimaryTerm::get_taxonomy_from_meta_key( $meta_key )
+				: null;
+
+			if ( null !== $primary_taxonomy && '' === $value ) {
+				// "None" on a taxonomy with its own key also drops the legacy
+				// value it would otherwise inherit.
+				\SEOPress\Helpers\Metas\PrimaryTerm::clear( $post_id, $primary_taxonomy );
+			} elseif ( null === $value || '' === $value || ( is_array( $value ) && empty( $value ) ) ) {
 				delete_post_meta( $post_id, $meta_key );
 			} else {
-				update_post_meta( $post_id, $meta_key, $value );
+				// The form was unslashed above; preserve literal slashes through metadata storage.
+				update_post_meta( $post_id, $meta_key, wp_slash( $value ) );
 			}
 		}
 	}
@@ -216,6 +226,8 @@ class ModuleMetabox implements ExecuteHooks {
 			'_seopress_robots_snippet'             => 'text',
 			'_seopress_robots_primary_cat'         => 'text',
 			'_seopress_robots_breadcrumbs'         => 'text',
+			'_seopress_robots_freeze_modified_date' => 'text',
+			'_seopress_robots_custom_modified_date' => 'text',
 			// Redirections (per-post) tab.
 			'_seopress_redirections_value'         => 'url',
 			'_seopress_redirections_enabled'       => 'text',
@@ -239,6 +251,20 @@ class ModuleMetabox implements ExecuteHooks {
 				return sanitize_text_field( implode( ',', $parts ) );
 			},
 		);
+
+		// Advanced tab, one primary term per taxonomy. Only the legacy key was
+		// listed, so on a taxonomy with no Classic box of its own
+		// (`meta_box_cb => false`) a choice made in this tab was lost on
+		// update. A term id or nothing, like the REST route: `0` included,
+		// which was stored where the route deletes it.
+		if ( class_exists( '\SEOPress\Helpers\Metas\PrimaryTerm' ) ) {
+			$primary_term = array( '\SEOPress\Helpers\Metas\PrimaryTerm', 'sanitize_term_id' );
+
+			$keys['_seopress_robots_primary_cat'] = $primary_term;
+			foreach ( \SEOPress\Helpers\Metas\PrimaryTerm::get_meta_keys() as $primary_key ) {
+				$keys[ $primary_key ] = $primary_term;
+			}
+		}
 
 		// Social tab — per-platform keys, sanitizer derived from the field type.
 		if ( class_exists( '\SEOPress\Helpers\Metas\SocialSettings' ) ) {
@@ -368,6 +394,42 @@ class ModuleMetabox implements ExecuteHooks {
 	}
 
 	/**
+	 * The dependencies webpack computed for a built script.
+	 *
+	 * `@wordpress/dependency-extraction-webpack-plugin` writes the exact list
+	 * of `wp-*` handles each bundle imports into an `.asset.php` next to it.
+	 * Hand-written lists next to it go stale in one direction only: a new
+	 * import is added to the JavaScript and nobody remembers the PHP. WordPress
+	 * then has no reason to load the package first, and whether it does is left
+	 * to whatever else the page enqueues. On a site with a page builder that
+	 * pulls the editor packages in late, our script runs before `wp-plugins`
+	 * exists and throws.
+	 *
+	 * ModuleAdminHeader, CommandPalette and ModuleSettings already read these
+	 * files; this screen was the one that did not.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param string $relative_path Path of the .asset.php, relative to the plugin root.
+	 * @param array  $fallback      Dependencies to use when the file is missing.
+	 *
+	 * @return array
+	 */
+	private function getScriptDependencies( $relative_path, $fallback = array() ) {
+		$asset_file = SEOPRESS_PLUGIN_DIR_PATH . $relative_path;
+
+		if ( ! file_exists( $asset_file ) ) {
+			return $fallback;
+		}
+
+		$asset = require $asset_file;
+
+		return isset( $asset['dependencies'] ) && is_array( $asset['dependencies'] )
+			? $asset['dependencies']
+			: $fallback;
+	}
+
+	/**
 	 * Enqueue module.
 	 *
 	 * @param array $args_localize The arguments localize.
@@ -411,20 +473,43 @@ class ModuleMetabox implements ExecuteHooks {
 			}
 		}
 
-		$dependencies = array( 'react', 'react-dom', 'wp-components' );
+		// The build knows what this bundle imports; the hand-written list did
+		// not, and left `wp-api-fetch` and `wp-element` undeclared.
+		$dependencies = $this->getScriptDependencies(
+			'public/metaboxe.asset.php',
+			array( 'react', 'react-dom', 'wp-components' )
+		);
+
+		// Only on the block editor, and not a bundle import: the metabox opens
+		// the SEOPress sidebar panel through it.
 		if ( $is_gutenberg ) {
-			$dependencies = array_merge( $dependencies, array( 'wp-edit-post', 'wp-plugins' ) );
+			foreach ( array( 'wp-edit-post', 'wp-plugins' ) as $editor_handle ) {
+				if ( ! in_array( $editor_handle, $dependencies, true ) ) {
+					$dependencies[] = $editor_handle;
+				}
+			}
 		}
 
 		wp_enqueue_media();
 		wp_enqueue_style( 'wp-components' );
 		wp_enqueue_style( 'seopress-metabox', SEOPRESS_URL_PUBLIC . '/metaboxe.css', array( 'wp-components' ), SEOPRESS_VERSION );
 		wp_enqueue_script( 'seopress-metabox', SEOPRESS_URL_PUBLIC . '/metaboxe.js', $dependencies, SEOPRESS_VERSION, true );
+		wp_set_script_translations( 'seopress-metabox', 'wp-seopress', WP_LANG_DIR . '/plugins' );
 
 		global $post;
 
-		if ( post_type_supports( get_post_type( $post ), 'custom-fields' ) ) {
-			wp_enqueue_script( 'seopress-pre-publish-checklist', SEOPRESS_URL_PUBLIC . '/editor/pre-publish-checklist/index.js', array(), SEOPRESS_VERSION, true );
+		// The checklist reads the SEO metas from the post's REST record, which
+		// leaves them out for a role kept out of the SEO metabox: it would
+		// report a meta title or description as missing when it is set.
+		if ( post_type_supports( get_post_type( $post ), 'custom-fields' ) && ! AdvancedSettings::role_is_blocked_on( get_post_type( $post ), 'GLOBAL' ) ) {
+			wp_enqueue_script(
+				'seopress-pre-publish-checklist',
+				SEOPRESS_URL_PUBLIC . '/editor/pre-publish-checklist/index.js',
+				$this->getScriptDependencies( 'public/editor/pre-publish-checklist/index.asset.php', array( 'wp-i18n' ) ),
+				SEOPRESS_VERSION,
+				true
+			);
+			wp_set_script_translations( 'seopress-pre-publish-checklist', 'wp-seopress', WP_LANG_DIR . '/plugins' );
 		}
 		// The sidebar panel and its score both describe the post being
 		// edited, so they need a real post. is_block_editor() is also true on
@@ -436,28 +521,21 @@ class ModuleMetabox implements ExecuteHooks {
 				return;
 			}
 
-			wp_enqueue_script( 'seopress-sidebar-panel', SEOPRESS_URL_PUBLIC . '/editor/sidebar-panel/index.js', array( 'wp-plugins', 'wp-editor', 'wp-element', 'wp-components', 'wp-i18n' ), SEOPRESS_VERSION, true );
+			wp_enqueue_script(
+				'seopress-sidebar-panel',
+				SEOPRESS_URL_PUBLIC . '/editor/sidebar-panel/index.js',
+				$this->getScriptDependencies(
+					'public/editor/sidebar-panel/index.asset.php',
+					array( 'wp-plugins', 'wp-editor', 'wp-element', 'wp-components', 'wp-i18n' )
+				),
+				SEOPRESS_VERSION,
+				true
+			);
+			wp_set_script_translations( 'seopress-sidebar-panel', 'wp-seopress', WP_LANG_DIR . '/plugins' );
 
 			// Get score data for the current post.
 			$score       = seopress_get_service( 'ContentAnalysisDatabase' )->getData( $post->ID, array( 'score' ) );
-			$score_color = '#94a3b8'; // Default gray.
-
-			if ( ! empty( $score ) && is_array( $score ) ) {
-				// Flatten the score array.
-				$score_flat = array();
-				foreach ( $score as $item ) {
-					if ( is_array( $item ) ) {
-						$score_flat = array_merge( $score_flat, $item );
-					}
-				}
-
-				// Both 'high' and 'medium' mean "should be improved" (orange/yellow).
-				if ( in_array( 'high', $score_flat, true ) || in_array( 'medium', $score_flat, true ) ) {
-					$score_color = '#f59e0b'; // Orange - should be improved.
-				} else {
-					$score_color = '#16a34a'; // Green - good.
-				}
-			}
+			$score_color = self::getToolbarScoreColor( $score, $post->ID );
 
 			// Default to showing the score text; let the user opt out via
 			// the new "SEO score in editor toolbar" setting. The legacy
@@ -603,6 +681,15 @@ class ModuleMetabox implements ExecuteHooks {
 					'GLOBAL'           => $settings_advanced->getSecurityMetaboxRole(),
 					'CONTENT_ANALYSIS' => $settings_advanced->getSecurityMetaboxRoleContentAnalysis(),
 				),
+				// The server's own decision, which the tabs follow. Recomputed
+				// client-side from USER_ROLES, it hid the tabs from an
+				// administrator who also held a blocked role (added by a
+				// forum or ads plugin), although the REST endpoints let them
+				// through. Nested so the booleans are not cast to strings.
+				'ROLES_BLOCKED_FOR_USER'    => array(
+					'GLOBAL'           => seopress_metabox_role_is_blocked( 'GLOBAL' ),
+					'CONTENT_ANALYSIS' => seopress_metabox_role_is_blocked( 'CONTENT_ANALYSIS' ),
+				),
 				'OPTIONS'                   => array(
 					/**
 					 * Filter whether the AI generation buttons are exposed in the
@@ -640,6 +727,8 @@ class ModuleMetabox implements ExecuteHooks {
 					'VIDEO_SITEMAP'    => apply_filters( 'seopress_active_video_sitemap', false ),
 					'INSPECT_URL'      => apply_filters( 'seopress_active_inspect_url', false ),
 					'INTERNAL_LINKING' => apply_filters( 'seopress_active_internal_linking', false ),
+					// Read-only list of the Instant Indexing submissions of this post.
+					'INDEXING_HISTORY' => '1' === seopress_get_toggle_option( 'instant-indexing' ),
 					'SCHEMA_MANUAL'    => apply_filters( 'seopress_active_schemas', false ),
 					'SCHEMA_AUTOMATIC' => apply_filters( 'seopress_active_schemas_automatic_universal_metabox', false ),
 				),
@@ -804,5 +893,37 @@ class ModuleMetabox implements ExecuteHooks {
 		$data = apply_filters( 'seopress_content_analysis_response', $data, $post_id );
 
 		return ! empty( $data ) ? $data : null;
+	}
+
+	/**
+	 * The colour of the SEOPress button in the block editor toolbar.
+	 *
+	 * Read from the same counts as the posts list column, ignored checks left
+	 * out, so a post showing 16/16 in green in the column is not "Has SEO
+	 * issues" in the toolbar. A score stored by 10.3.x or earlier has no
+	 * per-check detail and falls back to its impacts.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param mixed $score   The stored data, as ContentAnalysisDatabase::getData( $id, array( 'score' ) ) returns it.
+	 * @param int   $post_id The post.
+	 *
+	 * @return string Hex colour: gray when never analysed, green when good, orange otherwise.
+	 */
+	public static function getToolbarScoreColor( $score, $post_id ) { // phpcs:ignore -- camelCase is the convention for this class.
+		if ( empty( $score ) || ! is_array( $score ) ) {
+			return '#94a3b8';
+		}
+
+		$score_flat = array();
+		foreach ( $score as $item ) {
+			if ( is_array( $item ) ) {
+				$score_flat = array_merge( $score_flat, $item );
+			}
+		}
+
+		$summary = \SEOPress\Helpers\ContentAnalysis::getScoreSummary( $score_flat, \SEOPress\Helpers\ContentAnalysis::getIgnoredChecks( $post_id ) );
+
+		return \SEOPress\Helpers\ContentAnalysis::isGoodVerdict( $score_flat, $summary ) ? '#16a34a' : '#f59e0b';
 	}
 }

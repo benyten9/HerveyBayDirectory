@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Auto-fill from first YouTube video detected in the post content', 'wp-seopress-pro' ); ?>
 		</label>
 		<span class="description">
-			<?php esc_html_e( 'When enabled, empty fields below will be populated using metadata fetched from the YouTube Data API for the first YouTube video URL found in the post content. Manual values always take precedence.', 'wp-seopress-pro' ); ?>
+			<?php esc_html_e( 'When enabled, empty fields below are populated with the metadata of the first YouTube video found in the post content, fetched when the post is saved. Without a YouTube Data API key in the Structured Data Types settings, only the title and thumbnail are available. Manual values always take precedence.', 'wp-seopress-pro' ); ?>
 		</span>
 	</p>
 	<p>
@@ -41,7 +41,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Video name', 'wp-seopress-pro' ); ?>
 			<code>name</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_name', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_name', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The title of your video', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -50,7 +50,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			for="seopress_pro_rich_snippets_videos_description_meta"><?php esc_html_e( 'Video description', 'wp-seopress-pro' ); ?>
 			<code>description</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_description', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_description', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The description of the video', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -59,7 +59,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			for="seopress_pro_rich_snippets_videos_date_posted_meta"><?php esc_html_e( 'Uploaded date', 'wp-seopress-pro' ); ?>
 			<code>uploadDate</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_date_posted', 'date' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_date_posted', 'date' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The uploaded date of your video in ISO 8601 format. For example, "2017-01-24" or "2017-01-24T19:33:17+00:00".', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -68,7 +68,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			for="seopress_pro_rich_snippets_videos_img_meta"><?php esc_html_e( 'Video thumbnail', 'wp-seopress-pro' ); ?>
 			<code>thumbnailUrl</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_img', 'image' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_img', 'image' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'Minimum size: 160px by 90px - Max size: 1920x1080px - crawlable and indexable', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -77,7 +77,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Duration of your video (format: hh:mm:ss)', 'wp-seopress-pro' ); ?>
 			<code>duration</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_duration', 'time' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_duration', 'time' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'e.g. 00:04:30 for 4 minutes and 30 seconds', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -86,7 +86,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Video URL', 'wp-seopress-pro' ); ?>
 			<code>url</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_url', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_videos_url', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'e.g. https://example.com/video.mp4', 'wp-seopress-pro' ); ?></span>
 	</p>

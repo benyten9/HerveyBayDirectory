@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Query\Processors;
+namespace DoubleScale\Vendor\Illuminate\Database\Query\Processors;
 
-use Illuminate\Database\Query\Builder;
-class PostgresProcessor extends \Illuminate\Database\Query\Processors\Processor
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder;
+class PostgresProcessor extends Processor
 {
     /**
      * Process an "insert get ID" query.

@@ -28,6 +28,14 @@ class Canonical implements GetTagValue {
 			$value = get_post_meta( $context['post']->ID, '_seopress_robots_canonical', true );
 		}
 
+		// With plain permalinks the request path is always empty, so the
+		// rebuilt URL was the home page on every page, and two businesses on
+		// two pages shared one identity. The post's permalink carries the
+		// query ID that identifies it.
+		if ( empty( $value ) && isset( $context['post']->ID ) && empty( $wp->request ) && is_singular() ) {
+			$value = get_permalink( $context['post']->ID );
+		}
+
 		if ( empty( $value ) ) {
 			$value = user_trailingslashit( home_url( add_query_arg( array(), $wp->request ) ) );
 		}

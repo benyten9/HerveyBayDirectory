@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/jetengine-manage-fields', [
-    'label' => __('JetEngine Manage Fields', domain: 'nibwp'),
-    'description' => __(
-        'Manage JetEngine meta boxes and Custom Content Types (CCT). List and create meta boxes, list and create CCTs, and manage CCT items.',
-        domain: 'nibwp',
-    ),
+    'label' => __('JetEngine Manage Fields', 'nibwp'),
+    'description' => 'Manage JetEngine meta boxes and Custom Content Types (CCT). List and create meta boxes, list and create CCTs, and manage CCT items.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',

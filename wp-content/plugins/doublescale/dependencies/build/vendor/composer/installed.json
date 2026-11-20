@@ -31,7 +31,7 @@
             "installation-source": "dist",
             "autoload": {
                 "psr-4": {
-                    "Carbon\\Doctrine\\": "src\/Carbon\/Doctrine\/"
+                    "DoubleScale\\Vendor\\Carbon\\Doctrine\\": "src\/Carbon\/Doctrine\/"
                 }
             },
             "notification-url": "https:\/\/packagist.org\/downloads\/",
@@ -107,8 +107,8 @@
             "installation-source": "dist",
             "autoload": {
                 "psr-4": {
-                    "Doctrine\\Inflector\\": "lib\/Doctrine\/Inflector",
-                    "Doctrine\\Common\\Inflector\\": "lib\/Doctrine\/Common\/Inflector"
+                    "DoubleScale\\Vendor\\Doctrine\\Inflector\\": "lib\/Doctrine\/Inflector",
+                    "DoubleScale\\Vendor\\Doctrine\\Common\\Inflector\\": "lib\/Doctrine\/Common\/Inflector"
                 }
             },
             "notification-url": "https:\/\/packagist.org\/downloads\/",
@@ -200,7 +200,7 @@
             "installation-source": "dist",
             "autoload": {
                 "psr-4": {
-                    "Doctrine\\Common\\Lexer\\": "lib\/Doctrine\/Common\/Lexer"
+                    "DoubleScale\\Vendor\\Doctrine\\Common\\Lexer\\": "lib\/Doctrine\/Common\/Lexer"
                 }
             },
             "notification-url": "https:\/\/packagist.org\/downloads\/",
@@ -348,17 +348,17 @@
             "installation-source": "dist",
             "autoload": {
                 "psr-4": {
-                    "WPEloquent\\Eloquent\\": "src\/Eloquent\/",
-                    "Illuminate\\Container\\": "src\/Illuminate\/container\/",
-                    "Illuminate\\Contracts\\": "src\/Illuminate\/contracts\/",
-                    "Illuminate\\Database\\": "src\/Illuminate\/database\/",
-                    "Illuminate\\Events\\": "src\/Illuminate\/events\/",
-                    "Illuminate\\Filesystem\\": "src\/Illuminate\/filesystem\/",
-                    "Illuminate\\Pagination\\": "src\/Illuminate\/pagination\/",
-                    "Illuminate\\Support\\": "src\/Illuminate\/support\/",
-                    "Illuminate\\Translation\\": "src\/Illuminate\/translation\/",
-                    "Illuminate\\Validation\\": "src\/Illuminate\/validation\/",
-                    "WPEloquent\\WP\\": "src\/WP\/"
+                    "DoubleScale\\Vendor\\WPEloquent\\Eloquent\\": "src\/Eloquent\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Container\\": "src\/Illuminate\/container\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Contracts\\": "src\/Illuminate\/contracts\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Database\\": "src\/Illuminate\/database\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Events\\": "src\/Illuminate\/events\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Filesystem\\": "src\/Illuminate\/filesystem\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Pagination\\": "src\/Illuminate\/pagination\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Support\\": "src\/Illuminate\/support\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Translation\\": "src\/Illuminate\/translation\/",
+                    "DoubleScale\\Vendor\\Illuminate\\Validation\\": "src\/Illuminate\/validation\/",
+                    "DoubleScale\\Vendor\\WPEloquent\\WP\\": "src\/WP\/"
                 },
                 "files": [
                     "src\/Illuminate\/support\/helpers.php"
@@ -647,7 +647,7 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Carbon\\Laravel\\ServiceProvider"
+                        "DoubleScale\\Vendor\\Carbon\\Laravel\\ServiceProvider"
                     ]
                 },
                 "phpstan": {
@@ -663,7 +663,7 @@
             "installation-source": "dist",
             "autoload": {
                 "psr-4": {
-                    "Carbon\\": "src\/Carbon\/"
+                    "DoubleScale\\Vendor\\Carbon\\": "src\/Carbon\/"
                 }
             },
             "notification-url": "https:\/\/packagist.org\/downloads\/",

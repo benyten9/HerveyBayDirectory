@@ -92,7 +92,7 @@ class HostedFormRedirect {
 
 		register_rest_route(
 			'doublescale/v1',
-			'/integrations/authorize-net/return/(?P<hash>[a-f0-9]{32})',
+			'/integrations/authorize-net/return/(?P<hash>[A-Za-z0-9]{32})',
 			array(
 				'methods'             => array( 'GET', 'POST' ),
 				'callback'            => array( $this, 'handle_return' ),
@@ -159,7 +159,7 @@ class HostedFormRedirect {
 	 */
 	public function handle_return( \WP_REST_Request $request ) {
 		$hash    = (string) $request->get_param( 'hash' );
-		$invoice = class_exists( InvoiceModel::class ) ? InvoiceModel::get_by_hash( $hash ) : null;
+		$invoice = doublescale_module_data_ready( 'documents' ) ? InvoiceModel::get_by_hash( $hash ) : null;
 		$target  = \home_url( '/' );
 
 		if ( $invoice ) {

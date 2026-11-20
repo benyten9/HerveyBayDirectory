@@ -1,13 +1,13 @@
 <?php
 
-namespace Illuminate\Database\Query\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Query\Grammars;
 
 use RuntimeException;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\JoinClause;
-use Illuminate\Database\Grammar as BaseGrammar;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Query\JoinClause;
+use DoubleScale\Vendor\Illuminate\Database\Grammar as BaseGrammar;
 class Grammar extends BaseGrammar
 {
     /**

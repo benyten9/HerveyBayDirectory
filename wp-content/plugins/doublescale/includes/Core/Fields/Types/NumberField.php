@@ -49,7 +49,14 @@ class NumberField extends FieldType {
 	 * @return mixed
 	 */
 	public function sanitize_field( $value ) {
-		return absint( $value );
+		if ( is_string( $value ) ) {
+			$value = trim( $value );
+		}
+
+		// Prices, budgets and balances keep their decimals and sign (absint() turned 19.99 into 19
+		// and -5 into 5). Anything that is not a number is left as it is, so validation skips it
+		// instead of saving a made-up 0.
+		return is_numeric( $value ) ? $value + 0 : $value;
 	}
 
 	/**

@@ -8,16 +8,16 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
 use BadMethodCallException;
-use Carbon\Exceptions\BadComparisonUnitException;
-use Carbon\Exceptions\ImmutableException;
-use Carbon\Exceptions\InvalidDateException;
-use Carbon\Exceptions\InvalidFormatException;
-use Carbon\Exceptions\UnknownGetterException;
-use Carbon\Exceptions\UnknownMethodException;
-use Carbon\Exceptions\UnknownSetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\BadComparisonUnitException;
+use DoubleScale\Vendor\Carbon\Exceptions\ImmutableException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidDateException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidFormatException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownGetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownMethodException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownSetterException;
 use Closure;
 use DateInterval;
 use DateTime;
@@ -1230,7 +1230,7 @@ interface CarbonInterface extends DateTimeInterface, JsonSerializable
      *
      * @return int
      */
-    public function diffFiltered(\Carbon\CarbonInterval $ci, Closure $callback, $date = null, $absolute = \true);
+    public function diffFiltered(CarbonInterval $ci, Closure $callback, $date = null, $absolute = \true);
     /**
      * Get the difference in a human readable format in the current locale from current instance to an other
      * instance given (or now if null given).

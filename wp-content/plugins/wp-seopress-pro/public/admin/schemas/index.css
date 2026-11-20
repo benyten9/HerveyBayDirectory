@@ -1188,6 +1188,7 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
  * A term reads as "Bar Stools", not "Bar Stools (Product tags)". The taxonomy
  * still has to be there — two taxonomies can hold the same name — but as a
  * quiet second column rather than a parenthesis repeated down every row.
+ * The post picker puts the post type and ID in the same column.
  */
 .seopress-rules-option {
 	display: flex;
@@ -1196,7 +1197,7 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 	gap: 12px;
 }
 
-.seopress-rules-option__taxonomy {
+.seopress-rules-option__meta {
 	flex: 0 0 auto;
 	font-size: 11px;
 	letter-spacing: 0.02em;
@@ -1204,7 +1205,7 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 	color: #646970;
 }
 
-.components-form-token-field__suggestion.is-selected .seopress-rules-option__taxonomy {
+.components-form-token-field__suggestion.is-selected .seopress-rules-option__meta {
 	color: inherit;
 	opacity: 0.75;
 }

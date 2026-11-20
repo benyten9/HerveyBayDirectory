@@ -9,6 +9,8 @@ use SEOPressPro\Core\FormApi;
 class FormSchemaService extends FormApi {
 	protected function getTypeByField( $field ) {
 		switch ( $field ) {
+			case '_seopress_pro_rich_snippets_service_provider_source':
+				return 'select';
 			case '_seopress_pro_rich_snippets_service_description':
 				return 'textarea';
 			case '_seopress_pro_rich_snippets_service_img':
@@ -35,6 +37,8 @@ class FormSchemaService extends FormApi {
 
 	protected function getLabelByField( $field ) {
 		switch ( $field ) {
+			case '_seopress_pro_rich_snippets_service_provider_source':
+				return __( 'Provider source', 'wp-seopress-pro' );
 			case '_seopress_pro_rich_snippets_service_name':
 				return __( 'Service name', 'wp-seopress-pro' );
 			case '_seopress_pro_rich_snippets_service_type':
@@ -117,6 +121,8 @@ class FormSchemaService extends FormApi {
 
 	protected function getDescriptionByField( $field ) {
 		switch ( $field ) {
+			case '_seopress_pro_rich_snippets_service_provider_source':
+				return __( 'Link to the Organization configured in SEO > Social. If unavailable, the provider fields below are used. Person profiles cannot be linked here.', 'wp-seopress-pro' );
 			case '_seopress_pro_rich_snippets_service_name':
 				return __( 'Default: post title', 'wp-seopress-pro' );
 			case '_seopress_pro_rich_snippets_service_description':
@@ -124,6 +130,16 @@ class FormSchemaService extends FormApi {
 			case '_seopress_pro_rich_snippets_service_img':
 				return __( 'Default: post thumbnail', 'wp-seopress-pro' );
 		}
+	}
+
+	protected function getOptions( $field ) {
+		if ( '_seopress_pro_rich_snippets_service_provider_source' === $field ) {
+			return array(
+				array( 'value' => '', 'label' => __( 'Use the provider fields below', 'wp-seopress-pro' ) ),
+				array( 'value' => 'knowledge_graph_organization', 'label' => __( 'Link to the site Organization', 'wp-seopress-pro' ) ),
+			);
+		}
+		return array();
 	}
 
 	protected function getDetails( $postId = null ) {
@@ -143,6 +159,9 @@ class FormSchemaService extends FormApi {
 			),
 			array(
 				'key' => '_seopress_pro_rich_snippets_service_area',
+			),
+			array(
+				'key' => '_seopress_pro_rich_snippets_service_provider_source',
 			),
 			array(
 				'key' => '_seopress_pro_rich_snippets_service_provider_name',

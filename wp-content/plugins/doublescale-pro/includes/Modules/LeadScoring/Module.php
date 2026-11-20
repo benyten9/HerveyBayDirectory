@@ -36,11 +36,11 @@ final class Module extends AbstractModule {
 	}
 
 	public function label(): string {
-		return __( 'Lead scoring', 'doublescale' );
+		return __( 'Lead Scoring', 'doublescale' );
 	}
 
 	public function description(): string {
-		return __( 'Rules, levels, and automatic score updates when contacts engage.', 'doublescale' );
+		return __( 'Score contacts from their behavior and profile, and group them into levels.', 'doublescale' );
 	}
 
 	public function version(): string {
@@ -48,7 +48,20 @@ final class Module extends AbstractModule {
 	}
 
 	public function is_toggleable(): bool {
-		return false;
+		return true;
+	}
+
+	/**
+	 * On unless the admin turned it off: it was always on before it became a
+	 * switch, so sites with no stored choice keep it (its tables, scoring rules; no scores while it is off).
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		$stored = get_option( 'doublescale_enabled_modules', array() );
+		$on     = ! is_array( $stored ) || ! array_key_exists( $this->slug(), $stored ) || (bool) $stored[ $this->slug() ];
+
+		return (bool) apply_filters( 'doublescale_module_enabled_' . $this->slug(), $on );
 	}
 
 	public function dependencies(): array {
@@ -74,6 +87,11 @@ final class Module extends AbstractModule {
 
 		LeadScoringManager::instance();
 		new EventHandler();
+
+		// A new, changed or removed rule or level changes everyone's score, not only the
+		// next contact who does something: recalculate them all.
+		add_filter( 'rest_post_dispatch', array( LeadScoringManager::class, 'recalculate_after_rest_change' ), 10, 3 );
+		add_action( LeadScoringManager::RECALCULATE_HOOK, array( LeadScoringManager::class, 'recalculate_batch' ) );
 
 		$this->load_contact_filter_files();
 

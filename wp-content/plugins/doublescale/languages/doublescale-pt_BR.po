@@ -92,6 +92,9 @@ msgstr "%1$d horas, %2$d minutos, %3$d segundos"
 msgid "%1$d minutes, %2$d seconds"
 msgstr "%1$d minutos, %2$d segundos"
 
+msgid "%1$d of %2$d processed"
+msgstr "%1$d de %2$d processados"
+
 msgid "%1$d of %2$d selected"
 msgstr "%1$d de %2$d selecionado(s)"
 
@@ -13564,11 +13567,17 @@ msgstr "Mais"
 msgid "More coming soon"
 msgstr "Em breve, mais novidades"
 
+msgid "More lists (%d)"
+msgstr "Mais listas (%d)"
+
 msgid "More options"
 msgstr "Mais opções"
 
 msgid "More pages"
 msgstr "Mais páginas"
+
+msgid "More tags (%d)"
+msgstr "Mais tags (%d)"
 
 msgid "More than"
 msgstr "Mais que"

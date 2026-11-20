@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Migrations;
 
 use Closure;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Filesystem\Filesystem;
+use DoubleScale\Vendor\Illuminate\Filesystem\Filesystem;
 class MigrationCreator
 {
     /**

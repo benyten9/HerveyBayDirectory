@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
 use Closure;
-use Illuminate\Support\Str;
-use Illuminate\Contracts\Container\Container;
-use Illuminate\Contracts\Translation\Translator;
-use Illuminate\Contracts\Validation\Factory as FactoryContract;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container;
+use DoubleScale\Vendor\Illuminate\Contracts\Translation\Translator;
+use DoubleScale\Vendor\Illuminate\Contracts\Validation\Factory as FactoryContract;
 class Factory implements FactoryContract
 {
     /**
@@ -129,7 +129,7 @@ class Factory implements FactoryContract
     protected function resolve(array $data, array $rules, array $messages, array $customAttributes)
     {
         if (\is_null($this->resolver)) {
-            return new \Illuminate\Validation\Validator($this->translator, $data, $rules, $messages, $customAttributes);
+            return new Validator($this->translator, $data, $rules, $messages, $customAttributes);
         }
         return \call_user_func($this->resolver, $this->translator, $data, $rules, $messages, $customAttributes);
     }
@@ -139,7 +139,7 @@ class Factory implements FactoryContract
      * @param  \Illuminate\Validation\Validator  $validator
      * @return void
      */
-    protected function addExtensions(\Illuminate\Validation\Validator $validator)
+    protected function addExtensions(Validator $validator)
     {
         $validator->addExtensions($this->extensions);
         // Next, we will add the implicit extensions, which are similar to the required
@@ -240,7 +240,7 @@ class Factory implements FactoryContract
      * @param  \Illuminate\Validation\PresenceVerifierInterface  $presenceVerifier
      * @return void
      */
-    public function setPresenceVerifier(\Illuminate\Validation\PresenceVerifierInterface $presenceVerifier)
+    public function setPresenceVerifier(PresenceVerifierInterface $presenceVerifier)
     {
         $this->verifier = $presenceVerifier;
     }

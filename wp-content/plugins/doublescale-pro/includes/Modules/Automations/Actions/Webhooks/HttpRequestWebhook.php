@@ -292,6 +292,15 @@ class HttpRequestWebhook extends Action
 		// Check nonce for security
 		\check_ajax_referer('doublescale-admin', 'nonce');
 
+		// The test makes the server call any URL and shows the answer: only for
+		// people who build workflows (as creating one), not any team member
+		// holding the admin nonce.
+		$can_build = \current_user_can('doublescale_manage_own_automations')
+			|| (\class_exists('\\DoubleScale\\Core\\UserRoles\\Permissions') && \DoubleScale\Core\UserRoles\Permissions::can_manage_all_automations());
+		if (! $can_build) {
+			\wp_send_json_error(array('message' => \__('Sorry, you are not allowed to test webhooks.', 'doublescale')), 403);
+		}
+
 		// Call the test webhook method
 		$result = $this->test_webhook();
 
@@ -311,8 +320,10 @@ class HttpRequestWebhook extends Action
 	public function test_webhook()
 	{
 		// Get webhook URL from POST data
-		$webhook_url    = isset($_POST['webhook_url']) ? \sanitize_url($_POST['webhook_url']) : '';
-		$method         = isset($_POST['method']) ? \sanitize_text_field($_POST['method']) : 'POST';
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- ajax_test_webhook() checks the nonce and the user's rights first.
+		$webhook_url    = isset($_POST['webhook_url']) ? \esc_url_raw(\wp_unslash($_POST['webhook_url'])) : '';
+		$method         = isset($_POST['method']) ? \sanitize_text_field(\wp_unslash($_POST['method'])) : 'POST';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		$data_fields    = isset($_POST['data_fields']) ? $_POST['data_fields'] : array();
 		$headers_fields = isset($_POST['headers_fields']) ? $_POST['headers_fields'] : array();
 

@@ -14,6 +14,7 @@ use DoubleScale\Modules\Documents\Constants\InvoiceStatus;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Services\DuplicateInvoice;
 use DoubleScale\Modules\Documents\Services\InvoiceNotifications;
+use DoubleScale\Modules\Documents\Services\SendInvoice;
 use DoubleScale\Pro\Modules\RecurringInvoices\Models\InvoiceRecurrenceModel;
 
 /**
@@ -56,7 +57,7 @@ class GenerateRecurringInvoice {
 		// Gate: don't pile new invoices on a customer who hasn't settled the
 		// current one. `next_run_at` is deliberately NOT advanced, so the rule
 		// retries on the next sweep and fires as soon as payment lands.
-		if ( $recurrence->require_paid && InvoiceStatus::PAID !== (string) $template->status ) {
+		if ( $recurrence->require_paid && InvoiceStatus::PAID !== (string) $this->latest_in_series( $template, $recurrence )->status ) {
 			return null;
 		}
 
@@ -195,10 +196,11 @@ class GenerateRecurringInvoice {
 		// InvoiceModel::saving always recomputes subtotal/total from line_items,
 		// so totals stay correct without being set here.
 		//
-		// Status must be settled before any payment reconciliation runs:
-		// InvoicePayments::derive_status keeps DRAFT sticky, so an auto-sent
-		// invoice has to leave DRAFT here or it can never progress to paid.
-		$invoice->status = $recurrence->auto_send ? InvoiceStatus::UNPAID : InvoiceStatus::DRAFT;
+		// Every occurrence starts as a draft. An auto-sent one leaves DRAFT
+		// through the send itself, exactly like a manual send; one that could
+		// not be sent stays a draft for someone to send by hand, rather than
+		// sitting "unpaid" in the portal without ever reaching the customer.
+		$invoice->status = InvoiceStatus::DRAFT;
 
 		$invoice->save();
 
@@ -219,21 +221,58 @@ class GenerateRecurringInvoice {
 	}
 
 	/**
-	 * Email the generated invoice, marking it sent on success.
+	 * The invoice whose payment the next cycle waits for: the newest one this
+	 * rule generated, or the template before the first cycle has run.
 	 *
-	 * A delivery failure must not abort the cycle — the invoice exists and can
-	 * be resent by hand, so the schedule still moves on.
+	 * @param InvoiceModel           $template   Template invoice.
+	 * @param InvoiceRecurrenceModel $recurrence Recurrence rule.
+	 * @return InvoiceModel
+	 */
+	private function latest_in_series( InvoiceModel $template, InvoiceRecurrenceModel $recurrence ): InvoiceModel {
+		$latest = InvoiceModel::where( 'recurrence_id', (int) $recurrence->id )
+			->orderBy( 'id', 'desc' )
+			->first();
+
+		return $latest ? $latest : $template;
+	}
+
+	/**
+	 * Send the generated invoice the same way a person would.
+	 *
+	 * SendInvoice is the one place a send happens: it checks the send gate
+	 * (approvals), moves the invoice out of draft, freezes the billing, issuer
+	 * and currency snapshots, writes the activity row and fires
+	 * `doublescale_sales_invoice_sent`. A refused or failed send leaves the
+	 * invoice a draft. Either way the cycle is not aborted — the invoice exists
+	 * and can be sent by hand, so the schedule still moves on.
 	 *
 	 * @param InvoiceModel $invoice Generated invoice.
 	 * @return void
 	 */
 	private function send( InvoiceModel $invoice ): void {
 		try {
-			$sent = ( new InvoiceNotifications() )->send_invoice( $invoice );
-			if ( $sent ) {
-				DocumentCurrency::freeze_on_send( $invoice );
-				$invoice->sent_at = current_time( 'mysql' );
-				$invoice->save();
+			// A free older than SendInvoice (2026-08) only has the notifier.
+			if ( ! class_exists( SendInvoice::class ) ) {
+				if ( ( new InvoiceNotifications() )->send_invoice( $invoice ) ) {
+					$invoice->status = InvoiceStatus::UNPAID;
+					DocumentCurrency::freeze_on_send( $invoice );
+					$invoice->sent_at = current_time( 'mysql' );
+					$invoice->save();
+				}
+
+				return;
+			}
+
+			$result = SendInvoice::send( $invoice );
+			if ( is_wp_error( $result ) && function_exists( 'doublescale_get_logger' ) ) {
+				doublescale_get_logger()->warning(
+					'Recurring invoice was not sent; it stays a draft',
+					array(
+						'source'     => 'recurring-invoices',
+						'invoice_id' => (int) $invoice->id,
+						'error'      => $result->get_error_message(),
+					)
+				);
 			}
 		} catch ( \Throwable $e ) {
 			if ( function_exists( 'doublescale_get_logger' ) ) {

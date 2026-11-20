@@ -11,7 +11,7 @@
 
 namespace DoubleScale\Pro\Modules\Deals\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
@@ -51,6 +51,7 @@ class DealModel extends Model
 	protected $fillable = array(
 		'title',
 		'contact_id',
+		'company_id',
 		'pipeline_id',
 		'stage_id',
 		'value',
@@ -154,7 +155,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact()
 	{
@@ -166,7 +167,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function pipeline()
 	{
@@ -178,7 +179,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function stage()
 	{
@@ -190,7 +191,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function owner()
 	{
@@ -202,7 +203,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany|null
 	 */
 	public function activities()
 	{
@@ -215,7 +216,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function activityAssociations()
 	{
@@ -232,7 +233,7 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasManyThrough|null
 	 */
 	public function associatedActivities()
 	{
@@ -320,13 +321,14 @@ class DealModel extends Model
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function custom_fields()
 	{
 		return $this->belongsToMany(CustomFieldModel::class, 'doublescale_custom_field_relationship', 'entity_id', 'custom_field_id')
 			->withPivot('value')
-			->wherePivot('entity_type', 'deal');
+			->wherePivot('entity_type', 'deal')
+			->ordered();
 	}
 
 
@@ -364,7 +366,7 @@ class DealModel extends Model
 		try {
 			$normalized_fields = CustomFieldModel::normalize_submission($custom_fields ?: array());
 
-			$required_fields = CustomFieldModel::where('scope', 'deal')->get();
+			$required_fields = CustomFieldModel::where('scope', 'deal')->ordered()->get();
 			foreach ($required_fields as $field_model) {
 				if (!$field_model->is_required_field()) {
 					continue;
@@ -521,6 +523,25 @@ class DealModel extends Model
 	public static function boot()
 	{
 		parent::boot();
+
+		// A deal belongs to its contact's company: set when the deal is created
+		// or moves to another contact, then kept (a contact who later changes
+		// company leaves the deal with the old one).
+		static::saving(
+			function ($deal) {
+				if ($deal->company_id && ! $deal->isDirty('contact_id')) {
+					return;
+				}
+				$service = '\\DoubleScale\\Pro\\Modules\\Companies\\Services\\CompanyService';
+				if (! class_exists($service) || ! $deal->contact_id) {
+					return;
+				}
+				$company = $service::company_of((int) $deal->contact_id);
+				if ($company || $deal->isDirty('contact_id')) {
+					$deal->company_id = $company ? (int) $company->id : null;
+				}
+			}
+		);
 
 		static::created(
 			function ($deal) {

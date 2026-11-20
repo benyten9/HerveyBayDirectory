@@ -128,7 +128,7 @@ class SubscriptionPaymentGateway extends Rule {
 			return '';
 		}
 
-		$payment = $subscription instanceof WC_Subscription ? $subscription->get_payment_method() : false;
+		$payment = $subscription instanceof \WC_Subscription ? $subscription->get_payment_method() : false;
 
 		/** if empty then check for manual */
 		if ( empty( $payment ) && $subscription->is_manual() ) {

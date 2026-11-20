@@ -104,7 +104,6 @@ return array (
   'DoubleScale\\Automations\\Actions\\Tutorlms\\RemoveUserFromCourse' => 'DoubleScale\\Modules\\Automations\\Actions\\Tutorlms\\RemoveUserFromCourse',
   'DoubleScale\\Automations\\Actions\\Webhooks\\HttpRequestWebhook' => 'DoubleScale\\Modules\\Automations\\Actions\\Webhooks\\HttpRequestWebhook',
   'DoubleScale\\Automations\\Actions\\Webhooks\\WebhookActions' => 'DoubleScale\\Modules\\Automations\\Actions\\Webhooks\\WebhookActions',
-  'DoubleScale\\Automations\\Actions\\Webhooks\\ZapierWebhook' => 'DoubleScale\\Modules\\Automations\\Actions\\Webhooks\\ZapierWebhook',
   'DoubleScale\\Automations\\Actions\\Woocommerce\\AddOrderNote' => 'DoubleScale\\Modules\\Automations\\Actions\\Woocommerce\\AddOrderNote',
   'DoubleScale\\Automations\\Actions\\Woocommerce\\ChangeOrderStatus' => 'DoubleScale\\Modules\\Automations\\Actions\\Woocommerce\\ChangeOrderStatus',
   'DoubleScale\\Automations\\Actions\\Woocommerce\\CreateCoupon' => 'DoubleScale\\Modules\\Automations\\Actions\\Woocommerce\\CreateCoupon',

@@ -1,12 +1,12 @@
 <?php
 
-namespace Carbon\Doctrine;
+namespace DoubleScale\Vendor\Carbon\Doctrine;
 
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
 use DateTimeInterface;
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\ConversionException;
+use DoubleScale\Vendor\Doctrine\DBAL\Platforms\AbstractPlatform;
+use DoubleScale\Vendor\Doctrine\DBAL\Types\ConversionException;
 use Exception;
 /**
  * @template T of CarbonInterface
@@ -34,13 +34,13 @@ trait CarbonTypeConverter
      */
     public function getSQLDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
     {
-        $maximum = \Carbon\Doctrine\CarbonDoctrineType::MAXIMUM_PRECISION;
+        $maximum = CarbonDoctrineType::MAXIMUM_PRECISION;
         $precision = $fieldDeclaration['precision'] ?? null ?: $maximum;
         if ($fieldDeclaration['secondPrecision'] ?? \false) {
             $precision = 0;
         }
         if ($precision === $maximum) {
-            $precision = \Carbon\Doctrine\DateTimeDefaultPrecision::get();
+            $precision = DateTimeDefaultPrecision::get();
         }
         $type = parent::getSQLDeclaration($fieldDeclaration, $platform);
         if (!$precision) {

@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Translation;
+namespace DoubleScale\Vendor\Illuminate\Translation;
 
 use Countable;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Contracts\Translation\Loader;
-use Illuminate\Support\NamespacedItemResolver;
-use Illuminate\Contracts\Translation\Translator as TranslatorContract;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Contracts\Translation\Loader;
+use DoubleScale\Vendor\Illuminate\Support\NamespacedItemResolver;
+use DoubleScale\Vendor\Illuminate\Contracts\Translation\Translator as TranslatorContract;
 class Translator extends NamespacedItemResolver implements TranslatorContract
 {
     use Macroable;
@@ -339,7 +339,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
     public function getSelector()
     {
         if (!isset($this->selector)) {
-            $this->selector = new \Illuminate\Translation\MessageSelector();
+            $this->selector = new MessageSelector();
         }
         return $this->selector;
     }
@@ -349,7 +349,7 @@ class Translator extends NamespacedItemResolver implements TranslatorContract
      * @param  \Illuminate\Translation\MessageSelector  $selector
      * @return void
      */
-    public function setSelector(\Illuminate\Translation\MessageSelector $selector)
+    public function setSelector(MessageSelector $selector)
     {
         $this->selector = $selector;
     }

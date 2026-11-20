@@ -14,8 +14,8 @@ use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_Error;
-use DoubleScale\Modules\Campaigns\Services\MetaTemplateFetcher;
-use DoubleScale\Modules\Campaigns\Services\MetaTemplateSaver;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaTemplateFetcher;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaTemplateSaver;
 use DoubleScale\Modules\Campaigns\Models\TemplateModel;
 
 defined( 'ABSPATH' ) || exit;
@@ -134,6 +134,12 @@ class RestMetaWhatsappTemplatesController extends WP_REST_Controller {
 	 * @return bool True if user has permission.
 	 */
 	public function check_permissions() {
+		// Team access, not core's edit_posts: a WordPress Editor or Author, or a
+		// Help Center role, has no business with the customers' WhatsApp setup.
+		$permissions = '\\DoubleScale\\Core\\UserRoles\\Permissions';
+		if ( method_exists( $permissions, 'has_crm_or_support_access' ) ) {
+			return current_user_can( 'manage_options' ) || $permissions::has_crm_or_support_access();
+		}
 		return current_user_can( 'edit_posts' );
 	}
 

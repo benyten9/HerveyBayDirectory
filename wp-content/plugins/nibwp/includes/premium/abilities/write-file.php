@@ -11,11 +11,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/write-file', [
-    'label' => __('Write File', domain: 'nibwp'),
-    'description' => __(
-        'Writes content to a file on the server filesystem. PHP files (*.php) can ONLY be written to the sandbox directory (wp-content/nibwp-sandbox/). Non-PHP files can go anywhere under ABSPATH. Supports both UTF-8 text and base64-encoded binary content. Automatically creates parent directories when needed.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Write File', 'nibwp'),
+    'description' => 'Writes content to a file on the server filesystem. PHP files (*.php) can ONLY be written to the sandbox directory (wp-content/nibwp-sandbox/). Non-PHP files can go anywhere under ABSPATH. Supports both UTF-8 text and base64-encoded binary content. Automatically creates parent directories when needed.',
     'category' => 'filesystem',
     'input_schema' => [
         'type' => 'object',
@@ -68,7 +65,9 @@ wp_register_ability('nibwp/write-file', [
         ],
     ],
     'execute_callback' => 'nibwp_write_file',
-    'permission_callback' => 'nibwp_permission_callback',
+    // Writing to the install's filesystem is network authority on Multisite,
+    // not site authority — the same line core draws for edit_files.
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

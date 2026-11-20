@@ -354,7 +354,7 @@ class RestSmtpEmailLogController extends RestController {
 	/**
 	 * Perform delete / flush via POST JSON body (works when DELETE requests are blocked by hosts/CDNs).
 	 *
-	 * Body: `{ "op": "delete_one", "log_id": 1 }` | `{ "op": "delete_many", "ids": [1,2] }` | `{ "op": "flush" }`.
+	 * Body: `{ "op": "delete_one", "log_id": 1 }` | `{ "op": "delete_many", "ids": [1,2] }` | `{ "op": "flush" }` | `{ "op": "set_retention", "days": 30 }`.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_Error|WP_REST_Response
@@ -400,8 +400,34 @@ class RestSmtpEmailLogController extends RestController {
 				return new WP_REST_Response( array( 'success' => true ), 200 );
 
 			case 'flush':
+				$deleted = EmailLogHandler::flush();
+				if ( false === $deleted ) {
+					return new WP_Error(
+						'doublescale_smtp_logs_flush_failed',
+						__( 'Could not clear the email log.', 'doublescale' ),
+						array( 'status' => 422 )
+					);
+				}
 				return new WP_REST_Response(
-					array( 'success' => (bool) EmailLogHandler::flush() ),
+					array(
+						'success' => true,
+						'deleted' => $deleted,
+					),
+					200
+				);
+
+			case 'set_retention':
+				// Auto-clear window from the Logs page; leaves the row cap alone.
+				$days = $request->get_param( 'days' );
+				if ( ! is_numeric( $days ) || (int) $days < 0 ) {
+					return new WP_Error( 'doublescale_smtp_logs_invalid_days', __( 'Provide 0 or a positive number of days.', 'doublescale' ), array( 'status' => 400 ) );
+				}
+				Settings::update( 'log_retention_days', (int) $days );
+				return new WP_REST_Response(
+					array(
+						'success'        => true,
+						'retention_days' => EmailLogHandler::retention_days(),
+					),
 					200
 				);
 
@@ -502,7 +528,7 @@ class RestSmtpEmailLogController extends RestController {
 				$deleted = false;
 			}
 		} else {
-			$deleted = (bool) EmailLogHandler::flush();
+			$deleted = false !== EmailLogHandler::flush();
 		}
 
 		return new WP_REST_Response( array( 'success' => $deleted ), 200 );

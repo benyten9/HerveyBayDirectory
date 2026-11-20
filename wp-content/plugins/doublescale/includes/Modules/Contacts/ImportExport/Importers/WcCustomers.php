@@ -52,7 +52,7 @@ class WcCustomers extends Importer {
 	 * @var bool
 	 */
 	public function is_active() {
-		return doublescale_is_plugin_active( 'woocommerce/woocommerce.php' );
+		return doublescale_is_plugin_active( 'woocommerce' );
 	}
 
 	/**

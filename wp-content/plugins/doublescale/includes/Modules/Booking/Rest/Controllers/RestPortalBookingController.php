@@ -20,9 +20,12 @@ namespace DoubleScale\Modules\Booking\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Modules\Booking\Data\LocationLink;
 use DoubleScale\Modules\Booking\Models\BookedSlotModel;
 use DoubleScale\Modules\Booking\Models\BookingModel;
+use DoubleScale\Modules\Booking\Services\AttendeeChangePolicy;
 use DoubleScale\Modules\Booking\Services\BookingEvents;
+use DoubleScale\Modules\Portal\Services\PortalBookingOptions;
 use DoubleScale\Modules\Portal\Services\PortalIdentity;
 use WP_Error;
 use WP_REST_Request;
@@ -33,6 +36,9 @@ use WP_REST_Server;
  * RestPortalBookingController.
  */
 class RestPortalBookingController extends RestController {
+
+	/** Bookings that are off: cancelled, or declined by the host. */
+	public const OFF_STATUSES = array( 'cancelled', 'rejected' );
 
 	/**
 	 * REST base.
@@ -62,6 +68,19 @@ class RestPortalBookingController extends RestController {
 							'default' => 'all',
 						),
 					),
+				),
+			)
+		);
+
+		// What the client may book from the portal (Settings → Client Portal → Book a meeting).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/bookable-events',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_bookable_events' ),
+					'permission_callback' => array( PortalIdentity::class, 'permission_check' ),
 				),
 			)
 		);
@@ -104,6 +123,18 @@ class RestPortalBookingController extends RestController {
 	}
 
 	/**
+	 * The meetings this client may book, each with its booking page.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_bookable_events() {
+		return new WP_REST_Response(
+			array( 'data' => PortalBookingOptions::for_contact( PortalIdentity::current_contact() ) ),
+			200
+		);
+	}
+
+	/**
 	 * List the contact's bookings for one tab.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -123,7 +154,7 @@ class RestPortalBookingController extends RestController {
 		$filter = (string) $request->get_param( 'filter' );
 		$now    = gmdate( 'Y-m-d H:i:s' );
 
-		$query = BookingModel::with( array( 'event', 'order' ) )
+		$query = BookingModel::with( array( 'event', 'order', 'hosts' ) )
 			->where( 'contact_id', (int) $contact->id );
 
 		// `active()` excludes BOTH `cancelled` and `waiting` (see
@@ -135,15 +166,16 @@ class RestPortalBookingController extends RestController {
 			case 'all':
 				$query->orderBy( 'start_time', 'desc' );
 				break;
+			// A booking the host declined is as off as a cancelled one.
 			case 'cancelled':
-				$query->where( 'status', 'cancelled' )->orderBy( 'start_time', 'desc' );
+				$query->whereIn( 'status', self::OFF_STATUSES )->orderBy( 'start_time', 'desc' );
 				break;
 			case 'past':
-				$query->whereNotIn( 'status', array( 'cancelled' ) )->where( 'end_time', '<', $now )->orderBy( 'start_time', 'desc' );
+				$query->whereNotIn( 'status', self::OFF_STATUSES )->where( 'end_time', '<', $now )->orderBy( 'start_time', 'desc' );
 				break;
 			case 'upcoming':
 			default:
-				$query->whereNotIn( 'status', array( 'cancelled' ) )->where( 'end_time', '>=', $now )->orderBy( 'start_time', 'asc' );
+				$query->whereNotIn( 'status', self::OFF_STATUSES )->where( 'end_time', '>=', $now )->orderBy( 'start_time', 'asc' );
 				break;
 		}
 
@@ -204,6 +236,12 @@ class RestPortalBookingController extends RestController {
 			return new WP_Error( 'already_completed', __( 'Past bookings cannot be cancelled.', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
+		// The event's "Attendee cannot cancel" rule, as on the public pages.
+		$policy = AttendeeChangePolicy::for_booking( $booking, AttendeeChangePolicy::CANCEL );
+		if ( ! $policy['allowed'] ) {
+			return new WP_Error( 'booking_cancel_not_allowed', $policy['message'], array( 'status' => 403 ) );
+		}
+
 		$reason = sanitize_text_field( (string) $request->get_param( 'cancellation_reason' ) );
 		if ( '' !== $reason ) {
 			$booking->update_meta( 'cancellation_reason', $reason );
@@ -261,6 +299,11 @@ class RestPortalBookingController extends RestController {
 			return new WP_Error( 'not_reschedulable', __( 'This booking can no longer be rescheduled.', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
+		$policy = AttendeeChangePolicy::for_booking( $booking, AttendeeChangePolicy::RESCHEDULE );
+		if ( ! $policy['allowed'] ) {
+			return new WP_Error( 'booking_reschedule_not_allowed', $policy['message'], array( 'status' => 403 ) );
+		}
+
 		return new WP_REST_Response( array( 'url' => (string) $booking->getRescheduleUrl() ), 200 );
 	}
 
@@ -308,7 +351,10 @@ class RestPortalBookingController extends RestController {
 			);
 		}
 
-		$can_modify = ! $booking->isCancelled() && ! $booking->isCompleted();
+		// Over, declined or under way first, then the event's attendee rules,
+		// each with its own message.
+		$cancel     = AttendeeChangePolicy::for_booking( $booking, AttendeeChangePolicy::CANCEL );
+		$reschedule = AttendeeChangePolicy::for_booking( $booking, AttendeeChangePolicy::RESCHEDULE );
 
 		return array(
 			'id'             => (int) $booking->id,
@@ -318,42 +364,125 @@ class RestPortalBookingController extends RestController {
 				'name'     => $event ? (string) $event->name : __( 'Booking', 'doublescale' ),
 				'duration' => $event ? (int) $event->duration : null,
 			),
+			// The booking's own length: the client may have picked another
+			// duration than the event's default.
+			'duration'       => self::minutes( $booking, $event ),
+			// Who the client meets (display names only).
+			'hosts'          => self::host_names( $booking ),
 			'start_time'     => (string) $booking->start_time,
 			'end_time'       => (string) $booking->end_time,
 			'timezone'       => $booking->timezone ? (string) $booking->timezone : 'UTC',
-			'location'       => $this->shape_location( $booking->location ),
+			'location'       => $this->shape_location( $booking->location, $booking ),
 			'payment'        => $payment,
-			'can_cancel'     => $can_modify,
-			'can_reschedule' => $can_modify,
+			'can_cancel'                => $cancel['allowed'],
+			'cancel_denied_message'     => $cancel['message'],
+			'can_reschedule'            => $reschedule['allowed'],
+			'reschedule_denied_message' => $reschedule['message'],
+			// Over or off: the same meeting again, when the client may still book it.
+			'book_again_url'            => self::is_over( $booking )
+				? PortalBookingOptions::book_again_url( $event, PortalIdentity::current_contact() )
+				: null,
 		);
 	}
 
 	/**
-	 * Normalise the booking location meta into `{ label, value }` or null.
+	 * Whether the meeting is behind the client: ended, completed or cancelled.
 	 *
-	 * @param mixed $location Raw location meta (array|string|null).
+	 * @param BookingModel $booking Booking.
+	 * @return bool
+	 */
+	private static function is_over( BookingModel $booking ): bool {
+		if ( in_array( (string) $booking->status, array( 'completed', 'cancelled', 'rejected', 'no-show' ), true ) ) {
+			return true;
+		}
+		$end = strtotime( (string) $booking->end_time . ' UTC' );
+
+		return $end && $end <= time();
+	}
+
+	/**
+	 * The booking's length in minutes: its own slot, else its start and end,
+	 * else the event's default.
+	 *
+	 * @param BookingModel $booking Booking.
+	 * @param mixed        $event   Its event, if any.
+	 * @return int|null
+	 */
+	private static function minutes( BookingModel $booking, $event ): ?int {
+		if ( (int) $booking->slot_time > 0 ) {
+			return (int) $booking->slot_time;
+		}
+		$span = strtotime( (string) $booking->end_time ) - strtotime( (string) $booking->start_time );
+		if ( $span > 0 ) {
+			return (int) round( $span / MINUTE_IN_SECONDS );
+		}
+
+		return $event && (int) $event->duration > 0 ? (int) $event->duration : null;
+	}
+
+	/**
+	 * The hosts' display names.
+	 *
+	 * @param BookingModel $booking Booking.
+	 * @return string[]
+	 */
+	private static function host_names( BookingModel $booking ): array {
+		$names = array();
+		foreach ( $booking->hosts as $host ) {
+			$name = trim( (string) ( $host->display_name ?? '' ) );
+			if ( '' !== $name ) {
+				$names[] = $name;
+			}
+		}
+
+		return array_values( array_unique( $names ) );
+	}
+
+	/**
+	 * Normalise the booking location meta into `{ type, label, value, url,
+	 * kind }` or null. `url` is what the place opens and `kind` what that is
+	 * (see LocationLink): the meeting, a map of the host's address, or a call
+	 * to the host's phone. Both are null when the place opens nothing.
+	 *
+	 * @param mixed             $location Raw location meta (array|string|null).
+	 * @param BookingModel|null $booking  Booking (for the Zoom link written later).
 	 * @return array<string, string>|null
 	 */
-	private function shape_location( $location ): ?array {
-		if ( is_array( $location ) ) {
-			$label = isset( $location['label'] ) ? (string) $location['label'] : '';
-			$value = isset( $location['value'] ) ? (string) $location['value'] : '';
-			if ( '' === $label && '' === $value ) {
-				return null;
-			}
-			return array(
-				'label' => $label,
-				'value' => $value,
-			);
-		}
-
+	private function shape_location( $location, ?BookingModel $booking = null ): ?array {
 		if ( is_string( $location ) && '' !== $location ) {
-			return array(
-				'label' => '',
-				'value' => $location,
-			);
+			$location = array( 'value' => $location );
+		}
+		if ( ! is_array( $location ) ) {
+			return null;
 		}
 
-		return null;
+		$type  = isset( $location['type'] ) ? strtolower( (string) $location['type'] ) : '';
+		$label = isset( $location['label'] ) ? (string) $location['label'] : '';
+		$value = isset( $location['value'] ) ? (string) $location['value'] : '';
+
+		// As the public confirm page: the Zoom link is written after the
+		// booking (Action Scheduler), on the booking's Zoom details.
+		if ( 'zoom' === $type && ! LocationLink::for_location( $type, $value ) && $booking ) {
+			$details  = (array) $booking->get_meta( 'zoom_event_details', array() );
+			$join_url = (string) ( $details['meeting']['join_url'] ?? '' );
+			if ( LocationLink::for_location( $type, $join_url ) ) {
+				$value = $join_url;
+				$label = '' !== $label ? $label : __( 'Zoom', 'doublescale' );
+			}
+		}
+
+		if ( '' === $label && '' === $value ) {
+			return null;
+		}
+
+		$link = LocationLink::for_location( $type, $value );
+
+		return array(
+			'type'  => $type,
+			'label' => $label,
+			'value' => $value,
+			'url'   => $link ? $link['url'] : null,
+			'kind'  => $link ? $link['kind'] : null,
+		);
 	}
 }

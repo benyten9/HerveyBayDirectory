@@ -14,6 +14,7 @@ namespace DoubleScale\Pro\Modules\Automations\Triggers\Woocommerce\Cart;
 use DoubleScale\Modules\Automations\Abstracts\Trigger;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Automations\Models\AbandonedCartModel;
+use DoubleScale\Pro\Modules\Automations\Triggers\Woocommerce\Order\OrderTriggerPhone;
 use WC_Order;
 
 /**
@@ -21,6 +22,7 @@ use WC_Order;
  */
 class CartRecovered extends Trigger
 {
+	use OrderTriggerPhone;
 
 	/**
 	 * Trigger Name
@@ -112,6 +114,8 @@ class CartRecovered extends Trigger
 			'first_name' => $order->get_billing_first_name(),
 			'last_name'  => $order->get_billing_last_name(),
 			'email'      => $customer_email,
+			'phone'      => $this->resolve_order_phone($order),
+			'country'    => $this->resolve_order_country($order),
 			'data'       => array(
 				'order_id'          => $order->get_id(),
 				'abandoned_cart_id' => $abandoned_cart->id,

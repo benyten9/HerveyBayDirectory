@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Exceptions;
+namespace DoubleScale\Vendor\Carbon\Exceptions;
 
 use InvalidArgumentException as BaseInvalidArgumentException;
-class InvalidIntervalException extends BaseInvalidArgumentException implements \Carbon\Exceptions\InvalidArgumentException
+class InvalidIntervalException extends BaseInvalidArgumentException implements InvalidArgumentException
 {
     //
 }

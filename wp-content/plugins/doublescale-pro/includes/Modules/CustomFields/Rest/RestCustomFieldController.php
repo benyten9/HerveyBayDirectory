@@ -18,7 +18,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 
 /**
  * Custom_Field_Controller class
@@ -64,6 +64,35 @@ class RestCustomFieldController extends RestController {
 					'args'                => array(
 						'ids' => array(
 							'description' => __( 'Custom field IDs.', 'doublescale'),
+							'type'        => 'array',
+							'items'       => array(
+								'type' => 'integer',
+							),
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
+		// The order fields show in on forms, views and lists of one scope.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/order',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'reorder_items' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'scope' => array(
+							'description'       => __( 'Record type the fields belong to (contact, deal, project, task…).', 'doublescale' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_key',
+						),
+						'ids'   => array(
+							'description' => __( 'Custom field IDs in their new order.', 'doublescale' ),
 							'type'        => 'array',
 							'items'       => array(
 								'type' => 'integer',
@@ -213,7 +242,11 @@ class RestCustomFieldController extends RestController {
 			$from     = $request->get_param( 'from' ) ?? null;
 			$to       = $request->get_param( 'to' ) ?? null;
 
+			$scope       = sanitize_key( (string) ( $request->get_param( 'scope' ) ?? '' ) );
 			$query       = CustomFieldModel::query();
+			if ( '' !== $scope ) {
+				$query->where( 'scope', $scope );
+			}
 			$total_count = $query->count();
 
 			if ( $keyword ) {
@@ -226,7 +259,12 @@ class RestCustomFieldController extends RestController {
 				$query->where( 'created_at', '<=', $to );
 			}
 
-			$custom_fields = $query->orderBy( 'created_at', 'desc' )->paginate( $per_page, array( '*' ), 'page', $page );
+			// The order the fields show in (position, then id); scope first when
+			// every scope is listed, so each scope's fields stay together.
+			if ( '' === $scope ) {
+				$query->orderBy( 'scope' );
+			}
+			$custom_fields = $query->ordered()->paginate( $per_page, array( '*' ), 'page', $page );
 
 			return new WP_REST_Response( $custom_fields->toArray() + array( 'total_count' => $total_count ), 200 );
 		} catch ( \Exception $e ) {
@@ -389,6 +427,30 @@ class RestCustomFieldController extends RestController {
 	}
 
 	/**
+	 * Save the order of one scope's fields.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reorder_items( $request ) {
+		$scope = (string) $request->get_param( 'scope' );
+		$ids   = (array) $request->get_param( 'ids' );
+
+		try {
+			$result = CustomFieldModel::reorder( $scope, $ids );
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'rest_custom_field_order', $e->getMessage(), array( 'status' => 500 ) );
+		}
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$fields = CustomFieldModel::query()->where( 'scope', $scope )->ordered()->get( array( 'id', 'group_id', 'position' ) );
+		return new WP_REST_Response( $fields, 200 );
+	}
+
+	/**
 	 * Prepare custom field data
 	 *
 	 * @since 1.0.0
@@ -412,6 +474,11 @@ class RestCustomFieldController extends RestController {
 			if ( 'attributes' === $key ) {
 				if ( null === $value ) {
 					unset( $custom_field_data[ $key ] );
+				} elseif ( is_array( $value ) && array_key_exists( 'portal', $value ) ) {
+					// Client portal access: hidden (default), visible or editable.
+					$custom_field_data[ $key ]['portal'] = in_array( $value['portal'], array( CustomFieldModel::PORTAL_VISIBLE, CustomFieldModel::PORTAL_EDITABLE ), true )
+						? $value['portal']
+						: CustomFieldModel::PORTAL_HIDDEN;
 				}
 				continue;
 			}

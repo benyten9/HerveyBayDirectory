@@ -10,15 +10,65 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 
 // Bulk actions.
 // Generate automatically SEO metadata.
+
+/**
+ * Register bulk actions on a list table, honouring the seopress_bulk_actions filter.
+ *
+ * @since 10.3
+ *
+ * @param string $hook    Bulk actions hook to register on, e.g. bulk_actions-upload.
+ * @param string $key     Post type or taxonomy name, 'attachment' for the media library.
+ * @param array  $actions Bulk actions to register, as $callback => $handler. $handler is null when
+ *                        the action has no PHP handler, which is the case for the AI ones: they are
+ *                        handled in JavaScript.
+ *
+ * @return void
+ */
+function seopress_pro_register_bulk_actions( $hook, $key, $actions ) {
+	/** This filter is documented in wp-seopress/inc/functions/options-advanced-admin.php */
+	$actions = apply_filters( 'seopress_bulk_actions', $actions, $key );
+
+	if ( ! is_array( $actions ) ) {
+		return;
+	}
+
+	foreach ( $actions as $action => $handler ) {
+		add_filter( $hook, $action );
+
+		if ( null !== $handler ) {
+			add_filter( 'handle_' . $hook, $handler, 10, 3 );
+		}
+	}
+}
+
 $post_types = seopress_get_service( 'WordPressData' )->getPostTypes();
 
 
 foreach ( (array) $post_types as $key => $value ) {
 	if ( method_exists( seopress_get_service( 'TitleOption' ), 'getSingleCptEnable' ) && null === seopress_get_service( 'TitleOption' )->getSingleCptEnable( $key ) && '' != $key ) {
-		add_filter( 'bulk_actions-edit-' . $key, 'seopress_bulk_actions_ai_title' );
-		add_filter( 'bulk_actions-edit-' . $key, 'seopress_bulk_actions_ai_desc' );
+		seopress_pro_register_bulk_actions(
+			'bulk_actions-edit-' . $key,
+			$key,
+			array(
+				'seopress_bulk_actions_ai_title' => null,
+				'seopress_bulk_actions_ai_desc'  => null,
+			)
+		);
 	}
 }
+
+// Media library bulk actions.
+seopress_pro_register_bulk_actions(
+	'bulk_actions-upload',
+	'attachment',
+	array(
+		'seopress_bulk_actions_ai_alt_text'         => null,
+		'seopress_bulk_actions_ai_alt_text_missing' => null,
+		'seopress_bulk_actions_ai_alt_only'         => null,
+		'seopress_bulk_actions_ai_caption_only'     => null,
+		'seopress_bulk_actions_ai_description_only' => null,
+	)
+);
 
 /**
  * Bulk action to generate meta title with AI.
@@ -127,6 +177,35 @@ function seopress_bulk_action_ai_desc_admin_notice() {
 	}
 }
 
+add_action( 'admin_notices', 'seopress_bulk_action_ai_reviewed_admin_notice' );
+
+/**
+ * Admin notice once the AI suggestions approved in the bulk review are saved.
+ *
+ * @since 10.4.0
+ *
+ * @return void
+ */
+function seopress_bulk_action_ai_reviewed_admin_notice() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of a count.
+	$saved = isset( $_GET['bulk_ai_reviewed'] ) ? absint( wp_unslash( $_GET['bulk_ai_reviewed'] ) ) : 0;
+
+	if ( $saved > 0 ) {
+		/* translators: %s: number of AI suggestions saved after review */
+		$message = _n( '%s reviewed AI suggestion saved.', '%s reviewed AI suggestions saved.', $saved, 'wp-seopress-pro' );
+		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( $message, number_format_i18n( $saved ) ) ) );
+	}
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of a count.
+	$failed = isset( $_GET['bulk_ai_review_failed'] ) ? absint( wp_unslash( $_GET['bulk_ai_review_failed'] ) ) : 0;
+
+	if ( $failed > 0 ) {
+		/* translators: %s: number of approved AI suggestions that could not be saved */
+		$message = _n( '%s approved AI suggestion could not be saved.', '%s approved AI suggestions could not be saved.', $failed, 'wp-seopress-pro' );
+		printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( sprintf( $message, number_format_i18n( $failed ) ) ) );
+	}
+}
+
 /**
  * Bulk action to generate image metadata (alt text, caption, description) for images
  *
@@ -142,7 +221,6 @@ function seopress_bulk_actions_ai_alt_text( $bulk_actions ) {
 
 	return $bulk_actions;
 }
-add_filter( 'bulk_actions-upload', 'seopress_bulk_actions_ai_alt_text' );
 
 
 /**
@@ -175,7 +253,6 @@ function seopress_bulk_actions_ai_alt_text_missing( $bulk_actions ) {
 
 	return $bulk_actions;
 }
-add_filter( 'bulk_actions-upload', 'seopress_bulk_actions_ai_alt_text_missing' );
 
 /**
  * Bulk action to generate only alt text with AI.
@@ -192,7 +269,6 @@ function seopress_bulk_actions_ai_alt_only( $bulk_actions ) {
 
 	return $bulk_actions;
 }
-add_filter( 'bulk_actions-upload', 'seopress_bulk_actions_ai_alt_only' );
 
 /**
  * Bulk action to generate only caption with AI.
@@ -209,7 +285,6 @@ function seopress_bulk_actions_ai_caption_only( $bulk_actions ) {
 
 	return $bulk_actions;
 }
-add_filter( 'bulk_actions-upload', 'seopress_bulk_actions_ai_caption_only' );
 
 /**
  * Bulk action to generate only description with AI.
@@ -226,7 +301,6 @@ function seopress_bulk_actions_ai_description_only( $bulk_actions ) {
 
 	return $bulk_actions;
 }
-add_filter( 'bulk_actions-upload', 'seopress_bulk_actions_ai_description_only' );
 
 /**
  * Admin notice for bulk action to generate image metadata for images with missing alt text with AI.

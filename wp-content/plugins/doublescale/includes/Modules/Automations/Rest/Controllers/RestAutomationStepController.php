@@ -13,6 +13,7 @@ namespace DoubleScale\Modules\Automations\Rest\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Tracking\DeliveryRates;
 use DoubleScale\Core\UserRoles\Permissions;
 use WP_Error;
 use WP_REST_Request;
@@ -23,6 +24,7 @@ use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Modules\Automations\Services\ActionsManager;
+use DoubleScale\Modules\Automations\Services\GoalsManager;
 use DoubleScale\Modules\Automations\Services\VersionManager;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Emails\EmailAttachmentResolver;
@@ -417,7 +419,7 @@ class RestAutomationStepController extends RestController {
 	 */
 	public function update_item( $request ) {
 		try {
-			doublescale_get_logger()->error(
+			doublescale_get_logger()->debug(
 				'REST: update_item called for automation step',
 				array(
 					'step_id'   => $request->get_param( 'id' ),
@@ -434,7 +436,7 @@ class RestAutomationStepController extends RestController {
 
 			$step_data = $this->prepare_step( $request );
 
-			doublescale_get_logger()->error(
+			doublescale_get_logger()->debug(
 				'REST: About to save automation step',
 				array(
 					'step_id'          => $automation_step->id,
@@ -451,7 +453,7 @@ class RestAutomationStepController extends RestController {
 
 			$this->snapshot_version( $automation_step, __( 'Edited step', 'doublescale' ) );
 
-			doublescale_get_logger()->error(
+			doublescale_get_logger()->debug(
 				'REST: After save automation step',
 				array(
 					'step_id'          => $automation_step->id,
@@ -927,7 +929,19 @@ class RestAutomationStepController extends RestController {
 	 * @return AutomationStepModel
 	 */
 	private function resolve_action_label( $step ) {
-		if ( ! empty( $step->action ) && ( 'action' === $step->type || 'delay' === $step->type || 'goal' === $step->type ) ) {
+		// Goals live in their own registry; the canvas reads their name from _goal_label.
+		if ( ! empty( $step->action ) && 'goal' === $step->type ) {
+			try {
+				$settings                = $step->settings ?: array();
+				$settings['_goal_label'] = GoalsManager::instance()->get_goal( $step->action )->name;
+				$step->settings          = $settings;
+				$step->save();
+			} catch ( \Exception $e ) {
+				// Goal not registered — keep slug as label
+			}
+			return $step;
+		}
+		if ( ! empty( $step->action ) && ( 'action' === $step->type || 'delay' === $step->type ) ) {
 			try {
 				$action                    = ActionsManager::instance()->get_action( $step->action );
 				$settings                  = $step->settings ?: array();
@@ -1266,19 +1280,26 @@ class RestAutomationStepController extends RestController {
 					SUM(CASE WHEN {$tracking_table}.clicked = 1 AND {$tracking_table}.status = ? THEN 1 ELSE 0 END) as clicked_count,
 					SUM(CASE WHEN {$tracking_table}.status = ? THEN 1 ELSE 0 END) as delivered_count,
 					SUM(CASE WHEN {$tracking_table}.status = ? THEN 1 ELSE 0 END) as read_count,
+					SUM(CASE WHEN {$tracking_table}.status = ? THEN 1 ELSE 0 END) as failed_count,
 					SUM(CASE WHEN contacts.{$status_column} = 'unsubscribed' THEN 1 ELSE 0 END) as unsubscribed_count
 				",
-					array( TrackingStatus::SENT, TrackingStatus::SENT, TrackingStatus::SENT, TrackingStatus::DELIVERED, TrackingStatus::READ )
+					array( TrackingStatus::SENT, TrackingStatus::SENT, TrackingStatus::SENT, TrackingStatus::DELIVERED, TrackingStatus::READ, TrackingStatus::FAILED )
 				)
 				->first();
 
 			// Extract metrics.
-			$total_sent   = (int) $analytics_raw->total_sent;
 			$opened       = (int) $analytics_raw->opened_count;
 			$clicked      = (int) $analytics_raw->clicked_count;
 			$delivered    = (int) $analytics_raw->delivered_count;
 			$read         = (int) $analytics_raw->read_count;
 			$unsubscribed = (int) $analytics_raw->unsubscribed_count;
+
+			// A message's status moves past "sent" once delivered or read, so
+			// "sent" is every message the provider accepted — not only those
+			// still at SENT, which left a step whose messages were all read
+			// reporting nothing sent. Email never leaves SENT: unchanged.
+			$rates      = DeliveryRates::from_counts( (int) $analytics_raw->total_sent, $delivered, $read, (int) $analytics_raw->failed_count );
+			$total_sent = $rates['accepted'];
 
 			// If no messages sent, return zero analytics.
 			if ( 0 === $total_sent ) {
@@ -1303,8 +1324,8 @@ class RestAutomationStepController extends RestController {
 			// Calculate rates as percentages.
 			$open_rate         = $total_sent > 0 ? round( ( $opened / $total_sent ) * 100, 2 ) : 0;
 			$click_rate        = $total_sent > 0 ? round( ( $clicked / $total_sent ) * 100, 2 ) : 0;
-			$delivery_rate     = $total_sent > 0 ? round( ( $delivered / $total_sent ) * 100, 2 ) : 0;
-			$read_rate         = $total_sent > 0 ? round( ( $read / $total_sent ) * 100, 2 ) : 0;
+			$delivery_rate     = $rates['delivery_rate'];
+			$read_rate         = $rates['read_rate'];
 			$unsubscribed_rate = $total_sent > 0 ? round( ( $unsubscribed / $total_sent ) * 100, 2 ) : 0;
 
 			$analytics = array(
@@ -1337,7 +1358,7 @@ class RestAutomationStepController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function create_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_owning_automation( $request );
 	}
 
 	/**
@@ -1350,7 +1371,7 @@ class RestAutomationStepController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function get_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_owning_automation( $request );
 	}
 
 	/**
@@ -1363,7 +1384,7 @@ class RestAutomationStepController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function update_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_owning_automation( $request );
 	}
 
 	/**
@@ -1376,6 +1397,29 @@ class RestAutomationStepController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_owning_automation( $request );
+	}
+
+	/**
+	 * The step in the route (or, when creating one, the workflow it joins)
+	 * belongs to a workflow the user may change (every workflow for managers,
+	 * their own for Automation Agents). Missing records pass, so the handler
+	 * can answer 404.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	private function can_edit_owning_automation( $request ) {
+		if ( ! Permissions::can_access_automations() ) {
+			return false;
+		}
+		if ( null !== $request->get_param( 'id' ) ) {
+			$record = AutomationStepModel::find( (int) $request->get_param( 'id' ) );
+			return ! $record || Permissions::can_edit_automation( (int) $record->automation_id );
+		}
+		if ( null !== $request->get_param( 'automation_id' ) ) {
+			return Permissions::can_edit_automation( (int) $request->get_param( 'automation_id' ) );
+		}
+		return true;
 	}
 }

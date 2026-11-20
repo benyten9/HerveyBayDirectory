@@ -83,6 +83,14 @@ function seopress_get_schema_metaboxe_service( $seopress_pro_rich_snippets_data,
 			value="<?php echo esc_attr( $seopress_pro_rich_snippets_service_area ); ?>" />
 	</p>
 	<p>
+		<label for="seopress-service-provider-source-<?php echo esc_attr( $key_schema ); ?>"><?php esc_html_e( 'Provider source', 'wp-seopress-pro' ); ?></label>
+		<select id="seopress-service-provider-source-<?php echo esc_attr( $key_schema ); ?>" name="seopress_pro_rich_snippets_data[<?php echo esc_attr( $key_schema ); ?>][seopress_pro_rich_snippets_service_provider_source]">
+			<option value=""><?php esc_html_e( 'Use the provider fields below', 'wp-seopress-pro' ); ?></option>
+			<option value="knowledge_graph_organization" <?php selected( $seopress_pro_rich_snippets_data['_seopress_pro_rich_snippets_service_provider_source'] ?? '', 'knowledge_graph_organization' ); ?>><?php esc_html_e( 'Link to the site Organization', 'wp-seopress-pro' ); ?></option>
+		</select>
+		<span class="description"><?php esc_html_e( 'Link to the Organization configured in SEO > Social. If unavailable, the provider fields below are used. Person profiles cannot be linked here.', 'wp-seopress-pro' ); ?></span>
+	</p>
+	<p>
 		<label for="seopress_pro_rich_snippets_service_provider_name_meta">
 			<?php esc_html_e( 'Provider name', 'wp-seopress-pro' ); ?>
 		</label>

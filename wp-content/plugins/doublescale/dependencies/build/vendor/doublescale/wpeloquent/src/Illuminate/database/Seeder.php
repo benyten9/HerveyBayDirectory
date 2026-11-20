@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use InvalidArgumentException;
-use Illuminate\Console\Command;
-use Illuminate\Container\Container;
+use DoubleScale\Vendor\Illuminate\Console\Command;
+use DoubleScale\Vendor\Illuminate\Container\Container;
 abstract class Seeder
 {
     /**

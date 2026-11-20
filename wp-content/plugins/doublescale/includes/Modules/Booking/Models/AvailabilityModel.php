@@ -4,8 +4,8 @@ namespace DoubleScale\Modules\Booking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 class AvailabilityModel extends Model {
 

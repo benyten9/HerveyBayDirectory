@@ -11,8 +11,8 @@
 namespace Google\Site_Kit\Modules\Reader_Revenue_Manager\Datapoints\CTA;
 
 use Google\Site_Kit\Core\REST_API\Exception\Invalid_Param_Exception;
-use Google\Site_Kit_Dependencies\Google\Service\Webcontentpublisher\Cta;
-use Google\Site_Kit_Dependencies\Google\Service\Webcontentpublisher\NewsletterConfig;
+use Google\Site_Kit_Dependencies\Google\Service\WebContentPublisher\Cta;
+use Google\Site_Kit_Dependencies\Google\Service\WebContentPublisher\NewsletterConfig;
 
 /**
  * Configures newsletter sign-up CTA models.
@@ -36,7 +36,8 @@ class Newsletter_Signup_CTA_Type_Handler implements CTA_Type_Handler_Interface {
 	 * Boolean configuration fields, mapped to their model setters.
 	 */
 	const BOOLEAN_FIELDS = array(
-		'nameRequired' => 'setNameRequired',
+		'nameRequired'  => 'setNameRequired',
+		'optInRequired' => 'setOptInRequired',
 	);
 
 	/**

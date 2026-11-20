@@ -564,6 +564,27 @@ jQuery(document).ready(function ($) {
             return
         }
 
+        // Review step: the suggestions are shown first, and only the ones the
+        // user approves are saved. Without it, they are written straight away.
+        if (window.seopressAiBulkReview && typeof window.seopressAiBulkReview.open === 'function') {
+            let reviewLang = new URL(window.location.href).searchParams.get('lang');
+            if (reviewLang === 'all') {
+                reviewLang = null
+            }
+
+            const opened = window.seopressAiBulkReview.open({
+                action: action,
+                postIds: postIds,
+                lang: reviewLang,
+                nonce: $('#_wpnonce').val(),
+                opener: this,
+            });
+
+            if (opened) {
+                return
+            }
+        }
+
         $("#doaction, #doaction2").attr("disabled", "disabled");
         $("#doaction, #doaction2").parent().append('<div class="spinner" style="visibility:visible"></div>');
 

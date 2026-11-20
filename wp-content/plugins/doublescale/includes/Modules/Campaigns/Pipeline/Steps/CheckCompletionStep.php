@@ -54,6 +54,11 @@ class CheckCompletionStep implements PipelineStepInterface {
 			return;
 		}
 
+		if ( $ctx->total > 0 && $ctx->offset >= $ctx->total && $ctx->has_deferred_retries() ) {
+			$ctx->abort();
+			return;
+		}
+
 		if ( $ctx->is_complete() ) {
 			// Marks campaign completed and sets ctx->aborted = true.
 			$ctx->complete();

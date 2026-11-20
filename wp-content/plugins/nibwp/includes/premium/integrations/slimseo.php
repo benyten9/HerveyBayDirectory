@@ -65,7 +65,7 @@ function nibwp_slimseo_post_fields(): array
 
 wp_register_ability('nibwp/slimseo-info', [
     'label'       => __('Slim SEO — Info', 'nibwp'),
-    'description' => __('Detect Slim SEO and the Slim SEO Schema add-on, their versions, and which Slim SEO features are enabled (meta title/description, robots, Open Graph, Twitter, canonical, sitemaps, breadcrumbs, schema, redirection).', 'nibwp'),
+    'description' => 'Detect Slim SEO and the Slim SEO Schema add-on, their versions, and which Slim SEO features are enabled (meta title/description, robots, Open Graph, Twitter, canonical, sitemaps, breadcrumbs, schema, redirection).',
     'category'    => 'seo',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -97,7 +97,7 @@ function nibwp_slimseo_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/slimseo-post', [
     'label'       => __('Slim SEO — Post SEO', 'nibwp'),
-    'description' => __('Read/write a post\'s Slim SEO data: meta title, description, canonical URL, robots (noindex/nofollow), Facebook + Twitter image, and breadcrumb title. Actions: get, set, bulk_set. All values live in the single slim_seo post-meta array.', 'nibwp'),
+    'description' => 'Read/write a post\'s Slim SEO data: meta title, description, canonical URL, robots (noindex/nofollow), Facebook + Twitter image, and breadcrumb title. Actions: get, set, bulk_set. All values live in the single slim_seo post-meta array.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -208,7 +208,7 @@ function nibwp_slimseo_post_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/slimseo-settings', [
     'label'       => __('Slim SEO — Settings', 'nibwp'),
-    'description' => __('Read/write the global Slim SEO settings (the slim_seo option): the enabled features list, social defaults (default Facebook/Twitter image, Facebook app id, Twitter site), header/body/footer code injection, and redirection/404 behavior. Actions: get, update, set_features. Use get first to see exact keys.', 'nibwp'),
+    'description' => 'Read/write the global Slim SEO settings (the slim_seo option): the enabled features list, social defaults (default Facebook/Twitter image, Facebook app id, Twitter site), header/body/footer code injection, and redirection/404 behavior. Actions: get, update, set_features. Use get first to see exact keys.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -269,7 +269,7 @@ function nibwp_slimseo_settings_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/slimseo-schema', [
     'label'       => __('Slim SEO — Schema', 'nibwp'),
-    'description' => __('Read/write per-post structured-data (Schema) overrides for the Slim SEO Schema add-on. Actions: get, set, delete. The schema override is stored verbatim in the slim_seo_schema post-meta (an array of schema-type definitions); run get first to see its exact shape on this site.', 'nibwp'),
+    'description' => 'Read/write per-post structured-data (Schema) overrides for the Slim SEO Schema add-on. Actions: get, set, delete. The schema override is stored verbatim in the slim_seo_schema post-meta (an array of schema-type definitions); run get first to see its exact shape on this site.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

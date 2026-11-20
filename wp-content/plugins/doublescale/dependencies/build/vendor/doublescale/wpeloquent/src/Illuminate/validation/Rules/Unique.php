@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Validation\Rules;
+namespace DoubleScale\Vendor\Illuminate\Validation\Rules;
 
-use Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
 class Unique
 {
-    use \Illuminate\Validation\Rules\DatabaseRule;
+    use DatabaseRule;
     /**
      * The ID that should be ignored.
      *

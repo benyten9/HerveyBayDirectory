@@ -9,12 +9,15 @@
 namespace DoubleScale\Modules\Notifications\Rest\Controllers;
 
 use WP_REST_Controller;
+use DoubleScale\Core\UserRoles\Permissions;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use WP_Error;
 use DoubleScale\Modules\Notifications\Services\NotificationCategories;
 use DoubleScale\Modules\Notifications\Services\NotificationPreferences;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * RestNotificationPreferencesController class
@@ -173,11 +176,35 @@ class RestNotificationPreferencesController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function update_preferences( $request ) {
-		$user_id     = get_current_user_id();
-		$preferences = array(
-			'channels'      => $request->get_param( 'channels' ),
-			'subcategories' => $request->get_param( 'subcategories' ),
+		$user_id = get_current_user_id();
+		$current = NotificationPreferences::get( $user_id );
+
+		// What the request leaves out stays as it is: an app or an integration
+		// may change one switch without sending the whole page back.
+		$channels      = (array) ( $request->get_param( 'channels' ) ?? array() );
+		$subcategories = (array) ( $request->get_param( 'subcategories' ) ?? array() );
+		$preferences   = array(
+			'channels'      => array_merge( (array) ( $current['channels'] ?? array() ), $channels ),
+			'subcategories' => (array) ( $current['subcategories'] ?? array() ),
 		);
+		foreach ( $subcategories as $key => $value ) {
+			$preferences['subcategories'][ $key ] = array_merge(
+				(array) ( $preferences['subcategories'][ $key ] ?? array() ),
+				(array) $value
+			);
+		}
+
+		// Only the categories this user is shown can change: every other
+		// subcategory keeps what is stored, whatever the request carries.
+		$visible = array();
+		foreach ( array_keys( self::visible_categories() ) as $category ) {
+			$visible += NotificationCategories::get_subcategories( $category );
+		}
+		foreach ( (array) ( $current['subcategories'] ?? array() ) as $key => $value ) {
+			if ( ! isset( $visible[ $key ] ) ) {
+				$preferences['subcategories'][ $key ] = $value;
+			}
+		}
 
 		$result = NotificationPreferences::update( $user_id, $preferences );
 
@@ -208,10 +235,22 @@ class RestNotificationPreferencesController extends WP_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function get_categories( $request ) {
+		return new WP_REST_Response( self::visible_categories(), 200 );
+	}
+
+	/**
+	 * The categories the current user is shown, and may change.
+	 *
+	 * Uses the centralized capability map from NotificationCategories.
+	 * Automation-only staff (Automation Manager / Agent with no other
+	 * DoubleScale role) see the Automations category alone: it is the only
+	 * one that reaches them.
+	 *
+	 * @return array Category key => metadata.
+	 */
+	private static function visible_categories() {
 		$categories = NotificationCategories::get_all_with_metadata();
 
-		// Filter out categories the user can't access.
-		// Uses centralized capability map from NotificationCategories.
 		foreach ( array_keys( $categories ) as $category_key ) {
 			$required_cap = NotificationCategories::get_required_capability( $category_key );
 
@@ -221,7 +260,23 @@ class RestNotificationPreferencesController extends WP_REST_Controller {
 			}
 		}
 
-		return new WP_REST_Response( $categories, 200 );
+		if ( Permissions::is_automation_only() ) {
+			$categories = array_intersect_key( $categories, array( NotificationCategories::AUTOMATIONS => true ) );
+		}
+		// Helpdesk staff (and no other role): their helpdesk alerts only.
+		if ( Permissions::is_support_only() ) {
+			$categories = array_intersect_key( $categories, array( NotificationCategories::SUPPORT => true ) );
+		}
+		// Booking staff (and no other role): their booking alerts only.
+		if ( Permissions::is_booking_only() ) {
+			$categories = array_intersect_key( $categories, array( NotificationCategories::BOOKING => true ) );
+		}
+		// Project staff (and no other role): their project and task alerts.
+		if ( Permissions::is_project_only() ) {
+			$categories = array_intersect_key( $categories, array( NotificationCategories::PROJECTS => true, NotificationCategories::TASKS => true ) );
+		}
+
+		return $categories;
 	}
 
 	/**
@@ -271,7 +326,7 @@ class RestNotificationPreferencesController extends WP_REST_Controller {
 			'channels'      => array(
 				'description' => __( 'Global channel settings.', 'doublescale' ),
 				'type'        => 'object',
-				'required'    => true,
+				'required'    => false,
 				'properties'  => array(
 					'bell'    => array(
 						'type' => 'boolean',
@@ -287,7 +342,7 @@ class RestNotificationPreferencesController extends WP_REST_Controller {
 			'subcategories' => array(
 				'description' => __( 'Per-subcategory channel settings (flat structure).', 'doublescale' ),
 				'type'        => 'object',
-				'required'    => true,
+				'required'    => false,
 			),
 		);
 	}

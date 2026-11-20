@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use DoubleScale\Vendor\Faker\Factory as FakerFactory;
 use DoubleScale\Vendor\Faker\Generator as FakerGenerator;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Queue\EntityResolver;
-use Illuminate\Database\Connectors\ConnectionFactory;
-use Illuminate\Database\Eloquent\QueueEntityResolver;
-use Illuminate\Database\Eloquent\Factory as EloquentFactory;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\ServiceProvider;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\EntityResolver;
+use DoubleScale\Vendor\Illuminate\Database\Connectors\ConnectionFactory;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\QueueEntityResolver;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Factory as EloquentFactory;
 class DatabaseServiceProvider extends ServiceProvider
 {
     /**
@@ -51,7 +51,7 @@ class DatabaseServiceProvider extends ServiceProvider
         // connections might be managed. It also implements the connection resolver
         // interface which may be used by other components requiring connections.
         $this->app->singleton('db', function ($app) {
-            return new \Illuminate\Database\DatabaseManager($app, $app['db.factory']);
+            return new DatabaseManager($app, $app['db.factory']);
         });
         $this->app->bind('db.connection', function ($app) {
             return $app['db']->connection();

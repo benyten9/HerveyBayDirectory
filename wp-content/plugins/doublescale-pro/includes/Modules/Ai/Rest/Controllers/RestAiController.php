@@ -324,7 +324,7 @@ class RestAiController extends RestController
 	 */
 	public function generate_text_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access() || Permissions::has_project_access();
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::has_agent_access() || Permissions::has_project_access();
 	}
 
 	/**
@@ -652,6 +652,93 @@ class RestAiController extends RestController
 	}
 
 	/**
+	 * The saved API key, for a request that did not bring one.
+	 *
+	 * For a custom provider the key goes only to the base URL it was saved
+	 * with: sending it to any other address (typed into a request) would hand
+	 * the saved key to that server. The other providers' addresses are fixed.
+	 *
+	 * @param string $provider Requested provider.
+	 * @param string $base_url Requested base URL (custom provider).
+	 * @return string The decrypted key, '' when it may not be used.
+	 */
+	private function saved_key_for(string $provider, string $base_url): string
+	{
+		$ai_settings = Settings::get('ai', array());
+		$connections = $ai_settings['connections'] ?? array();
+		$saved_same  = ($provider === ($ai_settings['provider'] ?? ''));
+
+		if ('custom' === $provider && !self::same_url($base_url, $this->saved_custom_base_url($ai_settings))) {
+			return '';
+		}
+
+		// The global key only when the requested provider is the saved one:
+		// never a Gemini key to OpenAI.
+		$conn_key     = $connections[ $provider ]['api_key'] ?? '';
+		$fallback_key = $saved_same ? ($ai_settings['api_key'] ?? '') : '';
+
+		return (string) Settings::decrypt_value($conn_key ?: $fallback_key);
+	}
+
+	/**
+	 * @param array<string, mixed> $ai_settings Saved AI settings.
+	 * @return string
+	 */
+	private function saved_custom_base_url(array $ai_settings): string
+	{
+		return (string) ($ai_settings['connections']['custom']['base_url'] ?? ($ai_settings['base_url'] ?? ''));
+	}
+
+	/**
+	 * Whether two base URLs are the same address (case, trailing slash).
+	 *
+	 * @param string $a URL.
+	 * @param string $b URL.
+	 * @return bool
+	 */
+	private static function same_url(string $a, string $b): bool
+	{
+		$a = strtolower(rtrim(trim($a), '/'));
+		$b = strtolower(rtrim(trim($b), '/'));
+
+		return '' !== $a && $a === $b;
+	}
+
+	/**
+	 * A custom provider's address typed into a request: http or https, and
+	 * not a private or loopback address, unless it is the one already saved
+	 * (a local model server is a legitimate setup the admin made on purpose).
+	 *
+	 * @param string $base_url Requested base URL.
+	 * @return true|WP_Error
+	 */
+	private function guard_custom_base_url(string $base_url)
+	{
+		if ('' === trim($base_url)) {
+			return true;
+		}
+		if (self::same_url($base_url, $this->saved_custom_base_url(Settings::get('ai', array())))) {
+			return true;
+		}
+
+		$parts  = wp_parse_url($base_url);
+		$scheme = strtolower((string) ($parts['scheme'] ?? ''));
+		$host   = (string) ($parts['host'] ?? '');
+		$error  = new WP_Error('invalid_base_url', __('The base URL must be a public http or https address. Save it in the settings first to use a local server.', 'doublescale'), array('status' => 400));
+		if (!in_array($scheme, array('http', 'https'), true) || '' === $host) {
+			return $error;
+		}
+
+		$host = trim($host, '[]');
+		$ip   = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
+		if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+			return $error;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Test AI connection.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -661,16 +748,21 @@ class RestAiController extends RestController
 	{
 		// Accept inline params (like get_models) so user can test before saving.
 		$ai_settings = Settings::get('ai', array());
-		$connections  = $ai_settings['connections'] ?? array();
 
 		$provider = sanitize_text_field($request->get_param('provider') ?: ($ai_settings['provider'] ?? ''));
-		// Only fall back to the saved key when the provider matches, to avoid
-		// cross-provider key leaks (e.g. sending a Gemini key to OpenAI).
-		$saved_is_same_provider = ($provider === ($ai_settings['provider'] ?? ''));
-		$conn_key     = $connections[ $provider ]['api_key'] ?? '';
-		$fallback_key = $saved_is_same_provider ? ($ai_settings['api_key'] ?? '') : '';
-		$api_key  = $request->get_param('api_key') ?: Settings::decrypt_value($conn_key ?: $fallback_key);
-		$base_url = sanitize_url($request->get_param('base_url') ?: ($ai_settings['base_url'] ?? ''));
+		// The saved key is used only for the saved provider, and for a custom
+		// one only with the base URL it was saved with ({@see saved_key_for()}).
+		$base_url = sanitize_url($request->get_param('base_url') ?: $this->saved_custom_base_url($ai_settings));
+		$api_key  = (string) $request->get_param('api_key');
+		if ('' === $api_key) {
+			$api_key = $this->saved_key_for($provider, $base_url);
+		}
+		if ('custom' === $provider) {
+			$guard = $this->guard_custom_base_url($base_url);
+			if (is_wp_error($guard)) {
+				return $guard;
+			}
+		}
 
 		if (empty($provider) || ($provider !== 'custom' && empty($api_key))) {
 			return new WP_Error(
@@ -694,7 +786,7 @@ class RestAiController extends RestController
 		return new WP_REST_Response(
 			array(
 				'success' => true,
-				'message' => __('Connection successful! Your AI provider is configured correctly.', 'doublescale'),
+				'message' => __('Connection successful. Your AI provider is set up correctly.', 'doublescale'),
 			),
 			200
 		);
@@ -721,14 +813,16 @@ class RestAiController extends RestController
 			$ai_settings  = Settings::get('ai', array());
 			$provider     = $provider ?: ($ai_settings['provider'] ?? '');
 			$connections  = $ai_settings['connections'] ?? array();
-			$saved_is_same_provider = ($provider === ($ai_settings['provider'] ?? ''));
-			// Only fall back to the global api_key when the requested provider
-			// matches the saved provider. Otherwise use the provider's connection
-			// only — prevents sending e.g. a Gemini key to OpenAI.
-			$conn_key     = $connections[ $provider ]['api_key'] ?? '';
-			$fallback_key = $saved_is_same_provider ? ($ai_settings['api_key'] ?? '') : '';
-			$api_key      = $api_key ?: Settings::decrypt_value($conn_key ?: $fallback_key);
 			$base_url     = $base_url ?: ($connections['custom']['base_url'] ?? ($ai_settings['base_url'] ?? ''));
+			if (empty($api_key)) {
+				$api_key = $this->saved_key_for((string) $provider, (string) $base_url);
+			}
+		}
+		if ('custom' === $provider && !empty($base_url)) {
+			$guard = $this->guard_custom_base_url((string) $base_url);
+			if (is_wp_error($guard)) {
+				return $guard;
+			}
 		}
 
 		if (empty($provider)) {
@@ -739,286 +833,83 @@ class RestAiController extends RestController
 			);
 		}
 
-		switch ($provider) {
-			case 'openai':
-				if (empty($api_key)) {
-					return new WP_Error('missing_key', __('Api key is required.', 'doublescale'), array('status' => 400));
-				}
-				$models = $this->fetch_openai_models($api_key);
-				break;
-			case 'anthropic':
-				if (empty($api_key)) {
-					return new WP_Error('missing_key', __('Api key is required.', 'doublescale'), array('status' => 400));
-				}
-				$models = $this->fetch_anthropic_models($api_key);
-				break;
-			case 'gemini':
-				if (empty($api_key)) {
-					return new WP_Error('missing_key', __('Api key is required.', 'doublescale'), array('status' => 400));
-				}
-				$models = $this->fetch_gemini_models($api_key);
-				break;
-			case 'custom':
-				if (empty($base_url)) {
-					return new WP_Error('missing_base_url', __('Base URL is required for custom providers.', 'doublescale'), array('status' => 400));
-				}
-				$models = $this->fetch_custom_models($api_key, $base_url);
-				break;
-			default:
-				return new WP_Error(
-					'invalid_provider',
-					__('Invalid provider.', 'doublescale'),
-					array('status' => 400)
-				);
+		if (!in_array($provider, array('openai', 'anthropic', 'gemini', 'custom'), true)) {
+			return new WP_Error(
+				'invalid_provider',
+				__('Invalid provider.', 'doublescale'),
+				array('status' => 400)
+			);
+		}
+		if ('custom' === $provider && empty($base_url)) {
+			return new WP_Error('missing_base_url', __('Base URL is required for custom providers.', 'doublescale'), array('status' => 400));
+		}
+		if ('custom' !== $provider && empty($api_key)) {
+			return new WP_Error('missing_key', __('Api key is required.', 'doublescale'), array('status' => 400));
+		}
+
+		// One list for the dropdown and the AI calls: every current chat
+		// model, newest first, all pages (AiProvider::fetch_models()).
+		$models = \DoubleScale\Pro\Modules\Ai\AiProvider::fetch_models($provider, $api_key, $base_url);
+
+		// With the saved provider and key, the answer says whether the setup
+		// works (AiHealth): a refused key shows on the AI assistant page, a
+		// working one clears an earlier failure. A key being tried before it
+		// is saved never marks the saved setup.
+		$saved = Settings::get('ai', array());
+		if ($provider === ($saved['provider'] ?? '') && $api_key === (string) Settings::decrypt_value((string) ($saved['api_key'] ?? ''))) {
+			\DoubleScale\Pro\Modules\Ai\AiHealth::observe($models);
 		}
 
 		if (is_wp_error($models)) {
 			return $models;
 		}
 
+		$recommended = self::recommended_model($provider, $models);
+		if ('' !== $recommended) {
+			foreach ($models as &$model) {
+				if (($model['value'] ?? '') === $recommended) {
+					/* translators: %s: model name */
+					$model['label'] = sprintf(__('%s (recommended)', 'doublescale'), $model['label'] ?? $recommended);
+				}
+			}
+			unset($model);
+		}
+
 		return new WP_REST_Response(
 			array(
-				'success' => true,
-				'models'  => $models,
+				'success'     => true,
+				'models'      => $models,
+				// What the page picks when no saved model is in the list: the
+				// lists are newest first, and the newest is usually the dearest.
+				'recommended' => $recommended,
 			),
 			200
 		);
 	}
 
 	/**
-	 * Fetch available GPT models from OpenAI.
+	 * The provider's cheap default (AiProvider::get_default_model()) as it
+	 * appears in this list: the same id, or a dated version of it
+	 * (claude-haiku-4-5-20251001). Empty for custom providers or when absent.
 	 *
-	 * @param string $api_key Api key.
-	 * @return array|WP_Error List of { value, label } model objects.
+	 * @param array<int, array{value?: string}> $models
 	 */
-	private function fetch_openai_models($api_key)
+	public static function recommended_model(string $provider, array $models): string
 	{
-		$response = wp_remote_get(
-			'https://api.openai.com/v1/models',
-			array(
-				'timeout' => 15,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-				),
-			)
-		);
-
-		if (is_wp_error($response)) {
-			return new WP_Error('fetch_failed', $response->get_error_message(), array('status' => 502));
+		if (!in_array($provider, array('openai', 'anthropic', 'gemini'), true)) {
+			return '';
 		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			return new WP_Error(
-				'openai_error',
-				$body['error']['message'] ?? __('Failed to fetch OpenAI models.', 'doublescale'),
-				array('status' => $code)
-			);
+		$default = \DoubleScale\Pro\Modules\Ai\AiProvider::get_default_model($provider);
+		$values  = array_map(static fn($model) => (string) ($model['value'] ?? ''), $models);
+		if (in_array($default, $values, true)) {
+			return $default;
 		}
-
-		// Allow GPT-4o, GPT-4.1 (non-reasoning, fast) and GPT-5 (reasoning) chat models.
-		$models = array();
-		foreach ($body['data'] ?? array() as $model) {
-			$id = $model['id'] ?? '';
-			if ( ! preg_match('/^gpt-(4o(-mini)?|4\.1(-mini|-nano)?|5(\.\d+)?(-mini)?)$/', $id) ) {
-				continue;
-			}
-			$models[] = array(
-				'value' => $id,
-				'label' => $id,
-			);
-		}
-
-		usort($models, function ($a, $b) {
-			return strcmp($b['value'], $a['value']);
-		});
-
-		return $models;
-	}
-
-	/**
-	 * Return Anthropic Claude models.
-	 *
-	 * Anthropic does not have a public list-models Api, so we fetch their
-	 * /v1/models endpoint (requires beta header) and fall back to known models.
-	 *
-	 * @param string $api_key Api key.
-	 * @return array|WP_Error List of { value, label } model objects.
-	 */
-	private function fetch_anthropic_models($api_key)
-	{
-		$response = wp_remote_get(
-			'https://api.anthropic.com/v1/models',
-			array(
-				'timeout' => 15,
-				'headers' => array(
-					'x-api-key'         => $api_key,
-					'anthropic-version' => '2023-06-01',
-					'anthropic-beta'    => 'models-list-2025-02-19',
-				),
-			)
-		);
-
-		if (! is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-			$body   = json_decode(wp_remote_retrieve_body($response), true);
-			$models = array();
-			foreach ($body['data'] ?? array() as $model) {
-				$id = $model['id'] ?? '';
-				if (strpos($id, 'claude') === 0) {
-					$models[] = array(
-						'value' => $id,
-						'label' => $model['display_name'] ?? $id,
-					);
-				}
-			}
-			if (! empty($models)) {
-				return $models;
+		foreach ($values as $value) {
+			if (0 === strpos($value, $default . '-')) {
+				return $value;
 			}
 		}
-
-		// Fallback to well-known current models if Api is unavailable.
-		return array(
-			array('value' => 'claude-opus-4-6',           'label' => 'Claude Opus 4.6'),
-			array('value' => 'claude-sonnet-4-6',         'label' => 'Claude Sonnet 4.6'),
-			array('value' => 'claude-haiku-4-5-20251001', 'label' => 'Claude Haiku 4.5'),
-		);
-	}
-
-	/**
-	 * Fetch available Gemini models from Google.
-	 *
-	 * @param string $api_key Api key.
-	 * @return array|WP_Error List of { value, label } model objects.
-	 */
-	private function fetch_gemini_models($api_key)
-	{
-		// API key goes in the x-goog-api-key header (not the query string) so
-		// it never lands in server access logs or proxy logs.
-		$url = 'https://generativelanguage.googleapis.com/v1beta/models';
-
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout' => 15,
-				'headers' => array('x-goog-api-key' => $api_key),
-			)
-		);
-
-		if (is_wp_error($response)) {
-			return new WP_Error('fetch_failed', $response->get_error_message(), array('status' => 502));
-		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			return new WP_Error(
-				'gemini_error',
-				$body['error']['message'] ?? __('Failed to fetch Gemini models.', 'doublescale'),
-				array('status' => $code)
-			);
-		}
-
-		$models = array();
-		foreach ($body['models'] ?? array() as $model) {
-			// Only include models that support generateContent.
-			if (! in_array('generateContent', $model['supportedGenerationMethods'] ?? array(), true)) {
-				continue;
-			}
-
-			$id = str_replace('models/', '', $model['name'] ?? '');
-
-			// Skip non-text models (TTS, image-gen, robotics, computer-use, etc.).
-			if (preg_match('/tts|image|robotics|computer.use|research|banana|nano/', $id)) {
-				continue;
-			}
-
-			// Skip very old or experimental gemma models for cleaner list.
-			if (strpos($id, 'gemma') === 0) {
-				continue;
-			}
-
-			$label = $model['displayName'] ?? $id;
-			$models[] = array(
-				'value' => $id,
-				'label' => $label,
-			);
-		}
-
-		return $models;
-	}
-
-	/**
-	 * Fetch models from any OpenAI-compatible /v1/models endpoint.
-	 *
-	 * Works with OpenRouter, Ollama, LM Studio, Groq, etc.
-	 * For Ollama running locally: pass empty $api_key.
-	 *
-	 * @param string $api_key  Api key (can be empty for local providers like Ollama).
-	 * @param string $base_url Base URL, e.g. http://localhost:11434/v1
-	 * @return array|WP_Error List of { value, label } model objects.
-	 */
-	private function fetch_custom_models($api_key, $base_url)
-	{
-		$base_url = rtrim($base_url, '/');
-		$endpoint = $base_url . '/models';
-
-		$headers = array();
-		if (! empty($api_key)) {
-			$headers['Authorization'] = 'Bearer ' . $api_key;
-		}
-
-		$response = wp_remote_get(
-			$endpoint,
-			array(
-				'timeout' => 15,
-				'headers' => $headers,
-			)
-		);
-
-		if (is_wp_error($response)) {
-			return new WP_Error(
-				'fetch_failed',
-				sprintf(
-					/* translators: %s: base URL */
-					__('Could not reach %s. Is the server running?', 'doublescale'),
-					$base_url
-				),
-				array('status' => 502)
-			);
-		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			return new WP_Error(
-				'provider_error',
-				$body['error']['message'] ?? __('Failed to fetch models from the provider.', 'doublescale'),
-				array('status' => $code)
-			);
-		}
-
-		$models = array();
-		foreach ($body['data'] ?? array() as $model) {
-			$id = $model['id'] ?? '';
-			if (empty($id)) {
-				continue;
-			}
-			$models[] = array(
-				'value' => $id,
-				'label' => $model['name'] ?? $id,
-			);
-		}
-
-		// Sort alphabetically for consistent display.
-		usort($models, function ($a, $b) {
-			return strcmp($a['value'], $b['value']);
-		});
-
-		return $models;
+		return '';
 	}
 
 	/**
@@ -1035,315 +926,29 @@ class RestAiController extends RestController
 	 */
 	private function call_ai_provider($provider, $model, $api_key, $system, $user, $base_url = '', $json_mode = true, $max_tokens = 4096, $timeout = 120)
 	{
-		switch ($provider) {
-			case 'openai':
-				return $this->call_openai($model, $api_key, $system, $user, $json_mode, $max_tokens, $timeout);
-			case 'anthropic':
-				return $this->call_anthropic($model, $api_key, $system, $user, $max_tokens, $timeout);
-			case 'gemini':
-				return $this->call_gemini($model, $api_key, $system, $user, $max_tokens, $timeout);
-			case 'custom':
-				if (empty($base_url)) {
-					return new WP_Error(
-						'missing_base_url',
-						__('A Base URL is required for custom/compatible providers.', 'doublescale'),
-						array('status' => 400)
-					);
-				}
-				return $this->call_openai_compatible($model, $api_key, $system, $user, $base_url, $json_mode, $max_tokens, $timeout);
-			default:
-				return new WP_Error(
-					'invalid_provider',
-					__('Invalid AI provider configured.', 'doublescale'),
-					array('status' => 400)
-				);
-		}
-	}
-
-	/**
-	 * Call OpenAI Api.
-	 *
-	 * @param string $model   Model ID.
-	 * @param string $api_key Api key.
-	 * @param string $system  System prompt.
-	 * @param string $user      User prompt.
-	 * @param bool   $json_mode Whether to request JSON response format.
-	 * @return string|WP_Error
-	 */
-	private function call_openai($model, $api_key, $system, $user, $json_mode = true, $max_tokens = 4096, $timeout = 120)
-	{
-		// Reasoning models (gpt-5, o1, o3) use max_completion_tokens which covers
-		// both internal reasoning AND visible output. Non-reasoning models use
-		// max_tokens which only counts output. Reasoning models need ~3-4x the
-		// budget so thinking tokens don't starve the actual response.
-		$is_reasoning  = (bool) preg_match('/^(gpt-5|o[1-9])/', $model);
-		$token_key     = $is_reasoning ? 'max_completion_tokens' : 'max_tokens';
-		$token_budget  = $is_reasoning ? max($max_tokens * 4, 32768) : $max_tokens;
-
-		$body = array(
-			'model'      => $model,
-			'messages'   => array(
-				array('role' => 'system', 'content' => $system),
-				array('role' => 'user',   'content' => $user),
-			),
-			$token_key   => $token_budget,
-		);
-		if ($json_mode) {
-			$body['response_format'] = array('type' => 'json_object');
+		if ('custom' === $provider && empty($base_url)) {
+			return new WP_Error(
+				'missing_base_url',
+				__('A Base URL is required for custom/compatible providers.', 'doublescale'),
+				array('status' => 400)
+			);
 		}
 
-		$response = wp_remote_post(
-			'https://api.openai.com/v1/chat/completions',
+		// The same client as every other AI call: it knows each model's
+		// request shape (temperature, reasoning token budget) and reads the
+		// reply past a leading thinking block.
+		$client = new \DoubleScale\Pro\Modules\Ai\AiProvider((string) $provider, (string) $model, (string) $api_key, (string) $base_url);
+		$result = $client->call(
+			(string) $system,
+			(string) $user,
 			array(
-				'timeout' => $timeout,
-				'headers' => array(
-					'Content-Type'  => 'application/json',
-					'Authorization' => 'Bearer ' . $api_key,
-				),
-				'body'    => wp_json_encode($body),
+				'json_mode'  => (bool) $json_mode,
+				'max_tokens' => (int) $max_tokens,
+				'timeout'    => (int) $timeout,
 			)
 		);
 
-		if (is_wp_error($response)) {
-			return new WP_Error(
-				'ai_request_failed',
-				/* translators: %s: HTTP error message */
-				sprintf(__('AI request failed: %s', 'doublescale'), $response->get_error_message()),
-				array('status' => 502)
-			);
-		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			$error_msg = $body['error']['message'] ?? __('Unknown error from OpenAI', 'doublescale');
-			return new WP_Error(
-				'ai_api_error',
-				/* translators: %s: error message returned by the AI provider */
-				sprintf(__('OpenAI Api error: %s', 'doublescale'), $error_msg),
-				array('status' => $code)
-			);
-		}
-
-		return $body['choices'][0]['message']['content'] ?? '';
-	}
-
-	/**
-	 * Call any OpenAI-compatible Api (OpenRouter, Ollama, LM Studio, Groq, Azure, etc.).
-	 *
-	 * These providers all implement the POST /v1/chat/completions spec.
-	 * For Ollama running locally: base_url = http://localhost:11434/v1
-	 * For OpenRouter:            base_url = https://openrouter.ai/api/v1
-	 * For LM Studio:             base_url = http://localhost:1234/v1
-	 * For Groq:                  base_url = https://api.groq.com/openai/v1
-	 *
-	 * @param string $model    Model identifier.
-	 * @param string $api_key  Api key (pass empty string for Ollama — no key needed).
-	 * @param string $system   System prompt.
-	 * @param string $user     User prompt.
-	 * @param string $base_url  Base URL of the compatible endpoint (no trailing slash).
-	 * @param bool   $json_mode Whether to request JSON response format.
-	 * @return string|WP_Error
-	 */
-	private function call_openai_compatible($model, $api_key, $system, $user, $base_url, $json_mode = true, $max_tokens = 4096, $timeout = 120)
-	{
-		$base_url = rtrim($base_url, '/');
-		$endpoint = $base_url . '/chat/completions';
-
-		$headers = array(
-			'Content-Type' => 'application/json',
-		);
-
-		// Bearer auth — skip for Ollama which doesn't require a key.
-		if (! empty($api_key)) {
-			$headers['Authorization'] = 'Bearer ' . $api_key;
-		}
-
-		// OpenRouter requires HTTP-Referer and X-Title headers for ranking.
-		if (strpos($base_url, 'openrouter.ai') !== false) {
-			$headers['HTTP-Referer'] = home_url();
-			$headers['X-Title']      = get_bloginfo('name');
-		}
-
-		$body = array(
-			'model'       => $model,
-			'messages'    => array(
-				array('role' => 'system', 'content' => $system),
-				array('role' => 'user',   'content' => $user),
-			),
-			'max_tokens'  => $max_tokens,
-		);
-
-		// response_format json_object — only OpenAI and compatible providers that explicitly support it.
-		// OpenRouter passes it through to models that support it. Ollama supports it since v0.1.22.
-		if ($json_mode) {
-			$body['response_format'] = array('type' => 'json_object');
-		}
-
-		$response = wp_remote_post(
-			$endpoint,
-			array(
-				'timeout' => $timeout,
-				'headers' => $headers,
-				'body'    => wp_json_encode($body),
-			)
-		);
-
-		if (is_wp_error($response)) {
-			return new WP_Error(
-				'ai_request_failed',
-				/* translators: %s: HTTP error message */
-				sprintf(__('AI request failed: %s', 'doublescale'), $response->get_error_message()),
-				array('status' => 502)
-			);
-		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$parsed = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			$error_msg = $parsed['error']['message'] ?? __('Unknown error from AI provider', 'doublescale');
-			return new WP_Error(
-				'ai_api_error',
-				/* translators: %s: error message returned by the AI provider */
-				sprintf(__('AI provider error: %s', 'doublescale'), $error_msg),
-				array('status' => $code)
-			);
-		}
-
-		return $parsed['choices'][0]['message']['content'] ?? '';
-	}
-
-	/**
-	 * Call Anthropic (Claude) Api.
-	 *
-	 * @param string $model   Model ID.
-	 * @param string $api_key Api key.
-	 * @param string $system  System prompt.
-	 * @param string $user    User prompt.
-	 * @return string|WP_Error
-	 */
-	private function call_anthropic($model, $api_key, $system, $user, $max_tokens = 4096, $timeout = 120)
-	{
-		$response = wp_remote_post(
-			'https://api.anthropic.com/v1/messages',
-			array(
-				'timeout' => $timeout,
-				'headers' => array(
-					'Content-Type'      => 'application/json',
-					'x-api-key'         => $api_key,
-					'anthropic-version' => '2023-06-01',
-				),
-				'body'    => wp_json_encode(
-					array(
-						'model'      => $model,
-						'max_tokens' => $max_tokens,
-						'system'     => $system,
-						'messages'   => array(
-							array(
-								'role'    => 'user',
-								'content' => $user,
-							),
-						),
-					)
-				),
-			)
-		);
-
-		if (is_wp_error($response)) {
-			return new WP_Error(
-				'ai_request_failed',
-				/* translators: %s: HTTP error message */
-				sprintf(__('AI request failed: %s', 'doublescale'), $response->get_error_message()),
-				array('status' => 502)
-			);
-		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			$error_msg = $body['error']['message'] ?? __('Unknown error from Anthropic', 'doublescale');
-			return new WP_Error(
-				'ai_api_error',
-				/* translators: %s: error message returned by the AI provider */
-				sprintf(__('Anthropic Api error: %s', 'doublescale'), $error_msg),
-				array('status' => $code)
-			);
-		}
-
-		return $body['content'][0]['text'] ?? '';
-	}
-
-	/**
-	 * Call Google Gemini Api.
-	 *
-	 * @param string $model   Model ID.
-	 * @param string $api_key Api key.
-	 * @param string $system  System prompt.
-	 * @param string $user    User prompt.
-	 * @return string|WP_Error
-	 */
-	private function call_gemini($model, $api_key, $system, $user, $max_tokens = 4096, $timeout = 120)
-	{
-		// API key goes in the x-goog-api-key header (not the query string) so
-		// it never lands in server access logs or proxy logs.
-		$url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
-
-		$response = wp_remote_post(
-			$url,
-			array(
-				'timeout' => $timeout,
-				'headers' => array(
-					'Content-Type'   => 'application/json',
-					'x-goog-api-key' => $api_key,
-				),
-				'body'    => wp_json_encode(
-					array(
-						'system_instruction' => array(
-							'parts' => array(
-								array('text' => $system),
-							),
-						),
-						'contents'           => array(
-							array(
-								'parts' => array(
-									array('text' => $user),
-								),
-							),
-						),
-						'generationConfig'   => array(
-							'maxOutputTokens' => $max_tokens,
-						),
-					)
-				),
-			)
-		);
-
-		if (is_wp_error($response)) {
-			return new WP_Error(
-				'ai_request_failed',
-				/* translators: %s: HTTP error message */
-				sprintf(__('AI request failed: %s', 'doublescale'), $response->get_error_message()),
-				array('status' => 502)
-			);
-		}
-
-		$code = wp_remote_retrieve_response_code($response);
-		$body = json_decode(wp_remote_retrieve_body($response), true);
-
-		if ($code !== 200) {
-			$error_msg = $body['error']['message'] ?? __('Unknown error from Gemini', 'doublescale');
-			return new WP_Error(
-				'ai_api_error',
-				/* translators: %s: error message returned by the AI provider */
-				sprintf(__('Gemini Api error: %s', 'doublescale'), $error_msg),
-				array('status' => $code)
-			);
-		}
-
-		return $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
+		return is_array($result) ? (string) ($result['content'] ?? '') : $result;
 	}
 
 	/**

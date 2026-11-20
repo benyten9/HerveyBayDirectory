@@ -190,6 +190,28 @@ class Api {
 	}
 
 	/**
+	 * Read the sending limits Meta assigns to this number.
+	 *
+	 * messaging_limit_tier: unique recipients of business-initiated messages
+	 * per rolling 24h. throughput.level: messages per second (STANDARD / HIGH).
+	 * quality_rating: GREEN / YELLOW / RED. All three differ per account and
+	 * change over time, so campaigns read them instead of assuming.
+	 *
+	 * @return array Result array with success status and data/error.
+	 */
+	public function get_messaging_limits() {
+		$endpoint = "{$this->base_url}/{$this->api_version}/{$this->phone_number_id}";
+		$params   = array(
+			// messaging_limit_tier is deprecated: limits are per business portfolio
+			// now, in whatsapp_business_manager_messaging_limit. Both are asked
+			// for; the portfolio field wins (MetaAccountLimits::normalize()).
+			'fields' => 'whatsapp_business_manager_messaging_limit,messaging_limit_tier,throughput,quality_rating,display_phone_number',
+		);
+
+		return $this->request( 'GET', $endpoint, null, $params );
+	}
+
+	/**
 	 * Mark a message as read
 	 *
 	 * @param string $message_id The message ID to mark as read.

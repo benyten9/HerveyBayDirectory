@@ -33,51 +33,58 @@
         $('body').on('change', '#directorist-claimer_plan', function (e) {
             e.preventDefault();
             e.stopPropagation();
+
+            var form = $(this).closest('.directorist-claimer__form');
+            var plan_allowances = form.find('#directorist__plan-allowances');
             var data = {
                 'action': 'dcl_plan_allowances',
-                'author_id': $('#directorist__plan-allowances').data('author_id'),
+                'author_id': plan_allowances.data('author_id'),
                 'plan_id': $(this).val()
             };
             $.post(dcl_main.ajaxurl, data, function (response) {
                 if (response.html){
-                    $('#directorist__plan-allowances').show();
-                    $('#directorist__plan-allowances').html(response.html);
-                    $('.dcl_pricing_plan_name').removeClass('dcl-loading');
+                    plan_allowances.show();
+                    plan_allowances.html(response.html);
+                    form.find('.dcl_pricing_plan_name').removeClass('dcl-loading');
                 }else{
-                $('#directorist__plan-allowances').html(' ');
-                $('.dcl_pricing_plan_name').removeClass('dcl-loading');
-            }
+                    plan_allowances.html(' ');
+                    form.find('.dcl_pricing_plan_name').removeClass('dcl-loading');
+                }
 
             });
         });
         
-        $('#directorist-claimer__form').on('submit', function (e) {
+        $('.directorist-claimer__form').on('submit', function (e) {
             
             e.preventDefault();
 
-            $(this).find('.directorist-modal__footer .directorist-btn').addClass('directorist-loader');
+            var form = $(this);
+            var modal = form.closest('.directorist-claim-listing-modal');
 
-            var listing_type = $( 'input[type="radio"][name=listing_type]:checked').val();
-            var plan_id = $('#directorist-claimer_plan').find(":selected").val();
+            form.find('.directorist-modal__footer .directorist-btn').addClass('directorist-loader');
+
+            var listing_id = form.data('listing-id') || $('#directorist__post-id').first().val();
+            var listing_type = form.find('input[type="radio"][name=listing_type]:checked').val();
+            var plan_id = form.find('#directorist-claimer_plan').find(":selected").val();
 
 			var formData = new FormData();
 			
 			formData.append('action', 'dcl_submit_claim');
 
-			if( $('#directorist__post-id').val() ) {
-				formData.append('post_id', $('#directorist__post-id').val() );
+			if( listing_id ) {
+				formData.append('post_id', listing_id );
 			}
 			
-			if( $('#directorist-claimer__name').val() ) {
-				formData.append('claimer_name', $('#directorist-claimer__name').val() );
+			if( form.find('#directorist-claimer__name').val() ) {
+				formData.append('claimer_name', form.find('#directorist-claimer__name').val() );
 			}
 			
-			if( $('#directorist-claimer__phone').val() ) {
-				formData.append('claimer_phone', $('#directorist-claimer__phone').val() );
+			if( form.find('#directorist-claimer__phone').val() ) {
+				formData.append('claimer_phone', form.find('#directorist-claimer__phone').val() );
 			}
 			
-			if( $('#directorist-claimer__details').val() ) {
-				formData.append('claimer_details', $('#directorist-claimer__details').val() );
+			if( form.find('#directorist-claimer__details').val() ) {
+				formData.append('claimer_details', form.find('#directorist-claimer__details').val() );
 			}
 			
 			if( plan_id ) {
@@ -99,30 +106,32 @@
                 url: dcl_main.ajaxurl,
                 data: formData,
                 success(response) {
-                    $('#directorist-claimer__form .directorist-modal__footer .directorist-btn').removeClass('directorist-loader');
+                    form.find('.directorist-modal__footer .directorist-btn').removeClass('directorist-loader');
+                    if ( response.error_msg ) {
+                        form.find('#directorist-claimer__warning-notification').addClass('text-warning').html(response.error_msg);
+                        return;
+                    }
+
                     if ( response.take_payment ) {
                         window.location.href = response.checkout_url;
                     } else {
                         // Clear form fields
-                        $('.directorist-claimer__form .directorist-form-group').hide('');
+                        form.find('.directorist-form-group').hide('');
                         
                         // Show success message
-                        $('#directorist-claimer__submit-notification').addClass('text-success').html(response.message);
+                        form.find('#directorist-claimer__submit-notification').addClass('text-success').html(response.message);
                         
                         // Auto close modal after 2 seconds
                         setTimeout(() => {
                             // Close the modal
-                            $('.directorist-claim-listing-modal').removeClass('directorist-show');
+                            modal.removeClass('directorist-show');
                             $('body').removeClass('directorist-modal-open');
                         }, 2000);
-                    }
-                    if ( response.error_msg ){
-                        $('#directorist-claimer__warning-notification').addClass('text-warning').html(response.error_msg);
                     }
                 },
                     
                 error( error ) {
-                    $('#directorist-claimer__form .directorist-modal__footer .directorist-btn').removeClass('directorist-loader');
+                    form.find('.directorist-modal__footer .directorist-btn').removeClass('directorist-loader');
                 },
 				
 			});
@@ -152,4 +161,3 @@
     });
 
 })(jQuery);
-

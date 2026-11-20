@@ -400,19 +400,23 @@ function nibwp_figma_render_page(): void
     echo '<div class="wrap nibwp-wrap' . ($modal ? ' nw-figma--modal' : '') . '">';
     if (!$modal) {
         echo '<div class="nibwp-page-header"><div>';
-        echo '<h1>' . esc_html__('Figma', 'nibwp') . ' <span class="nw-figma__beta">BETA</span></h1>';
-        echo '<p class="nibwp-subtitle">' . sprintf(
-            /* translators: %d: number of pulled frames */
-            esc_html__('Pull frames into your library — cached as images + CSS tokens. Nothing is converted until you (or NibWP AI) decide, in any workflow or builder. %d in library.', 'nibwp'),
-            $lib_count
-        ) . '</p>';
+        echo '<h1>' . esc_html__('Figma', 'nibwp') . ' <span class="nw-figma__beta">' . esc_html_x('BETA', 'badge', 'nibwp') . '</span></h1>';
+        echo '<p class="nibwp-subtitle">'
+            . esc_html__('Pull frames into your library — cached as images + CSS tokens. Nothing is converted until you (or NibWP AI) decide, in any workflow or builder.', 'nibwp')
+            . ' ' . esc_html(sprintf(
+                /* translators: %d: number of pulled frames */
+                _n('%d frame in library.', '%d frames in library.', $lib_count, 'nibwp'),
+                $lib_count
+            )) . '</p>';
         echo '</div></div>';
     } else {
         echo '<h2 class="nibwp-card-title">' . esc_html__('Connect Figma', 'nibwp') . '</h2>';
     }
 
     if ($err !== '') {
-        if ($rate_wait > 0 || stripos($err, 'paused API access') !== false) {
+        // figma_rate marks a quota error by its code, which survives translation;
+        // the phrase match still catches links made before the flag existed.
+        if ($rate_wait > 0 || isset($_GET['figma_rate']) || stripos($err, 'paused API access') !== false) {
             nibwp_figma_render_rate_limit_notice($err, $rate_wait);
         } else {
             echo '<p class="nw-figma-note nw-figma-note--err">' . esc_html($err) . '</p>';
@@ -521,7 +525,11 @@ function nibwp_figma_render_page(): void
         echo '<button type="button" class="nw-figma-btn nw-figma-btn--ghost" id="nw-figma-sync" data-empty="' . ($lib === [] ? '1' : '0') . '"' . ($lib === [] ? ' disabled' : '') . '>'
             . '<span class="nw-figma-spin nw-figma-spin--dark" aria-hidden="true"></span>'
             . '<svg class="nw-figma-btn__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-7.4-3.9"/><path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 7.4 3.9"/><path d="M20 3v4.5h-4.5"/><path d="M4 21v-4.5h4.5"/></svg>'
-            . '<span class="nw-figma-btn__label">' . esc_html__('Re-sync library', 'nibwp') . ' (' . count($lib) . ')</span></button>';
+            . '<span class="nw-figma-btn__label">' . esc_html(sprintf(
+                /* translators: %d: number of frames in the library */
+                __('Re-sync library (%d)', 'nibwp'),
+                count($lib)
+            )) . '</span></button>';
         echo '<button type="button" class="nw-figma-btn nw-figma-btn--ghost nw-figma-batch__stop" id="nw-figma-batch-stop" hidden>'
             . '<svg class="nw-figma-btn__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>'
             . '<span class="nw-figma-btn__label">' . esc_html__('Stop', 'nibwp') . '</span></button>';
@@ -550,9 +558,12 @@ function nibwp_figma_render_page(): void
         if ($lib === []) {
             echo '<p class="nw-figma-card__sub">' . esc_html__('No frames pulled yet. Pull one from the Pull tab, then tell NibWP AI what to do with it.', 'nibwp') . '</p>';
         } else {
+            // Resolved once for the whole grid: every card offers the same
+            // builders, and asking per card re-probes every one of them.
+            $convert_options = nibwp_figma_convert_options();
             echo '<div class="nw-figma-grid" id="nw-figma-grid">';
             foreach (array_reverse($lib) as $e) {
-                nibwp_figma_render_lib_card((array) $e);
+                nibwp_figma_render_lib_card((array) $e, $convert_options);
             }
             echo '</div>';
             echo '<p class="nw-figma-empty" id="nw-figma-empty" hidden>' . esc_html__('No frames match that search.', 'nibwp') . '</p>';
@@ -643,7 +654,7 @@ function nibwp_figma_echo_howto(): void
     echo '<ul class="nw-figma-prompts">';
     foreach ($prompts as $prompt => $why) {
         echo '<li><button type="button" class="nw-figma-copy nw-figma-prompt" data-copy="' . esc_attr($prompt) . '">'
-            . '<span class="nw-figma-copy__text">' . esc_html($prompt) . '</span>'
+            . '<span class="nw-figma-copy__text" data-copied-label="' . esc_attr__('copied', 'nibwp') . '">' . esc_html($prompt) . '</span>'
             . '<svg class="nw-figma-copy__icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>'
             . '</button><span class="nw-figma-prompts__why">' . esc_html($why) . '</span></li>';
     }
@@ -680,15 +691,25 @@ function nibwp_figma_echo_tabs_js(): void
     window.nibwpFigma = {
         ajax:  <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>,
         nonce: <?php echo wp_json_encode(wp_create_nonce('nibwp_figma_lib')); ?>,
-        i18n:  {
-            confirmRemove: <?php echo wp_json_encode(__('Remove this frame from the library?', 'nibwp')); ?>,
-            removeTitle:   <?php echo wp_json_encode(__('Remove this frame?', 'nibwp')); ?>,
-            /* %s is replaced with the frame name, or "this frame" when unnamed. */
-            removeBody:    <?php echo wp_json_encode(__('This removes %s from your Figma library. The design in Figma is untouched, and you can pull it again at any time.', 'nibwp')); ?>,
-            removeConfirm: <?php echo wp_json_encode(__('Remove', 'nibwp')); ?>,
-            thisFrame:     <?php echo wp_json_encode(__('this frame', 'nibwp')); ?>,
-            failed:        <?php echo wp_json_encode(__('That did not work. Try again.', 'nibwp')); ?>
-        }
+        i18n:  <?php echo wp_json_encode([
+            'confirm_remove' => __('Remove this frame from the library?', 'nibwp'),
+            'remove_title'   => __('Remove this frame?', 'nibwp'),
+            /* translators: %s: the frame name, or "this frame" when it has none */
+            'remove_body'    => __('This removes %s from your Figma library. The design in Figma is untouched, and you can pull it again at any time.', 'nibwp'),
+            'remove_confirm' => __('Remove', 'nibwp'),
+            'this_frame'     => __('this frame', 'nibwp'),
+            'failed'         => __('That did not work. Try again.', 'nibwp'),
+            /* translators: 1: file number, 2: number of files, 3: file name */
+            'reading_file'   => __('Reading file %1$s / %2$s — %3$s', 'nibwp'),
+            'looking'        => __('Looking for frames…', 'nibwp'),
+            'nothing'        => __('Nothing to pull.', 'nibwp'),
+            'no_files'       => __('No files found there.', 'nibwp'),
+            /* translators: 1: frames pulled, 2: frames attempted */
+            'pulled'         => __('%1$s/%2$s pulled', 'nibwp'),
+            /* translators: %d: number of frames that failed to pull */
+            'failed_count'   => nibwp_i18n_js_plural(_n_noop('%d failed', '%d failed', 'nibwp')),
+            'stopped'        => __('stopped', 'nibwp'),
+        ]); ?>
     };
     (function(){
         /* Pull is a full POST round-trip (Figma fetch + image render + sideload),
@@ -841,16 +862,16 @@ function nibwp_figma_echo_tabs_js(): void
                         var nameEl = item.querySelector('.nw-figma-item__label');
                         var frame  = nameEl ? nameEl.textContent.trim() : '';
                         window.nibwpConfirm({
-                            title: cfg.i18n.removeTitle,
-                            message: cfg.i18n.removeBody.replace('%s', frame ? '<code>' + frame.replace(/[&<>"]/g, function(c){
+                            title: cfg.i18n.remove_title,
+                            message: cfg.i18n.remove_body.replace('%s', frame ? '<code>' + frame.replace(/[&<>"]/g, function(c){
                                 return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
-                            }) + '</code>' : cfg.i18n.thisFrame),
-                            confirmLabel: cfg.i18n.removeConfirm,
+                            }) + '</code>' : cfg.i18n.this_frame),
+                            confirmLabel: cfg.i18n.remove_confirm,
                             onConfirm: removeFrame
                         });
                         return;
                     }
-                    if (window.confirm(cfg.i18n.confirmRemove)) { removeFrame(); }
+                    if (window.confirm(cfg.i18n.confirm_remove)) { removeFrame(); }
                 }
             });
 
@@ -881,6 +902,15 @@ function nibwp_figma_echo_tabs_js(): void
 
             var cancelled = false, running = false;
 
+            /* %s / %1$s placeholders, filled in order or by position. */
+            var fmt = function(text, args){
+                var next = 0;
+                return String(text).replace(/%(?:(\d+)\$)?[sd]/g, function(m, pos){
+                    return String(pos ? args[parseInt(pos, 10) - 1] : args[next++]);
+                });
+            };
+            var plural = function(p, n){ return p.forms[p.index[n < 200 ? n : 100 + n % 100]].replace('%d', n); };
+
             var setBusy = function(btn, on){
                 if (!btn) { return; }
                 btn.classList.toggle('is-loading', on);
@@ -901,7 +931,7 @@ function nibwp_figma_echo_tabs_js(): void
                 var step = function(){
                     if (cancelled || i >= files.length) { onDone(out); return; }
                     var f = files[i++];
-                    if (txt) { txt.textContent = '<?php echo esc_js(__('Reading file', 'nibwp')); ?> ' + i + ' / ' + files.length + ' — ' + (f.name || ''); }
+                    if (txt) { txt.textContent = fmt(cfg.i18n.reading_file, [i, files.length, f.name || '']); }
                     if (fill) { fill.style.width = Math.round((i / files.length) * 30) + '%'; }
                     post('nibwp_figma_scan', {mode: 'file', key: f.key}).then(function(r){
                         if (r && r.success) {
@@ -927,11 +957,11 @@ function nibwp_figma_echo_tabs_js(): void
                 [pullAll, pullWs, syncBtn].forEach(function(b){ if (b) { b.disabled = true; } });
                 if (wrap) { wrap.hidden = false; }
                 if (fill) { fill.style.width = '0%'; }
-                if (txt) { txt.textContent = '<?php echo esc_js(__('Looking for frames…', 'nibwp')); ?>'; }
+                if (txt) { txt.textContent = cfg.i18n.looking; }
 
                 var pullTargets = function(targets){
                     if (!targets.length) {
-                        finish(btn, '<?php echo esc_js(__('Nothing to pull.', 'nibwp')); ?>');
+                        finish(btn, cfg.i18n.nothing);
                         return;
                     }
                     if (stopBtn) { stopBtn.hidden = false; }
@@ -939,9 +969,9 @@ function nibwp_figma_echo_tabs_js(): void
                     var i = 0, ok = 0, failed = 0;
                     var next = function(){
                         if (cancelled || i >= targets.length) {
-                            var msg = ok + '/' + targets.length + ' <?php echo esc_js(__('pulled', 'nibwp')); ?>'
-                                + (failed ? ' · ' + failed + ' <?php echo esc_js(__('failed', 'nibwp')); ?>' : '')
-                                + (cancelled ? ' · <?php echo esc_js(__('stopped', 'nibwp')); ?>' : '');
+                            var msg = fmt(cfg.i18n.pulled, [ok, targets.length])
+                                + (failed ? ' · ' + plural(cfg.i18n.failed_count, failed) : '')
+                                + (cancelled ? ' · ' + cfg.i18n.stopped : '');
                             finish(btn, msg);
                             if (ok) { setTimeout(function(){ window.location.search = '?page=nibwp-figma&tab=library'; }, 700); }
                             return;
@@ -964,7 +994,7 @@ function nibwp_figma_echo_tabs_js(): void
                             return;
                         }
                         var files = res.data.files || [];
-                        if (!files.length) { finish(btn, '<?php echo esc_js(__('No files found there.', 'nibwp')); ?>'); return; }
+                        if (!files.length) { finish(btn, cfg.i18n.no_files); return; }
                         if (stopBtn) { stopBtn.hidden = false; }
                         expandFiles(files, pullTargets);
                     }).catch(function(){ finish(btn, cfg.i18n.failed); });
@@ -1091,11 +1121,22 @@ function nibwp_figma_notice_is_ours($callback): bool
     return (bool) preg_match('#/plugins/nibwp[^/]*/#', $file);
 }
 
-/** One library card: thumbnail + tokens + the exact AI hint to use it. */
-function nibwp_figma_render_lib_card(array $e): void
+/**
+ * One library card: thumbnail + tokens + the exact AI hint to use it.
+ *
+ * @param array<string,string> $options Builder choices for the convert control.
+ *                                      The grid resolves them once for every
+ *                                      card; a lone call still gets a working
+ *                                      card rather than one missing a control.
+ */
+function nibwp_figma_render_lib_card(array $e, array $options = []): void
 {
+    if ($options === []) {
+        $options = nibwp_figma_convert_options();
+    }
+
     $id     = (string) ($e['id'] ?? '');
-    $name   = (string) ($e['name'] ?? 'Frame');
+    $name   = (string) ($e['name'] ?? __('Frame', 'nibwp'));
     $handle = (string) ($e['handle'] ?? '');
     $img    = (string) ($e['image_url'] ?? '');
     $colors = (array) ($e['tokens']['colors'] ?? []);
@@ -1129,20 +1170,68 @@ function nibwp_figma_render_lib_card(array $e): void
     // Click-to-copy handle — this is how you refer to the frame in a prompt.
     echo '<button type="button" class="nw-figma-hint nw-figma-copy" data-copy="' . esc_attr($command) . '"'
         . ' title="' . esc_attr__('Copy — use this name when you ask NibWP to build it', 'nibwp') . '">'
-        . '<span class="nw-figma-copy__text">' . esc_html($command) . '</span>'
+        . '<span class="nw-figma-copy__text" data-copied-label="' . esc_attr__('copied', 'nibwp') . '">' . esc_html($command) . '</span>'
         . '<svg class="nw-figma-copy__icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>'
         . '</button>';
 
-    echo '<div class="nw-figma-item__acts">';
-    echo '<a class="nw-figma-item__link" href="' . esc_url((string) ($e['url'] ?? '')) . '" target="_blank" rel="noopener">'
-        . '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H8.5a3.5 3.5 0 000 7H12z"/><path d="M12 2h3.5a3.5 3.5 0 110 7H12z"/><path d="M12 9H8.5a3.5 3.5 0 000 7H12z"/><path d="M12 16H8.5A3.5 3.5 0 1012 19.5z"/><circle cx="15.5" cy="12.5" r="3.5"/></svg>'
-        . esc_html__('Open in Figma', 'nibwp') . '</a>';
+    /*
+     * Icons with tooltips, laid out exactly as the Paper library card lays them
+     * out. The text link and the builder dropdown that used to sit here wrapped
+     * "Open in Figma" onto three lines beside a squeezed select, and the select
+     * offered a choice this path does not honour: the admin route converts with
+     * handoff disabled, so every option wrote core blocks regardless. One
+     * truthful action beats a menu of one.
+     */
+    echo '<div class="nw-figma-item__acts nw-figma-cardacts">';
+    echo '<div class="nw-figma-cardacts__start">';
+    echo '<a class="nw-figma-iconbtn" href="' . esc_url((string) ($e['url'] ?? '')) . '" target="_blank" rel="noopener"'
+        . ' aria-label="' . esc_attr__('Open in Figma', 'nibwp') . '" title="' . esc_attr__('Open in Figma', 'nibwp') . '">'
+        . '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H8.5a3.5 3.5 0 000 7H12z"/><path d="M12 2h3.5a3.5 3.5 0 110 7H12z"/><path d="M12 9H8.5a3.5 3.5 0 000 7H12z"/><path d="M12 16H8.5A3.5 3.5 0 1012 19.5z"/><circle cx="15.5" cy="12.5" r="3.5"/></svg>'
+        . '</a>';
+
+    // The same prompt affordance the Paper card carries. Pulling a frame is half
+    // the job; the other half is the words that tell an agent to build it, and
+    // they were only on one of the two screens.
+    echo '<button type="button" class="nw-figma-iconbtn nw-figma-copy" data-copy="'
+        . esc_attr(nibwp_figma_frame_prompt($command)) . '" aria-label="' . esc_attr__('Copy prompt', 'nibwp') . '"'
+        . ' title="' . esc_attr__('Copy prompt for your agent', 'nibwp') . '">'
+        . '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h8M8 14h5"/><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg>'
+        . '</button>';
+    echo '</div><div class="nw-figma-cardacts__end">';
+
+    echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="nw-figma-item__form">';
+    wp_nonce_field('nibwp_figma_convert');
+    echo '<input type="hidden" name="action" value="nibwp_figma_convert" />';
+    echo '<input type="hidden" name="figma_url" value="' . esc_url((string) ($e['url'] ?? '')) . '" />';
+    echo '<input type="hidden" name="builder" value="gutenberg" />';
+    echo '<button type="submit" class="nw-figma-iconbtn" aria-label="' . esc_attr__('Create a draft', 'nibwp') . '"'
+        . ' title="' . esc_attr__('Create a draft (core blocks)', 'nibwp') . '">'
+        . '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/><path d="M14 3v6h6"/><path d="M12 12v6M9 15h6"/></svg>'
+        . '</button>';
+    echo '</form>';
+
     echo '<button type="button" class="nw-figma-iconbtn nw-figma-iconbtn--danger nw-figma-del" aria-label="' . esc_attr__('Remove from library', 'nibwp') . '" title="' . esc_attr__('Remove from library', 'nibwp') . '">'
         . '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M6 6v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6"/></svg>'
         . '</button>';
     echo '</div>';
+    echo '</div>';
 
     echo '</div></div>';
+}
+
+/**
+ * What to say to an agent to build one pulled frame.
+ *
+ * Mirrors the Paper library's prompt, with the handle this card already shows,
+ * so the two screens hand over the same kind of instruction.
+ */
+function nibwp_figma_frame_prompt(string $handle): string
+{
+    return sprintf(
+        /* translators: %s: frame handle, e.g. @figma/hero-section */
+        __('Build %s on this site. Read it from the Figma library with nibwp/figma-get, plan the conversion with nibwp/figma-pro-analyze, then show me the plan and wait for my go-ahead before writing anything.', 'nibwp'),
+        $handle
+    );
 }
 
 /**
@@ -1222,8 +1311,8 @@ function nibwp_figma_echo_connect_forms(bool $from_modal = false): void
         . '<li>' . esc_html__('Paste the Client ID + Secret, save, then authorize.', 'nibwp') . '</li></ol>';
     echo '<form method="post" action="' . $post . '"><input type="hidden" name="action" value="nibwp_figma_save_oauth" />' . $m;
     wp_nonce_field('nibwp_figma_save_oauth');
-    echo '<input class="nw-figma-field" type="text" name="figma_client_id" placeholder="Client ID" value="' . esc_attr($client_id) . '" />';
-    echo '<input class="nw-figma-field" type="password" name="figma_client_secret" placeholder="' . ($has_secret ? esc_attr__('•••••• (saved — leave blank to keep)', 'nibwp') : 'Client Secret') . '" autocomplete="off" />';
+    echo '<input class="nw-figma-field" type="text" name="figma_client_id" placeholder="' . esc_attr__('Client ID', 'nibwp') . '" value="' . esc_attr($client_id) . '" />';
+    echo '<input class="nw-figma-field" type="password" name="figma_client_secret" placeholder="' . ($has_secret ? esc_attr__('•••••• (saved — leave blank to keep)', 'nibwp') : esc_attr__('Client Secret', 'nibwp')) . '" autocomplete="off" />';
     echo '<button class="nw-figma-btn nw-figma-btn--ghost" type="submit">' . esc_html__('Save app', 'nibwp') . '</button></form>';
     if ($client_id !== '' && $has_secret) {
         // target=_top so Figma's OAuth screen replaces the whole window (it can't be iframed).
@@ -1265,29 +1354,33 @@ function nibwp_figma_redirect(array $args, bool $modal = false): void
 
 add_action('admin_post_nibwp_figma_save_token', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_save_token');
     $fm = !empty($_POST['from_modal']);
     $token = sanitize_text_field((string) wp_unslash($_POST['figma_token'] ?? ''));
     if ($token === '') {
-        nibwp_figma_redirect(['figma_err' => 'Empty token.'], $fm);
+        nibwp_figma_redirect(['figma_err' => __('Paste a token first.', 'nibwp')], $fm);
     }
     // Validate against Figma before saving.
     $client = new NIBWP_Figma_Client($token);
     $me = $client->me();
     if (is_wp_error($me)) {
-        nibwp_figma_redirect(['figma_err' => 'Figma rejected the token: ' . $me->get_error_message()], $fm);
+        nibwp_figma_redirect(['figma_err' => sprintf(
+            /* translators: %s: error message from Figma */
+            __('Figma rejected the token: %s', 'nibwp'),
+            $me->get_error_message()
+        )], $fm);
     }
     nibwp_figma_save_secret('nibwp_figma_token', $token);
     update_option('nibwp_figma_auth_method', 'token', false);
     update_option('nibwp_figma_handle', (string) ($me['handle'] ?? $me['email'] ?? ''), false);
-    nibwp_figma_redirect(['figma_msg' => 'Connected to Figma.'], $fm);
+    nibwp_figma_redirect(['figma_msg' => __('Connected to Figma.', 'nibwp')], $fm);
 });
 
 add_action('admin_post_nibwp_figma_save_oauth', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_save_oauth');
     $fm = !empty($_POST['from_modal']);
@@ -1297,17 +1390,17 @@ add_action('admin_post_nibwp_figma_save_oauth', static function (): void {
     if ($sec !== '') {
         nibwp_figma_save_secret('nibwp_figma_oauth_client_secret', $sec);
     }
-    nibwp_figma_redirect(['figma_msg' => 'App credentials saved.'], $fm);
+    nibwp_figma_redirect(['figma_msg' => __('App credentials saved.', 'nibwp')], $fm);
 });
 
 add_action('admin_post_nibwp_figma_oauth_start', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_oauth_start');
     $cid = (string) get_option('nibwp_figma_oauth_client_id', '');
     if ($cid === '') {
-        nibwp_figma_redirect(['figma_err' => 'Set the OAuth Client ID first.']);
+        nibwp_figma_redirect(['figma_err' => __('Set the OAuth Client ID first.', 'nibwp')]);
     }
     $state = wp_generate_password(20, false);
     set_transient('nibwp_figma_oauth_state_' . get_current_user_id(), $state, 900);
@@ -1324,14 +1417,14 @@ add_action('admin_post_nibwp_figma_oauth_start', static function (): void {
 
 add_action('admin_post_nibwp_figma_oauth_callback', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     $code  = sanitize_text_field((string) wp_unslash($_GET['code'] ?? ''));
     $state = sanitize_text_field((string) wp_unslash($_GET['state'] ?? ''));
     $saved = get_transient('nibwp_figma_oauth_state_' . get_current_user_id());
     delete_transient('nibwp_figma_oauth_state_' . get_current_user_id());
     if ($code === '' || $state === '' || !hash_equals((string) $saved, $state)) {
-        nibwp_figma_redirect(['figma_err' => 'OAuth state mismatch or missing code.']);
+        nibwp_figma_redirect(['figma_err' => __('OAuth state mismatch or missing code.', 'nibwp')]);
     }
     $cid = (string) get_option('nibwp_figma_oauth_client_id', '');
     $sec = nibwp_figma_decrypt((string) get_option('nibwp_figma_oauth_client_secret', ''));
@@ -1346,12 +1439,16 @@ add_action('admin_post_nibwp_figma_oauth_callback', static function (): void {
         ],
     ]);
     if (is_wp_error($res)) {
-        nibwp_figma_redirect(['figma_err' => 'Token exchange failed: ' . $res->get_error_message()]);
+        nibwp_figma_redirect(['figma_err' => sprintf(
+            /* translators: %s: error message */
+            __('Token exchange failed: %s', 'nibwp'),
+            $res->get_error_message()
+        )]);
     }
     $data = json_decode((string) wp_remote_retrieve_body($res), true);
     $access = is_array($data) ? (string) ($data['access_token'] ?? '') : '';
     if ($access === '') {
-        nibwp_figma_redirect(['figma_err' => 'No access token returned by Figma.']);
+        nibwp_figma_redirect(['figma_err' => __('No access token returned by Figma.', 'nibwp')]);
     }
     nibwp_figma_save_secret('nibwp_figma_token', $access);
     update_option('nibwp_figma_auth_method', 'oauth', false);
@@ -1363,12 +1460,12 @@ add_action('admin_post_nibwp_figma_oauth_callback', static function (): void {
     if (!is_wp_error($me)) {
         update_option('nibwp_figma_handle', (string) ($me['handle'] ?? ''), false);
     }
-    nibwp_figma_redirect(['figma_msg' => 'Connected to Figma via OAuth.']);
+    nibwp_figma_redirect(['figma_msg' => __('Connected to Figma via OAuth.', 'nibwp')]);
 });
 
 add_action('admin_post_nibwp_figma_disconnect', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_disconnect');
     $fm = !empty($_POST['from_modal']);
@@ -1376,40 +1473,68 @@ add_action('admin_post_nibwp_figma_disconnect', static function (): void {
     delete_option('nibwp_figma_handle');
     delete_option('nibwp_figma_oauth_refresh');
     delete_option('nibwp_figma_auth_method');
-    nibwp_figma_redirect(['figma_msg' => 'Disconnected.'], $fm);
+    nibwp_figma_redirect(['figma_msg' => __('Disconnected.', 'nibwp')], $fm);
 });
 
 add_action('admin_post_nibwp_figma_convert', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_convert');
     if (!nibwp_figma_unlocked()) {
-        nibwp_figma_redirect(['figma_err' => 'The Figma integration requires a Pro / Bundle / Figma Skill license.']);
+        nibwp_figma_redirect(['figma_err' => __('The Figma integration requires a Pro / Bundle / Figma Skill license.', 'nibwp')]);
     }
 
     $url = esc_url_raw((string) wp_unslash($_POST['figma_url'] ?? ''));
     $title = sanitize_text_field((string) wp_unslash($_POST['figma_title'] ?? ''));
 
-    $out = nibwp_figma_do_convert($url, $title, 'auto', false);
+    /*
+     * Only a builder the card actually offered is honoured. Validating against
+     * the very list the card renders makes this an allow-list, so a stale form,
+     * a hand-written POST, or a builder whose skill was switched off since the
+     * page loaded all land on 'auto' instead of reaching the converter.
+     */
+    $allowed = nibwp_figma_convert_options();
+    $posted  = isset($_POST['builder']) && is_string($_POST['builder'])
+        ? (string) wp_unslash($_POST['builder'])
+        : '';
+    $builder = sanitize_key($posted);
+    if (!isset($allowed[$builder])) {
+        $builder = 'auto';
+    }
+
+    $out = nibwp_figma_do_convert($url, $title, $builder, false);
     if (is_wp_error($out)) {
         $d = (array) $out->get_error_data();
         nibwp_figma_redirect(array_filter([
             'figma_err'   => $out->get_error_message(),
             'figma_retry' => (int) ($d['retry_after'] ?? 0),
+            'figma_rate'  => $out->get_error_code() === 'figma_rate_limited' ? 1 : 0,
         ]));
     }
 
-    nibwp_figma_redirect(['converted' => (int) ($out['post_id'] ?? 0), 'figma_msg' => 'Converted.']);
+    /*
+     * Straight into the editor. The draft is the thing you asked for, and a
+     * notice on the library saying it exists, with a link to go and look, is a
+     * step for its own sake. Only when there is no post id — a handoff answered
+     * instead of a page — does the library still have something to say.
+     */
+    $converted = (int) ($out['post_id'] ?? 0);
+    if ($converted > 0) {
+        wp_safe_redirect(admin_url('post.php?post=' . $converted . '&action=edit'));
+        exit();
+    }
+
+    nibwp_figma_redirect(['figma_msg' => __('Converted.', 'nibwp')]);
 });
 
 add_action('admin_post_nibwp_figma_pull', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_pull');
     if (!nibwp_figma_unlocked()) {
-        nibwp_figma_redirect(['figma_err' => 'The Figma integration requires a Pro / Bundle / Figma Skill license.']);
+        nibwp_figma_redirect(['figma_err' => __('The Figma integration requires a Pro / Bundle / Figma Skill license.', 'nibwp')]);
     }
     $url  = esc_url_raw((string) wp_unslash($_POST['figma_url'] ?? ''));
     $name = sanitize_text_field((string) wp_unslash($_POST['figma_name'] ?? ''));
@@ -1420,9 +1545,10 @@ add_action('admin_post_nibwp_figma_pull', static function (): void {
         nibwp_figma_redirect(array_filter([
             'figma_err'   => $out->get_error_message(),
             'figma_retry' => (int) ($d['retry_after'] ?? 0),
+            'figma_rate'  => $out->get_error_code() === 'figma_rate_limited' ? 1 : 0,
         ]));
     }
-    nibwp_figma_redirect(['pulled' => (string) ($out['name'] ?? 'Frame')]);
+    nibwp_figma_redirect(['pulled' => (string) ($out['name'] ?? __('Frame', 'nibwp'))]);
 });
 
 /**
@@ -1478,14 +1604,14 @@ add_action('wp_ajax_nibwp_figma_lib_remove', static function (): void {
 
 add_action('admin_post_nibwp_figma_lib_delete', static function (): void {
     if (!current_user_can('manage_options')) {
-        wp_die('forbidden');
+        wp_die(esc_html__('Sorry, you are not allowed to do that.', 'nibwp'), 403);
     }
     check_admin_referer('nibwp_figma_lib_delete');
     $id = sanitize_text_field((string) wp_unslash($_POST['lib_id'] ?? ''));
     if ($id !== '') {
         NIBWP_Figma_Library::delete($id);
     }
-    nibwp_figma_redirect(['figma_msg' => 'Removed from library.']);
+    nibwp_figma_redirect(['figma_msg' => __('Removed from library.', 'nibwp')]);
 });
 
 /* ─────────────────── conversion core (shared) ─────────────────── */
@@ -1571,9 +1697,78 @@ function nibwp_figma_builder_ability_map(): array
         'etchwp'    => 'nibwp/etchwp-pro-html-to-component',
         'elementor' => 'nibwp/elementor-pro-html-to-page',
         'bricks'    => 'nibwp/bricks-pro-html-to-component',
-        'oxygen'    => 'nibwp/oxygen-html-to-page',
-        'kadence'   => 'nibwp/kadence-pro-html-to-page',
+        // Oxygen 6 is Breakdance underneath, and breakdance-pro is the pack that
+        // handles it — its own routing triggers on the word "oxygen". The entry
+        // here used to name nibwp/oxygen-html-to-page, which nothing registers.
+        'oxygen'    => 'nibwp/breakdance-pro-html-to-section',
+        // kadence-pro registers html-to-blocks, not html-to-page
+        // (skills/kadence-pro/abilities/convert.php:56, and its manifest agrees).
+        // While this said -page, nibwp_has_ability() answered false on every
+        // Kadence site, so both design bridges quietly built core blocks instead
+        // of Kadence ones and nothing said why.
+        'kadence'   => 'nibwp/kadence-pro-html-to-blocks',
+        'breakdance' => 'nibwp/breakdance-pro-html-to-section',
+        'builderius' => 'nibwp/builderius-pro-convert',
     ];
+}
+
+/**
+ * builder slug → the name a person calls it.
+ *
+ * Written out rather than derived. The one map in helpers.php that holds these
+ * names cannot be called — it is a local inside nibwp_builder_output_lines(),
+ * keyed by plugin file, while the detection above speaks slugs. Capitalising a
+ * slug mechanically is not a substitute either: it would offer "Etchwp" to
+ * somebody who owns Etch, so that only catches a builder nobody has named yet.
+ *
+ * Brand names are not translated, because a product is called what it is
+ * called. "Core blocks" is ordinary prose, and is.
+ *
+ * @return array<string,string>
+ */
+function nibwp_figma_builder_labels(): array
+{
+    return [
+        'etchwp'     => 'Etch',
+        'oxygen'     => 'Oxygen',
+        'bricks'     => 'Bricks',
+        'elementor'  => 'Elementor',
+        'kadence'    => 'Kadence Blocks',
+        'builderius' => 'Builderius',
+        'breakdance' => 'Breakdance',
+        'gutenberg'  => __('Core blocks', 'nibwp'),
+    ];
+}
+
+/**
+ * What a library card's convert control offers: slug → label.
+ *
+ * Core blocks first and always — they need no builder skill, so they cannot
+ * fail. After that, only a builder that could take a handoff right now. One that
+ * is installed with its skill switched off is deliberately missing: Skills is
+ * where that gets fixed, and an option that quietly builds something else is
+ * worse than no option at all.
+ *
+ * The card renders this list and the convert handler validates against it, so
+ * the form and its allow-list cannot drift apart.
+ *
+ * @return array<string,string>
+ */
+function nibwp_figma_convert_options(): array
+{
+    $labels  = nibwp_figma_builder_labels();
+    $options = ['gutenberg' => $labels['gutenberg']];
+
+    $detect = nibwp_figma_detect_builders();
+    foreach ((array) ($detect['ready_builders'] ?? []) as $slug) {
+        $slug = (string) $slug;
+        if ($slug === '' || $slug === 'gutenberg') {
+            continue;
+        }
+        $options[$slug] = $labels[$slug] ?? ucfirst($slug);
+    }
+
+    return $options;
 }
 
 /**

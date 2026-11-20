@@ -9,7 +9,6 @@ use Perfmatters\Vendor\Sabberworm\CSS\Parsing\SourceException;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedEOFException;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenException;
 use Perfmatters\Vendor\Sabberworm\CSS\ShortClassNameProvider;
-use function Perfmatters\Vendor\Safe\preg_match;
 /**
  * This class is a wrapper for quoted strings to distinguish them from keywords.
  *
@@ -51,10 +50,16 @@ class CSSString extends PrimitiveValue
             $parserState->consume($quote);
         }
         $result = '';
-        $content = null;
         if ($quote === null) {
             // Unquoted strings end in whitespace or with braces, brackets, parentheses
-            while (preg_match('/[\\s{}()<>\\[\\]]/isu', $parserState->peek()) === 0) {
+            while (\true) {
+                $matchResult = \preg_match('/[\\s{}()<>\\[\\]]/isu', $parserState->peek());
+                if (!\is_int($matchResult)) {
+                    throw new \RuntimeException('The CSS is not valid UTF-8.', 1787548272);
+                }
+                if ($matchResult !== 0) {
+                    break;
+                }
                 $result .= $parserState->parseCharacter(\false);
             }
         } else {

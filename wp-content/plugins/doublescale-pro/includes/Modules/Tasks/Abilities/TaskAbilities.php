@@ -9,6 +9,9 @@ namespace DoubleScale\Pro\Modules\Tasks\Abilities;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAccess;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAssigneeRule;
+use DoubleScale\Pro\Modules\Projects\Capabilities as ProjectCapabilities;
 use DoubleScale\Core\Abilities\AbilityBulk;
 use DoubleScale\Core\Abilities\AbilityCategories;
 use DoubleScale\Core\Abilities\AbilityInput;
@@ -197,7 +200,7 @@ final class TaskAbilities {
 					// `required` there and the model THROWS when one is absent —
 					// which the ability wrapper turns into an opaque 500. Declaring
 					// them here means the agent is told which field it forgot.
-					'required'   => array( 'title', 'entity_type', 'entity_id', 'due_date' ),
+					'required'   => array( 'title', 'entity_type', 'entity_id' ),
 				),
 				'meta'             => array(
 					'annotations' => array(
@@ -290,7 +293,7 @@ final class TaskAbilities {
 							),
 							'contact_ids' => AbilityBulk::ids_property(
 								'doublescale/create-tasks-bulk',
-								'Create one task per contact id. Mutually exclusive with tasks and filter. Requires title and due_date.'
+								'Create one task per contact id. Mutually exclusive with tasks and filter. Requires title; due_date is optional.'
 							),
 							'filter'      => AbilityBulk::filter_property(
 								'Same criteria as list-contacts. One task is created per matched contact. Mutually exclusive with tasks and contact_ids. An empty filter is refused.',
@@ -424,6 +427,34 @@ final class TaskAbilities {
 	}
 
 	/**
+	 * Whether the caller may read a task: everyone's for managers; otherwise
+	 * their own and their projects' (the Tasks list's rule).
+	 *
+	 * @param TaskModel $task Task.
+	 * @return bool
+	 */
+	private static function can_see( $task ): bool {
+		return self::sees_all()
+			|| TaskAccess::apply_visibility( TaskModel::query()->where( 'id', (int) $task->id ) )->exists();
+	}
+
+	/**
+	 * Whether the caller may change a task: their own, or one on a project
+	 * they work on.
+	 *
+	 * @param TaskModel $task Task.
+	 * @return bool
+	 */
+	private static function can_change( $task ): bool {
+		if ( self::sees_all() || (int) $task->assigned_to === get_current_user_id() ) {
+			return true;
+		}
+		return TaskEntityType::PROJECT === (int) $task->entity_type
+			&& method_exists( ProjectCapabilities::class, 'can_contribute_project' )
+			&& ProjectCapabilities::can_contribute_project( (int) $task->entity_id );
+	}
+
+	/**
 	 * List tasks.
 	 *
 	 * @since 1.0.0
@@ -482,14 +513,8 @@ final class TaskAbilities {
 			return AbilityResult::not_found( __( 'No task found with that id.', 'doublescale' ) );
 		}
 
-		$forbidden = AbilityScope::assert_owns(
-			$task,
-			'assigned_to',
-			self::sees_all(),
-			__( 'This task is not assigned to you.', 'doublescale' )
-		);
-		if ( $forbidden ) {
-			return $forbidden;
+		if ( ! self::can_see( $task ) ) {
+			return AbilityResult::forbidden( __( 'This task is not assigned to you, and it is not on a project you work on.', 'doublescale' ) );
 		}
 
 		$data = self::shape_task( $task );
@@ -558,7 +583,9 @@ final class TaskAbilities {
 
 		$sees_all = self::sees_all();
 		$query    = TaskModel::query();
-		AbilityScope::apply( $query, 'assigned_to', $sees_all );
+		if ( ! $sees_all ) {
+			TaskAccess::apply_visibility( $query );
+		}
 
 		$by_status   = array();
 		$by_priority = array();
@@ -669,7 +696,7 @@ final class TaskAbilities {
 
 		$invalid = AbilityInput::first_error(
 			array(
-				AbilityInput::required( $input, array( 'title', 'entity_type', 'entity_id', 'due_date' ) ),
+				AbilityInput::required( $input, array( 'title', 'entity_type', 'entity_id' ) ),
 				AbilityInput::date( $input['due_date'] ?? null, 'due_date' ),
 				AbilityInput::enum(
 					$input['priority'] ?? null,
@@ -694,6 +721,12 @@ final class TaskAbilities {
 			return $entity_missing;
 		}
 
+		if ( 'project' === (string) $input['entity_type']
+			&& method_exists( ProjectCapabilities::class, 'can_contribute_project' )
+			&& ! ProjectCapabilities::can_contribute_project( (int) $input['entity_id'] ) ) {
+			return AbilityResult::forbidden( __( 'You can add tasks only to projects you work on.', 'doublescale' ) );
+		}
+
 		$assigned_to = isset( $input['assigned_to'] ) ? (int) $input['assigned_to'] : get_current_user_id();
 
 		// Reassigning to someone else is a separate permission from creating.
@@ -703,13 +736,20 @@ final class TaskAbilities {
 			);
 		}
 
+		// The same rule as the task window: the assignee must be able to
+		// open the deal, project or contact.
+		$assignee_error = TaskAssigneeRule::error( (int) $types[ (string) $input['entity_type'] ], (int) $input['entity_id'], $assigned_to );
+		if ( $assignee_error ) {
+			return $assignee_error;
+		}
+
 		if ( AbilityBulk::is_preview( $input ) ) {
 			return array(
 				'created'      => false,
 				'would_create' => true,
 				'title'        => (string) $input['title'],
 				'assigned_to'  => $assigned_to,
-				'due_date'     => (string) $input['due_date'],
+				'due_date'     => isset( $input['due_date'] ) ? (string) $input['due_date'] : null,
 			);
 		}
 
@@ -723,7 +763,8 @@ final class TaskAbilities {
 			'assigned_to' => $assigned_to,
 		);
 
-		$data['due_date']    = (string) $input['due_date'];
+		// A task needs no due date (it may be waiting for a reply).
+		$data['due_date']    = isset( $input['due_date'] ) && '' !== $input['due_date'] ? (string) $input['due_date'] : null;
 		$data['entity_type'] = $types[ (string) $input['entity_type'] ];
 		$data['entity_id']   = (int) $input['entity_id'];
 
@@ -772,7 +813,7 @@ final class TaskAbilities {
 
 		$using_contacts = array_key_exists( 'contact_ids', $input ) || array_key_exists( 'filter', $input );
 		if ( $using_contacts ) {
-			$missing = AbilityInput::required( $input, array( 'title', 'due_date' ) );
+			$missing = AbilityInput::required( $input, array( 'title' ) );
 			if ( $missing ) {
 				return $missing;
 			}
@@ -895,14 +936,8 @@ final class TaskAbilities {
 			return AbilityResult::not_found( __( 'No task found with that id.', 'doublescale' ) );
 		}
 
-		$forbidden = AbilityScope::assert_owns(
-			$task,
-			'assigned_to',
-			self::sees_all(),
-			__( 'This task is not assigned to you.', 'doublescale' )
-		);
-		if ( $forbidden ) {
-			return $forbidden;
+		if ( ! self::can_change( $task ) ) {
+			return AbilityResult::forbidden( __( 'This task is not assigned to you, and it is not on a project you work on.', 'doublescale' ) );
 		}
 
 		if ( isset( $input['assigned_to'] )
@@ -911,6 +946,13 @@ final class TaskAbilities {
 			return AbilityResult::forbidden(
 				__( 'You cannot reassign tasks to another user.', 'doublescale' )
 			);
+		}
+
+		if ( isset( $input['assigned_to'] ) ) {
+			$assignee_error = TaskAssigneeRule::error_for_task( array( 'assigned_to' => (int) $input['assigned_to'] ), $task );
+			if ( $assignee_error ) {
+				return $assignee_error;
+			}
 		}
 
 		$changed = array();
@@ -1009,7 +1051,7 @@ final class TaskAbilities {
 	 * @since 1.0.0
 	 *
 	 * @param array<string, mixed> $filter Filter criteria.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public static function query_for_filter( array $filter ) {
 		$query = TaskModel::query();
@@ -1042,7 +1084,11 @@ final class TaskAbilities {
 			$query->where( 'title', 'LIKE', '%' . $search . '%' );
 		}
 
-		AbilityScope::apply( $query, 'assigned_to', self::sees_all() );
+		// Applied last so no caller filter can widen it: their own tasks, and
+		// the tasks of the projects they own or are on the team of.
+		if ( ! self::sees_all() ) {
+			TaskAccess::apply_visibility( $query );
+		}
 
 		return $query;
 	}

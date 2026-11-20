@@ -10,6 +10,8 @@
 namespace DoubleScale\Modules\Notifications\Migrations;
 
 use DoubleScale\Core\Database\Migration;
+
+defined( 'ABSPATH' ) || exit;
 /**
  * Notifications Table class
  */

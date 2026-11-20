@@ -56,7 +56,7 @@ abstract class AbstractMessageProvider implements MessageProviderInterface {
 	 *
 	 * Example: array(
 	 *     'sms' => '\DoubleScale\Modules\Tracking\Sms',
-	 *     'whatsapp' => '\DoubleScale\Modules\Tracking\Whatsapp',
+	 *     'whatsapp' => '\DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappTracking',
 	 * )
 	 *
 	 * @since 1.0.0

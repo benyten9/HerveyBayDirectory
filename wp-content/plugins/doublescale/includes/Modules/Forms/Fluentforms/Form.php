@@ -64,7 +64,7 @@ class Form extends Abstracts_Form {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		return doublescale_is_plugin_active( 'fluentform/fluentform.php' );
+		return doublescale_is_plugin_active( 'fluentform' );
 	}
 
 	/**

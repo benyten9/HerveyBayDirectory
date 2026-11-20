@@ -20,8 +20,8 @@ if (!defined('ABSPATH')) {
  */
 
 wp_register_ability('nibwp/etchwp-pro-image-to-component', [
-    'label'       => __('EtchWP Pro — Image to Component', domain: 'nibwp'),
-    'description' => __('Converts an image (URL or media-library ID) into a fully controllable EtchWP atomic component using ACSS spacing tokens and global classes. Validates against the house playbook before emit.', domain: 'nibwp'),
+    'label'       => __('EtchWP Pro — Image to Component', 'nibwp'),
+    'description' => 'Converts an image (URL or media-library ID) into a fully controllable EtchWP atomic component using ACSS spacing tokens and global classes. Validates against the house playbook before emit.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

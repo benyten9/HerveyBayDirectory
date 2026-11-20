@@ -1,27 +1,20 @@
 {
     "autoload": {
         "classmap": [
-            "inc/classes/LazyLoad/"
+            "inc/classes/LazyLoad/",
+            "inc/classes/Cache/",
+            "vendor-prefixed/deliciousbrains/wp-background-processing/classes/"
         ],
         "psr-4": {
             "Perfmatters\\": "inc/classes",
-            "Perfmatters\\Vendor\\Sabberworm\\CSS\\": "vendor-prefixed/sabberworm/php-css-parser/src",
-            "Perfmatters\\Vendor\\Safe\\": "vendor-prefixed/thecodingmachine/safe/lib",
-            "Perfmatters\\Vendor\\Safe\\Exceptions\\": [
-                "vendor-prefixed/thecodingmachine/safe/lib/Exceptions",
-                "vendor-prefixed/thecodingmachine/safe/generated/Exceptions"
-            ]
-        },
-        "files": [
-            "inc/prefixed-safe-autoload.php"
-        ]
+            "Perfmatters\\Vendor\\Sabberworm\\CSS\\": "vendor-prefixed/sabberworm/php-css-parser/src"
+        }
     },
     "require": {
-        "deliciousbrains/wp-background-processing": "1.4.0",
         "matthiasmullie/minify": "^1.3"
     },
     "require-dev": {
-        "sabberworm/php-css-parser": "9.3.0",
-        "thecodingmachine/safe": "^3.4"
+        "sabberworm/php-css-parser": "9.5.0",
+        "deliciousbrains/wp-background-processing": "1.4.0"
     }
 }

@@ -22,7 +22,7 @@ if ( is_singular() || is_home() ) {
 			if ( has_filter( 'seopress_dublin_core_title' ) ) {
 				$seopress_dublin_core_title = apply_filters( 'seopress_dublin_core_title', $seopress_dublin_core_title );
 			}
-			echo $seopress_dublin_core_title . "\n";
+			echo $seopress_dublin_core_title . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 	}
 	add_action( 'wp_head', 'seopress_dublin_core_title_hook', 1 );
@@ -40,7 +40,7 @@ if ( is_singular() || is_home() ) {
 			if ( has_filter( 'seopress_dublin_core_desc' ) ) {
 				$seopress_dublin_core_desc = apply_filters( 'seopress_dublin_core_desc', $seopress_dublin_core_desc );
 			}
-			echo $seopress_dublin_core_desc . "\n";
+			echo $seopress_dublin_core_desc . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 	}
 	add_action( 'wp_head', 'seopress_dublin_core_description_hook', 1 );
@@ -58,8 +58,8 @@ if ( is_singular() || is_home() ) {
 		if ( is_home() && get_post_meta( $page_id, '_seopress_robots_canonical', true ) != '' ) {
 			$_seopress_robots_canonical    = get_post_meta( $page_id, '_seopress_robots_canonical', true );
 			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $_seopress_robots_canonical ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-		} elseif ( get_post_meta( get_the_ID(), '_seopress_robots_canonical', true ) != '' ) { // Is metabox enabled.
-			$_seopress_robots_canonical    = get_post_meta( get_the_ID(), '_seopress_robots_canonical', true );
+		} elseif ( get_post_meta( seopress_pro_get_the_id(), '_seopress_robots_canonical', true ) != '' ) { // Is metabox enabled.
+			$_seopress_robots_canonical    = get_post_meta( seopress_pro_get_the_id(), '_seopress_robots_canonical', true );
 			$seopress_dublin_core_relation = '<meta name="dc.relation" content="' . htmlspecialchars( urldecode( $_seopress_robots_canonical ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
 		} else {
 			global $wp;
@@ -72,7 +72,7 @@ if ( is_singular() || is_home() ) {
 		}
 
 		if ( isset( $seopress_dublin_core_relation ) && '' != $seopress_dublin_core_relation ) {
-			echo $seopress_dublin_core_relation . "\n";
+			echo $seopress_dublin_core_relation . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 	}
 	add_action( 'wp_head', 'seopress_dublin_core_relation_hook', 1 );
@@ -89,7 +89,7 @@ if ( is_singular() || is_home() ) {
 		if ( has_filter( 'seopress_dublin_core_source' ) ) {
 			$seopress_dublin_core_source = apply_filters( 'seopress_dublin_core_source', $seopress_dublin_core_source );
 		}
-		echo $seopress_dublin_core_source . "\n";
+		echo $seopress_dublin_core_source . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 	}
 	add_action( 'wp_head', 'seopress_dublin_core_source_hook', 1 );
 
@@ -112,7 +112,7 @@ if ( is_singular() || is_home() ) {
 			$seopress_dc_language = apply_filters( 'seopress_dublin_core_language', $seopress_dc_language );
 		}
 
-		echo $seopress_dc_language . "\n";
+		echo $seopress_dc_language . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 	}
 	add_action( 'wp_head', 'seopress_dublin_core_language_hook', 1 );
 }

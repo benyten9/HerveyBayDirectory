@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-alttext', [
     'label'       => __('SEO Pro — Image Alt Text', 'nibwp'),
-    'description' => __('Audit images missing alt text and commit AI-written alt text. Actions: audit (list attachments / in-content images with no alt), set (write alt for { attachment_id, alt } items). You generate the alt from the image + page context per the playbook; this validates + persists to the attachment.', 'nibwp'),
+    'description' => 'Audit images missing alt text and commit AI-written alt text. Actions: audit (list attachments / in-content images with no alt), set (write alt for { attachment_id, alt } items). You generate the alt from the image + page context per the playbook; this validates + persists to the attachment.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

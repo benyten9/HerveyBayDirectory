@@ -118,9 +118,11 @@ final class CampaignStatusManager {
 			self::ACTIVE     => array( self::DRAFT, self::INACTIVE, self::PROCESSING, self::PAUSED, self::CANCELLED, self::RESENDING ),
 			self::SCHEDULED  => array( self::DRAFT, self::INACTIVE, self::PROCESSING, self::CANCELLED, self::FAILED ),
 			self::PROCESSING => array( self::COMPLETED, self::PAUSED, self::CANCELLED, self::FAILED ),
-			self::PAUSED     => array( self::PROCESSING, self::ACTIVE, self::CANCELLED ),
+			// A retry can be paused (Meta restricted the number mid-resend) and
+			// resumed back to retrying.
+			self::PAUSED     => array( self::PROCESSING, self::ACTIVE, self::CANCELLED, self::RESENDING ),
 			self::COMPLETED  => array( self::ACTIVE, self::RESENDING ),
-			self::RESENDING  => array( self::ACTIVE, self::COMPLETED, self::CANCELLED ),
+			self::RESENDING  => array( self::ACTIVE, self::COMPLETED, self::CANCELLED, self::PAUSED ),
 			self::CANCELLED  => array(),
 			self::FAILED     => array( self::ACTIVE, self::DRAFT, self::RESENDING ),
 		);

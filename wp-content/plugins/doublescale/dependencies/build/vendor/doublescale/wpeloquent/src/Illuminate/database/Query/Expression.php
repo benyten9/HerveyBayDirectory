@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Query;
+namespace DoubleScale\Vendor\Illuminate\Database\Query;
 
 class Expression
 {

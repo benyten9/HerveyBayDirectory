@@ -3229,9 +3229,54 @@
 				} };
 			}
 			onInit() {
+				this.bindLayoutShiftCorrection();
 				this.observeStickyElements(() => {
 					this.initializeStickyAndAnchorTracking();
 				});
+			}
+			bindLayoutShiftCorrection() {
+				document.addEventListener("click", (event) => {
+					const link = event.target.closest(this.getSettings("selectors.links"));
+					if (!(link === null || link === void 0 ? void 0 : link.hash) || link.hostname !== location.hostname || link.pathname !== location.pathname) return;
+					const target = this.getAnchorTarget(link);
+					if (!target || Math.abs(target.getBoundingClientRect().top - (parseFloat(target.style.scrollMarginTop) || 0)) < 2) return;
+					const startPosition = this.getScrollPosition(target);
+					setTimeout(() => {
+						if (!event.defaultPrevented) this.realignOnce(target, startPosition, "onscrollend" in window ? "scrollend" : null);
+					});
+				});
+				this.bindHashLoadCorrection();
+			}
+			bindHashLoadCorrection() {
+				const target = "complete" !== document.readyState && this.getAnchorTarget(location);
+				if (target) this.realignOnce(target, this.getScrollPosition(target), "load");
+			}
+			realignOnce(target, startPosition, settleEvent) {
+				const userScrollEvents = [
+					"wheel",
+					"touchstart",
+					"keydown"
+				];
+				let timeoutId;
+				const stop = () => {
+					clearTimeout(timeoutId);
+					window.removeEventListener(settleEvent, realign);
+					userScrollEvents.forEach((type) => window.removeEventListener(type, stop));
+				};
+				const realign = () => {
+					stop();
+					if (Math.abs(this.getScrollPosition(target) - startPosition) > 2) target.scrollIntoView({
+						behavior: "auto",
+						block: "start"
+					});
+				};
+				userScrollEvents.forEach((type) => window.addEventListener(type, stop, { passive: true }));
+				if (!settleEvent) {
+					timeoutId = setTimeout(realign, 800);
+					return;
+				}
+				window.addEventListener(settleEvent, realign);
+				if ("scrollend" === settleEvent) timeoutId = setTimeout(stop, 1500);
 			}
 			observeStickyElements(callback) {
 				new MutationObserver((mutationsList) => {

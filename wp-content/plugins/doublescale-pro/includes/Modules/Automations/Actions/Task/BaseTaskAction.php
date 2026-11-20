@@ -13,6 +13,8 @@ use DoubleScale\Pro\Modules\Automations\Support\AutomationModuleStorage;
 use DoubleScale\Pro\Modules\Automations\Support\TaskContactResolver;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskModel;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskStatusModel;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAssigneeCandidates;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAssigneeRule;
 use DoubleScale\Core\UserRoles\UserRoles;
 
 defined( 'ABSPATH' ) || exit;
@@ -181,7 +183,7 @@ abstract class BaseTaskAction extends Action {
 			return array();
 		}
 
-		if ( ! class_exists( \DoubleScale\Pro\Modules\Tasks\Models\TaskLabelModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'tasks' ) ) {
 			return array();
 		}
 
@@ -202,12 +204,11 @@ abstract class BaseTaskAction extends Action {
 		$field = array(
 			'label'      => $this->t( 'Assignee' ),
 			'type'       => 'infinite_scroll_select',
-			'endpoint'   => '/doublescale/v1/user-management/users/frontend',
+			// "Owner of the linked record" first, then the team members who open Tasks.
+			'endpoint'   => '/doublescale/v1/tasks/automation-assignees',
 			'placeholder'=> $this->t( 'Search and select assignee…' ),
+			'tooltip'    => __( 'Someone who cannot open the deal, project or contact of a run gets no task: it goes to that record\'s owner, and the run log says so.', 'doublescale' ),
 			'settings'   => array(
-				'apiParams'       => array(
-					'filter_crm_users' => 'true',
-				),
 				'dataPath'        => 'users',
 				'totalPath'       => 'pagination.total',
 				'searchParamName' => 'search',
@@ -220,5 +221,44 @@ abstract class BaseTaskAction extends Action {
 		}
 
 		return $field;
+	}
+
+	/**
+	 * Who a step gives a task on this record to: its pick when they can open
+	 * the record, else the record's owner ("Owner of the linked record" asks
+	 * for the owner outright). Nobody can be asked to pick again while the
+	 * automation runs, so the step says what it did instead.
+	 *
+	 * @param int $picked      The step's assignee setting.
+	 * @param int $entity_type Task entity type.
+	 * @param int $entity_id   Record id.
+	 * @return array{0:int, 1:string} The assignee (0 = nobody can take it) and
+	 *                                a note for the run log ('' = the pick).
+	 */
+	protected function resolve_assignee( int $picked, int $entity_type, int $entity_id ): array {
+		if ( TaskAssigneeCandidates::RECORD_OWNER !== $picked && null === TaskAssigneeRule::error( $entity_type, $entity_id, $picked ) ) {
+			return array( $picked, '' );
+		}
+
+		$owner = TaskAssigneeRule::allowed_or_owner( $entity_type, $entity_id, 0 );
+
+		if ( TaskAssigneeCandidates::RECORD_OWNER === $picked ) {
+			return array( $owner, $owner > 0 ? '' : __( 'The linked record has no owner who can take the task.', 'doublescale' ) );
+		}
+
+		if ( $owner > 0 ) {
+			return array(
+				$owner,
+				sprintf(
+					/* translators: 1: person picked in the step, 2: the record's owner, who got the task */
+					__( '%1$s cannot work on this record, so the task went to its owner, %2$s.', 'doublescale' ),
+					TaskAssigneeRule::name_of( $picked ),
+					TaskAssigneeRule::name_of( $owner )
+				),
+			);
+		}
+
+		$error = TaskAssigneeRule::error( $entity_type, $entity_id, $picked );
+		return array( 0, $error ? $error->get_error_message() : __( 'The linked record has no owner who can take the task.', 'doublescale' ) );
 	}
 }

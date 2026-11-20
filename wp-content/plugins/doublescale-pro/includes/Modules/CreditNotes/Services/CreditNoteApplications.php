@@ -189,6 +189,11 @@ class CreditNoteApplications {
 	 * @return void
 	 */
 	public function destroy_applications( CreditNoteModel $credit_note ): void {
+		// Applications point at invoices: none can exist without the invoices table.
+		if ( ! doublescale_table_exists( 'sales_invoices' ) ) {
+			return;
+		}
+
 		$applications = CreditNoteApplicationModel::query()
 			->with( array( 'creditNote', 'invoice' ) )
 			->where( 'credit_note_id', (int) $credit_note->id )
@@ -218,11 +223,11 @@ class CreditNoteApplications {
 			->where( 'transaction_id', self::PAYMENT_REF_PREFIX . (int) $application->id )
 			->first();
 
+		$application->delete();
+
 		if ( $payment ) {
 			$payment->delete();
 		}
-
-		$application->delete();
 
 		$invoice     = ( new InvoicePayments() )->sync( $invoice );
 		$credit_note = $this->sync( $credit_note );
@@ -240,6 +245,8 @@ class CreditNoteApplications {
 	 * @return CreditNoteModel
 	 */
 	public function sync( CreditNoteModel $credit_note ): CreditNoteModel {
+		$this->drop_applications_without_payments( $credit_note );
+
 		// Same credit note = same currency; this is not a cross-document total.
 		$amount_applied = (float) CreditNoteApplicationModel::query()
 			->where( 'credit_note_id', (int) $credit_note->id )
@@ -297,5 +304,84 @@ class CreditNoteApplications {
 		}
 
 		return CreditNoteStatus::OPEN;
+	}
+
+	/**
+	 * Drop the application that belongs to a credit-note payment being deleted.
+	 *
+	 * @param mixed $payment Payment model (free plugin).
+	 * @return void
+	 */
+	public static function on_payment_deleting( $payment ): void {
+		if ( ! is_object( $payment ) || ! isset( $payment->transaction_id ) ) {
+			return;
+		}
+
+		$txn    = trim( (string) $payment->transaction_id );
+		$prefix = self::PAYMENT_REF_PREFIX;
+		if ( '' === $txn || 0 !== strpos( $txn, $prefix ) ) {
+			return;
+		}
+
+		$application_id = (int) substr( $txn, strlen( $prefix ) );
+		if ( $application_id <= 0 ) {
+			return;
+		}
+
+		$application = CreditNoteApplicationModel::query()
+			->with( array( 'creditNote' ) )
+			->where( 'id', $application_id )
+			->first();
+
+		if ( ! $application ) {
+			return;
+		}
+
+		$credit_note = $application->creditNote;
+		$application->delete();
+
+		if ( $credit_note ) {
+			( new self() )->sync( $credit_note );
+		}
+	}
+
+	/**
+	 * Remove applications whose invoice payment was deleted without this service.
+	 *
+	 * @param CreditNoteModel $credit_note Credit note.
+	 * @return void
+	 */
+	private function drop_applications_without_payments( CreditNoteModel $credit_note ): void {
+		$applications = CreditNoteApplicationModel::query()
+			->where( 'credit_note_id', (int) $credit_note->id )
+			->get();
+
+		foreach ( $applications as $application ) {
+			$payment_exists = PaymentModel::query()
+				->where( 'transaction_id', self::PAYMENT_REF_PREFIX . (int) $application->id )
+				->exists();
+			if ( ! $payment_exists ) {
+				$application->delete();
+			}
+		}
+	}
+
+	/**
+	 * Heal credit notes whose applications outlived a deleted invoice payment.
+	 *
+	 * @return void
+	 */
+	public function reap_orphan_applications(): void {
+		$ids = CreditNoteApplicationModel::query()
+			->select( 'credit_note_id' )
+			->distinct()
+			->pluck( 'credit_note_id' );
+
+		foreach ( $ids as $id ) {
+			$credit_note = CreditNoteModel::find( (int) $id );
+			if ( $credit_note ) {
+				$this->sync( $credit_note );
+			}
+		}
 	}
 }

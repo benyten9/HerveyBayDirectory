@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Notifications\ChannelManager;
-use Illuminate\Notifications\AnonymousNotifiable;
-use Illuminate\Support\Testing\Fakes\NotificationFake;
+use DoubleScale\Vendor\Illuminate\Notifications\ChannelManager;
+use DoubleScale\Vendor\Illuminate\Notifications\AnonymousNotifiable;
+use DoubleScale\Vendor\Illuminate\Support\Testing\Fakes\NotificationFake;
 /**
  * @method static void send(\Illuminate\Support\Collection|array|mixed $notifiables, $notification)
  * @method static void sendNow(\Illuminate\Support\Collection|array|mixed $notifiables, $notification)
@@ -13,7 +13,7 @@ use Illuminate\Support\Testing\Fakes\NotificationFake;
  *
  * @see \Illuminate\Notifications\ChannelManager
  */
-class Notification extends \Illuminate\Support\Facades\Facade
+class Notification extends Facade
 {
     /**
      * Replace the bound instance with a fake.

@@ -25,7 +25,7 @@ class Online extends Location {
 	 *
 	 * @var string
 	 */
-	public $title = 'Online';
+	public $title = 'Online meeting';
 
 	/**
 	 * Slug

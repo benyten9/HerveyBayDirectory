@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-use Carbon\Carbon as BaseCarbon;
+use DoubleScale\Vendor\Carbon\Carbon as BaseCarbon;
 class Carbon extends BaseCarbon
 {
     //

@@ -1,23 +1,23 @@
 <?php
 
-namespace Illuminate\Database\Query;
+namespace DoubleScale\Vendor\Illuminate\Database\Query;
 
 use Closure;
 use RuntimeException;
 use DateTimeInterface;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Support\Collection;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\ConnectionInterface;
-use Illuminate\Support\Traits\ForwardsCalls;
-use Illuminate\Database\Concerns\BuildsQueries;
-use Illuminate\Database\Query\Grammars\Grammar;
-use Illuminate\Database\Query\Processors\Processor;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Pagination\Paginator;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionInterface;
+use DoubleScale\Vendor\Illuminate\Support\Traits\ForwardsCalls;
+use DoubleScale\Vendor\Illuminate\Database\Concerns\BuildsQueries;
+use DoubleScale\Vendor\Illuminate\Database\Query\Grammars\Grammar;
+use DoubleScale\Vendor\Illuminate\Database\Query\Processors\Processor;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 class Builder
 {
     use BuildsQueries, ForwardsCalls, Macroable {
@@ -203,7 +203,7 @@ class Builder
      */
     public function selectRaw($expression, array $bindings = [])
     {
-        $this->addSelect(new \Illuminate\Database\Query\Expression($expression));
+        $this->addSelect(new Expression($expression));
         if ($bindings) {
             $this->addBinding($bindings, 'select');
         }
@@ -232,7 +232,7 @@ class Builder
      */
     public function fromRaw($expression, $bindings = [])
     {
-        $this->from = new \Illuminate\Database\Query\Expression($expression);
+        $this->from = new Expression($expression);
         $this->addBinding($bindings, 'from');
         return $this;
     }
@@ -363,7 +363,7 @@ class Builder
         [$query, $bindings] = $this->createSub($query);
         $expression = '(' . $query . ') as ' . $this->grammar->wrapTable($as);
         $this->addBinding($bindings, 'join');
-        return $this->join(new \Illuminate\Database\Query\Expression($expression), $first, $operator, $second, $type, $where);
+        return $this->join(new Expression($expression), $first, $operator, $second, $type, $where);
     }
     /**
      * Add a left join to the query.
@@ -472,7 +472,7 @@ class Builder
      */
     protected function newJoinClause(self $parentQuery, $type, $table)
     {
-        return new \Illuminate\Database\Query\JoinClause($parentQuery, $type, $table);
+        return new JoinClause($parentQuery, $type, $table);
     }
     /**
      * Merge an array of where clauses and bindings.
@@ -536,7 +536,7 @@ class Builder
         // is a boolean. If it is, we'll add the raw boolean string as an actual
         // value to the query to ensure this is properly handled by the query.
         if (Str::contains($column, '->') && \is_bool($value)) {
-            $value = new \Illuminate\Database\Query\Expression($value ? 'true' : 'false');
+            $value = new Expression($value ? 'true' : 'false');
             if (\is_string($column)) {
                 $type = 'JsonBoolean';
             }
@@ -545,7 +545,7 @@ class Builder
         // in our array and add the query binding to our array of bindings that
         // will be bound to each SQL statements when it is finally executed.
         $this->wheres[] = \compact('type', 'column', 'operator', 'value', 'boolean');
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $this->addBinding($value, 'where');
         }
         return $this;
@@ -709,7 +709,7 @@ class Builder
         // query accordingly so that this query is properly executed when it is run.
         if ($values instanceof self || $values instanceof EloquentBuilder || $values instanceof Closure) {
             [$query, $bindings] = $this->createSub($values);
-            $values = [new \Illuminate\Database\Query\Expression($query)];
+            $values = [new Expression($query)];
             $this->addBinding($bindings, 'where');
         }
         // Next, if the value is Arrayable we need to cast it to its raw array form so we
@@ -1000,7 +1000,7 @@ class Builder
         if ($value instanceof DateTimeInterface) {
             $value = $value->format('d');
         }
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $value = \str_pad($value, 2, '0', \STR_PAD_LEFT);
         }
         return $this->addDateBasedWhere('Day', $column, $operator, $value, $boolean);
@@ -1033,7 +1033,7 @@ class Builder
         if ($value instanceof DateTimeInterface) {
             $value = $value->format('m');
         }
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $value = \str_pad($value, 2, '0', \STR_PAD_LEFT);
         }
         return $this->addDateBasedWhere('Month', $column, $operator, $value, $boolean);
@@ -1094,7 +1094,7 @@ class Builder
     protected function addDateBasedWhere($type, $column, $operator, $value, $boolean = 'and')
     {
         $this->wheres[] = \compact('column', 'type', 'boolean', 'operator', 'value');
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $this->addBinding($value, 'where');
         }
         return $this;
@@ -1264,7 +1264,7 @@ class Builder
     {
         $type = 'JsonContains';
         $this->wheres[] = \compact('type', 'column', 'value', 'boolean', 'not');
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $this->addBinding($this->grammar->prepareBindingForJsonContains($value));
         }
         return $this;
@@ -1317,7 +1317,7 @@ class Builder
         $type = 'JsonLength';
         [$value, $operator] = $this->prepareValueAndOperator($value, $operator, \func_num_args() === 2);
         $this->wheres[] = \compact('type', 'column', 'operator', 'value', 'boolean');
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $this->addBinding($value);
         }
         return $this;
@@ -1417,7 +1417,7 @@ class Builder
             [$value, $operator] = [$operator, '='];
         }
         $this->havings[] = \compact('type', 'column', 'operator', 'value', 'boolean');
-        if (!$value instanceof \Illuminate\Database\Query\Expression) {
+        if (!$value instanceof Expression) {
             $this->addBinding($value, 'having');
         }
         return $this;
@@ -2412,7 +2412,7 @@ class Builder
     protected function cleanBindings(array $bindings)
     {
         return \array_values(\array_filter($bindings, function ($binding) {
-            return !$binding instanceof \Illuminate\Database\Query\Expression;
+            return !$binding instanceof Expression;
         }));
     }
     /**

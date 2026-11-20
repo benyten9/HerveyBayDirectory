@@ -52,9 +52,10 @@ final class DocumentPdf {
 	}
 
 	/**
-	 * Company block for PDF and receipt headers.
+	 * Company block for PDF and receipt headers, with the invoice payment
+	 * instructions and footer (frozen with the rest when a document is sent).
 	 *
-	 * @return array{name: string, url: string, address: string, logo: string, logo_data_uri: string, registration_number: string, tax_vat_number: string}
+	 * @return array{name: string, url: string, address: string, logo: string, logo_data_uri: string, registration_number: string, tax_vat_number: string, payment_instructions: string, invoice_footer: string}
 	 */
 	public static function resolved_company_block(): array {
 		$business = self::resolved_business_settings();
@@ -79,13 +80,19 @@ final class DocumentPdf {
 				'logo_data_uri'         => self::resolved_company_logo_data_uri( $logo ),
 				'registration_number'   => trim( (string) SalesSettings::get( 'pdf_company_registration_number', '' ) ),
 				'tax_vat_number'        => trim( (string) SalesSettings::get( 'pdf_company_tax_vat_number', '' ) ),
+				'payment_instructions'  => (string) SalesSettings::get( 'invoice_payment_instructions', '' ),
+				'invoice_footer'        => (string) SalesSettings::get( 'invoice_footer', '' ),
 			)
 		);
 	}
 
 	/**
+	 * A snapshot frozen before the invoice texts existed has no such keys: it
+	 * takes them from the current settings, so already-sent invoices still
+	 * show how to pay.
+	 *
 	 * @param array<string, mixed> $block Company block or snapshot payload.
-	 * @return array{name: string, url: string, address: string, logo: string, logo_data_uri: string, registration_number: string, tax_vat_number: string}
+	 * @return array{name: string, url: string, address: string, logo: string, logo_data_uri: string, registration_number: string, tax_vat_number: string, payment_instructions: string, invoice_footer: string}
 	 */
 	public static function normalize_company_block( array $block ): array {
 		$logo = trim( (string) ( $block['logo'] ?? '' ) );
@@ -98,6 +105,54 @@ final class DocumentPdf {
 			'logo_data_uri'       => trim( (string) ( $block['logo_data_uri'] ?? '' ) ) ?: self::resolved_company_logo_data_uri( $logo ),
 			'registration_number' => trim( (string) ( $block['registration_number'] ?? '' ) ),
 			'tax_vat_number'      => trim( (string) ( $block['tax_vat_number'] ?? '' ) ),
+			'payment_instructions' => \wp_kses_post(
+				array_key_exists( 'payment_instructions', $block )
+					? (string) $block['payment_instructions']
+					: (string) SalesSettings::get( 'invoice_payment_instructions', '' )
+			),
+			'invoice_footer'       => \wp_kses_post(
+				array_key_exists( 'invoice_footer', $block )
+					? (string) $block['invoice_footer']
+					: (string) SalesSettings::get( 'invoice_footer', '' )
+			),
+		);
+	}
+
+	/**
+	 * The "From" lines of a document: name, address, website, registration and
+	 * VAT number. The PDF and every web view (admin preview, client page,
+	 * client portal) print exactly these lines.
+	 *
+	 * @param array<string, mixed> $company Company block (normalize_company_block shape).
+	 * @return array<int, string>
+	 */
+	public static function company_lines( array $company ): array {
+		$lines = array();
+		$name  = trim( (string) ( $company['name'] ?? '' ) );
+		if ( '' !== $name ) {
+			$lines[] = $name;
+		}
+		foreach ( preg_split( '/\r\n|\r|\n/', trim( (string) ( $company['address'] ?? '' ) ) ) ?: array() as $line ) {
+			$line = trim( (string) $line );
+			if ( '' !== $line ) {
+				$lines[] = $line;
+			}
+		}
+		$url = trim( (string) ( $company['url'] ?? '' ) );
+		if ( '' !== $url ) {
+			$lines[] = $url;
+		}
+		return self::append_company_legal_lines( $lines, $company );
+	}
+
+	/**
+	 * Business branding for the web views, with the document "From" lines.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function branding_config(): array {
+		return self::resolved_business_settings() + array(
+			'company_lines' => self::company_lines( self::resolved_company_block() ),
 		);
 	}
 
@@ -236,40 +291,6 @@ final class DocumentPdf {
 			return $pdf;
 		}
 
-		$download_name = \sanitize_file_name( $filename );
-		if ( '' === $download_name ) {
-			$download_name = 'document';
-		}
-		if ( '.pdf' !== strtolower( substr( $download_name, -4 ) ) ) {
-			$download_name .= '.pdf';
-		}
-
-		\add_filter(
-			'rest_pre_serve_request',
-			static function ( $served ) use ( $pdf, $download_name ) {
-				if ( $served ) {
-					return $served;
-				}
-
-				if ( ! headers_sent() ) {
-					header( 'Content-Type: application/pdf' );
-					header( 'Content-Disposition: attachment; filename="' . $download_name . '"' );
-					header( 'Content-Length: ' . strlen( $pdf ) );
-					header( 'X-Content-Type-Options: nosniff' );
-					header( 'Cache-Control: private, no-store, max-age=0' );
-				}
-
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw PDF bytes.
-				echo $pdf;
-
-				return true;
-			},
-			10,
-			1
-		);
-
-		// Body is ignored because the filter above already emitted the bytes,
-		// but we return a 200 response so the REST server proceeds to serve.
-		return new \WP_REST_Response( null, 200 );
+		return DocumentDownload::stream( $pdf, $filename, 'pdf', 'application/pdf' );
 	}
 }

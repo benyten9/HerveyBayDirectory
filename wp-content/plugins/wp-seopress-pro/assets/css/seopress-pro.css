@@ -852,6 +852,13 @@ ul.list-none li .dashicons {
     font-size: 1.2em;
 }
 
+/* Chatbase support beacon.
+ * The bubble and its "Help?" label (the ::after below) are both plain white
+ * with no elevation, so on the settings screens they painted straight over the
+ * white card behind them and cut through its edge. The shadow is drawn with a
+ * filter rather than box-shadow because the pill is made of two boxes: a filter
+ * on the button traces the union of the bubble and its pseudo-element, where
+ * two box-shadows would cast one onto the other along the seam. */
 #chatbase-bubble-button {
     bottom: 40px !important;
     right: 75px !important;
@@ -860,22 +867,32 @@ ul.list-none li .dashicons {
     background: #fff !important;
     padding: 1rem !important;
     z-index: 50 !important;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.14))
+        drop-shadow(0 4px 12px rgba(0, 0, 0, 0.16)) !important;
 }
 
+/* The label is pinned to the bubble rather than offset by a hand-measured
+ * -53px, which only ever lined up with the English "Help?": a narrower
+ * translation left a gap between the two halves, and the drop shadow above
+ * would fall straight into it. Same reason for stretching it top to bottom
+ * instead of assuming a 55px bubble. nowrap is required, not cosmetic — at
+ * left: 100% the available width is zero, so the box would otherwise shrink to
+ * its min-content width and stack CJK labels one character per line. */
 #chatbase-bubble-button::after {
     background: #ffffff;
     padding: 0 1rem 0 0;
-    display: block;
+    display: flex;
+    align-items: center;
     position: absolute;
-    top: 0px;
-    right: -53px;
+    top: 0;
+    bottom: 0;
+    left: 100%;
     border-radius: 0 10px 10px 0;
     font-weight: bold;
     color: #1d2327;
     width: auto;
-    max-width: 80px;
+    white-space: nowrap;
     z-index: -1;
-    line-height: 55px;
 }
 
 #chatbase-message-bubbles {
@@ -973,6 +990,11 @@ ul.list-none li .dashicons {
 }
 
 /* Breadcrumbs Preview */
+/* The preview paints a tint of the admin colour scheme over the white panel,
+   and the reader chooses that scheme. Its texts therefore carry their own
+   colours, dark enough to clear WCAG AA against the lightest tint any stock
+   scheme produces, rather than the metabox custom properties whose fallbacks
+   only ever reached 4.15:1 (grey) and 1.54:1 (amber). */
 .seopress-breadcrumbs-preview {
     background: rgba(var(--wp-admin-theme-color--rgb), 0.08);
     border-radius: 6px;
@@ -995,21 +1017,21 @@ ul.list-none li .dashicons {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--color, #757575);
+    color: #646970;
 }
 
 .seopress-breadcrumbs-preview-info {
     font-size: 14px;
     width: 14px;
     height: 14px;
-    color: var(--color, #757575);
+    color: #646970;
     cursor: help;
 }
 
 .seopress-breadcrumbs-preview-disabled {
     margin: 0;
     font-size: 13px;
-    color: var(--color, #757575);
+    color: #646970;
     font-style: italic;
 }
 
@@ -1023,8 +1045,8 @@ ul.list-none li .dashicons {
 
 .seopress-breadcrumbs-preview-warning {
     margin: 0 0 4px;
-    font-size: 11px;
-    color: var(--colorWarning, #ffba00);
+    font-size: 12px;
+    color: #7a5600;
     font-weight: 600;
 }
 
@@ -1044,9 +1066,9 @@ ul.list-none li .dashicons {
 }
 
 .seopress-breadcrumbs-preview-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    color: var(--color, #757575);
+    color: #646970;
     min-width: 50px;
     text-align: right;
     flex-shrink: 0;
@@ -1079,10 +1101,6 @@ ul.list-none li .dashicons {
     display: none;
 }
 
-.seopress-breadcrumbs-preview--no-separator .breadcrumb li::after {
-    display: none;
-}
-
 .seopress-breadcrumbs-preview .breadcrumb li a {
     color: var(--wp-admin-theme-color);
     text-decoration: none;
@@ -1093,7 +1111,7 @@ ul.list-none li .dashicons {
 }
 
 .seopress-breadcrumbs-preview .breadcrumb li:last-child span {
-    color: var(--color, #757575);
+    color: #646970;
 }
 
 @media only screen and (max-width: 782px) {

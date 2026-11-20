@@ -95,7 +95,33 @@ class ContactFields {
 	 * @return void
 	 */
 	private function setup_fields() {
-		$this->fields = array(
+		$this->fields = $this->get_built_in_fields();
+
+		if ( class_exists( CustomFieldModel::class ) ) {
+			// Only contact-scoped fields belong on a contact; deal/task/project
+			// fields have their own storage and would never resolve here.
+			// In the order the admin set (Pro sorts its cached list; older Pro: as stored).
+			$custom_fields = method_exists( CustomFieldModel::class, 'cached_for_scope' )
+				? CustomFieldModel::cached_for_scope( 'contact' )
+				: CustomFieldModel::where( 'scope', 'contact' )->get();
+
+			foreach ( $custom_fields as $custom_field ) {
+				$this->fields[ $custom_field->id ] = array(
+					'name'      => $custom_field->name,
+					'type'      => $this->types[ $custom_field->type ],
+					'is_custom' => true,
+				);
+			}
+		}
+	}
+
+	/**
+	 * The built-in contact fields (no database involved).
+	 *
+	 * @return array
+	 */
+	public function get_built_in_fields() {
+		return array(
 			'first_name' => array(
 				'name'     => __( 'First Name', 'doublescale' ),
 				'type'     => $this->types['text'],
@@ -143,9 +169,12 @@ class ContactFields {
 				'name' => __( 'Country', 'doublescale' ),
 				'type' => $this->types['text'],
 			),
+			// Text, not a number: a postal code keeps its leading zero (03070) and can hold letters
+			// (SW1A 1AA, K1A 0B1). As a number, every mapped zip became an integer that the contact
+			// model's string rule rejected, so the whole contact was never created.
 			'zip'        => array(
 				'name' => __( 'Zip', 'doublescale' ),
-				'type' => $this->types['number'],
+				'type' => $this->types['text'],
 			),
 			'phone'      => array(
 				'name' => __( 'Phone', 'doublescale' ),
@@ -156,20 +185,6 @@ class ContactFields {
 				'type' => $this->types['phone'],
 			),
 		);
-
-		if ( class_exists( CustomFieldModel::class ) ) {
-			// Only contact-scoped fields belong on a contact; deal/task/project
-			// fields have their own storage and would never resolve here.
-			$custom_fields = CustomFieldModel::where( 'scope', 'contact' )->get();
-
-			foreach ( $custom_fields as $custom_field ) {
-				$this->fields[ $custom_field->id ] = array(
-					'name'      => $custom_field->name,
-					'type'      => $this->types[ $custom_field->type ],
-					'is_custom' => true,
-				);
-			}
-		}
 	}
 
 	/**

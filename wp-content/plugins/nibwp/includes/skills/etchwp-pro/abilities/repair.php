@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/etchwp-pro-repair', [
     'label'       => __('EtchWP Pro — Repair pages from earlier versions', 'nibwp'),
-    'description' => __('Finds Etch pages NibWP built with an earlier version and repairs them: restores ACSS modifier classes whose "--" was lost on save, and turns old componentId instances into real Etch components. Dry run by default.', 'nibwp'),
+    'description' => 'Finds Etch pages NibWP built with an earlier version and repairs them: restores ACSS modifier classes whose "--" was lost on save, and turns old componentId instances into real Etch components. Dry run by default.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

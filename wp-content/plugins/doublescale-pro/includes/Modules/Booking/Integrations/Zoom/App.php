@@ -9,7 +9,7 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Zoom;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use DoubleScale\Pro\Modules\Booking\Integrations\OAuthConfig;
 
@@ -53,7 +53,7 @@ class App {
 	 */
 	public function get_auth_uri( $host_id, $account_id, $app_credentials = array() ) {
 		if ( empty( $host_id ) ) {
-			return new \WP_Error( 'no_host_id', esc_html__( 'No host ID found!', 'doublescale' ) );
+			return new \WP_Error( 'no_host_id', esc_html__( 'No host ID found!', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
 		if ( empty( $account_id ) ) {

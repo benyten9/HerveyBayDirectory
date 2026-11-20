@@ -13,6 +13,7 @@ use Directorist\DBModels\Order;
 use Directorist\Enums\Order\Status as OrderStatus;
 use Directorist\Repositories\OrderRepository;
 
+use DirectoristPricingPlan\App\Services\PackageRepairService;
 use DirectoristPricingPlan\WpMVC\Exceptions\Exception;
 use DirectoristPricingPlan\WpMVC\Database\Query\Builder;
 use DirectoristPricingPlan\WpMVC\Repositories\Repository;
@@ -57,96 +58,13 @@ class UserPackageRepository extends Repository {
         ];
     }
 
-    /**
-     * Get plan IDs referenced by packages whose plans no longer exist.
-     *
-     * @return stdClass[]
-     */
-    public function get_missing_plan_groups(): array {
-        return $this->get_query_builder()
-            ->select(
-                'package.plan_id',
-                'MIN(package.directory_type_id) as directory_type_id',
-                'COUNT(DISTINCT package.directory_type_id) as directory_type_count',
-                'COUNT(package.id) as package_count'
-            )
-            ->left_join( Plan::get_table_name() . ' as plan', 'package.plan_id', '=', 'plan.id' )
-            ->where_not_null( 'package.plan_id' )
-            ->where_null( 'plan.id' )
-            ->group_by( 'package.plan_id' )
-            ->order_by( 'package.plan_id', 'asc' )
-            ->get();
-    }
-
-    /**
-     * Replace missing package plan IDs and their matching pricing-plan order refs.
-     *
-     * @param array<int, int> $assignments Missing plan ID to replacement plan ID map.
-     * @return array{packages: int, orders: int}
-     */
+    /** Backward-compatible entry point for existing plan-only repair callers. */
     public function recover_missing_plans( array $assignments ): array {
-        global $wpdb;
-
-        $packages_table = $wpdb->prefix . UserPackage::get_table_name();
-        $orders_table   = $wpdb->prefix . Order::get_table_name();
-        $updated_at     = current_time( 'mysql' );
-        $updated        = [
-            'packages' => 0,
-            'orders'   => 0,
-        ];
-
-        if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
-            throw new Exception( esc_html__( 'Failed to start package plan recovery.', 'directorist-pricing-plans' ), 500 );
+        $submitted = [];
+        foreach ( $assignments as $missing_plan_id => $new_plan_id ) {
+            $submitted[] = [ 'missing_plan_id' => $missing_plan_id, 'new_plan_id' => $new_plan_id ];
         }
-
-        try {
-            foreach ( $assignments as $missing_plan_id => $new_plan_id ) {
-                $package_count = $wpdb->update(
-                    $packages_table,
-                    [
-                        'plan_id'    => $new_plan_id,
-                        'updated_at' => $updated_at,
-                    ],
-                    [ 'plan_id' => $missing_plan_id ],
-                    [ '%d', '%s' ],
-                    [ '%d' ]
-                );
-
-                if ( false === $package_count ) {
-                    throw new Exception( esc_html__( 'Failed to update packages with missing plans.', 'directorist-pricing-plans' ), 500 );
-                }
-
-                $order_count = $wpdb->update(
-                    $orders_table,
-                    [
-                        'ref'        => (string) $new_plan_id,
-                        'updated_at' => $updated_at,
-                    ],
-                    [
-                        'ref'      => (string) $missing_plan_id,
-                        'ref_type' => OrderRefType::PRICING_PLAN,
-                    ],
-                    [ '%s', '%s' ],
-                    [ '%s', '%s' ]
-                );
-
-                if ( false === $order_count ) {
-                    throw new Exception( esc_html__( 'Failed to update pricing plan orders.', 'directorist-pricing-plans' ), 500 );
-                }
-
-                $updated['packages'] += $package_count;
-                $updated['orders']   += $order_count;
-            }
-
-            if ( false === $wpdb->query( 'COMMIT' ) ) {
-                throw new Exception( esc_html__( 'Failed to commit package plan recovery.', 'directorist-pricing-plans' ), 500 );
-            }
-        } catch ( \Throwable $exception ) {
-            $wpdb->query( 'ROLLBACK' );
-            throw $exception;
-        }
-
-        return $updated;
+        return directorist_pricing_plans_singleton( PackageRepairService::class )->repair( $submitted );
     }
 
     private function get_package_details_query(): Builder {
@@ -532,6 +450,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function activate_package( UserPackageActivationDTO $activation_dto ): UserPackageDTO {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $plan     = $activation_dto->get_plan();
         $user_id  = $activation_dto->get_user_id();
         $order_id = $activation_dto->get_order_id();
@@ -614,6 +533,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function set_package( UserPackageDTO $package_dto, ?int $order_id = null ): UserPackageDTO {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         if ( ! $package_dto->is_is_legacy() && ! directorist_allow_multiple_plans_per_directory_type() ) {
             $previous_packages = $this->get_query_builder()
                 ->where( 'user_id', $package_dto->get_user_id() )
@@ -638,11 +558,23 @@ class UserPackageRepository extends Repository {
             }
         }
 
-        $old_package = $this->get_query_builder()
+        $existing_package_query = $this->get_query_builder()
             ->where( 'user_id', $package_dto->get_user_id() )
             ->where( 'directory_type_id', $package_dto->get_directory_type_id() )
-            ->where( 'plan_id', $package_dto->get_plan_id() )
-            ->first();
+            ->where( 'plan_id', $package_dto->get_plan_id() );
+
+        /**
+         * Filters the existing-package lookup used during package activation.
+         *
+         * Extensions can adjust ordering or conditions while retaining the
+         * repository's normal activation, history, and order-linking behavior.
+         *
+         * @param Builder        $query       Existing-package query.
+         * @param UserPackageDTO $package_dto Package being activated.
+         * @param int|null       $order_id    Activation order ID, when available.
+         */
+        $existing_package_query = apply_filters( 'directorist_pricing_plan_existing_package_query', $existing_package_query, $package_dto, $order_id );
+        $old_package = $existing_package_query->first();
 
         $create_new_package = true;
 
@@ -718,7 +650,9 @@ class UserPackageRepository extends Repository {
             throw new Exception( 'The plan associated with this package is not available anymore.', 404 );
         }
 
-        $amount   = null !== $package->subscription_amount ? (float) $package->subscription_amount : (float) $plan->price;
+        $amount   = PlanFeeType::FREE === $plan->fee_type
+            ? 0.0
+            : (float) ( $package->subscription_amount ?? directorist_get_plan_effective_price( $plan ) );
         $currency = ! empty( $package->subscription_currency ) ? $package->subscription_currency : atbdp_get_payment_currency();
 
         $order_dto = ( new OrderDTO() )
@@ -782,6 +716,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function expire_package( int $package_id ): bool {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
 
         if ( ! $old_package ) {
@@ -804,6 +739,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function mark_package_past_due( int $package_id ): bool {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
 
         if ( ! $old_package ) {
@@ -826,6 +762,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function renew( int $package_id, ?int $order_id = null, ?string $triggered_by = null ): int {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
 
         if ( ! $old_package ) {
@@ -895,6 +832,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function cancel_package( int $package_id, ?string $triggered_by = null ): bool {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
 
         if ( ! $old_package ) {
@@ -922,6 +860,7 @@ class UserPackageRepository extends Repository {
     }
 
     public function cancel_package_at_period_end( int $package_id, ?string $triggered_by = null ): bool {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $old_package = $this->get_query_builder()->where( 'id', $package_id )->first();
 
         if ( ! $old_package ) {
@@ -976,6 +915,10 @@ class UserPackageRepository extends Repository {
     }
 
     protected function format_item( stdClass $item ): stdClass {
+        if ( isset( $item->price ) && PlanFeeType::FREE === ( $item->fee_type ?? '' ) ) {
+            $item->price = directorist_get_plan_effective_price( $item );
+        }
+
         $is_expired_package = ( $item->plan_type ?? null ) !== PlanType::PAY_PER_LISTING
             && ! $this->is_empty_datetime( $item->current_period_end ?? null )
             && new DateTime( $item->current_period_end ) < directorist_now();
@@ -988,6 +931,18 @@ class UserPackageRepository extends Repository {
 
         $item->method                = ! empty( $item->payment_method ) ? $this->get_payment_method_title( $item->payment_method ) : null;
         $item->directory_type_config = ! empty( $item->directory_type_config ) ? maybe_unserialize( $item->directory_type_config ) : null;
+
+        /**
+         * Filters customer-facing actions for a package.
+         *
+         * Each action may provide an id, title, URL, and disabled state. Gateway
+         * extensions can use this hook without coupling their UI to Pricing Plans.
+         *
+         * @param array    $actions Package action definitions.
+         * @param stdClass $item    Formatted package data.
+         */
+        $package_actions       = apply_filters( 'directorist_pricing_plan_package_actions', [], $item );
+        $item->package_actions = is_array( $package_actions ) ? array_values( $package_actions ) : [];
 
         return $item;
     }

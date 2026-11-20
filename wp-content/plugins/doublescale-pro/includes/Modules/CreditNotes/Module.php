@@ -65,7 +65,14 @@ final class Module extends AbstractSalesChildModule {
 	protected function boot_child( Container $container ): void {
 		unset( $container );
 
-		Migrations\SalesCreditNotesTableCurrencyNullable::ensure();
+		$checks = static function () {
+			Migrations\SalesCreditNotesTableCurrencyNullable::ensure();
+		};
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_credit_notes', DOUBLESCALE_PRO_VERSION, $checks );
+		} else {
+			$checks();
+		}
 
 		$this->loadModuleMergeTagFiles();
 
@@ -86,6 +93,11 @@ final class Module extends AbstractSalesChildModule {
 			);
 		}
 		new Services\CreditNotePortalProvider();
+
+		add_action(
+			'doublescale_sales_invoice_payment_deleting',
+			array( Services\CreditNoteApplications::class, 'on_payment_deleting' )
+		);
 
 		MenuRegistry::add(
 			array(

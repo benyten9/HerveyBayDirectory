@@ -1,23 +1,23 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Concerns;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasOne;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\MorphTo;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\MorphOne;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Relation;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\MorphMany;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\MorphToMany;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasManyThrough;
 trait HasRelationships
 {
     /**

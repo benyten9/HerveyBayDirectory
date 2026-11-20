@@ -11,8 +11,8 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
 use DoubleScale\Modules\Documents\Models\ProposalModel;
-use Illuminate\Database\QueryException;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\QueryException;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * SalesNumbering service.
@@ -108,17 +108,15 @@ class SalesNumbering {
 	private static function next_number( string $prefix, string $model_class, string $column ): string {
 		$prefix = strtoupper( preg_replace( '/[^A-Z0-9]/', '', $prefix ) ?: 'DOC' );
 
-		$latest = $model_class::query()
+		// Highest number in use, not the newest row: a record numbered by hand
+		// (or imported) with a lower number would otherwise make the next
+		// number collide with one that already exists.
+		$highest = $model_class::query()
 			->where( $column, 'LIKE', $prefix . '-%' )
-			->orderByDesc( 'id' )
-			->value( $column );
+			->selectRaw( "MAX(CAST(SUBSTRING_INDEX(`{$column}`, '-', -1) AS UNSIGNED)) AS n" )
+			->value( 'n' );
 
-		$next = 1;
-		if ( is_string( $latest ) && preg_match( '/-(\d+)$/', $latest, $matches ) ) {
-			$next = (int) $matches[1] + 1;
-		}
-
-		return self::format_sequential_number( $prefix, $next );
+		return self::format_sequential_number( $prefix, (int) $highest + 1 );
 	}
 
 	/**

@@ -353,7 +353,7 @@ class RestStageController extends RestController {
 	 * @return WP_Error|bool
 	 */
 	public function get_item_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::has_agent_access();
 	}
 
 	/**

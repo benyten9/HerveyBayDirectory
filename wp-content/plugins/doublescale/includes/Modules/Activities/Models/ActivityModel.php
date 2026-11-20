@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Activities\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
@@ -141,7 +141,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasOneThrough
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasOneThrough
 	 */
 	public function contact() {
 		$assoc_table = $this->associations()->getRelated()->getTable();
@@ -161,7 +161,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function user() {
 		return $this->belongsTo( UserModel::class, 'user_id', 'ID' );
@@ -175,7 +175,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasOne
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasOne
 	 */
 	public function tracking() {
 		return $this->hasOne( CommunicationTrackingModel::class, 'source_id' )
@@ -191,7 +191,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function comments() {
 		return $this->hasMany( ActivityCommentModel::class, 'activity_id', 'id' )->orderBy( 'created_at', 'asc' );
@@ -203,7 +203,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function associations() {
 		return $this->hasMany( ActivityAssociationModel::class, 'activity_id', 'id' );
@@ -216,7 +216,7 @@ class ActivityModel extends Model {
 	 *
 	 * @param string $type Entity type (deal, company, project).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function associationsByType( $type ) {
 		return $this->associations()->where( 'entity_type', $type );
@@ -227,7 +227,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function dealAssociations() {
 		return $this->associationsByType( ActivityAssociationModel::ENTITY_TYPE_DEAL );
@@ -238,7 +238,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function campaignAssociations() {
 		return $this->associationsByType( ActivityAssociationModel::ENTITY_TYPE_CAMPAIGN );
@@ -249,7 +249,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function ticketAssociations() {
 		return $this->associationsByType( ActivityAssociationModel::ENTITY_TYPE_TICKET );
@@ -260,7 +260,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function taskAssociations() {
 		return $this->associationsByType( ActivityAssociationModel::ENTITY_TYPE_TASK );
@@ -271,7 +271,7 @@ class ActivityModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function contactAssociations() {
 		return $this->associationsByType( ActivityAssociationModel::ENTITY_TYPE_CONTACT );
@@ -293,9 +293,9 @@ class ActivityModel extends Model {
 	 *
 	 * Call on queries that serialize virtual morph ids — not on counts/aggregates.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeWithMorphAppends( $query ) {
 		return $query->with( self::morph_append_relations() );
@@ -402,10 +402,10 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: Filter by contact
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $contact_id Contact ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForContact( $query, $contact_id ) {
 		return $query->whereHas(
@@ -420,10 +420,10 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: Filter by deal using activity_associations table
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $deal_id Deal ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForDeal( $query, $deal_id ) {
 		return $query->whereHas(
@@ -442,10 +442,10 @@ class ActivityModel extends Model {
 	 * system events — in chronological order (oldest first) so the ticket
 	 * detail view can render the thread top-down.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $ticket_id Ticket ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForTicket( $query, $ticket_id ) {
 		return $query->whereHas(
@@ -454,16 +454,19 @@ class ActivityModel extends Model {
 				$q->where( 'entity_type', ActivityAssociationModel::ENTITY_TYPE_TICKET )
 					->where( 'entity_id', $ticket_id );
 			}
-		)->orderBy( 'created_at', 'asc' );
+		)->orderBy( 'created_at', 'asc' )
+			// Same second (a burst of mail, a reply and its status change):
+			// the order they were stored in, not whatever the database picks.
+			->orderBy( 'id', 'asc' );
 	}
 
 	/**
 	 * Scope: Filter by task using activity_associations table.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $task_id Task ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForTask( $query, $task_id ) {
 		return $query->whereHas(
@@ -478,10 +481,10 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: Filter by activity type
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string|array                          $type Activity type(s).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByType( $query, $type ) {
 		if ( is_array( $type ) ) {
@@ -493,9 +496,9 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: Only messages (email, Sms, WhatsApp)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeMessages( $query ) {
 		return $query->whereIn(
@@ -514,9 +517,9 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: Only activities with tracking
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeTracked( $query ) {
 		return $query->has( 'tracking' );
@@ -525,9 +528,9 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: Only notes
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeNotes( $query ) {
 		return $query->where( 'activity_type', ActivityTypes::NOTE );
@@ -536,9 +539,9 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: User-created activities (editable)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeUserCreated( $query ) {
 		return $query->whereIn( 'activity_type', ActivityTypes::get_editable_types() );
@@ -547,9 +550,9 @@ class ActivityModel extends Model {
 	/**
 	 * Scope: System-generated activities (immutable)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeSystemGenerated( $query ) {
 		return $query->whereIn( 'activity_type', ActivityTypes::get_system_types() );
@@ -563,6 +566,20 @@ class ActivityModel extends Model {
 	 * @return string
 	 */
 	public function getFormattedMessageAttribute() {
+		if ( \DoubleScale\Modules\Activities\Services\FileActivityPresenter::is_file_type( (string) $this->activity_type ) ) {
+			return \DoubleScale\Modules\Activities\Services\FileActivityPresenter::message(
+				(string) $this->activity_type,
+				$this->user ? (string) $this->user->display_name : null,
+				is_array( $this->data ) ? $this->data : array()
+			);
+		}
+
+		if ( \DoubleScale\Modules\Activities\Services\DetailsActivityPresenter::is_details_type( (string) $this->activity_type ) ) {
+			return \DoubleScale\Modules\Activities\Services\DetailsActivityPresenter::message(
+				is_array( $this->data ) ? $this->data : array()
+			);
+		}
+
 		$user_name = $this->user ? $this->user->display_name : __( 'Unknown User', 'doublescale' );
 
 		switch ( $this->activity_type ) {
@@ -577,7 +594,7 @@ class ActivityModel extends Model {
 				$old_stage_name = __( 'Unknown Stage', 'doublescale' );
 				$new_stage_name = __( 'Unknown Stage', 'doublescale' );
 
-				if ( class_exists( '\DoubleScale\Pro\Modules\Deals\Models\PipelineStageModel' ) ) {
+				if ( doublescale_module_data_ready( 'deals' ) ) {
 					$old_stage = \DoubleScale\Pro\Modules\Deals\Models\PipelineStageModel::find( $this->data['old_stage_id'] ?? 0 );
 					$new_stage = \DoubleScale\Pro\Modules\Deals\Models\PipelineStageModel::find( $this->data['new_stage_id'] ?? 0 );
 
@@ -885,6 +902,33 @@ class ActivityModel extends Model {
 					$user_name
 				);
 
+			case 'booking_scheduled':
+			case 'booking_confirmed':
+			case 'booking_pending':
+			case 'booking_rescheduled':
+			case 'booking_cancelled':
+			case 'booking_completed':
+			case 'booking_rejected':
+				$event = (string) ( $this->data['event_name'] ?? '' );
+				$host  = (string) ( $this->data['host_name'] ?? '' );
+				$event = '' !== $event ? $event : __( 'Meeting', 'doublescale' );
+				$verbs = array(
+					'booking_scheduled'   => __( 'booked', 'doublescale' ),
+					'booking_confirmed'   => __( 'confirmed', 'doublescale' ),
+					'booking_pending'     => __( 'waiting for confirmation', 'doublescale' ),
+					'booking_rescheduled' => __( 'rescheduled', 'doublescale' ),
+					'booking_cancelled'   => __( 'cancelled', 'doublescale' ),
+					'booking_completed'   => __( 'completed', 'doublescale' ),
+					'booking_rejected'    => __( 'declined', 'doublescale' ),
+				);
+				$verb = $verbs[ $this->activity_type ] ?? '';
+				if ( 'booking_scheduled' === $this->activity_type && '' !== $host ) {
+					/* translators: 1: event name, 2: host name */
+					return sprintf( __( '%1$s booked with %2$s', 'doublescale' ), $event, $host );
+				}
+				/* translators: 1: event name, 2: what happened (booked, cancelled…) */
+				return sprintf( __( '%1$s %2$s', 'doublescale' ), $event, $verb );
+
 			default:
 				return sprintf(
 					/* translators: %s: user name */
@@ -957,7 +1001,7 @@ class ActivityModel extends Model {
 	 *
 	 * @param string $search_term Search term.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public static function search_content( $search_term ) {
 		return self::whereRaw(

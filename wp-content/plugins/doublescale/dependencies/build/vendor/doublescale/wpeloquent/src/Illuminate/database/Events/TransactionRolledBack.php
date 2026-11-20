@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Events;
+namespace DoubleScale\Vendor\Illuminate\Database\Events;
 
-class TransactionRolledBack extends \Illuminate\Database\Events\ConnectionEvent
+class TransactionRolledBack extends ConnectionEvent
 {
     //
 }

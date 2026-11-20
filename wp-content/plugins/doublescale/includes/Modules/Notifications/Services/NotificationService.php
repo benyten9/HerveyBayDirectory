@@ -13,6 +13,8 @@ namespace DoubleScale\Modules\Notifications\Services;
 
 use DoubleScale\Modules\Notifications\Models\NotificationModel;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * NotificationService class
  *
@@ -285,13 +287,27 @@ class NotificationService {
 	}
 
 	/**
-	 * Delete old notifications (cleanup)
-	 *
-	 * @since 1.2.0
-	 *
-	 * @param int $days Number of days to keep.
+	 * Daily: drop notifications older than Settings → Notifications keeps
+	 * ("never" keeps them all).
 	 *
 	 * @return int Number of deleted records.
+	 */
+	public static function cleanup_by_retention(): int {
+		$settings = \DoubleScale\Core\Settings\Settings::get( 'notifications', array() );
+		$settings = is_array( $settings ) ? $settings : array();
+		if ( 'never' === ( $settings['retention_type'] ?? 'days' ) ) {
+			return 0;
+		}
+		// The page shows 30 days until someone chooses.
+		$days = absint( $settings['retention_days'] ?? 30 );
+		return $days > 0 ? (int) self::cleanup( $days ) : 0;
+	}
+
+	/**
+	 * Delete notifications older than a number of days.
+	 *
+	 * @param int $days Days to keep.
+	 * @return int|false Rows deleted.
 	 */
 	public static function cleanup( $days = 30 ) {
 		return NotificationModel::deleteOlderThan( $days );

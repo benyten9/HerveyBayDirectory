@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/acss-pro-validate-config', [
     'label'       => __('ACSS Pro — Validate config', 'nibwp'),
-    'description' => __('Run the ACSS validator rules (contrast / modular scale / luminance / palette delta-E) against a config and return the failed[] list with fix_hints. Read-only — does not require a preflight token.', 'nibwp'),
+    'description' => 'Run the ACSS validator rules (contrast / modular scale / luminance / palette delta-E) against a config and return the failed[] list with fix_hints. Read-only — does not require a preflight token.',
     'category'    => 'acss-pro',
     'input_schema' => [
         'type'     => 'object',

@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Automations\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationStepModel;
@@ -89,7 +89,7 @@ class AutomationContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function automation() {
 		return $this->belongsTo( AutomationModel::class, 'automation_id', 'id' );
@@ -100,7 +100,7 @@ class AutomationContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
@@ -111,7 +111,7 @@ class AutomationContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function next_step() {
 		return $this->belongsTo( AutomationStepModel::class, 'next_step' );
@@ -122,7 +122,7 @@ class AutomationContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function current_step() {
 		return $this->belongsTo( AutomationStepModel::class, 'current_step' );
@@ -133,7 +133,7 @@ class AutomationContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function processes() {
 		return $this->hasMany( AutomationContactProcessesModel::class, 'automation_contact_id', 'id' );

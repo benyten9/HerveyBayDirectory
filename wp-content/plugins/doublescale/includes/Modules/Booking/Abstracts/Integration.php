@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Booking\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Integration\Accounts;
 use DoubleScale\Modules\Booking\Managers\IntegrationsManager;
 use DoubleScale\Modules\Booking\Models\BookingModel;

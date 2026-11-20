@@ -258,7 +258,7 @@ if (
 	AutomationModuleStorage::is_ready( 'deals', DealModel::class )
 	&& AutomationModuleStorage::is_ready( 'custom-fields', CustomFieldModel::class )
 ) {
-	$custom_fields = CustomFieldModel::where( 'scope', 'deal' )->get();
+	$custom_fields = CustomFieldModel::cached_for_scope( 'deal' );
 }
 
 if ( ! empty( $custom_fields ) ) {

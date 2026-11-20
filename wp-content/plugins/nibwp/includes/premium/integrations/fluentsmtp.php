@@ -115,7 +115,7 @@ function nibwp_fsmtp_store_connection(array $providerSettings, string $title, bo
 
 wp_register_ability('nibwp/fluentsmtp-info', [
     'label'       => __('FluentSMTP — Info', 'nibwp'),
-    'description' => __('Detect FluentSMTP, its version, whether it is configured, the number of connections, the default + fallback connection, logging state, and the supported providers.', 'nibwp'),
+    'description' => 'Detect FluentSMTP, its version, whether it is configured, the number of connections, the default + fallback connection, logging state, and the supported providers.',
     'category'    => 'email',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -157,7 +157,7 @@ function nibwp_fsmtp_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentsmtp-connections', [
     'label'       => __('FluentSMTP — Connections', 'nibwp'),
-    'description' => __('List, read and delete FluentSMTP mail connections. Secrets are redacted on read. Actions: list, get, delete.', 'nibwp'),
+    'description' => 'List, read and delete FluentSMTP mail connections. Secrets are redacted on read. Actions: list, get, delete.',
     'category'    => 'email',
     'input_schema' => [
         'type' => 'object',
@@ -249,7 +249,7 @@ function nibwp_fsmtp_connections_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentsmtp-configure', [
     'label'       => __('FluentSMTP — Configure', 'nibwp'),
-    'description' => __('Configure how WordPress sends mail. Actions: save_smtp (a custom SMTP server — host, port, encryption, auth), save_provider (any API provider with raw provider_settings), set_default, set_fallback, map_sender. After saving, use fluentsmtp-send-test to verify delivery.', 'nibwp'),
+    'description' => 'Configure how WordPress sends mail. Actions: save_smtp (a custom SMTP server — host, port, encryption, auth), save_provider (any API provider with raw provider_settings), set_default, set_fallback, map_sender. After saving, use fluentsmtp-send-test to verify delivery.',
     'category'    => 'email',
     'input_schema' => [
         'type' => 'object',
@@ -360,7 +360,7 @@ function nibwp_fsmtp_configure_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentsmtp-send-test', [
     'label'       => __('FluentSMTP — Send Test', 'nibwp'),
-    'description' => __('Send a real test email through the active FluentSMTP connection (via wp_mail) and report success or the exact delivery error. Actions: send. Optionally route through a specific from-email/connection.', 'nibwp'),
+    'description' => 'Send a real test email through the active FluentSMTP connection (via wp_mail) and report success or the exact delivery error. Actions: send. Optionally route through a specific from-email/connection.',
     'category'    => 'email',
     'input_schema' => [
         'type' => 'object',
@@ -389,8 +389,17 @@ function nibwp_fsmtp_send_test_execute(array $input): array|WP_Error
     if ($to === '' || !is_email($to)) {
         return nibwp_fsmtp_err('bad_to', 'Provide a valid "to" email.');
     }
-    $subject = sanitize_text_field((string) ($input['subject'] ?? ('FluentSMTP test from ' . get_bloginfo('name'))));
-    $body    = (string) ($input['body'] ?? ('<p>This is a test email sent via FluentSMTP + NIBWP at ' . esc_html(current_time('mysql')) . '.</p>'));
+    // The defaults land in a person's inbox, so they speak the site's language.
+    $subject = sanitize_text_field((string) ($input['subject'] ?? sprintf(
+        /* translators: %s: site name */
+        __('FluentSMTP test from %s', 'nibwp'),
+        get_bloginfo('name')
+    )));
+    $body    = (string) ($input['body'] ?? ('<p>' . esc_html(sprintf(
+        /* translators: %s: date and time the test was sent */
+        __('This is a test email sent via FluentSMTP + NIBWP at %s.', 'nibwp'),
+        current_time('mysql')
+    )) . '</p>'));
 
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     if (!empty($input['from_email']) && is_email((string) $input['from_email'])) {
@@ -438,7 +447,7 @@ function nibwp_fsmtp_send_test_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentsmtp-logs', [
     'label'       => __('FluentSMTP — Logs', 'nibwp'),
-    'description' => __('Read and manage the FluentSMTP email log (requires logging enabled). Actions: list, get, resend, delete, clear. Filter list by status (sent|failed).', 'nibwp'),
+    'description' => 'Read and manage the FluentSMTP email log (requires logging enabled). Actions: list, get, resend, delete, clear. Filter list by status (sent|failed).',
     'category'    => 'email',
     'input_schema' => [
         'type' => 'object',
@@ -513,7 +522,7 @@ function nibwp_fsmtp_logs_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentsmtp-settings', [
     'label'       => __('FluentSMTP — Settings', 'nibwp'),
-    'description' => __('Read/write FluentSMTP misc settings: email logging on/off, log retention days, default + fallback connection, and FluentCRM log behavior. Actions: get, update.', 'nibwp'),
+    'description' => 'Read/write FluentSMTP misc settings: email logging on/off, log retention days, default + fallback connection, and FluentCRM log behavior. Actions: get, update.',
     'category'    => 'email',
     'input_schema' => [
         'type' => 'object',

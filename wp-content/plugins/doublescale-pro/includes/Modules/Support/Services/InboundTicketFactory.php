@@ -21,6 +21,7 @@ namespace DoubleScale\Pro\Modules\Support\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Support\Models\MailboxModel;
 use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Support\Services\EmailReplyParser;
@@ -221,7 +222,12 @@ final class InboundTicketFactory {
 	/**
 	 * Append the email as a customer reply on an existing ticket.
 	 *
-	 * `author_user_id` is null → customer-authored. Free's TicketService /
+	 * `author_user_id` is the teammate when one answered from their own
+	 * mailbox ({@see teammate_author()}), else null → no team author. The
+	 * sender rides along
+	 * (`from_email` / `from_name`) so the customer's portal tells their own
+	 * replies from someone CC'd on the thread or a teammate answering from
+	 * their mailbox. Free's TicketService /
 	 * EmailNotifications already handle "customer reply re-opens a closed ticket"
 	 * and "don't email the customer their own message back". The body is run
 	 * through free's {@see EmailReplyParser} first so the thread shows only what
@@ -246,10 +252,38 @@ final class InboundTicketFactory {
 				'source'           => 'email',
 				'message_id'       => isset( $data['message_id'] ) ? (string) $data['message_id'] : '',
 				'in_reply_to'      => isset( $data['in_reply_to'] ) ? (string) $data['in_reply_to'] : '',
-				'author_user_id'   => null,
+				'author_user_id'   => $this->teammate_author( $ticket, isset( $data['from_email'] ) ? (string) $data['from_email'] : '' ),
+				'from_email'       => isset( $data['from_email'] ) ? (string) $data['from_email'] : '',
+				'from_name'        => isset( $data['from_name'] ) ? (string) $data['from_name'] : '',
 				'attachment_files' => isset( $data['attachments'] ) && is_array( $data['attachments'] ) ? $data['attachments'] : array(),
 			)
 		);
+	}
+
+	/**
+	 * The teammate who sent this reply from their own mailbox, or null.
+	 *
+	 * A support user answering by email is the team answering: the reply is
+	 * theirs, so the customer is emailed it and the team is not told the
+	 * customer replied. The ticket's own contact stays the customer even when
+	 * they also have a support account.
+	 *
+	 * @param TicketModel $ticket     Ticket.
+	 * @param string      $from_email Sender address.
+	 * @return int|null
+	 */
+	private function teammate_author( TicketModel $ticket, string $from_email ): ?int {
+		$from_email = strtolower( trim( $from_email ) );
+		if ( '' === $from_email || ! class_exists( Permissions::class ) ) {
+			return null;
+		}
+		$ticket->loadMissing( 'contact' );
+		if ( $ticket->contact && strtolower( (string) $ticket->contact->email ) === $from_email ) {
+			return null;
+		}
+		$user = get_user_by( 'email', $from_email );
+
+		return $user && Permissions::has_support_access( (int) $user->ID ) ? (int) $user->ID : null;
 	}
 
 	/**

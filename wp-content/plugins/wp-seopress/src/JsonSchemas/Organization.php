@@ -90,8 +90,29 @@ class Organization extends JsonSchemaValue implements GetJsonData {
 			$schema = seopress_get_service( 'JsonSchemaGenerator' )->getJsonFromSchema( ContactPoint::NAME, $context, array( 'remove_empty' => true ) );
 			if ( count( $schema ) > 1 ) {
 				$data['contactPoint'][] = $schema;
+				if ( isset( $schema['telephone'] ) && '' !== $schema['telephone'] ) {
+					$data['telephone'] = $schema['telephone'];
+				}
 			}
 		} else {
+			// The Knowledge Graph photo is stored under "logo", which a Person
+			// does not have. Publish it as "image" before "logo" is dropped.
+			// At this point "logo" still holds a tag, resolved after the filter
+			// below, so it is only copied when the photo resolves to a value:
+			// an empty photo must leave "image" empty for Pro to fall back on
+			// the linked user's avatar.
+			if ( ! empty( $data['logo'] ) && is_string( $data['logo'] ) && empty( $data['image'] ) ) {
+				$photo = seopress_get_service( 'TagsToString' )->replace(
+					$data['logo'],
+					is_array( $context ) ? $context : array(),
+					array( 'passes' => 2 )
+				);
+
+				if ( '' !== trim( (string) $photo ) ) {
+					$data['image'] = $data['logo'];
+				}
+			}
+
 			// Remove Organization-specific keys.
 			$organization_only_keys = array(
 				'logo',
@@ -106,6 +127,10 @@ class Organization extends JsonSchemaValue implements GetJsonData {
 					unset( $data[ $organization_only_key ] );
 				}
 			}
+		}
+
+		if ( RichSnippetType::SUB_TYPE !== $type_schema ) {
+			$data['@id'] = \SEOPress\Helpers\SchemaEntityId::for_home( $is_person ? 'person' : 'organization' );
 		}
 
 		return apply_filters( 'seopress_get_json_data_organization', $data );

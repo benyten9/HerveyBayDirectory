@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use DoubleScale\Modules\Campaigns\Services\WhatsappAccountPause;
 use DoubleScale\Modules\Campaigns\Pipeline\BatchDispatchStrategyInterface;
 use DoubleScale\Modules\Campaigns\Pipeline\BatchResult;
 use DoubleScale\Modules\Campaigns\Pipeline\CampaignContext;
@@ -81,6 +82,16 @@ class IndividualDispatchStrategy implements BatchDispatchStrategyInterface {
 
 			// Dispatch: create tracking record + enqueue via Action Scheduler.
 			$result = call_user_func( $ctx->fn_add_message, $ctx->campaign, $contact );
+
+			// The send just paused the campaign (Meta restricted the number).
+			// Stop now — the batch would otherwise run on for up to 99 more
+			// sends before the loop re-reads the status. Aborting matches what
+			// the loop does for an admin pause; this contact was attempted.
+			if ( WhatsappAccountPause::was_paused( (int) $ctx->campaign->id ) ) {
+				++$ctx->offset;
+				update_option( $ctx->offset_key, $ctx->offset );
+				return BatchResult::fatal();
+			}
 
 			if ( ! $result['success'] ) {
 				// Save partial progress before stopping.

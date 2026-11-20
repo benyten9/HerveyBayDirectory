@@ -30,6 +30,7 @@ use DoubleScale\Modules\Campaigns\Campaign\EmailProcessing;
 use DoubleScale\Modules\Campaigns\Services\CampaignRateLimiter;
 use DoubleScale\Core\Settings\Settings;
 use DoubleScale\Modules\Campaigns\Services\CampaignStatusManager;
+use DoubleScale\Pro\Modules\SequenceEnrollments\SequenceEnrollments;
 
 /**
  * Email Sequences Manager class
@@ -85,6 +86,9 @@ final class EmailSequencesManager {
 	const EXIT_GOAL_MET     = 'goal_met';
 
 	const MAX_SEND_ATTEMPTS            = 3;
+
+	/** Contacts fetched per step per run; the next run picks up the rest. */
+	const ELIGIBLE_PAGE = 500;
 	const MAX_SEND_ATTEMPTS_PERMANENT  = 999;
 
 	const FAILURE_PERMANENT = 'permanent';
@@ -156,7 +160,7 @@ final class EmailSequencesManager {
 	 * @param int  $sequence_id Parent sequence ID.
 	 * @param int  $contact_id  Contact ID.
 	 * @param bool $force       Re-enroll even if already active.
-	 * @return bool|array True on success, array with status on skip, false on error.
+	 * @return true|array True on success; ['status' => 'skipped', 'message'] when skipped; ['success' => false, 'message'] on failure.
 	 */
 	public function start_sequence_for_contact( $sequence_id, $contact_id, $force = false ) {
 		try {
@@ -164,12 +168,13 @@ final class EmailSequencesManager {
 			$contact_id  = (int) $contact_id;
 
 			if ( $sequence_id <= 0 || $contact_id <= 0 ) {
-				return false;
+				return self::failure( __( 'No email sequence or contact was given.', 'doublescale' ) );
 			}
 
 			$contact = ContactModel::find( $contact_id );
 			if ( ! $contact ) {
-				return false;
+				/* translators: %d: contact id. */
+				return self::failure( sprintf( __( 'Contact #%d no longer exists.', 'doublescale' ), $contact_id ) );
 			}
 
 			if ( empty( $contact->email ) || ! filter_var( $contact->email, FILTER_VALIDATE_EMAIL ) ) {
@@ -201,6 +206,23 @@ final class EmailSequencesManager {
 				);
 			}
 
+			// A Campaign Agent's sequence mails only the contacts they own.
+			$sequence = CampaignModel::find( $sequence_id );
+			$owner    = $sequence ? \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::campaign_audience_owner( (int) $sequence->created_by ) : null;
+			if ( $owner && (int) $contact->owner_id !== (int) $owner ) {
+				doublescale_get_logger()->info(
+					'Sequence enrollment skipped - contact belongs to someone else',
+					array(
+						'sequence_id' => $sequence_id,
+						'contact_id'  => $contact_id,
+					)
+				);
+				return array(
+					'status'  => 'skipped',
+					'message' => 'This sequence only mails the contacts its creator owns',
+				);
+			}
+
 			return $this->do_enroll( $sequence_id, $contact_id, $force );
 		} catch ( Exception $e ) {
 			doublescale_get_logger()->error(
@@ -211,13 +233,28 @@ final class EmailSequencesManager {
 					'error'       => $e->getMessage(),
 				)
 			);
-			return false;
+			/* translators: %s: error message. */
+			return self::failure( sprintf( __( 'The contact could not be enrolled: %s', 'doublescale' ), $e->getMessage() ) );
 		}
 	}
 
 	/**
-	 * Atomic enrollment: locks the parent row to prevent concurrent
-	 * duplicate enrollments from webhooks/automations firing in parallel.
+	 * A failed enrolment with its reason.
+	 *
+	 * @param string $message Why it failed.
+	 * @return array{success: false, message: string}
+	 */
+	private static function failure( string $message ): array {
+		return array(
+			'success' => false,
+			'message' => $message,
+		);
+	}
+
+	/**
+	 * Enrol through the sequence_contacts table. The unique (sequence, contact)
+	 * key makes "already enrolled" atomic, so parallel workflow batches never
+	 * queue on the sequence row.
 	 *
 	 * @param int  $sequence_id Parent sequence ID.
 	 * @param int  $contact_id  Contact ID.
@@ -225,58 +262,40 @@ final class EmailSequencesManager {
 	 * @return bool|array
 	 */
 	private function do_enroll( $sequence_id, $contact_id, $force ) {
-		global $wpdb;
-		$wpdb->query( 'START TRANSACTION' );
+		$parent_sequence = CampaignModel::find( $sequence_id );
+		if ( ! $parent_sequence ) {
+			/* translators: %d: email sequence id. */
+			return self::failure( sprintf( __( 'Email sequence #%d no longer exists.', 'doublescale' ), (int) $sequence_id ) );
+		}
 
-		try {
-			$table = ( new CampaignModel() )->getTable();
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d FOR UPDATE", $sequence_id ) );
+		$result = SequenceEnrollments::enroll( (int) $sequence_id, (int) $contact_id, (bool) $force );
 
-			if ( ! $row ) {
-				$wpdb->query( 'ROLLBACK' );
-				return false;
-			}
+		if ( false === $result ) {
+			global $wpdb;
+			doublescale_get_logger()->error(
+				'Sequence enrollment failed - could not save the enrolment',
+				array(
+					'sequence_id' => $sequence_id,
+					'contact_id'  => $contact_id,
+					'error'       => $wpdb->last_error,
+				)
+			);
+			/* translators: %s: database error. */
+			return self::failure( sprintf( __( 'The enrolment could not be saved: %s', 'doublescale' ), $wpdb->last_error ?: __( 'database error', 'doublescale' ) ) );
+		}
 
-			$parent_sequence = CampaignModel::find( $sequence_id );
-			if ( ! $parent_sequence ) {
-				$wpdb->query( 'ROLLBACK' );
-				return false;
-			}
-
-			$settings    = $parent_sequence->settings;
-			$contact_ids = array_map( 'intval', (array) ( $settings['contact_ids'] ?? array() ) );
-
-			if ( ! $force && in_array( $contact_id, $contact_ids, true ) ) {
-				$wpdb->query( 'COMMIT' );
-				doublescale_get_logger()->info(
-					'Sequence enrollment skipped - already enrolled',
-					array(
-						'sequence_id' => $sequence_id,
-						'contact_id'  => $contact_id,
-					)
-				);
-				return array(
-					'status'  => 'skipped',
-					'message' => 'Contact is already enrolled in this sequence',
-				);
-			}
-
-			if ( ! in_array( $contact_id, $contact_ids, true ) ) {
-				$contact_ids[] = $contact_id;
-			}
-
-			$settings['contact_ids']                         = $contact_ids;
-			$settings['contact_enrollments'][ $contact_id ]  = current_time( 'mysql' );
-			$settings['contact_exit_reasons'][ $contact_id ] = null;
-
-			$parent_sequence->settings = $settings;
-			$parent_sequence->save();
-
-			$wpdb->query( 'COMMIT' );
-		} catch ( Exception $e ) {
-			$wpdb->query( 'ROLLBACK' );
-			throw $e;
+		if ( SequenceEnrollments::ALREADY === $result ) {
+			doublescale_get_logger()->info(
+				'Sequence enrollment skipped - already enrolled',
+				array(
+					'sequence_id' => $sequence_id,
+					'contact_id'  => $contact_id,
+				)
+			);
+			return array(
+				'status'  => 'skipped',
+				'message' => 'Contact is already enrolled in this sequence',
+			);
 		}
 
 		foreach ( $parent_sequence->sequences_mail as $sequence_step ) {
@@ -318,25 +337,9 @@ final class EmailSequencesManager {
 				return false;
 			}
 
-			$settings    = $parent_sequence->settings;
-			$contact_ids = array_map( 'intval', (array) ( $settings['contact_ids'] ?? array() ) );
-
-			$settings['contact_ids'] = array_values(
-				array_filter( $contact_ids, fn( $id ) => (int) $id !== $contact_id )
-			);
-
-			if ( ! empty( $settings['contact_enrollments'] ) && is_array( $settings['contact_enrollments'] ) ) {
-				unset( $settings['contact_enrollments'][ $contact_id ] );
-				unset( $settings['contact_enrollments'][ (string) $contact_id ] );
+			if ( ! SequenceEnrollments::exit_contact( (int) $parent_sequence->id, $contact_id, (string) $reason ) ) {
+				return false;
 			}
-
-			$settings['contact_exit_reasons'][ $contact_id ] = array(
-				'reason' => $reason,
-				'at'     => current_time( 'mysql' ),
-			);
-
-			$parent_sequence->settings = $settings;
-			$parent_sequence->save();
 
 			doublescale_get_logger()->info(
 				'Contact removed from email sequence',
@@ -370,14 +373,7 @@ final class EmailSequencesManager {
 	 * @return bool
 	 */
 	public function is_contact_enrolled( $sequence_id, $contact_id ) {
-		$parent_sequence = CampaignModel::find( (int) $sequence_id );
-		if ( ! $parent_sequence ) {
-			return false;
-		}
-
-		$contact_ids = array_map( 'intval', (array) ( $parent_sequence->settings['contact_ids'] ?? array() ) );
-
-		return in_array( (int) $contact_id, $contact_ids, true );
+		return SequenceEnrollments::is_enrolled( (int) $sequence_id, (int) $contact_id );
 	}
 
 	// ──────────────────────────────────────────────────────────────
@@ -397,6 +393,11 @@ final class EmailSequencesManager {
 				$this->rate_limiter->get_daily_count( 'email' ),
 				$max_per_day
 			);
+			return;
+		}
+
+		// Workflow messages waiting in the send queue go first on the shared limit.
+		if ( apply_filters( 'doublescale_campaign_should_yield', false, 'email' ) ) {
 			return;
 		}
 
@@ -446,7 +447,7 @@ final class EmailSequencesManager {
 	// ──────────────────────────────────────────────────────────────
 
 	/**
-	 * @return \Illuminate\Support\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Support\Collection
 	 */
 	private function get_ready_sequences() {
 		$sequences = CampaignModel::query()
@@ -569,14 +570,7 @@ final class EmailSequencesManager {
 			return;
 		}
 
-		$settings    = $parent->settings;
-		$contact_ids = array_map( 'intval', (array) ( $settings['contact_ids'] ?? array() ) );
-
-		if ( empty( $contact_ids ) ) {
-			return;
-		}
-
-		$contacts_to_exit = ContactModel::whereIn( 'id', $contact_ids )
+		$contacts_to_exit = ContactModel::whereIn( 'id', SequenceEnrollments::active_ids( (int) $parent->id ) )
 			->where(
 				function ( $query ) {
 					$query->where( 'email_status', '!=', 'subscribed' )
@@ -674,19 +668,22 @@ final class EmailSequencesManager {
 	 *
 	 * @param CampaignModel $sequence Child step.
 	 * @param CampaignModel $parent   Parent sequence.
-	 * @return \Illuminate\Support\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Support\Collection
 	 */
 	private function get_eligible_contacts( CampaignModel $sequence, CampaignModel $parent ) {
-		$settings    = $parent->settings;
-		$contact_ids = array_map( 'intval', (array) ( $settings['contact_ids'] ?? array() ) );
-
-		if ( empty( $contact_ids ) ) {
-			return collect();
-		}
-
 		$tracking_table = ( new CommunicationTrackingModel() )->getTable();
+		$delay          = $sequence->settings['delay'] ?? array(
+			'value' => 0,
+			'unit'  => 'minutes',
+		);
 
-		$contacts = ContactModel::whereIn( 'id', $contact_ids )
+		// Due when join time + delay has passed, i.e. joined at or before now - delay.
+		$value     = intval( $delay['value'] ?? 0 );
+		$unit      = strtolower( $delay['unit'] ?? 'minutes' );
+		$now       = current_time( 'timestamp' );
+		$joined_by = date( 'Y-m-d H:i:s', strtotime( "-{$value} {$unit}", $now ) ?: $now ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- local time, see calculate_execution_time().
+
+		return ContactModel::whereIn( 'id', SequenceEnrollments::active_ids( (int) $parent->id, $joined_by ) )
 			->where( 'email_status', 'subscribed' )
 			->whereNotNull( 'email' )
 			->where( 'email', '!=', '' )
@@ -701,33 +698,22 @@ final class EmailSequencesManager {
 						->where( 'status', TrackingStatus::SENT );
 				}
 			)
+			->whereNotIn(
+				'id',
+				function ( $sub ) use ( $sequence, $tracking_table ) {
+					$sub->select( 'contact_id' )
+						->from( $tracking_table )
+						->where( 'source_id', $sequence->id )
+						->where( 'source_type', MessageSourceTypes::CAMPAIGN )
+						->where( 'mode', CommunicationTrackingModel::MODE_EMAIL )
+						->where( 'status', TrackingStatus::FAILED )
+						->groupBy( 'contact_id' )
+						->havingRaw( 'COUNT(*) >= ?', array( self::MAX_SEND_ATTEMPTS ) );
+				}
+			)
+			->orderBy( 'id' )
+			->limit( self::ELIGIBLE_PAGE )
 			->get();
-
-		$enrollments = $settings['contact_enrollments'] ?? array();
-		$delay       = $sequence->settings['delay'] ?? array(
-			'value' => 0,
-			'unit'  => 'minutes',
-		);
-
-		return $contacts->filter(
-			function ( $contact ) use ( $enrollments, $delay, $sequence ) {
-				$enrollment_time = $enrollments[ $contact->id ] ?? $enrollments[ (string) $contact->id ] ?? null;
-				if ( ! $enrollment_time ) {
-					return false;
-				}
-
-				$due_at = $this->calculate_execution_time_from_base( $delay, $enrollment_time );
-				if ( strtotime( $due_at ) > current_time( 'timestamp' ) ) {
-					return false;
-				}
-
-				if ( $this->get_send_attempt_count( $sequence->id, $contact->id ) >= self::MAX_SEND_ATTEMPTS ) {
-					return false;
-				}
-
-				return true;
-			}
-		);
 	}
 
 	/**
@@ -746,28 +732,41 @@ final class EmailSequencesManager {
 	 * @return bool
 	 */
 	private function are_all_contacts_successfully_sent( CampaignModel $sequence, CampaignModel $parent ) {
-		$contact_ids = array_map( 'intval', (array) ( $parent->settings['contact_ids'] ?? array() ) );
-		$total       = count( $contact_ids );
+		global $wpdb;
 
+		$total = SequenceEnrollments::active_count( (int) $parent->id );
 		if ( $total === 0 ) {
 			return false;
 		}
 
-		$sent_count = CommunicationTrackingModel::where( 'source_id', $sequence->id )
-			->where( 'source_type', MessageSourceTypes::CAMPAIGN )
-			->where( 'mode', CommunicationTrackingModel::MODE_EMAIL )
-			->where( 'status', TrackingStatus::SENT )
-			->whereIn( 'contact_id', $contact_ids )
-			->count();
+		$tracking = ( new CommunicationTrackingModel() )->getTable();
+		$roster   = SequenceEnrollments::table();
 
-		$permanently_failed = 0;
-		foreach ( $contact_ids as $cid ) {
-			if ( $this->get_send_attempt_count( $sequence->id, $cid ) >= self::MAX_SEND_ATTEMPTS ) {
-				$permanently_failed++;
-			}
-		}
+		// One count per enrolled contact who is resolved: sent, or out of attempts.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$resolved = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$roster} r
+				WHERE r.sequence_id = %d AND r.status = %s
+				AND (
+					EXISTS ( SELECT 1 FROM {$tracking} t WHERE t.source_id = %d AND t.source_type = %d AND t.mode = %d AND t.status = %d AND t.contact_id = r.contact_id )
+					OR ( SELECT COUNT(*) FROM {$tracking} f WHERE f.source_id = %d AND f.source_type = %d AND f.mode = %d AND f.status = %d AND f.contact_id = r.contact_id ) >= %d
+				)",
+				(int) $parent->id,
+				SequenceEnrollments::ACTIVE,
+				(int) $sequence->id,
+				MessageSourceTypes::CAMPAIGN,
+				CommunicationTrackingModel::MODE_EMAIL,
+				TrackingStatus::SENT,
+				(int) $sequence->id,
+				MessageSourceTypes::CAMPAIGN,
+				CommunicationTrackingModel::MODE_EMAIL,
+				TrackingStatus::FAILED,
+				self::MAX_SEND_ATTEMPTS
+			)
+		);
 
-		return ( $sent_count + $permanently_failed ) >= $total;
+		return $resolved >= $total;
 	}
 
 	// ──────────────────────────────────────────────────────────────
@@ -776,7 +775,7 @@ final class EmailSequencesManager {
 
 	/**
 	 * @param CampaignModel                 $sequence
-	 * @param \Illuminate\Support\Collection $contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Support\Collection $contacts
 	 */
 	private function send_batch( CampaignModel $sequence, $contacts ) {
 		$max_per_second   = $this->settings['max_in_second'] ?? self::DEFAULT_MAX_PER_SECOND;
@@ -904,7 +903,11 @@ final class EmailSequencesManager {
 
 			$this->email_processor->process_campaign_message( $sequence, $contact, $campaign_message );
 
-			$this->rate_limiter->record_send_complete( 'email' );
+			// DoubleScale counts every delivered email against the shared daily
+			// cap itself; an older release did not, so count it here instead.
+			if ( ! method_exists( $this->email_processor, 'count_sent' ) ) {
+				$this->rate_limiter->record_send_complete( 'email' );
+			}
 
 			$campaign_message->refresh();
 			$success = ( (int) $campaign_message->status === TrackingStatus::SENT );
@@ -923,8 +926,6 @@ final class EmailSequencesManager {
 
 			return $success;
 		} catch ( Exception $e ) {
-			$this->rate_limiter->record_send_complete( 'email' );
-
 			doublescale_get_logger()->error(
 				'Email sequence send error',
 				array(

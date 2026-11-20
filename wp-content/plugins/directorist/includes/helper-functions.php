@@ -1952,8 +1952,8 @@ if ( ! function_exists( 'atbdp_is_page' ) ) {
 if ( ! function_exists( 'atbdp_popular_listings' ) ) {
     function atbdp_popular_listings( $listing_id ) {
         $listing_popular_by         = get_directorist_option( 'listing_popular_by' );
-        $average                    = directorist_get_listing_rating( $listing_id );
-        $average_review_for_popular = (int) get_directorist_option( 'average_review_for_popular', 4 );
+        $average                    = directorist_get_listing_rating( $listing_id, 2 );
+        $average_review_for_popular = (float) get_directorist_option( 'average_review_for_popular', 4 );
         $view_count                 = (int) get_post_meta( $listing_id, '_atbdp_post_views_count', true );
         $view_to_popular            = (int) get_directorist_option( 'views_for_popular' );
 
@@ -2425,7 +2425,11 @@ function atbdp_guest_submission( $guest_email ) {
      */
     $notify = apply_filters( 'directorist_guest_submission_email_notification', true, $user_id );
     if ( $notify ) {
-        ATBDP()->email->custom_wp_new_user_notification_email( $user_id );
+        if ( directorist_is_email_verification_enabled() ) {
+            ATBDP()->email->send_user_confirmation_email( get_user_by( 'ID', $user_id ) );
+        } else {
+            ATBDP()->email->custom_wp_new_user_notification_email( $user_id );
+        }
     }
 }
 
@@ -2917,7 +2921,7 @@ function directorist_redirect_to_admin_setup_wizard() {
     // Delete the redirect transient
     delete_transient( '_directorist_setup_page_redirect' );
 
-    wp_safe_redirect( add_query_arg( [ 'page' => 'directorist-setup' ], admin_url( 'index.php' ) ) );
+    wp_safe_redirect( add_query_arg( [ 'page' => 'directorist-ai-setup' ], admin_url( 'admin.php' ) ) );
     exit;
 }
 
@@ -2983,11 +2987,9 @@ if ( ! function_exists( 'directorist_get_default_directory' ) ) {
             ]
         );
 
-        if ( empty( $directories ) || is_wp_error( $directories ) || ! isset( $directories[0] ) ) {
-            return 0;
-        }
+        $directory = ! is_wp_error( $directories ) && isset( $directories[0] ) ? $directories[0] : 0;
 
-        return $directories[0];
+        return apply_filters( 'directorist_default_directory', $directory, $return );
     }
 }
 
@@ -4243,6 +4245,34 @@ function directorist_sanitize_term_item( $item ) {
 }
 
 /**
+ * Check submitted tag names for markup, including nested HTML entities.
+ *
+ * Decode only for validation so legitimate term names are not renamed.
+ *
+ * @param string|int|float $name Tag name or term ID.
+ * @return bool Whether the name contains only text.
+ */
+function directorist_is_valid_tag_name( $name ) {
+    if ( ! is_scalar( $name ) ) {
+        return false;
+    }
+
+    $name = (string) $name;
+
+    // Bound decoding work for excessively nested, untrusted entity sequences.
+    for ( $depth = 0; $depth < 5; ++$depth ) {
+        $previous = $name;
+        $name     = html_entity_decode( $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+        if ( $name === $previous ) {
+            return wp_strip_all_tags( $name ) === trim( $name );
+        }
+    }
+
+    return false;
+}
+
+/**
  * @param mixed $item
  * @return mixed item
  */
@@ -4817,6 +4847,20 @@ function directorist_get_featured_listing_status( $listing_id, $default_status )
     return $default_status;
 }
 
+/**
+ * Parse the signed integer bounds serialized by a custom Number slider.
+ *
+ * @param string $value Range such as "-100000-50000" or "-100000--50000".
+ * @return int[]|null Bounds, or null when the value is not a range.
+ */
+function directorist_parse_number_range( $value ) {
+    if ( ! is_scalar( $value ) || ! preg_match( '/\A(-?\d+)-(-?\d+)\z/', (string) $value, $matches ) ) {
+        return null;
+    }
+
+    return [ (int) $matches[1], (int) $matches[2] ];
+}
+
 function directorist_get_distance_range( $miles ) {
     // Set default values for min and max distance
     $min_distance = 0;
@@ -5051,6 +5095,46 @@ function directorist_single_listings_contents( int $directory_type_id, array $da
 function directorist_listing_archive_fields( int $directory_type_id, array $data = [] ): array {
     $card_fields = get_term_meta( $directory_type_id, 'listings_card_grid_view', true );
     $list_fields = get_term_meta( $directory_type_id, 'listings_card_list_view', true );
+
+    $is_valid_layout = static function ( $layout, $view ) {
+        if ( ! is_array( $layout ) || empty( $layout['active_template'] ) || empty( $layout['template_data'] ) || ! is_array( $layout['template_data'] ) ) {
+            return false;
+        }
+
+        $template          = $layout['active_template'];
+        $allowed_templates = [
+            'grid' => [ 'grid_view_with_thumbnail', 'grid_view_without_thumbnail' ],
+            'list' => [ 'list_view_with_thumbnail', 'list_view_without_thumbnail' ],
+        ];
+
+        return isset( $allowed_templates[ $view ] )
+            && in_array( $template, $allowed_templates[ $view ], true )
+            && isset( $layout['template_data'][ $template ] )
+            && is_array( $layout['template_data'][ $template ] );
+    };
+
+    if ( ! $is_valid_layout( $card_fields, 'grid' ) || ! $is_valid_layout( $list_fields, 'list' ) ) {
+        static $default_archive_fields = null;
+
+        if ( null === $default_archive_fields && class_exists( '\\Directorist\\Multi_Directory\\Multi_Directory_Migration' ) ) {
+            $migration = new \Directorist\Multi_Directory\Multi_Directory_Migration();
+            $widgets   = $migration->get_listings_card_wedgets_data();
+            $args      = [ 'listings_card_wedgets' => $widgets ];
+
+            $default_archive_fields = [
+                'card_fields' => $migration->get_listings_card_grid_view_data( $args ),
+                'list_fields' => $migration->get_listings_card_list_view_data( $args ),
+            ];
+        }
+
+        if ( ! $is_valid_layout( $card_fields, 'grid' ) && ! empty( $default_archive_fields['card_fields'] ) ) {
+            $card_fields = $default_archive_fields['card_fields'];
+        }
+
+        if ( ! $is_valid_layout( $list_fields, 'list' ) && ! empty( $default_archive_fields['list_fields'] ) ) {
+            $list_fields = $default_archive_fields['list_fields'];
+        }
+    }
 
     $data['directory_type_id'] = $directory_type_id;
 

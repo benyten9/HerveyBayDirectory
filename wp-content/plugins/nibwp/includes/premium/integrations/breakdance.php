@@ -60,7 +60,7 @@ function nibwp_breakdance_guard(): ?WP_Error
     if (!nibwp_breakdance_available()) {
         return nibwp_breakdance_err(
             'nibwp_breakdance_missing',
-            __('Breakdance is not active on this site.', domain: 'nibwp')
+            __('Breakdance is not active on this site.', 'nibwp')
         );
     }
 
@@ -158,7 +158,7 @@ function nibwp_breakdance_settings_meta_key(): string
 function nibwp_breakdance_get_tree(int $post_id)
 {
     if ($post_id <= 0 || !get_post($post_id)) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', 'nibwp'));
     }
 
     $tree = \Breakdance\Data\get_tree($post_id);
@@ -166,7 +166,7 @@ function nibwp_breakdance_get_tree(int $post_id)
     if ($tree === false || !is_array($tree)) {
         return nibwp_breakdance_err(
             'nibwp_breakdance_no_tree',
-            __('That post has no Breakdance tree. Enable the builder on it first with nibwp/breakdance-pages action=enable.', domain: 'nibwp')
+            __('That post has no Breakdance tree. Enable the builder on it first with nibwp/breakdance-pages action=enable.', 'nibwp')
         );
     }
 
@@ -188,13 +188,13 @@ function nibwp_breakdance_put_tree(int $post_id, array $tree)
     if (!\Breakdance\Data\is_valid_tree($tree)) {
         return nibwp_breakdance_err(
             'nibwp_breakdance_invalid_tree',
-            __('That is not a valid Breakdance tree — it needs a root node with id, data and children.', domain: 'nibwp')
+            __('That is not a valid Breakdance tree — it needs a root node with id, data and children.', 'nibwp')
         );
     }
 
     $encoded = wp_json_encode($tree);
     if (!is_string($encoded)) {
-        return nibwp_breakdance_err('nibwp_breakdance_encode_failed', __('The tree could not be encoded as JSON.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_encode_failed', __('The tree could not be encoded as JSON.', 'nibwp'));
     }
 
     \Breakdance\Data\set_meta($post_id, nibwp_breakdance_tree_meta_key(), ['tree_json_string' => $encoded]);
@@ -312,8 +312,8 @@ function nibwp_breakdance_paginate(array $in): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-info', [
-    'label'       => __('Breakdance — Info', domain: 'nibwp'),
-    'description' => __('Detect Breakdance, which brand mode it runs in, its post types, element count and content counts (read-only).', domain: 'nibwp'),
+    'label'       => __('Breakdance — Info', 'nibwp'),
+    'description' => 'Detect Breakdance, which brand mode it runs in, its post types, element count and content counts (read-only).',
     'category'    => 'breakdance',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -371,8 +371,8 @@ function nibwp_breakdance_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-elements', [
-    'label'       => __('Breakdance — Elements', domain: 'nibwp'),
-    'description' => __('List every element this install registers, with its slug, category and control schema — the vocabulary a tree has to be written in (read-only).', domain: 'nibwp'),
+    'label'       => __('Breakdance — Elements', 'nibwp'),
+    'description' => 'List every element this install registers, with its slug, category and control schema — the vocabulary a tree has to be written in (read-only).',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -409,7 +409,7 @@ function nibwp_breakdance_elements(array $input): array|WP_Error
     }
 
     if (!function_exists('Breakdance\\Elements\\get_elements_for_builder')) {
-        return nibwp_breakdance_err('nibwp_breakdance_no_elements', __('The Breakdance element registry is unavailable.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_no_elements', __('The Breakdance element registry is unavailable.', 'nibwp'));
     }
 
     $action = (string) ($input['action'] ?? 'list');
@@ -421,7 +421,7 @@ function nibwp_breakdance_elements(array $input): array|WP_Error
         if ($action === 'get') {
             $slug = (string) ($input['slug'] ?? '');
             if ($slug === '') {
-                throw new \RuntimeException(__('An element slug is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('An element slug is required.', 'nibwp'));
             }
             foreach ($elements as $element) {
                 $element = (array) $element;
@@ -430,7 +430,7 @@ function nibwp_breakdance_elements(array $input): array|WP_Error
                 }
             }
 
-            throw new \RuntimeException(__('No element with that slug is registered on this site.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No element with that slug is registered on this site.', 'nibwp'));
         }
 
         if ($action === 'categories') {
@@ -470,8 +470,8 @@ function nibwp_breakdance_elements(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-tree', [
-    'label'       => __('Breakdance — Page tree', domain: 'nibwp'),
-    'description' => __('Read a page\'s Breakdance node tree, its rendered HTML or a flat outline of it, and replace the whole tree in one call.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Page tree', 'nibwp'),
+    'description' => 'Read a page\'s Breakdance node tree, its rendered HTML or a flat outline of it, and replace the whole tree in one call.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -512,13 +512,13 @@ function nibwp_breakdance_tree(array $input): array|WP_Error
     $post_id = (int) ($input['post_id'] ?? 0);
 
     if ($action !== 'validate' && $post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', 'nibwp'));
     }
 
     if (in_array($action, ['set', 'validate'], strict: true)) {
         $raw = (string) ($input['tree'] ?? '');
         if ($raw === '') {
-            return nibwp_breakdance_err('nibwp_breakdance_bad_tree', __('A tree JSON string is required.', domain: 'nibwp'));
+            return nibwp_breakdance_err('nibwp_breakdance_bad_tree', __('A tree JSON string is required.', 'nibwp'));
         }
         $decoded = json_decode($raw, true);
         if (!is_array($decoded)) {
@@ -526,7 +526,7 @@ function nibwp_breakdance_tree(array $input): array|WP_Error
                 'nibwp_breakdance_bad_tree',
                 sprintf(
                     /* translators: %s: JSON parser error */
-                    __('The tree JSON could not be parsed: %s', domain: 'nibwp'),
+                    __('The tree JSON could not be parsed: %s', 'nibwp'),
                     json_last_error_msg()
                 )
             );
@@ -560,7 +560,7 @@ function nibwp_breakdance_tree(array $input): array|WP_Error
 
             case 'html':
                 if (!function_exists('Breakdance\\Data\\get_tree_as_html')) {
-                    throw new \RuntimeException(__('Rendering to HTML is unavailable in this Breakdance version.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Rendering to HTML is unavailable in this Breakdance version.', 'nibwp'));
                 }
 
                 return ['post_id' => $post_id, 'html' => \Breakdance\Data\get_tree_as_html($post_id)];
@@ -578,7 +578,7 @@ function nibwp_breakdance_tree(array $input): array|WP_Error
                 ];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -590,8 +590,8 @@ function nibwp_breakdance_tree(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-nodes', [
-    'label'       => __('Breakdance — Nodes', domain: 'nibwp'),
-    'description' => __('Read, add, update, duplicate, move and remove a single node inside a page\'s tree, leaving the rest of the page untouched.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Nodes', 'nibwp'),
+    'description' => 'Read, add, update, duplicate, move and remove a single node inside a page\'s tree, leaving the rest of the page untouched.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -638,10 +638,10 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
     $node_id = (int) ($input['node_id'] ?? 0);
 
     if ($post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', 'nibwp'));
     }
     if ($action !== 'add' && $node_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid node ID is required. Get one from nibwp/breakdance-tree action=outline.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid node ID is required. Get one from nibwp/breakdance-tree action=outline.', 'nibwp'));
     }
 
     $tree = nibwp_breakdance_get_tree($post_id);
@@ -661,7 +661,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                     }
                 });
                 if ($found === null) {
-                    throw new \RuntimeException(__('No node with that ID exists on this page.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that ID exists on this page.', 'nibwp'));
                 }
 
                 return ['post_id' => $post_id, 'node' => $found];
@@ -669,7 +669,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
             case 'add':
                 $type = (string) ($input['type'] ?? '');
                 if ($type === '') {
-                    throw new \RuntimeException(__('An element type is required. List them with nibwp/breakdance-elements.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('An element type is required. List them with nibwp/breakdance-elements.', 'nibwp'));
                 }
 
                 $new_id = nibwp_breakdance_max_id($tree) + 1;
@@ -705,7 +705,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                 }
 
                 if (!$added) {
-                    throw new \RuntimeException(__('No node with that parent ID exists on this page.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that parent ID exists on this page.', 'nibwp'));
                 }
 
                 $written = nibwp_breakdance_put_tree($post_id, $tree);
@@ -727,7 +727,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                     $node['data']['properties'] = (object) array_replace_recursive($current, $properties);
                 });
                 if (!$found) {
-                    throw new \RuntimeException(__('No node with that ID exists on this page.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that ID exists on this page.', 'nibwp'));
                 }
 
                 $written = nibwp_breakdance_put_tree($post_id, $tree);
@@ -745,7 +745,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                     }
                 });
                 if ($source === null) {
-                    throw new \RuntimeException(__('No node with that ID exists on this page.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that ID exists on this page.', 'nibwp'));
                 }
 
                 // Every node in the copy needs a fresh ID, or the tree carries
@@ -786,7 +786,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                 $place($tree['root']);
 
                 if (!$placed) {
-                    throw new \RuntimeException(__('That node is the root and cannot be duplicated.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('That node is the root and cannot be duplicated.', 'nibwp'));
                 }
 
                 $written = nibwp_breakdance_put_tree($post_id, $tree);
@@ -799,7 +799,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
             case 'move':
                 $parent_id = (int) ($input['parent_id'] ?? 0);
                 if ($parent_id <= 0) {
-                    throw new \RuntimeException(__('A parent_id is required to move a node.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A parent_id is required to move a node.', 'nibwp'));
                 }
 
                 $moving = null;
@@ -809,7 +809,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                     }
                 });
                 if ($moving === null) {
-                    throw new \RuntimeException(__('No node with that ID exists on this page.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that ID exists on this page.', 'nibwp'));
                 }
 
                 // Refused rather than attempted: moving a node inside itself
@@ -821,7 +821,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                     }
                 });
                 if ($descendant) {
-                    throw new \RuntimeException(__('A node cannot be moved inside itself or its own children.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A node cannot be moved inside itself or its own children.', 'nibwp'));
                 }
 
                 nibwp_breakdance_remove_node($tree['root'], $node_id);
@@ -841,7 +841,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                 });
 
                 if (!$moved) {
-                    throw new \RuntimeException(__('No node with that parent ID exists on this page.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that parent ID exists on this page.', 'nibwp'));
                 }
 
                 $written = nibwp_breakdance_put_tree($post_id, $tree);
@@ -853,7 +853,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
 
             case 'remove':
                 if (!nibwp_breakdance_remove_node($tree['root'], $node_id)) {
-                    throw new \RuntimeException(__('No node with that ID exists on this page, or it is the root.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No node with that ID exists on this page, or it is the root.', 'nibwp'));
                 }
 
                 $written = nibwp_breakdance_put_tree($post_id, $tree);
@@ -864,7 +864,7 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
                 return ['post_id' => $post_id, 'node_id' => $node_id, 'removed' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -873,8 +873,8 @@ function nibwp_breakdance_nodes(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-pages', [
-    'label'       => __('Breakdance — Pages', domain: 'nibwp'),
-    'description' => __('Find posts and pages built with Breakdance, create new ones, enable the builder on an existing post, and get its edit and preview URLs.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Pages', 'nibwp'),
+    'description' => 'Find posts and pages built with Breakdance, create new ones, enable the builder on an existing post, and get its edit and preview URLs.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -919,7 +919,7 @@ function nibwp_breakdance_pages(array $input): array|WP_Error
     $post_id = (int) ($input['post_id'] ?? 0);
 
     if (in_array($action, ['enable', 'urls'], strict: true) && $post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', 'nibwp'));
     }
 
     return nibwp_breakdance_try(static function () use ($action, $post_id, $input) {
@@ -953,7 +953,7 @@ function nibwp_breakdance_pages(array $input): array|WP_Error
             case 'create':
                 $new_id = wp_insert_post([
                     'post_type'   => (string) ($input['post_type'] ?? 'page'),
-                    'post_title'  => (string) ($input['title'] ?? __('New page', domain: 'nibwp')),
+                    'post_title'  => (string) ($input['title'] ?? __('New page', 'nibwp')),
                     'post_status' => (string) ($input['status'] ?? 'draft'),
                 ], true);
 
@@ -970,7 +970,7 @@ function nibwp_breakdance_pages(array $input): array|WP_Error
 
             case 'enable':
                 if (\Breakdance\Data\get_tree($post_id) !== false) {
-                    throw new \RuntimeException(__('That post already has a Breakdance tree — enabling again would discard it.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('That post already has a Breakdance tree — enabling again would discard it.', 'nibwp'));
                 }
                 $seeded = nibwp_breakdance_put_tree($post_id, ['root' => ['id' => 0, 'data' => ['type' => 'root'], 'children' => []]]);
                 if ($seeded instanceof WP_Error) {
@@ -988,7 +988,7 @@ function nibwp_breakdance_pages(array $input): array|WP_Error
                 ];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -997,8 +997,8 @@ function nibwp_breakdance_pages(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-templates', [
-    'label'       => __('Breakdance — Templates', domain: 'nibwp'),
-    'description' => __('List, read, create and rename headers, footers, popups, templates and global blocks — the themeless post types Breakdance builds a site from.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Templates', 'nibwp'),
+    'description' => 'List, read, create and rename headers, footers, popups, templates and global blocks — the themeless post types Breakdance builds a site from.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1041,7 +1041,7 @@ function nibwp_breakdance_templates(array $input): array|WP_Error
     $post_id = (int) ($input['post_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename'], strict: true) && $post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid template ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid template ID is required.', 'nibwp'));
     }
 
     if (in_array($action, ['list', 'create'], strict: true)) {
@@ -1049,7 +1049,7 @@ function nibwp_breakdance_templates(array $input): array|WP_Error
         if (nibwp_breakdance_post_type($role) === '') {
             return nibwp_breakdance_err(
                 'nibwp_breakdance_bad_role',
-                __('A known role is required — template, header, footer, popup, block or part. List them with action=types.', domain: 'nibwp')
+                __('A known role is required — template, header, footer, popup, block or part. List them with action=types.', 'nibwp')
             );
         }
     }
@@ -1084,7 +1084,7 @@ function nibwp_breakdance_templates(array $input): array|WP_Error
             case 'get':
                 $post = get_post($post_id);
                 if (!$post) {
-                    throw new \RuntimeException(__('No such template.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No such template.', 'nibwp'));
                 }
                 $tree = \Breakdance\Data\get_tree($post_id);
 
@@ -1100,7 +1100,7 @@ function nibwp_breakdance_templates(array $input): array|WP_Error
                 $type = nibwp_breakdance_post_type((string) $input['role']);
                 $new_id = wp_insert_post([
                     'post_type'   => $type,
-                    'post_title'  => (string) ($input['title'] ?? __('New template', domain: 'nibwp')),
+                    'post_title'  => (string) ($input['title'] ?? __('New template', 'nibwp')),
                     'post_status' => (string) ($input['status'] ?? 'publish'),
                 ], true);
 
@@ -1124,7 +1124,7 @@ function nibwp_breakdance_templates(array $input): array|WP_Error
                 return ['id' => $post_id, 'renamed' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1133,8 +1133,8 @@ function nibwp_breakdance_templates(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-conditions', [
-    'label'       => __('Breakdance — Display conditions', domain: 'nibwp'),
-    'description' => __('List the display conditions this install offers, and read or set the conditions that decide where a template, header, footer or popup appears.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Display conditions', 'nibwp'),
+    'description' => 'List the display conditions this install offers, and read or set the conditions that decide where a template, header, footer or popup appears.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1175,14 +1175,14 @@ function nibwp_breakdance_conditions(array $input): array|WP_Error
     $post_id = (int) ($input['post_id'] ?? 0);
 
     if (in_array($action, ['get', 'set'], strict: true) && $post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid template ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid template ID is required.', 'nibwp'));
     }
 
     if ($action === 'set') {
         $raw = (string) ($input['conditions'] ?? '');
         $decoded = json_decode($raw, true);
         if (!is_array($decoded)) {
-            return nibwp_breakdance_err('nibwp_breakdance_bad_conditions', __('Conditions must be a JSON array.', domain: 'nibwp'));
+            return nibwp_breakdance_err('nibwp_breakdance_bad_conditions', __('Conditions must be a JSON array.', 'nibwp'));
         }
         $input['_decoded'] = $decoded;
     }
@@ -1191,7 +1191,7 @@ function nibwp_breakdance_conditions(array $input): array|WP_Error
         switch ($action) {
             case 'available':
                 if (!function_exists('Breakdance\\Conditions\\get_conditions_for_builder')) {
-                    throw new \RuntimeException(__('Display conditions are unavailable in this Breakdance version.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Display conditions are unavailable in this Breakdance version.', 'nibwp'));
                 }
 
                 return ['conditions' => \Breakdance\Conditions\get_conditions_for_builder()];
@@ -1233,7 +1233,7 @@ function nibwp_breakdance_conditions(array $input): array|WP_Error
                 return ['post_id' => $post_id, 'conditions' => $input['_decoded'], 'updated' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1242,8 +1242,8 @@ function nibwp_breakdance_conditions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-global-settings', [
-    'label'       => __('Breakdance — Global settings', domain: 'nibwp'),
-    'description' => __('Read and write the site-wide Breakdance settings: typography, colors, breakpoints and the rest of the global style layer.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Global settings', 'nibwp'),
+    'description' => 'Read and write the site-wide Breakdance settings: typography, colors, breakpoints and the rest of the global style layer.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1283,7 +1283,7 @@ function nibwp_breakdance_global_settings(array $input): array|WP_Error
     if ($action === 'set') {
         $decoded = json_decode((string) ($input['settings'] ?? ''), true);
         if (!is_array($decoded)) {
-            return nibwp_breakdance_err('nibwp_breakdance_bad_settings', __('Settings must be a JSON object.', domain: 'nibwp'));
+            return nibwp_breakdance_err('nibwp_breakdance_bad_settings', __('Settings must be a JSON object.', 'nibwp'));
         }
         $input['_decoded'] = $decoded;
     }
@@ -1295,7 +1295,7 @@ function nibwp_breakdance_global_settings(array $input): array|WP_Error
 
             case 'set':
                 if (!function_exists('Breakdance\\Data\\save_global_settings')) {
-                    throw new \RuntimeException(__('Global settings cannot be written in this Breakdance version.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Global settings cannot be written in this Breakdance version.', 'nibwp'));
                 }
                 \Breakdance\Data\save_global_settings($input['_decoded']);
 
@@ -1306,7 +1306,7 @@ function nibwp_breakdance_global_settings(array $input): array|WP_Error
                 return ['updated' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1315,8 +1315,8 @@ function nibwp_breakdance_global_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-selectors', [
-    'label'       => __('Breakdance — Selectors', domain: 'nibwp'),
-    'description' => __('Read and write the global CSS classes and selectors Breakdance styles elements with.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Selectors', 'nibwp'),
+    'description' => 'Read and write the global CSS classes and selectors Breakdance styles elements with.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1356,7 +1356,7 @@ function nibwp_breakdance_selectors(array $input): array|WP_Error
     if ($action === 'set') {
         $decoded = json_decode((string) ($input['selectors'] ?? ''), true);
         if (!is_array($decoded)) {
-            return nibwp_breakdance_err('nibwp_breakdance_bad_selectors', __('Selectors must be a JSON object.', domain: 'nibwp'));
+            return nibwp_breakdance_err('nibwp_breakdance_bad_selectors', __('Selectors must be a JSON object.', 'nibwp'));
         }
         $input['_decoded'] = $decoded;
     }
@@ -1365,21 +1365,21 @@ function nibwp_breakdance_selectors(array $input): array|WP_Error
         switch ($action) {
             case 'get':
                 if (!function_exists('Breakdance\\Data\\load_selectors')) {
-                    throw new \RuntimeException(__('Selectors are unavailable in this Breakdance version.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Selectors are unavailable in this Breakdance version.', 'nibwp'));
                 }
 
                 return ['selectors' => \Breakdance\Data\load_selectors()];
 
             case 'set':
                 if (!function_exists('Breakdance\\Data\\save_selectors')) {
-                    throw new \RuntimeException(__('Selectors cannot be written in this Breakdance version.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Selectors cannot be written in this Breakdance version.', 'nibwp'));
                 }
                 \Breakdance\Data\save_selectors($input['_decoded']);
 
                 return ['updated' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1388,8 +1388,8 @@ function nibwp_breakdance_selectors(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-presets', [
-    'label'       => __('Breakdance — Design presets', domain: 'nibwp'),
-    'description' => __('Read the design presets defined on this site, so new elements can be built to match what is already there (read-only).', domain: 'nibwp'),
+    'label'       => __('Breakdance — Design presets', 'nibwp'),
+    'description' => 'Read the design presets defined on this site, so new elements can be built to match what is already there (read-only).',
     'category'    => 'breakdance',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -1414,7 +1414,7 @@ function nibwp_breakdance_presets(array $input): array|WP_Error
     }
 
     if (!function_exists('Breakdance\\Data\\load_presets')) {
-        return nibwp_breakdance_err('nibwp_breakdance_no_presets', __('Design presets are unavailable in this Breakdance version.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_no_presets', __('Design presets are unavailable in this Breakdance version.', 'nibwp'));
     }
 
     return nibwp_breakdance_try(static fn(): array => ['presets' => \Breakdance\Data\load_presets()]);
@@ -1425,8 +1425,8 @@ function nibwp_breakdance_presets(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-variables', [
-    'label'       => __('Breakdance — Variables', domain: 'nibwp'),
-    'description' => __('Read the design variables and their collections — the colors, sizes and spacing tokens this site is built on (read-only).', domain: 'nibwp'),
+    'label'       => __('Breakdance — Variables', 'nibwp'),
+    'description' => 'Read the design variables and their collections — the colors, sizes and spacing tokens this site is built on (read-only).',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1461,14 +1461,14 @@ function nibwp_breakdance_variables(array $input): array|WP_Error
     return nibwp_breakdance_try(static function () use ($action) {
         if ($action === 'collections') {
             if (!function_exists('Breakdance\\Variables\\getVariablesCollections')) {
-                throw new \RuntimeException(__('Variable collections are unavailable in this Breakdance version.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Variable collections are unavailable in this Breakdance version.', 'nibwp'));
             }
 
             return ['collections' => \Breakdance\Variables\getVariablesCollections()];
         }
 
         if (!function_exists('Breakdance\\Variables\\getVariables')) {
-            throw new \RuntimeException(__('Variables are unavailable in this Breakdance version.', domain: 'nibwp'));
+            throw new \RuntimeException(__('Variables are unavailable in this Breakdance version.', 'nibwp'));
         }
 
         return ['variables' => \Breakdance\Variables\getVariables()];
@@ -1480,8 +1480,8 @@ function nibwp_breakdance_variables(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-forms', [
-    'label'       => __('Breakdance — Form submissions', domain: 'nibwp'),
-    'description' => __('List and read the submissions captured by Breakdance forms (read-only).', domain: 'nibwp'),
+    'label'       => __('Breakdance — Form submissions', 'nibwp'),
+    'description' => 'List and read the submissions captured by Breakdance forms (read-only).',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1518,7 +1518,7 @@ function nibwp_breakdance_forms(array $input): array|WP_Error
     if (!post_type_exists($post_type)) {
         return nibwp_breakdance_err(
             'nibwp_breakdance_no_submissions',
-            __('Breakdance form submission storage is not enabled on this site.', domain: 'nibwp')
+            __('Breakdance form submission storage is not enabled on this site.', 'nibwp')
         );
     }
 
@@ -1526,14 +1526,14 @@ function nibwp_breakdance_forms(array $input): array|WP_Error
     $submission_id = (int) ($input['submission_id'] ?? 0);
 
     if ($action === 'get' && $submission_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid submission ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid submission ID is required.', 'nibwp'));
     }
 
     return nibwp_breakdance_try(static function () use ($action, $submission_id, $input, $post_type) {
         if ($action === 'get') {
             $post = get_post($submission_id);
             if (!$post || $post->post_type !== $post_type) {
-                throw new \RuntimeException(__('No such submission.', domain: 'nibwp'));
+                throw new \RuntimeException(__('No such submission.', 'nibwp'));
             }
 
             return [
@@ -1570,8 +1570,8 @@ function nibwp_breakdance_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-revisions', [
-    'label'       => __('Breakdance — Revisions', domain: 'nibwp'),
-    'description' => __('List a page\'s Breakdance revisions and restore one, so a bad edit can be undone.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Revisions', 'nibwp'),
+    'description' => 'List a page\'s Breakdance revisions and restore one, so a bad edit can be undone.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1612,10 +1612,10 @@ function nibwp_breakdance_revisions(array $input): array|WP_Error
     $revision_id = (int) ($input['revision_id'] ?? 0);
 
     if ($post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', 'nibwp'));
     }
     if ($action === 'restore' && $revision_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid revision ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid revision ID is required.', 'nibwp'));
     }
 
     return nibwp_breakdance_try(static function () use ($action, $post_id, $revision_id) {
@@ -1637,12 +1637,12 @@ function nibwp_breakdance_revisions(array $input): array|WP_Error
 
         if ($action === 'restore') {
             if (!isset($revisions[$revision_id])) {
-                throw new \RuntimeException(__('That revision does not belong to this post.', domain: 'nibwp'));
+                throw new \RuntimeException(__('That revision does not belong to this post.', 'nibwp'));
             }
 
             $tree = \Breakdance\Data\get_tree($revision_id);
             if ($tree === false || !is_array($tree)) {
-                throw new \RuntimeException(__('That revision carries no Breakdance tree.', domain: 'nibwp'));
+                throw new \RuntimeException(__('That revision carries no Breakdance tree.', 'nibwp'));
             }
 
             $written = nibwp_breakdance_put_tree($post_id, $tree);
@@ -1653,7 +1653,7 @@ function nibwp_breakdance_revisions(array $input): array|WP_Error
             return ['post_id' => $post_id, 'revision_id' => $revision_id, 'restored' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1662,8 +1662,8 @@ function nibwp_breakdance_revisions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/breakdance-delete', [
-    'label'       => __('Breakdance — Delete', domain: 'nibwp'),
-    'description' => __('Trash or permanently delete Breakdance templates and pages, and clear a page\'s tree without deleting the post. Irreversible where stated.', domain: 'nibwp'),
+    'label'       => __('Breakdance — Delete', 'nibwp'),
+    'description' => 'Trash or permanently delete Breakdance templates and pages, and clear a page\'s tree without deleting the post. Irreversible where stated.',
     'category'    => 'breakdance',
     'input_schema' => [
         'type' => 'object',
@@ -1705,13 +1705,13 @@ function nibwp_breakdance_delete(array $input): array|WP_Error
     $confirm = (bool) ($input['confirm'] ?? false);
 
     if ($post_id <= 0) {
-        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', domain: 'nibwp'));
+        return nibwp_breakdance_err('nibwp_breakdance_bad_id', __('A valid post ID is required.', 'nibwp'));
     }
 
     if (in_array($action, ['delete', 'clear_tree'], strict: true) && !$confirm) {
         return nibwp_breakdance_err(
             'nibwp_breakdance_unconfirmed',
-            __('This permanently destroys work. Re-issue the call with confirm set to true if that is intended.', domain: 'nibwp')
+            __('This permanently destroys work. Re-issue the call with confirm set to true if that is intended.', 'nibwp')
         );
     }
 
@@ -1720,7 +1720,7 @@ function nibwp_breakdance_delete(array $input): array|WP_Error
             case 'trash':
                 $result = wp_trash_post($post_id);
                 if (!$result) {
-                    throw new \RuntimeException(__('That post could not be trashed.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('That post could not be trashed.', 'nibwp'));
                 }
 
                 return ['post_id' => $post_id, 'trashed' => true, 'reversible' => true];
@@ -1728,7 +1728,7 @@ function nibwp_breakdance_delete(array $input): array|WP_Error
             case 'delete':
                 $result = wp_delete_post($post_id, true);
                 if (!$result) {
-                    throw new \RuntimeException(__('That post could not be deleted.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('That post could not be deleted.', 'nibwp'));
                 }
 
                 return ['post_id' => $post_id, 'deleted' => true, 'reversible' => false];
@@ -1742,6 +1742,6 @@ function nibwp_breakdance_delete(array $input): array|WP_Error
                 return ['post_id' => $post_id, 'cleared' => true, 'reversible' => false];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }

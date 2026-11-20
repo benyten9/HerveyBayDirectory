@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Container;
+namespace DoubleScale\Vendor\Illuminate\Container;
 
-use Illuminate\Support\Arr;
-use Illuminate\Contracts\Container\Container;
-use Illuminate\Contracts\Container\ContextualBindingBuilder as ContextualBindingBuilderContract;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\ContextualBindingBuilder as ContextualBindingBuilderContract;
 class ContextualBindingBuilder implements ContextualBindingBuilderContract
 {
     /**

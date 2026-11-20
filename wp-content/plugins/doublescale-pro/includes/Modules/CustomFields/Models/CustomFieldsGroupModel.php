@@ -7,8 +7,8 @@
 
 namespace DoubleScale\Pro\Modules\CustomFields\Models;
 
-use Illuminate\Support\Str;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * CustomFieldsGroupModel class
@@ -70,12 +70,14 @@ class CustomFieldsGroupModel extends Model {
 	);
 
 	/**
-	 * Custom fields in this group.
+	 * Custom fields in this group, in the order the admin set. Forms, detail
+	 * views, the settings screen and import/export mapping all read fields
+	 * through here.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function custom_fields() {
-		return $this->hasMany( CustomFieldModel::class, 'group_id' );
+		return $this->hasMany( CustomFieldModel::class, 'group_id' )->ordered();
 	}
 
 	/**

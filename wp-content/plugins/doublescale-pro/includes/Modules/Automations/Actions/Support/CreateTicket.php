@@ -97,7 +97,7 @@ class CreateTicket extends BaseSupportAction {
 	 * @return array
 	 */
 	public function get_fields() {
-		return array(
+		$fields = array(
 			'title'    => array(
 				'label'    => $this->t( 'Ticket Subject' ),
 				'type'     => 'text',
@@ -109,12 +109,13 @@ class CreateTicket extends BaseSupportAction {
 				'type'     => 'textarea',
 				'required' => true,
 			),
+			// Optional: without one the ticket goes to the default mailbox.
 			'mailbox'  => array(
 				'label'    => $this->t( 'Mailbox' ),
 				'type'     => 'select',
-				'required' => true,
+				'required' => false,
 				'options'  => $this->get_mailboxes_options(),
-				'tooltip'  => $this->t( 'Channel the ticket is routed to.' ),
+				'tooltip'  => $this->t( 'Leave empty to use your default mailbox.' ),
 			),
 			'priority' => array(
 				'label'    => $this->t( 'Priority' ),
@@ -134,6 +135,13 @@ class CreateTicket extends BaseSupportAction {
 				'options'  => $this->get_agents_options(),
 			),
 		);
+
+		// One mailbox (the usual case): nothing to choose, tickets go to it.
+		if ( count( (array) $this->get_mailboxes_options() ) <= 1 ) {
+			unset( $fields['mailbox'] );
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -155,7 +163,7 @@ class CreateTicket extends BaseSupportAction {
 				),
 				'mailbox'  => array(
 					'type'     => 'integer',
-					'required' => true,
+					'required' => false,
 				),
 				'priority' => array(
 					'type'     => 'string',

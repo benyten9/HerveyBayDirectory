@@ -38,7 +38,13 @@ if (!defined('ABSPATH')) {
 function nibwp_builderius_module_library(): array
 {
     return [
-        'HtmlElement'       => 'Universal HTML element (any tag) — the workhorse. Settings: tag, tagClass[], css, htmlAttribute[], textContent.',
+        // "content", not "textContent". Builderius declares it as
+        // name: 'content' with appliedToModules: ['HtmlElement', 'Shortcode']
+        // (src/Bundle/SettingBundle/Resources/config/settings.yml:63-74). This
+        // line said textContent until 2026-10-02, and an agent following it set a
+        // setting the builder ignores — producing an element with no text in it
+        // and nothing to explain why.
+        'HtmlElement'       => 'Universal HTML element (any tag) — the workhorse. Settings: tag, tagClass[], css, htmlAttribute[], content.',
         'HtmlCode'          => 'Raw HTML block.',
         'SvgCode'           => 'Inline SVG (contentSvg setting).',
         'Collection'        => 'Query loop over a data source (posts, terms, etc.).',

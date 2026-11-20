@@ -29,7 +29,7 @@ class Author extends JsonSchemaValue implements GetJsonData {
 		$data = $this->getArrayJson();
 
 		// Resolve author-specific fields from the current post context.
-		$post_id = isset( $context['post']->ID ) ? $context['post']->ID : get_the_ID();
+		$post_id = isset( $context['post']->ID ) ? $context['post']->ID : seopress_pro_get_the_id();
 
 		if ( $post_id ) {
 			$post    = get_post( $post_id );

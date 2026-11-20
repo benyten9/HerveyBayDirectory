@@ -10,12 +10,12 @@ namespace DoubleScale\Core;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Tasks;
-use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Events\Dispatcher;
-use Illuminate\Container\Container as IlluminateContainer;
-use Illuminate\Translation\ArrayLoader;
-use Illuminate\Translation\Translator;
-use Illuminate\Validation\Factory as ValidatorFactory;
+use DoubleScale\Vendor\Illuminate\Database\Capsule\Manager as Capsule;
+use DoubleScale\Vendor\Illuminate\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Container\Container as IlluminateContainer;
+use DoubleScale\Vendor\Illuminate\Translation\ArrayLoader;
+use DoubleScale\Vendor\Illuminate\Translation\Translator;
+use DoubleScale\Vendor\Illuminate\Validation\Factory as ValidatorFactory;
 
 /**
  * @property-read ValidatorFactory $validator

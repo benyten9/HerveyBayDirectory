@@ -154,6 +154,6 @@ final class CreditNoteFrontendHandler {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$hash = sanitize_text_field( wp_unslash( (string) $_GET[ CreditNoteUrl::HASH_QUERY_ARG ] ) );
-		return preg_match( '/^[a-f0-9]{32}$/', $hash ) ? $hash : '';
+		return preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ? $hash : '';
 	}
 }

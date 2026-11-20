@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Auth;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Auth;
 
 interface SupportsBasicAuth
 {

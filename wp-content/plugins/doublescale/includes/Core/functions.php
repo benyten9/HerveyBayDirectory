@@ -144,8 +144,212 @@ if ( ! function_exists( 'doublescale_decode_string' ) ) {
 }
 
 if ( ! function_exists( 'doublescale_is_plugin_active' ) ) {
+	/**
+	 * Whether a plugin DoubleScale integrates with is active: any of its plugin
+	 * files is active, or any constant it defines once loaded is defined (so a
+	 * copy installed under another folder still counts).
+	 *
+	 * Takes a key of doublescale_integrated_plugins() (`easy-digital-downloads`)
+	 * or a plugin basename (`easy-digital-downloads/easy-digital-downloads.php`);
+	 * Pro passes basenames so it keeps working with an older free plugin.
+	 *
+	 * @param string $plugin_name Integrated plugin key or plugin basename.
+	 */
 	function doublescale_is_plugin_active( $plugin_name ) {
-		return doublescale_is_plugin_active_basename( (string) $plugin_name );
+		$plugin_name = strtolower( (string) $plugin_name );
+		$plugins     = doublescale_integrated_plugins();
+		$plugin      = $plugins[ $plugin_name ] ?? null;
+
+		if ( null === $plugin ) {
+			$plugin = array(
+				'files'     => array( $plugin_name ),
+				'constants' => array(),
+			);
+			foreach ( $plugins as $candidate ) {
+				if ( in_array( $plugin_name, array_map( 'strtolower', (array) ( $candidate['files'] ?? array() ) ), true ) ) {
+					$plugin = $candidate;
+					break;
+				}
+			}
+		}
+
+		foreach ( (array) ( $plugin['constants'] ?? array() ) as $constant ) {
+			if ( is_string( $constant ) && '' !== $constant && defined( $constant ) ) {
+				return true;
+			}
+		}
+
+		foreach ( (array) ( $plugin['files'] ?? array() ) as $file ) {
+			if ( is_string( $file ) && doublescale_is_plugin_active_basename( $file ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
+
+if ( ! function_exists( 'doublescale_integrated_plugins' ) ) {
+	/**
+	 * Plugins DoubleScale integrates with: the plugin files each ships as (free
+	 * and pro editions together) and the constants each defines once loaded.
+	 *
+	 * @return array<string, array{files: array<int, string>, constants: array<int, string>}>
+	 */
+	function doublescale_integrated_plugins(): array {
+		$plugins = array(
+			// Commerce.
+			'woocommerce'               => array(
+				'files'     => array( 'woocommerce/woocommerce.php' ),
+				'constants' => array( 'WC_PLUGIN_FILE' ),
+			),
+			'woocommerce-subscriptions' => array(
+				'files'     => array( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ),
+				'constants' => array(),
+			),
+			'woocommerce-memberships'   => array(
+				'files'     => array( 'woocommerce-memberships/woocommerce-memberships.php' ),
+				'constants' => array(),
+			),
+			'woocommerce-wishlists'     => array(
+				'files'     => array( 'woocommerce-wishlists/woocommerce-wishlists.php' ),
+				'constants' => array(),
+			),
+			'easy-digital-downloads'    => array(
+				'files'     => array(
+					'easy-digital-downloads/easy-digital-downloads.php',
+					'easy-digital-downloads-pro/easy-digital-downloads.php',
+				),
+				'constants' => array( 'EDD_PLUGIN_FILE' ),
+			),
+			'surecart'                  => array(
+				'files'     => array( 'surecart/surecart.php' ),
+				'constants' => array( 'SURECART_PLUGIN_FILE' ),
+			),
+			'fluent-cart'               => array(
+				'files'     => array( 'fluent-cart/fluent-cart.php' ),
+				'constants' => array( 'FLUENTCART_VERSION' ),
+			),
+
+			// Booking.
+			'ameliabooking'             => array(
+				'files'     => array( 'ameliabooking/ameliabooking.php' ),
+				'constants' => array( 'AMELIA_VERSION' ),
+			),
+			'latepoint'                 => array(
+				'files'     => array( 'latepoint/latepoint.php' ),
+				'constants' => array( 'LATEPOINT_VERSION' ),
+			),
+
+			// LMS and memberships.
+			'learndash'                 => array(
+				'files'     => array( 'sfwd-lms/sfwd_lms.php' ),
+				'constants' => array( 'LEARNDASH_VERSION' ),
+			),
+			'lifterlms'                 => array(
+				'files'     => array( 'lifterlms/lifterlms.php' ),
+				'constants' => array( 'LLMS_PLUGIN_FILE' ),
+			),
+			'tutor'                     => array(
+				'files'     => array( 'tutor/tutor.php' ),
+				'constants' => array( 'TUTOR_VERSION' ),
+			),
+			'learnpress'                => array(
+				'files'     => array( 'learnpress/learnpress.php' ),
+				'constants' => array( 'LP_PLUGIN_FILE' ),
+			),
+			'memberpress'               => array(
+				'files'     => array( 'memberpress/memberpress.php' ),
+				'constants' => array( 'MEPR_PLUGIN_NAME' ),
+			),
+			'paid-memberships-pro'      => array(
+				'files'     => array( 'paid-memberships-pro/paid-memberships-pro.php' ),
+				'constants' => array( 'PMPRO_VERSION' ),
+			),
+
+			// Forms.
+			'wpforms'                   => array(
+				'files'     => array( 'wpforms-lite/wpforms.php', 'wpforms/wpforms.php' ),
+				'constants' => array( 'WPFORMS_VERSION' ),
+			),
+			'quillforms'                => array(
+				'files'     => array( 'quillforms/quillforms.php' ),
+				'constants' => array( 'QUILLFORMS_VERSION' ),
+			),
+			'fluentform'                => array(
+				'files'     => array( 'fluentform/fluentform.php' ),
+				'constants' => array( 'FLUENTFORM_VERSION' ),
+			),
+			'contact-form-7'            => array(
+				'files'     => array( 'contact-form-7/wp-contact-form-7.php' ),
+				'constants' => array( 'WPCF7_VERSION' ),
+			),
+			'ws-form'                   => array(
+				'files'     => array( 'ws-form/ws-form.php', 'ws-form-pro/ws-form.php' ),
+				'constants' => array( 'WS_FORM_VERSION' ),
+			),
+			'gravityforms'              => array(
+				'files'     => array( 'gravityforms/gravityforms.php' ),
+				'constants' => array( 'GF_MIN_WP_VERSION' ),
+			),
+			'ninja-forms'               => array(
+				'files'     => array( 'ninja-forms/ninja-forms.php' ),
+				'constants' => array( 'NF_PLUGIN_URL' ),
+			),
+			'formidable'                => array(
+				'files'     => array( 'formidable/formidable.php' ),
+				'constants' => array(),
+			),
+			'forminator'                => array(
+				'files'     => array( 'forminator/forminator.php' ),
+				'constants' => array( 'FORMINATOR_PLUGIN_BASENAME' ),
+			),
+			'metform'                   => array(
+				'files'     => array( 'metform/metform.php' ),
+				'constants' => array( 'METFORM_VERSION' ),
+			),
+			'jetformbuilder'            => array(
+				'files'     => array( 'jetformbuilder/jet-form-builder.php' ),
+				'constants' => array( 'JET_FORM_BUILDER_PATH' ),
+			),
+			'sureforms'                 => array(
+				'files'     => array( 'sureforms/sureforms.php' ),
+				'constants' => array( 'SRFM_FILE' ),
+			),
+			'bit-form'                  => array(
+				'files'     => array( 'bit-form/bitforms.php' ),
+				'constants' => array( 'BITFORMS_VERSION' ),
+			),
+			'bricks'                    => array(
+				// Bricks is a theme: no plugin file, only its constant (defined once the theme loads).
+				'files'     => array(),
+				'constants' => array( 'BRICKS_VERSION' ),
+			),
+			'elementor-pro'             => array(
+				'files'     => array( 'elementor-pro/elementor-pro.php' ),
+				'constants' => array( 'ELEMENTOR_PRO_VERSION' ),
+			),
+			'eform'                     => array(
+				'files'     => array( 'wp-fsqm-pro/ipt_fsqm.php' ),
+				'constants' => array(),
+			),
+
+			// Other.
+			'acf'                       => array(
+				'files'     => array( 'advanced-custom-fields/acf.php', 'advanced-custom-fields-pro/acf.php' ),
+				'constants' => array( 'ACF_VERSION' ),
+			),
+			'fluent-crm'                => array(
+				'files'     => array( 'fluent-crm/fluent-crm.php' ),
+				'constants' => array( 'FLUENTCRM_PLUGIN_VERSION' ),
+			),
+			'wp-marketing-automations'  => array(
+				'files'     => array( 'wp-marketing-automations/wp-marketing-automations.php' ),
+				'constants' => array( 'BWFAN_VERSION' ),
+			),
+		);
+
+		return (array) apply_filters( 'doublescale_integrated_plugins', $plugins );
 	}
 }
 
@@ -397,6 +601,51 @@ if ( ! function_exists( 'doublescale_resolve_deal_model_class' ) ) {
 	}
 }
 
+if ( ! function_exists( 'doublescale_client_portal_enabled' ) ) {
+	/**
+	 * Whether the client portal is on (Settings → Modules). On by default.
+	 */
+	function doublescale_client_portal_enabled(): bool {
+		return function_exists( 'doublescale_is_module_active' ) && doublescale_is_module_active( 'portal' );
+	}
+}
+
+// With the portal off: its endpoints answer "turned off", its page shows nothing.
+\DoubleScale\Core\Services\ClientPortalGate::register();
+
+if ( ! function_exists( 'doublescale_portal_can' ) ) {
+	/**
+	 * Whether a customer can see an area of the Client Portal.
+	 *
+	 * For add-ons that serve portal data themselves: ask before answering, with
+	 * the contact the add-on resolved (it may resolve differently from the
+	 * portal). Defaults to the logged-in customer. An area nobody registered is
+	 * not governed and answers true. Guard with function_exists(): an older
+	 * DoubleScale has no portal access at all.
+	 *
+	 * @param string                                                 $feature Area key, e.g. 'invoices'.
+	 * @param \DoubleScale\Modules\Contacts\Models\ContactModel|null $contact Contact; null = the logged-in customer.
+	 * @return bool
+	 */
+	function doublescale_portal_can( string $feature, $contact = null ): bool {
+		if ( ! doublescale_client_portal_enabled() ) {
+			return false;
+		}
+		if ( null === \DoubleScale\Modules\Portal\Services\PortalFeatures::get( $feature ) ) {
+			return true;
+		}
+
+		if ( null === $contact ) {
+			$contact = \DoubleScale\Modules\Portal\Services\PortalIdentity::current_contact();
+		}
+
+		return \DoubleScale\Modules\Portal\Services\PortalAccess::allows(
+			$feature,
+			$contact instanceof \DoubleScale\Modules\Contacts\Models\ContactModel ? $contact : null
+		);
+	}
+}
+
 if ( ! function_exists( 'doublescale_sales_documents_ready' ) ) {
 	/**
 	 * Whether the customer-facing Sales "Documents" portal surface is live.
@@ -418,6 +667,58 @@ if ( ! function_exists( 'doublescale_sales_documents_ready' ) ) {
 		 * @param bool $ready Default readiness (Sales module active).
 		 */
 		return (bool) apply_filters( 'doublescale_sales_documents_ready', $ready );
+	}
+}
+
+if ( ! function_exists( 'doublescale_record_company_id' ) ) {
+	/**
+	 * The company a record (ticket, invoice, proposal, project) belongs to.
+	 *
+	 * Records belong to a contact. When companies exist (DoubleScale Pro),
+	 * a record can belong to the contact's company instead, and all its people
+	 * see it in their client portal; Pro answers the filter.
+	 *
+	 * @param int   $contact_id The record's contact.
+	 * @param mixed $requested  The company asked for (0/null = none).
+	 * @return int|null
+	 */
+	function doublescale_record_company_id( $contact_id, $requested ): ?int {
+		/**
+		 * Filters the company a record belongs to.
+		 *
+		 * @param int|null $company_id Null: the record is the contact's.
+		 * @param int      $contact_id The record's contact.
+		 * @param mixed    $requested  The company asked for.
+		 */
+		$company_id = (int) apply_filters( 'doublescale_record_company_id', null, (int) $contact_id, $requested );
+		return $company_id > 0 ? $company_id : null;
+	}
+}
+
+if ( ! function_exists( 'doublescale_ensure_once' ) ) {
+	/**
+	 * Run a module's table/column self-heal checks once per plugin version.
+	 *
+	 * The checks are `SHOW TABLES` / `SHOW COLUMNS` probes that only find work
+	 * right after an install or upgrade. Run on every request they cost a few
+	 * dozen queries; gated, a steady-state request pays one autoloaded option
+	 * read. The stamp is written only after the checks return.
+	 *
+	 * @param string   $key      Unique key, e.g. 'pro_projects'.
+	 * @param string   $version  Version of the code that owns the checks.
+	 * @param callable $callback The checks.
+	 */
+	function doublescale_ensure_once( string $key, string $version, callable $callback ): void {
+		$done = get_option( 'doublescale_schema_checks', array() );
+		$done = is_array( $done ) ? $done : array();
+		if ( isset( $done[ $key ] ) && $done[ $key ] === $version ) {
+			return;
+		}
+
+		$callback();
+
+		$done[ $key ] = $version;
+		update_option( 'doublescale_schema_checks', $done, true );
 	}
 }
 

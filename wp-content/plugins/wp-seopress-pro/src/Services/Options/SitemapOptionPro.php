@@ -49,10 +49,12 @@ class SitemapOptionPro {
 	 * Auto-fill the automatic Video schema from the first YouTube video detected in the post content.
 	 *
 	 * @since 9.9.0
+	 * @deprecated 10.3.0 The toggle moved to the Structured Data Types tab and is
+	 *                    saved in the PRO option. Use OptionPro::getVideoSchemaYouTubeEnable().
 	 *
 	 * @return string|null
 	 */
 	public function getVideoSchemaYouTubeEnable() {
-		return $this->searchOptionByKey( 'seopress_xml_sitemap_video_schema_youtube_enable' );
+		return seopress_pro_get_service( 'OptionPro' )->getVideoSchemaYouTubeEnable();
 	}
 }

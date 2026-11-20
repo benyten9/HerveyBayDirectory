@@ -150,7 +150,7 @@ class OrderRepository extends Repository {
                 $order->total_amount = directorist_order_total_amount( $order );
 
                 return apply_filters( 'directorist_order_data', $order );
-            }, $query->order_by_desc( 'd_order.id' )->pagination( $dto->get_page(), $dto->get_per_page() ) 
+            }, $query->order_by_desc( 'd_order.id' )->pagination( $dto->get_page(), $dto->get_per_page(), 1, 100 )
         );
 
         return $orders;
@@ -193,6 +193,7 @@ class OrderRepository extends Repository {
      * @throws Exception If the update operation fails.
      */
     public function update( \Directorist\Utils\DTO $dto ) {
+        do_action( 'directorist_mcp_before_native_order_write' );
         $old_order = $this->get_by_id( $dto->get_id() );
         
         if ( ! $old_order ) {
@@ -225,6 +226,7 @@ class OrderRepository extends Repository {
      * @throws Exception If the update operation fails.
      */
     public function silent_update( \Directorist\Utils\DTO $dto ) {
+        do_action( 'directorist_mcp_before_native_order_write' );
         return parent::update( $dto );
     }
 
@@ -277,7 +279,7 @@ class OrderRepository extends Repository {
         
         if ( $tax_amount > 0 ) {
             $order->tax_amount = $tax_amount;
-            $order->tax_label  = OrderTaxType::PERCENT === $order->tax_type ? sprintf( esc_html__( 'Tax ( %s%% )', 'directorist' ), $order->coupon_discount ) : esc_html__( 'Tax', 'directorist' );
+            $order->tax_label  = OrderTaxType::PERCENT === $order->tax_type ? sprintf( esc_html__( 'Tax ( %s%% )', 'directorist' ), $order->tax_rate ) : esc_html__( 'Tax', 'directorist' );
         }
         
         $order->total_amount = directorist_order_total_amount( $order );

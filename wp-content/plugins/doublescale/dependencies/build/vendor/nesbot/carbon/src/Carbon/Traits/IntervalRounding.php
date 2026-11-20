@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\CarbonInterval;
-use Carbon\Exceptions\InvalidIntervalException;
+use DoubleScale\Vendor\Carbon\CarbonInterval;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidIntervalException;
 use DateInterval;
 /**
  * Trait to call rounding methods to interval or the interval of a period.

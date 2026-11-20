@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Container;
+namespace DoubleScale\Vendor\Illuminate\Container;
 
 use Closure;
 use ReflectionMethod;

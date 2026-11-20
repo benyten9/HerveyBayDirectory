@@ -1,13 +1,13 @@
 <?php
 
-namespace WPEloquent\Eloquent;
+namespace DoubleScale\Vendor\WPEloquent\Eloquent;
 
-use Illuminate\Database\ConnectionInterface;
-use Illuminate\Database\Query\Grammars\Grammar;
-use Illuminate\Database\Query\Processors\Processor;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionInterface;
+use DoubleScale\Vendor\Illuminate\Database\Query\Grammars\Grammar;
+use DoubleScale\Vendor\Illuminate\Database\Query\Processors\Processor;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Database\QueryException;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 class Database implements ConnectionInterface
 {
     public $db;
@@ -65,7 +65,7 @@ class Database implements ConnectionInterface
     {
         $processor = $this->getPostProcessor();
         $table = $this->db->prefix . $table;
-        $query = new \WPEloquent\Eloquent\Builder($this, $this->getQueryGrammar(), $processor);
+        $query = new Builder($this, $this->getQueryGrammar(), $processor);
         return $query->from($table);
     }
     /**
@@ -86,7 +86,7 @@ class Database implements ConnectionInterface
      */
     public function query()
     {
-        return new \WPEloquent\Eloquent\Builder($this, $this->getQueryGrammar(), $this->getPostProcessor());
+        return new Builder($this, $this->getQueryGrammar(), $this->getPostProcessor());
     }
     /**
      * Run a select statement and return a single result.

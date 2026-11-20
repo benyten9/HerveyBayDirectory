@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Inflector;
 
-use Doctrine\Inflector\Rules\Ruleset;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Ruleset;
 interface LanguageInflectorFactory
 {
     /**
@@ -25,5 +25,5 @@ interface LanguageInflectorFactory
     /**
      * Builds the inflector instance with all applicable rules
      */
-    public function build() : \Doctrine\Inflector\Inflector;
+    public function build() : Inflector;
 }

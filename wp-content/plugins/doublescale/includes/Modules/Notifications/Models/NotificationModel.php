@@ -9,7 +9,9 @@
 
 namespace DoubleScale\Modules\Notifications\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * NotificationModel class
@@ -151,10 +153,10 @@ class NotificationModel extends Model {
 	/**
 	 * Scope: Filter by user
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $user_id User ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForUser( $query, $user_id ) {
 		return $query->where( 'user_id', $user_id );
@@ -163,9 +165,9 @@ class NotificationModel extends Model {
 	/**
 	 * Scope: Unread notifications
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeUnread( $query ) {
 		return $query->where( 'is_read', 0 );
@@ -177,10 +179,10 @@ class NotificationModel extends Model {
 	 * Filters by all subcategories that belong to the given category.
 	 * Category is not stored in DB - derived from subcategory.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query    Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query    Query builder.
 	 * @param string                                $category Notification category.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByCategory( $query, $category ) {
 		$subcategories = array_keys( \DoubleScale\Modules\Notifications\Services\NotificationCategories::get_subcategories( $category ) );
@@ -190,10 +192,10 @@ class NotificationModel extends Model {
 	/**
 	 * Scope: Filter by subcategory
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query       Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query       Query builder.
 	 * @param string                                $subcategory Notification subcategory.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeBySubcategory( $query, $subcategory ) {
 		return $query->where( 'subcategory', $subcategory );
@@ -207,10 +209,10 @@ class NotificationModel extends Model {
 	 *
 	 * @since 1.2.0
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query    Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query    Query builder.
 	 * @param bool|null                             $is_admin Whether user is admin (null = auto-detect).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeExcludeSystemForNonAdmin( $query, $is_admin = null ) {
 		if ( null === $is_admin ) {
@@ -370,6 +372,9 @@ class NotificationModel extends Model {
 				$wpdb->esc_like( self::UNREAD_COUNT_META_KEY ) . '_%'
 			)
 		);
+		// The rows went behind WordPress' back: drop its cached copy too, or the
+		// bell keeps the old count (for good, with a persistent object cache).
+		wp_cache_delete( (int) $user_id, 'user_meta' );
 	}
 
 	/**
@@ -390,6 +395,12 @@ class NotificationModel extends Model {
 				$wpdb->esc_like( self::UNREAD_COUNT_META_KEY ) . '_%'
 			)
 		);
+		// Every user's cached meta may hold an old count.
+		if ( function_exists( 'wp_cache_flush_group' ) && wp_cache_supports( 'flush_group' ) ) {
+			wp_cache_flush_group( 'user_meta' );
+		} else {
+			wp_cache_flush();
+		}
 	}
 
 	/**

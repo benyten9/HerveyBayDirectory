@@ -198,7 +198,7 @@ class EnrollmentTags extends Rule {
 add_action(
 	'init',
 	function () {
-		if ( \doublescale_is_plugin_active( 'tutor/tutor.php' ) ) {
+		if ( \doublescale_is_plugin_active( 'tutor' ) ) {
 			RulesManager::instance()->register( new EnrollmentTags() );
 		}
 	},

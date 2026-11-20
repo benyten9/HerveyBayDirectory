@@ -13,14 +13,18 @@ use DoubleScale\Core\Abilities\AbilityBulk;
 use DoubleScale\Core\Abilities\AbilityCategories;
 use DoubleScale\Core\Abilities\AbilityInput;
 use DoubleScale\Core\Abilities\AbilityResult;
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Contacts\Services\ContactOwnershipGuard;
 use DoubleScale\Modules\Contacts\Models\ListModel;
 use DoubleScale\Modules\Contacts\Models\TagModel;
 
 /**
- * Contacts are team-wide in DoubleScale, so there is no owner column here —
- * Gate 2 (can_read_contacts) is the whole access story for this module.
+ * Contacts are team-wide for every role except the CRM Agent, who sees only
+ * contacts they own or collaborate on and changes only the ones they own.
+ * Every read goes through OwnerScope (a no-op for everyone else), so an MCP
+ * key acts with exactly its user's reach.
  */
 final class ContactAbilities {
 
@@ -433,7 +437,7 @@ final class ContactAbilities {
 	 * @return bool
 	 */
 	public static function can_write_contacts(): bool {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_agent_access();
 	}
 
 	/**
@@ -469,6 +473,13 @@ final class ContactAbilities {
 		// then split her history between them.
 		$existing = ContactModel::query()->where( 'email', $email )->first();
 		if ( $existing ) {
+			// A scoped agent learns only that the address is taken — never the
+			// other agent's contact id.
+			$claim = ContactOwnershipGuard::assert_can_claim( $existing );
+			if ( is_wp_error( $claim ) ) {
+				return $claim;
+			}
+
 			return new \WP_Error(
 				'doublescale_contact_exists',
 				sprintf(
@@ -537,7 +548,7 @@ final class ContactAbilities {
 			return $invalid;
 		}
 
-		$contact = ContactModel::query()->where( 'id', (int) $input['id'] )->first();
+		$contact = OwnerScope::current()->apply_contact_editable( ContactModel::query() )->where( 'id', (int) $input['id'] )->first();
 		if ( ! $contact ) {
 			return AbilityResult::not_found( __( 'No contact found with that id.', 'doublescale' ) );
 		}
@@ -931,7 +942,7 @@ final class ContactAbilities {
 			return $invalid;
 		}
 
-		$contact = ContactModel::query()->with( array( 'tags', 'lists' ) )->where( 'id', (int) $input['id'] )->first();
+		$contact = OwnerScope::current()->apply_contact_editable( ContactModel::query()->with( array( 'tags', 'lists' ) ) )->where( 'id', (int) $input['id'] )->first();
 		if ( ! $contact ) {
 			return AbilityResult::not_found( __( 'No contact found with that id.', 'doublescale' ) );
 		}
@@ -1026,10 +1037,10 @@ final class ContactAbilities {
 	 * @since 1.0.0
 	 *
 	 * @param array<string, mixed> $filter Filter criteria.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public static function query_for_filter( array $filter ) {
-		$query = ContactModel::query();
+		$query = OwnerScope::current()->apply_contact_visibility( ContactModel::query() );
 
 		$search = isset( $filter['search'] ) ? trim( (string) $filter['search'] ) : '';
 		if ( '' !== $search ) {
@@ -1138,7 +1149,7 @@ final class ContactAbilities {
 		}
 
 		// Eager-load so the shaper does not fire a query per relation.
-		$query = ContactModel::query()->with( array( 'tags', 'lists' ) );
+		$query = OwnerScope::current()->apply_contact_visibility( ContactModel::query()->with( array( 'tags', 'lists' ) ) );
 
 		$contact = $id > 0
 			? $query->where( 'id', $id )->first()

@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/kadence-pro-feedback', [
     'label'       => __('Kadence Pro — record conversion feedback', 'nibwp'),
-    'description' => __('Record thumb-up / thumb-down on the most recent Kadence conversion. Down reasons are aggregated per (brand, section_type) and surfaced to future runs.', 'nibwp'),
+    'description' => 'Record thumb-up / thumb-down on the most recent Kadence conversion. Down reasons are aggregated per (brand, section_type) and surfaced to future runs.',
     'category'    => 'kadence-pro',
     'input_schema' => [
         'type' => 'object',

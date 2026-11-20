@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Database;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Database;
 
 class ModelIdentifier
 {

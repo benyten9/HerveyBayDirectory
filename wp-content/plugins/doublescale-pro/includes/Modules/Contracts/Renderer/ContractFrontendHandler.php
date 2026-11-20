@@ -92,14 +92,43 @@ final class ContractFrontendHandler {
 			return;
 		}
 
+		$handle = $this->enqueue_frontend_assets();
+		if ( '' === $handle ) {
+			return;
+		}
+
+		$config = array(
+			'public_rest_url' => esc_url_raw( rest_url( 'doublescale/v1/sales/public/contracts' ) ),
+			'lang'            => get_locale(),
+			'mount_id'        => self::MOUNT_ID,
+		);
+
+		wp_localize_script( $handle, 'doublescale_contract_config', $config );
+	}
+
+	/**
+	 * Shared portal bundle on current Free; legacy contract files if Free is older.
+	 *
+	 * @return string Script handle, or empty when neither bundle exists.
+	 */
+	private function enqueue_frontend_assets(): string {
+		if ( class_exists( \DoubleScale\Modules\Portal\Renderer\PublicFrontendAssets::class ) ) {
+			\DoubleScale\Modules\Portal\Renderer\PublicFrontendAssets::enqueue_style();
+			return \DoubleScale\Modules\Portal\Renderer\PublicFrontendAssets::enqueue_script();
+		}
+
 		$plugin_dir = defined( 'DOUBLESCALE_PLUGIN_DIR' ) ? \DOUBLESCALE_PLUGIN_DIR : '';
 		$plugin_url = defined( 'DOUBLESCALE_PLUGIN_URL' ) ? \DOUBLESCALE_PLUGIN_URL : '';
 		$version    = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
-
 		$asset_file = $plugin_dir . 'build/renderer/contract/index.asset.php';
-		$asset      = file_exists( $asset_file ) ? require $asset_file : null;
-		$deps       = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
-		$ver        = isset( $asset['version'] ) ? $asset['version'] : $version;
+
+		if ( '' === $plugin_dir || ! is_readable( $asset_file ) ) {
+			return '';
+		}
+
+		$asset = require $asset_file;
+		$deps  = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
+		$ver   = isset( $asset['version'] ) ? $asset['version'] : $version;
 
 		wp_register_script(
 			self::HANDLE,
@@ -119,17 +148,11 @@ final class ContractFrontendHandler {
 			array(),
 			$ver
 		);
-
-		$config = array(
-			'public_rest_url' => esc_url_raw( rest_url( 'doublescale/v1/sales/public/contracts' ) ),
-			'lang'            => get_locale(),
-			'mount_id'        => self::MOUNT_ID,
-		);
-
-		wp_localize_script( self::HANDLE, 'doublescale_contract_config', $config );
 		wp_style_add_data( self::HANDLE, 'rtl', 'replace' );
 		wp_enqueue_script( self::HANDLE );
 		wp_enqueue_style( self::HANDLE );
+
+		return self::HANDLE;
 	}
 
 	/**
@@ -157,6 +180,6 @@ final class ContractFrontendHandler {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$hash = sanitize_text_field( wp_unslash( (string) $_GET[ ContractUrl::HASH_QUERY_ARG ] ) );
-		return preg_match( '/^[a-f0-9]{32}$/', $hash ) ? $hash : '';
+		return preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ? $hash : '';
 	}
 }

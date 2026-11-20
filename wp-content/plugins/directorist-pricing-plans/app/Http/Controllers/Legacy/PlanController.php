@@ -448,10 +448,10 @@ class PlanController {
         }
 
         $field_map = [
-            'playstore_product_id'    => [ 'playstore', 'product_id' ],
-            'playstore_product_price' => [ 'playstore', 'product_price' ],
-            'appstore_product_id'     => [ 'appstore', 'product_id' ],
-            'appstore_product_price'  => [ 'appstore', 'product_price' ],
+            'playstore_product_id'    => [ 'google_play_store', 'product_id' ],
+            'playstore_product_price' => [ 'google_play_store', 'product_price' ],
+            'appstore_product_id'     => [ 'apple_app_store', 'product_id' ],
+            'appstore_product_price'  => [ 'apple_app_store', 'product_price' ],
         ];
 
         if ( ! isset( $field_map[ $field ] ) ) {

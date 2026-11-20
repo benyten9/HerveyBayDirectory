@@ -37,7 +37,14 @@ class TaskCommentNotifier {
 		$link         = self::get_task_link( $task );
 		$plain        = wp_strip_all_tags( $body );
 
-		$mentioned_ids = self::parse_mention_user_ids( $body );
+		// Only people who can open the task are notified, whatever the
+		// comment's HTML says: see TaskMentions.
+		$mentioned_ids = array_values(
+			array_intersect(
+				self::parse_mention_user_ids( $body ),
+				TaskMentions::allowed_ids( $task, $current_user )
+			)
+		);
 		$notified      = array();
 
 		foreach ( $mentioned_ids as $user_id ) {
@@ -116,12 +123,15 @@ class TaskCommentNotifier {
 	 * @return string
 	 */
 	private static function excerpt( string $text ): string {
+		// a mention token reads as "@Name" in the alert
+		$text = (string) preg_replace( '/@\[([^\]]+)\]\(user:\d+\)/', '@$1', $text );
 		$text = trim( preg_replace( '/\s+/', ' ', $text ) );
-		if ( strlen( $text ) <= 120 ) {
+		// Characters, not bytes: a byte cut tears Arabic mid-letter.
+		if ( mb_strlen( $text ) <= 120 ) {
 			return $text;
 		}
 
-		return substr( $text, 0, 117 ) . '...';
+		return mb_substr( $text, 0, 117 ) . '...';
 	}
 
 	/**

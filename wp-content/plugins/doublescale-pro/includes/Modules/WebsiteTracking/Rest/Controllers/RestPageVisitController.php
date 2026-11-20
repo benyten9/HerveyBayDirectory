@@ -125,7 +125,7 @@ class RestPageVisitController extends RestController
                 array(
                     'methods'             => WP_REST_Server::READABLE,
                     'callback'            => array($this, 'get_contact_page_visits'),
-                    'permission_callback' => array($this, 'get_items_permissions_check'),
+                    'permission_callback' => array($this, 'get_contact_items_permissions_check'),
                     'args'                => array(
                         'contact_id' => array(
                             'description' => __('Contact ID.', 'doublescale'),
@@ -531,6 +531,27 @@ class RestPageVisitController extends RestController
     public function get_items_permissions_check($request)
     {
         return Permissions::has_crm_manager_access();
+    }
+
+    /**
+     * Check if user can view one contact's page visits
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return bool True if the request has access, false otherwise.
+     */
+    public function get_contact_items_permissions_check($request)
+    {
+        // A contact's Website Tracking tab: the sales roles, on a contact they can see.
+        if (Permissions::has_crm_manager_access()) {
+            return true;
+        }
+        if (!\DoubleScale\Pro\Core\UserRoles\PermissionsCompat::can_view_website_tracking()) {
+            return false;
+        }
+        $contact = ContactModel::find((int) $request->get_param('contact_id'));
+
+        return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::can_view_contact($contact);
     }
 
     /**

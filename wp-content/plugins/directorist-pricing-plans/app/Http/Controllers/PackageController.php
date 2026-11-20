@@ -159,7 +159,7 @@ class PackageController extends Controller {
             throw new Exception( esc_html__( "You are not authorized to cancel this package.", 'directorist-pricing-plans' ) );
         }
 
-        $plan      = $package->plan_id ? Plan::query()->where( 'id', $package->plan_id )->get() : null;
+        $plan      = $package->plan_id ? Plan::query()->where( 'id', $package->plan_id )->first() : null;
         $plan_type = $plan->type ?? PlanType::PACKAGE;
 
         if ( PlanType::PAY_PER_LISTING === $plan_type ) {
@@ -175,7 +175,7 @@ class PackageController extends Controller {
             $is_cancelled = apply_filters( "directorist_pricing_plan_subscription_canceled_at_period_end", true, $this->package_repository->to_dto( $package ), 'subscriber' );
 
             if ( ! $is_cancelled ) {
-                throw new Exception( esc_html__( "Package was not cancelled, please try again.", 'directorist-pricing-plans' ) );
+                throw new Exception( esc_html__( 'The payment gateway could not schedule cancellation at period end. Your package was not changed. Please contact the site administrator.', 'directorist-pricing-plans' ), 502 );
             }
         }
 
@@ -210,7 +210,7 @@ class PackageController extends Controller {
             $is_cancelled = apply_filters( "directorist_pricing_plan_subscription_canceled", true, $this->package_repository->to_dto( $package ), 'subscriber' );
 
             if ( ! $is_cancelled ) {
-                throw new Exception( esc_html__( "Package was not cancelled, please try again.", 'directorist-pricing-plans' ) );
+                throw new Exception( esc_html__( 'The payment gateway could not cancel the subscription. Your package was not changed. Please contact the site administrator.', 'directorist-pricing-plans' ), 502 );
             }
         }
 

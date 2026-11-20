@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use SEOPress\Helpers\ContentAnalysis;
+use SEOPress\Helpers\Shortcodes;
 use SEOPressPro\Services\Audit;
 
 /**
@@ -182,16 +183,18 @@ class GetContent {
 			foreach ( array_count_values( $data['json_schemas'] ) as $key => $value ) {
 				$html = null;
 				if ( $value > 1 ) {
-					if ( 'Review' !== $key ) {
-						$html                          = '<span class="impact high">' . __( 'duplicated schema - x', 'wp-seopress' ) . $value . '</span>';
+					if ( ! in_array( $key, array( 'Review', 'Person' ), true ) ) {
+						/* translators: %d: Number of schema entities of the same type. */
+						$html = '<span class="impact high">' . esc_html( sprintf( __( 'duplicated schema - x%d', 'wp-seopress' ), $value ) ) . '</span>';
+						$issue_desc[] = array( $key, $value );
 						$analyzes['schemas']['impact'] = 'high';
 					} else {
-						$html = ' <span class="impact">' . __( 'x', 'wp-seopress' ) . $value . '</span>';
+						/* translators: %d: Number of schema entities of the same type. */
+						$html = ' <span class="impact">' . esc_html( sprintf( __( 'x%d', 'wp-seopress' ), $value ) ) . '</span>';
 					}
 
-					$issue_desc[] = array( $key, $value );
 				}
-				$desc .= '<li><span class="dashicons dashicons-minus"></span>' . $key . $html . '</li>';
+				$desc .= '<li><span class="dashicons dashicons-minus"></span>' . esc_html( $key ) . $html . '</li>';
 			}
 			$desc                       .= '</ul>';
 			$analyzes['schemas']['desc'] = $desc;
@@ -274,8 +277,9 @@ class GetContent {
 		$issue['issue_type'] = 'permalink';
 		$emitted_names       = array();
 
-		$permalink = ! empty( $data['permalink'] ) && is_array( $data['permalink'] ) ? $data['permalink']['value'] : '';
-		$permalink = str_replace( '-', ' ', $permalink );
+		// The slug, as the editor reads it, not the whole URL: a keyword in the
+		// domain or the category base is not a keyword in the permalink.
+		$permalink = ContentAnalysis::getPermalinkSlug( $post );
 		$keywords  = isset( $data['keywords'] ) ? $data['keywords'] : array();
 		$matches   = $this->getMatches( $permalink, $keywords );
 
@@ -300,7 +304,7 @@ class GetContent {
 			$desc                                    .= '</ul>';
 			$analyzes['keywords_permalink']['desc']   = $desc;
 			$analyzes['keywords_permalink']['impact'] = 'good';
-		} elseif ( get_option( 'page_on_front' ) == $post->ID ) {
+		} elseif ( \SEOPress\Helpers\StaticPages::matches( $post->ID ) ) {
 				$analyzes['keywords_permalink']['desc']   = '<p><span class="dashicons dashicons-yes"></span>' . __( 'This is your homepage. This check doesn\'t apply here because there is no slug.', 'wp-seopress' ) . '</p>';
 				$analyzes['keywords_permalink']['impact'] = 'good';
 		} else {
@@ -1248,13 +1252,18 @@ class GetContent {
 		$without_alt = array();
 		if ( ! empty( $data['images'] ) ) {
 			foreach ( $data['images'] as $image ) {
-				if ( ! empty( $image['alt'] ) ) {
+				// An explicit empty alt marks a decorative image. Older collectors
+				// without presence metadata retain their previous behavior.
+				$has_alt = isset( $image['has_alt'] ) ? $image['has_alt'] : ! empty( $image['alt'] );
+				if ( $has_alt ) {
 					$with_alt[] = $image['src'];
 				} else {
 					$without_alt[] = $image['src'];
 				}
 			}
 		}
+
+		$without_alt = array_values( array_unique( $without_alt ) );
 
 		if ( ! empty( $without_alt ) ) {
 			$desc = '<div class="wrap-analysis-img">';
@@ -1295,7 +1304,7 @@ class GetContent {
 			$issue['issue_desc'] = $issue_desc;
 		} elseif ( ! empty( $with_alt ) && empty( $without_alt ) ) {
 			$analyzes['img_alt']['impact'] = 'good';
-			$analyzes['img_alt']['desc']   = '<p><span class="dashicons dashicons-yes"></span>' . __( 'All alternative tags are filled in. Good work!', 'wp-seopress' ) . '</p>';
+			$analyzes['img_alt']['desc']   = '<p><span class="dashicons dashicons-yes"></span>' . __( 'All images have an alt attribute. Empty alternative text is allowed for decorative images.', 'wp-seopress' ) . '</p>';
 		} elseif ( empty( $with_alt ) && empty( $without_alt ) ) {
 			$analyzes['img_alt']['impact'] = 'medium';
 			$analyzes['img_alt']['desc']   = '<p><span class="dashicons dashicons-no-alt"></span>' . __( 'We could not find any image in your content. Content with media is a plus for your SEO.', 'wp-seopress' ) . '</p>';
@@ -1411,14 +1420,9 @@ class GetContent {
 		$issue['issue_type'] = 'internal_links';
 		$emitted_names       = array();
 
-		$desc = '<p>' . __( 'Internal links are important for SEO and user experience. Always try to link your content together, with quality link anchors.', 'wp-seopress' ) . '</p>';
+		$desc = '<p>' . __( 'This check finds links pointing to this page from your other content. Link your content together with descriptive link text.', 'wp-seopress' ) . '</p>';
 
-		// Bricks compatibility.
-		$theme = wp_get_theme();
-		if ( defined( 'BRICKS_DB_EDITOR_MODE' ) && ( 'bricks' === $theme->template || 'Bricks' === $theme->parent_theme ) ) {
-			$analyzes['internal_links']['impact'] = 'good';
-			$desc                                .= '<p><span class="dashicons dashicons-no-alt"></span>' . __( 'Unfortunately, this analysis can‘t work with Bricks Builder because of the way your content is stored in your database.', 'wp-seopress' ) . '</p>';
-		} elseif ( isset( $data['internal_links'] ) && is_array( $data['internal_links'] ) && ! empty( $data['internal_links'] ) ) {
+		if ( isset( $data['internal_links'] ) && is_array( $data['internal_links'] ) && ! empty( $data['internal_links'] ) ) {
 			$count = count( $data['internal_links'] );
 
 			$desc .= '<p>' . /* translators: %s internal links */ sprintf( __( 'We found %s internal links to this page.', 'wp-seopress' ), $count ) . '</p>';
@@ -1481,7 +1485,7 @@ class GetContent {
 		} elseif ( 'yes' === get_post_meta( $post->ID, '_seopress_robots_index', true ) ) {
 				$analyzes['all_canonical']['impact'] = 'good';
 				$desc                               .= '<p><span class="dashicons dashicons-yes"></span>' . __( 'This page doesn\'t have any canonical URL because your post is set to <strong>noindex</strong>. This is normal.', 'wp-seopress' ) . '</p>';
-		} elseif ( seopress_get_service( 'TitleOption' )->getSingleCptNoIndex() || seopress_get_service( 'TitleOption' )->getTitleNoIndex() || true === post_password_required( $post->ID ) ) {
+		} elseif ( seopress_get_service( 'TitleOption' )->getSingleCptNoIndex( $post->ID ) || seopress_get_service( 'TitleOption' )->getTitleNoIndex() || true === post_password_required( $post->ID ) ) {
 			$analyzes['all_canonical']['impact'] = 'good';
 			$desc                               .= '<p><span class="dashicons dashicons-yes"></span>' . __( 'This page doesn\'t have any canonical URL because your post is set to <strong>noindex</strong>. This is normal.', 'wp-seopress' ) . '</p>';
 		} else {
@@ -1510,17 +1514,24 @@ class GetContent {
 	 * @return int
 	 */
 	private function getContentWordCount( $post ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
-		if ( null === $post || empty( $post->post_content ) ) {
+		$content = $this->getAnalysedContent( $post );
+
+		if ( '' === $content ) {
 			return 0;
 		}
-
-		$content = $post->post_content;
 
 		if ( function_exists( 'has_blocks' ) && has_blocks( $content ) ) {
 			$content = do_blocks( $content );
 		}
 
-		$content = wp_strip_all_tags( strip_shortcodes( $content ), true );
+		// Shortcodes::stripTags() rather than core strip_shortcodes(): for an
+		// enclosing shortcode, core removes the tag *and everything it wraps*.
+		// A page built with Flatsome's UX Builder, WPBakery, Divi or Avada
+		// holds all of its prose inside such a tag, so the core call left
+		// nothing to count and every one of them reported zero words. The
+		// helper drops the tags and keeps the text, without executing a
+		// shortcode, which this context could not afford anyway.
+		$content = wp_strip_all_tags( Shortcodes::stripTags( $content ), true );
 		$content = html_entity_decode( $content, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		if ( '' === trim( $content ) ) {
@@ -1530,6 +1541,37 @@ class GetContent {
 		$words = preg_split( '/[\p{Z}\s]+/u', trim( $content ), -1, PREG_SPLIT_NO_EMPTY );
 
 		return is_array( $words ) ? count( $words ) : 0;
+	}
+
+	/**
+	 * The raw post content read by the word count and the heading outline
+	 * fallback.
+	 *
+	 * Page builders that store their layout outside post_content (or render it
+	 * from a template) can hand their own content to the analysis here.
+	 *
+	 * @param WP_Post $post The post.
+	 *
+	 * @return string
+	 */
+	private function getAnalysedContent( $post ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
+		if ( null === $post ) {
+			return '';
+		}
+
+		/**
+		 * Filter the content used for the word count and the heading checks of
+		 * the content analysis. Defaults to post_content. May contain HTML,
+		 * blocks or shortcodes: it is rendered and stripped before counting.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string  $content The post content.
+		 * @param WP_Post $post    The analysed post.
+		 */
+		$content = apply_filters( 'seopress_content_analysis_word_count_content', (string) $post->post_content, $post );
+
+		return is_string( $content ) ? $content : '';
 	}
 
 	/**
@@ -1577,19 +1619,19 @@ class GetContent {
 	 * @return array Ordered list of heading levels.
 	 */
 	private function getHeadingOutlineFromContent( $post ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
-		if ( null === $post || empty( $post->post_content ) || ! class_exists( 'DOMDocument' ) ) {
+		$content = $this->getAnalysedContent( $post );
+
+		if ( '' === $content || ! class_exists( 'DOMDocument' ) ) {
 			return array();
 		}
 
 		// Both heading checks resolve the same outline within one analysis run;
 		// memoize on the content hash so do_blocks() + DOM parsing runs once and
 		// the cache is never served stale after an edit.
-		$cache_key = $post->ID . ':' . md5( $post->post_content );
+		$cache_key = $post->ID . ':' . md5( $content );
 		if ( isset( $this->heading_outline_cache[ $cache_key ] ) ) {
 			return $this->heading_outline_cache[ $cache_key ];
 		}
-
-		$content = $post->post_content;
 
 		if ( function_exists( 'has_blocks' ) && has_blocks( $content ) ) {
 			$content = do_blocks( $content );
@@ -1707,6 +1749,20 @@ class GetContent {
 			}
 		}
 
+		// A Bricks single template can hold all content for a post type while
+		// individual posts have no builder metadata. Resolve its assignment
+		// without changing Bricks' active templates or the global query.
+		if ( ! $is_builder && is_callable( array( '\\Bricks\\Database', 'get_all_templates_by_type' ) ) && is_callable( array( '\\Bricks\\Database', 'find_template_id' ) ) ) {
+			$template_id = \Bricks\Database::find_template_id(
+				\Bricks\Database::get_all_templates_by_type(),
+				'content',
+				'content',
+				$post->ID,
+				'single'
+			);
+			$is_builder = $template_id && 'content' === get_post_meta( $template_id, '_bricks_template_type', true ) && ! empty( get_post_meta( $template_id, '_bricks_page_content_2', true ) );
+		}
+
 		/**
 		 * Filter whether a post is considered managed by a page builder that
 		 * stores its content outside post_content. Return true to make the AI
@@ -1762,9 +1818,12 @@ class GetContent {
 	 */
 	private function markCheckNotEvaluated( $analyzes, $key, $post ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
 		// 'good' keeps the check out of the alert buckets and the aggregate
-		// score; the note makes clear it was skipped rather than passed.
-		$analyzes[ $key ]['impact'] = 'good';
-		$analyzes[ $key ]['desc']   = '<p>' . __( 'This content is built with a page builder that stores its layout outside the post content, so these checks could not read it and were skipped. Please verify these aspects directly on the published page.', 'wp-seopress' ) . '</p>';
+		// score; the note makes clear it was skipped rather than passed, and
+		// `evaluated` keeps it out of the passed/total count on every surface,
+		// since a check that never ran was not passed either.
+		$analyzes[ $key ]['impact']    = 'good';
+		$analyzes[ $key ]['evaluated'] = false;
+		$analyzes[ $key ]['desc']      = '<p>' . __( 'This content is built with a page builder that stores its layout outside the post content, so these checks could not read it and were skipped. Please verify these aspects directly on the published page.', 'wp-seopress' ) . '</p>';
 
 		// Drop any verdict emitted on a previous pass so a stale alert clears.
 		$this->cleanupResolvedIssues( $post->ID, $key, array() );

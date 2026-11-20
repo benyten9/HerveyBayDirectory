@@ -11,11 +11,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/enable-file', [
-    'label' => __('Enable File', domain: 'nibwp'),
-    'description' => __(
-        'Re-enables a previously disabled sandbox file by removing the ".disabled" suffix from its filename. Only operates on files inside the sandbox directory (wp-content/nibwp-sandbox/). Idempotent: enabling a file that is not disabled succeeds with enabled=false.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Enable File', 'nibwp'),
+    'description' => 'Re-enables a previously disabled sandbox file by removing the ".disabled" suffix from its filename. Only operates on files inside the sandbox directory (wp-content/nibwp-sandbox/). Idempotent: enabling a file that is not disabled succeeds with enabled=false.',
     'category' => 'filesystem',
     'input_schema' => [
         'type' => 'object',
@@ -38,7 +35,9 @@ wp_register_ability('nibwp/enable-file', [
         ],
     ],
     'execute_callback' => 'nibwp_enable_file',
-    'permission_callback' => 'nibwp_permission_callback',
+    // The other half of disable-file, and the same authority.
+    // See nibwp_filesystem_permission_callback().
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

@@ -49,8 +49,9 @@ class PlanFeatureRepository extends Repository {
         return $features_data;
     }
 
-    public function update_features( $features, $plan_id ) {
-        $db_features     = $this->get_query_builder()->select( 'id', 'feature_key' )->where( 'plan_id', $plan_id )->get();
+    public function update_features( $features, $plan_id, bool $preserve_order = false ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
+        $db_features     = $this->get_query_builder()->select( 'id', 'feature_key', 'sort_order' )->where( 'plan_id', $plan_id )->get();
         $db_features_map = [];
 
         foreach ( $db_features as $db_feature ) {
@@ -58,10 +59,14 @@ class PlanFeatureRepository extends Repository {
         }
 
         $sort_order = 1;
+        $next_order = $db_features ? max( array_map( 'intval', array_column( $db_features, 'sort_order' ) ) ) : 0;
 
         foreach ( $features as $feature ) {
             $feature     = (object) $feature;
             $feature_key = (string) $feature->key;
+            if ( $preserve_order ) {
+                $sort_order = isset( $db_features_map[ $feature_key ] ) ? (int) $db_features_map[ $feature_key ]->sort_order : ++$next_order;
+            }
 
             $dto = ( new PlanFeatureDTO() )
             ->set_is_enabled( (bool) $feature->is_enabled )

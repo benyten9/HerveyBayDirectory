@@ -11,6 +11,8 @@ namespace DoubleScale\Modules\Notifications\Services;
 
 use DoubleScale\Modules\Emails\Emails;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * NotificationEmailSender class
  *
@@ -255,20 +257,53 @@ class NotificationEmailSender {
 		// Link button (if provided).
 		if ( ! empty( $link ) ) {
 			$html .= '<div style="margin-bottom: 24px;">';
-			$html .= '<a href="' . esc_url( $link ) . '" style="display: inline-block; background-color: #2271b1; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 500;">' . esc_html__( 'View Details', 'doublescale' ) . '</a>';
+			$html .= '<a href="' . esc_url( self::follow_admin_page_slug( (string) $link ) ) . '" style="display: inline-block; background-color: #2271b1; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 500;">' . esc_html__( 'View Details', 'doublescale' ) . '</a>';
 			$html .= '</div>';
 		}
 
 		// Footer.
-		$html           .= '<hr style="border: none; border-top: 1px solid #dcdcde; margin: 24px 0;">';
-		$html           .= '<p style="color: #787c82; font-size: 12px; margin: 0;">';
-		$html           .= esc_html__( 'You received this notification from Plugin.', 'doublescale' ) . ' ';
-		$preferences_url = admin_url( 'admin.php?page=doublescale&path=settings&tab=notifications' );
-		$html           .= '<a href="' . esc_url( $preferences_url ) . '" style="color: #2271b1;">' . esc_html__( 'Manage preferences', 'doublescale' ) . '</a>';
-		$html           .= '</p>';
+		$site = wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES );
+		if ( '' === trim( $site ) ) {
+			$site = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		}
+		$preferences_url = admin_url( 'admin.php?page=' . rawurlencode( self::admin_page_slug() ) . '&path=settings/notifications' );
+
+		$html .= '<hr style="border: none; border-top: 1px solid #dcdcde; margin: 24px 0;">';
+		$html .= '<p style="color: #787c82; font-size: 12px; margin: 0;">';
+		/* translators: %s: site name */
+		$html .= esc_html( sprintf( __( 'You received this notification from %s.', 'doublescale' ), $site ) ) . ' ';
+		$html .= '<a href="' . esc_url( $preferences_url ) . '" style="color: #2271b1;">' . esc_html__( 'Manage preferences', 'doublescale' ) . '</a>';
+		$html .= '</p>';
 
 		$html .= '</div>';
 
 		return $html;
+	}
+
+	/**
+	 * The admin page's slug; white labeling renames it.
+	 *
+	 * @return string
+	 */
+	private static function admin_page_slug(): string {
+		$slug = (string) apply_filters( 'doublescale_admin_menu_slug', 'doublescale' );
+		return '' !== $slug ? $slug : 'doublescale';
+	}
+
+	/**
+	 * Point an admin link at the renamed page. Notifiers build links with the
+	 * default `page=doublescale`, which lands on WordPress's "Sorry, you are not
+	 * allowed to access this page." once white labeling renames it.
+	 *
+	 * @param string $url Link from the notifier.
+	 * @return string
+	 */
+	private static function follow_admin_page_slug( string $url ): string {
+		$slug = self::admin_page_slug();
+		if ( 'doublescale' === $slug || 0 !== strpos( $url, admin_url( 'admin.php' ) ) ) {
+			return $url;
+		}
+
+		return (string) preg_replace( '/([?&])page=doublescale(?=&|#|$)/', '${1}page=' . rawurlencode( $slug ), $url );
 	}
 }

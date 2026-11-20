@@ -167,7 +167,7 @@ function nibwp_gp_color_keys(array $settings): array
 
 wp_register_ability('nibwp/generatepress-info', [
     'label'       => __('GeneratePress — Info', 'nibwp'),
-    'description' => __('Detect GeneratePress + GP Premium, version, active modules, Elements support, Global Colors, and the available hook locations.', 'nibwp'),
+    'description' => 'Detect GeneratePress + GP Premium, version, active modules, Elements support, Global Colors, and the available hook locations.',
     'category'    => 'generatepress',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -217,7 +217,7 @@ function nibwp_gp_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/generatepress-settings', [
     'label'       => __('GeneratePress — Settings', 'nibwp'),
-    'description' => __('Read and write GeneratePress settings (layout, container, header, navigation, sidebars, footer, structure, branding). Actions: get, update, get_defaults, reset.', 'nibwp'),
+    'description' => 'Read and write GeneratePress settings (layout, container, header, navigation, sidebars, footer, structure, branding). Actions: get, update, get_defaults, reset.',
     'category'    => 'generatepress',
     'input_schema' => [
         'type' => 'object',
@@ -280,7 +280,7 @@ function nibwp_gp_settings_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/generatepress-colors', [
     'label'       => __('GeneratePress — Colors', 'nibwp'),
-    'description' => __('Read/write GeneratePress colors and the Global Colors palette. Actions: get, update, list_global, set_global, add_global, update_global, remove_global.', 'nibwp'),
+    'description' => 'Read/write GeneratePress colors and the Global Colors palette. Actions: get, update, list_global, set_global, add_global, update_global, remove_global.',
     'category'    => 'generatepress',
     'input_schema' => [
         'type' => 'object',
@@ -375,7 +375,7 @@ function nibwp_gp_colors_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/generatepress-typography', [
     'label'       => __('GeneratePress — Typography', 'nibwp'),
-    'description' => __('Read/write GeneratePress typography: the Font Manager, dynamic typography rules (per selector), and global typography flags. Actions: get, update, add_font, remove_font, set_rule, remove_rule.', 'nibwp'),
+    'description' => 'Read/write GeneratePress typography: the Font Manager, dynamic typography rules (per selector), and global typography flags. Actions: get, update, add_font, remove_font, set_rule, remove_rule.',
     'category'    => 'generatepress',
     'input_schema' => [
         'type' => 'object',
@@ -461,7 +461,7 @@ function nibwp_gp_typography_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/generatepress-spacing', [
     'label'       => __('GeneratePress — Spacing', 'nibwp'),
-    'description' => __('Read/write GeneratePress spacing (padding/margins for header, content, widgets, footer, menus). Actions: get, update, get_defaults, reset.', 'nibwp'),
+    'description' => 'Read/write GeneratePress spacing (padding/margins for header, content, widgets, footer, menus). Actions: get, update, get_defaults, reset.',
     'category'    => 'generatepress',
     'input_schema' => [
         'type' => 'object',
@@ -515,7 +515,7 @@ function nibwp_gp_spacing_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/generatepress-elements', [
     'label'       => __('GeneratePress — Elements (Premium)', 'nibwp'),
-    'description' => __('Manage GeneratePress Premium Elements: hooks, block elements, headers and layouts, with display/location conditions. Actions: list, get, hooks, create_hook, create_block, update, set_conditions, delete.', 'nibwp'),
+    'description' => 'Manage GeneratePress Premium Elements: hooks, block elements, headers and layouts, with display/location conditions. Actions: list, get, hooks, create_hook, create_block, update, set_conditions, delete.',
     'category'    => 'generatepress',
     'input_schema' => [
         'type' => 'object',

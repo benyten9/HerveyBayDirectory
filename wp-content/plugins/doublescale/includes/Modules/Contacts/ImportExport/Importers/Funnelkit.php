@@ -50,7 +50,7 @@ class Funnelkit extends Importer {
 	 * @var bool
 	 */
 	public function is_active() {
-		return doublescale_is_plugin_active( 'wp-marketing-automations/wp-marketing-automations.php' );
+		return doublescale_is_plugin_active( 'wp-marketing-automations' );
 	}
 
 	/**

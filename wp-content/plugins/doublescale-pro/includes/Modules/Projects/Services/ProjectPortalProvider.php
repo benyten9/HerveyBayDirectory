@@ -2,8 +2,8 @@
 /**
  * Projects ⇄ Client Portal bridge.
  *
- * Contributes the Projects section, a "projects" summary card, and
- * project-lifecycle timeline items to the portal. A client sees only the
+ * Contributes the Projects section, a "projects" summary card,
+ * project-lifecycle timeline items and due dates on the calendar to the portal. A client sees only the
  * projects whose `contact_id` matches their resolved portal contact.
  *
  * Resolved in {@see \DoubleScale\Pro\Modules\Projects\Module::boot()} so its
@@ -28,6 +28,8 @@ final class ProjectPortalProvider {
 		add_filter( 'doublescale_portal_sections', array( $this, 'register_section' ) );
 		add_filter( 'doublescale_portal_summary_cards', array( $this, 'add_summary_card' ), 10, 2 );
 		add_filter( 'doublescale_portal_timeline_items', array( $this, 'add_timeline_items' ), 10, 2 );
+		// Each project on its due date in the client's calendar.
+		add_filter( 'doublescale_portal_calendar_events', array( ProjectCalendarProvider::class, 'add_client_events' ), 10, 4 );
 	}
 
 	/**
@@ -80,8 +82,7 @@ final class ProjectPortalProvider {
 			return $items;
 		}
 
-		$projects = ProjectModel::with( array( 'status' ) )
-			->where( 'contact_id', (int) $contact->id )
+		$projects = ProjectPortalScope::apply( ProjectModel::with( array( 'status' ) ), (int) $contact->id )
 			->orderBy( 'id', 'desc' )
 			->limit( 50 )
 			->get();
@@ -120,7 +121,7 @@ final class ProjectPortalProvider {
 		}
 
 		try {
-			return (int) ProjectModel::where( 'contact_id', (int) $contact->id )
+			return (int) ProjectPortalScope::apply( ProjectModel::query(), (int) $contact->id )
 				->whereHas(
 					'status',
 					static function ( $query ) {

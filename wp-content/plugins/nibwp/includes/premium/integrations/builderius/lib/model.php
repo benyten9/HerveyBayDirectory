@@ -47,7 +47,7 @@ function nibwp_builderius_guard(): ?WP_Error
     if (!nibwp_builderius_active()) {
         return new WP_Error(
             'no_builderius',
-            __('Builderius is not active on this site. Install/activate Builderius (wordpress.org/plugins/builderius) first.', domain: 'nibwp')
+            __('Builderius is not active on this site. Install/activate Builderius (wordpress.org/plugins/builderius) first.', 'nibwp')
         );
     }
     return null;

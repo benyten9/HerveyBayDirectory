@@ -10,7 +10,7 @@ require_once __DIR__ . '/../lib/external.php';
 
 wp_register_ability('nibwp/seo-pro-indexing', [
     'label'       => __('SEO Pro — Instant Indexing', 'nibwp'),
-    'description' => __('Submit URLs to search engines via IndexNow (Bing, Yandex, Seznam). Actions: submit (push a list of URLs), configure (store the IndexNow key). Requires an IndexNow key hosted at /{key}.txt on the site.', 'nibwp'),
+    'description' => 'Submit URLs to search engines via IndexNow (Bing, Yandex, Seznam). Actions: submit (push a list of URLs), configure (store the IndexNow key). Requires an IndexNow key hosted at /{key}.txt on the site.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

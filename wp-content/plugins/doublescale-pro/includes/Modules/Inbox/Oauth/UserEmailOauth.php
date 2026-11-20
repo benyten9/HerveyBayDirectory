@@ -923,7 +923,7 @@ class UserEmailOauth {
 		update_option( 'doublescale_has_user_email_accounts', true, true );
 		$campaigns_tasks = \DoubleScale\Core\PluginKernel::instance()->campaigns_tasks;
 		if ( $campaigns_tasks->get_next_timestamp( 'doublescale_user_email_accounts' ) === false ) {
-			$campaigns_tasks->schedule_recurring( time(), 60, 'doublescale_user_email_accounts' );
+			$campaigns_tasks->schedule_recurring( time(), \DoubleScale\Pro\Modules\Inbox\Module::poll_interval(), 'doublescale_user_email_accounts' );
 		}
 	}
 
@@ -979,9 +979,9 @@ class UserEmailOauth {
 							{
 								type: 'DOUBLESCALE_OAUTH_RESULT',
 								scope: 'personal',
-								status: <?php echo wp_json_encode( $status ); ?>,
-								provider: <?php echo wp_json_encode( $provider ); ?>,
-								message: <?php echo wp_json_encode( $message ); ?>
+								status: <?php echo wp_json_encode( $status, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,
+								provider: <?php echo wp_json_encode( $provider, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,
+								message: <?php echo wp_json_encode( $message, JSON_HEX_TAG | JSON_HEX_AMP ); ?>
 							},
 							window.location.origin
 						);

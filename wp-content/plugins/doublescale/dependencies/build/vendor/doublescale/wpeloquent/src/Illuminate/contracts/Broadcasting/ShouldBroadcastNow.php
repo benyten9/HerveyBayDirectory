@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Broadcasting;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Broadcasting;
 
-interface ShouldBroadcastNow extends \Illuminate\Contracts\Broadcasting\ShouldBroadcast
+interface ShouldBroadcastNow extends ShouldBroadcast
 {
     //
 }

@@ -388,47 +388,61 @@ class RestCustomFieldsGroupController extends RestController {
 				return new WP_Error( 'error', __( 'Custom fields group not found.', 'doublescale'), array( 'status' => 404 ) );
 			}
 
-			// Prepare data for the new group
-			$new_name = $request->get_param( 'name' ) ?: $original_group->name . ' (Copy)';
-			$new_slug = $request->get_param( 'slug' ) ?: $original_group->slug . '-copy';
-
-			// Ensure unique slug
-			$counter   = 1;
-			$base_slug = $new_slug;
-			while ( CustomFieldsGroupModel::where( 'slug', $new_slug )->exists() ) {
-				$new_slug = $base_slug . '-' . $counter;
-				$counter++;
+			// A name of its own: the group's key (slug) is made from its name
+			// when it is saved (CustomFieldsGroupModel::boot) and must be
+			// unique, so a second copy called "Website (Copy)" again was not
+			// saved at all. "Website (Copy)", then "Website (Copy 2)"…
+			$base_name = $request->get_param( 'name' ) ?: $original_group->name . ' (Copy)';
+			$new_name  = $base_name;
+			$counter   = 2;
+			while ( CustomFieldsGroupModel::where( 'slug', \DoubleScale\Vendor\Illuminate\Support\Str::slug( $new_name ) )->exists() ) {
+				$new_name = $request->get_param( 'name' ) ? $base_name . ' ' . $counter : $original_group->name . ' (Copy ' . $counter . ')';
+				++$counter;
 			}
 
-			// Create the duplicate group
 			$duplicate_data = array(
 				'name'  => $new_name,
-				'slug'  => $new_slug,
+				'slug'  => \DoubleScale\Vendor\Illuminate\Support\Str::slug( $new_name ),
 				'scope' => $original_group->scope,
 			);
 
 			$duplicate_group = CustomFieldsGroupModel::create( $duplicate_data );
+			// wp-eloquent does not always throw when the database refuses a row.
+			if ( empty( $duplicate_group->id ) ) {
+				return new WP_Error( 'custom_fields_group_duplicate_failed', __( 'The copy of the group could not be saved.', 'doublescale' ), array( 'status' => 500 ) );
+			}
 
-			// Duplicate associated custom fields if they exist
-			if ( ! empty( $original_group->custom_fields ) ) {
+			// Copy the fields. Each copy needs a key (slug) of its own: keys are
+			// unique across every field and merge tags read them
+			// ({contact_field:slug}), so a copy that kept the original's was
+			// refused and the duplicate stopped half way. Anything that still
+			// fails takes the half-made group and its copies away again.
+			$copies = array();
+			try {
 				foreach ( $original_group->custom_fields as $field ) {
 					$field_data = $field->toArray();
-					unset( $field_data['id'] ); // Remove the original ID
-					unset( $field_data['created_at'] ); // Remove created_at
-					unset( $field_data['updated_at'] ); // Remove updated_at
+					unset( $field_data['id'], $field_data['created_at'], $field_data['updated_at'], $field_data['position'] );
 
-					$field_data['group_id'] = $duplicate_group->id; // Set new group ID
+					$field_data['group_id'] = $duplicate_group->id;
 
-					// Generate unique field name if necessary
+					// A name of its own, as before.
 					$original_name = $field_data['name'];
 					$counter       = 1;
 					while ( CustomFieldModel::where( 'name', $field_data['name'] )->exists() ) {
 						$field_data['name'] = $original_name . ' (Copy ' . $counter . ')';
-						$counter++;
+						++$counter;
 					}
 
-					CustomFieldModel::create( $field_data );
+					$field_data['slug'] = self::unique_field_slug( (string) ( $field->slug ?: $original_name ) . '-copy' );
+
+					$copies[] = CustomFieldModel::create( $field_data );
 				}
+			} catch ( \Exception $e ) {
+				foreach ( $copies as $copy ) {
+					$copy->delete();
+				}
+				$duplicate_group->delete();
+				throw $e;
 			}
 
 			// Reload the group with its fields
@@ -441,6 +455,25 @@ class RestCustomFieldsGroupController extends RestController {
 	}
 
 
+
+	/**
+	 * A field key (slug) no field has yet: "version-copy", then
+	 * "version-copy-2", "version-copy-3"…
+	 *
+	 * @param string $base Wanted key.
+	 * @return string
+	 */
+	private static function unique_field_slug( string $base ): string {
+		$base = sanitize_title( $base );
+		$slug = $base;
+		$n    = 2;
+		while ( CustomFieldModel::where( 'slug', $slug )->exists() ) {
+			$slug = $base . '-' . $n;
+			++$n;
+		}
+
+		return $slug;
+	}
 
 	/**
 	 * Prepare group from request

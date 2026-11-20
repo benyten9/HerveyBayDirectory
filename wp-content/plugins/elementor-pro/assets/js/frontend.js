@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.3.0 - 22-09-2026 */
+/*! elementor-pro - v4.4.0 - 16-11-2026 */
 (function() {
 	//#region \0rolldown/runtime.js
 	var __defProp$1 = Object.defineProperty;

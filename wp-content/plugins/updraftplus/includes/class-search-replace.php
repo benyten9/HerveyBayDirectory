@@ -24,7 +24,7 @@ class UpdraftPlus_Search_Replace {
 	 */
 	public function __construct() {
 		add_action('updraftplus_restore_db_pre', array($this, 'updraftplus_restore_db_pre'));
-		$this->max_recursion = apply_filters('updraftplus_search_replace_max_recursion', 20);
+		$this->max_recursion = apply_filters('updraftplus_search_replace_max_recursion', 0);
 	}
 
 	/**
@@ -298,12 +298,12 @@ class UpdraftPlus_Search_Replace {
 				/* translators: 1: Exception class, 2: Exception message. */
 				$updraftplus->log(sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage()), 'warning-restore');
 			} catch (Error $e) {// phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- The Error class does not exist in PHP below 5.6.
-				$log_message = 'A PHP Fatal error (recoverable, '.get_class($e).') occurred during the recursive search/replace. Exception message: Error message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
+				$log_message = 'A PHP Fatal error (recoverable, '.get_class($e).') occurred during the recursive search/replace. Exception message: Error message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.basename($e->getFile()).')';
 				$report['errors'][] = $log_message;
 				UpdraftPlus_Manipulation_Functions::error_log($log_message);
 				$updraftplus->log($log_message);
 				/* translators: 1: Fatal error class, 2: Error message. */
-				$updraftplus->log(sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage()), 'warning-restore');
+				$updraftplus->log(sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage().' - '.basename($e->getFile()).'/'.$e->getLine()), 'warning-restore');
 			}
 
 			// Something was changed
@@ -373,6 +373,7 @@ class UpdraftPlus_Search_Replace {
 			$case_insensitive = false;
 
 			// If we've reached the maximum recursion level, short circuit
+			// N.B. Applying a recursion limit can result in data corruption if the limit is hit and there is deliberately placed content in the database
 			if (0 !== $this->max_recursion && $recursion_level >= $this->max_recursion) {
 				return $data;
 			}
@@ -392,8 +393,27 @@ class UpdraftPlus_Search_Replace {
 				$case_insensitive = preg_match('#^https?:#i', $from) && preg_match('#^https?:#i', $to) ? true : false;
 			}
 
-			// O:8:"DateTime":0:{} : see https://bugs.php.net/bug.php?id=62852
-			if (is_serialized($data) && false === strpos($data, 'O:8:"DateTime":0:{}') && false !== ($unserialized = UpdraftPlus::unserialize($data))) {
+			if (is_string($data)) {
+				$datetime_monkey_patch = $this->monkey_patch_string($data, 'O:8:"DateTime":0:{}');
+				// Try to avoid scanning what may be a long string unnecessarily many times
+				if (false !== strpos($datetime_monkey_patch['data'], "\u003")) {
+					$json_bracket1_monkey_patch = $this->monkey_patch_string($datetime_monkey_patch['data'], "\u003c");
+					$json_bracket2_monkey_patch = $this->monkey_patch_string($json_bracket1_monkey_patch['data'], "\u003e");
+					$json_bracket3_monkey_patch = $this->monkey_patch_string($json_bracket2_monkey_patch['data'], "\u003C");
+					$json_bracket4_monkey_patch = $this->monkey_patch_string($json_bracket3_monkey_patch['data'], "\u003E");
+					$data = $json_bracket4_monkey_patch['data'];
+				} else {
+					$json_bracket1_monkey_patch = array('positions' => array());
+					$json_bracket2_monkey_patch = array('positions' => array());
+					$json_bracket3_monkey_patch = array('positions' => array());
+					$json_bracket4_monkey_patch = array('positions' => array());
+					$data = $datetime_monkey_patch['data'];
+				}
+			} else {
+				$datetime_monkey_patch = null;
+			}
+			
+			if (is_serialized($data) && false !== ($unserialized = UpdraftPlus::unserialize($data))) {
 				$data = $this->recursive_unserialize_replace($from, $to, $unserialized, true, $recursion_level + 1);
 			} elseif (is_array($data)) {
 				$_tmp = array();
@@ -417,8 +437,21 @@ class UpdraftPlus_Search_Replace {
 				$data = $_tmp;
 				unset($_tmp);
 			} elseif (is_string($data) && (null !== ($_tmp = json_decode($data, true)))) {
+				
+				// Do not unnecessarily re-encode data
+				$any_found = false;
+				$from_candidates = is_array($from) ? $from : array($from);
+		
+				// Only handling slashes here; false negatives could result from other JSON-encoded characters, but the tool is not intended to cover any possibility
+				foreach ($from_candidates as $from_candidate) {
+					$escaped = str_replace('/', '\/', $from_candidate);
+					if (false !== ($case_insensitive ? stripos($data, $from_candidate) : strpos($data, $from_candidate)) || false !== ($case_insensitive ? stripos($data, $escaped) : strpos($data, $escaped))) {
+						$any_found = true;
+						break;
+					}
+				}
 
-				if (is_array($_tmp)) {
+				if ($any_found && is_array($_tmp)) {
 					foreach ($_tmp as $key => $value) {
 						$_tmp[$key] = $this->recursive_unserialize_replace($from, $to, $value, false, $recursion_level + 1, $visited_data);
 					}
@@ -449,9 +482,27 @@ class UpdraftPlus_Search_Replace {
 // }
 				}
 			}
+			
+			// Restore original strings
+			if (null !== $datetime_monkey_patch) {
+				if (!empty($json_bracket4_monkey_patch['positions'])) {
+					$data = str_replace($json_bracket4_monkey_patch['magic_string'], "\u003E", $data);
+				}
+				if (!empty($json_bracket3_monkey_patch['positions'])) {
+					$data = str_replace($json_bracket3_monkey_patch['magic_string'], "\u003C", $data);
+				}
+				if (!empty($json_bracket2_monkey_patch['positions'])) {
+					$data = str_replace($json_bracket2_monkey_patch['magic_string'], "\u003e", $data);
+				}
+				if (!empty($json_bracket1_monkey_patch['positions'])) {
+					$data = str_replace($json_bracket1_monkey_patch['magic_string'], "\u003c", $data);
+				}
+				if (!empty($datetime_monkey_patch['positions'])) {
+					$data = str_replace($datetime_monkey_patch['magic_string'], 'O:8:"DateTime":0:{}', $data);
+				}
+			}
 
-			if ($serialised)
-				return serialize($data);
+			if ($serialised) return serialize($data);
 
 		} catch (Exception $error) {
 			if (3 > $error_count) {
@@ -464,6 +515,64 @@ class UpdraftPlus_Search_Replace {
 		return $data;
 	}
 
+	/**
+	 * Replace any instances of $needle with a randomised, not-yet-present string (which may not be of the samme length)
+	 *
+	 * @param String  $data
+	 * @param String  $needle
+	 * @param Boolean $case_sensitive - whether to perform the search case-sensitively; this should only be performed if you either don't care about restoring the original case, or are preserving the original string
+	 *
+	 * @return Array - with keys 'data' (new version of $data - will be the same length), 'positions' (places where replacement occurred in the original string), 'magic_string' (the replacement string, guaranteed to not otherwise occur).
+	 */
+	private function monkey_patch_string($data, $needle, $case_sensitive = true) {
+		
+		// Record original occurrence positions.
+		$needle_positions = array();
+		
+		$str_compare_function = $case_sensitive ? 'strpos' : 'stripos';
+		$str_replace_function = $case_sensitive ? 'str_replace' : 'str_ireplace';
+		
+		$replacement = null;
+		
+		// O:8:"DateTime":0:{} - unserializing it causes a fatal error before PHP 7.1 (and an Error to be thrown after that), and yet it does get serialised into databases.
+		if (is_string($data) && false !== $str_compare_function($data, $needle)) {
+			
+			$needle_length = strlen($needle);
+			$chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!$#^&*()';
+			
+			if ($needle_length > strlen($chars)) {
+				throw new InvalidArgumentException('Needle too long');
+			}
+			
+			$offset = 0;
+			
+			while (($pos = $str_compare_function($data, $needle, $offset)) !== false) {
+				$needle_positions[] = $pos;
+				$offset = $pos + $needle_length;
+			}
+			
+			do {
+				// Make suffficiently long to make inadvertant matches upon multiple rounds of replacement implausible
+				$replacement = substr(str_shuffle($chars), 0, $needle_length);
+				$valid = true;
+				// Check every occurrence of the candidate in the modified data.
+				$offset = 0;
+				while (($pos = $str_compare_function($data, $replacement, $offset)) !== false) {
+					if (!in_array($pos, $needle_positions, true)) {
+						$valid = false;
+						break;
+					}
+					$offset = $pos + 1;
+				}
+			} while (!$valid);
+			
+			// Perform replacement.
+			$data = $str_replace_function($needle, $replacement, $data);
+		}
+		
+		return array('data' => $data, 'positions' => $needle_positions, 'magic_string' => $replacement);
+	}
+	
 	/**
 	 * This function will get the last database error and log it
 	 *

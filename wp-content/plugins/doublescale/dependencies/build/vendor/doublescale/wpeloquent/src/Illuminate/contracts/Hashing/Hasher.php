@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Hashing;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Hashing;
 
 interface Hasher
 {

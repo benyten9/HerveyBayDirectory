@@ -1,13 +1,13 @@
 <?php
 
-namespace Illuminate\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Pagination;
 
 use Closure;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
-use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\Traits\ForwardsCalls;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Htmlable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\ForwardsCalls;
 /**
  * @mixin \Illuminate\Support\Collection
  */

@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Query\Processors;
+namespace DoubleScale\Vendor\Illuminate\Database\Query\Processors;
 
-class SQLiteProcessor extends \Illuminate\Database\Query\Processors\Processor
+class SQLiteProcessor extends Processor
 {
     /**
      * Process the results of a column listing query.

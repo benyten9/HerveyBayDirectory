@@ -75,7 +75,7 @@ class REST_Integration_Controller extends Abstract_REST_Integration_Controller {
 	public function auth_uri( $request ) {
 		$host_id = $request->get_param( 'host_id' );
 		if ( empty( $host_id ) ) {
-			return new WP_Error( 'no_host_id', esc_html__( 'No host ID provided.', 'doublescale' ) );
+			return new WP_Error( 'no_host_id', esc_html__( 'No host ID provided.', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
 		$calendar = CalendarModel::find( $host_id );

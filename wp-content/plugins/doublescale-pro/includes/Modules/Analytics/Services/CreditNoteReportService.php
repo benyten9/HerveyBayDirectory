@@ -61,13 +61,16 @@ class CreditNoteReportService extends EntityReportService {
 		$credited_cur_now  = $this->sum_amount_by_currency( $issued_now, $filters );
 		$credited_cur_prev = $this->sum_amount_by_currency( $issued_prev, $filters );
 
-		$invoiced_now  = $this->invoiced_total( $period, $filters, false );
-		$invoiced_prev = $this->invoiced_total( $period, $filters, true );
+		// The ratio compares with invoices, another module's data: shown only
+		// while Documents is on.
+		$invoices_on   = $this->invoices_ready();
+		$invoiced_now  = $invoices_on ? $this->invoiced_total( $period, $filters, false ) : 0.0;
+		$invoiced_prev = $invoices_on ? $this->invoiced_total( $period, $filters, true ) : 0.0;
 
 		$voided_now  = $this->count_by_status( $period, $filters, CreditNoteStatus::VOID, false );
 		$voided_prev = $this->count_by_status( $period, $filters, CreditNoteStatus::VOID, true );
 
-		return array(
+		$kpis = array(
 			$this->kpi(
 				'issued',
 				__( 'Credit Notes Issued', 'doublescale' ),
@@ -112,15 +115,29 @@ class CreditNoteReportService extends EntityReportService {
 				$this->average_amount_by_currency( $issued_now, $filters ),
 				$this->average_amount_by_currency( $issued_prev, $filters )
 			),
-			$this->kpi(
+		);
+
+		if ( $invoices_on ) {
+			$kpis[] = $this->kpi(
 				'credit_to_invoice_ratio',
 				__( 'Credit-to-Invoice Ratio', 'doublescale' ),
 				$this->ratio( array_sum( $credited_cur_now ), $invoiced_now ),
 				$this->ratio( array_sum( $credited_cur_prev ), $invoiced_prev ),
 				'percent',
 				true
-			),
-		);
+			);
+		}
+
+		return $kpis;
+	}
+
+	/**
+	 * Whether invoices can be read (Documents on, tables there).
+	 *
+	 * @return bool
+	 */
+	protected function invoices_ready() {
+		return doublescale_module_data_ready( 'documents' );
 	}
 
 	/**
@@ -378,6 +395,11 @@ class CreditNoteReportService extends EntityReportService {
 	 * @return float
 	 */
 	protected function invoiced_total( ReportPeriod $period, array $filters, $use_previous ) {
+		// Invoices are another module's data: none while Documents is off.
+		if ( ! $this->invoices_ready() ) {
+			return 0.0;
+		}
+
 		$service = $this->invoice_service ? $this->invoice_service : new InvoiceReportService();
 
 		return $service->invoiced_total_for( $period, $filters, $use_previous );

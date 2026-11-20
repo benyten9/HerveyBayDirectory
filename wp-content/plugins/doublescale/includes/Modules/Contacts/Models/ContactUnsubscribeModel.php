@@ -11,7 +11,7 @@ namespace DoubleScale\Modules\Contacts\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Constants\MessageSourceTypes;
 
 /**
@@ -110,7 +110,7 @@ class ContactUnsubscribeModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
@@ -119,10 +119,10 @@ class ContactUnsubscribeModel extends Model {
 	/**
 	 * Scope: Filter by mode
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param string                                $mode
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForMode( $query, $mode ) {
 		return $query->where( 'mode', $mode );
@@ -131,10 +131,10 @@ class ContactUnsubscribeModel extends Model {
 	/**
 	 * Scope: Filter by source type
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param string                                $source_type
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeBySourceType( $query, $source_type ) {
 		return $query->where( 'source_type', $source_type );
@@ -143,11 +143,11 @@ class ContactUnsubscribeModel extends Model {
 	/**
 	 * Scope: Filter by source (type and id)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param string                                $source_type
 	 * @param int                                   $source_id
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeBySource( $query, $source_type, $source_id ) {
 		return $query->where( 'source_type', $source_type )
@@ -157,10 +157,10 @@ class ContactUnsubscribeModel extends Model {
 	/**
 	 * Scope: Filter by campaign
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param int                                   $campaign_id
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForCampaign( $query, $campaign_id ) {
 		return $query->where( 'source_type', self::SOURCE_CAMPAIGN )
@@ -170,10 +170,10 @@ class ContactUnsubscribeModel extends Model {
 	/**
 	 * Scope: Filter by automation
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param int                                   $automation_id
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForAutomation( $query, $automation_id ) {
 		return $query->where( 'source_type', self::SOURCE_AUTOMATION )
@@ -183,10 +183,10 @@ class ContactUnsubscribeModel extends Model {
 	/**
 	 * Scope: Filter by contact
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param int                                   $contact_id
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForContact( $query, $contact_id ) {
 		return $query->where( 'contact_id', $contact_id );

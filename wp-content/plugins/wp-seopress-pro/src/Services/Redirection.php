@@ -64,7 +64,7 @@ class Redirection {
 			$post_type
 		);
 
-		$page = $wpdb->get_var( $sql );
+		$page = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 		if ( isset( $page ) ) {
 			$this->cachePageByTitle[ $title ] = get_post( $page, $output );
 			return $this->cachePageByTitle[ $title ];
@@ -82,7 +82,7 @@ class Redirection {
 			$post_type
 		);
 
-		$page = $wpdb->get_var( $sql );
+		$page = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 		if ( isset( $page ) ) {
 			$this->cachePageByTitle[ $title ] = get_post( $page, $output );
@@ -108,6 +108,98 @@ class Redirection {
 		if ( $stop_date === false ) {
 			update_post_meta( $id, '_seopress_404_redirect_date_request', time() );
 		}
+	}
+
+	/**
+	 * The candidates already computed, with their trailing slash flipped.
+	 *
+	 * Only the path is touched: the query string keeps its place, and the root is
+	 * left alone rather than turned into a double slash. Anything already tried is
+	 * dropped, so a pattern is never tested twice against the same string.
+	 *
+	 * @param array $candidate_groups Groups of candidates already built.
+	 *
+	 * @return array The extra candidates, possibly empty.
+	 */
+	private function get_trailing_slash_candidates( $candidate_groups ) {
+		$seen    = array();
+		$flipped = array();
+
+		foreach ( $candidate_groups as $group ) {
+			foreach ( (array) $group as $candidate ) {
+				if ( ! is_string( $candidate ) || '' === $candidate ) {
+					continue;
+				}
+
+				$seen[ $candidate ] = true;
+
+				$separator = strpos( $candidate, '?' );
+				$path      = false === $separator ? $candidate : substr( $candidate, 0, $separator );
+				$query     = false === $separator ? '' : substr( $candidate, $separator );
+
+				// The root is already a single slash in both shapes.
+				if ( '' === $path || '/' === $path ) {
+					continue;
+				}
+
+				$variant = '/' === substr( $path, -1 )
+					? rtrim( $path, '/' )
+					: $path . '/';
+
+				// Trimming can empty the path, which is the root again.
+				if ( '' === $variant ) {
+					continue;
+				}
+
+				$flipped[] = $variant . $query;
+			}
+		}
+
+		return array_values( array_diff( array_unique( $flipped ), array_keys( $seen ) ) );
+	}
+
+	/**
+	 * Additional URL forms already supported by the literal matcher.
+	 *
+	 * Keep these in separate fallback groups so existing regex matches retain
+	 * priority. Parse before decoding to preserve non-Latin paths and encoded
+	 * question marks, and keep the installation path supplied by each plugin.
+	 *
+	 * @return array[] Candidates with a query, followed by queryless paths.
+	 */
+	private function get_multilingual_regex_candidates() {
+		global $wp;
+		$urls = array();
+		if ( defined( 'ICL_SITEPRESS_VERSION' ) ) {
+			$original_home = static function ( $localized_url, $original_url ) {
+				return $original_url;
+			};
+			add_filter( 'wpml_get_home_url', $original_home, 20, 2 );
+			try {
+				$urls[] = add_query_arg( $_SERVER['QUERY_STRING'] ?? '', '', home_url( $wp->request ) );
+			} finally {
+				remove_filter( 'wpml_get_home_url', $original_home, 20 );
+			}
+		}
+		if ( function_exists( 'weglot_get_current_full_url' ) ) {
+			$urls[] = weglot_get_current_full_url();
+		}
+
+		$with_query = array();
+		$paths      = array();
+		foreach ( $urls as $url ) {
+			if ( ! is_string( $url ) || '' === $url ) {
+				continue;
+			}
+			$parts = seopress_pro_parse_url_decoded( $url );
+			if ( ! is_array( $parts ) ) {
+				continue;
+			}
+			$path = ! empty( $parts['path'] ) ? $parts['path'] : '/';
+			$with_query[] = apply_filters( 'redirection_get_current_url', $path . ( ! empty( $parts['query'] ) ? '?' . $parts['query'] : '' ) );
+			$paths[]      = apply_filters( 'redirection_get_current_url', $path );
+		}
+		return array( array_unique( $with_query ), array_unique( $paths ) );
 	}
 
 	/**
@@ -149,7 +241,7 @@ class Redirection {
 				$currentUrl = '/';
 			}
 
-			if ( isset( $currentUrlParse['query'] ) && ! empty( $currentUrlParse['query'] ) ) {
+			if ( empty( $options['without_query'] ) && isset( $currentUrlParse['query'] ) && ! empty( $currentUrlParse['query'] ) ) {
 				$currentUrl .= '?' . $currentUrlParse['query'];
 			}
 		} else {
@@ -195,13 +287,46 @@ class Redirection {
 		return '#' . $escaped . '#i';
 	}
 
-	public function checkRegexRedirect() {
-		$redirectionsWithRegex = get_posts(
+	/**
+	 * The regex redirections this request is allowed to be matched against.
+	 *
+	 * Whether a redirection is enabled belongs in this query, not after the
+	 * match. The scan stops at the first pattern that answers, and
+	 * handleRedirectionWithId() then returns without redirecting when that
+	 * redirection turns out to be disabled - so a disabled rule did not merely
+	 * fail to fire, it consumed the request. Two things followed from that:
+	 *
+	 * - a matched-but-disabled rule left the visitor on a bare 404, with no
+	 *   header and nothing in the logs to explain it;
+	 * - when two patterns overlapped, a disabled rule earlier in the scan order
+	 *   won the match and the enabled rule after it never ran. A site could
+	 *   have a correct, enabled redirection that simply never fired.
+	 *
+	 * A CSV import is the usual way to end up with one, since an empty
+	 * `Enabled` column is imported faithfully as off. See #1696.
+	 *
+	 * This is the clause the REST "Test a URL" endpoint has always filtered on,
+	 * which is what made the tester report "no match" on a URL the site was
+	 * 404ing with no explanation.
+	 *
+	 * Neither the term cache nor the meta of every candidate is primed: this
+	 * runs on every 404 the front-end serves, only the matched redirection's
+	 * meta is ever read, and the categories are an admin-screen concern.
+	 *
+	 * @return \WP_Post[] Enabled regex redirections, in scan order.
+	 */
+	public function getRegexRedirections() {
+		return get_posts(
 			array(
-				'post_type'      => 'seopress_404',
-				'meta_query'     => array(
+				'post_type'              => 'seopress_404',
+				'post_status'            => 'publish',
+				'meta_query'             => array(
 					array(
 						'key'   => '_seopress_redirections_enabled_regex',
+						'value' => 'yes',
+					),
+					array(
+						'key'   => '_seopress_redirections_enabled',
 						'value' => 'yes',
 					),
 					array(
@@ -216,9 +341,15 @@ class Redirection {
 						),
 					),
 				),
-				'posts_per_page' => -1,
+				'posts_per_page'         => -1,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
 			)
 		);
+	}
+
+	public function checkRegexRedirect() {
+		$redirectionsWithRegex = $this->getRegexRedirections();
 
 		if ( empty( $redirectionsWithRegex ) ) {
 			return;
@@ -242,34 +373,27 @@ class Redirection {
 			$currentUrls[] = $currentUrlWithHomePath;
 		}
 
-		$redirectionMatch = null;
-		$matches          = null;
-		foreach ( $redirectionsWithRegex as $redirection ) {
-			$regex = $this->buildRegexPattern( $redirection->post_title );
-
-			foreach ( $currentUrls as $candidate ) {
-				// preg_match() leaves this untouched when the pattern does not
-				// compile, which is exactly what the `@` below tolerates. Only
-				// an empty array can survive from the previous candidate, since
-				// a non-empty one always breaks out — so this is the invariant
-				// stated where it is read, not a defect being patched.
-				$found = array();
-
-				try {
-					@\preg_match( $regex, $candidate, $found );
-					if ( ! empty( $found ) ) {
-						$redirectionMatch = $redirection;
-						$matches          = $found;
-						break 2;
-					}
-				} catch ( \Exception $e ) {
-				}
+		$candidate_groups = array( $currentUrls );
+		if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
+			$paths = array();
+			foreach ( array( false, true ) as $keep_home_path ) {
+				$paths[] = $this->getCurrentUrl( array(
+					'only_uri'       => true,
+					'keep_home_path' => $keep_home_path,
+					'without_query'  => true,
+				) );
 			}
+			$candidate_groups[] = array_unique( $paths );
 		}
 
-		if ( ! $redirectionMatch ) {
+		$candidate_groups = array_merge( $candidate_groups, $this->get_multilingual_regex_candidates() );
+
+		$result = $this->match_regex_candidates( $candidate_groups, $redirectionsWithRegex );
+		if ( null === $result ) {
 			return;
 		}
+		$redirectionMatch = $result['redirection'];
+		$matches          = $result['matches'];
 
 		$query_param = get_post_meta( $redirectionMatch->ID, '_seopress_redirections_param', true );
 
@@ -285,6 +409,40 @@ class Redirection {
 				'matches'     => $matches,
 			)
 		);
+	}
+
+	/**
+	 * Select a regex rule without redirecting or updating its hit counter.
+	 *
+	 * Candidate groups are tried before rule order: existing query and path
+	 * matches retain priority over the trailing-slash fallback.
+	 *
+	 * @param array      $candidate_groups Ordered groups of request forms.
+	 * @param \WP_Post[] $redirections     Eligible rules in scan order.
+	 * @return array|null The matching post and capture groups, or no match.
+	 */
+	public function match_regex_candidates( $candidate_groups, $redirections ) {
+		$slash_variants = $this->get_trailing_slash_candidates( $candidate_groups );
+		if ( ! empty( $slash_variants ) ) {
+			$candidate_groups[] = $slash_variants;
+		}
+
+		foreach ( $candidate_groups as $candidates ) {
+			foreach ( $redirections as $redirection ) {
+				$regex = $this->buildRegexPattern( $redirection->post_title );
+				foreach ( $candidates as $candidate ) {
+					$matches = array();
+					// Invalid user patterns are ignored by both the frontend and tester.
+					if ( 1 === @preg_match( $regex, $candidate, $matches ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+						return array(
+							'redirection' => $redirection,
+							'matches'     => $matches,
+						);
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	protected function replaceRegexPatternMatches( $url, $matches ) {
@@ -337,23 +495,11 @@ class Redirection {
 			$redirectionValue = $this->replaceRegexPatternMatches( $redirectionValue, $options['matches'] );
 		}
 
-		// 451 / 410
-		if ( '410' == $redirectionType || '451' == $redirectionType ) {
-			// URL redirection
-			$seopress_redirections_value = $initUrl;
-
-			// Update counter
-			$this->update404CounterById( $id );
-
-			// Do redirect
-			if ( true == $if_exact_match ) {
-				header( 'Location:' . $seopress_redirections_value, true, $redirectionType );
-				exit();
-			} elseif ( false == $if_exact_match && 'exact_match' != $query_param ) {
-				header( 'Location:' . $seopress_redirections_value, true, $redirectionType );
-				exit();
-			} elseif ( 'regex' === $query_param ) {
-				header( 'Location:' . $seopress_redirections_value, true, $redirectionType );
+		// 451 / 410 are error responses, not redirects to another URL.
+		if ( '410' === $redirectionType || '451' === $redirectionType ) {
+			if ( true == $if_exact_match || 'exact_match' !== $query_param ) {
+				$this->update404CounterById( $id );
+				$this->render_error_response( (int) $redirectionType, $id );
 				exit();
 			}
 		}
@@ -383,4 +529,41 @@ class Redirection {
 			}
 		}
 	}
+
+	/**
+	 * Render a theme error page while preserving the configured HTTP status.
+	 *
+	 * @param int $status HTTP status (410 or 451).
+	 * @param int $id     Redirection post ID.
+	 * @return void
+	 */
+	protected function render_error_response( $status, $id ) {
+		global $wp_query;
+
+		$wp_query->set_404();
+		status_header( $status );
+		nocache_headers();
+
+		/**
+		 * Whether to render a theme template for a 410 or 451 response.
+		 *
+		 * Return false to keep an empty response body.
+		 *
+		 * @param bool $render Whether to render the template.
+		 * @param int  $status HTTP status.
+		 * @param int  $id     Redirection post ID.
+		 */
+		if ( ! apply_filters( 'seopress_pro_redirections_render_error_template', true, $status, $id ) ) {
+			return;
+		}
+
+		$template = get_query_template( (string) $status );
+		if ( ! $template ) {
+			$template = get_404_template();
+		}
+		if ( $template ) {
+			load_template( $template, false );
+		}
+	}
+
 }

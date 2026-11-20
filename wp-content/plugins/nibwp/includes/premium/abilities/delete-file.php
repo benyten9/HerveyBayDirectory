@@ -11,11 +11,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/delete-file', [
-    'label' => __('Delete File', domain: 'nibwp'),
-    'description' => __(
-        'Deletes a file or directory from the server filesystem. Non-empty directories require the recursive flag. Critical WordPress directories (ABSPATH root, wp-admin, wp-includes) are protected from deletion. Idempotent: deleting a non-existent path succeeds with deleted=false.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Delete File', 'nibwp'),
+    'description' => 'Deletes a file or directory from the server filesystem. Non-empty directories require the recursive flag. Critical WordPress directories (ABSPATH root, wp-admin, wp-includes) are protected from deletion. Idempotent: deleting a non-existent path succeeds with deleted=false.',
     'category' => 'filesystem',
     'input_schema' => [
         'type' => 'object',
@@ -47,7 +44,9 @@ wp_register_ability('nibwp/delete-file', [
         ],
     ],
     'execute_callback' => 'nibwp_delete_file',
-    'permission_callback' => 'nibwp_permission_callback',
+    // Deleting reaches every site's files on a network, so it takes network
+    // authority there. See nibwp_filesystem_permission_callback().
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

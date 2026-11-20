@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
-class SQLiteBuilder extends \Illuminate\Database\Schema\Builder
+class SQLiteBuilder extends Builder
 {
     /**
      * Drop all tables from the database.

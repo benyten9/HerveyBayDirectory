@@ -8,22 +8,22 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-use Carbon\Exceptions\EndLessPeriodException;
-use Carbon\Exceptions\InvalidCastException;
-use Carbon\Exceptions\InvalidIntervalException;
-use Carbon\Exceptions\InvalidPeriodDateException;
-use Carbon\Exceptions\InvalidPeriodParameterException;
-use Carbon\Exceptions\NotACarbonClassException;
-use Carbon\Exceptions\NotAPeriodException;
-use Carbon\Exceptions\UnknownGetterException;
-use Carbon\Exceptions\UnknownMethodException;
-use Carbon\Exceptions\UnreachableException;
-use Carbon\Traits\IntervalRounding;
-use Carbon\Traits\Mixin;
-use Carbon\Traits\Options;
-use Carbon\Traits\ToStringFormat;
+use DoubleScale\Vendor\Carbon\Exceptions\EndLessPeriodException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidCastException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidIntervalException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidPeriodDateException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidPeriodParameterException;
+use DoubleScale\Vendor\Carbon\Exceptions\NotACarbonClassException;
+use DoubleScale\Vendor\Carbon\Exceptions\NotAPeriodException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownGetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownMethodException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnreachableException;
+use DoubleScale\Vendor\Carbon\Traits\IntervalRounding;
+use DoubleScale\Vendor\Carbon\Traits\Mixin;
+use DoubleScale\Vendor\Carbon\Traits\Options;
+use DoubleScale\Vendor\Carbon\Traits\ToStringFormat;
 use Closure;
 use Countable;
 use DateInterval;
@@ -232,7 +232,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      *
      * @var string
      */
-    protected const DEFAULT_DATE_CLASS = \Carbon\Carbon::class;
+    protected const DEFAULT_DATE_CLASS = Carbon::class;
     /**
      * The registered macros.
      *
@@ -244,7 +244,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      *
      * @var string
      */
-    protected $dateClass = \Carbon\Carbon::class;
+    protected $dateClass = Carbon::class;
     /**
      * Underlying date interval instance. Always present, one day by default.
      *
@@ -449,7 +449,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
         foreach (\explode('/', $iso) as $key => $part) {
             if ($key === 0 && \preg_match('/^R(\\d*|INF)$/', $part, $match)) {
                 $parsed = \strlen($match[1]) ? $match[1] !== 'INF' ? (int) $match[1] : \INF : null;
-            } elseif ($interval === null && ($parsed = \Carbon\CarbonInterval::make($part))) {
+            } elseif ($interval === null && ($parsed = CarbonInterval::make($part))) {
                 $interval = $part;
             } elseif ($start === null && ($parsed = $dateClass::make($part))) {
                 $start = $part;
@@ -593,7 +593,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
             $parsedDate = null;
             if ($argument instanceof DateTimeZone) {
                 $this->setTimezone($argument);
-            } elseif ($this->dateInterval === null && (\is_string($argument) && \preg_match('/^(-?\\d(\\d(?![\\/-])|[^\\d\\/-]([\\/-])?)*|P[T\\d].*|(?:\\h*\\d+(?:\\.\\d+)?\\h*[a-z]+)+)$/i', $argument) || $argument instanceof DateInterval || $argument instanceof Closure) && ($parsedInterval = @\Carbon\CarbonInterval::make($argument))) {
+            } elseif ($this->dateInterval === null && (\is_string($argument) && \preg_match('/^(-?\\d(\\d(?![\\/-])|[^\\d\\/-]([\\/-])?)*|P[T\\d].*|(?:\\h*\\d+(?:\\.\\d+)?\\h*[a-z]+)+)$/i', $argument) || $argument instanceof DateInterval || $argument instanceof Closure) && ($parsedInterval = @CarbonInterval::make($argument))) {
                 $this->setDateInterval($parsedInterval);
             } elseif ($this->startDate === null && ($parsedDate = $this->makeDateTime($argument))) {
                 $this->setStartDate($parsedDate);
@@ -613,7 +613,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
             $this->setStartDate($dateClass::now());
         }
         if ($this->dateInterval === null) {
-            $this->setDateInterval(\Carbon\CarbonInterval::day());
+            $this->setDateInterval(CarbonInterval::day());
             $this->isDefaultInterval = \true;
         }
         if ($this->options === null) {
@@ -728,14 +728,14 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      */
     public function setDateClass(string $dateClass)
     {
-        if (!\is_a($dateClass, \Carbon\CarbonInterface::class, \true)) {
+        if (!\is_a($dateClass, CarbonInterface::class, \true)) {
             throw new NotACarbonClassException($dateClass);
         }
         $self = $this->copyIfImmutable();
         $self->dateClass = $dateClass;
-        if (\is_a($dateClass, \Carbon\Carbon::class, \true)) {
+        if (\is_a($dateClass, Carbon::class, \true)) {
             $self->options = $self->options & ~static::IMMUTABLE;
-        } elseif (\is_a($dateClass, \Carbon\CarbonImmutable::class, \true)) {
+        } elseif (\is_a($dateClass, CarbonImmutable::class, \true)) {
             $self->options = $self->options | static::IMMUTABLE;
         }
         return $self;
@@ -760,7 +760,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      */
     public function setDateInterval($interval)
     {
-        if (!($interval = \Carbon\CarbonInterval::make($interval))) {
+        if (!($interval = CarbonInterval::make($interval))) {
             throw new InvalidIntervalException('Invalid interval.');
         }
         if ($interval->spec() === 'PT0S' && !$interval->f && !$interval->getStep()) {
@@ -1457,13 +1457,13 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
                 self::setDefaultParameters($parameters, [[0, 'date', null]]);
                 return $this->setStartDate(...$parameters);
             case 'sinceNow':
-                return $this->setStartDate(new \Carbon\Carbon(), ...$parameters);
+                return $this->setStartDate(new Carbon(), ...$parameters);
             case 'end':
             case 'until':
                 self::setDefaultParameters($parameters, [[0, 'date', null]]);
                 return $this->setEndDate(...$parameters);
             case 'untilNow':
-                return $this->setEndDate(new \Carbon\Carbon(), ...$parameters);
+                return $this->setEndDate(new Carbon(), ...$parameters);
             case 'dates':
             case 'between':
                 self::setDefaultParameters($parameters, [[0, 'start', null], [1, 'end', null]]);
@@ -1513,7 +1513,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
             case 'millisecond':
             case 'microseconds':
             case 'microsecond':
-                return $this->setDateInterval([$this->isDefaultInterval ? new \Carbon\CarbonInterval('PT0S') : $this->dateInterval, $method](...$parameters));
+                return $this->setDateInterval([$this->isDefaultInterval ? new CarbonInterval('PT0S') : $this->dateInterval, $method](...$parameters));
         }
         $dateClass = $this->dateClass;
         if ($this->localStrictModeEnabled ?? $dateClass::isStrictModeEnabled()) {
@@ -1592,7 +1592,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
         }
         if ($this->recurrences === \INF) {
             $start = $this->getStartDate();
-            return $start < $start->avoidMutation()->add($this->getDateInterval()) ? \Carbon\CarbonImmutable::endOfTime() : \Carbon\CarbonImmutable::startOfTime();
+            return $start < $start->avoidMutation()->add($this->getDateInterval()) ? CarbonImmutable::endOfTime() : CarbonImmutable::startOfTime();
         }
         if ($this->filters === [[static::RECURRENCES_FILTER, null]]) {
             return $this->getStartDate()->avoidMutation()->add($this->getDateInterval()->times($this->recurrences - ($this->isStartExcluded() ? 0 : 1)));
@@ -1929,7 +1929,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      */
     public function round($precision = null, $function = 'round')
     {
-        return $this->roundWith($precision ?? $this->getDateInterval()->setLocalTranslator(\Carbon\TranslatorImmutable::get('en'))->forHumans(), $function);
+        return $this->roundWith($precision ?? $this->getDateInterval()->setLocalTranslator(TranslatorImmutable::get('en'))->forHumans(), $function);
     }
     /**
      * Round the current instance second with given precision if specified (else period interval is used).
@@ -2113,10 +2113,10 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      */
     protected function handleChangedParameters()
     {
-        if ($this->getOptions() & static::IMMUTABLE && $this->dateClass === \Carbon\Carbon::class) {
-            $this->dateClass = \Carbon\CarbonImmutable::class;
-        } elseif (!($this->getOptions() & static::IMMUTABLE) && $this->dateClass === \Carbon\CarbonImmutable::class) {
-            $this->dateClass = \Carbon\Carbon::class;
+        if ($this->getOptions() & static::IMMUTABLE && $this->dateClass === Carbon::class) {
+            $this->dateClass = CarbonImmutable::class;
+        } elseif (!($this->getOptions() & static::IMMUTABLE) && $this->dateClass === CarbonImmutable::class) {
+            $this->dateClass = Carbon::class;
         }
         $this->validationResult = null;
     }
@@ -2162,7 +2162,7 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
      *
      * @return CarbonInterface
      */
-    protected function prepareForReturn(\Carbon\CarbonInterface $date)
+    protected function prepareForReturn(CarbonInterface $date)
     {
         $date = [$this->dateClass, 'make']($date);
         if ($this->timezone) {
@@ -2252,14 +2252,14 @@ class CarbonPeriod implements Iterator, Countable, JsonSerializable
     }
     private function isInfiniteDate($date) : bool
     {
-        return $date instanceof \Carbon\CarbonInterface && ($date->isEndOfTime() || $date->isStartOfTime());
+        return $date instanceof CarbonInterface && ($date->isEndOfTime() || $date->isStartOfTime());
     }
     private function rawDate($date) : ?DateTimeInterface
     {
         if ($date === \false || $date === null) {
             return null;
         }
-        if ($date instanceof \Carbon\CarbonInterface) {
+        if ($date instanceof CarbonInterface) {
             return $date->isMutable() ? $date->toDateTime() : $date->toDateTimeImmutable();
         }
         if (\in_array(\get_class($date), [DateTime::class, DateTimeImmutable::class], \true)) {

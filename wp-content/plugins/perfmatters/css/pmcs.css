@@ -293,46 +293,6 @@
 	color: #66686c;
 }
 
-/* control bar + subnav */
-.pm-control-bar {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin: -20px -20px 10px -20px;
-	padding: 10px 20px;
-	border-bottom: 1px solid #f2f2f2;
-	font-size: 14px;
-	line-height: 40px;
-}
-.pm-subnav {
-	display: flex;
-}
-#perfmatters-admin-container .pm-subnav a {
-	display: flex;
-	align-items: center;
-    margin-right: 20px;
-    font-size: 14px;
-    line-height: 40px;
-    color: #4A89DD;
-    text-decoration: none;
-    box-shadow: none;
-}
-#perfmatters-admin-container .pm-subnav a:hover {
-	color: #3F74BC;
-}
-#perfmatters-admin-container .pm-subnav a.active {
-	color: #333;
-    border-color: #333;
-}
-
-#perfmatters-admin-container .pm-subnav a .dashicons {
-	height: 16px;
-    width: 16px;
-    font-size: 16px;
-    align-items: center;
-    margin-right: 3px;
-}
-
 /* /settings scripts bottom fix */
 #code-code .perfmatters-settings-section {
     border-bottom: none;

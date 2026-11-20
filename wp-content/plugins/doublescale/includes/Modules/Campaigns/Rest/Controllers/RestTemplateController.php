@@ -666,6 +666,26 @@ class RestTemplateController extends RestController {
 				return new WP_Error( 'error', __( 'Template not found', 'doublescale' ), array( 'status' => 404 ) );
 			}
 
+			// Never delete what a campaign, an automation step or a sent
+			// message still depends on — it would be left with nothing.
+			$used_by = \DoubleScale\Modules\Campaigns\Services\TemplateUsage::find( $template->id );
+			if ( null !== $used_by ) {
+				$messages = array(
+					\DoubleScale\Modules\Campaigns\Services\TemplateUsage::CAMPAIGN   => __( 'This template is used by a campaign, so it cannot be deleted.', 'doublescale' ),
+					\DoubleScale\Modules\Campaigns\Services\TemplateUsage::AUTOMATION => __( 'This template is used by an automation, so it cannot be deleted.', 'doublescale' ),
+					\DoubleScale\Modules\Campaigns\Services\TemplateUsage::MESSAGES   => __( 'Messages were already sent with this template, so it cannot be deleted.', 'doublescale' ),
+				);
+
+				return new WP_Error(
+					'template_in_use',
+					$messages[ $used_by ],
+					array(
+						'status'  => 409,
+						'used_by' => $used_by,
+					)
+				);
+			}
+
 			$template->delete();
 
 			return new WP_REST_Response( null, 204 );
@@ -712,8 +732,14 @@ class RestTemplateController extends RestController {
 			'type'      => $type,
 			'body'      => $request->get_param( 'body' ),
 			'settings'  => $settings,
-			'thumbnail' => $request->get_param( 'thumbnail' ),
 		);
+
+		// Like `hidden` below: a partial update (a rename sends only the name,
+		// the builder's re-save only the body) must not wipe the thumbnail.
+		// Sending it — even empty — still sets it; a create still gets one.
+		if ( $request->has_param( 'thumbnail' ) || ! $request->get_param( 'id' ) ) {
+			$template_data['thumbnail'] = $request->get_param( 'thumbnail' );
+		}
 
 		// `hidden` decides whether a template appears in the user-facing
 		// picker, so only a caller that actually sent it may change it. A
@@ -761,7 +787,7 @@ class RestTemplateController extends RestController {
 	 * @return bool $permission The permission
 	 */
 	public function get_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return Permissions::can_use_campaigns();
 	}
 
 	/**
@@ -774,7 +800,7 @@ class RestTemplateController extends RestController {
 	 * @return bool $permission The permission
 	 */
 	public function get_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return Permissions::can_use_campaigns();
 	}
 
 	/**
@@ -787,7 +813,7 @@ class RestTemplateController extends RestController {
 	 * @return bool $permission The permission
 	 */
 	public function create_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return Permissions::can_use_campaigns();
 	}
 
 	/**
@@ -800,7 +826,7 @@ class RestTemplateController extends RestController {
 	 * @return bool $permission The permission
 	 */
 	public function update_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->may_change_templates( array( $request->get_param( 'id' ) ) );
 	}
 
 	/**
@@ -813,7 +839,7 @@ class RestTemplateController extends RestController {
 	 * @return bool $permission The permission
 	 */
 	public function delete_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->may_change_templates( (array) $request->get_param( 'ids' ) );
 	}
 
 	/**
@@ -826,7 +852,35 @@ class RestTemplateController extends RestController {
 	 * @return bool $permission The permission
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->may_change_templates( array( $request->get_param( 'id' ) ) );
+	}
+
+	/**
+	 * Campaign managers change any template; a Campaign Agent uses every
+	 * template but changes only the ones they made.
+	 *
+	 * @param array $ids Template ids.
+	 * @return bool|WP_Error
+	 */
+	private function may_change_templates( array $ids ) {
+		if ( Permissions::can_manage_campaigns() ) {
+			return true;
+		}
+		if ( ! Permissions::can_use_campaigns() ) {
+			return false;
+		}
+
+		$ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+		if ( empty( $ids ) ) {
+			return true;
+		}
+
+		$theirs = TemplateModel::query()->whereIn( 'id', $ids )->where( 'created_by', get_current_user_id() )->count();
+		if ( $theirs !== count( array_unique( $ids ) ) ) {
+			return new WP_Error( 'rest_forbidden', __( 'You can change only the templates you created.', 'doublescale' ), array( 'status' => 403 ) );
+		}
+
+		return true;
 	}
 
 	/**

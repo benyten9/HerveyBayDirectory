@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Translation;
+namespace DoubleScale\Vendor\Illuminate\Translation;
 
-use Illuminate\Contracts\Translation\Loader;
+use DoubleScale\Vendor\Illuminate\Contracts\Translation\Loader;
 class ArrayLoader implements Loader
 {
     /**

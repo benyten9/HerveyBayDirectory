@@ -163,6 +163,7 @@ class License extends WP_CLI_Command {
 			WP_CLI::error( 'Deactivation failed. Please try again or deactivate from the SEOPress settings page.' );
 		}
 
+		delete_option( 'seopress_pro_license_retry_after' );
 		delete_option( 'seopress_pro_license_status' );
 		delete_option( 'seopress_pro_license_expiry' );
 		$this->clear_edd_cache();
@@ -219,6 +220,7 @@ class License extends WP_CLI_Command {
 	 * @return void
 	 */
 	public function reset( $args, $assoc_args ) {
+		delete_option( 'seopress_pro_license_retry_after' );
 		delete_option( 'seopress_pro_license_status' );
 		delete_option( 'seopress_pro_license_key' );
 		delete_option( 'seopress_pro_license_key_error' );

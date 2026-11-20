@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Queue;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Queue;
 
 interface QueueableCollection
 {

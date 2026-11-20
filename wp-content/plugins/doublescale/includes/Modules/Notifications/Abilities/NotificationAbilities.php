@@ -166,7 +166,7 @@ final class NotificationAbilities {
 			$fetch->where( 'is_read', 0 );
 		}
 
-		$rows = $fetch->orderBy( 'created_at', 'desc' )
+		$rows = $fetch->orderBy( 'created_at', 'desc' )->orderBy( 'id', 'desc' )
 			->skip( $offset )
 			->take( $limit )
 			->get();

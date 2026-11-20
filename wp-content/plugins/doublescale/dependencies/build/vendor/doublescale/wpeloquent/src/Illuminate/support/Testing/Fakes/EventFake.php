@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Support\Testing\Fakes;
+namespace DoubleScale\Vendor\Illuminate\Support\Testing\Fakes;
 
 use Closure;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Vendor\PHPUnit\Framework\Assert as PHPUnit;
-use Illuminate\Contracts\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher;
 class EventFake implements Dispatcher
 {
     /**

@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Validation\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Validation\Concerns;
 
 use Closure;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use DoubleScale\Vendor\Symfony\Component\HttpFoundation\File\UploadedFile;
 trait FormatsMessages
 {
-    use \Illuminate\Validation\Concerns\ReplacesAttributes;
+    use ReplacesAttributes;
     /**
      * Get the validation message for an attribute and rule.
      *

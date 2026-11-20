@@ -73,6 +73,7 @@ final class Module extends AbstractModule {
 			$dir . '/SubtasksTableColumns.php',
 			$dir . '/SubtasksTableDueDateToDatetime.php',
 			$dir . '/SubtasksTableNotesColumn.php',
+			$dir . '/TasksTableDueDateNullable.php',
 		);
 	}
 
@@ -97,6 +98,14 @@ final class Module extends AbstractModule {
 			Services\TaskActivityLogger::class,
 			static fn() => new Services\TaskActivityLogger()
 		);
+		$container->singleton(
+			Services\TaskAssigneeHandover::class,
+			static fn() => new Services\TaskAssigneeHandover()
+		);
+		$container->singleton(
+			Services\SubtaskContactShare::class,
+			static fn() => new Services\SubtaskContactShare()
+		);
 	}
 
 	public function restControllers(): array {
@@ -109,13 +118,21 @@ final class Module extends AbstractModule {
 	public function boot( Container $container ): void {
 		parent::boot( $container );
 
-		Migrations\SubtasksTableColumns::ensure_columns();
-		Migrations\SubtasksTableDueDateToDatetime::ensure();
-		Migrations\SubtasksTableNotesColumn::ensure();
-		Migrations\TasksTableStatusIdColumn::ensure();
-		Migrations\TasksTableStageIdToStatusIdColumn::ensure();
-		Migrations\TaskStatusesTableProtectedColumn::ensure();
-		Migrations\TaskRecurrencesTableColumns::ensure();
+		$checks = static function () {
+			Migrations\SubtasksTableColumns::ensure_columns();
+			Migrations\SubtasksTableDueDateToDatetime::ensure();
+			Migrations\SubtasksTableNotesColumn::ensure();
+			Migrations\TasksTableDueDateNullable::ensure();
+			Migrations\TasksTableStatusIdColumn::ensure();
+			Migrations\TasksTableStageIdToStatusIdColumn::ensure();
+			Migrations\TaskStatusesTableProtectedColumn::ensure();
+			Migrations\TaskRecurrencesTableColumns::ensure();
+		};
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_tasks', DOUBLESCALE_PRO_VERSION, $checks );
+		} else {
+			$checks();
+		}
 
 		$container->get( Reminders\TaskReminderScheduler::class );
 		$container->get( Reminders\TaskAutomationSweeper::class );
@@ -126,6 +143,13 @@ final class Module extends AbstractModule {
 		$container->get( Services\TaskCalendarProvider::class );
 
 		$container->get( Services\TaskActivityLogger::class )->register();
+
+		// Someone who loses a record hands its open tasks to the record's owner.
+		$container->get( Services\TaskAssigneeHandover::class )->register();
+		$container->get( Services\SubtaskContactShare::class )->register();
+
+		// Open tasks in the contact profile's header tiles.
+		( new Services\TaskContactSummary() )->register();
 
 		$this->loadModuleMergeTagFiles();
 	}

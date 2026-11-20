@@ -46,7 +46,7 @@ function nibwp_fmtr_err(string $code, string $message): WP_Error
 function nibwp_fmtr_guard(): ?WP_Error
 {
     if (!nibwp_fmtr_available()) {
-        return nibwp_fmtr_err('nibwp_fmtr_missing', __('Forminator is not active on this site.', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_missing', __('Forminator is not active on this site.', 'nibwp'));
     }
 
     // Forminator's API asks to be initialised before use; skipping it is how
@@ -90,8 +90,8 @@ function nibwp_fmtr_summary($module): array
 /* ── Ability 1 — info ───────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-info', [
-    'label'       => __('Forminator — Info', domain: 'nibwp'),
-    'description' => __('Detect Forminator and count what exists on the site: forms, polls and quizzes (read-only).', domain: 'nibwp'),
+    'label'       => __('Forminator — Info', 'nibwp'),
+    'description' => 'Detect Forminator and count what exists on the site: forms, polls and quizzes (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -134,8 +134,8 @@ function nibwp_fmtr_info(array $input): array|WP_Error
 /* ── Ability 2 — forms ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-forms', [
-    'label'       => __('Forminator — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create and update Forminator forms, and get the shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('Forminator — Forms', 'nibwp'),
+    'description' => 'List, read, create and update Forminator forms, and get the shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -178,7 +178,7 @@ function nibwp_fmtr_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'update', 'shortcode'], strict: true) && $form_id <= 0) {
-        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_fmtr_try(static function () use ($action, $form_id, $input) {
@@ -200,7 +200,7 @@ function nibwp_fmtr_forms(array $input): array|WP_Error
 
             case 'create':
                 $new_id = Forminator_API::add_form(
-                    (string) ($input['name'] ?? __('Untitled form', domain: 'nibwp')),
+                    (string) ($input['name'] ?? __('Untitled form', 'nibwp')),
                     [],
                     (array) ($input['settings'] ?? [])
                 );
@@ -208,7 +208,7 @@ function nibwp_fmtr_forms(array $input): array|WP_Error
                 return is_wp_error($new_id) ? $new_id : [
                     'form_id' => (int) $new_id,
                     'created' => true,
-                    'note'    => __('Check the notification settings — a form without one stores entries and emails nobody.', domain: 'nibwp'),
+                    'note'    => __('Check the notification settings — a form without one stores entries and emails nobody.', 'nibwp'),
                 ];
 
             case 'update':
@@ -220,15 +220,15 @@ function nibwp_fmtr_forms(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'shortcode' => sprintf('[forminator_form id="%d"]', $form_id)];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
 /* ── Ability 3 — fields ─────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-fields', [
-    'label'       => __('Forminator — Fields', domain: 'nibwp'),
-    'description' => __('List, read, add, update and delete the fields on a form.', domain: 'nibwp'),
+    'label'       => __('Forminator — Fields', 'nibwp'),
+    'description' => 'List, read, add, update and delete the fields on a form.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -268,14 +268,14 @@ function nibwp_fmtr_fields(array $input): array|WP_Error
 
     $form_id = (int) ($input['form_id'] ?? 0);
     if ($form_id <= 0) {
-        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $action = (string) ($input['action'] ?? 'list');
     $field_id = (string) ($input['field_id'] ?? '');
 
     if (in_array($action, ['get', 'update', 'delete'], strict: true) && $field_id === '') {
-        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A field ID is required — a string such as "email-1".', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A field ID is required — a string such as "email-1".', 'nibwp'));
     }
 
     return nibwp_fmtr_try(static function () use ($form_id, $action, $field_id, $input) {
@@ -302,7 +302,7 @@ function nibwp_fmtr_fields(array $input): array|WP_Error
             case 'by_type':
                 $type = (string) ($input['type'] ?? '');
                 if ($type === '') {
-                    throw new \RuntimeException(__('A field type is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A field type is required.', 'nibwp'));
                 }
 
                 return ['form_id' => $form_id, 'type' => $type, 'fields' => Forminator_API::get_form_fields_by_type($form_id, $type)];
@@ -313,7 +313,7 @@ function nibwp_fmtr_fields(array $input): array|WP_Error
             case 'add':
                 $field = (array) ($input['field'] ?? []);
                 if (($field['type'] ?? '') === '') {
-                    throw new \RuntimeException(__('A field type is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A field type is required.', 'nibwp'));
                 }
                 $result = Forminator_API::add_form_field($form_id, (string) $field['type'], $field);
 
@@ -331,19 +331,19 @@ function nibwp_fmtr_fields(array $input): array|WP_Error
                     'form_id'  => $form_id,
                     'field_id' => $field_id,
                     'deleted'  => true,
-                    'note'     => __('Values recorded against this field remain in past entries but are no longer reachable through the form.', domain: 'nibwp'),
+                    'note'     => __('Values recorded against this field remain in past entries but are no longer reachable through the form.', 'nibwp'),
                 ];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
 /* ── Ability 4 — entries ────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-entries', [
-    'label'       => __('Forminator — Entries', domain: 'nibwp'),
-    'description' => __('List, read and count entries for a form, poll or quiz.', domain: 'nibwp'),
+    'label'       => __('Forminator — Entries', 'nibwp'),
+    'description' => 'List, read and count entries for a form, poll or quiz.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -384,7 +384,7 @@ function nibwp_fmtr_entries(array $input): array|WP_Error
 
     $module_id = (int) ($input['module_id'] ?? 0);
     if ($module_id <= 0) {
-        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid module ID is required.', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid module ID is required.', 'nibwp'));
     }
 
     return nibwp_fmtr_try(static function () use ($module_id, $input) {
@@ -398,7 +398,7 @@ function nibwp_fmtr_entries(array $input): array|WP_Error
         ];
 
         if (!isset($methods[$module])) {
-            throw new \RuntimeException(__('module must be form, poll or quiz.', domain: 'nibwp'));
+            throw new \RuntimeException(__('module must be form, poll or quiz.', 'nibwp'));
         }
 
         $api = $methods[$module];
@@ -410,7 +410,7 @@ function nibwp_fmtr_entries(array $input): array|WP_Error
         if ($action === 'get') {
             $entry_id = (int) ($input['entry_id'] ?? 0);
             if ($entry_id <= 0) {
-                throw new \RuntimeException(__('A valid entry ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid entry ID is required.', 'nibwp'));
             }
 
             return ['module' => $module, 'entry_id' => $entry_id, 'entry' => Forminator_API::{$api['one']}($module_id, $entry_id)];
@@ -437,8 +437,8 @@ function nibwp_fmtr_entries(array $input): array|WP_Error
 /* ── Ability 5 — settings ───────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-settings', [
-    'label'       => __('Forminator — Form settings', domain: 'nibwp'),
-    'description' => __('Read and change a form\'s settings, including its email notifications.', domain: 'nibwp'),
+    'label'       => __('Forminator — Form settings', 'nibwp'),
+    'description' => 'Read and change a form\'s settings, including its email notifications.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -478,7 +478,7 @@ function nibwp_fmtr_settings(array $input): array|WP_Error
 
     $form_id = (int) ($input['form_id'] ?? 0);
     if ($form_id <= 0) {
-        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_fmtr_try(static function () use ($form_id, $input) {
@@ -498,7 +498,7 @@ function nibwp_fmtr_settings(array $input): array|WP_Error
                 'settings' => $settings,
                 'notification_count' => count($notifications),
                 'warning'  => $notifications === []
-                    ? __('No notifications configured. Entries are stored and nobody is emailed.', domain: 'nibwp')
+                    ? __('No notifications configured. Entries are stored and nobody is emailed.', 'nibwp')
                     : '',
             ];
         }
@@ -506,7 +506,7 @@ function nibwp_fmtr_settings(array $input): array|WP_Error
         if ($action === 'set_one') {
             $key = (string) ($input['key'] ?? '');
             if ($key === '') {
-                throw new \RuntimeException(__('A setting key is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A setting key is required.', 'nibwp'));
             }
             $result = Forminator_API::update_form_setting($form_id, $key, $input['value'] ?? null);
 
@@ -515,7 +515,7 @@ function nibwp_fmtr_settings(array $input): array|WP_Error
 
         $settings = (array) ($input['settings'] ?? []);
         if ($settings === []) {
-            throw new \RuntimeException(__('Nothing to set.', domain: 'nibwp'));
+            throw new \RuntimeException(__('Nothing to set.', 'nibwp'));
         }
         $result = Forminator_API::update_form_settings($form_id, $settings);
 
@@ -526,8 +526,8 @@ function nibwp_fmtr_settings(array $input): array|WP_Error
 /* ── Ability 6 — polls, Ability 7 — quizzes ─────────────────────────── */
 
 wp_register_ability('nibwp/forminator-polls', [
-    'label'       => __('Forminator — Polls', domain: 'nibwp'),
-    'description' => __('List, read, create and update Forminator polls.', domain: 'nibwp'),
+    'label'       => __('Forminator — Polls', 'nibwp'),
+    'description' => 'List, read, create and update Forminator polls.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -562,8 +562,8 @@ function nibwp_fmtr_polls(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/forminator-quizzes', [
-    'label'       => __('Forminator — Quizzes', domain: 'nibwp'),
-    'description' => __('List, read, create and update Forminator quizzes.', domain: 'nibwp'),
+    'label'       => __('Forminator — Quizzes', 'nibwp'),
+    'description' => 'List, read, create and update Forminator quizzes.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -614,7 +614,7 @@ function nibwp_fmtr_module(array $input, string $module)
     $action = (string) ($input['action'] ?? 'list');
 
     if (in_array($action, ['get', 'update'], strict: true) && $id <= 0) {
-        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid ID is required.', domain: 'nibwp'));
+        return nibwp_fmtr_err('nibwp_fmtr_bad_id', __('A valid ID is required.', 'nibwp'));
     }
 
     return nibwp_fmtr_try(static function () use ($module, $id, $action, $input) {
@@ -625,7 +625,7 @@ function nibwp_fmtr_module(array $input, string $module)
             if (!method_exists('Forminator_API', $method)) {
                 throw new \RuntimeException(sprintf(
                     /* translators: %s: the API method */
-                    __('This Forminator version does not expose %s.', domain: 'nibwp'),
+                    __('This Forminator version does not expose %s.', 'nibwp'),
                     $method
                 ));
             }
@@ -644,7 +644,7 @@ function nibwp_fmtr_module(array $input, string $module)
 
             case 'create':
                 $new_id = Forminator_API::{$getters['add']}(
-                    (string) ($input['name'] ?? __('Untitled', domain: 'nibwp')),
+                    (string) ($input['name'] ?? __('Untitled', 'nibwp')),
                     [],
                     (array) ($input['settings'] ?? [])
                 );
@@ -657,15 +657,15 @@ function nibwp_fmtr_module(array $input, string $module)
                 return is_wp_error($result) ? $result : ['id' => $id, 'updated' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
 /* ── Ability 8 — audit ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-audit', [
-    'label'       => __('Forminator — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the faults that lose enquiries: no notifications, and no fields (read-only).', domain: 'nibwp'),
+    'label'       => __('Forminator — Audit', 'nibwp'),
+    'description' => 'Check every form for the faults that lose enquiries: no notifications, and no fields (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -719,8 +719,8 @@ function nibwp_fmtr_audit(array $input): array|WP_Error
                     'title'    => $name,
                     'severity' => 'blocker',
                     'code'     => 'no_notifications',
-                    'message'  => __('No email notifications. Entries are stored but nobody is told, so they accumulate unread.', domain: 'nibwp'),
-                    'fix'      => __('Add one through the form settings, then confirm with nibwp/forminator-settings.', domain: 'nibwp'),
+                    'message'  => __('No email notifications. Entries are stored but nobody is told, so they accumulate unread.', 'nibwp'),
+                    'fix'      => __('Add one through the form settings, then confirm with nibwp/forminator-settings.', 'nibwp'),
                 ];
             }
 
@@ -731,8 +731,8 @@ function nibwp_fmtr_audit(array $input): array|WP_Error
                     'title'    => $name,
                     'severity' => 'warning',
                     'code'     => 'no_fields',
-                    'message'  => __('The form has no fields, so there is nothing to submit.', domain: 'nibwp'),
-                    'fix'      => __('Add fields with nibwp/forminator-fields.', domain: 'nibwp'),
+                    'message'  => __('The form has no fields, so there is nothing to submit.', 'nibwp'),
+                    'fix'      => __('Add fields with nibwp/forminator-fields.', 'nibwp'),
                 ];
             }
         }
@@ -751,8 +751,8 @@ function nibwp_fmtr_audit(array $input): array|WP_Error
 /* ── Ability 9 — delete ─────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/forminator-delete', [
-    'label'       => __('Forminator — Delete', domain: 'nibwp'),
-    'description' => __('Permanently delete a form, poll, quiz or entry. Irreversible.', domain: 'nibwp'),
+    'label'       => __('Forminator — Delete', 'nibwp'),
+    'description' => 'Permanently delete a form, poll, quiz or entry. Irreversible.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -790,7 +790,7 @@ function nibwp_fmtr_delete(array $input): array|WP_Error
     if (!(bool) ($input['confirm'] ?? false)) {
         return nibwp_fmtr_err(
             'nibwp_fmtr_unconfirmed',
-            __('This permanently destroys data and cannot be undone. Re-issue with confirm true if that is intended.', domain: 'nibwp')
+            __('This permanently destroys data and cannot be undone. Re-issue with confirm true if that is intended.', 'nibwp')
         );
     }
 
@@ -800,13 +800,13 @@ function nibwp_fmtr_delete(array $input): array|WP_Error
         $module_id = (int) ($input['module_id'] ?? 0);
 
         if ($module_id <= 0) {
-            throw new \RuntimeException(__('A valid module ID is required.', domain: 'nibwp'));
+            throw new \RuntimeException(__('A valid module ID is required.', 'nibwp'));
         }
 
         if ($action === 'delete_module') {
             $method = 'delete_' . $module;
             if (!method_exists('Forminator_API', $method)) {
-                throw new \RuntimeException(__('This Forminator version cannot delete that module type.', domain: 'nibwp'));
+                throw new \RuntimeException(__('This Forminator version cannot delete that module type.', 'nibwp'));
             }
             $result = Forminator_API::{$method}($module_id);
 
@@ -816,7 +816,7 @@ function nibwp_fmtr_delete(array $input): array|WP_Error
         if ($action === 'delete_entry') {
             $entry_id = (int) ($input['entry_id'] ?? 0);
             if ($entry_id <= 0) {
-                throw new \RuntimeException(__('A valid entry ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid entry ID is required.', 'nibwp'));
             }
             $method = 'delete_' . $module . '_entry';
             $result = Forminator_API::{$method}($module_id, $entry_id);

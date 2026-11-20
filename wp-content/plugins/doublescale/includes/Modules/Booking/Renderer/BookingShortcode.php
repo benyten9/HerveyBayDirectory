@@ -38,7 +38,7 @@ class BookingShortcode {
 	 *
 	 * @var string
 	 */
-	private const DEFAULT_MIN_HEIGHT = '500px';
+	private const DEFAULT_MIN_HEIGHT = '480px';
 
 	/**
 	 * Event model class name (injectable for tests).
@@ -54,6 +54,49 @@ class BookingShortcode {
 		$this->event_model_class = $event_model_class;
 
 		add_shortcode( self::SHORTCODE, array( $this, 'render_shortcode' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_iframe_assets' ) );
+	}
+
+	/**
+	 * Styles for the host page that embeds the booking iframe via shortcode.
+	 */
+	public function enqueue_iframe_assets(): void {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$post = get_post();
+		$content = $post ? (string) $post->post_content : '';
+		$has_booking = $content
+			&& (
+				has_shortcode( $content, self::SHORTCODE )
+				|| false !== strpos( $content, self::SHORTCODE )
+				|| false !== strpos( $content, 'doublescale-booking' )
+			);
+
+		// Page builders may store the shortcode outside raw post_content; still
+		// enqueue lightly so any iframe on the page is sized correctly.
+		if ( ! $has_booking && ! is_singular() ) {
+			return;
+		}
+
+		$version = defined( 'DOUBLESCALE_VERSION' ) ? \DOUBLESCALE_VERSION : '1.0.0';
+		$handle  = 'doublescale-booking-iframe';
+		wp_register_style( $handle, false, array(), $version );
+		wp_enqueue_style( $handle );
+		wp_add_inline_style(
+			$handle,
+			'.doublescale-booking-iframe{display:block!important;width:100%!important;max-width:100%!important;margin:0 auto!important;border:0!important;background:transparent!important;box-sizing:border-box!important;vertical-align:top;overflow:hidden;}'
+			. '.entry-content .doublescale-booking-iframe,.wp-block-group .doublescale-booking-iframe,.eb-parent .doublescale-booking-iframe,.wp-block-kadence-column .doublescale-booking-iframe{width:100%!important;max-width:100%!important;}'
+			. '.doublescale-booking-iframe-wrap{display:block;width:100%;max-width:100%;margin:0;padding:0;line-height:0;}'
+		);
+
+		wp_register_script( $handle, false, array(), $version, true );
+		wp_enqueue_script( $handle );
+		wp_add_inline_script(
+			$handle,
+			"(function(){function size(iframe,h){if(!iframe||!h||h<200){return;}var next=Math.ceil(h);iframe.style.height=next+'px';iframe.style.minHeight=next+'px';iframe.style.maxHeight='none';}function bind(iframe){if(!iframe||iframe.dataset.dsBound){return;}iframe.dataset.dsBound='1';window.addEventListener('message',function(e){if(!e||!e.data||e.data.type!=='doublescale-booking-resize'){return;}if(e.source!==iframe.contentWindow){return;}size(iframe,parseInt(e.data.height,10));});iframe.addEventListener('load',function(){try{iframe.contentWindow.postMessage({type:'doublescale-booking-request-height'},'*');}catch(err){}});}function scan(){document.querySelectorAll('iframe.doublescale-booking-iframe').forEach(bind);}scan();document.addEventListener('DOMContentLoaded',scan);window.addEventListener('load',scan);if(typeof MutationObserver!=='undefined'){new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});}})();"
+		);
 	}
 
 	/**
@@ -87,10 +130,16 @@ class BookingShortcode {
 
 		list( $width, $min_height, $max_height ) = $this->parse_dimensions( $atts );
 
-		$src = home_url( '/?doublescale_booking_event=' . rawurlencode( (string) $event->slug ) );
+		$src = add_query_arg(
+			array(
+				'doublescale_booking_event' => (string) $event->slug,
+				'embed'                     => '1',
+			),
+			home_url( '/' )
+		);
 
 		return sprintf(
-			'<iframe class="doublescale-booking-iframe" src="%s" title="%s" loading="lazy" style="border:0;display:block;width:%s;min-height:%s;max-height:%s"></iframe>',
+			'<div class="doublescale-booking-iframe-wrap"><iframe class="doublescale-booking-iframe" src="%s" title="%s" loading="eager" style="border:0;display:block;width:%s;min-height:%s;max-height:%s;background:transparent;"></iframe></div>',
 			esc_url( $src ),
 			esc_attr__( 'Booking form', 'doublescale' ),
 			esc_attr( $width ),

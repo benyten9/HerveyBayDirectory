@@ -11,11 +11,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/disable-file', [
-    'label' => __('Disable File', domain: 'nibwp'),
-    'description' => __(
-        'Disables a file in the sandbox (wp-content/nibwp-sandbox/) by appending ".disabled" to its filename. The file is preserved on disk but no longer loaded by the sandbox loader. Use the same path with ".disabled" removed to re-enable. Only operates on files inside the sandbox directory. Idempotent: disabling an already-disabled file succeeds with disabled=false.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Disable File', 'nibwp'),
+    'description' => 'Disables a file in the sandbox (wp-content/nibwp-sandbox/) by appending ".disabled" to its filename. The file is preserved on disk but no longer loaded by the sandbox loader. Use the same path with ".disabled" removed to re-enable. Only operates on files inside the sandbox directory. Idempotent: disabling an already-disabled file succeeds with disabled=false.',
     'category' => 'filesystem',
     'input_schema' => [
         'type' => 'object',
@@ -38,7 +35,9 @@ wp_register_ability('nibwp/disable-file', [
         ],
     ],
     'execute_callback' => 'nibwp_disable_file',
-    'permission_callback' => 'nibwp_permission_callback',
+    // Renaming a file out of the way is a write to the install's filesystem.
+    // See nibwp_filesystem_permission_callback().
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

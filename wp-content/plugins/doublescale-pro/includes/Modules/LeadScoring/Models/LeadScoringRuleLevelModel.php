@@ -12,7 +12,7 @@
 
 namespace DoubleScale\Pro\Modules\LeadScoring\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * LeadScoringRuleLevelModel class
@@ -81,7 +81,7 @@ class LeadScoringRuleLevelModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public static function get_ordered_by_points( $order = 'asc' ) {
 		return self::orderBy( 'points', $order )->get();
@@ -140,7 +140,7 @@ class LeadScoringRuleLevelModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public static function get_levels_with_achievement_status( $score ) {
 		$levels = self::get_ordered_by_points( 'asc' );

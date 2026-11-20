@@ -4,7 +4,7 @@ namespace DoubleScale\Modules\Booking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Booking\Services\BookingEvents;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 
@@ -154,6 +154,37 @@ class BookingModel extends Model {
 			return $this->event->advanced_settings ?? array();
 		}
 		return array();
+	}
+
+	/**
+	 * The event's "Redirect After Booking" page for this booking, with its
+	 * query string's merge tags filled in. Empty when the event uses the
+	 * default confirmation page.
+	 *
+	 * Every path that ends a booking reads it: the booking request itself,
+	 * and the return from a payment gateway.
+	 *
+	 * @return string
+	 */
+	public function get_redirect_after_booking_url(): string {
+		$advanced_settings = $this->getAdvancedSettings();
+		$redirect_url      = isset( $advanced_settings['redirect_url'] ) ? trim( (string) $advanced_settings['redirect_url'] ) : '';
+
+		if ( empty( $advanced_settings['redirect_after_submit'] ) || '' === $redirect_url ) {
+			return '';
+		}
+
+		$redirect_query_string = isset( $advanced_settings['redirect_query_string'] ) ? (string) $advanced_settings['redirect_query_string'] : '';
+		if ( '' !== $redirect_query_string ) {
+			$redirect_query_string = (string) \DoubleScale\Modules\Booking\Managers\MergeTagsManager::instance()->process_merge_tags( $redirect_query_string, $this );
+		}
+
+		if ( '' !== $redirect_query_string ) {
+			$separator    = ( false === strpos( $redirect_url, '?' ) ) ? '?' : '&';
+			$redirect_url = $redirect_url . $separator . ltrim( $redirect_query_string, '?&' );
+		}
+
+		return $redirect_url;
 	}
 
 	public function getPaymentSettingsFromEntity() {

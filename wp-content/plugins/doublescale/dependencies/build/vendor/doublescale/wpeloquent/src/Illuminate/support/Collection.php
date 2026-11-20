@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use stdClass;
 use Countable;
@@ -11,10 +11,10 @@ use ArrayIterator;
 use CachingIterator;
 use JsonSerializable;
 use IteratorAggregate;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Contracts\Support\Jsonable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Jsonable;
 use DoubleScale\Vendor\Symfony\Component\VarDumper\VarDumper;
-use Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
 /**
  * @property-read HigherOrderCollectionProxy $average
  * @property-read HigherOrderCollectionProxy $avg
@@ -79,7 +79,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public static function wrap($value)
     {
-        return $value instanceof self ? new static($value) : new static(\Illuminate\Support\Arr::wrap($value));
+        return $value instanceof self ? new static($value) : new static(Arr::wrap($value));
     }
     /**
      * Get the underlying items from the given collection if applicable.
@@ -195,7 +195,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function collapse()
     {
-        return new static(\Illuminate\Support\Arr::collapse($this->items));
+        return new static(Arr::collapse($this->items));
     }
     /**
      * Alias for the "contains" method.
@@ -255,7 +255,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function crossJoin(...$lists)
     {
-        return new static(\Illuminate\Support\Arr::crossJoin($this->items, ...\array_map([$this, 'getArrayableItems'], $lists)));
+        return new static(Arr::crossJoin($this->items, ...\array_map([$this, 'getArrayableItems'], $lists)));
     }
     /**
      * Dump the collection and end the script.
@@ -454,7 +454,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
         } elseif (!\is_array($keys)) {
             $keys = \func_get_args();
         }
-        return new static(\Illuminate\Support\Arr::except($this->items, $keys));
+        return new static(Arr::except($this->items, $keys));
     }
     /**
      * Run a filter over each of the items.
@@ -465,7 +465,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
     public function filter(callable $callback = null)
     {
         if ($callback) {
-            return new static(\Illuminate\Support\Arr::where($this->items, $callback));
+            return new static(Arr::where($this->items, $callback));
         }
         return new static(\array_filter($this->items));
     }
@@ -711,7 +711,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function first(callable $callback = null, $default = null)
     {
-        return \Illuminate\Support\Arr::first($this->items, $callback, $default);
+        return Arr::first($this->items, $callback, $default);
     }
     /**
      * Get the first item by the given key value pair.
@@ -733,7 +733,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function flatten($depth = \INF)
     {
-        return new static(\Illuminate\Support\Arr::flatten($this->items, $depth));
+        return new static(Arr::flatten($this->items, $depth));
     }
     /**
      * Flip the items in the collection.
@@ -944,7 +944,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function last(callable $callback = null, $default = null)
     {
-        return \Illuminate\Support\Arr::last($this->items, $callback, $default);
+        return Arr::last($this->items, $callback, $default);
     }
     /**
      * Get the values of a given key.
@@ -955,7 +955,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function pluck($value, $key = null)
     {
-        return new static(\Illuminate\Support\Arr::pluck($this->items, $value, $key));
+        return new static(Arr::pluck($this->items, $value, $key));
     }
     /**
      * Run a map over each of the items.
@@ -1165,7 +1165,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
             $keys = $keys->all();
         }
         $keys = \is_array($keys) ? $keys : \func_get_args();
-        return new static(\Illuminate\Support\Arr::only($this->items, $keys));
+        return new static(Arr::only($this->items, $keys));
     }
     /**
      * "Paginate" the collection by slicing it into a smaller collection.
@@ -1224,7 +1224,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function prepend($value, $key = null)
     {
-        $this->items = \Illuminate\Support\Arr::prepend($this->items, $value, $key);
+        $this->items = Arr::prepend($this->items, $value, $key);
         return $this;
     }
     /**
@@ -1261,7 +1261,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function pull($key, $default = null)
     {
-        return \Illuminate\Support\Arr::pull($this->items, $key, $default);
+        return Arr::pull($this->items, $key, $default);
     }
     /**
      * Put an item in the collection by key.
@@ -1286,9 +1286,9 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
     public function random($number = null)
     {
         if (\is_null($number)) {
-            return \Illuminate\Support\Arr::random($this->items);
+            return Arr::random($this->items);
         }
-        return new static(\Illuminate\Support\Arr::random($this->items, $number));
+        return new static(Arr::random($this->items, $number));
     }
     /**
      * Reduce the collection to a single value.
@@ -1379,7 +1379,7 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
      */
     public function shuffle($seed = null)
     {
-        return new static(\Illuminate\Support\Arr::shuffle($this->items, $seed));
+        return new static(Arr::shuffle($this->items, $seed));
     }
     /**
      * Slice the underlying collection array.
@@ -1868,6 +1868,6 @@ class Collection implements ArrayAccess, Arrayable, Countable, IteratorAggregate
         if (!\in_array($key, static::$proxies)) {
             throw new Exception("Property [{$key}] does not exist on this collection instance.");
         }
-        return new \Illuminate\Support\HigherOrderCollectionProxy($this, $key);
+        return new HigherOrderCollectionProxy($this, $key);
     }
 }

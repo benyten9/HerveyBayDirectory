@@ -12,9 +12,33 @@ defined( 'ABSPATH' ) || exit;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 class BookingDataFormatter {
+
+	/**
+	 * A booking day for guests, in the site's language and Date Format:
+	 * "jueves, 5 de noviembre de 2026" on a Spanish site, "Thursday,
+	 * November 5, 2026" with the default English settings. DateTime::format()
+	 * always printed English day and month names.
+	 *
+	 * @param \DateTimeInterface $date Date in the booking's time zone.
+	 * @return string
+	 */
+	public static function long_date( \DateTimeInterface $date ): string {
+		$format = (string) get_option( 'date_format' );
+		if ( '' === $format ) {
+			$format = 'F j, Y';
+		}
+		// Add the weekday unless the site's format already shows one.
+		if ( ! preg_match( '/(?<!\\\\)[lD]/', $format ) ) {
+			$format = 'l, ' . $format;
+		}
+
+		$formatted = wp_date( $format, $date->getTimestamp(), $date->getTimezone() );
+
+		return false === $formatted ? $date->format( 'l, F j, Y' ) : $formatted;
+	}
 
 	/**
 	 * Format booking data for templates
@@ -57,7 +81,7 @@ class BookingDataFormatter {
 				'%s - %s, %s',
 				$start->format( $php_time_format ),
 				$end->format( $php_time_format ),
-				$start->format( 'l, F d, Y' )
+				self::long_date( $start )
 			);
 		} catch ( Exception $e ) {
 			return '';
@@ -92,17 +116,28 @@ class BookingDataFormatter {
 
 		$booking_array['location_value'] = $value;
 
-		$link_types = array( 'online', 'zoom', 'ms-teams', 'google-meet' );
+		$conferencing_types = array( 'zoom', 'ms-teams', 'google-meet' );
+		$link               = LocationLink::for_location( $type, is_scalar( $value ) ? (string) $value : '' );
 
-		if ( in_array( $type, $link_types, true ) && filter_var( $value, FILTER_VALIDATE_URL ) ) {
-			$booking_array['location'] = sprintf(
-				'<a class="link" href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-				esc_url( $value ),
-				esc_html( $label )
-			);
+		// A meeting goes by its name (conferencing labels stand alone, with no
+		// trailing ":" when the join URL is absent); any other place in full.
+		if ( in_array( $type, $conferencing_types, true ) || ( $link && LocationLink::MEETING === $link['kind'] && '' !== $label ) ) {
+			$text = '' !== $label ? $label : $value;
+		} elseif ( '' !== $label && '' !== $value ) {
+			$text = $label . ' : ' . $value;
 		} else {
-			$booking_array['location'] = esc_html( $label . ' : ' . $value );
+			$text = '' !== $label ? $label : $value;
 		}
+
+		// The meeting and the map open in a new tab; a call hands over to the phone.
+		$booking_array['location'] = $link
+			? sprintf(
+				'<a class="link" href="%s"%s>%s</a>',
+				esc_url( $link['url'] ),
+				LocationLink::CALL === $link['kind'] ? '' : ' target="_blank" rel="noopener noreferrer"',
+				esc_html( $text )
+			)
+			: esc_html( $text );
 
 		return $booking_array;
 	}

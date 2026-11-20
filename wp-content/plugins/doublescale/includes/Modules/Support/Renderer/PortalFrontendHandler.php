@@ -180,6 +180,10 @@ final class PortalFrontendHandler {
 			// pre-validate before sending a file.
 			'attachment_limits'     => \DoubleScale\Modules\Support\Services\AttachmentSettings::to_payload(),
 			'style_urls'            => $this->build_style_urls(),
+			// Settings → Business → Brand colour, as on the client portal.
+			'brand_color'           => \DoubleScale\Core\Settings\BrandColor::get(),
+			// Dates the way the site writes them (Settings → General).
+			'site_dates'            => \DoubleScale\Core\Settings\SiteDates::config(),
 		);
 
 		wp_localize_script(
@@ -413,7 +417,8 @@ final class PortalFrontendHandler {
 		 */
 		return (string) apply_filters(
 			'doublescale_support_portal_brand_title',
-			__( 'DoubleScale Support', 'doublescale' )
+			/* translators: %s: the business name from Settings → Business (or the site title). */
+			sprintf( __( '%s Support', 'doublescale' ), \DoubleScale\Modules\Portal\Services\PortalLoginSettings::default_heading() )
 		);
 	}
 

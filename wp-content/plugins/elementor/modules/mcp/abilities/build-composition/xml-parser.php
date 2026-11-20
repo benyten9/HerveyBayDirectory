@@ -22,16 +22,32 @@ class Xml_Parser {
 		libxml_use_internal_errors( $previous );
 
 		if ( ! $loaded ) {
-			$message = $errors ? $errors[0]->message : 'Unknown XML error.';
+			$message = $errors ? $this->describe_libxml_error( trim( $errors[0]->message ) ) : 'Unknown XML error.';
 			return new \WP_Error(
 				'invalid_xml',
 				/* translators: %s: XML parse error message */
-				sprintf( __( 'Failed to parse xml_structure: %s', 'elementor' ), trim( $message ) ),
+				sprintf( __( 'Failed to parse xml_structure: %s', 'elementor' ), $message ),
 				[ 'status' => \WP_Http::BAD_REQUEST ]
 			);
 		}
 
 		return $dom;
+	}
+
+	private function describe_libxml_error( string $message ): string {
+		$root = preg_quote( self::COMPOSITION_ROOT_TAG, '/' );
+
+		if ( preg_match( '/tag mismatch: ' . $root . ' line \d+ and (\S+)$/', $message, $matches ) ) {
+			/* translators: %s: XML tag name */
+			return sprintf( __( 'Closing tag </%s> has no matching opening tag.', 'elementor' ), $matches[1] );
+		}
+
+		if ( preg_match( '/tag mismatch: (\S+) line \d+ and ' . $root . '$/', $message, $matches ) ) {
+			/* translators: %s: XML tag name */
+			return sprintf( __( 'Element <%s> is not closed.', 'elementor' ), $matches[1] );
+		}
+
+		return $message;
 	}
 
 	public function get_root( \DOMDocument $dom ): ?\DOMElement {
@@ -54,6 +70,10 @@ class Xml_Parser {
 
 	public function get_tag_name( \DOMElement $node ): string {
 		return $node->tagName; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOMElement API.
+	}
+
+	public function remove_element( \DOMElement $node ): void {
+		$node->parentNode->removeChild( $node ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOMNode API.
 	}
 
 	public function get_configuration_id( \DOMElement $node ): ?string {

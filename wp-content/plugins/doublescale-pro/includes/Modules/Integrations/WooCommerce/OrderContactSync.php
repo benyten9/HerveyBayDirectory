@@ -244,6 +244,16 @@ final class OrderContactSync {
 			}
 		}
 
+		// The billing phone only fills a number the contact does not have. This
+		// runs on every status change of any order, old ones included, and
+		// WooCommerce never hears of a number the client changed in the portal
+		// (or the team on the contact page): writing it back undid that change.
+		foreach ( array( 'phone', 'whatsapp_phone' ) as $field ) {
+			if ( '' !== trim( (string) ( $contact->{$field} ?? '' ) ) ) {
+				unset( $merged[ $field ] );
+			}
+		}
+
 		if ( '' === trim( (string) ( $contact->source ?? '' ) ) ) {
 			$merged['source'] = 'woocommerce';
 		}

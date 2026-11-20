@@ -10,7 +10,7 @@ namespace DoubleScale\Modules\Tracking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Constants\CampaignChannel;
 
 /**
@@ -96,7 +96,7 @@ class TrackingTemplateModel extends Model {
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function tracking_records() {
 		return $this->hasMany( CommunicationTrackingModel::class, 'template_id' );

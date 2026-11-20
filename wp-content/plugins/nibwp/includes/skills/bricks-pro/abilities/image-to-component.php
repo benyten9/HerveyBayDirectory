@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/bricks-pro-image-to-component', [
     'label'       => __('Bricks Pro — Image to Bricks template', 'nibwp'),
-    'description' => __('Agent extracts the layout from an image / screenshot URL, builds the Bricks element tree, then submits via html-to-component for validation + persistence. This ability is the discoverable entry; routing happens server-side.', 'nibwp'),
+    'description' => 'Agent extracts the layout from an image / screenshot URL, builds the Bricks element tree, then submits via html-to-component for validation + persistence. This ability is the discoverable entry; routing happens server-side.',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

@@ -20,7 +20,7 @@ class TicketSource extends BaseSupportMergeTag {
 
 	public $slug = 'ticket_source';
 
-	public $description = 'How the ticket was opened (web or email)';
+	public $description = 'How the ticket was opened (web, email or help assistant chat)';
 
 	public function get_value( $contact, $merge_tag = '' ) {
 		$ticket = $this->resolve_ticket( $contact );
@@ -32,6 +32,7 @@ class TicketSource extends BaseSupportMergeTag {
 		$labels = array(
 			'web'   => __( 'Web / Portal', 'doublescale' ),
 			'email' => __( 'Email', 'doublescale' ),
+			'chat'  => __( 'Help assistant chat', 'doublescale' ),
 		);
 
 		return $labels[ $source ] ?? $source;

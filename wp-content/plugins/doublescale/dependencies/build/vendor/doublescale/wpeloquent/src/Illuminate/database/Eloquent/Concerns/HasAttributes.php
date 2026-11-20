@@ -1,18 +1,18 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Concerns;
 
 use LogicException;
 use DateTimeInterface;
-use Carbon\CarbonInterface;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Collection as BaseCollection;
-use Illuminate\Database\Eloquent\JsonEncodingException;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Carbon;
+use DoubleScale\Vendor\Illuminate\Support\Facades\Date;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Relation;
+use DoubleScale\Vendor\Illuminate\Support\Collection as BaseCollection;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\JsonEncodingException;
 trait HasAttributes
 {
     /**

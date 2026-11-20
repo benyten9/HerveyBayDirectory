@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Events;
+namespace DoubleScale\Vendor\Illuminate\Database\Events;
 
 class StatementPrepared
 {

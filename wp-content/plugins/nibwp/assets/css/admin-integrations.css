@@ -537,11 +537,14 @@
         .nibwp-integration-badge.is-missing { color: #d63638; }
         .nibwp-integration-badge.is-inactive { color: #a7aaad; }
 
-        /* Ability list in footer */
+        /* Action list in footer */
         .nibwp-ability-list {
+            flex-basis: 100%;
             font-size: 11px;
+            line-height: 1.5;
             color: #a7aaad;
             font-family: monospace;
+            overflow-wrap: anywhere;
         }
 
         /* Header with toggle */

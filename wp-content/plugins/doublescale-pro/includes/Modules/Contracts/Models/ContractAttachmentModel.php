@@ -41,7 +41,7 @@ class ContractAttachmentModel extends CoreAttachmentModel {
 	);
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contract() {
 		return $this->belongsTo( ContractModel::class, 'attachable_id', 'id' );

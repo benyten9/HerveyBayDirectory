@@ -815,7 +815,14 @@ function nibwp_affiliate_render_pitch(): void
                         <span><?php esc_html_e('Commission', 'nibwp'); ?></span>
                     </li>
                     <li>
-                        <strong><?php echo esc_html(sprintf('%d days', (int) $offer['cookie_days'])); ?></strong>
+                        <strong><?php
+                            $cookie_days = (int) $offer['cookie_days'];
+                            printf(
+                                /* translators: %s: number of days the referral cookie lasts */
+                                esc_html(_n('%s day', '%s days', $cookie_days, 'nibwp')),
+                                esc_html(number_format_i18n($cookie_days))
+                            );
+                        ?></strong>
                         <span><?php esc_html_e('Cookie window', 'nibwp'); ?></span>
                     </li>
                     <li>

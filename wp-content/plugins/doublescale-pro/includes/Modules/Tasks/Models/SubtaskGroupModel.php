@@ -11,7 +11,7 @@ namespace DoubleScale\Pro\Modules\Tasks\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * SubtaskGroupModel class
@@ -99,7 +99,7 @@ class SubtaskGroupModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function task() {
 		return $this->belongsTo( TaskModel::class, 'task_id', 'id' );
@@ -110,7 +110,7 @@ class SubtaskGroupModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function subtasks() {
 		return $this->hasMany( SubtaskModel::class, 'group_id', 'id' )->orderBy( 'position' );

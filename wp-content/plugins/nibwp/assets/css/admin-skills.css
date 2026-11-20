@@ -81,19 +81,19 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
-            /* nowrap on purpose: a wrapping flex line wraps BEFORE it shrinks,
-               so the search dropped to a second row on a laptop while both
-               items still had room to give. Below the breakpoint they stack
-               deliberately instead. */
-            flex-wrap: nowrap;
+            gap: 10px 16px;
+            flex-wrap: wrap;
             /* The wrap's own overflow:hidden would clip the search field's
                focus ring, and the tab strip does its own scrolling anyway. */
             overflow: visible;
         }
         .nw-skill-bar .nw-int-tabs {
-            flex: 1 1 auto;
+            flex: 0 0 auto;
             min-width: 0;
+            max-width: 100%;
+        }
+        .nw-skill-bar .nw-int-tab {
+            padding: 7px 11px;
         }
         /* Search and sort travel together on the right; the sort keeps its own
            width so a long option label cannot squeeze the field. */
@@ -125,8 +125,47 @@
         }
         @media (max-width: 782px) {
             .nw-skill-bar { align-items: stretch; flex-wrap: wrap; }
+            .nw-skill-bar__filters { flex-basis: 100%; flex-wrap: wrap; }
+            .nw-skill-bar__divider { display: none; }
+            .nw-skill-bar__tools { flex-basis: 100%; flex-wrap: wrap; }
             .nw-skill-bar__search { flex-basis: 100%; width: 100%; }
             .nw-skill-bar .nw-sort-select { flex: 1 1 auto; }
+        }
+
+        .nw-skill-bar__filters {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+        .nw-skill-bar__tools {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex: 1 1 360px;
+            min-width: 0;
+        }
+        .nw-skill-bar.is-stacked .nw-skill-bar__tools {
+            flex-basis: 100%;
+            justify-content: flex-start;
+        }
+        .nw-skill-bar.is-stacked .nw-skill-bar__search {
+            flex: 1 1 auto;
+            width: auto;
+            max-width: none;
+        }
+        .nw-skill-bar__divider {
+            flex: 0 0 1px;
+            align-self: stretch;
+            min-height: 20px;
+            background: var(--nw-border, #e5e7eb);
+        }
+        .nw-skill-empty {
+            margin: 0 0 16px;
+            font-size: 13px;
+            color: var(--nw-text-muted, #646970);
         }
 
         .nw-skill-grid {

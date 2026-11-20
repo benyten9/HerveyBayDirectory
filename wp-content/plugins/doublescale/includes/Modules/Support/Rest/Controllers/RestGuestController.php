@@ -14,15 +14,16 @@ use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
-use DoubleScale\Modules\Support\Constants\TicketStatus;
 use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Support\Services\AttachmentService;
 use DoubleScale\Modules\Support\Services\ContactResolver;
+use DoubleScale\Modules\Support\Services\ReplyAuthor;
 use DoubleScale\Modules\Support\Services\TicketService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use DoubleScale\Modules\Portal\Services\ClientSeen;
 
 /**
  * RestGuestController class.
@@ -131,9 +132,12 @@ class RestGuestController extends RestController {
 		);
 		$attachments_map = ( new AttachmentService() )->map_for_activities( $ids );
 
-		$data = array();
+		$customer_email = $this->customer_email( $ticket );
+		// The client opened the conversation: the team's replies are seen.
+		ClientSeen::ticket_replies_seen( $items, $customer_email );
+		$data           = array();
 		foreach ( $items as $activity ) {
-			$data[] = $this->shape_public_activity( $activity, $attachments_map );
+			$data[] = $this->shape_public_activity( $activity, $attachments_map, $customer_email );
 		}
 
 		return new WP_REST_Response(
@@ -188,17 +192,14 @@ class RestGuestController extends RestController {
 			$payload['attachment_hashes'] = $params['attachment_hashes'];
 		}
 
+		// A customer's reply reopens the ticket (TicketService::add_reply).
 		$activity = $this->service()->add_reply( $ticket, $payload );
 		if ( is_wp_error( $activity ) ) {
 			return $activity;
 		}
 
-		if ( in_array( $ticket->status, array( TicketStatus::RESOLVED, TicketStatus::CLOSED ), true ) ) {
-			$this->service()->update_ticket( $ticket, array( 'status' => TicketStatus::OPEN ) );
-		}
-
 		$attachments_map = ( new AttachmentService() )->map_for_activities( array( (int) $activity->id ) );
-		return new WP_REST_Response( $this->shape_public_activity( $activity, $attachments_map ), 201 );
+		return new WP_REST_Response( $this->shape_public_activity( $activity, $attachments_map, $this->customer_email( $ticket ) ), 201 );
 	}
 
 	/**
@@ -233,15 +234,18 @@ class RestGuestController extends RestController {
 			),
 			'created_at'     => $ticket->created_at ? (string) $ticket->created_at : null,
 			'updated_at'     => $ticket->updated_at ? (string) $ticket->updated_at : null,
+			// Merged into another request of the same customer: replies go there.
+			'merged_into'    => (int) $ticket->merged_into_id > 0 ? (int) $ticket->merged_into_id : null,
 		);
 	}
 
 	/**
-	 * @param ActivityModel                                $activity Activity.
+	 * @param ActivityModel                                $activity        Activity.
 	 * @param array<int, array<int, array<string, mixed>>> $attachments_map Attachments by activity id.
+	 * @param string                                       $customer_email  The ticket's contact email.
 	 * @return array
 	 */
-	private function shape_public_activity( ActivityModel $activity, array $attachments_map ): array {
+	private function shape_public_activity( ActivityModel $activity, array $attachments_map, string $customer_email = '' ): array {
 		$kind_map = array(
 			ActivityTypes::SUPPORT_REPLY => 'reply',
 			ActivityTypes::SUPPORT_EVENT => 'event',
@@ -249,13 +253,15 @@ class RestGuestController extends RestController {
 		$kind     = $kind_map[ $activity->activity_type ] ?? 'event';
 		$data     = is_array( $activity->data ) ? $activity->data : array();
 
-		$is_customer = $this->activity_is_customer_authored( $activity );
+		$is_customer = $this->activity_is_customer_authored( $activity, $data, $customer_email );
 
 		// Resolve the `user` shown to the guest. We expose only the WP
 		// display_name — never the agent's WP id or email:
 		// - Customer-authored row → the customer's own id (their reply).
 		// - Staff REPLY → the agent's display_name, so the customer sees who
 		// helped them (no id, no email).
+		// - Someone else's emailed reply → the sender's name; a system message
+		// → none (the thread says "Support team").
 		// - Events (ticket created, status changed, …) → authorless system rows.
 		$user = null;
 		if ( $is_customer ) {
@@ -273,6 +279,9 @@ class RestGuestController extends RestController {
 			$user = array(
 				'display_name' => (string) $activity->user->display_name,
 			);
+		} elseif ( ActivityTypes::SUPPORT_REPLY === $activity->activity_type && empty( $activity->user_id ) ) {
+			$sender = ReplyAuthor::sender_name( $data );
+			$user   = null !== $sender ? array( 'display_name' => $sender ) : null;
 		}
 
 		$payload = array(
@@ -280,7 +289,7 @@ class RestGuestController extends RestController {
 			'kind'        => $kind,
 			'type'        => $activity->activity_type,
 			'user_id'     => $is_customer && $activity->user_id ? (int) $activity->user_id : null,
-			'data'        => $data,
+			'data'        => ReplyAuthor::public_data( (string) $activity->activity_type, $data ),
 			'is_self'     => $is_customer,
 			'is_customer' => $is_customer,
 			'user'        => $user,
@@ -299,17 +308,34 @@ class RestGuestController extends RestController {
 	}
 
 	/**
-	 * Customer-authored when there is no WP user, or the user is not support staff.
+	 * Customer-authored when the WP user is not support staff, or, with no WP
+	 * user, when it is not someone else's email or a system message
+	 * ({@see ReplyAuthor::authorless_is_customer()}).
 	 *
-	 * @param ActivityModel $activity Activity row.
+	 * @param ActivityModel        $activity       Activity row.
+	 * @param array<string, mixed> $data           Activity data.
+	 * @param string               $customer_email The ticket's contact email.
 	 * @return bool
 	 */
-	private function activity_is_customer_authored( ActivityModel $activity ): bool {
+	private function activity_is_customer_authored( ActivityModel $activity, array $data, string $customer_email ): bool {
 		if ( empty( $activity->user_id ) ) {
-			return true;
+			return ReplyAuthor::authorless_is_customer( $data, $customer_email );
 		}
 
 		return ! Permissions::has_support_access( (int) $activity->user_id );
+	}
+
+	/**
+	 * The ticket's contact email, to tell the customer's own emailed replies
+	 * from someone else's.
+	 *
+	 * @param TicketModel $ticket Ticket.
+	 * @return string
+	 */
+	private function customer_email( TicketModel $ticket ): string {
+		$ticket->loadMissing( 'contact' );
+
+		return $ticket->contact ? (string) $ticket->contact->email : '';
 	}
 
 	/**

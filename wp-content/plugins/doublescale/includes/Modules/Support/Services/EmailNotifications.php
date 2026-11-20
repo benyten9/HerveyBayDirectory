@@ -17,8 +17,10 @@
  * Delivery is additionally PINNED to the SMTP connection that sends from that
  * address (see {@see self::dispatch()}) so a multi-connection install can't route
  * the mail through the wrong SMTP connection. A mailbox with no sending identity
- * — or a from_email no SMTP connection sends from — causes the outbound email to
- * be skipped + logged (the reply still saves). Operators set the sending identity
+ * — or, while DoubleScale's SMTP module is on, a from_email no SMTP connection
+ * sends from — causes the outbound email to be skipped + logged (the reply still
+ * saves). With the SMTP module off, support email goes through wp_mail() and the
+ * site's own mailer (e.g. WP Mail SMTP) from the mailbox address. Operators set the sending identity
  * per mailbox in the Support → Mailboxes editor.
  *
  * Per-mailbox templates: each event's enabled-state + subject + body resolve
@@ -40,6 +42,7 @@ namespace DoubleScale\Modules\Support\Services;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Constants\ActivityTypes;
+use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Emails\Emails;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
@@ -107,12 +110,36 @@ final class EmailNotifications {
 						)
 					);
 				}
-				$subject = $this->render( $tpl['subject'], $tokens );
-				$inner   = $this->render( $tpl['body'], $tokens );
+				if ( TicketService::is_unverified( $t ) ) {
+					// Nobody proved this address: whoever typed it could put any
+					// subject or name into a stranger's inbox. Neutral text only
+					// (an operator's template may use the typed title and name).
+					$tokens['ticket_title']        = '';
+					$tokens['customer_full_name']  = __( 'there', 'doublescale' );
+					$tokens['customer_first_name'] = __( 'there', 'doublescale' );
+					$subject                       = __( 'We received your request', 'doublescale' );
+					$inner                         = $this->render( self::unverified_created_body(), $tokens );
+				} else {
+					$subject = $this->render( $tpl['subject'], $tokens );
+					$inner   = $this->render( $tpl['body'], $tokens );
+				}
 
-				$this->dispatch( $t, $email, $subject, $this->wrap_body( $t, $inner ) );
+				$this->dispatch( $t, $email, $subject, $this->wrap_body( $t, $inner ), array(), $this->company_cc( $t, $email ) );
 			}
 		);
+	}
+
+	/**
+	 * The "We received your request" body for a ticket whose address nobody
+	 * proved: no typed title, no typed name.
+	 *
+	 * @return string
+	 */
+	private static function unverified_created_body(): string {
+		return '<p>' . esc_html__( 'Hello,', 'doublescale' ) . '</p>'
+			. '<p>' . esc_html__( 'We received your request. Our team will reply here.', 'doublescale' ) . '</p>'
+			. '<p><a href="{ticket_public_url}">' . esc_html__( 'View request', 'doublescale' ) . '</a></p>'
+			. '<p>{site_name}</p>';
 	}
 
 	/**
@@ -130,6 +157,19 @@ final class EmailNotifications {
 	public function on_reply_created( $activity, $ticket ): void {
 		// Customer-authored reply (no agent user_id) — nothing to send outward.
 		if ( ! is_object( $activity ) || empty( $activity->user_id ) ) {
+			return;
+		}
+
+		/**
+		 * Whether the team's reply is emailed to the customer now. DoubleScale
+		 * Pro holds it while the customer is answered in its help chat, and
+		 * emails it later only if it was not seen there.
+		 *
+		 * @param bool          $now      Default true.
+		 * @param ActivityModel $activity The reply.
+		 * @param TicketModel   $ticket   The ticket.
+		 */
+		if ( ! apply_filters( 'doublescale_support_reply_email_now', true, $activity, $ticket ) ) {
 			return;
 		}
 
@@ -163,10 +203,23 @@ final class EmailNotifications {
 				// validated and stored on the activity by TicketService::add_reply;
 				// dispatch() puts it on the outbound Cc: header.
 				$cc = isset( $data['cc'] ) && is_array( $data['cc'] ) ? $data['cc'] : array();
+				$cc = array_values( array_unique( array_merge( $cc, $this->company_cc( $t, $email ) ) ) );
 
 				// From is the mailbox's sending identity (not the agent's) — see
-				// dispatch() / sender_identity().
-				$this->dispatch( $t, $email, $subject, $this->wrap_body( $t, $inner ), $attachments, $cc );
+				// dispatch() / sender_identity(). The ticket screen shows where
+				// the reply got to (ReplyDelivery): sent, or why not, and opened.
+				$reply_id = (int) ( $activity->id ?? 0 );
+				$body     = $this->wrap_body( $t, $inner ) . ( $reply_id > 0 ? ReplyDelivery::pixel_tag( $reply_id ) : '' );
+				$sent     = $this->dispatch( $t, $email, $subject, $body, $attachments, $cc );
+				if ( $reply_id > 0 ) {
+					if ( true === $sent ) {
+						ReplyDelivery::clear( $reply_id, ReplyDelivery::EMAIL_HELD );
+						ReplyDelivery::stamp( $reply_id, ReplyDelivery::EMAILED );
+					} else {
+						ReplyDelivery::stamp( $reply_id, ReplyDelivery::FAILED_WHY, null === $sent ? 'mailbox' : 'send' );
+						ReplyDelivery::stamp( $reply_id, ReplyDelivery::EMAIL_FAILED );
+					}
+				}
 			}
 		);
 	}
@@ -208,7 +261,17 @@ final class EmailNotifications {
 				$subject = $this->render( $tpl['subject'], $tokens );
 				$inner   = $this->render( $tpl['body'], $tokens );
 
-				$this->dispatch( $t, $email, $subject, $this->wrap_body( $t, $inner ) );
+				/**
+				 * The customer's "solved / closed" email body, after the
+				 * mailbox's template (DoubleScale Pro ends it with rating faces).
+				 *
+				 * @param string      $inner      Body HTML.
+				 * @param TicketModel $t          Ticket.
+				 * @param string      $new_status resolved or closed.
+				 */
+				$inner = (string) apply_filters( 'doublescale_support_status_email_body', $inner, $t, $new_status );
+
+				$this->dispatch( $t, $email, $subject, $this->wrap_body( $t, $inner ), array(), $this->company_cc( $t, $email ) );
 			}
 		);
 	}
@@ -227,9 +290,9 @@ final class EmailNotifications {
 	 * @param string      $body        HTML body.
 	 * @param array       $attachments Absolute file paths to attach.
 	 * @param string[]    $cc          CC recipients for this message (already validated upstream).
-	 * @return void
+	 * @return bool|null True sent, false the mailer refused it, null not sent (the mailbox cannot send).
 	 */
-	private function dispatch( TicketModel $ticket, string $to, string $subject, string $body, array $attachments = array(), array $cc = array() ): void {
+	private function dispatch( TicketModel $ticket, string $to, string $subject, string $body, array $attachments = array(), array $cc = array() ): ?bool {
 		$identity = $this->sender_identity( $ticket );
 
 		// No resolvable sending identity on the mailbox → do NOT send. A support
@@ -253,13 +316,15 @@ final class EmailNotifications {
 					'recipient'  => $to,
 				)
 			);
-			return;
+			return null;
 		}
 
-		if ( '' === $identity['connection_id'] ) {
+		if ( '' === $identity['connection_id'] && self::doublescale_smtp_on() ) {
 			// Identity set, but no SMTP connection sends from this address. We do
 			// NOT fall through to the global default route (it would deliver under a
 			// right-looking From with misaligned SPF/DKIM) — skip + log instead.
+			// With DoubleScale's SMTP module off the site's own mailer (WP Mail
+			// SMTP, a host's mailer…) delivers every email, this one included.
 			doublescale_get_logger()->error(
 				'No SMTP connection sends from the support mailbox address; outbound email skipped',
 				array(
@@ -270,7 +335,7 @@ final class EmailNotifications {
 					'recipient'    => $to,
 				)
 			);
-			return;
+			return null;
 		}
 
 		$emails               = new Emails();
@@ -314,11 +379,15 @@ final class EmailNotifications {
 		// through the SMTP module's PHPMailerOverride, which reads this filter via
 		// get_smart_route() inside wp_mail(); the one-shot add/remove scopes the
 		// override to exactly this send so a later mail isn't mis-routed.
+		// Without a connection (SMTP module off) wp_mail() and the site's
+		// mailer take it as it is.
 		$connection_id = $identity['connection_id'];
 		$pin           = static function () use ( $connection_id ) {
 			return $connection_id;
 		};
-		add_filter( 'doublescale_smtp_explicit_connection', $pin );
+		if ( '' !== $connection_id ) {
+			add_filter( 'doublescale_smtp_explicit_connection', $pin );
+		}
 		try {
 			$result = $emails->send( $to, $subject, $body, $attachments );
 		} finally {
@@ -346,6 +415,19 @@ final class EmailNotifications {
 				)
 			);
 		}
+
+		return (bool) $result;
+	}
+
+	/**
+	 * Whether DoubleScale's SMTP module sends the site's email. Off, wp_mail()
+	 * goes to whatever mailer the site uses (WP Mail SMTP, the host's…), and
+	 * support email follows it like every other email.
+	 *
+	 * @return bool
+	 */
+	private static function doublescale_smtp_on(): bool {
+		return ! function_exists( 'doublescale_is_module_active' ) || doublescale_is_module_active( 'smtp' );
 	}
 
 	/**
@@ -383,10 +465,11 @@ final class EmailNotifications {
 
 		// The mailbox stores only the From address; the SMTP connection that sends
 		// from it supplies the From name (and is what we pin transport to). No
-		// matching connection → '' → dispatch() skips + logs.
+		// matching connection → '' → dispatch() skips + logs, unless DoubleScale's
+		// SMTP module is off (the site's mailer sends; From name: the site name).
 		$connection_id = '';
 		$from_name     = '';
-		if ( class_exists( '\DoubleScale\Modules\Smtp\Settings' ) ) {
+		if ( self::doublescale_smtp_on() && class_exists( '\DoubleScale\Modules\Smtp\Settings' ) ) {
 			$connection_id = \DoubleScale\Modules\Smtp\Settings::get_connection_id_for_from_email( $from_email );
 			if ( '' !== $connection_id ) {
 				$resolved = \DoubleScale\Modules\Smtp\Settings::get_identity_for_connection( $connection_id );
@@ -420,7 +503,17 @@ final class EmailNotifications {
 	 */
 	private function thread_parent_message_id( TicketModel $ticket ): string {
 		try {
-			$activity = ActivityModel::forTicket( (int) $ticket->id )
+			// Not forTicket(): its "oldest first" comes before the order below,
+			// which then always picked the customer's FIRST email.
+			$ticket_id = (int) $ticket->id;
+			$activity  = ActivityModel::query()
+				->whereHas(
+					'associations',
+					static function ( $q ) use ( $ticket_id ) {
+						$q->where( 'entity_type', ActivityAssociationModel::ENTITY_TYPE_TICKET )
+							->where( 'entity_id', $ticket_id );
+					}
+				)
 				->where( 'activity_type', ActivityTypes::SUPPORT_REPLY )
 				->whereNull( 'user_id' )
 				->whereRaw( "JSON_UNQUOTE(JSON_EXTRACT(data, '\$.message_id')) <> ''" )
@@ -542,7 +635,7 @@ final class EmailNotifications {
 			'reply_to_customer'          => array(
 				'subject' => __( 'Re: {ticket_title}', 'doublescale' ),
 				'body'    => '<p>Hi <strong>{customer_full_name}</strong>,</p>'
-					. '<p>An agent just replied to your ticket "<strong>{ticket_title}</strong>" (<a href="{ticket_public_url}">#{ticket_id}</a>). To view his reply or add additional comments, click the button below:</p>'
+					. '<p>An agent just replied to your ticket "<strong>{ticket_title}</strong>" (<a href="{ticket_public_url}">#{ticket_id}</a>). To view the reply or add comments, click the button below:</p>'
 					. '<p><a href="{ticket_public_url}">View Ticket</a></p>'
 					. '<p>or follow this link: {ticket_public_url}</p>'
 					. '<hr />'
@@ -619,6 +712,29 @@ final class EmailNotifications {
 	// ---------------------------------------------------------------------
 	// Helpers
 	// ---------------------------------------------------------------------
+
+	/**
+	 * Colleagues copied on a company ticket's emails (DoubleScale Pro decides
+	 * who: those who replied on it or follow all their company's tickets).
+	 *
+	 * @param TicketModel $ticket Ticket.
+	 * @param string      $to     The requester's address (already the To).
+	 * @return string[]
+	 */
+	private function company_cc( TicketModel $ticket, string $to ): array {
+		if ( (int) $ticket->company_id <= 0 ) {
+			return array();
+		}
+
+		/**
+		 * Filters the colleagues copied on a company ticket's email.
+		 *
+		 * @param string[]    $cc     Addresses.
+		 * @param TicketModel $ticket Ticket.
+		 * @param string      $to     The requester's address.
+		 */
+		return array_values( array_unique( (array) apply_filters( 'doublescale_support_company_cc', array(), $ticket, $to ) ) );
+	}
 
 	/**
 	 * The ticket customer's email, or '' when unresolvable.

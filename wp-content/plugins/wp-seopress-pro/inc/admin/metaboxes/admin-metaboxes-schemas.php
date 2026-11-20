@@ -37,7 +37,7 @@ if ( ! empty( $sp_schemas_ids ) ) {
 	<p class="sp-schema-count" data-count="<?php echo absint( $count ); ?>">
 		<?php
 			/* translators: %s number of automatic schemas */
-			printf( _n( 'You have <strong>%s</strong> automatic schema:', 'You have <strong>%s</strong> automatic schemas:', $count, 'wp-seopress-pro' ), number_format_i18n( absint( $count ) ) );
+			printf( wp_kses_post( _n( 'You have <strong>%s</strong> automatic schema:', 'You have <strong>%s</strong> automatic schemas:', $count, 'wp-seopress-pro' ) ), number_format_i18n( absint( $count ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Translated sentence holding a single link whose URL is escaped with esc_url().
 		?>
 	</p>
 </div>
@@ -1769,6 +1769,18 @@ if ( ! empty( $sp_schemas_ids ) ) {
 			}
 		}
 
+		// Book.
+		if ( 'book' === $seopress_pro_rich_snippets_type ) {
+			foreach ( \SEOPressPro\Helpers\Schemas\Book::fields() as $key => $field ) {
+				if ( 'manual_single' !== get_post_meta( $id, \SEOPressPro\Helpers\Schemas\Book::PREFIX . $key, true ) ) {
+					continue;
+				}
+				$name = 'seopress_pro_schemas[' . absint( $id ) . '][rich_snippets_book][' . $key . ']';
+				$value = isset( $seopress_pro_schemas[0][ $id ]['rich_snippets_book'][ $key ] ) ? $seopress_pro_schemas[0][ $id ]['rich_snippets_book'][ $key ] : '';
+				echo '<p><label for="' . esc_attr( $name ) . '">' . esc_html( $field['label'] ) . '</label><input type="text" id="' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" /><span class="description">' . esc_html( $field['description'] ) . '</span></p>';
+			}
+		}
+
 		// Software App.
 		if ( 'softwareapp' == $seopress_pro_rich_snippets_type ) {
 			if ( 'manual_single' == $seopress_pro_rich_snippets_softwareapp_name ) {
@@ -1903,6 +1915,8 @@ if ( ! empty( $sp_schemas_ids ) ) {
 		// Custom.
 		if ( 'custom' == $seopress_pro_rich_snippets_type ) {
 			if ( 'manual_custom_single' == $seopress_pro_rich_snippets_custom ) {
+				// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- example.com URL inside a JSON-LD sample used as a textarea placeholder, nothing is ever fetched from it.
+				// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- Admin markup assembled below, its dynamic parts already escaped.
 				echo '<p>
 						<label for="seopress_pro_schemas[' . absint( $id ) . '][rich_snippets_custom][custom]_meta">
 							' . esc_html__( 'Custom schema', 'wp-seopress-pro' ) . '</label>
@@ -1943,6 +1957,8 @@ if ( ! empty( $sp_schemas_ids ) ) {
 								'wp-seopress-pro'
 							) . '" aria-label="' . esc_html__( 'Custom schema', 'wp-seopress-pro' ) . '" value="' . esc_html( $check_custom ) . '">' . htmlspecialchars( $check_custom, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</textarea>
 					</p>';
+				// phpcs:enable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
+				// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
 		}
 	}

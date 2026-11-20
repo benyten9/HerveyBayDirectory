@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static \Illuminate\Contracts\Validation\Validator make(array $data, array $rules, array $messages = [], array $customAttributes = [])
@@ -10,7 +10,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Validation\Factory
  */
-class Validator extends \Illuminate\Support\Facades\Facade
+class Validator extends Facade
 {
     /**
      * Get the registered name of the component.

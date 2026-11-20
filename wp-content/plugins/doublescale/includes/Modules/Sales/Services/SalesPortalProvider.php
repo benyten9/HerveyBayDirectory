@@ -32,6 +32,8 @@ use DoubleScale\Modules\Documents\Rest\InvoiceShaper;
 use DoubleScale\Modules\Documents\Rest\ProposalShaper;
 use DoubleScale\Modules\Documents\Services\InvoiceUrl;
 use DoubleScale\Modules\Documents\Services\ProposalUrl;
+use DoubleScale\Modules\Portal\Services\PortalAccess;
+use DoubleScale\Modules\Portal\Services\PortalAccessGate;
 
 /**
  * SalesPortalProvider.
@@ -147,9 +149,11 @@ final class SalesPortalProvider {
 		}
 
 		if ( doublescale_sales_child_module_active( 'documents' ) ) {
-			$invoices = InvoiceModel::where( 'contact_id', (int) $contact->id )
+			// Latest touched first, so an old invoice paid today is among them.
+			$invoices = \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
 				->where( 'status', '!=', InvoiceStatus::DRAFT )
-				->orderBy( 'id', 'desc' )
+				->with( 'payments' )
+				->orderBy( 'updated_at', 'desc' )
 				->limit( self::TIMELINE_CAP )
 				->get();
 
@@ -159,16 +163,16 @@ final class SalesPortalProvider {
 					'kind'          => 'document',
 					'document_type' => 'invoice',
 					'type'          => self::invoice_lifecycle_type( $invoice ),
-					'date'          => (string) $invoice->created_at,
+					'date'          => self::invoice_event_date( $invoice ),
 					'title'         => (string) $invoice->invoice_number,
 					'status'        => (string) $invoice->status,
 					'public_url'    => (string) InvoiceUrl::get_public_url( $invoice ),
 				);
 			}
 
-			$proposals = ProposalModel::where( 'contact_id', (int) $contact->id )
+			$proposals = \DoubleScale\Modules\Portal\Services\PortalScope::apply( ProposalModel::query(), (int) $contact->id, 'invoices' )
 				->where( 'status', '!=', ProposalStatus::DRAFT )
-				->orderBy( 'id', 'desc' )
+				->orderBy( 'updated_at', 'desc' )
 				->limit( self::TIMELINE_CAP )
 				->get();
 
@@ -179,7 +183,7 @@ final class SalesPortalProvider {
 					'kind'          => 'document',
 					'document_type' => 'proposal',
 					'type'          => self::proposal_lifecycle_type( $proposal ),
-					'date'          => (string) $proposal->created_at,
+					'date'          => self::proposal_event_date( $proposal ),
 					'title'         => $title,
 					'status'        => (string) $proposal->status,
 					'public_url'    => (string) ProposalUrl::get_public_url( $proposal ),
@@ -214,7 +218,7 @@ final class SalesPortalProvider {
 		}
 
 		if ( doublescale_sales_child_module_active( 'documents' ) ) {
-			$invoices = InvoiceModel::where( 'contact_id', (int) $contact->id )
+			$invoices = \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
 				->where( 'status', '!=', InvoiceStatus::DRAFT )
 				->whereNotNull( 'due_date' )
 				->whereBetween( 'due_date', array( $start, $end_inclusive ) )
@@ -235,7 +239,7 @@ final class SalesPortalProvider {
 				);
 			}
 
-			$proposals = ProposalModel::where( 'contact_id', (int) $contact->id )
+			$proposals = \DoubleScale\Modules\Portal\Services\PortalScope::apply( ProposalModel::query(), (int) $contact->id, 'invoices' )
 				->where( 'status', '!=', ProposalStatus::DRAFT )
 				->whereNotNull( 'open_till' )
 				->whereBetween( 'open_till', array( $start, $end_inclusive ) )
@@ -272,7 +276,13 @@ final class SalesPortalProvider {
 			return 0;
 		}
 
-		$count = 0;
+		$count  = 0;
+		$access = PortalAccess::for_contact( $contact );
+		$shows  = array(
+			'documents'    => ! empty( $access['documents'] ),
+			'contracts'    => ! empty( $access['contracts'] ),
+			'credit_notes' => ! empty( $access['credit_notes'] ),
+		);
 
 		if (
 			doublescale_sales_child_module_active( 'documents' )
@@ -282,25 +292,36 @@ final class SalesPortalProvider {
 			)
 		) {
 			try {
-				$count += (int) InvoiceModel::where( 'contact_id', (int) $contact->id )
-					->where( 'status', '!=', InvoiceStatus::DRAFT )
-					->count();
+				if ( $shows['documents'] ) {
+					$count += (int) \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
+						->where( 'status', '!=', InvoiceStatus::DRAFT )
+						->count();
 
-				$count += (int) ProposalModel::where( 'contact_id', (int) $contact->id )
-					->where( 'status', '!=', ProposalStatus::DRAFT )
-					->count();
+					$count += (int) \DoubleScale\Modules\Portal\Services\PortalScope::apply( ProposalModel::query(), (int) $contact->id, 'invoices' )
+						->where( 'status', '!=', ProposalStatus::DRAFT )
+						->count();
+				}
 			} catch ( \Throwable $e ) {
 				// Tables missing — leave count at 0 for documents.
 			}
 		}
 
-		/**
-		 * Allow Pro modules to include additional customer-visible documents.
-		 *
-		 * @param int           $count   Current count.
-		 * @param ContactModel  $contact Resolved contact.
-		 */
-		return (int) apply_filters( 'doublescale_portal_visible_document_count', $count, $contact );
+		if ( $shows['documents'] && $shows['contracts'] && $shows['credit_notes'] ) {
+			/**
+			 * Allow Pro modules to include additional customer-visible documents.
+			 *
+			 * @param int           $count   Current count.
+			 * @param ContactModel  $contact Resolved contact.
+			 */
+			return (int) apply_filters( 'doublescale_portal_visible_document_count', $count, $contact );
+		}
+
+		// A document module is hidden for this customer. The count filter above
+		// cannot tell a contract from a credit note, so count the rows the
+		// Documents page itself lists for the kinds Pro adds, after the same gate.
+		$added = apply_filters( 'doublescale_portal_documents_rows', array(), $contact, 'all' );
+
+		return $count + count( PortalAccessGate::document_rows( is_array( $added ) ? $added : array(), $contact ) );
 	}
 
 	/**
@@ -322,13 +343,13 @@ final class SalesPortalProvider {
 
 		try {
 			$invoices = $documents_ready
-				? (int) InvoiceModel::where( 'contact_id', (int) $contact->id )
+				? (int) \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
 					->whereIn( 'status', self::OUTSTANDING_INVOICE_STATUSES )
 					->count()
 				: 0;
 
 			$proposals = $documents_ready
-				? (int) ProposalModel::where( 'contact_id', (int) $contact->id )
+				? (int) \DoubleScale\Modules\Portal\Services\PortalScope::apply( ProposalModel::query(), (int) $contact->id, 'invoices' )
 					->whereIn( 'status', self::OPEN_PROPOSAL_STATUSES )
 					->count()
 				: 0;
@@ -353,7 +374,7 @@ final class SalesPortalProvider {
 			return '0';
 		}
 
-		$invoices = InvoiceModel::where( 'contact_id', (int) $contact->id )
+		$invoices = \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
 			->whereIn( 'status', self::OUTSTANDING_INVOICE_STATUSES )
 			->get();
 
@@ -373,12 +394,75 @@ final class SalesPortalProvider {
 		}
 
 		$parts = array();
+		// The Documents cards' form ("1,250 $", "9,496.20 EUR"): one way to
+		// write an amount across the portal.
 		foreach ( $by_currency as $currency => $sum ) {
-			$amount  = function_exists( 'number_format_i18n' ) ? number_format_i18n( $sum, 2 ) : number_format( $sum, 2 );
-			$parts[] = '' !== $currency ? $amount . ' ' . $currency : $amount;
+			$decimals = abs( $sum - round( $sum ) ) < 0.005 ? 0 : 2;
+			$amount   = function_exists( 'number_format_i18n' ) ? number_format_i18n( $sum, $decimals ) : number_format( $sum, $decimals );
+			$code     = strtoupper( trim( (string) $currency ) );
+			$parts[]  = '' === $code ? $amount : $amount . ' ' . ( 'USD' === $code ? '$' : $code );
 		}
 
 		return implode( ' · ', $parts );
+	}
+
+	/**
+	 * When the invoice's own event happened, in UTC like every other row of
+	 * the activity list: paid = its latest payment, else sent, else created.
+	 *
+	 * @param InvoiceModel $invoice Invoice (payments loaded).
+	 * @return string
+	 */
+	private static function invoice_event_date( InvoiceModel $invoice ): string {
+		if ( InvoiceStatus::PAID === (string) $invoice->status ) {
+			$latest = '';
+			foreach ( $invoice->payments as $payment ) {
+				$latest = max( $latest, (string) $payment->created_at );
+			}
+			if ( '' !== $latest ) {
+				return $latest;
+			}
+		}
+
+		return self::site_time_to_utc( $invoice->sent_at, (string) $invoice->created_at );
+	}
+
+	/**
+	 * When the proposal was answered, else sent, else created (UTC).
+	 *
+	 * @param ProposalModel $proposal Proposal.
+	 * @return string
+	 */
+	private static function proposal_event_date( ProposalModel $proposal ): string {
+		switch ( (string) $proposal->status ) {
+			case ProposalStatus::ACCEPTED:
+				$when = $proposal->accepted_at;
+				break;
+			case ProposalStatus::DECLINED:
+				$when = $proposal->declined_at;
+				break;
+			default:
+				$when = $proposal->sent_at;
+		}
+		if ( empty( $when ) ) {
+			$when = $proposal->sent_at;
+		}
+
+		return self::site_time_to_utc( $when, (string) $proposal->created_at );
+	}
+
+	/**
+	 * Sent/answered times are stored in the site's time; the activity list
+	 * reads UTC (as `created_at`).
+	 *
+	 * @param mixed  $site_time Stored site-time value.
+	 * @param string $fallback  UTC value when it is empty.
+	 * @return string
+	 */
+	private static function site_time_to_utc( $site_time, string $fallback ): string {
+		$value = trim( (string) $site_time );
+
+		return '' !== $value ? get_gmt_from_date( $value ) : $fallback;
 	}
 
 	/**

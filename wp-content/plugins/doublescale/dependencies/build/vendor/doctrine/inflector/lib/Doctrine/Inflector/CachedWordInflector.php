@@ -1,15 +1,15 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Inflector;
 
-class CachedWordInflector implements \Doctrine\Inflector\WordInflector
+class CachedWordInflector implements WordInflector
 {
     /** @var WordInflector */
     private $wordInflector;
     /** @var string[] */
     private $cache = [];
-    public function __construct(\Doctrine\Inflector\WordInflector $wordInflector)
+    public function __construct(WordInflector $wordInflector)
     {
         $this->wordInflector = $wordInflector;
     }

@@ -9,11 +9,8 @@ if (!defined('ABSPATH')) {
 // ── EtchWP: Manage Blocks ──
 
 wp_register_ability('nibwp/etchwp-manage-blocks', [
-    'label' => __('EtchWP — Manage Blocks', domain: 'nibwp'),
-    'description' => __(
-        'List, create, update, and delete custom blocks registered by EtchWP. Supports block metadata, render callbacks, and editor settings.',
-        domain: 'nibwp',
-    ),
+    'label' => __('EtchWP — Manage Blocks', 'nibwp'),
+    'description' => 'List, create, update, and delete custom blocks registered by EtchWP. Supports block metadata, render callbacks, and editor settings.',
     'category' => 'etchwp',
     'input_schema' => [
         'type' => 'object',
@@ -29,7 +26,7 @@ wp_register_ability('nibwp/etchwp-manage-blocks', [
             ],
             'block_data' => [
                 'type' => 'object',
-                'description' => 'Block configuration for create/update: title, description, category, icon, attributes, render_callback code.',
+                'description' => 'Block configuration for create/update: title, description, category, icon, attributes.',
                 'properties' => [
                     'title' => ['type' => 'string'],
                     'description' => ['type' => 'string'],
@@ -37,7 +34,6 @@ wp_register_ability('nibwp/etchwp-manage-blocks', [
                     'icon' => ['type' => 'string'],
                     'keywords' => ['type' => 'array', 'items' => ['type' => 'string']],
                     'attributes' => ['type' => 'object'],
-                    'render_template' => ['type' => 'string', 'description' => 'PHP render template code.'],
                 ],
             ],
         ],
@@ -63,7 +59,11 @@ wp_register_ability('nibwp/etchwp-manage-blocks', [
                 'Use "list" to see all registered blocks.',
                 'Use "create" with block_data to register a new block.',
                 'Block names should use namespace/name format (e.g. "etch/hero-section").',
-                'The render_template is PHP code that outputs the block HTML.',
+                'This ability registers block metadata only; it does not accept PHP.',
+                'A block that needs a PHP render callback belongs in a sandbox file:',
+                'write it with nibwp/write-file to wp-content/nibwp-sandbox/ and call',
+                'register_block_type() there, where the code is on disk, reviewable,',
+                'and can be disabled or deleted.',
             ]),
             'readonly' => false,
             'destructive' => false,
@@ -154,15 +154,21 @@ function nibwp_etchwp_create_block(array $input): array|WP_Error
         'attributes' => $data['attributes'] ?? [],
     ];
 
-    if (!empty($data['render_template'])) {
-        $render_code = (string) $data['render_template'];
-        $args['render_callback'] = static function ($attributes, $content) use ($render_code) {
-            ob_start();
-            // @mago-ignore lint:no-eval
-            eval($render_code);
-            return ob_get_clean();
-        };
-    }
+    /*
+     * No render callback from input.
+     *
+     * This once accepted a render_template string and eval()'d it inside the
+     * callback. Two things were wrong with that. It was an arbitrary-code path
+     * reachable over MCP, where the only gate is the ability's capability check
+     * and the code itself is never written down anywhere an administrator could
+     * read it afterwards. And it did not work: register_block_type() holds the
+     * closure for the current request only, so the template was gone again by
+     * the next one and the block rendered its saved markup regardless.
+     *
+     * A block that genuinely needs PHP gets a sandbox file instead, where the
+     * code lands on disk under wp-content/nibwp-sandbox/, shows up on the
+     * Sandbox screen, and can be disabled or deleted.
+     */
 
     $result = register_block_type($name, $args);
     if ($result === false) {
@@ -202,11 +208,8 @@ function nibwp_etchwp_delete_block(array $input): array|WP_Error
 // ── EtchWP: Manage Custom Fields ──
 
 wp_register_ability('nibwp/etchwp-manage-fields', [
-    'label' => __('EtchWP — Manage Custom Fields', domain: 'nibwp'),
-    'description' => __(
-        'List, create, and manage custom fields registered through EtchWP. Read and write field values on posts, users, and terms.',
-        domain: 'nibwp',
-    ),
+    'label' => __('EtchWP — Manage Custom Fields', 'nibwp'),
+    'description' => 'List, create, and manage custom fields registered through EtchWP. Read and write field values on posts, users, and terms.',
     'category' => 'etchwp',
     'input_schema' => [
         'type' => 'object',
@@ -322,11 +325,8 @@ function nibwp_etchwp_update_field_values(array $input): array|WP_Error
 // ── EtchWP: Manage Styles ──
 
 wp_register_ability('nibwp/etchwp-manage-styles', [
-    'label' => __('EtchWP — Manage Styles', domain: 'nibwp'),
-    'description' => __(
-        'Manage global styles, CSS custom properties, and theme.json settings via EtchWP. Read and update design tokens.',
-        domain: 'nibwp',
-    ),
+    'label' => __('EtchWP — Manage Styles', 'nibwp'),
+    'description' => 'Manage global styles, CSS custom properties, and theme.json settings via EtchWP. Read and update design tokens.',
     'category' => 'etchwp',
     'input_schema' => [
         'type' => 'object',
@@ -500,11 +500,8 @@ function nibwp_etchwp_update_global_styles(array $input): array|WP_Error
 // ── EtchWP: Manage Assets ──
 
 wp_register_ability('nibwp/etchwp-manage-assets', [
-    'label' => __('EtchWP — Manage Assets', domain: 'nibwp'),
-    'description' => __(
-        'List, enqueue, and manage CSS/JS assets registered by EtchWP. View registered scripts and styles, check dependencies.',
-        domain: 'nibwp',
-    ),
+    'label' => __('EtchWP — Manage Assets', 'nibwp'),
+    'description' => 'List, enqueue, and manage CSS/JS assets registered by EtchWP. View registered scripts and styles, check dependencies.',
     'category' => 'etchwp',
     'input_schema' => [
         'type' => 'object',

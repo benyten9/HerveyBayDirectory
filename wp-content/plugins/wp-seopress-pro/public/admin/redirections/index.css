@@ -864,16 +864,46 @@ body:not(.admin-bar) .seopress-dataviews-page-header {
 	min-width: 0;
 }
 
-/* Both URL cells ask for an ellipsis through `max-width: 100%`, but a table
-   column sizes itself to its content, so that 100% resolved to the width of
-   the URL itself and the truncation never engaged. The columns grew with the
-   longest URL in the page until the table overflowed and Destination URL ended
-   up behind the sticky actions column. Cap the cells in `ch` so there is a real
-   width to truncate against; the full URL stays available in the title
-   tooltip. */
+/* Text cells ask for an ellipsis through `max-width: 100%`, but a table column
+   sizes itself to its content, so that 100% resolved to the width of the text
+   itself and the truncation never engaged. Long values widened the table until
+   Destination URL ended up behind the sticky actions column. Cap the cells in
+   `ch` so there is a real width to truncate against; the full value stays
+   available in the title tooltip. */
 .seopress-redirections-layout__main td .dataviews-view-table__primary-column-content,
 .seopress-redirections-layout__main td .dataviews-view-table__cell-content-wrapper {
 	max-width: 32ch;
+}
+
+/* URL cells do not need that cap: `.seopress-redirections-url` lets them shrink
+   (see urlFields.js), so they can use the room the table has and only truncate
+   when it runs out. DataViews makes every column but the primary one
+   shrink-to-fit with `width: 1%`; give the URL columns their share of the free
+   space back. That rule carries four classes' worth of specificity and its
+   stylesheet can load after this one, so the override needs !important. */
+.seopress-redirections-layout__main td .dataviews-view-table__primary-column-content:has(.seopress-redirections-url),
+.seopress-redirections-layout__main td .dataviews-view-table__cell-content-wrapper:has(.seopress-redirections-url) {
+	max-width: none;
+}
+
+.seopress-redirections-layout__main .dataviews-view-table col.dataviews-view-table__col-destination,
+.seopress-redirections-layout__main .dataviews-view-table col.dataviews-view-table__col-fullOrigin {
+	width: auto !important;
+}
+
+/* DataViews gives every cell a 15ch floor. Type, Hits, Regex, Enabled and the
+   dates hold a few characters, yet each kept ~147px, and on a narrow table the
+   URL columns were squeezed down to that same floor. Only URL cells keep it;
+   the other columns shrink to their content and leave the rest to the URLs. */
+.seopress-redirections-layout__main td .dataviews-view-table__cell-content-wrapper:not(:has(.seopress-redirections-url)) {
+	min-width: 0;
+}
+
+.seopress-redirections-url {
+	display: inline-grid;
+	grid-template-columns: minmax(0, max-content);
+	max-width: 100%;
+	vertical-align: middle;
 }
 
 @media screen and (max-width: 960px) {

@@ -18,7 +18,8 @@ if ( 'at_biz_dir_page_directorist-orders' === $hook_suffix ) {
         'directorist-pricing-plans-app-script',
         'directoristPricingPlans',
         [
-            'planAppConfigurations' => directorist_pricing_plans_config( 'plan-app-configurations' ),
+            'planAppConfigurations'           => directorist_pricing_plans_config( 'plan-app-configurations' ),
+            'isListingDisplayPriorityEnabled' => directorist_is_listing_display_priority_enabled(),
         ]
     );
 }

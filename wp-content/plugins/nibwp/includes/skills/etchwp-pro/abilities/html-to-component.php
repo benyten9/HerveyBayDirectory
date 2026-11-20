@@ -31,7 +31,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/etchwp-pro-html-to-component', [
     'label'       => __('EtchWP Pro — HTML / Website to Component', 'nibwp'),
-    'description' => __('Validates an agent-built Etch payload against the EtchWP Pro playbook (BEM, ACSS tokens, no clamp() font-size, style-hoist, form shortcode) and persists it into etch_styles + the target post. Conversion synthesis happens on the agent side; this ability is the guardrail + writer. Trigger words: "convert to etch", "etchify", "etch this", "make this an etch section".', 'nibwp'),
+    'description' => 'Validates an agent-built Etch payload against the EtchWP Pro playbook (BEM, ACSS tokens, no clamp() font-size, style-hoist, form shortcode) and persists it into etch_styles + the target post. Conversion synthesis happens on the agent side; this ability is the guardrail + writer. Trigger words: "convert to etch", "etchify", "etch this", "make this an etch section".',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

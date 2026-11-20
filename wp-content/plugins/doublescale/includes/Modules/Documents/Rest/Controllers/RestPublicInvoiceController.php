@@ -22,6 +22,7 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use DoubleScale\Modules\Portal\Services\ClientSeen;
 
 /**
  * RestPublicInvoiceController class.
@@ -132,7 +133,8 @@ class RestPublicInvoiceController extends RestController {
 			return new WP_Error( 'not_found', __( 'Invoice not found.', 'doublescale' ), array( 'status' => 404 ) );
 		}
 
-		if ( empty( $invoice->viewed_at ) ) {
+		// Opened by the client: a teammate checking the link does not count.
+		if ( empty( $invoice->viewed_at ) && ! ClientSeen::is_team_viewer() ) {
 			$invoice->viewed_at = current_time( 'mysql' );
 			$invoice->save();
 			$this->log_viewed_activity( $invoice );
@@ -285,7 +287,13 @@ class RestPublicInvoiceController extends RestController {
 			$payload['payments'][] = InvoiceShaper::shape_public_payment( $payment );
 		}
 
-		return $payload;
+		/**
+		 * Filter the customer-facing invoice payload (public page and portal).
+		 *
+		 * @param array<string, mixed> $payload Public payload.
+		 * @param InvoiceModel         $invoice Invoice.
+		 */
+		return apply_filters( 'doublescale_public_invoice_payload', $payload, $invoice );
 	}
 
 	/**

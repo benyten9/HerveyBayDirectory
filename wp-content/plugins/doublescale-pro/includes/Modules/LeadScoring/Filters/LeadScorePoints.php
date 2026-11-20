@@ -13,7 +13,7 @@
 namespace DoubleScale\Pro\Modules\LeadScoring\Filters;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 
 /**

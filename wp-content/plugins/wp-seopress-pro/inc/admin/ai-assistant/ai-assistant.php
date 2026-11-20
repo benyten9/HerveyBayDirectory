@@ -209,10 +209,6 @@ function seopress_ai_get_models_list() {
 				'label' => 'Mistral Large',
 				'value' => 'mistral-large-latest',
 			),
-			array(
-				'label' => 'Pixtral Large',
-				'value' => 'pixtral-large-latest',
-			),
 		),
 		'claude'   => array(
 			array(
@@ -301,6 +297,8 @@ function seopress_ai_assistant_classic_editor_assets( $hook = '' ) {
 				'quickOutline'   => __( 'Write an article outline', 'wp-seopress-pro' ),
 				'quickTitles'    => __( 'Suggest titles', 'wp-seopress-pro' ),
 				'quickAnalyze'   => __( 'Analyze my post', 'wp-seopress-pro' ),
+				'runAction'      => __( 'Run', 'wp-seopress-pro' ),
+				'actionDone'     => __( 'Done', 'wp-seopress-pro' ),
 			),
 		)
 	);
@@ -360,6 +358,8 @@ function seopress_ai_assistant_settings_assets( $hook ) {
 				'you'         => __( 'You', 'wp-seopress-pro' ),
 				'assistant'   => __( 'AI Assistant', 'wp-seopress-pro' ),
 				'copy'        => __( 'Copy', 'wp-seopress-pro' ),
+				'runAction'   => __( 'Run', 'wp-seopress-pro' ),
+				'actionDone'  => __( 'Done', 'wp-seopress-pro' ),
 			),
 		)
 	);

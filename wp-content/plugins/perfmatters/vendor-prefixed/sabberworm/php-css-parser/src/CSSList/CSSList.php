@@ -13,6 +13,7 @@ use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenException;
 use Perfmatters\Vendor\Sabberworm\CSS\Position\Position;
 use Perfmatters\Vendor\Sabberworm\CSS\Position\Positionable;
 use Perfmatters\Vendor\Sabberworm\CSS\Property\AtRule;
+use Perfmatters\Vendor\Sabberworm\CSS\Property\AtRuleStatement;
 use Perfmatters\Vendor\Sabberworm\CSS\Property\Charset;
 use Perfmatters\Vendor\Sabberworm\CSS\Property\CSSNamespace;
 use Perfmatters\Vendor\Sabberworm\CSS\Property\Import;
@@ -23,7 +24,6 @@ use Perfmatters\Vendor\Sabberworm\CSS\RuleSet\RuleSet;
 use Perfmatters\Vendor\Sabberworm\CSS\Value\CSSString;
 use Perfmatters\Vendor\Sabberworm\CSS\Value\URL;
 use Perfmatters\Vendor\Sabberworm\CSS\Value\Value;
-use function Perfmatters\Vendor\Safe\preg_match;
 /**
  * This is the most generic container available. It can contain `DeclarationBlock`s (rule sets with a selector),
  * `RuleSet`s as well as other `CSSList` objects.
@@ -62,8 +62,8 @@ abstract class CSSList implements CSSElement, CSSListItem, Positionable
         $isRoot = $list instanceof Document;
         $usesLenientParsing = $parserState->getSettings()->usesLenientParsing();
         $comments = [];
+        $parserState->consumeWhiteSpace($comments);
         while (!$parserState->isEnd()) {
-            $parserState->consumeWhiteSpace($comments);
             $listItem = null;
             if ($usesLenientParsing) {
                 try {
@@ -72,7 +72,7 @@ abstract class CSSList implements CSSElement, CSSListItem, Positionable
                 } catch (UnexpectedTokenException $e) {
                     $listItem = \false;
                     // If the failed parsing did not consume anything that was to come ...
-                    if ($parserState->currentColumn() === $positionBeforeParse && !$parserState->isEnd()) {
+                    if ($parserState->currentColumn() === $positionBeforeParse) {
                         // ... the unexpected token needs to be skipped, otherwise there'll be an infinite loop.
                         $parserState->consume(1);
                     }
@@ -190,8 +190,13 @@ abstract class CSSList implements CSSElement, CSSListItem, Positionable
             }
             return new CSSNamespace($url, $prefix, $identifierLineNumber);
         } else {
-            // Unknown other at rule (font-face or such)
-            $arguments = \trim($parserState->consumeUntil('{', \false, \true));
+            // Unknown other at rule (font-face, @layer, or such)
+            $arguments = \trim($parserState->consumeUntil(['{', ';'], \false, \false));
+            if ($parserState->comes(';')) {
+                $parserState->consume(';');
+                return new AtRuleStatement($identifier, $arguments, $identifierLineNumber);
+            }
+            $parserState->consume('{');
             if (\substr_count($arguments, '(') !== \substr_count($arguments, ')')) {
                 if ($parserState->getSettings()->usesLenientParsing()) {
                     return null;
@@ -228,7 +233,9 @@ abstract class CSSList implements CSSElement, CSSListItem, Positionable
         if (\strcasecmp($identifier, $match) === 0) {
             return \true;
         }
-        return preg_match("/^(-\\w+-)?{$match}\$/i", $identifier) === 1;
+        $matchResult = \preg_match("/^(-\\w+-)?{$match}\$/i", $identifier);
+        \assert(\is_int($matchResult));
+        return $matchResult === 1;
     }
     /**
      * Prepends an item to the list of contents.
@@ -328,7 +335,7 @@ abstract class CSSList implements CSSElement, CSSListItem, Positionable
         if (!\is_array($selectors)) {
             $selectors = \explode(',', $selectors);
         }
-        foreach ($selectors as $key => &$selector) {
+        foreach ($selectors as &$selector) {
             if (!$selector instanceof Selector) {
                 if (!Selector::isValid($selector)) {
                     throw new UnexpectedTokenException("Selector did not match '" . Selector::SELECTOR_VALIDATION_RX . "'.", $selector, 'custom');

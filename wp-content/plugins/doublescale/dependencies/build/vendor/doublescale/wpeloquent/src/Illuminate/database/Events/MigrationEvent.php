@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Events;
+namespace DoubleScale\Vendor\Illuminate\Database\Events;
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Contracts\Database\Events\MigrationEvent as MigrationEventContract;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\Migration;
+use DoubleScale\Vendor\Illuminate\Contracts\Database\Events\MigrationEvent as MigrationEventContract;
 abstract class MigrationEvent implements MigrationEventContract
 {
     /**

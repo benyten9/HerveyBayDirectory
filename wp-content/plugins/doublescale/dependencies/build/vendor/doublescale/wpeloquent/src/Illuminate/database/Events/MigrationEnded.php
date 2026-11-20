@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Events;
+namespace DoubleScale\Vendor\Illuminate\Database\Events;
 
-class MigrationEnded extends \Illuminate\Database\Events\MigrationEvent
+class MigrationEnded extends MigrationEvent
 {
     //
 }

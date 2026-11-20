@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use WP_Error;
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;

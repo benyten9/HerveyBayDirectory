@@ -33,6 +33,11 @@ class Settings extends Module_Settings implements Setting_With_Owned_Keys_Interf
 	const OPTION = 'googlesitekit_analytics-4_settings';
 
 	/**
+	 * Setting key for whether "Fresh Data" cards/widgets should include WooCommerce products.
+	 */
+	const FRESH_DATA_INCLUDES_WOOCOMMERCE_PRODUCTS = 'freshDataIncludesWooCommerceProducts';
+
+	/**
 	 * Registers the setting in WordPress.
 	 *
 	 * @since 1.30.0
@@ -66,6 +71,7 @@ class Settings extends Module_Settings implements Setting_With_Owned_Keys_Interf
 	 * Returns keys for view-only settings.
 	 *
 	 * @since 1.113.0
+	 * @since 1.192.0 Always includes `freshDataIncludesWooCommerceProducts`.
 	 *
 	 * @return array An array of keys for view-only settings.
 	 */
@@ -76,6 +82,8 @@ class Settings extends Module_Settings implements Setting_With_Owned_Keys_Interf
 			'detectedEvents',
 			'newConversionEventsLastUpdateAt',
 			'lostConversionEventsLastUpdateAt',
+			'propertyCreateTime',
+			self::FRESH_DATA_INCLUDES_WOOCOMMERCE_PRODUCTS,
 		);
 	}
 
@@ -83,13 +91,14 @@ class Settings extends Module_Settings implements Setting_With_Owned_Keys_Interf
 	 * Gets the default value.
 	 *
 	 * @since 1.30.0
+	 * @since 1.192.0 Always includes `freshDataIncludesWooCommerceProducts`.
 	 *
 	 * @return array
 	 */
 	protected function get_default() {
 		return array(
-			'ownerID'                          => 0,
-			'accountID'                        => '',
+			'ownerID'                                      => 0,
+			'accountID'                                    => '',
 			/**
 			 * This setting is deprecated and only remains for backwards
 			 * compatibility with old migrations.
@@ -98,26 +107,27 @@ class Settings extends Module_Settings implements Setting_With_Owned_Keys_Interf
 			 *
 			 * @deprecated
 			 */
-			'adsConversionID'                  => '',
-			'propertyID'                       => '',
-			'webDataStreamID'                  => '',
-			'measurementID'                    => '',
-			'trackingDisabled'                 => array( 'loggedinUsers' ),
-			'useSnippet'                       => true,
-			'googleTagID'                      => '',
-			'googleTagAccountID'               => '',
-			'googleTagContainerID'             => '',
-			'googleTagContainerDestinationIDs' => null,
-			'googleTagLastSyncedAtMs'          => 0,
-			'availableCustomDimensions'        => null,
-			'propertyCreateTime'               => 0,
-			'adSenseLinked'                    => false,
-			'adSenseLinkedLastSyncedAt'        => 0,
-			'adsLinked'                        => false,
-			'adsLinkedLastSyncedAt'            => 0,
-			'detectedEvents'                   => array(),
-			'newConversionEventsLastUpdateAt'  => 0,
-			'lostConversionEventsLastUpdateAt' => 0,
+			'adsConversionID'                              => '',
+			'propertyID'                                   => '',
+			'webDataStreamID'                              => '',
+			'measurementID'                                => '',
+			'trackingDisabled'                             => array( 'loggedinUsers' ),
+			'useSnippet'                                   => true,
+			'googleTagID'                                  => '',
+			'googleTagAccountID'                           => '',
+			'googleTagContainerID'                         => '',
+			'googleTagContainerDestinationIDs'             => null,
+			'googleTagLastSyncedAtMs'                      => 0,
+			'availableCustomDimensions'                    => null,
+			'propertyCreateTime'                           => 0,
+			'adSenseLinked'                                => false,
+			'adSenseLinkedLastSyncedAt'                    => 0,
+			'adsLinked'                                    => false,
+			'adsLinkedLastSyncedAt'                        => 0,
+			'detectedEvents'                               => array(),
+			'newConversionEventsLastUpdateAt'              => 0,
+			'lostConversionEventsLastUpdateAt'             => 0,
+			self::FRESH_DATA_INCLUDES_WOOCOMMERCE_PRODUCTS => true,
 		);
 	}
 
@@ -152,7 +162,7 @@ class Settings extends Module_Settings implements Setting_With_Owned_Keys_Interf
 	 * @param array &$option The option array to sanitize.
 	 */
 	private function sanitize_boolean_properties( &$option ) {
-		$boolean_properties = array( 'useSnippet', 'adSenseLinked', 'adsLinked' );
+		$boolean_properties = array( 'useSnippet', 'adSenseLinked', 'adsLinked', self::FRESH_DATA_INCLUDES_WOOCOMMERCE_PRODUCTS );
 		foreach ( $boolean_properties as $property ) {
 			if ( isset( $option[ $property ] ) ) {
 				$option[ $property ] = (bool) $option[ $property ];

@@ -48,8 +48,12 @@ function doublescale_booking_payment_return_handler() {
 
 			// Determine redirect URL based on action
 			if ( $action === 'return' ) {
-				// Redirect to confirmation page - use home_url() which includes the full site path
-				$redirect_url = home_url( "/?doublescale_booking=booking&id={$booking_id}&type=confirm" );
+				// The event's "Redirect After Booking" page when it has one,
+				// otherwise the confirmation page (home_url() keeps the site path).
+				$redirect_url = $booking->get_redirect_after_booking_url();
+				if ( '' === $redirect_url ) {
+					$redirect_url = home_url( "/?doublescale_booking=booking&id={$booking_id}&type=confirm" );
+				}
 			} elseif ( $action === 'cancel' ) {
 				$redirect_url = home_url( "/?doublescale_booking=booking&id={$booking_id}&type=cancel" );
 			} else {

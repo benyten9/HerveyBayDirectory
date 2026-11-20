@@ -104,7 +104,7 @@ $nibwp_bdpro_common_instructions = implode("\n", [
 
 wp_register_ability('nibwp/breakdance-pro-html-to-section', [
     'label'       => __('Breakdance Pro — HTML to section', 'nibwp'),
-    'description' => __('Convert HTML into a validated Breakdance section, page, header, footer, popup or global block. Checks every element slug and property path against this site\'s own registry, maps literal colors onto existing variables, and turns repeated markup into a loop. Trigger words: "convert to breakdance", "html to breakdance", "breakdance this".', 'nibwp'),
+    'description' => 'Convert HTML into a validated Breakdance section, page, header, footer, popup or global block. Checks every element slug and property path against this site\'s own registry, maps literal colors onto existing variables, and turns repeated markup into a loop. Trigger words: "convert to breakdance", "html to breakdance", "breakdance this".',
     'category'    => 'breakdance-pro',
     'input_schema' => nibwp_bdpro_convert_schema('The HTML being converted from.'),
     'output_schema' => ['type' => 'object'],
@@ -115,7 +115,7 @@ wp_register_ability('nibwp/breakdance-pro-html-to-section', [
 
 wp_register_ability('nibwp/breakdance-pro-url-to-section', [
     'label'       => __('Breakdance Pro — URL to section', 'nibwp'),
-    'description' => __('Rebuild a page from a live URL as a validated Breakdance section or template, using this site\'s elements and design tokens rather than the source site\'s markup.', 'nibwp'),
+    'description' => 'Rebuild a page from a live URL as a validated Breakdance section or template, using this site\'s elements and design tokens rather than the source site\'s markup.',
     'category'    => 'breakdance-pro',
     'input_schema' => nibwp_bdpro_convert_schema('The URL being rebuilt, and what was found there.'),
     'output_schema' => ['type' => 'object'],
@@ -129,7 +129,7 @@ wp_register_ability('nibwp/breakdance-pro-url-to-section', [
 
 wp_register_ability('nibwp/breakdance-pro-image-to-section', [
     'label'       => __('Breakdance Pro — Image to section', 'nibwp'),
-    'description' => __('Turn a screenshot, mockup or design image into a validated Breakdance section built from real elements and this site\'s design tokens.', 'nibwp'),
+    'description' => 'Turn a screenshot, mockup or design image into a validated Breakdance section built from real elements and this site\'s design tokens.',
     'category'    => 'breakdance-pro',
     'input_schema' => nibwp_bdpro_convert_schema('What the image showed.'),
     'output_schema' => ['type' => 'object'],
@@ -168,7 +168,7 @@ $nibwp_bdpro_figma_schema['required'] = ['nodes'];
 
 wp_register_ability('nibwp/breakdance-pro-figma-to-section', [
     'label'       => __('Breakdance Pro — Figma to section', 'nibwp'),
-    'description' => __('Convert a Figma frame into a validated Breakdance section from the FILE — node tree, auto-layout and Variables — not from a rendered image. Figma Variables are matched against this site\'s own variables by value, so the section adopts the design system rather than copying hex codes.', 'nibwp'),
+    'description' => 'Convert a Figma frame into a validated Breakdance section from the FILE — node tree, auto-layout and Variables — not from a rendered image. Figma Variables are matched against this site\'s own variables by value, so the section adopts the design system rather than copying hex codes.',
     'category'    => 'breakdance-pro',
     'input_schema' => $nibwp_bdpro_figma_schema,
     'output_schema' => ['type' => 'object'],

@@ -53,10 +53,12 @@ function nibwp_status_icon(string $name, int $size = 16): string
     }
 
     return sprintf(
-        '<svg class="nw-status-ico" width="%1$d" height="%1$d" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+        '<svg class="nw-status-ico%3$s" width="%1$d" height="%1$d" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
         . ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">%2$s</svg>',
         $size,
-        $paths[$name]
+        $paths[$name],
+        // The knock-on arrow points from cause to effect, the way the line reads.
+        $name === 'arrow' ? ' nw-rtl-flip' : ''
     );
 }
 

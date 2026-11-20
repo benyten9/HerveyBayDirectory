@@ -278,7 +278,7 @@ class DatabaseOptimizer {
         $data['all_transients'] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(option_id) FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", $wpdb->esc_like('_transient_') . '%', $wpdb->esc_like('_site_transient_') . '%')) . ' ' . __('Transients Found', 'perfmatters');
  
  		//tables
-        $data['tables'] = $wpdb->get_var("SELECT COUNT(table_name) FROM information_schema.tables WHERE table_schema = '" . DB_NAME . "' and Engine <> 'InnoDB' and data_free > 0") . ' ' . __('Unoptimized Tables Found', 'perfmatters');
+        $data['tables'] = $wpdb->get_var($wpdb->prepare("SELECT COUNT(table_name) FROM information_schema.tables WHERE table_schema = %s and Engine <> 'InnoDB' and data_free > 0", DB_NAME)) . ' ' . __('Unoptimized Tables Found', 'perfmatters');
 
         wp_send_json_success(array(
 	    	'message' => __('Database scan completed.', 'perfmatters'),

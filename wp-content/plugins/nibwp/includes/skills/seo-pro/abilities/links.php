@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-links', [
     'label'       => __('SEO Pro — Internal Links', 'nibwp'),
-    'description' => __('Improve internal linking. Actions: suggest (find relevant internal-link opportunities for a post), apply (insert a link into the post content for { anchor, target_url }), broken (check the post\'s links for 4xx/5xx). apply edits post content and is validate/preview gated.', 'nibwp'),
+    'description' => 'Improve internal linking. Actions: suggest (find relevant internal-link opportunities for a post), apply (insert a link into the post content for { anchor, target_url }), broken (check the post\'s links for 4xx/5xx). apply edits post content and is validate/preview gated.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

@@ -106,6 +106,7 @@ class UnsubscribePage {
 			<?php wp_head(); ?>
 		</head>
 	<body>
+		<?php Services\SubscriptionManager::render_site_brand(); ?>
 		<div class="unsubscribe-container">
 			<div class="success-icon">
 				<svg viewBox="0 0 24 24">
@@ -133,6 +134,7 @@ class UnsubscribePage {
 				?>
 			</p>
 		</div>
+		<?php Services\SubscriptionManager::render_page_note(); ?>
 		<?php wp_footer(); ?>
 	</body>
 	</html>

@@ -70,6 +70,7 @@ class ManageColumn implements ExecuteHooksBackend {
 		}
 		if ( ! empty( seopress_get_service( 'AdvancedOption' )->getAppearanceSearchConsole() ) ) {
 			$columns['seopress_search_console_position'] = __( 'Position', 'wp-seopress-pro' );
+			$columns['seopress_search_console_index_status'] = __( 'Google index (saved)', 'wp-seopress-pro' );
 		}
 
 		return $columns;
@@ -84,6 +85,9 @@ class ManageColumn implements ExecuteHooksBackend {
 	 */
 	public function displayColumn( $column, $post_id ) {
 		switch ( $column ) {
+			case 'seopress_search_console_index_status':
+				$this->display_index_status( $post_id );
+				break;
 			case 'seopress_search_console_clicks':
 				$clicks = get_post_meta( $post_id, '_seopress_search_console_analysis_clicks', true );
 				if ( ! $clicks ) {
@@ -124,6 +128,41 @@ class ManageColumn implements ExecuteHooksBackend {
 				echo esc_html( number_format_i18n( floatval( $position ), 0 ) );
 
 				break;
+		}
+	}
+
+	/** Render an existing inspection only; list views must never call Google. */
+	private function display_index_status( $post_id ) {
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		$data = get_post_meta( $post_id, '_seopress_gsc_inspect_url_data', true );
+		if ( is_string( $data ) ) {
+			$data = json_decode( $data, true );
+		} elseif ( is_object( $data ) ) {
+			$data = json_decode( wp_json_encode( $data ), true );
+		}
+		$result = is_array( $data ) && isset( $data['inspectionResult'] ) && is_array( $data['inspectionResult'] ) ? $data['inspectionResult'] : array();
+		$status = isset( $result['indexStatusResult'] ) && is_array( $result['indexStatusResult'] ) ? $result['indexStatusResult'] : array();
+		if ( empty( $status ) ) {
+			echo esc_html__( 'No saved inspection', 'wp-seopress-pro' );
+			return;
+		}
+		$labels = array(
+			'PASS' => __( 'Indexed', 'wp-seopress-pro' ),
+			'FAIL' => __( 'Indexing error', 'wp-seopress-pro' ),
+			'NEUTRAL' => __( 'Excluded', 'wp-seopress-pro' ),
+		);
+		$verdict = isset( $status['verdict'] ) && is_string( $status['verdict'] ) ? $status['verdict'] : '';
+		$label = isset( $labels[ $verdict ] ) ? $labels[ $verdict ] : __( 'Unknown status', 'wp-seopress-pro' );
+		$url = isset( $result['inspectionResultLink'] ) && is_string( $result['inspectionResultLink'] ) ? $result['inspectionResultLink'] : '';
+		if ( '' !== esc_url( $url ) ) {
+			echo '<a href="' . esc_url( $url ) . '"target="_blank" rel="noopener noreferrer">' . esc_html( $label ) . '</a>';
+		} else {
+			echo esc_html( $label );
+		}
+		if ( ! empty( $status['coverageState'] ) && is_string( $status['coverageState'] ) ) {
+			echo '<p class="description">' . esc_html( $status['coverageState'] ) . '</p>';
 		}
 	}
 

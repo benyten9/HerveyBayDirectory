@@ -259,7 +259,7 @@ class RestContractController extends RestController {
 
 		$query = ContractModel::query()->with( array( 'contact', 'assigned_user', 'type' ) );
 
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_sales_records() ) {
 			$query->where( 'assigned_user_id', get_current_user_id() );
 		}
 
@@ -354,7 +354,7 @@ class RestContractController extends RestController {
 		}
 
 		$query = ContractModel::query()->where( 'is_trash', false );
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_sales_records() ) {
 			$query->where( 'assigned_user_id', get_current_user_id() );
 		}
 
@@ -391,7 +391,7 @@ class RestContractController extends RestController {
 		$trash_count = (int) ContractModel::query()
 			->where( 'is_trash', true )
 			->when(
-				! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep(),
+				! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_sales_records(),
 				function ( $q ) {
 					$q->where( 'assigned_user_id', get_current_user_id() );
 				}

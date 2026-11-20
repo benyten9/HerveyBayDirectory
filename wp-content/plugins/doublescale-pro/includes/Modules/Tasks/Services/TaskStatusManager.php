@@ -8,6 +8,7 @@
 namespace DoubleScale\Pro\Modules\Tasks\Services;
 
 use DoubleScale\Core\Constants\TaskStatus;
+use DoubleScale\Pro\Database\SeedLock;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskModel;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskStatusModel;
 
@@ -45,6 +46,11 @@ class TaskStatusManager {
 	);
 
 	/**
+	 * Lock held by every write that creates or protects the board's columns.
+	 */
+	private const SEED_LOCK = 'task_statuses';
+
+	/**
 	 * @var self|null
 	 */
 	private static $instance = null;
@@ -70,17 +76,29 @@ class TaskStatusManager {
 			return;
 		}
 
-		foreach ( self::DEFAULT_STATUSES as $index => $status ) {
-			TaskStatusModel::create(
-				array(
-					'name'         => $status['name'],
-					'status'       => $status['status'],
-					'color'        => $status['color'],
-					'is_protected' => ! empty( $status['is_protected'] ) ? 1 : 0,
-					'sort_order'   => $index,
-				)
-			);
-		}
+		// The Tasks page asks for tasks and for statuses at the same moment, and
+		// on a new site both requests find the board empty. Only the one holding
+		// the lock may seed, and it has to look again first.
+		SeedLock::run(
+			self::SEED_LOCK,
+			static function () {
+				if ( TaskStatusModel::count() > 0 ) {
+					return;
+				}
+
+				foreach ( self::DEFAULT_STATUSES as $index => $status ) {
+					TaskStatusModel::create(
+						array(
+							'name'         => $status['name'],
+							'status'       => $status['status'],
+							'color'        => $status['color'],
+							'is_protected' => ! empty( $status['is_protected'] ) ? 1 : 0,
+							'sort_order'   => $index,
+						)
+					);
+				}
+			}
+		);
 	}
 
 	/**
@@ -91,13 +109,49 @@ class TaskStatusManager {
 	 * @return void
 	 */
 	public function ensure_protected_stages(): void {
+		if ( 1 === $this->count_protected_stages( 'open' ) && 1 === $this->count_protected_stages( 'closed' ) ) {
+			return;
+		}
+
+		// Same lock as the seeding: a request that arrives while another one is
+		// still creating the defaults must not add an "Open" and a "Closed" of
+		// its own next to them.
+		SeedLock::run(
+			self::SEED_LOCK,
+			function () {
+				$this->protect_one_stage_of_each_type();
+			}
+		);
+	}
+
+	/**
+	 * How many statuses of this type cannot be deleted.
+	 *
+	 * @param string $status open|closed.
+	 * @return int
+	 */
+	private function count_protected_stages( string $status ): int {
+		return (int) TaskStatusModel::where( 'status', $status )
+			->where( 'is_protected', 1 )
+			->count();
+	}
+
+	/**
+	 * Leave one protected Open and one protected Closed status, creating the
+	 * one the board has none of.
+	 *
+	 * @return void
+	 */
+	private function protect_one_stage_of_each_type(): void {
 		$protected_open = TaskStatusModel::where( 'status', 'open' )
 			->where( 'is_protected', 1 )
 			->orderBy( 'sort_order', 'asc' )
 			->orderBy( 'id', 'asc' )
 			->first();
 
-		if ( ! $protected_open ) {
+		if ( $protected_open ) {
+			$this->unprotect_copies_of( $protected_open );
+		} else {
 			$first_open = TaskStatusModel::where( 'status', 'open' )
 				->orderBy( 'sort_order', 'asc' )
 				->orderBy( 'id', 'asc' )
@@ -125,7 +179,9 @@ class TaskStatusManager {
 			->orderBy( 'id', 'asc' )
 			->first();
 
-		if ( ! $protected_closed ) {
+		if ( $protected_closed ) {
+			$this->unprotect_copies_of( $protected_closed );
+		} else {
 			$first_closed = TaskStatusModel::where( 'status', 'closed' )
 				->orderBy( 'sort_order', 'asc' )
 				->orderBy( 'id', 'asc' )
@@ -150,7 +206,21 @@ class TaskStatusManager {
 	}
 
 	/**
-	 * @return \WPEloquent\Eloquent\Collection
+	 * A board seeded twice has two protected copies of a status, and a
+	 * protected status cannot be deleted. Keep the given one.
+	 *
+	 * @param TaskStatusModel $kept The copy that stays protected.
+	 * @return void
+	 */
+	private function unprotect_copies_of( TaskStatusModel $kept ): void {
+		TaskStatusModel::where( 'status', $kept->status )
+			->where( 'is_protected', 1 )
+			->where( 'id', '!=', $kept->id )
+			->update( array( 'is_protected' => 0 ) );
+	}
+
+	/**
+	 * @return \DoubleScale\Vendor\WPEloquent\Eloquent\Collection
 	 */
 	public function list_stages() {
 		$this->ensure_default_stages();

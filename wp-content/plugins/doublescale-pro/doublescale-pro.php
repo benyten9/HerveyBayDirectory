@@ -4,7 +4,7 @@
  * Plugin Name:       DoubleScale Pro
  * Plugin URI:        https://www.doublescale.io/
  * Description:       A powerful CRM Builder for WordPress that lets you manage leads, track interactions, and automate customer relationships—all seamlessly integrated within your WordPress dashboard.
- * Version:           1.2.26
+ * Version:           1.6.1
  * Author:            doublescale.io
  * Author URI:        http://www.doublescale.io
  * License:           GPL v2 or later
@@ -23,7 +23,21 @@ if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_FILE' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_FILE', __FILE__ );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_VERSION', '1.2.26' );
+	define( 'DOUBLESCALE_PRO_VERSION', '1.6.1' );
+}
+// Pro asks for Illuminate, WPEloquent, Carbon and Doctrine as DoubleScale\Vendor\…:
+// tells free it needs no aliases for the old, unprefixed names.
+if ( ! defined( 'DOUBLESCALE_PRO_SCOPED_VENDOR' ) ) {
+	define( 'DOUBLESCALE_PRO_SCOPED_VENDOR', 1 );
+}
+/*
+ * Version of the hooks and screen slots add-ons build on (project, deal and
+ * task tabs, actions and sections; the portal project data; the project
+ * delete veto; 2: the Custom Objects record pages). Raise it when one
+ * changes; add-ons check it, not the version.
+ */
+if ( ! defined( 'DOUBLESCALE_PRO_ADDON_API' ) ) {
+	define( 'DOUBLESCALE_PRO_ADDON_API', 2 );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -53,12 +67,58 @@ if ( ! defined( 'DOUBLESCALE_PRO_PRICE_URL' ) ) {
  * Bump this when a Pro release starts depending on APIs added in a newer free.
  */
 if ( ! defined( 'DOUBLESCALE_PRO_MIN_FREE_VERSION' ) ) {
-	// 1.3.29 adds POST /doublescale/v1/campaigns/{id}/resend. Retry Sending in
-	// this Pro bundle posts there; an older free 404s the route instead of
-	// retrying failed campaign emails.
-	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.3.29' );
+	// 1.10.1 has the knowledge base module, RateLimiter and ClientIp, which
+	// the Help Assistant, live chat and ticket ratings build on. Against an
+	// older free those features stay off and this notice says why.
+	// 1.9.6 lists the Bricks trigger (catalog + stub) and hands the picked page
+	// to any page-based form when the editor loads its field rules and merge
+	// tags. Against an older free the Bricks forms connection works, but a
+	// Bricks workflow's conditions and {{bricks:…}} tags find no fields, and
+	// this notice says why.
+	// 1.9.2 shows the project custom fields Pro marks "Visible to the
+	// client" in the portal's project overview (an older free leaves them
+	// out), and has 1.9.1's fixes: a task cleanup that never deletes other
+	// plugins' scheduled jobs, and product rules that don't load the catalogue.
+	// 1.9.0 has what the Companies module builds on: company_id on tickets,
+	// invoices, proposals, files and projects, the record-owner slot and the
+	// doublescale_record_company_id / _portal_scope_company_ids /
+	// _portal_company / _document_cc / _support_company_cc filters. Against
+	// an older free company records and the client portal's company sharing
+	// do not work, and this notice says why.
+	// 1.5.1 lets customers upload files from the client portal and tells the
+	// contact's Attachments tab who uploaded each file (`uploaded_by`). Against
+	// an older free the portal has no Files page and the tab shows no uploader,
+	// and this notice says why. 1.5.1 also takes a date filter's "Between" as
+	// a [from, to] range; an older free answers that filter with an HTTP 500.
+	// 1.4.9 keeps a buyer in the workflow when their phone number already
+	// belongs to another contact, and never lets a phone match overwrite that
+	// contact's email. Every WooCommerce order trigger in this Pro passes the
+	// buyer's phone; against an older free such a buyer silently drops out of
+	// the workflow or takes over the other contact, and this notice says why.
+	// 1.4.8 lists the Email Opened trigger (catalog + stub), announces every
+	// recorded open with its email on `doublescale_mail_open`, and handles the
+	// tracking pixel on `init`, where an automation run can be queued. Against
+	// an older free the trigger is simply not offered, and this notice says why.
+	// 1.4.7 adds what Pro's XRechnung export builds on: DocumentDownload, the
+	// invoices.buyer_reference column, and the doublescale_sales_settings_*
+	// and doublescale_public_invoice_payload filters. Against an older free
+	// the export registers no routes (EInvoicing::free_supports()) and this
+	// notice explains why the buttons error.
+	// 1.4.6 added POST /doublescale/v1/campaigns/{id}/rename.
+	// 1.6.3 ships what the send queue and Pro's WhatsApp engine build on
+	// (SendContext, waiting steps, shared daily limits, the channel engine
+	// registry). Pro runs on an older free too: those features stay off, and
+	// ScopedVendorNames bridges free's unprefixed vendor names.
+	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.10.1' );
 }
 add_filter( 'doublescale_is_pro_addon_active', '__return_true', 1 );
+// This Pro shows who uploaded each contact file (client or team), so free may
+// let customers upload from the client portal. An older Pro never says so,
+// which keeps the portal uploads off until both plugins are updated.
+add_filter( 'doublescale_portal_client_uploads_supported', '__return_true' );
+// This Pro ships its own WhatsApp campaign engine, so free stops asking the
+// site to update Pro before DoubleScale 2.0 (which no longer ships free's).
+add_filter( 'doublescale_pro_messaging_engine_capable', '__return_true' );
 add_filter(
 	'doublescale_pro_plugin_basenames',
 	static function ( array $basenames ): array {
@@ -440,6 +500,10 @@ if ( file_exists( $doublescale_free_scoped_deps ) ) {
 	require_once $doublescale_free_scoped_deps;
 }
 
+// An older free ships Illuminate & co. unprefixed: Pro's prefixed names point at its classes.
+require_once DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/Compat/ScopedVendorNames.php';
+\DoubleScale\Pro\Compat\ScopedVendorNames::register();
+
 $doublescale_scoped_deps     = DOUBLESCALE_PRO_PLUGIN_DIR . 'dependencies/build/vendor/scoper-autoload.php';
 $vendor_autoload             = DOUBLESCALE_PRO_PLUGIN_DIR . 'dependencies/vendor/autoload.php';
 $doublescale_pro_composer    = DOUBLESCALE_PRO_PLUGIN_DIR . 'vendor/autoload.php';
@@ -696,6 +760,34 @@ function doublescale_pro_pre_init() {
 }
 
 /**
+ * Unschedule the Action Scheduler work only Pro's engines run.
+ *
+ * The clears below only reach old WP-Cron names; the real queues live in
+ * Action Scheduler, and with Pro off nothing listens on them — the SMS drain
+ * then failed every minute. WhatsApp's queue stays while free ships its own
+ * engine: free takes WhatsApp back on the next request and finishes it.
+ *
+ * @return void
+ */
+function doublescale_pro_unschedule_engine_tasks(): void {
+	if ( ! class_exists( \DoubleScale\Core\Tasks::class ) ) {
+		return;
+	}
+
+	$hooks = array( 'doublescale_sms_campaigns', 'process_campaign_sms', 'continue_sms_campaign', 'resume_after_meta_tier' );
+
+	$registry = '\\DoubleScale\\Modules\\Campaigns\\Services\\ChannelEngineRegistry';
+	if ( class_exists( $registry ) && ! $registry::has_fallback( 'whatsapp' ) ) {
+		array_push( $hooks, 'doublescale_whatsapp_campaigns', 'process_campaign_whatsapp', 'continue_whatsapp_campaign' );
+	}
+
+	$tasks = new \DoubleScale\Core\Tasks( 'doublescale_campaigns' );
+	foreach ( $hooks as $hook ) {
+		$tasks->unschedule_all( $hook );
+	}
+}
+
+/**
  * Plugin deactivation hook.
  *
  * @since 1.0.0
@@ -708,6 +800,11 @@ function doublescale_pro_deactivation() {
 	wp_clear_scheduled_hook( 'doublescale_daily3' );
 	wp_clear_scheduled_hook( 'doublescale_daily4' );
 	wp_clear_scheduled_hook( 'doublescale_cleanup_page_visits' );
+
+	doublescale_pro_unschedule_engine_tasks();
+	if ( class_exists( \DoubleScale\Core\NextRunCache::class ) ) {
+		\DoubleScale\Core\NextRunCache::flush();
+	}
 
 	if ( class_exists( \DoubleScale\Modules\Emails\SocialIconGenerator::class ) ) {
 		\DoubleScale\Modules\Emails\SocialIconGenerator::cleanup();

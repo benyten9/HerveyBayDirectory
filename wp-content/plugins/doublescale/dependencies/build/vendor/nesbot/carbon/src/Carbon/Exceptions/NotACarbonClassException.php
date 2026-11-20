@@ -8,12 +8,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Exceptions;
+namespace DoubleScale\Vendor\Carbon\Exceptions;
 
-use Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
 use InvalidArgumentException as BaseInvalidArgumentException;
 use Throwable;
-class NotACarbonClassException extends BaseInvalidArgumentException implements \Carbon\Exceptions\InvalidArgumentException
+class NotACarbonClassException extends BaseInvalidArgumentException implements InvalidArgumentException
 {
     /**
      * The className.

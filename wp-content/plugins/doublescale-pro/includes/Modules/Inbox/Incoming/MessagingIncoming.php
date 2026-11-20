@@ -376,13 +376,31 @@ class MessagingIncoming {
 				'status' => 'subscribed',
 			);
 
+			// A WhatsApp number alone doesn't identify a contact (see ContactModel::has_identifier),
+			// so a new WhatsApp sender gets the same number as their phone too.
 			if ( $is_whatsapp ) {
 				$contact_data['whatsapp_phone'] = $stored_phone;
+
+				// Someone already on file with this phone but no WhatsApp number is the same person.
+				$by_phone = ContactModel::whereIn( 'phone', $lookup_candidates ?: array( $stored_phone ) )->first();
+				if ( $by_phone && empty( $by_phone->whatsapp_phone ) ) {
+					$by_phone->update( array( 'whatsapp_phone' => $stored_phone ) );
+					return $by_phone;
+				}
+				if ( ! $by_phone ) {
+					$contact_data['phone'] = $stored_phone;
+				}
 			} else {
 				$contact_data['phone'] = $stored_phone;
 			}
 
-			$contact = ContactModel::create( $contact_data );
+			$contact = \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::create_routed_contact(
+				(string) $channel,
+				array(),
+				static function () use ( $contact_data ) {
+					return ContactModel::create( $contact_data );
+				}
+			);
 
 			doublescale_get_logger()->info(
 				'New contact created from incoming message',

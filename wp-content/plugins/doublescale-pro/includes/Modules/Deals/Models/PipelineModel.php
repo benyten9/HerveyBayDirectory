@@ -10,7 +10,7 @@
 
 namespace DoubleScale\Pro\Modules\Deals\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * PipelineModel class
@@ -89,7 +89,7 @@ class PipelineModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function stages() {
 		return $this->hasMany( PipelineStageModel::class, 'pipeline_id', 'id' )->orderBy( 'sort_order' );
@@ -100,7 +100,7 @@ class PipelineModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function deals() {
 		return $this->hasMany( DealModel::class, 'pipeline_id', 'id' );
@@ -111,7 +111,7 @@ class PipelineModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function active_deals() {
 		return $this->hasMany( DealModel::class, 'pipeline_id', 'id' )->where( 'status', 'open' );
@@ -166,6 +166,13 @@ class PipelineModel extends Model {
 	 */
 	public static function boot() {
 		parent::boot();
+
+		// Deleting a pipeline makes the next request check again that one exists.
+		static::deleted(
+			function () {
+				delete_option( 'doublescale_default_pipeline_checked' );
+			}
+		);
 
 		static::deleting(
 			function( $pipeline ) {

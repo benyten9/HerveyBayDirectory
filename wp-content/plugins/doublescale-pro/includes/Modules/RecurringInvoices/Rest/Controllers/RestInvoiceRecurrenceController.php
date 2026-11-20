@@ -81,6 +81,12 @@ class RestInvoiceRecurrenceController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_item( $request ) {
+		// Recurring invoices are invoice data: 404 while Documents is off.
+		$off = doublescale_module_data_error( 'documents' );
+		if ( $off ) {
+			return $off;
+		}
+
 		$invoice = $this->resolve_invoice( $request );
 		if ( is_wp_error( $invoice ) ) {
 			return $invoice;
@@ -99,6 +105,12 @@ class RestInvoiceRecurrenceController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function save_item( $request ) {
+		// Recurring invoices are invoice data: 404 while Documents is off.
+		$off = doublescale_module_data_error( 'documents' );
+		if ( $off ) {
+			return $off;
+		}
+
 		$invoice = $this->resolve_invoice( $request );
 		if ( is_wp_error( $invoice ) ) {
 			return $invoice;
@@ -122,6 +134,12 @@ class RestInvoiceRecurrenceController extends RestController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function delete_item( $request ) {
+		// Recurring invoices are invoice data: 404 while Documents is off.
+		$off = doublescale_module_data_error( 'documents' );
+		if ( $off ) {
+			return $off;
+		}
+
 		$invoice = $this->resolve_invoice( $request );
 		if ( is_wp_error( $invoice ) ) {
 			return $invoice;

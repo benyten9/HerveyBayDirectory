@@ -77,10 +77,6 @@ final class Module extends AbstractSalesChildModule {
 			Services\DealAttachmentActivityLogger::class,
 			static fn() => new Services\DealAttachmentActivityLogger()
 		);
-		$container->singleton(
-			Services\DealPortalProvider::class,
-			static fn() => new Services\DealPortalProvider()
-		);
 	}
 
 	public function restControllers(): array {
@@ -92,7 +88,16 @@ final class Module extends AbstractSalesChildModule {
 	}
 
 	protected function boot_child( Container $container ): void {
-		Migrations\DealTableCurrencyColumn::ensure();
+		$checks = static function () {
+			Migrations\DealTableCurrencyColumn::ensure();
+		};
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_deals', DOUBLESCALE_PRO_VERSION, $checks );
+		} else {
+			$checks();
+		}
+		// Deals carry their contact's company (company page, deletes, joins).
+		Services\CompanyDeals::register();
 
 		$container->get( Services\PipelineManager::class );
 		$container->get( Services\DealManager::class );
@@ -101,14 +106,16 @@ final class Module extends AbstractSalesChildModule {
 		// to the cross-module calendar feed (owner-scoped for reps; all for managers).
 		$container->get( Services\DealCalendarProvider::class );
 
-		// Client Portal calendar bridge: contributes the contact's own deal close
-		// dates (title + status only — never pipeline internals).
-		$container->get( Services\DealPortalProvider::class );
-
 		$container->get( Services\DealAttachmentActivityLogger::class )->register();
+
+		// Open deals in the contact profile's header tiles.
+		( new Services\DealContactSummary() )->register();
 
 		// Opt-in: mark linked deals Won when their invoice is fully paid.
 		$container->get( Services\DealInvoicePaidCloser::class )->register();
+
+		// An invoice converted from a deal's proposal belongs to that deal too.
+		$container->get( Services\DealProposalInvoiceLinker::class )->register();
 
 		// Deleting a contact cascades to their deals through delete_deal() so
 		// the deal deleting event and doublescale_deal_deleted listeners run

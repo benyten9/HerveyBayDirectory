@@ -11,6 +11,8 @@ namespace DoubleScale\Modules\Notifications\Services;
 
 use DoubleScale\Modules\Notifications\Models\NotificationModel;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * NotificationPreferences class
  *
@@ -136,6 +138,12 @@ class NotificationPreferences {
 				NotificationCategories::CONTACTS_BOUNCED   => array(
 					'bell'    => true,
 					'email'   => true, // Important for deliverability.
+					'browser' => true,
+					'push'    => true,
+				),
+				NotificationCategories::CONTACTS_PORTAL_FILES => array(
+					'bell'    => true,
+					'email'   => true, // A client is waiting on someone to look at their file.
 					'browser' => true,
 					'push'    => true,
 				),
@@ -532,11 +540,16 @@ class NotificationPreferences {
 		// Compute diff from defaults - only store what's different.
 		$diff = self::compute_diff( $sanitized );
 
-		// If no differences, delete the meta key entirely.
+		// If no differences, delete the meta key entirely. WordPress answers
+		// false when the meta is already gone or already holds this value: a
+		// save that changes nothing is still a successful save.
 		if ( empty( $diff ) ) {
-			$result = delete_user_meta( $user_id, self::META_KEY );
+			delete_user_meta( $user_id, self::META_KEY );
+			$result = '' === get_user_meta( $user_id, self::META_KEY, true );
+		} elseif ( get_user_meta( $user_id, self::META_KEY, true ) === $diff ) {
+			$result = true;
 		} else {
-			$result = update_user_meta( $user_id, self::META_KEY, $diff );
+			$result = (bool) update_user_meta( $user_id, self::META_KEY, $diff );
 		}
 
 		// Invalidate cached unread count since preferences affect which notifications are counted.
@@ -665,7 +678,7 @@ class NotificationPreferences {
 			}
 		}
 
-		return $enabled;
+		return array_merge( $enabled, self::system_subcategories_for( $user_id ) );
 	}
 
 	/**
@@ -698,7 +711,22 @@ class NotificationPreferences {
 			}
 		}
 
-		return $enabled;
+		return array_merge( $enabled, self::system_subcategories_for( $user_id ) );
+	}
+
+	/**
+	 * System notices (licence, security, …) for an administrator: they have no
+	 * switch of their own, so they follow the channel, as sending them does
+	 * ({@see is_enabled()}). Nobody else gets them.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string[]
+	 */
+	private static function system_subcategories_for( $user_id ): array {
+		if ( ! user_can( (int) $user_id, 'manage_options' ) ) {
+			return array();
+		}
+		return array_keys( NotificationCategories::get_subcategories( NotificationCategories::SYSTEM ) );
 	}
 
 	/**

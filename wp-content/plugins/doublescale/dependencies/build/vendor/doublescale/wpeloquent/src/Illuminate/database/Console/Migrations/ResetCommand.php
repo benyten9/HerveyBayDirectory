@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
-use Illuminate\Console\ConfirmableTrait;
-use Illuminate\Database\Migrations\Migrator;
+use DoubleScale\Vendor\Illuminate\Console\ConfirmableTrait;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\Migrator;
 use DoubleScale\Vendor\Symfony\Component\Console\Input\InputOption;
-class ResetCommand extends \Illuminate\Database\Console\Migrations\BaseCommand
+class ResetCommand extends BaseCommand
 {
     use ConfirmableTrait;
     /**

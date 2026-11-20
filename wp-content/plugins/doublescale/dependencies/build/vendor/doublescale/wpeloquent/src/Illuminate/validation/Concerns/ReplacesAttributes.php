@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Validation\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Validation\Concerns;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 trait ReplacesAttributes
 {
     /**

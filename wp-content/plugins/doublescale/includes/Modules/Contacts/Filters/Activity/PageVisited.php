@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 use DoubleScale\Modules\Contacts\Filters\Traits\TimeframeContactFilter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * PageVisited class
@@ -132,7 +132,7 @@ class PageVisited extends Filter {
 
 		$value = $filter['value'] ?? array();
 
-		$page_guid      = $value['guid'] ?? '';
+		$page_guid      = $this->page_address( (string) ( $value['guid'] ?? '' ) );
 		$timeframe_data = $value['timeframe'] ?? array( 'type' => 'at_any_time' );
 
 		$event_count_condition = $value['event_count_condition'] ?? array(
@@ -168,6 +168,41 @@ class PageVisited extends Filter {
 		);
 
 		return $query;
+	}
+
+	/**
+	 * Where a page is visited today, for a page picked from the list.
+	 *
+	 * The list offers each page's guid, which is fixed when the page is created
+	 * — usually ?page_id=N under plain permalinks — while visits are recorded at
+	 * the address the visitor opened (/support/). Such a page matched no visit.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $page_guid Page GUID from the rule.
+	 *
+	 * @return string The page's permalink, or the GUID when it is not a page here.
+	 */
+	protected function page_address( $page_guid ) {
+		if ( '' === $page_guid ) {
+			return '';
+		}
+
+		global $wp_rewrite;
+
+		// url_to_postid() reads the rewrite rules for a pretty address, and they
+		// only exist once WordPress has set up the theme; the guid lookup below
+		// covers both forms without them.
+		$post_id = $wp_rewrite instanceof \WP_Rewrite ? url_to_postid( $page_guid ) : 0;
+		if ( ! $post_id ) {
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- one lookup per rule.
+			$post_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE guid = %s LIMIT 1", $page_guid ) );
+		}
+
+		$permalink = $post_id ? get_permalink( $post_id ) : false;
+
+		return $permalink ? $permalink : $page_guid;
 	}
 
 	/**

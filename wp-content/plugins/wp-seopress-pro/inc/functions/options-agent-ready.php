@@ -226,7 +226,7 @@ function seopress_agent_ready_render_markdown( $post ) {
 	$modified    = get_post_modified_time( 'c', true, $post );
 	$description = has_excerpt( $post )
 		? wp_strip_all_tags( get_the_excerpt( $post ) )
-		: wp_trim_words( wp_strip_all_tags( $post->post_content ), 40 );
+		: wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 40 );
 	$description = html_entity_decode( $description, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 	$content_html = apply_filters( 'the_content', $post->post_content );
@@ -278,7 +278,7 @@ function seopress_agent_ready_render_home_markdown() {
 			$url     = get_permalink( $post );
 			$excerpt = has_excerpt( $post )
 				? wp_strip_all_tags( get_the_excerpt( $post ) )
-				: wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
+				: wp_trim_words( wp_strip_all_tags( strip_shortcodes( $post->post_content ) ), 30 );
 			$excerpt = html_entity_decode( $excerpt, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 			$markdown .= '- [' . $title . '](' . $url . ')';

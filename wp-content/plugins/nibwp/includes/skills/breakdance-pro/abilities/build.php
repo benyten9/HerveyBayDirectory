@@ -23,7 +23,7 @@ require_once __DIR__ . "/../lib/validator.php";
 
 wp_register_ability('nibwp/breakdance-pro-template', [
     'label'       => __('Breakdance Pro — Build a template', 'nibwp'),
-    'description' => __('Create a header, footer, popup, template or global block, build its content, and assign the display conditions that decide where it appears — in one call.', 'nibwp'),
+    'description' => 'Create a header, footer, popup, template or global block, build its content, and assign the display conditions that decide where it appears — in one call.',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -165,7 +165,7 @@ function nibwp_bdpro_template_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-loop-plan', [
     'label'       => __('Breakdance Pro — Plan a loop', 'nibwp'),
-    'description' => __('Find repeated structure in a payload or an existing page and return a concrete plan for replacing it with a Breakdance loop element bound to a post type (read-only).', 'nibwp'),
+    'description' => 'Find repeated structure in a payload or an existing page and return a concrete plan for replacing it with a Breakdance loop element bound to a post type (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -258,7 +258,7 @@ function nibwp_bdpro_loop_plan_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-library', [
     'label'       => __('Breakdance Pro — Design library', 'nibwp'),
-    'description' => __('List the saved design-library parts on this site, so a new section can start from something already built and approved rather than from nothing (read-only).', 'nibwp'),
+    'description' => 'List the saved design-library parts on this site, so a new section can start from something already built and approved rather than from nothing (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -326,7 +326,7 @@ function nibwp_bdpro_library_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-woocommerce', [
     'label'       => __('Breakdance Pro — WooCommerce elements', 'nibwp'),
-    'description' => __('The WooCommerce elements Breakdance registers on this site — product grids, cart, checkout, single-product parts — for building store templates with real elements rather than shortcodes (read-only).', 'nibwp'),
+    'description' => 'The WooCommerce elements Breakdance registers on this site — product grids, cart, checkout, single-product parts — for building store templates with real elements rather than shortcodes (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',

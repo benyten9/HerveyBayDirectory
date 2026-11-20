@@ -1,1 +1,1 @@
-<?php return array('dependencies' => array('react', 'seopress-pro-dataviews-commons', 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n', 'wp-notices', 'wp-primitives', 'wp-url'), 'version' => '018917494ecb351621e6');
+<?php return array('dependencies' => array('react', 'seopress-pro-dataviews-commons', 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-element', 'wp-i18n', 'wp-notices', 'wp-primitives', 'wp-url'), 'version' => '678777de03b6a1886b15');

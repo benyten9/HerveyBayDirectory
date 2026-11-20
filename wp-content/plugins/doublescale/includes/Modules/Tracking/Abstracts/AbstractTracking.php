@@ -13,6 +13,8 @@ use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Core\Constants\MessageSourceTypes;
+use DoubleScale\Modules\Campaigns\Services\WhatsappErrorCodes;
+use DoubleScale\Modules\Campaigns\Services\WhatsappAccountPause;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Contacts\Models\ContactUnsubscribeModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel;
@@ -498,9 +500,20 @@ abstract class AbstractTracking {
 			);
 		}
 
-		// Handle provider-reported opt-out (e.g., Meta WhatsApp blocked/spam errors)
+		// Meta restricted the SENDING number (#131048). Not an opt-out, whatever
+		// the provider's metadata says — a Pro build older than this change
+		// still flags it as one. Pause the campaign; leave the contact alone.
+		$account_restricted = CampaignChannel::STR_WHATSAPP === $this->channel
+			&& '' !== (string) $error_code
+			&& WhatsappErrorCodes::is_account_restriction( $error_code );
+
+		if ( $account_restricted && MessageSourceTypes::CAMPAIGN === (int) $tracking_record->source_type ) {
+			WhatsappAccountPause::pause( (int) $tracking_record->source_id, $error_code, (string) $error_message );
+		}
+
+		// Handle provider-reported opt-out (e.g., Meta WhatsApp blocked the business)
 		// This auto-unsubscribes contacts who have opted out at the provider level
-		if ( ! empty( $metadata['is_opt_out'] ) && $tracking_record->contact_id ) {
+		if ( ! $account_restricted && ! empty( $metadata['is_opt_out'] ) && $tracking_record->contact_id ) {
 			$this->handle_provider_opt_out( $tracking_record, $metadata );
 		}
 
@@ -614,8 +627,8 @@ abstract class AbstractTracking {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public click tracking, nonce not applicable
 		$hash_key = sanitize_text_field( wp_unslash( $_GET['hash_key'] ) );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public click tracking, nonce not applicable
-		$original_url = urldecode( sanitize_url( wp_unslash( $_GET['original'] ) ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Public click tracking; the link is decoded first, then sanitised by esc_url_raw().
+		$original_url = esc_url_raw( urldecode( wp_unslash( $_GET['original'] ) ) );
 
 		$this->handle_click_tracking( $hash_key, $original_url );
 	}

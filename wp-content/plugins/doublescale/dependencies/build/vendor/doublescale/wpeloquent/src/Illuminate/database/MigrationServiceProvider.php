@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Database\Migrations\Migrator;
-use Illuminate\Contracts\Support\DeferrableProvider;
-use Illuminate\Database\Migrations\MigrationCreator;
-use Illuminate\Database\Migrations\DatabaseMigrationRepository;
+use DoubleScale\Vendor\Illuminate\Support\ServiceProvider;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\Migrator;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\DeferrableProvider;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\MigrationCreator;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\DatabaseMigrationRepository;
 class MigrationServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     /**

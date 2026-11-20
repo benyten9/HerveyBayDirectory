@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Support;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Support;
 
 interface Renderable
 {

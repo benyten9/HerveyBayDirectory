@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
 class TableGuesser
 {

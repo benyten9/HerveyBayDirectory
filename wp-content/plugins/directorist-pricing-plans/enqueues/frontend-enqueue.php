@@ -5,7 +5,8 @@ defined( 'ABSPATH' ) || exit;
 use DirectoristPricingPlan\WpMVC\Enqueue\Enqueue;
 
 Enqueue::register_style( 'directorist-pricing-plans-frontend', 'build/css/frontend' );
-Enqueue::script( 'directorist-pricing-plans-listing-owner-dashboard', 'build/js/frontend/listing-owner-dashboard' );
+// Dashboard packages and listing actions enqueue this script when needed.
+Enqueue::register_script( 'directorist-pricing-plans-listing-owner-dashboard', 'build/js/frontend/listing-owner-dashboard' );
 
 $allow_multiple_plans = directorist_allow_multiple_plans_per_directory_type();
 

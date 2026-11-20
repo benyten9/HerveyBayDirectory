@@ -22,6 +22,89 @@ function seopress_pro_get_service( $service ) {
 }
 
 /**
+ * Get the ID of the post being requested.
+ *
+ * Proxies seopress_get_the_id(), which the free plugin ships since 10.3, and
+ * falls back to the same resolution when an older free plugin is running. The
+ * two plugins update through different channels, so Pro cannot assume the free
+ * plugin is as recent as itself.
+ *
+ * @since 10.3.0
+ *
+ * @return int The requested post ID, 0 when there is none.
+ */
+function seopress_pro_get_the_id() {
+	if ( function_exists( 'seopress_get_the_id' ) ) {
+		return seopress_get_the_id();
+	}
+
+	return seopress_pro_resolve_the_id();
+}
+
+/**
+ * Get the post being requested.
+ *
+ * Proxies seopress_get_the_post(), with the same fallback as
+ * seopress_pro_get_the_id().
+ *
+ * @since 10.3.0
+ *
+ * @return WP_Post|null The requested post, null when there is none.
+ */
+function seopress_pro_get_the_post() {
+	if ( function_exists( 'seopress_get_the_post' ) ) {
+		return seopress_get_the_post();
+	}
+
+	return seopress_pro_resolve_the_post();
+}
+
+/**
+ * Resolve the requested post ID without the free plugin helper.
+ *
+ * Mirror of seopress_get_the_id() for free plugins older than 10.3. get_the_ID()
+ * reads the global $post, which page builders can leave on the last item of a
+ * query loop before wp_head runs, so singular requests read the main query.
+ *
+ * @since 10.3.0
+ *
+ * @return int The requested post ID, 0 when there is none.
+ */
+function seopress_pro_resolve_the_id() {
+	if ( did_action( 'wp' ) && is_singular() ) {
+		$queried_id = get_queried_object_id();
+
+		if ( $queried_id ) {
+			return (int) $queried_id;
+		}
+	}
+
+	return (int) get_the_ID();
+}
+
+/**
+ * Resolve the requested post without the free plugin helper.
+ *
+ * Mirror of seopress_get_the_post() for free plugins older than 10.3. Falls back
+ * to the global $post for the virtual posts some plugins push into the loop
+ * (BuddyPress and bbPress theme compatibility), which get_post() cannot resolve.
+ *
+ * @since 10.3.0
+ *
+ * @return WP_Post|null The requested post, null when there is none.
+ */
+function seopress_pro_resolve_the_post() {
+	$post_id = seopress_pro_resolve_the_id();
+	$post    = $post_id ? get_post( $post_id ) : null;
+
+	if ( null === $post && isset( $GLOBALS['post'] ) ) {
+		$post = $GLOBALS['post'];
+	}
+
+	return $post;
+}
+
+/**
  * Resolve the robots.txt URL used by the SEO alerts, accounting for multisite
  * and language plugins.
  *
@@ -295,7 +378,89 @@ function seopress_ai_get_providers() {
 }
 
 /**
+ * Get the White Label state resolved for the PRO React admin.
+ *
+ * The free plugin owns the resolution rules (which of the White Label titles
+ * wins, how the PRO name falls back on the free one) and already reads PRO's
+ * own options to answer, so this is a pass-through rather than a second
+ * implementation: two copies of those rules would drift.
+ *
+ * When the free plugin predates the helper (PRO and free update through
+ * different channels), the neutral default is returned and the React screens
+ * keep the wording they have today.
+ *
+ * @since 10.3.0
+ *
+ * @return array{enabled:bool,pluginName:string,proPluginName:string}
+ */
+function seopress_pro_get_white_label_state() {
+	if ( ! class_exists( '\SEOPress\Helpers\WhiteLabel' ) ) {
+		return array(
+			'enabled'       => false,
+			'pluginName'    => 'SEOPress',
+			'proPluginName' => 'SEOPress PRO',
+		);
+	}
+
+	return array(
+		'enabled'       => (bool) \SEOPress\Helpers\WhiteLabel::isEnabled(),
+		'pluginName'    => (string) \SEOPress\Helpers\WhiteLabel::pluginName(),
+		'proPluginName' => (string) \SEOPress\Helpers\WhiteLabel::proPluginName(),
+	);
+}
+
+/**
+ * Get the AI providers the admin is allowed to offer.
+ *
+ * SEOPress AI Credits is not only a brand on a card, it is a billed service the
+ * site owner subscribes to on seopress.org. Renaming it under White Label would
+ * misdescribe an invoice the client can read, so the option is removed from the
+ * picker instead.
+ *
+ * The one exception is a site that already runs on credits: hiding the provider
+ * it selected would make the AI features look broken and push it onto another
+ * provider it has no key for. An existing setup is therefore left visible, and
+ * the filter below lets an agency hide it there too.
+ *
+ * @since 10.3.0
+ *
+ * @return array Map of provider slug => array( 'label', 'constant' ).
+ */
+function seopress_ai_get_visible_providers() {
+	$providers = seopress_ai_get_providers();
+
+	$white_label = seopress_pro_get_white_label_state();
+
+	if ( ! empty( $white_label['enabled'] ) ) {
+		$selected = '';
+		if ( function_exists( 'seopress_pro_get_service' ) ) {
+			$options = seopress_pro_get_service( 'OptionPro' );
+			if ( is_object( $options ) && method_exists( $options, 'getAIProvider' ) ) {
+				$selected = (string) $options->getAIProvider();
+			}
+		}
+
+		if ( 'seopress' !== $selected ) {
+			unset( $providers['seopress'] );
+		}
+	}
+
+	/**
+	 * Filter the AI providers offered in the admin.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param array $providers   Map of provider slug => array( 'label', 'constant' ).
+	 * @param array $white_label Resolved White Label state.
+	 */
+	return (array) apply_filters( 'seopress_ai_visible_providers', $providers, $white_label );
+}
+
+/**
  * Get the provider list shaped for a React <SelectControl>.
+ *
+ * Built from the visible providers, so the White Label rule above applies
+ * everywhere the list is rendered rather than on one screen only.
  *
  * @since 10.2.0
  *
@@ -304,7 +469,7 @@ function seopress_ai_get_providers() {
 function seopress_ai_get_providers_list() {
 	$options = array();
 
-	foreach ( seopress_ai_get_providers() as $slug => $provider ) {
+	foreach ( seopress_ai_get_visible_providers() as $slug => $provider ) {
 		$options[] = array(
 			'value' => $slug,
 			'label' => $provider['label'],
@@ -359,7 +524,8 @@ function seopress_ai_provider_key_is_constant( $provider ) {
  *
  * @param int|null $post_id  Post being edited, if any (used for the base cap check).
  * @param string   $base_cap Base capability to require (edit_post / edit_posts).
- * @param string   $context  Surface being gated (metabox, social, image_meta, upload, bulk, chat).
+ * @param string   $context  Surface being gated (metabox, social, image_meta, upload, bulk, chat,
+ *                           ability, for a call arriving through the Abilities API or MCP).
  *
  * @return bool
  */
@@ -525,13 +691,9 @@ function seopress_pro_resolve_lb_opening_hours( $schema_id, $meta_key, $schema_n
 		$hours = seopress_pro_get_lb_opening_hours_days( get_post_meta( $schema_id, $meta_key, true ) );
 	}
 
-	/*
-	 * Both UIs that write these hours always cover the seven days. A shorter
-	 * list never reached the JSON-LD before 10.2 — it fell through to a branch
-	 * driven by the previous key of the resolver loop — so keep discarding it
-	 * rather than start emitting hours on sites that never showed any.
-	 */
-	return is_array( $hours ) && 7 === count( $hours ) ? $hours : '';
+	// Imported or migrated settings may omit days. Preserve their indexes so
+	// the renderer keeps the correct weekdays instead of dropping every hour.
+	return is_array( $hours ) && ! empty( $hours ) ? $hours : '';
 }
 
 /**
@@ -915,6 +1077,72 @@ function seopress_pro_escape_csv_value( $value ) {
 }
 
 /**
+ * Turn a stored string into the plain text a JSON payload should carry.
+ *
+ * REST responses are read by React, which escapes whatever it renders, so
+ * escaping server-side is not protection: it is corruption that reaches the
+ * screen. Two escapers were being used as if they were sanitizers here.
+ *
+ * `sanitize_text_field()` deletes every percent-encoded octet, and WordPress
+ * percent-encodes non-Latin slugs itself in `sanitize_title_with_dashes()`, so
+ * a Korean or Cyrillic URL came out as a run of hyphens.
+ *
+ * `esc_html()` and `esc_url()` go the other way and add entities. A title is
+ * already entity-encoded before it gets here anyway, because `wptexturize()`
+ * writes an en dash as `&#8211;`, and the scan stores anchors through
+ * `esc_attr()`. React shows those literally.
+ *
+ * So: decode the entities and fold control characters into spaces, nothing
+ * else. Tags are not stripped: the value is rendered as text, never as markup,
+ * and an anchor such as "the <title> tag" is common on the sites this runs on.
+ *
+ * The return value is therefore not safe as HTML. It is meant for a payload
+ * that React renders as text children, or for a CSV cell once it has gone
+ * through `seopress_pro_escape_csv_value()`. Anything that outputs it as markup,
+ * in PHP or through `dangerouslySetInnerHTML`, must escape it first.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $value The stored value.
+ *
+ * @return string
+ */
+function seopress_pro_plain_text( $value ) {
+	if ( ! is_string( $value ) || '' === $value ) {
+		return '';
+	}
+
+	$value = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+	return trim( preg_replace( '/[\x00-\x1F\x7F]+/', ' ', $value ) );
+}
+
+/**
+ * Spell a list of file extensions for a message.
+ *
+ * Built rather than concatenated into a translated string: the separator and
+ * the leading dot are punctuation, not something a translator should have to
+ * reassemble a sentence around.
+ *
+ * @since 10.3.0
+ *
+ * @param string[] $extensions Extensions without their leading dot.
+ *
+ * @return string e.g. ".csv, .txt"
+ */
+function seopress_pro_list_extensions( $extensions ) {
+	return implode(
+		', ',
+		array_map(
+			function ( $extension ) {
+				return '.' . $extension;
+			},
+			(array) $extensions
+		)
+	);
+}
+
+/**
  * Reverse seopress_pro_escape_csv_value() when reading a cell back.
  *
  * Keeps an export/import round trip lossless: a redirection whose source path
@@ -960,6 +1188,7 @@ function seopress_pro_unescape_csv_value( $value ) {
  * @return string|false The JSON-LD, or false if the data cannot be encoded.
  */
 function seopress_pro_json_ld_encode( $data ) {
+	$data = seopress_pro_resolve_schema_images( $data );
 	if ( function_exists( 'seopress_json_ld_encode' ) ) {
 		return seopress_json_ld_encode( $data );
 	}
@@ -1007,6 +1236,54 @@ function seopress_pro_json_ld_encode_fallback( $data ) {
  */
 function seopress_pro_json_ld_script_type() {
 	return 'application/ld+json';
+}
+
+/**
+ * The id a JSON-LD script tag carries, or an empty string.
+ *
+ * An id on a `<script type="application/ld+json">` is valid HTML and inert:
+ * it names the element so a script or a stylesheet elsewhere on the page can
+ * address that specific block. It is the one attribute besides the type that
+ * a custom schema has a reason to keep, so it survives the rewrite below
+ * while everything else still goes.
+ *
+ * The attributes are read with `wp_kses_hair()`, the parser `wp_kses()` uses,
+ * so only the element's own `id` answers: not `data-id`, not `xml:id`, and not
+ * an `id=` written inside the value of another attribute. When the attribute
+ * is repeated the first one wins, as it does in a browser.
+ *
+ * HTML accepts any character in an id except ASCII whitespace, and a page
+ * selects the element by the exact value, so the value is kept as written
+ * with only whitespace and control characters removed. Changing it any
+ * further would break the selector without telling anyone. An id left empty,
+ * or that is not valid UTF-8, is treated as absent.
+ *
+ * `wp_kses_hair()` hands a double-quoted value back raw before WordPress 7.0
+ * and entity-encoded since, so the value is escaped with `esc_attr()` where
+ * the tag is printed. That keeps a quote or a bracket from ending the
+ * attribute on every supported version, and does not encode an entity twice.
+ *
+ * @since 10.4.0
+ *
+ * @param string $tag The opening script tag, as matched.
+ *
+ * @return string The id, unescaped, or an empty string.
+ */
+function seopress_pro_json_ld_script_id( $tag ) {
+	// The attributes alone, without the tag name and the closing bracket.
+	$attributes = preg_replace( '#^<script\b|/?\s*>$#i', '', (string) $tag );
+
+	foreach ( wp_kses_hair( (string) $attributes, wp_allowed_protocols() ) as $name => $attribute ) {
+		if ( 'id' !== strtolower( $name ) ) {
+			continue;
+		}
+
+		$id = preg_replace( '/[\x00-\x20\x7F]+/', '', wp_check_invalid_utf8( (string) $attribute['value'] ) );
+
+		return is_string( $id ) ? $id : '';
+	}
+
+	return '';
 }
 
 /**
@@ -1070,7 +1347,14 @@ function seopress_pro_strip_foreign_script_tags( $value ) {
 				return '';
 			}
 
-			return '<script type="' . seopress_pro_json_ld_script_type() . '">';
+			// The type is normalized and every other attribute dropped, except
+			// the id, which is inert and is what lets a page address this
+			// block. See seopress_pro_json_ld_script_id().
+			$id = seopress_pro_json_ld_script_id( $matches[0] );
+
+			return '<script type="' . seopress_pro_json_ld_script_type() . '"'
+				. ( '' !== $id ? ' id="' . esc_attr( $id ) . '"' : '' )
+				. '>';
 		},
 		$value
 	);
@@ -1081,11 +1365,13 @@ function seopress_pro_strip_foreign_script_tags( $value ) {
 /**
  * Sanitize a custom JSON-LD field on its way into the database.
  *
- * The three paths that store a schema — the REST route the metabox talks to,
- * the registered post meta the Block Editor writes through, and the Classic
- * Editor fallback — all ran the same `wp_kses()` call with the same
- * `script` allowlist. They share this instead, so the script type is
- * constrained in one place.
+ * Every path that stores a custom schema ran its own copy of the same
+ * `wp_kses()` call with the same `script` allowlist: the REST route the
+ * manual schemas metabox talks to, the registered post meta the Block Editor
+ * writes through, the Classic Editor fallback, and the two routes behind the
+ * automatic Custom schema (the template saved from the schema editor and its
+ * per-post override). They share this instead, so the script type is
+ * constrained, and the id kept, in one place.
  *
  * @since 10.2.0
  *
@@ -1100,7 +1386,19 @@ function seopress_pro_kses_json_ld( $value ) {
 
 	// Everything but a script tag goes, so nothing outside a schema can carry
 	// an event handler. The type is then constrained on what is left.
-	$value = wp_kses( (string) $value, array( 'script' => array( 'type' => array() ) ) );
+	//
+	// `id` is on the allowlist because the rewrite below cannot keep what
+	// never reaches it: wp_kses() runs first, and an attribute it drops is
+	// gone before the tag is rebuilt. Its value is escaped there, not here.
+	$value = wp_kses(
+		(string) $value,
+		array(
+			'script' => array(
+				'type' => array(),
+				'id'   => array(),
+			),
+		)
+	);
 
 	return seopress_pro_strip_foreign_script_tags( $value );
 }
@@ -1132,12 +1430,13 @@ function seopress_pro_json_ld_normalize_custom( $html ) {
 		return $html;
 	}
 
-	// A value stored before the script type was constrained on the way in is
-	// still in the database, and nothing rewrites it until its post is saved
-	// again. Filtering here is what keeps it from reaching wp_head(), and it
-	// has to run before the early return below: a payload that carries no
-	// brace has nothing to re-encode but may still carry a script tag.
+	// A value stored before the field was sanitized on the way in is still in
+	// the database, and nothing rewrites it until its post is saved again.
+	// Filtering here is what keeps it from reaching wp_head(). It has to run
+	// before the early return below: a payload that carries no brace has
+	// nothing to re-encode but may still carry markup.
 	$html = seopress_pro_strip_foreign_script_tags( $html );
+	$html = seopress_pro_strip_markup_outside_json_ld( $html );
 
 	if ( false === strpos( $html, '{' ) ) {
 		return $html;
@@ -1158,6 +1457,43 @@ function seopress_pro_json_ld_normalize_custom( $html ) {
 	}
 
 	return seopress_pro_json_ld_normalize_body( $html );
+}
+
+/**
+ * Remove every tag found outside the JSON-LD script elements of a payload.
+ *
+ * Stripping foreign script tags left any other markup, an `<img onerror>`
+ * for one, printed into wp_head() as stored. The script bodies are left
+ * alone: a browser reads them as text up to `</script`, and running wp_kses()
+ * over JSON mangles values such as `&lt;5 minutes`, which it takes for the
+ * start of a tag. The bodies are re-encoded as JSON afterwards anyway.
+ *
+ * @since 10.4.0
+ *
+ * @param string $html Custom schema, script tags already rebuilt.
+ *
+ * @return string
+ */
+function seopress_pro_strip_markup_outside_json_ld( $html ) {
+	$parts = preg_split(
+		'#(<script\b[^>]*type\s*=\s*["\']application/ld\+json["\'][^>]*>.*?</script\s*>)#is',
+		$html,
+		-1,
+		PREG_SPLIT_DELIM_CAPTURE
+	);
+
+	if ( false === $parts ) {
+		return wp_kses( $html, array() );
+	}
+
+	foreach ( $parts as $index => $part ) {
+		// Odd indexes are the captured script elements.
+		if ( 0 === $index % 2 ) {
+			$parts[ $index ] = wp_kses( $part, array() );
+		}
+	}
+
+	return implode( '', $parts );
 }
 
 /**
@@ -1478,4 +1814,61 @@ function seopress_pro_strip_query_string( $uri ) {
 	$pos = strpos( $uri, '?' );
 
 	return false === $pos ? $uri : substr( $uri, 0, $pos );
+}
+
+/**
+ * Resolve attachment IDs only in schema image properties at render time.
+ *
+ * @param mixed $data Schema node or value.
+ * @param bool  $image_value Whether a scalar occupies an image property.
+ * @return mixed
+ */
+function seopress_pro_resolve_schema_images( $data, $image_value = false ) {
+	if ( ! is_array( $data ) ) {
+		if ( $image_value && ( is_int( $data ) || ( is_string( $data ) && ctype_digit( $data ) ) ) && (int) $data > 0 ) {
+			$url = wp_get_attachment_url( (int) $data );
+			if ( $url ) {
+				return $url;
+			}
+		}
+		return $data;
+	}
+
+	$is_image = isset( $data['@type'] ) && in_array( 'ImageObject', (array) $data['@type'], true );
+	foreach ( $data as $key => $value ) {
+		$resolve = in_array( $key, array( 'image', 'logo', 'thumbnailUrl' ), true )
+			|| ( $is_image && in_array( $key, array( 'url', 'contentUrl' ), true ) )
+			|| ( $image_value && is_int( $key ) );
+		$data[ $key ] = seopress_pro_resolve_schema_images( $value, $resolve );
+	}
+	return $data;
+}
+
+// Manual schemas reach this filter after their dynamic tags have been resolved.
+add_filter( 'seopress_json_schema_generator_get_jsons', 'seopress_pro_resolve_schema_images' );
+
+/**
+ * Whether the .htaccess editor must refuse to write.
+ *
+ * DISALLOW_FILE_EDIT and SEOPRESS_BLOCK_HTACCESS turn it off, and so does
+ * DISALLOW_FILE_MODS: a site locked against every file change should not be
+ * the one place a server configuration file can still be rewritten. Read
+ * through wp_is_file_mod_allowed() so its `file_mod_allowed` filter applies.
+ * The handler and the settings screen ask the same question here, so the
+ * screen never offers what the handler refuses.
+ *
+ * @since 10.4.0
+ *
+ * @return bool
+ */
+function seopress_htaccess_editing_is_disabled() {
+	if ( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT ) {
+		return true;
+	}
+
+	if ( defined( 'SEOPRESS_BLOCK_HTACCESS' ) && SEOPRESS_BLOCK_HTACCESS ) {
+		return true;
+	}
+
+	return ! wp_is_file_mod_allowed( 'seopress_htaccess' );
 }

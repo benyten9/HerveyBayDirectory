@@ -26,6 +26,8 @@ use DoubleScale\Core\ListPreferences\ListPreferencesManager;
 use DoubleScale\Modules\Contacts\Rest\Controllers\RestContactController;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\UserRoles\UserRoles;
+use DoubleScale\Modules\KnowledgeBase\Services\KbAccess;
+use DoubleScale\Modules\Support\Services\ProfilePhoto;
 use DoubleScale\Website\License;
 
 /**
@@ -36,20 +38,13 @@ use DoubleScale\Website\License;
 final class AdminConfig {
 
 	/**
-	 * Set admin config
+	 * The current user's access flags, as the admin app and the mobile app see
+	 * them: CRM role flags plus module capabilities, and the contact rules
+	 * (who reads, adds, changes and assigns contacts).
 	 *
-	 * @since 1.0.0
-	 *
-	 * @return void
+	 * @return array<string, bool>
 	 */
-	public static function set_admin_config() {
-		// Admin email address.
-		$admin_email = get_option( 'admin_email' );
-		$ajax_url    = admin_url( 'admin-ajax.php' );
-		$nonce       = wp_create_nonce( 'doublescale-admin' );
-
-		// Get current user capabilities for role-based access control.
-		//
+	public static function get_user_capabilities() {
 		// Two buckets are exposed to the SPA:
 		//
 		// 1. CRM role flags — used by `useCapabilities()` for role-based UI
@@ -67,9 +62,41 @@ final class AdminConfig {
 		$user_capabilities = array(
 			'doublescale_access'                  => current_user_can( 'doublescale_access' ),
 			'doublescale_crm_manager'             => Permissions::is_crm_manager(),
+			// CRM Agent: agent level in every module. `is_scoped_agent` is the
+			// server's final word on whether this user's contact lists are
+			// narrowed (agent level + site set to 'own'); `sees_all_*` say so
+			// per module.
+			'doublescale_crm_agent'               => Permissions::is_crm_agent(),
+			'doublescale_campaign_manager'       => Permissions::is_campaign_manager(),
+			'doublescale_campaign_agent'         => Permissions::is_campaign_agent(),
+			'doublescale_team_member'            => Permissions::is_team_member(),
+			'doublescale_is_scoped_agent'         => Permissions::is_scoped_agent(),
+			'doublescale_is_agent_tier'           => Permissions::is_agent_tier(),
+			'doublescale_can_assign_contact_owner' => Permissions::can_assign_contact_owner(),
+			'doublescale_sees_all_contacts'       => Permissions::sees_all_records( 'contacts' ),
+			'doublescale_sees_all_deals'          => Permissions::sees_all_records( 'deals' ),
 			'doublescale_sales_manager'           => Permissions::user_has_role( UserRoles::SALES_MANAGER ),
 			'doublescale_sales_rep'               => Permissions::user_has_role( UserRoles::SALES_REP ),
 			'doublescale_can_delete_contacts'     => Permissions::can_delete_contacts(),
+			// Contacts: who opens them, who changes any of them (else only their
+			// own), and which module tabs a contact shows them.
+			'doublescale_read_contacts'           => Permissions::can_read_contacts(),
+			'doublescale_create_contacts'         => Permissions::has_agent_access(),
+			'doublescale_can_edit_any_contact'    => Permissions::can_edit_any_contact(),
+			'doublescale_deals_access'            => Permissions::has_agent_access(),
+			'doublescale_tasks_access'            => Permissions::can_access_tasks_api(),
+			// What this person may open, per calendar kind (the dashboard calendar
+			// offers only these; the feed itself is scoped server-side).
+			'doublescale_read_deals'              => Permissions::can_read_deals(),
+			'doublescale_booking_access'          => Permissions::has_booking_access(),
+			'doublescale_project_access'          => Permissions::has_project_access(),
+			// The Sales module itself (not can_view_sales(), which project staff
+			// pass only to pick a sales rep for project billing).
+			'doublescale_sales_docs_access'       => current_user_can( 'doublescale_view_sales' )
+				|| current_user_can( 'doublescale_manage_all_sales' )
+				|| current_user_can( 'doublescale_manage_own_sales' )
+				|| current_user_can( 'doublescale_manage' ),
+			'doublescale_website_tracking_access' => Permissions::can_view_website_tracking(),
 			// Server-computed Settings gate — prefer this in the SPA so
 			// CRM Manager + Sales Rep multi-role users never get locked to
 			// Mailbox/Notifications by composing membership flags in JS.
@@ -90,11 +117,30 @@ final class AdminConfig {
 			'doublescale_is_project_only'         => Permissions::is_project_only(),
 			'doublescale_is_booking_only'         => Permissions::is_booking_only(),
 			'doublescale_is_support_only'         => Permissions::is_support_only(),
+			'doublescale_automation_manager'      => Permissions::user_has_role( UserRoles::AUTOMATION_MANAGER ),
+			'doublescale_automation_agent'        => Permissions::user_has_role( UserRoles::AUTOMATION_AGENT ),
+			'doublescale_is_automation_only'      => Permissions::is_automation_only(),
+			'doublescale_help_center_manager'     => Permissions::user_has_role( UserRoles::HELP_CENTER_MANAGER ),
+			'doublescale_help_center_agent'       => Permissions::user_has_role( UserRoles::HELP_CENTER_AGENT ),
+			'doublescale_is_help_center_only'     => Permissions::is_help_center_only(),
+			// Help center articles: read every one, write (create + their own),
+			// manage (every article, categories, order, import, page address).
+			// The server's final word ({@see KbAccess}), so the screens never
+			// rebuild the rule from role flags.
+			'doublescale_view_kb'                 => KbAccess::can_read(),
+			'doublescale_write_kb'                => KbAccess::can_write(),
+			'doublescale_manage_kb'               => KbAccess::can_manage(),
+			// The Automations module: own workflows at least; manage_all for every workflow.
+			'doublescale_view_automations'        => Permissions::can_access_automations(),
+			'doublescale_manage_all_automations'  => Permissions::can_manage_all_automations(),
 			'doublescale_view_support'            => Permissions::has_support_access(),
 			'doublescale_manage_all_tickets'      => Permissions::can_manage_all_tickets(),
 			// Mailbox/settings gate (manager-tier): admins, CRM Managers, and
 			// Support Managers. Support Agents + Sales roles are excluded.
 			'doublescale_manage_support_settings' => Permissions::can_access_support_settings(),
+			// Their own profile photo, which visitors see in the live chat:
+			// people who answer tickets, while the Helpdesk is on.
+			'doublescale_can_set_profile_photo'   => ProfilePhoto::can_set( get_current_user_id() ),
 		);
 
 		if ( class_exists( \DoubleScale\Modules\Booking\Capabilities::class ) ) {
@@ -120,11 +166,32 @@ final class AdminConfig {
 		$user_capabilities['doublescale_can_assign_task_assignee'] = Permissions::can_assign_task_assignee();
 		$user_capabilities['doublescale_can_assign_sales_rep']    = \DoubleScale\Modules\Sales\Capabilities::can_assign_sales_rep();
 
+		return $user_capabilities;
+	}
+
+	/**
+	 * Set admin config
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public static function set_admin_config() {
+		// Admin email address.
+		$admin_email = get_option( 'admin_email' );
+		$ajax_url    = admin_url( 'admin-ajax.php' );
+		$nonce       = wp_create_nonce( 'doublescale-admin' );
+
+		// Get current user capabilities for role-based access control.
+		$user_capabilities = self::get_user_capabilities();
+
 		$current_wp_user = wp_get_current_user();
 		$current_user    = array(
 			'id'           => $current_wp_user->ID,
 			'display_name' => $current_wp_user->display_name,
 			'email'        => $current_wp_user->user_email,
+			// Their own DoubleScale photo ('' for none), for the Profile photo menu.
+			'photo'        => ProfilePhoto::url( (int) $current_wp_user->ID ),
 		);
 
 		$url_doublescale_pro = DOUBLESCALE_PRO_PRICE_URL;
@@ -138,11 +205,6 @@ final class AdminConfig {
 		// Get pro plugin data
 		$pro_plugin_data = self::get_pro_plugin_data();
 
-		// FormsManager may finish resolving after the first `doublescale_ready` pass; refresh
-		// trigger catalog so the admin SPA receives form integration rows for automations.
-		if ( class_exists( TriggersManager::class ) ) {
-			TriggersManager::instance()->sync_form_trigger_sources();
-		}
 
 		$config = apply_filters(
 			'doublescale_admin_config',
@@ -172,17 +234,13 @@ final class AdminConfig {
 				'customFieldsTypes'   => class_exists( \DoubleScale\Pro\Modules\CustomFields\CustomFieldsManager::class ) ? \DoubleScale\Pro\Modules\CustomFields\CustomFieldsManager::instance()->get_options() : array(),
 				'contactFieldsGroups' => Utils::get_contact_fields(),
 				'integrations'        => IntegrationsManager::instance()->get_options(),
-				'automationTriggers'  => TriggersManager::instance()->get_sources(),
-				'automationActions'   => ActionsManager::instance()->get_sources(),
-				'automationGoals'     => GoalsManager::instance()->get_sources(),
-				'automationRules'     => class_exists( 'DoubleScale\Modules\Automations\Services\RulesManager' ) ? RulesManager::instance()->get_groups() : array(),
-				'isWoocommerceActive' => (bool) doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'isWoocommerceActive' => (bool) doublescale_is_plugin_active( 'woocommerce' ),
 				'isEddActive'         => defined( 'EDD_PLUGIN_FILE' ),
 				'isSurecartActive'    => defined( 'SURECART_PLUGIN_FILE' ),
-				'isLmsActive'         => (bool) ( doublescale_is_plugin_active( 'sfwd-lms/sfwd_lms.php' ) || doublescale_is_plugin_active( 'tutor/tutor.php' ) || doublescale_is_plugin_active( 'lifterlms/lifterlms.php' ) || doublescale_is_plugin_active( 'learnpress/learnpress.php' ) ),
+				'isFluentcartActive'  => \DoubleScale\Core\Services\FluentCartOrders::is_active(),
+				'isLmsActive'         => (bool) ( doublescale_is_plugin_active( 'learndash' ) || doublescale_is_plugin_active( 'tutor' ) || doublescale_is_plugin_active( 'lifterlms' ) || doublescale_is_plugin_active( 'learnpress' ) ),
 				'isMemberpressActive' => defined( 'MEPR_PLUGIN_NAME' ),
 				'isPmproActive'       => defined( 'PMPRO_VERSION' ),
-				'mergeTags'           => MergeTagsManager::instance()->get_groups(),
 				'importers'           => Importers_Manager::instance()->get_options(),
 				'userCapabilities'    => $user_capabilities,
 				'currentUser'         => $current_user,
@@ -207,6 +265,11 @@ final class AdminConfig {
 				'aiConfigured'        => self::is_ai_configured(),
 				'aiAssistantEnabled'  => self::is_ai_assistant_enabled(),
 				'modules'             => self::get_modules_config(),
+				/** New modules this administrator has not seen (dashboard card, "New" in Control Modules). */
+				'moduleNews'          => \DoubleScale\Core\ModuleNews::for_user( get_current_user_id() ),
+				// Dates the way the site writes them (Settings → General): every
+				// screen formats with these, never the browser's own order.
+				'siteDates'           => \DoubleScale\Core\Settings\SiteDates::config(),
 				/** Temporary release gate for Sales proposals/invoices — see doublescale_sales_documents_ready(). */
 				'salesDocumentsReady' => doublescale_sales_documents_ready(),
 				/** Pro approval workflow toggle — see SalesSettings::get( 'approval_workflow_enabled' ). */
@@ -216,10 +279,18 @@ final class AdminConfig {
 				/** Whether a configured WhatsApp provider can send documents without
 				 * the admin opening wa.me — Pro answers this filter. */
 				'salesWhatsappAutoAvailable' => (bool) apply_filters( 'doublescale_sales_whatsapp_auto_available', false ),
-				'business'            => self::get_business_branding_config(),
+				'business'            => self::get_business_branding_config() + array( 'business_brand_color' => \DoubleScale\Core\Settings\BrandColor::get() ),
 				'calendarWeekStartsOn' => Settings::get_calendar_week_starts_on(),
+				/** Settings → Website Tracking is on (the contact tab says so when it's off). */
+				'websiteTrackingEnabled' => Settings::is_website_tracking_enabled(),
 			)
 		);
+
+		// The automation catalog and merge tags are fetched by the app when a screen
+		// needs them (GET doublescale/v1/admin/catalog). Kill switch: print them inline.
+		if ( self::inline_catalog() ) {
+			$config = array_merge( $config, self::get_catalog() );
+		}
 
 		wp_add_inline_script(
 			'doublescale-admin',
@@ -229,13 +300,46 @@ final class AdminConfig {
 	}
 
 	/**
+	 * The automation catalog (triggers, actions, goals, conditions) and merge tags.
+	 *
+	 * Served by RestCatalogController; printed inline only with the kill switch.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function get_catalog(): array {
+		// FormsManager may finish resolving after the first `doublescale_ready` pass; refresh
+		// trigger catalog so the admin SPA receives form integration rows for automations.
+		if ( class_exists( TriggersManager::class ) ) {
+			TriggersManager::instance()->sync_form_trigger_sources();
+		}
+
+		return array(
+			'automationTriggers' => TriggersManager::instance()->get_sources(),
+			'automationActions'  => ActionsManager::instance()->get_sources(),
+			'automationGoals'    => GoalsManager::instance()->get_sources(),
+			'automationRules'    => class_exists( 'DoubleScale\Modules\Automations\Services\RulesManager' ) ? RulesManager::instance()->get_groups() : array(),
+			'mergeTags'          => MergeTagsManager::instance()->get_groups(),
+		);
+	}
+
+	/**
+	 * Whether to print the catalog into the page as before (kill switch).
+	 */
+	private static function inline_catalog(): bool {
+		if ( defined( 'DOUBLESCALE_EAGER_REGISTRIES' ) && DOUBLESCALE_EAGER_REGISTRIES ) {
+			return true;
+		}
+		return (bool) apply_filters( 'doublescale_admin_inline_catalog', false );
+	}
+
+	/**
 	 * Business branding for document templates and admin UI.
 	 *
 	 * @return array{business_name: string, business_address: string, business_logo: string}
 	 */
 	private static function get_business_branding_config(): array {
 		if ( class_exists( \DoubleScale\Modules\Documents\Services\DocumentPdf::class ) ) {
-			return \DoubleScale\Modules\Documents\Services\DocumentPdf::resolved_business_settings();
+			return \DoubleScale\Modules\Documents\Services\DocumentPdf::branding_config();
 		}
 
 		$business = Settings::get( 'business', array() );
@@ -314,9 +418,12 @@ final class AdminConfig {
 	 *
 	 * @since 1.0.0
 	 *
+	 * Public: the settings save reports it back, so an open admin page can
+	 * update without a reload.
+	 *
 	 * @return bool True when a provider and Api key (or custom provider) are set.
 	 */
-	private static function is_ai_configured() {
+	public static function is_ai_configured() {
 		if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
 			return false;
 		}

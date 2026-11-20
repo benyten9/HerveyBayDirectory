@@ -1,5 +1,11 @@
 <?php
 
+// MCP Adapter 0.7.0 logs a doing_it_wrong notice when the canonical plugin
+// boots after this package already registered WP\MCP via Jetpack Autoloader.
+if ( ! defined( 'WP_MCP_AUTOLOAD' ) ) {
+	define( 'WP_MCP_AUTOLOAD', false );
+}
+
 global $__composer_autoload_files, $elementor_mcp_composer_versions;
 
 /**
@@ -30,26 +36,26 @@ if ( file_exists( $autoload_files_path ) ) {
 
 $pattern = '#/([^/]+)/vendor/elementor/#';
 if ( preg_match( $pattern, __DIR__, $matches ) ) {
-	$elementor_mcp_composer_versions[ $matches[1] ] = '1.0.16';
+	$elementor_mcp_composer_versions[ $matches[1] ] = '1.0.22';
 }
 
-if ( ! function_exists( 'elementor_mcp_composer_register_1_dot_0_dot_16' ) && function_exists( 'add_action' ) ) {
+if ( ! function_exists( 'elementor_mcp_composer_register_1_dot_0_dot_22' ) && function_exists( 'add_action' ) ) {
 
 	if ( ! class_exists( '\Elementor\MCP\Composer\Versions', false ) ) {
 		require_once __DIR__ . '/src/Versions.php';
 		add_action( 'plugins_loaded', [ \Elementor\MCP\Composer\Versions::class, 'initialize_latest_version' ], -15, 0 );
 	}
 
-	add_action( 'plugins_loaded', 'elementor_mcp_composer_register_1_dot_0_dot_16', -20, 0 );
+	add_action( 'plugins_loaded', 'elementor_mcp_composer_register_1_dot_0_dot_22', -20, 0 );
 
 	/**
 	 * Register this package version with the version arbitrator.
 	 *
 	 * @return void
 	 */
-	function elementor_mcp_composer_register_1_dot_0_dot_16() {
+	function elementor_mcp_composer_register_1_dot_0_dot_22() {
 		$versions = \Elementor\MCP\Composer\Versions::instance();
-		$versions->register( '1.0.16', 'elementor_mcp_composer_initialize_1_dot_0_dot_16' );
+		$versions->register( '1.0.22', 'elementor_mcp_composer_initialize_1_dot_0_dot_22' );
 	}
 
 	/**
@@ -57,7 +63,7 @@ if ( ! function_exists( 'elementor_mcp_composer_register_1_dot_0_dot_16' ) && fu
 	 *
 	 * @return void
 	 */
-	function elementor_mcp_composer_initialize_1_dot_0_dot_16() {
+	function elementor_mcp_composer_initialize_1_dot_0_dot_22() {
 		\Elementor\MCP\Composer\Loader::init();
 	}
 }

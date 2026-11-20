@@ -278,7 +278,13 @@ function seopress_404_btn_cpt() {
 	$screen = get_current_screen();
 	global $pagenow;
 
-	if ( 'seopress_404' === $screen->post_type && ( 'post-new.php' === $pagenow || 'post.php' === $pagenow ) ) { ?>
+	// Null on admin pages that never register a WP_Screen (some third-party
+	// plugin screens): reading a property on it warned on every such page.
+	if ( ! $screen || 'seopress_404' !== $screen->post_type ) {
+		return;
+	}
+
+	if ( 'post-new.php' === $pagenow || 'post.php' === $pagenow ) { ?>
 <script>
 	jQuery(function() {
 		jQuery("body.post-type-seopress_404 .wrap h1").after(
@@ -287,7 +293,7 @@ function seopress_404_btn_cpt() {
 	});
 </script>
 		<?php
-	} elseif ( 'seopress_404' === $screen->post_type ) {
+	} else {
 		?>
 <script>
 jQuery(function() {
@@ -1313,7 +1319,7 @@ function seopress_301_after_title() {
 		<p>
 			<?php echo wp_kses_post( __( 'Enter your <strong>relative</strong> URL above. Do not use anchors, they are not sent by your browser.', 'wp-seopress-pro' ) ); ?>
 			<br>
-			<?php echo wp_kses_post( __( 'e.g. <code>my-custom-permalink</code>. If you have a permalink structure like <code>/%category%/%postname%/</code>, make sure to include the categories: <code>category/sub-category/my-custom-permalink</code>.', 'wp-seopress-pro' ) ); ?>
+			<?php echo wp_kses_post( __( 'e.g. <code>my-custom-permalink</code>. If you have a permalink structure like <code>/%category%/%postname%/</code>, make sure to include the categories: <code>category/sub-category/my-custom-permalink</code>.', 'wp-seopress-pro' ) ); // phpcs:ignore WordPress.WP.I18n.MissingTranslatorsComment -- "%category%" and "%postname%" are permalink tags, the string is never passed to sprintf(). ?>
 		</p>
 		<?php
 	}
@@ -1659,7 +1665,7 @@ function seopress_404_count_display_column( $column, $post_id ) {
 		global $wp_version;
 		$timestamp = esc_html( get_post_meta( $post_id, '_seopress_404_redirect_date_request', true ) );
 		if ( '' != $timestamp ) {
-			echo esc_html( date( get_option( 'date_format' ) . ' [' . get_option( 'time_format' ) . ']', $timestamp ) );
+			echo esc_html( gmdate( get_option( 'date_format' ) . ' [' . get_option( 'time_format' ) . ']', $timestamp ) );
 		}
 	}
 	if ( 'seopress_404_redirect_ua' === $column ) {
@@ -2100,8 +2106,8 @@ function seopress_bulk_action_add_to_cat_admin_notice() {
 	$count    = intval( $_REQUEST['bulk_add_to_cat_posts'] ); //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$cat_name = isset( $_REQUEST['bulk_add_to_cat_name'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['bulk_add_to_cat_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-	/* translators: 1: number of redirections updated, 2: category name */
 	$message = sprintf(
+		/* translators: 1: number of redirections updated, 2: category name */
 		_n(
 			'%1$s redirection assigned to &ldquo;%2$s&rdquo;.',
 			'%1$s redirections assigned to &ldquo;%2$s&rdquo;.',

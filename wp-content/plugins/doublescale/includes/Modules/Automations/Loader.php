@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use DoubleScale\Modules\Automations\Engine\SendContext;
 use DoubleScale\Modules\Automations\Engine\StepBudget;
 use DoubleScale\Modules\Automations\Engine\TriggerBatch;
 use DoubleScale\Modules\Automations\Engine\TriggerPayload;
@@ -195,7 +196,8 @@ final class Loader {
 			$failed   = 0;
 			// One budget for the whole batch: early contacts run their first
 			// steps inline, later ones fall back to queued steps once it is spent.
-			StepBudget::run(
+			// A bulk run: send steps hand their messages to the send queue.
+			SendContext::bulk( static fn() => StepBudget::run(
 				function () use ( $items, $model, $automation_id, &$enrolled, &$failed ) {
 					foreach ( (array) $items as $item ) {
 						if ( ! is_array( $item ) ) {
@@ -222,7 +224,7 @@ final class Loader {
 				},
 				// The batch itself may hold up to 100 enrolments; give it more room.
 				StepBudget::default_seconds() * 2
-			);
+			) );
 
 			doublescale_get_logger()->debug(
 				'Process Automations Batch completed',
@@ -291,6 +293,15 @@ final class Loader {
 				if ( $delay_process ) {
 					$delay_process->status = 'completed';
 					$delay_process->save();
+				} elseif ( $automation->processes()
+					->where( 'automation_contact_id', $automation_contact_id )
+					->where( 'step_id', $parent_step_id )
+					->where( 'status', 'skipped' )
+					->exists() ) {
+					// The contact jumped ahead to a goal while it slept here
+					// (GoalJump): this wake-up is stale, the steps after the
+					// delay are already behind it.
+					return;
 				}
 			}
 			$step               = AutomationStepModel::findOrFail( $step_id );
@@ -327,7 +338,6 @@ final class Loader {
 	 */
 	public function process_automation_goal( $step, $automation_contact_id ) {
 		try {
-			$skip               = $step->get_setting( 'skip', false );
 			$automation         = $step->automation;
 			$automation_contact = AutomationContactModel::find( $automation_contact_id );
 
@@ -335,26 +345,22 @@ final class Loader {
 				return;
 			}
 
-			if ( ! $skip ) {
-				// Update the goal process record to completed
-				$goal_process = $automation_contact->processes()->where( 'step_id', $step->id )->where( 'status', 'pending' )->first();
-				if ( $goal_process ) {
-					$goal_process->status = 'completed';
-					$goal_process->save();
-				}
+			// The run must still be held on this goal: if it already moved on
+			// (it jumped further ahead, or the step was released twice), this
+			// release has nothing to do.
+			$goal_process = $automation_contact->processes()->where( 'step_id', $step->id )->where( 'status', 'pending' )->first();
+			if ( ! $goal_process || (int) $automation_contact->current_step !== (int) $step->id ) {
+				return;
+			}
+			$goal_process->status = 'completed';
+			$goal_process->save();
 
-				// Move to next step if available
-				if ( 0 !== $automation_contact->next_step ) {
-					$automation_process = new ProcessAutomation( $step->automation );
-					$automation_process->enqueue_step( $automation_contact->next_step, $automation_contact->id );
-				}
+			$automation_process = new ProcessAutomation( $automation );
+			if ( 0 !== (int) $automation_contact->next_step ) {
+				$automation_process->update_automation_contact_status( $automation_contact, 'active', (int) $step->id, (int) $automation_contact->next_step );
+				$automation_process->enqueue_step( (int) $automation_contact->next_step, $automation_contact->id );
 			} else {
-				// If skipped, just mark the process as completed
-				$automation_process = $automation_contact->processes()->where( 'step_id', $step->id )->where( 'status', 'pending' )->first();
-				if ( $automation_process ) {
-					$automation_process->status = 'completed';
-					$automation_process->save();
-				}
+				$automation_process->update_automation_contact_status( $automation_contact, 'completed', (int) $step->id, 0 );
 			}
 		} catch ( Exception $e ) {
 			doublescale_get_logger()->error(

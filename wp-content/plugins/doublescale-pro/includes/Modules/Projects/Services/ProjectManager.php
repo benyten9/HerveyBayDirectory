@@ -8,6 +8,7 @@
 namespace DoubleScale\Pro\Modules\Projects\Services;
 
 use Exception;
+use DoubleScale\Pro\Database\SeedLock;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectStatusModel;
 use DoubleScale\Pro\Modules\Deals\Models\DealModel;
@@ -22,8 +23,14 @@ use DoubleScale\Modules\Documents\Models\ProposalModel;
 use DoubleScale\Modules\Documents\Rest\ProposalShaper;
 use DoubleScale\Pro\Core\UserRoles\PermissionsCompat;
 use DoubleScale\Pro\Modules\Projects\Capabilities;
+use DoubleScale\Pro\Modules\Projects\Rest\ProjectShaper;
 
 final class ProjectManager {
+
+	/**
+	 * Lock held by every write that creates or protects the default statuses.
+	 */
+	private const SEED_LOCK = 'project_statuses';
 
 	/**
 	 * @var ProjectManager|null
@@ -48,7 +55,7 @@ final class ProjectManager {
 	 * @return void
 	 */
 	public function init() {
-		add_action( 'wp_loaded', array( $this, 'seed_default_statuses' ) );
+		add_action( 'wp_loaded', array( $this, 'maybe_seed_default_statuses' ) );
 	}
 
 	/**
@@ -90,19 +97,53 @@ final class ProjectManager {
 	/**
 	 * @return void
 	 */
-	public function seed_default_statuses() {
-		if ( ProjectStatusModel::count() > 0 ) {
+	public function maybe_seed_default_statuses() {
+		// The every-request check runs once per Pro version (or after a status
+		// is deleted): the flag is one of the options loaded together at boot.
+		// Direct callers (status screens, project creation, migrations) always
+		// check through seed_default_statuses().
+		$version = defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '';
+		if ( '' !== $version && get_option( 'doublescale_project_statuses_seeded' ) === $version ) {
 			return;
 		}
-		$position = 0;
-		foreach ( $this->get_default_statuses() as $status ) {
-			ProjectStatusModel::create(
-				array_merge(
-					$status,
-					array( 'position' => $position++ )
-				)
-			);
+		$this->seed_default_statuses();
+	}
+
+	/**
+	 * Create the default statuses when there are none (always checks).
+	 *
+	 * @return void
+	 */
+	public function seed_default_statuses() {
+		$version = defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '';
+		if ( ProjectStatusModel::count() > 0 ) {
+			if ( '' !== $version ) {
+				update_option( 'doublescale_project_statuses_seeded', $version, false );
+			}
+			return;
 		}
+
+		// This runs on every request, so two of them can find no statuses at the
+		// same moment. Only the one holding the lock may seed, and it has to
+		// look again first.
+		SeedLock::run(
+			self::SEED_LOCK,
+			function () {
+				if ( ProjectStatusModel::count() > 0 ) {
+					return;
+				}
+
+				$position = 0;
+				foreach ( $this->get_default_statuses() as $status ) {
+					ProjectStatusModel::create(
+						array_merge(
+							$status,
+							array( 'position' => $position++ )
+						)
+					);
+				}
+			}
+		);
 	}
 
 	/**
@@ -113,13 +154,63 @@ final class ProjectManager {
 	public function ensure_protected_statuses() {
 		$this->seed_default_statuses();
 
+		if ( 1 === $this->count_protected_statuses( 0 ) && 1 === $this->count_protected_statuses( 1 ) ) {
+			return;
+		}
+
+		// Same lock as the seeding: a request that arrives while another one is
+		// still creating the defaults must not add a "New" and a "Completed" of
+		// its own next to them.
+		SeedLock::run(
+			self::SEED_LOCK,
+			function () {
+				$this->protect_one_status_of_each_type();
+			}
+		);
+	}
+
+	/**
+	 * How many statuses of this type cannot be deleted.
+	 *
+	 * @param int $is_completed 0 for open statuses, 1 for completed ones.
+	 * @return int
+	 */
+	private function count_protected_statuses( int $is_completed ): int {
+		return (int) ProjectStatusModel::where( 'is_completed', $is_completed )
+			->where( 'is_protected', 1 )
+			->count();
+	}
+
+	/**
+	 * A set of statuses seeded twice has two protected copies of a status, and
+	 * a protected status cannot be deleted. Keep the given one.
+	 *
+	 * @param ProjectStatusModel $kept The copy that stays protected.
+	 * @return void
+	 */
+	private function unprotect_copies_of( ProjectStatusModel $kept ): void {
+		ProjectStatusModel::where( 'is_completed', $kept->is_completed ? 1 : 0 )
+			->where( 'is_protected', 1 )
+			->where( 'id', '!=', $kept->id )
+			->update( array( 'is_protected' => 0 ) );
+	}
+
+	/**
+	 * Leave one protected open and one protected completed status, creating
+	 * the one the project has none of.
+	 *
+	 * @return void
+	 */
+	private function protect_one_status_of_each_type(): void {
 		$protected_open = ProjectStatusModel::where( 'is_completed', 0 )
 			->where( 'is_protected', 1 )
 			->orderBy( 'position', 'asc' )
 			->orderBy( 'id', 'asc' )
 			->first();
 
-		if ( ! $protected_open ) {
+		if ( $protected_open ) {
+			$this->unprotect_copies_of( $protected_open );
+		} else {
 			$first_open = ProjectStatusModel::where( 'is_completed', 0 )
 				->orderBy( 'position', 'asc' )
 				->orderBy( 'id', 'asc' )
@@ -148,7 +239,9 @@ final class ProjectManager {
 			->orderBy( 'id', 'asc' )
 			->first();
 
-		if ( ! $protected_closed ) {
+		if ( $protected_closed ) {
+			$this->unprotect_copies_of( $protected_closed );
+		} else {
 			$first_closed = ProjectStatusModel::where( 'is_completed', 1 )
 				->orderBy( 'position', 'asc' )
 				->orderBy( 'id', 'asc' )
@@ -189,8 +282,8 @@ final class ProjectManager {
 				throw new Exception( 'Contact not found' );
 			}
 
-			if ( ! empty( $data['deal_id'] ) && class_exists( DealModel::class ) && ! DealModel::find( $data['deal_id'] ) ) {
-				throw new Exception( 'Deal not found' );
+			if ( ! empty( $data['deal_id'] ) ) {
+				$this->prepare_deal_for_linked_project( (int) $data['deal_id'] );
 			}
 
 			if ( ! ProjectStatusModel::find( $data['status_id'] ) ) {
@@ -249,14 +342,12 @@ final class ProjectManager {
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query  Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query  Query builder.
 	 * @param array                               $filters Query filters.
 	 * @return void
 	 */
 	private function apply_filters_to_query( $query, array $filters ) {
-		if ( ! user_can( get_current_user_id(), 'doublescale_project_read_all_projects' ) ) {
-			$query->where( 'owner_id', get_current_user_id() );
-		}
+		$query->readableBy( get_current_user_id() );
 
 		if ( ! empty( $filters['status_id'] ) ) {
 			$query->where( 'status_id', (int) $filters['status_id'] );
@@ -264,11 +355,33 @@ final class ProjectManager {
 		if ( ! empty( $filters['contact_id'] ) ) {
 			$query->where( 'contact_id', (int) $filters['contact_id'] );
 		}
+		if ( ! empty( $filters['client_contact_id'] ) ) {
+			$client    = (int) $filters['client_contact_id'];
+			$companies = class_exists( \DoubleScale\Pro\Modules\Companies\Services\CompanyService::class )
+				? array_map(
+					static function ( $row ) {
+						return (int) $row->company_id;
+					},
+					\DoubleScale\Pro\Modules\Companies\Services\CompanyService::memberships( $client )
+				)
+				: array();
+			$query->where(
+				static function ( $q ) use ( $client, $companies ) {
+					$q->where( 'contact_id', $client );
+					if ( $companies ) {
+						$q->orWhereIn( 'company_id', $companies );
+					}
+				}
+			);
+		}
 		if ( ! empty( $filters['deal_id'] ) ) {
 			$query->where( 'deal_id', (int) $filters['deal_id'] );
 		}
 		if ( ! empty( $filters['owner_id'] ) ) {
 			$query->where( 'owner_id', (int) $filters['owner_id'] );
+		}
+		if ( ! empty( $filters['team_member_id'] ) ) {
+			$query->involving( (int) $filters['team_member_id'] );
 		}
 		if ( ! empty( $filters['search'] ) ) {
 			$like = '%' . str_replace( array( '%', '_' ), array( '\\%', '\\_' ), $filters['search'] ) . '%';
@@ -288,10 +401,10 @@ final class ProjectManager {
 
 	/**
 	 * @param array $filters Query filters.
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public function get_projects_with_filters( array $filters = array() ) {
-		$query = ProjectModel::query()->with( array( 'status', 'contact', 'owner', 'deal' ) );
+		$query = ProjectModel::query()->with( ProjectModel::loadable_relations( array( 'status', 'contact', 'owner', 'deal' ) ) );
 		$this->apply_filters_to_query( $query, $filters );
 
 		$allowed_sort_columns = array( 'position', 'title', 'budget', 'start_date', 'due_date', 'created_at', 'updated_at', 'status_id' );
@@ -299,16 +412,35 @@ final class ProjectManager {
 			? $filters['sort_by']
 			: 'position';
 		$sort_order           = ( ! empty( $filters['sort_order'] ) && 'desc' === $filters['sort_order'] ) ? 'desc' : 'asc';
-		$query->orderBy( $sort_by, $sort_order );
+		$viewer               = get_current_user_id();
+		if ( 'budget' === $sort_by && ! PermissionsCompat::can_manage_all_projects( $viewer ) ) {
+			// Only budgets the viewer may see take part: a team member must not
+			// learn how other people's projects rank.
+			$query->orderByRaw( 'CASE WHEN owner_id = ' . (int) $viewer . ' THEN budget END ' . $sort_order );
+		} else {
+			$query->orderBy( $sort_by, $sort_order );
+		}
+		$query->orderBy( 'id', 'asc' );
 
 		if ( ! empty( $filters['page'] ) && ! empty( $filters['per_page'] ) ) {
 			$page     = max( 1, (int) $filters['page'] );
-			$per_page = max( 1, min( 100, (int) $filters['per_page'] ) );
+			// Lists page by 100 at most; the board asks for all (up to its own ceiling).
+			$ceiling  = ! empty( $filters['board'] ) ? \DoubleScale\Pro\Modules\Projects\Rest\Controllers\RestProjectController::BOARD_LIMIT : 100;
+			$per_page = max( 1, min( $ceiling, (int) $filters['per_page'] ) );
 			$offset   = ( $page - 1 ) * $per_page;
 			$query->skip( $offset )->take( $per_page );
 		}
 
-		return $query->get();
+		$projects = $query->get();
+
+		// One query each for the page's task progress and contacts' WordPress
+		// accounts, instead of a few per project.
+		ProjectModel::prime_task_progress( $projects->pluck( 'id' )->all() );
+		if ( method_exists( \DoubleScale\Modules\Contacts\Models\ContactModel::class, 'prime_wp_users' ) ) {
+			\DoubleScale\Modules\Contacts\Models\ContactModel::prime_wp_users( $projects->pluck( 'contact.email' )->filter()->all() );
+		}
+
+		return $projects;
 	}
 
 	/**
@@ -319,6 +451,7 @@ final class ProjectManager {
 		$this->ensure_protected_statuses();
 		$statuses = ProjectStatusModel::orderBy( 'position' )->get();
 		$projects = $this->get_projects_with_filters( $filters );
+		$members  = ProjectTeam::members_for_projects( $projects->pluck( 'id' )->all() );
 
 		$grouped = array();
 		foreach ( $statuses as $status ) {
@@ -336,7 +469,7 @@ final class ProjectManager {
 					'projects' => array(),
 				);
 			}
-			$grouped[ $status_id ]['projects'][] = $this->shape_project_for_board( $project );
+			$grouped[ $status_id ]['projects'][] = $this->shape_project_for_board( $project, $members[ (int) $project->id ] ?? array() );
 		}
 
 		foreach ( $grouped as &$column ) {
@@ -353,11 +486,17 @@ final class ProjectManager {
 	}
 
 	/**
-	 * @param ProjectModel $project Project.
+	 * @param ProjectModel $project    Project.
+	 * @param int[]        $member_ids Team member ids.
 	 * @return array<string, mixed>
 	 */
-	private function shape_project_for_board( ProjectModel $project ) {
-		return $project->toArray();
+	private function shape_project_for_board( ProjectModel $project, array $member_ids ) {
+		return ProjectShaper::apply_viewer(
+			array_merge( $project->toArray(), ProjectShaper::public_url_fields( $project ) ),
+			$project,
+			Capabilities::project_permissions( $project ),
+			$member_ids
+		);
 	}
 
 	/**
@@ -415,8 +554,10 @@ final class ProjectManager {
 				'contact_id'    => $project->contact_id,
 				'activity_type' => ActivityTypes::PROJECT_STATUS_CHANGED,
 				'data'          => array(
-					'old_status_id' => $old_status_id,
-					'new_status_id' => $new_status_id,
+					'old_status_id'   => $old_status_id,
+					'new_status_id'   => $new_status_id,
+					// Kept with the change: a status deleted later still reads by name.
+					'new_status_name' => ( $new_status = ProjectStatusModel::find( (int) $new_status_id ) ) ? (string) $new_status->name : '',
 				),
 				'user_id'       => $user_id,
 			)
@@ -475,7 +616,11 @@ final class ProjectManager {
 				'deal_id'    => $deal->id,
 				'budget'     => $deal->value,
 				'status_id'  => $default_status->id,
-				'owner_id'   => $deal->owner_id,
+				// The deal's owner keeps it, unless they cannot open projects
+				// (a Sales Rep): then the person converting it owns it.
+				'owner_id'   => (int) $deal->owner_id > 0 && ProjectTeam::is_eligible( (int) $deal->owner_id )
+					? (int) $deal->owner_id
+					: ( get_current_user_id() ?: null ),
 			)
 		);
 
@@ -512,6 +657,37 @@ final class ProjectManager {
 
 		do_action( 'doublescale_project_converted_from_deal', $project, $deal );
 		return $project;
+	}
+
+	/**
+	 * Validate deal linkage rules and mark open deals as won.
+	 *
+	 * @param int $deal_id Deal ID.
+	 * @return void
+	 * @throws Exception When the deal cannot be linked.
+	 */
+	private function prepare_deal_for_linked_project( int $deal_id ): void {
+		if ( ! doublescale_module_data_ready( 'deals' ) ) {
+			throw new Exception( 'Deal not found' );
+		}
+
+		$deal = DealModel::find( $deal_id );
+		if ( ! $deal ) {
+			throw new Exception( 'Deal not found' );
+		}
+
+		if ( 'lost' === (string) $deal->status ) {
+			throw new Exception( 'Lost deals cannot be linked to projects.' );
+		}
+
+		$existing = ProjectModel::where( 'deal_id', $deal_id )->first();
+		if ( $existing ) {
+			throw new Exception( 'This deal already has a linked project.' );
+		}
+
+		if ( ! $this->ensure_deal_won_for_conversion( $deal ) ) {
+			throw new Exception( 'Failed to mark deal as won.' );
+		}
 	}
 
 	/**
@@ -593,7 +769,7 @@ final class ProjectManager {
 		$due   = 0.0;
 		$invoices = array();
 
-		if ( class_exists( InvoiceModel::class ) && ! empty( $invoice_ids ) ) {
+		if ( doublescale_module_data_ready( 'documents' ) && ! empty( $invoice_ids ) ) {
 			$rows = InvoiceModel::whereIn( 'id', $invoice_ids )->get();
 			foreach ( $rows as $invoice ) {
 				$invoice_total = (float) $invoice->total;
@@ -613,7 +789,7 @@ final class ProjectManager {
 		}
 
 		$proposals = array();
-		if ( class_exists( ProposalModel::class ) && ! empty( $proposal_ids ) ) {
+		if ( doublescale_module_data_ready( 'documents' ) && ! empty( $proposal_ids ) ) {
 			$rows = ProposalModel::whereIn( 'id', $proposal_ids )->get();
 			foreach ( $rows as $proposal ) {
 				$proposals[] = array(
@@ -665,9 +841,18 @@ final class ProjectManager {
 			return false;
 		}
 
+		if ( null !== $this->document_link_error( $project, (int) $doc_id, $type ) ) {
+			return false;
+		}
+
 		$entity_type = 'invoice' === $type
 			? ActivityAssociationModel::ENTITY_TYPE_INVOICE
 			: ActivityAssociationModel::ENTITY_TYPE_PROPOSAL;
+
+		// Already linked: linking again would only add a duplicate activity.
+		if ( in_array( (int) $doc_id, array_map( 'intval', $this->get_linked_document_ids( (int) $project_id, $entity_type ) ), true ) ) {
+			return true;
+		}
 
 		$activity = ActivityModel::create(
 			array(
@@ -710,6 +895,124 @@ final class ProjectManager {
 	}
 
 	/**
+	 * Why a document may not be linked to a project, or null when it may.
+	 *
+	 * The document must exist and, when the project has a client, belong to
+	 * that client: a project's money is the sum of its linked invoices, and
+	 * another client's invoice would land in this client's totals.
+	 *
+	 * @param ProjectModel $project Project.
+	 * @param int          $doc_id  Document ID.
+	 * @param string       $type    invoice|proposal.
+	 * @return \WP_Error|null
+	 */
+	public function document_link_error( ProjectModel $project, int $doc_id, string $type ): ?\WP_Error {
+		$model    = 'invoice' === $type ? InvoiceModel::class : ProposalModel::class;
+		$document = ( $doc_id > 0 && class_exists( $model ) ) ? $model::find( $doc_id ) : null;
+
+		if ( ! $document ) {
+			return new \WP_Error(
+				'invoice' === $type ? 'invoice_not_found' : 'proposal_not_found',
+				'invoice' === $type
+					? __( 'Invoice not found.', 'doublescale' )
+					: __( 'Proposal not found.', 'doublescale' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$contact_id = (int) $project->contact_id;
+		if ( $contact_id && (int) $document->contact_id !== $contact_id ) {
+			return new \WP_Error(
+				'document_contact_mismatch',
+				'invoice' === $type
+					? __( 'This invoice belongs to a different contact than the project.', 'doublescale' )
+					: __( 'This proposal belongs to a different contact than the project.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Projects a document is linked to.
+	 *
+	 * @param int    $doc_id Document ID.
+	 * @param string $type   invoice|proposal.
+	 * @return array<int>
+	 */
+	public function get_project_ids_for_document( int $doc_id, string $type ): array {
+		if ( ! class_exists( ActivityAssociationModel::class ) ) {
+			return array();
+		}
+
+		$entity_type = 'invoice' === $type
+			? ActivityAssociationModel::ENTITY_TYPE_INVOICE
+			: ActivityAssociationModel::ENTITY_TYPE_PROPOSAL;
+
+		$activity_ids = ActivityAssociationModel::where( 'entity_type', $entity_type )
+			->where( 'entity_id', $doc_id )
+			->pluck( 'activity_id' )
+			->toArray();
+
+		if ( empty( $activity_ids ) ) {
+			return array();
+		}
+
+		return array_map(
+			'intval',
+			ActivityAssociationModel::whereIn( 'activity_id', $activity_ids )
+				->where( 'entity_type', ActivityAssociationModel::ENTITY_TYPE_PROJECT )
+				->pluck( 'entity_id' )
+				->unique()
+				->values()
+				->toArray()
+		);
+	}
+
+	/**
+	 * The project's linked invoices and proposals that its client was sent:
+	 * the client's own (the project's contact), never drafts — the same rows
+	 * the client portal lists under Documents. What the portal and the shared
+	 * project page may show; get_financials() is the team's view of everything.
+	 *
+	 * @param ProjectModel $project Project.
+	 * @return array{invoices: array<int, InvoiceModel>, proposals: array<int, ProposalModel>}
+	 */
+	public function get_client_documents( ProjectModel $project ): array {
+		$documents  = array(
+			'invoices'  => array(),
+			'proposals' => array(),
+		);
+		$contact_id = (int) $project->contact_id;
+		if ( ! $contact_id ) {
+			return $documents;
+		}
+
+		$invoice_ids = $this->get_linked_document_ids( (int) $project->id, ActivityAssociationModel::ENTITY_TYPE_INVOICE );
+		if ( doublescale_module_data_ready( 'documents' ) && ! empty( $invoice_ids ) ) {
+			$documents['invoices'] = InvoiceModel::whereIn( 'id', $invoice_ids )
+				->where( 'contact_id', $contact_id )
+				->where( 'status', '!=', 'draft' )
+				->orderBy( 'id', 'desc' )
+				->get()
+				->all();
+		}
+
+		$proposal_ids = $this->get_linked_document_ids( (int) $project->id, ActivityAssociationModel::ENTITY_TYPE_PROPOSAL );
+		if ( doublescale_module_data_ready( 'documents' ) && ! empty( $proposal_ids ) ) {
+			$documents['proposals'] = ProposalModel::whereIn( 'id', $proposal_ids )
+				->where( 'contact_id', $contact_id )
+				->where( 'status', '!=', 'draft' )
+				->orderBy( 'id', 'desc' )
+				->get()
+				->all();
+		}
+
+		return $documents;
+	}
+
+	/**
 	 * @param int $project_id  Project ID.
 	 * @param int $entity_type Document entity type constant.
 	 * @return array<int>
@@ -748,7 +1051,7 @@ final class ProjectManager {
 			return $data;
 		}
 
-		if ( ! class_exists( DealModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'deals' ) ) {
 			return $data;
 		}
 

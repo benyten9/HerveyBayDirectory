@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Pagination;
 
-use Illuminate\Support\ServiceProvider;
+use DoubleScale\Vendor\Illuminate\Support\ServiceProvider;
 class PaginationServiceProvider extends ServiceProvider
 {
     /**
@@ -24,13 +24,13 @@ class PaginationServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        \Illuminate\Pagination\Paginator::viewFactoryResolver(function () {
+        Paginator::viewFactoryResolver(function () {
             return $this->app['view'];
         });
-        \Illuminate\Pagination\Paginator::currentPathResolver(function () {
+        Paginator::currentPathResolver(function () {
             return $this->app['request']->url();
         });
-        \Illuminate\Pagination\Paginator::currentPageResolver(function ($pageName = 'page') {
+        Paginator::currentPageResolver(function ($pageName = 'page') {
             $page = $this->app['request']->input($pageName);
             if (\filter_var($page, \FILTER_VALIDATE_INT) !== \false && (int) $page >= 1) {
                 return (int) $page;

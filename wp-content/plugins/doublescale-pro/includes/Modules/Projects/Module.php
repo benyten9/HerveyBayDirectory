@@ -11,6 +11,8 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\AbstractModule;
 use DoubleScale\Core\Container;
+use DoubleScale\Core\ModuleManager;
+use DoubleScale\Modules\Portal\Services\PortalFeatures;
 use DoubleScale\Core\Services\ShortcodePageProvisioner;
 use DoubleScale\Pro\Modules\Projects\Abilities\ProjectAbilities;
 use DoubleScale\Admin\AdminLoader;
@@ -77,6 +79,18 @@ final class Module extends AbstractModule {
 			Services\ProjectPortalProvider::class,
 			static fn() => new Services\ProjectPortalProvider()
 		);
+		$container->singleton(
+			Services\ProjectDocumentLinker::class,
+			static fn() => new Services\ProjectDocumentLinker()
+		);
+		$container->singleton(
+			Services\ProjectCalendarProvider::class,
+			static fn() => new Services\ProjectCalendarProvider()
+		);
+		$container->singleton(
+			Services\ProjectTeamSync::class,
+			static fn() => new Services\ProjectTeamSync()
+		);
 	}
 
 	public function restControllers(): array {
@@ -85,26 +99,60 @@ final class Module extends AbstractModule {
 			Rest\Controllers\RestProjectStatusController::class,
 			Rest\Controllers\RestPortalProjectController::class,
 			Rest\Controllers\RestPublicProjectController::class,
+			Rest\Controllers\RestProjectTeamController::class,
 		);
 	}
 
 	public function boot( Container $container ): void {
 		parent::boot( $container );
-		Migrations\ProjectStatusesTableProtectedColumn::ensure();
-		Migrations\ProjectsTableHashColumn::ensure();
-		Migrations\ProjectsTableProgressColumn::ensure();
+		$checks = static function () {
+			Migrations\ProjectStatusesTableProtectedColumn::ensure();
+			Migrations\ProjectsTableHashColumn::ensure();
+			Migrations\ProjectsTableProgressColumn::ensure();
+			Migrations\ProjectsTableBillingColumns::ensure();
+			Migrations\ProjectMembersTable::ensure();
+		};
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_projects', DOUBLESCALE_PRO_VERSION, $checks );
+		} else {
+			$checks();
+		}
+		Services\ProjectTeam::mark_table_ready();
+
+		// Support tickets can be linked to projects (free stores the link).
+		Services\TicketProjectLink::register();
 		// Roles may have been provisioned before Pro Projects loaded (shell caps
 		// only). Re-provision + sync so project_* caps land on Project Manager /
 		// Member and are stripped from Sales roles.
 		UserRoles::provision_project_roles();
 		Capabilities::ensure_capabilities_synced();
 		self::maybe_migrate_crm_managers_to_project_managers();
-		add_action( 'admin_notices', array( self::class, 'maybe_show_role_migration_notice' ) );
-		add_action( 'wp_ajax_doublescale_dismiss_projects_role_notice', array( self::class, 'dismiss_role_migration_notice' ) );
+		// The migration notice is retired: drop its leftover flag.
+		if ( false !== get_option( 'doublescale_projects_role_migration_notice', false ) ) {
+			delete_option( 'doublescale_projects_role_migration_notice' );
+		}
+
+		// The project form offers "Show tasks in the client portal" only when
+		// the installed free portal can show them and tasks are on.
+		add_filter(
+			'doublescale_admin_config',
+			static function ( $config ) {
+				if ( is_array( $config ) ) {
+					$config['portalProjectTasks'] = defined( PortalFeatures::class . '::SUPPORTS_PROJECT_TASKS' )
+						&& ModuleManager::isEnabled( 'tasks' );
+				}
+				return $config;
+			}
+		);
 
 		$container->get( Services\ProjectManager::class );
 		$container->get( Services\ProjectActivityLogger::class )->register();
 		$container->get( Services\ProjectPortalProvider::class );
+		$container->get( Services\ProjectCalendarProvider::class );
+		$container->get( Services\ProjectDocumentLinker::class )->register();
+		$container->get( Services\ProjectTeamSync::class )->register();
+		// A time tracking add-on from before project teams shows members the rates.
+		add_action( 'rest_api_init', array( Services\TimeTrackingMoneyGuard::class, 'register' ) );
 		new Renderer\ProjectFrontendHandler();
 
 		// Auto-create the page hosting that shortcode, so a shared project links
@@ -121,6 +169,18 @@ final class Module extends AbstractModule {
 		}
 
 		add_action( 'admin_menu', array( self::class, 'scope_menu_for_project_only_users' ), 9999 );
+
+		// The Projects tab and figure on a company page.
+		Services\CompanyProjects::register();
+
+		// Deleting a company detaches its projects too.
+		add_filter(
+			'doublescale_company_tables',
+			static function ( $tables ) {
+				$tables[] = 'doublescale_projects';
+				return $tables;
+			}
+		);
 
 		// projects.deal_id has no FK; detach it when the source deal is deleted
 		// so project views never resolve a dead deal.
@@ -213,61 +273,10 @@ final class Module extends AbstractModule {
 		}
 
 		update_option( 'doublescale_projects_role_migrated', true, false );
-		update_option( 'doublescale_projects_role_migration_notice', 'pending', false );
 	}
 
 	/**
-	 * @return void
-	 */
-	public static function maybe_show_role_migration_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		if ( ! get_option( 'doublescale_projects_role_migration_notice' ) ) {
-			return;
-		}
-
-		if ( get_user_meta( get_current_user_id(), 'doublescale_dismissed_projects_role_notice', true ) ) {
-			return;
-		}
-
-		$dismiss_url = wp_nonce_url(
-			admin_url( 'admin-ajax.php?action=doublescale_dismiss_projects_role_notice' ),
-			'doublescale_dismiss_projects_role_notice'
-		);
-
-		printf(
-			'<div class="notice notice-info is-dismissible" data-dismiss-url="%1$s"><p><strong>%2$s</strong> %3$s</p></div>',
-			esc_url( $dismiss_url ),
-			esc_html__( 'DoubleScale Projects:', 'doublescale' ),
-			esc_html__(
-				'Existing CRM Managers were automatically granted the Project Manager role so they keep project access. Review team roles in Settings → Team.',
-				'doublescale'
-			)
-		);
-
-		wp_enqueue_script( 'jquery' );
-		wp_add_inline_script(
-			'jquery',
-			'jQuery(function($){$(\'.notice.is-dismissible[data-dismiss-url]\').on(\'click\',\'.notice-dismiss\',function(){var u=$(this).closest(\'.notice\').data(\'dismiss-url\');if(u){$.post(u);}});});'
-		);
-	}
-
-	/**
-	 * @return void
-	 */
-	public static function dismiss_role_migration_notice(): void {
-		check_ajax_referer( 'doublescale_dismiss_projects_role_notice' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( -1, 403 );
-		}
-		update_user_meta( get_current_user_id(), 'doublescale_dismissed_projects_role_notice', true );
-		wp_send_json_success();
-	}
-
-	/**
-	 * Remove every DoubleScale submenu except Projects for project-only staff.
+	 * Remove every DoubleScale submenu project-only staff do not use (see doublescale_project_staff_admin_paths).
 	 *
 	 * @return void
 	 */
@@ -284,9 +293,24 @@ final class Module extends AbstractModule {
 			return;
 		}
 
+		/**
+		 * Admin pages project-only staff keep in the menu: projects, their
+		 * tasks and their own settings. Add-ons add theirs (e.g. `time`).
+		 *
+		 * @param string[] $paths `path=` values.
+		 */
+		$paths = (array) apply_filters( 'doublescale_project_staff_admin_paths', array( 'projects', 'tasks', 'settings' ) );
+
 		foreach ( $submenu[ $menu_slug ] as $key => $item ) {
 			$slug = isset( $item[2] ) ? (string) $item[2] : '';
-			if ( false === strpos( $slug, 'path=projects' ) ) {
+			$keep = false;
+			foreach ( $paths as $path ) {
+				if ( false !== strpos( $slug, 'path=' . $path ) ) {
+					$keep = true;
+					break;
+				}
+			}
+			if ( ! $keep ) {
 				unset( $submenu[ $menu_slug ][ $key ] );
 			}
 		}

@@ -173,10 +173,12 @@ class BulkEmailSender {
 	 *
 	 * @since 1.0.0
 	 *
+	 * @param string|null $from_email From email the batch is sent with, so the size
+	 *                                comes from the mailer that will send it.
 	 * @return int Maximum batch size (default 100 if unknown)
 	 */
-	public static function get_max_batch_size() {
-		$mailer = self::get_mailer_instance();
+	public static function get_max_batch_size( $from_email = null ) {
+		$mailer = self::get_mailer_instance( $from_email );
 
 		if ( ! $mailer ) {
 			return 100; // Safe default
@@ -199,20 +201,25 @@ class BulkEmailSender {
 	 * - ElasticEmail: {{contact:first_name}} -> {first_name}
 	 * - AWS SES: {{contact:first_name}} -> {{first_name}}
 	 *
+	 * Pass the batch's From email: send_batch() routes by it, and converting for
+	 * the Default connection's mailer instead leaves the tags unconverted when the
+	 * From matches another connection, so the provider renders them empty.
+	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $content Content with CRM merge tags
+	 * @param string      $content    Content with CRM merge tags
+	 * @param string|null $from_email From email the batch is sent with.
 	 *
 	 * @return string Content with mailer-specific recipient variables
 	 */
-	public static function convert_merge_tags_to_recipient_variables( $content ) {
-		$mailer = self::get_mailer_instance();
+	public static function convert_merge_tags_to_recipient_variables( $content, $from_email = null ) {
+		$mailer = self::get_mailer_instance( $from_email );
 
 		if ( ! $mailer ) {
 			return $content;
 		}
 
-		return $mailer->convert_merge_tags( $content );
+		return $mailer->convert_merge_tags( \DoubleScale\Core\MergeTags\MergeTagsManager::alias_fallback_tags( $content ) );
 	}
 
 	/**
@@ -245,6 +252,8 @@ class BulkEmailSender {
 	 * }
 	 */
 	public static function send_batch( $batch_data ) {
+		$batch_data = \DoubleScale\Core\MergeTags\MergeTagsManager::resolve_batch_fallbacks( (array) $batch_data );
+
 		// Extract from_email for smart routing
 		$from_email = $batch_data['from_email'] ?? null;
 		$mailer     = self::get_mailer_instance( $from_email );

@@ -11,7 +11,7 @@ class ComposerStaticInit5ebd33cca55a36ddced7dce5466021a1
     );
 
     public static $prefixLengthsPsr4 = array (
-        'D' =>
+        'D' => 
         array (
             'DirectoristStripe\\WpMVC\\Routing\\' => 32,
             'DirectoristStripe\\WpMVC\\RequestValidator\\' => 41,
@@ -31,59 +31,59 @@ class ComposerStaticInit5ebd33cca55a36ddced7dce5466021a1
     );
 
     public static $prefixDirsPsr4 = array (
-        'DirectoristStripe\\WpMVC\\Routing\\' =>
+        'DirectoristStripe\\WpMVC\\Routing\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/routing/src',
         ),
-        'DirectoristStripe\\WpMVC\\RequestValidator\\' =>
+        'DirectoristStripe\\WpMVC\\RequestValidator\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/request-validator/src',
         ),
-        'DirectoristStripe\\WpMVC\\Helpers\\' =>
+        'DirectoristStripe\\WpMVC\\Helpers\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/helpers/src',
         ),
-        'DirectoristStripe\\WpMVC\\Database\\' =>
+        'DirectoristStripe\\WpMVC\\Database\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/database/src',
         ),
-        'DirectoristStripe\\WpMVC\\' =>
+        'DirectoristStripe\\WpMVC\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/framework/src',
         ),
-        'DirectoristStripe\\Stripe\\' =>
+        'DirectoristStripe\\Stripe\\' => 
         array (
             0 => __DIR__ . '/..' . '/stripe/stripe-php/lib',
         ),
-        'DirectoristStripe\\Psr\\Container\\' =>
+        'DirectoristStripe\\Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'DirectoristStripe\\PhpDocReader\\' =>
+        'DirectoristStripe\\PhpDocReader\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-di/phpdoc-reader/src/PhpDocReader',
         ),
-        'DirectoristStripe\\Laravel\\SerializableClosure\\' =>
+        'DirectoristStripe\\Laravel\\SerializableClosure\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/serializable-closure/src',
         ),
-        'DirectoristStripe\\Invoker\\' =>
+        'DirectoristStripe\\Invoker\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-di/invoker/src',
         ),
-        'DirectoristStripe\\Database\\' =>
+        'DirectoristStripe\\Database\\' => 
         array (
             0 => __DIR__ . '/../..' . '/../database',
         ),
-        'DirectoristStripe\\DI\\' =>
+        'DirectoristStripe\\DI\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-di/php-di/src',
         ),
-        'DirectoristStripe\\Bootstrap\\' =>
+        'DirectoristStripe\\Bootstrap\\' => 
         array (
             0 => __DIR__ . '/../..' . '/../bootstrap',
         ),
-        'DirectoristStripe\\App\\' =>
+        'DirectoristStripe\\App\\' => 
         array (
             0 => __DIR__ . '/../..' . '/../app',
         ),

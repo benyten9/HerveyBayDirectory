@@ -198,6 +198,18 @@ add_action(
 		if ( class_exists( \DoubleScale\Modules\Campaigns\Abstracts\AbstractCampaignProcessing::class, false ) ) {
 			\DoubleScale\Pro\Modules\Campaigns\Automated\AutomatedCampaignsFeature::instance();
 			\DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::instance();
+			// Pro's own WhatsApp engine owns WhatsApp wherever free can hand it
+			// over (free 1.7.0+); an older free keeps running its own engine.
+			\DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappEngine::register();
+			// Keeps WhatsApp campaigns inside the account's Meta tier (off
+			// against a free that cannot pause, or still ships its own copy).
+			\DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaTierGuard::register();
+			add_action(
+				'rest_api_init',
+				static function (): void {
+					( new \DoubleScale\Pro\Modules\Campaigns\Whatsapp\RestWhatsappLimitsController() )->register_routes();
+				}
+			);
 			$container = \DoubleScale\Core\PluginKernel::instance()->get_container();
 			$container->singleton(
 				\DoubleScale\Pro\Modules\Campaigns\Sequences\EmailSequencesManager::class,
@@ -229,6 +241,8 @@ add_action(
 		}
 		if ( class_exists( \DoubleScale\Modules\Tracking\Abstracts\AbstractTracking::class, false ) ) {
 			\DoubleScale\Pro\Modules\Campaigns\Sms\SmsTracking::instance();
+			// Pro's WhatsApp receiver answers Meta wherever free can hand it over.
+			\DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappEngine::register_tracking();
 		}
 	},
 	20
@@ -290,6 +304,33 @@ if ( ! function_exists( 'doublescale_pro_get_automation_catalog' ) ) {
 }
 
 /**
+ * Pro modules' data models for doublescale_module_data_ready() (free): the
+ * table that stands for each module's data.
+ *
+ * @return array<string, class-string>
+ */
+function doublescale_pro_module_data_models(): array {
+	return array(
+		'contracts'          => \DoubleScale\Pro\Modules\Contracts\Models\ContractModel::class,
+		'credit_notes'       => \DoubleScale\Pro\Modules\CreditNotes\Models\CreditNoteModel::class,
+		'deals'              => \DoubleScale\Pro\Modules\Deals\Models\DealModel::class,
+		'leadscoring'        => \DoubleScale\Pro\Modules\LeadScoring\Models\LeadScoringRuleModel::class,
+		'product_catalog'    => \DoubleScale\Pro\Modules\ProductCatalog\Models\ProductModel::class,
+		'projects'           => \DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class,
+		'recurring_invoices' => \DoubleScale\Pro\Modules\RecurringInvoices\Models\InvoiceRecurrenceModel::class,
+		'tasks'              => \DoubleScale\Pro\Modules\Tasks\Models\TaskModel::class,
+		'websitetracking'    => \DoubleScale\Pro\Modules\WebsiteTracking\Models\PageVisitModel::class,
+	);
+}
+
+add_filter(
+	'doublescale_module_data_models',
+	static function ( $models ) {
+		return array_merge( (array) $models, doublescale_pro_module_data_models() );
+	}
+);
+
+/**
  * Whether Support automation catalog entries may register (module on + tables exist).
  */
 if ( ! function_exists( 'doublescale_pro_is_module_automation_storage_ready' ) ) {
@@ -347,6 +388,17 @@ if ( ! function_exists( 'doublescale_pro_is_tasks_automation_available' ) ) {
 			'tasks',
 			\DoubleScale\Pro\Modules\Tasks\Models\TaskModel::class
 		);
+	}
+}
+
+/**
+ * Whether cart recovery runs: it is part of Automations. Cart tracking, its
+ * WooCommerce checkout hooks, routes, conditions and merge tags read the
+ * abandoned-carts table, which exists only while Automations is on.
+ */
+if ( ! function_exists( 'doublescale_pro_is_abandoned_carts_available' ) ) {
+	function doublescale_pro_is_abandoned_carts_available(): bool {
+		return function_exists( 'doublescale_is_module_active' ) && doublescale_is_module_active( 'automations' );
 	}
 }
 
@@ -733,78 +785,88 @@ add_action(
 			require_once $model_file;
 		}
 
-		// Cart automation rules: each file calls RulesManager::instance()->register(...) on include.
-		foreach ( glob( $base . 'Rules/Cart/*.php' ) ?: array() as $file ) {
-			require_once $file;
-		}
-
-		// Cart merge tags: each file calls MergeTagsManager::instance()->register(...) on include.
-		foreach ( glob( $base . 'MergeTags/Woocommerce/AbandonedCart/*.php' ) ?: array() as $file ) {
-			require_once $file;
-		}
-
-		// Service class — registers WC hooks, AJAX handlers, scheduled tasks.
-		$service_file = $base . 'AbandonedCart/AbandonedCart.php';
-		if ( is_readable( $service_file ) ) {
-			require_once $service_file;
-			\DoubleScale\Modules\Automations\AbandonedCart\AbandonedCart::instance();
-		}
+		// Conditions (rules) and merge tags register themselves when their file is
+		// included. They are read only when a message is rendered, an automation
+		// checks a condition or the builder lists them, so the files are included
+		// on first read (Free's DefersRegistration). Older Free: include now.
+		$carts = doublescale_pro_is_abandoned_carts_available();
+		$rules = $carts ? array( 'Rules/Cart/*.php' ) : array();
+		$tags  = $carts ? array( 'MergeTags/Woocommerce/AbandonedCart/*.php' ) : array();
 
 		// Support automation conditions + merge tags. Gated on the support module
-		// so the rule/merge-tag groups only register when the feature is on. Each
-		// file calls RulesManager / MergeTagsManager ::register(...) on include;
-		// the abstract base classes resolve via PSR-4 autoload.
+		// so the rule/merge-tag groups only register when the feature is on.
 		if ( function_exists( 'doublescale_pro_is_support_automation_available' )
 			&& doublescale_pro_is_support_automation_available() ) {
-			foreach ( glob( $base . 'Rules/Support/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
-			foreach ( glob( $base . 'MergeTags/Support/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
+			$rules[] = 'Rules/Support/*.php';
+			$tags[]  = 'MergeTags/Support/*.php';
 		}
 
 		// Sales proposal/invoice automation conditions. Gated like Support above.
 		if ( function_exists( 'doublescale_pro_is_sales_automation_available' )
 			&& doublescale_pro_is_sales_automation_available() ) {
-			foreach ( glob( $base . 'Rules/Proposal/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
-			foreach ( glob( $base . 'Rules/Invoice/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
+			$rules[] = 'Rules/Proposal/*.php';
+			$rules[] = 'Rules/Invoice/*.php';
 		}
 
 		// Contract automation conditions.
 		if ( function_exists( 'doublescale_pro_is_contracts_automation_available' )
 			&& doublescale_pro_is_contracts_automation_available() ) {
-			foreach ( glob( $base . 'Rules/Contract/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
+			$rules[] = 'Rules/Contract/*.php';
 		}
 
 		// Credit note automation conditions.
 		if ( function_exists( 'doublescale_pro_is_credit_notes_automation_available' )
 			&& doublescale_pro_is_credit_notes_automation_available() ) {
-			foreach ( glob( $base . 'Rules/CreditNote/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
+			$rules[] = 'Rules/CreditNote/*.php';
 		}
 
 		// Task automation conditions. Gated like Support above.
 		if ( function_exists( 'doublescale_pro_is_tasks_automation_available' )
 			&& doublescale_pro_is_tasks_automation_available() ) {
-			foreach ( glob( $base . 'Rules/Task/*.php' ) ?: array() as $file ) {
-				require_once $file;
-			}
+			$rules[] = 'Rules/Task/*.php';
 		}
 
 		// Project automation conditions.
 		if ( function_exists( 'doublescale_pro_is_projects_automation_available' )
 			&& doublescale_pro_is_projects_automation_available() ) {
-			foreach ( glob( $base . 'Rules/Project/*.php' ) ?: array() as $file ) {
-				require_once $file;
+			$rules[] = 'Rules/Project/*.php';
+		}
+
+		$include = static function ( array $patterns ) use ( $base ): void {
+			foreach ( $patterns as $pattern ) {
+				foreach ( glob( $base . $pattern ) ?: array() as $file ) {
+					require_once $file;
+				}
 			}
+		};
+		$defer   = static function ( $manager, callable $loader ): void {
+			if ( method_exists( $manager, 'defer' ) ) {
+				$manager->defer( $loader );
+			} else {
+				$loader();
+			}
+		};
+
+		$defer(
+			\DoubleScale\Modules\Automations\Services\RulesManager::instance(),
+			static function () use ( $include, $rules ): void {
+				$include( $rules );
+			}
+		);
+		$defer(
+			\DoubleScale\Core\MergeTags\MergeTagsManager::instance(),
+			static function () use ( $include, $tags ): void {
+				$include( $tags );
+			}
+		);
+
+		// Service class — registers WC hooks, AJAX handlers, scheduled tasks.
+		// Only while cart recovery is available: its checkout hooks read the
+		// abandoned-carts table.
+		$service_file = $base . 'AbandonedCart/AbandonedCart.php';
+		if ( $carts && is_readable( $service_file ) ) {
+			require_once $service_file;
+			\DoubleScale\Modules\Automations\AbandonedCart\AbandonedCart::instance();
 		}
 	},
 	20
@@ -817,16 +879,17 @@ add_action(
 			return;
 		}
 		$controller_file = DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/Modules/Automations/Rest/Controllers/RestAbandonedCartController.php';
-		if ( ! is_readable( $controller_file ) ) {
-			return;
+		if ( doublescale_pro_is_abandoned_carts_available() && is_readable( $controller_file ) ) {
+			require_once $controller_file;
+			( new \DoubleScale\Modules\Automations\Rest\Controllers\RestAbandonedCartController() )->register_routes();
 		}
-		require_once $controller_file;
-		( new \DoubleScale\Modules\Automations\Rest\Controllers\RestAbandonedCartController() )->register_routes();
 
 		// Inbound webhook receiver for Pro automations. Migrated from the
 		// free plugin so the free build no longer ships a public REST route.
+		// It starts automations, so it exists only while Automations is on.
 		$webhook_controller_file = DOUBLESCALE_PRO_PLUGIN_DIR . 'includes/Modules/Automations/Rest/Controllers/RestWebhookController.php';
-		if ( is_readable( $webhook_controller_file ) ) {
+		if ( function_exists( 'doublescale_is_module_active' ) && doublescale_is_module_active( 'automations' )
+			&& is_readable( $webhook_controller_file ) ) {
 			require_once $webhook_controller_file;
 			( new \DoubleScale\Modules\Automations\Rest\Controllers\RestWebhookController() )->register_routes();
 		}
@@ -873,3 +936,16 @@ add_action(
 	},
 	100
 );
+
+/*
+ * "Projects" contact filters (campaign audiences, segments): "CMS is WordPress"
+ * picks the clients of WordPress projects. Registered here, not in the Projects
+ * module, so saved rules still match nobody while that module is off.
+ */
+\DoubleScale\Pro\Modules\Projects\Filters\ProjectContactFilters::init();
+
+/*
+ * Real-time push through relay.doublescale.io (live chat, live screens).
+ * Licence-gated: only while the licence is active. Not a module: always on.
+ */
+\DoubleScale\Pro\Core\Realtime\Realtime::register();

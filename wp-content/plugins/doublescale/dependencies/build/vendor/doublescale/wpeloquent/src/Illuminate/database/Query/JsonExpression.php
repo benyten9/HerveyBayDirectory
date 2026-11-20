@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Query;
+namespace DoubleScale\Vendor\Illuminate\Database\Query;
 
 use InvalidArgumentException;
-class JsonExpression extends \Illuminate\Database\Query\Expression
+class JsonExpression extends Expression
 {
     /**
      * Create a new raw query expression.
@@ -25,7 +25,7 @@ class JsonExpression extends \Illuminate\Database\Query\Expression
      */
     protected function getJsonBindingParameter($value)
     {
-        if ($value instanceof \Illuminate\Database\Query\Expression) {
+        if ($value instanceof Expression) {
             return $value->getValue();
         }
         switch ($type = \gettype($value)) {

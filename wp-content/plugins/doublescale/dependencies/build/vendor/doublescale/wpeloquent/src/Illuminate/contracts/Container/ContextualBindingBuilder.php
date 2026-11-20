@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Container;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Container;
 
 interface ContextualBindingBuilder
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-use Illuminate\Filesystem\Filesystem;
+use DoubleScale\Vendor\Illuminate\Filesystem\Filesystem;
 use DoubleScale\Vendor\Symfony\Component\Process\Process;
 use DoubleScale\Vendor\Symfony\Component\Process\PhpExecutableFinder;
 class Composer
@@ -71,7 +71,7 @@ class Composer
      */
     protected function phpBinary()
     {
-        return \Illuminate\Support\ProcessUtils::escapeArgument((new PhpExecutableFinder())->find(\false));
+        return ProcessUtils::escapeArgument((new PhpExecutableFinder())->find(\false));
     }
     /**
      * Get a new Symfony process instance.

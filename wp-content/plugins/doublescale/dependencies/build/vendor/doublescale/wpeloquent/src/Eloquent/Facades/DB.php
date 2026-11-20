@@ -1,9 +1,9 @@
 <?php
 
-namespace WPEloquent\Eloquent\Facades;
+namespace DoubleScale\Vendor\WPEloquent\Eloquent\Facades;
 
-use Illuminate\Support\Facades\Facade;
-use WPEloquent\Eloquent\Database;
+use DoubleScale\Vendor\Illuminate\Support\Facades\Facade;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Database;
 /**
  * @see \Illuminate\Database\DatabaseManager
  * @see \Illuminate\Database\Connection

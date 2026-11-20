@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static mixed guard(string|null $name = null)
@@ -29,7 +29,7 @@ namespace Illuminate\Support\Facades;
  * @see \Illuminate\Contracts\Auth\Guard
  * @see \Illuminate\Contracts\Auth\StatefulGuard
  */
-class Auth extends \Illuminate\Support\Facades\Facade
+class Auth extends Facade
 {
     /**
      * Get the registered name of the component.

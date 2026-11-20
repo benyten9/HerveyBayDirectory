@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-use Carbon\Exceptions\InvalidCastException;
-use Carbon\Exceptions\InvalidTimeZoneException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidCastException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidTimeZoneException;
 use DateTimeInterface;
 use DateTimeZone;
 use Throwable;
@@ -87,7 +87,7 @@ class CarbonTimeZone extends DateTimeZone
         if ($tz !== \false) {
             return new static($tz->getName());
         }
-        if (\Carbon\Carbon::isStrictModeEnabled()) {
+        if (Carbon::isStrictModeEnabled()) {
             throw new InvalidTimeZoneException('Unknown or bad timezone (' . ($objectDump ?: $object) . ')');
         }
         return \false;
@@ -133,7 +133,7 @@ class CarbonTimeZone extends DateTimeZone
      */
     public function toOffsetName(?DateTimeInterface $date = null)
     {
-        return static::getOffsetNameFromMinuteOffset($this->getOffset($date ?: \Carbon\Carbon::now($this)) / 60);
+        return static::getOffsetNameFromMinuteOffset($this->getOffset($date ?: Carbon::now($this)) / 60);
     }
     /**
      * Returns a new CarbonTimeZone object using the offset string instead of region string.
@@ -164,7 +164,7 @@ class CarbonTimeZone extends DateTimeZone
         if ($firstChar !== '+' && $firstChar !== '-') {
             return $name;
         }
-        $date = $date ?: \Carbon\Carbon::now($this);
+        $date = $date ?: Carbon::now($this);
         // Integer construction no longer supported since PHP 8
         // @codeCoverageIgnoreStart
         try {
@@ -178,7 +178,7 @@ class CarbonTimeZone extends DateTimeZone
             return $name;
         }
         foreach (\timezone_identifiers_list() as $timezone) {
-            if (\Carbon\Carbon::instance($date)->tz($timezone)->getOffset() === $offset) {
+            if (Carbon::instance($date)->tz($timezone)->getOffset() === $offset) {
                 return $timezone;
             }
         }
@@ -197,8 +197,8 @@ class CarbonTimeZone extends DateTimeZone
         if ($tz !== \false) {
             return new static($tz);
         }
-        if (\Carbon\Carbon::isStrictModeEnabled()) {
-            throw new InvalidTimeZoneException('Unknown timezone for offset ' . $this->getOffset($date ?: \Carbon\Carbon::now($this)) . ' seconds.');
+        if (Carbon::isStrictModeEnabled()) {
+            throw new InvalidTimeZoneException('Unknown timezone for offset ' . $this->getOffset($date ?: Carbon::now($this)) . ' seconds.');
         }
         return \false;
     }
@@ -242,7 +242,7 @@ class CarbonTimeZone extends DateTimeZone
      */
     public static function createFromHourOffset(float $hourOffset)
     {
-        return static::createFromMinuteOffset($hourOffset * \Carbon\Carbon::MINUTES_PER_HOUR);
+        return static::createFromMinuteOffset($hourOffset * Carbon::MINUTES_PER_HOUR);
     }
     /**
      * Create a CarbonTimeZone from int/float minute offset.

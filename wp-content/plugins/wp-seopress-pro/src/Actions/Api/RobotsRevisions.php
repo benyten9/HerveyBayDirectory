@@ -32,8 +32,28 @@ class RobotsRevisions implements ExecuteHooks {
 	 *
 	 * @return boolean
 	 */
-	public function permissionCheck() {
-		return current_user_can( seopress_capability( 'manage_options', 'pro' ) );
+	public function permissionCheck( $request = null ) {
+		if ( ! current_user_can( seopress_capability( 'manage_options', 'pro' ) ) ) {
+			return false;
+		}
+
+		// `type=network` reads and restores the option of the main site, so the
+		// local manage_options of a sub-site administrator is not the right
+		// permission for it. Without this, an administrator of any sub-site
+		// could read the network robots.txt history and put an older directive
+		// back, which on a sub-directory network changes what every site
+		// serves. See SEC-06.
+		if ( ! $request instanceof \WP_REST_Request ) {
+			return true;
+		}
+
+		if ( 'network' !== $request->get_param( 'type' ) ) {
+			return true;
+		}
+
+		return is_multisite()
+			? current_user_can( 'manage_network_options' )
+			: current_user_can( seopress_capability( 'manage_options', 'pro' ) );
 	}
 
 	/**

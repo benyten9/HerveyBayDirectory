@@ -177,7 +177,7 @@ function nibwp_sc_crud(array $input, string $model_short, array $list_query = []
 
 wp_register_ability('nibwp/surecart-info', [
     'label'       => __('SureCart — Info', 'nibwp'),
-    'description' => __('Detect SureCart, its version, store connection state, the shop/checkout/dashboard page assignments, local checkout-form count, and counts of products/prices when reachable.', 'nibwp'),
+    'description' => 'Detect SureCart, its version, store connection state, the shop/checkout/dashboard page assignments, local checkout-form count, and counts of products/prices when reachable.',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -222,7 +222,7 @@ function nibwp_sc_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-products', [
     'label'       => __('SureCart — Products', 'nibwp'),
-    'description' => __('Manage SureCart products. Actions: list, get, create, update, archive. "data" carries product fields (name, description, image, metadata, tax_enabled, slug…).', 'nibwp'),
+    'description' => 'Manage SureCart products. Actions: list, get, create, update, archive. "data" carries product fields (name, description, image, metadata, tax_enabled, slug…).',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'enum' => ['list', 'get', 'create', 'update', 'archive']], 'id' => ['type' => 'string'], 'data' => ['type' => 'object'], 'query' => ['type' => 'object'], 'per_page' => ['type' => 'integer'], 'page' => ['type' => 'integer']], 'required' => ['action'], 'additionalProperties' => true],
     'output_schema' => ['type' => 'object'],
@@ -237,7 +237,7 @@ function nibwp_sc_products_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-prices', [
     'label'       => __('SureCart — Prices', 'nibwp'),
-    'description' => __('Manage SureCart prices (a product can have many). Actions: list, get, create, update, archive. For create, "data" needs product (id), amount (in cents), currency, and optionally recurring {interval, interval_count}, name, trial_duration_days.', 'nibwp'),
+    'description' => 'Manage SureCart prices (a product can have many). Actions: list, get, create, update, archive. For create, "data" needs product (id), amount (in cents), currency, and optionally recurring {interval, interval_count}, name, trial_duration_days.',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'enum' => ['list', 'get', 'create', 'update', 'archive']], 'id' => ['type' => 'string'], 'data' => ['type' => 'object'], 'query' => ['type' => 'object'], 'per_page' => ['type' => 'integer'], 'page' => ['type' => 'integer']], 'required' => ['action'], 'additionalProperties' => true],
     'output_schema' => ['type' => 'object'],
@@ -252,7 +252,7 @@ function nibwp_sc_prices_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-collections', [
     'label'       => __('SureCart — Collections', 'nibwp'),
-    'description' => __('Manage SureCart product collections (groupings used by the storefront). Actions: list, get, create, update, archive.', 'nibwp'),
+    'description' => 'Manage SureCart product collections (groupings used by the storefront). Actions: list, get, create, update, archive.',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'enum' => ['list', 'get', 'create', 'update', 'archive']], 'id' => ['type' => 'string'], 'data' => ['type' => 'object'], 'query' => ['type' => 'object'], 'per_page' => ['type' => 'integer'], 'page' => ['type' => 'integer']], 'required' => ['action'], 'additionalProperties' => true],
     'output_schema' => ['type' => 'object'],
@@ -267,7 +267,7 @@ function nibwp_sc_collections_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-coupons', [
     'label'       => __('SureCart — Coupons', 'nibwp'),
-    'description' => __('Manage SureCart coupons / discounts. Actions: list, get, create, update, archive. For create, "data" needs name + (amount_off or percent_off).', 'nibwp'),
+    'description' => 'Manage SureCart coupons / discounts. Actions: list, get, create, update, archive. For create, "data" needs name + (amount_off or percent_off).',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'enum' => ['list', 'get', 'create', 'update', 'archive']], 'id' => ['type' => 'string'], 'data' => ['type' => 'object'], 'query' => ['type' => 'object'], 'per_page' => ['type' => 'integer'], 'page' => ['type' => 'integer']], 'required' => ['action'], 'additionalProperties' => true],
     'output_schema' => ['type' => 'object'],
@@ -282,7 +282,7 @@ function nibwp_sc_coupons_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-customers', [
     'label'       => __('SureCart — Customers', 'nibwp'),
-    'description' => __('Read SureCart customers. Actions: list, get. (Create/update is intentionally omitted — customers are created through checkout.)', 'nibwp'),
+    'description' => 'Read SureCart customers. Actions: list, get. (Create/update is intentionally omitted — customers are created through checkout.)',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'enum' => ['list', 'get']], 'id' => ['type' => 'string'], 'query' => ['type' => 'object'], 'per_page' => ['type' => 'integer'], 'page' => ['type' => 'integer']], 'required' => ['action'], 'additionalProperties' => true],
     'output_schema' => ['type' => 'object'],
@@ -297,7 +297,7 @@ function nibwp_sc_customers_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-orders', [
     'label'       => __('SureCart — Orders', 'nibwp'),
-    'description' => __('Read SureCart orders. Actions: list, get. Returns order/checkout records with line items, customer and totals.', 'nibwp'),
+    'description' => 'Read SureCart orders. Actions: list, get. Returns order/checkout records with line items, customer and totals.',
     'category'    => 'ecommerce',
     'input_schema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'enum' => ['list', 'get']], 'id' => ['type' => 'string'], 'query' => ['type' => 'object'], 'per_page' => ['type' => 'integer'], 'page' => ['type' => 'integer']], 'required' => ['action'], 'additionalProperties' => true],
     'output_schema' => ['type' => 'object'],
@@ -316,7 +316,7 @@ function nibwp_sc_orders_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-forms', [
     'label'       => __('SureCart — Checkout Forms & Pages', 'nibwp'),
-    'description' => __('Manage the LOCAL SureCart checkout forms (sc_form posts, whose content is SureCart blocks) and the store page assignments. Actions: list, get, create, update, set_pages. The form content is block markup you can build with the EtchWP/Bricks Pro skills.', 'nibwp'),
+    'description' => 'Manage the LOCAL SureCart checkout forms (sc_form posts, whose content is SureCart blocks) and the store page assignments. Actions: list, get, create, update, set_pages. The form content is block markup you can build with the EtchWP/Bricks Pro skills.',
     'category'    => 'ecommerce',
     'input_schema' => [
         'type' => 'object',
@@ -405,7 +405,7 @@ function nibwp_sc_forms_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/surecart-blocks', [
     'label'       => __('SureCart — Block Catalog', 'nibwp'),
-    'description' => __('List the available SureCart storefront blocks (surecart/*) and their attributes, optionally filtered by group (product, checkout, cart, customer, collection, price). The EtchWP / Bricks Pro skills use this to design SureCart product pages, pricing tables, buy buttons, checkout and customer dashboards.', 'nibwp'),
+    'description' => 'List the available SureCart storefront blocks (surecart/*) and their attributes, optionally filtered by group (product, checkout, cart, customer, collection, price). The EtchWP / Bricks Pro skills use this to design SureCart product pages, pricing tables, buy buttons, checkout and customer dashboards.',
     'category'    => 'ecommerce',
     'input_schema' => [
         'type' => 'object',

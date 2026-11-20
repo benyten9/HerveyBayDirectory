@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/ase-manage-fields', [
-    'label' => __('ASE Manage Fields', domain: 'nibwp'),
-    'description' => __(
-        'Manage Admin and Site Enhancements (ASE) custom field groups, post types, taxonomies, and field values. Supports ASE Pro custom fields module.',
-        domain: 'nibwp',
-    ),
+    'label' => __('ASE Manage Fields', 'nibwp'),
+    'description' => 'Manage Admin and Site Enhancements (ASE) custom field groups, post types, taxonomies, and field values. Supports ASE Pro custom fields module.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',

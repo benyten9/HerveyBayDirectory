@@ -44,6 +44,20 @@ final class Module extends AbstractModule {
 		return array( 'core' );
 	}
 
+	/**
+	 * Email templates are shared: campaigns, automation emails and WhatsApp
+	 * steps and the email renderer all read them, so their table belongs to
+	 * this always-on module (the migration file stays with Campaigns, which
+	 * created it first; running it again on an existing table only adds
+	 * missing columns).
+	 *
+	 * @return string[]
+	 */
+	public function migrations(): array {
+		$file = dirname( __DIR__ ) . '/Campaigns/Migrations/TemplatesTable.php';
+		return is_file( $file ) ? array( $file ) : array();
+	}
+
 	public function boot( Container $container ): void {
 		parent::boot( $container );
 

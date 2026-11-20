@@ -1,8 +1,8 @@
 <?php
 
-namespace Carbon\Doctrine;
+namespace DoubleScale\Vendor\Carbon\Doctrine;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
+use DoubleScale\Vendor\Doctrine\DBAL\Platforms\AbstractPlatform;
 interface CarbonDoctrineType
 {
     public const MAXIMUM_PRECISION = 10;

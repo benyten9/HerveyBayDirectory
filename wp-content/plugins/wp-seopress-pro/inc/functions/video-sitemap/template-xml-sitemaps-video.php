@@ -27,24 +27,6 @@ if ( 2 == apply_filters( 'wpml_setting', false, 'language_negotiation_type' ) ) 
 	add_filter( 'wpml_get_home_url', 'seopress_remove_wpml_home_url_filter', 20, 5 );
 }
 
-add_filter(
-	'seopress_sitemaps_video_query',
-	function ( $args ) {
-		global $sitepress, $sitepress_settings;
-
-		$sitepress_settings['auto_adjust_ids'] = 0;
-		remove_filter( 'terms_clauses', array( $sitepress, 'terms_clauses' ) );
-		remove_filter( 'category_link', array( $sitepress, 'category_link_adjust_id' ), 1 );
-
-		// If multidomain setup.
-		if ( 2 == apply_filters( 'wpml_setting', false, 'language_negotiation_type' ) ) {
-			$args['suppress_filters'] = false;
-		}
-
-		return $args;
-	}
-);
-
 /**
  * XML Sitemap video template.
  *
@@ -68,6 +50,17 @@ function seopress_xml_sitemap_video() {
 	$home_url = home_url() . '/';
 
 	$home_url = apply_filters( 'seopress_sitemaps_home_url', $home_url );
+
+	// Text node content: decode once, escape once for XML, as the news sitemap
+	// does. CDATA was not enough: a value carrying `]]>` closed the section and
+	// whatever followed it became markup, which the XSL then printed as HTML.
+	$video_xml_text = static function ( $value ) {
+		return htmlspecialchars( html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE | ENT_DISALLOWED, 'UTF-8' );
+	};
+
+	$video_xml_url = static function ( $url ) {
+		return htmlspecialchars( esc_url_raw( (string) $url ), ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE | ENT_DISALLOWED, 'UTF-8' );
+	};
 
 	$seopress_sitemaps  = '<?xml version="1.0" encoding="UTF-8"?>';
 	$seopress_sitemaps .= '<?xml-stylesheet type="text/xsl" href="' . $home_url . 'sitemaps_video_xsl.xsl"?>';
@@ -162,11 +155,34 @@ function seopress_xml_sitemap_video() {
 				continue;
 			}
 
+			// WPML: skip entries the site no longer serves, whether their
+			// language was hidden or removed without its content being deleted.
+			// The query above reads wp_posts directly, so WPML's own filters
+			// never see it and this is the only place it can be caught.
+			if ( function_exists( 'seopress_wpml_is_language_excluded' ) ) {
+				$video_post = get_post( $id );
+
+				if ( $video_post && seopress_wpml_is_language_excluded( seopress_wpml_get_element_language( $id, $video_post->post_type ) ) ) {
+					continue;
+				}
+			}
+
 			$seopress_video_disabled = get_post_meta( $id, '_seopress_video_disabled', true );
 			$seopress_video          = get_post_meta( $id, '_seopress_video' );
 			$seopress_video_xml_yt   = get_post_meta( $id, '_seopress_video_xml_yt', true );
 
-			if ( ( ! empty( $seopress_video[0][0]['url'] ) || ! empty( $seopress_video_xml_yt ) ) && 'yes' != $seopress_video_disabled ) {
+			// Keep only the manual videos that have a URL. The legacy metabox
+			// always saves an empty row first, and legacy keys may not start at 0.
+			$manual_videos = array_values(
+				array_filter(
+					isset( $seopress_video[0] ) ? (array) $seopress_video[0] : array(),
+					function ( $video ) {
+						return is_array( $video ) && ! empty( $video['url'] );
+					}
+				)
+			);
+
+			if ( ( ! empty( $manual_videos ) || ! empty( $seopress_video_xml_yt ) ) && 'yes' != $seopress_video_disabled ) {
 				$seopress_sitemaps .= "\n";
 				$seopress_sitemaps .= '<url>';
 				$seopress_sitemaps .= "\n";
@@ -179,13 +195,13 @@ function seopress_xml_sitemap_video() {
 					$seopress_sitemaps .= $seopress_video_xml_yt;
 				}
 
-				if ( ! empty( $seopress_video[0][0]['url'] ) ) {
-					foreach ( $seopress_video[0] as $key => $value ) {
+				if ( ! empty( $manual_videos ) ) {
+					foreach ( $manual_videos as $video ) {
 						$seopress_sitemaps .= '<video:video>';
 						$seopress_sitemaps .= "\n";
 
 						// Thumbnail.
-						$thumbnail = isset( $seopress_video[0][ $key ]['thumbnail'] ) ? $seopress_video[0][ $key ]['thumbnail'] : null;
+						$thumbnail = isset( $video['thumbnail'] ) ? $video['thumbnail'] : null;
 						if ( '' != $thumbnail ) {// Video Thumbnail.
 							$seopress_sitemaps .= '<video:thumbnail_loc>' . htmlspecialchars( urldecode( esc_attr( wp_filter_nohtml_kses( $thumbnail ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '</video:thumbnail_loc>';
 							$seopress_sitemaps .= "\n";
@@ -195,61 +211,62 @@ function seopress_xml_sitemap_video() {
 						}
 
 						// Post Title.
-						$title = isset( $seopress_video[0][ $key ]['title'] ) ? $seopress_video[0][ $key ]['title'] : null;
+						$title = isset( $video['title'] ) ? $video['title'] : null;
 						if ( '' != $title ) {// Video Title.
-							$seopress_sitemaps .= '<video:title><![CDATA[' . $title . ']]></video:title>';
+							$seopress_sitemaps .= '<video:title>' . $video_xml_text( $title ) . '</video:title>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != get_post_meta( $id, '_seopress_titles_title', true ) ) {// SEO Custom Title.
-							$seopress_sitemaps .= '<video:title><![CDATA[' . get_post_meta( $id, '_seopress_titles_title', true ) . ']]></video:title>';
+							$seopress_sitemaps .= '<video:title>' . $video_xml_text( get_post_meta( $id, '_seopress_titles_title', true ) ) . '</video:title>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != get_the_title( $id ) ) {// Post title.
-							$seopress_sitemaps .= '<video:title><![CDATA[' . get_the_title( $id ) . ']]></video:title>';
+							$seopress_sitemaps .= '<video:title>' . $video_xml_text( get_the_title( $id ) ) . '</video:title>';
 							$seopress_sitemaps .= "\n";
 						}
 
 						// Description.
-						$desc = isset( $seopress_video[0][ $key ]['desc'] ) ? $seopress_video[0][ $key ]['desc'] : null;
+						$desc = isset( $video['desc'] ) ? $video['desc'] : null;
 						if ( '' != $desc ) {// Video Description.
-							$seopress_sitemaps .= '<video:description><![CDATA[' . $desc . ']]></video:description>';
+							$seopress_sitemaps .= '<video:description>' . $video_xml_text( $desc ) . '</video:description>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != get_post_meta( $id, '_seopress_titles_desc', true ) ) {// SEO Custom Meta desc.
-							$seopress_sitemaps .= '<video:description><![CDATA[' . get_post_meta( $id, '_seopress_titles_desc', true ) . ']]></video:description>';
+							$seopress_sitemaps .= '<video:description>' . $video_xml_text( get_post_meta( $id, '_seopress_titles_desc', true ) ) . '</video:description>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != get_the_excerpt( $id ) ) {// Excerpt.
-							$seopress_sitemaps .= '<video:description><![CDATA[' . wp_trim_words( esc_attr( wp_filter_nohtml_kses( htmlentities( get_the_excerpt( $id ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ), 60 ) . ']]></video:description>';
+							$seopress_sitemaps .= '<video:description>' . $video_xml_text( wp_trim_words( wp_strip_all_tags( get_the_excerpt( $id ) ), 60 ) ) . '</video:description>';
 							$seopress_sitemaps .= "\n";
 						}
 
 						// URL.
-						$internal_video = isset( $seopress_video[0][ $key ]['internal_video'] ) ? $seopress_video[0][ $key ]['internal_video'] : null;
-						$url            = isset( $seopress_video[0][ $key ]['url'] ) ? $seopress_video[0][ $key ]['url'] : null;
+						$internal_video = isset( $video['internal_video'] ) ? $video['internal_video'] : null;
+						$url            = isset( $video['url'] ) ? $video['url'] : null;
 
 						if ( '' != $url && '' != $internal_video ) {
-							$seopress_sitemaps .= '<video:content_loc><![CDATA[' . $url . ']]></video:content_loc>';
+							$seopress_sitemaps .= '<video:content_loc>' . $video_xml_url( $url ) . '</video:content_loc>';
 							$seopress_sitemaps .= "\n";
 						} elseif ( '' != $url ) {// URL.
-							$seopress_sitemaps .= '<video:player_loc><![CDATA[' . $url . ']]></video:player_loc>';
+							$player_url         = function_exists( 'seopress_pro_get_youtube_embed_url' ) ? seopress_pro_get_youtube_embed_url( $url ) : $url;
+							$seopress_sitemaps .= '<video:player_loc>' . $video_xml_url( $player_url ) . '</video:player_loc>';
 							$seopress_sitemaps .= "\n";
 						}
 
 						// Duration.
-						$duration = isset( $seopress_video[0][ $key ]['duration'] ) ? $seopress_video[0][ $key ]['duration'] : null;
+						$duration = isset( $video['duration'] ) ? $video['duration'] : null;
 						if ( '' != $duration ) {
-							$seopress_sitemaps .= '<video:duration>' . $duration . '</video:duration>';
+							$seopress_sitemaps .= '<video:duration>' . absint( $duration ) . '</video:duration>';
 							$seopress_sitemaps .= "\n";
 						}
 
 						// Rating.
-						$rating = isset( $seopress_video[0][ $key ]['rating'] ) ? $seopress_video[0][ $key ]['rating'] : null;
+						$rating = isset( $video['rating'] ) ? $video['rating'] : null;
 						if ( '' != $rating ) {
-							$seopress_sitemaps .= '<video:rating>' . $rating . '</video:rating>';
+							$seopress_sitemaps .= '<video:rating>' . str_replace( ',', '.', (string) round( (float) $rating, 1 ) ) . '</video:rating>';
 							$seopress_sitemaps .= "\n";
 						}
 
 						// View count.
-						$view_count = isset( $seopress_video[0][ $key ]['view_count'] ) ? $seopress_video[0][ $key ]['view_count'] : null;
+						$view_count = isset( $video['view_count'] ) ? $video['view_count'] : null;
 						if ( '' != $view_count ) {
-							$seopress_sitemaps .= '<video:view_count>' . $view_count . '</video:view_count>';
+							$seopress_sitemaps .= '<video:view_count>' . absint( $view_count ) . '</video:view_count>';
 							$seopress_sitemaps .= "\n";
 						}
 
@@ -258,7 +275,7 @@ function seopress_xml_sitemap_video() {
 						$seopress_sitemaps .= "\n";
 
 						// Family Friendly.
-						$family_friendly = isset( $seopress_video[0][ $key ]['family_friendly'] ) ? $seopress_video[0][ $key ]['family_friendly'] : null;
+						$family_friendly = isset( $video['family_friendly'] ) ? $video['family_friendly'] : null;
 						if ( '' != $family_friendly ) {
 							$seopress_sitemaps .= '<video:family_friendly>no</video:family_friendly>';
 							$seopress_sitemaps .= "\n";
@@ -267,14 +284,14 @@ function seopress_xml_sitemap_video() {
 							$seopress_sitemaps .= "\n";
 						}
 						// Tags.
-						$tag                = isset( $seopress_video[0][ $key ]['tag'] ) ? $seopress_video[0][ $key ]['tag'] : null;
+						$tag                = isset( $video['tag'] ) ? $video['tag'] : null;
 						$seopress_target_kw = '';
 						if ( '' != get_post_meta( $id, '_seopress_analysis_target_kw', true ) ) {
 							$seopress_target_kw = get_post_meta( $id, '_seopress_analysis_target_kw', true ) . ',';
 						}
 
 						if ( '' != $tag ) {// Video tags.
-							$seopress_sitemaps .= '<video:tag>' . esc_attr( wp_filter_nohtml_kses( $tag ) ) . '</video:tag>';
+							$seopress_sitemaps .= '<video:tag>' . $video_xml_text( wp_strip_all_tags( $tag ) ) . '</video:tag>';
 							$seopress_sitemaps .= "\n";
 						} else { // Post tags.
 							$tags = get_the_tags( $id );
@@ -289,7 +306,7 @@ function seopress_xml_sitemap_video() {
 									}
 									++$i;
 								}
-								$seopress_sitemaps .= '<video:tag>' . $seopress_target_kw . $tags_list . '</video:tag>';
+								$seopress_sitemaps .= '<video:tag>' . $video_xml_text( $seopress_target_kw . $tags_list ) . '</video:tag>';
 								$seopress_sitemaps .= "\n";
 							}
 						}
@@ -309,4 +326,4 @@ function seopress_xml_sitemap_video() {
 
 	return $seopress_sitemaps;
 }
-echo seopress_xml_sitemap_video();
+echo seopress_xml_sitemap_video(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML document assembled above.

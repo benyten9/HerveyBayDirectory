@@ -17,6 +17,7 @@ use DirectoristPricingPlan\App\Providers\Admin\ListingPlanColumnProvider;
 use DirectoristPricingPlan\App\Providers\Admin\ListingPlanMetaboxProvider;
 use DirectoristPricingPlan\App\Providers\ShortcodeServiceProvider;
 use DirectoristPricingPlan\App\Providers\CheckoutServiceProvider;
+use DirectoristPricingPlan\App\Providers\InAppPurchaseServiceProvider;
 use DirectoristPricingPlan\App\Providers\PaymentCheckoutServiceProvider;
 use DirectoristPricingPlan\App\Providers\TrialServiceProvider;
 use DirectoristPricingPlan\App\Providers\ListingDashboardServiceProvider;
@@ -35,6 +36,8 @@ use DirectoristPricingPlan\Database\Migrations\ListingPlanMetaMigration;
 use DirectoristPricingPlan\Database\Migrations\RepairV4LegacyPackageDatesMigration;
 use DirectoristPricingPlan\Database\Migrations\RepairV4LegacySubscriptionsMigration;
 use DirectoristPricingPlan\Database\Migrations\AddPastDueUserPackageStatusMigration;
+use DirectoristPricingPlan\Database\Migrations\ReverseListingDisplayPriorityMigration;
+use DirectoristPricingPlan\Database\Migrations\EnforceListingDisplayPriorityMinimumMigration;
 use DirectoristPricingPlan\App\Providers\ListingsQueryProvider;
 use DirectoristPricingPlan\App\Providers\EmailService\PackageNotificationProvider;
 // use DirectoristPricingPlan\Database\Migrations\TestMigration;
@@ -87,6 +90,7 @@ return [
         PlanServiceProvider::class,
         ExtensionServiceProvider::class,
         CheckoutServiceProvider::class,
+        InAppPurchaseServiceProvider::class,
         PaymentCheckoutServiceProvider::class,
         TrialServiceProvider::class,
         DirectCheckout::class,
@@ -141,6 +145,8 @@ return [
         'repair-v4-legacy-package-dates'       => RepairV4LegacyPackageDatesMigration::class,
         'repair-v4-legacy-subscriptions'       => RepairV4LegacySubscriptionsMigration::class,
         'add-past-due-user-package-status'     => AddPastDueUserPackageStatusMigration::class,
+        'reverse-listing-display-priorities'   => ReverseListingDisplayPriorityMigration::class,
+        'enforce-listing-priority-minimum'     => EnforceListingDisplayPriorityMinimumMigration::class,
     ],
 
     /**

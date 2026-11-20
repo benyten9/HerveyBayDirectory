@@ -21,9 +21,9 @@ use DoubleScale\Core\Validators\PhoneValidator;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Automations\Models\AutomationStepModel;
-use DoubleScale\Modules\Campaigns\Campaign\WhatsappProcessing;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappEngine;
 use DoubleScale\Modules\Campaigns\Models\TemplateModel;
-use DoubleScale\Modules\Campaigns\Services\WhatsappConversationWindow;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\ConversationWindow;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
@@ -143,13 +143,21 @@ class SendWhatsapp extends AbstractSendMessage
 	}
 
 	/**
-	 * Get processing instance
+	 * The engine that sends WhatsApp on this site (see WhatsappEngine): Pro's
+	 * own wherever it owns the channel, free's against an older free.
 	 *
-	 * @return WhatsappProcessing
+	 * @return \DoubleScale\Modules\Campaigns\Abstracts\AbstractCampaignProcessing
+	 * @throws \Exception When no WhatsApp engine runs on this site.
 	 */
 	protected function get_processing_instance()
 	{
-		return WhatsappProcessing::instance();
+		$processing = WhatsappEngine::processor();
+
+		if ( ! $processing ) {
+			throw new \Exception( __( 'WhatsApp was not sent: no WhatsApp campaign engine is running on this site.', 'doublescale' ) );
+		}
+
+		return $processing;
 	}
 
 	/**
@@ -256,6 +264,45 @@ class SendWhatsapp extends AbstractSendMessage
 			// Prepare message data (stores template variables in tracking meta)
 			$this->prepare_message_data( $step, $contact, $tracking );
 
+			// Bulk runs, a backlog, the daily cap or the Meta tier: the message
+			// waits in the send queue and this step waits with it.
+			$queued = $this->maybe_queue( $automation, $step, $automation_contact, $tracking );
+			if ( $queued ) {
+				return $queued;
+			}
+
+			return $this->deliver( $automation, $step, $automation_contact, $tracking );
+
+		} catch ( \Exception $e ) {
+			doublescale_get_logger()->error(
+				"Send {$channel_name} action: Exception occurred",
+				array(
+					'automation_id' => $automation->id,
+					'contact_id'    => $automation_contact->contact_id,
+					'error'         => $e->getMessage(),
+					'code'          => "send_{$channel_type}_exception",
+				)
+			);
+			throw $e;
+		}
+	}
+
+	/**
+	 * Send a prepared template message (tracking row and variables stored) and
+	 * report the result. Used inline and by the send queue's dispatcher.
+	 *
+	 * @param AutomationModel            $automation         Workflow.
+	 * @param AutomationStepModel        $step               Send step.
+	 * @param AutomationContactModel     $automation_contact Contact's journey.
+	 * @param CommunicationTrackingModel $tracking           Prepared tracking row.
+	 * @return bool|array
+	 */
+	public function deliver( AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact, CommunicationTrackingModel $tracking ) {
+		$contact      = $automation_contact->contact;
+		$channel_name = $this->get_channel_name();
+		$channel_type = $this->get_channel_type();
+
+		try {
 			// Create dummy campaign for process_campaign_message() to work
 			// This allows us to reuse 100% of existing campaign infrastructure
 			$dummy_campaign         = new \DoubleScale\Modules\Campaigns\Models\CampaignModel(
@@ -327,7 +374,10 @@ class SendWhatsapp extends AbstractSendMessage
 					'code'          => "send_{$channel_type}_exception",
 				)
 			);
-			throw $e;
+			return array(
+				'success' => false,
+				'message' => $e->getMessage(),
+			);
 		}
 	}
 
@@ -385,7 +435,7 @@ class SendWhatsapp extends AbstractSendMessage
 			throw new \Exception( __( 'WhatsApp message body is required.', 'doublescale') );
 		}
 
-		$window = WhatsappConversationWindow::check( $contact->id );
+		$window = ConversationWindow::check( $contact->id );
 		if ( ! $window['active'] ) {
 			doublescale_get_logger()->info(
 				"Send {$channel_name} action: 24-hour session window closed",
@@ -528,12 +578,14 @@ class SendWhatsapp extends AbstractSendMessage
 	 */
 	public function get_fields()
 	{
-		// Fetch templates directly from Meta Api (same as individual messaging)
-		// This ensures we always show the latest approved templates
+		// Catalog fields are built on every admin/REST boot. The fetcher caches
+		// Graph for 10 minutes so this is not a live Meta call per request.
 		try {
-			$fetcher   = new \DoubleScale\Modules\Campaigns\Services\MetaTemplateFetcher();
+			$fetcher   = new \DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaTemplateFetcher();
 			$templates = $fetcher->fetch_approved_templates();
-		} catch ( \Exception $e ) {
+		} catch ( \Throwable $e ) {
+			// \Throwable, not \Exception: this runs on every admin and REST boot,
+			// so an \Error from a bad Meta answer must not take the site down.
 			// If Meta WhatsApp is not configured or fetch fails, show error
 			return array(
 				'no_templates_notice' => array(
@@ -817,11 +869,11 @@ class SendWhatsapp extends AbstractSendMessage
 
 		// Not found in DB, fetch from Meta Api and save
 		try {
-			$fetcher = new \DoubleScale\Modules\Campaigns\Services\MetaTemplateFetcher();
+			$fetcher = new \DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaTemplateFetcher();
 			$meta_template = $fetcher->fetch_by_sid( $template_sid );
 
 			if ( $meta_template ) {
-				$saver = new \DoubleScale\Modules\Campaigns\Services\MetaTemplateSaver();
+				$saver = new \DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaTemplateSaver();
 				return $saver->save_on_use( $meta_template );
 			}
 		} catch ( \Exception $e ) {

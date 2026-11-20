@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\Tasks\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * TaskStatusModel class.
@@ -54,7 +54,7 @@ class TaskStatusModel extends Model {
 	/**
 	 * Tasks in this status.
 	 *
-	 * @return \WPEloquent\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\WPEloquent\Eloquent\Relations\HasMany
 	 */
 	public function tasks() {
 		return $this->hasMany( TaskModel::class, 'status_id', 'id' );

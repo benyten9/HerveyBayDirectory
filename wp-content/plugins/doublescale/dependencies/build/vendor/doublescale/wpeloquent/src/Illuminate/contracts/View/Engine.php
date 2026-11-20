@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\View;
+namespace DoubleScale\Vendor\Illuminate\Contracts\View;
 
 interface Engine
 {

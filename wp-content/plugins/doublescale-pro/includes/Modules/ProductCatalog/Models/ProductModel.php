@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\ProductCatalog\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * ProductModel class.

@@ -36,6 +36,7 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use DoubleScale\Modules\Portal\Services\ClientSeen;
 
 /**
  * RestReplyController class.
@@ -128,6 +129,12 @@ class RestReplyController extends RestController {
 		$ticket = $this->resolve_ticket( $request );
 		if ( is_wp_error( $ticket ) ) {
 			return $ticket;
+		}
+
+		// A team member has it on screen: live chat messages need no notice
+		// (Notifications' ChatReplyNotice), whichever module tells the team.
+		if ( class_exists( \DoubleScale\Modules\Notifications\Services\ChatReplyNotice::class ) ) {
+			\DoubleScale\Modules\Notifications\Services\ChatReplyNotice::viewed( (int) $ticket->id );
 		}
 
 		$allowed_types = $this->resolve_kinds( $request->get_param( 'kinds' ) );
@@ -349,6 +356,8 @@ class RestReplyController extends RestController {
 			'cc'         => isset( $data['cc'] ) && is_array( $data['cc'] ) ? array_values( $data['cc'] ) : array(),
 			'created_at' => $activity->created_at ? (string) $activity->created_at : null,
 			'updated_at' => $activity->updated_at ? (string) $activity->updated_at : null,
+			// When the client first saw this reply ({@see ClientSeen}).
+			'client_seen_at' => isset( $data[ ClientSeen::SEEN_KEY ] ) ? (string) $data[ ClientSeen::SEEN_KEY ] : null,
 		);
 
 		if ( $activity->relationLoaded( 'user' ) && $activity->user ) {

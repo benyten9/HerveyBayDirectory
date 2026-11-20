@@ -24,6 +24,7 @@ use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Activities\Models\ActivityCommentModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Core\Constants\ActivityTypes;
 
 /**
@@ -412,7 +413,7 @@ final class ActivityManager {
 	 * @param int   $per_page Results per page.
 	 * @param int   $page Page number.
 	 *
-	 * @return \Illuminate\Pagination\LengthAwarePaginator|null
+	 * @return \DoubleScale\Vendor\Illuminate\Pagination\LengthAwarePaginator|null
 	 */
 	public function get_activities( $filters = array(), $per_page = 20, $page = 1 ) {
 		$query = ActivityModel::withMorphAppends()->with( array( 'user', 'comments.user' ) );
@@ -1026,11 +1027,31 @@ final class ActivityManager {
 			return 'not_found';
 		}
 
-		if ( Permissions::is_sales_rep() && $deal->owner_id !== get_current_user_id() ) {
+		if ( ! OwnerScope::current()->sees_all( 'deals' ) && (int) $deal->owner_id !== (int) get_current_user_id() ) {
 			return 'forbidden';
 		}
 
 		return 'ok';
+	}
+
+	/**
+	 * Whether the current user may see a contact's activities: the contact
+	 * must be visible to them (owner, collaborator, or sees all).
+	 *
+	 * @param int $contact_id Contact ID.
+	 * @return bool
+	 */
+	public function can_access_contact_activities( int $contact_id ): bool {
+		if ( $contact_id <= 0 ) {
+			return true;
+		}
+		$scope = OwnerScope::current();
+		if ( $scope->sees_all( 'contacts' ) ) {
+			return true;
+		}
+		$contact = \DoubleScale\Modules\Contacts\Models\ContactModel::find( $contact_id );
+
+		return $contact ? $scope->can_view_contact( $contact ) : false;
 	}
 
 	/**
@@ -1056,7 +1077,7 @@ final class ActivityManager {
 	 * @return string 'ok', 'not_found', or 'forbidden'.
 	 */
 	private function check_task_access( $task_id ) {
-		if ( ! class_exists( '\DoubleScale\Pro\Modules\Tasks\Models\TaskModel' ) ) {
+		if ( ! doublescale_module_data_ready( 'tasks' ) ) {
 			return 'not_found';
 		}
 
@@ -1100,13 +1121,7 @@ final class ActivityManager {
 			return 'no_pro';
 		}
 
-		if (
-			! class_exists( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel' )
-			|| (
-				function_exists( 'doublescale_is_module_storage_ready' )
-				&& ! doublescale_is_module_storage_ready( 'projects', '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel' )
-			)
-		) {
+		if ( ! doublescale_module_data_ready( 'projects' ) ) {
 			return 'no_pro';
 		}
 
@@ -1321,12 +1336,11 @@ final class ActivityManager {
 			$count_queries[]  = $activities_sql['count'];
 		}
 
-		// Include tasks when Pro is active AND the Tasks module is enabled.
-		// Class existence proves Pro loaded; the option toggle proves the admin
-		// hasn't disabled the module (table persists across module disables).
+		// Include tasks when Pro is active and the Tasks module's data can be
+		// read (on, with its tables: doublescale_module_data_ready).
 		// Note: activity_type filtering is handled by get_activities(), not here.
 		// This method always returns all activities + tasks (when Pro active).
-		if ( $pro_active && ( ! function_exists( 'doublescale_is_module_active' ) || doublescale_is_module_active( 'tasks' ) ) ) {
+		if ( $pro_active && doublescale_module_data_ready( 'tasks' ) ) {
 			$tasks_sql = $this->build_tasks_union_sql( $filters, $wpdb );
 			if ( $tasks_sql ) {
 				$select_queries[] = $tasks_sql['select'];
@@ -1346,9 +1360,8 @@ final class ActivityManager {
 			}
 		}
 
-		// Page visits table is owned by Pro's WebsiteTracking module — without
-		// this gate, a Free-standalone install hits "Table doesn't exist".
-		if ( ! function_exists( 'doublescale_is_module_active' ) || doublescale_is_module_active( 'websitetracking' ) ) {
+		// Page visits are Pro's WebsiteTracking data: none on a free-only site.
+		if ( doublescale_module_data_ready( 'websitetracking' ) ) {
 			$page_visits_sql = $this->build_page_visits_union_sql( $filters, $wpdb );
 			if ( $page_visits_sql ) {
 				$select_queries[] = $page_visits_sql['select'];
@@ -1459,6 +1472,22 @@ final class ActivityManager {
 				$contact_type,
 				$filters['contact_id']
 			);
+		} elseif ( ! empty( $filters['contact_ids'] ) ) {
+			// Several contacts at once (a company's members).
+			$contact_type    = \DoubleScale\Modules\Activities\Models\ActivityAssociationModel::ENTITY_TYPE_CONTACT;
+			$ids             = implode( ',', array_map( 'intval', (array) $filters['contact_ids'] ) );
+			$where_clauses[] = $wpdb->prepare(
+				"EXISTS (
+					SELECT 1 FROM {$associations_table} contact_assoc
+					WHERE contact_assoc.activity_id = a.id
+					AND contact_assoc.entity_type = %d
+					AND contact_assoc.entity_id IN ({$ids})
+				)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integers.
+				$contact_type
+			);
+		} elseif ( ! empty( $filters['company_id'] ) ) {
+			// A company with nobody in it: only the tasks about it, no activities.
+			$where_clauses[] = '1 = 0';
 		}
 
 		// Deal/Entity filter (via associations).
@@ -1608,6 +1637,23 @@ final class ActivityManager {
 				\DoubleScale\Core\Constants\TaskEntityType::CONTACT,
 				$filters['contact_id']
 			);
+		} elseif ( ! empty( $filters['contact_ids'] ) || ! empty( $filters['company_id'] ) ) {
+			// A company's timeline: its people's tasks and the tasks about it.
+			$parts = array();
+			if ( ! empty( $filters['contact_ids'] ) ) {
+				$parts[] = $wpdb->prepare(
+					'(t.entity_type = %d AND t.entity_id IN (' . implode( ',', array_map( 'intval', (array) $filters['contact_ids'] ) ) . '))', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- integers.
+					\DoubleScale\Core\Constants\TaskEntityType::CONTACT
+				);
+			}
+			if ( ! empty( $filters['company_id'] ) ) {
+				$parts[] = $wpdb->prepare(
+					'(t.entity_type = %d AND t.entity_id = %d)',
+					\DoubleScale\Core\Constants\TaskEntityType::COMPANY,
+					(int) $filters['company_id']
+				);
+			}
+			$where_clauses[] = '(' . implode( ' OR ', $parts ) . ')';
 		}
 
 		// Deal filter.
@@ -1760,6 +1806,7 @@ final class ActivityManager {
 	 */
 	private function transform_activity_row( $row, ?array $user ): array {
 		$data = ! empty( $row->data ) ? json_decode( $row->data, true ) : array();
+		$data = FileActivityPresenter::refresh_data( (string) $row->activity_type, is_array( $data ) ? $data : array() );
 
 		$editable_types = ActivityTypes::get_editable_types();
 		$system_types   = ActivityTypes::get_system_types();
@@ -1817,6 +1864,42 @@ final class ActivityManager {
 	}
 
 	/**
+	 * A ticket event's title ("Ticket opened", "Ticket closed"…), or '' when
+	 * the event is not one of these.
+	 *
+	 * @param array $data Activity data.
+	 * @return string
+	 */
+	private static function support_event_message( array $data ): string {
+		$key = (string) ( $data['event_key'] ?? '' );
+		if ( 'ticket_created' === $key ) {
+			return __( 'Ticket opened', 'doublescale' );
+		}
+		if ( 'status_changed' === $key ) {
+			$labels = array(
+				'open'     => __( 'Ticket reopened', 'doublescale' ),
+				'pending'  => __( 'Ticket set to pending', 'doublescale' ),
+				'on_hold'  => __( 'Ticket put on hold', 'doublescale' ),
+				'solved'   => __( 'Ticket solved', 'doublescale' ),
+				'resolved' => __( 'Ticket resolved', 'doublescale' ),
+				'closed'   => __( 'Ticket closed', 'doublescale' ),
+			);
+			$to = (string) ( $data['to'] ?? '' );
+			return $labels[ $to ] ?? __( 'Ticket status changed', 'doublescale' );
+		}
+		if ( 'agent_changed' === $key ) {
+			return empty( $data['to'] ) ? __( 'Ticket unassigned', 'doublescale' ) : __( 'Ticket assigned', 'doublescale' );
+		}
+		if ( 'priority_changed' === $key ) {
+			return __( 'Ticket priority changed', 'doublescale' );
+		}
+		if ( 'tags_changed' === $key ) {
+			return __( 'Ticket tags changed', 'doublescale' );
+		}
+		return '';
+	}
+
+	/**
 	 * Format activity message
 	 *
 	 * @since 1.0.0
@@ -1829,6 +1912,31 @@ final class ActivityManager {
 	 */
 	private function format_activity_message( string $type, ?array $user, array $data ): string {
 		$user_name = $user ? $user['display_name'] : null;
+
+		// A ticket note with no team member behind it was added by an automation.
+		if ( ActivityTypes::SUPPORT_NOTE === $type && null === $user_name ) {
+			return __( 'An automation added an internal note', 'doublescale' );
+		}
+
+		// A reply with no team member behind it came from the customer (or a
+		// colleague of theirs, who is named).
+		if ( ActivityTypes::SUPPORT_REPLY === $type && null === $user_name ) {
+			$from = trim( (string) ( $data['from_name'] ?? '' ) );
+			if ( '' === $from ) {
+				$from = trim( (string) ( $data['from_email'] ?? '' ) );
+			}
+			return '' !== $from
+				/* translators: %s: customer name or email */
+				? sprintf( __( '%s replied on a ticket', 'doublescale' ), $from )
+				: __( 'The customer replied on a ticket', 'doublescale' );
+		}
+
+		if ( ActivityTypes::SUPPORT_EVENT === $type ) {
+			$event = self::support_event_message( $data );
+			if ( '' !== $event ) {
+				return $event;
+			}
+		}
 
 		if ( ActivityTypes::EMAIL_RECEIVED === $type ) {
 			$from_email = $data['from_email'] ?? '';
@@ -1875,14 +1983,12 @@ final class ActivityManager {
 			return $message;
 		}
 
-		if ( ActivityTypes::FILE_ATTACHED === $type || ActivityTypes::FILE_REMOVED === $type ) {
-			$file_name = isset( $data['file_name'] ) ? (string) $data['file_name'] : '';
-			$base      = ActivityTypes::get_activity_message( $type, $user_name );
-			if ( '' !== $file_name ) {
-				/* translators: 1: activity message, 2: file name */
-				return sprintf( __( '%1$s: %2$s', 'doublescale' ), $base, $file_name );
-			}
-			return $base;
+		if ( FileActivityPresenter::is_file_type( $type ) ) {
+			return FileActivityPresenter::message( $type, $user_name, $data );
+		}
+
+		if ( DetailsActivityPresenter::is_details_type( $type ) ) {
+			return DetailsActivityPresenter::message( $data );
 		}
 
 		if ( ActivityTypes::STATUS_CHANGED === $type ) {
@@ -1926,6 +2032,29 @@ final class ActivityManager {
 			}
 		}
 
+		// bookings: "Discovery Call booked with Sarah Mitchell", "Discovery Call cancelled", …
+		if ( 0 === strpos( (string) $type, 'booking_' ) ) {
+			$event = isset( $data['event_name'] ) && '' !== (string) $data['event_name'] ? (string) $data['event_name'] : __( 'Meeting', 'doublescale' );
+			$host  = isset( $data['host_name'] ) ? (string) $data['host_name'] : '';
+			if ( ActivityTypes::BOOKING_SCHEDULED === $type && '' !== $host ) {
+				/* translators: 1: event name, 2: host name */
+				return sprintf( __( '%1$s booked with %2$s', 'doublescale' ), $event, $host );
+			}
+			$verbs = array(
+				ActivityTypes::BOOKING_SCHEDULED   => __( 'booked', 'doublescale' ),
+				ActivityTypes::BOOKING_CONFIRMED   => __( 'confirmed', 'doublescale' ),
+				ActivityTypes::BOOKING_PENDING     => __( 'waiting for confirmation', 'doublescale' ),
+				ActivityTypes::BOOKING_RESCHEDULED => __( 'rescheduled', 'doublescale' ),
+				ActivityTypes::BOOKING_CANCELLED   => __( 'cancelled', 'doublescale' ),
+				ActivityTypes::BOOKING_COMPLETED   => __( 'completed', 'doublescale' ),
+				ActivityTypes::BOOKING_REJECTED    => __( 'declined', 'doublescale' ),
+			);
+			if ( isset( $verbs[ $type ] ) ) {
+				/* translators: 1: event name, 2: what happened (booked, cancelled…) */
+				return sprintf( __( '%1$s %2$s', 'doublescale' ), $event, $verbs[ $type ] );
+			}
+		}
+
 		return ActivityTypes::get_activity_message( $type, $user_name );
 	}
 
@@ -1950,6 +2079,11 @@ final class ActivityManager {
 
 		$tracking_table  = $wpdb->prefix . 'doublescale_communication_tracking';
 		$campaigns_table = $wpdb->prefix . 'doublescale_campaigns';
+		// The campaign's name is the Campaigns module's data: joined only while
+		// it is on (its table exists only then).
+		$campaigns_on   = doublescale_module_data_ready( 'campaigns' );
+		$campaign_name  = $campaigns_on ? "COALESCE(camp.name, '')" : "''";
+		$campaign_join  = $campaigns_on ? "LEFT JOIN {$campaigns_table} camp ON ct.source_type = 1 AND ct.source_id = camp.id" : '';
 		$contacts_table  = $wpdb->prefix . 'doublescale_contacts';
 		$contact_where   = $wpdb->prepare( 'ct.contact_id = %d', $filters['contact_id'] );
 
@@ -1981,7 +2115,7 @@ final class ActivityManager {
 					'tracking_id', ct.id,
 					'source_type', ct.source_type,
 					'source_id', ct.source_id,
-					'campaign_name', COALESCE(camp.name, ''),
+					'campaign_name', {$campaign_name},
 					'recipient', ct.recipient,
 					'opened_at', ct.opened_at,
 					'contact_name', TRIM(CONCAT(COALESCE(con.first_name, ''), ' ', COALESCE(con.last_name, '')))
@@ -2000,7 +2134,7 @@ final class ActivityManager {
 				NULL as is_overdue,
 				0 as comments_count
 			FROM {$tracking_table} ct
-			LEFT JOIN {$campaigns_table} camp ON ct.source_type = 1 AND ct.source_id = camp.id
+			{$campaign_join}
 			LEFT JOIN {$contacts_table} con ON ct.contact_id = con.id
 			WHERE {$opens_where_sql}",
 			'count'  => "SELECT COUNT(*) FROM {$tracking_table} ct WHERE {$opens_where_sql}",
@@ -2036,7 +2170,7 @@ final class ActivityManager {
 					'tracking_id', ct.id,
 					'source_type', ct.source_type,
 					'source_id', ct.source_id,
-					'campaign_name', COALESCE(camp.name, ''),
+					'campaign_name', {$campaign_name},
 					'recipient', ct.recipient,
 					'clicked_at', ct.clicked_at,
 					'contact_name', TRIM(CONCAT(COALESCE(con.first_name, ''), ' ', COALESCE(con.last_name, '')))
@@ -2055,7 +2189,7 @@ final class ActivityManager {
 				NULL as is_overdue,
 				0 as comments_count
 			FROM {$tracking_table} ct
-			LEFT JOIN {$campaigns_table} camp ON ct.source_type = 1 AND ct.source_id = camp.id
+			{$campaign_join}
 			LEFT JOIN {$contacts_table} con ON ct.contact_id = con.id
 			WHERE {$clicks_where_sql}",
 			'count'  => "SELECT COUNT(*) FROM {$tracking_table} ct WHERE {$clicks_where_sql}",

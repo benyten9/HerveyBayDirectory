@@ -37,7 +37,7 @@ final class SummaryEmail {
 			return;
 		}
 
-		if ( false !== as_next_scheduled_action( self::HOOK, array(), self::AS_GROUP ) ) {
+		if ( false !== \DoubleScale\Core\NextRunCache::get( self::HOOK, array(), self::AS_GROUP ) ) {
 			return;
 		}
 

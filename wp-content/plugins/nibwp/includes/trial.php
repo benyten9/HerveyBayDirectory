@@ -138,13 +138,22 @@ add_action('admin_notices', static function (): void {
     if ($trial['active']) {
         $is_final = $trial['seconds_left'] <= 2 * DAY_IN_SECONDS;
         $class = $is_final ? 'notice notice-warning nibwp-pro-notice' : 'notice notice-info nibwp-pro-notice';
+        $days = number_format_i18n($trial['days_left']);
         $msg = $is_final
-            ? sprintf(esc_html__('Your NIBWP Pro trial ends in %d day(s). Activate a license to keep premium integrations.', 'nibwp'), $trial['days_left'])
-            : sprintf(esc_html__('Pro trial active — %d day(s) left. Every premium integration + every skill unlocked.', 'nibwp'), $trial['days_left']);
+            ? esc_html(sprintf(
+                /* translators: %s: number of days left in the trial */
+                _n('Your NIBWP Pro trial ends in %s day. Activate a license to keep premium integrations.', 'Your NIBWP Pro trial ends in %s days. Activate a license to keep premium integrations.', $trial['days_left'], 'nibwp'),
+                $days
+            ))
+            : esc_html(sprintf(
+                /* translators: %s: number of days left in the trial */
+                _n('Pro trial active — %s day left. Every premium integration + every skill unlocked.', 'Pro trial active — %s days left. Every premium integration + every skill unlocked.', $trial['days_left'], 'nibwp'),
+                $days
+            ));
         echo '<div class="' . esc_attr($class) . '"><p>'
             . $msg
             . ' <a href="' . esc_url(nibwp_item_url('bundle')) . '" target="_blank" rel="noopener">'
-            . esc_html__('See plans →', 'nibwp')
+            . esc_html__('See plans', 'nibwp') . ' <span class="nw-rtl-flip" aria-hidden="true">→</span>'
             . '</a></p></div>';
         return;
     }
@@ -155,7 +164,7 @@ add_action('admin_notices', static function (): void {
         echo '<div class="notice notice-warning nibwp-pro-notice"><p>'
             . esc_html__('Your NIBWP Pro trial ended. Premium integrations are locked again — activate a license to restore access.', 'nibwp')
             . ' <a href="' . esc_url($pricing) . '" target="_blank" rel="noopener">'
-            . esc_html__('View pricing →', 'nibwp')
+            . esc_html__('View pricing', 'nibwp') . ' <span class="nw-rtl-flip" aria-hidden="true">→</span>'
             . '</a></p></div>';
     }
 });

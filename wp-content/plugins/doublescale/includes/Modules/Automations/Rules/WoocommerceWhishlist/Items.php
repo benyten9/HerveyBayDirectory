@@ -14,6 +14,7 @@ namespace DoubleScale\Modules\Automations\Rules\WoocommerceWhishlist;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Automations\Rules\Woocommerce\ProductPicker;
 use DoubleScale\Modules\Automations\Abstracts\Rule;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Services\RulesManager;
@@ -57,7 +58,21 @@ class Items extends Rule {
 	 *
 	 * @since 1.0.0
 	 */
-	public $type = 'multiselect';
+	public $type = ProductPicker::TYPE;
+
+	/**
+	 * Searched as the admin types (WooCommerce's REST API), never listed in full.
+	 *
+	 * @var string
+	 */
+	public $endpoint = ProductPicker::ENDPOINT;
+
+	/**
+	 * How the editor reads the endpoint.
+	 *
+	 * @var array
+	 */
+	public $settings = ProductPicker::SETTINGS;
 
 	/**
 	 * Has options
@@ -93,25 +108,9 @@ class Items extends Rule {
 	 * @return array
 	 */
 	public function get_options() {
-		$products = \get_posts(
-			array(
-				'post_type'      => 'product',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			)
-		);
-
-		$options = array();
-		if ( ! empty( $products ) ) {
-			foreach ( $products as $product_id ) {
-				$product = \wc_get_product( $product_id );
-				if ( $product ) {
-					$options[ $product_id ] = $product->get_name();
-				}
-			}
-		}
-		return $options;
+		// The picker searches products on demand (endpoint above); listing
+		// every product here ran on each DoubleScale admin page.
+		return array();
 	}
 
 	/**

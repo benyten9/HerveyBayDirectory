@@ -1,18 +1,18 @@
 <?php
 
-namespace Illuminate\Database\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Migrations;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
-use Illuminate\Console\OutputStyle;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Database\Events\MigrationEnded;
-use Illuminate\Database\Events\MigrationsEnded;
-use Illuminate\Database\Events\MigrationStarted;
-use Illuminate\Database\Events\MigrationsStarted;
-use Illuminate\Database\ConnectionResolverInterface as Resolver;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Console\OutputStyle;
+use DoubleScale\Vendor\Illuminate\Filesystem\Filesystem;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Database\Events\MigrationEnded;
+use DoubleScale\Vendor\Illuminate\Database\Events\MigrationsEnded;
+use DoubleScale\Vendor\Illuminate\Database\Events\MigrationStarted;
+use DoubleScale\Vendor\Illuminate\Database\Events\MigrationsStarted;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionResolverInterface as Resolver;
 class Migrator
 {
     /**
@@ -66,7 +66,7 @@ class Migrator
      * @param  \Illuminate\Contracts\Events\Dispatcher|null  $dispatcher
      * @return void
      */
-    public function __construct(\Illuminate\Database\Migrations\MigrationRepositoryInterface $repository, Resolver $resolver, Filesystem $files, Dispatcher $dispatcher = null)
+    public function __construct(MigrationRepositoryInterface $repository, Resolver $resolver, Filesystem $files, Dispatcher $dispatcher = null)
     {
         $this->files = $files;
         $this->events = $dispatcher;

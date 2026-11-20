@@ -331,7 +331,7 @@ class OldDataMigrationQueue extends BaseSequence {
                 'is_hidden_from_plans_list'              => ( ( $postmeta['_hide_from_plans'] ?? '' ) === 'yes' ) ? 1 : 0,
                 'is_marked_as_recommended'               => ( ( $postmeta['default_pln'] ?? '' ) === 'yes' ) ? 1 : 0,
                 'fallback_plan_id'                       => null,
-                'listing_display_priority'               => (int) ( $postmeta['_dpp_plan_sorting_order'] ?? 0 ),
+                'listing_display_priority'               => max( 1, (int) ( $postmeta['_dpp_plan_sorting_order'] ?? 1 ) ),
             ];
 
             // Convert free pay_per_listing plans to package type.

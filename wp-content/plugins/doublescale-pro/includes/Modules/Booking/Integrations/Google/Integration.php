@@ -12,18 +12,21 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Google;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\EventLocations\GoogleMeet;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use DoubleScale\Modules\Booking\Abstracts\Integration as Abstract_Integration;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Pro\Modules\Booking\Integrations\Google\Rest\REST_API;
+use DoubleScale\Pro\Modules\Booking\Integrations\DescribesBookingLocation;
 use DoubleScale\Modules\Booking\BookingUtils;
 use WP_Error;
 /**
  * Google Integration class
  */
 class Integration extends Abstract_Integration {
+	use DescribesBookingLocation;
+
 
 
 	/**
@@ -78,6 +81,8 @@ class Integration extends Abstract_Integration {
 		\add_filter( 'doublescale_booking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
 		add_action( 'doublescale_booking_initialize_default_settings', array( $this, 'initialize_default_settings' ) );
 		add_action( 'doublescale_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// Zoom bookings the Zoom integration did not write (e.g. Zoom not connected).
+		add_action( 'doublescale_booking_created', array( $this, 'add_zoom_booking_to_calendars' ), 20 );
 		add_action( 'doublescale_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'doublescale_booking_rescheduled', array( $this, 'reschedule_event' ) );
 
@@ -306,11 +311,33 @@ class Integration extends Abstract_Integration {
 	}
 
 	/**
-	 * Add one Google Calendar event on the host’s selected remote default calendar (Meet optional).
+	 * Zoom bookings normally reach Google through the Zoom integration (with the
+	 * join link). When that did not happen, write a plain event here.
+	 *
+	 * @param int|string|BookingModel $booking Booking id, numeric string, or model.
+	 *
+	 * @return BookingModel|null
+	 */
+	public function add_zoom_booking_to_calendars( $booking ) {
+		$booking = $this->resolve_booking( $booking );
+		if ( ! $booking || ! $this->booking_has_zoom_location( $booking ) ) {
+			return $booking;
+		}
+
+		return $this->add_event_to_calendars( $booking, false, $this->booking_location_text( $booking ), true );
+	}
+
+	/**
+	 * Add one Google Calendar event on the host’s selected remote default
+	 * calendar, for every location. A Meet link is created only when the
+	 * booking location is Google Meet.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param int|string|BookingModel $booking Booking id, numeric string, or model.
+	 * @param int|string|BookingModel $booking           Booking id, numeric string, or model.
+	 * @param bool                    $is_google_meeting Ignored unless $is_zoom; Meet follows the booking location.
+	 * @param string|null             $zoom_link         Location text for Zoom bookings.
+	 * @param bool                    $is_zoom           True when called by the Zoom integration.
 	 *
 	 * @return BookingModel
 	 */
@@ -325,11 +352,19 @@ class Integration extends Abstract_Integration {
 				return $booking;
 			}
 
-			if ( ! $is_zoom ) {
-				// Early return if booking location is not Google Meet
-				if ( ! $this->booking_has_google_meet_location( $booking ) ) {
+			if ( true !== $is_zoom ) {
+				// Zoom bookings are written via the Zoom integration (or the priority-20 fallback).
+				if ( $this->booking_has_zoom_location( $booking ) ) {
 					return $booking;
 				}
+				$is_google_meeting = $this->booking_has_google_meet_location( $booking );
+			} else {
+				$is_google_meeting = false;
+			}
+
+			// Never write the same booking twice.
+			if ( ! empty( $booking->get_meta( 'google_events_details', array() ) ) ) {
+				return $booking;
 			}
 
 			$bookable_entity  = $booking->getBookableEntity();
@@ -411,23 +446,20 @@ class Integration extends Abstract_Integration {
 			$this->set_host( $integration_calendar );
 			$google_integration = $this->host->get_meta( $this->meta_key, array() );
 
+			// This host never connected Google Calendar: nothing to sync, and nothing wrong.
 			if ( empty( $google_integration ) ) {
-				$booking->logs()->create(
-					array(
-						'type'    => 'error',
-						'message' => __( 'Google Calendar integration not configured.', 'doublescale' ),
-					)
-				);
 				return $booking;
 			}
 
 			$default_account = $this->pick_host_account_for_default_calendar_sync( $google_integration );
 
 			if ( ! $default_account ) {
+				// No default remote calendar: skip outbound sync. The booking
+				// already exists — not an error, but say why nothing was added.
 				$booking->logs()->create(
 					array(
-						'type'    => 'error',
-						'message' => __( 'No default calendar found in any Google account.', 'doublescale' ),
+						'type'    => 'info',
+						'message' => __( 'Not added to Google Calendar: no remote calendar is selected for this host.', 'doublescale' ),
 					)
 				);
 				return $booking;
@@ -455,7 +487,7 @@ class Integration extends Abstract_Integration {
 			$event_data = array(
 				'summary'                 => sprintf( __( '%1$s: %2$s', 'doublescale' ), $booking->getContactDisplayName(), $entity_name ),
 				'description'             => $this->get_event_description( $booking, $organizer ),
-				'location'                => is_array( $booking->location ) ? (string) ( $booking->location['label'] ?? '' ) : '',
+				'location'                => $this->booking_location_text( $booking ),
 				'source'                  => array(
 					'title' => $integration_calendar->name,
 					'url'   => $booking->event_url,
@@ -496,7 +528,7 @@ class Integration extends Abstract_Integration {
 						),
 					),
 				);
-			} else {
+			} elseif ( $is_zoom && $zoom_link ) {
 				$event_data['location'] = $zoom_link;
 			}
 

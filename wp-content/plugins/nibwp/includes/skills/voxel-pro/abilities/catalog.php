@@ -17,7 +17,7 @@ require_once __DIR__ . '/../lib/registry.php';
 
 wp_register_ability('nibwp/voxel-pro-catalog', [
     'label'       => __('Voxel Pro — widget and slot catalog', 'nibwp'),
-    'description' => __('The vocabulary for building Voxel templates: which widgets exist on this site and what each requires, one widget\'s full control list read live from Elementor, and the slots a finished template can be assigned to.', 'nibwp'),
+    'description' => 'The vocabulary for building Voxel templates: which widgets exist on this site and what each requires, one widget\'s full control list read live from Elementor, and the slots a finished template can be assigned to.',
     'category'    => 'voxel-pro',
     'input_schema' => [
         'type' => 'object',

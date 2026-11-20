@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use SEOPress\Helpers\BuilderContent;
+use SEOPress\Helpers\Shortcodes;
 use SEOPress\Models\GetTagValue;
 
 /**
@@ -49,6 +51,10 @@ class PostContent implements GetTagValue {
 
 		if ( ! empty( $context['post'] ) ) {
 			$value = get_post_field( 'post_content', $context['post']->ID );
+
+			if ( '' === $value ) {
+				$value = BuilderContent::getText( $context['post']->ID );
+			}
 		}
 
 		$value = wp_trim_words(
@@ -56,7 +62,7 @@ class PostContent implements GetTagValue {
 				stripslashes_deep(
 					wp_filter_nohtml_kses(
 						wp_strip_all_tags(
-							strip_shortcodes( $value )
+							Shortcodes::stripTags( $value )
 						)
 					)
 				)

@@ -13,6 +13,7 @@ namespace DoubleScale\Pro\Modules\Automations\Triggers\Woocommerce\Subscription;
 
 use DoubleScale\Modules\Automations\Abstracts\Trigger;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
+use DoubleScale\Pro\Modules\Automations\Triggers\Woocommerce\Order\OrderTriggerPhone;
 use WC_Subscription;
 
 /**
@@ -20,8 +21,7 @@ use WC_Subscription;
  */
 class SubscriptionNoteAdded extends Trigger
 {
-
-
+	use OrderTriggerPhone;
 
 	/**
 	 * Trigger Name
@@ -101,6 +101,8 @@ class SubscriptionNoteAdded extends Trigger
 			'first_name' => $subscription->get_billing_first_name(),
 			'last_name'  => $subscription->get_billing_last_name(),
 			'email'      => $subscription->get_billing_email(),
+			'phone'      => $this->resolve_order_phone($subscription),
+			'country'    => $this->resolve_order_country($subscription),
 			'data'       => array(
 				'subscription_id' => $subscription->get_id(),
 				'note_id'         => $note_id,

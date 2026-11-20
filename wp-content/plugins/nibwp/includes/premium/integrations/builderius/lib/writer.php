@@ -60,14 +60,14 @@ function nibwp_builderius_write_commit(int $branch_id, array $config, string $me
 {
     $json = wp_json_encode($config);
     if ($json === false) {
-        return new WP_Error('bad_config', __('Config could not be JSON-encoded.', domain: 'nibwp'));
+        return new WP_Error('bad_config', __('Config could not be JSON-encoded.', 'nibwp'));
     }
     $name = 'c' . bin2hex(random_bytes(5));
     $commit_id = wp_insert_post([
         'post_type'    => NIBWP_BLDR_CPT_COMMIT,
         'post_parent'  => $branch_id,
         'post_status'  => 'publish',
-        'post_title'   => $message !== '' ? $message : __('Commit', domain: 'nibwp'),
+        'post_title'   => $message !== '' ? $message : __('Commit', 'nibwp'),
         'post_name'    => $name,
         // JSON is mostly backslashes; wp_insert_post() unslashes, so an
         // unslashed write stores a commit that no longer parses.
@@ -98,12 +98,12 @@ function nibwp_builderius_create_template(string $title, string $type, string $s
 {
     $probe = nibwp_builderius_probe();
     if (!$probe['ok']) {
-        return new WP_Error('write_surface_unavailable', __('Builderius template post types are not registered on this site.', domain: 'nibwp'), $probe);
+        return new WP_Error('write_surface_unavailable', __('Builderius template post types are not registered on this site.', 'nibwp'), $probe);
     }
     if ($config !== []) {
         $verdict = nibwp_builderius_validate_config($config);
         if (!$verdict['passed']) {
-            return new WP_Error('validation_failed', __('Config failed validation.', domain: 'nibwp'), $verdict);
+            return new WP_Error('validation_failed', __('Config failed validation.', 'nibwp'), $verdict);
         }
     }
     if (!empty($ctx['dry_run'])) {
@@ -137,7 +137,7 @@ function nibwp_builderius_create_template(string $title, string $type, string $s
     if ($config !== []) {
         $branches = nibwp_builderius_branches_for_template((int) $template_id);
         if ($branches !== []) {
-            $committed = nibwp_builderius_write_commit((int) $branches[0]->ID, $config, __('Initial content (NIBWP)', domain: 'nibwp'));
+            $committed = nibwp_builderius_write_commit((int) $branches[0]->ID, $config, __('Initial content (NIBWP)', 'nibwp'));
         }
     }
 
@@ -164,11 +164,11 @@ function nibwp_builderius_create_template(string $title, string $type, string $s
 function nibwp_builderius_update_template(int $template_id, array $config, string $message, array $ctx = []): array|WP_Error
 {
     if (get_post_type($template_id) !== NIBWP_BLDR_CPT_TEMPLATE) {
-        return new WP_Error('not_found', __('No Builderius template with that id.', domain: 'nibwp'));
+        return new WP_Error('not_found', __('No Builderius template with that id.', 'nibwp'));
     }
     $verdict = nibwp_builderius_validate_config($config);
     if (!$verdict['passed']) {
-        return new WP_Error('validation_failed', __('Config failed validation.', domain: 'nibwp'), $verdict);
+        return new WP_Error('validation_failed', __('Config failed validation.', 'nibwp'), $verdict);
     }
     if (!empty($ctx['dry_run'])) {
         return ['dry_run' => true, 'template_id' => $template_id, 'validation' => $verdict];
@@ -176,9 +176,9 @@ function nibwp_builderius_update_template(int $template_id, array $config, strin
 
     $branches = nibwp_builderius_branches_for_template($template_id);
     if ($branches === []) {
-        return new WP_Error('no_branch', __('Template has no branch yet — open it once in Builderius, or recreate it.', domain: 'nibwp'));
+        return new WP_Error('no_branch', __('Template has no branch yet — open it once in Builderius, or recreate it.', 'nibwp'));
     }
-    $commit_id = nibwp_builderius_write_commit((int) $branches[0]->ID, $config, $message !== '' ? $message : __('Update via NIBWP', domain: 'nibwp'));
+    $commit_id = nibwp_builderius_write_commit((int) $branches[0]->ID, $config, $message !== '' ? $message : __('Update via NIBWP', 'nibwp'));
     if (is_wp_error($commit_id)) {
         return $commit_id;
     }
@@ -203,13 +203,13 @@ function nibwp_builderius_update_template(int $template_id, array $config, strin
 function nibwp_builderius_create_record(string $post_type, string $title, array $config, array $ctx = []): array|WP_Error
 {
     if (!post_type_exists($post_type)) {
-        return new WP_Error('write_surface_unavailable', sprintf(__('Post type %s is not registered.', domain: 'nibwp'), $post_type));
+        return new WP_Error('write_surface_unavailable', sprintf(__('Post type %s is not registered.', 'nibwp'), $post_type));
     }
     if ($config !== []) {
         $verdict = nibwp_builderius_validate_config($config);
         // Global settings sets aren't a module tree; only validate when it looks like one.
         if (isset($config['modules']) && !$verdict['passed']) {
-            return new WP_Error('validation_failed', __('Config failed validation.', domain: 'nibwp'), $verdict);
+            return new WP_Error('validation_failed', __('Config failed validation.', 'nibwp'), $verdict);
         }
     }
     if (!empty($ctx['dry_run'])) {
@@ -240,7 +240,7 @@ function nibwp_builderius_create_record(string $post_type, string $title, array 
 function nibwp_builderius_create_branch(int $template_id, string $name, string $base_commit = '', array $ctx = []): array|WP_Error
 {
     if (get_post_type($template_id) !== NIBWP_BLDR_CPT_TEMPLATE) {
-        return new WP_Error('not_found', __('No Builderius template with that id.', domain: 'nibwp'));
+        return new WP_Error('not_found', __('No Builderius template with that id.', 'nibwp'));
     }
     if (!empty($ctx['dry_run'])) {
         return ['dry_run' => true, 'template_id' => $template_id, 'branch' => $name];
@@ -275,11 +275,11 @@ function nibwp_builderius_delete(int $id, bool $force = false): array|WP_Error
         NIBWP_BLDR_CPT_BRANCH,
     ];
     if ($pt === false || !in_array($pt, $allowed, true)) {
-        return new WP_Error('not_deletable', __('That id is not a deletable Builderius record.', domain: 'nibwp'));
+        return new WP_Error('not_deletable', __('That id is not a deletable Builderius record.', 'nibwp'));
     }
     $res = wp_delete_post($id, $force);
     if (!$res) {
-        return new WP_Error('delete_failed', __('Delete failed.', domain: 'nibwp'));
+        return new WP_Error('delete_failed', __('Delete failed.', 'nibwp'));
     }
     return ['deleted' => $id, 'post_type' => $pt, 'forced' => $force];
 }

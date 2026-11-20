@@ -1,18 +1,18 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules\English;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules\English;
 
-use Doctrine\Inflector\GenericLanguageInflectorFactory;
-use Doctrine\Inflector\Rules\Ruleset;
+use DoubleScale\Vendor\Doctrine\Inflector\GenericLanguageInflectorFactory;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Ruleset;
 final class InflectorFactory extends GenericLanguageInflectorFactory
 {
     protected function getSingularRuleset() : Ruleset
     {
-        return \Doctrine\Inflector\Rules\English\Rules::getSingularRuleset();
+        return Rules::getSingularRuleset();
     }
     protected function getPluralRuleset() : Ruleset
     {
-        return \Doctrine\Inflector\Rules\English\Rules::getPluralRuleset();
+        return Rules::getPluralRuleset();
     }
 }

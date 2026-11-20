@@ -32,6 +32,8 @@ use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Core\PluginKernel;
 use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Modules\Campaigns\Services\CampaignStatusManager;
+use DoubleScale\Modules\Campaigns\Services\StrandedMessageSweeper;
+use DoubleScale\Modules\Campaigns\Services\WhatsappAccountPause;
 use DoubleScale\Modules\Campaigns\Services\CampaignRateLimiter;
 use DoubleScale\Modules\Campaigns\Services\CampaignContactFilter;
 use DoubleScale\Core\MergeTags\MergeTagsManager;
@@ -196,12 +198,24 @@ abstract class AbstractCampaignProcessing {
 		$type_string = $this->channel;
 
 		PluginKernel::instance()->campaigns_tasks->register_callback( "doublescale_{$type_string}_campaigns", array( $this, 'process_campaigns' ) );
-		PluginKernel::instance()->campaigns_tasks->register_callback( "process_campaign_{$type_string}", array( $this, 'process_campaign_message' ) );
+
+		// Both handlers below are queued through task meta — retries, the
+		// memory-limit requeue and the continuation fallback — and neither looks
+		// the meta up itself, so they take their real arguments from Tasks.
+		// Without it Action Scheduler hands them the bare meta id: message sends
+		// died with "Too few arguments" and continuation ran for the wrong
+		// campaign id.
+		PluginKernel::instance()->campaigns_tasks->register_callback(
+			"process_campaign_{$type_string}",
+			array( $this, 'process_campaign_message' ),
+			true
+		);
 
 		// Register continuation handler (Action Scheduler fallback)
 		PluginKernel::instance()->campaigns_tasks->register_callback(
 			"continue_{$type_string}_campaign",
-			array( $this, 'continue_campaign_processing' )
+			array( $this, 'continue_campaign_processing' ),
+			true
 		);
 
 		// Register AJAX continuation handler (faster, immediate processing)
@@ -255,6 +269,13 @@ abstract class AbstractCampaignProcessing {
 
 			// Check if progress was made
 			if ( $last_offset !== false && $last_offset == $current_offset ) {
+				if ( $this->campaign_has_scheduled_retries( $campaign )
+					&& (int) $campaign->count > 0
+					&& $current_offset >= (int) $campaign->count
+				) {
+					return;
+				}
+
 				// No progress made - increment counter
 				$no_progress_count = (int) get_transient( $no_progress_key );
 				++$no_progress_count;
@@ -573,16 +594,48 @@ abstract class AbstractCampaignProcessing {
 	abstract protected function send_message( $message_data, ContactModel $contact, CommunicationTrackingModel $campaign_message );
 
 	/**
-	 * Messages per second this channel may send; null lets the limiter use
-	 * the channel default. Channels with a configurable cap override this.
+	 * Messages per second this channel may send.
 	 *
 	 * @return int|null
 	 */
 	protected function get_per_second_cap() {
-		if ( method_exists( $this, 'get_max_per_second' ) ) {
-			return (int) $this->get_max_per_second();
-		}
-		return null;
+		return $this->get_max_per_second();
+	}
+
+	/**
+	 * The configured "messages per second" cap for this channel.
+	 *
+	 * Every channel stores this the same way — `max_in_second` in its own
+	 * settings group, with `$this->settings` already resolved per channel in
+	 * the constructor — so this resolution belongs here rather than in one
+	 * subclass.
+	 *
+	 * It used to live only on EmailProcessing, reached through a
+	 * `method_exists()` probe in get_per_second_cap(). That made the probe
+	 * return null for every other channel, and null tells CampaignRateLimiter
+	 * to use its own default: 1 message per second for both WhatsApp and SMS.
+	 * `whatsapp.max_in_second` was therefore stored, validated on save, shown
+	 * in the UI, and never read — a bulk WhatsApp campaign crawled at 1/s no
+	 * matter what the admin set.
+	 *
+	 * @return int Messages per second (>= 1).
+	 */
+	protected function get_max_per_second() {
+		$max = $this->settings['max_in_second']
+			?? $this->rate_limiter->get_default_per_second_limit( $this->channel );
+		$max = (int) apply_filters( "doublescale_{$this->channel}_max_per_second", (int) $max );
+
+		// A cap below 1 would stall the sender rather than slow it.
+		return max( 1, $max );
+	}
+
+	/**
+	 * The send speed this channel actually uses, for display.
+	 *
+	 * @return int Messages per second.
+	 */
+	public function effective_max_per_second() {
+		return $this->get_max_per_second();
 	}
 
 	/**
@@ -618,6 +671,11 @@ abstract class AbstractCampaignProcessing {
 	 */
 	public function process_campaigns() {
 		$this->start_time = microtime( true );
+
+		// A message whose queued job never ran is invisible to everything else:
+		// no longer FAILED, so no retry finds it, and no job left to run it.
+		// Reclaim those first so this pass can pick them up.
+		StrandedMessageSweeper::instance()->sweep();
 
 		// Update heartbeat at the start to track that cron is running
 		if ( ! PluginKernel::instance()->campaigns_tasks->update_heartbeat( "doublescale_{$this->channel}_campaigns" ) ) {
@@ -794,6 +852,7 @@ abstract class AbstractCampaignProcessing {
 		$ctx->fn_complete        = \Closure::fromCallable( array( $this, 'complete_campaign' ) );
 		$ctx->fn_fail            = \Closure::fromCallable( array( $this, 'fail_campaign' ) );
 		$ctx->fn_continue        = array( $this->continuation_scheduler, 'queue' );
+		$ctx->fn_continue_at     = array( $this->continuation_scheduler, 'queue_at' );
 		$ctx->fn_refresh_lock    = array( $this->locker, 'refresh' );
 		$ctx->fn_execution_time  = array( $this, 'get_current_execution_time' );
 		$ctx->fn_add_message     = \Closure::fromCallable( array( $this, 'add_message' ) );
@@ -953,6 +1012,29 @@ abstract class AbstractCampaignProcessing {
 				);
 			}
 
+			// A guard may stop the campaign at this recipient (Pro: the Meta
+			// messaging tier and quality rating). No row is created and the
+			// offset does not advance, so a resumed campaign starts here.
+			if ( CampaignChannel::STR_WHATSAPP === $this->channel ) {
+				/**
+				 * Whether to stop a WhatsApp campaign before this recipient.
+				 *
+				 * Return true only after pausing the campaign yourself (see
+				 * WhatsappAccountPause::pause()); this just ends the batch.
+				 *
+				 * @param bool          $hold      Default false.
+				 * @param string        $recipient Recipient number as tracked.
+				 * @param CampaignModel $campaign  The campaign being sent.
+				 */
+				if ( true === apply_filters( 'doublescale_whatsapp_campaign_hold_recipient', false, (string) $recipient, $campaign ) ) {
+					return array(
+						'success' => false,
+						'skipped' => false,
+						'fatal'   => true,
+					);
+				}
+			}
+
 			$campaign_message = CommunicationTrackingModel::create(
 				array(
 					'contact_id'  => $contact->id,
@@ -1017,6 +1099,47 @@ abstract class AbstractCampaignProcessing {
 
 
 	/**
+	 * Point a queued text message at the number the contact has now.
+	 *
+	 * The tracking row copied the number when the message was queued. A
+	 * WhatsApp send then waits in Action Scheduler, a memory requeue waits, and
+	 * Retry Sending reuses the row — meanwhile the client may have changed the
+	 * number (portal, contact page). Send to the current one; with none left,
+	 * fail the message with the reason rather than reach a number the client
+	 * gave up. Email is left as it is.
+	 *
+	 * @param ContactModel|null          $contact          Contact being messaged.
+	 * @param CommunicationTrackingModel $campaign_message Tracking row.
+	 * @return bool False when the message must not be sent.
+	 */
+	protected function send_to_current_number( $contact, CommunicationTrackingModel $campaign_message ): bool {
+		if ( CampaignChannel::STR_EMAIL === $this->channel || ! $contact instanceof ContactModel || empty( $contact->id ) ) {
+			return true;
+		}
+
+		$fresh   = ContactModel::find( (int) $contact->id );
+		$current = $fresh ? (string) $this->get_recipient( $fresh ) : '';
+
+		if ( '' === $current ) {
+			$campaign_message->status = TrackingStatus::FAILED;
+			$campaign_message->save();
+			CommunicationTrackingMetaModel::store_error_info(
+				$campaign_message->id,
+				'recipient_removed',
+				__( 'Not sent: the contact no longer has a number for this channel.', 'doublescale' )
+			);
+			return false;
+		}
+
+		if ( $current !== (string) $campaign_message->recipient ) {
+			$campaign_message->recipient = $current;
+			$campaign_message->save();
+		}
+
+		return true;
+	}
+
+	/**
 	 * Process campaign message - unified logic for all types
 	 *
 	 * @param CampaignModel                       $campaign
@@ -1024,12 +1147,61 @@ abstract class AbstractCampaignProcessing {
 	 * @param CommunicationTrackingModel          $campaign_message
 	 * @return void
 	 */
-	public function process_campaign_message( CampaignModel $campaign, $contact_or_automation_contact, CommunicationTrackingModel $campaign_message ) {
+	public function process_campaign_message( $campaign, $contact_or_automation_contact, $campaign_message ) {
+		// Action Scheduler stores its arguments as JSON, so a deferred send
+		// (WhatsApp uses schedule_single(); email and SMS run in-process) gets
+		// these back as row ids. Type-hinted models made every scheduled retry
+		// fail instantly with "must be of type CampaignModel, int given",
+		// leaving the message SCHEDULED for good and Retry Sending looking
+		// like a no-op. Rehydrate instead of rejecting.
+		if ( ! $campaign instanceof CampaignModel ) {
+			$campaign = CampaignModel::find( (int) $campaign );
+		}
+
+		if ( ! $campaign_message instanceof CommunicationTrackingModel ) {
+			$campaign_message = CommunicationTrackingModel::find( (int) $campaign_message );
+		}
+
+		if (
+			! $contact_or_automation_contact instanceof ContactModel
+			&& ! $contact_or_automation_contact instanceof AutomationContactModel
+		) {
+			$contact_or_automation_contact = ContactModel::find( (int) $contact_or_automation_contact );
+		}
+
+		// A row deleted between scheduling and running leaves nothing to send.
+		if ( ! $campaign || ! $campaign_message || ! $contact_or_automation_contact ) {
+			return;
+		}
+
+		// Meta restricted the sending number and the campaign paused. A send
+		// queued before that — a retry, a backoff, a memory requeue — must not
+		// reach the restricted number. Fail it with a reason so Retry Sending
+		// can pick it up once the campaign resumes.
+		if (
+			CampaignChannel::STR_WHATSAPP === $this->channel
+			&& MessageSourceTypes::CAMPAIGN === (int) $campaign_message->source_type
+			&& CampaignStatusManager::PAUSED === (string) $campaign->status
+		) {
+			$campaign_message->status = TrackingStatus::FAILED;
+			$campaign_message->save();
+			CommunicationTrackingMetaModel::store_error_info(
+				$campaign_message->id,
+				'campaign_paused',
+				__( 'Not sent: the campaign is paused because Meta restricted the sending number. Retry once it resumes.', 'doublescale' )
+			);
+			return;
+		}
+
 		// Extract actual contact for operations that need it (validation, sending, etc.)
 		// But preserve the original for merge tag processing
 		$contact = $contact_or_automation_contact instanceof AutomationContactModel
 			? $contact_or_automation_contact->contact
 			: $contact_or_automation_contact;
+
+		if ( ! $this->send_to_current_number( $contact, $campaign_message ) ) {
+			return;
+		}
 
 		// Check if memory limit is reached
 		if ( Utils::is_memory_limit_reached() ) {
@@ -1131,6 +1303,15 @@ abstract class AbstractCampaignProcessing {
 
 			// Handle result
 			$this->handle_send_result( $campaign_message, $result );
+
+			// Campaign lifecycle bookkeeping — real campaigns only. Automations
+			// (Send Email / SMS / WhatsApp) pass an in-memory CampaignModel that
+			// was never saved; reloading it threw "No query results for model
+			// [CampaignModel]" into the catch below, which marked an already
+			// delivered message FAILED and stopped the automation.
+			if ( ! $contact_or_automation_contact instanceof AutomationContactModel ) {
+				$this->complete_campaign_after_send( $campaign, $campaign_message );
+			}
 
 			// Log processing result
 			$this->log_campaign_processing_result( $campaign, $contact, $campaign_message );
@@ -1481,6 +1662,7 @@ abstract class AbstractCampaignProcessing {
 		if ( $result && $result['success'] ) {
 			$campaign_message->status  = TrackingStatus::SENT;
 			$campaign_message->sent_at = current_time( 'mysql', true );
+			$this->count_sent( 1 );
 
 			// Write conditional_sections meta ONLY after successful send
 			// This ensures we only track sections for emails that were actually sent
@@ -1502,6 +1684,41 @@ abstract class AbstractCampaignProcessing {
 						'meta_value'                => $error,
 					)
 				);
+			}
+
+			// The same failure again, this time with the provider's numeric
+			// code, under the structured key the UI already renders and the
+			// failure-cause grouping counts. Written in addition to
+			// `send_error` rather than instead of it: Pro reads that key back
+			// as a plain string, so a free-new + Pro-old site would lose its
+			// automation failure messages if this replaced it.
+			//
+			// store_error_info() upserts, so a delivery webhook arriving later
+			// correctly overwrites this with the final outcome.
+			$structured = \DoubleScale\Modules\Tracking\SendErrorMeta::structured_from_result( $result );
+			$code       = '';
+			if ( '' !== $structured['code'] || '' !== $structured['message'] ) {
+				$code = '' !== $structured['code'] ? $structured['code'] : "{$this->channel}_send_failed";
+				CommunicationTrackingMetaModel::store_error_info(
+					$campaign_message->id,
+					$code,
+					$structured['message']
+				);
+			}
+
+			// Meta restricted the sending number: stop the whole campaign here
+			// rather than keep feeding it the traffic that gets numbers blocked.
+			if (
+				CampaignChannel::STR_WHATSAPP === $this->channel
+				&& MessageSourceTypes::CAMPAIGN === (int) $campaign_message->source_type
+				&& '' !== $code
+			) {
+				WhatsappAccountPause::handle_error( (int) $campaign_message->source_id, $code, $structured['message'] ?? '' );
+			}
+
+			if ( $this->maybe_defer_retriable_failure( $campaign_message, $code, $structured['message'] ?? '' ) ) {
+				$campaign_message->save();
+				return;
 			}
 
 			// Log error details if available
@@ -1528,6 +1745,161 @@ abstract class AbstractCampaignProcessing {
 		}
 
 		$campaign_message->save();
+	}
+
+	/**
+	 * Defer a temporary provider failure instead of recording it as permanent.
+	 *
+	 * @param CommunicationTrackingModel $campaign_message Tracking row.
+	 * @param string                     $code             Provider error code.
+	 * @param string                     $error_message    Human-readable reason.
+	 * @return bool True when the row was rescheduled.
+	 */
+	protected function maybe_defer_retriable_failure( CommunicationTrackingModel $campaign_message, $code, $error_message ) {
+		$numeric   = ctype_digit( (string) $code ) ? (int) $code : 0;
+		$retriable = (bool) apply_filters( 'doublescale_send_error_is_retriable', false, $numeric, $this->channel );
+		if ( ! $retriable ) {
+			return false;
+		}
+
+		$max     = max( 1, (int) apply_filters( 'doublescale_whatsapp_max_retriable_attempts', 3, $this->channel ) );
+		$attempt = $this->get_retry_attempt( (int) $campaign_message->id ) + 1;
+		$this->store_retry_attempt( (int) $campaign_message->id, $attempt );
+
+		if ( $attempt > $max ) {
+			CommunicationTrackingMetaModel::store_error_info(
+				$campaign_message->id,
+				$code . '_exhausted',
+				$error_message
+			);
+			return false;
+		}
+
+		$campaign_message->status = TrackingStatus::SCHEDULED;
+
+		$campaign = CampaignModel::find( $campaign_message->source_id );
+		$contact  = $campaign_message->contact;
+		if ( $campaign && $contact ) {
+			$delay = (int) ( 2 ** $attempt ) + wp_rand( 0, $attempt );
+			PluginKernel::instance()->campaigns_tasks->schedule_single(
+				time() + $delay,
+				"process_campaign_{$this->channel}",
+				$campaign,
+				$contact,
+				$campaign_message
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param int $tracking_id Tracking row id.
+	 * @return int
+	 */
+	protected function get_retry_attempt( $tracking_id ) {
+		$rows = CommunicationTrackingMetaModel::where( 'communication_tracking_id', $tracking_id )
+			->where( 'meta_key', 'retry_attempt' )
+			->get();
+
+		$max = 0;
+		foreach ( $rows as $row ) {
+			$raw = $row->meta_value;
+			if ( is_array( $raw ) ) {
+				$max = max( $max, (int) ( $raw['count'] ?? 0 ) );
+				continue;
+			}
+			$max = max( $max, (int) $raw );
+		}
+
+		return $max;
+	}
+
+	/**
+	 * @param int $tracking_id Tracking row id.
+	 * @param int $count       Attempt number.
+	 * @return void
+	 */
+	protected function store_retry_attempt( $tracking_id, $count ) {
+		$existing = CommunicationTrackingMetaModel::where( 'communication_tracking_id', $tracking_id )
+			->where( 'meta_key', 'retry_attempt' )
+			->first();
+		$data     = array( 'count' => (int) $count );
+
+		if ( $existing ) {
+			$existing->meta_value = $data;
+			$existing->save();
+			return;
+		}
+
+		CommunicationTrackingMetaModel::create(
+			array(
+				'communication_tracking_id' => $tracking_id,
+				'meta_key'                  => 'retry_attempt',
+				'meta_value'                => $data,
+			)
+		);
+	}
+
+	/**
+	 * @param CampaignModel $campaign Campaign.
+	 * @return bool
+	 */
+	protected function campaign_has_scheduled_retries( CampaignModel $campaign ) {
+		return $campaign->messages()->where( 'status', TrackingStatus::SCHEDULED )->exists();
+	}
+
+	/**
+	 * Run post-send campaign bookkeeping without letting it undo the send.
+	 *
+	 * The message has already been handed to the provider when this runs. A
+	 * failure here is a bookkeeping problem, not a delivery one, so it is
+	 * logged and the message keeps the status the send gave it.
+	 *
+	 * @param CampaignModel              $campaign         Campaign.
+	 * @param CommunicationTrackingModel $campaign_message Message just sent.
+	 * @return void
+	 */
+	protected function complete_campaign_after_send( CampaignModel $campaign, CommunicationTrackingModel $campaign_message ) {
+		try {
+			$this->maybe_complete_after_deferred_send( $campaign );
+		} catch ( \Throwable $e ) {
+			doublescale_get_logger()->warning(
+				'Campaign completion check failed after a send; the message status is unchanged.',
+				array(
+					'code'        => 'campaign_completion_check_failed',
+					'campaign_id' => $campaign->id,
+					'message_id'  => $campaign_message->id,
+					'error'       => $e->getMessage(),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Complete a processing campaign once the audience is dispatched and no
+	 * deferred retries remain.
+	 *
+	 * @param CampaignModel $campaign Campaign.
+	 * @return void
+	 */
+	protected function maybe_complete_after_deferred_send( CampaignModel $campaign ) {
+		$campaign->refresh();
+		if ( CampaignStatusManager::PROCESSING !== $campaign->status ) {
+			return;
+		}
+
+		$offset = (int) get_option( "doublescale_{$this->channel}_campaigns_last_contact_offset_{$campaign->id}", 0 );
+		$total  = (int) $campaign->count;
+		if ( $total < 1 || $offset < $total ) {
+			return;
+		}
+
+		if ( $this->campaign_has_scheduled_retries( $campaign ) ) {
+			return;
+		}
+
+		$this->complete_campaign( $campaign, $total );
 	}
 
 	/**
@@ -1627,9 +1999,16 @@ abstract class AbstractCampaignProcessing {
 			return null;
 		}
 
-		// Get provider from registry
-		$this->message_provider = \DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry::instance()
-			->get_provider( $this->channel );
+		$registry_class = '\DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry';
+		if ( ! class_exists( $registry_class ) ) {
+			return null;
+		}
+
+		try {
+			$this->message_provider = $registry_class::instance()->get_provider( $this->channel );
+		} catch ( \Throwable $e ) {
+			return null;
+		}
 
 		return $this->message_provider;
 	}
@@ -1742,27 +2121,19 @@ abstract class AbstractCampaignProcessing {
 	}
 
 	/**
-	 * Get max per day setting for this channel
+	 * Count delivered messages against the channel's shared daily cap.
 	 *
-	 * Returns the max per day from settings, or the default from rate limiter.
-	 * Returns null for channels without daily limits (Sms, WhatsApp).
+	 * Every send path that marks messages SENT calls this once, so campaigns,
+	 * sequences and workflows all draw from the same daily budget.
 	 *
-	 * @since 1.0.0
-	 *
-	 * @return int|null Max per day or null if no daily limit for this channel
+	 * @param int $sent Messages just delivered.
+	 * @return void
 	 */
-	protected function get_max_per_day_setting() {
-		// Check if channel has daily limits configured in rate limiter
-		$default_limit = $this->rate_limiter->get_default_daily_limit( $this->channel );
-
-		// If no default limit for this channel (returns fallback 10000 only for unknown channels)
-		// Sms and WhatsApp are not in the defaults array, so they'll get the fallback
-		// We explicitly check if it's email to apply daily limits
-		if ( 'email' !== $this->channel ) {
-			return null; // No daily limits for Sms/Whatsapp
+	protected function count_sent( $sent ) {
+		$sent = (int) $sent;
+		if ( $sent > 0 ) {
+			$this->rate_limiter->increment_daily_count( $this->channel, $sent );
 		}
-
-		return $this->settings['max_in_day'] ?? $default_limit;
 	}
 
 	/**
@@ -1904,10 +2275,12 @@ abstract class AbstractCampaignProcessing {
 		$total_seconds = $end_time - (float) $campaign_start_time;
 		$total_seconds = max( 0, $total_seconds ); // Ensure non-negative
 
-		// Calculate hours, minutes, seconds
-		$hours   = floor( $total_seconds / 3600 );
-		$minutes = floor( ( $total_seconds % 3600 ) / 60 );
-		$seconds = floor( $total_seconds % 60 );
+		// Whole hours, minutes and seconds. `%` on the float itself is a lossy
+		// conversion PHP 8.1+ reports as deprecated.
+		$whole   = (int) $total_seconds;
+		$hours   = intdiv( $whole, 3600 );
+		$minutes = intdiv( $whole % 3600, 60 );
+		$seconds = $whole % 60;
 
 		// Format duration string
 		$formatted = '';

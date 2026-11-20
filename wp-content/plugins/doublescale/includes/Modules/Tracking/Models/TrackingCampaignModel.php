@@ -10,7 +10,7 @@ namespace DoubleScale\Modules\Tracking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * Maps to `doublescale_campaigns` for FK resolution when the Campaigns module is not bundled.

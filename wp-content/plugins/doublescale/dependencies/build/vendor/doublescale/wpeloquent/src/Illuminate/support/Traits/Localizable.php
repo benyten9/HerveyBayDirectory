@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Traits;
+namespace DoubleScale\Vendor\Illuminate\Support\Traits;
 
-use Illuminate\Container\Container;
+use DoubleScale\Vendor\Illuminate\Container\Container;
 trait Localizable
 {
     /**

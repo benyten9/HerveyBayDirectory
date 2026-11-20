@@ -76,7 +76,7 @@ class Video extends JsonSchemaValue implements GetJsonData {
 		}
 
 		if ( isset( $variables['published_date'] ) && ! empty( $variables['published_date'] ) ) {
-			$variables['uploadDate'] = date( 'c', strtotime( $variables['published_date'] ) );
+			$variables['uploadDate'] = gmdate( 'c', strtotime( $variables['published_date'] ) );
 		} elseif ( isset( $context['post']->ID ) ) {
 			$variables['uploadDate'] = get_the_date( 'c', $context['post']->ID );
 		}
@@ -90,7 +90,8 @@ class Video extends JsonSchemaValue implements GetJsonData {
 		}
 
 		if ( isset( $variables['url'] ) ) {
-			$variables['contentUrl'] = $variables['embedUrl'] = $variables['url'];
+			$variables['contentUrl'] = $variables['url'];
+			$variables['embedUrl']   = function_exists( 'seopress_pro_get_youtube_embed_url' ) ? seopress_pro_get_youtube_embed_url( $variables['url'] ) : $variables['url'];
 		}
 
 		$schema = seopress_get_service( 'JsonSchemaGenerator' )->getJsonFromSchema( Organization::NAME, $context, array( 'remove_empty' => true ) );

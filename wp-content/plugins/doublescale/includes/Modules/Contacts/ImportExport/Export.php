@@ -14,6 +14,7 @@ namespace DoubleScale\Modules\Contacts\ImportExport;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Core\Utils\Utils;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Contacts\Filters\Process as Contact_Filters_Process;
@@ -115,11 +116,11 @@ class Export {
 		$total_contacts_query = ContactModel::query();
 
 		if ( ! empty( $this->filters ) ) {
-			$filters_process = new Contact_Filters_Process( $total_contacts_query, $this->filters );
-			$total_contacts  = $filters_process->filter()->count();
-		} else {
-			$total_contacts = $total_contacts_query->count();
+			$filters_process      = new Contact_Filters_Process( $total_contacts_query, $this->filters );
+			$total_contacts_query = $filters_process->filter();
 		}
+		// An export is the one thing a collaborator never gets: only OWNED contacts leave the site.
+		$total_contacts = OwnerScope::current()->apply_contact_ownership( $total_contacts_query )->count();
 
 		$contact_fields = $this->get_contact_fields();
 		$headers        = array_map(
@@ -161,7 +162,7 @@ class Export {
 				$contacts_query  = $filters_process->filter();
 			}
 
-			$contacts = $contacts_query->get();
+			$contacts = OwnerScope::current()->apply_contact_ownership( $contacts_query )->get();
 
 			if ( $contacts->isEmpty() ) {
 				break;

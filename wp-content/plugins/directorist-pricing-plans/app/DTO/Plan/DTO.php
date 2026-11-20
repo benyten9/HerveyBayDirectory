@@ -58,7 +58,7 @@ class DTO extends \DirectoristPricingPlan\WpMVC\DTO\DTO
 
     private int $fallback_plan_id;
 
-    private int $listing_display_priority;
+    private int $listing_display_priority = 1;
 
     private bool $is_featured;
 
@@ -651,7 +651,7 @@ class DTO extends \DirectoristPricingPlan\WpMVC\DTO\DTO
      * @return self
      */
     public function set_listing_display_priority( int $listing_display_priority ): self {
-        $this->listing_display_priority = $listing_display_priority;
+        $this->listing_display_priority = max( 1, $listing_display_priority );
 
         return $this;
     }

@@ -60,7 +60,7 @@ function nibwp_weglot_guard(): ?WP_Error
     if (!nibwp_weglot_available()) {
         return nibwp_weglot_err(
             'nibwp_weglot_missing',
-            __('Weglot is not active on this site.', domain: 'nibwp')
+            __('Weglot is not active on this site.', 'nibwp')
         );
     }
 
@@ -208,7 +208,7 @@ function nibwp_weglot_write_option(string $key, $value): array
     $service = nibwp_weglot_service('Option_Service_Weglot');
 
     if ($service === null || !method_exists($service, 'set_option_by_key')) {
-        return ['local' => false, 'pushed' => false, 'message' => __('This Weglot version does not expose option writing.', domain: 'nibwp')];
+        return ['local' => false, 'pushed' => false, 'message' => __('This Weglot version does not expose option writing.', 'nibwp')];
     }
 
     $local = false;
@@ -229,7 +229,7 @@ function nibwp_weglot_write_option(string $key, $value): array
         } catch (\Throwable $e) {
             $message = sprintf(
                 /* translators: %s: error from Weglot */
-                __('Saved locally, but pushing to your Weglot workspace failed: %s', domain: 'nibwp'),
+                __('Saved locally, but pushing to your Weglot workspace failed: %s', 'nibwp'),
                 $e->getMessage()
             );
         }
@@ -243,8 +243,8 @@ function nibwp_weglot_write_option(string $key, $value): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-info', [
-    'label'       => __('Weglot — Info', domain: 'nibwp'),
-    'description' => __('Detect Weglot, whether an API key is configured, the original and destination languages, the translation engine, and whether the site is actually translating (read-only).', domain: 'nibwp'),
+    'label'       => __('Weglot — Info', 'nibwp'),
+    'description' => 'Detect Weglot, whether an API key is configured, the original and destination languages, the translation engine, and whether the site is actually translating (read-only).',
     'category'    => 'multilingual',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -302,8 +302,8 @@ function nibwp_weglot_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-languages', [
-    'label'       => __('Weglot — Languages', domain: 'nibwp'),
-    'description' => __('List the languages Weglot supports, read which are configured on this site, and add a destination language.', domain: 'nibwp'),
+    'label'       => __('Weglot — Languages', 'nibwp'),
+    'description' => 'List the languages Weglot supports, read which are configured on this site, and add a destination language.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -347,7 +347,7 @@ function nibwp_weglot_languages(array $input): array|WP_Error
 
         if ($action === 'available') {
             if ($service === null || !method_exists($service, 'get_languages_available')) {
-                throw new \RuntimeException(__('This Weglot version does not expose the language list.', domain: 'nibwp'));
+                throw new \RuntimeException(__('This Weglot version does not expose the language list.', 'nibwp'));
             }
 
             $search = strtolower((string) ($input['search'] ?? ''));
@@ -372,19 +372,19 @@ function nibwp_weglot_languages(array $input): array|WP_Error
         if ($action === 'add') {
             $code = trim((string) ($input['code'] ?? ''));
             if ($code === '') {
-                throw new \RuntimeException(__('A language code is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A language code is required.', 'nibwp'));
             }
 
             if (!(bool) ($input['confirm'] ?? false)) {
-                throw new \RuntimeException(__('Adding a language increases translated word usage against the plan. Re-issue with confirm true once the user has agreed.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Adding a language increases translated word usage against the plan. Re-issue with confirm true once the user has agreed.', 'nibwp'));
             }
 
             if (in_array($code, nibwp_weglot_destination_codes(), strict: true)) {
-                return ['code' => $code, 'added' => false, 'note' => __('That language is already configured.', domain: 'nibwp')];
+                return ['code' => $code, 'added' => false, 'note' => __('That language is already configured.', 'nibwp')];
             }
 
             if ($service === null || !method_exists($service, 'add_language')) {
-                throw new \RuntimeException(__('This Weglot version does not expose adding a language.', domain: 'nibwp'));
+                throw new \RuntimeException(__('This Weglot version does not expose adding a language.', 'nibwp'));
             }
 
             $service->add_language($code);
@@ -393,7 +393,7 @@ function nibwp_weglot_languages(array $input): array|WP_Error
                 'code'  => $code,
                 'added' => true,
                 'destination_languages' => nibwp_weglot_destination_codes(),
-                'note'  => __('Weglot will begin translating into this language. Watch the word count against the plan.', domain: 'nibwp'),
+                'note'  => __('Weglot will begin translating into this language. Watch the word count against the plan.', 'nibwp'),
             ];
         }
 
@@ -410,8 +410,8 @@ function nibwp_weglot_languages(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-settings', [
-    'label'       => __('Weglot — Settings', domain: 'nibwp'),
-    'description' => __('Read every Weglot option, and change the ones that matter for translation quality and SEO: hreflang tags, translated slugs, automatic redirection, private-mode and search-engine indexing.', domain: 'nibwp'),
+    'label'       => __('Weglot — Settings', 'nibwp'),
+    'description' => 'Read every Weglot option, and change the ones that matter for translation quality and SEO: hreflang tags, translated slugs, automatic redirection, private-mode and search-engine indexing.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -453,10 +453,10 @@ function nibwp_weglot_settings(array $input): array|WP_Error
         if ($action === 'set') {
             $key = trim((string) ($input['key'] ?? ''));
             if ($key === '') {
-                throw new \RuntimeException(__('An option key is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('An option key is required.', 'nibwp'));
             }
             if (!array_key_exists('value', $input)) {
-                throw new \RuntimeException(__('A value is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A value is required.', 'nibwp'));
             }
 
             $before = nibwp_weglot_options()[$key] ?? null;
@@ -488,8 +488,8 @@ function nibwp_weglot_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-exclusions', [
-    'label'       => __('Weglot — Exclusions', domain: 'nibwp'),
-    'description' => __('Read and set what Weglot must leave alone: URLs that should not be translated, and CSS selectors for blocks such as code samples, brand names and product codes.', domain: 'nibwp'),
+    'label'       => __('Weglot — Exclusions', 'nibwp'),
+    'description' => 'Read and set what Weglot must leave alone: URLs that should not be translated, and CSS selectors for blocks such as code samples, brand names and product codes.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -571,8 +571,8 @@ function nibwp_weglot_exclusions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-switcher', [
-    'label'       => __('Weglot — Language switcher', domain: 'nibwp'),
-    'description' => __('Read and change the language switcher: its style, flags, placement and custom CSS.', domain: 'nibwp'),
+    'label'       => __('Weglot — Language switcher', 'nibwp'),
+    'description' => 'Read and change the language switcher: its style, flags, placement and custom CSS.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -623,7 +623,7 @@ function nibwp_weglot_switcher(array $input): array|WP_Error
             }
 
             if ($written === []) {
-                throw new \RuntimeException(__('Give either a button object or css.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Give either a button object or css.', 'nibwp'));
             }
 
             return ['updated' => true, 'results' => $written];
@@ -648,8 +648,8 @@ function nibwp_weglot_switcher(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-slugs', [
-    'label'       => __('Weglot — Translated slugs', domain: 'nibwp'),
-    'description' => __('Read the translated URL slugs Weglot holds for this site, and whether slug translation is switched on (read-only).', domain: 'nibwp'),
+    'label'       => __('Weglot — Translated slugs', 'nibwp'),
+    'description' => 'Read the translated URL slugs Weglot holds for this site, and whether slug translation is switched on (read-only).',
     'category'    => 'multilingual',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -677,7 +677,7 @@ function nibwp_weglot_slugs(array $input): array|WP_Error
     }
 
     if (!nibwp_weglot_has_key()) {
-        return nibwp_weglot_err('nibwp_weglot_no_key', __('No Weglot API key is configured, so slugs cannot be read.', domain: 'nibwp'));
+        return nibwp_weglot_err('nibwp_weglot_no_key', __('No Weglot API key is configured, so slugs cannot be read.', 'nibwp'));
     }
 
     return nibwp_weglot_try(static function (): array {
@@ -702,8 +702,8 @@ function nibwp_weglot_slugs(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-pages', [
-    'label'       => __('Weglot — Page translation control', domain: 'nibwp'),
-    'description' => __('Read and set which pages are left untranslated in which languages — Weglot\'s page unpublication rules.', domain: 'nibwp'),
+    'label'       => __('Weglot — Page translation control', 'nibwp'),
+    'description' => 'Read and set which pages are left untranslated in which languages — Weglot\'s page unpublication rules.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -763,8 +763,8 @@ function nibwp_weglot_pages(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-media', [
-    'label'       => __('Weglot — Media, PDF and email', domain: 'nibwp'),
-    'description' => __('Read and switch the translation of things beyond page text: media and image URLs, PDF documents, and outgoing emails.', domain: 'nibwp'),
+    'label'       => __('Weglot — Media, PDF and email', 'nibwp'),
+    'description' => 'Read and switch the translation of things beyond page text: media and image URLs, PDF documents, and outgoing emails.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -821,7 +821,7 @@ function nibwp_weglot_media(array $input): array|WP_Error
             }
 
             if ($results === []) {
-                throw new \RuntimeException(__('Give at least one of media, pdf or emails.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Give at least one of media, pdf or emails.', 'nibwp'));
             }
 
             return ['updated' => true, 'results' => $results];
@@ -841,8 +841,8 @@ function nibwp_weglot_media(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-plan', [
-    'label'       => __('Weglot — Plan and usage', domain: 'nibwp'),
-    'description' => __('Read the Weglot account: plan, word allowance, how much is used, and how many languages it covers (read-only).', domain: 'nibwp'),
+    'label'       => __('Weglot — Plan and usage', 'nibwp'),
+    'description' => 'Read the Weglot account: plan, word allowance, how much is used, and how many languages it covers (read-only).',
     'category'    => 'multilingual',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -870,14 +870,14 @@ function nibwp_weglot_plan(array $input): array|WP_Error
     }
 
     if (!nibwp_weglot_has_key()) {
-        return nibwp_weglot_err('nibwp_weglot_no_key', __('No Weglot API key is configured, so the account cannot be read.', domain: 'nibwp'));
+        return nibwp_weglot_err('nibwp_weglot_no_key', __('No Weglot API key is configured, so the account cannot be read.', 'nibwp'));
     }
 
     return nibwp_weglot_try(static function (): array {
         $service = nibwp_weglot_service('User_Api_Service_Weglot');
 
         if ($service === null) {
-            throw new \RuntimeException(__('The Weglot account service is unavailable in this version.', domain: 'nibwp'));
+            throw new \RuntimeException(__('The Weglot account service is unavailable in this version.', 'nibwp'));
         }
 
         $user = method_exists($service, 'get_user_info') ? $service->get_user_info() : null;
@@ -896,8 +896,8 @@ function nibwp_weglot_plan(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-audit', [
-    'label'       => __('Weglot — Audit', domain: 'nibwp'),
-    'description' => __('Check a Weglot setup for the mistakes that cost money or rankings: missing API key, no hreflang, untranslated slugs, no exclusions on a technical site, private mode left on, and languages configured but not reachable (read-only).', domain: 'nibwp'),
+    'label'       => __('Weglot — Audit', 'nibwp'),
+    'description' => 'Check a Weglot setup for the mistakes that cost money or rankings: missing API key, no hreflang, untranslated slugs, no exclusions on a technical site, private mode left on, and languages configured but not reachable (read-only).',
     'category'    => 'multilingual',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -936,48 +936,48 @@ function nibwp_weglot_audit(array $input): array|WP_Error
         if (!$has_key) {
             $blockers[] = [
                 'code'    => 'no_api_key',
-                'message' => __('No API key. Nothing is being translated, whatever else is configured.', domain: 'nibwp'),
-                'fix'     => __('Add the key from your Weglot account under Weglot → Settings.', domain: 'nibwp'),
+                'message' => __('No API key. Nothing is being translated, whatever else is configured.', 'nibwp'),
+                'fix'     => __('Add the key from your Weglot account under Weglot → Settings.', 'nibwp'),
             ];
         }
 
         if ($destinations === []) {
             $blockers[] = [
                 'code'    => 'no_languages',
-                'message' => __('No destination languages. The site has Weglot installed and translates into nothing.', domain: 'nibwp'),
-                'fix'     => __('Add one with nibwp/weglot-languages after checking the plan.', domain: 'nibwp'),
+                'message' => __('No destination languages. The site has Weglot installed and translates into nothing.', 'nibwp'),
+                'fix'     => __('Add one with nibwp/weglot-languages after checking the plan.', 'nibwp'),
             ];
         }
 
         if (array_key_exists('active_translation', $options) && !$options['active_translation']) {
             $blockers[] = [
                 'code'    => 'translation_off',
-                'message' => __('Translation is switched off in the settings.', domain: 'nibwp'),
-                'fix'     => __('Set active_translation to true with nibwp/weglot-settings.', domain: 'nibwp'),
+                'message' => __('Translation is switched off in the settings.', 'nibwp'),
+                'fix'     => __('Set active_translation to true with nibwp/weglot-settings.', 'nibwp'),
             ];
         }
 
         if (!(bool) ($options['add_hreflang'] ?? true)) {
             $warnings[] = [
                 'code'    => 'no_hreflang',
-                'message' => __('hreflang tags are off. Search engines cannot tell which language version to show, which is the most common way a translated site fails to rank.', domain: 'nibwp'),
-                'fix'     => __('Set add_hreflang to true.', domain: 'nibwp'),
+                'message' => __('hreflang tags are off. Search engines cannot tell which language version to show, which is the most common way a translated site fails to rank.', 'nibwp'),
+                'fix'     => __('Set add_hreflang to true.', 'nibwp'),
             ];
         }
 
         if (!(bool) ($options['active_slugs'] ?? false)) {
             $warnings[] = [
                 'code'    => 'slugs_untranslated',
-                'message' => __('URL slugs are not translated. /fr/about ranks worse in French than /fr/a-propos.', domain: 'nibwp'),
-                'fix'     => __('Set active_slugs to true, then review the slugs in the Weglot dashboard.', domain: 'nibwp'),
+                'message' => __('URL slugs are not translated. /fr/about ranks worse in French than /fr/a-propos.', 'nibwp'),
+                'fix'     => __('Set active_slugs to true, then review the slugs in the Weglot dashboard.', 'nibwp'),
             ];
         }
 
         if ((bool) ($options['allow_private'] ?? false)) {
             $warnings[] = [
                 'code'    => 'private_mode_on',
-                'message' => __('Private mode is on. Translations are not visible to the public — fine while building, a problem if it was forgotten.', domain: 'nibwp'),
-                'fix'     => __('Set allow_private to false when the site is ready.', domain: 'nibwp'),
+                'message' => __('Private mode is on. Translations are not visible to the public — fine while building, a problem if it was forgotten.', 'nibwp'),
+                'fix'     => __('Set allow_private to false when the site is ready.', 'nibwp'),
             ];
         }
 
@@ -985,8 +985,8 @@ function nibwp_weglot_audit(array $input): array|WP_Error
         if ($exclude_blocks === []) {
             $warnings[] = [
                 'code'    => 'no_exclusions',
-                'message' => __('Nothing is excluded from translation. Code samples, brand names, SKUs and addresses are being translated along with the prose — and billed.', domain: 'nibwp'),
-                'fix'     => __('Set exclusions with nibwp/weglot-exclusions. Start with code, pre and any syntax-highlighting class.', domain: 'nibwp'),
+                'message' => __('Nothing is excluded from translation. Code samples, brand names, SKUs and addresses are being translated along with the prose — and billed.', 'nibwp'),
+                'fix'     => __('Set exclusions with nibwp/weglot-exclusions. Start with code, pre and any syntax-highlighting class.', 'nibwp'),
             ];
         }
 
@@ -995,7 +995,7 @@ function nibwp_weglot_audit(array $input): array|WP_Error
                 'code'    => 'many_languages',
                 'message' => sprintf(
                     /* translators: %d: number of destination languages */
-                    __('%d destination languages. Every word on the site is translated once per language, so usage grows with the site, not just with the language count.', domain: 'nibwp'),
+                    __('%d destination languages. Every word on the site is translated once per language, so usage grows with the site, not just with the language count.', 'nibwp'),
                     count($destinations)
                 ),
             ];
@@ -1024,8 +1024,8 @@ function nibwp_weglot_audit(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-workflow', [
-    'label'       => __('Weglot — Translation workflow', domain: 'nibwp'),
-    'description' => __('The ordered plan for translating this particular site, built from its current state: what is already done, what to do next, and what it will cost (read-only).', domain: 'nibwp'),
+    'label'       => __('Weglot — Translation workflow', 'nibwp'),
+    'description' => 'The ordered plan for translating this particular site, built from its current state: what is already done, what to do next, and what it will cost (read-only).',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -1079,14 +1079,14 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
         if (!nibwp_weglot_has_key()) {
             $steps[] = [
                 'step'    => 'Connect the account',
-                'why'     => __('Nothing translates without an API key.', domain: 'nibwp'),
+                'why'     => __('Nothing translates without an API key.', 'nibwp'),
                 'ability' => 'Weglot → Settings in wp-admin',
             ];
         }
 
         $steps[] = [
             'step'    => 'Check the plan before committing',
-            'why'     => __('Weglot bills by translated words across every language. Know the allowance before adding languages, because going over stops translation rather than charging quietly.', domain: 'nibwp'),
+            'why'     => __('Weglot bills by translated words across every language. Know the allowance before adding languages, because going over stops translation rather than charging quietly.', 'nibwp'),
             'ability' => 'nibwp/weglot-plan',
         ];
 
@@ -1095,7 +1095,7 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
         // refund it.
         $steps[] = [
             'step'    => 'Set exclusions FIRST',
-            'why'     => __('Anything translated once is already billed. Excluding code, brand names and product codes before the first pass saves both quota and nonsense output.', domain: 'nibwp'),
+            'why'     => __('Anything translated once is already billed. Excluding code, brand names and product codes before the first pass saves both quota and nonsense output.', 'nibwp'),
             'ability' => 'nibwp/weglot-exclusions',
             'suggested_selectors' => $exclusions,
         ];
@@ -1105,7 +1105,7 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
                 'step'    => 'Add the languages',
                 'why'     => sprintf(
                     /* translators: %s: comma-separated language codes */
-                    __('Not yet configured: %s. Each one multiplies word usage.', domain: 'nibwp'),
+                    __('Not yet configured: %s. Each one multiplies word usage.', 'nibwp'),
                     implode(', ', $missing)
                 ),
                 'ability' => 'nibwp/weglot-languages',
@@ -1116,7 +1116,7 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
         if (!(bool) ($options['add_hreflang'] ?? true)) {
             $steps[] = [
                 'step'    => 'Switch hreflang on',
-                'why'     => __('Without it search engines cannot tell the language versions apart, and the translated pages compete with each other instead of ranking.', domain: 'nibwp'),
+                'why'     => __('Without it search engines cannot tell the language versions apart, and the translated pages compete with each other instead of ranking.', 'nibwp'),
                 'ability' => 'nibwp/weglot-settings',
             ];
         }
@@ -1124,26 +1124,26 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
         if (!(bool) ($options['active_slugs'] ?? false)) {
             $steps[] = [
                 'step'    => 'Translate the slugs',
-                'why'     => __('A French page on an English URL ranks worse than one on a French URL.', domain: 'nibwp'),
+                'why'     => __('A French page on an English URL ranks worse than one on a French URL.', 'nibwp'),
                 'ability' => 'nibwp/weglot-settings',
             ];
         }
 
         $steps[] = [
             'step'    => 'Place the switcher where people will find it',
-            'why'     => __('A translated site nobody can switch is a translated site nobody reads.', domain: 'nibwp'),
+            'why'     => __('A translated site nobody can switch is a translated site nobody reads.', 'nibwp'),
             'ability' => 'nibwp/weglot-switcher',
         ];
 
         $steps[] = [
             'step'    => 'Decide what should NOT be translated',
-            'why'     => __('Country-specific pages, legal text that must stay in its original language, market-specific landing pages.', domain: 'nibwp'),
+            'why'     => __('Country-specific pages, legal text that must stay in its original language, market-specific landing pages.', 'nibwp'),
             'ability' => 'nibwp/weglot-pages',
         ];
 
         $steps[] = [
             'step'    => 'Re-audit',
-            'why'     => __('Confirm the configuration before telling anyone the site is translated.', domain: 'nibwp'),
+            'why'     => __('Confirm the configuration before telling anyone the site is translated.', 'nibwp'),
             'ability' => 'nibwp/weglot-audit',
         ];
 
@@ -1152,7 +1152,7 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
             'already_configured' => $existing,
             'to_add'             => $missing,
             'steps'              => $steps,
-            'principle'          => __('Exclusions before languages, languages before polish. A word translated once is billed once, whatever you do afterwards.', domain: 'nibwp'),
+            'principle'          => __('Exclusions before languages, languages before polish. A word translated once is billed once, whatever you do afterwards.', 'nibwp'),
         ];
     });
 }
@@ -1162,8 +1162,8 @@ function nibwp_weglot_workflow(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/weglot-sync', [
-    'label'       => __('Weglot — Sync with the workspace', domain: 'nibwp'),
-    'description' => __('Pull the configuration held in your Weglot workspace, or push the local one to it, when the two have drifted apart.', domain: 'nibwp'),
+    'label'       => __('Weglot — Sync with the workspace', 'nibwp'),
+    'description' => 'Pull the configuration held in your Weglot workspace, or push the local one to it, when the two have drifted apart.',
     'category'    => 'multilingual',
     'input_schema' => [
         'type' => 'object',
@@ -1198,7 +1198,7 @@ function nibwp_weglot_sync(array $input): array|WP_Error
     }
 
     if (!nibwp_weglot_has_key()) {
-        return nibwp_weglot_err('nibwp_weglot_no_key', __('No Weglot API key is configured, so there is no workspace to sync with.', domain: 'nibwp'));
+        return nibwp_weglot_err('nibwp_weglot_no_key', __('No Weglot API key is configured, so there is no workspace to sync with.', 'nibwp'));
     }
 
     $action = (string) ($input['action'] ?? 'compare');
@@ -1206,7 +1206,7 @@ function nibwp_weglot_sync(array $input): array|WP_Error
     if (in_array($action, ['pull', 'push'], strict: true) && !(bool) ($input['confirm'] ?? false)) {
         return nibwp_weglot_err(
             'nibwp_weglot_unconfirmed',
-            __('This overwrites one side of the configuration with the other. Compare first, then re-issue with confirm true.', domain: 'nibwp')
+            __('This overwrites one side of the configuration with the other. Compare first, then re-issue with confirm true.', 'nibwp')
         );
     }
 
@@ -1214,7 +1214,7 @@ function nibwp_weglot_sync(array $input): array|WP_Error
         $service = nibwp_weglot_service('Option_Service_Weglot');
 
         if ($service === null) {
-            throw new \RuntimeException(__('The Weglot option service is unavailable.', domain: 'nibwp'));
+            throw new \RuntimeException(__('The Weglot option service is unavailable.', 'nibwp'));
         }
 
         $local = nibwp_weglot_options();
@@ -1244,10 +1244,10 @@ function nibwp_weglot_sync(array $input): array|WP_Error
 
         if ($action === 'pull') {
             if ($remote === []) {
-                throw new \RuntimeException(__('The workspace returned no configuration to pull.', domain: 'nibwp'));
+                throw new \RuntimeException(__('The workspace returned no configuration to pull.', 'nibwp'));
             }
             if (!method_exists($service, 'set_options')) {
-                throw new \RuntimeException(__('This Weglot version does not expose replacing the local options.', domain: 'nibwp'));
+                throw new \RuntimeException(__('This Weglot version does not expose replacing the local options.', 'nibwp'));
             }
 
             $service->set_options($remote);
@@ -1256,7 +1256,7 @@ function nibwp_weglot_sync(array $input): array|WP_Error
         }
 
         if (!method_exists($service, 'save_options_to_weglot')) {
-            throw new \RuntimeException(__('This Weglot version does not expose pushing to the workspace.', domain: 'nibwp'));
+            throw new \RuntimeException(__('This Weglot version does not expose pushing to the workspace.', 'nibwp'));
         }
 
         $service->save_options_to_weglot();

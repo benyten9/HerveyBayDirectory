@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/acpt-manage-types', [
-    'label' => __('ACPT Manage Types', domain: 'nibwp'),
-    'description' => __(
-        'Manage ACPT post types, taxonomies, and meta groups. List and create custom post types, taxonomies, and meta field groups via the ACPT API.',
-        domain: 'nibwp',
-    ),
+    'label' => __('ACPT Manage Types', 'nibwp'),
+    'description' => 'Manage ACPT post types, taxonomies, and meta groups. List and create custom post types, taxonomies, and meta field groups via the ACPT API.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',

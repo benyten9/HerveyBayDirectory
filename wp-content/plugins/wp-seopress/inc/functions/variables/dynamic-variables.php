@@ -18,7 +18,10 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 function seopress_get_dynamic_variables( $variables, $post, $is_oembed ) {
 	// Init.
 	if ( isset( $is_oembed ) && false === $is_oembed ) {
-		global $post;
+		// Not the global $post: page builders leave their query loop's last post
+		// in it while wp_head is being built, which would describe a loop item
+		// instead of the requested page. See seopress_get_the_post().
+		$post = seopress_get_the_post();
 	}
 	global $term;
 	global $wp_query;
@@ -132,9 +135,10 @@ function seopress_get_dynamic_variables( $variables, $post, $is_oembed ) {
 	}
 
 	if ( ( is_single() || true === $is_oembed ) && has_category( '', $post ) ) {
-		$post_category_array = get_the_terms( $post->ID, 'category' );
-		$post_category       = $post_category_array[0]->name;
-		$post_category       = apply_filters( 'seopress_titles_cat', $post_category );
+		// The primary category, else the first one, like %%_ct_category%%.
+		$post_category_term = \SEOPress\Helpers\Metas\PrimaryTerm::get_display_term( $post->ID, 'category' );
+		$post_category      = $post_category_term instanceof WP_Term ? $post_category_term->name : '';
+		$post_category      = apply_filters( 'seopress_titles_cat', $post_category );
 	}
 
 	if ( ( is_single() || true === $is_oembed ) && has_tag( '', $post ) ) {
@@ -157,26 +161,28 @@ function seopress_get_dynamic_variables( $variables, $post, $is_oembed ) {
 		$seopress_get_post_title = esc_attr( wp_strip_all_tags( $seopress_get_post_title ) );
 	}
 
+	// Post content, else the page builder text when post_content is empty
+	// (Bricks keeps the whole layout in post meta).
+	$seopress_raw_content = '';
+	if ( isset( $post ) && is_object( $post ) && isset( $post->ID ) && true !== post_password_required( $post->ID ) ) {
+		$seopress_raw_content = get_post_field( 'post_content', $post->ID );
+		if ( '' === $seopress_raw_content ) {
+			$seopress_raw_content = SEOPress\Helpers\BuilderContent::getText( $post->ID );
+		}
+	}
+
 	// Post Excerpt.
 	if ( '' !== $seopress_excerpt && isset( $post ) && is_object( $post ) && isset( $post->ID ) && true !== post_password_required( $post->ID ) ) {
-		$seopress_get_the_excerpt = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $seopress_excerpt ), true ) ) ) ), $seopress_excerpt_length );
-	} elseif ( isset( $post ) && is_object( $post ) && isset( $post->ID ) && true !== post_password_required( $post->ID ) ) {
-		if ( '' !== get_post_field( 'post_content', $post->ID ) ) {
-			$seopress_get_the_excerpt = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( get_post_field( 'post_content', $post->ID ), true ) ) ) ) ), $seopress_excerpt_length );
-		} else {
-			$seopress_get_the_excerpt = null;
-		}
+		$seopress_get_the_excerpt = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( SEOPress\Helpers\Shortcodes::stripTags( $seopress_excerpt ), true ) ) ) ), $seopress_excerpt_length );
+	} elseif ( '' !== $seopress_raw_content ) {
+		$seopress_get_the_excerpt = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( SEOPress\Helpers\Shortcodes::stripTags( $seopress_raw_content ) ) ) ) ), $seopress_excerpt_length );
 	} else {
 		$seopress_get_the_excerpt = null;
 	}
 
 	// Post Content.
-	if ( isset( $post ) && is_object( $post ) && isset( $post->ID ) && true !== post_password_required( $post->ID ) ) {
-		if ( '' !== get_post_field( 'post_content', $post->ID ) ) {
-			$seopress_content = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( get_post_field( 'post_content', $post->ID ), true ) ) ) ) ), $seopress_excerpt_length );
-		} else {
-			$seopress_content = null;
-		}
+	if ( '' !== $seopress_raw_content ) {
+		$seopress_content = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( SEOPress\Helpers\Shortcodes::stripTags( $seopress_raw_content ) ) ) ) ), $seopress_excerpt_length );
 	} else {
 		$seopress_content = null;
 	}
@@ -334,8 +340,8 @@ function seopress_get_dynamic_variables( $variables, $post, $is_oembed ) {
 		$seopress_paged,
 		$seopress_context_paged,
 		post_type_archive_title( '', false ),
-		get_the_archive_title(),
-		get_query_var( 'monthnum' ) . ' - ' . get_query_var( 'year' ),
+		\SEOPress\Tags\ArchiveTitle::resolve(),
+		\SEOPress\Tags\Date\ArchiveDate::resolve(),
 		get_query_var( 'day' ),
 		get_query_var( 'monthnum' ),
 		$month_name_archive,

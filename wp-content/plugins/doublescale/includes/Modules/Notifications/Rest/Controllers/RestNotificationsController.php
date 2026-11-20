@@ -17,6 +17,8 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * RestNotificationsController class.
  *
@@ -187,7 +189,9 @@ class RestNotificationsController extends WP_REST_Controller {
 			->forUser( $user_id )
 			->whereIn( 'subcategory', $bell_enabled_subcats )
 			->excludeSystemForNonAdmin()
-			->orderBy( 'created_at', 'desc' );
+			->orderBy( 'created_at', 'desc' )
+			// Same second: the newest stored first, the same on every page.
+			->orderBy( 'id', 'desc' );
 
 		$notifications = $fetch_query
 			->skip( ( $page - 1 ) * $per_page )

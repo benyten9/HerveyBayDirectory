@@ -69,6 +69,14 @@ final class PublicFrontendAssets {
 			wp_set_script_translations( self::HANDLE, 'doublescale', $plugin_dir . 'languages' );
 		}
 
+		// Dates the way the site writes them, for every public page this
+		// script serves (portal, invoices, proposals, contracts…).
+		wp_add_inline_script(
+			self::HANDLE,
+			'window.doublescaleSiteDates = ' . wp_json_encode( \DoubleScale\Core\Settings\SiteDates::config(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+			'before'
+		);
+
 		wp_register_style(
 			self::HANDLE,
 			$plugin_url . 'build/renderer/portal/style.css',

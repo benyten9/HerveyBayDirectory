@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use PDO;
-use Illuminate\Database\Schema\MySqlBuilder;
-use Illuminate\Database\Query\Processors\MySqlProcessor;
-use Doctrine\DBAL\Driver\PDOMySql\Driver as DoctrineDriver;
-use Illuminate\Database\Query\Grammars\MySqlGrammar as QueryGrammar;
-use Illuminate\Database\Schema\Grammars\MySqlGrammar as SchemaGrammar;
-class MySqlConnection extends \Illuminate\Database\Connection
+use DoubleScale\Vendor\Illuminate\Database\Schema\MySqlBuilder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Processors\MySqlProcessor;
+use DoubleScale\Vendor\Doctrine\DBAL\Driver\PDOMySql\Driver as DoctrineDriver;
+use DoubleScale\Vendor\Illuminate\Database\Query\Grammars\MySqlGrammar as QueryGrammar;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Grammars\MySqlGrammar as SchemaGrammar;
+class MySqlConnection extends Connection
 {
     /**
      * Get the default query grammar instance.

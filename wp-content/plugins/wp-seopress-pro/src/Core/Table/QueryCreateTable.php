@@ -87,7 +87,7 @@ class QueryCreateTable {
 		if ( ! empty( $newColumns ) ) {
 			$sql = "ALTER TABLE {$tableName} ADD (" . implode( ', ', $newColumns ) . ')';
 			try {
-				$wpdb->query( $sql );
+				$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table and column names come from the plugin own table definitions, never from user input.
 			} catch ( \Exception $e ) {
 				return false;
 			}
@@ -138,7 +138,7 @@ class QueryCreateTable {
 		// Create the indexes
 		try {
 			foreach ( $indexes as $index ) {
-				$wpdb->query( $index );
+				$wpdb->query( $index ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table and column names come from the plugin own table definitions, never from user input.
 			}
 		} catch ( \Exception $e ) {
 			return false;

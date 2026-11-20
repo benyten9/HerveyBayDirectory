@@ -45,6 +45,8 @@ class ActivityTypes {
 	const STATUS_CHANGED = 'status_changed';
 	const FILE_ATTACHED  = 'file_attached';
 	const FILE_REMOVED   = 'file_removed';
+	// The client changed their own details in the client portal (team-only).
+	const DETAILS_UPDATED = 'contact_details_updated';
 
 	/**
 	 * Authentication activity types
@@ -103,6 +105,7 @@ class ActivityTypes {
 			self::STATUS_CHANGED,
 			self::FILE_ATTACHED,
 			self::FILE_REMOVED,
+			self::DETAILS_UPDATED,
 			self::LOGGED_IN,
 			self::LOGGED_OUT,
 			self::BOOKING_SCHEDULED,
@@ -156,6 +159,7 @@ class ActivityTypes {
 			self::STATUS_CHANGED,
 			self::FILE_ATTACHED,
 			self::FILE_REMOVED,
+			self::DETAILS_UPDATED,
 			self::SUPPORT_EVENT,
 			self::TASK_EVENT,
 			self::PROJECT_EVENT,
@@ -303,6 +307,7 @@ class ActivityTypes {
 			self::STATUS_CHANGED      => __( 'Status Changed', 'doublescale' ),
 			self::FILE_ATTACHED       => __( 'File Attached', 'doublescale' ),
 			self::FILE_REMOVED        => __( 'File Removed', 'doublescale' ),
+			self::DETAILS_UPDATED     => __( 'Details Updated', 'doublescale' ),
 			self::LOGGED_IN           => __( 'Logged In', 'doublescale' ),
 			self::LOGGED_OUT          => __( 'Logged Out', 'doublescale' ),
 			self::BOOKING_SCHEDULED   => __( 'Booking Scheduled', 'doublescale' ),

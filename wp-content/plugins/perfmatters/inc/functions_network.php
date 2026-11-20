@@ -58,17 +58,22 @@ function perfmatters_network_admin_menu() {
     );
 
 	//Register Setting
-	register_setting('perfmatters_network', 'perfmatters_network');
+	register_setting('perfmatters_network', 'perfmatters_network', 'perfmatters_sanitize_network');
 }
 add_filter('network_admin_menu', 'perfmatters_network_admin_menu');
 
+//sanitize network options
+function perfmatters_sanitize_network($input) {
+	$input = wp_unslash($input);
+	return is_array($input) ? $input : array();
+}
 //network access callback
 function perfmatters_network_access_callback() {
 	$perfmatters_network = get_site_option('perfmatters_network');
 
 	echo "<select name='perfmatters_network[access]' id='access'>";
-		echo "<option value=''>" . __('Site Admins (Default)', 'perfmatters') . "</option>";
-		echo "<option value='super' " . ((!empty($perfmatters_network['access']) && $perfmatters_network['access'] == 'super') ? "selected" : "") . ">" . __('Super Admins Only', 'perfmatters') . "</option>";
+		echo "<option value=''>" . esc_html__('Site Admins (Default)', 'perfmatters') . "</option>";
+		echo "<option value='super' " . ((!empty($perfmatters_network['access']) && $perfmatters_network['access'] == 'super') ? "selected" : "") . ">" . esc_html__('Super Admins Only', 'perfmatters') . "</option>";
 	echo "<select>";
 
 	//tooltip
@@ -84,9 +89,9 @@ function perfmatters_network_default_callback() {
 	echo "<select name='perfmatters_network[default]' id='default'>";
 		$sites = array_map('get_object_vars', get_sites(array('deleted' => 0, 'number' => 1000)));
 		if(is_array($sites) && $sites !== array()) {
-			echo "<option value=''>" . __('None', 'perfmatters') . "</option>";
+			echo "<option value=''>" . esc_html__('None', 'perfmatters') . "</option>";
 			foreach($sites as $site) {
-				echo "<option value='" . $site['blog_id'] . "' " . ((!empty($perfmatters_network['default']) && $perfmatters_network['default'] == $site['blog_id']) ? "selected" : "") . ">" . $site['blog_id'] . ": " . $site['domain'] . $site['path'] . "</option>";
+				echo "<option value='" . esc_attr($site['blog_id']) . "' " . ((!empty($perfmatters_network['default']) && $perfmatters_network['default'] == $site['blog_id']) ? "selected" : "") . ">" . esc_html($site['blog_id'] . ': ' . $site['domain'] . $site['path']) . "</option>";
 			}
 		}
 	echo "<select>";
@@ -111,8 +116,8 @@ function perfmatters_update_network_options() {
 	foreach($options as $option) {
 		if(isset($_POST[$option])) {
 
-			//Update Site Uption
-			update_site_option($option, $_POST[$option]);
+			//Update Site Option
+			update_site_option($option, perfmatters_sanitize_network($_POST[$option]));
 		}
 	}
 

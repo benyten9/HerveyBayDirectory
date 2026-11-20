@@ -58,7 +58,7 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 
 		$json = seopress_pro_json_ld_encode( $schema );
 
-		?><script type="application/ld+json"><?php echo apply_filters( 'seopress_schemas_profile_page_html', $json ); ?></script>
+		?><script type="application/ld+json"><?php echo apply_filters( 'seopress_schemas_profile_page_html', $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties. ?></script>
 		<?php
 	}
 
@@ -73,7 +73,6 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 		$author_url  = esc_url( get_author_posts_url( $author->ID ) );
 		$post_count  = count_user_posts( $author->ID, 'post', true );
 		$avatar_url  = esc_url( get_avatar_url( $author->ID, array( 'size' => 512 ) ) );
-		$user_url    = esc_url( $author->user_url );
 		$description = esc_html( get_the_author_meta( 'description', $author->ID ) );
 
 		// Get date created (user registration date).
@@ -88,54 +87,10 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 			$date_modified = $date_created;
 		}
 
-		// Build main entity (Person).
-		$main_entity = array(
-			'@type'         => 'Person',
-			'@id'           => PersonId::get( $author->ID ),
-			'name'          => esc_html( $author->display_name ),
-			'alternateName' => esc_html( $author->user_login ),
-			'identifier'    => (string) $author->ID,
-			'url'           => $author_url,
-		);
-
-		// Add description if available.
-		if ( ! empty( $description ) ) {
-			$main_entity['description'] = $description;
-		}
-
-		// Add avatar if available.
-		if ( ! empty( $avatar_url ) && false !== $avatar_url ) {
-			$main_entity['image'] = $avatar_url;
-		}
-
-		// Build sameAs array from social profiles.
+		// Every social profile the author has, the WordPress website field
+		// included: getSameAs() puts user_url first, then the SEOPress fields,
+		// then the imported Yoast / Rank Math / AIOSEO ones, as a sequential list.
 		$same_as = SocialProfiles::getSameAs( $author->ID );
-
-		if ( ! empty( $same_as ) ) {
-			$main_entity['sameAs'] = count( $same_as ) === 1 ? $same_as[0] : array_values( $same_as );
-		}
-
-		// Add interaction statistic (post count).
-		$main_entity['interactionStatistic'] = array(
-			'@type'                => 'InteractionCounter',
-			'interactionType'      => seopress_check_ssl() . 'schema.org/WriteAction',
-			'userInteractionCount' => (int) $post_count,
-		);
-
-		// Build the full ProfilePage schema.
-		$schema = array(
-			'@context'   => seopress_check_ssl() . 'schema.org',
-			'@type'      => 'ProfilePage',
-			'mainEntity' => $main_entity,
-		);
-
-		// Add dates if available.
-		if ( ! empty( $date_created ) ) {
-			$schema['dateCreated'] = $date_created;
-		}
-		if ( ! empty( $date_modified ) ) {
-			$schema['dateModified'] = $date_modified;
-		}
 
 		// Build profile data for the filter.
 		$profile_data = array(
@@ -145,7 +100,7 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 			'description'   => $description,
 			'image'         => $avatar_url,
 			'url'           => $author_url,
-			'sameAs'        => ! empty( $user_url ) ? array( $user_url ) : array(),
+			'sameAs'        => $same_as,
 			'postCount'     => (int) $post_count,
 			'dateCreated'   => $date_created,
 			'dateModified'  => $date_modified,
@@ -183,11 +138,16 @@ class PrintProfilePage implements ExecuteHooksFrontend {
 		}
 
 		if ( ! empty( $profile_data['sameAs'] ) && is_array( $profile_data['sameAs'] ) ) {
+			// Reindexed again: the filter is public, so an integrator can hand
+			// back a list with gaps and the single-profile branch below would
+			// read a key that is not there.
+			$filtered_same_as = array_values( $profile_data['sameAs'] );
+
 			// If only one sameAs, use string; otherwise use array.
-			if ( count( $profile_data['sameAs'] ) === 1 ) {
-				$main_entity['sameAs'] = esc_url( $profile_data['sameAs'][0] );
+			if ( 1 === count( $filtered_same_as ) ) {
+				$main_entity['sameAs'] = esc_url( $filtered_same_as[0] );
 			} else {
-				$main_entity['sameAs'] = array_map( 'esc_url', $profile_data['sameAs'] );
+				$main_entity['sameAs'] = array_map( 'esc_url', $filtered_same_as );
 			}
 		}
 

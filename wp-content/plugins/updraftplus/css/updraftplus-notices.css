@@ -100,6 +100,20 @@ h4.updraft_advert_heading {
 	text-align: center;
 }
 
+@media screen and (max-width: 559px) {
+
+	.updraft_notice_blackfriday {
+		position: relative;
+	}
+
+	.updraft_notice_blackfriday .updraft-advert-dismiss {
+		position: absolute;
+		top: 9px;
+		right: 5px;
+	}
+
+}
+
 @media screen and (min-width: 560px) {
 
 	.updraft_advert_content_left, .updraft_advert_content_left_extra {

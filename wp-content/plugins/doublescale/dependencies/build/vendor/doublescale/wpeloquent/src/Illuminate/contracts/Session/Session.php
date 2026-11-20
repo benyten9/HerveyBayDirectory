@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Session;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Session;
 
 interface Session
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use Closure;
 use InvalidArgumentException;
@@ -78,7 +78,7 @@ abstract class Manager
         if (isset($this->customCreators[$driver])) {
             return $this->callCustomCreator($driver);
         } else {
-            $method = 'create' . \Illuminate\Support\Str::studly($driver) . 'Driver';
+            $method = 'create' . Str::studly($driver) . 'Driver';
             if (\method_exists($this, $method)) {
                 return $this->{$method}();
             }

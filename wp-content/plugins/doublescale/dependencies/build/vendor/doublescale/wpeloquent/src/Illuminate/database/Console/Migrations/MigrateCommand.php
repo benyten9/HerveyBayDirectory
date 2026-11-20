@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
-use Illuminate\Console\ConfirmableTrait;
-use Illuminate\Database\Migrations\Migrator;
-class MigrateCommand extends \Illuminate\Database\Console\Migrations\BaseCommand
+use DoubleScale\Vendor\Illuminate\Console\ConfirmableTrait;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\Migrator;
+class MigrateCommand extends BaseCommand
 {
     use ConfirmableTrait;
     /**

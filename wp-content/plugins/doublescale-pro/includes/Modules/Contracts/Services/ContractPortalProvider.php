@@ -27,6 +27,8 @@ final class ContractPortalProvider {
 		add_filter( 'doublescale_portal_documents_rows', array( $this, 'add_document_rows' ), 10, 3 );
 		add_filter( 'doublescale_portal_visible_document_count', array( $this, 'add_visible_document_count' ), 10, 2 );
 		add_filter( 'doublescale_portal_calendar_events', array( $this, 'add_calendar_events' ), 10, 4 );
+		// "Download all" in the portal: this type's PDFs.
+		add_filter( 'doublescale_portal_document_pdf', array( $this, 'document_pdf' ), 10, 4 );
 	}
 
 	/**
@@ -66,7 +68,8 @@ final class ContractPortalProvider {
 				'all_day'  => true,
 				'timezone' => null,
 				'status'   => (string) $contract->status,
-				'route'    => '/documents',
+				// The contract itself, as invoices and proposals open theirs.
+				'route'    => '/documents/contract/' . $contract->hash,
 			);
 		}
 
@@ -87,17 +90,21 @@ final class ContractPortalProvider {
 			->where( 'status', '!=', ContractStatus::DRAFT )
 			->where( 'hide_from_customer', false )
 			->where( 'is_trash', false )
-			->orderBy( 'id', 'desc' )
+			->orderBy( 'updated_at', 'desc' )
 			->limit( self::TIMELINE_CAP )
 			->get();
 
 		foreach ( $contracts as $contract ) {
+			// Signed stays signed once the contract is active or expired; dated
+			// by its signature (else its sending), in UTC like the other rows.
+			$signed  = ! empty( $contract->signed_at );
+			$when    = $signed ? $contract->signed_at : $contract->sent_at;
 			$items[] = array(
 				'id'            => 'contract-' . (int) $contract->id,
 				'kind'          => 'document',
 				'document_type' => 'contract',
-				'type'          => ContractStatus::SIGNED === (string) $contract->status ? 'contract_signed' : 'contract_sent',
-				'date'          => (string) $contract->created_at,
+				'type'          => $signed || ContractStatus::SIGNED === (string) $contract->status ? 'contract_signed' : 'contract_sent',
+				'date'          => ! empty( $when ) ? get_gmt_from_date( (string) $when ) : (string) $contract->created_at,
 				'title'         => (string) $contract->subject,
 				'status'        => (string) $contract->status,
 				'hash'          => (string) $contract->hash,
@@ -183,4 +190,26 @@ final class ContractPortalProvider {
 		return function_exists( 'doublescale_sales_child_module_active' )
 			&& doublescale_sales_child_module_active( 'contracts' );
 	}
+
+	/**
+	 * The PDF of one of the client's contracts for "Download all".
+	 *
+	 * @param string|null $bytes      PDF bytes so far.
+	 * @param string      $type       Row type.
+	 * @param int         $id         Document id.
+	 * @param int         $contact_id Client.
+	 * @return string|null
+	 */
+	public function document_pdf( $bytes, $type, $id, $contact_id ) {
+		if ( 'contract' !== $type || ! $this->is_active() ) {
+			return $bytes;
+		}
+		$doc = ContractModel::find( (int) $id );
+		if ( ! $doc || (int) $doc->contact_id !== (int) $contact_id ) {
+			return $bytes;
+		}
+		$pdf = \DoubleScale\Pro\Modules\Contracts\Services\ContractPdf::render_pdf( ContractShaper::shape_public( $doc ) );
+		return is_string( $pdf ) ? $pdf : $bytes;
+	}
+
 }

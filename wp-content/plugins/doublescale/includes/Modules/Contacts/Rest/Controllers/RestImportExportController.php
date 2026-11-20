@@ -145,6 +145,11 @@ class RestImportExportController extends RestController {
 							'required' => false,
 							'type'     => 'string',
 						),
+						'assign_owner_id'       => array(
+							'description' => __( 'Manager only: the team member imported contacts are assigned to. Agents always import under their own name.', 'doublescale' ),
+							'required'    => false,
+							'type'        => 'integer',
+						),
 						'update_existing'       => array(
 							'required' => false,
 							'type'     => 'boolean',
@@ -226,6 +231,11 @@ class RestImportExportController extends RestController {
 					array(
 						'methods'             => WP_REST_Server::READABLE,
 						'callback'            => function ( $request ) use ( $importer ) {
+							// A plugin importer (FluentCRM, FunnelKit, MemberPress,
+							// WooCommerce) reads that plugin's tables: only while it is active.
+							if ( method_exists( $importer, 'is_active' ) && ! $importer->is_active() ) {
+								return new WP_Error( 'importer_unavailable', __( 'This importer\'s plugin is not active on this site.', 'doublescale' ), array( 'status' => 404 ) );
+							}
 							try {
 								$credentials = $request->get_param( 'credentials' ) ?? array();
 								$importer->set_credentials( $credentials );
@@ -233,7 +243,8 @@ class RestImportExportController extends RestController {
 
 								return new WP_REST_Response( $fields, 200 );
 							} catch ( Exception $e ) {
-								return new WP_Error( 'importer_error', $e->getMessage(), array( 'status' => 500 ) );
+								// Missing or wrong credentials: the request's problem, not the server's.
+								return new WP_Error( 'importer_error', $e->getMessage(), array( 'status' => 400 ) );
 							}
 						},
 						'permission_callback' => array( $this, 'import_export_permissions_check' ),
@@ -651,9 +662,11 @@ class RestImportExportController extends RestController {
 		$credentials           = $request->get_param( 'credentials' ) ?? array();
 		$membership_filter     = $request->get_param( 'membership_filter' ) ?? array();
 		$phone_is_whatsapp     = $request->get_param( 'phone_is_whatsapp' );
+		$assign_owner_id       = (int) $request->get_param( 'assign_owner_id' );
 		$result                = array();
 
 		$args = array(
+			'assign_owner_id'       => $assign_owner_id,
 			'offset'                => $offset,
 			'cursor'                => $cursor,
 			'status'                => $status,
@@ -704,6 +717,8 @@ class RestImportExportController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function import_export_permissions_check( $request ) {
-		return Permissions::has_sales_manager_access();
+		// A CRM Agent imports contacts under their own ownership and exports
+		// only the contacts they own (Export scopes the query).
+		return Permissions::has_sales_manager_access() || Permissions::is_crm_agent();
 	}
 }

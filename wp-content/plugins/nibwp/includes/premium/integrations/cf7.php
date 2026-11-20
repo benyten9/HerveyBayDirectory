@@ -79,7 +79,7 @@ function nibwp_cf7_guard(): ?WP_Error
     if (!nibwp_cf7_available()) {
         return nibwp_cf7_err(
             'nibwp_cf7_missing',
-            __('Contact Form 7 is not active on this site.', domain: 'nibwp')
+            __('Contact Form 7 is not active on this site.', 'nibwp')
         );
     }
 
@@ -107,13 +107,13 @@ function nibwp_cf7_try(callable $fn, string $code = 'nibwp_cf7_failed')
 function nibwp_cf7_form(int $id)
 {
     if ($id <= 0) {
-        return nibwp_cf7_err('nibwp_cf7_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_cf7_err('nibwp_cf7_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $form = wpcf7_contact_form($id);
 
     if (!$form || !is_object($form)) {
-        return nibwp_cf7_err('nibwp_cf7_not_found', __('No Contact Form 7 form with that ID.', domain: 'nibwp'));
+        return nibwp_cf7_err('nibwp_cf7_not_found', __('No Contact Form 7 form with that ID.', 'nibwp'));
     }
 
     return $form;
@@ -133,7 +133,7 @@ function nibwp_cf7_save(object $form, array $properties)
     if (!method_exists($form, 'set_properties') || !method_exists($form, 'save')) {
         return nibwp_cf7_err(
             'nibwp_cf7_readonly',
-            __('This Contact Form 7 version does not expose writing form properties.', domain: 'nibwp')
+            __('This Contact Form 7 version does not expose writing form properties.', 'nibwp')
         );
     }
 
@@ -209,8 +209,8 @@ function nibwp_cf7_suppressing_directives(string $settings): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-info', [
-    'label'       => __('Contact Form 7 — Info', domain: 'nibwp'),
-    'description' => __('Detect Contact Form 7, its version, how many forms exist, whether submissions are being stored, and which spam protections are configured (read-only).', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Info', 'nibwp'),
+    'description' => 'Detect Contact Form 7, its version, how many forms exist, whether submissions are being stored, and which spam protections are configured (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -257,7 +257,7 @@ function nibwp_cf7_info(array $input): array|WP_Error
             ],
             'note' => nibwp_cf7_flamingo()
                 ? ''
-                : __('Contact Form 7 does not store submissions. Install Flamingo if a record of enquiries is wanted.', domain: 'nibwp'),
+                : __('Contact Form 7 does not store submissions. Install Flamingo if a record of enquiries is wanted.', 'nibwp'),
         ];
     });
 }
@@ -267,8 +267,8 @@ function nibwp_cf7_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-forms', [
-    'label'       => __('Contact Form 7 — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, rename and duplicate Contact Form 7 forms, and get the shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Forms', 'nibwp'),
+    'description' => 'List, read, create, rename and duplicate Contact Form 7 forms, and get the shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -312,7 +312,7 @@ function nibwp_cf7_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename', 'duplicate', 'shortcode'], strict: true) && $form_id <= 0) {
-        return nibwp_cf7_err('nibwp_cf7_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_cf7_err('nibwp_cf7_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_cf7_try(static function () use ($action, $form_id, $input) {
@@ -341,13 +341,13 @@ function nibwp_cf7_forms(array $input): array|WP_Error
 
         if ($action === 'create') {
             if (!class_exists('WPCF7_ContactForm')) {
-                throw new \RuntimeException(__('Contact Form 7 classes are unavailable.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Contact Form 7 classes are unavailable.', 'nibwp'));
             }
 
             // Built from CF7's own default template so a new form arrives
             // working — fields, mail and messages — rather than as an empty
             // shell that silently sends nothing.
-            $args = ['title' => (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp'))];
+            $args = ['title' => (string) ($input['title'] ?? __('Untitled form', 'nibwp'))];
 
             // The locale key is omitted rather than passed empty. CF7 falls back
             // to determine_locale() only when the key is NOT SET, and an empty
@@ -361,7 +361,7 @@ function nibwp_cf7_forms(array $input): array|WP_Error
             $form = WPCF7_ContactForm::get_template($args);
 
             if (!$form || !method_exists($form, 'save')) {
-                throw new \RuntimeException(__('Contact Form 7 did not return a usable template.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Contact Form 7 did not return a usable template.', 'nibwp'));
             }
 
             $new_id = (int) $form->save();
@@ -393,7 +393,7 @@ function nibwp_cf7_forms(array $input): array|WP_Error
             case 'rename':
                 $title = trim((string) ($input['title'] ?? ''));
                 if ($title === '') {
-                    throw new \RuntimeException(__('A title is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A title is required.', 'nibwp'));
                 }
                 $updated = wp_update_post(['ID' => $form_id, 'post_title' => $title], true);
                 if (is_wp_error($updated)) {
@@ -404,7 +404,7 @@ function nibwp_cf7_forms(array $input): array|WP_Error
 
             case 'duplicate':
                 if (!method_exists($form, 'copy')) {
-                    throw new \RuntimeException(__('This Contact Form 7 version does not expose duplicating a form.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('This Contact Form 7 version does not expose duplicating a form.', 'nibwp'));
                 }
                 $copy = $form->copy();
                 $new_id = (int) $copy->save();
@@ -418,7 +418,7 @@ function nibwp_cf7_forms(array $input): array|WP_Error
                 ];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -427,8 +427,8 @@ function nibwp_cf7_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-template', [
-    'label'       => __('Contact Form 7 — Form template', domain: 'nibwp'),
-    'description' => __('Read and replace the form-tag markup that defines a form\'s fields and layout.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Form template', 'nibwp'),
+    'description' => 'Read and replace the form-tag markup that defines a form\'s fields and layout.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -483,7 +483,7 @@ function nibwp_cf7_template(array $input): array|WP_Error
 
         if ($action === 'set') {
             if (!array_key_exists('form', $input)) {
-                throw new \RuntimeException(__('The form markup is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('The form markup is required.', 'nibwp'));
             }
 
             $before = (string) nibwp_cf7_prop($form, 'form');
@@ -506,7 +506,7 @@ function nibwp_cf7_template(array $input): array|WP_Error
                 'removed_fields' => $lost,
                 'warning' => $lost === []
                     ? ''
-                    : __('Fields disappeared from the template. Any mail template referencing them by name will now send that line empty — check nibwp/cf7-mail.', domain: 'nibwp'),
+                    : __('Fields disappeared from the template. Any mail template referencing them by name will now send that line empty — check nibwp/cf7-mail.', 'nibwp'),
             ];
         }
 
@@ -529,8 +529,8 @@ function nibwp_cf7_tag_names(string $markup): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-fields', [
-    'label'       => __('Contact Form 7 — Fields', domain: 'nibwp'),
-    'description' => __('The fields of a form as Contact Form 7 itself parses them — name, type, whether required, and any options (read-only).', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Fields', 'nibwp'),
+    'description' => 'The fields of a form as Contact Form 7 itself parses them — name, type, whether required, and any options (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -613,8 +613,8 @@ function nibwp_cf7_fields(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-mail', [
-    'label'       => __('Contact Form 7 — Mail templates', domain: 'nibwp'),
-    'description' => __('Read and change what a form sends on submit: recipient, sender, subject, body, headers and attachments, for both the main mail and the autoresponder.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Mail templates', 'nibwp'),
+    'description' => 'Read and change what a form sends on submit: recipient, sender, subject, body, headers and attachments, for both the main mail and the autoresponder.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -660,7 +660,7 @@ function nibwp_cf7_mail(array $input): array|WP_Error
 
     $which = (string) ($input['which'] ?? 'mail');
     if (!in_array($which, ['mail', 'mail_2'], strict: true)) {
-        return nibwp_cf7_err('nibwp_cf7_bad_mail', __('which must be mail or mail_2.', domain: 'nibwp'));
+        return nibwp_cf7_err('nibwp_cf7_bad_mail', __('which must be mail or mail_2.', 'nibwp'));
     }
 
     $action = (string) ($input['action'] ?? 'get');
@@ -671,7 +671,7 @@ function nibwp_cf7_mail(array $input): array|WP_Error
         if ($action === 'set') {
             $values = (array) ($input['values'] ?? []);
             if ($values === []) {
-                throw new \RuntimeException(__('Nothing to set.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Nothing to set.', 'nibwp'));
             }
 
             $allowed = nibwp_cf7_mail_keys();
@@ -679,7 +679,7 @@ function nibwp_cf7_mail(array $input): array|WP_Error
             if ($unknown !== []) {
                 throw new \RuntimeException(sprintf(
                     /* translators: 1: unknown keys, 2: the keys CF7 accepts */
-                    __('Contact Form 7 has no mail key %1$s. Accepted keys: %2$s', domain: 'nibwp'),
+                    __('Contact Form 7 has no mail key %1$s. Accepted keys: %2$s', 'nibwp'),
                     implode(', ', $unknown),
                     implode(', ', $allowed)
                 ));
@@ -713,7 +713,7 @@ function nibwp_cf7_mail(array $input): array|WP_Error
                 'unknown_placeholders' => array_values(array_unique($used)),
                 'warning' => $used === []
                     ? ''
-                    : __('The template references names this form has no field for. Those lines will arrive empty.', domain: 'nibwp'),
+                    : __('The template references names this form has no field for. Those lines will arrive empty.', 'nibwp'),
             ];
         }
 
@@ -732,8 +732,8 @@ function nibwp_cf7_mail(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-messages', [
-    'label'       => __('Contact Form 7 — Messages', domain: 'nibwp'),
-    'description' => __('Read and change the messages a form shows: success, validation errors, spam refusal and the rest.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Messages', 'nibwp'),
+    'description' => 'Read and change the messages a form shows: success, validation errors, spam refusal and the rest.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -777,7 +777,7 @@ function nibwp_cf7_messages(array $input): array|WP_Error
         if ((string) ($input['action'] ?? 'get') === 'set') {
             $messages = (array) ($input['messages'] ?? []);
             if ($messages === []) {
-                throw new \RuntimeException(__('Nothing to set.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Nothing to set.', 'nibwp'));
             }
 
             $unknown = $current === [] ? [] : array_values(array_diff(array_keys($messages), array_keys($current)));
@@ -793,7 +793,7 @@ function nibwp_cf7_messages(array $input): array|WP_Error
                 'unknown_keys' => $unknown,
                 'warning' => $unknown === []
                     ? ''
-                    : __('Some keys are not ones this Contact Form 7 version uses. They are stored but will never be shown.', domain: 'nibwp'),
+                    : __('Some keys are not ones this Contact Form 7 version uses. They are stored but will never be shown.', 'nibwp'),
             ];
         }
 
@@ -806,8 +806,8 @@ function nibwp_cf7_messages(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-settings', [
-    'label'       => __('Contact Form 7 — Additional settings', domain: 'nibwp'),
-    'description' => __('Read and change a form\'s additional settings — demo mode, skipping mail, subscribers only, and any custom directives.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Additional settings', 'nibwp'),
+    'description' => 'Read and change a form\'s additional settings — demo mode, skipping mail, subscribers only, and any custom directives.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -853,7 +853,7 @@ function nibwp_cf7_settings(array $input): array|WP_Error
 
         if ((string) ($input['action'] ?? 'get') === 'set') {
             if (!array_key_exists('settings', $input)) {
-                throw new \RuntimeException(__('The settings block is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('The settings block is required.', 'nibwp'));
             }
 
             $next = (string) $input['settings'];
@@ -870,7 +870,7 @@ function nibwp_cf7_settings(array $input): array|WP_Error
                 'mail_suppressed_by' => $suppressed,
                 'warning' => $suppressed === []
                     ? ''
-                    : __('This form will no longer deliver mail. Tell the user, and remove the directive when testing is done.', domain: 'nibwp'),
+                    : __('This form will no longer deliver mail. Tell the user, and remove the directive when testing is done.', 'nibwp'),
             ];
         }
 
@@ -891,8 +891,8 @@ function nibwp_cf7_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-submissions', [
-    'label'       => __('Contact Form 7 — Submissions', domain: 'nibwp'),
-    'description' => __('List and read stored submissions through Flamingo, and mark them spam or not spam.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Submissions', 'nibwp'),
+    'description' => 'List and read stored submissions through Flamingo, and mark them spam or not spam.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -932,7 +932,7 @@ function nibwp_cf7_submissions(array $input): array|WP_Error
     if (!nibwp_cf7_flamingo()) {
         return nibwp_cf7_err(
             'nibwp_cf7_no_storage',
-            __('Contact Form 7 does not keep submissions, and Flamingo is not installed, so there is no history to read. Install Flamingo to start storing them — it cannot recover enquiries already sent.', domain: 'nibwp')
+            __('Contact Form 7 does not keep submissions, and Flamingo is not installed, so there is no history to read. Install Flamingo to start storing them — it cannot recover enquiries already sent.', 'nibwp')
         );
     }
 
@@ -940,7 +940,7 @@ function nibwp_cf7_submissions(array $input): array|WP_Error
     $submission_id = (int) ($input['submission_id'] ?? 0);
 
     if ($action !== 'list' && $submission_id <= 0) {
-        return nibwp_cf7_err('nibwp_cf7_bad_id', __('A valid submission ID is required.', domain: 'nibwp'));
+        return nibwp_cf7_err('nibwp_cf7_bad_id', __('A valid submission ID is required.', 'nibwp'));
     }
 
     return nibwp_cf7_try(static function () use ($action, $submission_id, $input) {
@@ -969,7 +969,7 @@ function nibwp_cf7_submissions(array $input): array|WP_Error
 
         $post = get_post($submission_id);
         if (!$post || $post->post_type !== 'flamingo_inbound') {
-            throw new \RuntimeException(__('No such submission.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No such submission.', 'nibwp'));
         }
 
         if ($action === 'get') {
@@ -1003,8 +1003,8 @@ function nibwp_cf7_submissions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-spam', [
-    'label'       => __('Contact Form 7 — Spam protection', domain: 'nibwp'),
-    'description' => __('Report what is protecting a form from spam: Akismet field mapping, reCAPTCHA or Turnstile configuration, and whether a form has any protection at all (read-only).', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Spam protection', 'nibwp'),
+    'description' => 'Report what is protecting a form from spam: Akismet field mapping, reCAPTCHA or Turnstile configuration, and whether a form has any protection at all (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1080,9 +1080,9 @@ function nibwp_cf7_spam(array $input): array|WP_Error
         ];
 
         if (!$protected) {
-            $out['form']['warning'] = __('This form has no spam protection. Map Akismet fields in the form tags, or add a CAPTCHA.', domain: 'nibwp');
+            $out['form']['warning'] = __('This form has no spam protection. Map Akismet fields in the form tags, or add a CAPTCHA.', 'nibwp');
         } elseif ($akismet_active && !$akismet_mapped) {
-            $out['form']['warning'] = __('Akismet is active but this form maps no fields to it, so Akismet never sees the submission.', domain: 'nibwp');
+            $out['form']['warning'] = __('Akismet is active but this form maps no fields to it, so Akismet never sees the submission.', 'nibwp');
         }
 
         return $out;
@@ -1094,8 +1094,8 @@ function nibwp_cf7_spam(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/cf7-delete', [
-    'label'       => __('Contact Form 7 — Delete', domain: 'nibwp'),
-    'description' => __('Permanently delete a form or a stored submission. Irreversible.', domain: 'nibwp'),
+    'label'       => __('Contact Form 7 — Delete', 'nibwp'),
+    'description' => 'Permanently delete a form or a stored submission. Irreversible.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1137,7 +1137,7 @@ function nibwp_cf7_delete(array $input): array|WP_Error
     if (!(bool) ($input['confirm'] ?? false)) {
         return nibwp_cf7_err(
             'nibwp_cf7_unconfirmed',
-            __('This permanently destroys data and cannot be undone. Re-issue with confirm true if that is intended.', domain: 'nibwp')
+            __('This permanently destroys data and cannot be undone. Re-issue with confirm true if that is intended.', 'nibwp')
         );
     }
 
@@ -1161,13 +1161,13 @@ function nibwp_cf7_delete(array $input): array|WP_Error
         if ($action === 'delete_submission') {
             $submission_id = (int) ($input['submission_id'] ?? 0);
             if ($submission_id <= 0) {
-                throw new \RuntimeException(__('A valid submission ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid submission ID is required.', 'nibwp'));
             }
             wp_delete_post($submission_id, true);
 
             return ['submission_id' => $submission_id, 'deleted' => true, 'reversible' => false];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }

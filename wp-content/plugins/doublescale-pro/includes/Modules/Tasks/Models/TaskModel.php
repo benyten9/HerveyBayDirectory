@@ -9,7 +9,7 @@
 
 namespace DoubleScale\Pro\Modules\Tasks\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Constants\TaskEntityType;
 use DoubleScale\Core\Constants\TaskStatus;
 use DoubleScale\Core\Constants\TaskType;
@@ -87,6 +87,7 @@ class TaskModel extends Model {
 		'contact_id',
 		'deal_id',
 		'project_id',
+		'company_id',
 		'display_status',
 		'is_overdue',
 		'subtask_progress',
@@ -105,13 +106,13 @@ class TaskModel extends Model {
 	public $rules = array(
 		'title'       => 'required|string|min:3|max:255',
 		'description' => 'nullable|string|max:5000',
-		'entity_type' => 'required|integer|in:1,2,3',
+		'entity_type' => 'required|integer|in:1,2,3,4,5',
 		'entity_id'   => 'required|integer',
 		'assigned_to' => 'required|integer',
 		'task_type'   => 'required|string|in:call,email,meeting,todo,follow_up',
 		'status'      => 'required|string|in:pending,completed',
 		'priority'    => 'required|string|in:low,medium,high',
-		'due_date'      => 'required|date',
+		'due_date'      => 'nullable|date',
 		'due_time'      => 'nullable|date_format:H:i:s',
 		'reminder_at'   => 'nullable|date_format:Y-m-d H:i:s',
 	);
@@ -128,14 +129,13 @@ class TaskModel extends Model {
 		'title.min'            => 'Task title must be at least 3 characters.',
 		'title.max'            => 'Task title must not exceed 255 characters.',
 		'entity_type.required' => 'Entity type is required.',
-		'entity_type.in'       => 'Entity type must be 1 (Contact), 2 (Deal), or 3 (Project).',
+		'entity_type.in'       => 'Entity type must be 1 (Contact), 2 (Deal), 3 (Project), 4 (Company) or 5 (Record).',
 		'entity_id.required'   => 'Entity ID is required.',
 		'assigned_to.required' => 'Assigned user is required.',
 		'task_type.required'   => 'Task type is required.',
 		'task_type.in'         => 'Invalid task type.',
 		'status.required'      => 'Task status is required.',
 		'priority.required'    => 'Task priority is required.',
-		'due_date.required'    => 'Due date is required.',
 		'due_time.date_format' => 'Due time must be in H:i:s format (e.g., 09:30:00).',
 	);
 
@@ -156,12 +156,20 @@ class TaskModel extends Model {
 			return $this->contact;
 		}
 
-		if ( $entity_type === TaskEntityType::DEAL && class_exists( '\DoubleScale\Pro\Modules\Deals\Models\DealModel' ) ) {
+		if ( $entity_type === TaskEntityType::DEAL && doublescale_module_data_ready( 'deals' ) ) {
 			return $this->deal;
 		}
 
-		if ( $entity_type === TaskEntityType::PROJECT && class_exists( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel' ) ) {
+		if ( $entity_type === TaskEntityType::PROJECT && doublescale_module_data_ready( 'projects' ) ) {
 			return $this->project;
+		}
+
+		if ( $entity_type === TaskEntityType::COMPANY ) {
+			return $this->company;
+		}
+
+		if ( \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE === $entity_type ) {
+			return \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::model( (int) $this->entity_id );
 		}
 
 		return null;
@@ -173,7 +181,7 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		// Only load contact if entity_type is CONTACT
@@ -187,25 +195,49 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function deal() {
-		if ( class_exists( '\DoubleScale\Pro\Modules\Deals\Models\DealModel' ) ) {
+		if ( doublescale_module_data_ready( 'deals' ) ) {
 			return $this->belongsTo( '\DoubleScale\Pro\Modules\Deals\Models\DealModel', 'entity_id', 'id' );
 		}
-		return null;
+		// Deals are another module's data: a relation that matches nothing
+		// while it is off (eager loads and `$task->deal` give null).
+		return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
 	 * Get the project this task belongs to (if entity_type is PROJECT).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function project() {
-		if ( class_exists( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel' ) ) {
+		if ( doublescale_module_data_ready( 'projects' ) ) {
 			return $this->belongsTo( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel', 'entity_id', 'id' );
 		}
+		// Projects are another module's data: matches nothing while it is off.
+		return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
+	}
+
+	/**
+	 * The company this task is about (if entity_type is COMPANY).
+	 *
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 */
+	public function company() {
+		if ( class_exists( '\DoubleScale\Pro\Modules\Companies\Models\CompanyModel' ) ) {
+			return $this->belongsTo( '\DoubleScale\Pro\Modules\Companies\Models\CompanyModel', 'entity_id', 'id' );
+		}
 		return null;
+	}
+
+	/**
+	 * Company id accessor (for the frontend), when the task is about a company.
+	 *
+	 * @return int|null
+	 */
+	public function getCompanyIdAttribute() {
+		return (int) $this->entity_type === TaskEntityType::COMPANY ? (int) $this->entity_id : null;
 	}
 
 	/**
@@ -213,7 +245,7 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function assignedUser() {
 		return $this->belongsTo( UserModel::class, 'assigned_to', 'ID' );
@@ -222,7 +254,7 @@ class TaskModel extends Model {
 	/**
 	 * Kanban board status for this task.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function kanbanStatus() {
 		return $this->belongsTo( TaskStatusModel::class, 'status_id', 'id' );
@@ -230,7 +262,7 @@ class TaskModel extends Model {
 
 	/**
 	 * @deprecated Use kanbanStatus().
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function stage() {
 		return $this->kanbanStatus();
@@ -241,7 +273,7 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function subtasks() {
 		return $this->hasMany( SubtaskModel::class, 'task_id', 'id' )->orderBy( 'position' );
@@ -252,7 +284,7 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function subtaskGroups() {
 		return $this->hasMany( SubtaskGroupModel::class, 'task_id', 'id' )->orderBy( 'position' );
@@ -263,7 +295,7 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function labels() {
 		return $this->belongsToMany(
@@ -277,7 +309,7 @@ class TaskModel extends Model {
 	/**
 	 * Recurrence rule when this task is the series template.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasOne
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasOne
 	 */
 	public function recurrence() {
 		return $this->hasOne( TaskRecurrenceModel::class, 'template_task_id', 'id' );
@@ -291,7 +323,7 @@ class TaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function custom_fields() {
 		return $this->belongsToMany(
@@ -301,7 +333,8 @@ class TaskModel extends Model {
 			'custom_field_id'
 		)
 			->withPivot( 'value' )
-			->wherePivot( 'entity_type', 'task' );
+			->wherePivot( 'entity_type', 'task' )
+			->ordered();
 	}
 
 	/**
@@ -316,7 +349,7 @@ class TaskModel extends Model {
 		try {
 			$normalized_fields = CustomFieldModel::normalize_submission( $custom_fields ?: array() );
 
-			$required_fields = CustomFieldModel::where( 'scope', 'task' )->get();
+			$required_fields = CustomFieldModel::where( 'scope', 'task' )->ordered()->get();
 			foreach ( $required_fields as $field_model ) {
 				if ( ! $field_model->is_required_field() ) {
 					continue;
@@ -395,10 +428,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter by entity type
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $type Entity type constant.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByEntityType( $query, $type ) {
 		return $query->where( 'entity_type', $type );
@@ -407,11 +440,11 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter by specific entity (type + ID)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $type Entity type.
 	 * @param int                                   $id Entity ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByEntity( $query, $type, $id ) {
 		return $query->where( 'entity_type', $type )->where( 'entity_id', $id );
@@ -420,10 +453,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter tasks for a specific contact
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $contact_id Contact ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForContact( $query, $contact_id ) {
 		return $query->where( 'entity_type', TaskEntityType::CONTACT )
@@ -433,10 +466,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter tasks for a specific deal
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $deal_id Deal ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForDeal( $query, $deal_id ) {
 		return $query->where( 'entity_type', TaskEntityType::DEAL )
@@ -446,10 +479,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter tasks for a specific project.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $project_id Project ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForProject( $query, $project_id ) {
 		return $query->where( 'entity_type', TaskEntityType::PROJECT )
@@ -459,10 +492,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter tasks assigned to a specific user
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $user_id WordPress user ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeAssignedTo( $query, $user_id ) {
 		return $query->where( 'assigned_to', $user_id );
@@ -471,10 +504,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: tasks visible to a sales rep (parent assignee or subtask assignee).
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query   Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query   Query builder.
 	 * @param int                                   $user_id WordPress user ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeVisibleToSalesRep( $query, $user_id ) {
 		$user_id = (int) $user_id;
@@ -531,10 +564,10 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Filter by status
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $status Task status.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByStatus( $query, $status ) {
 		return $query->where( 'status', $status );
@@ -543,9 +576,9 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Get pending tasks only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopePending( $query ) {
 		return $query->where( 'status', TaskStatus::PENDING );
@@ -554,9 +587,9 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Get completed tasks only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeCompleted( $query ) {
 		return $query->where( 'status', TaskStatus::COMPLETED );
@@ -565,9 +598,9 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Get overdue tasks only (calculated from due_date)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeOverdue( $query ) {
 		return $query->where( 'status', TaskStatus::PENDING )
@@ -577,9 +610,9 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Get upcoming tasks only (due date in future)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeUpcoming( $query ) {
 		return $query->where( 'status', TaskStatus::PENDING )
@@ -589,9 +622,9 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Get tasks due today
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeDueToday( $query ) {
 		return $query->where( 'status', TaskStatus::PENDING )
@@ -601,11 +634,11 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Get tasks due in a date range
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $start_date Start date (Y-m-d).
 	 * @param string                                $end_date End date (Y-m-d).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeDueBetween( $query, $start_date, $end_date ) {
 		return $query->whereBetween( 'due_date', array( $start_date, $end_date ) );
@@ -614,9 +647,9 @@ class TaskModel extends Model {
 	/**
 	 * Scope: Order by priority (high first)
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByPriority( $query ) {
 		return $query->orderByRaw(
@@ -630,9 +663,9 @@ class TaskModel extends Model {
 	 * Includes safety limit: Only retries reminders up to 24 hours old to prevent
 	 * infinite retries on permanently failing notifications.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopePendingReminders( $query ) {
 		$now            = current_time( 'mysql' );
@@ -681,6 +714,10 @@ class TaskModel extends Model {
 	 * @return string The calculated display status
 	 */
 	public function getDisplayStatusAttribute() {
+		// A task with no due date is never overdue, due today or upcoming.
+		if ( empty( $this->due_date ) ) {
+			return TaskStatus::COMPLETED === $this->status ? TaskStatus::COMPLETED : TaskStatus::PENDING;
+		}
 		return TaskStatus::calculate_display_status( $this->status, $this->due_date );
 	}
 
@@ -738,16 +775,23 @@ class TaskModel extends Model {
 		$old_status = (string) $this->status;
 
 		// Use query builder for atomic status update without full model validation
-		$result = static::where( 'id', $this->id )->update(
-			array(
-				'status'       => TaskStatus::COMPLETED,
-				'completed_at' => current_time( 'mysql', true ),
-				'updated_at'   => current_time( 'mysql', true ),
-			)
+		$changes = array(
+			'status'       => TaskStatus::COMPLETED,
+			'completed_at' => current_time( 'mysql', true ),
+			'updated_at'   => current_time( 'mysql', true ),
 		);
+		// a done task belongs in a closed column (Done), not where it was
+		$column = $this->column_of_type( 'closed' );
+		if ( $column ) {
+			$changes['status_id'] = $column;
+		}
+		$result = static::where( 'id', $this->id )->update( $changes );
 
 		if ( $result ) {
 			// Sync the model instance properties
+			if ( $column ) {
+				$this->status_id = $column;
+			}
 			$this->status       = TaskStatus::COMPLETED;
 			$this->completed_at = current_time( 'mysql', true );
 			$this->updated_at   = current_time( 'mysql', true );
@@ -769,17 +813,24 @@ class TaskModel extends Model {
 		$old_status = (string) $this->status;
 
 		// Use query builder for atomic status update without full model validation
-		$result = static::where( 'id', $this->id )->update(
-			array(
-				'status'           => TaskStatus::PENDING,
-				'completed_at'     => null,
-				'reminder_sent_at' => null, // Reset so reminder can be sent again
-				'updated_at'       => current_time( 'mysql', true ),
-			)
+		$changes = array(
+			'status'           => TaskStatus::PENDING,
+			'completed_at'     => null,
+			'reminder_sent_at' => null, // Reset so reminder can be sent again
+			'updated_at'       => current_time( 'mysql', true ),
 		);
+		// a reopened task goes back to an open column (To do)
+		$column = $this->column_of_type( 'open' );
+		if ( $column ) {
+			$changes['status_id'] = $column;
+		}
+		$result = static::where( 'id', $this->id )->update( $changes );
 
 		if ( $result ) {
 			// Sync the model instance properties
+			if ( $column ) {
+				$this->status_id = $column;
+			}
 			$this->status           = TaskStatus::PENDING;
 			$this->completed_at     = null;
 			$this->reminder_sent_at = null;
@@ -789,6 +840,23 @@ class TaskModel extends Model {
 		}
 
 		return (bool) $result;
+	}
+
+	/**
+	 * The board column a task should move to when it becomes $type ("open" or "closed"):
+	 * null when its current column already has that type (or there are no columns),
+	 * otherwise the protected column of that type (To do / Done), or the first one.
+	 *
+	 * @param string $type open|closed.
+	 * @return int|null
+	 */
+	private function column_of_type( string $type ): ?int {
+		$current = $this->status_id ? TaskStatusModel::find( (int) $this->status_id ) : null;
+		if ( $current && $type === (string) $current->status ) {
+			return null;
+		}
+		$target = TaskStatusModel::where( 'status', $type )->orderBy( 'is_protected', 'desc' )->orderBy( 'sort_order' )->first();
+		return $target ? (int) $target->id : null;
 	}
 
 	/**
@@ -840,6 +908,18 @@ class TaskModel extends Model {
 			}
 		);
 
+		static::deleted(
+			function ( $task ) {
+				/**
+				 * Fires after a task (and its subtasks) was deleted.
+				 *
+				 * @param int       $task_id Deleted task id.
+				 * @param TaskModel $task    The deleted task.
+				 */
+				do_action( 'doublescale_task_deleted', (int) $task->id, $task );
+			}
+		);
+
 		// Validate on save
 		static::saving(
 			function ( $task ) {
@@ -854,20 +934,29 @@ class TaskModel extends Model {
 
 				// Validate entity type (cast to int for consistent comparison)
 				$entity_type = (int) $task->entity_type;
-				if ( ! TaskEntityType::is_valid( $entity_type ) ) {
+				if ( ! TaskEntityType::is_valid( $entity_type ) && \DoubleScale\Pro\Modules\Tasks\Services\TaskRecordEntity::TYPE !== $entity_type ) {
 					throw new \Exception( 'Invalid entity type. Must be 1 (Contact), 2 (Deal), or 3 (Project).' );
 				}
 
 				if ( $entity_type === TaskEntityType::DEAL ) {
-					if ( ! class_exists( \DoubleScale\Pro\Modules\Deals\Models\DealModel::class ) ) {
+					if ( ! doublescale_module_data_ready( 'deals' ) ) {
 						throw new \Exception( 'Deal tasks require the Pipelines & Deals module.' );
 					}
 				}
 
 				if ( $entity_type === TaskEntityType::PROJECT ) {
-					if ( ! class_exists( \DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class ) ) {
+					if ( ! doublescale_module_data_ready( 'projects' ) ) {
 						throw new \Exception( 'Project tasks require the Projects module.' );
 					}
+				}
+			}
+		);
+
+		// A task created already completed (e.g. straight into a closed status) gets its completion time too
+		static::creating(
+			function ( $task ) {
+				if ( $task->status === TaskStatus::COMPLETED && ! $task->completed_at ) {
+					$task->completed_at = current_time( 'mysql', true );
 				}
 			}
 		);

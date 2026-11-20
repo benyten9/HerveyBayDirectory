@@ -13,9 +13,11 @@ use DoubleScale\Core\Models\AttachmentModel;
 use DoubleScale\Core\Services\AttachmentService;
 use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
+use DoubleScale\Modules\Sales\Models\TaxModel;
 use DoubleScale\Pro\Modules\Deals\Models\DealModel;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
 use DoubleScale\Pro\Modules\Projects\Rest\ProjectShaper;
+use DoubleScale\Pro\Modules\Projects\Services\ProjectTeam;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectDiscussionModel;
 use DoubleScale\Pro\Modules\Projects\Services\ProjectActivityLogger;
 use DoubleScale\Pro\Modules\Projects\Services\ProjectManager;
@@ -28,6 +30,12 @@ use WP_REST_Response;
 use WP_REST_Server;
 
 class RestProjectController extends RestController {
+
+	/**
+	 * Most projects the board and list load at once (the screen says so when
+	 * there are more). A caller that pages with per_page gets at most 100.
+	 */
+	const BOARD_LIMIT = 500;
 
 	/**
 	 * Activity feed type filters accepted by the project activity endpoint.
@@ -56,6 +64,11 @@ class RestProjectController extends RestController {
 	private const DOCUMENT_EVENT_KEYS = array( 'invoice_linked', 'proposal_linked' );
 
 	/**
+	 * Activity entries about money, hidden from team members who are not the owner.
+	 */
+	private const MONEY_EVENT_KEYS = array( 'budget_changed', 'invoice_linked', 'proposal_linked' );
+
+	/**
 	 * @var string
 	 */
 	protected $rest_base = 'projects';
@@ -71,9 +84,11 @@ class RestProjectController extends RestController {
 	private const PROJECT_ATTACHMENT_MAX_BYTES = 10485760;
 
 	/**
-	 * Maximum active attachments per project.
+	 * Maximum active attachments per project: high, a guard against a runaway
+	 * script rather than a quota (only the team uploads here; client uploads
+	 * have their own limits). Filter: `doublescale_attachment_max_count`.
 	 */
-	private const PROJECT_ATTACHMENT_MAX_COUNT = 20;
+	private const PROJECT_ATTACHMENT_MAX_COUNT = 500;
 
 	/**
 	 * @return void
@@ -181,7 +196,7 @@ class RestProjectController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'upload_attachment' ),
-					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'permission_callback' => array( $this, 'contribute_permissions_check' ),
 				),
 			)
 		);
@@ -190,9 +205,23 @@ class RestProjectController extends RestController {
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<id>\d+)/attachments/(?P<attachment_id>\d+)',
 			array(
-				'methods'             => WP_REST_Server::DELETABLE,
-				'callback'            => array( $this, 'delete_attachment' ),
-				'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_attachment' ),
+					'permission_callback' => array( $this, 'contribute_permissions_check' ),
+				),
+				// Show or hide a file in the client portal.
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_attachment_visibility' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'client_visible' => array(
+							'type'     => 'boolean',
+							'required' => true,
+						),
+					),
+				),
 			)
 		);
 
@@ -221,7 +250,7 @@ class RestProjectController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_discussion' ),
-					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'permission_callback' => array( $this, 'contribute_permissions_check' ),
 				),
 			)
 		);
@@ -246,12 +275,29 @@ class RestProjectController extends RestController {
 		$filters = $this->build_filters( $request );
 
 		if ( 'board' === $view ) {
+			// The board and the list show every project, grouped by status:
+			// the default page of 50 hid the rest with nothing to reach them.
+			// A caller that asks for a page still gets that page.
+			$query_args = $request->get_query_params();
+			if ( ! isset( $query_args['per_page'] ) ) {
+				$filters['page']     = 1;
+				$filters['per_page'] = self::BOARD_LIMIT;
+				$filters['board']    = true;
+			}
 			$board = ProjectManager::instance()->get_board_data( $filters );
-			return new WP_REST_Response( $board, 200 );
+
+			$response = new WP_REST_Response( $board, 200 );
+			$counted  = $filters;
+			unset( $counted['page'], $counted['per_page'], $counted['board'] );
+			$response->header( 'X-Total-Count', (string) ProjectManager::instance()->count_projects_with_filters( $counted ) );
+			$response->header( 'X-Board-Limit', (string) $filters['per_page'] );
+			return $response;
 		}
 
 		$projects = ProjectManager::instance()->get_projects_with_filters( $filters );
 		$total    = ProjectManager::instance()->count_projects_with_filters( $filters );
+		// One query for the whole page; member_ids() reads it back per row.
+		ProjectTeam::members_for_projects( $projects->pluck( 'id' )->all() );
 		$data     = array();
 		foreach ( $projects as $project ) {
 			$data[] = $this->prepare_item_for_response( $project, $request );
@@ -268,7 +314,7 @@ class RestProjectController extends RestController {
 	 */
 	public function get_item( $request ) {
 		$project_id = (int) $request->get_param( 'id' );
-		$with       = array( 'status', 'contact', 'deal', 'owner', 'custom_fields' );
+		$with       = ProjectModel::loadable_relations( array( 'status', 'contact', 'deal', 'owner', 'custom_fields' ) );
 
 		$project = ProjectModel::with( $with )->find( $project_id );
 		if ( ! $project ) {
@@ -301,6 +347,24 @@ class RestProjectController extends RestController {
 		if ( ! PermissionsCompat::can_assign_project_owner() ) {
 			$owner_id = get_current_user_id();
 		}
+		$owner_error = $this->owner_error( (int) $owner_id );
+		if ( $owner_error ) {
+			return $owner_error;
+		}
+
+		$team_ids = $this->requested_team_ids( $request );
+		foreach ( $team_ids as $member_id ) {
+			if ( $member_id === (int) $owner_id ) {
+				continue;
+			}
+			$user = get_userdata( $member_id );
+			if ( ! $user ) {
+				return new WP_Error( 'doublescale_project_member_invalid_user', __( 'That user does not exist.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			if ( ! ProjectTeam::is_eligible( $member_id ) ) {
+				return ProjectTeam::no_project_access_error( $user, 'doublescale_project_member_no_project_access' );
+			}
+		}
 
 		$data = array(
 			'title'       => $title,
@@ -315,10 +379,21 @@ class RestProjectController extends RestController {
 			'progress'    => null !== $request->get_param( 'progress' ) ? max( 0, min( 100, (int) $request->get_param( 'progress' ) ) ) : 0,
 			'calculate_progress' => (bool) $request->get_param( 'calculate_progress' ),
 		);
+		$data['company_id'] = self::company_for( $data['contact_id'], $request->get_param( 'company_id' ) );
+
+		$billing = $this->sanitize_billing( $request );
+		if ( is_wp_error( $billing ) ) {
+			return $billing;
+		}
+		$data = array_merge( $data, $billing );
 
 		$project = ProjectManager::instance()->create_project( $data );
 		if ( ! $project ) {
 			return new WP_Error( 'creation_failed', __( 'Failed to create project.', 'doublescale' ), array( 'status' => 500 ) );
+		}
+
+		if ( ! empty( $team_ids ) ) {
+			ProjectTeam::sync( $project, $team_ids );
 		}
 
 		$custom_fields = $request->get_param( 'custom_fields' );
@@ -355,6 +430,14 @@ class RestProjectController extends RestController {
 			}
 		}
 
+		// Sharing follows the contact: a new contact or an explicit company_id
+		// (0 = not shared) is re-checked against the contact's company.
+		if ( $request->has_param( 'company_id' ) || array_key_exists( 'contact_id', $data ) ) {
+			$contact_for_company = array_key_exists( 'contact_id', $data ) ? $data['contact_id'] : $project->contact_id;
+			$requested_company   = $request->has_param( 'company_id' ) ? $request->get_param( 'company_id' ) : $project->company_id;
+			$data['company_id']  = self::company_for( $contact_for_company, $requested_company );
+		}
+
 		if ( isset( $data['progress'] ) ) {
 			$data['progress'] = max( 0, min( 100, (int) $data['progress'] ) );
 		}
@@ -375,7 +458,46 @@ class RestProjectController extends RestController {
 			$data['due_date'] = $this->sanitize_date( $data['due_date'] );
 		}
 
+		$billing = $this->sanitize_billing( $request, $project );
+		if ( is_wp_error( $billing ) ) {
+			return $billing;
+		}
+		$data = array_merge( $data, $billing );
+
+		if ( isset( $data['owner_id'] ) && PermissionsCompat::can_assign_project_owner() ) {
+			// The model refuses an owner of 0; say so instead of failing the save.
+			if ( (int) $data['owner_id'] <= 0 ) {
+				return new WP_Error( 'doublescale_project_owner_required', __( 'Choose who owns this project.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			$owner_error = $this->owner_error( (int) $data['owner_id'] );
+			if ( $owner_error ) {
+				return $owner_error;
+			}
+		}
+
+		$team_ids = null;
+		if ( $request->has_param( 'team_member_ids' ) ) {
+			if ( ! Capabilities::can_manage_project_team( $project_id ) ) {
+				return new WP_Error( 'forbidden', __( 'Only the project owner or a manager can change its team.', 'doublescale' ), array( 'status' => 403 ) );
+			}
+			$team_ids  = $this->requested_team_ids( $request );
+			$new_owner = isset( $data['owner_id'] ) && PermissionsCompat::can_assign_project_owner() ? (int) $data['owner_id'] : (int) $project->owner_id;
+			foreach ( $team_ids as $member_id ) {
+				if ( $member_id === $new_owner ) {
+					continue;
+				}
+				$user = get_userdata( $member_id );
+				if ( ! $user ) {
+					return new WP_Error( 'doublescale_project_member_invalid_user', __( 'That user does not exist.', 'doublescale' ), array( 'status' => 400 ) );
+				}
+				if ( ! ProjectTeam::is_eligible( $member_id ) ) {
+					return ProjectTeam::no_project_access_error( $user, 'doublescale_project_member_no_project_access' );
+				}
+			}
+		}
+
 		$old_status_id = (int) $project->status_id;
+		$old_owner_id  = (int) $project->owner_id;
 		$new_status_id = $request->get_param( 'status_id' );
 		unset( $data['status_id'] );
 		$project       = ProjectManager::instance()->update_project( $project_id, $data );
@@ -387,6 +509,15 @@ class RestProjectController extends RestController {
 			$project->moveToStatus( (int) $new_status_id, get_current_user_id() );
 			$project->position = ProjectManager::instance()->next_position_for_status( (int) $new_status_id );
 			$project->save();
+		}
+
+		if ( null !== $team_ids ) {
+			// The form never lists the owner: one handing over in the same save
+			// stays on the team, as with any other change of owner.
+			if ( (int) $project->owner_id !== $old_owner_id && $old_owner_id > 0 ) {
+				$team_ids[] = $old_owner_id;
+			}
+			ProjectTeam::sync( $project, $team_ids );
 		}
 
 		$custom_fields = $request->get_param( 'custom_fields' );
@@ -411,7 +542,9 @@ class RestProjectController extends RestController {
 			$ids = array_map( 'intval', $bulk_ids );
 		}
 
-		$deleted = 0;
+		$deleted    = 0;
+		$blocked    = array();
+		$first_veto = null;
 		foreach ( $ids as $project_id ) {
 			$project = ProjectModel::find( $project_id );
 			if ( ! $project ) {
@@ -423,12 +556,40 @@ class RestProjectController extends RestController {
 			if ( ! Capabilities::can_manage_project( $project_id ) ) {
 				continue;
 			}
+			/**
+			 * Whether something keeps this project from being deleted, e.g.
+			 * time tracking keeps a project whose time is on an invoice.
+			 *
+			 * @param \WP_Error|null $error   Null to allow the delete.
+			 * @param ProjectModel   $project Project.
+			 */
+			$veto = apply_filters( 'doublescale_project_delete_error', null, $project );
+			if ( is_wp_error( $veto ) ) {
+				$blocked[] = array(
+					'id'     => (int) $project_id,
+					'title'  => (string) $project->title,
+					'reason' => $veto->get_error_message(),
+				);
+				$first_veto = $first_veto ?? $veto;
+				continue;
+			}
 			if ( $project->delete() ) {
 				++$deleted;
 			}
 		}
 
-		return new WP_REST_Response( array( 'deleted' => $deleted ), 200 );
+		if ( 0 === $deleted && 1 === count( $ids ) && $first_veto instanceof WP_Error ) {
+			$first_veto->add_data( array( 'status' => 409 ) );
+			return $first_veto;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'deleted' => $deleted,
+				'blocked' => $blocked,
+			),
+			200
+		);
 	}
 
 	/**
@@ -495,7 +656,7 @@ class RestProjectController extends RestController {
 			return new WP_Error( 'conversion_failed', __( 'Failed to convert deal to project.', 'doublescale' ), array( 'status' => 500 ) );
 		}
 
-		return new WP_REST_Response( $this->prepare_item_for_response( $project->fresh( array( 'status', 'contact', 'deal', 'owner' ) ), $request ), 201 );
+		return new WP_REST_Response( $this->prepare_item_for_response( $project->fresh( ProjectModel::loadable_relations( array( 'status', 'contact', 'deal', 'owner' ) ) ), $request ), 201 );
 	}
 
 	/**
@@ -507,6 +668,9 @@ class RestProjectController extends RestController {
 		$project    = ProjectModel::find( $project_id );
 		if ( ! $project || ! $this->can_access_project( $project ) ) {
 			return new WP_Error( 'project_not_found', __( 'Project not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+		if ( ! Capabilities::can_view_project_financials( $project_id ) ) {
+			return new WP_Error( 'rest_forbidden', __( 'Only the project owner and managers see its money.', 'doublescale' ), array( 'status' => 403 ) );
 		}
 
 		return new WP_REST_Response( ProjectManager::instance()->get_financials( $project_id ), 200 );
@@ -526,6 +690,11 @@ class RestProjectController extends RestController {
 		}
 		if ( $invoice_id <= 0 ) {
 			return new WP_Error( 'missing_invoice', __( 'invoice_id is required.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		$link_error = ProjectManager::instance()->document_link_error( $project, $invoice_id, 'invoice' );
+		if ( $link_error ) {
+			return $link_error;
 		}
 
 		if ( ! ProjectManager::instance()->attach_invoice( $project_id, $invoice_id ) ) {
@@ -549,6 +718,11 @@ class RestProjectController extends RestController {
 		}
 		if ( $proposal_id <= 0 ) {
 			return new WP_Error( 'missing_proposal', __( 'proposal_id is required.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		$link_error = ProjectManager::instance()->document_link_error( $project, $proposal_id, 'proposal' );
+		if ( $link_error ) {
+			return $link_error;
 		}
 
 		if ( ! ProjectManager::instance()->attach_proposal( $project_id, $proposal_id ) ) {
@@ -594,7 +768,7 @@ class RestProjectController extends RestController {
 	public function create_discussion( $request ) {
 		$project_id = (int) $request->get_param( 'id' );
 		$project    = ProjectModel::find( $project_id );
-		if ( ! $project || ! $this->can_modify_project( $project, $request ) ) {
+		if ( ! $project || ! Capabilities::can_contribute_project( (int) $project->id ) ) {
 			return new WP_Error( 'forbidden', __( 'You cannot modify this project.', 'doublescale' ), array( 'status' => 403 ) );
 		}
 
@@ -724,7 +898,8 @@ class RestProjectController extends RestController {
 		if ( $project->relationLoaded( 'contact' ) && $project->contact ) {
 			$data['contact'] = array(
 				'id'   => (int) $project->contact->id,
-				'name' => (string) ( $project->contact->full_name ?? $project->contact->email ?? '' ),
+				// "First Last", or the e-mail when the contact has no name
+				'name' => (string) ( trim( $project->contact->first_name . ' ' . $project->contact->last_name ) ?: ( $project->contact->email ?? '' ) ),
 			);
 		}
 		if ( $project->relationLoaded( 'deal' ) && $project->deal ) {
@@ -754,10 +929,32 @@ class RestProjectController extends RestController {
 			)->values()->all();
 		}
 
+		// One answer to "how is this billed", also for projects saved before fee types.
+		$data['fee_type'] = $project->effectiveFeeType();
+		$data['tax']      = null;
+		if ( $project->tax_id && class_exists( TaxModel::class ) ) {
+			$tax = TaxModel::find( (int) $project->tax_id );
+			if ( $tax ) {
+				$data['tax'] = array(
+					'id'   => (int) $tax->id,
+					'name' => (string) $tax->name,
+					'rate' => (float) $tax->rate,
+				);
+			}
+		}
+
 		$data['task_progress']     = $project->task_progress;
 		$data['resolved_progress'] = $project->resolveProgress();
 
-		return array_merge( $data, ProjectShaper::public_url_fields( $project ) );
+		$data        = array_merge( $data, ProjectShaper::public_url_fields( $project ) );
+		$permissions = Capabilities::project_permissions( $project );
+		$data        = ProjectShaper::apply_viewer( $data, $project, $permissions, ProjectTeam::member_ids( (int) $project->id ) );
+		if ( 'GET' !== $request->get_method() || null !== $request->get_param( 'id' ) ) {
+			// One project (read, create, update): the team with names, for its page.
+			$data['team'] = ProjectShaper::team( $project, $permissions['can_manage_team'] );
+		}
+
+		return $data;
 	}
 
 	/**
@@ -771,6 +968,7 @@ class RestProjectController extends RestController {
 			'contact_id' => array( 'type' => 'integer' ),
 			'deal_id'    => array( 'type' => 'integer' ),
 			'owner_id'   => array( 'type' => 'integer' ),
+			'team_member_id' => array( 'type' => 'integer' ),
 			'page'       => array( 'type' => 'integer', 'default' => 1 ),
 			'per_page'   => array( 'type' => 'integer', 'default' => 50 ),
 			'sort_by'    => array(
@@ -791,8 +989,11 @@ class RestProjectController extends RestController {
 			'search'     => $request->get_param( 'search' ),
 			'status_id'  => $request->get_param( 'status_id' ),
 			'contact_id' => $request->get_param( 'contact_id' ),
+			// A client's projects: the contact's own and their companies' (ticket project picker).
+			'client_contact_id' => $request->get_param( 'client_contact_id' ),
 			'deal_id'    => $request->get_param( 'deal_id' ),
 			'owner_id'   => $request->get_param( 'owner_id' ),
+			'team_member_id' => $request->get_param( 'team_member_id' ),
 			'page'       => $request->get_param( 'page' ),
 			'per_page'   => $request->get_param( 'per_page' ),
 			'sort_by'    => $request->get_param( 'sort_by' ),
@@ -804,6 +1005,92 @@ class RestProjectController extends RestController {
 				return null !== $value && '' !== $value;
 			}
 		);
+	}
+
+	/**
+	 * How the project is billed, from the fields the request carries.
+	 *
+	 * Only fields present in the request are returned, so an update that does
+	 * not mention them leaves them alone; an explicit null clears one.
+	 *
+	 * @param WP_REST_Request   $request  Request.
+	 * @param ProjectModel|null $existing The project being updated.
+	 * @return array<string, mixed>|WP_Error
+	 */
+	private function sanitize_billing( $request, $existing = null ) {
+		$data = array();
+
+		if ( $request->has_param( 'fee_type' ) ) {
+			$fee_type = $request->get_param( 'fee_type' );
+			if ( null === $fee_type || '' === $fee_type ) {
+				$data['fee_type'] = null;
+			} elseif ( in_array( $fee_type, array( ProjectModel::FEE_HOURLY, ProjectModel::FEE_FIXED ), true ) ) {
+				$data['fee_type'] = $fee_type;
+			} else {
+				return new WP_Error( 'invalid_fee_type', __( 'Choose hourly or fixed price.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+		}
+
+		foreach ( array( 'hourly_rate', 'estimated_hours_min', 'estimated_hours_max' ) as $field ) {
+			if ( ! $request->has_param( $field ) ) {
+				continue;
+			}
+			$value = $request->get_param( $field );
+			if ( null === $value || '' === $value ) {
+				$data[ $field ] = null;
+				continue;
+			}
+			if ( ! is_numeric( $value ) || (float) $value < 0 ) {
+				return new WP_Error( 'invalid_' . $field, __( 'Rates and hours must be zero or more.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			$data[ $field ] = round( (float) $value, 2 );
+		}
+
+		$min = array_key_exists( 'estimated_hours_min', $data ) ? $data['estimated_hours_min'] : ( $existing ? $existing->estimated_hours_min : null );
+		$max = array_key_exists( 'estimated_hours_max', $data ) ? $data['estimated_hours_max'] : ( $existing ? $existing->estimated_hours_max : null );
+		if ( null !== $min && null !== $max && (float) $max < (float) $min ) {
+			return new WP_Error( 'invalid_estimated_hours', __( 'The maximum estimated hours cannot be less than the minimum.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		if ( $request->has_param( 'tax_id' ) ) {
+			$tax_id = (int) $request->get_param( 'tax_id' );
+			if ( $tax_id <= 0 ) {
+				$data['tax_id'] = null;
+			} elseif ( ! class_exists( TaxModel::class ) || ! TaxModel::find( $tax_id ) ) {
+				return new WP_Error( 'invalid_tax', __( 'That tax no longer exists.', 'doublescale' ), array( 'status' => 400 ) );
+			} else {
+				$data['tax_id'] = $tax_id;
+			}
+		}
+
+		// The fee schedule's amount: a fixed price is the budget, an hourly
+		// project has none. An explicit null clears it (the update loop above
+		// only copies values that are set).
+		if ( $request->has_param( 'budget' ) ) {
+			$budget = $request->get_param( 'budget' );
+			if ( null === $budget || '' === $budget ) {
+				$data['budget'] = null;
+			} elseif ( ! is_numeric( $budget ) || (float) $budget < 0 ) {
+				return new WP_Error( 'invalid_budget', __( 'Budget cannot be negative.', 'doublescale' ), array( 'status' => 400 ) );
+			} else {
+				$data['budget'] = round( (float) $budget, 2 );
+			}
+		}
+
+		if ( $request->has_param( 'portal_show_time' ) ) {
+			$data['portal_show_time'] = (bool) $request->get_param( 'portal_show_time' );
+		}
+		if ( $request->has_param( 'portal_show_notes' ) ) {
+			$data['portal_show_notes'] = (bool) $request->get_param( 'portal_show_notes' );
+		}
+		if ( $request->has_param( 'portal_show_tasks' ) ) {
+			$data['portal_show_tasks'] = (bool) $request->get_param( 'portal_show_tasks' );
+		}
+		if ( $request->has_param( 'portal_show_tickets' ) ) {
+			$data['portal_show_tickets'] = (bool) $request->get_param( 'portal_show_tickets' );
+		}
+
+		return $data;
 	}
 
 	/**
@@ -863,6 +1150,48 @@ class RestProjectController extends RestController {
 	}
 
 	/**
+	 * Work on a project: comment, add files. The owner, its team, managers.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public function contribute_permissions_check( $request ) {
+		return Capabilities::can_contribute_project( (int) $request->get_param( 'id' ) );
+	}
+
+	/**
+	 * Why a user cannot own a project (they cannot open projects), or null.
+	 *
+	 * @param int $owner_id Wanted owner (0 = nobody).
+	 * @return WP_Error|null
+	 */
+	private function owner_error( int $owner_id ): ?WP_Error {
+		if ( $owner_id <= 0 ) {
+			return null;
+		}
+		$user = get_userdata( $owner_id );
+		if ( ! $user ) {
+			return new WP_Error( 'doublescale_project_owner_invalid_user', __( 'That user does not exist.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+		if ( ! ProjectTeam::is_eligible( $owner_id ) ) {
+			return ProjectTeam::no_project_access_error( $user, 'doublescale_project_owner_no_project_access' );
+		}
+		return null;
+	}
+
+	/**
+	 * @param WP_REST_Request $request Request.
+	 * @return int[]
+	 */
+	private function requested_team_ids( $request ): array {
+		$ids = $request->get_param( 'team_member_ids' );
+		if ( ! is_array( $ids ) ) {
+			return array();
+		}
+		return array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+	}
+
+	/**
 	 * List active file attachments for a project.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -894,7 +1223,7 @@ class RestProjectController extends RestController {
 	 */
 	public function upload_attachment( $request ) {
 		try {
-			$project = $this->get_project_for_attachment( $request, true );
+			$project = $this->get_project_for_attachment( $request, 'contribute' );
 			if ( is_wp_error( $project ) ) {
 				return $project;
 			}
@@ -935,7 +1264,7 @@ class RestProjectController extends RestController {
 			do_action( 'doublescale_project_file_attached', $project, $attachment );
 
 			return new WP_REST_Response(
-				$service->shape_for_api( $attachment ),
+				$this->shape_attachment( $attachment ),
 				201
 			);
 		} catch ( Exception $e ) {
@@ -951,7 +1280,7 @@ class RestProjectController extends RestController {
 	 */
 	public function delete_attachment( $request ) {
 		try {
-			$project = $this->get_project_for_attachment( $request, true );
+			$project = $this->get_project_for_attachment( $request, 'contribute' );
 			if ( is_wp_error( $project ) ) {
 				return $project;
 			}
@@ -959,6 +1288,11 @@ class RestProjectController extends RestController {
 			$attachment = $this->find_project_attachment( $project, (int) $request->get_param( 'attachment_id' ) );
 			if ( is_wp_error( $attachment ) ) {
 				return $attachment;
+			}
+
+			// A team member removes their own files; the rest is the owner's.
+			if ( (int) $attachment->user_id !== get_current_user_id() && ! $this->can_modify_project( $project, $request ) ) {
+				return new WP_Error( 'rest_forbidden', __( 'Only the project owner can remove files others added.', 'doublescale' ), array( 'status' => 403 ) );
 			}
 
 			do_action( 'doublescale_project_file_removed', $project, $attachment );
@@ -978,13 +1312,79 @@ class RestProjectController extends RestController {
 	}
 
 	/**
+	 * Show or hide a project file in the client portal. Files stay hidden until
+	 * the team shares them; the flag lives in the attachment's meta.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_attachment_visibility( $request ) {
+		$project = $this->get_project_for_attachment( $request, 'manage' );
+		if ( is_wp_error( $project ) ) {
+			return $project;
+		}
+
+		$attachment = $this->find_project_attachment( $project, (int) $request->get_param( 'attachment_id' ) );
+		if ( is_wp_error( $attachment ) ) {
+			return $attachment;
+		}
+
+		$visible = rest_sanitize_boolean( $request->get_param( 'client_visible' ) );
+		// Assign the whole array: a key set through the cast property is not saved.
+		$meta         = is_array( $attachment->meta ) ? $attachment->meta : array();
+		$newly_shared = $visible && empty( $meta['client_visible'] );
+		if ( $newly_shared ) {
+			$meta['client_visible_at'] = current_time( 'mysql', true );
+		}
+		$meta['client_visible'] = $visible;
+		$attachment->meta       = $meta;
+		$attachment->save();
+
+		// The client is told in the portal's bell (and emailed as they chose).
+		if ( $newly_shared && class_exists( \DoubleScale\Modules\Portal\Services\PortalNotifications::class ) ) {
+			\DoubleScale\Modules\Portal\Services\PortalNotifications::add(
+				(int) $project->contact_id,
+				array(
+					'category' => \DoubleScale\Modules\Portal\Services\PortalNotifications::TEAM_UPDATES,
+					'type'     => 'project_file',
+					'area'     => 'projects',
+					/* translators: %s: project title */
+					'title'    => sprintf( __( 'File shared on "%s"', 'doublescale' ), (string) $project->title ),
+					'body'     => (string) $attachment->file_name,
+					'route'    => '/projects/' . (int) $project->id,
+				)
+			);
+		}
+
+		return new WP_REST_Response( $this->shape_attachment( $attachment ), 200 );
+	}
+
+	/**
+	 * One project file for the team: the shared shape plus whether the client
+	 * sees it.
+	 *
+	 * @param AttachmentModel $attachment Attachment row.
+	 * @return array<string, mixed>
+	 */
+	private function shape_attachment( AttachmentModel $attachment ): array {
+		return $this->attachment_service()->shape_for_api( $attachment ) + array(
+			'client_visible'   => ProjectShaper::is_client_visible( $attachment ),
+			// When the client first opened it (free's ClientSeen stamps it).
+			'client_opened_at' => ( (array) $attachment->meta )['client_opened_at'] ?? null,
+			// The owner removes any file; a team member only the ones they added.
+			'can_delete'       => (int) $attachment->user_id === get_current_user_id()
+				|| Capabilities::can_manage_project( (int) $attachment->attachable_id ),
+		);
+	}
+
+	/**
 	 * Resolve a project for attachment endpoints with ownership scoping.
 	 *
-	 * @param WP_REST_Request $request        Request.
-	 * @param bool            $require_update Whether update access is required.
+	 * @param WP_REST_Request $request Request.
+	 * @param string          $level   'read', 'contribute' (team members) or 'manage'.
 	 * @return ProjectModel|WP_Error
 	 */
-	private function get_project_for_attachment( $request, bool $require_update = false ) {
+	private function get_project_for_attachment( $request, string $level = 'read' ) {
 		$project_id = (int) $request->get_param( 'id' );
 		$project    = ProjectModel::find( $project_id );
 
@@ -996,7 +1396,10 @@ class RestProjectController extends RestController {
 			return new WP_Error( 'project_not_found', __( 'Project not found.', 'doublescale' ), array( 'status' => 404 ) );
 		}
 
-		if ( $require_update && ! $this->can_modify_project( $project, $request ) ) {
+		$allowed = 'manage' === $level
+			? $this->can_modify_project( $project, $request )
+			: ( 'contribute' !== $level || Capabilities::can_contribute_project( (int) $project->id ) );
+		if ( ! $allowed ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'Sorry, you are not allowed to edit this project.', 'doublescale' ),
@@ -1014,8 +1417,7 @@ class RestProjectController extends RestController {
 	 * @return array<int, array<string, mixed>>
 	 */
 	private function get_project_attachments_shaped( int $project_id ): array {
-		$service = $this->attachment_service();
-		$rows    = AttachmentModel::forType( self::PROJECT_ATTACHABLE_TYPE )
+		$rows = AttachmentModel::forType( self::PROJECT_ATTACHABLE_TYPE )
 			->where( 'attachable_id', $project_id )
 			->active()
 			->orderBy( 'created_at', 'desc' )
@@ -1023,7 +1425,7 @@ class RestProjectController extends RestController {
 
 		$shaped = array();
 		foreach ( $rows as $attachment ) {
-			$shaped[] = $service->shape_for_api( $attachment );
+			$shaped[] = $this->shape_attachment( $attachment );
 		}
 
 		return $shaped;
@@ -1056,7 +1458,14 @@ class RestProjectController extends RestController {
 	 * @return WP_Error|null
 	 */
 	private function guard_project_attachment_count( int $existing_count ): ?WP_Error {
-		if ( $existing_count >= self::PROJECT_ATTACHMENT_MAX_COUNT ) {
+		/**
+		 * Most files one project, deal or task can hold.
+		 *
+		 * @param int    $max  Default 500.
+		 * @param string $type 'project', 'deal' or 'task'.
+		 */
+		$max = max( 1, (int) apply_filters( 'doublescale_attachment_max_count', self::PROJECT_ATTACHMENT_MAX_COUNT, 'project' ) );
+		if ( $existing_count >= $max ) {
 			return new WP_Error(
 				'too_many_files',
 				sprintf(
@@ -1064,10 +1473,10 @@ class RestProjectController extends RestController {
 					_n(
 						'You can attach at most %d file to this project.',
 						'You can attach at most %d files to this project.',
-						self::PROJECT_ATTACHMENT_MAX_COUNT,
+						$max,
 						'doublescale'
 					),
-					self::PROJECT_ATTACHMENT_MAX_COUNT
+					$max
 				),
 				array( 'status' => 400 )
 			);
@@ -1187,11 +1596,19 @@ class RestProjectController extends RestController {
 			)
 			->get();
 
-		$rows = array();
+		$sees_money = Capabilities::can_view_project_financials( (int) $project->id );
+		$rows       = array();
 		foreach ( $activities as $activity ) {
+			$entry = $this->prepare_project_activity_for_response( $activity, (int) $project->id );
+			if ( ! $sees_money ) {
+				if ( in_array( $entry['event_key'], self::MONEY_EVENT_KEYS, true ) ) {
+					continue;
+				}
+				unset( $entry['data']['budget'] );
+			}
 			$rows[] = array(
 				'sort_at' => (string) $activity->created_at,
-				'entry'   => $this->prepare_project_activity_for_response( $activity, (int) $project->id ),
+				'entry'   => $entry,
 			);
 		}
 
@@ -1352,5 +1769,20 @@ class RestProjectController extends RestController {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * The company a project is shared with: the requested one when the
+	 * project's contact belongs to it (older free: never shared).
+	 *
+	 * @param mixed $contact_id Project contact.
+	 * @param mixed $requested  Requested company id.
+	 * @return int|null
+	 */
+	private static function company_for( $contact_id, $requested ): ?int {
+		if ( ! class_exists( \DoubleScale\Pro\Modules\Companies\Services\CompanyService::class ) ) {
+			return null;
+		}
+		return \DoubleScale\Pro\Modules\Companies\Services\CompanyService::record_company_id( $contact_id, $requested );
 	}
 }

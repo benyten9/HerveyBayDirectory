@@ -170,9 +170,9 @@ if ( '1' == seopress_get_toggle_option( 'google-analytics' ) && ! isset( $_GET['
 		$days = apply_filters( 'seopress_cookies_expiration_days', $days );
 
 		$seopress_cookies_user_consent = array(
-			'seopress_nonce'                   => wp_create_nonce( 'seopress_cookies_user_consent_nonce' ),
-			'seopress_cookies_user_consent'    => admin_url( 'admin-ajax.php' ),
 			'seopress_cookies_expiration_days' => $days,
+			// Which consent categories each deferred tracker waits for.
+			'requirements'                     => seopress_user_consent_snippet_categories(),
 		);
 		wp_localize_script( 'seopress-cookies-ajax', 'seopressAjaxGAUserConsent', $seopress_cookies_user_consent );
 	}
@@ -181,6 +181,10 @@ if ( '1' == seopress_get_toggle_option( 'google-analytics' ) && ! isset( $_GET['
 	 * Triggers WooCommerce JS.
 	 */
 	function seopress_google_analytics_ecommerce_js() {
+		if ( ! defined( 'SEOPRESS_PRO_VERSION' ) ) {
+			return;
+		}
+
 		$prefix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		wp_enqueue_script( 'seopress-analytics', plugins_url( 'assets/js/seopress-analytics' . $prefix . '.js', dirname( __DIR__ ) ), array( 'jquery' ), SEOPRESS_VERSION, true );
 
@@ -197,12 +201,12 @@ if ( '1' == seopress_get_toggle_option( 'google-analytics' ) && ! isset( $_GET['
 	function seopress_after_update_cart() {
 		check_ajax_referer( 'seopress_analytics_nonce' );
 
-		// Bail when WooCommerce is unavailable: the AJAX hook is registered
+		// Bail when PRO or WooCommerce is unavailable: the AJAX hook is registered
 		// unconditionally but other carts (Fluent Cart, etc.) can fire the
 		// same jQuery events that trigger this endpoint client-side. Without
 		// this guard, $woocommerce is null and the get_cart() call below
 		// throws a fatal on the JSON response.
-		if ( ! function_exists( 'WC' ) || ! WC() || ! WC()->cart ) {
+		if ( ! defined( 'SEOPRESS_PRO_VERSION' ) || ! function_exists( 'WC' ) || ! WC() || ! WC()->cart ) {
 			wp_send_json_success( '' );
 		}
 
@@ -277,91 +281,6 @@ if ( '1' == seopress_get_toggle_option( 'google-analytics' ) && ! isset( $_GET['
 		// User Consent.
 		require_once plugin_dir_path( __FILE__ ) . '/options-user-consent.php';
 	}
-
-	/**
-	 * Cookies user consent.
-	 */
-	function seopress_cookies_user_consent() {
-		if ( '1' === seopress_get_service( 'GoogleAnalyticsOption' )->getHalfDisable() ) {// no user consent required.
-			wp_send_json_success();
-		} elseif ( is_user_logged_in() ) {
-				global $wp_roles;
-
-				// Get current user role.
-			if ( isset( wp_get_current_user()->roles[0] ) ) {
-				$seopress_user_role = wp_get_current_user()->roles[0];
-				// If current user role matchs values from SEOPress GA settings then apply.
-				if ( ! empty( seopress_get_service( 'GoogleAnalyticsOption' )->getRoles() ) ) {
-					if ( array_key_exists( $seopress_user_role, seopress_get_service( 'GoogleAnalyticsOption' )->getRoles() ) ) {
-						// Do nothing.
-					} else {
-						require_once plugin_dir_path( __FILE__ ) . '/options-google-analytics.php'; // Google Analytics.
-						require_once plugin_dir_path( __FILE__ ) . '/options-matomo.php'; // Matomo.
-						require_once plugin_dir_path( __FILE__ ) . '/options-clarity.php'; // Clarity.
-						$data                   = array();
-						$data['gtag_js']        = seopress_google_analytics_js( false );
-						$data['matomo_js']      = seopress_matomo_js( false );
-						$data['clarity_js']     = seopress_clarity_js( false );
-						$data['body_js']        = seopress_google_analytics_body_code( false );
-						$data['matomo_body_js'] = seopress_matomo_body_js( false );
-						$data['head_js']        = seopress_google_analytics_head_code( false );
-						$data['footer_js']      = seopress_google_analytics_footer_code( false );
-						$data['custom']         = '';
-						$data['custom']         = apply_filters( 'seopress_custom_tracking', $data['custom'] );
-						wp_send_json_success( $data );
-					}
-				} else {
-					require_once plugin_dir_path( __FILE__ ) . '/options-google-analytics.php'; // Google Analytics.
-					require_once plugin_dir_path( __FILE__ ) . '/options-matomo.php'; // Matomo.
-					require_once plugin_dir_path( __FILE__ ) . '/options-clarity.php'; // Clarity.
-					$data                   = array();
-					$data['gtag_js']        = seopress_google_analytics_js( false );
-					$data['matomo_js']      = seopress_matomo_js( false );
-					$data['clarity_js']     = seopress_clarity_js( false );
-					$data['body_js']        = seopress_google_analytics_body_code( false );
-					$data['matomo_body_js'] = seopress_matomo_body_js( false );
-					$data['head_js']        = seopress_google_analytics_head_code( false );
-					$data['footer_js']      = seopress_google_analytics_footer_code( false );
-					$data['custom']         = '';
-					$data['custom']         = apply_filters( 'seopress_custom_tracking', $data['custom'] );
-					wp_send_json_success( $data );
-				}
-			}
-		} else {
-			require_once plugin_dir_path( __FILE__ ) . '/options-google-analytics.php'; // Google Analytics.
-			require_once plugin_dir_path( __FILE__ ) . '/options-matomo.php'; // Matomo.
-			require_once plugin_dir_path( __FILE__ ) . '/options-clarity.php'; // Clarity.
-			$data                   = array();
-			$data['gtag_js']        = seopress_google_analytics_js( false );
-			$data['matomo_js']      = seopress_matomo_js( false );
-			$data['clarity_js']     = seopress_clarity_js( false );
-			$data['body_js']        = seopress_google_analytics_body_code( false );
-			$data['matomo_body_js'] = seopress_matomo_body_js( false );
-			$data['head_js']        = seopress_google_analytics_head_code( false );
-			$data['footer_js']      = seopress_google_analytics_footer_code( false );
-			$data['custom']         = '';
-			$data['custom']         = apply_filters( 'seopress_custom_tracking', $data['custom'] );
-			wp_send_json_success( $data );
-		}
-	}
-	add_action( 'wp_ajax_seopress_cookies_user_consent', 'seopress_cookies_user_consent' );
-	add_action( 'wp_ajax_nopriv_seopress_cookies_user_consent', 'seopress_cookies_user_consent' );
-
-	/**
-	 * Cookies user consent close.
-	 */
-	function seopress_cookies_user_consent_close() {
-		require_once plugin_dir_path( __FILE__ ) . '/options-google-analytics.php'; // Google Analytics.
-		require_once plugin_dir_path( __FILE__ ) . '/options-clarity.php'; // Clarity.
-
-		$data                       = array();
-		$data['gtag_consent_js']    = seopress_google_analytics_js( false );
-		$data['clarity_consent_js'] = seopress_clarity_js( false );
-
-		wp_send_json_success( $data );
-	}
-	add_action( 'wp_ajax_seopress_cookies_user_consent_close', 'seopress_cookies_user_consent_close' );
-	add_action( 'wp_ajax_nopriv_seopress_cookies_user_consent_close', 'seopress_cookies_user_consent_close' );
 }
 
 add_action( 'wp', 'seopress_load_redirections_options', 0 );
@@ -395,6 +314,37 @@ if ( '1' == seopress_get_toggle_option( 'xml-sitemap' ) ) { // phpcs:ignore -- T
 	require_once plugin_dir_path( __FILE__ ) . '/options-robots-txt.php'; // Robots.txt.
 }
 
+/**
+ * Advanced comments website hook.
+ *
+ * Removes the `<p class="comment-form-url">` paragraph and keeps the rest of the url field.
+ * The whole field is unset when nothing else is left or when it has no such paragraph.
+ *
+ * A theme that wraps the paragraph, e.g. `<div class="row"><p class="comment-form-url">...</p></div>`,
+ * keeps an empty `<div class="row"></div>`. If a theme shows extra spacing in the comment form
+ * with this option on, check this first.
+ *
+ * @param array $fields The fields.
+ * @return array The fields.
+ */
+function seopress_advanced_advanced_comments_website_hook( $fields ) {
+	if ( ! isset( $fields['url'] ) ) {
+		return $fields;
+	}
+
+	// Some themes (Astra) close a wrapper opened in the author field at the end of the url field: only remove the Website paragraph.
+	// The match stops at the first </p>, so a <p> nested in the url paragraph (invalid HTML) would leave a stray </p>.
+	$rest = preg_replace( '#<p\b[^>]*\bcomment-form-url\b[^>]*>.*?</p>#is', '', $fields['url'] );
+
+	if ( is_string( $rest ) && $rest !== $fields['url'] && '' !== trim( $rest ) ) {
+		$fields['url'] = $rest;
+	} else {
+		unset( $fields['url'] );
+	}
+
+	return $fields;
+}
+
 if ( '1' == seopress_get_toggle_option( 'advanced' ) ) { // phpcs:ignore -- TODO: null comparison check.
 	require_once plugin_dir_path( __FILE__ ) . '/options-advanced-rewriting.php'; // Advanced Rewriting.
 
@@ -405,17 +355,6 @@ if ( '1' == seopress_get_toggle_option( 'advanced' ) ) { // phpcs:ignore -- TODO
 		}
 
 		if ( '1' === seopress_get_service( 'AdvancedOption' )->getAdvancedCommentsWebsiteDisable() ) {
-			/**
-			 * Advanced comments website hook.
-			 *
-			 * @param array $fields The fields.
-			 * @return array The fields.
-			 */
-			function seopress_advanced_advanced_comments_website_hook( $fields ) {
-				unset( $fields['url'] );
-
-				return $fields;
-			}
 			add_filter( 'comment_form_default_fields', 'seopress_advanced_advanced_comments_website_hook', 40 );
 		}
 
@@ -472,7 +411,7 @@ if ( '1' == seopress_get_toggle_option( 'advanced' ) ) { // phpcs:ignore -- TODO
 				if ( null !== $post->post_type && 'post' === $post->post_type ) {
 					$primary_cat = get_category( $_seopress_robots_primary_cat );
 				}
-				if ( ! is_wp_error( $primary_cat ) && null !== $primary_cat ) {
+				if ( $primary_cat instanceof WP_Term && has_term( $primary_cat->term_id, 'category', $post->ID ) ) {
 					return $primary_cat;
 				} else {
 					return $cats_0;
@@ -505,7 +444,7 @@ if ( '1' == seopress_get_toggle_option( 'advanced' ) ) { // phpcs:ignore -- TODO
 				if ( null !== $post->post_type && 'product' === $post->post_type ) {
 					$primary_cat = get_term( $_seopress_robots_primary_cat, 'product_cat' );
 				}
-				if ( ! is_wp_error( $primary_cat ) && null !== $primary_cat ) {
+				if ( $primary_cat instanceof WP_Term && has_term( $primary_cat->term_id, 'product_cat', $post->ID ) ) {
 					return $primary_cat;
 				}
 			} else {
@@ -515,6 +454,7 @@ if ( '1' == seopress_get_toggle_option( 'advanced' ) ) { // phpcs:ignore -- TODO
 		} else {
 			return $terms_0;
 		}
+		return $terms_0;
 	}
 	add_filter( 'wc_product_post_type_link_product_cat', 'seopress_titles_primary_wc_cat_hook', 10, 3 );
 }

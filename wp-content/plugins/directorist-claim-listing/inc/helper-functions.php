@@ -199,147 +199,18 @@ if (!function_exists('is_pricing_plans_active_with_dcl')) {
  *
  */
 if (!function_exists('dcl_current_user')) {
-    function dcl_current_user()
-    {
-        // sanitize form values
-        $post_id = !empty($_POST["post_id"]) ? (int)$_POST["post_id"] : '';
-        $claimer_name = !empty($_POST["claimer_name"]) ? sanitize_text_field($_POST["claimer_name"]) : '';
-        $claimer_phone = !empty($_POST["claimer_phone"]) ? $_POST["claimer_phone"] : '';
-        $claimer_plan_id = isset($_POST["plan_id"]) ? (int)($_POST["plan_id"]) : '';
-        $claimer_details = !empty($_POST["claimer_details"]) ? stripslashes(esc_textarea($_POST["claimer_details"])) : '';
-
-        //lets update some necessery data
-        update_post_meta($post_id, '_claimer_name', $claimer_name);
-        update_post_meta($post_id, '_claimer_phone', $claimer_phone);
-        update_post_meta($post_id, '_claimer_details', $claimer_details);
-        update_post_meta($post_id, '_claimer_plans', $claimer_plan_id);
-
-        if (get_directorist_option('disable_email_notification')) return false;
-        if (!in_array('new_claim_submitted', get_directorist_option('notify_user', array('new_claim_submitted')))) return false;
-        // vars
-        $post_author_id = get_post_field('post_author', $post_id);
-        $user = get_userdata($post_author_id);
-        $site_name = get_bloginfo('name');
-        $site_url = get_bloginfo('url');
-        $site_email = get_bloginfo('admin_email');
-        $currennt_user = wp_get_current_user();
-        $current_user_email = $currennt_user->user_email;
-        $listing_title = get_the_title($post_id);
-        $listing_url = get_permalink($post_id);
-        $date_format = get_option('date_format');
-        $time_format = get_option('time_format');
-        $current_time = current_time('timestamp');
-        $contact_email_subject = get_directorist_option('email_sub_new_claim');
-        $contact_email_body = get_directorist_option('email_tmpl_new_claim');
-
-        $placeholders = array(
-            '==NAME==' => $user->display_name,
-            '==USERNAME==' => $user->user_login,
-            '==SITE_NAME==' => $site_name,
-            '==SITE_LINK==' => sprintf('<a href="%s">%s</a>', $site_url, $site_name),
-            '==SITE_URL==' => sprintf('<a href="%s">%s</a>', $site_url, $site_url),
-            '==LISTING_TITLE==' => $listing_title,
-            '==LISTING_LINK==' => sprintf('<a href="%s">%s</a>', $listing_url, $listing_title),
-            '==LISTING_URL==' => sprintf('<a href="%s">%s</a>', $listing_url, $listing_url),
-            '==SENDER_NAME==' => $claimer_name,
-            '==SENDER_PHONE==' => $claimer_phone,
-            '==MESSAGE==' => $claimer_details,
-            '==TODAY==' => date_i18n($date_format, $current_time),
-            '==NOW==' => date_i18n($date_format . ' ' . $time_format, $current_time)
-        );
-
-        $to = $current_user_email;
-
-        $subject = strtr($contact_email_subject, $placeholders);
-
-        $message = strtr($contact_email_body, $placeholders);
-        $message = nl2br($message);
-
-        $headers = "From: {$claimer_name} <{$current_user_email}>\r\n";
-
-
-        $is_mail_send = get_post_meta($post_id, '_claimed_primary_mail', true);
-        if (empty($is_mail_send)) {
-            $success = directorist()->email->send_mail($to, $subject, $message, $headers);
-            if ($success) {
-                update_post_meta($post_id, '_claimed_primary_mail', 1);
-            }
-        }
-
+    /** @deprecated Use DCL_Claim_Service::submit() with explicit validated input. */
+    function dcl_current_user() {
+        return DCL_Base()->directorist_do_claim( absint( $_POST['post_id'] ?? 0 ) );
     }
 }
-/**
- * Send confermation to the listing owner.
- *
- * @return   string    $result    Message based on the result.
- * @since    1.0.0
- *
- */
 if (!function_exists('dcl_email_admin_listing_claim')) {
-    function dcl_email_admin_listing_claim()
-    {
-
-        // sanitize form values
-        $post_id = !empty($_POST["post_id"]) ? (int)$_POST["post_id"] : '';
-        $claimer_name = !empty($_POST["claimer_name"]) ? sanitize_text_field($_POST["claimer_name"]) : '';
-        $claimer_phone = !empty($_POST["claimer_phone"]) ? ($_POST["claimer_phone"]) : '';
-        $claimer_details = !empty($_POST["claimer_details"]) ? stripslashes(esc_textarea($_POST["claimer_details"])) : '';
-        //
-
-
-        if (get_directorist_option('disable_email_notification')) return false;
-        if (!in_array('new_claim_submitted', get_directorist_option('notify_admin', array('new_claim_submitted')))) return false;
-        // vars
-        $site_name = get_bloginfo('name');
-        $site_url = get_bloginfo('url');
-        $currennt_user = wp_get_current_user();
-        $current_user_email = $currennt_user->user_email;
-        $listing_title = get_the_title($post_id);
-        $listing_url = get_permalink($post_id);
-        $date_format = get_option('date_format');
-        $time_format = get_option('time_format');
-        $current_time = current_time('timestamp');
-
-        $placeholders = array(
-            '{site_name}' => $site_name,
-            '{site_link}' => sprintf('<a href="%s">%s</a>', $site_url, $site_name),
-            '{site_url}' => sprintf('<a href="%s">%s</a>', $site_url, $site_url),
-            '{listing_title}' => $listing_title,
-            '{listing_link}' => sprintf('<a href="%s">%s</a>', $listing_url, $listing_title),
-            '{listing_url}' => sprintf('<a href="%s">%s</a>', $listing_url, $listing_url),
-            '{sender_name}' => $claimer_name,
-            '{sender_email}' => $current_user_email,
-            '{sender_phone}' => $claimer_phone,
-            '{message}' => $claimer_details,
-            '{today}' => date_i18n($date_format, $current_time),
-            '{now}' => date_i18n($date_format . ' ' . $time_format, $current_time)
-        );
-        $send_emails = ATBDP()->email->get_admin_email_list();
-        $to = !empty($send_emails) ? $send_emails : get_bloginfo('admin_email');
-
-        $subject = __('[{site_name}] Contact via "{listing_title}"', 'directorist-claim-listing');
-        $subject = strtr($subject, $placeholders);
-
-        $message = __("Dear Administrator,<br /><br />An user on your website {site_name} submit a claim for this listing .<br /><br />Listing URL: {listing_url}<br /><br />Name: {sender_name}<br />Email: {sender_email}<br />Claim Details: {message}<br />Time: {now}", 'directorist-claim-listing');
-        $message = strtr($message, $placeholders);
-
-        $headers = "From: {$claimer_name} <{$current_user_email}>\r\n";
-
-        $is_mail_send = get_post_meta($post_id, '_claimed_admin_primary_mail', true);
-        if (empty($is_mail_send)) {
-            $success = ATBDP()->email->send_mail($to, $subject, $message, $headers);
-            if ($success) {
-                update_post_meta($post_id, '_claimed_admin_primary_mail', 1);
-            }
-        }
-
+    /** @deprecated Notification intents now belong to the complete submission unit. */
+    function dcl_email_admin_listing_claim() {
+        return dcl_current_user();
     }
 }
 
-
-/**
- * @since 1.0.0
- */
 if (!function_exists('dcl_need_to_charge_with_plan')) {
     /**
      * Determine if a plan-based claim needs payment.
@@ -351,45 +222,10 @@ if (!function_exists('dcl_need_to_charge_with_plan')) {
      */
     function dcl_need_to_charge_with_plan()
     {
-        $post_id         = (int) $_POST['post_id'];
-        $claimer_plan_id = isset( $_POST['plan_id'] ) ? (int) $_POST['plan_id'] : 0;
-        $claim_charge_by = get_directorist_option( 'claim_charge_by' );
-        $charged_by      = get_post_meta( $post_id, '_claim_fee', true );
-        $charged_by      = ( $charged_by !== '' ) ? $charged_by : $claim_charge_by;
-
-        if ( ! is_pricing_plans_active() ) {
-            return true;
-        }
-
-        if ( 'pricing_plan' !== $charged_by ) {
-            return true;
-        }
-
-        if ( empty( $claimer_plan_id ) ) {
-            return false;
-        }
-
-        $plan = directorist_get_pricing_plan_by_id( $claimer_plan_id );
-
-        if ( ! $plan ) {
-            return false;
-        }
-
-        $user_id   = get_current_user_id();
-
-        if ( PlanType::PACKAGE === $plan->type ) {
-            $package = directorist_user_package_repository()->get_package_by_plan( $user_id, $claimer_plan_id );
-
-            if ( $package && directorist_is_package_active( $package ) ) {
-                update_post_meta( $post_id, directorist_plan_key(), $claimer_plan_id );
-                return true;
-            }
-
-            return false;
-        }
-
-        // PAY_PER_LISTING always needs checkout
-        return false;
+        try {
+            $payment = DCL_Claim_Service::payment( absint( $_POST['post_id'] ?? 0 ), get_current_user_id(), absint( $_POST['plan_id'] ?? 0 ), absint( $_POST['order_id'] ?? 0 ) );
+            return $payment['verified'];
+        } catch ( Throwable $error ) { return false; }
     }
 }
 if (!function_exists('dcl_need_to_charge_without_plan')) {
@@ -445,29 +281,7 @@ if (!function_exists('non_paid_claim')) {
 if (!function_exists('dcl_new_claim')) {
     function dcl_new_claim($listing_id)
     {
-        $claim_id = wp_insert_post(array(
-            'post_content' => '',
-            'post_title' => get_the_title($listing_id),
-            'post_status' => 'publish',
-            'post_type' => 'dcl_claim_listing',
-            'comment_status' => false,
-        ));
-
-        $claimer_phone = get_post_meta($listing_id, '_claimer_phone', true);
-        $claimer_name = get_post_meta($listing_id, '_claimer_name', true);
-        $claimer_detail = get_post_meta($listing_id, '_claimer_details', true);
-        $claimer_details = "This is $claimer_name, $claimer_detail";
-
-        update_post_meta($claim_id, '_listing_claimer', get_current_user_id());
-        update_post_meta($claim_id, '_claimed_listing', $listing_id);
-        update_post_meta($claim_id, '_claim_status', 'pending');
-        update_post_meta($claim_id, '_claimer_details', $claimer_details);
-        update_post_meta($claim_id, '_claimer_phone', $claimer_phone);
-
-        /**
-         * @since 1.3.7
-         */
-        do_action( 'atbdp_new_claim_inserted', $claim_id );
+        return DCL_Base()->directorist_do_claim( $listing_id );
     }
 }
 
@@ -505,6 +319,196 @@ if (!function_exists('dcl_tract_duplicate_claim')) {
         }
         return ($claim_meta) ? $claim_meta : false;
     }
+}
+
+/**
+ * Render the claim listing widget + modal for a given listing.
+ *
+ * Handles all checks (global setting, admin-only claimable, already claimed),
+ * renders the claim card and modal form with pricing plan selection, and
+ * returns the complete HTML. Returns empty string when claim should not show.
+ *
+ * @param int   $listing_id The listing post ID.
+ * @param array $args       Optional overrides:
+ *                           - claim_title, claim_description, claim_button_text: text overrides.
+ *                           - icon: Card header icon class (renders card header when set).
+ *                           - label: Card header label text (renders card header when set).
+ *                           - custom_block_classes: Extra CSS classes on the wrapper.
+ * @return string Rendered HTML or empty string.
+ */
+function directorist_render_claim_listing( int $listing_id, array $args = [] ): string {
+	if ( ! get_directorist_option( 'enable_claim_listing', 1 ) ) {
+		return '';
+	}
+
+	if ( ! function_exists( 'directorist_is_listing_created_by_admin' ) ) {
+		return '';
+	}
+
+	$admin_only_claimable = get_directorist_option( 'admin_only_claimable', false );
+	if ( ! empty( $admin_only_claimable ) && ! directorist_is_listing_created_by_admin( $listing_id ) ) {
+		return '';
+	}
+
+	$claimed_by_admin = get_post_meta( $listing_id, '_claimed_by_admin', true );
+	$claim_fee        = get_post_meta( $listing_id, '_claim_fee', true );
+	if ( $claimed_by_admin || 'claim_approved' === $claim_fee ) {
+		return '';
+	}
+
+	$defaults = [
+		'claim_title'       => get_directorist_option( 'claim_widget_title', __( 'Is this your business?', 'directorist-claim-listing' ) ),
+		'claim_description' => get_directorist_option( 'claim_widget_description', __( 'Claim listing is the best way to manage and protect your business.', 'directorist-claim-listing' ) ),
+		'claim_button_text' => get_directorist_option( 'claim_now', __( 'Claim Now!', 'directorist-claim-listing' ) ),
+	];
+	$args = wp_parse_args( $args, $defaults );
+
+	global $post;
+	$original_post = $post;
+	$post          = get_post( $listing_id );
+	setup_postdata( $post );
+
+	$wrapper_classes = 'directorist-claim-listing-wrapper';
+	if ( ! empty( $args['custom_block_classes'] ) ) {
+		$wrapper_classes .= ' ' . esc_attr( $args['custom_block_classes'] );
+	}
+	$has_header = ! empty( $args['icon'] ) || ! empty( $args['label'] );
+
+	ob_start();
+	?>
+	<div class="<?php echo $wrapper_classes; ?>">
+		<div class="directorist-card directorist-claim-listing">
+			<?php if ( $has_header ) : ?>
+				<div class="directorist-card__header">
+					<h3 class="directorist-card__header__title">
+						<?php if ( ! empty( $args['icon'] ) ) : ?>
+							<span class="directorist-card__header-icon"><?php directorist_icon( $args['icon'] ); ?></span>
+						<?php endif; ?>
+						<?php if ( ! empty( $args['label'] ) ) : ?>
+							<span class="directorist-card__header-text"><?php echo esc_html( $args['label'] ); ?></span>
+						<?php endif; ?>
+					</h3>
+				</div>
+			<?php endif; ?>
+			<div class="directorist-card__body">
+				<h4 class="directorist-claim-listing__title"><?php echo esc_html( $args['claim_title'] ); ?></h4>
+				<p class="directorist-claim-listing__description"><?php echo esc_html( $args['claim_description'] ); ?></p>
+				<?php if ( is_user_logged_in() ) : ?>
+					<a href="#" class="directorist-btn directorist-btn-modal directorist-btn-modal-js" data-directorist_target="directorist-claim-listing-modal"><?php echo esc_html( $args['claim_button_text'] ); ?></a>
+				<?php else : ?>
+					<a href="#" class="directorist-claim-listing__login-alert directorist-btn directorist-btn-modal directorist-btn-modal-js"><?php echo esc_html( $args['claim_button_text'] ); ?></a>
+				<?php endif; ?>
+			</div>
+		</div>
+		<input type="hidden" id="directorist__post-id" value="<?php echo esc_attr( $listing_id ); ?>" />
+	</div>
+	<div class="directorist-modal directorist-modal-js directorist-fade directorist-claim-listing-modal directorist-claimer">
+		<div class="directorist-modal__dialog directorist-modal__dialog-lg">
+			<div class="directorist-modal__content">
+				<form id="directorist-claimer__form" class="directorist-claimer__form">
+					<div class="directorist-modal__header">
+						<h3 class="directorist-modal-title" id="directorist-claim-label"><?php _e( 'Claim This Listing', 'directorist-claim-listing' ); ?></h3>
+						<a href="#" class="directorist-modal-close directorist-modal-close-js"><span aria-hidden="true">&times;</span></a>
+					</div>
+					<div class="directorist-modal__body">
+						<div class="directorist-form-group">
+							<label for="directorist-claimer__name" class="directorist-claimer__name"><?php _e( 'Full Name', 'directorist-claim-listing' ); ?> <span class="directorist-claimer__star-red">*</span></label>
+							<input type="text" class="directorist-form-element" id="directorist-claimer__name" name="claimer_name" autocomplete="name" placeholder="<?php _e( 'Full Name', 'directorist-claim-listing' ); ?>" required>
+						</div>
+						<div class="directorist-form-group">
+							<label for="directorist-claimer__phone" class="directorist-claimer__phone"><?php _e( 'Phone', 'directorist-claim-listing' ); ?> <span class="directorist-claimer__star-red">*</span></label>
+							<input type="tel" class="directorist-form-element" id="directorist-claimer__phone" name="claimer_phone" autocomplete="tel" placeholder="<?php _e( '111-111-235', 'directorist-claim-listing' ); ?>" required>
+						</div>
+						<div class="directorist-form-group">
+							<label for="directorist-claimer__details" class="directorist-claimer__details"><?php _e( 'Verification Details', 'directorist-claim-listing' ); ?> <span class="directorist-claimer__star-red">*</span></label>
+							<textarea class="directorist-form-element" id="directorist-claimer__details" name="claimer_details" autocomplete="off" rows="3" placeholder="<?php _e( 'Details description about your business', 'directorist-claim-listing' ); ?>..." required></textarea>
+						</div>
+						<div class="directorist-form-group">
+							<?php
+							$claim_charge_by = get_directorist_option( 'claim_charge_by' );
+							$charged_by      = get_post_meta( $listing_id, '_claim_fee', true );
+							$directory_type  = get_post_meta( $listing_id, '_directory_type', true );
+							$charged_by      = ( '' !== $charged_by ) ? $charged_by : $claim_charge_by;
+							$has_plans       = is_pricing_plans_active();
+
+							if ( ! empty( $has_plans ) && 'pricing_plan' === $charged_by ) {
+								$metas = [];
+								$metas['exclude'] = [
+									'relation' => 'OR',
+									[ 'key' => '_hide_from_plans', 'compare' => 'NOT EXISTS' ],
+									[ 'key' => '_hide_from_plans', 'value' => 'yes', 'compare' => '!=' ],
+								];
+								if ( ! empty( $directory_type ) ) {
+									$metas['directory'] = [
+										'key'     => '_assign_to_directory',
+										'value'   => $directory_type,
+										'compare' => '=',
+									];
+								}
+
+								if ( class_exists( 'ATBDP_Pricing_Plans' ) ) {
+									$query_args = [
+										'post_type'      => 'atbdp_pricing_plans',
+										'posts_per_page' => -1,
+										'status'         => 'publish',
+										'meta_query'     => array_merge( [ 'relation' => 'AND' ], $metas ),
+									];
+								} else {
+									$wc_metas            = $metas;
+									$wc_metas['exclude'] = [
+										'relation' => 'OR',
+										[ 'key' => '_hide_from_plans', 'compare' => 'NOT EXISTS' ],
+										[ 'key' => '_hide_from_plans', 'value' => 1, 'compare' => '!=' ],
+									];
+									$query_args = [
+										'post_type'  => 'product',
+										'tax_query'  => [ [ 'taxonomy' => 'product_type', 'field' => 'slug', 'terms' => 'listing_pricing_plans' ] ],
+										'meta_query' => array_merge( [ 'relation' => 'AND' ], $wc_metas ),
+									];
+								}
+
+								$atbdp_query = new \WP_Query( $query_args );
+								if ( $atbdp_query->have_posts() ) {
+									$plans     = $atbdp_query->posts;
+									$is_native = class_exists( 'ATBDP_Pricing_Plans' );
+									printf( '<label for="select_plans">%s</label>', __( 'Select Plan', 'directorist-claim-listing' ) );
+									printf( '<select id="directorist-claimer_plan">' );
+									printf( '<option>%s</option>', __( 'Select Plan', 'directorist-claim-listing' ) );
+									foreach ( $plans as $plan ) {
+										$active_plan = subscribed_package_or_PPL_plans( get_current_user_id(), 'completed', $plan->ID );
+										$plan_type   = get_post_meta( $plan->ID, 'plan_type', true );
+										$is_active   = ! empty( $active_plan ) && 'package' === $plan_type;
+										$class_attr  = $is_active ? ( $is_native ? 'class="directorist__active-plan"' : 'class="directorist__active-plan" selected' ) : '';
+										$badge       = $is_active ? '<span class="atbd_badge">' . __( '- Active', 'directorist-claim-listing' ) . '</span>' : '';
+										printf( '<option %s value="%s">%s %s</option>', $class_attr, esc_attr( $plan->ID ), esc_html( $plan->post_title ), $badge );
+									}
+									printf( '</select>' );
+									?>
+									<div id="directorist__plan-allowances" data-author_id="<?php echo get_current_user_id(); ?>"></div>
+									<?php
+									printf( '<a target="_blank" href="%s" class="directorist__plans">%s</a>', esc_url( \ATBDP_Permalink::get_fee_plan_page_link() ), __( 'Show plan details', 'directorist-claim-listing' ) );
+								}
+							}
+							?>
+						</div>
+						<div id="directorist-claimer__submit-notification"></div>
+						<div id="directorist-claimer__warning-notification"></div>
+					</div>
+					<div class="directorist-modal__footer">
+						<button type="submit" class="directorist-btn"><?php esc_html_e( 'Submit', 'directorist-claim-listing' ); ?></button>
+						<span><?php directorist_icon( 'fas fa-lock' ); ?><?php esc_html_e( 'Secure Claim Process', 'directorist-claim-listing' ); ?></span>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<?php
+	$html = ob_get_clean();
+
+	$post = $original_post;
+	$original_post ? setup_postdata( $original_post ) : wp_reset_postdata();
+
+	return $html;
 }
 
 // dcl_get_template

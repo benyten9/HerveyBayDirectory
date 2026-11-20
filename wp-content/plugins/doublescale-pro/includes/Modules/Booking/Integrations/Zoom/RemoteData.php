@@ -11,7 +11,7 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Zoom;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Integration\RemoteData as Abstracts_RemoteData;
 
 /**

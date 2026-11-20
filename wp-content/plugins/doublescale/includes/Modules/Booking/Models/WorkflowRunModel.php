@@ -12,7 +12,7 @@
 
 namespace DoubleScale\Modules\Booking\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 defined( 'ABSPATH' ) || exit;
 

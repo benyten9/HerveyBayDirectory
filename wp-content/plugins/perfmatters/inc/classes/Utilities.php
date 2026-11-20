@@ -204,6 +204,9 @@ class Utilities
             'fb-edit', //fusion builder
             'builder',
             'bricks', //bricks
+            'brizy-edit', //brizy
+            'brizy-edit-iframe',
+            'is-editor-iframe',
             'vc_editable', //wp bakery
             'op3editor', //optimizepress
             'cs_preview_state', //cornerstone

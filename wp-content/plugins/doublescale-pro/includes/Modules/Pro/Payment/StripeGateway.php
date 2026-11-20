@@ -46,8 +46,15 @@ class StripeGateway extends Gateway {
 		return true;
 	}
 
+	/**
+	 * Invoices and bookings pay through Stripe.js in the customer's browser, so
+	 * Stripe is only ready when the publishable key is one Stripe.js accepts.
+	 *
+	 * @return bool
+	 */
 	public function is_configured(): bool {
-		return StripeIntegration::instance()->is_configured();
+		$integration = StripeIntegration::instance();
+		return $integration->is_configured() && '' !== $integration->get_publishable_key();
 	}
 
 	/**
@@ -87,7 +94,7 @@ class StripeGateway extends Gateway {
 
 			list( $intent, $created ) = PaymentIntentFlow::resolve_or_create(
 				$service,
-				$subject->external_payment_ref(),
+				$this->payment_intent_ref( $subject ),
 				$amount,
 				$currency,
 				function () use ( $service, $subject, $amount, $currency ) {
@@ -158,11 +165,13 @@ class StripeGateway extends Gateway {
 	 * @return array|WP_Error
 	 */
 	public function confirm( PayableSubject $subject ) {
-		if ( ! $this->is_configured() ) {
+		// Confirming reads the intent server-side with the secret key alone, so a
+		// payment started before the publishable key went bad still completes.
+		if ( ! StripeIntegration::instance()->is_configured() ) {
 			return new WP_Error( 'gateway_not_configured', __( 'Stripe is not configured.', 'doublescale' ), array( 'status' => 503 ) );
 		}
 
-		$pi_id = $subject->external_payment_ref();
+		$pi_id = $this->payment_intent_ref( $subject );
 		if ( null === $pi_id || '' === $pi_id ) {
 			return new WP_Error( 'invalid_data', __( 'No Stripe payment is in progress.', 'doublescale' ), array( 'status' => 400 ) );
 		}
@@ -199,6 +208,29 @@ class StripeGateway extends Gateway {
 		} catch ( \Throwable $e ) {
 			return new WP_Error( 'stripe_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * The Stripe PaymentIntent this subject pays with.
+	 *
+	 * An invoice keeps one in-progress reference for every gateway, and PayPal
+	 * writes its order id there when its buttons load next to Stripe's form on
+	 * the invoice page. Read from that slot, a card Stripe had just charged
+	 * failed to confirm ("Could not retrieve payment intent") and the invoice
+	 * stayed unpaid. The invoice's own Stripe column only ever holds Stripe's.
+	 *
+	 * @param PayableSubject $subject Payable subject.
+	 * @return string|null
+	 */
+	private function payment_intent_ref( PayableSubject $subject ): ?string {
+		if ( $subject instanceof InvoicePayableSubject ) {
+			$pi_id = trim( (string) ( $subject->get_invoice()->stripe_payment_intent_id ?? '' ) );
+			if ( '' !== $pi_id ) {
+				return $pi_id;
+			}
+		}
+
+		return $subject->external_payment_ref();
 	}
 
 	/**

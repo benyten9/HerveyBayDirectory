@@ -18,6 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use DoubleScale\Modules\Forms\Abstracts\Form as Abstracts_Form;
 use DoubleScale\Modules\Forms\Quillforms\FormUtils;
 use DoubleScale\Modules\Forms\Services\FormsManager;
+use DoubleScale\Core\Fields\Types\Boolean_Field;
 
 
 /**
@@ -63,7 +64,7 @@ class Form extends Abstracts_Form {
 	 * @return bool
 	 */
 	public function is_enabled() {
-		return doublescale_is_plugin_active( 'quillforms/quillforms.php' );
+		return doublescale_is_plugin_active( 'quillforms' );
 	}
 
 	/**
@@ -133,6 +134,31 @@ class Form extends Abstracts_Form {
 	}
 
 	/**
+	 * A Legal (consent) block answers with its own label ("I accept"), which a yes/no contact field
+	 * would read as "no". Map the yes label to true and everything else to false.
+	 *
+	 * @param mixed  $value           The answer (the block's yes or no label).
+	 * @param string $source_field_id The Quill Forms block id.
+	 * @param array  $source_field    The block's definition (label, type).
+	 * @param array  $target_field    The contact field's definition.
+	 * @return mixed
+	 */
+	protected function normalize_mapped_value( $value, $source_field_id, $source_field, $target_field ) {
+		if ( 'legal' !== ( $source_field['type'] ?? '' ) || ! is_a( $target_field['type'] ?? '', Boolean_Field::class, true ) ) {
+			return $value;
+		}
+
+		$form_id = $this->submission['form_id'] ?? null;
+		if ( ! $form_id ) {
+			return $value;
+		}
+
+		$yes_label = ( new FormUtils( $form_id ) )->get_field_attributes( $source_field_id )['yesLabel'] ?? null;
+
+		return null !== $yes_label && '' !== (string) $value && (string) $value === (string) $yes_label ? 'true' : 'false';
+	}
+
+	/**
 	 * Process
 	 *
 	 * @since 1.0.0
@@ -143,19 +169,33 @@ class Form extends Abstracts_Form {
 	 * @return void
 	 */
 	public function process( $entry, $form_data ) {
-		$form_utils         = new FormUtils( $entry->form_id, $form_data );
-		$form_data          = $form_utils->prepare_entry( $entry );
-		$data               = $this->get_default_data();
-		$data['fields']     = $form_utils->get_fields();
-		$data['entry']      = $form_data;
-		$data['entry_id']   = $entry->ID;
-		$data['form_id']    = $entry->form_id;
-		$data['form_title'] = isset( $entry->form_id ) ? get_the_title( $entry->form_id ) : '';
+		// This runs inside Quill Forms' "entry processed" hook, after the entry is saved: whatever
+		// goes wrong here must not turn the visitor's submission into an error page.
+		try {
+			$form_utils         = new FormUtils( $entry->form_id, $form_data );
+			$form_data          = $form_utils->prepare_entry( $entry );
+			$data               = $this->get_default_data();
+			$data['fields']     = $form_utils->get_fields();
+			$data['entry']      = $form_data;
+			$data['entry_id']   = $entry->ID;
+			$data['form_id']    = $entry->form_id;
+			$data['form_title'] = isset( $entry->form_id ) ? get_the_title( $entry->form_id ) : '';
 
-		if ( $this->is_form_active( $entry->form_id ) ) {
-			$this->process_form( $data );
+			if ( $this->is_form_active( $entry->form_id ) ) {
+				$this->process_form( $data );
+			}
+
+			$this->process_automations( $data );
+		} catch ( \Throwable $e ) {
+			doublescale_get_logger()->error(
+				'Quill Forms: could not process a submission',
+				array(
+					'code'     => 'quillforms_process_failed',
+					'form_id'  => $entry->form_id ?? null,
+					'entry_id' => $entry->ID ?? null,
+					'error'    => $e->getMessage(),
+				)
+			);
 		}
-
-		$this->process_automations( $data );
 	}
 }

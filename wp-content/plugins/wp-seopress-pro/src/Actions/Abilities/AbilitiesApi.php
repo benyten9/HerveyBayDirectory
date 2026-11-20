@@ -51,6 +51,12 @@ class AbilitiesApi implements ExecuteHooks {
 	 * @return void
 	 */
 	public function registerCategory() {
+		// These methods are public callbacks: guard the WP 6.9+ API here too, not
+		// only in hooks(), so a direct call on an older WordPress cannot fatal.
+		if ( ! function_exists( 'wp_register_ability_category' ) ) {
+			return;
+		}
+
 		if ( function_exists( 'wp_get_ability_category' ) && wp_get_ability_category( self::CATEGORY ) ) {
 			return;
 		}
@@ -70,6 +76,10 @@ class AbilitiesApi implements ExecuteHooks {
 	 * @return void
 	 */
 	public function registerAbilities() {
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+
 		wp_register_ability(
 			'seopress/get-technical-audit',
 			array(

@@ -215,6 +215,7 @@ class EmailIndividualSender extends AbstractIndividualMessageSender {
 			// Email will attempt to send using WordPress default mail system if no SMTP configured.
 
 			$emails = new Emails();
+			$emails->use_conversation_layout();
 
 			// Resolve sender identity via the shared resolver.
 			// `from_account = 'shared'` forces the shared/admin chain (skip personal lookup).

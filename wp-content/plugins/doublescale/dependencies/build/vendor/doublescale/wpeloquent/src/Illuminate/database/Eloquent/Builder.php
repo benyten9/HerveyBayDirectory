@@ -1,18 +1,18 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 use Closure;
 use Exception;
 use BadMethodCallException;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Traits\ForwardsCalls;
-use Illuminate\Database\Concerns\BuildsQueries;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Query\Builder as QueryBuilder;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Pagination\Paginator;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\ForwardsCalls;
+use DoubleScale\Vendor\Illuminate\Database\Concerns\BuildsQueries;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Relation;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder as QueryBuilder;
 /**
  * @property-read HigherOrderBuilderProxy $orWhere
  *
@@ -20,7 +20,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  */
 class Builder
 {
-    use BuildsQueries, \Illuminate\Database\Eloquent\Concerns\QueriesRelationships, ForwardsCalls;
+    use BuildsQueries, Concerns\QueriesRelationships, ForwardsCalls;
     /**
      * The base query builder instance.
      *
@@ -310,7 +310,7 @@ class Builder
         } elseif (!\is_null($result)) {
             return $result;
         }
-        throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(\get_class($this->model), $id);
+        throw (new ModelNotFoundException())->setModel(\get_class($this->model), $id);
     }
     /**
      * Find a model by its primary key or return fresh model instance.
@@ -382,7 +382,7 @@ class Builder
         if (!\is_null($model = $this->first($columns))) {
             return $model;
         }
-        throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(\get_class($this->model));
+        throw (new ModelNotFoundException())->setModel(\get_class($this->model));
     }
     /**
      * Execute the query and get the first result or call a callback.
@@ -495,7 +495,7 @@ class Builder
             try {
                 return $this->getModel()->newInstance()->{$name}();
             } catch (BadMethodCallException $e) {
-                throw \Illuminate\Database\Eloquent\RelationNotFoundException::make($this->getModel(), $name);
+                throw RelationNotFoundException::make($this->getModel(), $name);
             }
         });
         $nested = $this->relationsNestedUnder($name);
@@ -809,7 +809,7 @@ class Builder
                 // If the scope is a scope object, we will call the apply method on this scope
                 // passing in the builder and the model instance. After we run all of these
                 // scopes we will return back the builder instance to the outside caller.
-                if ($scope instanceof \Illuminate\Database\Eloquent\Scope) {
+                if ($scope instanceof Scope) {
                     $scope->apply($builder, $this->getModel());
                 }
             });
@@ -1045,7 +1045,7 @@ class Builder
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return $this
      */
-    public function setModel(\Illuminate\Database\Eloquent\Model $model)
+    public function setModel(Model $model)
     {
         $this->model = $model;
         $this->query->from($model->getTable());
@@ -1082,7 +1082,7 @@ class Builder
     public function __get($key)
     {
         if ($key === 'orWhere') {
-            return new \Illuminate\Database\Eloquent\HigherOrderBuilderProxy($this, $key);
+            return new HigherOrderBuilderProxy($this, $key);
         }
         throw new Exception("Property [{$key}] does not exist on the Eloquent builder instance.");
     }

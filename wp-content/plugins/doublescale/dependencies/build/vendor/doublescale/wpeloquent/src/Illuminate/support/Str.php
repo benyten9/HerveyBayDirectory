@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use DoubleScale\Vendor\Ramsey\Uuid\Uuid;
 use DoubleScale\Vendor\Ramsey\Uuid\UuidFactory;
-use Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
 use DoubleScale\Vendor\Ramsey\Uuid\Generator\CombGenerator;
 use DoubleScale\Vendor\Ramsey\Uuid\Codec\TimestampFirstCombCodec;
 class Str
@@ -150,7 +150,7 @@ class Str
      */
     public static function is($pattern, $value)
     {
-        $patterns = \Illuminate\Support\Arr::wrap($pattern);
+        $patterns = Arr::wrap($pattern);
         if (empty($patterns)) {
             return \false;
         }
@@ -257,7 +257,7 @@ class Str
      */
     public static function plural($value, $count = 2)
     {
-        return \Illuminate\Support\Pluralizer::plural($value, $count);
+        return Pluralizer::plural($value, $count);
     }
     /**
      * Pluralize the last word of an English, studly caps case string.
@@ -380,7 +380,7 @@ class Str
      */
     public static function singular($value)
     {
-        return \Illuminate\Support\Pluralizer::singular($value);
+        return Pluralizer::singular($value);
     }
     /**
      * Generate a URL friendly "slug" from a given string.

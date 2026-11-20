@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 
 /**
@@ -122,6 +122,14 @@ class Process {
 			}
 		}
 
+		// Lists and Tags mode can carry rule rows beside the list/tag picks —
+		// the campaign's "Exclude recent buyers" saves one in a third slot,
+		// `[ includes[], excludes[], rules[] ]`, and the Recipients list sends
+		// it as a plain row in the tagged flat list. They are AND-ed onto the
+		// list/tag result. Both readers below only know list/tag keys, so they
+		// are set aside first; until request 129 they were silently dropped.
+		$list_tag_rule_rows = $is_list_tag_format ? $this->list_tag_rule_rows() : array();
+
 		if ( $is_list_tag_format && ! $this->is_legacy_positional_list_tag_payload() ) {
 			// Re-split tagged flat list into the two-slot shape that
 			// filter_list_tag_format() reads. Rows missing an explicit
@@ -166,7 +174,11 @@ class Process {
 		}
 
 		if ( $is_list_tag_format ) {
-			return $this->filter_list_tag_format();
+			$this->filter_list_tag_format();
+			foreach ( $list_tag_rule_rows as $rule_row ) {
+				$this->query = $this->add_filter_to_query( $this->query, $rule_row );
+			}
+			return $this->query;
 		}
 
 		// Contacts UI sends a flat list of rows: [ { filter, group, ... }, ... ].
@@ -489,6 +501,44 @@ class Process {
 		}
 
 		return $filters;
+	}
+
+	/**
+	 * Rule rows inside a list/tag payload: top-level rows of the tagged flat
+	 * list, or rows in any slot of the positional shape.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function list_tag_rule_rows(): array {
+		$rows = array();
+
+		foreach ( $this->filters as $row_or_slot ) {
+			if ( ! is_array( $row_or_slot ) ) {
+				continue;
+			}
+			if ( $this->is_rule_row( $row_or_slot ) ) {
+				$rows[] = $row_or_slot;
+				continue;
+			}
+			foreach ( $row_or_slot as $row ) {
+				if ( is_array( $row ) && $this->is_rule_row( $row ) ) {
+					$rows[] = $row;
+				}
+			}
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Whether a row is a rule (Filter or RuleItem format), not a list/tag pick.
+	 *
+	 * @param array<mixed> $row Row.
+	 */
+	private function is_rule_row( array $row ): bool {
+		return ( array_key_exists( 'filter', $row ) || array_key_exists( 'rule', $row ) )
+			&& ! array_key_exists( 'list', $row )
+			&& ! array_key_exists( 'tag', $row );
 	}
 
 	/**

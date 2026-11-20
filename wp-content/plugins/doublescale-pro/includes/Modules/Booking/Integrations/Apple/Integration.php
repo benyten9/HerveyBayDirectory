@@ -12,7 +12,7 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Apple;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Abstracts\Integration as Abstract_Integration;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
@@ -414,25 +414,16 @@ class Integration extends Abstract_Integration {
 			$this->set_host( $integration_calendar );
 			$apple_integration = $this->host->get_meta( $this->meta_key, array() );
 
+			// This host never connected Apple Calendar: nothing to sync, and nothing wrong.
 			if ( empty( $apple_integration ) ) {
-				$booking->logs()->create(
-					array(
-						'type'    => 'error',
-						'message' => __( 'Apple Calendar integration not configured.', 'doublescale' ),
-					)
-				);
 				return $booking;
 			}
 
 			$default_account = $this->pick_host_account_for_default_calendar_sync( $apple_integration );
 
 			if ( ! $default_account ) {
-				$booking->logs()->create(
-					array(
-						'type'    => 'error',
-						'message' => __( 'No default calendar found in any Apple account.', 'doublescale' ),
-					)
-				);
+				// No default remote calendar: skip outbound sync. The booking
+				// already exists — do not log this as an error.
 				return $booking;
 			}
 

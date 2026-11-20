@@ -8,19 +8,19 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Laravel;
+namespace DoubleScale\Vendor\Carbon\Laravel;
 
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterval;
-use Carbon\CarbonPeriod;
-use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
-use Illuminate\Events\Dispatcher;
-use Illuminate\Events\EventDispatcher;
-use Illuminate\Support\Carbon as IlluminateCarbon;
-use Illuminate\Support\Facades\Date;
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Carbon\CarbonImmutable;
+use DoubleScale\Vendor\Carbon\CarbonInterval;
+use DoubleScale\Vendor\Carbon\CarbonPeriod;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
+use DoubleScale\Vendor\Illuminate\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Events\EventDispatcher;
+use DoubleScale\Vendor\Illuminate\Support\Carbon as IlluminateCarbon;
+use DoubleScale\Vendor\Illuminate\Support\Facades\Date;
 use Throwable;
-class ServiceProvider extends \Illuminate\Support\ServiceProvider
+class ServiceProvider extends \DoubleScale\Vendor\Illuminate\Support\ServiceProvider
 {
     /** @var callable|null */
     protected $appGetter = null;
@@ -43,7 +43,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $service = $this;
         $events = $this->app['events'];
         if ($this->isEventDispatcher($events)) {
-            $events->listen(\class_exists('Illuminate\\Foundation\\Events\\LocaleUpdated') ? 'Illuminate\\Foundation\\Events\\LocaleUpdated' : 'locale.changed', function () use($service) {
+            $events->listen(\class_exists('DoubleScale\\Vendor\\Illuminate\\Foundation\\Events\\LocaleUpdated') ? 'Illuminate\\Foundation\\Events\\LocaleUpdated' : 'locale.changed', function () use($service) {
                 $service->updateLocale();
             });
         }

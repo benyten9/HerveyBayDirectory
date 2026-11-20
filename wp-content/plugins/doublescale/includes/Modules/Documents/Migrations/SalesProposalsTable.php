@@ -33,6 +33,7 @@ class SalesProposalsTable extends Migration {
 			template TINYINT UNSIGNED NOT NULL DEFAULT 1,
 			template_color VARCHAR(7) NULL DEFAULT NULL,
 			contact_id BIGINT(20) UNSIGNED NOT NULL,
+			company_id BIGINT(20) UNSIGNED NULL,
 			assigned_user_id BIGINT(20) UNSIGNED NULL,
 			date DATE NULL,
 			open_till DATE NULL,
@@ -70,6 +71,7 @@ class SalesProposalsTable extends Migration {
 			UNIQUE KEY proposal_number (proposal_number),
 			UNIQUE KEY hash (hash),
 			KEY idx_contact_status (contact_id, status),
+			KEY idx_company (company_id),
 			KEY idx_assigned_status (assigned_user_id, status),
 			KEY idx_created (created_at)";
 	}

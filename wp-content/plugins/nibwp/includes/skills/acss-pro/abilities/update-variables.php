@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/acss-pro-update-variables', [
     'label'       => __('ACSS Pro — Update ACSS variables', 'nibwp'),
-    'description' => __('Persist a validated ACSS config into the ACSS settings option (mode controlled by preflight: preserve_keep_existing | overwrite_with_extracted | merge_only_new_keys). Re-runs the validator at the persist gate. Requires _preflight_token.', 'nibwp'),
+    'description' => 'Persist a validated ACSS config into the ACSS settings option (mode controlled by preflight: preserve_keep_existing | overwrite_with_extracted | merge_only_new_keys). Re-runs the validator at the persist gate. Requires _preflight_token.',
     'category'    => 'acss-pro',
     'input_schema' => [
         'type'     => 'object',

@@ -66,8 +66,21 @@ final class Permissions {
 			return false;
 		}
 
-		return self::user_has_role( UserRoles::SALES_REP, $user_id )
-			|| self::user_has_role( UserRoles::SALES_MANAGER, $user_id );
+		return self::user_has_role( UserRoles::CRM_AGENT, $user_id )
+			|| self::user_has_role( UserRoles::SALES_REP, $user_id )
+			|| self::user_has_role( UserRoles::SALES_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::AUTOMATION_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::AUTOMATION_AGENT, $user_id )
+			|| self::user_has_role( UserRoles::CAMPAIGN_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::CAMPAIGN_AGENT, $user_id )
+			|| self::user_has_role( UserRoles::SUPPORT_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::SUPPORT_AGENT, $user_id )
+			|| self::user_has_role( UserRoles::BOOKING_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::BOOKING_AGENT, $user_id )
+			|| self::user_has_role( UserRoles::PROJECT_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::PROJECT_MEMBER, $user_id )
+			|| self::user_has_role( UserRoles::HELP_CENTER_MANAGER, $user_id )
+			|| self::user_has_role( UserRoles::HELP_CENTER_AGENT, $user_id );
 	}
 
 	/**
@@ -144,6 +157,306 @@ final class Permissions {
 	 */
 	public static function is_sales_rep( $user_id = null ) {
 		return self::user_has_role( UserRoles::SALES_REP, $user_id );
+	}
+
+	/**
+	 * Whether the user holds the CRM Agent role (membership, like the other
+	 * `is_*` role checks).
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function is_crm_agent( $user_id = null ) {
+		return self::user_has_role( UserRoles::CRM_AGENT, $user_id );
+	}
+
+	/**
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function is_campaign_manager( $user_id = null ) {
+		return self::user_has_role( UserRoles::CAMPAIGN_MANAGER, $user_id );
+	}
+
+	/**
+	 * Campaign Agent: their own campaigns and sequences, to their own contacts.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function is_campaign_agent( $user_id = null ) {
+		return self::user_has_role( UserRoles::CAMPAIGN_AGENT, $user_id );
+	}
+
+	/**
+	 * Whether the user holds the Team Member base role (admin access only;
+	 * an add-on decides what they work on).
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function is_team_member( $user_id = null ) {
+		return self::user_has_role( UserRoles::TEAM_MEMBER, $user_id );
+	}
+
+	/**
+	 * Anyone who runs campaigns and sequences: campaign managers (every
+	 * campaign), and Campaign Agents and CRM Agents (their own).
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_use_campaigns( $user_id = null ) {
+		return self::can_manage_campaigns( $user_id ) || self::is_campaign_agent( $user_id ) || self::is_crm_agent( $user_id );
+	}
+
+	/**
+	 * The contact whose campaigns this user's campaigns may reach: the user,
+	 * when they are an agent limited to their own contacts; null (no limit)
+	 * for managers, or when everyone sees all contacts.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return int|null
+	 */
+	public static function campaign_audience_owner( $user_id = null ): ?int {
+		$user_id = self::set_current_user_id( $user_id );
+		if ( $user_id <= 0 || self::can_manage_campaigns( $user_id ) ) {
+			return null;
+		}
+
+		return self::is_scoped_agent( $user_id ) ? (int) $user_id : null;
+	}
+
+	/**
+	 * Every campaign, sequence and email template: CRM Managers (and
+	 * administrators) and Campaign Managers. Forms, lists and tags stay with
+	 * CRM Managers.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_manage_campaigns( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		return self::has_crm_manager_access( $user_id ) || self::is_crm_manager( $user_id ) || self::is_campaign_manager( $user_id );
+	}
+
+	/**
+	 * Site option: what agent-level team members see in Contacts.
+	 * 'own' (default) — contacts they own, contacts shared with them, and
+	 * unassigned contacts; 'all' — every contact.
+	 *
+	 * Existing contacts start unassigned, so on upgrade agents still see all
+	 * of them; only contacts another agent creates afterwards are private.
+	 *
+	 * Its own option, not a key in the shared settings array: that array is
+	 * saved whole, so a slow request holding an older copy could silently
+	 * switch privacy back. Access rules must not be lost that way.
+	 */
+	public const CONTACT_VISIBILITY_OPTION = 'doublescale_contact_visibility';
+
+	/**
+	 * Roles that make someone a manager of at least one module. Holding any
+	 * of them means the person sees every contact, whatever the setting.
+	 * Help Center Manager is not one: it manages articles only and gives no
+	 * contact access, so a CRM or Support Agent who also manages the help
+	 * center stays an agent (scoped contacts).
+	 *
+	 * @return string[]
+	 */
+	public static function manager_tier_roles(): array {
+		return array(
+			UserRoles::CRM_MANAGER,
+			UserRoles::SALES_MANAGER,
+			UserRoles::SUPPORT_MANAGER,
+			UserRoles::BOOKING_MANAGER,
+			UserRoles::PROJECT_MANAGER,
+			UserRoles::AUTOMATION_MANAGER,
+			UserRoles::CAMPAIGN_MANAGER,
+		);
+	}
+
+	/**
+	 * Agent-level roles: the general CRM Agent and every module agent role.
+	 *
+	 * @return string[]
+	 */
+	public static function agent_tier_roles(): array {
+		return array(
+			UserRoles::CRM_AGENT,
+			UserRoles::SALES_REP,
+			UserRoles::SUPPORT_AGENT,
+			UserRoles::BOOKING_AGENT,
+			UserRoles::PROJECT_MEMBER,
+			UserRoles::AUTOMATION_AGENT,
+			UserRoles::CAMPAIGN_AGENT,
+			UserRoles::HELP_CENTER_AGENT,
+			UserRoles::TEAM_MEMBER,
+		);
+	}
+
+	/**
+	 * The site's contact visibility for agents: 'all' or 'own'.
+	 *
+	 * @return string
+	 */
+	public static function contact_visibility(): string {
+		return 'all' === get_option( self::CONTACT_VISIBILITY_OPTION, 'own' ) ? 'all' : 'own';
+	}
+
+	/**
+	 * @param string $mode 'all' or 'own'.
+	 * @return void
+	 */
+	public static function set_contact_visibility( string $mode ): void {
+		update_option( self::CONTACT_VISIBILITY_OPTION, 'all' === $mode ? 'all' : 'own', true );
+	}
+
+	/**
+	 * Whether the user works at agent level only: holds an agent role and no
+	 * manager role (and is not an administrator / CRM Manager).
+	 *
+	 * Independent of the visibility setting, so ownership and sharing are
+	 * recorded the same way whichever mode the site is in — switching to
+	 * private later then works from day one.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function is_agent_tier( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		if ( self::is_crm_manager( $user_id ) ) {
+			return false;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+
+		$roles = (array) $user->roles;
+		if ( array_intersect( self::manager_tier_roles(), $roles ) ) {
+			return false;
+		}
+
+		return (bool) array_intersect( self::agent_tier_roles(), $roles );
+	}
+
+	/**
+	 * Whether the user is limited to their own (plus shared and unassigned)
+	 * contacts right now: an agent-level user on a site set to 'own'.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function is_scoped_agent( $user_id = null ) {
+		return 'own' === self::contact_visibility() && self::is_agent_tier( $user_id );
+	}
+
+	/**
+	 * The one question every own-scope branch asks: may this user see EVERY
+	 * record of a module, or only their own?
+	 *
+	 * Rule: holding any manager-tier role for a module grants see-all for that
+	 * module (role MEMBERSHIP, the same way `user_has_role()`, the Support,
+	 * Booking and Sales caps and the Tasks controller already decide). A CRM
+	 * Agent who is also Sales Manager sees every deal but still only their own
+	 * contacts, tickets and bookings.
+	 *
+	 * Contacts follow the visibility setting (default 'own'); for every other
+	 * module each role answers exactly as its module's own branch did before
+	 * this method existed. The CRM Agent adds "own" answers (deals, tasks),
+	 * mirroring the Sales Rep it contains.
+	 *
+	 * @param string   $module  One of: contacts, deals, sales, tasks, projects,
+	 *                          support, booking, campaigns, lists, tags,
+	 *                          templates, automations, activities, reports,
+	 *                          dashboard.
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool True when the user sees all records of the module.
+	 */
+	public static function sees_all_records( $module, $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		// Administrators and CRM Managers see everything, everywhere.
+		if ( self::is_crm_manager( $user_id ) ) {
+			return true;
+		}
+
+		switch ( (string) $module ) {
+			case 'contacts':
+				// Everyone sees every contact unless the site limits agents
+				// ('own'), and then only agent-level users are limited. Any
+				// manager role keeps the team-wide view.
+				return ! self::is_scoped_agent( $user_id );
+
+			case 'deals':
+				// Exactly the old `is_sales_rep() && ! has_sales_manager_access()`
+				// rule, with the CRM Agent added. Other roles that can read deals
+				// (project staff) keep seeing every deal, as before.
+				if ( self::has_sales_manager_access( $user_id ) ) {
+					return true;
+				}
+				return ! self::is_sales_rep( $user_id ) && ! self::is_crm_agent( $user_id );
+
+			case 'sales':
+				return user_can( $user_id, 'doublescale_manage_all_sales' )
+					|| user_can( $user_id, 'doublescale_manage' );
+
+			case 'tasks':
+				// Mirrors TaskAccess::is_own_tasks_only(): Sales Reps and scoped
+				// agents work their own tasks. The team-wide view belongs to the
+				// task managers — Sales Managers and Project Managers; every
+				// other role (Project Member, Helpdesk, Booking, Campaign,
+				// Automation staff) works on their own tasks.
+				if ( self::is_sales_rep( $user_id ) || self::is_crm_agent( $user_id ) ) {
+					return false;
+				}
+				return self::has_sales_manager_access( $user_id )
+					|| self::is_project_manager( $user_id )
+					|| self::can_manage_all_projects( $user_id );
+
+			case 'projects':
+				return self::can_manage_all_projects( $user_id );
+
+			case 'support':
+				return self::can_manage_all_tickets( $user_id );
+
+			case 'booking':
+				return user_can( $user_id, 'doublescale_booking_read_all_bookings' );
+
+			case 'automations':
+				return self::can_manage_all_automations( $user_id );
+
+			case 'campaigns':
+			case 'lists':
+			case 'tags':
+			case 'templates':
+				// Campaign managers see every campaign; a Campaign Agent
+				// sees the ones they created.
+				return self::can_manage_campaigns( $user_id );
+
+			case 'activities':
+			case 'reports':
+			case 'dashboard':
+				return self::has_sales_manager_access( $user_id );
+		}
+
+		// An unknown module name must never widen access.
+		return false;
+	}
+
+	/**
+	 * Whether the user may set or change a contact's owner.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_assign_contact_owner( $user_id = null ) {
+		// Choosing an owner changes the contact, so it follows the edit rule:
+		// administrators and CRM Managers, not module managers.
+		return self::can_edit_any_contact( $user_id );
 	}
 
 	/**
@@ -322,11 +635,19 @@ final class Permissions {
 	 * @return bool
 	 */
 	public static function can_access_tasks_api( $user_id = null ) {
-		if ( self::has_sales_rep_access( $user_id ) ) {
+		if ( self::has_agent_access( $user_id ) ) {
 			return true;
 		}
 
-		return self::has_project_access( $user_id );
+		if ( self::has_project_access( $user_id ) ) {
+			return true;
+		}
+
+		// Every team role works on tasks — Helpdesk, Booking, Campaign and
+		// Automation staff included. Who sees which tasks is
+		// sees_all_records( 'tasks' ): outside the task managers, their own.
+		$user_id = self::set_current_user_id( $user_id );
+		return user_can( $user_id, 'manage_options' ) || self::check_user_has_role( $user_id );
 	}
 
 	/**
@@ -340,7 +661,7 @@ final class Permissions {
 	 * @return bool
 	 */
 	public static function can_read_custom_field_definitions( $scope = null, $user_id = null ) {
-		if ( self::has_sales_rep_access( $user_id ) ) {
+		if ( self::has_agent_access( $user_id ) ) {
 			return true;
 		}
 
@@ -354,14 +675,19 @@ final class Permissions {
 			return true;
 		}
 
+		// Everyone who opens contacts reads their custom fields.
+		if ( 'contact' === $scope && self::can_read_contacts( $user_id ) ) {
+			return true;
+		}
+
 		return false;
 	}
 
 	/**
 	 * Check if the user may read shared taxonomy terms (tags, lists).
 	 *
-	 * Any DoubleScale app user needs this for pickers on contacts, deals, and
-	 * projects. Creating or deleting terms remains CRM-manager-only.
+	 * Any customer-facing DoubleScale user needs this for pickers on contacts, deals, and
+	 * projects ({@see self::has_crm_or_support_access()}). Creating or deleting terms remains CRM-manager-only.
 	 *
 	 * @param int|null $user_id User ID (null for current user).
 	 * @return bool
@@ -369,24 +695,61 @@ final class Permissions {
 	public static function can_read_taxonomy_terms( $user_id = null ) {
 		$user_id = self::set_current_user_id( $user_id );
 
-		return user_can( $user_id, 'doublescale_access' );
+		// Tag and list names describe the customer base: not for the Help Center
+		// or Team Member roles, which hold `doublescale_access` for the shell only.
+		return user_can( $user_id, 'doublescale_access' ) && self::has_crm_or_support_access( $user_id );
 	}
 
 	/**
 	 * Check if the user may read contacts (list/detail).
 	 *
-	 * Sales/CRM users retain access. Project users need read access to pick a
-	 * related contact when creating or editing projects.
+	 * Every team role opens contacts: CRM and Sales roles work them, and the
+	 * module roles (Campaigns, Support, Booking, Projects, Automations) read
+	 * the customers behind their work. Which contacts follows the Contact
+	 * visibility setting ({@see sees_all_records()}); changing one is for its
+	 * owner, CRM Managers and administrators ({@see can_edit_any_contact()}).
 	 *
 	 * @param int|null $user_id User ID (null for current user).
 	 * @return bool
 	 */
 	public static function can_read_contacts( $user_id = null ) {
-		if ( self::has_sales_rep_access( $user_id ) ) {
+		if ( self::has_agent_access( $user_id ) ) {
 			return true;
 		}
 
-		return self::has_project_access( $user_id );
+		// Campaigns build audiences from contacts (read only); a Campaign
+		// Agent's list is narrowed like any agent's.
+		if ( self::is_campaign_manager( $user_id ) || self::is_campaign_agent( $user_id ) ) {
+			return true;
+		}
+
+		return self::has_project_access( $user_id )
+			|| self::has_support_access( $user_id )
+			|| self::has_booking_access( $user_id )
+			|| self::can_access_automations( $user_id );
+	}
+
+	/**
+	 * Whether the user sees a contact's website visits: administrators, CRM
+	 * Managers, CRM Agents, Sales Managers and Sales Reps.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_view_website_tracking( $user_id = null ) {
+		return self::has_agent_access( $user_id );
+	}
+
+	/**
+	 * Whether the user may edit and delete EVERY contact: administrators and
+	 * CRM Managers. Everyone else changes only the contacts they own; module
+	 * managers and collaborators view the rest.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function can_edit_any_contact( $user_id = null ) {
+		return self::is_crm_manager( $user_id );
 	}
 
 	/**
@@ -399,7 +762,7 @@ final class Permissions {
 	 * @return bool
 	 */
 	public static function can_read_deals( $user_id = null ) {
-		if ( self::has_sales_rep_access( $user_id ) ) {
+		if ( self::has_agent_access( $user_id ) ) {
 			return true;
 		}
 
@@ -416,7 +779,7 @@ final class Permissions {
 	 * @return bool
 	 */
 	public static function can_send_contact_message( $user_id = null ) {
-		if ( self::has_sales_rep_access( $user_id ) ) {
+		if ( self::has_agent_access( $user_id ) ) {
 			return true;
 		}
 
@@ -435,7 +798,17 @@ final class Permissions {
 	 * @return true|WP_Error
 	 */
 	public static function validate_send_contact_message_access( $contact_id, $project_id = null, $deal_id = null ) {
-		if ( self::has_sales_rep_access() ) {
+		// An agent limited to their own contacts messages only contacts they
+		// can see; anything else answers like a missing contact.
+		if ( self::is_scoped_agent() ) {
+			$contact = \DoubleScale\Modules\Contacts\Models\ContactModel::find( absint( $contact_id ) );
+			if ( $contact && \DoubleScale\Core\Scope\OwnerScope::current()->can_view_contact( $contact ) ) {
+				return true;
+			}
+			return new WP_Error( 'not_found', __( 'Contact not found', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		if ( self::has_agent_access() ) {
 			return true;
 		}
 
@@ -461,7 +834,7 @@ final class Permissions {
 		}
 
 		if ( ! class_exists( '\DoubleScale\Pro\Modules\Projects\Capabilities' )
-			|| ! class_exists( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel' ) ) {
+			|| ! doublescale_module_data_ready( 'projects' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'Sorry, you are not allowed to do that.', 'doublescale' ),
@@ -640,6 +1013,7 @@ final class Permissions {
 		$roles             = (array) $user->roles;
 		$broader_crm_roles = array(
 			UserRoles::CRM_MANAGER,
+			UserRoles::CRM_AGENT,
 			UserRoles::SALES_MANAGER,
 			UserRoles::SALES_REP,
 		);
@@ -654,6 +1028,10 @@ final class Permissions {
 
 		$project_roles = array( UserRoles::PROJECT_MANAGER, UserRoles::PROJECT_MEMBER );
 		if ( array_intersect( $project_roles, $roles ) ) {
+			return false;
+		}
+
+		if ( array_intersect( self::automation_roles(), $roles ) ) {
 			return false;
 		}
 
@@ -683,6 +1061,7 @@ final class Permissions {
 		$roles             = (array) $user->roles;
 		$broader_crm_roles = array(
 			UserRoles::CRM_MANAGER,
+			UserRoles::CRM_AGENT,
 			UserRoles::SALES_MANAGER,
 			UserRoles::SALES_REP,
 		);
@@ -697,6 +1076,15 @@ final class Permissions {
 
 		$project_roles = array( UserRoles::PROJECT_MANAGER, UserRoles::PROJECT_MEMBER );
 		if ( array_intersect( $project_roles, $roles ) ) {
+			return false;
+		}
+
+		if ( array_intersect( self::automation_roles(), $roles ) ) {
+			return false;
+		}
+
+		// Help Center staff keep their articles in the menu.
+		if ( array_intersect( self::help_center_roles(), $roles ) ) {
 			return false;
 		}
 
@@ -726,6 +1114,7 @@ final class Permissions {
 		$roles             = (array) $user->roles;
 		$broader_crm_roles = array(
 			UserRoles::CRM_MANAGER,
+			UserRoles::CRM_AGENT,
 			UserRoles::SALES_MANAGER,
 			UserRoles::SALES_REP,
 		);
@@ -743,8 +1132,147 @@ final class Permissions {
 			return false;
 		}
 
+		if ( array_intersect( self::automation_roles(), $roles ) ) {
+			return false;
+		}
+
+		// Help Center staff keep their articles in the menu.
+		if ( array_intersect( self::help_center_roles(), $roles ) ) {
+			return false;
+		}
+
 		$project_roles = array( UserRoles::PROJECT_MANAGER, UserRoles::PROJECT_MEMBER );
 		return (bool) array_intersect( $project_roles, $roles );
+	}
+
+	/**
+	 * The two automation roles.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function automation_roles(): array {
+		return array( UserRoles::AUTOMATION_MANAGER, UserRoles::AUTOMATION_AGENT );
+	}
+
+	/**
+	 * Whether the user's ONLY DoubleScale roles are automation roles. Scopes
+	 * the admin menu down to Automations for dedicated automation staff.
+	 *
+	 * @param int|null $user_id User ID (null for current user)
+	 * @return bool
+	 */
+	public static function is_automation_only( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+		$user    = get_userdata( $user_id );
+		if ( ! $user || user_can( $user_id, 'manage_options' ) ) {
+			return false;
+		}
+
+		$roles = (array) $user->roles;
+		$other = array(
+			UserRoles::CRM_MANAGER,
+			UserRoles::SALES_MANAGER,
+			UserRoles::SALES_REP,
+			UserRoles::SUPPORT_MANAGER,
+			UserRoles::SUPPORT_AGENT,
+			UserRoles::BOOKING_MANAGER,
+			UserRoles::BOOKING_AGENT,
+			UserRoles::PROJECT_MANAGER,
+			UserRoles::PROJECT_MEMBER,
+			UserRoles::HELP_CENTER_MANAGER,
+			UserRoles::HELP_CENTER_AGENT,
+		);
+		if ( array_intersect( $other, $roles ) ) {
+			return false;
+		}
+
+		return (bool) array_intersect( self::automation_roles(), $roles );
+	}
+
+	/**
+	 * The two help center roles.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function help_center_roles(): array {
+		return array( UserRoles::HELP_CENTER_MANAGER, UserRoles::HELP_CENTER_AGENT );
+	}
+
+	/**
+	 * Whether the user's ONLY DoubleScale roles are help center roles. Scopes
+	 * the admin menu down to the Help Center (plus the Dashboard and Tasks
+	 * every team role has) for people who only write help articles.
+	 *
+	 * Helpdesk staff who also write articles stay "support only": the
+	 * Helpdesk landing keeps the Help Center beside the inbox.
+	 *
+	 * @param int|null $user_id User ID (null for current user)
+	 * @return bool
+	 */
+	public static function is_help_center_only( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+		$user    = get_userdata( $user_id );
+		if ( ! $user || user_can( $user_id, 'manage_options' ) ) {
+			return false;
+		}
+
+		$roles = (array) $user->roles;
+		$other = array_diff( UserRoles::get_known_role_slugs(), self::help_center_roles() );
+		if ( array_intersect( $other, $roles ) ) {
+			return false;
+		}
+
+		// With the help center off there is no Help Center page to land on
+		// (the admin would redirect to it forever).
+		return (bool) array_intersect( self::help_center_roles(), $roles )
+			&& UserRoles::is_role_module_enabled( UserRoles::HELP_CENTER_MANAGER );
+	}
+
+	/**
+	 * Whether the user may open the Automations module at all (their own
+	 * workflows at least). Administrators and CRM Managers always may.
+	 *
+	 * @param int|null $user_id User ID (null for current user)
+	 * @return bool
+	 */
+	public static function can_access_automations( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+		return self::has_crm_manager_access( $user_id ) || user_can( $user_id, 'doublescale_view_automations' );
+	}
+
+	/**
+	 * Whether the user sees and edits every workflow, and gets every
+	 * automation alert: administrators, CRM Managers and Automation Managers.
+	 *
+	 * @param int|null $user_id User ID (null for current user)
+	 * @return bool
+	 */
+	public static function can_manage_all_automations( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+		return self::has_crm_manager_access( $user_id ) || user_can( $user_id, 'doublescale_manage_all_automations' );
+	}
+
+	/**
+	 * Whether the user may open and change one workflow: any workflow for
+	 * managers, only the ones they created for Automation Agents.
+	 *
+	 * @param object|int $automation Automation model (or id).
+	 * @param int|null   $user_id    User ID (null for current user)
+	 * @return bool
+	 */
+	public static function can_edit_automation( $automation, $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+		if ( self::can_manage_all_automations( $user_id ) ) {
+			return true;
+		}
+		if ( ! user_can( $user_id, 'doublescale_manage_own_automations' ) ) {
+			return false;
+		}
+		if ( is_numeric( $automation ) ) {
+			$automation = \DoubleScale\Modules\Automations\Models\AutomationModel::find( (int) $automation );
+		}
+
+		return $automation && (int) $automation->created_by === (int) $user_id && $user_id > 0;
 	}
 
 
@@ -753,7 +1281,8 @@ final class Permissions {
 	 *
 	 * Sales Reps must never delete contacts — including when they also hold the
 	 * WordPress `administrator` role but are scoped to Sales Rep in Team settings.
-	 * CRM Managers and Sales Managers retain delete access.
+	 * Administrators and CRM Managers delete any contact; everyone else who
+	 * reads contacts deletes only the ones they own (checked per record).
 	 *
 	 * @param int|null $user_id User ID (null for current user).
 	 * @return bool
@@ -769,11 +1298,47 @@ final class Permissions {
 			return false;
 		}
 
-		if ( self::is_crm_manager( $user_id ) ) {
+		if ( self::can_edit_any_contact( $user_id ) ) {
 			return true;
 		}
 
-		return self::user_has_role( UserRoles::SALES_MANAGER, $user_id );
+		// Everyone else deletes only the contacts they OWN; the delete
+		// handlers enforce ownership per record (collaborating is not enough,
+		// and a module manager's team-wide view is read only).
+		return self::can_read_contacts( $user_id );
+	}
+
+	/**
+	 * Whether the user works with customers: an administrator, a CRM Manager,
+	 * or anyone holding a CRM, Sales, Support, Booking, Project, Automation or
+	 * Campaign role. NOT the Help Center roles (articles only) and not Team
+	 * Member (add-on areas only): they hold `doublescale_access` for the admin
+	 * shell, which is no proof they may open customer data or shared settings.
+	 *
+	 * Gate shared-inbox, shared-email and webhook-address routes with this (or a
+	 * stricter check), never with `doublescale_access` alone.
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function has_crm_or_support_access( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+		if ( $user_id <= 0 || ! user_can( $user_id, 'doublescale_access' ) ) {
+			return false;
+		}
+		if ( user_can( $user_id, 'manage_options' ) || self::is_crm_manager( $user_id ) ) {
+			return true;
+		}
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+		$customer_roles = array_diff(
+			UserRoles::get_known_role_slugs(),
+			array( UserRoles::HELP_CENTER_MANAGER, UserRoles::HELP_CENTER_AGENT, UserRoles::TEAM_MEMBER )
+		);
+
+		return (bool) array_intersect( $customer_roles, (array) $user->roles );
 	}
 
 	/**
@@ -822,6 +1387,23 @@ final class Permissions {
 	 * @param int|null $user_id User ID (null for current user)
 	 * @return bool True if user has sales rep access
 	 */
+	/**
+	 * Sales-tier access for working records: Sales Rep and above, plus the
+	 * CRM Agent. Holding it says nothing about *which* records — callers
+	 * narrow with {@see \DoubleScale\Core\Scope\OwnerScope}.
+	 *
+	 * Kept separate from has_sales_rep_access() so the CRM Agent is added to
+	 * each surface deliberately (team reports, for example, still are not).
+	 *
+	 * @param int|null $user_id User ID (null for current user).
+	 * @return bool
+	 */
+	public static function has_agent_access( $user_id = null ) {
+		$user_id = self::set_current_user_id( $user_id );
+
+		return self::has_sales_rep_access( $user_id ) || self::is_crm_agent( $user_id );
+	}
+
 	public static function has_sales_rep_access( $user_id = null ) {
 		$user_id = self::set_current_user_id( $user_id );
 
@@ -1014,12 +1596,17 @@ final class Permissions {
 
 		$roles = (array) $user->roles;
 
-		// Priority order: Administrator > CRM Manager > Sales Manager > Sales Rep
-		// > Support Manager > Support Agent > Booking Manager > Booking Agent
-		// > Project Manager > Project Member.
+		// Priority order: Administrator > CRM Manager > CRM Agent > Sales Manager
+		// > Sales Rep > Support Manager > Support Agent > Booking Manager
+		// > Booking Agent > Project Manager > Project Member > Automation Manager
+		// > Automation Agent > Campaign Manager > Campaign Agent
+		// > Help Center Manager > Help Center Agent > Team Member. Every role in
+		// UserRoles::get_roles() must be listed, or its holders count as having
+		// none (TeamRoleDashboardTest).
 		$priority = array(
 			UserRoles::ADMINISTRATOR,
 			UserRoles::CRM_MANAGER,
+			UserRoles::CRM_AGENT,
 			UserRoles::SALES_MANAGER,
 			UserRoles::SALES_REP,
 			UserRoles::SUPPORT_MANAGER,
@@ -1028,6 +1615,13 @@ final class Permissions {
 			UserRoles::BOOKING_AGENT,
 			UserRoles::PROJECT_MANAGER,
 			UserRoles::PROJECT_MEMBER,
+			UserRoles::AUTOMATION_MANAGER,
+			UserRoles::AUTOMATION_AGENT,
+			UserRoles::CAMPAIGN_MANAGER,
+			UserRoles::CAMPAIGN_AGENT,
+			UserRoles::HELP_CENTER_MANAGER,
+			UserRoles::HELP_CENTER_AGENT,
+			UserRoles::TEAM_MEMBER,
 		);
 
 		foreach ( $priority as $role ) {

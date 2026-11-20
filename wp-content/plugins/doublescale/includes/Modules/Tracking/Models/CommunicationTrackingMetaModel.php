@@ -4,7 +4,7 @@ namespace DoubleScale\Modules\Tracking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Core\MergeTags\MergeTagsManager;

@@ -11,8 +11,6 @@ namespace DoubleScale\Modules\Campaigns\Services;
 
 defined( 'ABSPATH' ) || exit;
 
-use DoubleScale\Modules\Campaigns\Models\TemplateModel;
-use DoubleScale\Modules\Campaigns\Services\TemplateFieldMapper;
 use DoubleScale\Core\Constants\CampaignChannel;
 
 /**
@@ -126,6 +124,18 @@ class CampaignTemplateFactory {
 	 * @throws \InvalidArgumentException
 	 */
 	private function get_template_processor( $campaign_type ) {
+		// The engine that owns the channel saves its own templates — Pro's
+		// WhatsApp engine once it ships one — so a campaign is never split
+		// across two implementations. Engines without a processor of their own
+		// fall through to the ones below.
+		$engine = ChannelEngineRegistry::get( (string) $campaign_type );
+		if ( $engine && method_exists( $engine, 'get_template_processor' ) ) {
+			$processor = $engine->get_template_processor();
+			if ( $processor ) {
+				return $processor;
+			}
+		}
+
 		switch ( $campaign_type ) {
 			case CampaignChannel::STR_EMAIL:
 			case CampaignChannel::STR_EMAIL_SEQUENCE:
@@ -142,174 +152,6 @@ class CampaignTemplateFactory {
 				// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message, not direct output.
 				throw new \InvalidArgumentException( "Unsupported campaign type: {$campaign_type}" );
 		}
-	}
-}
-
-/**
- * Template Processor Interface
- */
-interface Template_Processor_Interface {
-
-	/**
-	 * Process template data and create/update template
-	 *
-	 * @param array  $template_data Template data
-	 * @param string $campaign_status Campaign status (draft, scheduled, etc.)
-	 * @return TemplateModel|null
-	 */
-	public function process( array $template_data, $campaign_status = 'draft' );
-
-	/**
-	 * Get default template name
-	 *
-	 * @return string
-	 */
-	public function get_default_name();
-
-	/**
-	 * Validate template data
-	 *
-	 * @param array  $template_data Template data
-	 * @param string $campaign_status Campaign status (draft, scheduled, etc.)
-	 * @return bool
-	 */
-	public function validate( array $template_data, $campaign_status = 'draft' );
-}
-
-/**
- * Abstract Template Processor
- */
-abstract class Abstract_Template_Processor implements Template_Processor_Interface {
-
-	/**
-	 * Campaign type
-	 *
-	 * @var string
-	 */
-	protected $campaign_type;
-
-	/**
-	 * Constructor
-	 *
-	 * @param string $campaign_type Campaign type (email, sms, whatsapp)
-	 */
-	public function __construct( $campaign_type ) {
-		$this->campaign_type = $campaign_type;
-	}
-
-	/**
-	 * Process template data
-	 *
-	 * @param array  $template_data Template data
-	 * @param string $campaign_status Campaign status (draft, scheduled, etc.)
-	 * @return TemplateModel|null
-	 */
-	public function process( array $template_data, $campaign_status = 'draft' ) {
-		if ( ! $this->validate( $template_data, $campaign_status ) ) {
-			return null;
-		}
-
-		$template_id = $template_data['template_id'] ?? null;
-		$hidden      = $template_data['hidden'] ?? 1;
-
-		// If campaign is NOT draft, create new template to preserve original
-		// Only update existing template if campaign is draft
-		if ( $campaign_status !== 'draft' ) {
-			$template_id = null; // Force creation of new template
-		}
-
-		$processed_data = $this->process_specific_data( $template_data );
-
-		$template_attributes = array(
-			'name'     => $processed_data['name'] ?: $this->get_default_name(),
-			'type'     => $this->campaign_type,
-			'subject'  => $processed_data['subject'] ?? '',
-			'body'     => $processed_data['body'] ?? $this->get_default_body(),
-			'settings' => $processed_data['settings'] ?? array(),
-			'hidden'   => $hidden,
-		);
-
-		return TemplateModel::createOrUpdate( $template_id, $template_attributes );
-	}
-
-	/**
-	 * Process campaign-specific template data
-	 * Uses centralized TemplateFieldMapper for consistent field mapping
-	 *
-	 * @param array $template_data Template data
-	 * @return array Processed data with name, subject, body, settings
-	 */
-	protected function process_specific_data( array $template_data ) {
-		// Use centralized field mapper
-		$processed = TemplateFieldMapper::array_to_template( $template_data, $this->campaign_type );
-
-		// Apply defaults if needed
-		if ( empty( $processed['body'] ) ) {
-			$processed['body'] = $this->get_default_body();
-		}
-
-		return $processed;
-	}
-
-	/**
-	 * Get default template body
-	 * Must be implemented by child classes
-	 *
-	 * @return string
-	 */
-	abstract protected function get_default_body();
-
-	/**
-	 * Basic validation - can be overridden by child classes
-	 *
-	 * @param array  $template_data Template data
-	 * @param string $campaign_status Campaign status (draft, scheduled, etc.)
-	 * @return bool
-	 */
-	public function validate( array $template_data, $campaign_status = 'draft' ) {
-		if ( empty( $template_data ) ) {
-			doublescale_get_logger()->error(
-				'Template validation failed: Empty template data',
-				array(
-					'campaign_type' => $this->campaign_type,
-					'code'          => 'template_validation_empty',
-				)
-			);
-			return false;
-		}
-
-		// For Sms and WhatsApp, validate body content and length
-		if ( in_array( $this->campaign_type, array( CampaignChannel::STR_SMS, CampaignChannel::STR_WHATSAPP ) ) ) {
-			$body = $template_data['body'] ?? '';
-
-			// Body is required
-			if ( empty( trim( $body ) ) ) {
-				doublescale_get_logger()->error(
-					'Template validation failed: Empty body',
-					array(
-						'campaign_type' => $this->campaign_type,
-						'template_data' => $template_data,
-						'code'          => 'template_validation_empty_body',
-					)
-				);
-				return false;
-			}
-
-			// Validate body length (max 1600 characters)
-			if ( strlen( wp_strip_all_tags( $body ) ) > 1600 ) {
-				doublescale_get_logger()->error(
-					'Template validation failed: Body too long',
-					array(
-						'campaign_type' => $this->campaign_type,
-						'body_length'   => strlen( wp_strip_all_tags( $body ) ),
-						'code'          => 'template_validation_body_too_long',
-					)
-				);
-				return false;
-			}
-		}
-
-		return true;
 	}
 }
 

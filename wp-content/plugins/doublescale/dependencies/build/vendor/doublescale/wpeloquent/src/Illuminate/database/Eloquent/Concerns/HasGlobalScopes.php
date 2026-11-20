@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Concerns;
 
 use Closure;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use InvalidArgumentException;
-use Illuminate\Database\Eloquent\Scope;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Scope;
 trait HasGlobalScopes
 {
     /**

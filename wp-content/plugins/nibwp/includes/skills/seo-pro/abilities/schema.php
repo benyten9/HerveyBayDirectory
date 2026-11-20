@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-schema', [
     'label'       => __('SEO Pro — Structured Data', 'nibwp'),
-    'description' => __('Recommend, generate, validate and persist JSON-LD structured data per post. Actions: recommend (suggest the best @type + a prefilled skeleton), get, set (validate required schema.org fields then store + render), delete. The schema renders on the front end regardless of the active SEO plugin.', 'nibwp'),
+    'description' => 'Recommend, generate, validate and persist JSON-LD structured data per post. Actions: recommend (suggest the best @type + a prefilled skeleton), get, set (validate required schema.org fields then store + render), delete. The schema renders on the front end regardless of the active SEO plugin.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

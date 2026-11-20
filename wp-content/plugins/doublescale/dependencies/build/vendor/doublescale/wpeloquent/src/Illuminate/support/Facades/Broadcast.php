@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Contracts\Broadcasting\Factory as BroadcastingFactoryContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Broadcasting\Factory as BroadcastingFactoryContract;
 /**
  * @method static void connection($name = null);
  * @method static \Illuminate\Broadcasting\Broadcasters\Broadcaster channel(string $channel, callable|string  $callback)
@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\Factory as BroadcastingFactoryContract;
  *
  * @see \Illuminate\Contracts\Broadcasting\Factory
  */
-class Broadcast extends \Illuminate\Support\Facades\Facade
+class Broadcast extends Facade
 {
     /**
      * Get the registered name of the component.

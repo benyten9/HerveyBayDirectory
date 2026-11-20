@@ -143,6 +143,24 @@ final class ModuleManager {
 	 * to enabled until the user opts out.
 	 */
 	public static function is_enabled_by_default( string $slug ): bool {
+		// Website tracking starts from the old Settings → Website Tracking toggle.
+		if ( 'websitetracking' === $slug ) {
+			return \DoubleScale\Core\Settings\Settings::website_tracking_setting_on();
+		}
+		// These were always on before they became toggles.
+		if ( in_array( $slug, array( 'portal', 'leadscoring' ), true ) ) {
+			return true;
+		}
+		// An extension's module is on once its add-on is installed, until turned off.
+		if ( 'time_tracking' === $slug ) {
+			return true;
+		}
+		// The help center is a Helpdesk child but starts off: switched on in
+		// Control Modules or by the Get Started "Customer support" goal.
+		if ( 'knowledge_base' === $slug ) {
+			return false;
+		}
+
 		return function_exists( 'doublescale_child_module_parent_map' )
 			&& array_key_exists( $slug, doublescale_child_module_parent_map() );
 	}

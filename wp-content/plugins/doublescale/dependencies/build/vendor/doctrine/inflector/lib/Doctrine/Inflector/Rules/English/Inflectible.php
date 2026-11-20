@@ -1,12 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules\English;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules\English;
 
-use Doctrine\Inflector\Rules\Pattern;
-use Doctrine\Inflector\Rules\Substitution;
-use Doctrine\Inflector\Rules\Transformation;
-use Doctrine\Inflector\Rules\Word;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Pattern;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Substitution;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Transformation;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Word;
 class Inflectible
 {
     /**

@@ -4,6 +4,7 @@ namespace DoubleScale\Modules\Automations\Rules\Woocommerce;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Services\WooPurchaseHistory;
 use DoubleScale\Modules\Automations\Abstracts\Rule;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Services\RulesManager;
@@ -55,19 +56,43 @@ class LastOrder extends Rule {
 	/**
 	 * Get operators
 	 *
+	 * "Within" / "Not within" take a day count (client request 129): an
+	 * automation can skip promotions for whoever bought recently.
+	 *
 	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
 	public function get_operators() {
 		return array(
-			'before'  => __( 'Before', 'doublescale' ),
-			'after'   => __( 'After', 'doublescale' ),
-			'on'      => __( 'On', 'doublescale' ),
-			'between' => __( 'Between', 'doublescale' ),
+			'before'     => __( 'Before', 'doublescale' ),
+			'after'      => __( 'After', 'doublescale' ),
+			'on'         => __( 'On', 'doublescale' ),
+			'between'    => __( 'Between', 'doublescale' ),
+			'within'     => __( 'Within', 'doublescale' ),
+			'not_within' => __( 'Not within', 'doublescale' ),
 		);
 	}
 
+	/**
+	 * Unix time of the contact's latest purchase, or null.
+	 *
+	 * Orders billed to the contact's email and orders on a site account with
+	 * that email both count — reading only the account missed guest checkouts.
+	 *
+	 * @param AutomationContactModel $automation_contact Contact Model.
+	 *
+	 * @return int|null
+	 */
+	private function get_last_order_timestamp( $automation_contact ) {
+		$contact = $automation_contact->contact;
+
+		if ( ! $contact || empty( $contact->email ) ) {
+			return null;
+		}
+
+		return WooPurchaseHistory::latest_order_timestamp( (string) $contact->email );
+	}
 
 	/**
 	 * Get value
@@ -76,49 +101,12 @@ class LastOrder extends Rule {
 	 *
 	 * @param AutomationContactModel $automation_contact Contact Model.
 	 *
-	 * @return string|null
+	 * @return string|null Order date in Y-m-d (site timezone).
 	 */
 	public function get_value( $automation_contact ) {
-		$contact = $automation_contact->contact;
+		$timestamp = $this->get_last_order_timestamp( $automation_contact );
 
-		if ( ! $contact || empty( $contact->email ) ) {
-			return null;
-		}
-
-		// Check if WooCommerce functions are available
-		if ( ! function_exists( 'wc_get_orders' ) ) {
-			return null;
-		}
-
-		$query_args = array(
-			'limit'   => 1,
-			'orderby' => 'date',
-			'order'   => 'DESC',
-			'status'  => array( 'wc-completed', 'wc-processing', 'wc-on-hold' ),
-		);
-
-		// Get user by email
-		$user = get_user_by( 'email', $contact->email );
-
-		if ( $user ) {
-			$query_args['customer_id'] = $user->ID;
-		} else {
-			$query_args['billing_email'] = $contact->email;
-		}
-
-		$orders = wc_get_orders( $query_args );
-
-		if ( empty( $orders ) ) {
-			return null;
-		}
-
-		$last_order = $orders[0];
-		if ( ! $last_order instanceof \WC_Order ) {
-			return null;
-		}
-
-		// Return the order date in Y-m-d format
-		return $last_order->get_date_created()->date( 'Y-m-d' );
+		return null === $timestamp ? null : wp_date( 'Y-m-d', $timestamp );
 	}
 
 	/**
@@ -132,9 +120,24 @@ class LastOrder extends Rule {
 	 * @return bool
 	 */
 	public function is_met( AutomationContactModel $automation_contact, $rule = array() ) {
+		$operator   = $rule['operator'] ?? '';
+		$rule_value = $rule['value'] ?? '';
+
+		if ( 'within' === $operator || 'not_within' === $operator ) {
+			// A day count, or a date ("since that day") saved by an older screen.
+			$start = WooPurchaseHistory::window_start( $rule_value );
+			if ( null === $start ) {
+				return false;
+			}
+
+			$timestamp = $this->get_last_order_timestamp( $automation_contact );
+			$within    = null !== $timestamp && $timestamp >= $start;
+
+			// Never bought counts as "not within": nothing was bought in the window.
+			return 'within' === $operator ? $within : ! $within;
+		}
+
 		$last_order_date = $this->get_value( $automation_contact );
-		$operator        = $rule['operator'];
-		$rule_value      = $rule['value'] ?? '';
 
 		// If no last order found, rule cannot be met
 		if ( empty( $last_order_date ) ) {

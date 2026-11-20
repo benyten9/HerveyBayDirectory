@@ -1,13 +1,13 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use Countable;
 use JsonSerializable;
-use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\MessageProvider;
-use Illuminate\Contracts\Support\MessageBag as MessageBagContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Jsonable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\MessageProvider;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\MessageBag as MessageBagContract;
 class MessageBag implements Arrayable, Countable, Jsonable, JsonSerializable, MessageBagContract, MessageProvider
 {
     /**
@@ -135,8 +135,8 @@ class MessageBag implements Arrayable, Countable, Jsonable, JsonSerializable, Me
     public function first($key = null, $format = null)
     {
         $messages = \is_null($key) ? $this->all($format) : $this->get($key, $format);
-        $firstMessage = \Illuminate\Support\Arr::first($messages, null, '');
-        return \is_array($firstMessage) ? \Illuminate\Support\Arr::first($firstMessage) : $firstMessage;
+        $firstMessage = Arr::first($messages, null, '');
+        return \is_array($firstMessage) ? Arr::first($firstMessage) : $firstMessage;
     }
     /**
      * Get all of the messages from the message bag for a given key.
@@ -153,7 +153,7 @@ class MessageBag implements Arrayable, Countable, Jsonable, JsonSerializable, Me
         if (\array_key_exists($key, $this->messages)) {
             return $this->transform($this->messages[$key], $this->checkFormat($format), $key);
         }
-        if (\Illuminate\Support\Str::contains($key, '*')) {
+        if (Str::contains($key, '*')) {
             return $this->getMessagesForWildcardKey($key, $format);
         }
         return [];
@@ -168,7 +168,7 @@ class MessageBag implements Arrayable, Countable, Jsonable, JsonSerializable, Me
     protected function getMessagesForWildcardKey($key, $format)
     {
         return collect($this->messages)->filter(function ($messages, $messageKey) use($key) {
-            return \Illuminate\Support\Str::is($key, $messageKey);
+            return Str::is($key, $messageKey);
         })->map(function ($messages, $messageKey) use($format) {
             return $this->transform($messages, $this->checkFormat($format), $messageKey);
         })->all();

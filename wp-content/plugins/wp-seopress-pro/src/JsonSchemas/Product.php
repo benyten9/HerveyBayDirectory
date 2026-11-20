@@ -83,8 +83,41 @@ class Product extends JsonSchemaValue implements GetJsonData {
 		if ( 'none' === $variables['priceCurrency'] ) {
 			$variables['priceCurrency'] = '';
 		}
+		// "none" is the value of the "Select an Energy Consumption" placeholder.
+		if ( 'none' === $variables['energy_consumption'] ) {
+			$variables['energy_consumption'] = '';
+		}
+
+		$variables['positiveNotes'] = $this->getFilledNotes( $variables['positiveNotes'] );
+		$variables['negativeNotes'] = $this->getFilledNotes( $variables['negativeNotes'] );
 
 		return $variables;
+	}
+
+	/**
+	 * Keep the notes that have a name, numbered from 0. The metabox saves an
+	 * empty string when no note was added, and a row left blank keeps its key.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param mixed $notes The saved notes.
+	 *
+	 * @return array
+	 */
+	protected function getFilledNotes( $notes ) {
+		if ( ! is_array( $notes ) ) {
+			return array();
+		}
+
+		$filled = array();
+
+		foreach ( $notes as $note ) {
+			if ( is_array( $note ) && isset( $note['name'] ) && is_string( $note['name'] ) && '' !== trim( $note['name'] ) ) {
+				$filled[] = $note;
+			}
+		}
+
+		return $filled;
 	}
 
 	/**
@@ -145,7 +178,7 @@ class Product extends JsonSchemaValue implements GetJsonData {
 			}
 		}
 
-		if ( isset( $variables['energy_consumption'] ) ) {
+		if ( ! empty( $variables['energy_consumption'] ) ) {
 			$data['hasEnergyConsumptionDetails'] = array(
 				'@type'                       => 'EnergyConsumptionDetails',
 				'hasEnergyEfficiencyCategory' => $variables['energy_consumption'],
@@ -200,8 +233,9 @@ class Product extends JsonSchemaValue implements GetJsonData {
 				}
 			}
 		}
-		// Like article review
-		elseif ( isset( $variables['positiveNotes'] ) || isset( $variables['negativeNotes'] ) ) {
+		// Like article review. Without notes the review would hold nothing but
+		// the post author, which Google flags.
+		elseif ( ! empty( $variables['positiveNotes'] ) || ! empty( $variables['negativeNotes'] ) ) {
 			$contextWithVariables              = $context;
 			$contextWithVariables['variables'] = array(
 				'ratingAuthor'  => '%%post_author%%',
@@ -385,8 +419,8 @@ class Product extends JsonSchemaValue implements GetJsonData {
 			}
 
 			foreach ( $this->getVariantAttributes( $variation ) as $property => $value ) {
-				$variant[ $property ]   = $value;
-				$varies_by[ $property ] = true;
+				$variant[ $property ]     = $value;
+				$varies_by[ $property ][] = $value;
 			}
 
 			$price = $variation->get_price();
@@ -416,6 +450,11 @@ class Product extends JsonSchemaValue implements GetJsonData {
 			$group_id = (string) $product->get_id();
 		}
 		$data['productGroupID'] = $group_id;
+
+		// Count only values carried by the variants actually emitted above.
+		$varies_by = array_filter( $varies_by, function ( $values ) {
+			return count( array_unique( $values ) ) > 1;
+		} );
 
 		if ( ! empty( $varies_by ) ) {
 			$data['variesBy'] = array_map(
@@ -595,49 +634,36 @@ class Product extends JsonSchemaValue implements GetJsonData {
 
 				// Cache computed shipping offers by shipping class (request-level).
 				static $shipping_details_cache = array();
-				$cache_key                     = sprintf( '%d|%s', $shipping_class_id, (string) $currency );
+				// See the automatic path: the signature has to carry the tax
+				// configuration the value depends on.
+				$cache_key = sprintf(
+					'%d|%s|%s',
+					$shipping_class_id,
+					(string) $currency,
+					\SEOPressPro\Helpers\WooCommerceShipping::cache_signature( $product )
+				);
 				if ( isset( $shipping_details_cache[ $cache_key ] ) ) {
 					return $shipping_details_cache[ $cache_key ];
 				}
 
-				// Persist cache if an object cache is available.
-				$object_cache_key = 'wc_shipping_details_schema_' . md5( $cache_key );
+				// Persist cache if an object cache is available. The plugin version is part of the hash so
+				// offers cached by a previous release are not served after an update.
+				$object_cache_key = 'wc_shipping_details_schema_' . md5( $cache_key . '|' . SEOPRESS_PRO_VERSION );
 				$cached           = wp_cache_get( $object_cache_key, 'seopress_pro' );
 				if ( is_array( $cached ) ) {
 					$shipping_details_cache[ $cache_key ] = $cached;
 					return $cached;
 				}
 
-				// Cache zones (and their shipping methods) per request.
-				static $zones_cache = null;
-				if ( null === $zones_cache ) {
-					$zones_cache = \WC_Shipping_Zones::get_zones();
-				}
+				// The offers before the filter, kept across requests: computing
+				// them looks up the tax rate of every destination of every zone.
+				$cached_schema = \SEOPressPro\Helpers\WooCommerceShipping::get_cached_offers( 'schema|' . $cache_key );
 
-				foreach ( $zones_cache as $zone ) {
-					$destinationSchema = $this->get_woocommerce_shipping_destination_schema( $zone, $context );
-
-					// A zone whose locations cannot be expressed as a DefinedRegion would emit
-					// an OfferShippingDetails without any destination, which Google rejects.
-					if ( empty( $destinationSchema ) ) {
-						continue;
-					}
-
-					foreach ( $zone['shipping_methods'] as $method ) {
-						// WC_Shipping_Zones::get_zones() returns every method, enabled or not.
-						// Publishing a disabled rate advertises a cost that can never apply.
-						if ( method_exists( $method, 'is_enabled' ) && ! $method->is_enabled() ) {
-							continue;
-						}
-
-						$contextWithVariables              = $context;
-						$contextWithVariables['variables'] = array(
-							'shippingAmount'      => $this->get_woocommerce_shipping_amount( $method, $product ),
-							'currency'            => $currency,
-							'shippingDestination' => $destinationSchema,
-						);
-						$schema[]                          = seopress_get_service( 'JsonSchemaGenerator' )->getJsonFromSchema( OfferShippingDetails::NAME, $contextWithVariables, array( 'remove_empty' => false ) );
-					}
+				if ( null !== $cached_schema ) {
+					$schema = $cached_schema;
+				} else {
+					$schema = $this->compute_woocommerce_shipping_details( $product, $currency, $context );
+					\SEOPressPro\Helpers\WooCommerceShipping::set_cached_offers( 'schema|' . $cache_key, $schema );
 				}
 
 				/**
@@ -655,6 +681,61 @@ class Product extends JsonSchemaValue implements GetJsonData {
 				wp_cache_set( $object_cache_key, $schema, 'seopress_pro', HOUR_IN_SECONDS );
 			}
 		}
+		return $schema;
+	}
+
+	/**
+	 * One OfferShippingDetails per rate group, method and zone.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param \WC_Product $product  The product being shipped.
+	 * @param string      $currency The shop currency.
+	 * @param array       $context  The schema generation context.
+	 *
+	 * @return array
+	 */
+	protected function compute_woocommerce_shipping_details( $product, $currency, $context ) {
+		$schema = array();
+
+		// Cache zones (and their shipping methods) per request.
+		static $zones_cache = null;
+		if ( null === $zones_cache ) {
+			$zones_cache = \WC_Shipping_Zones::get_zones();
+		}
+
+		foreach ( $zones_cache as $zone ) {
+			$destinationSchema = $this->get_woocommerce_shipping_destination_schema( $zone, $context );
+
+			// A zone whose locations cannot be expressed as a DefinedRegion would emit
+			// an OfferShippingDetails without any destination, which Google rejects.
+			if ( empty( $destinationSchema ) ) {
+				continue;
+			}
+
+			foreach ( $zone['shipping_methods'] as $method ) {
+				// WC_Shipping_Zones::get_zones() returns every method, enabled or not.
+				// Publishing a disabled rate advertises a cost that can never apply.
+				if ( ! \SEOPressPro\Helpers\WooCommerceShipping::is_delivery_method( $method ) ) {
+					continue;
+				}
+
+				// One offer per distinct amount in the zone: see the
+				// automatic path and WooCommerceShipping::group_by_amount().
+				$rate_groups = \SEOPressPro\Helpers\WooCommerceShipping::group_by_amount( $method, $product, $destinationSchema );
+
+				foreach ( $rate_groups as $rate_group ) {
+					$contextWithVariables              = $context;
+					$contextWithVariables['variables'] = array(
+						'shippingAmount'      => $rate_group['amount'],
+						'currency'            => $currency,
+						'shippingDestination' => $rate_group['destinations'],
+					);
+					$schema[]                          = seopress_get_service( 'JsonSchemaGenerator' )->getJsonFromSchema( OfferShippingDetails::NAME, $contextWithVariables, array( 'remove_empty' => false ) );
+				}
+			}
+		}
+
 		return $schema;
 	}
 
@@ -768,20 +849,6 @@ class Product extends JsonSchemaValue implements GetJsonData {
 	 * @return  string              $cost
 	 */
 	public function get_woocommerce_shipping_amount( $method, $product ) {
-		// Free Shipping methods have no cost; min_amount is the order threshold, not the price.
-		if ( 'free_shipping' === $method->id ) {
-			return 0;
-		}
-
-		$shipping_class_id = (int) $product->get_shipping_class_id();
-		$instance          = $method->instance_settings;
-		$cost              = isset( $instance['cost'] ) ? (float) $instance['cost'] : 0;
-		if ( $shipping_class_id && isset( $instance['type'] ) && $instance['type'] === 'class' ) {
-			$cost_key = 'class_cost_' . (int) $shipping_class_id;
-			if ( ! empty( $instance[ $cost_key ] ) ) {
-				$cost += (float) $instance[ $cost_key ];
-			}
-		}
-		return $cost;
+		return \SEOPressPro\Helpers\WooCommerceShipping::get_amount( $method, $product );
 	}
 }

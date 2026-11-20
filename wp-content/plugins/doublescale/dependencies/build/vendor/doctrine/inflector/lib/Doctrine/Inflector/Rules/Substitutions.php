@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules;
 
-use Doctrine\Inflector\WordInflector;
+use DoubleScale\Vendor\Doctrine\Inflector\WordInflector;
 use function strtolower;
 use function strtoupper;
 use function substr;
@@ -11,19 +11,19 @@ class Substitutions implements WordInflector
 {
     /** @var Substitution[] */
     private $substitutions;
-    public function __construct(\Doctrine\Inflector\Rules\Substitution ...$substitutions)
+    public function __construct(Substitution ...$substitutions)
     {
         foreach ($substitutions as $substitution) {
             $this->substitutions[$substitution->getFrom()->getWord()] = $substitution;
         }
     }
-    public function getFlippedSubstitutions() : \Doctrine\Inflector\Rules\Substitutions
+    public function getFlippedSubstitutions() : Substitutions
     {
         $substitutions = [];
         foreach ($this->substitutions as $substitution) {
-            $substitutions[] = new \Doctrine\Inflector\Rules\Substitution($substitution->getTo(), $substitution->getFrom());
+            $substitutions[] = new Substitution($substitution->getTo(), $substitution->getFrom());
         }
-        return new \Doctrine\Inflector\Rules\Substitutions(...$substitutions);
+        return new Substitutions(...$substitutions);
     }
     public function inflect(string $word) : string
     {

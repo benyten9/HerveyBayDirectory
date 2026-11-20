@@ -10,12 +10,32 @@ namespace DoubleScale\Core\Services;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Models\AttachmentModel;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 use WP_Error;
 
 /**
  * AttachmentService class.
  */
 class AttachmentService {
+
+	/**
+	 * Uploads folder used when a caller passes no `storage_subdir`.
+	 */
+	public const DEFAULT_STORAGE_BASE = 'doublescale-attachments';
+
+	/**
+	 * Per-request cache of uploader labels, keyed `user:ID` / `contact:ID`.
+	 *
+	 * @var array<string, string>
+	 */
+	private static $uploader_names = array();
+
+	/**
+	 * Extensions a web server may execute or treat as configuration. Rejected
+	 * in any dot-segment of an uploaded name, whatever the accepted-types filter
+	 * allows.
+	 */
+	private const BLOCKED_EXTENSION_PATTERN = '/^(php[0-9]*|phtml|phar|pht|phps|pl|py|cgi|fcgi|sh|shtml?|asp|aspx|jsp|jspx|htaccess|htpasswd)$/';
 
 	/**
 	 * @var string[]
@@ -47,7 +67,9 @@ class AttachmentService {
 	 * @param string               $attachable_type Owner type.
 	 * @param int|null             $attachable_id   Owner id (NULL for pre-create temp).
 	 * @param array<string, mixed> $uploader        user_id and/or contact_id.
-	 * @param array<string, mixed> $opts            status, activity_id, storage_subdir, protected_base_dir.
+	 * @param array<string, mixed> $opts            status, activity_id, storage_subdir, protected_base_dir,
+	 *                                              randomize_name (store under a random name; the original
+	 *                                              stays in `file_name` only), max_size_bytes, meta.
 	 * @return AttachmentModel|WP_Error
 	 */
 	public function store_upload(
@@ -76,14 +98,11 @@ class AttachmentService {
 		}
 
 		$original_name = sanitize_file_name( (string) ( $file['name'] ?? 'file' ) );
-		$mime          = $this->detect_mime( (string) $file['tmp_name'], (string) ( $file['type'] ?? '' ) );
-		if ( ! in_array( $mime, self::accepted_mimes(), true ) ) {
-			return new WP_Error( 'invalid_mime', __( 'This file type is not allowed.', 'doublescale' ), array( 'status' => 400 ) );
+		$validated     = $this->validate_file( $original_name, (string) $file['tmp_name'] );
+		if ( is_wp_error( $validated ) ) {
+			return $validated;
 		}
-
-		if ( ! $this->extension_is_allowed( $original_name ) ) {
-			return new WP_Error( 'invalid_extension', __( 'This file type is not allowed.', 'doublescale' ), array( 'status' => 400 ) );
-		}
+		$mime = $validated['mime'];
 
 		$upload_dir = wp_upload_dir( null, false, false );
 		if ( ! is_array( $upload_dir ) || empty( $upload_dir['basedir'] ) ) {
@@ -92,7 +111,7 @@ class AttachmentService {
 
 		$subdir = isset( $opts['storage_subdir'] ) && is_string( $opts['storage_subdir'] ) && '' !== $opts['storage_subdir']
 			? $opts['storage_subdir']
-			: 'doublescale-attachments/' . gmdate( 'Y' ) . '/' . gmdate( 'm' );
+			: self::DEFAULT_STORAGE_BASE . '/' . gmdate( 'Y' ) . '/' . gmdate( 'm' );
 
 		$target_dir = trailingslashit( $upload_dir['basedir'] ) . $subdir;
 		if ( ! wp_mkdir_p( $target_dir ) ) {
@@ -100,11 +119,9 @@ class AttachmentService {
 			return new WP_Error( 'mkdir_failed', __( 'Could not create upload directory.', 'doublescale' ), array( 'status' => 500 ) );
 		}
 
-		if ( ! empty( $opts['protected_base_dir'] ) ) {
-			$this->ensure_protected_dir( (string) $upload_dir['basedir'], (string) $opts['protected_base_dir'] );
-		}
+		$this->ensure_protected_dir( (string) $upload_dir['basedir'], $this->protected_base_for( $subdir, $opts ) );
 
-		$stored_name = wp_unique_filename( $target_dir, $original_name );
+		$stored_name = $this->safe_stored_name( $target_dir, $original_name, $validated['ext'], ! empty( $opts['randomize_name'] ) );
 		$absolute    = trailingslashit( $target_dir ) . $stored_name;
 		$relative    = $subdir . '/' . $stored_name;
 
@@ -123,6 +140,7 @@ class AttachmentService {
 				'activity_id'     => ! empty( $opts['activity_id'] ) ? (int) $opts['activity_id'] : null,
 				'user_id'         => ! empty( $uploader['user_id'] ) ? (int) $uploader['user_id'] : null,
 				'contact_id'      => ! empty( $uploader['contact_id'] ) ? (int) $uploader['contact_id'] : null,
+				'company_id'      => ! empty( $uploader['company_id'] ) ? (int) $uploader['company_id'] : null,
 				'file_name'       => $original_name,
 				'file_path'       => $relative,
 				'file_type'       => $mime,
@@ -171,7 +189,7 @@ class AttachmentService {
 
 		$subdir = isset( $opts['storage_subdir'] ) && is_string( $opts['storage_subdir'] ) && '' !== $opts['storage_subdir']
 			? $opts['storage_subdir']
-			: 'doublescale-attachments/' . gmdate( 'Y' ) . '/' . gmdate( 'm' );
+			: self::DEFAULT_STORAGE_BASE . '/' . gmdate( 'Y' ) . '/' . gmdate( 'm' );
 
 		$target_dir = trailingslashit( $upload_dir['basedir'] ) . $subdir;
 		if ( ! wp_mkdir_p( $target_dir ) ) {
@@ -179,25 +197,47 @@ class AttachmentService {
 			return new WP_Error( 'mkdir_failed', __( 'Could not create upload directory.', 'doublescale' ), array( 'status' => 500 ) );
 		}
 
-		if ( ! empty( $opts['protected_base_dir'] ) ) {
-			$this->ensure_protected_dir( (string) $upload_dir['basedir'], (string) $opts['protected_base_dir'] );
+		$this->ensure_protected_dir( (string) $upload_dir['basedir'], $this->protected_base_for( $subdir, $opts ) );
+
+		// Validate the bytes in a temp file outside the uploads folder, so
+		// nothing lands in a web-reachable directory until it has passed.
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php'; // Not loaded during REST and cron requests.
 		}
-
-		$stored_name = wp_unique_filename( $target_dir, $original_name );
-		$absolute    = trailingslashit( $target_dir ) . $stored_name;
-		$relative    = $subdir . '/' . $stored_name;
-
+		$tmp = wp_tempnam( 'doublescale-attachment' );
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-		if ( false === file_put_contents( $absolute, $content ) ) {
-			$this->log_storage_failure( 'Failed to write raw attachment bytes to disk', $target_dir );
+		if ( ! $tmp || false === file_put_contents( $tmp, $content ) ) {
+			$this->log_storage_failure( 'Failed to write raw attachment bytes to a temp file', $target_dir );
 			return new WP_Error( 'write_failed', __( 'Failed to store the attachment.', 'doublescale' ), array( 'status' => 500 ) );
 		}
 
-		$mime = $this->detect_mime( $absolute, isset( $file['mime'] ) ? (string) $file['mime'] : '' );
-		if ( ! in_array( $mime, self::accepted_mimes(), true ) ) {
+		$validated = $this->validate_file( $original_name, $tmp );
+		if ( is_wp_error( $validated ) ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink,WordPress.PHP.NoSilencedErrors.Discouraged
-			@unlink( $absolute );
-			return new WP_Error( 'invalid_mime', __( 'This file type is not allowed.', 'doublescale' ), array( 'status' => 400 ) );
+			@unlink( $tmp );
+			return $validated;
+		}
+		$mime = $validated['mime'];
+
+		// Raw bytes arrive from email senders, who need no account, so the
+		// stored name is random unless a caller explicitly opts out.
+		$randomize   = ! isset( $opts['randomize_name'] ) || ! empty( $opts['randomize_name'] );
+		$stored_name = $this->safe_stored_name( $target_dir, $original_name, $validated['ext'], $randomize );
+		$absolute    = trailingslashit( $target_dir ) . $stored_name;
+		$relative    = $subdir . '/' . $stored_name;
+
+		// rename() fails across filesystems (temp dir on another mount), so fall back to copy.
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename,WordPress.PHP.NoSilencedErrors.Discouraged
+		$moved = @rename( $tmp, $absolute );
+		if ( ! $moved ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.copy_copy,WordPress.PHP.NoSilencedErrors.Discouraged
+			$moved = @copy( $tmp, $absolute );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink,WordPress.PHP.NoSilencedErrors.Discouraged
+			@unlink( $tmp );
+		}
+		if ( ! $moved ) {
+			$this->log_storage_failure( 'Failed to move raw attachment bytes into place', $target_dir );
+			return new WP_Error( 'write_failed', __( 'Failed to store the attachment.', 'doublescale' ), array( 'status' => 500 ) );
 		}
 
 		return AttachmentModel::create(
@@ -207,6 +247,7 @@ class AttachmentService {
 				'activity_id'     => ! empty( $opts['activity_id'] ) ? (int) $opts['activity_id'] : null,
 				'user_id'         => ! empty( $uploader['user_id'] ) ? (int) $uploader['user_id'] : null,
 				'contact_id'      => ! empty( $uploader['contact_id'] ) ? (int) $uploader['contact_id'] : null,
+				'company_id'      => ! empty( $uploader['company_id'] ) ? (int) $uploader['company_id'] : null,
 				'file_name'       => $original_name,
 				'file_path'       => $relative,
 				'file_type'       => $mime,
@@ -242,6 +283,11 @@ class AttachmentService {
 		$absolute = AttachmentModel::resolve_absolute_path( (string) $attachment->file_path );
 		if ( '' === $absolute || ! is_file( $absolute ) ) {
 			wp_die( esc_html__( 'File not found.', 'doublescale' ), esc_html__( 'Not Found', 'doublescale' ), array( 'response' => 404 ) );
+		}
+
+		// A file the team shared, opened by the client: the team sees it.
+		if ( class_exists( \DoubleScale\Modules\Portal\Services\ClientSeen::class ) ) {
+			\DoubleScale\Modules\Portal\Services\ClientSeen::file_opened( $attachment );
 		}
 
 		$filename    = (string) $attachment->file_name;
@@ -299,6 +345,122 @@ class AttachmentService {
 			'url'         => $this->signed_url( $attachment, $legacy_url ),
 			'is_inline'   => $is_inline,
 		);
+	}
+
+	/**
+	 * Who uploaded an attachment: a team member (`user_id`) or the contact
+	 * themself (`contact_id` only — portal uploads never carry a user id).
+	 *
+	 * Opt-in on purpose: `shape_for_api()` also feeds customer-facing payloads
+	 * (support portal), which must not gain staff names or extra queries.
+	 *
+	 * @param AttachmentModel $attachment Attachment.
+	 * @return array{type: string, id: int|null, name: string}
+	 */
+	public function uploader_for_api( AttachmentModel $attachment ): array {
+		$user_id    = (int) $attachment->user_id;
+		$contact_id = (int) $attachment->contact_id;
+
+		if ( $user_id > 0 ) {
+			$key = 'user:' . $user_id;
+			if ( ! isset( self::$uploader_names[ $key ] ) ) {
+				$user                         = get_userdata( $user_id );
+				self::$uploader_names[ $key ] = $user ? (string) $user->display_name : __( 'Deleted user', 'doublescale' );
+			}
+
+			return array(
+				'type' => 'team',
+				'id'   => $user_id,
+				'name' => self::$uploader_names[ $key ],
+			);
+		}
+
+		if ( $contact_id > 0 ) {
+			$key = 'contact:' . $contact_id;
+			if ( ! isset( self::$uploader_names[ $key ] ) ) {
+				$contact = ContactModel::find( $contact_id );
+				$name    = $contact ? trim( (string) $contact->first_name . ' ' . (string) $contact->last_name ) : '';
+				if ( '' === $name && $contact ) {
+					$name = (string) $contact->email;
+				}
+				self::$uploader_names[ $key ] = '' !== $name ? $name : __( 'Contact', 'doublescale' );
+			}
+
+			return array(
+				'type' => 'contact',
+				'id'   => $contact_id,
+				'name' => self::$uploader_names[ $key ],
+			);
+		}
+
+		return array(
+			'type' => 'unknown',
+			'id'   => null,
+			'name' => '',
+		);
+	}
+
+	/**
+	 * @deprecated 1.5.2 Uploads now use safe_stored_name(), which always stores the validated extension.
+	 *
+	 * Name to write the file under inside `$target_dir`.
+	 *
+	 * Randomized names keep untrusted uploads unguessable even where the web
+	 * server ignores `.htaccess` (nginx); the original name lives in the row.
+	 *
+	 * @param string $target_dir    Absolute target directory.
+	 * @param string $original_name Sanitized original file name.
+	 * @param bool   $randomize     Store under a random name.
+	 * @return string
+	 */
+	public function stored_file_name( string $target_dir, string $original_name, bool $randomize = false ): string {
+		if ( ! $randomize ) {
+			return wp_unique_filename( $target_dir, $original_name );
+		}
+
+		$ext = strtolower( (string) pathinfo( $original_name, PATHINFO_EXTENSION ) );
+		$ext = preg_replace( '/[^a-z0-9]/', '', $ext );
+
+		try {
+			$random = bin2hex( random_bytes( 16 ) );
+		} catch ( \Throwable $e ) {
+			$random = strtolower( wp_generate_password( 32, false, false ) );
+		}
+
+		return $random . ( '' !== $ext ? '.' . $ext : '' );
+	}
+
+	/**
+	 * Deny direct web access to the default storage folder.
+	 *
+	 * Every download goes through the signed `?ds_file=` handler, so nothing
+	 * needs the folder to be browsable. Called on upgrade for existing sites.
+	 *
+	 * @return void
+	 */
+	public static function protect_default_storage(): void {
+		$upload_dir = wp_upload_dir( null, false, false );
+		if ( ! is_array( $upload_dir ) || empty( $upload_dir['basedir'] ) ) {
+			return;
+		}
+
+		( new self() )->ensure_protected_dir( (string) $upload_dir['basedir'], self::DEFAULT_STORAGE_BASE );
+	}
+
+	/**
+	 * The folder to lock down for a store call: the caller's explicit choice,
+	 * else the default storage base when the file lands in it.
+	 *
+	 * @param string               $subdir Relative storage subdir.
+	 * @param array<string, mixed> $opts   Store options.
+	 * @return string Empty when nothing should be locked.
+	 */
+	private function protected_base_for( string $subdir, array $opts ): string {
+		if ( ! empty( $opts['protected_base_dir'] ) ) {
+			return (string) $opts['protected_base_dir'];
+		}
+
+		return 0 === strpos( $subdir, self::DEFAULT_STORAGE_BASE . '/' ) ? self::DEFAULT_STORAGE_BASE : '';
 	}
 
 	/**
@@ -418,6 +580,9 @@ class AttachmentService {
 	}
 
 	/**
+	 * @deprecated 1.5.2 Use validate_file(), which checks content against the
+	 *             original file name. This method sniffs content only.
+	 *
 	 * @param string $path          Temp file path.
 	 * @param string $declared_mime Declared MIME from the client.
 	 * @return string
@@ -440,16 +605,150 @@ class AttachmentService {
 	}
 
 	/**
+	 * Whether a file name may be stored.
+	 *
+	 * Fails closed: the extension must map to an accepted MIME type. An
+	 * extension WordPress does not recognise (wp_check_filetype() returns an
+	 * empty type) is rejected, and so is any name with an executable
+	 * extension in any dot-segment, so `x.php`, `x.php.gif` and `x.gif.php`
+	 * never reach disk.
+	 *
 	 * @param string $file_name Original filename.
 	 * @return bool
 	 */
 	public function extension_is_allowed( string $file_name ): bool {
+		return '' !== $this->allowed_mime_for_name( $file_name );
+	}
+
+	/**
+	 * Accepted MIME type for a file name, or '' when the name is not allowed.
+	 *
+	 * @param string $file_name Original filename.
+	 * @return string
+	 */
+	private function allowed_mime_for_name( string $file_name ): string {
+		$file_name = strtolower( trim( $file_name ) );
+		// Control characters (a NUL in "x.php\0.jpg") have no place in a file
+		// name and can make later steps read a different name than this check.
+		if ( '' === $file_name || preg_match( '/[\x00-\x1f\x7f]/', $file_name ) || $this->has_blocked_extension( $file_name ) ) {
+			return '';
+		}
+
 		$check = wp_check_filetype( $file_name );
 		$type  = isset( $check['type'] ) ? (string) $check['type'] : '';
-		if ( '' === $type ) {
-			return true;
+		$ext   = isset( $check['ext'] ) ? (string) $check['ext'] : '';
+		if ( '' === $type || '' === $ext ) {
+			return '';
 		}
-		return in_array( $type, self::accepted_mimes(), true );
+
+		return in_array( $type, self::accepted_mimes(), true ) ? $type : '';
+	}
+
+	/**
+	 * Whether any dot-separated segment of the name is an executable or
+	 * server-configuration extension.
+	 *
+	 * Checking every segment, not only the last, covers servers that execute
+	 * `x.php.gif` (Apache with AddHandler) as well as the plain `x.php` case.
+	 *
+	 * @param string $file_name Lower-cased file name.
+	 * @return bool
+	 */
+	private function has_blocked_extension( string $file_name ): bool {
+		$segments = explode( '.', $file_name );
+		array_shift( $segments ); // The base name before the first dot is not an extension.
+
+		foreach ( $segments as $segment ) {
+			// sanitize_file_name() turns `x.php.gif` into `x.php_.gif`; the
+			// underscore must not let the inner extension through.
+			if ( 1 === preg_match( self::BLOCKED_EXTENSION_PATTERN, rtrim( $segment, '_' ) ) ) {
+				return true;
+			}
+		}
+
+		// Dotfiles such as `.htaccess` and `.user.ini` configure the server.
+		return 0 === strpos( $file_name, '.' );
+	}
+
+	/**
+	 * Validate an untrusted file before it is stored.
+	 *
+	 * Returns the MIME type and the extension the file will be stored with.
+	 * The extension always comes from the accepted-types allow-list, never
+	 * from the content, so a file is never stored with an executable
+	 * extension whatever bytes it contains. Image types are additionally
+	 * checked against the file's real content.
+	 *
+	 * @param string $original_name Sanitized original file name.
+	 * @param string $path          Path to the bytes on disk.
+	 * @return array{mime:string, ext:string}|WP_Error
+	 */
+	public function validate_file( string $original_name, string $path ) {
+		$not_allowed = new WP_Error( 'invalid_extension', __( 'This file type is not allowed.', 'doublescale' ), array( 'status' => 400 ) );
+
+		$mime = $this->allowed_mime_for_name( $original_name );
+		if ( '' === $mime ) {
+			return $not_allowed;
+		}
+
+		$check = wp_check_filetype( strtolower( $original_name ) );
+		$ext   = (string) $check['ext'];
+
+		// Validate content against the real name (not PHP's extensionless temp
+		// name). WordPress verifies image bytes and rejects a mismatch, such as
+		// HTML or script content named `photo.jpg`.
+		if ( function_exists( 'wp_check_filetype_and_ext' ) ) {
+			$verified = wp_check_filetype_and_ext( $path, $original_name );
+			if ( ! is_array( $verified ) || empty( $verified['type'] ) || empty( $verified['ext'] ) ) {
+				return new WP_Error( 'invalid_mime', __( 'This file type is not allowed.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			$verified_mime = (string) $verified['type'];
+			$verified_ext  = strtolower( (string) $verified['ext'] );
+			if ( ! in_array( $verified_mime, self::accepted_mimes(), true ) || $this->has_blocked_extension( 'file.' . $verified_ext ) ) {
+				return new WP_Error( 'invalid_mime', __( 'This file type is not allowed.', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			// WordPress may correct the extension to match real image content
+			// (a PNG named .jpg is stored as .png); both are on the allow-list.
+			$mime = $verified_mime;
+			$ext  = $verified_ext;
+		}
+
+		return array(
+			'mime' => $mime,
+			'ext'  => $ext,
+		);
+	}
+
+	/**
+	 * A safe stored name: the original base name, or a random one, always
+	 * ending in the validated extension.
+	 *
+	 * @param string $target_dir    Absolute target directory.
+	 * @param string $original_name Sanitized original file name.
+	 * @param string $ext           Validated extension.
+	 * @param bool   $randomize     Store under a random name.
+	 * @return string
+	 */
+	private function safe_stored_name( string $target_dir, string $original_name, string $ext, bool $randomize ): string {
+		$ext = preg_replace( '/[^a-z0-9]/', '', strtolower( $ext ) );
+
+		if ( $randomize ) {
+			try {
+				$base = bin2hex( random_bytes( 16 ) );
+			} catch ( \Throwable $e ) {
+				$base = strtolower( wp_generate_password( 32, false, false ) );
+			}
+			return $base . '.' . $ext;
+		}
+
+		// Keep only the part before the first dot so no inner extension survives.
+		$parts = explode( '.', $original_name );
+		$base  = sanitize_file_name( (string) $parts[0] );
+		if ( '' === $base ) {
+			$base = 'file';
+		}
+
+		return wp_unique_filename( $target_dir, $base . '.' . $ext );
 	}
 
 	/**

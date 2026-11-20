@@ -76,6 +76,7 @@ function seopress_pro_sanitize_options_fields( $input ) {
 		'seopress_mu_white_label_plugin_list_website',
 		'seopress_ps_api_key',
 		'seopress_ps_url',
+		'seopress_video_youtube_api_key',
 		'seopress_ai_openai_api_key',
 		'seopress_ai_deepseek_api_key',
 		'seopress_ai_gemini_api_key',
@@ -213,5 +214,14 @@ function seopress_pro_sanitize_options_fields( $input ) {
 		}
 	}
 
-	return $input;
+	// Opening hours: days, half-days, hours and minutes, all plain text. The key
+	// is left out of the list above (the branches for it there never run), so
+	// it was stored as submitted and printed by the Local Business widget.
+	if ( isset( $input['seopress_local_business_opening_hours'] ) ) {
+		$input['seopress_local_business_opening_hours'] = is_array( $input['seopress_local_business_opening_hours'] )
+			? map_deep( $input['seopress_local_business_opening_hours'], 'sanitize_text_field' )
+			: sanitize_text_field( $input['seopress_local_business_opening_hours'] );
+	}
+
+	return \SEOPressPro\Helpers\Settings\LocalBusinessHelper::sanitize_additional_fields( $input );
 }

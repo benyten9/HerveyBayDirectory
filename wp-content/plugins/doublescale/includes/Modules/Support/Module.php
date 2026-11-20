@@ -45,6 +45,7 @@ use DoubleScale\Modules\Support\Services\AttachmentSettings;
 use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Portal\Services\PortalRequestScope;
 
 final class Module extends AbstractModule implements ProvidesAbilities {
 
@@ -169,12 +170,41 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			Rest\Controllers\RestPortalController::class,
 			Rest\Controllers\RestAttachmentController::class,
 			Rest\Controllers\RestGuestController::class,
+			Rest\Controllers\RestPublicTicketController::class,
 			Rest\Controllers\RestReportController::class,
+			Rest\Controllers\RestSavedReplyController::class,
+			Rest\Controllers\RestProfilePhotoController::class,
 		);
 	}
 
 	public function boot( Container $container ): void {
 		parent::boot( $container );
+
+		// Ticket columns added after the tickets table (response and
+		// resolution times, rating, merge): a site whose migration ledger is
+		// already past this module never runs the migration again.
+		doublescale_ensure_once(
+			'support_tickets',
+			DOUBLESCALE_VERSION . '/' . DOUBLESCALE_SCHEMA_REV,
+			array( Migrations\SupportTicketsTableTimingColumns::class, 'ensure' )
+		);
+
+		// Tickets from before those columns: response and resolution times
+		// filled from their history, in the background (once per revision).
+		Services\TicketTimingBackfill::register();
+		// Tickets from the help center by visitors with no account: the
+		// emailed confirmation link.
+		Services\PublicTickets::register();
+		// Where a team reply got to (the reply email's open image).
+		Services\ReplyDelivery::register();
+		// The team's own photos, shown for their avatars everywhere (the live
+		// chat shows them to visitors).
+		Services\ProfilePhoto::register();
+		doublescale_ensure_once(
+			'support_timing_backfill',
+			DOUBLESCALE_SCHEMA_REV,
+			array( Services\TicketTimingBackfill::class, 'queue' )
+		);
 
 		// Resolve the resolver + service eagerly so any other module that
 		// listens for support-side hooks can use them from `doublescale_loaded`.
@@ -403,9 +433,15 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		}
 
 		try {
-			return (int) TicketModel::where( 'contact_id', $contact->id )
-				->whereIn( 'status', array( TicketStatus::OPEN, TicketStatus::PENDING ) )
-				->count();
+			$query = \DoubleScale\Modules\Portal\Services\PortalScope::apply( TicketModel::query(), (int) $contact->id, 'tickets' )
+				->whereIn( 'status', array( TicketStatus::OPEN, TicketStatus::PENDING ) );
+			// A portal locked to one department counts what its list shows.
+			$mailbox_id = PortalRequestScope::mailbox_id();
+			if ( $mailbox_id > 0 ) {
+				$query->where( 'mailbox_id', $mailbox_id );
+			}
+
+			return (int) $query->count();
 		} catch ( \Throwable $e ) {
 			return 0;
 		}

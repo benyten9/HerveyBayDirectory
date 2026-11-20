@@ -225,7 +225,7 @@ if ( ! class_exists( 'ATBDP_Cron' ) ) :
                 ],
             ];
 
-            $listings = new WP_Query( apply_filters( 'directorist_update_listings_expired_status_query_arguments ', $args ) );
+            $listings = new WP_Query( apply_filters( 'directorist_update_listings_expired_status_query_arguments', $args ) );
 
             if ( $listings->have_posts() ) {
                 foreach ( $listings->posts as $listing ) {
@@ -393,7 +393,12 @@ if ( ! class_exists( 'ATBDP_Cron' ) ) :
                         // Send emails
                         $expiration_date      = get_post_meta( $listing->ID, '_expiry_date', true );
                         $expiration_date_time = strtotime( $expiration_date );
-                        $reminder_date_time   = strtotime( "+{$email_renewal_day} days", strtotime( $expiration_date_time ) );
+
+                        if ( false === $expiration_date_time ) {
+                            continue;
+                        }
+
+                        $reminder_date_time = strtotime( "+{$email_renewal_day} days", $expiration_date_time );
 
                         if ( current_time( 'timestamp' ) > $reminder_date_time ) {
                             do_action( 'atbdp_send_renewal_reminder', $listing->ID );

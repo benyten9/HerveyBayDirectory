@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
 use Closure;
-use Illuminate\Support\Str;
-use Illuminate\Database\ConnectionResolverInterface;
-class DatabasePresenceVerifier implements \Illuminate\Validation\PresenceVerifierInterface
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionResolverInterface;
+class DatabasePresenceVerifier implements PresenceVerifierInterface
 {
     /**
      * The database connection instance.

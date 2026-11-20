@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Translation;
+namespace DoubleScale\Vendor\Illuminate\Translation;
 
 use RuntimeException;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Contracts\Translation\Loader;
+use DoubleScale\Vendor\Illuminate\Filesystem\Filesystem;
+use DoubleScale\Vendor\Illuminate\Contracts\Translation\Loader;
 class FileLoader implements Loader
 {
     /**

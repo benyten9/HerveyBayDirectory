@@ -51,10 +51,13 @@ final class PortalUserProvisioner {
 			? array_values( array_filter( array_map( 'intval', $raw['auto_create_list_ids'] ) ) )
 			: array();
 
-		$role = isset( $raw['role'] ) && is_string( $raw['role'] ) && get_role( $raw['role'] ) ? $raw['role'] : 'subscriber';
+		$role = isset( $raw['role'] ) && is_string( $raw['role'] ) && self::is_customer_role( $raw['role'] ) ? $raw['role'] : 'subscriber';
 
 		$send_welcome = ! array_key_exists( 'send_welcome_email', $raw ) || ! empty( $raw['send_welcome_email'] );
 		$role         = (string) apply_filters( 'doublescale_portal_user_role', $role );
+		if ( ! self::is_customer_role( $role ) ) {
+			$role = 'subscriber';
+		}
 
 		return array(
 			'auto_create_users'    => ! empty( $raw['auto_create_users'] ),
@@ -87,6 +90,26 @@ final class PortalUserProvisioner {
 
 		Settings::update( self::SETTINGS_KEY, $current );
 		return self::settings();
+	}
+
+	/**
+	 * Whether a role is fit for a customer account: it exists and can do
+	 * nothing beyond reading. A stored setting or a filter can never make
+	 * portal accounts staff — an administrator role here would hand one to
+	 * anyone who books with their own email.
+	 *
+	 * @param string $role Role slug.
+	 * @return bool
+	 */
+	public static function is_customer_role( string $role ): bool {
+		$object = get_role( $role );
+		if ( ! $object ) {
+			return false;
+		}
+
+		$granted = array_keys( array_filter( (array) $object->capabilities ) );
+
+		return array() === array_diff( $granted, array( 'read', 'level_0' ) );
 	}
 
 	// -- eligibility -------------------------------------------------------
@@ -139,6 +162,8 @@ final class PortalUserProvisioner {
 			if ( ! get_user_meta( $existing->ID, self::META_CONTACT_ID, true ) ) {
 				update_user_meta( $existing->ID, self::META_CONTACT_ID, (int) $contact->id );
 			}
+			// The team linked this login to the client: it counts as theirs.
+			PortalEmailConfirmation::confirm( (int) $existing->ID );
 			return array(
 				'status'  => 'linked',
 				'user_id' => (int) $existing->ID,
@@ -170,12 +195,17 @@ final class PortalUserProvisioner {
 
 		update_user_meta( $user_id, self::META_CONTACT_ID, (int) $contact->id );
 		update_user_meta( $user_id, self::META_PROVISIONED, time() );
+		// Its password is only ever chosen from a link sent to this address.
+		PortalEmailConfirmation::confirm( (int) $user_id );
 
 		$send = null === $send_welcome ? $settings['send_welcome_email'] : $send_welcome;
 		if ( $send ) {
-			// Core's set-password email; the customer never sees the generated
-			// password and lands on the standard reset flow.
-			wp_new_user_notification( $user_id, null, 'user' );
+			// The portal invite (choose a password, then the portal); core's
+			// "Login Details" email only when there is no portal page to name.
+			$invited = PortalInvite::send( $contact );
+			if ( is_wp_error( $invited ) && 'portal_no_page' === $invited->get_error_code() ) {
+				wp_new_user_notification( $user_id, null, 'user' );
+			}
 		}
 
 		/**
@@ -295,13 +325,23 @@ final class PortalUserProvisioner {
 		$missing_scoped = (int) $wpdb->get_var( 'SELECT COUNT(*) ' . $scoped['sql'] );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$with_email = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}doublescale_contacts WHERE email IS NOT NULL AND email <> ''" );
+		$is_scoped  = ! empty( $settings['auto_create_list_ids'] );
+
+		// Scoped to lists, "already have one" counts the contacts on those lists too.
+		$with_account = max( 0, $with_email - $missing );
+		if ( $is_scoped ) {
+			$ids = implode( ',', array_map( 'intval', $settings['auto_create_list_ids'] ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- int ids.
+			$in_scope     = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT c.id) FROM {$wpdb->prefix}doublescale_contacts c INNER JOIN {$wpdb->prefix}doublescale_contact_taxonomy_relationship r ON r.contact_id = c.id AND r.taxonomy_type = 'list' AND r.taxonomy_id IN ({$ids}) WHERE c.email IS NOT NULL AND c.email <> ''" );
+			$with_account = max( 0, $in_scope - $missing_scoped );
+		}
 
 		return array(
 			'contacts_with_email' => $with_email,
-			'with_account'        => max( 0, $with_email - $missing ),
+			'with_account'        => $with_account,
 			'missing_account'     => $missing,
 			'missing_in_scope'    => $missing_scoped,
-			'scoped'              => ! empty( $settings['auto_create_list_ids'] ),
+			'scoped'              => $is_scoped,
 		);
 	}
 

@@ -8,11 +8,11 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\MessageFormatter;
+namespace DoubleScale\Vendor\Carbon\MessageFormatter;
 
 use DoubleScale\Vendor\Symfony\Component\Translation\Formatter\ChoiceMessageFormatterInterface;
 use DoubleScale\Vendor\Symfony\Component\Translation\Formatter\MessageFormatterInterface;
-if (!\class_exists(\Carbon\MessageFormatter\LazyMessageFormatter::class, \false)) {
+if (!\class_exists(LazyMessageFormatter::class, \false)) {
     abstract class LazyMessageFormatter implements MessageFormatterInterface, ChoiceMessageFormatterInterface
     {
         protected abstract function transformLocale(?string $locale) : ?string;

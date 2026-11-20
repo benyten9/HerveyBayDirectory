@@ -35,6 +35,7 @@ class SignificantKeywords {
 	 *
 	 * @since 10.2.0 Renders blocks and shortcodes, and falls back on block
 	 *               attribute text.
+	 * @since 10.4.0 Reads the text held in custom fields, ACF included.
 	 *
 	 * @param \WP_Post $post The post to read.
 	 *
@@ -59,14 +60,7 @@ class SignificantKeywords {
 				$content = do_blocks( $content );
 			}
 
-			// The historical filter reads as "disable", and its default was the
-			// string '__return_true' compared against false, so the shortcode
-			// branch never ran. Honour it with its documented meaning while
-			// keeping the old escape hatch working: only an explicit false (the
-			// value the previous code demanded) still disables expansion.
-			$disable_shortcodes = apply_filters( 'seopress_pro_significant_kw_disable_shortcode', false );
-
-			if ( false === $disable_shortcodes ) {
+			if ( $this->shouldExpandShortcodes() ) {
 				$content = do_shortcode( $content );
 			}
 
@@ -77,6 +71,16 @@ class SignificantKeywords {
 			if ( '' !== $attributes ) {
 				$content .= ' ' . $attributes;
 			}
+		}
+
+		// Custom fields are read whatever `post_content` holds, outside the
+		// render gate above: a post whose visible text lives entirely in ACF
+		// stores nothing in `post_content`, which is precisely the case the
+		// gate refuses to render.
+		$custom_fields = $this->collectCustomFieldText( $post );
+
+		if ( '' !== $custom_fields ) {
+			$content .= ' ' . $custom_fields;
 		}
 
 		ob_end_clean();
@@ -130,6 +134,415 @@ class SignificantKeywords {
 		 * @param \WP_Post $post          The post.
 		 */
 		return (bool) apply_filters( 'seopress_pro_significant_kw_render_content', $has_markup, $post );
+	}
+
+	/**
+	 * Whether shortcodes are expanded before the text is read.
+	 *
+	 * The historical filter reads as "disable", and its default was the string
+	 * '__return_true' compared against false, so the shortcode branch never
+	 * ran. Honour it with its documented meaning while keeping the old escape
+	 * hatch working: only an explicit false (the value the previous code
+	 * demanded) still disables expansion.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return bool
+	 */
+	protected function shouldExpandShortcodes() {
+		return false === apply_filters( 'seopress_pro_significant_kw_disable_shortcode', false );
+	}
+
+	/**
+	 * The meta keys whose text joins the post content.
+	 *
+	 * ACF keys are discovered from storage rather than from the plugin: for
+	 * every field `foo` it saves, ACF writes a sibling `_foo` holding the field
+	 * key (`field_xxxxxxxx`). Reading the pair back needs neither ACF loaded
+	 * nor its field groups walked, and it picks up repeater and group
+	 * subfields, which are stored under flattened keys of the same shape.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param \WP_Post $post The post being analysed.
+	 *
+	 * @return string[]
+	 */
+	protected function getCustomFieldKeys( $post ) {
+		/**
+		 * Filter the custom fields the keyword extraction reads.
+		 *
+		 * Defaults to the ACF fields stored on the post. Append the meta keys
+		 * of any other builder that keeps its text in post meta, or return an
+		 * empty array to read nothing but `post_content`.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string[] $keys The meta keys to read.
+		 * @param \WP_Post $post The post being analysed.
+		 */
+		$keys = apply_filters( 'seopress_pro_significant_kw_custom_fields', $this->discoverAcfFieldKeys( $post ), $post );
+
+		if ( ! is_array( $keys ) ) {
+			return array();
+		}
+
+		$clean = array();
+
+		foreach ( $keys as $key ) {
+			if ( ! is_string( $key ) || '' === trim( $key ) ) {
+				continue;
+			}
+
+			$clean[] = trim( $key );
+		}
+
+		return array_values( array_unique( $clean ) );
+	}
+
+	/**
+	 * The ACF fields stored on a post.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param \WP_Post $post The post being analysed.
+	 *
+	 * @return string[]
+	 */
+	protected function discoverAcfFieldKeys( $post ) {
+		$meta = get_post_meta( $post->ID );
+
+		if ( ! is_array( $meta ) || empty( $meta ) ) {
+			return array();
+		}
+
+		$keys = array();
+
+		foreach ( $meta as $meta_key => $values ) {
+			if ( ! is_string( $meta_key ) || '_' !== substr( $meta_key, 0, 1 ) ) {
+				continue;
+			}
+
+			$reference = is_array( $values ) ? reset( $values ) : $values;
+
+			if ( ! $this->isAcfFieldReference( $reference ) ) {
+				continue;
+			}
+
+			$field_key = substr( $meta_key, 1 );
+
+			// The reference is only meaningful next to the field it describes.
+			// This also rules out a bare underscore: it reads as an empty meta
+			// key, which the meta API answers with every row the post has.
+			if ( ! isset( $meta[ $field_key ] ) ) {
+				continue;
+			}
+
+			// The field type is checked later, in collectCustomFieldText(),
+			// once the filter has had its say and only for values that hold
+			// text: with field groups stored in the database, each lookup can
+			// cost a query.
+			$keys[] = $field_key;
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Whether a sibling meta value is an ACF field key.
+	 *
+	 * Matched on the prefix, which is all ACF itself checks in
+	 * `acf_is_field_key()`. A hexadecimal shape is what the admin generates,
+	 * not what the format allows: a Clone field in seamless mode, which is the
+	 * default, stores `field_aaa_field_bbb`, and a field declared in code with
+	 * acf-builder or ACF Composer has a readable key such as
+	 * `field_hero_title`. Both were being skipped.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param mixed $reference The sibling value.
+	 *
+	 * @return bool
+	 */
+	protected function isAcfFieldReference( $reference ) {
+		if ( ! is_string( $reference ) || 0 !== strpos( $reference, 'field_' ) ) {
+			return false;
+		}
+
+		// Something has to follow the prefix: a bare `field_` names nothing.
+		return '' !== substr( $reference, 6 );
+	}
+
+	/**
+	 * Whether an ACF field holds text a reader is meant to see.
+	 *
+	 * Only asked when ACF is loaded, which is the only way to know a field's
+	 * type. Without it every field is read, which is what this branch did for
+	 * all of them: a `password` field is stored in clear, and an internal note
+	 * or an admin-only field is not page text either.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $reference The ACF field key.
+	 *
+	 * @return bool
+	 */
+	protected function isReadableAcfFieldType( $reference ) {
+		$field = $this->getAcfField( $reference );
+
+		// ACF is not loaded, or the reference is an orphan left behind by a
+		// deleted field: the type is unknown.
+		if ( ! is_array( $field ) || empty( $field['type'] ) ) {
+			return true;
+		}
+
+		/**
+		 * Filter the ACF field types read for keyword extraction.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string[] $types The field types whose value is page text.
+		 */
+		$types = apply_filters(
+			'seopress_pro_significant_kw_acf_field_types',
+			array( 'text', 'textarea', 'wysiwyg' )
+		);
+
+		return in_array( $field['type'], (array) $types, true );
+	}
+
+	/**
+	 * The ACF definition of a field, or null when ACF is not loaded.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $reference The ACF field key.
+	 *
+	 * @return array|false|null
+	 */
+	protected function getAcfField( $reference ) {
+		if ( ! function_exists( 'acf_get_field' ) ) {
+			return null;
+		}
+
+		return acf_get_field( $reference );
+	}
+
+	/**
+	 * The ACF field key stored next to a meta key, or null.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int    $post_id  The post.
+	 * @param string $meta_key The meta key.
+	 *
+	 * @return string|null
+	 */
+	protected function getAcfReference( $post_id, $meta_key ) {
+		$reference = get_post_meta( $post_id, '_' . $meta_key, true );
+
+		return $this->isAcfFieldReference( $reference ) ? $reference : null;
+	}
+
+	/**
+	 * Collect the prose held in custom fields.
+	 *
+	 * Same reading as block attributes, and for the same reason: a field holds
+	 * whatever the site builder put in it, so an unfiltered sweep indexes
+	 * colour codes, URLs and identifiers alongside the text and starves the
+	 * matcher, which ranks by frequency.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param \WP_Post $post The post being analysed.
+	 *
+	 * @return string
+	 */
+	protected function collectCustomFieldText( $post ) {
+		// A password protected post is not readable text: its body is behind a
+		// form. The keyword index feeds internal link suggestions, which anyone
+		// with edit_posts can query, so what the author put in its fields has no
+		// business being there, whether the key was discovered or added through
+		// the filter. `post_content` has always been indexed for these posts and
+		// still is; this only declines to widen it.
+		if ( isset( $post->post_password ) && '' !== (string) $post->post_password ) {
+			return '';
+		}
+
+		$keys = $this->getCustomFieldKeys( $post );
+
+		if ( empty( $keys ) ) {
+			return '';
+		}
+
+		$collected = array();
+
+		foreach ( $keys as $key ) {
+			$values = get_post_meta( $post->ID, $key, false );
+
+			if ( ! is_array( $values ) || ! $this->holdsText( $values ) ) {
+				continue;
+			}
+
+			// Only now ask ACF for the type: a field holding no text costs
+			// nothing, and neither does a sweep the filter switched off.
+			$reference = $this->getAcfReference( $post->ID, $key );
+
+			if ( null !== $reference && ! $this->isReadableAcfFieldType( $reference ) ) {
+				continue;
+			}
+
+			array_walk_recursive(
+				$values,
+				function ( $value ) use ( &$collected ) {
+					$text = $this->readableMetaValue( $value );
+
+					if ( '' !== $text ) {
+						$collected[] = $text;
+					}
+				}
+			);
+		}
+
+		return implode( ' ', $collected );
+	}
+
+	/**
+	 * Whether stored values contain anything that could be text.
+	 *
+	 * Cheap on purpose: it runs before the field type lookup, to spare it on
+	 * empty fields, numbers, IDs and serialized payloads.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $values The stored values of one meta key.
+	 *
+	 * @return bool
+	 */
+	protected function holdsText( $values ) {
+		$found = false;
+
+		array_walk_recursive(
+			$values,
+			function ( $value ) use ( &$found ) {
+				if ( $found || ! is_string( $value ) ) {
+					return;
+				}
+
+				$value = trim( $value );
+
+				if ( '' !== $value && ! is_numeric( $value ) && ! is_serialized( $value ) ) {
+					$found = true;
+				}
+			}
+		);
+
+		return $found;
+	}
+
+	/**
+	 * The readable text of a single meta value, or an empty string.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return string
+	 */
+	protected function readableMetaValue( $value ) {
+		if ( ! is_string( $value ) || '' === trim( $value ) ) {
+			return '';
+		}
+
+		// A serialized payload is storage, not prose: its class and property
+		// names would be indexed as vocabulary.
+		if ( is_serialized( $value ) ) {
+			return '';
+		}
+
+		// Expand before reading: a WYSIWYG field is stored with its shortcodes
+		// unrendered, and the tags alone read as markup, not as sentences.
+		if ( $this->shouldExpandShortcodes() && false !== strpos( $value, '[' ) ) {
+			$value = do_shortcode( $value );
+		}
+
+		return $this->collectFieldProse( $value );
+	}
+
+	/**
+	 * The prose inside one field value.
+	 *
+	 * `looksLikeProse()` was written for block attributes, which are short
+	 * configuration strings, and asking it about a whole field body made one
+	 * hit reject a two thousand word WYSIWYG. `Taux de TVA : 20%` matches the
+	 * unit rule, `terms &amp; conditions:` and `&nbsp;Lundi :` match the CSS
+	 * declaration rule once TinyMCE's entities are in play, and a single brace
+	 * anywhere in the text is enough on its own.
+	 *
+	 * So the value is decoded, split on its own line breaks, and judged line by
+	 * line. A long line is held to the two word minimum only: the structural
+	 * rules exist to recognise configuration, and configuration is short.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $value The stored field value.
+	 *
+	 * @return string
+	 */
+	protected function collectFieldProse( $value ) {
+		// Drop invalid UTF-8 first: one stray byte makes every /u regex below
+		// fail, and the whole field was lost with it.
+		$value = wp_check_invalid_utf8( $value, true );
+		$value = wp_strip_all_tags( $value );
+
+		// TinyMCE stores its text with entities, and the semicolon ending one
+		// is what tripped the CSS declaration rule: `&amp; tarifs :` reads as
+		// `; tarifs :`. The `/u` modifier makes \s match the non breaking
+		// space a decoded `&nbsp;` leaves behind, so the collapsing below
+		// handles that one.
+		$value = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) );
+
+		$lines = preg_split( '/\R+/u', $value );
+
+		if ( ! is_array( $lines ) ) {
+			$lines = array( $value );
+		}
+
+		/**
+		 * Filter the length above which a field line is read as prose on the
+		 * strength of its words alone.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int $length Bytes, as counted by strlen(). Default 200.
+		 */
+		$long = (int) apply_filters( 'seopress_pro_significant_kw_prose_line_length', 200 );
+
+		$kept = array();
+
+		foreach ( $lines as $line ) {
+			$line = trim( preg_replace( '/\s+/u', ' ', $line ) );
+
+			if ( '' === $line ) {
+				continue;
+			}
+
+			if ( strlen( $line ) >= $long ) {
+				// Two words minimum still applies: that is the rule that
+				// recognises text rather than the rules that recognise markup.
+				if ( preg_match( '/\p{L}\p{L}+\s+\p{L}\p{L}+/u', $line ) ) {
+					$kept[] = $line;
+				}
+
+				continue;
+			}
+
+			if ( $this->looksLikeProse( $line ) ) {
+				$kept[] = $line;
+			}
+		}
+
+		return implode( ' ', $kept );
 	}
 
 	/**
@@ -352,6 +765,12 @@ class SignificantKeywords {
 		$total          = $this->getTotalWords( $content );
 		$totalDocuments = seopress_pro_get_service( 'SignificantKeywordsRepository' )->countAllDocuments();
 
+		// How many suggestions come back, not how many words are examined: $y only
+		// advances once a suggestion has been produced, so a word with no
+		// correspondent costs nothing and the walk continues through the whole list.
+		// Read as a cap on the walk, this looks like five unshared words starving the
+		// matcher, which is what #1690 reported. See
+		// test-internal-linking-low-ranked-word.php.
 		$limit = apply_filters( 'seopress_pro_significant_keywords_limit', 5 );
 		$y     = 0;
 		foreach ( $words as $word => $count ) {

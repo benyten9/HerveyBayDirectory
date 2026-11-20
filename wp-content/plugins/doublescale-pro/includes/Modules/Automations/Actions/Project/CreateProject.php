@@ -13,6 +13,7 @@ use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Pro\Modules\Automations\Triggers\Project\BaseProjectTrigger;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectStatusModel;
+use DoubleScale\Pro\Modules\Projects\Services\ProjectTeam;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -64,7 +65,8 @@ class CreateProject extends BaseProjectAction {
 		}
 
 		$owner = (int) $step->get_setting( 'owner' );
-		if ( $owner <= 0 ) {
+		// Nobody owns a project they cannot open (a Sales Rep picked in the step).
+		if ( $owner <= 0 || ! ProjectTeam::is_eligible( $owner ) ) {
 			$owner = get_current_user_id() ?: 1;
 		}
 

@@ -170,6 +170,6 @@ class Integration extends Integration_Abstract {
 	 * @return string
 	 */
 	public function get_icon_url(): string {
-		return $this->plugin_asset_url( 'assets/images/authorize-net/authorize-net.svg' );
+		return $this->plugin_asset_url( 'assets/images/authorize-net/authorize.png' );
 	}
 }

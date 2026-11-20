@@ -90,10 +90,15 @@ class SEOPRESS_Language_Packs {
 	 *
 	 * @since 1.1
 	 *
-	 * @param bool|array $value The transient value.
+	 * @param mixed $value The transient value, normally an object.
+	 *
+	 * @return object
 	 */
 	public function site_transient_update_plugins( $value ) {
-		if ( ! $value ) {
+		// The transient can come back as something other than an object, a
+		// string from an object cache drop-in for instance. WordPress copes
+		// with it, but adding a property to a string is a fatal error on PHP 8.
+		if ( ! is_object( $value ) ) {
 			$value = new stdClass();
 		}
 

@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/acss-pro-from-design', [
     'label'       => __('ACSS Pro — Config from design', 'nibwp'),
-    'description' => __('Validate an agent-built ACSS config extracted from a screenshot / HTML+CSS / URL. Server runs the contrast + scale + luminance rules and returns either {validated: true, config} or {failed:[...], fix_hints}. The agent surfaces failures to the user with copy-paste replacements and resubmits. Persistence is a separate call.', 'nibwp'),
+    'description' => 'Validate an agent-built ACSS config extracted from a screenshot / HTML+CSS / URL. Server runs the contrast + scale + luminance rules and returns either {validated: true, config} or {failed:[...], fix_hints}. The agent surfaces failures to the user with copy-paste replacements and resubmits. Persistence is a separate call.',
     'category'    => 'acss-pro',
     'input_schema' => [
         'type'       => 'object',

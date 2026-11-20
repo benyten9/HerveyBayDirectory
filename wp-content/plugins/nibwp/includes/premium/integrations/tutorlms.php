@@ -156,8 +156,8 @@ function nibwp_tutorlms_course_shape(int $course_id): ?array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-courses', [
-    'label'       => __('Tutor LMS — Courses', domain: 'nibwp'),
-    'description' => __('Create, read, update, delete and price Tutor LMS courses, plus prerequisites and bundles.', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Courses', 'nibwp'),
+    'description' => 'Create, read, update, delete and price Tutor LMS courses, plus prerequisites and bundles.',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',
@@ -371,8 +371,8 @@ function nibwp_tutorlms_apply_course_meta(int $course_id, array $input): void
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-content', [
-    'label'       => __('Tutor LMS — Content', domain: 'nibwp'),
-    'description' => __('Manage Tutor LMS topics, lessons and course announcements (CRUD + reordering).', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Content', 'nibwp'),
+    'description' => 'Manage Tutor LMS topics, lessons and course announcements (CRUD + reordering).',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',
@@ -588,8 +588,8 @@ function nibwp_tutorlms_content_manage(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-students', [
-    'label'       => __('Tutor LMS — Students', domain: 'nibwp'),
-    'description' => __('Enroll/unenroll students, list enrollments and read/update course progress.', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Students', 'nibwp'),
+    'description' => 'Enroll/unenroll students, list enrollments and read/update course progress.',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',
@@ -742,8 +742,8 @@ function nibwp_tutorlms_students_manage(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-quizzes', [
-    'label'       => __('Tutor LMS — Quizzes', domain: 'nibwp'),
-    'description' => __('Manage Tutor LMS quizzes, questions, attempts and (Pro) assignments.', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Quizzes', 'nibwp'),
+    'description' => 'Manage Tutor LMS quizzes, questions, attempts and (Pro) assignments.',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',
@@ -940,8 +940,8 @@ function nibwp_tutorlms_quizzes_manage(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-instructors', [
-    'label'       => __('Tutor LMS — Instructors', domain: 'nibwp'),
-    'description' => __('List instructors, promote users to instructor, manage co-instructors (Pro) and approval status.', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Instructors', 'nibwp'),
+    'description' => 'List instructors, promote users to instructor, manage co-instructors (Pro) and approval status.',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',
@@ -1078,8 +1078,8 @@ function nibwp_tutorlms_instructors_manage(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-monetization', [
-    'label'       => __('Tutor LMS — Monetization', domain: 'nibwp'),
-    'description' => __('Detect the monetization engine, set course pricing, manage native coupons, and read earnings/withdrawals.', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Monetization', 'nibwp'),
+    'description' => 'Detect the monetization engine, set course pricing, manage native coupons, and read earnings/withdrawals.',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',
@@ -1251,8 +1251,8 @@ function nibwp_tutorlms_coupon_dispatch(string $action, array $input, string $mo
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/tutorlms-reports', [
-    'label'       => __('Tutor LMS — Reports', domain: 'nibwp'),
-    'description' => __('Read course analytics, sales, the student roster and per-student progress (read-only).', domain: 'nibwp'),
+    'label'       => __('Tutor LMS — Reports', 'nibwp'),
+    'description' => 'Read course analytics, sales, the student roster and per-student progress (read-only).',
     'category'    => 'lms',
     'input_schema' => [
         'type' => 'object',

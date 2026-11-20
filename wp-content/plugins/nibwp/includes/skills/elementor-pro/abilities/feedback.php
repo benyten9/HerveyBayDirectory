@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/elementor-pro-feedback', [
     'label'       => __('Elementor Pro — record conversion feedback', 'nibwp'),
-    'description' => __('Record thumb-up / thumb-down on the most recent Elementor conversion. Down reasons are aggregated per section_type and surfaced to future runs.', 'nibwp'),
+    'description' => 'Record thumb-up / thumb-down on the most recent Elementor conversion. Down reasons are aggregated per section_type and surfaced to future runs.',
     'category'    => 'elementor-pro',
     'input_schema' => [
         'type' => 'object',

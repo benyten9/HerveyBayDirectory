@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
-use Illuminate\Support\ConfigurationUrlParser as BaseConfigurationUrlParser;
+use DoubleScale\Vendor\Illuminate\Support\ConfigurationUrlParser as BaseConfigurationUrlParser;
 class ConfigurationUrlParser extends BaseConfigurationUrlParser
 {
     //

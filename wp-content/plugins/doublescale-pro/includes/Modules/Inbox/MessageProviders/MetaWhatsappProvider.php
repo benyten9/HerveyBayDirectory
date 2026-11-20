@@ -14,7 +14,7 @@ use DoubleScale\Pro\Modules\Inbox\Abstracts\AbstractMessageProvider;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Pro\Modules\Integrations\MetaWhatsapp\Api;
-use DoubleScale\Core\Constants\MetaWhatsappErrorCodes;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\MetaWhatsappErrorCodes;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -50,7 +50,7 @@ class MetaWhatsappProvider extends AbstractMessageProvider {
 	 * @var array
 	 */
 	protected $tracking_classes = array(
-		'whatsapp' => '\DoubleScale\Modules\Tracking\Whatsapp',
+		'whatsapp' => '\DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappTracking',
 	);
 
 	/**
@@ -141,7 +141,9 @@ class MetaWhatsappProvider extends AbstractMessageProvider {
 
 				$this->log( 'debug', 'Sending Meta WhatsApp session message', array(
 					'contact_id'   => $contact->id ?? null,
-					'body_preview' => substr( $data['Body'], 0, 50 ),
+					// Character-safe: a byte substr() tears Arabic mid-character, and an
+					// older free's logger throws on the invalid UTF-8 after Meta accepted.
+					'body_preview' => mb_substr( (string) $data['Body'], 0, 50 ),
 				) );
 			} else {
 				return $this->error_result(
@@ -1123,9 +1125,67 @@ class MetaWhatsappProvider extends AbstractMessageProvider {
 					strtolower( $missing )
 				);
 			}
+
+			$body_slots = $this->extract_positional_slots_from_card( $card );
+			$variables  = isset( $params['variables'] ) && is_array( $params['variables'] )
+				? $params['variables']
+				: array();
+
+			foreach ( $body_slots as $slot ) {
+				$filled = isset( $variables[ (string) $slot ] )
+					? trim( (string) $variables[ (string) $slot ] )
+					: '';
+
+				if ( '' === $filled ) {
+					return sprintf(
+						/* translators: 1: card number, 2: placeholder like {{1}}. */
+						__( 'This WhatsApp carousel template needs a value for card %1$d %2$s before the message can be sent.', 'doublescale' ),
+						(int) $index + 1,
+						'{{' . $slot . '}}'
+					);
+				}
+			}
 		}
 
 		return '';
+	}
+
+	/**
+	 * The {{n}} slots a carousel card's BODY text declares.
+	 *
+	 * Callers: validate_carousel_payload() via contact/automation/campaign sends.
+	 * Schema: card_params[i].variables. User: "بردوا ال Carousel مفوش ال variables ديه".
+	 *
+	 * @param array $card Declared card.
+	 * @return int[]
+	 */
+	private function extract_positional_slots_from_card( array $card ): array {
+		$components = $card['components'] ?? array();
+		if ( ! is_array( $components ) ) {
+			return array();
+		}
+
+		$text = '';
+		foreach ( $components as $component ) {
+			if ( ! is_array( $component ) ) {
+				continue;
+			}
+			if ( 'BODY' === strtoupper( (string) ( $component['type'] ?? '' ) ) ) {
+				$text = (string) ( $component['text'] ?? '' );
+				break;
+			}
+		}
+
+		if ( '' === $text ) {
+			return array();
+		}
+
+		preg_match_all( '/\{\{\s*(\d+)\s*\}\}/', $text, $matches );
+		$slots = array_map( 'intval', $matches[1] ?? array() );
+		$slots = array_values( array_unique( array_filter( $slots ) ) );
+		sort( $slots, SORT_NUMERIC );
+
+		return $slots;
 	}
 
 	/**

@@ -5,8 +5,8 @@
  * Subscribes to project lifecycle events and creates in-app notifications
  * (bell / browser / email / push) for project owners and the broader team.
  *
- * Audience: when a project has an owner (`owner_id`) the notification targets
- * that user; otherwise it fans out to every project-capable CRM user via
+ * Audience: the project's team (owner and members), never the person who
+ * acted; when nobody owns or works on it, it fans out to every project-capable CRM user via
  * NotificationService::broadcast() (capability-filtered, preference-aware).
  *
  * @listens doublescale_project_created
@@ -25,6 +25,7 @@ use DoubleScale\Modules\Notifications\Services\NotificationService;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectDiscussionModel;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
 use DoubleScale\Pro\Modules\Projects\Services\ProjectActivityLogger;
+use DoubleScale\Pro\Modules\Projects\Services\ProjectTeam;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -45,6 +46,41 @@ class ProjectNotifications {
 		add_action( 'doublescale_project_updated', array( $this, 'on_project_updated' ), 10, 2 );
 		add_action( 'doublescale_project_status_changed', array( $this, 'on_project_status_changed' ), 10, 3 );
 		add_action( 'doublescale_project_comment_posted', array( $this, 'on_comment_posted' ), 10, 3 );
+		add_action( 'doublescale_project_member_added', array( $this, 'on_member_added' ), 10, 4 );
+	}
+
+	/**
+	 * Handle project.member_added — tell the person they joined the team.
+	 *
+	 * @param mixed $project_id Project id.
+	 * @param mixed $user_id    New member.
+	 * @param mixed $reason     Why they were added.
+	 * @param mixed $added_by   Who added them (0 = the system).
+	 */
+	public function on_member_added( $project_id, $user_id, $reason = '', $added_by = 0 ): void {
+		$user_id = (int) $user_id;
+		// A former owner kept on the team knows the project already.
+		if ( $user_id <= 0 || $user_id === get_current_user_id() || ProjectTeam::REASON_FORMER_OWNER === (string) $reason ) {
+			return;
+		}
+
+		$this->safely(
+			ProjectModel::find( (int) $project_id ),
+			function ( ProjectModel $p ) use ( $user_id, $added_by ) {
+				$adder = (int) $added_by > 0 ? $this->user_display_name( (int) $added_by ) : '';
+				NotificationService::create(
+					$user_id,
+					__( 'You were added to a project', 'doublescale' ),
+					'' !== $adder
+						/* translators: 1: person who added them, 2: project title */
+						? sprintf( __( '%1$s added you to %2$s.', 'doublescale' ), $adder, $this->project_title( $p ) )
+						: $this->project_title( $p ),
+					$this->links_for( $p ),
+					NotificationCategories::PROJECTS_ASSIGNED,
+					array( 'project_id' => (int) $p->id )
+				);
+			}
+		);
 	}
 
 	/**
@@ -139,7 +175,7 @@ class ProjectNotifications {
 	}
 
 	/**
-	 * Handle project.comment_posted — notify the project owner.
+	 * Handle project.comment_posted — notify the project's team.
 	 *
 	 * @param mixed $project    ProjectModel instance (validated in safely()).
 	 * @param mixed $discussion ProjectDiscussionModel instance.
@@ -155,32 +191,28 @@ class ProjectNotifications {
 		$this->safely(
 			$project,
 			function ( ProjectModel $p ) use ( $discussion ) {
-				$owner_id = (int) ( $p->owner_id ?? 0 );
-				$author   = (int) ( $discussion->user_id ?? 0 );
-
-				if ( $owner_id <= 0 || $owner_id === $author ) {
-					return;
-				}
-
+				$author      = (int) ( $discussion->user_id ?? 0 );
 				$author_name = $this->user_display_name( $author );
 				$is_reply    = (int) ( $discussion->parent_id ?? 0 ) > 0;
 
-				NotificationService::create(
-					$owner_id,
-					$is_reply
-						/* translators: %s: project title */
-						? sprintf( __( 'New reply on %s', 'doublescale' ), $this->project_title( $p ) )
-						/* translators: %s: project title */
-						: sprintf( __( 'New comment on %s', 'doublescale' ), $this->project_title( $p ) ),
-					/* translators: %s: comment author display name */
-					sprintf( __( '%s left a comment.', 'doublescale' ), $author_name ),
-					$this->links_for( $p ),
-					NotificationCategories::PROJECTS_COMMENT,
-					array(
-						'project_id' => (int) $p->id,
-						'comment_id' => (int) $discussion->id,
-					)
-				);
+				foreach ( array_diff( ProjectTeam::team_user_ids( $p ), array( $author ) ) as $recipient ) {
+					NotificationService::create(
+						(int) $recipient,
+						$is_reply
+							/* translators: %s: project title */
+							? sprintf( __( 'New reply on %s', 'doublescale' ), $this->project_title( $p ) )
+							/* translators: %s: project title */
+							: sprintf( __( 'New comment on %s', 'doublescale' ), $this->project_title( $p ) ),
+						/* translators: %s: comment author display name */
+						sprintf( __( '%s left a comment.', 'doublescale' ), $author_name ),
+						$this->links_for( $p ),
+						NotificationCategories::PROJECTS_COMMENT,
+						array(
+							'project_id' => (int) $p->id,
+							'comment_id' => (int) $discussion->id,
+						)
+					);
+				}
 			}
 		);
 	}
@@ -190,7 +222,8 @@ class ProjectNotifications {
 	// ------------------------------------------------------------------
 
 	/**
-	 * Send a notification to the project owner, or broadcast when unassigned.
+	 * Send a notification to the project's team (owner and members) except the
+	 * person who acted, or broadcast when nobody owns or works on it.
 	 *
 	 * @param ProjectModel $project     The project.
 	 * @param string       $title       Notification title.
@@ -200,16 +233,14 @@ class ProjectNotifications {
 	private function notify( ProjectModel $project, string $title, string $body, string $subcategory ): void {
 		$links       = $this->links_for( $project );
 		$metadata    = array( 'project_id' => (int) $project->id );
-		$owner_id    = (int) ( $project->owner_id ?? 0 );
 		$actor_id    = get_current_user_id();
 		$exclude_ids = $actor_id > 0 ? array( $actor_id ) : array();
+		$team        = ProjectTeam::team_user_ids( $project );
 
-		if ( $owner_id > 0 ) {
-			if ( $owner_id === $actor_id ) {
-				return;
+		if ( ! empty( $team ) ) {
+			foreach ( array_diff( $team, $exclude_ids ) as $recipient ) {
+				NotificationService::create( (int) $recipient, $title, $body, $links, $subcategory, $metadata );
 			}
-
-			NotificationService::create( $owner_id, $title, $body, $links, $subcategory, $metadata );
 			return;
 		}
 

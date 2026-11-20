@@ -68,6 +68,13 @@ function seopress_xml_sitemap_news() {
 		}
 	}
 
+	// Text node content: decode once, escape once for XML. ENT_DISALLOWED
+	// replaces the characters XML 1.0 forbids, one of which is enough to make
+	// the whole sitemap unreadable.
+	$news_xml_text = static function ( $value ) {
+		return htmlspecialchars( html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE | ENT_DISALLOWED, 'UTF-8' );
+	};
+
 	remove_all_filters( 'pre_get_posts' );
 
 	$home_url = home_url() . '/';
@@ -124,6 +131,15 @@ function seopress_xml_sitemap_news() {
 	$postslist = get_posts( $args );
 	foreach ( $postslist as $post ) {
 		setup_postdata( $post );
+
+		// WPML: skip entries the site no longer serves, whether their language
+		// was hidden or removed without its content being deleted. The query
+		// above spans every language on purpose, so nothing else filters them.
+		if ( function_exists( 'seopress_wpml_is_language_excluded' )
+			&& seopress_wpml_is_language_excluded( seopress_wpml_get_element_language( $post->ID, $post->post_type ) ) ) {
+			continue;
+		}
+
 		if ( 'yes' != get_post_meta( $post->ID, '_seopress_news_disabled', true ) ) {
 			// Extract language. Use each post's own language when Polylang is
 			// active, otherwise fall back to the site locale.
@@ -251,7 +267,7 @@ function seopress_xml_sitemap_news() {
 
 			// Array with all the information needed for a sitemap URL.
 
-			$google_news_name = htmlspecialchars( urldecode( esc_attr( html_entity_decode( seopress_pro_get_service( 'OptionPro' )->getGoogleNewsName(), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+			$google_news_name = $news_xml_text( seopress_pro_get_service( 'OptionPro' )->getGoogleNewsName() );
 			$google_news_name = apply_filters( 'seopress_sitemaps_xml_news_name', $google_news_name );
 
 			$seopress_url = array(
@@ -262,7 +278,7 @@ function seopress_xml_sitemap_news() {
 					'name'             => $google_news_name,
 					'language'         => $lang,
 					'publication_date' => get_the_date( 'c', $post ),
-					'title'            => htmlspecialchars( urldecode( esc_attr( html_entity_decode( get_the_title( $post ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
+					'title'            => $news_xml_text( wp_strip_all_tags( get_the_title( $post ) ) ),
 					'keywords'         => $seopress_keywords,
 				),
 			);
@@ -334,4 +350,4 @@ function seopress_xml_sitemap_news() {
 
 	return $seopress_sitemaps;
 }
-echo seopress_xml_sitemap_news();
+echo seopress_xml_sitemap_news(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML document assembled above.

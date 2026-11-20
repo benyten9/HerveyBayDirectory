@@ -14,6 +14,7 @@ use Directorist\Enums\Payment\Status as PaymentStatus;
 use Directorist\Helpers\DateTime;
 
 use DirectoristPricingPlan\App\Repositories\PlanOrderMetaRepository;
+use DirectoristPricingPlan\App\DTO\PlanOrderMeta\DTO as PlanOrderMetaDTO;
 use DirectoristPricingPlan\App\Enums\UserPackage\Status as UserPackageStatus;
 
 use DirectoristStripe\App\Stripe;
@@ -79,7 +80,10 @@ class CheckoutController extends Controller {
 
         do_action( 'directorist_stripe_webhook_received', $type, $data );
 
-        StripeSDK::setApiKey( directorist_stripe_get_secret_key() );
+        $is_live    = filter_var( $request->get_param( 'livemode' ), FILTER_VALIDATE_BOOLEAN );
+        $secret_key = get_directorist_option( $is_live ? 'stripe_live_sk' : 'stripe_test_sk' );
+
+        StripeSDK::setApiKey( $secret_key ?: directorist_stripe_get_secret_key() );
 
         switch ( $type ) {
             case 'checkout.session.completed':
@@ -87,6 +91,9 @@ class CheckoutController extends Controller {
                 break;
             case 'customer.subscription.deleted':
                 $this->delete_subscription( $data['object']['id'] ?? '' );
+                break;
+            case 'customer.subscription.updated':
+                $this->reconcile_subscription_status( $data['object'] ?? [] );
                 break;
             case 'invoice.paid':
                 $this->handle_invoice_paid( $data['object']['id'] ?? '' );
@@ -103,6 +110,21 @@ class CheckoutController extends Controller {
                 'message' => 'Webhook received',
             ]
         );
+    }
+
+    /**
+     * Keep local package access aligned with terminal Stripe subscriptions.
+     *
+     * @param array $subscription Stripe subscription webhook object.
+     */
+    public function reconcile_subscription_status( array $subscription ): void {
+        $status = sanitize_key( (string) ( $subscription['status'] ?? '' ) );
+
+        if ( ! in_array( $status, [ 'canceled', 'incomplete_expired' ], true ) ) {
+            return;
+        }
+
+        $this->delete_subscription( sanitize_text_field( (string) ( $subscription['id'] ?? '' ) ) );
     }
 
     public function handle_checkout_session_completed( string $session_id ) {
@@ -182,7 +204,9 @@ class CheckoutController extends Controller {
         try {
             $stripe_invoice = Invoice::retrieve( $stripe_invoice_id );
 
-            if ( empty( $stripe_invoice->subscription ) ) {
+            $stripe_subscription_id = $this->get_invoice_subscription_id( $stripe_invoice );
+
+            if ( '' === $stripe_subscription_id ) {
                 return;
             }
 
@@ -191,9 +215,17 @@ class CheckoutController extends Controller {
             $currency         = strtoupper( $stripe_invoice->currency );
             $paid_amount      = $this->get_invoice_payment_amount( $stripe_invoice );
             $existing_payment = $this->get_payment_by_transaction_id( $transaction_id );
+            $order_date       = $this->get_invoice_order_date( $stripe_invoice );
+            $payment_date     = $this->get_invoice_payment_date( $stripe_invoice );
+            $period_start     = $this->get_invoice_period_start( $stripe_invoice );
+            $period_end       = $this->get_invoice_period_end( $stripe_invoice );
 
             if ( $existing_payment ) {
                 $this->update_payment( $existing_payment, $paid_amount, $currency, $is_paid );
+
+                if ( 'subscription_cycle' === ( $stripe_invoice->billing_reason ?? '' ) ) {
+                    $this->correct_invoice_record_dates( $existing_payment, $order_date, $payment_date );
+                }
 
                 if ( $is_paid ) {
                     $order = $this->get_order_dto( (int) $existing_payment->order_id );
@@ -201,12 +233,23 @@ class CheckoutController extends Controller {
                     if ( $order ) {
                         $this->mark_order_paid( $order, $currency );
                     }
+
+                    $this->update_package_billing_start( $stripe_subscription_id, $period_start, $period_end );
                 }
                 return;
             }
 
-            $stripe_subscription = Subscription::retrieve( $stripe_invoice->subscription );
-            $initial_order_id    = $legacy_order_id
+            $stripe_subscription = Subscription::retrieve( $stripe_subscription_id );
+
+            if ( ! $legacy_order_id ) {
+                $legacy_order_id = $this->reconcile_legacy_subscription( $stripe_subscription, $stripe_invoice );
+            }
+
+            if ( $legacy_order_id && 'subscription_create' === ( $stripe_invoice->billing_reason ?? '' ) ) {
+                return;
+            }
+
+            $initial_order_id = $legacy_order_id
                 ? 0
                 : absint( $stripe_subscription->metadata->order_id ?? 0 );
 
@@ -214,11 +257,12 @@ class CheckoutController extends Controller {
                 $order = $this->get_order_dto( $initial_order_id );
 
                 if ( $order ) {
-                    $this->upsert_payment( $initial_order_id, $transaction_id, $paid_amount, $currency, $is_paid );
+                    $this->upsert_payment( $initial_order_id, $transaction_id, $paid_amount, $currency, $is_paid, $payment_date );
 
                     if ( $is_paid ) {
                         $this->mark_order_paid( $order, $currency );
-                        $this->update_package_subscription_details( $order, $stripe_invoice->subscription, $currency, $paid_amount );
+                        $this->update_package_subscription_details( $order, $stripe_subscription_id, $currency, $paid_amount );
+                        $this->update_package_billing_start( $stripe_subscription_id, $period_start, $period_end );
                     }
                     return;
                 }
@@ -227,7 +271,7 @@ class CheckoutController extends Controller {
             $renewal_order_id = $this->create_renewal_order_from_invoice( $stripe_invoice );
 
             if ( $renewal_order_id ) {
-                $this->upsert_payment( $renewal_order_id, $transaction_id, $paid_amount, $currency, $is_paid );
+                $this->upsert_payment( $renewal_order_id, $transaction_id, $paid_amount, $currency, $is_paid, $payment_date );
 
                 if ( $is_paid ) {
                     $renewal_order = $this->get_order_dto( $renewal_order_id );
@@ -235,6 +279,8 @@ class CheckoutController extends Controller {
                     if ( $renewal_order ) {
                         $this->mark_order_paid( $renewal_order, $currency );
                     }
+
+                    $this->update_package_billing_start( $stripe_subscription_id, $period_start, $period_end );
                 }
             }
         } catch ( \Exception $e ) {
@@ -246,6 +292,31 @@ class CheckoutController extends Controller {
                 )
             );
         }
+    }
+
+    private function reconcile_legacy_subscription( $stripe_subscription, $stripe_invoice ): int {
+        $legacy_order_id = absint( $stripe_subscription->plan->metadata->order_id ?? 0 );
+
+        if ( ! $legacy_order_id ) {
+            return 0;
+        }
+
+        $migrated_order = directorist_order_repository()
+            ->get_query_builder()
+            ->where( 'legacy_id', $legacy_order_id )
+            ->first();
+
+        if ( ! $migrated_order || 'pricing_plan' !== ( $migrated_order->ref_type ?? '' ) || empty( $migrated_order->ref ) ) {
+            return 0;
+        }
+
+        $linked = ( new LegacyWebhookController() )->ensure_package_subscription_link(
+            $migrated_order,
+            (string) $stripe_subscription->id,
+            $stripe_invoice
+        );
+
+        return $linked ? (int) $migrated_order->id : 0;
     }
 
     public function delete_subscription( string $stripe_subscription_id ) {
@@ -412,7 +483,13 @@ class CheckoutController extends Controller {
             return null;
         }
 
-        $package = directorist_user_package_repository()->get_by_subscription_id( $stripe_invoice->subscription );
+        $stripe_subscription_id = $this->get_invoice_subscription_id( $stripe_invoice );
+
+        if ( '' === $stripe_subscription_id ) {
+            return null;
+        }
+
+        $package = directorist_user_package_repository()->get_by_subscription_id( $stripe_subscription_id );
 
         if ( ! $package ) {
             return null;
@@ -439,6 +516,12 @@ class CheckoutController extends Controller {
             ->set_currency( $currency )
             ->set_status( OrderStatus::PENDING );
 
+        $order_date = $this->get_invoice_order_date( $stripe_invoice );
+
+        if ( $order_date ) {
+            $order_dto->set_created_at( $order_date );
+        }
+
         if ( $source_order->is_initialized( 'listing_id' ) && null !== $source_order->get_listing_id() ) {
             $order_dto->set_listing_id( $source_order->get_listing_id() );
         }
@@ -453,10 +536,119 @@ class CheckoutController extends Controller {
 
         $new_order_id = directorist_order_repository()->create( $order_dto );
 
+        if ( $new_order_id ) {
+            $period_end = $this->get_invoice_period_end( $stripe_invoice );
+
+            $this->plan_order_meta_repository()->upsert_by_order_id(
+                ( new PlanOrderMetaDTO )
+                    ->set_order_id( $new_order_id )
+                    ->set_is_recurring( true )
+                    ->set_is_trial( false )
+                    ->set_current_period_end( $period_end )
+            );
+        }
+
         return $new_order_id;
     }
 
-    private function upsert_payment( int $order_id, string $transaction_id, float $amount, string $currency, bool $is_paid ) {
+    /**
+     * Get the subscription ID from current and legacy Stripe invoice schemas.
+     *
+     * @param object $stripe_invoice Stripe invoice.
+     */
+    public function get_invoice_subscription_id( $stripe_invoice ): string {
+        $candidates = [
+            $stripe_invoice->subscription ?? null,
+            $stripe_invoice->parent->subscription_details->subscription ?? null,
+        ];
+
+        foreach ( $stripe_invoice->lines->data ?? [] as $line ) {
+            $candidates[] = $line->parent->subscription_item_details->subscription ?? null;
+        }
+
+        foreach ( $candidates as $candidate ) {
+            if ( is_string( $candidate ) && '' !== $candidate ) {
+                return $candidate;
+            }
+
+            if ( is_object( $candidate ) && ! empty( $candidate->id ) ) {
+                return (string) $candidate->id;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Get the billing-period start from a Stripe invoice.
+     *
+     * @param object $stripe_invoice Stripe invoice.
+     */
+    public function get_invoice_period_start( $stripe_invoice ): ?DateTime {
+        $period_start = 0;
+
+        foreach ( $stripe_invoice->lines->data ?? [] as $line ) {
+            $line_period_start = (int) ( $line->period->start ?? 0 );
+            $period_start      = max( $period_start, $line_period_start );
+        }
+
+        if ( ! $period_start ) {
+            $period_start = (int) ( $stripe_invoice->period_start ?? 0 );
+        }
+
+        return $period_start ? $this->unix_to_datetime( $period_start ) : null;
+    }
+
+    /**
+     * Use the billing-period start as the historical renewal order date.
+     *
+     * @param object $stripe_invoice Stripe invoice.
+     */
+    private function get_invoice_order_date( $stripe_invoice ): ?DateTime {
+        $period_start = $this->get_invoice_period_start( $stripe_invoice );
+
+        if ( $period_start ) {
+            return $period_start;
+        }
+
+        $invoice_created = (int) ( $stripe_invoice->created ?? 0 );
+
+        return $invoice_created ? $this->unix_to_datetime( $invoice_created ) : null;
+    }
+
+    /**
+     * Get the date Stripe recorded payment for an invoice.
+     *
+     * @param object $stripe_invoice Stripe invoice.
+     */
+    private function get_invoice_payment_date( $stripe_invoice ): ?DateTime {
+        $paid_at = (int) ( $stripe_invoice->status_transitions->paid_at ?? 0 );
+
+        if ( $paid_at ) {
+            return $this->unix_to_datetime( $paid_at );
+        }
+
+        $invoice_created = (int) ( $stripe_invoice->created ?? 0 );
+
+        return $invoice_created ? $this->unix_to_datetime( $invoice_created ) : null;
+    }
+
+    private function get_invoice_period_end( $stripe_invoice ): ?DateTime {
+        $period_end = 0;
+
+        foreach ( $stripe_invoice->lines->data ?? [] as $line ) {
+            $line_period_end = (int) ( $line->period->end ?? 0 );
+            $period_end      = max( $period_end, $line_period_end );
+        }
+
+        if ( ! $period_end ) {
+            $period_end = (int) ( $stripe_invoice->period_end ?? 0 );
+        }
+
+        return $period_end ? $this->unix_to_datetime( $period_end ) : null;
+    }
+
+    private function upsert_payment( int $order_id, string $transaction_id, float $amount, string $currency, bool $is_paid, ?DateTime $created_at = null ) {
         if ( empty( $transaction_id ) ) {
             return;
         }
@@ -476,7 +668,67 @@ class CheckoutController extends Controller {
             ->set_status( $is_paid ? PaymentStatus::PAID : PaymentStatus::PENDING )
             ->set_method( Stripe::get_key() );
 
+        if ( $created_at ) {
+            $payment_dto->set_created_at( $created_at );
+        }
+
         directorist_payment_repository()->create( $payment_dto );
+    }
+
+    /**
+     * Correct historical order and payment dates when an invoice was replayed.
+     *
+     * @param object        $payment Payment record.
+     * @param DateTime|null $order_date Stripe billing-period start.
+     * @param DateTime|null $payment_date Stripe paid date.
+     */
+    private function correct_invoice_record_dates( $payment, ?DateTime $order_date, ?DateTime $payment_date ): void {
+        if ( $order_date ) {
+            directorist_order_repository()->silent_update(
+                ( new OrderDTO )
+                    ->set_id( (int) $payment->order_id )
+                    ->set_created_at( $order_date )
+            );
+        }
+
+        if ( $payment_date ) {
+            directorist_payment_repository()->update(
+                ( new PaymentDTO )
+                    ->set_id( (int) $payment->id )
+                    ->set_created_at( $payment_date )
+            );
+        }
+    }
+
+    /**
+     * Keep the package billing start aligned with its current Stripe period.
+     *
+     * @param string        $subscription_id Stripe subscription ID.
+     * @param DateTime|null $period_start Stripe period start.
+     * @param DateTime|null $period_end Stripe period end.
+     */
+    private function update_package_billing_start( string $subscription_id, ?DateTime $period_start, ?DateTime $period_end ): void {
+        if ( ! $period_start || ! $period_end ) {
+            return;
+        }
+
+        $repository = directorist_user_package_repository();
+        $package    = $repository->get_by_subscription_id( $subscription_id );
+
+        if ( ! $package || empty( $package->current_period_end ) ) {
+            return;
+        }
+
+        $package_period_end = new DateTime( (string) $package->current_period_end, new DateTimeZone( 'UTC' ) );
+
+        if ( $package_period_end->getTimestamp() !== $period_end->getTimestamp() ) {
+            return;
+        }
+
+        $repository->update(
+            $repository->to_dto( $package )
+                ->set_started_at( $period_start )
+        );
     }
 
     private function update_payment( $existing_payment, float $amount, string $currency, bool $is_paid ) {

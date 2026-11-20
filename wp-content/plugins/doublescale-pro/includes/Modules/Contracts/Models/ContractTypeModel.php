@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\Contracts\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * ContractTypeModel class.

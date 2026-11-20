@@ -276,6 +276,21 @@ function seopress_301_do_redirect() {
 		}
 	}
 
+	// A slash is an explicit homepage origin. Keep existing matches (including
+	// query-specific rules) first, and never fall back to empty stored titles.
+	$is_homepage_path = ! isset( $get_current_url['path'] ) || '' === trim( $get_current_url['path'], '/' );
+	if ( empty( $seopress_get_page ) && $is_homepage_path ) {
+		$host         = isset( $get_current_url['host'] ) ? $get_current_url['host'] : '';
+		$root_origins = '' !== $host ? array( $host . '/', $host, '/' ) : array( '/' );
+		foreach ( $root_origins as $root_origin ) {
+			$seopress_get_page = seopress_pro_get_service( 'Redirection' )->getPageByTitle( $root_origin, '', 'seopress_404' );
+			if ( $seopress_get_page ) {
+				break;
+			}
+		}
+		$if_exact_match = empty( $get_current_url['query'] );
+	}
+
 	do_action( 'seopress_before_redirect', $seopress_get_page );
 
 	if ( ! isset( $seopress_get_page->ID ) ) {
@@ -832,7 +847,7 @@ function seopress_prevent_title_redirection_already_exist( $post ) {
 		'seopress_404'
 	);
 
-	$wpdb->get_results( $sql );
+	$wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 	$count_post_title_exist = $wpdb->num_rows;
 

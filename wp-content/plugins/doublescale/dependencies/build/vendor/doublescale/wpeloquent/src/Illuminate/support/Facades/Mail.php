@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Support\Testing\Fakes\MailFake;
+use DoubleScale\Vendor\Illuminate\Support\Testing\Fakes\MailFake;
 /**
  * @method static \Illuminate\Mail\PendingMail to($users)
  * @method static \Illuminate\Mail\PendingMail bcc($users)
@@ -25,7 +25,7 @@ use Illuminate\Support\Testing\Fakes\MailFake;
  * @see \Illuminate\Mail\Mailer
  * @see \Illuminate\Support\Testing\Fakes\MailFake
  */
-class Mail extends \Illuminate\Support\Facades\Facade
+class Mail extends Facade
 {
     /**
      * Replace the bound instance with a fake.

@@ -49,7 +49,7 @@ final class CampaignAbilities {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function definitions(): array {
-		$permission = array( Permissions::class, 'has_crm_manager_access' );
+		$permission = array( Permissions::class, 'can_manage_campaigns' );
 
 		return array(
 			'doublescale/list-campaigns' => array(

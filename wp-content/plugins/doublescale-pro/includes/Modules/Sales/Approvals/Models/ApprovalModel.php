@@ -10,7 +10,7 @@ namespace DoubleScale\Pro\Modules\Sales\Approvals\Models;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Pro\Modules\Sales\Approvals\Constants\ApprovalStatus;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * ApprovalModel class.
@@ -42,18 +42,18 @@ class ApprovalModel extends Model {
 	);
 
 	/**
-	 * @param \WPEloquent\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\WPEloquent\Eloquent\Builder $query Query builder.
 	 * @param string                         $type  Document type.
 	 * @param int                            $id    Document id.
-	 * @return \WPEloquent\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\WPEloquent\Eloquent\Builder
 	 */
 	public function scopeForDocument( $query, string $type, int $id ) {
 		return $query->where( 'document_type', $type )->where( 'document_id', $id );
 	}
 
 	/**
-	 * @param \WPEloquent\Eloquent\Builder $query Query builder.
-	 * @return \WPEloquent\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\WPEloquent\Eloquent\Builder $query Query builder.
+	 * @return \DoubleScale\Vendor\WPEloquent\Eloquent\Builder
 	 */
 	public function scopePending( $query ) {
 		return $query->where( 'status', ApprovalStatus::PENDING );

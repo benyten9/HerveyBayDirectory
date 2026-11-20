@@ -199,4 +199,8 @@ class PageVisited extends Rule
     }
 }
 
-RulesManager::instance()->register(new PageVisited());
+// Page visits are the Website Tracking module's data: the condition exists
+// only while it can be read.
+if ( ! function_exists( 'doublescale_module_data_ready' ) || doublescale_module_data_ready( 'websitetracking' ) ) {
+	RulesManager::instance()->register( new PageVisited() );
+}

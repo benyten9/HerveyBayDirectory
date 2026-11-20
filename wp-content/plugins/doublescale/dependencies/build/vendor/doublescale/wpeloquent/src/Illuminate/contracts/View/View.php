@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\View;
+namespace DoubleScale\Vendor\Illuminate\Contracts\View;
 
-use Illuminate\Contracts\Support\Renderable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Renderable;
 interface View extends Renderable
 {
     /**

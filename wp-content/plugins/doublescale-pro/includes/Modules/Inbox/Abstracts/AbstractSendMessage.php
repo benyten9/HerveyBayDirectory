@@ -23,6 +23,7 @@ use DoubleScale\Modules\Automations\Abstracts\Action;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
+use DoubleScale\Modules\Automations\Models\AbandonedCartModel;
 use DoubleScale\Modules\Campaigns\Models\CampaignModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
@@ -31,6 +32,7 @@ use DoubleScale\Core\Constants\MessageSourceTypes;
 use DoubleScale\Core\Constants\MessageDirection;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Pro\Utils;
+use DoubleScale\Pro\Modules\SendQueue\SendQueue;
 
 /**
  * AbstractSendMessage class
@@ -94,6 +96,33 @@ abstract class AbstractSendMessage extends Action {
 	abstract protected function get_channel_name();
 
 	/**
+	 * Whether this is a cart reminder the shopper agreed to at checkout.
+	 *
+	 * With GDPR compliance on, a shopper's new contact is "unverified": they
+	 * saw the cart-reminder notice but never opted into marketing email. The
+	 * reminder about their own cart is still allowed, unless they chose
+	 * "No thanks". Unsubscribed, bounced and blocked contacts never get it.
+	 *
+	 * @param ContactModel           $contact            Contact.
+	 * @param AutomationContactModel $automation_contact Automation contact.
+	 * @return bool
+	 */
+	protected function is_consented_cart_reminder( ContactModel $contact, AutomationContactModel $automation_contact ) {
+		if ( 'email' !== $this->get_channel_type() || 'unverified' !== $contact->email_status ) {
+			return false;
+		}
+
+		$cart_id = (int) $automation_contact->get_data( 'cart_id' );
+		if ( ! $cart_id ) {
+			return false;
+		}
+
+		$cart = AbandonedCartModel::find( $cart_id );
+
+		return $cart && 'opt-out' !== $cart->status && strtolower( (string) $cart->email ) === strtolower( (string) $contact->email );
+	}
+
+	/**
 	 * Process Action
 	 * Consolidated logic for all message sending actions
 	 *
@@ -112,7 +141,7 @@ abstract class AbstractSendMessage extends Action {
 			$channel_type = $this->get_channel_type();
 
 			// Check if contact is subscribed to this channel
-			if ( ! $contact->is_subscribed_to_channel( $channel_type ) ) {
+			if ( ! $contact->is_subscribed_to_channel( $channel_type ) && ! $this->is_consented_cart_reminder( $contact, $automation_contact ) ) {
 				doublescale_get_logger()->info(
 					"Skipping {$channel_name} automation action - contact unsubscribed from {$channel_type}",
 					array(
@@ -253,6 +282,46 @@ abstract class AbstractSendMessage extends Action {
 				throw $e;
 			}
 
+			// 6. Bulk runs, a backlog, the daily cap or the WhatsApp tier: the
+			// message waits in the send queue and this step waits with it.
+			$queued = $this->maybe_queue( $automation, $step, $automation_contact, $tracking );
+			if ( $queued ) {
+				return $queued;
+			}
+
+			// 7. Otherwise send now, exactly as before.
+			return $this->deliver( $automation, $step, $automation_contact, $tracking );
+		} catch ( \Exception $e ) {
+			doublescale_get_logger()->error(
+				"Send {$this->get_channel_name()} action: Exception occurred",
+				array(
+					'automation_id' => $automation->id ?? 0,
+					'contact_id'    => $automation_contact->contact->id ?? 0,
+					'error'         => $e->getMessage(),
+					'code'          => "send_{$this->get_channel_type()}_exception",
+				)
+			);
+			return false;
+		}
+	}
+
+	/**
+	 * Send a prepared message (its tracking row exists) and report the result.
+	 * Used for inline sends and by the send queue's dispatcher.
+	 *
+	 * @param AutomationModel            $automation         Workflow.
+	 * @param AutomationStepModel        $step               Send step.
+	 * @param AutomationContactModel     $automation_contact Contact's journey.
+	 * @param CommunicationTrackingModel $tracking           Prepared tracking row.
+	 * @return bool|array True when sent; ['success' => false, 'message'] on failure.
+	 */
+	public function deliver( AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact, CommunicationTrackingModel $tracking ) {
+		$contact      = $automation_contact->contact;
+		$channel_name = $this->get_channel_name();
+		$channel_type = $this->get_channel_type();
+		$template     = (object) array( 'id' => $tracking->template_id );
+
+		try {
 			// 6. Create dummy campaign for process_campaign_message() to work
 			// This allows us to reuse 100% of existing campaign infrastructure
 			$dummy_campaign         = new CampaignModel(
@@ -334,20 +403,79 @@ abstract class AbstractSendMessage extends Action {
 						'code'          => "send_{$channel_type}_failed",
 					)
 				);
-				return false;
+				$error = \DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel::get_meta_value( $tracking->id, 'send_error' );
+				return array(
+					'success' => false,
+					'message' => is_string( $error ) && '' !== trim( $error )
+						/* translators: %1$s: channel name, %2$s: provider error. */
+						? sprintf( __( '%1$s could not be sent: %2$s', 'doublescale' ), $channel_name, trim( $error ) )
+						/* translators: %s: channel name. */
+						: sprintf( __( '%s could not be sent.', 'doublescale' ), $channel_name ),
+				);
 			}
 		} catch ( \Exception $e ) {
 			doublescale_get_logger()->error(
-				"Send {$this->get_channel_name()} action: Exception occurred",
+				"Send {$channel_name} action: Exception occurred",
 				array(
-					'automation_id' => $automation->id ?? 0,
-					'contact_id'    => $automation_contact->contact->id ?? 0,
+					'automation_id' => $automation->id,
+					'contact_id'    => $automation_contact->contact_id,
 					'error'         => $e->getMessage(),
-					'code'          => "send_{$this->get_channel_type()}_exception",
+					'code'          => "send_{$channel_type}_exception",
 				)
 			);
-			return false;
+			return array(
+				'success' => false,
+				'message' => $e->getMessage(),
+			);
 		}
+	}
+
+	/**
+	 * Why a queued message may no longer go out ('' when it may): the contact
+	 * unsubscribed from the channel or lost their address/number meanwhile.
+	 *
+	 * @param ContactModel           $contact            Contact.
+	 * @param AutomationContactModel $automation_contact Contact's journey.
+	 * @return string
+	 */
+	public function delivery_blocked( ContactModel $contact, AutomationContactModel $automation_contact ) {
+		if ( ! $contact->is_subscribed_to_channel( $this->get_channel_type() ) && ! $this->is_consented_cart_reminder( $contact, $automation_contact ) ) {
+			/* translators: %s: channel name (Email, SMS, WhatsApp) */
+			return sprintf( __( 'Contact unsubscribed from %s', 'doublescale' ), $this->get_channel_name() );
+		}
+		$recipient_error = $this->validate_recipient( $contact );
+		if ( $recipient_error ) {
+			return (string) ( $recipient_error['message'] ?? __( 'The contact has no address to send to.', 'doublescale' ) );
+		}
+		return '';
+	}
+
+	/**
+	 * Queue the prepared message instead of sending it now, when the send
+	 * queue says it should wait.
+	 *
+	 * @param AutomationModel            $automation         Workflow.
+	 * @param AutomationStepModel        $step               Send step.
+	 * @param AutomationContactModel     $automation_contact Contact's journey.
+	 * @param CommunicationTrackingModel $tracking           Prepared tracking row.
+	 * @return array|null The 'queued' result, or null to send now.
+	 */
+	protected function maybe_queue( AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact, CommunicationTrackingModel $tracking ) {
+		if ( ! class_exists( SendQueue::class ) ) {
+			return null;
+		}
+		$channel = (string) $this->get_channel_type();
+		$reason  = SendQueue::hold_reason( $channel, (string) $tracking->recipient );
+		if ( '' === $reason ) {
+			return null;
+		}
+		if ( ! SendQueue::push( $channel, (int) $tracking->id, (int) $automation->id, (int) $step->id, (int) $automation_contact->id, (int) $automation_contact->contact_id ) ) {
+			return null;
+		}
+		return array(
+			'status'  => 'queued',
+			'message' => __( 'Queued for sending', 'doublescale' ),
+		);
 	}
 
 	/**

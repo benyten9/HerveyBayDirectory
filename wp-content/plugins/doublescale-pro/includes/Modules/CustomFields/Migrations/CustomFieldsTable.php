@@ -32,6 +32,7 @@ class CustomFieldsTable extends Migration {
 			attributes TEXT,
 			group_id BIGINT(20) NOT NULL,
 			scope VARCHAR(255) NOT NULL,
+			position INT NOT NULL DEFAULT 0,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id),

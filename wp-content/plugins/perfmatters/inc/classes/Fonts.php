@@ -215,8 +215,14 @@ class Fonts
         }
 
         //minify and save file
-        $minifier = new \MatthiasMullie\Minify\CSS($css);
-        $minifier->minify($file_path);
+        try {
+            $minifier = new \MatthiasMullie\Minify\CSS($css);
+            $minifier->minify($file_path);
+        }
+        catch(\MatthiasMullie\Minify\Exceptions\IOException $e) {
+            error_log('Perfmatters: ' . $e->getMessage());
+            return false;
+        }
 
         return true;
     }

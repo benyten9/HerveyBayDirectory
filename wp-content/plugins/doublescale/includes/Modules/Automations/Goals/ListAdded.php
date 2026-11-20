@@ -128,6 +128,27 @@ class ListAdded extends Goal {
 	}
 
 	/**
+	 * Already achieved on arrival: the contact is subscribed to one of the goal's lists.
+	 *
+	 * @param AutomationContactModel $automation_contact Run, pointed at the goal step.
+	 * @param ContactModel           $contact            Contact.
+	 * @return bool
+	 */
+	public function is_met_now( AutomationContactModel $automation_contact, ContactModel $contact ) {
+		$step = $this->goal_step( $automation_contact );
+		if ( ! $step ) {
+			return false;
+		}
+		foreach ( array_map( 'intval', (array) $step->get_setting( 'lists', array() ) ) as $list_id ) {
+			if ( $list_id > 0 && $contact->is_subscribed_to_list( $list_id ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get fields
 	 *
 	 * @since 1.0.0

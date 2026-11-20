@@ -23,11 +23,8 @@ if (!defined('ABSPATH')) {
 // =====================================================================
 
 wp_register_ability('nibwp/fluentaffiliate-manage', [
-    'label' => __('FluentAffiliate – Program Manager', domain: 'nibwp'),
-    'description' => __(
-        'Manage FluentAffiliate affiliates, groups, referrals, visits, payouts, settings, and reports. Approve/reject affiliates, create commissions, mark payouts paid, and pull program analytics.',
-        domain: 'nibwp',
-    ),
+    'label' => __('FluentAffiliate – Program Manager', 'nibwp'),
+    'description' => 'Manage FluentAffiliate affiliates, groups, referrals, visits, payouts, settings, and reports. Approve/reject affiliates, create commissions, mark payouts paid, and pull program analytics.',
     'category' => 'affiliate',
     'input_schema' => [
         'type' => 'object',

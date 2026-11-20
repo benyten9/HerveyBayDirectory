@@ -14,9 +14,13 @@
 namespace DoubleScale\Modules\Contacts\Services;
 
 use DoubleScale\Core\Constants\CampaignChannel;
+use DoubleScale\Core\Scope\OwnerScope;
+use DoubleScale\Modules\Campaigns\Services\CampaignMessageQuery;
 use DoubleScale\Modules\Contacts\Filters\Process as Contact_Filters_Process;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use WP_REST_Request;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Translates list/bulk request criteria into an Eloquent query.
@@ -38,6 +42,7 @@ final class ContactQueryBuilder {
 		'subscribed',
 		'campaign_type',
 		'has_whatsapp_phone',
+		'campaign_messages',
 	);
 
 	/**
@@ -46,7 +51,7 @@ final class ContactQueryBuilder {
 	 * @param WP_REST_Request      $request Request carrying the list criteria.
 	 * @param array<string, mixed> $args    Optional. 'with' => relations to eager-load.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public static function from_request( $request, array $args = array() ) {
 		return self::from_criteria( self::criteria_from_request( $request ), $args );
@@ -122,10 +127,17 @@ final class ContactQueryBuilder {
 	 * channel, WhatsApp availability, then the keyword search last so it
 	 * searches *within* the filtered results.
 	 *
-	 * @param array<string, mixed> $criteria Criteria array.
-	 * @param array<string, mixed> $args     Optional. 'with' => relations to eager-load.
+	 * Ownership is applied last of all, so nothing in the criteria can widen
+	 * what the caller may see: `scope` (an OwnerScope, default the current
+	 * user's) and `level` — 'visible' (owned or collaborating; the default for
+	 * lists, search and pickers) or 'owned' (export, campaign audiences,
+	 * reassignment: never a contact you only collaborate on).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param array<string, mixed> $criteria Criteria array.
+	 * @param array<string, mixed> $args     Optional. 'with' => relations to eager-load,
+	 *                                       'scope' => OwnerScope, 'level' => 'visible'|'owned'.
+	 *
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public static function from_criteria( array $criteria, array $args = array() ) {
 		$keywords           = $criteria['keywords'] ?? '';
@@ -135,6 +147,7 @@ final class ContactQueryBuilder {
 		$has_whatsapp_phone = $criteria['has_whatsapp_phone'] ?? null;
 		$from               = $criteria['from'] ?? null;
 		$to                 = $criteria['to'] ?? null;
+		$campaign_messages  = $criteria['campaign_messages'] ?? null;
 
 		$contacts = ContactModel::query();
 
@@ -207,6 +220,11 @@ final class ContactQueryBuilder {
 			}
 		}
 
+		// Recipients of a campaign, as its Messages tab lists them.
+		if ( null !== $campaign_messages && '' !== $campaign_messages && array() !== $campaign_messages ) {
+			$contacts = self::apply_campaign_messages( $contacts, $campaign_messages );
+		}
+
 		// Apply keyword search AFTER filters (search within filtered results).
 		if ( '' !== $keywords ) {
 			$has_custom_fields = class_exists( 'DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel' );
@@ -230,7 +248,66 @@ final class ContactQueryBuilder {
 			);
 		}
 
-		return $contacts;
+		return self::apply_scope( $contacts, $args );
+	}
+
+	/**
+	 * Narrow a contacts query to what a scope may see or owns. Applied last.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $contacts Contacts query.
+	 * @param array<string, mixed>                  $args     'scope' and 'level' (see from_criteria()).
+	 *
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	public static function apply_scope( $contacts, array $args = array() ) {
+		if ( ! class_exists( OwnerScope::class ) ) {
+			return $contacts;
+		}
+
+		$scope = $args['scope'] ?? null;
+		if ( ! $scope instanceof OwnerScope ) {
+			$scope = OwnerScope::current();
+		}
+
+		$level = $args['level'] ?? 'visible';
+
+		return 'owned' === $level
+			? $scope->apply_contact_ownership( $contacts )
+			: $scope->apply_contact_visibility( $contacts );
+	}
+
+	/**
+	 * Narrow to the contacts behind a campaign's Messages tab rows.
+	 *
+	 * The criterion is `{campaign_id, status, error_code}` — the tab's own
+	 * filter — and resolves through the same CampaignMessageQuery the tab lists
+	 * with, as a subquery, so "select all N matching" tags exactly those N
+	 * rows' contacts without loading their ids into PHP.
+	 *
+	 * A criterion that cannot be resolved matches nobody. Dropping it instead
+	 * would leave the rest of the criteria — often nothing — and address every
+	 * contact in the database.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $contacts Contacts query.
+	 * @param mixed                                 $criterion Raw criterion.
+	 *
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	private static function apply_campaign_messages( $contacts, $criterion ) {
+		$criterion   = is_array( $criterion ) ? $criterion : array();
+		$campaign_id = absint( $criterion['campaign_id'] ?? 0 );
+
+		if ( $campaign_id < 1 || ! class_exists( CampaignMessageQuery::class ) ) {
+			return $contacts->whereRaw( '1 = 0' );
+		}
+
+		$messages = CampaignMessageQuery::filtered(
+			$campaign_id,
+			sanitize_key( (string) ( $criterion['status'] ?? '' ) ),
+			sanitize_text_field( (string) ( $criterion['error_code'] ?? '' ) )
+		)->whereNotNull( 'contact_id' )->select( 'contact_id' );
+
+		return $contacts->whereIn( 'id', $messages );
 	}
 
 	/**

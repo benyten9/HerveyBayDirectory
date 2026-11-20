@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Auth;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Auth;
 
 interface UserProvider
 {
@@ -26,7 +26,7 @@ interface UserProvider
      * @param  string  $token
      * @return void
      */
-    public function updateRememberToken(\Illuminate\Contracts\Auth\Authenticatable $user, $token);
+    public function updateRememberToken(Authenticatable $user, $token);
     /**
      * Retrieve a user by the given credentials.
      *
@@ -41,5 +41,5 @@ interface UserProvider
      * @param  array  $credentials
      * @return bool
      */
-    public function validateCredentials(\Illuminate\Contracts\Auth\Authenticatable $user, array $credentials);
+    public function validateCredentials(Authenticatable $user, array $credentials);
 }

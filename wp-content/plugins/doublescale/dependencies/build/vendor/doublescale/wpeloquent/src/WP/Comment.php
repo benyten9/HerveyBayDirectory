@@ -1,8 +1,8 @@
 <?php
 
-namespace WPEloquent\WP;
+namespace DoubleScale\Vendor\WPEloquent\WP;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 class Comment extends Model
 {
     protected $table = 'comments';
@@ -14,6 +14,6 @@ class Comment extends Model
      */
     public function post()
     {
-        return $this->hasOne('WPEloquent\\WP\\Post');
+        return $this->hasOne('DoubleScale\\Vendor\\WPEloquent\\WP\\Post');
     }
 }

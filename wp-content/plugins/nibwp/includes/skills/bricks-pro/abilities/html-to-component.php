@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/bricks-pro-html-to-component', [
     'label'       => __('Bricks Pro — HTML / URL / image to Bricks template', 'nibwp'),
-    'description' => __('Validates an agent-built Bricks payload against the Bricks Pro playbook (element whitelist, ACSS tokens, global classes, no inline @media, no raw form/iframe) and persists it as a Bricks template (header/footer/content/section/archive/error/popup). Conversion synthesis happens on the agent side; this ability is the guardrail + writer. Trigger words: "brickify", "convert to bricks", "html to bricks", "create bricks section".', 'nibwp'),
+    'description' => 'Validates an agent-built Bricks payload against the Bricks Pro playbook (element whitelist, ACSS tokens, global classes, no inline @media, no raw form/iframe) and persists it as a Bricks template (header/footer/content/section/archive/error/popup). Conversion synthesis happens on the agent side; this ability is the guardrail + writer. Trigger words: "brickify", "convert to bricks", "html to bricks", "create bricks section".',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

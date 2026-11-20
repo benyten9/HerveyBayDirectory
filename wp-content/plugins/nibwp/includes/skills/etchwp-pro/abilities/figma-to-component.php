@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/etchwp-pro-figma-to-component', [
     'label'       => __('EtchWP Pro — Figma to Component', 'nibwp'),
-    'description' => __('Converts a Figma frame URL into a reusable EtchWP component with ACSS tokens, BEM naming, props, conditions, and loops. Figma variants become EtchWP conditions; component instances become loops.', 'nibwp'),
+    'description' => 'Converts a Figma frame URL into a reusable EtchWP component with ACSS tokens, BEM naming, props, conditions, and loops. Figma variants become EtchWP conditions; component instances become loops.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

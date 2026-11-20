@@ -8,9 +8,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\Exceptions\InvalidFormatException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidFormatException;
 use ReturnTypeWillChange;
 use Throwable;
 /**
@@ -32,7 +32,7 @@ use Throwable;
  */
 trait Serialization
 {
-    use \Carbon\Traits\ObjectInitialisation;
+    use ObjectInitialisation;
     /**
      * The custom Carbon JSON serializer.
      *

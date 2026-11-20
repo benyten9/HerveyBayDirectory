@@ -110,6 +110,11 @@ class Capabilities {
 		if ( self::can_manage_all_sales( $user_id ) ) {
 			return true;
 		}
+		// An own-sales user (Sales Rep, CRM Agent) keeps their documents: another
+		// role of theirs (project access) must not let them hand one to a colleague.
+		if ( self::user_can( 'doublescale_manage_own_sales', $user_id ) ) {
+			return false;
+		}
 
 		return Permissions::can_assign_sales_rep( $user_id > 0 ? $user_id : null );
 	}
@@ -190,19 +195,44 @@ class Capabilities {
 	}
 
 	/**
-	 * @param int $user_id User id.
+	 * Whether a user's sales document lists (proposals, invoices, contracts,
+	 * credit notes) show every record, or only the ones assigned to them.
+	 *
+	 * @param int $user_id User id (0 = current user).
+	 * @return bool
+	 */
+	public static function sees_all_records( int $user_id = 0 ): bool {
+		if ( self::can_manage_all_sales( $user_id ) ) {
+			return true;
+		}
+		// An own-sales user (Sales Rep, CRM Agent) lists their own documents,
+		// even when another role of theirs may assign reps (as
+		// user_can_manage_record() decides for one record).
+		if ( self::user_can( 'doublescale_manage_own_sales', $user_id ) ) {
+			return false;
+		}
+		return self::can_assign_sales_rep( $user_id );
+	}
+
+	/**
+	 * Whether a user may open and change one sales document.
+	 *
+	 * @param int      $user_id          User id.
+	 * @param int|null $assigned_user_id The document's sales rep.
 	 * @return bool
 	 */
 	public static function user_can_manage_record( int $user_id, ?int $assigned_user_id ): bool {
 		if ( self::can_manage_all_sales( $user_id ) ) {
 			return true;
 		}
+		// An own-sales user (Sales Rep, CRM Agent) is bound to their own records
+		// even when another role of theirs may assign reps elsewhere.
+		if ( self::user_can( 'doublescale_manage_own_sales', $user_id ) ) {
+			return (int) $assigned_user_id === $user_id;
+		}
 		if ( self::can_assign_sales_rep( $user_id ) ) {
 			return true;
 		}
-		if ( ! self::user_can( 'doublescale_manage_own_sales', $user_id ) ) {
-			return false;
-		}
-		return (int) $assigned_user_id === $user_id;
+		return false;
 	}
 }

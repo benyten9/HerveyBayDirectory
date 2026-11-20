@@ -3,7 +3,7 @@
 Plugin Name: Perfmatters
 Plugin URI: https://perfmatters.io/
 Description: Perfmatters is a lightweight performance plugin developed to speed up your WordPress site.
-Version: 2.6.8
+Version: 2.7.0
 Requires at least: 5.5
 Requires PHP: 8.1
 Author: forgemedia
@@ -24,7 +24,7 @@ if(!defined('ABSPATH')) {
 define('PERFMATTERS_STORE_URL', 'https://perfmatters.io/');
 define('PERFMATTERS_ITEM_ID', 696);
 define('PERFMATTERS_ITEM_NAME', 'perfmatters');
-define('PERFMATTERS_VERSION', '2.6.8');
+define('PERFMATTERS_VERSION', '2.7.0');
 define('PERFMATTERS_PATH', plugin_dir_path(__FILE__ ));
 define('PERFMATTERS_URL', plugin_dir_url(__FILE__));
 if(!defined('PMMU_PLUGIN_DIR')) {
@@ -65,6 +65,9 @@ function perfmatters_plugins_loaded() {
     Perfmatters\LazyLoad::init_elements();
     Perfmatters\CDN::init();
 	Perfmatters\Buffer::init();
+
+	//page cache
+	Perfmatters\Cache::init();
 
 	//initialize db optimizer
 	new Perfmatters\DatabaseOptimizer();
@@ -154,7 +157,7 @@ function perfmatters_admin_scripts() {
 		wp_register_style('perfmatters-styles', plugins_url('/css/style.css', __FILE__), array(), PERFMATTERS_VERSION);
 		wp_enqueue_style('perfmatters-styles');
 
-		wp_register_script('perfmatters-js', plugins_url('/js/perfmatters.js', __FILE__), array(), PERFMATTERS_VERSION);
+		wp_register_script('perfmatters-js', plugins_url('/js/perfmatters.js', __FILE__), array('jquery'), PERFMATTERS_VERSION);
 		wp_enqueue_script('perfmatters-js');
 		wp_localize_script('perfmatters-js', 'PERFMATTERS', array(
 			'ajaxurl' => admin_url('admin-ajax.php'),
@@ -163,6 +166,13 @@ function perfmatters_admin_scripts() {
 				'failed' => __('Action failed.', 'perfmatters')
 			),
 		));
+
+		//page cache status / warmer progress (settings screen)
+		wp_register_style('perfmatters-cache', plugins_url('/css/cache.css', __FILE__), array('perfmatters-styles'), PERFMATTERS_VERSION);
+		wp_enqueue_style('perfmatters-cache');
+
+		wp_register_script('perfmatters-cache', plugins_url('/js/cache.js', __FILE__), array('jquery', 'perfmatters-js'), PERFMATTERS_VERSION, true);
+		wp_enqueue_script('perfmatters-cache');
 
 		//Global script textareas: wp.codeEditor.initialize() expects the object returned from
 		//wp_enqueue_code_editor() (top-level "codemirror" key), not a "codeEditor" wrapper.
@@ -232,6 +242,7 @@ function perfmatters_get_reload_notice_text($action) {
 			'import_settings'  => __('Successfully imported Perfmatters settings.', 'perfmatters'),
 			'restore_defaults' => __('Successfully restored default options.', 'perfmatters'),
 			'import_snippets'  => __('Successfully imported Perfmatters code snippets.', 'perfmatters'),
+			'remove_cloudflare_token' => __('Cloudflare API token removed.', 'perfmatters'),
 		);
 		$text = $messages[$message_key] ?? '';
 	}
@@ -244,7 +255,7 @@ function perfmatters_meta_links($links, $file) {
 	if(strpos($file, 'perfmatters.php') !== false) {
 
 		//support link
-		$perfmatters_links = array('<a href="https://perfmatters.io/docs/" target="_blank">' . __('Support', 'perfmatters') . '</a>');
+		$perfmatters_links = array('<a href="https://perfmatters.io/docs/" target="_blank">' . esc_html__('Support', 'perfmatters') . '</a>');
 
 		$links = array_merge($links, $perfmatters_links);
 	}
@@ -257,7 +268,7 @@ function perfmatters_action_links($actions, $plugin_file)
 {
 	if(plugin_basename(__FILE__) == $plugin_file) {
 		$settings_url = is_network_admin() ? network_admin_url('settings.php?page=perfmatters') : admin_url('options-general.php?page=perfmatters');
-		$settings_link = array('settings' => '<a href="' . $settings_url . '">' . __('Settings', 'perfmatters') . '</a>');
+		$settings_link = array('settings' => '<a href="' . $settings_url . '">' . esc_html__('Settings', 'perfmatters') . '</a>');
 		$actions = array_merge($settings_link, $actions);
 	}
 	return $actions;
@@ -270,16 +281,18 @@ function perfmatters_plugin_update_message() {
 	$license_status = is_multisite() ? get_site_option('perfmatters_edd_license_status') : get_option('perfmatters_edd_license_status');
 
 	if(empty($license_status) || $license_status !== 'valid') {
-		echo ' <strong><a href="' . esc_url(admin_url('options-general.php?page=perfmatters#license')) . '">' . __('Enter valid license key for automatic updates.', 'perfmatters') . '</a></strong>';
+		echo ' <strong><a href="' . esc_url(admin_url('options-general.php?page=perfmatters#license')) . '">' . esc_html__('Enter valid license key for automatic updates.', 'perfmatters') . '</a></strong>';
 	}
 }
 add_action('in_plugin_update_message-perfmatters/perfmatters.php', 'perfmatters_plugin_update_message', 10, 2);
 
 function perfmatters_activate() {
+
+	//activation runs before this plugin's plugins_loaded — load options for Dropin/Htaccess
+	Perfmatters\Config::init();
 	
 	//enable local analytics scheduled event
-	$perfmatters_options = get_option('perfmatters_options');
-	if(!empty($perfmatters_options['analytics']['enable_local_ga'])) {
+	if(!empty(Perfmatters\Config::$options['analytics']['enable_local_ga'])) {
 		if(!wp_next_scheduled('perfmatters_update_ga')) {
 			wp_schedule_event(time(), 'daily', 'perfmatters_update_ga');
 		}
@@ -290,6 +303,21 @@ function perfmatters_activate() {
 	if(!empty($pmsm_settings['mu_mode']) && !file_exists(PMMU_PLUGIN_DIR . "/perfmatters_mu.php")) {
 		if(file_exists(plugin_dir_path(__FILE__) . "/inc/perfmatters_mu.php")) {
 			@copy(plugin_dir_path(__FILE__) . "/inc/perfmatters_mu.php", PMMU_PLUGIN_DIR . "/perfmatters_mu.php");
+		}
+	}
+
+	//restore page-cache drop-in when disk cache was already enabled
+	if(!empty(Perfmatters\Config::$options['cache']['page'])) {
+		if(Perfmatters\Cache::disk_enabled()) {
+			$result = Perfmatters\Cache\Dropin::install();
+
+			if($result === true) {
+				Perfmatters\Cache\Dropin::mark_files_current();
+			}
+		}
+		else {
+			//host page cache or multisite soft-lock
+			Perfmatters\Cache::stand_aside();
 		}
 	}
 }
@@ -303,6 +331,11 @@ function perfmatters_deactivate() {
 		if(wp_next_scheduled($hook)) {
 			wp_clear_scheduled_hook($hook);
 		}
+	}
+
+	//page cache drop-in / warmer / CF must not outlive the plugin
+	if(class_exists('Perfmatters\\Cache')) {
+		Perfmatters\Cache::uninstall();
 	}
 }
 register_deactivation_hook(__FILE__, 'perfmatters_deactivate');
@@ -495,6 +528,16 @@ function perfmatters_install() {
 		update_option('perfmatters_options', $perfmatters_options);
 	}
 
+	//default warmer sources for existing installs (new installs already get these via add_option)
+	if($perfmatters_version < '2.7.0') {
+		$perfmatters_options = get_option('perfmatters_options');
+		$perfmatters_options['cache']['warmer_sources'] = array(
+			'posts' => 1,
+			'pages' => 1
+		);
+		update_option('perfmatters_options', $perfmatters_options);
+	}
+
 	//migrate code snippet data from cache to uploads
 	if($perfmatters_version < '2.5.4') {
 	   	
@@ -583,9 +626,12 @@ function perfmatters_uninstall() {
 		'perfmatters_exclude_instant_page'
 	);
 
+	$clean = false;
+
 	if(is_multisite()) {
 		$perfmatters_network = get_site_option('perfmatters_network');
 		if(!empty($perfmatters_network['clean_uninstall']) && $perfmatters_network['clean_uninstall'] == 1) {
+			$clean = true;
 
 			global $wpdb;
 
@@ -595,16 +641,23 @@ function perfmatters_uninstall() {
 			$sites = array_map('get_object_vars', get_sites(array('deleted' => 0)));
 			if(is_array($sites) && $sites !== array()) {
 				foreach($sites as $site) {
+					switch_to_blog((int) $site['blog_id']);
+
+					if(class_exists('Perfmatters\\Cache')) {
+						Perfmatters\Cache::uninstall();
+					}
 
 					//remove options
 					foreach($perfmatters_options as $option) {
-						delete_blog_option($site['blog_id'], $option);
+						delete_option($option);
 					}
 
 					//remove meta options
 					foreach($perfmatters_meta_options as $option) {
-						$wpdb->delete($wpdb->get_blog_prefix($site['blog_id']) . 'postmeta', array('meta_key' => $option));
+						$wpdb->delete($wpdb->prefix . 'postmeta', array('meta_key' => $option));
 					}
+
+					restore_current_blog();
 				}
 			}
 
@@ -615,8 +668,13 @@ function perfmatters_uninstall() {
 	else {
 		$perfmatters_tools = get_option('perfmatters_tools');
 		if(!empty($perfmatters_tools['clean_uninstall']) && $perfmatters_tools['clean_uninstall'] == 1) {
+			$clean = true;
 
 			global $wpdb;
+
+			if(class_exists('Perfmatters\\Cache')) {
+				Perfmatters\Cache::uninstall();
+			}
 
 			//remove options
 			foreach($perfmatters_options as $option) {
@@ -633,14 +691,26 @@ function perfmatters_uninstall() {
 		}
 	}
 
-	//remove cache directory if needed
+	//minify/css/fonts + page-cache bootstrap (default path and filtered bootstrap if different)
+	$cache_dirs = array(WP_CONTENT_DIR . '/cache/perfmatters');
+
+	if($clean && class_exists('Perfmatters\\Cache\\Config')) {
+		$bootstrap = Perfmatters\Cache\Config::bootstrap_dir();
+
+		if(is_string($bootstrap) && $bootstrap !== '') {
+			$cache_dirs[] = $bootstrap;
+		}
+	}
+
 	require_once(ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php');
 	require_once(ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php');
 	if(class_exists('WP_Filesystem_Direct')) {
 		$fileSystemDirect = new WP_Filesystem_Direct(false);
-		$cache_dir = ABSPATH . 'wp-content/cache/perfmatters';
-		if($fileSystemDirect->is_dir($cache_dir)) {
-			$fileSystemDirect->rmdir($cache_dir, true);
+
+		foreach(array_unique($cache_dirs) as $cache_dir) {
+			if($fileSystemDirect->is_dir($cache_dir)) {
+				$fileSystemDirect->rmdir($cache_dir, true);
+			}
 		}
 	}
 

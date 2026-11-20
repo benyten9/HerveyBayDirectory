@@ -12,7 +12,7 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Zoom;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\EventLocations\Zoom;
 use DoubleScale\Modules\Booking\Abstracts\Integration as Abstract_Integration;
 use DoubleScale\Pro\Modules\Booking\Integrations\Zoom\Rest\REST_API;

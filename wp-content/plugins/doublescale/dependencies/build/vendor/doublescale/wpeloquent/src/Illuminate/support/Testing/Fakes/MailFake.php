@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Support\Testing\Fakes;
+namespace DoubleScale\Vendor\Illuminate\Support\Testing\Fakes;
 
-use Illuminate\Contracts\Mail\Mailer;
-use Illuminate\Contracts\Mail\Mailable;
-use Illuminate\Contracts\Mail\MailQueue;
+use DoubleScale\Vendor\Illuminate\Contracts\Mail\Mailer;
+use DoubleScale\Vendor\Illuminate\Contracts\Mail\Mailable;
+use DoubleScale\Vendor\Illuminate\Contracts\Mail\MailQueue;
 use DoubleScale\Vendor\PHPUnit\Framework\Assert as PHPUnit;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\ShouldQueue;
 class MailFake implements Mailer, MailQueue
 {
     /**
@@ -205,7 +205,7 @@ class MailFake implements Mailer, MailQueue
      */
     public function to($users)
     {
-        return (new \Illuminate\Support\Testing\Fakes\PendingMailFake($this))->to($users);
+        return (new PendingMailFake($this))->to($users);
     }
     /**
      * Begin the process of mailing a mailable class instance.
@@ -215,7 +215,7 @@ class MailFake implements Mailer, MailQueue
      */
     public function bcc($users)
     {
-        return (new \Illuminate\Support\Testing\Fakes\PendingMailFake($this))->bcc($users);
+        return (new PendingMailFake($this))->bcc($users);
     }
     /**
      * Send a new message with only a raw text part.

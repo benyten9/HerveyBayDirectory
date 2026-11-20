@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Filesystem;
+namespace DoubleScale\Vendor\Illuminate\Filesystem;
 
-use Illuminate\Support\ServiceProvider;
+use DoubleScale\Vendor\Illuminate\Support\ServiceProvider;
 class FilesystemServiceProvider extends ServiceProvider
 {
     /**
@@ -23,7 +23,7 @@ class FilesystemServiceProvider extends ServiceProvider
     protected function registerNativeFilesystem()
     {
         $this->app->singleton('files', function () {
-            return new \Illuminate\Filesystem\Filesystem();
+            return new Filesystem();
         });
     }
     /**
@@ -49,7 +49,7 @@ class FilesystemServiceProvider extends ServiceProvider
     protected function registerManager()
     {
         $this->app->singleton('filesystem', function () {
-            return new \Illuminate\Filesystem\FilesystemManager($this->app);
+            return new FilesystemManager($this->app);
         });
     }
     /**

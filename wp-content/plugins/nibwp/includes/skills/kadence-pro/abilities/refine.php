@@ -19,7 +19,7 @@ require_once __DIR__ . '/../lib/persister.php';
 
 wp_register_ability('nibwp/kadence-pro-refine', [
     'label'       => __('Kadence Pro — refine a Kadence layout', 'nibwp'),
-    'description' => __('Re-validate and re-persist an updated Kadence block tree onto an existing post (behind an idempotency marker). Use after the user asks to tweak a layout you built.', 'nibwp'),
+    'description' => 'Re-validate and re-persist an updated Kadence block tree onto an existing post (behind an idempotency marker). Use after the user asks to tweak a layout you built.',
     'category'    => 'kadence-pro',
     'input_schema' => [
         'type' => 'object',

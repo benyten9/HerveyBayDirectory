@@ -14,16 +14,22 @@ defined( 'ABSPATH' ) || exit;
 
 use Exception;
 use DoubleScale\Modules\Automations\Engine\ContactEnrollment;
+use DoubleScale\Modules\Automations\Engine\GoalJump;
+use DoubleScale\Modules\Automations\Engine\GoalSettings;
+use DoubleScale\Modules\Automations\Engine\SendContext;
 use DoubleScale\Modules\Automations\Engine\StepBudget;
 use DoubleScale\Modules\Automations\Engine\StepNavigator;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Automations\Services\ActionResult;
 use DoubleScale\Modules\Automations\Services\ActionsManager;
+use DoubleScale\Modules\Automations\Services\GoalsManager;
 use DoubleScale\Modules\Automations\Services\ProcessRecordPayload;
+use DoubleScale\Modules\Automations\Services\StepFailureReason;
 use DoubleScale\Modules\Automations\Migrations\AutomationContactProcessesTable;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Core\PluginKernel;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Automations\Conditions\Process as Process_Conditions;
 use DoubleScale\Modules\Automations\Support\ConditionSettings;
 
@@ -261,13 +267,38 @@ class ProcessAutomation {
 			if ( $action->is_pro ) {
 				$result = true;
 			} else {
-				$result = $action->process_action( $this->automation, $step, $automation_contact );
+				StepFailureReason::begin();
+				$was_test = SendContext::set_test( $test_mode );
+				try {
+					$result = $action->process_action( $this->automation, $step, $automation_contact );
+				} finally {
+					SendContext::set_test( $was_test );
+					$logged = StepFailureReason::end();
+				}
 			}
 			$next_step   = $this->get_next_step( $step );
 			$interpreted = ActionResult::interpret( $result );
 
 			if ( 'failed' === $interpreted['outcome'] ) {
-				$this->record_failed_step( $step, $automation_contact, $interpreted['message'] );
+				// A step that returned a bare `false` still gets a reason: what it
+				// logged while running, or a plain note that it gave none.
+				$reason = '' !== $interpreted['message']
+					? $interpreted['message']
+					: StepFailureReason::fallback( $logged ?? '', (string) ( $action->name ?? $step->action ) );
+				$this->record_failed_step( $step, $automation_contact, $reason );
+				return;
+			}
+
+			// Handed to a queue: wait here like a Delay. The queue calls
+			// finish_waiting_step() once the work is done.
+			if ( 'waiting' === $interpreted['outcome'] ) {
+				$this->add_automation_contact_process(
+					$step,
+					$automation_contact->contact_id,
+					$automation_contact->id,
+					'pending',
+					$interpreted['message']
+				);
 				return;
 			}
 
@@ -308,6 +339,101 @@ class ProcessAutomation {
 				$this->record_failed_step( $step, $automation_contact, $e->getMessage() );
 			}
 			return;
+		}
+	}
+
+	/**
+	 * Finish a step that was waiting on a queue (see the 'waiting' outcome).
+	 *
+	 * Done → the step's pending record becomes completed and the contact moves
+	 * on to the next step. Failed → the record becomes failed with $message
+	 * and the contact stops, like any failed step. A contact that jumped ahead
+	 * to a goal meanwhile has no pending record here and is left alone.
+	 *
+	 * @param AutomationStepModel $step                  The waiting step.
+	 * @param int                 $automation_contact_id Automation contact.
+	 * @param bool                $ok                    Whether the work succeeded.
+	 * @param string              $message               Reason, when it failed.
+	 * @return bool False when there was nothing waiting.
+	 */
+	public function finish_waiting_step( $step, $automation_contact_id, $ok, $message = '' ) {
+		$process = $this->automation->processes()
+			->where( 'automation_contact_id', (int) $automation_contact_id )
+			->where( 'step_id', (int) $step->id )
+			->where( 'status', 'pending' )
+			->orderBy( 'id', 'desc' )
+			->first();
+		if ( ! $process ) {
+			return false;
+		}
+
+		$automation_contact = AutomationContactModel::find( (int) $automation_contact_id );
+		if ( ! $automation_contact ) {
+			return false;
+		}
+
+		$next_step = $this->get_next_step( $step );
+
+		if ( ! $ok ) {
+			$process->status = 'failed';
+			if ( '' !== $message ) {
+				$process->message = $message;
+			}
+			$this->save_process( $process );
+			$this->update_automation_contact_status( $automation_contact, 'failed', $step->id, $next_step ? $next_step->id : 0 );
+			return true;
+		}
+
+		$process->status  = 'completed';
+		$process->message = '';
+		$this->save_process( $process );
+
+		if ( $next_step ) {
+			$this->enqueue_step( $next_step->id, $automation_contact->id );
+		} else {
+			$this->update_automation_contact_status( $automation_contact, 'completed', $step->id, 0 );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Update what a waiting step shows, e.g. "Waiting: daily email limit
+	 * reached, resumes at 00:00".
+	 *
+	 * @param int    $step_id               Waiting step.
+	 * @param int    $automation_contact_id Automation contact.
+	 * @param string $message               New message.
+	 * @return void
+	 */
+	public function update_waiting_message( $step_id, $automation_contact_id, $message ) {
+		try {
+			$this->automation->processes()
+				->where( 'automation_contact_id', (int) $automation_contact_id )
+				->where( 'step_id', (int) $step_id )
+				->where( 'status', 'pending' )
+				->update( array( 'message' => mb_substr( (string) $message, 0, 500 ) ) );
+		} catch ( Exception $e ) {
+			// Older installs without the message column: the wait still works.
+			unset( $e );
+		}
+	}
+
+	/**
+	 * Save a process record; without the optional message column, save the rest.
+	 *
+	 * @param object $process Process record.
+	 * @return void
+	 */
+	private function save_process( $process ) {
+		try {
+			$process->save();
+		} catch ( Exception $e ) {
+			if ( ! ProcessRecordPayload::is_unknown_message_column( $e ) ) {
+				throw $e;
+			}
+			unset( $process->message );
+			$process->save();
 		}
 	}
 
@@ -483,19 +609,32 @@ class ProcessAutomation {
 	public function process_goal( $step, $automation_contact_id ) {
 		try {
 			$automation_contact = AutomationContactModel::findOrFail( $automation_contact_id );
-			$skip               = $step->get_setting( 'skip', false );
 			$next_step          = $this->get_next_step( $step );
-			if ( $skip ) {
-				$this->add_automation_contact_process( $step, $automation_contact->contact_id, $automation_contact->id, 'skipped' );
-				if ( $next_step ) {
-					$this->enqueue_step( $next_step->id, $automation_contact->id );
-				}
+			$contact_id         = (int) $automation_contact->contact_id;
+
+			// Already achieved (it has the tag, it is on the list...): move on.
+			if ( $this->goal_met_on_arrival( $step, $automation_contact ) ) {
+				$this->add_automation_contact_process( $step, $contact_id, $automation_contact->id, 'completed', \__( 'Goal already achieved when the contact arrived.', 'doublescale' ) );
+				$this->continue_after( $step, $next_step, $automation_contact );
 				return;
 			}
 
-			// Create a process record for the goal step with pending status
-			$this->add_automation_contact_process( $step, $automation_contact->contact_id, $automation_contact->id, 'pending' );
-			$this->update_automation_contact_status( $automation_contact, 'pending', $step->id, $next_step ? $next_step->id : 0 );
+			switch ( GoalSettings::mode( $step->settings ) ) {
+				case GoalSettings::CONTINUE:
+					$this->add_automation_contact_process( $step, $contact_id, $automation_contact->id, 'skipped', \__( 'Goal not achieved yet: the contact continued.', 'doublescale' ) );
+					$this->continue_after( $step, $next_step, $automation_contact );
+					return;
+
+				case GoalSettings::END:
+					$this->add_automation_contact_process( $step, $contact_id, $automation_contact->id, 'skipped', \__( 'Goal not achieved: the automation ended for this contact.', 'doublescale' ) );
+					$this->update_automation_contact_status( $automation_contact, 'completed', (int) $step->id, 0 );
+					return;
+
+				default:
+					// Hold the contact here until the goal is achieved.
+					$this->add_automation_contact_process( $step, $contact_id, $automation_contact->id, 'pending' );
+					$this->update_automation_contact_status( $automation_contact, 'pending', $step->id, $next_step ? $next_step->id : 0 );
+			}
 		} catch ( Exception $e ) {
 			doublescale_get_logger()->error(
 				\__( 'Process Goal Error', 'doublescale' ),
@@ -509,6 +648,46 @@ class ProcessAutomation {
 				)
 			);
 			return;
+		}
+	}
+
+	/**
+	 * Whether the contact has already achieved the goal on reaching it.
+	 *
+	 * @param object                 $step               Goal step.
+	 * @param AutomationContactModel $automation_contact Run.
+	 * @return bool
+	 */
+	private function goal_met_on_arrival( $step, $automation_contact ): bool {
+		try {
+			$goal = GoalsManager::instance()->get_goal( (string) $step->action );
+		} catch ( Exception $e ) {
+			return false;
+		}
+		if ( $goal->is_pro ) {
+			return false;
+		}
+		$contact = ContactModel::find( (int) $automation_contact->contact_id );
+		if ( ! $contact ) {
+			return false;
+		}
+
+		return (bool) $goal->is_met_now( GoalJump::probe( $automation_contact, (int) $step->id ), $contact );
+	}
+
+	/**
+	 * Run the step after `$step`, or finish the automation when there is none.
+	 *
+	 * @param object                       $step               Current step.
+	 * @param object|false|null            $next_step          Next step.
+	 * @param AutomationContactModel       $automation_contact Run.
+	 * @return void
+	 */
+	private function continue_after( $step, $next_step, $automation_contact ): void {
+		if ( $next_step ) {
+			$this->enqueue_step( $next_step->id, $automation_contact->id );
+		} else {
+			$this->update_automation_contact_status( $automation_contact, 'completed', (int) $step->id, 0 );
 		}
 	}
 

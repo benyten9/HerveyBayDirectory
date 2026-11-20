@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Database\Schema\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema\Grammars;
 
 use RuntimeException;
-use Illuminate\Support\Fluent;
-use Illuminate\Database\Connection;
-use Illuminate\Database\Schema\Blueprint;
-class MySqlGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Blueprint;
+class MySqlGrammar extends Grammar
 {
     /**
      * The possible column modifiers.

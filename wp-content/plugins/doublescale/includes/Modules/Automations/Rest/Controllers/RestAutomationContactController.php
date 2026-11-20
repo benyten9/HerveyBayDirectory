@@ -277,7 +277,7 @@ class RestAutomationContactController extends RestController {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function create_item_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_sales_rep_access() || $this->can_edit_owning_automation( $request );
 	}
 
 	/**
@@ -288,7 +288,7 @@ class RestAutomationContactController extends RestController {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function get_item_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_sales_rep_access() || $this->can_edit_owning_automation( $request );
 	}
 
 	/**
@@ -299,7 +299,7 @@ class RestAutomationContactController extends RestController {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function update_item_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_sales_rep_access() || $this->can_edit_owning_automation( $request );
 	}
 
 	/**
@@ -310,6 +310,28 @@ class RestAutomationContactController extends RestController {
 	 * @param WP_REST_Request $request The request object.
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_sales_rep_access() || $this->can_edit_owning_automation( $request );
+	}
+
+	/**
+	 * Automation staff (not otherwise in sales) may work with runs in the
+	 * workflows they can change: every workflow for managers, their own for
+	 * Automation Agents.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	private function can_edit_owning_automation( $request ) {
+		if ( ! Permissions::can_access_automations() ) {
+			return false;
+		}
+		if ( null !== $request->get_param( 'id' ) ) {
+			$record = AutomationContactModel::find( (int) $request->get_param( 'id' ) );
+			return ! $record || Permissions::can_edit_automation( (int) $record->automation_id );
+		}
+		if ( null !== $request->get_param( 'automation_id' ) ) {
+			return Permissions::can_edit_automation( (int) $request->get_param( 'automation_id' ) );
+		}
+		return Permissions::can_manage_all_automations();
 	}
 }

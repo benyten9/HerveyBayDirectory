@@ -31,7 +31,8 @@ class Settings {
 	 */
 	public function __construct() {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
-		add_action( 'admin_post_dlig_save_google_settings', [ $this, 'handle_save' ] );
+		add_action( 'admin_post_dlig_save_google_settings',   [ $this, 'handle_save' ] );
+		add_action( 'admin_post_dlig_remove_google_api_key',  [ $this, 'handle_remove' ] );
 	}
 
 	// ── Getters ──────────────────────────────────────────────────────────────
@@ -51,7 +52,16 @@ class Settings {
 	}
 
 	public function get_max_results(): int {
-		return max( 1, min( 60, intval( get_option( self::OPT_MAX_RESULTS, 20 ) ) ) );
+		return max( 1, min( 20, intval( get_option( self::OPT_MAX_RESULTS, 20 ) ) ) );
+	}
+
+	/** Store a replacement credential without exposing it in a read or preview. */
+	public function save_api_key( string $key ): void {
+		$encrypted = '' === $key ? '' : $this->encrypt( $key );
+		if ( '' !== $key && '' === $encrypted ) {
+			throw new \RuntimeException( 'Could not encrypt the Google Places credential.' );
+		}
+		update_option( self::OPT_API_KEY, $encrypted, false );
 	}
 
 	// ── WP Settings API registration (used for REST / options sanitization) ──
@@ -64,7 +74,7 @@ class Settings {
 		] );
 		register_setting( 'dgbi_settings_group', self::OPT_MAX_RESULTS, [
 			'sanitize_callback' => function ( $v ) {
-				return max( 1, min( 60, absint( $v ) ) );
+				return max( 1, min( 20, absint( $v ) ) );
 			},
 		] );
 	}
@@ -81,6 +91,7 @@ class Settings {
 		}
 
 		check_admin_referer( 'dlig_save_google_settings_action', 'dgbi_settings_nonce' );
+        \DLI_MCP_Compatibility::native_lock();
 
 		// API key: only update if the submitted value is not the placeholder mask.
 		if ( isset( $_POST['dgbi_api_key'] ) ) {
@@ -99,11 +110,31 @@ class Settings {
 		}
 		update_option( self::OPT_DEFAULT_STATUS, $status, 'no' );
 
-		$max = max( 1, min( 60, absint( $_POST['dgbi_max_results'] ?? 20 ) ) );
+		$max = max( 1, min( 20, absint( $_POST['dgbi_max_results'] ?? 20 ) ) );
 		update_option( self::OPT_MAX_RESULTS, $max, 'no' );
 
 		wp_safe_redirect( add_query_arg(
 			[ 'page' => DLI_PAGE_SLUG, 'tab' => 'google', 'google_tab' => 'settings', 'dgbi_settings_saved' => '1' ],
+			admin_url( 'edit.php?post_type=at_biz_dir' )
+		) );
+		exit;
+	}
+
+	/**
+	 * Handle the Remove API Key form submission.
+	 */
+	public function handle_remove(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Unauthorized.', 'directorist-listing-import' ) );
+		}
+
+		check_admin_referer( 'dlig_remove_google_api_key_action', 'dgbi_remove_nonce' );
+        \DLI_MCP_Compatibility::native_lock();
+
+		update_option( self::OPT_API_KEY, '', 'no' );
+
+		wp_safe_redirect( add_query_arg(
+			[ 'page' => DLI_PAGE_SLUG, 'tab' => 'google', 'google_tab' => 'settings', 'dgbi_key_removed' => '1' ],
 			admin_url( 'edit.php?post_type=at_biz_dir' )
 		) );
 		exit;
@@ -149,6 +180,12 @@ class Settings {
 								<span aria-hidden="true">✓</span>
 								<?php esc_html_e( 'Key connected. Enter a new key to replace it.', 'directorist-listing-import' ); ?>
 							</p>
+							<button
+								type="submit"
+								form="dgbi-remove-api-key-form"
+								class="button button-link-delete dgbi-remove-key-button"
+								onclick="return confirm('<?php echo esc_js( __( 'Remove the stored API key? Imports will stop working until a new key is added.', 'directorist-listing-import' ) ); ?>')"
+							><?php esc_html_e( 'Remove API Key', 'directorist-listing-import' ); ?></button>
 						<?php else : ?>
 							<p class="description">
 								<?php
@@ -195,7 +232,7 @@ class Settings {
 							name="dgbi_max_results"
 							class="small-text"
 							min="1"
-							max="60"
+							max="20"
 							value="<?php echo esc_attr( $this->get_max_results() ); ?>"
 						>
 					</td>
@@ -205,6 +242,12 @@ class Settings {
 
 			<?php submit_button( __( 'Save Settings', 'directorist-listing-import' ) ); ?>
 		</form>
+		<?php if ( $api_key_stored ) : ?>
+			<form id="dgbi-remove-api-key-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="dlig_remove_google_api_key">
+				<?php wp_nonce_field( 'dlig_remove_google_api_key_action', 'dgbi_remove_nonce' ); ?>
+			</form>
+		<?php endif; ?>
 		<?php
 	}
 

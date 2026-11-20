@@ -6,7 +6,6 @@ namespace Perfmatters\Vendor\Sabberworm\CSS\Value;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\ParserState;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedEOFException;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenException;
-use function Perfmatters\Vendor\Safe\preg_match;
 /** @internal */
 class CalcFunction extends CSSFunction
 {
@@ -57,7 +56,11 @@ class CalcFunction extends CSSFunction
             } else {
                 if (\in_array($parserState->peek(), $operators, \true)) {
                     if ($parserState->comes('-') || $parserState->comes('+')) {
-                        if (preg_match('/\\s/', $parserState->peek(1, -1)) !== 1 || preg_match('/\\s/', $parserState->peek(1, 1)) !== 1) {
+                        $matchResultBefore = \preg_match('/\\s/', $parserState->peek(1, -1));
+                        \assert(\is_int($matchResultBefore));
+                        $matchResultAfter = \preg_match('/\\s/', $parserState->peek(1, 1));
+                        \assert(\is_int($matchResultAfter));
+                        if ($matchResultBefore !== 1 || $matchResultAfter !== 1) {
                             throw new UnexpectedTokenException(" {$parserState->peek()} ", $parserState->peek(1, -1) . $parserState->peek(2), 'literal', $parserState->currentLine());
                         }
                     }

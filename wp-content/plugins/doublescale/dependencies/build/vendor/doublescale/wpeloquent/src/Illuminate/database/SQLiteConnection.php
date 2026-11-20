@@ -1,13 +1,13 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
-use Illuminate\Database\Schema\SQLiteBuilder;
-use Illuminate\Database\Query\Processors\SQLiteProcessor;
-use Doctrine\DBAL\Driver\PDOSqlite\Driver as DoctrineDriver;
-use Illuminate\Database\Query\Grammars\SQLiteGrammar as QueryGrammar;
-use Illuminate\Database\Schema\Grammars\SQLiteGrammar as SchemaGrammar;
-class SQLiteConnection extends \Illuminate\Database\Connection
+use DoubleScale\Vendor\Illuminate\Database\Schema\SQLiteBuilder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Processors\SQLiteProcessor;
+use DoubleScale\Vendor\Doctrine\DBAL\Driver\PDOSqlite\Driver as DoctrineDriver;
+use DoubleScale\Vendor\Illuminate\Database\Query\Grammars\SQLiteGrammar as QueryGrammar;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Grammars\SQLiteGrammar as SchemaGrammar;
+class SQLiteConnection extends Connection
 {
     /**
      * Create a new database connection instance.

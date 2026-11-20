@@ -11,11 +11,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/create-upload-link', [
-    'label' => __('Create Upload Link', domain: 'nibwp'),
-    'description' => __(
-        'Creates a temporary, self-authenticated URL that external tools can use to upload one file into the WordPress filesystem. Useful when the agent has a local ZIP, plugin, theme, or media file and wants to upload it with curl or another external tool. The URL accepts raw PUT/POST bodies and multipart/form-data with a field named "file". Set register_attachment to true to put a local image or other media file straight into the Media Library: the upload response then includes attachment_id and url.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Create Upload Link', 'nibwp'),
+    'description' => 'Creates a temporary, self-authenticated URL that external tools can use to upload one file into the WordPress filesystem. Useful when the agent has a local ZIP, plugin, theme, or media file and wants to upload it with curl or another external tool. The URL accepts raw PUT/POST bodies and multipart/form-data with a field named "file". Set register_attachment to true to put a local image or other media file straight into the Media Library: the upload response then includes attachment_id and url.',
     'category' => 'filesystem',
     'input_schema' => [
         'type' => 'object',
@@ -88,7 +85,9 @@ wp_register_ability('nibwp/create-upload-link', [
         ],
     ],
     'execute_callback' => 'nibwp_create_upload_link',
-    'permission_callback' => 'nibwp_permission_callback',
+    // The link it mints writes a chosen path on the server, so minting one is
+    // the write itself. See nibwp_filesystem_permission_callback().
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

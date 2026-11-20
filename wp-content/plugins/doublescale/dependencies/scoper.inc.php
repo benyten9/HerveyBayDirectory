@@ -9,8 +9,11 @@
  * Runtime loads only `dependencies/build/vendor/scoper-autoload.php` when present
  * so Guzzle / SendGrid / etc. do not clash with other plugins.
  *
- * WPEloquent ships bundled Illuminate — those namespaces must never be prefixed
- * or you split contracts vs implementations (PHP 8.1+ fatals).
+ * WPEloquent's bundled Illuminate, and the Carbon / Doctrine it uses, are prefixed
+ * too (DoubleScale\Vendor\Illuminate\…): other plugins ship their own Laravel
+ * (e.g. MailerPress ships illuminate/* 12 with psr/container 2), and two copies
+ * under one class name fatal the site. Prefix the whole set together, never a
+ * part of it, or contracts and implementations split.
  *
  * @package DoubleScale
  */
@@ -23,6 +26,11 @@ return [
 	'prefix'                  => 'DoubleScale\\Vendor',
 	'expose-global-constants' => true,
 	'expose-global-classes'   => true,
+	// Keep this on: the scoped Illuminate code calls its own helpers (value(),
+	// collect()…) unqualified and lands on these global aliases, so turning it
+	// off takes the site down. tools/prune-scoper-function-aliases.php drops the
+	// aliases that point at nothing (request 132: UpdraftPlus backups died on
+	// our litespeed_finish_request()).
 	'expose-global-functions' => true,
 	'expose-namespaces'       => array(),
 	'exclude-namespaces'      => array(
@@ -30,13 +38,8 @@ return [
 		'GuzzleHttp',
 		'Psr\\Http',
 		'Psr\\Log',
-		'Illuminate',
-		'WPEloquent',
-		'Carbon',
 		'League',
 		'Javanile',
-		// Doctrine: optional cache adapters in some SDKs; partial prefix breaks implements clauses.
-		'Doctrine',
 	),
 	'exclude-files'           => array(
 		__DIR__ . '/composer.json',

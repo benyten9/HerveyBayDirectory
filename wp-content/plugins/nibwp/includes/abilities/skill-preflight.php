@@ -43,7 +43,7 @@ if (!defined('NIBWP_PREFLIGHT_MAX_ATTEMPTS')) {
 if (function_exists('wp_register_ability')) {
     wp_register_ability('nibwp/skill-preflight', [
         'label'       => __('Skill Preflight', 'nibwp'),
-        'description' => __('Generic per-skill preflight gate. Probes server-detectable facts (ACSS active, EtchWP version, existing brand prefixes, candidate target posts, installed form plugins), reads cached user answers via nibwp_user_default_get, asks the user only the still-unanswered questions from the skill manifest, and mints a 1-hour preflight_token the downstream conversion ability requires. Call this FIRST for any skill whose mandatory_routing.preflight_required = true.', 'nibwp'),
+        'description' => 'Generic per-skill preflight gate. Probes server-detectable facts (ACSS active, EtchWP version, existing brand prefixes, candidate target posts, installed form plugins), reads cached user answers via nibwp_user_default_get, asks the user only the still-unanswered questions from the skill manifest, and mints a 1-hour preflight_token the downstream conversion ability requires. Call this FIRST for any skill whose mandatory_routing.preflight_required = true.',
         'category'    => 'mcp-adapter',
         'input_schema' => [
             'type' => 'object',
@@ -304,6 +304,7 @@ function nibwp_skill_preflight_environment(string $skill_id): array
         'forminator'     => class_exists('Forminator'),
         'jetpack-form'   => class_exists('Jetpack_Contact_Form'),
         'happyforms'     => class_exists('HappyForms_Form_Controller'),
+        'bit-form'       => class_exists('BitCode\BitForm\Core\Database\FormModel'),
     ];
     foreach ($form_plugins as $slug => $active) {
         if ($active) {

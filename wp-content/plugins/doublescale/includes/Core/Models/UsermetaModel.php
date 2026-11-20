@@ -13,7 +13,7 @@ namespace DoubleScale\Core\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * User_Meta_Model class

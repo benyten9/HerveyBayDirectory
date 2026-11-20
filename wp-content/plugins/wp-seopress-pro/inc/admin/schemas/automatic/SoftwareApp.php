@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Software name', 'wp-seopress-pro' ); ?>
 			<code>name</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_name', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_name', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The name of your app', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Operating system', 'wp-seopress-pro' ); ?>
 			<code>operatingSystem</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_os', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_os', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The operating system(s) required to use the app', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -41,7 +41,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Application category', 'wp-seopress-pro' ); ?>
 			<code>applicationCategory</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_cat', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_cat', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php echo wp_kses_post( __( '<strong>Authorized values:</strong> "GameApplication", "SocialNetworkingApplication", "TravelApplication", "ShoppingApplication", "SportsApplication", "LifestyleApplication", "BusinessApplication", "DesignApplication", "DeveloperApplication", "DriverApplication", "EducationalApplication", "HealthApplication", "FinanceApplication", "SecurityApplication", "BrowserApplication", "CommunicationApplication", "DesktopEnhancementApplication", "EntertainmentApplication", "MultimediaApplication", "HomeApplication", "UtilitiesApplication", "ReferenceApplication"', 'wp-seopress-pro' ) ); ?></span>
 	</p>
@@ -50,7 +50,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Price of your app', 'wp-seopress-pro' ); ?>
 			<code>price</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_price', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_price', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The price of your app (set "0" if the app is free of charge)', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -59,7 +59,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Currency', 'wp-seopress-pro' ); ?>
 			<code>priceCurrency</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_currency', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_currency', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'e.g. USD, EUR...', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -68,7 +68,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Your rating', 'wp-seopress-pro' ); ?>
 			<code>ratingValue</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_rating', 'rating' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_rating', 'rating' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'The item rating', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -77,7 +77,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Max best rating', 'wp-seopress-pro' ); ?>
 			<code>bestRating</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_max_rating', 'rating' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_softwareapp_max_rating', 'rating' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span
 			class="description"><?php esc_html_e( 'Only required if your scale is different from 1 to 5.', 'wp-seopress-pro' ); ?></span>
 	</p>

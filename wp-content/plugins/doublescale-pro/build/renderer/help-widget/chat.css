@@ -1,0 +1,1564 @@
+/*
+ * Help assistant chat. Lives in a shadow root (widget, help page) or the
+ * portal's, so nothing here needs to fight a theme. Pixels, not rem: the
+ * portal rewrites rem to px, and a theme's html font-size must not resize it.
+ * Logical properties only, so right-to-left needs no second file.
+ *
+ * DoubleScale's design tokens, as fixed values: the portal's own (primary
+ * 240 45% 41% = #3a3a99, border 0 0% 82% = #d1d1d1, foreground, muted). Never
+ * read generic names like --primary or --border: a theme on the customer's
+ * site can define them for something else. Only the help center page's own
+ * accent (--ds-hc-accent, inherited through the shadow root) is read, so the
+ * chat matches that page. Sizes follow the admin/portal Button and Input
+ * (40px high, 8px corners) and the portal's inner cards (12px corners,
+ * #f7f8fa).
+ */
+
+.dshc {
+	--dshc-accent: var(--ds-hc-accent, #3a3a99);
+	--dshc-fg: #29292f;
+	--dshc-muted: #6b6d75;
+	--dshc-border: #d1d1d1;
+	--dshc-bg: #ffffff;
+	--dshc-soft: #f7f8fa;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	color: var(--dshc-fg);
+	background: var(--dshc-bg);
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.5;
+	text-align: start;
+}
+
+.dshc *,
+.dshc *::before,
+.dshc *::after {
+	box-sizing: inherit;
+}
+
+.dshc--panel {
+	width: 380px;
+	max-width: calc(100vw - 32px);
+	height: 560px;
+	max-height: calc(100vh - 120px);
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	box-shadow: 0 12px 32px rgba(17, 24, 39, 0.16);
+	overflow: hidden;
+}
+
+.dshc--inline {
+	height: 440px;
+	margin-block-end: 24px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+
+.dshc-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	border-block-end: 1px solid var(--dshc-border);
+	background: var(--dshc-bg);
+	color: var(--dshc-fg);
+}
+
+.dshc-title {
+	flex: 1;
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: inherit;
+}
+
+.dshc-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: var(--dshc-muted);
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.dshc-icon-btn:hover {
+	background: var(--dshc-soft);
+	color: var(--dshc-fg);
+}
+
+.dshc-icon-btn:focus-visible,
+.dshc-send:focus-visible,
+.dshc-source:focus-visible,
+.dshc-log:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: 2px;
+}
+
+.dshc-log {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.dshc-msg {
+	max-width: 88%;
+	padding: 10px 14px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	background: var(--dshc-soft);
+	overflow-wrap: anywhere;
+}
+
+.dshc-msg--user {
+	align-self: flex-end;
+	border-color: var(--dshc-accent);
+	background: var(--dshc-accent);
+	color: #fff;
+}
+
+.dshc-msg--assistant {
+	align-self: flex-start;
+}
+
+.dshc-msg--pending .dshc-text {
+	color: var(--dshc-muted);
+	font-style: italic;
+}
+
+.dshc-msg--error {
+	border-color: #fecaca;
+	background: #fef2f2;
+	color: #b91c1c;
+}
+
+.dshc-text {
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+.dshc-sources {
+	margin-block-start: 8px;
+	padding-block-start: 8px;
+	border-block-start: 1px solid var(--dshc-border);
+}
+
+.dshc-sources-title {
+	margin: 0 0 4px;
+	font-size: 12px;
+	color: var(--dshc-muted);
+}
+
+.dshc-sources-list {
+	margin: 0;
+	padding-inline-start: 18px;
+}
+
+.dshc-source {
+	color: var(--dshc-accent);
+	text-decoration: underline;
+}
+
+.dshc-handoff,
+.dshc-error {
+	margin: 8px 0 0;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.dshc-error {
+	color: #b91c1c;
+}
+
+.dshc-form {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	padding: 12px 16px;
+	border-block-start: 1px solid var(--dshc-border);
+}
+
+.dshc-input {
+	flex: 1;
+	min-width: 0;
+	min-height: 40px;
+	max-height: 120px;
+	margin: 0;
+	padding: 9px 12px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 8px;
+	background: var(--dshc-bg);
+	box-shadow: none;
+	color: var(--dshc-fg);
+	font: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	resize: none;
+}
+
+.dshc-input::placeholder {
+	color: var(--dshc-muted);
+}
+
+/* Like the admin/portal Input: focus changes nothing but the caret. */
+.dshc-input:focus {
+	outline: none;
+	border-color: var(--dshc-border);
+	box-shadow: none;
+}
+
+.dshc-send {
+	flex: none;
+	height: 40px;
+	margin: 0;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--dshc-accent);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: opacity 0.15s;
+}
+
+.dshc-send:hover {
+	opacity: 0.9;
+}
+
+.dshc-send:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.dshc-note {
+	margin: 0;
+	padding: 0 16px 12px;
+	font-size: 12px;
+	color: var(--dshc-muted);
+}
+
+.dshc-sr,
+.dshc-trap {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+@media (max-width: 480px) {
+	.dshc--panel {
+		width: 100vw;
+		max-width: 100vw;
+		height: 100%;
+		max-height: none;
+		border-radius: 0;
+		border: 0;
+	}
+}
+
+/* Contact support: an outline button like the admin's, then the form. */
+.dshc-handoff-box {
+	margin-block-start: 10px;
+}
+
+.dshc-handoff-btn {
+	height: 36px;
+	margin: 0;
+	padding: 0 14px;
+	border: 1px solid var(--dshc-accent);
+	border-radius: 8px;
+	background: var(--dshc-bg);
+	color: var(--dshc-accent);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.dshc-handoff-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.dshc-handoff-btn:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: 2px;
+}
+
+.dshc-handoff-form {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.dshc-handoff-intro {
+	margin: 0;
+	font-size: 13px;
+	color: var(--dshc-muted);
+}
+
+.dshc-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.dshc-field-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--dshc-fg);
+}
+
+.dshc-field-input {
+	height: 40px;
+	flex: none;
+}
+
+.dshc-consent {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--dshc-fg);
+}
+
+.dshc-consent input {
+	margin: 2px 0 0;
+	accent-color: var(--dshc-accent);
+}
+
+.dshc-handoff-form .dshc-send {
+	align-self: flex-start;
+}
+
+.dshc-handoff-done {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 500;
+	color: #15803d;
+}
+
+/* Was this helpful? — small outline buttons like the admin's. */
+.dshc-rate {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-block-start: 8px;
+	font-size: 12px;
+	color: var(--dshc-muted);
+}
+
+.dshc-rate-btn {
+	height: 28px;
+	margin: 0;
+	padding: 0 10px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 8px;
+	background: var(--dshc-bg);
+	color: var(--dshc-fg);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.dshc-rate-btn[aria-pressed='true'] {
+	border-color: var(--dshc-accent);
+	color: var(--dshc-accent);
+	font-weight: 500;
+}
+
+.dshc-rate-btn:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: 2px;
+}
+
+.dshc-rate-thanks {
+	color: #15803d;
+}
+
+/* A larger floating panel. */
+.dshc--panel.dshc--wide {
+	width: 720px;
+	height: 85vh;
+}
+
+/* The "⋯" menu in the header. */
+.dshc-head {
+	position: relative;
+}
+.dshc-menu {
+	position: absolute;
+	top: calc(100% - 4px);
+	inset-inline-end: 12px;
+	z-index: 2;
+	min-width: 220px;
+	padding: 6px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 10px;
+	background: var(--dshc-bg);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.dshc-menu[hidden] {
+	display: none;
+}
+.dshc-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	min-height: 36px;
+	margin: 0;
+	padding: 6px 10px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--dshc-fg);
+	font: inherit;
+	font-size: 14px;
+	text-align: start;
+	cursor: pointer;
+}
+
+/* An item that does not fit this screen (search / download without a conversation). */
+.dshc-menu-item[hidden] {
+	display: none;
+}
+.dshc-menu-item:hover:not(:disabled),
+.dshc-menu-item:focus-visible {
+	background: var(--dshc-soft);
+	outline: none;
+}
+.dshc-menu-item:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+.dshc-menu-icon {
+	width: 18px;
+	text-align: center;
+	color: var(--dshc-muted);
+}
+
+/* The owner's quick replies under the welcome. */
+.dshc-quick {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
+	margin: 0 0 12px;
+}
+.dshc-quick-btn {
+	min-height: 36px;
+	margin: 0;
+	padding: 6px 14px;
+	border: 1px solid var(--dshc-accent);
+	border-radius: 18px;
+	background: var(--dshc-bg);
+	color: var(--dshc-accent);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1.3;
+	text-align: start;
+	cursor: pointer;
+}
+.dshc-quick-btn:hover {
+	background: var(--dshc-soft);
+}
+.dshc-quick-btn:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: 2px;
+}
+
+/* "Ava · 5 minutes ago" under an answer. */
+.dshc-meta {
+	margin: 8px 0 0;
+	font-size: 12px;
+	color: var(--dshc-muted);
+}
+
+/* The assistant's picture, name and the line under it. */
+.dshc-avatar {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+.dshc-avatar--letter {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--dshc-accent);
+	color: #fff;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1;
+}
+.dshc-ident {
+	flex: 1;
+	min-width: 0;
+}
+.dshc-ident .dshc-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.dshc-subtitle {
+	margin: 2px 0 0;
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 1.3;
+	color: var(--dshc-muted);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The box you type in: rounded, growing, with the emoji and send buttons. */
+.dshc-composer {
+	position: relative;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+	padding: 8px 8px 6px 12px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 16px;
+	background: var(--dshc-bg);
+}
+.dshc-composer:focus-within {
+	border-color: var(--dshc-accent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--dshc-accent) 15%, transparent);
+}
+.dshc-composer .dshc-input {
+	min-height: 24px;
+	max-height: 120px;
+	padding: 2px 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	outline: none;
+	overflow-y: auto;
+}
+.dshc-composer .dshc-input:focus,
+.dshc-composer .dshc-input:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+.dshc-tools {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.dshc-tool {
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+.dshc-tool:hover {
+	background: var(--dshc-soft);
+}
+.dshc-tool:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: 1px;
+}
+.dshc-composer .dshc-send {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	margin-inline-start: auto;
+	padding: 0;
+	border-radius: 50%;
+}
+.dshc-emoji-panel {
+	position: absolute;
+	bottom: calc(100% + 6px);
+	inset-inline-start: 0;
+	z-index: 3;
+	display: grid;
+	grid-template-columns: repeat(8, 32px);
+	gap: 2px;
+	padding: 8px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	background: var(--dshc-bg);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.dshc-emoji-panel[hidden] {
+	display: none;
+}
+.dshc-emoji {
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+.dshc-emoji:hover,
+.dshc-emoji:focus-visible {
+	background: var(--dshc-soft);
+	outline: none;
+}
+
+/* Dark: the owner's choice, or the reader's device when set to match it. */
+.dshc--dark {
+	--dshc-fg: #ececf1;
+	--dshc-muted: #a1a3ad;
+	--dshc-border: #3b3c44;
+	--dshc-bg: #1d1e23;
+	--dshc-soft: #2a2b32;
+	color-scheme: dark;
+}
+.dshc--dark .dshc-msg--error {
+	border-color: #7f1d1d;
+	background: #3b1f22;
+	color: #fca5a5;
+}
+.dshc--dark .dshc-error {
+	color: #fca5a5;
+}
+.dshc--dark .dshc-handoff-done,
+.dshc--dark .dshc-rate-thanks {
+	color: #4ade80;
+}
+.dshc--dark .dshc-menu,
+.dshc--dark .dshc-emoji-panel {
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* The floating chat's home page. */
+.dshc-home {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	padding: 16px;
+	overflow-y: auto;
+}
+.dshc-home[hidden] {
+	display: none;
+}
+.dshc-home-hello {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.5;
+	color: var(--dshc-fg);
+}
+.dshc-home-start {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.dshc-home-ask,
+.dshc-home-continue {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	width: 100%;
+	margin: 0;
+	padding: 12px 14px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	background: var(--dshc-bg);
+	color: var(--dshc-fg);
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	text-align: start;
+	cursor: pointer;
+}
+.dshc-home-ask {
+	border-color: var(--dshc-accent);
+	background: var(--dshc-accent);
+	color: #fff;
+	text-align: center;
+}
+.dshc-home-continue:hover {
+	background: var(--dshc-soft);
+}
+.dshc-home-continue-text {
+	overflow: hidden;
+	font-weight: 400;
+	color: var(--dshc-muted);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.dshc-home-new {
+	align-self: flex-start;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--dshc-accent);
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+.dshc-home-search {
+	/* Not the conversation box: one line, never stretched to fill home. */
+	flex: none;
+	width: 100%;
+	height: 40px;
+	min-height: 40px;
+	box-sizing: border-box;
+}
+.dshc-home-title {
+	margin: 4px 0 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--dshc-muted);
+}
+.dshc-home-popular {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	overflow: hidden;
+}
+.dshc-home-popular li + li {
+	border-block-start: 1px solid var(--dshc-border);
+}
+.dshc-home-link {
+	display: block;
+	padding: 10px 14px;
+	color: var(--dshc-fg);
+	font-size: 14px;
+	text-decoration: none;
+}
+.dshc-home-link:hover,
+.dshc-home-link:focus-visible {
+	background: var(--dshc-soft);
+	outline: none;
+}
+.dshc-home-empty {
+	margin: 0;
+	font-size: 13px;
+	color: var(--dshc-muted);
+}
+.dshc-log[hidden],
+.dshc-form[hidden],
+.dshc-note[hidden],
+.dshc-back[hidden] {
+	display: none;
+}
+[dir='rtl'] .dshc-back svg {
+	transform: scaleX(-1);
+}
+
+/* Home like Chatway's: a band in the site's colour, a card riding on it. */
+.dshc-home {
+	gap: 0;
+	padding: 0;
+	background: var(--dshc-soft);
+}
+.dshc-home-hero {
+	padding: 24px 20px 52px;
+	background: var(--dshc-accent);
+	color: #fff;
+	font-size: 22px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+.dshc-home-body {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-block-start: -36px;
+	padding: 0 16px 16px;
+}
+.dshc-home-card {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 16px;
+	border-radius: 16px;
+	background: var(--dshc-bg);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+.dshc-home-card-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+}
+.dshc-home-card .dshc-avatar {
+	width: 44px;
+	height: 44px;
+	font-size: 17px;
+}
+.dshc-home-card-words {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+.dshc-home-card-text {
+	margin: 0;
+	overflow: hidden;
+	color: var(--dshc-fg);
+	font-size: 15px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.dshc-home-card-time {
+	font-size: 12px;
+	color: var(--dshc-muted);
+}
+.dshc-home-card .dshc-home-ask,
+.dshc-home-card .dshc-home-continue {
+	display: block;
+	width: 100%;
+	padding: 12px 14px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--dshc-accent);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	text-align: center;
+	cursor: pointer;
+}
+.dshc-home-card .dshc-home-ask:hover,
+.dshc-home-card .dshc-home-continue:hover {
+	opacity: 0.92;
+}
+.dshc-home-new {
+	align-self: center;
+}
+
+/* The assistant's small picture by its messages; the time on the reader's. */
+.dshc-msg--assistant {
+	position: relative;
+	margin-inline-start: 32px;
+}
+.dshc-msg-avatar {
+	position: absolute;
+	inset-inline-start: -32px;
+	bottom: 0;
+	width: 24px;
+	height: 24px;
+	font-size: 11px;
+}
+.dshc-meta--user {
+	margin: 4px 0 0;
+	color: rgba(255, 255, 255, 0.85);
+	font-size: 11px;
+	text-align: end;
+}
+
+/* "Online": a green dot on the picture, a badge on the home card. */
+.dshc-avatar-wrap {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+}
+.dshc-online-dot {
+	position: absolute;
+	inset-inline-end: -1px;
+	bottom: -1px;
+	width: 10px;
+	height: 10px;
+	border: 2px solid var(--dshc-bg);
+	border-radius: 50%;
+	background: #22c55e;
+}
+.dshc-online {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-end;
+	gap: 6px;
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: #e7f8ee;
+	color: #15803d;
+	font-size: 12px;
+	font-weight: 500;
+}
+.dshc-online::before {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #22c55e;
+	content: '';
+}
+.dshc--dark .dshc-online {
+	background: rgba(34, 197, 94, 0.15);
+	color: #4ade80;
+}
+
+/* Files for the team: the paperclip, chips before sending, files in messages. */
+.dshc-file-input {
+	display: none;
+}
+.dshc-attach-btn[hidden] {
+	display: none;
+}
+.dshc-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.dshc-chips:empty {
+	display: none;
+}
+.dshc-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	max-width: 100%;
+	padding: 2px 4px 2px 10px;
+	border-radius: 999px;
+	background: var(--dshc-soft);
+	color: var(--dshc-fg);
+	font-size: 12px;
+}
+.dshc-chip-remove {
+	width: 20px;
+	height: 20px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--dshc-muted);
+	cursor: pointer;
+}
+.dshc-chip-error {
+	color: #b91c1c;
+	font-size: 12px;
+}
+.dshc-files {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 8px;
+}
+.dshc-file {
+	color: inherit;
+	font-size: 13px;
+	text-decoration: underline;
+	word-break: break-word;
+}
+.dshc-file-thumb {
+	display: block;
+	max-width: 180px;
+	max-height: 140px;
+	border-radius: 8px;
+	object-fit: cover;
+}
+
+/* A team member answers: "joined" line, big emoji, time between groups, lost message. */
+.dshc-event {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	color: var(--dshc-muted);
+	font-size: 12px;
+}
+.dshc-event-avatar {
+	width: 18px;
+	height: 18px;
+	font-size: 10px;
+}
+.dshc-msg--emoji {
+	border: 0 !important;
+	background: transparent !important;
+	padding: 0 !important;
+}
+.dshc-msg--emoji > .dshc-text {
+	font-size: 44px;
+	line-height: 1.1;
+}
+.dshc-msg--emoji .dshc-meta--user {
+	color: var(--dshc-muted);
+}
+.dshc-time-sep {
+	align-self: center;
+	color: var(--dshc-muted);
+	font-size: 11px;
+}
+.dshc-failed {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 6px;
+	color: #fca5a5;
+	font-size: 12px;
+}
+.dshc-retry {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* Tabs under the floating chat (Home, Messages, Help), like Intercom's. */
+.dshc-tabs {
+	display: flex;
+	flex: none;
+	border-block-start: 1px solid var(--dshc-border);
+	background: var(--dshc-bg);
+}
+.dshc-tabs[hidden],
+.dshc-messages[hidden],
+.dshc-help[hidden],
+.dshc-searchbar[hidden],
+.dshc-tab-title[hidden],
+.dshc-tab-badge[hidden] {
+	display: none;
+}
+.dshc-tab {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	margin: 0;
+	padding: 10px 4px 8px;
+	border: 0;
+	background: transparent;
+	color: var(--dshc-muted);
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+.dshc-tab[aria-current='page'] {
+	color: var(--dshc-fg);
+	font-weight: 600;
+}
+.dshc-tab:hover {
+	color: var(--dshc-fg);
+}
+.dshc-tab:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: -2px;
+}
+.dshc-tab-icon {
+	position: relative;
+	display: inline-flex;
+}
+.dshc-tab-badge {
+	position: absolute;
+	inset-block-start: -4px;
+	inset-inline-end: -8px;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 4px;
+	border-radius: 8px;
+	background: #ef4444;
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 16px;
+	text-align: center;
+}
+
+/* Messages and Help: the header is only the tab's name and close. */
+.dshc-head--tab > :not(.dshc-tab-title):not(.dshc-close) {
+	display: none !important;
+}
+.dshc-tab-title {
+	flex: 1;
+	margin: 0;
+	font-size: 16px;
+	font-weight: 700;
+	text-align: center;
+	color: inherit;
+}
+.dshc-head--tab .dshc-tab-title {
+	/* Centered over the chat: the close button's width on the other side. */
+	padding-inline-start: 36px;
+}
+
+/* Home: the faces of the team who answer. */
+.dshc-faces {
+	display: flex;
+	margin-block-end: 14px;
+}
+.dshc-face {
+	width: 40px;
+	height: 40px;
+	border: 2px solid var(--dshc-accent);
+	font-size: 16px;
+}
+.dshc-face-wrap {
+	position: relative;
+	display: inline-flex;
+	flex: none;
+}
+.dshc-face-wrap + .dshc-face-wrap {
+	margin-inline-start: -10px;
+}
+/* Here now: the green dot, ringed in the band's colour. */
+.dshc-face-dot {
+	inset-inline-end: 0;
+	bottom: 0;
+	width: 12px;
+	height: 12px;
+	border-color: var(--dshc-accent);
+}
+/* "3 online now" under the faces. */
+.dshc-online-now {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: -6px 0 12px;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1.4;
+	opacity: 0.9;
+}
+.dshc-online-now::before {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #22c55e;
+	content: '';
+}
+
+/* Messages: this browser's conversations. */
+.dshc-messages {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	padding: 12px 16px 16px;
+	overflow-y: auto;
+}
+.dshc-portal-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	color: var(--dshc-fg);
+	text-decoration: none;
+}
+.dshc-portal-card:hover,
+.dshc-portal-card:focus-visible {
+	background: var(--dshc-soft);
+	outline: none;
+}
+.dshc-portal-words {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	font-size: 13px;
+}
+.dshc-portal-words span {
+	color: var(--dshc-muted);
+}
+.dshc-portal-arrow {
+	color: var(--dshc-muted);
+	font-size: 16px;
+}
+.dshc-conv-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.dshc-conv-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	margin: 0;
+	padding: 12px 8px;
+	border: 0;
+	border-block-end: 1px solid var(--dshc-border);
+	border-radius: 0;
+	background: transparent;
+	color: var(--dshc-fg);
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+.dshc-conv-row:hover,
+.dshc-conv-row:focus-visible {
+	background: var(--dshc-soft);
+	outline: none;
+}
+.dshc-conv-words {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+.dshc-conv-name {
+	font-size: 14px;
+}
+.dshc-conv-text {
+	overflow: hidden;
+	color: var(--dshc-muted);
+	font-size: 13px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.dshc-conv-row--unread .dshc-conv-text {
+	color: var(--dshc-fg);
+	font-weight: 600;
+}
+.dshc-conv-time {
+	align-self: flex-start;
+	color: var(--dshc-muted);
+	font-size: 12px;
+	white-space: nowrap;
+}
+.dshc-conv-dot {
+	flex: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #ef4444;
+}
+.dshc-send-message {
+	align-self: center;
+	width: auto !important;
+	margin-block-start: auto;
+	padding: 10px 20px !important;
+	border-radius: 10px !important;
+}
+
+/* Help: collections, a collection's articles, an article. */
+.dshc-help {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	padding: 12px 16px 16px;
+	overflow-y: auto;
+}
+.dshc-help-search {
+	flex: none;
+	width: 100%;
+	height: 40px;
+	min-height: 40px;
+}
+.dshc-help-body {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.dshc-help-count,
+.dshc-help-title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--dshc-fg);
+}
+.dshc-help-trail {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+[dir='rtl'] .dshc-help-back svg {
+	transform: scaleX(-1);
+}
+.dshc-help-loading {
+	margin: 0;
+	color: var(--dshc-muted);
+}
+.dshc-help-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.dshc-help-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	margin: 0;
+	padding: 12px 4px;
+	border: 0;
+	border-block-end: 1px solid var(--dshc-border);
+	background: transparent;
+	color: var(--dshc-fg);
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+.dshc-help-row:hover,
+.dshc-help-row:focus-visible {
+	background: var(--dshc-soft);
+	outline: none;
+}
+.dshc-help-words {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+.dshc-help-name {
+	font-size: 14px;
+}
+.dshc-help-desc {
+	color: var(--dshc-fg);
+	font-size: 13px;
+}
+.dshc-help-meta {
+	color: var(--dshc-muted);
+	font-size: 12px;
+}
+.dshc-help-chevron {
+	color: var(--dshc-muted);
+	font-size: 20px;
+}
+[dir='rtl'] .dshc-help-chevron {
+	transform: scaleX(-1);
+}
+.dshc-article {
+	color: var(--dshc-fg);
+	font-size: 14px;
+	line-height: 1.6;
+	overflow-wrap: anywhere;
+}
+.dshc-article img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 8px;
+}
+.dshc-article a,
+.dshc-article-link {
+	color: var(--dshc-accent);
+}
+.dshc--dark .dshc-article a,
+.dshc--dark .dshc-article-link {
+	color: #a5b4fc;
+}
+.dshc-article pre {
+	overflow-x: auto;
+	padding: 10px;
+	border-radius: 8px;
+	background: var(--dshc-soft);
+}
+.dshc-article-link {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+/* Search in the conversation. */
+.dshc-searchbar {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 12px;
+	border-block-end: 1px solid var(--dshc-border);
+	background: var(--dshc-bg);
+}
+.dshc-search-input {
+	flex: 1;
+	min-width: 0;
+	height: 36px;
+	min-height: 36px;
+}
+.dshc-search-count {
+	min-width: 36px;
+	color: var(--dshc-muted);
+	font-size: 12px;
+	text-align: center;
+}
+.dshc-searchbar .dshc-icon-btn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+.dshc-mark {
+	border-radius: 3px;
+	background: #fde68a;
+	color: #111827;
+}
+.dshc-mark--current {
+	background: #f59e0b;
+}
+
+/* "Seen" / "Not seen yet" before the time of the reader's last message. */
+.dshc-seen {
+	font-weight: 500;
+}
+
+/* "How would you rate our help?": five faces, then optional words. */
+.dshc-rate-card {
+	align-self: stretch;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px;
+	border: 1px solid var(--dshc-border);
+	border-radius: 12px;
+	background: var(--dshc-soft);
+	text-align: center;
+}
+.dshc-rate-question {
+	margin: 0;
+	font-weight: 600;
+	color: var(--dshc-fg);
+}
+.dshc-rate-faces {
+	display: flex;
+	justify-content: center;
+	gap: 6px;
+}
+.dshc-rate-face {
+	width: 40px;
+	height: 40px;
+	margin: 0;
+	padding: 0;
+	border: 2px solid transparent;
+	border-radius: 50%;
+	background: var(--dshc-bg);
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+	transition: transform 0.12s ease;
+}
+.dshc-rate-face:hover {
+	transform: scale(1.12);
+}
+.dshc-rate-face[aria-pressed='true'] {
+	border-color: var(--dshc-accent);
+	transform: scale(1.12);
+}
+.dshc-rate-face:focus-visible,
+.dshc-rate-send:focus-visible {
+	outline: 2px solid var(--dshc-accent);
+	outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.dshc-rate-face {
+		transition: none;
+	}
+}
+.dshc-rate-words[hidden] {
+	display: none;
+}
+.dshc-rate-words {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+.dshc-rate-comment {
+	text-align: start;
+}
+.dshc-rate-send {
+	flex: none;
+	height: 40px;
+	margin: 0;
+	padding: 0 14px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--dshc-accent);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.dshc-rate-send:disabled {
+	opacity: 0.6;
+}
+.dshc-rate-status {
+	margin: 0;
+	color: var(--dshc-muted);
+	font-size: 13px;
+}
+.dshc-rate-status:empty {
+	display: none;
+}
+
+/* A team member is typing: three dots under the last message. */
+.dshc-typing {
+	display: inline-flex;
+	gap: 4px;
+	align-self: flex-start;
+	margin-block: 4px 8px;
+	padding: 10px 12px;
+	border-radius: 14px;
+	border: 1px solid var(--dshc-border);
+	background: var(--dshc-soft);
+}
+
+.dshc-typing span {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--dshc-muted);
+	animation: dshc-typing 1.2s infinite ease-in-out;
+}
+
+.dshc-typing span:nth-child(2) {
+	animation-delay: 0.15s;
+}
+
+.dshc-typing span:nth-child(3) {
+	animation-delay: 0.3s;
+}
+
+@keyframes dshc-typing {
+	0%, 60%, 100% {
+		opacity: 0.35;
+		transform: translateY(0);
+	}
+	30% {
+		opacity: 1;
+		transform: translateY(-3px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dshc-typing span {
+		animation: none;
+	}
+}
+

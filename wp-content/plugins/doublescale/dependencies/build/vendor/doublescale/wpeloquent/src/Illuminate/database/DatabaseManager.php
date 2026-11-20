@@ -1,17 +1,17 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use PDO;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Support\ConfigurationUrlParser;
-use Illuminate\Database\Connectors\ConnectionFactory;
+use DoubleScale\Vendor\Illuminate\Support\ConfigurationUrlParser;
+use DoubleScale\Vendor\Illuminate\Database\Connectors\ConnectionFactory;
 /**
  * @mixin \Illuminate\Database\Connection
  */
-class DatabaseManager implements \Illuminate\Database\ConnectionResolverInterface
+class DatabaseManager implements ConnectionResolverInterface
 {
     /**
      * The application instance.
@@ -137,7 +137,7 @@ class DatabaseManager implements \Illuminate\Database\ConnectionResolverInterfac
      * @param  string  $type
      * @return \Illuminate\Database\Connection
      */
-    protected function configure(\Illuminate\Database\Connection $connection, $type)
+    protected function configure(Connection $connection, $type)
     {
         $connection = $this->setPdoForType($connection, $type);
         // First we'll set the fetch mode and a few other dependencies of the database
@@ -159,7 +159,7 @@ class DatabaseManager implements \Illuminate\Database\ConnectionResolverInterfac
      * @param  string|null  $type
      * @return \Illuminate\Database\Connection
      */
-    protected function setPdoForType(\Illuminate\Database\Connection $connection, $type = null)
+    protected function setPdoForType(Connection $connection, $type = null)
     {
         if ($type === 'read') {
             $connection->setPdo($connection->getReadPdo());

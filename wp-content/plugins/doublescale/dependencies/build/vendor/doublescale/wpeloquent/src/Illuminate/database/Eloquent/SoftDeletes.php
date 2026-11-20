@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 /**
  * @method static static|\Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder withTrashed()
@@ -22,7 +22,7 @@ trait SoftDeletes
      */
     public static function bootSoftDeletes()
     {
-        static::addGlobalScope(new \Illuminate\Database\Eloquent\SoftDeletingScope());
+        static::addGlobalScope(new SoftDeletingScope());
     }
     /**
      * Initialize the soft deleting trait for an instance.

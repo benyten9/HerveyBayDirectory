@@ -33,8 +33,11 @@ class Service extends JsonSchemaValue implements GetJsonData {
 				'value'   => '_seopress_pro_rich_snippets_service_name',
 				'default' => '%%post_title%%',
 			),
+			// A fragment, not the bare canonical: that URL now identifies the
+			// WebPage in the breadcrumb trail, and the service offered on a
+			// page is not the page.
 			'id'                 => array(
-				'default' => '%%schema_article_canonical%%',
+				'default' => '%%schema_article_canonical%%#service',
 			),
 			'serviceType'        => '_seopress_pro_rich_snippets_service_type',
 			'description'        => array(
@@ -46,6 +49,7 @@ class Service extends JsonSchemaValue implements GetJsonData {
 				'default' => '%%post_thumbnail_url%%',
 			),
 			'areaServed'         => '_seopress_pro_rich_snippets_service_area',
+			'providerSource'     => '_seopress_pro_rich_snippets_service_provider_source',
 			'providerName'       => '_seopress_pro_rich_snippets_service_provider_name',
 			'localBusinessImage' => '_seopress_pro_rich_snippets_service_lb_img',
 			'providerMobility'   => '_seopress_pro_rich_snippets_service_provider_mobility',
@@ -66,8 +70,14 @@ class Service extends JsonSchemaValue implements GetJsonData {
 		foreach ( $keys as $key => $item ) {
 			if ( is_string( $item ) ) {
 				$variables[ $key ] = isset( $schemaManual[ $item ] ) ? $schemaManual[ $item ] : '';
-			} elseif ( is_array( $item ) && isset( $item['value'] ) ) {
-				$variables[ $key ] = isset( $schemaManual[ $item['value'] ] ) && ! empty( $schemaManual[ $item['value'] ] ) ? $schemaManual[ $item['value'] ] : $item['default'];
+			} elseif ( is_array( $item ) ) {
+				// `value` is optional. This copy of the base resolver required
+				// it, so `id`, which has only a default, was skipped: `[[id]]`
+				// never resolved and the node went out with no identifier at
+				// all, although the key has declared one since 4.6. The base
+				// class has always handled the default-only form.
+				$default           = isset( $item['default'] ) ? $item['default'] : '';
+				$variables[ $key ] = ( isset( $item['value'] ) && isset( $schemaManual[ $item['value'] ] ) && ! empty( $schemaManual[ $item['value'] ] ) ) ? $schemaManual[ $item['value'] ] : $default;
 			}
 		}
 
@@ -98,13 +108,13 @@ class Service extends JsonSchemaValue implements GetJsonData {
 				break;
 		}
 
-		if ( isset( $variables['image'] ) && ! empty( $variables['image'] ) ) {
+		if ( ! empty( $variables['providerName'] ) ) {
 			$contextWithVariables              = $context;
 			$contextWithVariables['variables'] = array(
 				'type'            => 'LocalBusiness',
 				'name'            => isset( $variables['providerName'] ) ? $variables['providerName'] : '',
 				'telephone'       => isset( $variables['telephone'] ) ? $variables['telephone'] : '',
-				'image'           => $variables['image'],
+				'image'           => isset( $variables['localBusinessImage'] ) ? $variables['localBusinessImage'] : '',
 				'priceRange'      => isset( $variables['priceRange'] ) ? $variables['priceRange'] : '',
 				'streetAddress'   => isset( $variables['streetAddress'] ) ? $variables['streetAddress'] : '',
 				'addressLocality' => isset( $variables['addressLocality'] ) ? $variables['addressLocality'] : '',
@@ -119,6 +129,11 @@ class Service extends JsonSchemaValue implements GetJsonData {
 			if ( count( $schema ) > 1 ) {
 				$data['provider'] = $schema;
 			}
+		}
+
+		$provider_reference = \SEOPressPro\Helpers\ServiceProviderReference::resolve( $variables['providerSource'] ?? '', $context );
+		if ( ! empty( $provider_reference ) ) {
+			$data['provider'] = $provider_reference;
 		}
 
 		if ( isset( $context['product'] ) && null !== $context['product'] && isset( $context['post']->ID ) && comments_open( $context['post']->ID ) ) {
@@ -168,6 +183,12 @@ class Service extends JsonSchemaValue implements GetJsonData {
 		}
 
 		$data = seopress_get_service( 'VariablesToString' )->replaceDataToString( $data, $variables );
+
+		// Two manual services on one page derive their identity from the same
+		// canonical, like two businesses do.
+		if ( RichSnippetType::MANUAL === $typeSchema ) {
+			$data = $this->numberManualIdentity( $data, $context );
+		}
 
 		return apply_filters( 'seopress_pro_get_json_data_service', $data, $context );
 	}

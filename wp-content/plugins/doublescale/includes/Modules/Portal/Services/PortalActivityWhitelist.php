@@ -32,6 +32,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
+use DoubleScale\Modules\Support\Services\ReplyAuthor;
 
 /**
  * PortalActivityWhitelist helper.
@@ -76,7 +77,9 @@ final class PortalActivityWhitelist {
 	 *
 	 * The author is the contact when EITHER:
 	 *   - the row carries no WP `user_id` — portal/email replies are deliberately
-	 *     written NULL ({@see \DoubleScale\Modules\Support\Rest\Controllers\RestPortalController::add_reply}); or
+	 *     written NULL ({@see \DoubleScale\Modules\Support\Rest\Controllers\RestPortalController::add_reply}) —
+	 *     and it is not someone else's email or a system message
+	 *     ({@see ReplyAuthor::authorless_is_customer()}); or
 	 *   - the `user_id` is the contact's own WP account — which is what the *opening*
 	 *     message of a web-created ticket carries, because TicketService credits the
 	 *     logged-in customer (source `web`, no explicit author).
@@ -87,12 +90,13 @@ final class PortalActivityWhitelist {
 	 *
 	 * @param ActivityModel $activity        Activity row.
 	 * @param int|null      $contact_user_id The contact's own WP account id, or null.
+	 * @param string        $contact_email   The contact's email.
 	 * @return bool
 	 */
-	public static function is_self_authored( ActivityModel $activity, ?int $contact_user_id ): bool {
+	public static function is_self_authored( ActivityModel $activity, ?int $contact_user_id, string $contact_email = '' ): bool {
 		$uid = (int) $activity->user_id;
 		if ( 0 === $uid ) {
-			return true;
+			return ReplyAuthor::authorless_is_customer( is_array( $activity->data ) ? $activity->data : array(), $contact_email );
 		}
 		return null !== $contact_user_id && $uid === $contact_user_id;
 	}
@@ -109,16 +113,18 @@ final class PortalActivityWhitelist {
 	 *                                       email), so a message they authored while
 	 *                                       logged in is recognised as "self". Null when
 	 *                                       the contact has no WP account.
+	 * @param string        $contact_email   The contact's email, so an emailed reply
+	 *                                       from another address is not "You".
 	 * @return array<string, mixed>|null
 	 */
-	public static function shape( ActivityModel $activity, ?int $contact_user_id = null ): ?array {
+	public static function shape( ActivityModel $activity, ?int $contact_user_id = null, string $contact_email = '' ): ?array {
 		$type = (string) $activity->activity_type;
 		if ( ! self::is_allowed( $type ) ) {
 			return null;
 		}
 
 		$data    = is_array( $activity->data ) ? $activity->data : array();
-		$is_self = self::is_self_authored( $activity, $contact_user_id );
+		$is_self = self::is_self_authored( $activity, $contact_user_id, $contact_email );
 
 		$item = array(
 			'id'      => (int) $activity->id,

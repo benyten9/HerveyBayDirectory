@@ -370,6 +370,11 @@ class License {
 				'label' => esc_html__( 'Plus', 'doublescale' ),
 				'level' => 2,
 			),
+			'agency'         => array(
+				'label' => esc_html__( 'Agency', 'doublescale' ),
+				'level' => 3,
+			),
+			// Legacy: replaced by Agency in November 2026; existing licenses keep working.
 			'enterprise'     => array(
 				'label' => esc_html__( 'Enterprise', 'doublescale' ),
 				'level' => 3,
@@ -381,6 +386,10 @@ class License {
 			'plus-ltd'       => array(
 				'label' => esc_html__( 'Plus LTD', 'doublescale' ),
 				'level' => 2,
+			),
+			'agency-ltd'     => array(
+				'label' => esc_html__( 'Agency LTD', 'doublescale' ),
+				'level' => 3,
 			),
 			'enterprise-ltd' => array(
 				'label' => esc_html__( 'Enterprise LTD', 'doublescale' ),

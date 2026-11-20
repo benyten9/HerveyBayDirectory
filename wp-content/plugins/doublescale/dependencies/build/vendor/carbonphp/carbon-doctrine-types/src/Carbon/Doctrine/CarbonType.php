@@ -1,9 +1,9 @@
 <?php
 
-namespace Carbon\Doctrine;
+namespace DoubleScale\Vendor\Carbon\Doctrine;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-class CarbonType extends \Carbon\Doctrine\DateTimeType implements \Carbon\Doctrine\CarbonDoctrineType
+use DoubleScale\Vendor\Doctrine\DBAL\Platforms\AbstractPlatform;
+class CarbonType extends DateTimeType implements CarbonDoctrineType
 {
     /**
      * {@inheritdoc}

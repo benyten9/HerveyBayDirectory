@@ -343,9 +343,12 @@ body.nw-dark .nw-oc-conns {
     display: inline-flex;
     color: var(--nw-text-muted);
     transition: transform 140ms ease;
+    /* A "more this way" chevron points the way the line reads. Both states keep
+       the same function list in RTL so the turn still animates. */
+    transform: none /*rtl:rotate(0deg) scaleX(-1)*/;
 }
 
-.nibwp-optional[open] .nibwp-optional__chev { transform: rotate(90deg); }
+.nibwp-optional[open] .nibwp-optional__chev { transform: rotate(90deg) /*rtl:rotate(-90deg) scaleX(-1)*/; }
 
 .nibwp-optional__title {
     font-size: 16px;

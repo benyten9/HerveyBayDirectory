@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Config;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Config;
 
 interface Repository
 {

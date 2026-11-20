@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Support\Testing\Fakes\BusFake;
-use Illuminate\Contracts\Bus\Dispatcher as BusDispatcherContract;
+use DoubleScale\Vendor\Illuminate\Support\Testing\Fakes\BusFake;
+use DoubleScale\Vendor\Illuminate\Contracts\Bus\Dispatcher as BusDispatcherContract;
 /**
  * @method static mixed dispatch($command)
  * @method static mixed dispatchNow($command, $handler = null)
@@ -14,7 +14,7 @@ use Illuminate\Contracts\Bus\Dispatcher as BusDispatcherContract;
  *
  * @see \Illuminate\Contracts\Bus\Dispatcher
  */
-class Bus extends \Illuminate\Support\Facades\Facade
+class Bus extends Facade
 {
     /**
      * Replace the bound instance with a fake.

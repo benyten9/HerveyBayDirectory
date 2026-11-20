@@ -5,7 +5,7 @@ if(!defined('ABSPATH')) {
 	exit;
 }
 
-class DatabaseOptimizationProcess extends \WP_Background_Process {
+class DatabaseOptimizationProcess extends \Perfmatters\Vendor\WP_Background_Process {
 
 	//prefix for process
 	protected $prefix = 'perfmatters';
@@ -106,7 +106,7 @@ class DatabaseOptimizationProcess extends \WP_Background_Process {
 				break;
 
 			case 'tables' :
-				$query = $wpdb->get_results("SELECT table_name, data_free FROM information_schema.tables WHERE table_schema = '" . DB_NAME . "' and Engine <> 'InnoDB' and data_free > 0");
+				$query = $wpdb->get_results($wpdb->prepare("SELECT table_name, data_free FROM information_schema.tables WHERE table_schema = %s and Engine <> 'InnoDB' and data_free > 0", DB_NAME));
 				if($query) {
 					$count = 0;
 					foreach($query as $table) {

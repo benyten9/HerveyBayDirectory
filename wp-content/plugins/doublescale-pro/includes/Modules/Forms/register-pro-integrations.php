@@ -81,6 +81,7 @@ function doublescale_pro_register_form_integrations( $forms ) {
 		'ninjaforms'     => new \DoubleScale\Pro\Modules\Forms\Ninjaforms\Form(),
 		'wsform'         => new \DoubleScale\Pro\Modules\Forms\Wsform\Form(),
 		'bitform'        => new \DoubleScale\Pro\Modules\Forms\Bitform\Form(),
+		'bricks'         => new \DoubleScale\Pro\Modules\Forms\Bricks\Form(),
 		'sureforms'      => new \DoubleScale\Pro\Modules\Forms\Sureforms\Form(),
 		'eform'          => new \DoubleScale\Pro\Modules\Forms\Eform\Form(),
 		'jetformbuilder' => new \DoubleScale\Pro\Modules\Forms\Jetformbuilder\Form(),

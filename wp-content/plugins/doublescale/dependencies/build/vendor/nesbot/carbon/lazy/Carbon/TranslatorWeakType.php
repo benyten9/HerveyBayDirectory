@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-if (!\class_exists(\Carbon\LazyTranslator::class, \false)) {
-    class LazyTranslator extends \Carbon\AbstractTranslator
+if (!\class_exists(LazyTranslator::class, \false)) {
+    class LazyTranslator extends AbstractTranslator
     {
         /**
          * Returns the translation.

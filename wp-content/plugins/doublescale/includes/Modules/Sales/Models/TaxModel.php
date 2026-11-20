@@ -9,7 +9,7 @@ namespace DoubleScale\Modules\Sales\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * TaxModel class.

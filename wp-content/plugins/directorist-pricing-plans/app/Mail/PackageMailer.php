@@ -5,6 +5,7 @@ namespace DirectoristPricingPlan\App\Mail;
 defined( 'ABSPATH' ) || exit;
 
 use stdClass;
+use DirectoristPricingPlan\App\Enums\Plan\FeeType;
 use WP_User;
 use Directorist\Helpers\DateTime;
 
@@ -294,24 +295,26 @@ class PackageMailer extends Mailer {
         $is_trial     = ! empty( $package->is_trial );
         $currency     = $package->subscription_currency ?? get_directorist_option( 'g_currency', 'USD' );
         $order        = $this->get_last_order( $package );
-        $first_amount = $order ? directorist_order_total_amount( $order ) : (float) ( $plan->price ?? 0 );
+        $plan_price   = directorist_get_plan_effective_price( $plan );
+        $is_free      = FeeType::FREE === ( $plan->fee_type ?? '' );
+        $first_amount = $order ? directorist_order_total_amount( $order ) : $plan_price;
         $has_discount = $order && (float) ( $order->coupon_discount ?? 0 ) > 0;
 
         if ( $order && ! empty( $order->currency ) ) {
             $currency = $order->currency;
         }
 
-        $regular_amount = (float) ( $package->subscription_amount ?? $plan->price ?? 0 );
+        $regular_amount = $is_free ? 0.0 : (float) ( $package->subscription_amount ?? $plan_price );
 
         if ( ! $is_recurring || $is_trial ) {
-            $regular_amount = (float) ( $plan->price ?? $regular_amount );
+            $regular_amount = $plan_price;
         }
 
         $next_amount = $regular_amount;
 
-        if ( $has_discount && function_exists( 'directorist_compute_order_total_amount' ) ) {
+        if ( ! $is_free && $has_discount && function_exists( 'directorist_compute_order_total_amount' ) ) {
             $next_amount = directorist_compute_order_total_amount(
-                (float) ( $plan->price ?? 0 ),
+                $plan_price,
                 isset( $order->tax_rate ) ? (float) $order->tax_rate : null,
                 $order->tax_type ?? null,
                 isset( $order->coupon_discount ) ? (float) $order->coupon_discount : null,

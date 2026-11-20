@@ -129,7 +129,7 @@ if ( seopress_pro_get_service( 'OptionPro' )->getRSSPostThumbnail() === '1' ) {
 			$thumb    = wp_get_attachment_image_src( $thumb_id, $size );
 
 			if ( is_array( $thumb ) ) {
-				echo '<media:content url="' . $thumb[0] . '" width="' . $thumb[1] . '" height="' . $thumb[2] . '" medium="image"/>';
+				echo '<media:content url="' . $thumb[0] . '" width="' . $thumb[1] . '" height="' . $thumb[2] . '" medium="image"/>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 				echo "\n";
 			}
 		}

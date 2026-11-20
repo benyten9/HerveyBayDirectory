@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Booking\Models\BookingModel;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 /**
  * Booking Tasks class

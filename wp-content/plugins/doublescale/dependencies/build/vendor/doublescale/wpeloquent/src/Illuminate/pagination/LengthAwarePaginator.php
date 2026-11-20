@@ -1,17 +1,17 @@
 <?php
 
-namespace Illuminate\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Pagination;
 
 use Countable;
 use ArrayAccess;
 use JsonSerializable;
 use IteratorAggregate;
-use Illuminate\Support\Collection;
-use Illuminate\Support\HtmlString;
-use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator as LengthAwarePaginatorContract;
-class LengthAwarePaginator extends \Illuminate\Pagination\AbstractPaginator implements Arrayable, ArrayAccess, Countable, IteratorAggregate, JsonSerializable, Jsonable, LengthAwarePaginatorContract
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Support\HtmlString;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Jsonable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Contracts\Pagination\LengthAwarePaginator as LengthAwarePaginatorContract;
+class LengthAwarePaginator extends AbstractPaginator implements Arrayable, ArrayAccess, Countable, IteratorAggregate, JsonSerializable, Jsonable, LengthAwarePaginatorContract
 {
     /**
      * The total number of items before slicing.
@@ -89,7 +89,7 @@ class LengthAwarePaginator extends \Illuminate\Pagination\AbstractPaginator impl
      */
     protected function elements()
     {
-        $window = \Illuminate\Pagination\UrlWindow::make($this);
+        $window = UrlWindow::make($this);
         return \array_filter([$window['first'], \is_array($window['slider']) ? '...' : null, $window['slider'], \is_array($window['last']) ? '...' : null, $window['last']]);
     }
     /**

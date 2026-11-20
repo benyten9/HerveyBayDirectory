@@ -5,6 +5,46 @@ namespace SEOPressPro\Helpers\Settings;
 defined( 'ABSPATH' ) or exit( 'Cheatin&#8217; uh?' );
 
 abstract class LocalBusinessHelper {
+	/**
+	 * Sanitize the optional global business details without changing other settings.
+	 *
+	 * @param array $options Settings supplied by a form, REST or an import.
+	 * @return array
+	 */
+	public static function sanitize_additional_fields( $options ) {
+		foreach ( array( 'email', 'logo', 'image', 'area_served', 'same_as' ) as $field ) {
+			$key = 'seopress_local_business_' . $field;
+			if ( ! array_key_exists( $key, $options ) ) {
+				continue;
+			}
+			$value = is_string( $options[ $key ] ) ? $options[ $key ] : '';
+			if ( 'email' === $field ) {
+				$options[ $key ] = sanitize_email( $value );
+			} elseif ( 'logo' === $field || 'image' === $field ) {
+				$options[ $key ] = self::sanitize_http_url( $value );
+			} else {
+				$lines = preg_split( '/\r\n|\r|\n/', sanitize_textarea_field( $value ) );
+				$lines = array_map( 'trim', $lines );
+				if ( 'same_as' === $field ) {
+					$lines = array_map( array( self::class, 'sanitize_http_url' ), $lines );
+				}
+				$options[ $key ] = implode( "\n", array_unique( array_filter( $lines, 'strlen' ) ) );
+			}
+		}
+		return $options;
+	}
+
+	/**
+	 * Keep absolute HTTP(S) URLs suitable for public schema properties.
+	 *
+	 * @param string $value URL.
+	 * @return string
+	 */
+	private static function sanitize_http_url( $value ) {
+		$value = esc_url_raw( trim( $value ), array( 'http', 'https' ) );
+		return wp_parse_url( $value, PHP_URL_HOST ) ? $value : '';
+	}
+
 	public static function getListTypes() {
 		$types = array(
 			array(
@@ -40,7 +80,7 @@ abstract class LocalBusinessHelper {
 				'label' => __( '|-Auto Repair', 'wp-seopress-pro' ),
 			),
 			array(
-				'value' => 'Auto Wash',
+				'value' => 'AutoWash',
 				'label' => __( '|-AutoWash', 'wp-seopress-pro' ),
 			),
 			array(
@@ -577,7 +617,7 @@ abstract class LocalBusinessHelper {
 			),
 			array(
 				'value' => 'TelevisionStation',
-				'label' => __( '|-Wholesale Store', 'wp-seopress-pro' ),
+				'label' => __( 'Television Station', 'wp-seopress-pro' ),
 			),
 			array(
 				'value' => 'TouristInformationCenter',
@@ -747,6 +787,24 @@ abstract class LocalBusinessHelper {
 
 			),
 		);
+
+		$additional_fields = array(
+			'email'       => __( 'Email', 'wp-seopress-pro' ),
+			'logo'        => __( 'Business logo URL', 'wp-seopress-pro' ),
+			'image'       => __( 'Business image URL', 'wp-seopress-pro' ),
+			'area_served' => __( 'Areas served (one per line)', 'wp-seopress-pro' ),
+			'same_as'     => __( 'Business profile URLs (one per line)', 'wp-seopress-pro' ),
+		);
+		foreach ( $additional_fields as $field => $label ) {
+			$settings['fields'][] = array(
+				'id'       => 'seopress_local_business_' . $field,
+				'title'    => $label,
+				'callback' => array( $classCallback, 'render_additional_field' ),
+				'page'     => $page,
+				'section'  => $idSection,
+				'args'     => array( 'field' => $field, 'label' => $label ),
+			);
+		}
 
 		return $settings;
 	}

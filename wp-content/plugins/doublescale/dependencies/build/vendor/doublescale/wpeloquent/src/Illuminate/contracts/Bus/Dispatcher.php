@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Bus;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Bus;
 
 interface Dispatcher
 {

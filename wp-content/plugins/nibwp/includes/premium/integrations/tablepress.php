@@ -26,7 +26,7 @@ function nibwp_tp_guard(): ?WP_Error
     if (!class_exists('TablePress')) {
         return new WP_Error(
             'nibwp_tp_missing',
-            __('TablePress is not active on this site.', domain: 'nibwp')
+            __('TablePress is not active on this site.', 'nibwp')
         );
     }
 
@@ -37,7 +37,7 @@ function nibwp_tp_guard(): ?WP_Error
 function nibwp_tp_model()
 {
     if (!method_exists('TablePress', 'load_model')) {
-        return new WP_Error('nibwp_tp_no_model', __('This TablePress version does not expose its table model.', domain: 'nibwp'));
+        return new WP_Error('nibwp_tp_no_model', __('This TablePress version does not expose its table model.', 'nibwp'));
     }
 
     return TablePress::load_model('table');
@@ -60,11 +60,8 @@ function nibwp_tp_summary(array $table): array
 }
 
 wp_register_ability('nibwp/tablepress-manage', [
-    'label' => __('TablePress – Tables & Cells', domain: 'nibwp'),
-    'description' => __(
-        'Manage TablePress tables: create, read, copy, rename and delete them, replace the whole grid, or edit individual cells, rows and columns without resending the rest.',
-        domain: 'nibwp',
-    ),
+    'label' => __('TablePress – Tables & Cells', 'nibwp'),
+    'description' => 'Manage TablePress tables: create, read, copy, rename and delete them, replace the whole grid, or edit individual cells, rows and columns without resending the rest.',
     'category' => 'utilities',
     'input_schema' => [
         'type' => 'object',
@@ -164,11 +161,19 @@ function nibwp_tablepress_manage(array $input): array|WP_Error
 
     $action = (string) ($input['action'] ?? '');
 
+    // The capability first, then the confirmation. An account that cannot delete a
+    // table has no business being told that the only thing missing was a confirm
+    // flag, and the ordering has to be the same everywhere or the check cannot
+    // pin it.
+    if ($denied = nibwp_tp_require($action, (string) ($input['table_id'] ?? ''))) {
+        return $denied;
+    }
+
     $irreversible = ['delete_table', 'delete_row', 'delete_column'];
     if (in_array($action, $irreversible, strict: true) && empty($input['confirm'])) {
         return new WP_Error(
             'nibwp_tp_unconfirmed',
-            __('This cannot be undone. Re-issue the call with confirm set to true if that is intended.', domain: 'nibwp')
+            __('This cannot be undone. Re-issue the call with confirm set to true if that is intended.', 'nibwp')
         );
     }
 
@@ -177,7 +182,7 @@ function nibwp_tablepress_manage(array $input): array|WP_Error
     } catch (\Throwable $e) {
         return new WP_Error('nibwp_tp_failed', sprintf(
             /* translators: 1: action, 2: error message. */
-            __('TablePress could not complete %1$s: %2$s', domain: 'nibwp'),
+            __('TablePress could not complete %1$s: %2$s', 'nibwp'),
             $action,
             $e->getMessage()
         ));
@@ -187,6 +192,90 @@ function nibwp_tablepress_manage(array $input): array|WP_Error
 /**
  * @return array<string, mixed>|WP_Error
  */
+/**
+ * Which TablePress capability each action needs.
+ *
+ * TablePress defines its own capabilities and maps the per-table ones as meta
+ * capabilities, so `tablepress_edit_table` is asked WITH a table ID and answers
+ * about that table (controllers/controller-admin.php:588, :1291, :1332;
+ * controllers/controller-admin_ajax.php:82). Asking without the ID would be a
+ * different question, and a laxer one.
+ *
+ * The second element says whether the capability is per-table.
+ *
+ * @return array<string, array{0: string, 1: bool}>
+ */
+function nibwp_tp_capabilities(): array
+{
+    return [
+        'count_tables'   => ['tablepress_list_tables', false],
+        'list_tables'    => ['tablepress_list_tables', false],
+        'get_table'      => ['tablepress_edit_table', true],
+        'create_table'   => ['tablepress_add_tables', false],
+        'update_table'   => ['tablepress_edit_table', true],
+        'rename_table'   => ['tablepress_edit_table', true],
+        'set_cell'       => ['tablepress_edit_table', true],
+        'add_row'        => ['tablepress_edit_table', true],
+        'update_row'     => ['tablepress_edit_table', true],
+        'delete_row'     => ['tablepress_edit_table', true],
+        'add_column'     => ['tablepress_edit_table', true],
+        'delete_column'  => ['tablepress_edit_table', true],
+        'delete_table'   => ['tablepress_delete_table', true],
+        'copy_table'     => ['tablepress_copy_table', true],
+        'get_options'    => ['tablepress_edit_table', true],
+        'update_options' => ['tablepress_edit_table', true],
+    ];
+}
+
+/**
+ * Refuse unless this account holds the capability TablePress itself would ask for.
+ *
+ * This layer did not exist until 2026-10-02: every action ran on whatever the hub's
+ * own permission callback allowed, so an account that could reach the ability could
+ * overwrite or delete any table on the site regardless of the TablePress roles an
+ * owner had set up. The capability is checked BEFORE the table is looked up, so an
+ * account without it cannot use the refusal to learn which table IDs exist.
+ */
+function nibwp_tp_require(string $action, string $table_id = ''): ?WP_Error
+{
+    $map = nibwp_tp_capabilities();
+
+    // An action nobody mapped is refused rather than waved through: a new action
+    // arriving without an entry here must fail closed.
+    if (!isset($map[$action])) {
+        return new WP_Error(
+            'nibwp_tp_unmapped_action',
+            sprintf(
+                /* translators: %s: the action name */
+                __('"%s" has no TablePress capability mapped to it, so it is refused. This is a bug in NibWP, not a permission you can grant.', 'nibwp'),
+                $action
+            ),
+            ['status' => 500]
+        );
+    }
+
+    [$capability, $per_table] = $map[$action];
+
+    $allowed = $per_table && $table_id !== ''
+        ? current_user_can($capability, $table_id)
+        : current_user_can($capability);
+
+    if ($allowed) {
+        return null;
+    }
+
+    return new WP_Error(
+        'nibwp_tp_forbidden',
+        sprintf(
+            /* translators: 1: action name, 2: TablePress capability name */
+            __('"%1$s" needs the %2$s capability, which this account does not have. TablePress grants it through its own roles, not through NibWP.', 'nibwp'),
+            $action,
+            $capability
+        ),
+        ['status' => 403]
+    );
+}
+
 function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
 {
     // Actions that need an existing table all load it the same way.
@@ -199,13 +288,14 @@ function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
     $table = null;
     if (in_array($action, $needs_table, strict: true)) {
         $id = (string) ($in['table_id'] ?? '');
+
         if ($id === '') {
-            return new WP_Error('nibwp_tp_no_id', __('This action needs a table_id.', domain: 'nibwp'));
+            return new WP_Error('nibwp_tp_no_id', __('This action needs a table_id.', 'nibwp'));
         }
         if (!$model->table_exists($id)) {
             return new WP_Error('nibwp_tp_no_table', sprintf(
                 /* translators: %s: the table ID that was asked for. */
-                __('No TablePress table with ID %s.', domain: 'nibwp'),
+                __('No TablePress table with ID %s.', 'nibwp'),
                 $id
             ));
         }
@@ -245,7 +335,7 @@ function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
         case 'create_table':
             $name = (string) ($in['name'] ?? '');
             if ($name === '') {
-                return new WP_Error('nibwp_tp_no_name', __('create_table needs a name.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_name', __('create_table needs a name.', 'nibwp'));
             }
 
             $new = $model->get_table_template();
@@ -266,7 +356,7 @@ function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
 
         case 'update_table':
             if (empty($in['data']) || !is_array($in['data'])) {
-                return new WP_Error('nibwp_tp_no_data', __('update_table replaces the whole grid, so it needs data. To change one value use set_cell.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_data', __('update_table replaces the whole grid, so it needs data. To change one value use set_cell.', 'nibwp'));
             }
             $before = count((array) ($table['data'] ?? []));
             $table['data'] = nibwp_tp_normalise_grid((array) $in['data']);
@@ -308,7 +398,7 @@ function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
         case 'rename_table':
             $new_id = (string) ($in['name'] ?? '');
             if ($new_id === '') {
-                return new WP_Error('nibwp_tp_no_new_id', __('rename_table needs the new ID in `name`.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_new_id', __('rename_table needs the new ID in `name`.', 'nibwp'));
             }
             $renamed = $model->change_table_id((string) $table['id'], $new_id);
             if (is_wp_error($renamed)) {
@@ -318,7 +408,7 @@ function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
             return [
                 'renamed'   => true,
                 'table_id'  => $new_id,
-                'note'      => __('Any [table id=…] shortcode using the old ID now points at nothing. Update those too.', domain: 'nibwp'),
+                'note'      => __('Any [table id=…] shortcode using the old ID now points at nothing. Update those too.', 'nibwp'),
             ];
 
         case 'get_options':
@@ -327,7 +417,7 @@ function nibwp_tp_dispatch($model, string $action, array $in): array|WP_Error
         case 'update_options':
             $options = (array) ($in['options'] ?? []);
             if ($options === []) {
-                return new WP_Error('nibwp_tp_no_options', __('update_options needs an options object.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_options', __('update_options needs an options object.', 'nibwp'));
             }
             $table['options'] = array_merge((array) ($table['options'] ?? []), $options);
             $saved = $model->save($table);
@@ -359,12 +449,12 @@ function nibwp_tp_grid($model, string $action, array $in, array $table): array|W
     switch ($action) {
         case 'set_cell':
             if ($row_index === null || $col_index === null) {
-                return new WP_Error('nibwp_tp_no_cell', __('set_cell needs row_index and column_index.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_cell', __('set_cell needs row_index and column_index.', 'nibwp'));
             }
             if ($row_index < 0 || $row_index >= $rows || $col_index < 0 || $col_index >= $cols) {
                 return new WP_Error('nibwp_tp_out_of_range', sprintf(
                     /* translators: 1: rows, 2: columns. */
-                    __('That cell is outside the table, which is %1$d rows by %2$d columns.', domain: 'nibwp'),
+                    __('That cell is outside the table, which is %1$d rows by %2$d columns.', 'nibwp'),
                     $rows,
                     $cols
                 ));
@@ -376,7 +466,7 @@ function nibwp_tp_grid($model, string $action, array $in, array $table): array|W
         case 'add_row':
             $row = array_values((array) ($in['row'] ?? []));
             if ($row === []) {
-                return new WP_Error('nibwp_tp_no_row', __('add_row needs a row.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_row', __('add_row needs a row.', 'nibwp'));
             }
             // Pad or trim so the grid stays rectangular; a ragged row breaks
             // TablePress rendering rather than erroring.
@@ -390,27 +480,27 @@ function nibwp_tp_grid($model, string $action, array $in, array $table): array|W
 
         case 'update_row':
             if ($row_index === null) {
-                return new WP_Error('nibwp_tp_no_row_index', __('update_row needs a row_index.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_row_index', __('update_row needs a row_index.', 'nibwp'));
             }
             if ($row_index < 0 || $row_index >= $rows) {
-                return new WP_Error('nibwp_tp_out_of_range', __('That row is outside the table.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_out_of_range', __('That row is outside the table.', 'nibwp'));
             }
             $row = array_values((array) ($in['row'] ?? []));
             if ($row === []) {
-                return new WP_Error('nibwp_tp_no_row', __('update_row needs a row.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_row', __('update_row needs a row.', 'nibwp'));
             }
             $data[$row_index] = array_pad(array_slice($row, 0, $cols), $cols, '');
             break;
 
         case 'delete_row':
             if ($row_index === null) {
-                return new WP_Error('nibwp_tp_no_row_index', __('delete_row needs a row_index.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_row_index', __('delete_row needs a row_index.', 'nibwp'));
             }
             if ($row_index < 0 || $row_index >= $rows) {
-                return new WP_Error('nibwp_tp_out_of_range', __('That row is outside the table.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_out_of_range', __('That row is outside the table.', 'nibwp'));
             }
             if ($rows <= 1) {
-                return new WP_Error('nibwp_tp_last_row', __('A TablePress table cannot have zero rows. Delete the table instead.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_last_row', __('A TablePress table cannot have zero rows. Delete the table instead.', 'nibwp'));
             }
             array_splice($data, $row_index, 1);
             break;
@@ -428,13 +518,13 @@ function nibwp_tp_grid($model, string $action, array $in, array $table): array|W
 
         case 'delete_column':
             if ($col_index === null) {
-                return new WP_Error('nibwp_tp_no_col_index', __('delete_column needs a column_index.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_no_col_index', __('delete_column needs a column_index.', 'nibwp'));
             }
             if ($col_index < 0 || $col_index >= $cols) {
-                return new WP_Error('nibwp_tp_out_of_range', __('That column is outside the table.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_out_of_range', __('That column is outside the table.', 'nibwp'));
             }
             if ($cols <= 1) {
-                return new WP_Error('nibwp_tp_last_column', __('A TablePress table cannot have zero columns. Delete the table instead.', domain: 'nibwp'));
+                return new WP_Error('nibwp_tp_last_column', __('A TablePress table cannot have zero columns. Delete the table instead.', 'nibwp'));
             }
             foreach ($data as $i => $r) {
                 $r = (array) $r;
@@ -446,7 +536,7 @@ function nibwp_tp_grid($model, string $action, array $in, array $table): array|W
         default:
             return new WP_Error('nibwp_tp_unknown_action', sprintf(
                 /* translators: %s: the requested action. */
-                __('Unknown TablePress action: %s', domain: 'nibwp'),
+                __('Unknown TablePress action: %s', 'nibwp'),
                 $action
             ));
     }

@@ -8,11 +8,11 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
 use DoubleScale\Vendor\Symfony\Component\Translation\MessageCatalogueInterface;
-if (!\class_exists(\Carbon\LazyTranslator::class, \false)) {
-    class LazyTranslator extends \Carbon\AbstractTranslator implements \Carbon\TranslatorStrongTypeInterface
+if (!\class_exists(LazyTranslator::class, \false)) {
+    class LazyTranslator extends AbstractTranslator implements TranslatorStrongTypeInterface
     {
         public function trans(?string $id, array $parameters = [], ?string $domain = null, ?string $locale = null) : string
         {

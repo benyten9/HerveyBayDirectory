@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Migrations;
 
-use Illuminate\Database\ConnectionResolverInterface as Resolver;
-class DatabaseMigrationRepository implements \Illuminate\Database\Migrations\MigrationRepositoryInterface
+use DoubleScale\Vendor\Illuminate\Database\ConnectionResolverInterface as Resolver;
+class DatabaseMigrationRepository implements MigrationRepositoryInterface
 {
     /**
      * The database connection resolver instance.

@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Exception;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Contacts\Services\LeadRouter;
 use DoubleScale\Modules\Forms\Models\FormModel;
 use DoubleScale\Modules\Forms\Models\FormSubmissionModel;
 use DoubleScale\Core\Fields\ContactFields;
@@ -235,6 +236,12 @@ abstract class Form {
 				$contact_data['email_status'] = 'subscribed';
 			}
 
+			// Empty answers leave the contact's values alone unless the
+			// connection says otherwise, as in the automation path below.
+			if ( ! ( $this->form_data->data['update_blank_fields'] ?? false ) ) {
+				$contact_data = array_filter( $contact_data );
+			}
+
 			if ( ! $update_existing ) {
 				$contact = ContactModel::get_by_email( $contact_data['email'] ?? '' );
 				if ( $contact ) {
@@ -243,7 +250,18 @@ abstract class Form {
 				}
 			}
 
-			$contact = ContactModel::createOrUpdate( $contact_data );
+			$contact = LeadRouter::with_context(
+				'form',
+				array(
+					'form_id'  => $this->form_data->id ?? null,
+					// Forms → this form → Assign to; none: the default rule.
+					'owner_id' => (int) ( $this->form_data->data['owner_id'] ?? 0 ),
+					'actor_id' => 0,
+				),
+				static function () use ( $contact_data ) {
+					return ContactModel::createOrUpdate( $contact_data );
+				}
+			);
 
 			if ( ! empty( $lists ) ) {
 				$contact->add_lists( $lists );
@@ -419,7 +437,7 @@ abstract class Form {
 				if ( ! isset( $entry['fields'][ $contact_field ] ) || ! isset( $fields[ $contact_field ] ) ) {
 					continue;
 				}
-				$raw_value = $entry['fields'][ $contact_field ];
+				$raw_value = $this->normalize_mapped_value( $entry['fields'][ $contact_field ], (string) $contact_field, $fields[ $contact_field ], $contact_fields[ $form_field ] );
 			}
 
 			if ( ! class_exists( $contact_fields[ $form_field ]['type'] ) ) {
@@ -456,6 +474,24 @@ abstract class Form {
 		);
 	}
 
+
+	/**
+	 * Translate a form answer into what the mapped contact field expects.
+	 *
+	 * Form plugins phrase some answers their own way (a consent block answers with its label, for
+	 * instance). A form class overrides this for those; by default the answer is used as it is.
+	 *
+	 * @since 1.5.2
+	 *
+	 * @param mixed  $value           The answer as the form plugin reported it.
+	 * @param string $source_field_id The form field's id.
+	 * @param array  $source_field    The form field's definition (label, type).
+	 * @param array  $target_field    The contact field's definition (name, type, is_custom).
+	 * @return mixed
+	 */
+	protected function normalize_mapped_value( $value, $source_field_id, $source_field, $target_field ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- overridable hook.
+		return $value;
+	}
 
 	/**
 	 * Check if value contains form merge tags
@@ -648,7 +684,18 @@ abstract class Form {
 				}
 			}
 
-			$contact = ContactModel::createOrUpdate( $contact_data );
+			$contact = LeadRouter::with_context(
+				'form',
+				array(
+					'form_id'  => $this->form_data->id ?? null,
+					// Forms → this form → Assign to; none: the default rule.
+					'owner_id' => (int) ( $this->form_data->data['owner_id'] ?? 0 ),
+					'actor_id' => 0,
+				),
+				static function () use ( $contact_data ) {
+					return ContactModel::createOrUpdate( $contact_data );
+				}
+			);
 
 			if ( ! empty( $lists ) ) {
 				$contact->add_lists( $lists );

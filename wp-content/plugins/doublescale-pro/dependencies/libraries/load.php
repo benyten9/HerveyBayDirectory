@@ -6,3 +6,4 @@
  */
 
 require_once __DIR__ . '/action-scheduler/action-scheduler.php';
+require_once __DIR__ . '/ar-php/src/Arabic.php';

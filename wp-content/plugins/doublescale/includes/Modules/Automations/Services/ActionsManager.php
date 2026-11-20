@@ -26,6 +26,11 @@ use DoubleScale\Core\Managers\IntegrationsManager;
  */
 final class ActionsManager {
 
+	use \DoubleScale\Core\DefersRegistration;
+
+	/** @var callable|null Includes the action class files (set by the Automations module). */
+	private $files_loader;
+
 
 
 
@@ -81,9 +86,57 @@ final class ActionsManager {
 	}
 
 	/**
-	 * Load actions
+	 * The Automations module hands over the loader for the action class files.
+	 *
+	 * Actions are read only when an automation step runs or a screen lists
+	 * them, so the files are included on first read (see load_actions()).
+	 *
+	 * @param callable $loader Includes the action class files.
+	 */
+	public function set_files_loader( callable $loader ): void {
+		$this->files_loader = $loader;
+	}
+
+	/**
+	 * On doublescale_ready: build the action catalog on first read.
+	 *
+	 * One deferred step does what used to happen in order: include the files
+	 * (each action queues its own registration on `init`), apply
+	 * `doublescale_automation_actions` (Pro's actions are registered first),
+	 * then the queued `init` registrations run. First registration wins, so
+	 * the result is the same as eager loading.
 	 */
 	public function load_actions() {
+		$files              = $this->files_loader;
+		$this->files_loader = null;
+		$this->defer(
+			function () use ( $files ) {
+				if ( $files ) {
+					$files();
+				}
+				$this->build_catalog();
+			}
+		);
+	}
+
+	/**
+	 * Make sure the catalog is loaded before it is read.
+	 */
+	private function ensure_loaded(): void {
+		// Read before doublescale_ready (unusual): include the files now, as at boot before.
+		if ( $this->files_loader && ! did_action( 'doublescale_ready' ) ) {
+			$files              = $this->files_loader;
+			$this->files_loader = null;
+			$files();
+			return;
+		}
+		$this->load_deferred();
+	}
+
+	/**
+	 * Apply the actions filter and store every action in the sources.
+	 */
+	private function build_catalog() {
 		/** @var Action[] $actions */
 		$actions = apply_filters( 'doublescale_automation_actions', $this->actions );
 
@@ -119,8 +172,8 @@ final class ActionsManager {
 		}
 
 		foreach ( $this->sources['send_data']['groups'] as $group => $data ) {
-			// Zapier and HTTP Request don't require integration setup
-			if ( $group === 'zapier' || $group === 'http_request' ) {
+			// HTTP Request doesn't require integration setup
+			if ( $group === 'http_request' ) {
 				$this->sources['send_data']['groups'][ $group ]['is_disabled'] = false;
 			} else {
 				$this->sources['send_data']['groups'][ $group ]['is_disabled'] = ! IntegrationsManager::instance()->is_active( $group );
@@ -156,6 +209,7 @@ final class ActionsManager {
 	 * @return Action
 	 */
 	public function get_action( $slug ) {
+		$this->ensure_loaded();
 		if ( isset( $this->actions[ $slug ] ) ) {
 			return $this->actions[ $slug ];
 		}
@@ -173,6 +227,7 @@ final class ActionsManager {
 	 * @return array
 	 */
 	public function get_actions() {
+		$this->ensure_loaded();
 		return $this->actions;
 	}
 
@@ -268,21 +323,21 @@ final class ActionsManager {
 				),
 			),
 			'ecommerce'   => array(
-				'label' => __( 'E-commerce', 'doublescale' ),
+				'label' => __( 'E-commerce Plugins', 'doublescale' ),
 				'tabs'  => array(
 					'woocommerce' => array(
 						'label'       => __( 'WooCommerce', 'doublescale' ),
-						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 						'groups'      => array(
 							'order'  => array(
 								'label'       => __( 'Order', 'doublescale' ),
 								'actions'     => array(),
-								'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+								'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 							),
 							'coupon' => array(
 								'label'       => __( 'Coupon', 'doublescale' ),
 								'actions'     => array(),
-								'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+								'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 							),
 						),
 					),
@@ -292,22 +347,22 @@ final class ActionsManager {
 				'label'  => __( 'LMS', 'doublescale' ),
 				'groups' => array(
 					'learndash'  => array(
-						'is_disabled' => ! doublescale_is_plugin_active( 'sfwd-lms/sfwd_lms.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'learndash' ),
 						'label'       => __( 'LearnDash', 'doublescale' ),
 						'actions'     => array(),
 					),
 					'tutorlms'   => array(
-						'is_disabled' => ! doublescale_is_plugin_active( 'tutor/tutor.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'tutor' ),
 						'label'       => __( 'Tutor LMS', 'doublescale' ),
 						'actions'     => array(),
 					),
 					'lifterlms'  => array(
-						'is_disabled' => ! doublescale_is_plugin_active( 'lifterlms/lifterlms.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'lifterlms' ),
 						'label'       => __( 'LifterLMS', 'doublescale' ),
 						'actions'     => array(),
 					),
 					'learnpress' => array(
-						'is_disabled' => ! doublescale_is_plugin_active( 'learnpress/learnpress.php' ),
+						'is_disabled' => ! doublescale_is_plugin_active( 'learnpress' ),
 						'label'       => __( 'LearnPress', 'doublescale' ),
 						'actions'     => array(),
 					),
@@ -396,10 +451,6 @@ final class ActionsManager {
 					'label'   => __( 'Slack', 'doublescale' ),
 					'actions' => array(),
 				),
-					'zapier'       => array(
-						'label'   => __( 'Zapier', 'doublescale' ),
-						'actions' => array(),
-					),
 					'http_request' => array(
 						'label'   => __( 'HTTP Request', 'doublescale' ),
 						'actions' => array(),
@@ -426,6 +477,9 @@ final class ActionsManager {
 	 * @return array
 	 */
 	public function get_sources() {
+		$this->ensure_loaded();
+		$this->sources = DeferredValue::resolve( $this->sources );
+
 		return SourceTreePruner::prune(
 			$this->sources,
 			array( 'ecommerce', 'lms', 'membership' )
@@ -488,7 +542,6 @@ final class ActionsManager {
 	private function resolve_action_group_label( $source, $group_slug ) {
 		if ( 'send_data' === $source ) {
 			$static_labels = array(
-				'zapier'       => __( 'Zapier', 'doublescale' ),
 				'http_request' => __( 'HTTP Request', 'doublescale' ),
 				'slack'        => __( 'Slack', 'doublescale' ),
 			);
@@ -544,7 +597,7 @@ final class ActionsManager {
 		$row = array(
 			'label'             => $action->name,
 			'description'       => $action->description,
-			'fields'            => $action->get_fields(),
+			'fields'            => new DeferredValue( array( $action, 'get_fields' ) ),
 			'is_integration'    => $action->is_integration,
 			'required_triggers' => $action->required_triggers,
 			'is_pro'            => $action->is_pro,

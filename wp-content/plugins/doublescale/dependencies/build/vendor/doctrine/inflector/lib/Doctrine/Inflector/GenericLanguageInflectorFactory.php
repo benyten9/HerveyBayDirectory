@@ -1,11 +1,11 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Inflector;
 
-use Doctrine\Inflector\Rules\Ruleset;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Ruleset;
 use function array_unshift;
-abstract class GenericLanguageInflectorFactory implements \Doctrine\Inflector\LanguageInflectorFactory
+abstract class GenericLanguageInflectorFactory implements LanguageInflectorFactory
 {
     /** @var Ruleset[] */
     private $singularRulesets = [];
@@ -16,11 +16,11 @@ abstract class GenericLanguageInflectorFactory implements \Doctrine\Inflector\La
         $this->singularRulesets[] = $this->getSingularRuleset();
         $this->pluralRulesets[] = $this->getPluralRuleset();
     }
-    public final function build() : \Doctrine\Inflector\Inflector
+    public final function build() : Inflector
     {
-        return new \Doctrine\Inflector\Inflector(new \Doctrine\Inflector\CachedWordInflector(new \Doctrine\Inflector\RulesetInflector(...$this->singularRulesets)), new \Doctrine\Inflector\CachedWordInflector(new \Doctrine\Inflector\RulesetInflector(...$this->pluralRulesets)));
+        return new Inflector(new CachedWordInflector(new RulesetInflector(...$this->singularRulesets)), new CachedWordInflector(new RulesetInflector(...$this->pluralRulesets)));
     }
-    public final function withSingularRules(?Ruleset $singularRules, bool $reset = \false) : \Doctrine\Inflector\LanguageInflectorFactory
+    public final function withSingularRules(?Ruleset $singularRules, bool $reset = \false) : LanguageInflectorFactory
     {
         if ($reset) {
             $this->singularRulesets = [];
@@ -30,7 +30,7 @@ abstract class GenericLanguageInflectorFactory implements \Doctrine\Inflector\La
         }
         return $this;
     }
-    public final function withPluralRules(?Ruleset $pluralRules, bool $reset = \false) : \Doctrine\Inflector\LanguageInflectorFactory
+    public final function withPluralRules(?Ruleset $pluralRules, bool $reset = \false) : LanguageInflectorFactory
     {
         if ($reset) {
             $this->pluralRulesets = [];

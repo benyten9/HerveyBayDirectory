@@ -732,8 +732,11 @@ function nibwp_render_connect_flow(
 
             function shadows() {
                 var max = rail.scrollWidth - rail.clientWidth;
-                wrap.classList.toggle('has-scroll-left', rail.scrollLeft > 2);
-                wrap.classList.toggle('has-scroll-right', rail.scrollLeft < max - 2);
+                // Right to left, scrollLeft runs from 0 at the start down to -max at
+                // the end, and the RTL stylesheet swaps the fades, so the distance
+                // from the start is what both classes need.
+                wrap.classList.toggle('has-scroll-left', Math.abs(rail.scrollLeft) > 2);
+                wrap.classList.toggle('has-scroll-right', Math.abs(rail.scrollLeft) < max - 2);
             }
 
             function animate() {
@@ -763,10 +766,13 @@ function nibwp_render_connect_flow(
                 if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) { return; }
                 var max = rail.scrollWidth - rail.clientWidth;
                 if (max <= 0) { return; }
-                var next = rail.scrollLeft + e.deltaY;
+                // Wheel down moves toward the end of the strip, which is leftward
+                // (negative scrollLeft) when the page reads right to left.
+                var rtl = getComputedStyle(rail).direction === 'rtl';
+                var next = Math.abs(rail.scrollLeft) + e.deltaY;
                 // Only swallow the page scroll while there is somewhere to go.
                 if (next > 0 && next < max) { e.preventDefault(); }
-                rail.scrollLeft = next;
+                rail.scrollLeft = rtl ? -next : next;
                 shadows();
             }, { passive: false });
 

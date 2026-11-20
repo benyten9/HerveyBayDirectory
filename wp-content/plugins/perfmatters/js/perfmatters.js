@@ -14,6 +14,7 @@ jQuery(function($) {
 		}
 
 		$('.perfmatters-button-message').hide();
+		$('#perfmatters-action-toast').removeClass('is-visible');
 					
 		//deactivate previous active tab + content
 		var activeTab = $('#perfmatters-menu a.active');
@@ -268,14 +269,6 @@ jQuery(function($) {
 		}
 	});
 
-	//initialize codemirror textareas
-	/*var $codemirror = $('.perfmatters-codemirror');
-	if($codemirror.length) {
-		$codemirror.each(function() {
-			wp.codeEditor.initialize(this, cm_settings);
-		});
-	}*/
-
 	//show advanced toggle
 	$('#perfmatters-options-form #show_advanced').on('click', function(e) {
 		var container = $('#perfmatters-options');
@@ -306,20 +299,19 @@ jQuery(function($) {
 	    });
 	});
 
-	// PHP-rendered success beside a button (?message= after full reload): same fadeIn + 10s fadeOut as AJAX .always.
-	$('.perfmatters-button-message[data-pm-post-reload-notice="1"]').each(function() {
-		var $message = $(this);
-		var action = $message.closest('.perfmatters-button-container').find('button[data-pm-action]').attr('data-pm-action');
-		if(!action) {
-			return;
-		}
-		$message.fadeIn();
-		clearTimeout(pmActionButtonTimeouts[action]);
-		pmActionButtonTimeouts[action] = setTimeout(function() {
-			//$message.fadeOut();
-		}, 10000);
-	});
-
+	//PHP-rendered reload toast: add is-visible after paint so the same CSS fade runs as AJAX toasts
+	var $reloadToast = $('#perfmatters-action-toast');
+	if($reloadToast.length && $.trim($reloadToast.text()) && !$reloadToast.hasClass('is-visible')) {
+		requestAnimationFrame(function() {
+			requestAnimationFrame(function() {
+				$reloadToast.addClass('is-visible');
+				clearTimeout(pmActionButtonTimeouts.reload_toast);
+				pmActionButtonTimeouts.reload_toast = setTimeout(function() {
+					$reloadToast.removeClass('is-visible');
+				}, 10000);
+			});
+		});
+	}
 
 	function perfmattersFadeButtonMessage($message, action) {
 		$message.fadeIn();
@@ -327,6 +319,26 @@ jQuery(function($) {
 		pmActionButtonTimeouts[action] = setTimeout(function() {
 			$message.fadeOut();
 		}, 10000);
+	}
+
+	//inline beside the button, or #perfmatters-action-toast when data-pm-message="toast"
+	function perfmattersShowActionMessage(text, action, isError, messageMode, $inlineMessage) {
+		if(!text) {
+			return;
+		}
+
+		if(messageMode === 'toast') {
+			var $toast = $('#perfmatters-action-toast');
+			$toast.toggleClass('perfmatters-error', !!isError).text(text).addClass('is-visible');
+			clearTimeout(pmActionButtonTimeouts[action]);
+			pmActionButtonTimeouts[action] = setTimeout(function() {
+				$toast.removeClass('is-visible');
+			}, 10000);
+			return;
+		}
+
+		$inlineMessage.toggleClass('perfmatters-error', !!isError).html(text);
+		perfmattersFadeButtonMessage($inlineMessage, action);
 	}
 
 	function perfmattersReloadWithNotice(data) {
@@ -354,16 +366,6 @@ jQuery(function($) {
 		window.location.assign(url.toString());
 	}
 
-	// PHP-rendered success after full reload.
-	$('.perfmatters-button-message .perfmatters-reload-notice').each(function() {
-		var $message = $(this).closest('.perfmatters-button-message');
-		var action = $message.closest('.perfmatters-button-container').find('button[data-pm-action]').attr('data-pm-action');
-		if(!action) {
-			return;
-		}
-		perfmattersFadeButtonMessage($message, action);
-	});
-
 	//action button press
 	$('button[data-pm-action]').on('click', function(e) {
 
@@ -382,10 +384,9 @@ jQuery(function($) {
 		var text = container.find('.perfmatters-button-text');
 		var spinner = container.find('.perfmatters-button-spinner');
 		var message = container.find('.perfmatters-button-message');
+		var messageMode = button.attr('data-pm-message') || 'inline';
 
-		//reset message
-		message.html('');
-		message.removeClass('perfmatters-error');
+		message.html('').removeClass('perfmatters-error');
 	 	clearTimeout(pmActionButtonTimeouts[action]);
 
 	 	//switch to spinner
@@ -407,6 +408,12 @@ jQuery(function($) {
 	    }
 	    else if(action == 'scan_database') {
 	    	$('#tools-database .perfmatters-option-data').html('');
+	    }
+	    else if(action == 'scan_warmer_sources') {
+	    	$('#perfmatters-cache-warmer-sources .perfmatters-option-data').html('');
+	    }
+	    else if(action == 'sync_cloudflare_rules' || action == 'remove_cloudflare_token' || action == 'sync_cache_files' || action == 'cache_clear' || action == 'cache_warmer_start' || action == 'cache_warmer_stop') {
+	    	//token + nonce only; do not serialize the settings form
 	    }
 	    else {
 	    	var form = $(this).closest('form');
@@ -434,14 +441,9 @@ jQuery(function($) {
 	    })
 	    .done(function(r) {
 
-	    	//add message error class
-	    	if(!r.success) {
-	    		message.addClass('perfmatters-error');
-	    	}
-
 	    	//export settings
 	    	const exportActions = ['export_settings', 'export_snippets'];
-	    	if(exportActions.includes(action) && r.data.export) {
+	    	if(exportActions.includes(action) && r.data && r.data.export) {
 	    		var blob = new Blob([r.data.export], {
 			        type: 'application/json'
 		      	});
@@ -458,7 +460,7 @@ jQuery(function($) {
 	    	}
 
 	    	//scan database
-	    	if(action =='scan_database' && r.data.data) {
+	    	if(action =='scan_database' && r.data && r.data.data) {
 
 				const timer = ms => new Promise(res => setTimeout(res, ms));
 
@@ -473,10 +475,40 @@ jQuery(function($) {
 				}
 				loadOptionData();
 	    	}
+
+	    	//scan warmer sources (Perfmatters Cache)
+	    	if(action == 'scan_warmer_sources' && r.data && r.data.data) {
+
+				const timer = ms => new Promise(res => setTimeout(res, ms));
+
+				async function loadWarmerSourceData () {
+
+					var keys = Object.keys(r.data.data);
+
+					for(var i = 0; i < keys.length; i++) {
+						//label is the per-source row (all sources share one settings <td>)
+						$('#warmer-source-' + keys[i]).closest('label').find('.perfmatters-option-data').html(r.data.data[keys[i]]);
+						await timer(250);
+					}
+				}
+				loadWarmerSourceData();
+	    	}
+
+	    	//cache toolbar / Sync Rules / soft cache saves: refresh status cards without a full reload
+	    	if((action == 'sync_cloudflare_rules' || action == 'cache_clear' || action == 'cache_warmer_start' || action == 'cache_warmer_stop' || action == 'save_settings') && r.data && r.data.progress && typeof window.perfmattersCacheApplyProgress === 'function') {
+	    		window.perfmattersCacheApplyProgress(r.data.progress);
+	    		if(r.data.progress.running && typeof window.perfmattersCacheWarmerPoll === 'function') {
+	    			window.perfmattersCacheWarmerPoll();
+	    		}
+	    	}
+
+	    	//reload responses show the notice on the next page only (avoid toast → navigate → toast again)
+	    	if(r.data && r.data.message && !(r.data && r.data.reload)) {
+	    		perfmattersShowActionMessage(r.data.message, action, !r.success, messageMode, message);
+	    	}
 		})
-		.fail(function(r) {
-			message.addClass('perfmatters-error');
-			message.html(PERFMATTERS.strings.failed);
+		.fail(function() {
+			perfmattersShowActionMessage(PERFMATTERS.strings.failed, action, true, messageMode, message);
 		})
 	.always(function(r) {
 
@@ -484,12 +516,6 @@ jQuery(function($) {
 				perfmattersReloadWithNotice(r.data);
 				return;
 			}
-
-			//show response message
-			if(r.data && r.data.message) {
-				message.html(r.data.message);
-			}
-			perfmattersFadeButtonMessage(message, action);
 
 			//re-enable button
 			button.attr('disabled', false);

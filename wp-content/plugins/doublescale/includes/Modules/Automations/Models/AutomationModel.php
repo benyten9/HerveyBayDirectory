@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Automations\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 
 /**
@@ -100,7 +100,7 @@ class AutomationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function contacts() {
 		return $this->hasMany( AutomationContactModel::class, 'automation_id', 'id' );
@@ -111,7 +111,7 @@ class AutomationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function steps() {
 		return $this->hasMany( AutomationStepModel::class, 'automation_id', 'id' );
@@ -122,7 +122,7 @@ class AutomationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function processes() {
 		return $this->hasMany( AutomationContactProcessesModel::class, 'automation_id', 'id' );
@@ -133,7 +133,7 @@ class AutomationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function messages() {
 		return $this->hasMany( CommunicationTrackingModel::class, 'source_id', 'id' )
@@ -167,11 +167,11 @@ class AutomationModel extends Model {
 	 * Per-request memo for get_automations_by_trigger().
 	 *
 	 * A bulk operation fires the same trigger once per contact; without this
-	 * every contact cost a query plus the `retrieved` event's draft-step
-	 * DELETE. Cleared whenever an automation is saved or deleted, and at the
-	 * start of each queued action so a long-running runner sees edits.
+	 * every contact cost a query. Cleared whenever an automation is saved or
+	 * deleted, and at the start of each queued action so a long-running runner
+	 * sees edits.
 	 *
-	 * @var array<string, \Illuminate\Support\Collection>
+	 * @var array<string, \DoubleScale\Vendor\Illuminate\Support\Collection>
 	 */
 	private static $by_trigger_cache = array();
 
@@ -344,11 +344,13 @@ class AutomationModel extends Model {
 		self::saved(
 			function () {
 				self::flush_trigger_cache();
+				\DoubleScale\Modules\Automations\Services\TriggerBootPlan::forget_active();
 			}
 		);
 		self::deleted(
 			function () {
 				self::flush_trigger_cache();
+				\DoubleScale\Modules\Automations\Services\TriggerBootPlan::forget_active();
 			}
 		);
 
@@ -359,14 +361,20 @@ class AutomationModel extends Model {
 				$automation->processes()->delete();
 			}
 		);
+	}
 
-		// Delete draft steps will retrerive the automation
-		self::retrieved(
-			function ( $automation ) {
-				$automation->steps()
-					->where( 'status', 'draft' )
-					->delete();
-			}
-		);
+	/**
+	 * Delete an automation's unsaved draft steps.
+	 *
+	 * Runs when the editor opens the automation. It used to run on every load
+	 * of an automation, which cost a DELETE per automation on each request
+	 * that read them (triggers, cron, lists).
+	 *
+	 * @param int $automation_id Automation ID.
+	 */
+	public static function delete_draft_steps( $automation_id ) {
+		AutomationStepModel::where( 'automation_id', $automation_id )
+			->where( 'status', 'draft' )
+			->delete();
 	}
 }

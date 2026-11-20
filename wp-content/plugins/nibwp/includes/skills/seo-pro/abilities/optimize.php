@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-optimize', [
     'label'       => __('SEO Pro — On-page Optimize', 'nibwp'),
-    'description' => __('Optimize a single post for a target keyword: analyze keyword placement (title, description, H1, subheadings, first paragraph, density), score before vs after a proposed title/description, validate, and persist. Returns content-level recommendations for the agent to apply separately.', 'nibwp'),
+    'description' => 'Optimize a single post for a target keyword: analyze keyword placement (title, description, H1, subheadings, first paragraph, density), score before vs after a proposed title/description, validate, and persist. Returns content-level recommendations for the agent to apply separately.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

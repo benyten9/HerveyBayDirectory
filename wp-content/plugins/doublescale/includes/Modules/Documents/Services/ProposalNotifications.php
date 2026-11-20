@@ -70,6 +70,19 @@ final class ProposalNotifications {
 		$emails->from_address = $identity['from_address'];
 		$emails->from_name    = $identity['from_name'];
 		$emails->reply_to     = $identity['reply_to'];
+		// A shared proposal: the company's billing contacts get a copy.
+		/**
+		 * Filters who is copied on a proposal email (a company proposal's billing contacts).
+		 *
+		 * @param string[] $cc         Addresses.
+		 * @param int      $contact_id The proposal's contact.
+		 * @param int|null $company_id The proposal's company.
+		 * @param string   $to         The address it is sent to.
+		 */
+		$cc = array_values( array_filter( (array) apply_filters( 'doublescale_document_cc', array(), (int) $proposal->contact_id, $proposal->company_id ? (int) $proposal->company_id : null, $to ) ) );
+		if ( $cc ) {
+			$emails->cc = implode( ',', $cc );
+		}
 
 		try {
 			return (bool) $emails->send( $to, $subject, $body );

@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Contracts\Auth\PasswordBroker;
+use DoubleScale\Vendor\Illuminate\Contracts\Auth\PasswordBroker;
 /**
  * @method static string sendResetLink(array $credentials)
  * @method static mixed reset(array $credentials, \Closure $callback)
@@ -11,7 +11,7 @@ use Illuminate\Contracts\Auth\PasswordBroker;
  *
  * @see \Illuminate\Auth\Passwords\PasswordBroker
  */
-class Password extends \Illuminate\Support\Facades\Facade
+class Password extends Facade
 {
     /**
      * Constant representing a successfully sent reminder.

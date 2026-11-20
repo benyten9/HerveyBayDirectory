@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
 abstract class Grammar
 {
     use Macroable;

@@ -4,14 +4,14 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit390b5f1754d9f2d3a225beb7738904da
+class ComposerStaticInit0dbccf413d5f025929f79d785e5e7a69
 {
     public static $files = array (
         'b33e3d135e5d9e47d845c576147bda89' => __DIR__ . '/..' . '/php-di/php-di/src/functions.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'D' =>
+        'D' => 
         array (
             'DirectoristPricingPlan\\WpMVC\\Routing\\' => 37,
             'DirectoristPricingPlan\\WpMVC\\RequestValidator\\' => 46,
@@ -31,59 +31,59 @@ class ComposerStaticInit390b5f1754d9f2d3a225beb7738904da
     );
 
     public static $prefixDirsPsr4 = array (
-        'DirectoristPricingPlan\\WpMVC\\Routing\\' =>
+        'DirectoristPricingPlan\\WpMVC\\Routing\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/routing/src',
         ),
-        'DirectoristPricingPlan\\WpMVC\\RequestValidator\\' =>
+        'DirectoristPricingPlan\\WpMVC\\RequestValidator\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/request-validator/src',
         ),
-        'DirectoristPricingPlan\\WpMVC\\Queue\\' =>
+        'DirectoristPricingPlan\\WpMVC\\Queue\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/queue/src',
         ),
-        'DirectoristPricingPlan\\WpMVC\\Helpers\\' =>
+        'DirectoristPricingPlan\\WpMVC\\Helpers\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/helpers/src',
         ),
-        'DirectoristPricingPlan\\WpMVC\\Database\\' =>
+        'DirectoristPricingPlan\\WpMVC\\Database\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/database/src',
         ),
-        'DirectoristPricingPlan\\WpMVC\\' =>
+        'DirectoristPricingPlan\\WpMVC\\' => 
         array (
             0 => __DIR__ . '/..' . '/wpmvc/framework/src',
         ),
-        'DirectoristPricingPlan\\Psr\\Container\\' =>
+        'DirectoristPricingPlan\\Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'DirectoristPricingPlan\\PhpDocReader\\' =>
+        'DirectoristPricingPlan\\PhpDocReader\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-di/phpdoc-reader/src/PhpDocReader',
         ),
-        'DirectoristPricingPlan\\Laravel\\SerializableClosure\\' =>
+        'DirectoristPricingPlan\\Laravel\\SerializableClosure\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/serializable-closure/src',
         ),
-        'DirectoristPricingPlan\\Invoker\\' =>
+        'DirectoristPricingPlan\\Invoker\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-di/invoker/src',
         ),
-        'DirectoristPricingPlan\\Database\\' =>
+        'DirectoristPricingPlan\\Database\\' => 
         array (
             0 => __DIR__ . '/../..' . '/../database',
         ),
-        'DirectoristPricingPlan\\DI\\' =>
+        'DirectoristPricingPlan\\DI\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-di/php-di/src',
         ),
-        'DirectoristPricingPlan\\Bootstrap\\' =>
+        'DirectoristPricingPlan\\Bootstrap\\' => 
         array (
             0 => __DIR__ . '/../..' . '/../bootstrap',
         ),
-        'DirectoristPricingPlan\\App\\' =>
+        'DirectoristPricingPlan\\App\\' => 
         array (
             0 => __DIR__ . '/../..' . '/../app',
         ),
@@ -98,9 +98,9 @@ class ComposerStaticInit390b5f1754d9f2d3a225beb7738904da
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit390b5f1754d9f2d3a225beb7738904da::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit390b5f1754d9f2d3a225beb7738904da::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit390b5f1754d9f2d3a225beb7738904da::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit0dbccf413d5f025929f79d785e5e7a69::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit0dbccf413d5f025929f79d785e5e7a69::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit0dbccf413d5f025929f79d785e5e7a69::$classMap;
 
         }, null, ClassLoader::class);
     }

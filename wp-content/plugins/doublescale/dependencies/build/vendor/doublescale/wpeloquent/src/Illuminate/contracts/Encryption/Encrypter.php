@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Encryption;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Encryption;
 
 interface Encrypter
 {

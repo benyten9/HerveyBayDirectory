@@ -12,26 +12,6 @@ if (!class_exists('ComposerAutoloaderInit16ae31899de823e17ba816de66fa67da', fals
 
 // Exposed functions. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/docs/configuration.md#exposing-functions
-if (!function_exists('getMaxHistoryMonthsByAmount')) {
-    function getMaxHistoryMonthsByAmount() {
-        return \DoubleScale\Vendor\getMaxHistoryMonthsByAmount(...func_get_args());
-    }
-}
-if (!function_exists('getHtmlAttribute')) {
-    function getHtmlAttribute() {
-        return \DoubleScale\Vendor\getHtmlAttribute(...func_get_args());
-    }
-}
-if (!function_exists('getOpenCollectiveSponsors')) {
-    function getOpenCollectiveSponsors() {
-        return \DoubleScale\Vendor\getOpenCollectiveSponsors(...func_get_args());
-    }
-}
-if (!function_exists('app')) {
-    function app() {
-        return \DoubleScale\Vendor\app(...func_get_args());
-    }
-}
 if (!function_exists('append_config')) {
     function append_config() {
         return \DoubleScale\Vendor\append_config(...func_get_args());
@@ -362,104 +342,9 @@ if (!function_exists('with')) {
         return \DoubleScale\Vendor\with(...func_get_args());
     }
 }
-if (!function_exists('findTranslationFiles')) {
-    function findTranslationFiles() {
-        return \DoubleScale\Vendor\findTranslationFiles(...func_get_args());
-    }
-}
-if (!function_exists('calculateTranslationStatus')) {
-    function calculateTranslationStatus() {
-        return \DoubleScale\Vendor\calculateTranslationStatus(...func_get_args());
-    }
-}
-if (!function_exists('printTranslationStatus')) {
-    function printTranslationStatus() {
-        return \DoubleScale\Vendor\printTranslationStatus(...func_get_args());
-    }
-}
-if (!function_exists('extractLocaleFromFilePath')) {
-    function extractLocaleFromFilePath() {
-        return \DoubleScale\Vendor\extractLocaleFromFilePath(...func_get_args());
-    }
-}
-if (!function_exists('extractTranslationKeys')) {
-    function extractTranslationKeys() {
-        return \DoubleScale\Vendor\extractTranslationKeys(...func_get_args());
-    }
-}
-if (!function_exists('findTransUnitMismatches')) {
-    function findTransUnitMismatches() {
-        return \DoubleScale\Vendor\findTransUnitMismatches(...func_get_args());
-    }
-}
-if (!function_exists('isTranslationCompleted')) {
-    function isTranslationCompleted() {
-        return \DoubleScale\Vendor\isTranslationCompleted(...func_get_args());
-    }
-}
-if (!function_exists('printTitle')) {
-    function printTitle() {
-        return \DoubleScale\Vendor\printTitle(...func_get_args());
-    }
-}
-if (!function_exists('printTable')) {
-    function printTable() {
-        return \DoubleScale\Vendor\printTable(...func_get_args());
-    }
-}
-if (!function_exists('textColorRed')) {
-    function textColorRed() {
-        return \DoubleScale\Vendor\textColorRed(...func_get_args());
-    }
-}
-if (!function_exists('textColorGreen')) {
-    function textColorGreen() {
-        return \DoubleScale\Vendor\textColorGreen(...func_get_args());
-    }
-}
-if (!function_exists('textColorNormal')) {
-    function textColorNormal() {
-        return \DoubleScale\Vendor\textColorNormal(...func_get_args());
-    }
-}
 if (!function_exists('trigger_deprecation')) {
     function trigger_deprecation() {
         return \DoubleScale\Vendor\trigger_deprecation(...func_get_args());
-    }
-}
-if (!function_exists('litespeed_finish_request')) {
-    function litespeed_finish_request() {
-        return \DoubleScale\Vendor\litespeed_finish_request(...func_get_args());
-    }
-}
-if (!function_exists('mb_str_pad')) {
-    function mb_str_pad() {
-        return \DoubleScale\Vendor\mb_str_pad(...func_get_args());
-    }
-}
-if (!function_exists('mb_ucfirst')) {
-    function mb_ucfirst() {
-        return \DoubleScale\Vendor\mb_ucfirst(...func_get_args());
-    }
-}
-if (!function_exists('mb_lcfirst')) {
-    function mb_lcfirst() {
-        return \DoubleScale\Vendor\mb_lcfirst(...func_get_args());
-    }
-}
-if (!function_exists('mb_trim')) {
-    function mb_trim() {
-        return \DoubleScale\Vendor\mb_trim(...func_get_args());
-    }
-}
-if (!function_exists('mb_ltrim')) {
-    function mb_ltrim() {
-        return \DoubleScale\Vendor\mb_ltrim(...func_get_args());
-    }
-}
-if (!function_exists('mb_rtrim')) {
-    function mb_rtrim() {
-        return \DoubleScale\Vendor\mb_rtrim(...func_get_args());
     }
 }
 
@@ -477,6 +362,10 @@ if (!function_exists('str_ends_with')) {
     function str_ends_with($haystack, $needle) {
         return \DoubleScale\Vendor\str_ends_with($haystack ?? '', $needle ?? '');
     }
+}
+
+if (!defined('DOUBLESCALE_SCOPED_VENDOR')) {
+    define('DOUBLESCALE_SCOPED_VENDOR', 1);
 }
 
 return $loader;

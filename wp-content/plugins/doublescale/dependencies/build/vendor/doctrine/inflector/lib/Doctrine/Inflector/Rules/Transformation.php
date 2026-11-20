@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules;
 
-use Doctrine\Inflector\WordInflector;
+use DoubleScale\Vendor\Doctrine\Inflector\WordInflector;
 use function preg_replace;
 final class Transformation implements WordInflector
 {
@@ -11,12 +11,12 @@ final class Transformation implements WordInflector
     private $pattern;
     /** @var string */
     private $replacement;
-    public function __construct(\Doctrine\Inflector\Rules\Pattern $pattern, string $replacement)
+    public function __construct(Pattern $pattern, string $replacement)
     {
         $this->pattern = $pattern;
         $this->replacement = $replacement;
     }
-    public function getPattern() : \Doctrine\Inflector\Rules\Pattern
+    public function getPattern() : Pattern
     {
         return $this->pattern;
     }

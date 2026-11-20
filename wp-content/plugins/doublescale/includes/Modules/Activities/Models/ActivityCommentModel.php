@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Activities\Models;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Models\UserModel;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * ActivityCommentModel class
@@ -92,7 +92,7 @@ class ActivityCommentModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function activity() {
 		return $this->belongsTo( ActivityModel::class, 'activity_id', 'id' );
@@ -103,7 +103,7 @@ class ActivityCommentModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function user() {
 		return $this->belongsTo( UserModel::class, 'user_id', 'ID' );

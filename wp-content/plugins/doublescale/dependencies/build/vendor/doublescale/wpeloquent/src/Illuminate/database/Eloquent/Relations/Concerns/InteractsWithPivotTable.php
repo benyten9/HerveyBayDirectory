@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Concerns;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Support\Collection as BaseCollection;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Pivot;
+use DoubleScale\Vendor\Illuminate\Support\Collection as BaseCollection;
 trait InteractsWithPivotTable
 {
     /**

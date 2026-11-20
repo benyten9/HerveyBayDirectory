@@ -77,6 +77,7 @@ class ListingPlanAssignmentService {
      * @return array{changed: bool, order_id?: int, package_id: int}
      */
     public function assign_unassigned_listing( int $listing_id, int $plan_id ): array {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $listing         = $this->get_listing( $listing_id );
         $current_plan_id = (int) get_post_meta( $listing_id, directorist_plan_key(), true );
         $current_package = directorist_get_listing_package( $listing_id );
@@ -94,6 +95,7 @@ class ListingPlanAssignmentService {
      * @return array{changed: bool, order_id?: int, package_id: int}
      */
     public function assign_admin_listing_plan( int $listing_id, int $plan_id ): array {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $listing         = $this->get_listing( $listing_id );
         $current_plan_id = (int) get_post_meta( $listing_id, directorist_plan_key(), true );
 
@@ -109,6 +111,7 @@ class ListingPlanAssignmentService {
     }
 
     public function remove_package_plan( int $listing_id, ?int $requesting_user_id = null ): void {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $this->get_listing( $listing_id, $requesting_user_id );
 
         $plan_id = (int) get_post_meta( $listing_id, directorist_plan_key(), true );
@@ -348,6 +351,7 @@ class ListingPlanAssignmentService {
      * @return array{changed: bool, requires_payment: bool, redirect_url?: string, order_id?: int}
      */
     public function assign( int $listing_id, int $plan_id, ?int $requesting_user_id = null, bool $is_admin = false ): array {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $listing    = $this->get_listing( $listing_id, $requesting_user_id );
         $compatible = $this->get_compatible_plans( $listing_id, $requesting_user_id );
         $target     = null;
@@ -431,6 +435,7 @@ class ListingPlanAssignmentService {
     }
 
     public function apply_assignment( int $listing_id, stdClass $package, stdClass $plan, bool $is_admin = false ): void {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         update_post_meta( $listing_id, directorist_plan_key(), (int) $plan->id );
 
         if ( PlanType::PAY_PER_LISTING === ( $plan->type ?? PlanType::PACKAGE ) ) {
@@ -443,7 +448,7 @@ class ListingPlanAssignmentService {
         directorist_set_listing_status( $listing_id, $is_admin ? 'publish' : $this->get_user_assignment_status( $listing_id ) );
         update_post_meta( $listing_id, '_listing_status', 'post_status' );
 
-        do_action( 'directorist_listing_plan_reassigned', $listing_id, (int) $plan->id, (int) $package->id );
+        \DirectoristPricingPlan\App\MCP\Outbox::assignment_event( $listing_id, (int) $plan->id, (int) $package->id );
     }
 
     private function build_owned_plan_option( WP_Post $listing, stdClass $plan, int $current_plan_id, bool $is_featured ): array {
@@ -489,7 +494,7 @@ class ListingPlanAssignmentService {
      */
     private function build_plan_display_data( stdClass $plan ): array {
         return [
-            'price'                                  => PlanFeeType::FREE === ( $plan->fee_type ?? '' ) ? 0.0 : (float) $plan->price,
+            'price'                                  => directorist_get_plan_effective_price( $plan ),
             'currency'                               => atbdp_get_payment_currency(),
             'interval_type'                          => (string) ( $plan->interval_type ?? 'lifetime' ),
             'interval_count'                         => (int) ( $plan->interval_count ?? 0 ),

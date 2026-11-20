@@ -92,6 +92,9 @@ class CreateCoupon extends Action
 			$usage_limit_per_coupon = $step->get_setting('usage_limit_per_coupon') ?? 0;
 			$limit_usage_to_x_items = $step->get_setting('limit_usage_to_x_items') ?? 0;
 			$usage_limit_per_user   = $step->get_setting('usage_limit_per_user') ?? 0;
+			$individual_use         = wc_string_to_bool($step->get_setting('individual_use') ?? false);
+			$exclude_sale_items     = wc_string_to_bool($step->get_setting('exclude_sale_items') ?? false);
+			$restrict_to_contact    = wc_string_to_bool($step->get_setting('restrict_to_contact_email') ?? false);
 
 			if (empty($discount_type)) {
 				doublescale_get_logger()->info(
@@ -103,6 +106,20 @@ class CreateCoupon extends Action
 					)
 				);
 				return false;
+			}
+
+			// A coupon meant for one person must never be created open to
+			// everyone, so a contact without an email stops the step here.
+			$allowed_emails = array();
+			if ($restrict_to_contact) {
+				$contact_email = $this->get_contact_email($automation_contact);
+				if ('' === $contact_email) {
+					return array(
+						'success' => false,
+						'message' => __('The coupon is restricted to the contact\'s email, but this contact has no email address.', 'doublescale'),
+					);
+				}
+				$allowed_emails[] = $contact_email;
 			}
 
 			$coupon_code              = $this->generate_dynamic_coupon_code($coupon_prefix);
@@ -119,6 +136,9 @@ class CreateCoupon extends Action
 			$coupon->set_usage_limit($usage_limit_per_coupon);
 			$coupon->set_limit_usage_to_x_items($limit_usage_to_x_items);
 			$coupon->set_usage_limit_per_user($usage_limit_per_user);
+			$coupon->set_individual_use($individual_use);
+			$coupon->set_exclude_sale_items($exclude_sale_items);
+			$coupon->set_email_restrictions($allowed_emails);
 			$coupon->save();
 
 			// automation contact data
@@ -155,6 +175,22 @@ class CreateCoupon extends Action
 		}
 	}
 
+
+	/**
+	 * The enrolled contact's email, or '' when it has none worth restricting to.
+	 *
+	 * @param AutomationContactModel $automation_contact Enrollment row.
+	 *
+	 * @return string
+	 */
+	protected function get_contact_email(AutomationContactModel $automation_contact)
+	{
+		$contact = $automation_contact->contact;
+		$email   = is_object($contact) ? sanitize_email((string) ($contact->email ?? '')) : '';
+
+		// WC_Coupon lowercases restrictions itself, as checkout compares lowercased.
+		return is_email($email) ? $email : '';
+	}
 
 	/**
 	 * Generate dynamic coupon code
@@ -290,8 +326,10 @@ class CreateCoupon extends Action
 						'type'  => 'coupon_expiry_date',
 						'label' => __('Coupon Expiry Date', 'doublescale'),
 					),
+					// 'switch', not 'checkbox': a checkbox field without options
+					// renders no input at all, so this was never settable.
 					'is_free_shipping'   => array(
-						'type'  => 'checkbox',
+						'type'  => 'switch',
 						'label' => __('Is Free Shipping', 'doublescale'),
 					),
 				),
@@ -311,6 +349,27 @@ class CreateCoupon extends Action
 					'usage_limit_per_user'   => array(
 						'type'  => 'number',
 						'label' => __('Usage Limit Per User', 'doublescale'),
+					),
+				),
+			),
+			'restriction' => array(
+				'type'   => 'group',
+				'label'  => __('Usage Restriction', 'doublescale'),
+				'fields' => array(
+					'individual_use'            => array(
+						'type'       => 'switch',
+						'label'      => __('Individual use only', 'doublescale'),
+						'helperText' => __('Turn this on if the coupon cannot be used in conjunction with other coupons.', 'doublescale'),
+					),
+					'exclude_sale_items'        => array(
+						'type'       => 'switch',
+						'label'      => __('Exclude sale items', 'doublescale'),
+						'helperText' => __('Turn this on if the coupon should not apply to items on sale. Per-item coupons will only work if the item is not on sale. Per-cart coupons will only work if there are items in the cart that are not on sale.', 'doublescale'),
+					),
+					'restrict_to_contact_email' => array(
+						'type'       => 'switch',
+						'label'      => __('Restrict to the contact\'s email', 'doublescale'),
+						'helperText' => __('Only the contact who received this coupon can use it: WooCommerce checks the billing email at checkout.', 'doublescale'),
 					),
 				),
 			),
@@ -375,6 +434,15 @@ class CreateCoupon extends Action
 				),
 				'usage_limit_per_user'   => array(
 					'type' => 'string',
+				),
+				'individual_use'            => array(
+					'type' => 'boolean',
+				),
+				'exclude_sale_items'        => array(
+					'type' => 'boolean',
+				),
+				'restrict_to_contact_email' => array(
+					'type' => 'boolean',
 				),
 			),
 		);

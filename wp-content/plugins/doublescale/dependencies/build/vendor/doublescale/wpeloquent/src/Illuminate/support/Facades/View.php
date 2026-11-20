@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static bool exists(string $view)
@@ -14,7 +14,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\View\Factory
  */
-class View extends \Illuminate\Support\Facades\Facade
+class View extends Facade
 {
     /**
      * Get the registered name of the component.

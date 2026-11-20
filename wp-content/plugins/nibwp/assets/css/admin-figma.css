@@ -421,6 +421,8 @@
 }
 
 .nw-figma-item {
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--nw-border, #e6e8eb);
     border-radius: 12px;
     overflow: hidden;
@@ -443,7 +445,7 @@
     border-bottom: 1px solid var(--nw-border, #eee);
 }
 
-.nw-figma-item__body { padding: 11px 13px; }
+.nw-figma-item__body { display: flex; flex-direction: column; flex: 1 1 auto; padding: 11px 13px; }
 
 .nw-figma-item__name {
     display: block;
@@ -481,7 +483,12 @@
     font-size: 11px;
     color: var(--nw-text-2, #3c434a);
     cursor: pointer;
+    /* A command to paste into a terminal reads left to right in any language. */
+    /*rtl:begin:ignore*/
+    direction: ltr;
+    unicode-bidi: isolate;
     text-align: left;
+    /*rtl:end:ignore*/
     transition: border-color .15s, background .15s;
 }
 
@@ -507,7 +514,7 @@
 }
 
 .nw-figma-copy.is-copied .nw-figma-copy__text::after {
-    content: " ✓ copied";
+    content: " ✓ " attr(data-copied-label);
     font-weight: 700;
 }
 
@@ -521,6 +528,41 @@
 }
 
 .nw-figma-item__form { margin: 0 0 0 auto; }
+
+.nw-figma-cardacts {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 6px;
+    margin: 11px -13px 0;
+    padding: 11px 13px 0;
+    border-top: 1px solid var(--nw-border-2, #eceef0);
+}
+.nw-figma-cardacts .nw-figma-item__form { margin: 0; }
+.nw-figma-cardacts .nw-figma-iconbtn {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+}
+.nw-figma-cardacts .nw-figma-iconbtn:not(.nw-figma-iconbtn--danger):hover {
+    border-color: var(--nw-accent, #f59e0b);
+    color: var(--nw-accent-strong, #d97706);
+    background: var(--nw-warn-soft, #fff8eb);
+}
+.nw-figma-cardacts { margin-top: auto; }
+.nw-figma-cardacts__start,
+.nw-figma-cardacts__end {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.nw-figma-cardacts__end { margin-inline-start: auto; }
+.nw-figma-cardacts .nw-figma-iconbtn:focus-visible {
+    outline: 2px solid var(--nw-accent-strong, #d97706);
+    outline-offset: 2px;
+}
 
 .nw-figma-item__link {
     display: inline-flex;

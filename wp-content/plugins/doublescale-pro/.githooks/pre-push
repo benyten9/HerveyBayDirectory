@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Release security gate (lives in the free plugin: tools/security/README.md).
+#   - pushing a v* tag runs the whole gate, including a scan of the exact
+#     tree customers download for that tag; the push is refused if it fails;
+#   - pushing a branch runs the fast static checks only.
+# Emergency only: SECURITY_GATE_SKIP_REASON="why" git push …
+set -uo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+FREE_DIR="${DOUBLESCALE_FREE_DIR:-$(dirname "$ROOT")/doublescale}"
+GATE="$FREE_DIR/tools/security/gate.php"
+PHP_BIN="${PHP_BIN:-php}"
+
+if [[ -n "${SECURITY_GATE_SKIP_REASON:-}" ]]; then
+	echo "⚠️  SECURITY GATE SKIPPED: $SECURITY_GATE_SKIP_REASON" >&2
+	exit 0
+fi
+if [[ ! -f "$GATE" ]]; then
+	echo "✗ Security gate not found at $GATE — clone the free plugin next to Pro or set DOUBLESCALE_FREE_DIR." >&2
+	exit 1
+fi
+
+tag_sha="" ; branches=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+	[[ "$local_sha" =~ ^0+$ ]] && continue # deleting a ref
+	case "$remote_ref" in
+		refs/tags/v*) tag_sha="$local_sha" ;;
+		refs/heads/*) branches=1 ;;
+	esac
+done
+
+if [[ -n "$tag_sha" ]]; then
+	echo "→ Release tag: running the security gate on what customers will download…" >&2
+	"$PHP_BIN" "$GATE" --plugin="$ROOT" --git-archive="$tag_sha^{}" || { echo "✗ Tag push refused by the security gate." >&2; exit 1; }
+elif (( branches )); then
+	"$PHP_BIN" "$GATE" --plugin="$ROOT" --only=rules,secrets,phpcs || { echo "✗ Push refused: new security findings (see above)." >&2; exit 1; }
+fi
+exit 0

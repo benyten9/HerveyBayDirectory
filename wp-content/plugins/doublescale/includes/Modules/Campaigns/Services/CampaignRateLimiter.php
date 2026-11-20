@@ -45,7 +45,12 @@ class CampaignRateLimiter {
 	private $default_per_second_limits = array(
 		'email'    => 15,
 		'sms'      => 1,
-		'whatsapp' => 1,
+		// Matches the documented default of the `whatsapp.max_in_second`
+		// setting, which the REST layer validates to 1..10. This is only the
+		// fallback for a site that never saved the setting — but until the cap
+		// was wired through get_max_per_second(), EVERY WhatsApp send used it,
+		// at its previous value of 1/s.
+		'whatsapp' => 10,
 	);
 
 	/**
@@ -111,7 +116,7 @@ class CampaignRateLimiter {
 	// =========================================================================
 
 	/**
-	 * Initialize per-second tracker for a channel
+	 * Start an empty one-second window for a channel.
 	 *
 	 * Call this at the start of campaign processing.
 	 *
@@ -124,47 +129,58 @@ class CampaignRateLimiter {
 		$channel = $this->normalize_channel_type( $channel );
 
 		$this->second_trackers[ $channel ] = array(
-			'count'        => 0,
-			'second_start' => microtime( true ),
+			'sent' => array(),
 		);
 	}
 
 	/**
-	 * Check if per-second limit is reached and wait if necessary
+	 * Wait, if needed, so this send keeps the channel under its per-second cap.
 	 *
-	 * Returns true if processing can continue, false if should stop.
+	 * Sliding one-second window: with $max sends in the last second, wait until
+	 * the oldest of them is a second old. No one-second span ever holds more
+	 * than $max sends, whatever the pace before. Fires
+	 * `doublescale_rate_limit_wait` before pausing.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param string   $channel        Campaign channel
-	 * @param int|null $max_per_second Max per second (null = use default)
-	 * @return bool True if can continue, false if should stop
+	 * @param int|null $max_per_second Cap (null = channel default).
+	 * @return bool Always true.
 	 */
 	public function check_and_wait_per_second( $channel, $max_per_second = null ) {
 		$channel = $this->normalize_channel_type( $channel );
 
-		// Initialize tracker if not exists
-		if ( ! isset( $this->second_trackers[ $channel ] ) ) {
+		if ( ! isset( $this->second_trackers[ $channel ]['sent'] ) ) {
 			$this->init_second_tracker( $channel );
 		}
 
-		// Get limit
 		if ( null === $max_per_second ) {
 			$max_per_second = $this->get_default_per_second_limit( $channel );
 		}
 
-		$max_per_second = apply_filters( "doublescale_{$channel}_max_per_second", $max_per_second );
+		$max_per_second = (int) apply_filters( "doublescale_{$channel}_max_per_second", $max_per_second );
+		if ( $max_per_second <= 0 ) {
+			return true;
+		}
 
-		// Check if limit reached
-		if ( $this->second_trackers[ $channel ]['count'] >= $max_per_second ) {
-			$this->wait_for_next_second( $channel );
+		$this->prune_window( $channel );
+		$sent = $this->second_trackers[ $channel ]['sent'];
+		if ( count( $sent ) >= $max_per_second ) {
+			$oldest_in_window = $sent[ count( $sent ) - $max_per_second ];
+			$wait             = ( $oldest_in_window + 1.0 ) - microtime( true );
+			if ( $wait > 0 ) {
+				$sleep_microseconds = min( (int) ceil( $wait * 1000000 ), 1000000 );
+				do_action( 'doublescale_rate_limit_wait', $channel, $sleep_microseconds );
+				usleep( $sleep_microseconds );
+			}
+			$this->prune_window( $channel );
 		}
 
 		return true;
 	}
 
 	/**
-	 * Record a message sent (increment per-second counter)
+	 * Record a send in the channel's one-second window.
 	 *
 	 * @since 1.0.0
 	 *
@@ -174,54 +190,31 @@ class CampaignRateLimiter {
 	public function record_sent( $channel ) {
 		$channel = $this->normalize_channel_type( $channel );
 
-		if ( ! isset( $this->second_trackers[ $channel ] ) ) {
+		if ( ! isset( $this->second_trackers[ $channel ]['sent'] ) ) {
 			$this->init_second_tracker( $channel );
 		}
 
-		++$this->second_trackers[ $channel ]['count'];
+		$this->second_trackers[ $channel ]['sent'][] = microtime( true );
+		$this->prune_window( $channel );
 	}
 
 	/**
-	 * Wait until the current second has elapsed
+	 * Drop send times older than one second.
 	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $channel Campaign channel
+	 * @param string $channel Normalized channel.
 	 * @return void
 	 */
-	private function wait_for_next_second( $channel ) {
-		$channel = $this->normalize_channel_type( $channel );
-
-		if ( ! isset( $this->second_trackers[ $channel ] ) ) {
-			return;
+	private function prune_window( $channel ) {
+		$cutoff = microtime( true ) - 1.0;
+		$sent   = $this->second_trackers[ $channel ]['sent'];
+		$total  = count( $sent );
+		$drop   = 0;
+		while ( $drop < $total && $sent[ $drop ] <= $cutoff ) {
+			++$drop;
 		}
-
-		$elapsed = microtime( true ) - $this->second_trackers[ $channel ]['second_start'];
-
-		if ( $elapsed < 1.0 ) {
-			$sleep_microseconds = (int) ( ( 1.0 - $elapsed ) * 1000000 );
-
-			// Safety cap: never sleep more than 1 second
-			$sleep_microseconds = min( $sleep_microseconds, 1000000 );
-
-			if ( $sleep_microseconds > 0 ) {
-				/**
-				 * Fires when the per-second cap is reached and the sender is about to
-				 * pause. Tests observe it; nothing should slow down sends further.
-				 *
-				 * @param string $channel            Channel key.
-				 * @param int    $sleep_microseconds Pause length.
-				 */
-				do_action( 'doublescale_rate_limit_wait', $channel, $sleep_microseconds );
-				usleep( $sleep_microseconds );
-			}
+		if ( $drop > 0 ) {
+			$this->second_trackers[ $channel ]['sent'] = array_slice( $sent, $drop );
 		}
-
-		// Reset tracker for new second
-		$this->second_trackers[ $channel ] = array(
-			'count'        => 0,
-			'second_start' => microtime( true ),
-		);
 	}
 
 	/**
@@ -239,21 +232,23 @@ class CampaignRateLimiter {
 	}
 
 	/**
-	 * Get current per-second count for channel
+	 * Sends in the channel's last second.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param string $channel Campaign channel
-	 * @return int Current count this second
+	 * @return int
 	 */
 	public function get_current_second_count( $channel ) {
 		$channel = $this->normalize_channel_type( $channel );
 
-		if ( ! isset( $this->second_trackers[ $channel ] ) ) {
+		if ( ! isset( $this->second_trackers[ $channel ]['sent'] ) ) {
 			return 0;
 		}
 
-		return $this->second_trackers[ $channel ]['count'];
+		$this->prune_window( $channel );
+
+		return count( $this->second_trackers[ $channel ]['sent'] );
 	}
 
 	// =========================================================================
@@ -273,37 +268,103 @@ class CampaignRateLimiter {
 	}
 
 	/**
-	 * Get current daily count for campaign type
+	 * The shared daily cap for a channel: campaigns, sequences and workflows
+	 * all count against it. Email reads the Email settings' "max per day";
+	 * SMS and WhatsApp have none here (WhatsApp follows the Meta tier).
 	 *
-	 * @param string $type Campaign type string
-	 * @return int Current daily count
+	 * @param string|int $channel Channel.
+	 * @return int|null Null when the channel has no daily cap.
 	 */
-	public function get_daily_count( $type ) {
-		$type = $this->normalize_channel_type( $type );
-		return (int) get_option( "doublescale_daily_{$type}_count", 0 );
+	public function get_daily_limit( $channel ) {
+		$channel = $this->normalize_channel_type( $channel );
+		$limit   = null;
+
+		if ( isset( $this->default_daily_limits[ $channel ] ) ) {
+			$settings = \DoubleScale\Core\Settings\Settings::get( $channel, array() );
+			$limit    = (int) ( is_array( $settings ) && ! empty( $settings['max_in_day'] ) ? $settings['max_in_day'] : $this->default_daily_limits[ $channel ] );
+		}
+
+		/**
+		 * Filter a channel's shared daily send cap (null for none).
+		 *
+		 * @param int|null $limit   Daily cap.
+		 * @param string   $channel email|sms|whatsapp.
+		 */
+		$limit = apply_filters( 'doublescale_daily_send_limit', $limit, $channel );
+
+		return null === $limit ? null : max( 0, (int) $limit );
 	}
 
 	/**
-	 * Increment daily count for campaign type
+	 * Whether today's shared cap for the channel is used up.
+	 *
+	 * @param string|int $channel Channel.
+	 * @return bool
+	 */
+	public function is_daily_cap_reached( $channel ) {
+		$limit = $this->get_daily_limit( $channel );
+		return null !== $limit && $this->get_daily_count( $channel ) >= $limit;
+	}
+
+	/**
+	 * When today's counters start again: next midnight in the site's timezone.
+	 *
+	 * @return \DateTimeImmutable
+	 */
+	public function next_reset_at() {
+		return new \DateTimeImmutable( 'tomorrow', wp_timezone() );
+	}
+
+	/**
+	 * Option holding a channel's count for one day (site timezone).
+	 *
+	 * The date in the name makes the count start again every day without a
+	 * reset job; old days are removed by cleanup_old_daily_counts().
+	 *
+	 * @param string $channel Normalized channel.
+	 * @return string
+	 */
+	private function daily_option_name( $channel ) {
+		return "doublescale_daily_{$channel}_count_" . wp_date( 'Ymd' );
+	}
+
+	/**
+	 * Get today's count for a channel.
+	 *
+	 * @param string $type Campaign type string
+	 * @return int
+	 */
+	public function get_daily_count( $type ) {
+		$type = $this->normalize_channel_type( $type );
+		return (int) get_option( $this->daily_option_name( $type ), 0 );
+	}
+
+	/**
+	 * Increment today's count for a channel.
 	 * Uses atomic increment to prevent race conditions
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param string $type Campaign type string
+	 * @param int    $by   How many sends to add.
 	 * @return int New count after increment
 	 */
-	public function increment_daily_count( $type ) {
+	public function increment_daily_count( $type, $by = 1 ) {
 		global $wpdb;
 
+		$by = max( 1, (int) $by );
+
 		$type        = $this->normalize_channel_type( $type );
-		$option_name = "doublescale_daily_{$type}_count";
+		$option_name = $this->daily_option_name( $type );
 
 		$result = $wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload)
-                VALUES (%s, 1, 'no')
-                ON DUPLICATE KEY UPDATE option_value = option_value + 1",
-				$option_name
+                VALUES (%s, %d, 'no')
+                ON DUPLICATE KEY UPDATE option_value = option_value + %d",
+				$option_name,
+				$by,
+				$by
 			)
 		);
 
@@ -316,26 +377,26 @@ class CampaignRateLimiter {
 					'error' => $wpdb->last_error,
 				)
 			);
-
 			$current_count = $this->get_daily_count( $type );
-			update_option( $option_name, $current_count + 1, false );
-			return $current_count + 1;
+			update_option( $option_name, $current_count + $by, false );
+			return $current_count + $by;
 		}
 
 		wp_cache_delete( $option_name, 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
 
 		return $this->get_daily_count( $type );
 	}
 
 	/**
-	 * Reset daily count for campaign type
+	 * Reset today's count for a channel.
 	 *
 	 * @param string $type Campaign type string
 	 * @return void
 	 */
 	public function reset_daily_count( $type ) {
 		$type = $this->normalize_channel_type( $type );
-		update_option( "doublescale_daily_{$type}_count", 0, false );
+		update_option( $this->daily_option_name( $type ), 0, false );
 
 		doublescale_get_logger()->info(
 			/* translators: %s: channel type (email, sms, whatsapp) */
@@ -343,6 +404,26 @@ class CampaignRateLimiter {
 			array(
 				'code'    => "daily_{$type}_count_reset",
 				'channel' => $type,
+			)
+		);
+	}
+
+	/**
+	 * Remove counters of past days, and the undated counters older releases
+	 * kept forever. Runs on the daily cleanup slot.
+	 *
+	 * @return void
+	 */
+	public static function cleanup_old_daily_counts() {
+		global $wpdb;
+
+		$today = wp_date( 'Ymd' );
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options}
+				WHERE option_name REGEXP '^doublescale_daily_(email|sms|whatsapp)_count(_[0-9]{8})?$'
+				AND option_name NOT LIKE %s",
+				'%\\_' . $today
 			)
 		);
 	}
@@ -408,10 +489,10 @@ class CampaignRateLimiter {
 
 		// Check daily limit first (non-blocking)
 		if ( null === $max_per_day ) {
-			$max_per_day = $this->get_default_daily_limit( $channel );
+			$max_per_day = $this->get_daily_limit( $channel );
 		}
 
-		if ( $this->is_daily_limit_reached( $channel, $max_per_day ) ) {
+		if ( null !== $max_per_day && $this->is_daily_limit_reached( $channel, $max_per_day ) ) {
 			return array(
 				'can_send' => false,
 				'reason'   => 'daily_limit_reached',
@@ -456,11 +537,13 @@ class CampaignRateLimiter {
 	public function get_rate_limit_status( $channel ) {
 		$channel = $this->normalize_channel_type( $channel );
 
+		$limit = $this->get_daily_limit( $channel );
+
 		return array(
 			'channel'              => $channel,
 			'daily_count'          => $this->get_daily_count( $channel ),
-			'daily_limit'          => $this->get_default_daily_limit( $channel ),
-			'daily_remaining'      => max( 0, $this->get_default_daily_limit( $channel ) - $this->get_daily_count( $channel ) ),
+			'daily_limit'          => $limit,
+			'daily_remaining'      => null === $limit ? null : max( 0, $limit - $this->get_daily_count( $channel ) ),
 			'per_second_limit'     => $this->get_default_per_second_limit( $channel ),
 			'current_second_count' => $this->get_current_second_count( $channel ),
 		);

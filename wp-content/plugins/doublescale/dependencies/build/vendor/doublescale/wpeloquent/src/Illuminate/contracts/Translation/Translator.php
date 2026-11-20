@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Translation;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Translation;
 
 interface Translator
 {

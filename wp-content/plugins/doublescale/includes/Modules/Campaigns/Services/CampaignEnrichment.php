@@ -17,6 +17,7 @@ use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Contacts\Filters\Process as Contact_Filters_Process;
 use DoubleScale\Modules\Campaigns\Services\CampaignAnalytics;
 use DoubleScale\Core\Constants\CampaignChannel;
+use DoubleScale\Core\UserRoles\Permissions;
 
 /**
  * CampaignEnrichment class
@@ -79,6 +80,12 @@ class CampaignEnrichment {
 
 		// Compute and set all statistics
 		$stats = $this->compute_all_stats( $campaign );
+
+		// Why a paused campaign stopped (Meta restricted the number), so the
+		// overview can say so and offer to resume.
+		$stats['pause_reason'] = CampaignStatusManager::PAUSED === (string) $campaign->status
+			? WhatsappAccountPause::get_pause_reason( (int) $campaign->id )
+			: null;
 
 		// Set as non-persistent attributes (won't be saved to database)
 		foreach ( $stats as $key => $value ) {
@@ -144,7 +151,20 @@ class CampaignEnrichment {
 	public function compute_recipients_count( CampaignModel $campaign, $contacts_count ) {
 		$stored = (int) $campaign->count;
 
-		if ( $stored < 1 ) {
+		// A zero count is a valid captured audience size once processing has
+		// started. Only campaigns that have not run yet may use the live estimate.
+		$not_started = in_array(
+			(string) $campaign->status,
+			array(
+				CampaignStatusManager::DRAFT,
+				CampaignStatusManager::INACTIVE,
+				CampaignStatusManager::ACTIVE,
+				CampaignStatusManager::SCHEDULED,
+			),
+			true
+		);
+
+		if ( $not_started && $stored < 1 ) {
 			return (int) $contacts_count;
 		}
 
@@ -182,6 +202,13 @@ class CampaignEnrichment {
 			$query->where( 'whatsapp_status', 'subscribed' )
 				->whereNotNull( 'whatsapp_phone' )
 				->where( 'whatsapp_phone', '!=', '' );
+		}
+
+		// An agent's campaign reaches only the contacts they own, as at send time.
+		$creator = (int) ( $campaign->created_by ?? 0 );
+		$owner   = $creator > 0 ? Permissions::campaign_audience_owner( $creator ) : null;
+		if ( null !== $owner ) {
+			$query->where( 'owner_id', $owner );
 		}
 
 		// Apply custom filters if provided
@@ -248,6 +275,16 @@ class CampaignEnrichment {
 	 */
 	private function normalize_analytics_stats( CampaignModel $campaign, $analytics_stats ) {
 		$stats = array();
+
+		// Every message the campaign produced, whatever state it is in now.
+		// Without this the client derived a total as sent + failed, which drops
+		// scheduled, pending, delivered and read — so a campaign mid-resend
+		// reported far fewer messages than its own table listed.
+		$stats['total']              = $analytics_stats['total'] ?? 0;
+
+		// Messages queued for a retry. Every message must land in some counter,
+		// or the overview reports a total its breakdown cannot explain.
+		$stats['scheduled_count']    = $analytics_stats['scheduled'] ?? 0;
 
 		// Common stats for all campaign types
 		$stats['sent_count']         = $analytics_stats['sent'] ?? 0;

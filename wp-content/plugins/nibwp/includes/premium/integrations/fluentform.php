@@ -74,7 +74,7 @@ function nibwp_ff_guard(): ?WP_Error
     if (!nibwp_ff_available()) {
         return nibwp_ff_err(
             'nibwp_ff_missing',
-            __('Fluent Forms is not active on this site.', domain: 'nibwp')
+            __('Fluent Forms is not active on this site.', 'nibwp')
         );
     }
 
@@ -91,7 +91,7 @@ function nibwp_ff_guard_pro(): ?WP_Error
     if (!nibwp_ff_pro()) {
         return nibwp_ff_err(
             'nibwp_ff_no_pro',
-            __('This needs Fluent Forms Pro, which is not active on this site.', domain: 'nibwp')
+            __('This needs Fluent Forms Pro, which is not active on this site.', 'nibwp')
         );
     }
 
@@ -116,18 +116,18 @@ function nibwp_ff_try(callable $fn, string $code = 'nibwp_ff_failed')
 function nibwp_ff_form(int $form_id)
 {
     if ($form_id <= 0) {
-        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $model = '\\FluentForm\\App\\Models\\Form';
     if (!class_exists($model)) {
-        return nibwp_ff_err('nibwp_ff_no_model', __('The Fluent Forms model layer is unavailable.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_no_model', __('The Fluent Forms model layer is unavailable.', 'nibwp'));
     }
 
     $form = $model::find($form_id);
 
     if (!$form) {
-        return nibwp_ff_err('nibwp_ff_not_found', __('No Fluent Forms form with that ID.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_not_found', __('No Fluent Forms form with that ID.', 'nibwp'));
     }
 
     return $form;
@@ -171,7 +171,7 @@ function nibwp_ff_meta_put(int $form_id, string $key, $value, ?int $meta_id = nu
 {
     $model = '\\FluentForm\\App\\Models\\FormMeta';
     if (!class_exists($model)) {
-        return nibwp_ff_err('nibwp_ff_no_model', __('The Fluent Forms model layer is unavailable.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_no_model', __('The Fluent Forms model layer is unavailable.', 'nibwp'));
     }
 
     $encoded = is_string($value) ? $value : (string) wp_json_encode($value);
@@ -179,7 +179,7 @@ function nibwp_ff_meta_put(int $form_id, string $key, $value, ?int $meta_id = nu
     if ($meta_id !== null && $meta_id > 0) {
         $row = $model::find($meta_id);
         if (!$row || (int) $row->form_id !== $form_id) {
-            return nibwp_ff_err('nibwp_ff_bad_meta', __('That meta row does not belong to this form.', domain: 'nibwp'));
+            return nibwp_ff_err('nibwp_ff_bad_meta', __('That meta row does not belong to this form.', 'nibwp'));
         }
         $row->value = $encoded;
         $row->save();
@@ -262,8 +262,8 @@ function nibwp_ff_flatten_fields(array $fields, array &$out = []): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-info', [
-    'label'       => __('Fluent Forms — Info', domain: 'nibwp'),
-    'description' => __('Detect Fluent Forms, whether Pro is active, how many forms and submissions exist, and what the Pro license unlocks here (read-only).', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Info', 'nibwp'),
+    'description' => 'Detect Fluent Forms, whether Pro is active, how many forms and submissions exist, and what the Pro license unlocks here (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -311,7 +311,7 @@ function nibwp_ff_info(array $input): array|WP_Error
                 : [],
             'note' => nibwp_ff_pro()
                 ? ''
-                : __('Fluent Forms Pro is not active, so payments, subscriptions and the Pro integration feeds are unavailable.', domain: 'nibwp'),
+                : __('Fluent Forms Pro is not active, so payments, subscriptions and the Pro integration feeds are unavailable.', 'nibwp'),
         ];
     });
 }
@@ -321,8 +321,8 @@ function nibwp_ff_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-forms', [
-    'label'       => __('Fluent Forms — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, rename and duplicate Fluent Forms forms, and get the shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Forms', 'nibwp'),
+    'description' => 'List, read, create, rename and duplicate Fluent Forms forms, and get the shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -365,7 +365,7 @@ function nibwp_ff_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename', 'duplicate', 'shortcode'], strict: true) && $form_id <= 0) {
-        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_ff_try(static function () use ($action, $form_id, $input) {
@@ -413,7 +413,7 @@ function nibwp_ff_forms(array $input): array|WP_Error
             case 'create':
                 $model = '\\FluentForm\\App\\Models\\Form';
                 $new = $model::create([
-                    'title'       => (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp')),
+                    'title'       => (string) ($input['title'] ?? __('Untitled form', 'nibwp')),
                     'status'      => 'published',
                     'form_fields' => (string) wp_json_encode(['fields' => [], 'submitButton' => []]),
                     'has_payment' => 0,
@@ -423,13 +423,13 @@ function nibwp_ff_forms(array $input): array|WP_Error
                 return [
                     'form_id' => (int) ($new->id ?? 0),
                     'created' => true,
-                    'note'    => __('No notification yet, so a submission would reach nobody.', domain: 'nibwp'),
+                    'note'    => __('No notification yet, so a submission would reach nobody.', 'nibwp'),
                 ];
 
             case 'rename':
                 $title = trim((string) ($input['title'] ?? ''));
                 if ($title === '') {
-                    throw new \RuntimeException(__('A title is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A title is required.', 'nibwp'));
                 }
                 $form->title = $title;
                 $form->save();
@@ -439,7 +439,7 @@ function nibwp_ff_forms(array $input): array|WP_Error
             case 'duplicate':
                 $model = '\\FluentForm\\App\\Models\\Form';
                 $copy = $model::create([
-                    'title'       => (string) ($form->title ?? '') . ' ' . __('(copy)', domain: 'nibwp'),
+                    'title'       => (string) ($form->title ?? '') . ' ' . __('(copy)', 'nibwp'),
                     'status'      => (string) ($form->status ?? 'published'),
                     'form_fields' => (string) ($form->form_fields ?? ''),
                     'has_payment' => (int) ($form->has_payment ?? 0),
@@ -463,7 +463,7 @@ function nibwp_ff_forms(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'shortcode' => sprintf('[fluentform id="%d"]', $form_id)];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -472,8 +472,8 @@ function nibwp_ff_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-fields', [
-    'label'       => __('Fluent Forms — Fields', domain: 'nibwp'),
-    'description' => __('Read a form\'s fields flattened to names and labels, read the raw field structure, or replace it.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Fields', 'nibwp'),
+    'description' => 'Read a form\'s fields flattened to names and labels, read the raw field structure, or replace it.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -525,7 +525,7 @@ function nibwp_ff_fields_ability(array $input): array|WP_Error
                 'nibwp_ff_bad_fields',
                 sprintf(
                     /* translators: %s: JSON parser error */
-                    __('The field structure could not be parsed: %s', domain: 'nibwp'),
+                    __('The field structure could not be parsed: %s', 'nibwp'),
                     json_last_error_msg()
                 )
             );
@@ -556,7 +556,7 @@ function nibwp_ff_fields_ability(array $input): array|WP_Error
                 'removed_fields' => $lost,
                 'warning' => $lost === []
                     ? ''
-                    : __('Field names disappeared. Values already submitted under them are orphaned, and any notification referencing them will render empty.', domain: 'nibwp'),
+                    : __('Field names disappeared. Values already submitted under them are orphaned, and any notification referencing them will render empty.', 'nibwp'),
             ];
         }
 
@@ -571,8 +571,8 @@ function nibwp_ff_fields_ability(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-entries', [
-    'label'       => __('Fluent Forms — Submissions', domain: 'nibwp'),
-    'description' => __('List and read submissions, and change their state: status, favorite and read/unread.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Submissions', 'nibwp'),
+    'description' => 'List and read submissions, and change their state: status, favorite and read/unread.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -618,10 +618,10 @@ function nibwp_ff_entries(array $input): array|WP_Error
 
     $per_entry = ['get', 'set_status', 'favorite', 'unfavorite', 'mark_read', 'mark_unread'];
     if (in_array($action, $per_entry, strict: true) && $entry_id <= 0) {
-        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid submission ID is required.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid submission ID is required.', 'nibwp'));
     }
     if (in_array($action, ['list', 'count'], strict: true) && $form_id <= 0) {
-        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_ff_try(static function () use ($action, $form_id, $entry_id, $input) {
@@ -659,7 +659,7 @@ function nibwp_ff_entries(array $input): array|WP_Error
 
         $entry = $model::find($entry_id);
         if (!$entry) {
-            throw new \RuntimeException(__('No submission with that ID.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No submission with that ID.', 'nibwp'));
         }
 
         if ($action === 'get') {
@@ -684,13 +684,13 @@ function nibwp_ff_entries(array $input): array|WP_Error
         ];
 
         if (!isset($map[$action])) {
-            throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+            throw new \RuntimeException(__('Unknown action.', 'nibwp'));
         }
 
         [$property, $value] = $map[$action];
 
         if ($action === 'set_status' && $value === '') {
-            throw new \RuntimeException(__('A status is required.', domain: 'nibwp'));
+            throw new \RuntimeException(__('A status is required.', 'nibwp'));
         }
 
         $entry->{$property} = $value;
@@ -705,8 +705,8 @@ function nibwp_ff_entries(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-notifications', [
-    'label'       => __('Fluent Forms — Email notifications', domain: 'nibwp'),
-    'description' => __('Read and configure the emails a form sends on submit — recipient, subject, body, and whether each is enabled.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Email notifications', 'nibwp'),
+    'description' => 'Read and configure the emails a form sends on submit — recipient, subject, body, and whether each is enabled.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -749,8 +749,8 @@ function nibwp_ff_notifications(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-confirmations', [
-    'label'       => __('Fluent Forms — Confirmations', domain: 'nibwp'),
-    'description' => __('Read and configure what a visitor sees after submitting — a message, a redirect, or another page.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Confirmations', 'nibwp'),
+    'description' => 'Read and configure what a visitor sees after submitting — a message, a redirect, or another page.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -804,7 +804,7 @@ function nibwp_ff_meta_collection(array $input, string $key, string $singular)
     $meta_id = (int) ($input['meta_id'] ?? 0);
 
     if (in_array($action, ['update', 'delete'], strict: true) && $meta_id <= 0) {
-        return nibwp_ff_err('nibwp_ff_bad_id', __('A meta_id is required. List them first.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_bad_id', __('A meta_id is required. List them first.', 'nibwp'));
     }
 
     return nibwp_ff_try(static function () use ($form, $action, $key, $singular, $meta_id, $input) {
@@ -840,7 +840,7 @@ function nibwp_ff_meta_collection(array $input, string $key, string $singular)
                 'count'   => count($out),
                 'enabled' => $enabled,
                 'warning' => ($key === 'notifications' && $enabled === 0)
-                    ? __('No enabled notification. Submissions to this form reach nobody.', domain: 'nibwp')
+                    ? __('No enabled notification. Submissions to this form reach nobody.', 'nibwp')
                     : '',
             ];
         }
@@ -848,7 +848,7 @@ function nibwp_ff_meta_collection(array $input, string $key, string $singular)
         if ($action === 'add') {
             $value = (array) ($input[$singular] ?? []);
             if ($value === []) {
-                throw new \RuntimeException(__('An object is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('An object is required.', 'nibwp'));
             }
             $new_id = nibwp_ff_meta_put($form_id, $key, $value);
 
@@ -856,7 +856,7 @@ function nibwp_ff_meta_collection(array $input, string $key, string $singular)
         }
 
         if (!array_key_exists($meta_id, $rows)) {
-            throw new \RuntimeException(__('No such row on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No such row on this form.', 'nibwp'));
         }
 
         if ($action === 'update') {
@@ -883,8 +883,8 @@ function nibwp_ff_meta_collection(array $input, string $key, string $singular)
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-settings', [
-    'label'       => __('Fluent Forms — Form settings', domain: 'nibwp'),
-    'description' => __('Read and change a form\'s settings: layout, scheduling, entry limits, login requirement and the rest of formSettings.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Form settings', 'nibwp'),
+    'description' => 'Read and change a form\'s settings: layout, scheduling, entry limits, login requirement and the rest of formSettings.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -934,7 +934,7 @@ function nibwp_ff_settings(array $input): array|WP_Error
         if ((string) ($input['action'] ?? 'get') === 'set') {
             $settings = (array) ($input['settings'] ?? []);
             if ($settings === []) {
-                throw new \RuntimeException(__('Nothing to set.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Nothing to set.', 'nibwp'));
             }
 
             $merged = array_replace_recursive($current, $settings);
@@ -957,7 +957,7 @@ function nibwp_ff_settings(array $input): array|WP_Error
                 'submission_gates' => $gates,
                 'warning' => $gates === []
                     ? ''
-                    : __('This form now restricts who can submit, or when. Confirm that is intended.', domain: 'nibwp'),
+                    : __('This form now restricts who can submit, or when. Confirm that is intended.', 'nibwp'),
             ];
         }
 
@@ -970,8 +970,8 @@ function nibwp_ff_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-integrations', [
-    'label'       => __('Fluent Forms — Integration feeds', domain: 'nibwp'),
-    'description' => __('Discover every integration feed configured on a form — webhooks, CRM syncs, mail platforms — and read or change one.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Integration feeds', 'nibwp'),
+    'description' => 'Discover every integration feed configured on a form — webhooks, CRM syncs, mail platforms — and read or change one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1046,7 +1046,7 @@ function nibwp_ff_integrations(array $input): array|WP_Error
                 'feed_count' => count($feeds),
                 'core_meta' => $core,
                 'note'      => $feeds === []
-                    ? __('No integration feeds on this form — it does nothing beyond storing the submission and sending any notifications.', domain: 'nibwp')
+                    ? __('No integration feeds on this form — it does nothing beyond storing the submission and sending any notifications.', 'nibwp')
                     : '',
             ];
         }
@@ -1056,7 +1056,7 @@ function nibwp_ff_integrations(array $input): array|WP_Error
 
         if ($action === 'get') {
             if ($meta_key === '') {
-                throw new \RuntimeException(__('A meta_key is required. Run discover first.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A meta_key is required. Run discover first.', 'nibwp'));
             }
 
             return ['form_id' => $form_id, 'meta_key' => $meta_key, 'feeds' => nibwp_ff_meta($form_id, $meta_key)];
@@ -1064,7 +1064,7 @@ function nibwp_ff_integrations(array $input): array|WP_Error
 
         if ($action === 'set') {
             if ($meta_key === '') {
-                throw new \RuntimeException(__('A meta_key is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A meta_key is required.', 'nibwp'));
             }
             $result = nibwp_ff_meta_put($form_id, $meta_key, (array) ($input['value'] ?? []), $meta_id > 0 ? $meta_id : null);
 
@@ -1072,12 +1072,12 @@ function nibwp_ff_integrations(array $input): array|WP_Error
         }
 
         if ($meta_id <= 0) {
-            throw new \RuntimeException(__('A meta_id is required to delete a feed.', domain: 'nibwp'));
+            throw new \RuntimeException(__('A meta_id is required to delete a feed.', 'nibwp'));
         }
 
         $row = $model::find($meta_id);
         if (!$row || (int) $row->form_id !== $form_id) {
-            throw new \RuntimeException(__('That feed does not belong to this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('That feed does not belong to this form.', 'nibwp'));
         }
         $row->delete();
 
@@ -1090,8 +1090,8 @@ function nibwp_ff_integrations(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-payments', [
-    'label'       => __('Fluent Forms — Payments', domain: 'nibwp'),
-    'description' => __('Read transactions and subscriptions captured by Fluent Forms Pro payment forms (read-only).', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Payments', 'nibwp'),
+    'description' => 'Read transactions and subscriptions captured by Fluent Forms Pro payment forms (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1140,7 +1140,7 @@ function nibwp_ff_payments(array $input): array|WP_Error
 
             case 'transaction':
                 if ($id <= 0) {
-                    throw new \RuntimeException(__('A transaction ID is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A transaction ID is required.', 'nibwp'));
                 }
 
                 return ['transaction' => $api->transaction($id)];
@@ -1150,7 +1150,7 @@ function nibwp_ff_payments(array $input): array|WP_Error
 
             case 'subscription':
                 if ($id <= 0) {
-                    throw new \RuntimeException(__('A subscription ID is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A subscription ID is required.', 'nibwp'));
                 }
 
                 return ['subscription' => $api->getSubscription($id)];
@@ -1158,13 +1158,13 @@ function nibwp_ff_payments(array $input): array|WP_Error
             case 'by_submission':
                 $entry_id = (int) ($input['entry_id'] ?? 0);
                 if ($entry_id <= 0) {
-                    throw new \RuntimeException(__('A submission ID is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A submission ID is required.', 'nibwp'));
                 }
 
                 return ['entry_id' => $entry_id, 'transactions' => $api->transactionsBySubmissionId($entry_id)];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1173,8 +1173,8 @@ function nibwp_ff_payments(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-analytics', [
-    'label'       => __('Fluent Forms — Analytics', domain: 'nibwp'),
-    'description' => __('Views, submissions, conversion rate and unread count for a form (read-only).', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Analytics', 'nibwp'),
+    'description' => 'Views, submissions, conversion rate and unread count for a form (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1207,7 +1207,7 @@ function nibwp_ff_analytics(array $input): array|WP_Error
 
     $form_id = (int) ($input['form_id'] ?? 0);
     if ($form_id <= 0) {
-        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_ff_err('nibwp_ff_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_ff_try(static function () use ($form_id): array {
@@ -1217,7 +1217,7 @@ function nibwp_ff_analytics(array $input): array|WP_Error
         $properties = fluentFormApi('forms')->form($form_id);
 
         if (!is_object($properties)) {
-            throw new \RuntimeException(__('No Fluent Forms form with that ID.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No Fluent Forms form with that ID.', 'nibwp'));
         }
 
         return [
@@ -1235,8 +1235,8 @@ function nibwp_ff_analytics(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-export', [
-    'label'       => __('Fluent Forms — Export submissions', domain: 'nibwp'),
-    'description' => __('Export a form\'s submissions as rows or CSV, with the field labels as headers (read-only).', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Export submissions', 'nibwp'),
+    'description' => 'Export a form\'s submissions as rows or CSV, with the field labels as headers (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1316,7 +1316,7 @@ function nibwp_ff_export(array $input): array|WP_Error
         if ((string) ($input['format'] ?? 'rows') === 'csv') {
             $handle = fopen('php://temp', 'r+');
             if ($handle === false) {
-                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', 'nibwp'));
             }
             fputcsv($handle, $columns);
             foreach ($out as $record) {
@@ -1338,8 +1338,8 @@ function nibwp_ff_export(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-audit', [
-    'label'       => __('Fluent Forms — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the faults that lose enquiries: no enabled notification, no confirmation, no fields, and restrictions that have quietly closed a form (read-only).', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Audit', 'nibwp'),
+    'description' => 'Check every form for the faults that lose enquiries: no enabled notification, no confirmation, no fields, and restrictions that have quietly closed a form (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1403,8 +1403,8 @@ function nibwp_ff_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'blocker',
                     'code'     => 'no_enabled_notification',
-                    'message'  => __('No enabled notification. Submissions are stored and nobody is told.', domain: 'nibwp'),
-                    'fix'      => __('Add one with nibwp/fluentform-notifications, or confirm the entries are only read in the admin.', domain: 'nibwp'),
+                    'message'  => __('No enabled notification. Submissions are stored and nobody is told.', 'nibwp'),
+                    'fix'      => __('Add one with nibwp/fluentform-notifications, or confirm the entries are only read in the admin.', 'nibwp'),
                 ];
             }
 
@@ -1414,8 +1414,8 @@ function nibwp_ff_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_confirmation',
-                    'message'  => __('No confirmation, so a visitor gets no acknowledgement after submitting.', domain: 'nibwp'),
-                    'fix'      => __('Add one with nibwp/fluentform-confirmations.', domain: 'nibwp'),
+                    'message'  => __('No confirmation, so a visitor gets no acknowledgement after submitting.', 'nibwp'),
+                    'fix'      => __('Add one with nibwp/fluentform-confirmations.', 'nibwp'),
                 ];
             }
 
@@ -1425,8 +1425,8 @@ function nibwp_ff_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_fields',
-                    'message'  => __('The form has no fields, so there is nothing to submit.', domain: 'nibwp'),
-                    'fix'      => __('Add fields with nibwp/fluentform-fields.', domain: 'nibwp'),
+                    'message'  => __('The form has no fields, so there is nothing to submit.', 'nibwp'),
+                    'fix'      => __('Add fields with nibwp/fluentform-fields.', 'nibwp'),
                 ];
             }
 
@@ -1443,10 +1443,10 @@ function nibwp_ff_audit(array $input): array|WP_Error
                         'code'     => 'restriction_' . $gate,
                         'message'  => sprintf(
                             /* translators: %s: the restriction key */
-                            __('The restriction "%s" is on, which limits who can submit or when.', domain: 'nibwp'),
+                            __('The restriction "%s" is on, which limits who can submit or when.', 'nibwp'),
                             $gate
                         ),
-                        'fix'      => __('Intentional on a campaign or members-only form; a mistake left behind on a contact form.', domain: 'nibwp'),
+                        'fix'      => __('Intentional on a campaign or members-only form; a mistake left behind on a contact form.', 'nibwp'),
                     ];
                 }
             }
@@ -1469,8 +1469,8 @@ function nibwp_ff_audit(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/fluentform-delete', [
-    'label'       => __('Fluent Forms — Delete', domain: 'nibwp'),
-    'description' => __('Permanently delete a form or a submission. Irreversible.', domain: 'nibwp'),
+    'label'       => __('Fluent Forms — Delete', 'nibwp'),
+    'description' => 'Permanently delete a form or a submission. Irreversible.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1510,7 +1510,7 @@ function nibwp_ff_delete(array $input): array|WP_Error
     if (!(bool) ($input['confirm'] ?? false)) {
         return nibwp_ff_err(
             'nibwp_ff_unconfirmed',
-            __('This permanently destroys data and cannot be undone. Re-issue with confirm true if that is intended.', domain: 'nibwp')
+            __('This permanently destroys data and cannot be undone. Re-issue with confirm true if that is intended.', 'nibwp')
         );
     }
 
@@ -1547,19 +1547,19 @@ function nibwp_ff_delete(array $input): array|WP_Error
         if ($action === 'delete_entry') {
             $entry_id = (int) ($input['entry_id'] ?? 0);
             if ($entry_id <= 0) {
-                throw new \RuntimeException(__('A valid submission ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid submission ID is required.', 'nibwp'));
             }
 
             $submission = '\\FluentForm\\App\\Models\\Submission';
             $row = $submission::find($entry_id);
             if (!$row) {
-                throw new \RuntimeException(__('No submission with that ID.', domain: 'nibwp'));
+                throw new \RuntimeException(__('No submission with that ID.', 'nibwp'));
             }
             $row->delete();
 
             return ['entry_id' => $entry_id, 'deleted' => true, 'reversible' => false];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }

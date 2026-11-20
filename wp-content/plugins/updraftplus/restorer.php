@@ -665,6 +665,17 @@ class Updraft_Restorer {
 	public function perform_restore($entities_to_restore, $restore_options) {
 		global $updraftplus;
 		
+		// Block all restore operations when DISALLOW_FILE_MODS is active. This is the final enforcement point (the UI and WP-CLI checks are early conveniences); a resumed restore re-enters this method and is re-checked.
+		if (defined('DISALLOW_FILE_MODS') && DISALLOW_FILE_MODS) {
+			$error_message = sprintf(
+				/* translators: %s: Constant name (DISALLOW_FILE_MODS) */
+				__('Restore operations are disabled by the %s constant.', 'updraftplus'),
+				'DISALLOW_FILE_MODS'
+			).' '.__('To restore this site, temporarily remove the constant from wp-config.php or set it to false.', 'updraftplus');
+			$updraftplus->log($error_message, 'error');
+			return new WP_Error('restore_disallowed', $error_message);
+		}
+
 		$updraftplus->log_restore_update(array('type' => 'state', 'stage' => 'verifying', 'data' => implode(', ', array_flip($entities_to_restore))));
 
 		// Now log. We first remove any encryption passphrase from the log data.
@@ -702,6 +713,10 @@ class Updraft_Restorer {
 		
 		$updraftplus->jobdata_set('second_loop_entities', $second_loop);
 		$updraftplus->jobdata_set('backup_timestamp', $timestamp);
+
+		// The timestamp when the restoration process started
+		$restore_timestamp = $updraftplus->jobdata_get('restore_timestamp', false);
+		if (!$restore_timestamp) $updraftplus->jobdata_set('restore_timestamp', time());
 		
 		// Use a site option, as otherwise on multisite when all the array of options is updated via UpdraftPlus_Options::update_site_option(), it will over-write any restored UD options from the backup
 		update_site_option('updraft_restore_in_progress', $updraftplus->nonce);
@@ -740,19 +755,19 @@ class Updraft_Restorer {
 					$log_message = 'Exception ('.get_class($e).') occurred during restore: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
 					/* translators: 1: Class name, 2: Exception message */
 					$display_log_message = sprintf(__('A PHP exception (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage());
-					UpdraftPlus_Manipulation_Functions::error_log($log_message);
 					// @codingStandardsIgnoreLine
 					if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
 					$updraftplus->log($display_log_message, 'notice-restore');
+					$updraftplus->log($log_message);
 					die();
 				} catch (Error $e) { //phpcs:ignore PHPCompatibility.Classes.NewClasses.errorFound -- This Error class will only get triggered during runtime but we don't explicitly throw this class in our code; so we only catch it when PHP throws it.
 					$log_message = 'PHP Fatal error ('.get_class($e).') has occurred. Error Message: '.$e->getMessage().' (Code: '.$e->getCode().', line '.$e->getLine().' in '.$e->getFile().')';
-					UpdraftPlus_Manipulation_Functions::error_log($log_message);
 					// @codingStandardsIgnoreLine
 					if (function_exists('wp_debug_backtrace_summary')) $log_message .= ' Backtrace: '.str_replace(array(ABSPATH, "\n"), array('', ', '), $e->getTraceAsString());
 					/* translators: 1: Class name, 2: Exception message */
 					$display_log_message = sprintf(__('A PHP fatal error (%1$s) has occurred: %2$s', 'updraftplus'), get_class($e), $e->getMessage());
 					$updraftplus->log($display_log_message, 'notice-restore');
+					$updraftplus->log($log_message);
 					die();
 				}
 				
@@ -780,6 +795,14 @@ class Updraft_Restorer {
 
 				do_action('updraft_restored_archive', $file, $type, $restore_result, $fkey, $timestamp);
 
+			}
+
+			// Scan and delete leftover files in the "uploads" directory that are not part of the backup file or don't exist in the backup file
+			if ('uploads' == $type && apply_filters('updraftplus_restore_uploads_in_one_go', !class_exists('UpdraftPlusAddOn_MultiSite')) && (!defined('UPDRAFTPLUS_RESTORE_DELETE_OLD_UPLOAD_FILES') || UPDRAFTPLUS_RESTORE_DELETE_OLD_UPLOAD_FILES)) {
+				$working_dir = $info['path'];
+				$restore_timestamp = $updraftplus->jobdata_get('restore_timestamp');
+				$updraftplus->log('Scan and delete old files that are not presented in the restored backup...');
+				UpdraftPlus_Filesystem_Functions::delete_files_by_age($working_dir, $restore_timestamp, apply_filters('updraftplus_restore_uploads_paths_to_keep', array(), $working_dir, $this->ud_backup_is_multisite, $this->ud_multisite_selective_restore));
 			}
 			
 			// Update the job data each time we go round the loop, so that if it aborts, it can be resumed from the correct point
@@ -932,12 +955,13 @@ class Updraft_Restorer {
 	 *
 	 * In the 'ordinary' case of unzipping a UD zip backup, this method basically does some preparation, and then calls UpdraftPlus_Filesystem_Functions::unzip_file() for the actual unzipping
 	 *
-	 * @param  String		  $package - specify package - relative to UpdraftPlus::backups_dir_location()
-	 * @param  String|Boolean $type    - type of archive e.g. db.
+	 * @param string         $package             - specify package - relative to UpdraftPlus::backups_dir_location()
+	 * @param string|boolean $type                - type of archive e.g. db.
+	 * @param boolean        $use_fast_extraction - whether or not to use the fast extraction. If this is true, then files will be directly extracted to the designated location. Otherwise, they will be extracted to the 'upgrade' directory first.
 	 *
-	 * @return String|WP_Error If successful, then this indicates the working directory that the archive was unpacked in; a WP_Filesystem path
+	 * @return string|WP_Error If successful, then this indicates the working directory that the archive was unpacked in; a WP_Filesystem path
 	 */
-	private function unpack_package_archive($package, $type = false) {
+	private function unpack_package_archive($package, $type = false, $use_fast_extraction = false) {
 
 		global $wp_filesystem, $updraftplus;
 
@@ -963,7 +987,7 @@ class Updraft_Restorer {
 		// We need a working directory. This has a change from the WP core version - minimise path length
 		// N.B. It is deterministic; the same package file will get the same working directory
 		// $working_dir = $upgrade_folder . basename($package, '.zip');
-		$working_dir = $upgrade_folder.substr(md5($package), 0, 8);
+		$working_dir = ($use_fast_extraction) ? $wp_filesystem->wp_content_dir() : $upgrade_folder.substr(md5($package), 0, 8);
 		
 		if (preg_match('#\.zip$#i', $package)) {
 		
@@ -984,7 +1008,7 @@ class Updraft_Restorer {
 			
 		}
 
-		if (0 == $zip_starting_index) {
+		if (0 == $zip_starting_index && !$use_fast_extraction) {
 			// Clean up contents of upgrade directory beforehand.
 			$upgrade_files = $wp_filesystem->dirlist($upgrade_folder);
 			if (!empty($upgrade_files)) {
@@ -1006,12 +1030,17 @@ class Updraft_Restorer {
 		// Unzip package to working directory
 		if (preg_match('#\.zip$#i', $package)) {
 
-			$folders_to_include = array();
+			$folders_to_look = array();
+			$extract_matched_folders = 'extract_only';
 			
-			if ('themes' == $type && !$this->include_unspecified_themes) $folders_to_include = $this->themes_to_restore;
-			if ('plugins' == $type && !$this->include_unspecified_plugins) $folders_to_include = $this->plugins_to_restore;
+			if ('themes' == $type && !$this->include_unspecified_themes) $folders_to_look = $this->themes_to_restore;
+			if ('plugins' == $type && !$this->include_unspecified_plugins) $folders_to_look = $this->plugins_to_restore;
+			if ('uploads' == $type && apply_filters('updraftplus_restore_uploads_in_one_go', !class_exists('UpdraftPlusAddOn_MultiSite'))) {
+				$folders_to_look = apply_filters('updraftplus_restore_uploads_folders_to_look', $folders_to_look, $this->ud_multisite_selective_restore);
+				$extract_matched_folders = apply_filters('updraftplus_restore_uploads_extract_matched_folders', $extract_matched_folders, $this->ud_multisite_selective_restore);
+			}
 
-			$result = UpdraftPlus_Filesystem_Functions::unzip_file($package, $working_dir, $zip_starting_index, $folders_to_include);
+			$result = UpdraftPlus_Filesystem_Functions::unzip_file($package, $working_dir, $zip_starting_index, $folders_to_look, $extract_matched_folders);
 			
 		} elseif (preg_match('#\.tar(\.(gz|bz2))?$#i', $package)) {
 			
@@ -1676,6 +1705,14 @@ class Updraft_Restorer {
 
 		$updraftplus->log("restore_backup(backup_file=$backup_file, type=$type, info=".serialize($info).", last_one=$last_one)");
 
+		if (function_exists('set_time_limit')) @set_time_limit(1800);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
+
+		// Perform an improved restoration process for the 'uploads' entity which directly extracts the files to the 'wp-content/uploads' directory.
+		if (apply_filters('updraftplus_restore_uploads_in_one_go', !class_exists('UpdraftPlusAddOn_MultiSite')) && empty($this->ud_foreign) && 'uploads' == $type) {
+			$working_dir = $this->unpack_package_archive($backup_file, $type, true);
+			return is_wp_error($working_dir) ? $working_dir : true;
+		}
+
 		if ('db' == $type) {
 			$get_dir = '';
 		} else {
@@ -1696,8 +1733,6 @@ class Updraft_Restorer {
 		
 		$this->import_table_prefix = $import_table_prefix;
 		$this->final_import_table_prefix = $updraftplus->get_table_prefix(false);
-		
-		if (function_exists('set_time_limit')) @set_time_limit(1800);// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged -- Silenced to suppress errors that may arise because of the function.
 
 		// Based upon how WP updates work, the following code unpacks the "package" (the backup archive) and then later its contents are moved to their destination.
 
@@ -2929,14 +2964,31 @@ class Updraft_Restorer {
 			}
 		}
 
-		UpdraftPlus_Database_Utility::set_sql_mode(array('NO_AUTO_VALUE_ON_ZERO'), array(), $this->use_wpdb() ? null : $this->mysql_dbh);
+		// NO_BACKSLASH_ESCAPES is also in the default list, but it's good to make it explicit
+		$set_sql_mode = UpdraftPlus_Database_Utility::set_sql_mode(array('NO_AUTO_VALUE_ON_ZERO'), array('NO_BACKSLASH_ESCAPES'), $this->use_wpdb() ? null : $this->mysql_dbh);
+		if (false === $set_sql_mode) {
+			return new WP_Error('set_sql_mode_failed', __('At least one incompatible SQL mode remains set; the  restore cannot continue', 'updraftplus'));
+		} elseif (null === $set_sql_mode && (!defined('UPDRAFTPLUS_ALLOW_SQL_MODE_FAILURE') || !UPDRAFTPLUS_ALLOW_SQL_MODE_FAILURE)) {
+			return new WP_Error('set_sql_mode_failed', __('It is not known whether the SQL mode could be correctly set; to continue the restore you must define UPDRAFTPLUS_ALLOW_SQL_MODE_FAILURE as true.', 'updraftplus'));
+		}
+		
+		$connection_charset = $this->set_connection_charset_utf8();
+		
+		if (!is_string($connection_charset)) {
+			return new WP_Error('set_connection_charset_failed', __('Setting the database connection character et failed; aborting restore operation.', 'updraftplus'));
+		}
+		
+		$updraftplus->log(__('Connection character set:', 'updraftplus')." $connection_charset");
 
-		// register restoration shutdown event so that we can set some mysql's global variable back to its original value
+		// Register restoration shutdown event so that we can set some MySQL global variables back to their original values
 		register_shutdown_function(array($this, 'on_shutdown'));
 
 		// Find the supported engines - in case the dump had something else (case seen: saved from MariaDB with engine Aria; imported into plain MySQL without)
 		$supported_engines = array_change_key_case((array) $wpdb->get_results("SHOW ENGINES", OBJECT_K));
 		$supported_charsets = array_change_key_case((array) $wpdb->get_results("SHOW CHARACTER SET", OBJECT_K));
+		
+		// Keep harmonised with the list in the main UpdraftPlus class
+		$allowed_set_name_charsets = array_intersect(array_keys($supported_charsets), array('latin1', 'latin2', 'ascii', 'utf8mb4', 'utf8mb3', 'utf8', 'utf16', 'utf16le', 'utf32'));
 		$supported_collations = array_change_key_case((array) $wpdb->get_results('SHOW COLLATION', OBJECT_K));
 
 		$this->table_engine = '';
@@ -2948,6 +3000,22 @@ class Updraft_Restorer {
 
 		$sql_line = "";
 		$sql_type = -1;
+		
+		// This array has been created for clarity, to be able to refer to names and not numbers
+		$sql_types = array(
+			'DROP_TABLE' => 1,
+			'CREATE_TABLE' => 2,
+			'INSERT' => 3,
+			'ALTER_OR_LOCK_TABLE' => 4,
+			'CREATE_OR_DROP_DATABASE' => 6,
+			'USE' => 7,
+			'SET_NAMES' => 8,
+			'CREATE_TRIGGER' => 9,
+			'DELIMITER' => 10,
+			'CREATE_FUNCTION' => 12,
+			'LOCK_OR_UNLOCK_TABLE' => 15,
+			'DROP_VIEW' => 16,
+		);
 
 		$this->start_time = microtime(true);
 
@@ -3110,7 +3178,7 @@ class Updraft_Restorer {
 		while (($is_plain && !feof($dbhandle)) || (!$is_plain && (($is_bz2) || (!$is_bz2 && !gzeof($dbhandle))))) {
 			// Up to 1Mb
 			if ($is_plain) {
-				$buffer = rtrim(fgets($dbhandle, 1048576));
+				$buffer = fgets($dbhandle, 1048576);
 			} elseif ($is_bz2) {
 				if (!isset($bz2_buffer)) $bz2_buffer = '';// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable -- The variable is defined after check.
 				$buffer = '';
@@ -3130,96 +3198,17 @@ class Updraft_Restorer {
 				} else {
 					break;
 				}
-				$buffer = rtrim($buffer);
 			} else {
-				$buffer = rtrim(gzgets($dbhandle, 1048576));
+				$buffer = gzgets($dbhandle, 1048576);
 			}
-
-			// Discard comments
-			if (empty($buffer) || '#' == substr($buffer, 0, 1) || preg_match('/^--(\s|$)/', substr($buffer, 0, 3))) {
-				if ('' == $this->old_siteurl && preg_match('/^\# Backup of: (http(.*))$/', $buffer, $matches)) {
-					$this->old_siteurl = untrailingslashit($matches[1]);
-					$updraftplus->log("Backup of: ".$this->old_siteurl);
-					/* translators: %s: Old site */
-					$updraftplus->log(sprintf(__('Backup of: %s', 'updraftplus'), $this->old_siteurl), 'notice-restore', 'backup-of');
-					do_action('updraftplus_restore_db_record_old_siteurl', $this->old_siteurl);
-
-					$this->save_configuration_bundle();
-
-				} elseif (false === $this->created_by_version && preg_match('/^\# Created by UpdraftPlus version ([\d\.]+)/', $buffer, $matches)) {
-					$this->created_by_version = trim($matches[1]);
-					$updraftplus->log(__('Backup created by:', 'updraftplus').' '.$this->created_by_version, 'notice-restore', 'created-by');
-					$updraftplus->log('Backup created by: '.$this->created_by_version);
-				} elseif ('' == $this->old_home && preg_match('/^\# Home URL: (http(.*))$/', $buffer, $matches)) {
-					$this->old_home = untrailingslashit($matches[1]);
-					if ($this->old_siteurl && $this->old_home != $this->old_siteurl) {
-						$updraftplus->log(__('Site home:', 'updraftplus').' '.$this->old_home, 'notice-restore', 'site-home');
-						$updraftplus->log('Site home: '.$this->old_home);
-					}
-					do_action('updraftplus_restore_db_record_old_home', $this->old_home);
-				} elseif ('' == $this->old_content && preg_match('/^\# Content URL: (http(.*))$/', $buffer, $matches)) {
-					$this->old_content = untrailingslashit($matches[1]);
-					$updraftplus->log(__('Content URL:', 'updraftplus').' '.$this->old_content, 'notice-restore', 'content-url');
-					$updraftplus->log('Content URL: '.$this->old_content);
-					do_action('updraftplus_restore_db_record_old_content', $this->old_content);
-				} elseif ('' == $this->old_uploads && preg_match('/^\# Uploads URL: (http(.*))$/', $buffer, $matches)) {
-					$this->old_uploads = untrailingslashit($matches[1]);
-					$updraftplus->log(__('Uploads URL:', 'updraftplus').' '.$this->old_uploads, 'notice-restore', 'uploads-url');
-					$updraftplus->log('Uploads URL: '.$this->old_uploads);
-					do_action('updraftplus_restore_db_record_old_uploads', $this->old_uploads);
-				} elseif (null === $this->old_table_prefix && (preg_match('/^\# Table prefix: ?(\S*)$/', $buffer, $matches) || preg_match('/^-- Table Prefix: ?(\S*)$/i', $buffer, $matches))) {
-					// We also support backwpup style:
-					// -- Table Prefix: wp_
-					$this->old_table_prefix = $matches[1];
-					$updraftplus->log(__('Old table prefix:', 'updraftplus').' '.$this->old_table_prefix, 'notice-restore', 'old-table-prefix');
-					$updraftplus->log("Old table prefix: ".$this->old_table_prefix);
-				} elseif (preg_match('/^\# Skipped tables: (.*)$/', $buffer, $matches)) {
-					$updraftplus->log(__('Skipped tables:', 'updraftplus').' '.$matches[1], 'notice-restore', 'skipped-tables');
-					$updraftplus->log("Skipped tables: ".$matches[1]);
-				} elseif ($gathering_siteinfo && preg_match('/^\# Site info: (\S+)$/', $buffer, $matches)) {
-					if ('end' == $matches[1]) {
-						$gathering_siteinfo = false;
-						// Sanity checks
-						if (isset($this->old_siteinfo['multisite']) && !$this->old_siteinfo['multisite'] && is_multisite()) {
-							if (!class_exists('UpdraftPlusAddOn_MultiSite') || !class_exists('UpdraftPlus_Addons_Migrator')) {
-								/* translators: %s: String 'UpdraftPlus Premium' */
-								return new WP_Error('missing_addons', sprintf(__('To import an ordinary WordPress site into a multisite installation requires %s.', 'updraftplus'), 'UpdraftPlus Premium'));
-							}
-						}
-					} elseif (preg_match('/^([^=]+)=(.*)$/', $matches[1], $kvmatches)) {
-						$key = $kvmatches[1];
-						$val = $kvmatches[2];
-						$updraftplus->log(__('Site information:', 'updraftplus')." $key = $val", 'notice-restore', 'site-information');
-						$updraftplus->log("Site information: $key=$val");
-						if ('multisite_data' == $key) {
-							$this->old_siteinfo[$key] = json_decode($val, true);
-						} else {
-							$this->old_siteinfo[$key] = $val;
-						}
-						if ('multisite' == $key) {
-							$this->ud_backup_is_multisite = ($val) ? 1 : 0;
-						}
-					}
-				} elseif ('' == $this->old_abspath && preg_match('/^\# ABSPATH: ?(.*)$/', $buffer, $matches)) {
-					if (ABSPATH != $matches[1] && '/' != $matches[1]) {
-						$this->old_abspath = $matches[1];
-						$updraftplus->log(__('Old ABSPATH:', 'updraftplus').' '.$this->old_abspath, 'notice-restore', 'old-abspath');
-						$updraftplus->log("Old ABSPATH: {$this->old_abspath}");
-						do_action('updraftplus_restore_db_record_old_abspath', $this->old_abspath);
-					}
-				} elseif ('' == $this->old_updraftplus_plugin_slug && preg_match('/^\# UpdraftPlus plugin slug: ?(.*)$/', $buffer, $matches)) {
-					$this->old_updraftplus_plugin_slug = $matches[1];
-					$updraftplus->log(__('UpdraftPlus plugin slug:', 'updraftplus').' '.$this->old_updraftplus_plugin_slug, 'notice-restore', 'old-updraftplus-plugin-slug');
-					$updraftplus->log("UpdraftPlus plugin slug: {$this->old_updraftplus_plugin_slug}");
-				}
-				continue;
-			}
+			
+			$buffer = rtrim($buffer, "\r\n");
 
 			// Detect INSERT and various other commands early, so that we can split or combine them if necessary
 			if (preg_match('/^\s*(insert\s\s*into(?:\s*`(.+?)`|[^\(]+)(?:\s*\(.+?\))?\s*(?:values|\())/i', $sql_line.$buffer, $matches)) {
 				// https://regex101.com/r/zrQquQ/2
 				$this->table_name = $matches[2];
-				$sql_type = 3;
+				$sql_type = $sql_types['INSERT'];
 				$insert_prefix = $matches[1];
 
 				// if the current table is a generated columns table, that means at this stage the table creation is being postponed and the block of code below will get executed first to filter the create statement
@@ -3245,7 +3234,7 @@ class Updraft_Restorer {
 				$delimiter = $matches[1];
 				// Obviously, what is supported here is quite limited
 				$delimiter_regex = str_replace(array('$', '#', '/'), array('\$', '\#', '\/'), $delimiter);
-			} elseif (preg_match('/^\s*create trigger /i', $sql_line.$buffer)) {
+			} elseif (preg_match('/^\s*create trigger\s/i', $sql_line.$buffer)) {
 				$sql_type = 9;
 				$buffer = $buffer."\n";
 			} elseif (preg_match("/^\s*CREATE\s\s*(?:DEFINER\s*=\s*(?:`.{1,17}`@`[^\s]+`\s*|'.{1,17}'@'[^\s]+'\s*|[^\s]+?\s))?(?:AGGREGATE\s\s*)?(?:PROCEDURE|FUNCTION)((?:\s\s*[^\(`]+|\s*`(?:[^`]|``)+`))\s*\(/is", $sql_line.$buffer)) {
@@ -3271,7 +3260,7 @@ class Updraft_Restorer {
 
 			// Deal with case where adding this line will take us over the MySQL max_allowed_packet limit - must split, if we can (if it looks like consecutive rows)
 			// Allow a 100-byte margin for error (including searching/replacing table prefix)
-			if (3 == $sql_type && $sql_line && strlen($sql_line.$buffer) > ($this->max_allowed_packet - 100) && preg_match('/,\s*$/', $sql_line) && preg_match('/^\s*\(/', $buffer)) {
+			if ($sql_type == $sql_types['INSERT'] && $sql_line && strlen($sql_line.$buffer) > ($this->max_allowed_packet - 100) && preg_match('/,\s*$/', $sql_line) && preg_match('/^\s*\(/', $buffer) && UpdraftPlus_Database_Utility::sql_statement_is_finished($sql_line)) {
 				
 				if ($this->table_should_be_skipped($this->table_name)) {
 					// Reset - we need the insert prefix so following lines get detected correctly
@@ -3299,7 +3288,7 @@ class Updraft_Restorer {
 				$sql_line = $insert_prefix." ";
 			}
 
-			$sql_line .= (9 == $sql_type && '' != $sql_line) ? ' '.$buffer : $buffer;
+			$sql_line .= ($sql_types['CREATE_TRIGGER'] == $sql_type && '' != $sql_line) ? ' '.$buffer : $buffer;
 			
 			// Do we have a complete line yet? We used to just test the final character for ';' here (up to 1.8.12), but that was too unsophisticated
 			// From 1.16.16, we don't hard-code the delimiter here, and we also add the knowledge that CREATE TRIGGER statements finish with END
@@ -3307,8 +3296,104 @@ class Updraft_Restorer {
 			//
 			// $wpdb->query("CREATE TRIGGER `civicrm_acl_after_insert` AFTER INSERT ON `civicrm_acl` FOR EACH ROW BEGIN IF (@civicrm_disable_logging IS NULL OR @civicrm_disable_logging = 0 ) THEN INSERT INTO log_civicrm_acl (`id`, `name`, `deny`, `entity_table`, `entity_id`, `operation`, `object_table`, `object_id`, `acl_table`, `acl_id`, `is_active`, log_conn_id, log_user_id, log_action) VALUES ( NEW.`id`, NEW.`name`, NEW.`deny`, NEW.`entity_table`, NEW.`entity_id`, NEW.`operation`, NEW.`object_table`, NEW.`object_id`, NEW.`acl_table`, NEW.`acl_id`, NEW.`is_active`, COALESCE(@uniqueID, LEFT(CONCAT('c_', unix_timestamp()/3600, CONNECTION_ID()), 17)), @civicrm_user_id, 'insert'); END IF; END"));
 
-			if ((3 == $sql_type && !preg_match('/\)\s*'.$delimiter_regex.'$/', substr($sql_line, -5, 5))) || (!in_array($sql_type, array(3, 9, 10, 12)) && substr($sql_line, -strlen($delimiter), strlen($delimiter)) != $delimiter) || (9 == $sql_type && !preg_match('/(?:END)?\s*'.$delimiter_regex.'\s*$/', $sql_line))) continue;
+			if (($sql_types['INSERT'] == $sql_type && !preg_match('/\)\s*'.$delimiter_regex.'\s*$/', substr($sql_line, -8)))
+				|| (!in_array($sql_type, array($sql_types['INSERT'], $sql_types['CREATE_TRIGGER'], $sql_types['CREATE_FUNCTION'], $sql_types['DELIMITER'])) && substr(rtrim($sql_line), -strlen($delimiter), strlen($delimiter)) != $delimiter && !preg_match('/^\s*(--|#)/', $sql_line))
+				|| ($sql_types['CREATE_TRIGGER'] == $sql_type && !preg_match('/(?:END)?\s*'.$delimiter_regex.'\s*$/', $sql_line))
+			) continue;
 
+			if (!UpdraftPlus_Database_Utility::sql_statement_is_finished($sql_line)) continue;
+			
+			// Discard comments
+			if (preg_match('/^\s*(--|#)/', $sql_line)) {
+				
+				// An SQL comment this long does not happen for any valid reason
+				if (strlen($sql_line) > 100000) {
+					/* translators: 1: number of characters, 2: first characters */
+					return new WP_Error('invalid_sql_comment', sprintf(__('An excessively long SQL comment line (%1$d characters, %2$s) has occurred; this indicates corruption.', 'updraftplus'), strlen($sql_line), substr($sql_line, 0, 100).' ...'));
+				}
+				
+				if ('' == $this->old_siteurl && preg_match('/^\# Backup of: (http(.*))$/', $sql_line, $matches)) {
+					$this->old_siteurl = untrailingslashit($matches[1]);
+					$updraftplus->log("Backup of: ".$this->old_siteurl);
+					/* translators: %s: Old site */
+					$updraftplus->log(sprintf(__('Backup of: %s', 'updraftplus'), $this->old_siteurl), 'notice-restore', 'backup-of');
+					do_action('updraftplus_restore_db_record_old_siteurl', $this->old_siteurl);
+					
+					$this->save_configuration_bundle();
+					
+				} elseif (false === $this->created_by_version && preg_match('/^\# Created by UpdraftPlus version ([\d\.]+)/', $sql_line, $matches)) {
+					$this->created_by_version = trim($matches[1]);
+					$updraftplus->log(__('Backup created by:', 'updraftplus').' '.$this->created_by_version, 'notice-restore', 'created-by');
+					$updraftplus->log('Backup created by: '.$this->created_by_version);
+				} elseif ('' == $this->old_home && preg_match('/^\# Home URL: (http(.*))$/', $sql_line, $matches)) {
+					$this->old_home = untrailingslashit($matches[1]);
+					if ($this->old_siteurl && $this->old_home != $this->old_siteurl) {
+						$updraftplus->log(__('Site home:', 'updraftplus').' '.$this->old_home, 'notice-restore', 'site-home');
+						$updraftplus->log('Site home: '.$this->old_home);
+					}
+					do_action('updraftplus_restore_db_record_old_home', $this->old_home);
+				} elseif ('' == $this->old_content && preg_match('/^\# Content URL: (http(.*))$/', $sql_line, $matches)) {
+					$this->old_content = untrailingslashit($matches[1]);
+					$updraftplus->log(__('Content URL:', 'updraftplus').' '.$this->old_content, 'notice-restore', 'content-url');
+					$updraftplus->log('Content URL: '.$this->old_content);
+					do_action('updraftplus_restore_db_record_old_content', $this->old_content);
+				} elseif ('' == $this->old_uploads && preg_match('/^\# Uploads URL: (http(.*))$/', $sql_line, $matches)) {
+					$this->old_uploads = untrailingslashit($matches[1]);
+					$updraftplus->log(__('Uploads URL:', 'updraftplus').' '.$this->old_uploads, 'notice-restore', 'uploads-url');
+					$updraftplus->log('Uploads URL: '.$this->old_uploads);
+					do_action('updraftplus_restore_db_record_old_uploads', $this->old_uploads);
+				} elseif (null === $this->old_table_prefix && (preg_match('/^\# Table prefix: ?(\S*)$/', $sql_line, $matches) || preg_match('/^-- Table Prefix: ?(\S*)$/i', $sql_line, $matches))) {
+					// We also support backwpup style:
+					// -- Table Prefix: wp_
+					$this->old_table_prefix = $matches[1];
+					$updraftplus->log(__('Old table prefix:', 'updraftplus').' '.$this->old_table_prefix, 'notice-restore', 'old-table-prefix');
+					$updraftplus->log("Old table prefix: ".$this->old_table_prefix);
+				} elseif (preg_match('/^\# Skipped tables: (.*)$/', $sql_line, $matches)) {
+					$updraftplus->log(__('Skipped tables:', 'updraftplus').' '.$matches[1], 'notice-restore', 'skipped-tables');
+					$updraftplus->log("Skipped tables: ".$matches[1]);
+				} elseif ($gathering_siteinfo && preg_match('/^\# Site info: (\S+)$/', $sql_line, $matches)) {
+					if ('end' == $matches[1]) {
+						$gathering_siteinfo = false;
+						// Sanity checks
+						if (isset($this->old_siteinfo['multisite']) && !$this->old_siteinfo['multisite'] && is_multisite()) {
+							if (!class_exists('UpdraftPlusAddOn_MultiSite') || !class_exists('UpdraftPlus_Addons_Migrator')) {
+								/* translators: %s: String 'UpdraftPlus Premium' */
+								return new WP_Error('missing_addons', sprintf(__('To import an ordinary WordPress site into a multisite installation requires %s.', 'updraftplus'), 'UpdraftPlus Premium'));
+							}
+						}
+					} elseif (preg_match('/^([^=]+)=(.*)$/', $matches[1], $kvmatches)) {
+						$key = $kvmatches[1];
+						$val = $kvmatches[2];
+						$updraftplus->log(__('Site information:', 'updraftplus')." $key = $val", 'notice-restore', 'site-information');
+						$updraftplus->log("Site information: $key=$val");
+						if ('multisite_data' == $key) {
+							$this->old_siteinfo[$key] = json_decode($val, true);
+						} else {
+							$this->old_siteinfo[$key] = $val;
+						}
+						if ('multisite' == $key) {
+							$this->ud_backup_is_multisite = ($val) ? 1 : 0;
+						}
+					}
+				} elseif ('' == $this->old_abspath && preg_match('/^\# ABSPATH: ?(.*)$/', $sql_line, $matches)) {
+					if (ABSPATH != $matches[1] && '/' != $matches[1]) {
+						$this->old_abspath = $matches[1];
+						$updraftplus->log(__('Old ABSPATH:', 'updraftplus').' '.$this->old_abspath, 'notice-restore', 'old-abspath');
+						$updraftplus->log("Old ABSPATH: {$this->old_abspath}");
+						do_action('updraftplus_restore_db_record_old_abspath', $this->old_abspath);
+					}
+				} elseif ('' == $this->old_updraftplus_plugin_slug && preg_match('/^\# UpdraftPlus plugin slug: ?(.*)$/', $sql_line, $matches)) {
+					$this->old_updraftplus_plugin_slug = $matches[1];
+					$updraftplus->log(__('UpdraftPlus plugin slug:', 'updraftplus').' '.$this->old_updraftplus_plugin_slug, 'notice-restore', 'old-updraftplus-plugin-slug');
+					$updraftplus->log("UpdraftPlus plugin slug: {$this->old_updraftplus_plugin_slug}");
+				}
+				
+				$sql_line = '';
+				$sql_type = -1;
+				
+				continue;
+			}
+			
 			$this->line++;
 
 			// We now have a complete line - process it
@@ -3351,7 +3436,7 @@ class Updraft_Restorer {
 				}
 				
 				// Legacy, less reliable - in case it was not caught before
-				if (null === $this->old_table_prefix && preg_match('/^([a-z0-9]+)_.*$/i', $this->table_name, $tmatches)) {
+				if (null === $this->old_table_prefix && preg_match('/^([a-z0-9]+)_/i', $this->table_name, $tmatches)) {
 					$this->old_table_prefix = $tmatches[1].'_';
 					$updraftplus->log(__('Old table prefix:', 'updraftplus').' '.$this->old_table_prefix, 'notice-restore', 'old-table-prefix');
 					$updraftplus->log("Old table prefix (detected from first table): ".$this->old_table_prefix);
@@ -3405,7 +3490,7 @@ class Updraft_Restorer {
 				$sql_line = $this->prepare_create_table($sql_line, $import_table_prefix, $supported_engines, $supported_charsets, $supported_collations);
 
 			} elseif (preg_match('/^\s*insert(?:\s\s*ignore)?\s\s*into(?:\s*`(.+?)`|[^\(]+)(?:\s*\(.+?\))?\s*(?:values|\()/i', $sql_line, $matches)) {
-				$sql_type = 3;
+				$sql_type = $sql_types['INSERT'];
 				$this->table_name = $matches[1];
 				if ($this->table_should_be_skipped($this->table_name)) {
 					// Reset
@@ -3450,32 +3535,55 @@ class Updraft_Restorer {
 						$sql_line = UpdraftPlus_Manipulation_Functions::str_replace_once($this->old_table_prefix, $temp_insert_table_prefix, $sql_line);
 					}
 				}
-			} elseif (preg_match('/^(un)?lock tables/i', $sql_line)) {
+			} elseif (preg_match('/^(un)?lock +tables/i', $sql_line)) {
 				// BackWPup produces these
 				$sql_type = 15;
-			} elseif (preg_match('/^(create|drop) database /i', $sql_line)) {
+			} elseif (preg_match('/^(create|drop) +database /i', $sql_line)) {
 				// WPB2D produces these, as do some phpMyAdmin dumps
 				$sql_type = 6;
 			} elseif (preg_match('/^use /i', $sql_line)) {
 				// WPB2D produces these, as do some phpMyAdmin dumps
 				$sql_type = 7;
-			} elseif (preg_match('#^\s*/\*\!40\d+ (SET NAMES) (.*)\*\/#i', $sql_line, $smatches)) {
+			} elseif (preg_match('#^\s*/\*\!40\d+ +(SET NAMES) +(.*)\*\/#i', $sql_line, $smatches)) {
 				$sql_type = 8;
-				$charset = rtrim($smatches[2]);
-				$connection_charset = $updraftplus->get_connection_charset();
+				$charset = strtolower(rtrim($smatches[2]));
+
 				if ('utf8' === $charset && 'utf8mb4' === $connection_charset) {
-					$sql_line = UpdraftPlus_Manipulation_Functions::str_lreplace("SET NAMES $charset", "SET NAMES $connection_charset", $sql_line);
+					$sql_line = '/*!40101 SET NAMES utf8mb4 */;';
 					/* translators: 1: Charset found, 2: Changed charset to */
-					$updraftplus->log(sprintf(__('Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset().', 'updraftplus'), $charset, $connection_charset), 'notice-restore');
-					$charset = $connection_charset;
+					$updraftplus->log(sprintf(__('Found SET NAMES %1$s, but changing to %2$s as suggested by WPDB::determine_charset().', 'updraftplus'), 'utf8', 'utf8mb4'), 'notice-restore');
+					$charset = 'utf8mb4';
 				}
-				$this->set_names = $charset;
-				if (!isset($supported_charsets[strtolower($charset)])) {
-					$sql_line = UpdraftPlus_Manipulation_Functions::str_lreplace($smatches[1]." ".$charset, "SET NAMES ".$this->restore_options['updraft_restorer_charset'], $sql_line);
+				
+				if (!isset($supported_charsets[strtolower($charset)]) && isset($this->restore_options['updraft_restorer_charset'])) {
+					$changed = $this->restore_options['updraft_restorer_charset'];
+					$sql_line = '/*!40101 SET NAMES '.$this->restore_options['updraft_restorer_charset'].' */;';
+					
 					/* translators: 1: Requested charset, 2: Fallback charset */
-					$updraftplus->log('SET NAMES: '.sprintf(__('Requested character set (%1$s) is not present - changing to %2$s.', 'updraftplus'), esc_html($charset), esc_html($this->restore_options['updraft_restorer_charset'])), 'notice-restore');
+					$updraftplus->log('SET NAMES: '.sprintf(__('Requested character set (%1$s) is not present - changing to %2$s.', 'updraftplus'), esc_html($charset), esc_html($changed)), 'notice-restore');
+					
+					$charset = $changed;
+
 				}
-			} elseif (preg_match('/^\s*create trigger /i', $sql_line)) {
+				
+				if (!in_array($charset, $allowed_set_name_charsets) && (!defined('UPDRAFTPLUS_ALLOW_ANY_SET_NAMES') || !UPDRAFTPLUS_ALLOW_ANY_SET_NAMES)) {
+					/* translators: 1: Database/table character set unique code */
+					$updraftplus->log('SET NAMES: '.sprintf(__('Requested character set (%1$s) is not allowed in SET NAMES.', 'updraftplus'), esc_html($charset)), 'warning-restore');
+					
+					return new WP_Error('set_names_forbidden', __('A forbidden SET NAMES command was encountered.', 'updraftplus'));
+
+				} else {
+					
+					$this->set_names = $charset;
+					
+					if (!in_array($charset, $allowed_set_name_charsets)) {
+					
+						/* translators: charset */
+						$updraftplus->log('SET NAMES: '.__('The site owner has used UPDRAFTPLUS_ALLOW_ANY_SET_NAMES to allow this.', 'updraftplus'), 'notice-restore');
+					}
+				}
+				
+			} elseif (preg_match('/^\s*create +trigger /i', $sql_line)) {
 				$sql_type = 9;
 				// If the statement is not yet complete, then continue (to get the next line)
 				if (!preg_match('/(?:END)?\s*'.$delimiter_regex.'\s*$/', $sql_line)) continue;
@@ -3495,7 +3603,7 @@ class Updraft_Restorer {
 					$sql_line = preg_replace('/\s*'.$delimiter_regex.'\s*$/', '', $sql_line);
 				}
 				if (!empty($this->db_permissons_forbidden['triggers'])) $updraftplus->log("Database user lacks permission to create triggers; statement will not be executed ($sql_line)");
-			} elseif (preg_match('/^\s*drop trigger /i', $sql_line)) {
+			} elseif (preg_match('/^\s*drop +trigger /i', $sql_line)) {
 				// Avoid sending unrecognised delimiters to the SQL server (this only affects backups created outside UD; we use ";;" which is cunningly compatible)
 				if (';' !== $delimiter) $sql_line = preg_replace('/'.$delimiter_regex.'\s*$/', '', $sql_line);
 			} elseif (preg_match("/^\s*CREATE\s\s*(?:OR\s\s*REPLACE\s\s*)?(?:DEFINER\s*=\s*(?:`.{1,17}`@`[^\s]+`\s*|'.{1,17}'@'[^\s]+'\s*|[^\s]+?\s))?(?:AGGREGATE\s\s*)?(?:PROCEDURE|FUNCTION)((?:\s\s*[^\(`]+|\s*`(?:[^`]|``)+`))\s*\(/is", $sql_line, $routine_matches)) {
@@ -3631,7 +3739,7 @@ class Updraft_Restorer {
 						$this->restoring_table = ''; // reset this variable so that the same table renaming procedure at the end of this method doesn't get executed
 					}
 				}
-			} elseif (preg_match('/^SET @@GLOBAL.GTID_PURGED/i', $sql_line)) {
+			} elseif (preg_match('/^SET +@@GLOBAL.GTID_PURGED/i', $sql_line)) {
 				// skip the SET @@GLOBAL.GTID_PURGED command
 				$sql_type = 17;
 			} elseif (preg_match('/^\/\*\!\d+\s+SET\s+(?:[^,].*)?(?=SQL_MODE\s*=)/i', $sql_line)) {
@@ -3654,7 +3762,7 @@ class Updraft_Restorer {
 			// mysqldump doesn't include all of the columns/fields value into the insert statement but instead it specifies only non generated-columns to be included in the insert statement (i.e insert into `table`(`non-generated-column1`,`non-generated-column2`) values('value','value2'))
 			// UDP includes all the columns (i.e insert into `table` values ('non-generated-column-value1', 'non-generated-column-value2', 'virtual-column-value', 'stored-column-value'))
 			// the code below will only get executed if the running DB server is MySQL and the insert statement has all the columns included. If we change the way UDP backup the generated columns to be the same as mysqldump then the code below is no longer necessary and can be removed
-			if (3 == $sql_type && !empty($this->generated_columns[$this->table_name])) {
+			if ($sql_types['INSERT'] == $sql_type && !empty($this->generated_columns[$this->table_name])) {
 				// MySQL doesn't allow the "generated columns" value takes its place in the insert statement, and because of that the only solution is to change the generated columns to standard columns which have been done previously
 				// now we need to change it back to generated columns but unfortunately changing it to virtual type wont work, it can only be changed to stored type
 				if (!isset($this->supported_generated_column_engines[strtolower($this->table_engine)])) $this->supported_generated_column_engines[strtolower($this->table_engine)] = UpdraftPlus_Database_Utility::is_generated_column_supported($this->table_engine);
@@ -3686,6 +3794,23 @@ class Updraft_Restorer {
 			$sql_line = '';
 			$sql_type = -1;
 
+		}
+		
+		// This ought to only be possible with a corrupted backup file - if the above loop finally exited via a 'continue' which did not also reset $sql_line
+		if ('' !== $sql_line) {
+			
+			$logit = substr($sql_line, 0, 100);
+			$updraftplus->log(sprintf("SQL remained at the end of the backup that was not executed: %s", '('.strlen($sql_line).', '.$logit.' ...)'));
+			
+			$updraftplus->log(
+				__('Warning:', 'updraftplus').' '.
+				sprintf(
+					/* translators: %s: SQL line */
+					__("SQL remained at the end of the backup that could not be executed: %s", 'updraftplus'),
+					'('.strlen($sql_line).', '.$logit.' ...)'
+				),
+			'notice-restore');
+			
 		}
 
 		if (is_array($this->stored_routine_supported) && $this->stored_routine_supported['is_binary_logging_enabled']) {
@@ -3728,7 +3853,6 @@ class Updraft_Restorer {
 			$this->restored_table($final_table_name, $this->final_import_table_prefix, $this->old_table_prefix, $this->table_engine);
 		}
 
-
 		// drop the dummy restored tables
 		if ($this->is_dummy_db_restore) $this->drop_tables($this->restored_table_names);
 
@@ -3752,6 +3876,84 @@ class Updraft_Restorer {
 
 	}
 
+	/**
+	 * Set the database connection to the most capable available UTF-8
+	 * character set and collation.
+	 *
+	 * @return String|Boolean - the character set chosen, or false if the attempt failed
+	 */
+	private function set_connection_charset_utf8() {
+		
+		global $wpdb;
+		
+		$actual_charset = false;
+		$actual_collate = false;
+		
+		foreach (array('utf8mb4', 'utf8') as $charset) {
+			
+			if ($this->use_wpdb()) {
+				$settings = $this->wpdb_obj->determine_charset($charset, '');
+			} else {
+				$settings = $wpdb->determine_charset($charset, '');
+			}
+			
+			if (empty($settings['charset'])) continue;
+			
+			$sql = 'SET NAMES '.esc_sql($settings['charset']);
+			if (!empty($settings['collate'])) $sql .= ' COLLATE '.esc_sql($settings['collate']);
+
+			if ($this->use_wpdb()) {
+				// dbh is protected, but available via the magic getter
+				$this->wpdb_obj->set_charset(
+					$this->wpdb_obj->dbh,
+					$settings['charset'],
+					$settings['collate']
+				);
+			} elseif ($this->use_mysqli) {
+				$set_charset_succeeded = mysqli_set_charset($this->mysql_dbh, $settings['charset']); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_set_charset -- Direct mysql function used for low-level database operations outside of $wpdb.
+				if ($set_charset_succeeded) mysqli_query($this->mysql_dbh, $sql); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Direct mysqli used for low-level restore operations outside of $wpdb.
+			} else {
+				$set_charset_succeeded = mysql_set_charset($settings['charset'], $this->mysql_dbh);// phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.RestrictedFunctions.mysql_mysql_set_charset -- Legacy compatibility for very old PHP versions.Direct mysql function used for low-level database operations outside of $wpdb.
+				if ($set_charset_succeeded) mysql_unbuffered_query($sql, $this->mysql_dbh); // phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_unbuffered_query -- Legacy compatibility for very old PHP versions. Direct mysql function used for low-level database operations outside of $wpdb.
+			}
+			
+		}
+		
+		if ($this->use_wpdb()) {
+			$actual_charset = $this->wpdb_obj->get_var('SELECT @@character_set_connection');
+			$actual_collate = $this->wpdb_obj->get_var('SELECT @@collation_connection');
+		} elseif ($this->use_mysqli) {
+			$result = mysqli_query($this->mysql_dbh, 'SELECT @@character_set_connection, @@collation_connection'); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_query -- Direct mysql function used for low-level database operations outside of $wpdb.
+			
+			if (false !== $result) {
+				$row = mysqli_fetch_row($result); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_fetch_row -- Direct mysql function used for low-level database operations outside of $wpdb.
+				$actual_charset = $row[0];
+				$actual_collate = $row[1];
+			}
+			
+			mysqli_free_result($result); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_free_result -- Direct mysql function used for low-level database operations outside of $wpdb.
+		} else {
+			$result = mysql_query('SELECT @@character_set_connection, @@collation_connection', $this->mysql_db); // phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_query -- Legacy compatibility for very old PHP versions. Direct mysql function used for low-level database operations outside of $wpdb.
+			
+			if (false !== $result) {
+				$row = mysql_fetch_row($result); // phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_fetch_row -- Legacy compatibility for very old PHP versions. Direct mysql function used for low-level database operations outside of $wpdb.
+				$actual_charset = $row[0];
+				$actual_collate = $row[1];
+			}
+
+			mysql_free_result($result); // phpcs:ignore PHPCompatibility.Extensions.RemovedExtensions.mysql_DeprecatedRemoved, WordPress.DB.RestrictedFunctions.mysql_mysql_free_result -- Legacy compatibility for very old PHP versions. Direct mysql function used for low-level database operations outside of $wpdb.
+			
+		}
+		
+		if (strtolower($actual_charset) === strtolower($settings['charset']) && strtolower($actual_collate) === strtolower($settings['collate'])) {
+			return strtolower($actual_charset);
+		}
+		
+		if (preg_match('/^utf8/i', $actual_charset)) return strtolower($actual_charset);
+		
+		return false;
+	}
+	
 	/**
 	 * This function will check if the passed in table should be skipped e.g it was processed on another run
 	 *

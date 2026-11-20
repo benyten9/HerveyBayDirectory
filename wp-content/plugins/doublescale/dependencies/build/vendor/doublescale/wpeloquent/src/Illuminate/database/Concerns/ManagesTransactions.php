@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Concerns;
 
 use Closure;
 use Exception;

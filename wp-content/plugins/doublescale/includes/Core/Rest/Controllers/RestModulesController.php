@@ -42,7 +42,28 @@ class RestModulesController extends RestController {
 							'type'     => 'string',
 							// `deals` (pipeline) is a child of Sales and no longer
 							// owns roles, so it has no role impact of its own.
-							'enum'     => array( 'support', 'sales' ),
+							// The help center (a Helpdesk child) owns its own.
+							'enum'     => array( 'support', 'sales', 'knowledge_base' ),
+						),
+					),
+				),
+			)
+		);
+
+		// New modules announced to this administrator: mark them seen.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/news/seen',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'mark_news_seen' ),
+					'permission_callback' => array( $this, 'admin_permissions_check' ),
+					'args'                => array(
+						'slugs' => array(
+							'required' => true,
+							'type'     => 'array',
+							'items'    => array( 'type' => 'string' ),
 						),
 					),
 				),
@@ -127,6 +148,23 @@ class RestModulesController extends RestController {
 	 */
 	public function get_modules( $request ) {
 		return new WP_REST_Response( $this->build_modules_payload(), 200 );
+	}
+
+	/**
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response
+	 */
+	public function mark_news_seen( $request ) {
+		$user_id = get_current_user_id();
+		\DoubleScale\Core\ModuleNews::mark_seen( $user_id, (array) $request->get_param( 'slugs' ) );
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'news'    => \DoubleScale\Core\ModuleNews::for_user( $user_id ),
+			),
+			200
+		);
 	}
 
 	/**

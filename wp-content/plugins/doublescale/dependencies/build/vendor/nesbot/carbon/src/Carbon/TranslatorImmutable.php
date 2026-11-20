@@ -8,12 +8,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-use Carbon\Exceptions\ImmutableException;
+use DoubleScale\Vendor\Carbon\Exceptions\ImmutableException;
 use DoubleScale\Vendor\Symfony\Component\Config\ConfigCacheFactoryInterface;
 use DoubleScale\Vendor\Symfony\Component\Translation\Formatter\MessageFormatterInterface;
-class TranslatorImmutable extends \Carbon\Translator
+class TranslatorImmutable extends Translator
 {
     /** @var bool */
     private $constructed = \false;

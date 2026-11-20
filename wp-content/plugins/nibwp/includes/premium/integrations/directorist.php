@@ -21,11 +21,8 @@ if (!defined('ABSPATH')) {
  */
 
 wp_register_ability('nibwp/directorist-manage', [
-    'label' => __('Directorist – Directory Manager', domain: 'nibwp'),
-    'description' => __(
-        'Manage a Directorist business directory — listings, categories, locations, tags, listing reviews, orders, pricing plans, and user favorites. Create / publish / expire / feature listings, approve reviews, and pull directory reports.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Directorist – Directory Manager', 'nibwp'),
+    'description' => 'Manage a Directorist business directory — listings, categories, locations, tags, listing reviews, orders, pricing plans, and user favorites. Create / publish / expire / feature listings, approve reviews, and pull directory reports.',
     'category' => 'directory',
     'input_schema' => [
         'type' => 'object',

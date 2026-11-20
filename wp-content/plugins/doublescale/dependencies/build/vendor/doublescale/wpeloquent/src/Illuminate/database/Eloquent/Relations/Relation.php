@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
 use Closure;
-use Illuminate\Support\Arr;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Traits\ForwardsCalls;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+use DoubleScale\Vendor\Illuminate\Support\Traits\ForwardsCalls;
 /**
  * @mixin \Illuminate\Database\Eloquent\Builder
  */

@@ -86,12 +86,19 @@ class Updater {
 
 		$plugin_info->plugin = $this->plugin_name;
 
-		if ( version_compare( $this->plugin_version, $version_info['new_version'], '<' ) ) {
+		$installed_version = $this->plugin_version;
+
+		if ( ! empty( $_transient_data->checked[ $this->plugin_name ] ) ) {
+			$installed_version = $_transient_data->checked[ $this->plugin_name ];
+		}
+
+		if ( version_compare( $installed_version, $version_info['new_version'], '<' ) ) {
 			$_transient_data->response[ $this->plugin_name ] = $plugin_info;
-			$_transient_data->checked[ $this->plugin_name ] = $version_info['new_version'];
+			$_transient_data->checked[ $this->plugin_name ] = $installed_version;
 		} else {
+			unset( $_transient_data->response[ $this->plugin_name ] );
 			$_transient_data->no_update[ $this->plugin_name ] = $plugin_info;
-			$_transient_data->checked[ $this->plugin_name ] = $this->plugin_version;
+			$_transient_data->checked[ $this->plugin_name ] = $installed_version;
 		}
 
 		$_transient_data->last_checked = time();

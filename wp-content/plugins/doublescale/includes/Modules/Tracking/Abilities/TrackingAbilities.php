@@ -245,7 +245,7 @@ final class TrackingAbilities {
 	 * @since 1.0.0
 	 *
 	 * @param array<string, mixed> $input Ability input.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	private static function filtered_query( array $input ) {
 		$query = CommunicationTrackingModel::query();

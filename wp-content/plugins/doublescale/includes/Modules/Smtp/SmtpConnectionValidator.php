@@ -28,9 +28,11 @@ class SmtpConnectionValidator {
 	 * Validate every connection in a merged settings array.
 	 *
 	 * @param array $settings Full settings including `connections`.
+	 * @param array $previous Connections as stored before this save; a connection whose
+	 *                        From address and account are unchanged skips the sender check.
 	 * @return true|WP_Error
 	 */
-	public static function validate_settings_connections( $settings ) {
+	public static function validate_settings_connections( $settings, $previous = array() ) {
 		if ( empty( $settings['connections'] ) || ! is_array( $settings['connections'] ) ) {
 			return true;
 		}
@@ -54,6 +56,12 @@ class SmtpConnectionValidator {
 			$single = self::validate_single_connection( (string) $connection_id, $connection, 'storage' );
 			if ( is_wp_error( $single ) ) {
 				return $single;
+			}
+
+			$before = isset( $previous[ $connection_id ] ) && is_array( $previous[ $connection_id ] ) ? $previous[ $connection_id ] : null;
+			$sender = self::validate_sender( (string) $connection_id, $connection, $before );
+			if ( is_wp_error( $sender ) ) {
+				return $sender;
 			}
 		}
 
@@ -133,6 +141,62 @@ class SmtpConnectionValidator {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Ask the provider whether the connection's From address can send, for mailers
+	 * whose account API offers `verify_sender()` (toSend). Without this, a From on an
+	 * unverified domain saves fine and then every email fails at send time.
+	 *
+	 * Runs only when the connection is new or its mailer, account or From address
+	 * changed, so saving other settings doesn't call the provider. A network failure
+	 * doesn't block the save; a clear "no" from the provider does.
+	 *
+	 * @param string     $connection_id Connection key.
+	 * @param array      $connection    Connection data.
+	 * @param array|null $before        The stored connection, or null when new.
+	 * @return true|WP_Error
+	 */
+	public static function validate_sender( $connection_id, array $connection, $before = null ) {
+		$from_email = strtolower( trim( (string) ( $connection['from_email'] ?? '' ) ) );
+		$account_id = trim( (string) ( $connection['account_id'] ?? '' ) );
+		$slug       = sanitize_key( (string) ( $connection['mailer'] ?? '' ) );
+		if ( '' === $from_email || ! is_email( $from_email ) || '' === $account_id || '' === $slug ) {
+			return true;
+		}
+
+		if ( is_array( $before )
+			&& strtolower( trim( (string) ( $before['from_email'] ?? '' ) ) ) === $from_email
+			&& trim( (string) ( $before['account_id'] ?? '' ) ) === $account_id
+			&& sanitize_key( (string) ( $before['mailer'] ?? '' ) ) === $slug
+		) {
+			return true;
+		}
+
+		$mailer = Mailers::get_mailer( $slug );
+		if ( ! $mailer || empty( $mailer->accounts ) ) {
+			return true;
+		}
+
+		$api = $mailer->accounts->connect( $account_id );
+		if ( is_wp_error( $api ) || ! method_exists( $api, 'verify_sender' ) ) {
+			return true;
+		}
+
+		$result = $api->verify_sender( $from_email );
+		if ( ! is_wp_error( $result ) || 'http_request_failed' === $result->get_error_code() ) {
+			return true;
+		}
+
+		return new WP_Error(
+			'doublescale_smtp_sender_unverified',
+			$result->get_error_message(),
+			array(
+				'status'        => 400,
+				'connection_id' => $connection_id,
+				'mailer'        => $slug,
+			)
+		);
 	}
 
 	/**

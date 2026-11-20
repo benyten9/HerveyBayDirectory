@@ -3,7 +3,7 @@ Contributors: Backup with UpdraftPlus, DavidAnderson, pmbaldha, DNutbourne, apor
 Tags: backup, database backup, wordpress backup, cloud backup, migration
 Requires at least: 3.9
 Tested up to: 7.1
-Stable tag: 1.26.8
+Stable tag: 1.26.16
 Author URI: https://updraftplus.com
 Donate link: https://david.dw-perspective.org.uk/donate
 License: GPLv3 or later
@@ -12,7 +12,7 @@ Backup, restore or migrate your WordPress website to another host or domain. Sch
 
 == Description ==
 
-<a href="https://updraftplus.com">The UpdraftPlus Backup & Migration Plugin</a> is trusted by the WordPress community to backup, restore and migrate their WordPress websites. UpdraftPlus is actively installed on more than 3 million websites around the world.
+<a href="https://updraftplus.com">The UpdraftPlus Backup & Migration Plugin</a> is trusted by the WordPress community to backup, restore and migrate their WordPress websites. UpdraftPlus is actively installed on more than 4 million websites around the world.
 
 = Backup with UpdraftPlus =
 
@@ -48,7 +48,7 @@ UpdraftPlus:
 * Offers a huge number of remote storage locations
 * Allows you to schedule backups, so you can ‘set and forget’
 * Is comprehensive and easy to use
-* Is proven to work on over 3 million sites.
+* Is proven to work on over 4 million sites.
 
 [vimeo https://vimeo.com/154870690]
 
@@ -106,7 +106,7 @@ UpdraftClone makes it quick and easy to create a temporary sandbox for changes y
 = The full suite of plugins from Team Updraft and friends =
 
 * <a href="https://updraftplus.com">UpdraftPlus</a>.
- <b>Backup, migrate and restore.</b> Rated 5* on the plugin directory and trusted by more than 3 million WordPress website owner
+ <b>Backup, migrate and restore.</b> Rated 5* on the plugin directory and trusted by more than 4 million WordPress website owner
 
 * <a href="https://getwpo.com">WP-Optimize</a>.
  <b>Clean the database, compress images and caching.</b> Optimize your WordPress website. 5* user rating. 1 million + active installs.
@@ -179,7 +179,81 @@ The [UpdraftPlus backup blog](https://updraftplus.com/news/) is the best place t
 
 N.B. Paid versions of UpdraftPlus Backup / Restore have a version number which is 1 higher in the first digit, and has an extra component on the end, but the changelog below still applies. i.e. changes listed for 1.16.32.x of the free version correspond to changes made in 2.16.32.x of the paid version.
 
-= 1.26.8 - 17/Sep/2026
+= 1.26.16 - 16/Nov/2026 =
+
+* SECURITY: Thanks to Jakub Herman and Wordfence for reporting further related instances of the problem patched in 1.26.9 (which could allow a low-privileged user account to manipulate a restore after inserting long controlled sequences in the database).
+* FEATURE: Search for and use mariadb-dump binaries as well as mysqldump
+* TWEAK: Search/replace of JSON sequences should not allow unwanted changes; thanks to Jakub Herman for reporting this issue. This could rise to a security issue, but only if the attacker (who would need a login) also has a further vulnerable 'gadget' on the site to exploit (none are known to exist in default WP + UpdraftPlus installs).
+* TWEAK: Pass --set-gtid-purged=OFF to mysqldump if relevant
+* TWEAK: When logging identified mysqldump, include the full command used
+* TWEAK: Updated bundled certificate authority file
+* TWEAK: Clarify search/replace message when restoring
+* TWEAK: When skipping a table during search/replace, include the table name in the log line
+* TWEAK: Set the connection character set to a UTF8 variant; abort backup upon failure
+* TWEAK: Block restoration if an incompatible connection character set is requested
+* TWEAK: Change link wording to "X/Twitter"
+* TWEAK: Upon restoration failure, log the file/line/trace in the log file without requiring a debug setting
+* TWEAK: get_sql_modes() now handles empty SQL mode session settings, thereby no longer telling the user of a restoration problem
+* TWEAK: Automatically remove the user's teamupdraft.com password from the settings (paid versions) after connecting to teamupdraft.com
+* TWEAK: Added the 2026 Black Friday promotional notices
+* TWEAK: Restore Google Drive drive.readonly scope after CASA review approval
+
+= 1.26.15 - 05/Nov/2026 =
+
+* FIX: SFTP uploads failed in 1.26.14 when a host key fingerprint was saved, because since the phpseclib3 upgrade the remote directory was not entered on the reconnected session
+
+= 1.26.14 - 26/Oct/2026 =
+
+* FEATURE: SFTP/SCP remote storage now supports modern host key algorithms like Ed25519 and also new cryptographies
+* FEATURE: Improve the restoration of the 'uploads' entity to be more efficient, and add the 'UPDRAFTPLUS_RESTORE_DELETE_OLD_UPLOAD_FILES' constant to allow the deletion of leftover files in the 'uploads' directory that are not part of the backup file
+* FIX: Fixed a JS error and incorrect checkbox state handling on the auto-backup before update prompt.
+* FIX: Prevent a fatal TypeError on PHP 8+ when an admin URL contains an "action" query argument as an array.
+* TWEAK: Disabled the option to automatically add websites to UDCentral upon connection by default. Users must now explicitly enable this option if they want websites to be added automatically upon connection.
+* TWEAK: Adjusted the Abort Backup popup icon sizing and added the missing "X" icon to the Close button on the backup completion popup.
+* TWEAK: Avoid warning by handling $_ENV variable.
+* TWEAK: Change the 'pre_database_backup_setup' action hook name to 'updraftplus_pre_database_backup_setup'
+* TWEAK: Check the existence of the user's folder before doing any UpdraftVault storage-related oprations to ensure the same directory is used even if the home/site URL has changed from using "www" to without using "www" or vice versa.
+* TWEAK: Enforce the WordPress DISALLOW_FILE_MODS constant to block all restore operations (including database) via the admin UI, WP-CLI, and the core restore method.
+* TWEAK: Ensure SFTP/SCP remote storage works with the phpseclib3 library upgrade, including SCP mode, Ed25519 SSH keys, database restores and rescans
+* TWEAK: Exclude the unused common-libs sub-libraries updraft-tasks and updraft-theme from the build to reduce the plugin size
+* TWEAK: Improved the remote storage UI with cleaner spacing, layout, font sizes, colors, and clearer wording, while fixing tooltip visibility for UpdraftVault.
+* TWEAK: Removed dead code and references left behind by the retirement of the Tour feature.
+* TWEAK: Removed implicit nullable type hints in the bundled PEAR library (HTTP_Request2_CookieJar and Net_URL2) to resolve PHP 8.4 deprecation notices
+* TWEAK: Removed the CURLOPT_BINARYTRANSFER cURL option (a no-op since PHP 5.1.2) from the Dropbox consumer to prevent deprecation warnings on PHP 8.4+
+* TWEAK: Removed the UDP_Google_Client type hint from the $client parameter in UDP_Google_Http_REST::decodeHttpResponse() to resolve a PHP 8.4 deprecation notice caused by implicit nullable typing 
+* TWEAK: Resolve PHP 8.2+ deprecation warning by explicitly declaring $commands property on UpdraftPlus_CLI_Command 
+* TWEAK: Resolve an SQL error when backing up the sitemeta table on multisite using mysqldump on Windows.
+* TWEAK: The "Follow TeamUpdraft" social media notice now stays hidden for 84 days once dismissed
+* TWEAK: Update all links in the udaddons folder to use teamupdraft.com instead of updraftplus.com.  
+* TWEAK: Upgraded phpseclib to the version 3 while still maintaining compatibility with the phpseclib version 2
+* TWEAK: Addressed several issues identified during Plugin Check (PCP) validation and improved overall plugin compatibility and code quality.
+
+= 1.26.13 - 19/Oct/2026 =
+
+* FIX: Properly apply the revocation in 1.26.12
+
+= 1.26.12 - 19/Oct/2026 =
+
+* SECURITY: Revokes UpdraftCentral Cloud keys created before the incident described at https://teamupdraft.com/blog/security-incident-october-2026/ .
+
+= 1.26.11 - 16/Oct/2026 =
+
+* SECURITY: The fix in 1.26.9 did not correctly handle NO_BACKSLASH_ESCAPES (a rare SQL server mode which is no longer supported by WordPress from WordPress 7.2 and causes various problems if set). Though your website almost certainly does not use it, it is still best to update.
+* FIX: When an near-over-sized (beyond the maximum packet size) line with a specific (unlikely) construction was rejected, it could be silently dropped in 1.26.10
+* TWEAK: Re-factor set_sql_mode() to allow indicating the success of the attempt
+* TWEAK: If a backup file is invalid with trailing content which cannot be executed, then log this
+
+= 1.26.10 - 15/Oct/2026 =
+
+* SECURITY: Thanks to Jakub Herman for reporting a second/related instance of the problem patched in 1.26.9. In this related instance, the problem could lead to execution only if the site was restored on a database server which differed in configuration from that on which the backup was taken. Nevertheless, all users should update.
+
+= 1.26.9 - 14/Oct/2026 =
+
+* SECURITY: On a site where an attacker who is not an admin has the ability to insert a database cell over 1MB with his own chosen content, if the site owner backs up and restores the site, then upon restoring, arbitrary SQL from the attacker may be run. Thanks to Wordfence for the responsible disclosure.
+* TWEAK: Drop support for generating RSA keys less than 2048 bits
+* TWEAK: If set, unset the SQL compatibility mode NO_BACKSLASH_ESCAPE
+
+= 1.26.8 - 17/Sep/2026 =
 
 * SECURITY: On a site which has been migrated (i.e. moved to a new address using UpdraftPlus's migration  feature), and is using an .htaccess file, and the .htaccess file has not been updated with the new site reference, and where the site owner does not respond to the notice to do so, and where the site has non-admin users who can login to the WP dashboard, and where the site had saved storage login credentials in the UpdraftPlus settings, such a logged-in user could access some of those credentials (e.g. could access FTP, but not Dropbox). Thanks to Jakub Herman for notifying us of this issue (via WPScan).
 * FEATURE: Implemented an onboarding wizard to assist first-time users with plugin configuration (requires WordPress 6.2+ and PHP 7.4+).
@@ -2175,7 +2249,7 @@ Older changes are found <a href="https://plugins.svn.wordpress.org/updraftplus/t
 
 == License ==
 
-    Copyright 2011-24 David Anderson
+    Copyright 2011-26 David Anderson
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -2196,4 +2270,4 @@ Non-English translators are provided by volunteers, and wordpress.org does not g
 We recognise and thank those mentioned at https://updraftplus.com/acknowledgements/ for code and/or libraries used and/or modified under the terms of their open source licences.
 
 == Upgrade Notice ==
-* 1.26.8: Onboarding Wizard, Azure legacy blob storage retirement, PHP < 5.6.1 feature deprecation warning, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.
+* 1.26.16: Improved backup compatibility, restoration, logging, and security, plus various fixes and small tweaks - see the changelog for details. A recommended update for all; please update immediately.

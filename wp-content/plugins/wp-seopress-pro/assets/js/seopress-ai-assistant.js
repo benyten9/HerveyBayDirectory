@@ -62,21 +62,24 @@
 	}
 
 	/**
-	 * Fetch SEO data (target keywords and content analysis).
+	 * Fetch SEO data (target keywords).
+	 *
+	 * Only the keywords are fetched here. The panel used to ask
+	 * /content-analysis for `analysis` as well, on every load of the edit
+	 * screen, which cost a full server-side loop-back render of the page and
+	 * returned nothing, because that response has no `analysis` key. The SEO
+	 * metabox runs the content analysis on load, from the HTML the browser
+	 * downloads. See #1874.
 	 */
 	function fetchSeoData() {
 		if ( ! config.postId ) {
 			return;
 		}
 
-		// Fetch target keywords and content analysis in parallel.
-		Promise.all( [
-			wp.apiFetch( { path: '/seopress/v1/posts/' + config.postId + '/target-keywords' } ).catch( function() { return null; } ),
-			wp.apiFetch( { path: '/seopress/v1/posts/' + config.postId + '/content-analysis' } ).catch( function() { return null; } )
-		] ).then( function( results ) {
+		wp.apiFetch( { path: '/seopress/v1/posts/' + config.postId + '/target-keywords' } ).then( function( response ) {
 			seoData = {
-				targetKeywords: results[0] && results[0].keywords ? results[0].keywords : [],
-				analysisResults: results[1] && results[1].analysis ? results[1].analysis : []
+				targetKeywords: response && response.keywords ? response.keywords : [],
+				analysisResults: []
 			};
 		} ).catch( function() {
 			seoData = null;
@@ -330,13 +333,18 @@
 				}
 			} );
 		} else {
-			messages.forEach( function( msg ) {
-				$messagesContainer.append( createMessageHtml( msg ) );
+			messages.forEach( function( msg, index ) {
+				$messagesContainer.append( createMessageHtml( msg, index ) );
 			} );
 			$clearBtn.prop( 'disabled', false );
 
 			// Bind copy buttons.
 			bindCopyButtons();
+
+			// Bind the buttons running a proposed action.
+			$messagesContainer.find( '.seopress-ai-assistant-run-action' ).on( 'click', function() {
+				runAction( $( this ).data( 'message-index' ), $( this ).data( 'action-index' ) );
+			} );
 		}
 
 		// Scroll to bottom.
@@ -389,7 +397,80 @@
 	 * @param {Object} msg Message object.
 	 * @return {string} Message HTML.
 	 */
-	function createMessageHtml( msg ) {
+	/**
+	 * Build the list of actions the assistant proposed in a message.
+	 *
+	 * The server no longer runs them on its own: the reply can be steered by
+	 * the content the model read. Each one waits for a click.
+	 *
+	 * @param {Object} msg   Message.
+	 * @param {number} index Message index.
+	 * @return {string} HTML.
+	 */
+	function createActionsHtml( msg, index ) {
+		if ( ! msg.actions || ! msg.actions.length ) {
+			return '';
+		}
+
+		var html = '<div class="seopress-ai-assistant-message__actions">';
+
+		msg.actions.forEach( function( action, actionIndex ) {
+			html += '<p class="seopress-ai-assistant-message__action">' +
+				'<strong>' + escapeHtml( action.label || action.ability ) + '</strong> ' +
+				'<code>' + escapeHtml( JSON.stringify( action.input || {} ) ) + '</code> ';
+
+			if ( 'success' === action.status ) {
+				html += '<span>' + escapeHtml( i18n.actionDone || 'Done' ) + '</span>';
+			} else if ( 'error' === action.status ) {
+				html += '<span>' + escapeHtml( action.message || i18n.error || 'Error' ) + '</span>';
+			} else {
+				html += '<button type="button" class="button button-small seopress-ai-assistant-run-action" data-message-index="' + index + '" data-action-index="' + actionIndex + '">' +
+					escapeHtml( i18n.runAction || 'Run' ) +
+				'</button>';
+			}
+
+			html += '</p>';
+		} );
+
+		return html + '</div>';
+	}
+
+	/**
+	 * Run an action the user confirmed.
+	 *
+	 * @param {number} messageIndex Message index.
+	 * @param {number} actionIndex  Action index in the message.
+	 */
+	function runAction( messageIndex, actionIndex ) {
+		var msg    = messages[ messageIndex ];
+		var action = msg && msg.actions ? msg.actions[ actionIndex ] : null;
+
+		if ( ! action || action.status ) {
+			return;
+		}
+
+		action.status = 'running';
+
+		wp.apiFetch( {
+			path: '/seopress/v1/ai/chat/action',
+			method: 'POST',
+			data: {
+				ability: action.ability,
+				input: action.input || {}
+			}
+		} ).then( function( response ) {
+			action.status  = response && 'success' === response.status ? 'success' : 'error';
+			action.message = response && response.message ? response.message : '';
+		} ).catch( function( error ) {
+			action.status  = 'error';
+			action.message = error.message || '';
+		} ).finally( function() {
+			saveMessages();
+			renderMessages();
+		} );
+	}
+
+	function createMessageHtml( msg, index ) {
 		var isUser = msg.role === 'user';
 		var roleLabel = isUser ? ( i18n.you || 'You' ) : ( i18n.assistant || 'AI Assistant' );
 		var iconClass = isUser ? 'dashicons-admin-users' : 'dashicons-format-chat';
@@ -414,6 +495,7 @@
 					copyBtn +
 				'</div>' +
 				'<div class="seopress-ai-assistant-message__text">' + formatContent( msg.content ) + '</div>' +
+				createActionsHtml( msg, index ) +
 			'</div>' +
 		'</div>';
 	}
@@ -460,7 +542,8 @@
 		} ).then( function( response ) {
 			messages.push( {
 				role: 'assistant',
-				content: response.content
+				content: response.content,
+				actions: response.actions_proposed || []
 			} );
 			saveMessages();
 		} ).catch( function( error ) {

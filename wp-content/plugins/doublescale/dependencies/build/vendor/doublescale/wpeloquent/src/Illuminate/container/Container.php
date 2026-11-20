@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Container;
+namespace DoubleScale\Vendor\Illuminate\Container;
 
 use Closure;
 use Exception;
@@ -8,9 +8,9 @@ use ArrayAccess;
 use LogicException;
 use ReflectionClass;
 use ReflectionParameter;
-use Illuminate\Support\Arr;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Contracts\Container\Container as ContainerContract;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\BindingResolutionException;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container as ContainerContract;
 class Container implements ArrayAccess, ContainerContract
 {
     /**
@@ -127,7 +127,7 @@ class Container implements ArrayAccess, ContainerContract
         foreach (Arr::wrap($concrete) as $c) {
             $aliases[] = $this->getAlias($c);
         }
-        return new \Illuminate\Container\ContextualBindingBuilder($this, $aliases);
+        return new ContextualBindingBuilder($this, $aliases);
     }
     /**
      * Determine if the given abstract type has been bound.
@@ -400,7 +400,7 @@ class Container implements ArrayAccess, ContainerContract
         if (!isset($this->tags[$tag])) {
             return [];
         }
-        return new \Illuminate\Container\RewindableGenerator(function () use($tag) {
+        return new RewindableGenerator(function () use($tag) {
             foreach ($this->tags[$tag] as $abstract) {
                 (yield $this->make($abstract));
             }
@@ -497,7 +497,7 @@ class Container implements ArrayAccess, ContainerContract
      */
     public function call($callback, array $parameters = [], $defaultMethod = null)
     {
-        return \Illuminate\Container\BoundMethod::call($this, $callback, $parameters, $defaultMethod);
+        return BoundMethod::call($this, $callback, $parameters, $defaultMethod);
     }
     /**
      * Get a closure to resolve the given type from the container.
@@ -546,7 +546,7 @@ class Container implements ArrayAccess, ContainerContract
             if ($this->has($id)) {
                 throw $e;
             }
-            throw new \Illuminate\Container\EntryNotFoundException($id);
+            throw new EntryNotFoundException($id);
         }
     }
     /**

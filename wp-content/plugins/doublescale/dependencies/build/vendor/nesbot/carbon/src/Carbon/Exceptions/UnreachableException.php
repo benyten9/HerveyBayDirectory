@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Exceptions;
+namespace DoubleScale\Vendor\Carbon\Exceptions;
 
 use RuntimeException as BaseRuntimeException;
-class UnreachableException extends BaseRuntimeException implements \Carbon\Exceptions\RuntimeException
+class UnreachableException extends BaseRuntimeException implements RuntimeException
 {
     //
 }

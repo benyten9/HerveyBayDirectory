@@ -28,6 +28,7 @@ abstract class AbstractFormSubmittedTrigger extends TriggerPro {
 	public static function integration_slugs(): array {
 		return array(
 			'bitform',
+			'bricks',
 			'contactform7',
 			'elementor',
 			'fluentforms',

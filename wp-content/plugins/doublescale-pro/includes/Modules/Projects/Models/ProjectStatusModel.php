@@ -7,7 +7,7 @@
 
 namespace DoubleScale\Pro\Modules\Projects\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 class ProjectStatusModel extends Model {
 
@@ -70,9 +70,21 @@ class ProjectStatusModel extends Model {
 	);
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function projects() {
 		return $this->hasMany( ProjectModel::class, 'status_id', 'id' );
+	}
+
+	/**
+	 * Deleting a status makes the next request check again that defaults exist.
+	 */
+	public static function boot() {
+		parent::boot();
+		static::deleted(
+			function () {
+				delete_option( 'doublescale_project_statuses_seeded' );
+			}
+		);
 	}
 }

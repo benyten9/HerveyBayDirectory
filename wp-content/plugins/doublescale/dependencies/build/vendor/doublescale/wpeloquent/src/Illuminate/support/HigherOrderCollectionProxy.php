@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 /**
  * @mixin \Illuminate\Support\Collection
@@ -26,7 +26,7 @@ class HigherOrderCollectionProxy
      * @param  string  $method
      * @return void
      */
-    public function __construct(\Illuminate\Support\Collection $collection, $method)
+    public function __construct(Collection $collection, $method)
     {
         $this->method = $method;
         $this->collection = $collection;

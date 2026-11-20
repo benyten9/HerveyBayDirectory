@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Contracts\Routing\ResponseFactory as ResponseFactoryContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Routing\ResponseFactory as ResponseFactoryContract;
 /**
  * @method static \Illuminate\Http\Response make(string $content = '', int $status = 200, array $headers = [])
  * @method static \Illuminate\Http\Response noContent($status = 204, array $headers = [])
@@ -21,7 +21,7 @@ use Illuminate\Contracts\Routing\ResponseFactory as ResponseFactoryContract;
  *
  * @see \Illuminate\Contracts\Routing\ResponseFactory
  */
-class Response extends \Illuminate\Support\Facades\Facade
+class Response extends Facade
 {
     /**
      * Get the registered name of the component.

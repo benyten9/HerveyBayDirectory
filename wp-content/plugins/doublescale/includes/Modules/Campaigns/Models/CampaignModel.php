@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Campaigns\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Campaigns\Models\TemplateModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
@@ -145,7 +145,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function messages() {
 		return $this->hasMany( CommunicationTrackingModel::class, 'source_id', 'id' )
@@ -158,7 +158,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function messages_with_contacts() {
 		global $wpdb;
@@ -181,7 +181,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function emails() {
 		return $this->messages()->emails();
@@ -192,7 +192,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function sms() {
 		return $this->messages()->sms();
@@ -203,7 +203,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function whatsapp() {
 		return $this->messages()->whatsapp();
@@ -214,7 +214,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function sequences_mail() {
 		return $this->hasMany( self::class, 'parent_id' )->where( 'type', CampaignChannel::CHANNEL_SEQUENCE_MAIL );
@@ -225,7 +225,7 @@ class CampaignModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function parent() {
 		return $this->belongsTo( self::class, 'parent_id' );
@@ -512,6 +512,67 @@ class CampaignModel extends Model {
 	}
 
 	/**
+	 * Whether a templates payload is just the stored templates echoed back.
+	 *
+	 * Used to tell an untouched round-trip (the client PUTting back the object
+	 * it was given) from a real edit. Compares the identity that decides which
+	 * message goes out — the template row, plus the fields a client can change
+	 * without changing that row.
+	 *
+	 * @param array $templates Templates from the incoming settings payload.
+	 * @return bool True when nothing that affects sending has changed.
+	 */
+	public function templates_match_stored( $templates ) {
+		$stored_ids = $this->get_template_ids();
+
+		if ( count( $templates ) !== count( $stored_ids ) ) {
+			return false;
+		}
+
+		foreach ( $templates as $index => $template ) {
+			$stored_id = $stored_ids[ $index ] ?? null;
+			$sent_id   = $template['template_id'] ?? $template['id'] ?? null;
+
+			// A payload with no id cannot be an echo: attach_templates() always
+			// sets one.
+			if ( ! $sent_id || (int) $sent_id !== (int) $stored_id ) {
+				return false;
+			}
+
+			$stored = TemplateModel::find( $stored_id );
+
+			if ( ! $stored ) {
+				return false;
+			}
+
+			// Body, subject and the provider identity all change what is sent.
+			if ( (string) ( $template['body'] ?? '' ) !== (string) $stored->body ) {
+				return false;
+			}
+
+			if ( (string) ( $template['subject'] ?? '' ) !== (string) $stored->subject ) {
+				return false;
+			}
+
+			$sent_external   = $template['settings']['external_id'] ?? null;
+			$stored_external = $stored->get_setting( 'external_id' );
+
+			if ( $sent_external !== $stored_external ) {
+				return false;
+			}
+
+			$sent_mappings   = $template['settings']['variable_mappings'] ?? array();
+			$stored_mappings = $stored->get_setting( 'variable_mappings', array() );
+
+			if ( (array) $sent_mappings != (array) $stored_mappings ) { // phpcs:ignore Universal.Operators.StrictComparisons.LooseNotEqual -- order-insensitive compare of decoded JSON.
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Attach templates to campaign settings for Api responses
 	 * Converts template_ids back to full template objects
 	 *
@@ -616,19 +677,39 @@ class CampaignModel extends Model {
 	public static function boot() {
 		parent::boot();
 
+		// Remember who made a campaign or sequence: a Campaign Agent works on
+		// their own (sequence steps and copies included).
+		static::creating(
+			function ( $campaign ) {
+				if ( empty( $campaign->created_by ) && get_current_user_id() > 0 ) {
+					$campaign->created_by = get_current_user_id();
+				}
+			}
+		);
+
 		// Save templates when saving the campaign
 		static::saving(
 			function ( $campaign ) {
 				// Retrieve the settings attribute
 				$settings = $campaign->settings;
 
-				// If templates exist in settings without the is_attached flag, they are
-				// new/edited template data that must be persisted as TemplateModel records.
-				// When is_attached is present the templates were injected by attach_templates()
-				// for the Api response — they should be dropped, not re-processed.
-				if ( isset( $settings['templates'] ) && is_array( $settings['templates'] ) && ! isset( $settings['is_attached'] ) ) {
-					$template_ids             = $campaign->process_templates( $settings['templates'] );
-					$settings['template_ids'] = $template_ids;
+				// Templates in settings are template data to persist as
+				// TemplateModel records.
+				//
+				// `is_attached` marks the objects attach_templates() injected
+				// into an Api response. The client edits that same response and
+				// PUTs it back, so the flag rides along on a genuine change —
+				// skipping on the flag alone silently discarded every template
+				// edit and still answered 200. Skip only when the payload is
+				// unchanged from what the campaign already stores.
+				if ( isset( $settings['templates'] ) && is_array( $settings['templates'] ) ) {
+					$is_echo = isset( $settings['is_attached'] )
+						&& $campaign->templates_match_stored( $settings['templates'] );
+
+					if ( ! $is_echo ) {
+						$template_ids             = $campaign->process_templates( $settings['templates'] );
+						$settings['template_ids'] = $template_ids;
+					}
 				}
 
 				// Always strip transient keys so they are never persisted to the DB.

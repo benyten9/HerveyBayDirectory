@@ -12,7 +12,7 @@
 
 namespace DoubleScale\Pro\Modules\LeadScoring\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * LeadScoringRuleModel class
@@ -83,7 +83,7 @@ class LeadScoringRuleModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public static function get_active_rules() {
 		 return self::where( 'status', 'active' )->get();
@@ -96,7 +96,7 @@ class LeadScoringRuleModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public static function get_by_status( $status ) {
 		return self::where( 'status', $status )->get();
@@ -127,11 +127,11 @@ class LeadScoringRuleModel extends Model {
 	/**
 	 * Scope to filter adding rules
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeAdding( $query ) {
 		return $query->where( 'is_adding', 1 );
@@ -140,11 +140,11 @@ class LeadScoringRuleModel extends Model {
 	/**
 	 * Scope to filter subtracting rules
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeSubtracting( $query ) {
 		return $query->where( 'is_adding', 0 );

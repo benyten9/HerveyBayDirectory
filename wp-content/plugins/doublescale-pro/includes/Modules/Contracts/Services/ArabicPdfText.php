@@ -138,7 +138,17 @@ final class ArabicPdfText {
 			return $instance;
 		}
 
-		$class = 'DoubleScale\\Vendor\\ArPHP\\I18N\\Arabic';
+		$class = 'DoubleScale\\Pro\\Vendor\\ArPHP\\I18N\\Arabic';
+		if ( ! class_exists( $class ) ) {
+			$file = ( defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ? DOUBLESCALE_PRO_PLUGIN_DIR : dirname( __DIR__, 4 ) . '/' )
+				. 'dependencies/libraries/ar-php/src/Arabic.php';
+			if ( is_readable( $file ) ) {
+				require_once $file;
+			}
+		}
+		if ( ! class_exists( $class ) ) {
+			$class = 'DoubleScale\\Vendor\\ArPHP\\I18N\\Arabic';
+		}
 		if ( ! class_exists( $class ) ) {
 			$class = 'ArPHP\\I18N\\Arabic';
 		}

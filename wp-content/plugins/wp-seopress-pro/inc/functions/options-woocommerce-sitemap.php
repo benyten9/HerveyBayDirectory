@@ -27,7 +27,7 @@ if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 
 			if ( function_exists( 'wc_get_page_id' ) ) {
 				if ( seopress_pro_get_service( 'OptionPro' )->getWCCustomerAccountPageNoindexEnable() === '1' ) {
-					if ( function_exists( 'icl_object_id' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) { // WPML.
+					if ( defined( 'ICL_SITEPRESS_VERSION' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) { // WPML.
 						$translations    = apply_filters( 'wpml_get_element_translations', null, wc_get_page_id( 'myaccount' ), 'post_page' );
 						$wc_pages_wpml[] = wp_list_pluck( $translations, 'element_id' );
 					} elseif ( function_exists( 'pll_get_post_translations' ) ) { // Polylang.
@@ -37,7 +37,7 @@ if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 					}
 				}
 				if ( seopress_pro_get_service( 'OptionPro' )->getWCCheckoutPageNoindexEnable() === '1' ) {
-					if ( function_exists( 'icl_object_id' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) { // WPML.
+					if ( defined( 'ICL_SITEPRESS_VERSION' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) { // WPML.
 						$translations    = apply_filters( 'wpml_get_element_translations', null, wc_get_page_id( 'checkout' ), 'post_page' );
 						$wc_pages_wpml[] = wp_list_pluck( $translations, 'element_id' );
 					} elseif ( function_exists( 'pll_get_post_translations' ) ) { // Polylang.
@@ -47,7 +47,7 @@ if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 					}
 				}
 				if ( seopress_pro_get_service( 'OptionPro' )->getWCCartPageNoindexEnable() === '1' ) {
-					if ( function_exists( 'icl_object_id' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) { // WPML.
+					if ( defined( 'ICL_SITEPRESS_VERSION' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) { // WPML.
 						$translations    = apply_filters( 'wpml_get_element_translations', null, wc_get_page_id( 'cart' ), 'post_page' );
 						$wc_pages_wpml[] = wp_list_pluck( $translations, 'element_id' );
 					} elseif ( function_exists( 'pll_get_post_translations' ) ) { // Polylang.

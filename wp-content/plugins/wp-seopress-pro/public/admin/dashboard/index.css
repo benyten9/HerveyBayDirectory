@@ -48,6 +48,28 @@
     font-size: 12px;
 }
 
+.seopress-overview-empty code,
+.seopress-overview-stale code {
+    overflow-wrap: anywhere;
+}
+
+.seopress-overview-stale {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    background: #f6f7f7;
+    border-left: 4px solid var(--colorWarning, #ffba00);
+    color: #1d2327;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.seopress-overview-stale p {
+    margin: 0;
+}
+
 /* ---------- PageSpeed (Figma showcase) ---------- */
 
 .seopress-overview-pagespeed {
@@ -307,6 +329,7 @@
 
 .seopress-overview-chart__plot {
     position: relative;
+    color: var(--wp-admin-theme-color, #2271b1);
 }
 
 .seopress-overview-chart__svg {
@@ -337,9 +360,28 @@
     pointer-events: none;
 }
 
+/* HTML, not SVG: the SVG stretches to the container, a circle would not stay round. */
 .seopress-overview-chart__dot {
-    fill: currentColor;
-    transition: r 0.1s ease-out;
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: width 0.1s ease-out, height 0.1s ease-out;
+}
+
+.seopress-overview-chart__dot.is-active {
+    width: 10px;
+    height: 10px;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seopress-overview-chart__dot {
+        transition: none;
+    }
 }
 
 .seopress-overview-chart__tooltip {
@@ -352,7 +394,7 @@
     background: #1d2327;
     color: #fff;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.4;
     white-space: nowrap;
     pointer-events: none;
@@ -361,7 +403,7 @@
 
 .seopress-overview-chart__tooltip-label {
     opacity: 0.75;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .seopress-overview-chart__tooltip-value {
@@ -369,13 +411,41 @@
 }
 
 .seopress-overview-chart__axis {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
+    height: 18px;
     margin-top: 4px;
     color: #646970;
-    font-size: 11px;
+    font-size: 13px;
     line-height: 1.4;
 }
+
+/* Each tick sits under its own data point, so the scale reads against the
+   line rather than only bounding it. */
+.seopress-overview-chart__tick {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+/* The end ticks would overflow the plot by half their width. The component
+   leaves their inline left unset, so no !important is needed here. */
+.seopress-overview-chart__tick.is-first {
+    left: 0;
+    transform: none;
+}
+
+.seopress-overview-chart__tick.is-last {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+
+/* How many ticks fit is decided in OverviewChart.jsx, on the rendered labels:
+   their width depends on the locale's date format and on the font, which a
+   fixed breakpoint cannot know. A tick that would touch its neighbour gets
+   visibility: hidden, so it keeps its box and can be measured again on the
+   next resize. */
 
 /* ---------- Generic stats grid (GA / Matomo) ---------- */
 
@@ -493,5 +563,148 @@
     font-size: 15px;
     font-weight: 600;
     line-height: 1.2;
+}
+
+/* ---------- Search Console performance ---------- */
+
+.seopress-overview-gsc-performance {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.seopress-overview-gsc-performance h3 {
+    margin: 0 0 4px 0;
+}
+
+.seopress-overview-gsc-performance__description {
+    margin: 0;
+    color: #646970;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.seopress-overview-gsc-performance__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+}
+
+.seopress-overview-gsc-performance__toolbar .components-base-control {
+    flex: 0 1 240px;
+    min-width: 180px;
+    margin-bottom: 0;
+}
+
+.seopress-overview-gsc-performance__property {
+    padding-bottom: 11px; /* Centers the line on the 40px select next to it. */
+    color: #646970;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* Prefixed to outrank core's .widefat rules. */
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table {
+    border: 0;
+    box-shadow: none;
+}
+
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table th,
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table thead th {
+    border-bottom: 1px solid #dcdcde;
+    color: #1d2327;
+    font-weight: 600;
+}
+
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table tbody th {
+    color: #1d2327;
+}
+
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table thead th:not(:first-child),
+.seopress-overview-disclosure .seopress-overview-gsc-performance__table td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Disclosure (details / summary) ---------- */
+
+.seopress-overview-disclosure {
+    border: 1px solid #f0f0f1;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.seopress-overview-disclosure > summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 14px;
+    color: #1d2327;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+    list-style: none;
+}
+
+.seopress-overview-disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+.seopress-overview-disclosure > summary::before {
+    content: "\f345";
+    font-family: dashicons;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1;
+    color: #646970;
+    transition: transform 0.15s ease-out;
+}
+
+.seopress-overview-disclosure[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.rtl .seopress-overview-disclosure > summary::before {
+    content: "\f341";
+}
+
+.rtl .seopress-overview-disclosure[open] > summary::before {
+    transform: rotate(-90deg);
+}
+
+.seopress-overview-disclosure > summary:hover {
+    background: #f6f7f7;
+    color: var(--wp-admin-theme-color);
+}
+
+.seopress-overview-disclosure > summary:focus-visible {
+    outline: 2px solid var(--wp-admin-theme-color);
+    outline-offset: -2px;
+}
+
+.seopress-overview-disclosure[open] > summary {
+    border-bottom: 1px solid #f0f0f1;
+}
+
+/* Wide tables scroll inside the box instead of being clipped. */
+.seopress-overview-disclosure__content {
+    overflow-x: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seopress-overview-disclosure > summary::before {
+        transition: none;
+    }
 }
 

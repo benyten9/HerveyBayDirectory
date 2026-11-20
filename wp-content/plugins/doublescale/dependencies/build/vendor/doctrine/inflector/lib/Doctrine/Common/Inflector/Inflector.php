@@ -17,19 +17,19 @@
  * and is licensed under the MIT license. For more information, see
  * <http://www.doctrine-project.org>.
  */
-namespace Doctrine\Common\Inflector;
+namespace DoubleScale\Vendor\Doctrine\Common\Inflector;
 
-use Doctrine\Inflector\Inflector as InflectorObject;
-use Doctrine\Inflector\InflectorFactory;
-use Doctrine\Inflector\LanguageInflectorFactory;
-use Doctrine\Inflector\Rules\Pattern;
-use Doctrine\Inflector\Rules\Patterns;
-use Doctrine\Inflector\Rules\Ruleset;
-use Doctrine\Inflector\Rules\Substitution;
-use Doctrine\Inflector\Rules\Substitutions;
-use Doctrine\Inflector\Rules\Transformation;
-use Doctrine\Inflector\Rules\Transformations;
-use Doctrine\Inflector\Rules\Word;
+use DoubleScale\Vendor\Doctrine\Inflector\Inflector as InflectorObject;
+use DoubleScale\Vendor\Doctrine\Inflector\InflectorFactory;
+use DoubleScale\Vendor\Doctrine\Inflector\LanguageInflectorFactory;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Pattern;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Patterns;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Ruleset;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Substitution;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Substitutions;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Transformation;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Transformations;
+use DoubleScale\Vendor\Doctrine\Inflector\Rules\Word;
 use InvalidArgumentException;
 use function array_keys;
 use function array_map;

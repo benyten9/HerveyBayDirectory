@@ -11,7 +11,7 @@ namespace DoubleScale\Modules\Booking\Services;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Models\AvailabilityModel;
 
 /**

@@ -22,13 +22,10 @@ if (!defined('ABSPATH')) {
  */
 wp_register_ability('nibwp/find-tools', [
     'label'       => __('Find the tools for a subject', 'nibwp'),
-    'description' => __(
-        'Call this the moment the user names a builder, plugin, theme or design tool — Etch, Figma, Kadence, Bricks, Elementor, Voxel, SureCart, ACSS, WooCommerce, Tutor LMS and so on. '
+    'description' => 'Call this the moment the user names a builder, plugin, theme or design tool — Etch, Figma, Kadence, Bricks, Elementor, Voxel, SureCart, ACSS, WooCommerce, Tutor LMS and so on. '
         . 'Returns everything this site actually has for that subject: the skill that claims it and the exact pipeline to run, any saved workflow covering it, the integration, every matching ability, and whether each is ready, locked, or unavailable and why. '
         . 'When nothing owns the subject it says so and clears you to build it with nibwp/execute-php, so a miss here is never a reason to decline the work. '
         . 'Cheaper and far more reliable than recalling the routing contract from the start of the conversation, and it reflects THIS site rather than what NibWP offers in general.',
-        'nibwp'
-    ),
     'category'    => 'nibwp',
     'input_schema' => [
         'type' => 'object',

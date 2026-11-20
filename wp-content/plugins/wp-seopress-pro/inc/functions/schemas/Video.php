@@ -31,11 +31,11 @@ function seopress_automatic_rich_snippets_videos_option( $schema_datas ) {
 			'description'  => $videos_description,
 			'thumbnailUrl' => $videos_img,
 			'contentUrl'   => $videos_url,
-			'embedUrl'     => $videos_url,
+			'embedUrl'     => function_exists( 'seopress_pro_get_youtube_embed_url' ) ? seopress_pro_get_youtube_embed_url( $videos_url ) : $videos_url,
 		);
 
 		if ( ! empty( $videos_uploaded_date ) ) {
-			$json['uploadDate'] = date( 'c', strtotime( $videos_uploaded_date ) );
+			$json['uploadDate'] = gmdate( 'c', strtotime( $videos_uploaded_date ) );
 		} elseif ( get_the_date() ) {
 			$json['uploadDate'] = get_the_date( 'c' );
 		}
@@ -56,11 +56,29 @@ function seopress_automatic_rich_snippets_videos_option( $schema_datas ) {
 			$json['publisher'] = array(
 				'@type' => 'Organization',
 				'name'  => seopress_get_service( 'SocialOption' )->getSocialKnowledgeName(),
-				'logo'  => array(
-					'@type' => 'ImageObject',
-					'url'   => seopress_pro_get_service( 'OptionPro' )->getArticlesPublisherLogo(),
-				),
 			);
+
+			// Same business as the Knowledge Graph node the free plugin prints,
+			// so both carry one identifier instead of standing as two nodes
+			// nothing connects. Empty whenever they would not match.
+			$publisher_id = \SEOPressPro\Helpers\PublisherEntity::get_id();
+			if ( '' !== $publisher_id ) {
+				$json['publisher']['@id'] = $publisher_id;
+			}
+
+			// Only with a publisher logo set: `array_filter()` below does not reach
+			// nested arrays, so an empty logo used to print `"url":null`.
+			$publisher_logo = seopress_pro_get_service( 'OptionPro' )->getArticlesPublisherLogo();
+			if ( ! empty( $publisher_logo ) ) {
+				$json['publisher']['logo'] = array_filter(
+					array(
+						'@type'  => 'ImageObject',
+						'url'    => $publisher_logo,
+						'width'  => seopress_pro_get_service( 'OptionPro' )->getArticlesPublisherLogoWidth(),
+						'height' => seopress_pro_get_service( 'OptionPro' )->getArticlesPublisherLogoHeight(),
+					)
+				);
+			}
 		}
 
 		$json = array_filter( $json );
@@ -71,6 +89,6 @@ function seopress_automatic_rich_snippets_videos_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_video_html', $json );
 
-		echo $json;
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties.
 	}
 }

@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Concerns;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use InvalidArgumentException;
-use Illuminate\Contracts\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher;
 trait HasEvents
 {
     /**

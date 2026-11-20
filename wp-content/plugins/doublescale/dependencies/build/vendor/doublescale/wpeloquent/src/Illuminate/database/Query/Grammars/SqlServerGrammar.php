@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Query\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Query\Grammars;
 
-use Illuminate\Support\Arr;
-use Illuminate\Database\Query\Builder;
-class SqlServerGrammar extends \Illuminate\Database\Query\Grammars\Grammar
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder;
+class SqlServerGrammar extends Grammar
 {
     /**
      * All of the available clause operators.

@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Support\Arr;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-class MorphToMany extends \Illuminate\Database\Eloquent\Relations\BelongsToMany
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+class MorphToMany extends BelongsToMany
 {
     /**
      * The type of the polymorphic relation.
@@ -113,7 +113,7 @@ class MorphToMany extends \Illuminate\Database\Eloquent\Relations\BelongsToMany
     public function newPivot(array $attributes = [], $exists = \false)
     {
         $using = $this->using;
-        $pivot = $using ? $using::fromRawAttributes($this->parent, $attributes, $this->table, $exists) : \Illuminate\Database\Eloquent\Relations\MorphPivot::fromAttributes($this->parent, $attributes, $this->table, $exists);
+        $pivot = $using ? $using::fromRawAttributes($this->parent, $attributes, $this->table, $exists) : MorphPivot::fromAttributes($this->parent, $attributes, $this->table, $exists);
         $pivot->setPivotKeys($this->foreignPivotKey, $this->relatedPivotKey)->setMorphType($this->morphType)->setMorphClass($this->morphClass);
         return $pivot;
     }

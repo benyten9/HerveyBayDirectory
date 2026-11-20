@@ -493,6 +493,9 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 		})();
 	}
 	__name(_isNativeReflectConstruct$34, "_isNativeReflectConstruct");
+	var MAX_RETRIES = 3;
+	var RETRY_BASE_DELAY_MS = 1e3;
+	var RETRY_MAX_DELAY_MS = 3e4;
 	var _default$10 = /*#__PURE__*/ function(_elementorModules$Mod) {
 		function _default() {
 			var _this;
@@ -577,6 +580,7 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 						deferred = this.addRequest(request.action, {
 							data: request.data,
 							unique_id: request.unique_id,
+							retry: request.retry,
 							success: function success(data) {
 								return _this3.cache[cacheKey] = data;
 							},
@@ -615,8 +619,8 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 							if (this.getCacheKey(pendingRequest.options) === this.getCacheKey(options)) {
 								pendingRequest.options.deferred.done(function(data) {
 									return options.deferred.resolve(data);
-								}).fail(function(data) {
-									return options.deferred.reject(data);
+								}).fail(function(data, code) {
+									return options.deferred.reject(data, code);
 								});
 								return options.deferred;
 							}
@@ -636,6 +640,9 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 						requests = this.requests;
 						this.requests = {};
 					}
+					var canRetry = Object.values(requests).every(function(request) {
+						return request.options.retry;
+					});
 					Object.entries(requests).forEach(function(_ref) {
 						var _ref2 = _slicedToArray(_ref, 2);
 						var id = _ref2[0];
@@ -647,6 +654,7 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 					});
 					return this.send("ajax", {
 						data: { actions: JSON.stringify(actions) },
+						retry: canRetry,
 						success: function success(data) {
 							Object.entries(data.responses).forEach(function(_ref3) {
 								var _ref4 = _slicedToArray(_ref3, 2);
@@ -655,7 +663,7 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 								var options = requests[id].options;
 								if (options) {
 									if (response.success) options.deferred.resolve(response.data);
-									else if (!response.success) options.deferred.reject(response.data);
+									else if (!response.success) options.deferred.reject(response.data, response.code);
 								}
 							});
 						},
@@ -706,7 +714,98 @@ var import_debug = /* @__PURE__ */ __toESM(require_debug());
 			{
 				key: "send",
 				value: function send(action, options) {
-					return jQuery.ajax(this.prepareSend(action, options));
+					var ajaxParams = this.prepareSend(action, options);
+					var retryEnabled = true === ajaxParams.retry;
+					delete ajaxParams.retry;
+					var attempt = 0;
+					var aborted = false;
+					var settled = false;
+					var jqXhr = null;
+					var retryTimer = null;
+					var markTransportComplete = function markTransportComplete(xhrFacade, activeJqXhr) {
+						if (activeJqXhr) {
+							xhrFacade.readyState = activeJqXhr.readyState;
+							xhrFacade.status = activeJqXhr.status;
+							xhrFacade.statusText = activeJqXhr.statusText;
+						}
+						if (4 !== xhrFacade.readyState) xhrFacade.readyState = 4;
+					};
+					var deferred = jQuery.Deferred();
+					var originalSuccess = ajaxParams.success;
+					var originalError = ajaxParams.error;
+					var xhrFacade = Object.assign(deferred.promise(), {
+						readyState: 1,
+						status: 0,
+						statusText: ""
+					});
+					ajaxParams.success = function(response) {
+						markTransportComplete(xhrFacade, jqXhr);
+						jqXhr = null;
+						settled = true;
+						deferred.resolve(response);
+						if (originalSuccess) originalSuccess(response);
+					};
+					ajaxParams.error = function(errorJqXHR, textStatus, errorThrown) {
+						jqXhr = null;
+						if (aborted || "abort" === textStatus || !retryEnabled || 429 !== errorJqXHR.status || attempt >= MAX_RETRIES) {
+							markTransportComplete(xhrFacade, errorJqXHR);
+							settled = true;
+							deferred.reject(errorJqXHR, textStatus, errorThrown);
+							if (originalError) originalError(errorJqXHR, textStatus, errorThrown);
+							return;
+						}
+						attempt += 1;
+						xhrFacade.readyState = 1;
+						retryTimer = setTimeout(function() {
+							jqXhr = jQuery.ajax(ajaxParams);
+							if (jqXhr) {
+								xhrFacade.readyState = jqXhr.readyState;
+								xhrFacade.status = jqXhr.status;
+								xhrFacade.statusText = jqXhr.statusText;
+							}
+						}, Math.min(getRetryDelayMs(errorJqXHR), RETRY_MAX_DELAY_MS));
+					};
+					function getRetryDelayMs(failedRequest) {
+						var header = failedRequest.getResponseHeader && failedRequest.getResponseHeader("Retry-After");
+						if (header && /^\d+(\.\d+)?$/.test(header.trim())) return Math.max(0, Number(header) * 1e3);
+						if (header) {
+							var date = Date.parse(header);
+							if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+						}
+						return RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1) * (1 + Math.random() * .2);
+					}
+					jqXhr = jQuery.ajax(ajaxParams);
+					if (jqXhr) {
+						xhrFacade.readyState = jqXhr.readyState;
+						xhrFacade.status = jqXhr.status;
+						xhrFacade.statusText = jqXhr.statusText;
+					}
+					xhrFacade.abort = function() {
+						if (settled) return;
+						aborted = true;
+						clearTimeout(retryTimer);
+						if (jqXhr) jqXhr.abort("Request canceled");
+						else {
+							var syntheticJqXHR = {
+								status: 0,
+								statusText: "abort",
+								readyState: 0,
+								getResponseHeader: function getResponseHeader() {
+									return null;
+								},
+								getAllResponseHeaders: function getAllResponseHeaders() {
+									return "";
+								}
+							};
+							xhrFacade.readyState = 0;
+							xhrFacade.status = 0;
+							xhrFacade.statusText = "abort";
+							settled = true;
+							deferred.reject(syntheticJqXHR, "abort", "Request canceled");
+							if (originalError) originalError(syntheticJqXHR, "abort", "Request canceled");
+						}
+					};
+					return xhrFacade;
 				}
 			},
 			{
@@ -1588,7 +1687,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 //#endregion
 //#region modules/web-cli/assets/js/modules/component-base.js
 	init_defineProperty();
-	function ownKeys$4(e, r) {
+	function ownKeys$5(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -1598,19 +1697,19 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 		}
 		return t;
 	}
-	__name(ownKeys$4, "ownKeys");
-	function _objectSpread$4(e) {
+	__name(ownKeys$5, "ownKeys");
+	function _objectSpread$5(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$4(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$5(Object(t), !0).forEach(function(r) {
 				_defineProperty(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$4(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$5(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$4, "_objectSpread");
+	__name(_objectSpread$5, "_objectSpread");
 	function _callSuper$27(t, o, e) {
 		return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct$27() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
 	}
@@ -1900,7 +1999,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 				key: "registerState",
 				value: function registerState(id, stateConfig) {
 					id = this.getNamespace() + (id ? "/".concat(id) : "");
-					var slice = (0, _reduxjs_toolkit.createSlice)(_objectSpread$4(_objectSpread$4({}, stateConfig), {}, { name: id }));
+					var slice = (0, _reduxjs_toolkit.createSlice)(_objectSpread$5(_objectSpread$5({}, stateConfig), {}, { name: id }));
 					$e.store.register(id, slice);
 				}
 			},
@@ -2322,7 +2421,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 //#endregion
 //#region assets/dev/js/editor/utils/editor-one-events.js
 	init_defineProperty();
-	function ownKeys$3(e, r) {
+	function ownKeys$4(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -2332,19 +2431,20 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 		}
 		return t;
 	}
-	__name(ownKeys$3, "ownKeys");
-	function _objectSpread$3(e) {
+	__name(ownKeys$4, "ownKeys");
+	function _objectSpread$4(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$3(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$4(Object(t), !0).forEach(function(r) {
 				_defineProperty(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$3(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$4(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$3, "_objectSpread");
+	__name(_objectSpread$4, "_objectSpread");
+	var ADMIN_NAV_CLICK_EVENT = "elementor/admin/nav-click";
 	var EditorOneEventManager = /*#__PURE__*/ function() {
 		function EditorOneEventManager() {
 			_classCallCheck(this, EditorOneEventManager);
@@ -2433,7 +2533,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 					var _config$appTypes3;
 					var overrides = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
 					var config = this.getConfig();
-					return _objectSpread$3({ window_name: (_config$appTypes$edit = config === null || config === void 0 || (_config$appTypes3 = config.appTypes) === null || _config$appTypes3 === void 0 ? void 0 : _config$appTypes3.editor) !== null && _config$appTypes$edit !== void 0 ? _config$appTypes$edit : "editor" }, overrides);
+					return _objectSpread$4({ window_name: (_config$appTypes$edit = config === null || config === void 0 || (_config$appTypes3 = config.appTypes) === null || _config$appTypes3 === void 0 ? void 0 : _config$appTypes3.editor) !== null && _config$appTypes$edit !== void 0 ? _config$appTypes$edit : "editor" }, overrides);
 				}
 			},
 			{
@@ -2754,7 +2854,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 					var _config$locations11;
 					var overrides = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
 					var config = this.getConfig();
-					return this.createBasePayload(_objectSpread$3({
+					return this.createBasePayload(_objectSpread$4({
 						window_name: (_config$appTypes$wpDa = config === null || config === void 0 || (_config$appTypes4 = config.appTypes) === null || _config$appTypes4 === void 0 ? void 0 : _config$appTypes4.wpDash) !== null && _config$appTypes$wpDa !== void 0 ? _config$appTypes$wpDa : "wpdash",
 						target_location: this.toLowerSnake(config === null || config === void 0 || (_config$locations11 = config.locations) === null || _config$locations11 === void 0 ? void 0 : _config$locations11.wpDashAdmin),
 						location_l2: ""
@@ -2829,6 +2929,9 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 						var _config$targetTypes14;
 						var _config$interactionRe16;
 						var _config$locations12;
+						var _window$crypto$random;
+						var _window$crypto;
+						var _window$crypto$random2;
 						var _config$names13;
 						var config = this.getConfig();
 						var payload = this.createBasePayload({
@@ -2840,7 +2943,15 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 							target_location: this.toLowerSnake(config === null || config === void 0 || (_config$locations12 = config.locations) === null || _config$locations12 === void 0 ? void 0 : _config$locations12.sidebar)
 						});
 						if (groupEventId) payload.location_l1 = groupEventId;
-						return this.dispatchEvent(config === null || config === void 0 || (_config$names13 = config.names) === null || _config$names13 === void 0 || (_config$names13 = _config$names13.editorOne) === null || _config$names13 === void 0 ? void 0 : _config$names13.sidebarMenuItemClicked, payload);
+						var navClickId = (_window$crypto$random = (_window$crypto = window.crypto) === null || _window$crypto === void 0 || (_window$crypto$random2 = _window$crypto.randomUUID) === null || _window$crypto$random2 === void 0 ? void 0 : _window$crypto$random2.call(_window$crypto)) !== null && _window$crypto$random !== void 0 ? _window$crypto$random : "".concat(Date.now(), "-").concat(Math.random().toString(36).slice(2));
+						payload.nav_click_id = navClickId;
+						var dispatched = this.dispatchEvent(config === null || config === void 0 || (_config$names13 = config.names) === null || _config$names13 === void 0 || (_config$names13 = _config$names13.editorOne) === null || _config$names13 === void 0 ? void 0 : _config$names13.sidebarMenuItemClicked, payload);
+						window.dispatchEvent(new CustomEvent(ADMIN_NAV_CLICK_EVENT, { detail: {
+							itemId: eventId,
+							rootItem: groupEventId,
+							navClickId
+						} }));
+						return dispatched;
 					} catch (error) {
 						return false;
 					}
@@ -3584,7 +3695,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 //#endregion
 //#region core/common/modules/finder/assets/js/component.js
 	init_defineProperty();
-	function ownKeys$2(e, r) {
+	function ownKeys$3(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -3594,19 +3705,19 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 		}
 		return t;
 	}
-	__name(ownKeys$2, "ownKeys");
-	function _objectSpread$2(e) {
+	__name(ownKeys$3, "ownKeys");
+	function _objectSpread$3(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$2(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$3(Object(t), !0).forEach(function(r) {
 				_defineProperty(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$2(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$3(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$2, "_objectSpread");
+	__name(_objectSpread$3, "_objectSpread");
 	function _callSuper$12(t, o, e) {
 		return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct$12() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
 	}
@@ -3673,7 +3784,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 			{
 				key: "defaultCommands",
 				value: function defaultCommands() {
-					return _objectSpread$2(_objectSpread$2({
+					return _objectSpread$3(_objectSpread$3({
 						"navigate/down": function navigate_down() {
 							elementorDevTools.deprecation.deprecated("$e.run( 'finder/navigate/down' )", "3.0.0", "$e.run( 'finder/navigate-down' )");
 							$e.run("finder/navigate-down");
@@ -4208,7 +4319,7 @@ var import_module = /* @__PURE__ */ __toESM(require_module());
 //#region modules/web-cli/assets/js/core/data/errors/base-error.js
 var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 	init_defineProperty();
-	function ownKeys$1(e, r) {
+	function ownKeys$2(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -4218,19 +4329,19 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 		}
 		return t;
 	}
-	__name(ownKeys$1, "ownKeys");
-	function _objectSpread$1(e) {
+	__name(ownKeys$2, "ownKeys");
+	function _objectSpread$2(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$1(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$2(Object(t), !0).forEach(function(r) {
 				_defineProperty(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$2(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$1, "_objectSpread");
+	__name(_objectSpread$2, "_objectSpread");
 	function _callSuper$9(t, o, e) {
 		return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct$9() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
 	}
@@ -4282,7 +4393,7 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 		return _createClass(BaseError, [{
 			key: "notify",
 			value: function notify() {
-				Console.error(_objectSpread$1({ message: this.message }, this));
+				Console.error(_objectSpread$2({ message: this.message }, this));
 			}
 		}], [{
 			key: "create",
@@ -5172,6 +5283,12 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 				export: "design_system_export",
 				opened: "design_system_opened"
 			},
+			default_styles: {
+				panelOpened: "default_styles_panel_opened",
+				tagSaved: "default_styles_tag_saved",
+				saveFailed: "default_styles_save_failed",
+				changesDiscarded: "default_styles_changes_discarded"
+			},
 			components: {
 				createClicked: "component_create_clicked",
 				createCancelled: "component_creation_cancelled",
@@ -5232,6 +5349,104 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 			}
 		}
 	};
+
+//#endregion
+//#region core/common/modules/events-manager/assets/js/install-events-proxy-fetch.js
+	init_defineProperty();
+	function ownKeys$1(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	__name(ownKeys$1, "ownKeys");
+	function _objectSpread$1(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$1(Object(t), !0).forEach(function(r) {
+				_defineProperty(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	__name(_objectSpread$1, "_objectSpread");
+	var INSTALLED_FLAG = "__elementorEventsProxyFetchInstalled";
+	function buildMixpanelAuthorization(token) {
+		return "Basic ".concat(btoa("".concat(token, ":")));
+	}
+	function isProxyRequestUrl(url, proxyPrefixes) {
+		return proxyPrefixes.some(function(prefix) {
+			return url.startsWith(prefix);
+		});
+	}
+	function isFetchRequest(input) {
+		return "function" === typeof Request && input instanceof Request;
+	}
+	function mergeFetchHeaders(input, init) {
+		var headers = new Headers();
+		if (isFetchRequest(input)) input.headers.forEach(function(value, key) {
+			headers.set(key, value);
+		});
+		if (init !== null && init !== void 0 && init.headers) new Headers(init.headers).forEach(function(value, key) {
+			headers.set(key, value);
+		});
+		return headers;
+	}
+	function stripMixpanelAuthorization(input, init, token) {
+		var _init$credentials;
+		if (!token) return {
+			input,
+			init,
+			stripped: false
+		};
+		var headers = mergeFetchHeaders(input, init);
+		var mixpanelAuthorization = buildMixpanelAuthorization(token);
+		if (headers.get("Authorization") !== mixpanelAuthorization) return {
+			input,
+			init,
+			stripped: false
+		};
+		headers.delete("Authorization");
+		var credentials = (_init$credentials = init.credentials) !== null && _init$credentials !== void 0 ? _init$credentials : "include";
+		if (isFetchRequest(input)) return {
+			input: new Request(input, {
+				headers,
+				credentials
+			}),
+			init: void 0,
+			stripped: true
+		};
+		return {
+			input,
+			init: _objectSpread$1(_objectSpread$1({}, init), {}, {
+				credentials,
+				headers
+			}),
+			stripped: true
+		};
+	}
+	function installEventsProxyFetch(proxyApiHost, proxyLibBasePath, token) {
+		if (!proxyApiHost || !token || window[INSTALLED_FLAG] || "function" !== typeof window.fetch) return;
+		var proxyPrefixes = [proxyApiHost, proxyLibBasePath].filter(Boolean);
+		var nativeFetch = window.fetch.bind(window);
+		window.fetch = function(input) {
+			var init = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+			var url = "string" === typeof input ? input : input === null || input === void 0 ? void 0 : input.url;
+			if (!url || !isProxyRequestUrl(url, proxyPrefixes)) return nativeFetch(input, init);
+			var _stripMixpanelAuthori = stripMixpanelAuthorization(input, init, token);
+			var nextInput = _stripMixpanelAuthori.input;
+			var nextInit = _stripMixpanelAuthori.init;
+			if (void 0 === nextInit) return nativeFetch(nextInput);
+			return nativeFetch(nextInput, nextInit);
+		};
+		window[INSTALLED_FLAG] = true;
+	}
 
 //#endregion
 //#region node_modules/mixpanel-browser/dist/mixpanel.module.js
@@ -23758,7 +23973,9 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 			{
 				key: "initializeMixpanel",
 				value: function initializeMixpanel(onLoaded) {
-					if (mixpanelInstance && mixpanelInstance.isInitialized) onLoaded(mixpanelInstance);
+					var editorEventsConfig = elementorCommon.config.editor_events;
+					installEventsProxyFetch(editorEventsConfig === null || editorEventsConfig === void 0 ? void 0 : editorEventsConfig.proxy_api_host, editorEventsConfig === null || editorEventsConfig === void 0 ? void 0 : editorEventsConfig.proxy_lib_base_path, editorEventsConfig === null || editorEventsConfig === void 0 ? void 0 : editorEventsConfig.token);
+					if (mixpanelInstance && mixpanelInstance.isInitialized) onLoaded === null || onLoaded === void 0 || onLoaded(mixpanelInstance);
 					else {
 						var _elementorCommon$conf;
 						var _elementorCommon$conf2;
@@ -23775,7 +23992,10 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 							flags: true,
 							api_host: (_elementorCommon$conf4 = elementorCommon.config.editor_events) === null || _elementorCommon$conf4 === void 0 ? void 0 : _elementorCommon$conf4.proxy_api_host,
 							lib_base_path: (_elementorCommon$conf5 = elementorCommon.config.editor_events) === null || _elementorCommon$conf5 === void 0 ? void 0 : _elementorCommon$conf5.proxy_lib_base_path,
-							loaded: onLoaded,
+							loaded: function loaded(instance) {
+								mixpanelInstance = instance;
+								onLoaded === null || onLoaded === void 0 || onLoaded(instance);
+							},
 							record_sessions_percent: (_elementorCommon$conf6 = (_elementorCommon$conf7 = elementorCommon.config.editor_events) === null || _elementorCommon$conf7 === void 0 ? void 0 : _elementorCommon$conf7.session_recording_percent) !== null && _elementorCommon$conf6 !== void 0 ? _elementorCommon$conf6 : 0,
 							record_idle_timeout_ms: 60 * 1e3,
 							record_min_ms: 5 * 1e3,

@@ -1,6 +1,6 @@
 <?php
 /**
- * Thin wrapper around Illuminate\Container.
+ * Thin wrapper around DoubleScale\Vendor\Illuminate\Container.
  *
  * @package DoubleScale\Core
  */
@@ -9,7 +9,7 @@ namespace DoubleScale\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Container\Container as IlluminateContainer;
+use DoubleScale\Vendor\Illuminate\Container\Container as IlluminateContainer;
 
 class Container {
 

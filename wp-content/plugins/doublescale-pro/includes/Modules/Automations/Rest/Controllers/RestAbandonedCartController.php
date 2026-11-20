@@ -258,11 +258,24 @@ class RestAbandonedCartController extends RestController {
 			// WooCommerce carts share one store currency — summing `total` is safe.
 			$total_revenue = AbandonedCartModel::where( 'order_id', '>', 0 )->sum( 'total' );
 
+			// The period's cart value by what happened to the carts, for the Revenue chart.
+			// Skipped carts (opted out, or in the cool-off period) were never followed up, so they are left out.
+			$period         = array( $start_date . ' 00:00:00', $end_date . ' 23:59:59' );
+			$value_by_state = static function ( array $statuses ) use ( $period ) {
+				return (float) AbandonedCartModel::whereBetween( 'created_at', $period )->whereIn( 'status', $statuses )->sum( 'total' );
+			};
+
 			$analytics = array(
-				'carts'   => $carts,
-				'revenue' => $revenue_grouped_by_date,
-				'data'    => $dates,
-				'total'   => array(
+				'carts'             => $carts,
+				'revenue'           => $revenue_grouped_by_date,
+				'revenue_by_status' => array(
+					'recovered' => $value_by_state( array( 'recovered' ) ),
+					'waiting'   => $value_by_state( array( 'pending', 'processing' ) ),
+					'lost'      => $value_by_state( array( 'lost' ) ),
+				),
+				'currency'          => function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : '',
+				'data'              => $dates,
+				'total'             => array(
 					'carts'   => $total_cart,
 					'revenue' => $total_revenue,
 				),

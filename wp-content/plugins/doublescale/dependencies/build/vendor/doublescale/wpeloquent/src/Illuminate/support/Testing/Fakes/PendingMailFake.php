@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Support\Testing\Fakes;
+namespace DoubleScale\Vendor\Illuminate\Support\Testing\Fakes;
 
-use Illuminate\Mail\PendingMail;
-use Illuminate\Contracts\Mail\Mailable;
+use DoubleScale\Vendor\Illuminate\Mail\PendingMail;
+use DoubleScale\Vendor\Illuminate\Contracts\Mail\Mailable;
 class PendingMailFake extends PendingMail
 {
     /**

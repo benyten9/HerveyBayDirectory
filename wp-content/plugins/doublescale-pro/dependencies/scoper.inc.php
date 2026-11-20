@@ -23,6 +23,9 @@ return [
 	'prefix'                  => 'DoubleScale\\Pro\\Vendor',
 	'expose-global-constants' => true,
 	'expose-global-classes'   => true,
+	// On like free's, whose Illuminate needs it. tools/prune-scoper-function-aliases.php
+	// drops the aliases that point at nothing, e.g. init() and test() from
+	// sabre/dav's build script (request 132).
 	'expose-global-functions' => true,
 	'expose-namespaces'       => array(
 		'SendGrid',

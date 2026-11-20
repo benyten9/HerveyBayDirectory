@@ -108,14 +108,29 @@ add_action( 'wp_ajax_seopress_google_analytics_lock', 'seopress_google_analytics
  * @since 10.1.2
  *
  * @param string $content Raw .htaccess body.
+ * @param string $current The file as it is on disk. A line it already holds is
+ *                        not refused: hosts and security plugins write their
+ *                        own (cPanel's session.save_path, a firewall's
+ *                        auto_prepend_file), and refusing them would block every
+ *                        save without making the file any safer.
  * @return string|null The offending directive as matched, or null.
  */
-function seopress_htaccess_find_unsafe_directive( $content ) {
+function seopress_htaccess_find_unsafe_directive( $content, $current = '' ) {
 	if ( ! is_string( $content ) || '' === trim( $content ) ) {
 		return null;
 	}
 
-	$blocked = array( 'SetHandler', 'AddHandler', 'RemoveHandler', 'AddType', 'RemoveType', 'ForceType' );
+	$existing = array();
+	if ( is_string( $current ) && '' !== $current ) {
+		$current = preg_replace( '/\\[ \t]*(\r\n|\r|\n)[ \t]*/', '', $current );
+		foreach ( preg_split( '/\r\n|\r|\n/', $current ) as $current_line ) {
+			$existing[ trim( $current_line ) ] = true;
+		}
+	}
+
+	// Include and IncludeOptional read directives from another file, which the
+	// checks below never see: an upload carrying SetHandler would do.
+	$blocked = array( 'SetHandler', 'AddHandler', 'RemoveHandler', 'AddType', 'RemoveType', 'ForceType', 'Include', 'IncludeOptional' );
 
 	// Apache joins lines ending with a backslash before parsing directives, so
 	// the same must happen here or "SetH\" + "andler" would slip through.
@@ -126,6 +141,11 @@ function seopress_htaccess_find_unsafe_directive( $content ) {
 
 		// Comments are inert, so a directive name inside one is harmless.
 		if ( '' === $trimmed || '#' === $trimmed[0] ) {
+			continue;
+		}
+
+		// Already in the file: saving it again changes nothing.
+		if ( isset( $existing[ trim( $line ) ] ) ) {
 			continue;
 		}
 
@@ -149,6 +169,27 @@ function seopress_htaccess_find_unsafe_directive( $content ) {
 			return 'php_flag engine off';
 		}
 
+		// Other PHP settings are checked against the ones sites usually tune
+		// here. auto_prepend_file pointed at an upload runs it on every request,
+		// and error_log or include_path are just as easy to turn into code
+		// execution, so a list of what is allowed holds where a list of what is
+		// refused kept missing one.
+		$is_php_directive = in_array( $token, array( 'php_flag', 'php_admin_flag', 'php_value', 'php_admin_value' ), true );
+
+		if ( $is_php_directive ) {
+			$setting = isset( $parts[1] ) ? strtolower( (string) strtok( $parts[1], " \t" ) ) : '';
+
+			if ( ! in_array( $setting, seopress_htaccess_allowed_php_settings(), true ) ) {
+				return '' === $setting ? $parts[0] : $parts[0] . ' ' . $setting;
+			}
+		}
+
+		// PHP-FPM reads the same settings from the PHP_VALUE and PHP_ADMIN_VALUE
+		// variables Apache passes to it: SetEnv, SetEnvIf or a rewrite's E= flag.
+		if ( ! $is_php_directive && preg_match( '/\bPHP_(?:ADMIN_)?VALUE\b/i', $trimmed ) ) {
+			return 'PHP_VALUE';
+		}
+
 		// mod_headers runs in the fixup phase, before the handler is picked, and
 		// setting Content-Type there calls ap_set_content_type(): that deselects
 		// PHP wherever it is wired through AddType rather than SetHandler. Only
@@ -169,6 +210,67 @@ function seopress_htaccess_find_unsafe_directive( $content ) {
 }
 
 /**
+ * PHP settings the .htaccess editor accepts in php_value / php_flag lines.
+ *
+ * Resource limits, error display and the like: what sites usually set there,
+ * and nothing that names a file PHP would load or write.
+ *
+ * @since 10.4.0
+ *
+ * @return string[] Lowercase setting names.
+ */
+function seopress_htaccess_allowed_php_settings() {
+	$settings = array(
+		'memory_limit',
+		'upload_max_filesize',
+		'post_max_size',
+		'max_execution_time',
+		'max_input_time',
+		'max_input_vars',
+		'max_input_nesting_level',
+		'max_file_uploads',
+		'default_socket_timeout',
+		'display_errors',
+		'display_startup_errors',
+		'log_errors',
+		'error_reporting',
+		'html_errors',
+		'output_buffering',
+		'zlib.output_compression',
+		'zlib.output_compression_level',
+		'short_open_tag',
+		'default_charset',
+		'date.timezone',
+		'pcre.backtrack_limit',
+		'pcre.recursion_limit',
+		'session.gc_maxlifetime',
+		'session.cookie_lifetime',
+		'session.cookie_httponly',
+		'session.cookie_secure',
+		'session.cookie_samesite',
+		'session.use_only_cookies',
+		'session.use_strict_mode',
+		'mbstring.language',
+		'mbstring.internal_encoding',
+	);
+
+	/**
+	 * Filter the PHP settings the .htaccess editor accepts.
+	 *
+	 * Add to it with care: a setting that names a file PHP loads or writes
+	 * (auto_prepend_file, error_log, include_path...) lets whoever can edit the
+	 * file run code on the server.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string[] $settings Lowercase setting names.
+	 */
+	$settings = (array) apply_filters( 'seopress_htaccess_allowed_php_settings', $settings );
+
+	return array_map( 'strtolower', array_map( 'strval', $settings ) );
+}
+
+/**
  * Save htaccess file.
  *
  * @return void
@@ -185,10 +287,7 @@ function seopress_save_htaccess() {
 	// applied while rendering the page: the AJAX endpoint has to enforce it too,
 	// or the file can still be written by posting to it directly. A control that
 	// lives only in the display is not a control.
-	if (
-		( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT )
-		|| ( defined( 'SEOPRESS_BLOCK_HTACCESS' ) && SEOPRESS_BLOCK_HTACCESS )
-	) {
+	if ( seopress_htaccess_editing_is_disabled() ) {
 		wp_send_json_error( array( 'message' => __( 'Editing the .htaccess file is disabled on this site.', 'wp-seopress-pro' ) ), 403 );
 	}
 
@@ -215,13 +314,13 @@ function seopress_save_htaccess() {
 	// Reject directives that would make the server hand back the raw source of
 	// PHP files, wp-config.php included. Checked before the file is touched, so a
 	// rejected payload leaves the current .htaccess exactly as it was.
-	$unsafe_directive = seopress_htaccess_find_unsafe_directive( $current_htaccess );
+	$unsafe_directive = seopress_htaccess_find_unsafe_directive( $current_htaccess, is_string( $old_htaccess ) ? $old_htaccess : '' );
 	if ( null !== $unsafe_directive ) {
 		wp_send_json_success(
 			array(
 				'msg'   => sprintf(
 					/* translators: %s: the Apache directive that was rejected, e.g. SetHandler. */
-					__( 'For security reasons, the "%s" directive is not allowed here: it can expose the source code of your PHP files, including wp-config.php. Please remove it and try again.', 'wp-seopress-pro' ),
+					__( 'For security reasons, the "%s" directive is not allowed here: it can expose the source code of your PHP files, including wp-config.php, or run code on the server. Please remove it and try again.', 'wp-seopress-pro' ),
 					$unsafe_directive
 				),
 				'class' => 'is-error',
@@ -229,18 +328,18 @@ function seopress_save_htaccess() {
 		);
 	}
 
-	if ( is_writable( $filename ) ) {
-		if ( ! $handle = fopen( $filename, 'w' ) ) {
+	if ( is_writable( $filename ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
+		if ( ! $handle = fopen( $filename, 'w' ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
 			$msg   = __( 'Impossible to open file: ', 'wp-seopress-pro' ) . $filename;
 			$class = 'is-error';
 		}
 
-		if ( false === fwrite( $handle, $current_htaccess ) ) {
+		if ( false === fwrite( $handle, $current_htaccess ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
 			$msg   = __( 'Impossible to write in file: ', 'wp-seopress-pro' ) . $filename;
 			$class = 'is-error';
 		}
 
-		fclose( $handle );
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
 
 		$args = array(
 			'blocking'    => true,
@@ -252,9 +351,9 @@ function seopress_save_htaccess() {
 		$code     = wp_remote_retrieve_response_code( $response );
 
 		if ( is_wp_error( $response ) || ! $code || $code >= 400 ) {
-			$handle = fopen( $filename, 'w' );
-			fwrite( $handle, $old_htaccess );
-			fclose( $handle );
+			$handle = fopen( $filename, 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
+			fwrite( $handle, $old_htaccess ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
+			fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
 
 			$msg   = __( '.htaccess could not be saved: the homepage check failed and the previous file has been restored. This usually indicates a syntax error in your .htaccess, or a server-side loopback issue (firewall, Basic Auth, broken DNS). Please verify your homepage is reachable and try again.', 'wp-seopress-pro' );
 			$class = 'is-error';
@@ -312,33 +411,28 @@ function seopress_pro_video_xml_sitemap_regenerate() {
 	check_ajax_referer( 'seopress_video_regenerate_nonce', '_ajax_nonce', true );
 
 	if ( current_user_can( seopress_capability( 'manage_options', 'migration' ) ) && is_admin() ) {
-		if ( isset( $_POST['offset'] ) && isset( $_POST['offset'] ) ) {
-			$offset = absint( $_POST['offset'] );
-		}
+		$offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
 
-		$cpt = array( 'any' );
-		if ( ! empty( seopress_get_service( 'SitemapOption' )->getPostTypesList() ) ) {
-			unset( $cpt[0] );
-			foreach ( seopress_get_service( 'SitemapOption' )->getPostTypesList() as $cpt_key => $cpt_value ) {
-				foreach ( $cpt_value as $_cpt_key => $_cpt_value ) {
-					if ( '1' == $_cpt_value ) {
-						$cpt[] = $cpt_key;
-					}
+		// Post types included in the XML sitemap. The names were quoted for the
+		// count below and the quoted list was then handed to get_posts() too, so
+		// it matched no post at all. Without a list, every type a front-end query
+		// covers, as 'any' did.
+		$cpt = array();
+		foreach ( (array) seopress_get_service( 'SitemapOption' )->getPostTypesList() as $cpt_key => $cpt_value ) {
+			foreach ( (array) $cpt_value as $_cpt_key => $_cpt_value ) {
+				if ( '1' == $_cpt_value ) {
+					$cpt[] = $cpt_key;
 				}
 			}
+		}
 
-			$cpt = array_map(
-				function ( $item ) {
-					return "'" . esc_sql( $item ) . "'";
-				},
-				$cpt
-			);
-
-			$cpt_string = implode( ',', $cpt );
+		if ( empty( $cpt ) ) {
+			$cpt = array_values( get_post_types( array( 'exclude_from_search' => false ) ) );
 		}
 
 		global $wpdb;
-		$total_count_posts = (int) $wpdb->get_var( "SELECT count(*) FROM {$wpdb->posts} WHERE post_status IN ('pending', 'draft', 'publish', 'future') AND post_type IN ( $cpt_string ) " );
+		$cpt_placeholders  = implode( ',', array_fill( 0, count( $cpt ), '%s' ) );
+		$total_count_posts = (int) $wpdb->get_var( $wpdb->prepare( "SELECT count(*) FROM {$wpdb->posts} WHERE post_status IN ('pending', 'draft', 'publish', 'future') AND post_type IN ( $cpt_placeholders )", $cpt ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Placeholders only.
 
 		$total_count_posts = apply_filters( 'seopress_video_regeneration_total_count_posts', $total_count_posts );
 
@@ -418,14 +512,10 @@ function seopress_ai_generate_seo_meta() {
 		wp_send_json_error( array( 'message' => __( 'You are not allowed to perform this action.', 'wp-seopress-pro' ) ), 403 );
 	}
 
-	if ( isset( $_POST['lang'] ) ) {
-		$language = esc_html( $_POST['lang'] );
-	}
-
-	$meta = '';
-	if ( isset( $_POST['meta'] ) ) {
-		$meta = esc_html( $_POST['meta'] );
-	}
+	// Same reading as the term handler below. $language was left undefined
+	// without `lang`, and esc_html() is an output escaper, not a sanitizer.
+	$language = isset( $_POST['lang'] ) ? sanitize_text_field( wp_unslash( $_POST['lang'] ) ) : 'en_US';
+	$meta     = isset( $_POST['meta'] ) ? sanitize_text_field( wp_unslash( $_POST['meta'] ) ) : '';
 
 	if ( 'alt_text' === $meta || 'image_meta' === $meta ) {
 		$fields = null;
@@ -517,7 +607,14 @@ function seopress_ai_check_license_key() {
 	// Determine provider based on the request.
 	$provider = 'openai'; // default
 	if ( isset( $_REQUEST['seopress_ai_provider'] ) ) {
-		$provider = sanitize_text_field( $_REQUEST['seopress_ai_provider'] );
+		$provider = strtolower( sanitize_text_field( wp_unslash( $_REQUEST['seopress_ai_provider'] ) ) );
+
+		// The provider names the option the key is saved in and the constant it
+		// is read from: anything else than a supported one is refused.
+		if ( ! array_key_exists( $provider, \SEOPressPro\Services\OpenAI\Usage::PROVIDER_KEY_CONSTANTS ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unknown AI provider.', 'wp-seopress-pro' ) ) );
+			return;
+		}
 	} elseif ( isset( $_REQUEST['seopress_ai_model'] ) ) {
 		$model = sanitize_text_field( $_REQUEST['seopress_ai_model'] );
 		// Extract provider from model or determine based on context.
@@ -675,29 +772,7 @@ function seopress_site_audit_load_analysis() {
 		return;
 	}
 
-	// Get security settings.
-	$options = seopress_get_service( 'AdvancedOption' )->getOption();
-
-	$audit_permissions = isset( $options['seopress_advanced_security_metaboxe_seopress-bot-batch'] ) ? $options['seopress_advanced_security_metaboxe_seopress-bot-batch'] : null;
-
-	$allowed = false;
-	global $wp_roles;
-	$user = wp_get_current_user();
-
-	if ( isset( $user->roles ) && is_array( $user->roles ) && ! empty( $user->roles ) ) {
-		$seopress_user_role = current( $user->roles );
-
-		if ( ! empty( $audit_permissions ) ) {
-			if ( array_key_exists( $seopress_user_role, $audit_permissions ) ) {
-				$allowed = true;
-			}
-		}
-	}
-
-	// Check if user has the capability to manage options.
-	if ( current_user_can( seopress_capability( 'manage_options', 'site-audit' ) ) ) {
-		$allowed = true;
-	}
+	$allowed = current_user_can( seopress_capability( 'manage_options', 'bot' ) );
 
 	// Check if user is allowed to access the analysis.
 	if ( ! $allowed ) {
@@ -713,14 +788,11 @@ function seopress_site_audit_load_analysis() {
 		wp_send_json_error( 'Type not provided.' );
 	}
 
-	$type = sanitize_text_field( $_POST['type'] );
-
-	ob_start();
-	seopress_pro_get_service( 'SiteAudit' )->renderAnalysisResults( $type );
-	$content = ob_get_clean();
-
-	echo $content;
-	wp_die();
+	// The legacy PHP rendering this endpoint returned was removed with the
+	// React Site Audit, which no longer calls it. Calling the removed
+	// SiteAudit::renderAnalysisResults() was a fatal error; the checks above
+	// stay so a stale caller is answered the same way as before.
+	wp_send_json_error( 'Not available.', 410 );
 }
 add_action( 'wp_ajax_seopress_site_audit_load_analysis', 'seopress_site_audit_load_analysis' );
 
@@ -738,28 +810,18 @@ function seopress_site_audit_run_actions() {
 		return;
 	}
 
-	// Get security settings.
-	$options = seopress_get_service( 'AdvancedOption' )->getOption();
+	$allowed = current_user_can( seopress_capability( 'manage_options', 'bot' ) );
 
-	$audit_permissions = isset( $options['seopress_advanced_security_metaboxe_seopress-bot-batch'] ) ? $options['seopress_advanced_security_metaboxe_seopress-bot-batch'] : null;
-
-	$allowed = false;
-	global $wp_roles;
-	$user = wp_get_current_user();
-
-	if ( isset( $user->roles ) && is_array( $user->roles ) && ! empty( $user->roles ) ) {
-		$seopress_user_role = current( $user->roles );
-
-		if ( ! empty( $audit_permissions ) ) {
-			if ( array_key_exists( $seopress_user_role, $audit_permissions ) ) {
-				$allowed = true;
-			}
-		}
-	}
-
-	// Check if user has the capability to manage options.
-	if ( current_user_can( seopress_capability( 'manage_options', 'site-audit' ) ) ) {
-		$allowed = true;
+	// Same reasoning as the REST route next to it: the `bot` area can be
+	// delegated to any role in Advanced > Security, and that delegation says
+	// nothing about AI. This handler generates and writes alt text, so the
+	// restriction applies as it does on every ordinary generation route.
+	// The read-only analysis loader above is deliberately untouched.
+	// See SEC-05.
+	if ( $allowed
+		&& function_exists( 'seopress_ai_generation_check' )
+		&& ! seopress_ai_generation_check( null, seopress_capability( 'manage_options', 'bot' ), 'bulk' ) ) {
+		$allowed = false;
 	}
 
 	// Check if user is allowed to access the analysis.
@@ -805,3 +867,78 @@ function seopress_site_audit_run_actions() {
 	}
 }
 add_action( 'wp_ajax_seopress_site_audit_run_actions', 'seopress_site_audit_run_actions' );
+
+/**
+ * Test a YouTube Data API key with one request.
+ *
+ * Tests the key typed in the settings field when there is one, otherwise the
+ * key in use. A key that works lifts the pause set after YouTube refused it,
+ * so a project the API was just enabled on is used again right away.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_pro_test_youtube_api_key() {
+	check_ajax_referer( 'seopress_pro_youtube_api_key_nonce' );
+
+	if ( ! current_user_can( seopress_capability( 'manage_options', 'pro' ) ) ) {
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-seopress-pro' ) ) );
+	}
+
+	$api_key = isset( $_POST['api_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) ) : '';
+	if ( '' === $api_key || seopress_pro_youtube_api_key_is_constant() ) {
+		$api_key = seopress_pro_get_youtube_api_key();
+	}
+
+	if ( '' === $api_key ) {
+		wp_send_json_error( array( 'message' => __( 'Enter an API key first.', 'wp-seopress-pro' ) ) );
+	}
+
+	// "Me at the zoo", the first video uploaded to YouTube: public and not going anywhere.
+	$result = seopress_pro_request_youtube_data_api( 'jNQXAC9IVRw', $api_key );
+
+	if ( 200 === $result['code'] ) {
+		if ( seopress_pro_get_youtube_api_key() === $api_key ) {
+			delete_transient( 'seopress_pro_yt_api_paused' );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'The API key works.', 'wp-seopress-pro' ) ) );
+	}
+
+	switch ( $result['reason'] ) {
+		case 'API_KEY_INVALID':
+		case 'keyInvalid':
+		case 'badRequest':
+			$message = __( 'This API key is not valid.', 'wp-seopress-pro' );
+			break;
+		case 'SERVICE_DISABLED':
+		case 'accessNotConfigured':
+			$message = __( 'The YouTube Data API v3 is not enabled in the Google Cloud project this key belongs to.', 'wp-seopress-pro' );
+			break;
+		case 'API_KEY_HTTP_REFERRER_BLOCKED':
+		case 'API_KEY_IP_ADDRESS_BLOCKED':
+		case 'API_KEY_SERVICE_BLOCKED':
+		case 'ipRefererBlocked':
+		case 'forbidden':
+			$message = __( 'This key is restricted and refuses requests from this server. Requests are sent by the server, not by the browser: restrict the key by IP address or by API, not by website.', 'wp-seopress-pro' );
+			break;
+		case 'quotaExceeded':
+		case 'dailyLimitExceeded':
+		case 'rateLimitExceeded':
+		case 'RATE_LIMIT_EXCEEDED':
+			$message = __( 'The daily quota of this key is used up. It is reset at midnight Pacific Time.', 'wp-seopress-pro' );
+			break;
+		default:
+			if ( 0 === $result['code'] ) {
+				/* translators: %s: error code, e.g. http_request_failed */
+				$message = sprintf( __( 'YouTube could not be reached (%s).', 'wp-seopress-pro' ), $result['reason'] );
+			} else {
+				/* translators: 1: HTTP status code, 2: error reason reported by YouTube */
+				$message = sprintf( __( 'YouTube refused the request (HTTP %1$d, %2$s).', 'wp-seopress-pro' ), $result['code'], $result['reason'] );
+			}
+	}
+
+	wp_send_json_error( array( 'message' => $message ) );
+}
+add_action( 'wp_ajax_seopress_pro_test_youtube_api_key', 'seopress_pro_test_youtube_api_key' );

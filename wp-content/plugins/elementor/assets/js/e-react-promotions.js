@@ -42530,7 +42530,11 @@ var import_index_umd = /* @__PURE__ */ __toESM(require_index_umd());
 		]);
 	}();
 	function applyProConnectPromotionOverrides(promotionData) {
-		if (!elementor.helpers.hasProAndNotConnected()) return promotionData;
+		var _elementorProEditorCo;
+		var _elementorProEditorCo2;
+		if (!elementor.helpers.hasPro()) return promotionData;
+		if ((_elementorProEditorCo = elementorProEditorConfig) !== null && _elementorProEditorCo !== void 0 && _elementorProEditorCo.isActive) return promotionData;
+		if (!((_elementorProEditorCo2 = elementorProEditorConfig) !== null && _elementorProEditorCo2 !== void 0 && (_elementorProEditorCo2 = _elementorProEditorCo2.urls) !== null && _elementorProEditorCo2 !== void 0 && _elementorProEditorCo2.connect)) return promotionData;
 		return _objectSpread(_objectSpread({}, promotionData), {}, {
 			ctaUrl: elementorProEditorConfig.urls.connect,
 			ctaText: (0, _wordpress_i18n.__)("Connect & Activate", "elementor")

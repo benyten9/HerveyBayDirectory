@@ -49,12 +49,14 @@ class CampaignContactFilter {
 	/**
 	 * Get filtered contacts for campaign
 	 *
-	 * @param string $type Campaign type ('email', 'sms', 'whatsapp')
-	 * @param array  $filters Campaign filters
+	 * @param string   $type    Campaign type ('email', 'sms', 'whatsapp')
+	 * @param array    $filters Campaign filters
+	 * @param int|null $owner   Only contacts this user owns: a Campaign Agent's
+	 *                          campaign (see Permissions::campaign_audience_owner()).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
-	public function get_filtered_contacts( $type, $filters = array() ) {
+	public function get_filtered_contacts( $type, $filters = array(), $owner = null ) {
 		// VALIDATE channel type first
 		if ( ! in_array( $type, array( 'email', 'sms', 'whatsapp' ), true ) ) {
 			// Return empty query for invalid channel
@@ -77,6 +79,20 @@ class CampaignContactFilter {
 			$query           = $contact_filters->filter();
 		}
 
+		return $this->limit_to_owner( $query, $owner );
+	}
+
+	/**
+	 * Keep only the contacts $owner owns (no limit when null).
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
+	 * @param int|null                              $owner User id.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	private function limit_to_owner( $query, $owner ) {
+		if ( (int) $owner > 0 ) {
+			$query->where( ContactModel::make()->getTable() . '.owner_id', (int) $owner );
+		}
 		return $query;
 	}
 
@@ -88,8 +104,8 @@ class CampaignContactFilter {
 	 *
 	 * @return int Contact count
 	 */
-	public function get_contact_count( $type, $filters = array() ) {
-		return $this->get_filtered_contacts( $type, $filters )->count();
+	public function get_contact_count( $type, $filters = array(), $owner = null ) {
+		return $this->get_filtered_contacts( $type, $filters, $owner )->count();
 	}
 
 	/**
@@ -100,23 +116,50 @@ class CampaignContactFilter {
 	 * @param int    $offset Starting offset
 	 * @param int    $limit Number of contacts to fetch
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
-	public function get_contacts_for_processing( $type, $filters = array(), $offset = 0, $limit = 10 ) {
-		return $this->get_filtered_contacts( $type, $filters )
+	public function get_contacts_for_processing( $type, $filters = array(), $offset = 0, $limit = 10, $owner = null ) {
+		return $this->get_filtered_contacts( $type, $filters, $owner )
 					->offset( $offset )
 					->limit( $limit )
 					->get();
 	}
 
 	/**
+	 * Count contacts the filters match, ignoring the recipient-field gate.
+	 *
+	 * Pairs with get_filtered_contacts(): the difference between the two is
+	 * precisely the set the send path skips for having no usable address on
+	 * this channel, which is the number the Recipients step needs in order to
+	 * warn instead of silently under-delivering.
+	 *
+	 * @param string $type    Channel ('email', 'sms', 'whatsapp').
+	 * @param array  $filters Filter groups.
+	 * @return int
+	 */
+	public function count_matching_contacts( $type, $filters = array(), $owner = null ) {
+		if ( ! in_array( $type, array( 'email', 'sms', 'whatsapp' ), true ) ) {
+			return 0;
+		}
+
+		$query = ContactModel::where( $type . '_status', 'subscribed' );
+
+		if ( ! empty( $filters ) ) {
+			$contact_filters = new Contact_Filters_Process( $query, $filters );
+			$query           = $contact_filters->filter();
+		}
+
+		return (int) $this->limit_to_owner( $query, $owner )->count();
+	}
+
+	/**
 	 * Apply campaign type filter to query
 	 * Filters contacts based on whether they have email or phone
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder instance
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder instance
 	 * @param string                                $type Campaign type ('email', 'sms', 'whatsapp')
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function apply_campaign_type_filter( $query, $type ) {
 		// Ensure type is in integer format (handles both string and int input)

@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
-use Illuminate\Console\Command;
+use DoubleScale\Vendor\Illuminate\Console\Command;
 use DoubleScale\Vendor\Symfony\Component\Console\Input\InputOption;
-use Illuminate\Database\Migrations\MigrationRepositoryInterface;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\MigrationRepositoryInterface;
 class InstallCommand extends Command
 {
     /**

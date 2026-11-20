@@ -69,9 +69,18 @@ class CreateTask extends BaseTaskAction {
 			$due_time = null;
 		}
 
-		$assignee = (int) $step->get_setting( 'assignee' );
+		$picked = (int) $step->get_setting( 'assignee' );
+		if ( 0 === $picked ) {
+			$picked = get_current_user_id() ?: 1;
+		}
+
+		list( $assignee, $note ) = $this->resolve_assignee( $picked, (int) $entity['entity_type'], (int) $entity['entity_id'] );
 		if ( $assignee <= 0 ) {
-			$assignee = get_current_user_id() ?: 1;
+			return array(
+				'status'  => 'skipped',
+				/* translators: %s: why nobody could take the task */
+				'message' => sprintf( __( 'No task was created: %s', 'doublescale' ), $note ),
+			);
 		}
 
 		$data = array(
@@ -120,7 +129,11 @@ class CreateTask extends BaseTaskAction {
 			BaseTaskTrigger::suppress_enrollment( false );
 		}
 
-		return true;
+		// The run log says when the task went to the record's owner instead.
+		return '' === $note ? true : array(
+			'success' => true,
+			'message' => $note,
+		);
 	}
 
 	/**

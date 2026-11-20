@@ -10,7 +10,7 @@ namespace DoubleScale\Modules\Support\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * MailboxModel class.
@@ -64,7 +64,7 @@ class MailboxModel extends Model {
 	/**
 	 * Tickets routed through this mailbox.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function tickets() {
 		return $this->hasMany( TicketModel::class, 'mailbox_id', 'id' );
@@ -131,7 +131,7 @@ class MailboxModel extends Model {
 	public function save( array $options = array() ) {
 		try {
 			return parent::save( $options );
-		} catch ( \Illuminate\Database\QueryException $e ) {
+		} catch ( \DoubleScale\Vendor\Illuminate\Database\QueryException $e ) {
 			if ( false !== strpos( $e->getMessage(), 'slug' ) ) {
 				$this->slug = $this->slug . '-' . substr( wp_generate_uuid4(), 0, 8 );
 				return parent::save( $options );

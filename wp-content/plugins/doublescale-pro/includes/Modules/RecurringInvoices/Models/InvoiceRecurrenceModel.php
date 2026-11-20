@@ -10,7 +10,7 @@ namespace DoubleScale\Pro\Modules\RecurringInvoices\Models;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * InvoiceRecurrenceModel class.
@@ -72,7 +72,7 @@ class InvoiceRecurrenceModel extends Model {
 	/**
 	 * Template invoice this rule copies from.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function templateInvoice() {
 		return $this->belongsTo( InvoiceModel::class, 'template_invoice_id', 'id' );
@@ -81,8 +81,8 @@ class InvoiceRecurrenceModel extends Model {
 	/**
 	 * Active rules whose slot has arrived.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeDue( $query ) {
 		return $query->where( 'is_active', 1 )

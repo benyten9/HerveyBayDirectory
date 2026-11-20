@@ -68,6 +68,11 @@ class RestCreditNoteApplicationController extends RestController {
 
 	public function get_items_permissions_check( $request ) {
 		unset( $request );
+		// Applying credit to invoices needs invoices (Documents on).
+		$off = doublescale_module_data_error( 'documents' );
+		if ( $off ) {
+			return $off;
+		}
 		return Capabilities::can_view_sales();
 	}
 
@@ -81,6 +86,11 @@ class RestCreditNoteApplicationController extends RestController {
 
 	public function update_item_permissions_check( $request ) {
 		unset( $request );
+		// Applying credit to invoices needs invoices (Documents on).
+		$off = doublescale_module_data_error( 'documents' );
+		if ( $off ) {
+			return $off;
+		}
 		return Capabilities::can_view_sales()
 			&& ( Capabilities::can_manage_all_sales() || Capabilities::current_user_can( 'doublescale_manage_own_sales' ) );
 	}

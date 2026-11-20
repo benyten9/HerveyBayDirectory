@@ -85,8 +85,11 @@ class LocalBusiness extends JsonSchemaValue implements GetJsonData {
 				'value'   => '_seopress_pro_rich_snippets_lb_name',
 				'default' => '%%sitetitle%%',
 			),
+			// A fragment, not the bare canonical. The breadcrumb's last crumb
+			// publishes `<canonical>` as the WebPage, and the page and the
+			// business on it are not the same thing.
 			'id'                  => array(
-				'default' => '%%schema_article_canonical%%',
+				'default' => '%%schema_article_canonical%%#localbusiness',
 			),
 			'openingHours'        => '_seopress_pro_rich_snippets_lb_opening_hours',
 		);
@@ -155,6 +158,19 @@ class LocalBusiness extends JsonSchemaValue implements GetJsonData {
 		}
 
 		$data = seopress_get_service( 'VariablesToString' )->replaceDataToString( $data, $variables );
+		// Global business settings describe this entity only, never a manual
+		// schema for another location. An unset image keeps the existing fallback.
+		if ( RichSnippetType::OPTION_LOCAL_BUSINESS === $typeSchema ) {
+			$options = get_option( 'seopress_pro_option_name', array() );
+			$options = \SEOPressPro\Helpers\Settings\LocalBusinessHelper::sanitize_additional_fields( is_array( $options ) ? $options : array() );
+			foreach ( array( 'email' => 'email', 'logo' => 'logo', 'image' => 'image', 'area_served' => 'areaServed', 'same_as' => 'sameAs' ) as $field => $property ) {
+				$value = $options[ 'seopress_local_business_' . $field ] ?? '';
+				if ( '' !== $value ) {
+					$data[ $property ] = in_array( $field, array( 'area_served', 'same_as' ), true ) ? explode( "\n", $value ) : $value;
+				}
+			}
+		}
+
 
 		$schema = seopress_get_service( 'JsonSchemaGenerator' )->getJsonFromSchema( PostalAddress::NAME, $context, array( 'remove_empty' => true ) );
 
@@ -193,7 +209,72 @@ class LocalBusiness extends JsonSchemaValue implements GetJsonData {
 			}
 		}
 
+		// The business the global settings describe is the site's own business,
+		// which is the entity the Free side publishes as Organization. It
+		// identified itself with the bare site root instead, so the two nodes
+		// described the same business and said nothing about each other. The
+		// shared organization identity is what connects them.
+		//
+		// Only that path. A manual LocalBusiness is another business the author
+		// entered on a post, and the inline `provider` of a Service is the
+		// business that provides it: giving either of them the site's identity
+		// would publish someone else's plumber as this agency, and would undo
+		// the explicit Knowledge Graph choice ServiceProviderReference exists
+		// to make. Free applies the same rule, no identity on a SUB_TYPE.
+		//
+		// The id is read back from the Organization generator, like the
+		// publisher and the Service provider, so a site that moved the node
+		// with `seopress_get_json_data_organization` (the workaround #1597
+		// hands customers) gets its business on the same identity.
+		if ( RichSnippetType::OPTION_LOCAL_BUSINESS === $typeSchema ) {
+			$data['@id'] = $this->organizationIdentity();
+		}
+
+		// Two manual businesses on one page resolve their own values from their
+		// own entry, but both derived their identity from the same canonical,
+		// so a consumer merging on `@id` read one business with the other's
+		// address. The first keeps the bare `#localbusiness` fragment, so the
+		// common case of a single business is unchanged.
+		if ( RichSnippetType::MANUAL === $typeSchema ) {
+			$data = $this->numberManualIdentity( $data, $context );
+		}
+
 		return apply_filters( 'seopress_pro_get_json_data_local_business', $data, $context );
+	}
+
+	/**
+	 * The identifier of the site's Organization node.
+	 *
+	 * Read from the Organization generator when the Knowledge Graph publishes
+	 * one. Otherwise, a Person, an empty or a disabled Knowledge Graph, it is
+	 * the default organization identity, which is what this node carried
+	 * before. With a Free version older than the shared helper, the same
+	 * identity is built by hand: falling back to the site root would make the
+	 * business and the home WebPage of the breadcrumb one node.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return string
+	 */
+	protected function organizationIdentity() {
+		if ( ! $this->hasEntityIdHelper() ) {
+			return trailingslashit( home_url() ) . '#organization';
+		}
+
+		$identity = \SEOPressPro\Helpers\PublisherEntity::get_id();
+
+		return '' !== $identity ? $identity : \SEOPress\Helpers\SchemaEntityId::for_home( 'organization' );
+	}
+
+	/**
+	 * Whether the Free side ships the shared identity helper (10.3+).
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return bool
+	 */
+	protected function hasEntityIdHelper() {
+		return class_exists( '\\SEOPress\\Helpers\\SchemaEntityId' );
 	}
 
 	public function cleanValues( $data ) {

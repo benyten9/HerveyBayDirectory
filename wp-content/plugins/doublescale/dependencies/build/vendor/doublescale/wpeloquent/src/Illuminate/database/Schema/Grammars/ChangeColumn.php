@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Database\Schema\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema\Grammars;
 
 use RuntimeException;
-use Doctrine\DBAL\Types\Type;
-use Illuminate\Support\Fluent;
-use Doctrine\DBAL\Schema\Table;
-use Illuminate\Database\Connection;
-use Doctrine\DBAL\Schema\Comparator;
-use Illuminate\Database\Schema\Blueprint;
-use Doctrine\DBAL\Schema\AbstractSchemaManager as SchemaManager;
+use DoubleScale\Vendor\Doctrine\DBAL\Types\Type;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\Table;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\Comparator;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Blueprint;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\AbstractSchemaManager as SchemaManager;
 class ChangeColumn
 {
     /**

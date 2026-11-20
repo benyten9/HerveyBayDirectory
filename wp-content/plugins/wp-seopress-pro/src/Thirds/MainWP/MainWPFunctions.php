@@ -1,4 +1,8 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
+}
+
 /**
  * Save pro licence
  *
@@ -41,8 +45,8 @@ function seopress_save_pro_licence( $licence ) {
 		if ( false === $license_data->success ) {
 			switch ( $license_data->error ) {
 				case 'expired':
-					/* translators: %s: localized expiration date */
 					$message = sprintf(
+						/* translators: %s: localized expiration date */
 						__( 'Your license key expired on %s.', 'wp-seopress-pro' ),
 						date_i18n( get_option( 'date_format' ), strtotime( $license_data->expires, current_time( 'timestamp' ) ) )
 					);

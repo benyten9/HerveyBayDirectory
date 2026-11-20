@@ -68,6 +68,34 @@ class OptionPro {
 	}
 
 	/**
+	 * Auto-fill the automatic Video schema from the first YouTube video detected in the post content.
+	 *
+	 * The toggle lives in the Structured Data Types tab since 10.0, so it is
+	 * saved in this option and no longer in the XML sitemap one.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @return string|null
+	 */
+	public function getVideoSchemaYouTubeEnable() {
+		return $this->searchOptionByKey( 'seopress_xml_sitemap_video_schema_youtube_enable' );
+	}
+
+	/**
+	 * The site's own YouTube Data API v3 key, used by the Video schema auto-fill and the XML Video sitemap.
+	 *
+	 * Use seopress_pro_get_youtube_api_key() to read the key actually in use:
+	 * the SEOPRESS_YOUTUBE_API_KEY constant takes precedence over this setting.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @return string|null
+	 */
+	public function getVideoYouTubeApiKey() {
+		return $this->searchOptionByKey( 'seopress_video_youtube_api_key' );
+	}
+
+	/**
 	 * @since 6.6.0
 	 *
 	 * @return string
@@ -785,7 +813,13 @@ class OptionPro {
 	 */
 	public function getGSCResolvedUrl() {
 		$custom_url = $this->getGSCSiteUrl();
-		$base_url   = ! empty( $custom_url ) ? $custom_url : site_url();
+
+		// home_url(), not site_url(): the property registered in Search Console
+		// is the address the site answers on. The two differ only when
+		// WordPress lives in a subdirectory of its own (Bedrock, or the classic
+		// "give WordPress its own directory" setup), where site_url() names a
+		// property that does not exist.
+		$base_url = ! empty( $custom_url ) ? $custom_url : home_url();
 
 		if ( $this->getGSCDomainProperty() ) {
 			$parsed = wp_parse_url( $base_url );

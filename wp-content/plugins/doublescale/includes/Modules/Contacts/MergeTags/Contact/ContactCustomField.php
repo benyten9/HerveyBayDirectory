@@ -50,6 +50,13 @@ class ContactCustomField extends MergeTag {
 	public $group = 'contact';
 
 	/**
+	 * Typed by people: printed without markup.
+	 *
+	 * @var bool
+	 */
+	public $plain_text = true;
+
+	/**
 	 * Is automation merge tag
 	 *
 	 * @var bool
@@ -95,7 +102,8 @@ class ContactCustomField extends MergeTag {
 if ( class_exists( CustomFieldModel::class ) ) {
 	( static function () {
 		try {
-			foreach ( CustomFieldModel::all() as $custom_field ) {
+			$fields = method_exists( CustomFieldModel::class, 'cached_all' ) ? CustomFieldModel::cached_all() : CustomFieldModel::all();
+			foreach ( $fields as $custom_field ) {
 				MergeTagsManager::instance()->register( new ContactCustomField( $custom_field ) );
 			}
 		} catch ( \Throwable $e ) {

@@ -95,7 +95,8 @@ class LegacyWebhookController extends Controller {
             }
 
             $invoice                 = Invoice::retrieve( $invoice_id );
-            $invoice_subscription_id = $this->normalize_stripe_id( $invoice->subscription ?? null );
+            $checkout_controller     = new CheckoutController();
+            $invoice_subscription_id = $checkout_controller->get_invoice_subscription_id( $invoice );
 
             if ( $subscription_id !== $invoice_subscription_id ) {
                 $this->log(
@@ -110,7 +111,7 @@ class LegacyWebhookController extends Controller {
                 return $this->acknowledge();
             }
 
-            ( new CheckoutController() )->handle_invoice_paid( $invoice_id, (int) $migrated_order->id );
+            $checkout_controller->handle_invoice_paid( $invoice_id, (int) $migrated_order->id );
         } catch ( \Exception $e ) {
             $this->log(
                 'Failed to process legacy subscription %s for order %d - %s',
@@ -133,24 +134,28 @@ class LegacyWebhookController extends Controller {
         return absint( $data['previous_attributes']['plan']['metadata']['order_id'] ?? 0 );
     }
 
-    private function ensure_package_subscription_link( $migrated_order, string $subscription_id, $invoice ): bool {
+    public function ensure_package_subscription_link( $migrated_order, string $subscription_id, $invoice ): bool {
         $package_repository = directorist_user_package_repository();
         $package            = $package_repository->get_by_subscription_id( $subscription_id );
 
         if ( ! $package ) {
-            $package = $package_repository
+            $package = $package_repository->get_by_last_order_id( (string) $migrated_order->id );
+        }
+
+        if ( ! $package ) {
+            $package_order = $package_repository->package_order_repository
                 ->get_query_builder()
-                ->where( 'user_id', (int) $migrated_order->user_id )
-                ->where( 'plan_id', (int) $migrated_order->ref )
-                ->where( 'is_recurring', 1 )
-                ->where( 'is_legacy', 1 )
-                ->order_by_desc( 'id' )
+                ->where( 'order_id', (int) $migrated_order->id )
                 ->first();
+
+            if ( $package_order ) {
+                $package = $package_repository->get_by_id( (int) $package_order->package_id );
+            }
         }
 
         if ( ! $package ) {
             $this->log(
-                'No recurring package found for migrated order %d and subscription %s.',
+                'No package linked to migrated order %d for subscription %s.',
                 (int) $migrated_order->id,
                 $subscription_id
             );
@@ -189,6 +194,11 @@ class LegacyWebhookController extends Controller {
 
         $package_dto  = ( new UserPackageDTO )->set_id( (int) $package->id );
         $needs_update = false;
+
+        if ( empty( $package->is_recurring ) ) {
+            $package_dto->set_is_recurring( true );
+            $needs_update = true;
+        }
 
         if ( empty( $package->subscription_id ) ) {
             $package_dto->set_subscription_id( $subscription_id );

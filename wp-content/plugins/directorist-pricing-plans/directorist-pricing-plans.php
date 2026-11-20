@@ -8,7 +8,7 @@ use DirectoristPricingPlan\WpMVC\App;
 /**
  * Plugin Name:       Directorist - Pricing Plans
  * Description:       Allow you to monetize your directory by creating and selling unlimited subscription plans.
- * Version:           4.1.1
+ * Version:           4.3.0
  * Requires Plugins:  directorist
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -26,6 +26,9 @@ require_once __DIR__ . '/vendor/vendor-src/autoload.php';
 require_once __DIR__ . '/app/Helpers/helper.php';
 require_once __DIR__ . '/app/Helpers/old-helpers.php';
 require_once __DIR__ . '/app/Helpers/EDDPluginUpdaterPricingPlan.php';
+
+// Load before Directorist seals the extension registry at plugins_loaded.
+\DirectoristPricingPlan\App\MCP\Integration::boot();
 
 final class DirectoristPricingPlan {
     public static DirectoristPricingPlan $instance;
@@ -76,7 +79,7 @@ final class DirectoristPricingPlan {
                 }
 
                 // Ensure minimum required Directorist version
-                $required_version = '8.9.4';
+                $required_version = '8.11';
                 $current_version  = defined( 'ATBDP_VERSION' ) ? ATBDP_VERSION : '0';
 
                 if ( version_compare( $current_version, $required_version, '<' ) ) {

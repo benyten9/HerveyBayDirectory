@@ -158,6 +158,7 @@ function seopress_pro_license_error_message( $error_code, $license_data = null )
  *     @type bool   $success Whether the license is now valid.
  *     @type string $status  The returned license status ('valid' / 'invalid' / '').
  *     @type string $message Error message on failure, empty on success.
+ *     @type bool $retryable Optional flag for temporary transport failures.
  * }
  */
 function seopress_pro_run_license_activation( $license ) {
@@ -185,9 +186,10 @@ function seopress_pro_run_license_activation( $license ) {
 			: __( 'An error occurred, please try again. Response code: ', 'wp-seopress-pro' ) . wp_remote_retrieve_response_code( $response );
 
 		return array(
-			'success' => false,
-			'status'  => '',
-			'message' => $message,
+			'success'   => false,
+			'status'    => '',
+			'message'   => $message,
+			'retryable' => is_wp_error( $response ) || 429 === wp_remote_retrieve_response_code( $response ) || 500 <= wp_remote_retrieve_response_code( $response ),
 		);
 	}
 
@@ -215,6 +217,8 @@ function seopress_pro_run_license_activation( $license ) {
 		// Lifetime license - set expiry far in the future.
 		update_option( 'seopress_pro_license_expiry', strtotime( '+100 years' ), false );
 	}
+
+	delete_option( 'seopress_pro_license_retry_after' );
 
 	// A successful activation clears any previously stored error.
 	delete_option( 'seopress_pro_license_key_error' );
@@ -276,6 +280,7 @@ function seopress_pro_run_license_deactivation() {
 	// just deactivated, and let automatic (wp-config.php) activation run again
 	// only if the site URL changes later.
 	delete_option( 'seopress_pro_license_automatic_attempt' );
+	delete_option( 'seopress_pro_license_retry_after' );
 
 	// Invalidate EDD updater caches to prevent stale package URLs.
 	seopress_clear_edd_updater_cache();
@@ -296,6 +301,7 @@ function seopress_pro_run_license_reset() {
 	delete_option( 'seopress_pro_license_key' );
 	delete_option( 'seopress_pro_license_key_error' );
 	delete_option( 'seopress_pro_license_automatic_attempt' );
+	delete_option( 'seopress_pro_license_retry_after' );
 	delete_option( 'seopress_pro_license_home_url' );
 	delete_option( 'seopress_pro_license_expiry' );
 
@@ -348,12 +354,18 @@ function seopress_automatic_license_activation() {
 		delete_option( 'seopress_pro_license_status' );
 		delete_option( 'seopress_pro_license_automatic_attempt' );
 		update_option( 'seopress_pro_license_home_url', get_option( 'home' ) );
+		delete_option( 'seopress_pro_license_retry_after' );
 	} else {
-		return false;
+		$retry_after = (int) get_option( 'seopress_pro_license_retry_after' );
+		if ( ! $retry_after || time() < $retry_after ) {
+			return false;
+		}
+		delete_option( 'seopress_pro_license_automatic_attempt' );
 	}
 
 	// Already activated?
 	if ( 'valid' === get_option( 'seopress_pro_license_status' ) ) {
+		delete_option( 'seopress_pro_license_retry_after' );
 		return;
 	}
 
@@ -363,7 +375,12 @@ function seopress_automatic_license_activation() {
 	}
 	update_option( 'seopress_pro_license_automatic_attempt', 1 );
 
+	// Bound retries after temporary transport failures; rejected keys need user action.
+	delete_option( 'seopress_pro_license_retry_after' );
 	$result = seopress_pro_run_license_activation( $license );
+	if ( ! empty( $result['retryable'] ) ) {
+		update_option( 'seopress_pro_license_retry_after', time() + 10 * MINUTE_IN_SECONDS, false );
+	}
 
 	// Persist the failure message for display on the License page.
 	if ( ! $result['success'] && '' !== $result['message'] ) {

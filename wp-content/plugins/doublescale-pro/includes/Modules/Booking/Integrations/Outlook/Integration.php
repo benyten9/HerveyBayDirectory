@@ -12,12 +12,13 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Outlook;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\EventLocations\MsTeams;
 use DoubleScale\Modules\Booking\Abstracts\Integration as Abstract_Integration;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use DoubleScale\Modules\Booking\Models\EventModel;
 use DoubleScale\Pro\Modules\Booking\Integrations\Outlook\Rest\REST_API;
+use DoubleScale\Pro\Modules\Booking\Integrations\DescribesBookingLocation;
 use DoubleScale\Modules\Booking\BookingUtils;
 use WP_Error;
 
@@ -25,6 +26,8 @@ use WP_Error;
  * Outlook Integration class
  */
 class Integration extends Abstract_Integration {
+	use DescribesBookingLocation;
+
 	/**
 	 * Default cache time in minutes
 	 */
@@ -84,6 +87,8 @@ class Integration extends Abstract_Integration {
 		\add_filter( 'doublescale_booking_get_available_slots', array( $this, 'get_available_slots' ), 10, 5 );
 		add_action( 'doublescale_booking_initialize_default_settings', array( $this, 'initialize_default_settings' ) );
 		add_action( 'doublescale_booking_created', array( $this, 'add_event_to_calendars' ) );
+		// Zoom bookings: write after the Zoom integration (priority 10) has saved the join link.
+		add_action( 'doublescale_booking_created', array( $this, 'add_zoom_booking_to_calendars' ), 20 );
 		add_action( 'doublescale_booking_cancelled', array( $this, 'remove_event_from_calendars' ) );
 		add_action( 'doublescale_booking_rescheduled', array( $this, 'reschedule_event' ) );
 	}
@@ -281,15 +286,34 @@ class Integration extends Abstract_Integration {
 	}
 
 	/**
-	 * Add one Outlook event on the host’s selected remote default calendar (optional Teams).
-	 *
-	 * @since 1.0.0
+	 * Zoom bookings run after the Zoom integration so the event carries the join link.
 	 *
 	 * @param int|string|BookingModel $booking Booking id, numeric string, or model.
 	 *
+	 * @return BookingModel|null
+	 */
+	public function add_zoom_booking_to_calendars( $booking ) {
+		$booking = $this->resolve_booking( $booking );
+		if ( ! $booking || ! $this->booking_has_zoom_location( $booking ) ) {
+			return $booking;
+		}
+
+		return $this->add_event_to_calendars( $booking, true );
+	}
+
+	/**
+	 * Add one Outlook event on the host’s selected remote default calendar, for
+	 * every location. A Teams meeting is attached only when the booking location
+	 * is Microsoft Teams and the account has Teams enabled.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int|string|BookingModel $booking      Booking id, numeric string, or model.
+	 * @param bool                    $zoom_handled True when called after the Zoom integration ran.
+	 *
 	 * @return BookingModel
 	 */
-	public function add_event_to_calendars( $booking ) {
+	public function add_event_to_calendars( $booking, $zoom_handled = false ) {
 		$booking = $this->resolve_booking( $booking );
 		if ( ! $booking ) {
 			return $booking;
@@ -300,10 +324,17 @@ class Integration extends Abstract_Integration {
 				return $booking;
 			}
 
-			// Check if location is MS Teams
-			if ( $booking->location['type'] !== MsTeams::instance()->slug ) {
+			// Zoom bookings are written by add_zoom_booking_to_calendars() once the link exists.
+			if ( true !== $zoom_handled && $this->booking_has_zoom_location( $booking ) ) {
 				return $booking;
 			}
+
+			// Never write the same booking twice.
+			if ( ! empty( $booking->get_meta( 'outlook_events_details', array() ) ) ) {
+				return $booking;
+			}
+
+			$is_teams_location = MsTeams::instance()->slug === $this->booking_location_type( $booking );
 
 			$bookable_entity  = $booking->getBookableEntity();
 			$booking_calendar = $booking->calendar;
@@ -385,23 +416,20 @@ class Integration extends Abstract_Integration {
 			$this->set_host( $integration_calendar );
 			$outlook_integration = $this->host->get_meta( $this->meta_key, array() );
 
+			// This host never connected Outlook Calendar: nothing to sync, and nothing wrong.
 			if ( empty( $outlook_integration ) ) {
-				$booking->logs()->create(
-					array(
-						'type'    => 'error',
-						'message' => __( 'Outlook Calendar integration not configured.', 'doublescale' ),
-					)
-				);
 				return $booking;
 			}
 
 			$default_account = $this->pick_host_account_for_default_calendar_sync( $outlook_integration );
 
 			if ( ! $default_account ) {
+				// No default remote calendar: skip outbound sync. The booking
+				// already exists — not an error, but say why nothing was added.
 				$booking->logs()->create(
 					array(
-						'type'    => 'error',
-						'message' => __( 'No default calendar found in any Outlook account.', 'doublescale' ),
+						'type'    => 'info',
+						'message' => __( 'Not added to Outlook Calendar: no remote calendar is selected for this host.', 'doublescale' ),
 					)
 				);
 				return $booking;
@@ -440,7 +468,7 @@ class Integration extends Abstract_Integration {
 			$event_data  = array(
 				'subject'               => sprintf( __( '%1$s: %2$s', 'doublescale' ), $booking->getContactDisplayName(), $entity_name ),
 				'location'              => array(
-					'displayName' => $booking->location['label'],
+					'displayName' => $is_teams_location ? 'Microsoft Teams' : $this->booking_location_text( $booking ),
 				),
 				'organizer'             => array(
 					'emailAddress' => array(
@@ -464,7 +492,8 @@ class Integration extends Abstract_Integration {
 				),
 				'transactionId'         => "{$this->get_site_uid()}-{$booking->id}",
 			);
-			$enableTeams = Arr::get( $default_account['data'], 'config.settings.enable_teams', false );
+			// Only Teams-location bookings get a Teams meeting; other locations are plain events.
+			$enableTeams = $is_teams_location && Arr::get( $default_account['data'], 'config.settings.enable_teams', false );
 
 			if ( $enableTeams ) {
 				$event_data['isOnlineMeeting']       = true;
@@ -502,7 +531,7 @@ class Integration extends Abstract_Integration {
 
 			$booking->update_meta( 'outlook_events_details', $meta );
 
-			if ( $enableTeams ) {
+			if ( $is_teams_location && $enableTeams ) {
 				$shared_teams_link = Arr::get( $event, 'onlineMeeting.joinUrl', '' );
 				$booking->update_meta(
 					'location',
@@ -512,7 +541,7 @@ class Integration extends Abstract_Integration {
 						'value' => $shared_teams_link,
 					)
 				);
-			} else {
+			} elseif ( $is_teams_location ) {
 				$value = Arr::get( $event, 'webLink', '' );
 				$booking->update_meta(
 					'location',

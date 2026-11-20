@@ -11,7 +11,7 @@ namespace DoubleScale\Modules\Booking\Renderer;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Exceptions\BookingNotFoundException;
 use DoubleScale\Modules\Booking\Exceptions\InvalidBookingHashException;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
@@ -124,8 +124,20 @@ class BookingFrontendHandler {
 					'url'       => home_url(),
 					'lang'      => get_locale(),
 					'timezones' => $tz_map,
+					// A signed-in client (not the team) books as themselves: their
+					// name and email fill the form. Not in the URL, where it would
+					// reach browser history and server logs.
+					'invitee'   => self::signed_in_invitee(),
 				)
 			)
+		);
+
+		// Dates the way the site writes them (Date / Time Format, Week Starts
+		// On): the booking calendar and its date labels follow the site.
+		wp_add_inline_script(
+			'doublescale-booking-renderer',
+			'window.doublescaleSiteDates = ' . wp_json_encode( \DoubleScale\Core\Settings\SiteDates::config(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+			'before'
 		);
 
 		// Mirror the admin's pro-feature gating into the renderer. When Pro
@@ -263,5 +275,23 @@ class BookingFrontendHandler {
 
 	private function is_valid_page_type( string $type ): bool {
 		return in_array( $type, array( 'cancel', 'reschedule', 'confirm', 'claim_waitlist' ), true );
+	}
+
+	/**
+	 * The signed-in visitor's name and email when they are a client (no team
+	 * capabilities); null otherwise.
+	 *
+	 * @return array{name: string, email: string}|null
+	 */
+	private static function signed_in_invitee(): ?array {
+		$user = wp_get_current_user();
+		if ( ! $user || ! $user->exists() || user_can( $user, 'edit_posts' ) ) {
+			return null;
+		}
+
+		return array(
+			'name'  => sanitize_text_field( $user->display_name ),
+			'email' => sanitize_email( $user->user_email ),
+		);
 	}
 }

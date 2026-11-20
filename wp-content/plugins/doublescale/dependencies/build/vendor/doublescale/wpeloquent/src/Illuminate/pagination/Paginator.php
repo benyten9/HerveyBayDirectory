@@ -1,17 +1,17 @@
 <?php
 
-namespace Illuminate\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Pagination;
 
 use Countable;
 use ArrayAccess;
 use JsonSerializable;
 use IteratorAggregate;
-use Illuminate\Support\Collection;
-use Illuminate\Support\HtmlString;
-use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Pagination\Paginator as PaginatorContract;
-class Paginator extends \Illuminate\Pagination\AbstractPaginator implements Arrayable, ArrayAccess, Countable, IteratorAggregate, JsonSerializable, Jsonable, PaginatorContract
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Support\HtmlString;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Jsonable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Contracts\Pagination\Paginator as PaginatorContract;
+class Paginator extends AbstractPaginator implements Arrayable, ArrayAccess, Countable, IteratorAggregate, JsonSerializable, Jsonable, PaginatorContract
 {
     /**
      * Determine if there are more items in the data source.

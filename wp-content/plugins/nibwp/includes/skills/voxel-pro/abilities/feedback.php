@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/voxel-pro-feedback', [
     'label'       => __('Voxel Pro — record build feedback', 'nibwp'),
-    'description' => __('Record thumb-up / thumb-down on the most recent Voxel template build. Down reasons are aggregated per (brand, kind) and surfaced to future runs through the matching checklist.', 'nibwp'),
+    'description' => 'Record thumb-up / thumb-down on the most recent Voxel template build. Down reasons are aggregated per (brand, kind) and surfaced to future runs through the matching checklist.',
     'category'    => 'voxel-pro',
     'input_schema' => [
         'type' => 'object',

@@ -23,7 +23,7 @@ if (!function_exists('nibwp_surecart_templates') && file_exists($nibwp_sc_engine
  */
 wp_register_ability('nibwp/etchwp-pro-surecart', [
     'label'       => __('EtchWP Pro — SureCart Section', 'nibwp'),
-    'description' => __('Design a SureCart storefront section (buy-button, product, product-grid, pricing, checkout, dashboard) as a validated EtchWP component — the SureCart blocks wrapped in a token-styled Etch section. Always dry_run:true first. templates come from the shared SureCart engine; bind with price_id / product_id / products / collection_id.', 'nibwp'),
+    'description' => 'Design a SureCart storefront section (buy-button, product, product-grid, pricing, checkout, dashboard) as a validated EtchWP component — the SureCart blocks wrapped in a token-styled Etch section. Always dry_run:true first. templates come from the shared SureCart engine; bind with price_id / product_id / products / collection_id.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

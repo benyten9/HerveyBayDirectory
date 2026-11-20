@@ -93,7 +93,7 @@ final class ContractCalendarProvider {
 
 	/**
 	 * @param mixed $query Eloquent query builder.
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	private function safe_get( $query ) {
 		$model = $query->getModel();

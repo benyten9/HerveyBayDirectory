@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Events;
+namespace DoubleScale\Vendor\Illuminate\Events;
 
-use Illuminate\Container\Container;
-use Illuminate\Contracts\Queue\Job;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use DoubleScale\Vendor\Illuminate\Container\Container;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\Job;
+use DoubleScale\Vendor\Illuminate\Queue\InteractsWithQueue;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\ShouldQueue;
 class CallQueuedListener implements ShouldQueue
 {
     use InteractsWithQueue;

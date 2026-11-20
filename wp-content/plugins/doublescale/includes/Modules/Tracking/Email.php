@@ -61,7 +61,11 @@ class Email {
 	 * Email Tracking
 	 */
 	public function __construct() {
-		add_action( 'doublescale_ready', array( $this, 'init' ) );
+		// An open or a click can start an automation, and that run is queued
+		// through Action Scheduler, which takes work from `init` priority 1 on.
+		// The pixel request dies as soon as it is answered, so the run cannot be
+		// deferred: handled at `doublescale_ready` it was never queued at all.
+		add_action( 'init', array( $this, 'init' ), 2 );
 	}
 
 	/**
@@ -78,15 +82,25 @@ class Email {
 	 * @param bool $cache Whether to allow caching (false = send no-cache headers).
 	 */
 	private function send_tracking_pixel( $cache = false ) {
+		// The theme has loaded by `init`: whatever it printed on the way would
+		// reach the mail client ahead of the image and break it.
+		if ( ob_get_length() ) {
+			ob_clean();
+		}
+
+		$pixel = base64_decode( self::TRACKING_PIXEL ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- binary 1x1 GIF tracking pixel.
+
 		header( 'Content-Type: image/gif' );
-		header( 'Content-Length: 43' );
+		// The real length: a server that passes a longer one through (nginx,
+		// unlike Apache) leaves the mail client waiting for bytes that never come.
+		header( 'Content-Length: ' . strlen( $pixel ) );
 		if ( ! $cache ) {
 			header( 'Cache-Control: private, no-cache, no-cache=Set-Cookie, proxy-revalidate' );
 			header( 'Expires: Wed, 11 Jan 1984 05:00:00 GMT' );
 			header( 'Last-Modified: Wed, 11 Jan 1984 05:00:00 GMT' );
 			header( 'Pragma: no-cache' );
 		}
-		die( base64_decode( self::TRACKING_PIXEL ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- binary 1x1 GIF tracking pixel; escaping would corrupt the bytes.
+		die( $pixel ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary 1x1 GIF tracking pixel; escaping would corrupt the bytes.
 	}
 
 	/**
@@ -98,6 +112,64 @@ class Email {
 	private function is_failed_outbound( $tracking_entry ) {
 		return (int) $tracking_entry->status === TrackingStatus::FAILED
 			&& (int) $tracking_entry->direction === MessageDirection::OUTBOUND;
+	}
+
+	/**
+	 * Record the first open of an email and announce it.
+	 *
+	 * An open is learned from the pixel, from a click in a client that blocks
+	 * images, and from a reply. Whichever comes first is the open: automations,
+	 * notifications and lead scoring hear about each email once.
+	 *
+	 * @since 1.4.8
+	 *
+	 * @param CommunicationTrackingModel $tracking_entry Email that was opened.
+	 * @param string                     $via            How it was detected: pixel, click or reply.
+	 * @return bool Whether this call recorded the open.
+	 */
+	public static function record_open( $tracking_entry, $via = 'pixel' ) {
+		if ( ! $tracking_entry instanceof CommunicationTrackingModel || $tracking_entry->opened ) {
+			return false;
+		}
+
+		$opened_at = current_time( 'mysql', true );
+
+		// Claimed in one statement, so two requests for the same pixel cannot
+		// both find the email unopened and both start the workflow.
+		$claimed = CommunicationTrackingModel::where( 'id', $tracking_entry->id )
+			->where(
+				static function ( $query ) {
+					$query->where( 'opened', 0 )->orWhereNull( 'opened' );
+				}
+			)
+			->update(
+				array(
+					'opened'    => 1,
+					'opened_at' => $opened_at,
+				)
+			);
+
+		if ( ! $claimed ) {
+			return false;
+		}
+
+		$tracking_entry->opened    = 1;
+		$tracking_entry->opened_at = $opened_at;
+		$tracking_entry->syncOriginalAttributes( array( 'opened', 'opened_at' ) );
+
+		$contact = $tracking_entry->contact;
+		if ( $contact ) {
+			/**
+			 * Fires the first time an email is opened.
+			 *
+			 * @param ContactModel               $contact        Contact who opened it.
+			 * @param CommunicationTrackingModel $tracking_entry The opened email. Since 1.4.8.
+			 * @param string                     $via            pixel, click or reply. Since 1.4.8.
+			 */
+			do_action( 'doublescale_mail_open', $contact, $tracking_entry, $via );
+		}
+
+		return true;
 	}
 
 	/**
@@ -126,21 +198,8 @@ class Email {
 				$this->send_tracking_pixel( true );
 			}
 
-			// Only update and fire action on first open (prevent duplicate notifications/lead scoring).
-			if ( ! $tracking_entry->opened ) {
-				$tracking_entry->update(
-					array(
-						'opened'    => 1,
-						'opened_at' => current_time( 'mysql', true ),
-					)
-				);
-
-				// Fire email opened action only on first open.
-				$contact = $tracking_entry->contact;
-				if ( $contact ) {
-					do_action( 'doublescale_mail_open', $contact );
-				}
-			}
+			// Only the first open is recorded and announced (prevent duplicate notifications/lead scoring).
+			self::record_open( $tracking_entry, 'pixel' );
 
 			// Send the pixel (always, regardless of first/repeat open)
 			$this->send_tracking_pixel();
@@ -213,15 +272,8 @@ class Email {
 				);
 			}
 
-			// If email was clicked but not opened, mark as opened too.
-			if ( ! $tracking_entry->opened ) {
-				$tracking_entry->update(
-					array(
-						'opened'    => 1,
-						'opened_at' => current_time( 'mysql', true ),
-					)
-				);
-			}
+			// If email was clicked but not opened, the click is the open.
+			self::record_open( $tracking_entry, 'click' );
 
 			// Fire email clicked action only on first click.
 			if ( ! $already_clicked ) {

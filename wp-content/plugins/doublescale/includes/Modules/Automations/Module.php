@@ -91,6 +91,10 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	}
 
 	public function boot( Container $container ): void {
+		// For users whose only DoubleScale roles are the automation ones,
+		// strip every non-Automations submenu from the DoubleScale menu.
+		add_action( 'admin_menu', array( self::class, 'scope_menu_for_automation_only_users' ), 9999 );
+
 		parent::boot( $container );
 
 		add_filter( 'doublescale_mail_merge_tag_groups', array( $this, 'register_merge_tag_groups' ) );
@@ -104,54 +108,89 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		add_filter( 'doublescale_automation_actions', array( $this, 'register_actions' ) );
 		add_filter( 'doublescale_automation_goals', array( $this, 'register_goals' ) );
 
-		$this->loadManifestOrGlobs(
-			array(
-				'includes/Modules/Automations/Triggers/*.php',
-				'includes/Modules/Automations/Triggers/Woocommerce/*/*.php',
-				'includes/Modules/Automations/Triggers/Learndash/*.php',
-				'includes/Modules/Automations/Triggers/Edd/*.php',
-				'includes/Modules/Automations/Triggers/Tutorlms/*.php',
-				'includes/Modules/Automations/Triggers/Lifterlms/*.php',
-				'includes/Modules/Automations/Triggers/Learnpress/*.php',
-				'includes/Modules/Automations/Triggers/Memberpress/*.php',
-				'includes/Modules/Automations/Triggers/Pmpro/*.php',
-				'includes/Modules/Automations/Triggers/Deal/*.php',
-				'includes/Modules/Automations/Triggers/Task/*.php',
-				'includes/Modules/Automations/Triggers/Project/*.php',
-				'includes/Modules/Automations/Triggers/Link/*.php',
-				'includes/Modules/Automations/Triggers/Forms/*.php',
-				'includes/Modules/Automations/Triggers/Booking/*.php',
-				'includes/Modules/Automations/Triggers/Support/*.php',
-				'includes/Modules/Automations/Triggers/Sales/*.php',
-				'includes/Modules/Automations/Triggers/Surecart/*/*.php',
-				'includes/Modules/Automations/Triggers/Prestoplayer/*.php',
-				'includes/Modules/Automations/Actions/*.php',
-				'includes/Modules/Automations/Actions/Delays/*.php',
-				'includes/Modules/Automations/Actions/Woocommerce/*.php',
-				'includes/Modules/Automations/Actions/Wordpress/*.php',
-				'includes/Modules/Automations/Actions/Crm/Slack/*.php',
-				'includes/Modules/Automations/Actions/Learndash/*.php',
-				'includes/Modules/Automations/Actions/Webhooks/*.php',
-				'includes/Modules/Automations/Actions/Tutorlms/*.php',
-				'includes/Modules/Automations/Actions/Lifterlms/*.php',
-				'includes/Modules/Automations/Actions/Learnpress/*.php',
-				'includes/Modules/Automations/Actions/Memberpress/*.php',
-				'includes/Modules/Automations/Actions/Pmpro/*.php',
-				'includes/Modules/Automations/Actions/Deal/*.php',
-				'includes/Modules/Automations/Actions/Task/*.php',
-				'includes/Modules/Automations/Actions/Project/*.php',
-				'includes/Modules/Automations/Actions/Support/*.php',
-				'includes/Modules/Automations/Actions/Messaging/*.php',
-				'includes/Modules/Automations/Actions/Email/*.php',
-				'includes/Modules/Automations/Goals/*.php',
-				'includes/Modules/Automations/Goals/Surecart/*.php',
-				'includes/Modules/Automations/Goals/Woocommerce/*.php',
-				'includes/Modules/Automations/Rules/*/*.php',
-			),
-			'automations_v4'
+		// Triggers: only the ones active automations use are built and hooked at
+		// boot; the full catalog is built on first read (see TriggersManager).
+		add_action( 'doublescale_modules_booted', array( Services\TriggerBootPlan::class, 'note_modules' ), 1 );
+		Services\TriggersManager::instance()->set_files_loader(
+			function () {
+				$this->loadManifestOrGlobs(
+					array(
+						'includes/Modules/Automations/Triggers/*.php',
+						'includes/Modules/Automations/Triggers/Woocommerce/*/*.php',
+						'includes/Modules/Automations/Triggers/Learndash/*.php',
+						'includes/Modules/Automations/Triggers/Edd/*.php',
+						'includes/Modules/Automations/Triggers/Tutorlms/*.php',
+						'includes/Modules/Automations/Triggers/Lifterlms/*.php',
+						'includes/Modules/Automations/Triggers/Learnpress/*.php',
+						'includes/Modules/Automations/Triggers/Memberpress/*.php',
+						'includes/Modules/Automations/Triggers/Pmpro/*.php',
+						'includes/Modules/Automations/Triggers/Deal/*.php',
+						'includes/Modules/Automations/Triggers/Task/*.php',
+						'includes/Modules/Automations/Triggers/Project/*.php',
+						'includes/Modules/Automations/Triggers/Link/*.php',
+						'includes/Modules/Automations/Triggers/Forms/*.php',
+						'includes/Modules/Automations/Triggers/Booking/*.php',
+						'includes/Modules/Automations/Triggers/Support/*.php',
+						'includes/Modules/Automations/Triggers/Sales/*.php',
+						'includes/Modules/Automations/Triggers/Surecart/*/*.php',
+						'includes/Modules/Automations/Triggers/Fluentcart/*.php',
+						'includes/Modules/Automations/Triggers/Amelia/*.php',
+						'includes/Modules/Automations/Triggers/Latepoint/*.php',
+						'includes/Modules/Automations/Triggers/Prestoplayer/*.php',
+					),
+					'automation_triggers_v1'
+				);
+			}
 		);
 
-		$this->load_pro_automation_rule_files_if_available();
+		$this->loadManifestOrGlobs(
+			array(
+				'includes/Modules/Automations/Goals/*.php',
+				'includes/Modules/Automations/Goals/Surecart/*.php',
+				'includes/Modules/Automations/Goals/Fluentcart/*.php',
+				'includes/Modules/Automations/Goals/Woocommerce/*.php',
+			),
+			'automations_v7'
+		);
+
+		// Actions are read only when an automation step runs or a screen lists them:
+		// ActionsManager includes the files on first read (see load_actions()).
+		Services\ActionsManager::instance()->set_files_loader(
+			function () {
+				$this->loadManifestOrGlobs(
+					array(
+						'includes/Modules/Automations/Actions/*.php',
+						'includes/Modules/Automations/Actions/Delays/*.php',
+						'includes/Modules/Automations/Actions/Woocommerce/*.php',
+						'includes/Modules/Automations/Actions/Wordpress/*.php',
+						'includes/Modules/Automations/Actions/Crm/Slack/*.php',
+						'includes/Modules/Automations/Actions/Learndash/*.php',
+						'includes/Modules/Automations/Actions/Webhooks/*.php',
+						'includes/Modules/Automations/Actions/Tutorlms/*.php',
+						'includes/Modules/Automations/Actions/Lifterlms/*.php',
+						'includes/Modules/Automations/Actions/Learnpress/*.php',
+						'includes/Modules/Automations/Actions/Memberpress/*.php',
+						'includes/Modules/Automations/Actions/Pmpro/*.php',
+						'includes/Modules/Automations/Actions/Deal/*.php',
+						'includes/Modules/Automations/Actions/Task/*.php',
+						'includes/Modules/Automations/Actions/Project/*.php',
+						'includes/Modules/Automations/Actions/Support/*.php',
+						'includes/Modules/Automations/Actions/Messaging/*.php',
+						'includes/Modules/Automations/Actions/Email/*.php',
+					),
+					'automation_actions_v1'
+				);
+			}
+		);
+
+		// Conditions are read only when an automation checks one or the builder
+		// lists them: include the files on first read (see DefersRegistration).
+		Services\RulesManager::instance()->defer(
+			function () {
+				$this->loadManifestOrGlobs( array( 'includes/Modules/Automations/Rules/*/*.php' ), 'automation_rules_v1' );
+				$this->load_pro_automation_rule_files_if_available();
+			}
+		);
 
 		$this->loadMergeTags();
 	}
@@ -198,6 +237,11 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	}
 
 	public function register_merge_tag_groups( $groups ) {
+		$groups['webhook'] = array(
+			'name'      => __( 'Webhook data', 'doublescale' ),
+			'mergeTags' => isset( $groups['webhook']['mergeTags'] ) ? $groups['webhook']['mergeTags'] : array(),
+			'triggers'  => array( 'webhook_received' ),
+		);
 		$groups['messaging'] = array(
 			'name'      => __( 'Messaging', 'doublescale' ),
 			'mergeTags' => isset( $groups['messaging']['mergeTags'] ) ? $groups['messaging']['mergeTags'] : array(),
@@ -219,8 +263,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			'triggers'  => $wp_user_triggers,
 		);
 
-		$acf_disabled = ! doublescale_is_plugin_active( 'advanced-custom-fields/acf.php' )
-			&& ! doublescale_is_plugin_active( 'advanced-custom-fields-pro/acf.php' );
+		$acf_disabled = ! doublescale_is_plugin_active( 'acf' );
 
 		$groups['acf_user'] = array(
 			'name'        => __( 'ACF User Fields', 'doublescale' ),
@@ -230,5 +273,36 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		);
 
 		return $groups;
+	}
+
+	/**
+	 * Remove every DoubleScale submenu except Automations for users whose only
+	 * DoubleScale roles are Automation Manager / Automation Agent.
+	 *
+	 * @return void
+	 */
+	public static function scope_menu_for_automation_only_users(): void {
+		if ( ! \DoubleScale\Core\UserRoles\Permissions::is_automation_only() ) {
+			return;
+		}
+
+		$menu_slug = apply_filters( 'doublescale_admin_menu_slug', 'doublescale' );
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- intentional submenu trimming
+		global $submenu;
+		if ( empty( $submenu[ $menu_slug ] ) || ! is_array( $submenu[ $menu_slug ] ) ) {
+			return;
+		}
+
+		foreach ( $submenu[ $menu_slug ] as $key => $item ) {
+			$slug = isset( $item[2] ) ? (string) $item[2] : '';
+			// Settings stays: its Notifications tab holds their automation alerts
+			if ( false === strpos( $slug, 'path=automations' ) && false === strpos( $slug, 'path=settings' ) ) {
+				unset( $submenu[ $menu_slug ][ $key ] );
+			}
+		}
+
+		// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- intentional submenu trimming (re-indexing the same global filtered above).
+		$submenu[ $menu_slug ] = array_values( $submenu[ $menu_slug ] );
 	}
 }

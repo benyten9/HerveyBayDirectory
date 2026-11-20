@@ -16,8 +16,9 @@ use DoubleScale\Modules\Booking\Models\BookedSlotModel;
 use DoubleScale\Modules\Booking\Services\BookingEvents;
 use DoubleScale\Modules\Booking\Exceptions\InvalidBookingInputException;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Contacts\Services\LeadRouter;
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 class BookingService {
 
@@ -207,8 +208,13 @@ class BookingService {
 		try {
 			$overlap_check();
 
+			$routing = array(
+				'calendar_id'  => $calendar_id,
+				'host_user_id' => (int) ( reset( $host_ids ) ?: 0 ),
+			);
+
 			foreach ( $invitees as $invitee ) {
-				$contact = $this->resolve_or_create_contact_for_invitee( $invitee );
+				$contact = $this->resolve_or_create_contact_for_invitee( $invitee, $routing );
 				if ( ! $contact ) {
 					throw new \Exception( esc_html__( 'Failed to book', 'doublescale' ) );
 				}
@@ -671,7 +677,7 @@ class BookingService {
 	 * @param array $invitee Invitee payload — expects `email` and `name` keys.
 	 * @return ContactModel|null Resolved contact, or null when email is invalid.
 	 */
-	private function resolve_or_create_contact_for_invitee( array $invitee ): ?ContactModel {
+	private function resolve_or_create_contact_for_invitee( array $invitee, array $routing = array() ): ?ContactModel {
 		$email = sanitize_email( $invitee['email'] ?? '' );
 		if ( empty( $email ) || ! is_email( $email ) ) {
 			return null;
@@ -681,13 +687,20 @@ class BookingService {
 		$first_name = isset( $name_parts[0] ) ? sanitize_text_field( $name_parts[0] ) : '';
 		$last_name  = isset( $name_parts[1] ) ? sanitize_text_field( $name_parts[1] ) : '';
 
-		$contact = ContactModel::firstOrCreate(
-			array( 'email' => $email ),
-			array(
-				'first_name' => $first_name,
-				'last_name'  => $last_name,
-				'source'     => 'booking',
-			)
+		// A new guest goes to the booking's host (or the calendar's routing rule).
+		$contact = LeadRouter::with_context(
+			'booking',
+			$routing,
+			static function () use ( $email, $first_name, $last_name ) {
+				return ContactModel::firstOrCreate(
+					array( 'email' => $email ),
+					array(
+						'first_name' => $first_name,
+						'last_name'  => $last_name,
+						'source'     => 'booking',
+					)
+				);
+			}
 		);
 
 		if ( ! $contact ) {

@@ -18,6 +18,7 @@ use WP_REST_Server;
 use WP_Application_Passwords;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\ModuleManager;
+use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\UserRoles\UserRoles;
 
 class RestSiteVerificationController extends RestController {
@@ -284,6 +285,7 @@ class RestSiteVerificationController extends RestController {
 		$priority = array(
 			'administrator',
 			UserRoles::CRM_MANAGER,
+			UserRoles::CRM_AGENT,
 			UserRoles::SALES_MANAGER,
 			UserRoles::SALES_REP,
 			UserRoles::SUPPORT_MANAGER,
@@ -292,6 +294,13 @@ class RestSiteVerificationController extends RestController {
 			UserRoles::BOOKING_AGENT,
 			UserRoles::PROJECT_MANAGER,
 			UserRoles::PROJECT_MEMBER,
+			UserRoles::AUTOMATION_MANAGER,
+			UserRoles::AUTOMATION_AGENT,
+			UserRoles::CAMPAIGN_MANAGER,
+			UserRoles::CAMPAIGN_AGENT,
+			UserRoles::HELP_CENTER_MANAGER,
+			UserRoles::HELP_CENTER_AGENT,
+			UserRoles::TEAM_MEMBER,
 		);
 
 		$normalized = array_map(
@@ -312,7 +321,7 @@ class RestSiteVerificationController extends RestController {
 
 	/**
 	 * @param array<int, string> $roles
-	 * @return array{show_license_status: bool, show_push_notifications: bool, calendar_own_only: bool}
+	 * @return array<string, bool>
 	 */
 	private function build_mobile_flags( array $roles, int $user_id ): array {
 		$normalized = array_map(
@@ -327,16 +336,26 @@ class RestSiteVerificationController extends RestController {
 		$is_crm_manager = in_array( strtolower( UserRoles::CRM_MANAGER ), $normalized, true );
 		$is_sales_manager = in_array( strtolower( UserRoles::SALES_MANAGER ), $normalized, true );
 		$is_sales_rep = in_array( strtolower( UserRoles::SALES_REP ), $normalized, true );
+		$is_crm_agent = in_array( strtolower( UserRoles::CRM_AGENT ), $normalized, true );
 		$is_booking_agent = in_array( strtolower( UserRoles::BOOKING_AGENT ), $normalized, true );
+		$scoped_agent = Permissions::is_crm_agent( $user_id ); // agent in every module: own calendar
 
-		$show_license_status = $is_admin || $is_crm_manager || $is_sales_manager || $is_sales_rep;
-		$show_push_notifications = $is_admin || $is_sales_manager || $is_sales_rep;
-		$calendar_own_only = $is_booking_agent && ! $is_admin && ! $is_crm_manager;
+		$show_license_status = $is_admin || $is_crm_manager || $is_sales_manager || $is_sales_rep || $is_crm_agent;
+		$show_push_notifications = $is_admin || $is_sales_manager || $is_sales_rep || $is_crm_agent;
+		$calendar_own_only = ( $is_booking_agent || $scoped_agent ) && ! $is_admin && ! $is_crm_manager;
 
 		return array(
 			'show_license_status'     => $show_license_status,
 			'show_push_notifications'   => $show_push_notifications,
 			'calendar_own_only'         => $calendar_own_only,
+			// The API already narrows every list for a scoped agent; these let the
+			// app hide owner pickers and "all" toggles that would do nothing.
+			'contacts_own_only'         => ! Permissions::sees_all_records( 'contacts', $user_id ),
+			'deals_own_only'            => ! Permissions::sees_all_records( 'deals', $user_id ),
+			// This site applies the team roles rules (contact owners, read-only
+			// module roles): the access flags in `capabilities` are complete, so
+			// a missing one means "no" rather than "older plugin".
+			'team_roles'                => true,
 		);
 	}
 
@@ -345,7 +364,18 @@ class RestSiteVerificationController extends RestController {
 	 * @return array<string, bool>
 	 */
 	private function build_capabilities_payload( $user ): array {
+		// The same access flags the admin app gets (who reads, adds, changes
+		// and assigns contacts, which module tabs a contact shows, the CRM
+		// Agent and campaign roles), then the user's own doublescale_* caps.
 		$capabilities = array();
+		if ( (int) $user->ID === get_current_user_id() && class_exists( \DoubleScale\Admin\AdminConfig::class ) ) {
+			// Granted flags only, like the caps below: a missing key means "no".
+			foreach ( \DoubleScale\Admin\AdminConfig::get_user_capabilities() as $flag => $enabled ) {
+				if ( $enabled ) {
+					$capabilities[ (string) $flag ] = true;
+				}
+			}
+		}
 
 		foreach ( (array) $user->allcaps as $capability => $enabled ) {
 			if ( ! $enabled ) {

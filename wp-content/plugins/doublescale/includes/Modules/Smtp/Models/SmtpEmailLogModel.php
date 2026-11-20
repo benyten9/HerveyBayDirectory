@@ -9,7 +9,7 @@ namespace DoubleScale\Modules\Smtp\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * Maps to {$wpdb->prefix}doublescale_smtp_email_log.

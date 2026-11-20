@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-audit', [
     'label'       => __('SEO Pro — Audit', 'nibwp'),
-    'description' => __('Scan posts/pages and return a scored SEO report card plus a prioritized fix queue (missing/long titles + descriptions, missing H1/alt/canonical, noindex mistakes, thin content). Engine-agnostic. Read-only — the entry point of the SEO Pro pipeline.', 'nibwp'),
+    'description' => 'Scan posts/pages and return a scored SEO report card plus a prioritized fix queue (missing/long titles + descriptions, missing H1/alt/canonical, noindex mistakes, thin content). Engine-agnostic. Read-only — the entry point of the SEO Pro pipeline.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

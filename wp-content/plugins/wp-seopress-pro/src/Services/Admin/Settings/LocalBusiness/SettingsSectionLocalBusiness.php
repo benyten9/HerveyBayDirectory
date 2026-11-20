@@ -84,8 +84,34 @@ class SettingsSectionLocalBusiness {
 				$field['title'],
 				$field['callback'],
 				$field['page'],
-				$field['section']
+				$field['section'],
+				$field['args'] ?? array()
 			);
+		}
+	}
+
+	/**
+	 * Render the optional details in the classic settings form.
+	 *
+	 * @param array $args Registered field and label.
+	 * @return void
+	 */
+	public function render_additional_field( $args ) {
+		if ( ! current_user_can( seopress_capability( 'manage_options', 'pro' ) ) ) {
+			return;
+		}
+		$field = $args['field'] ?? '';
+		if ( ! in_array( $field, array( 'email', 'logo', 'image', 'area_served', 'same_as' ), true ) ) {
+			return;
+		}
+		$key     = 'seopress_local_business_' . $field;
+		$options = get_option( 'seopress_pro_option_name', array() );
+		$value   = isset( $options[ $key ] ) && is_string( $options[ $key ] ) ? $options[ $key ] : '';
+		$name    = 'seopress_pro_option_name[' . $key . ']';
+		if ( in_array( $field, array( 'area_served', 'same_as' ), true ) ) {
+			printf( '<textarea name="%s" aria-label="%s" rows="4">%s</textarea>', esc_attr( $name ), esc_attr( $args['label'] ), esc_textarea( $value ) );
+		} else {
+			printf( '<input type="%s" name="%s" aria-label="%s" value="%s" />', 'email' === $field ? 'email' : 'url', esc_attr( $name ), esc_attr( $args['label'] ), esc_attr( $value ) );
 		}
 	}
 
@@ -96,16 +122,17 @@ class SettingsSectionLocalBusiness {
 	 */
 	public function renderSection() {
 		seopress_pro_get_service( 'RenderSectionPro' )->render( 'local-business' );
-		$imgOption = seopress_get_service( 'SocialOption' )->getSocialKnowledgeImage();
+		$options   = get_option( 'seopress_pro_option_name', array() );
+		$imgOption = ! empty( $options['seopress_local_business_image'] ) ? $options['seopress_local_business_image'] : seopress_get_service( 'SocialOption' )->getSocialKnowledgeImage();
 		$docs      = function_exists( 'seopress_get_docs_links' ) ? seopress_get_docs_links() : array();
 
 		if ( empty( $imgOption ) ) {
 			?>
 			<div class="seopress-notice is-error">
 				<p>
-					<?php esc_html_e( 'You have to set an image in Knowledge Graph settings, otherwise, your Google Local Business data will not be valid.', 'wp-seopress-pro' ); ?>
+					<?php esc_html_e( 'Add a business image here or set an image in Knowledge Graph settings.', 'wp-seopress-pro' ); ?>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=seopress-social' ) ); ?>" class="btn btnPrimary">
-						<?php esc_html_e( 'Fix this!', 'wp-seopress-pro' ); ?>
+						<?php esc_html_e( 'Knowledge Graph settings', 'wp-seopress-pro' ); ?>
 					</a>
 				</p>
 			</div>

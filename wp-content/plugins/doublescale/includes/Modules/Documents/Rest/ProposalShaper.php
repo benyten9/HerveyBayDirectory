@@ -40,6 +40,7 @@ final class ProposalShaper {
 			'template'         => DocumentTemplate::normalize( $proposal->template ?? DocumentTemplate::DEFAULT ),
 			'template_color'   => DocumentTemplateColor::normalize( $proposal->template_color ?? null ),
 			'contact_id'       => (int) $proposal->contact_id,
+			'company_id'       => $proposal->company_id ? (int) $proposal->company_id : null,
 			'assigned_user_id' => $proposal->assigned_user_id ? (int) $proposal->assigned_user_id : null,
 			'date'             => $proposal->date,
 			'open_till'        => $proposal->open_till,
@@ -70,6 +71,7 @@ final class ProposalShaper {
 			'has_signature'    => ! empty( $proposal->signature ),
 			'is_expired'       => self::is_expired( $proposal ),
 			'issuer_snapshot_raw' => $proposal->issuer_snapshot ? (string) $proposal->issuer_snapshot : null,
+			'issuer_lines'     => self::issuer_lines( $proposal ),
 			'invoice_id'       => self::get_linked_invoice_id( $proposal ),
 			'public_url'       => ProposalUrl::get_public_url( $proposal ),
 			'created_at'       => $proposal->created_at,
@@ -125,6 +127,22 @@ final class ProposalShaper {
 	}
 
 	/**
+	 * The document's "From" lines, exactly as its PDF prints them (frozen once sent).
+	 *
+	 * @param object $document Proposal or invoice model.
+	 * @return array<int, string>
+	 */
+	public static function issuer_lines( $document ): array {
+		$company = \DoubleScale\Modules\Documents\Services\DocumentIssuerSnapshot::resolve_company_for_shaped(
+			array(
+				'sent_at'             => $document->sent_at ?? null,
+				'issuer_snapshot_raw' => $document->issuer_snapshot ? (string) $document->issuer_snapshot : null,
+			)
+		);
+		return \DoubleScale\Modules\Documents\Services\DocumentPdf::company_lines( $company );
+	}
+
+	/**
 	 * @param ProposalModel $proposal Proposal.
 	 * @return array
 	 */
@@ -173,6 +191,7 @@ final class ProposalShaper {
 			'require_signature' => (bool) SalesSettings::get( 'require_signature_on_accept', true ),
 			'signed_name'     => $proposal->signed_name ? (string) $proposal->signed_name : null,
 			'has_signature'   => ! empty( $proposal->signature ),
+			'issuer_lines'    => self::issuer_lines( $proposal ),
 		);
 	}
 

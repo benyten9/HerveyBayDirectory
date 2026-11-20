@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Booking\Abstracts\MergeTag;
 use DoubleScale\Modules\Booking\Models\BookingModel;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 class ContactNote extends MergeTag {
 

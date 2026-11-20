@@ -12,7 +12,7 @@ namespace DoubleScale\Modules\Campaigns\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 
@@ -59,6 +59,23 @@ class TemplateModel extends Model {
 		'created_at',
 		'updated_at',
 	);
+
+	/**
+	 * Remember who made a template, so a Campaign Agent can change their own.
+	 *
+	 * @return void
+	 */
+	public static function boot() {
+		parent::boot();
+
+		static::creating(
+			function ( $template ) {
+				if ( empty( $template->created_by ) && get_current_user_id() > 0 ) {
+					$template->created_by = get_current_user_id();
+				}
+			}
+		);
+	}
 
 	/**
 	 * Casts
@@ -197,7 +214,7 @@ class TemplateModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function tracking_records() {
 		return $this->hasMany( CommunicationTrackingModel::class, 'template_id' );
@@ -294,11 +311,24 @@ class TemplateModel extends Model {
 			'header_format',
 			'header_media',
 			'header_variables',
+			// The placeholders the approved template declares. The provider
+			// compares these against the values a send supplies and refuses a
+			// short payload with a message naming the empty slots. Leaving it
+			// out starved that check: every send looked complete, and a
+			// template sent with no values reached Meta and came back as
+			// "(#132000) Number of parameters does not match the expected
+			// number of params" — which names neither the template nor the
+			// slot, and reached the operator verbatim.
+			'variables',
 			// Interactive templates (catalog, product list, flow, coupon): the
 			// send path needs the declared buttons and the values for them, or
 			// Meta rejects the message with error 131008.
 			'buttons',
 			'button_params',
+			// A carousel's cards each carry their own header media, which Meta
+			// never returns in the template list. Without this the provider
+			// builds cards with no image and Meta rejects the whole send.
+			'card_params',
 			'template_type',
 		);
 

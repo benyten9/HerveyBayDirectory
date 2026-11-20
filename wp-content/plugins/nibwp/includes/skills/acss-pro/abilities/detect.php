@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/acss-pro-detect', [
     'label'       => __('ACSS Pro — Detect installation', 'nibwp'),
-    'description' => __('Probe Automatic.css installation. Returns active state, version, and the current settings option contents. Use BEFORE proposing a new config so the agent knows what to merge with.', 'nibwp'),
+    'description' => 'Probe Automatic.css installation. Returns active state, version, and the current settings option contents. Use BEFORE proposing a new config so the agent knows what to merge with.',
     'category'    => 'acss-pro',
     'input_schema'  => ['type' => 'object', 'properties' => new \stdClass()],
     'output_schema' => [

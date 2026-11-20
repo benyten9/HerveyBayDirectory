@@ -187,6 +187,9 @@ final class Module extends AbstractModule {
 			Rest\Controllers\RestCustomFieldsController::class,
 			Rest\Controllers\RestIncomingWebhookController::class,
 			Rest\Controllers\RestAutoCloseController::class,
+			Rest\Controllers\RestSatisfactionController::class,
+			Rest\Controllers\RestVisitorPanelController::class,
+			Rest\Controllers\RestAutoAssignController::class,
 		);
 	}
 
@@ -203,6 +206,17 @@ final class Module extends AbstractModule {
 		}
 
 		parent::boot( $container );
+
+		// Customer satisfaction: faces at the end of the "solved" email, and
+		// the page their link opens (off until the owner turns it on).
+		Services\SatisfactionLinks::register();
+		Renderer\SatisfactionPage::register();
+
+		// Auto assign: new tickets to the team in turn (off until turned on).
+		// Who is online is kept here too, not only with the help assistant.
+		Services\RoundRobin::register();
+		\DoubleScale\Pro\Modules\Support\Services\TeamPresence::register();
+		\DoubleScale\Pro\Modules\Support\Services\PortalLive::register();
 
 		// Resolve the router so its constructor subscribes to
 		// `doublescale_email_received` (the forwarding fallback path).
@@ -294,8 +308,12 @@ final class Module extends AbstractModule {
 			if ( false === $tasks->get_next_timestamp( 'doublescale_support_email_inbound' ) ) {
 				$tasks->schedule_recurring( time(), MINUTE_IN_SECONDS, 'doublescale_support_email_inbound' );
 			}
-		} else {
+			update_option( 'doublescale_support_inbound_schedule_state', 'on', false );
+		} elseif ( 'off' !== get_option( 'doublescale_support_inbound_schedule_state' ) ) {
+			// Clearing the schedule costs Action Scheduler queries: do it when the
+			// state changes, not on every request.
 			$tasks->unschedule_all( 'doublescale_support_email_inbound' );
+			update_option( 'doublescale_support_inbound_schedule_state', 'off', false );
 		}
 	}
 

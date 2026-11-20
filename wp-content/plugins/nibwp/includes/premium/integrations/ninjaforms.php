@@ -62,7 +62,7 @@ function nibwp_nf_err(string $code, string $message): WP_Error
 function nibwp_nf_guard(): ?WP_Error
 {
     if (!nibwp_nf_available()) {
-        return nibwp_nf_err('nibwp_nf_missing', __('Ninja Forms is not active on this site.', domain: 'nibwp'));
+        return nibwp_nf_err('nibwp_nf_missing', __('Ninja Forms is not active on this site.', 'nibwp'));
     }
 
     return null;
@@ -112,19 +112,19 @@ function nibwp_nf_model(int $form_id)
 function nibwp_nf_form(int $form_id)
 {
     if ($form_id <= 0) {
-        return nibwp_nf_err('nibwp_nf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_nf_err('nibwp_nf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $model = nibwp_nf_model($form_id);
 
     if ($model === null || !method_exists($model, 'get_settings')) {
-        return nibwp_nf_err('nibwp_nf_not_found', __('No Ninja Forms form with that ID.', domain: 'nibwp'));
+        return nibwp_nf_err('nibwp_nf_not_found', __('No Ninja Forms form with that ID.', 'nibwp'));
     }
 
     $settings = $model->get_settings();
 
     if (!is_array($settings) || $settings === []) {
-        return nibwp_nf_err('nibwp_nf_not_found', __('No Ninja Forms form with that ID.', domain: 'nibwp'));
+        return nibwp_nf_err('nibwp_nf_not_found', __('No Ninja Forms form with that ID.', 'nibwp'));
     }
 
     return Ninja_Forms()->form($form_id);
@@ -199,8 +199,8 @@ function nibwp_nf_action_summary(int $form_id): array
 /* ── Ability 1 — info ───────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-info', [
-    'label'       => __('Ninja Forms — Info', domain: 'nibwp'),
-    'description' => __('Detect Ninja Forms, its version and how many forms and submissions exist (read-only).', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Info', 'nibwp'),
+    'description' => 'Detect Ninja Forms, its version and how many forms and submissions exist (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -242,7 +242,7 @@ function nibwp_nf_info(array $input): array|WP_Error
             'version'     => defined('NF_PLUGIN_VERSION') ? NF_PLUGIN_VERSION : '',
             'form_count'  => count($forms),
             'stored_submissions' => $submissions,
-            'note' => __('Storing a submission is an action in Ninja Forms. A form without a "save" action keeps nothing, however healthy it looks.', domain: 'nibwp'),
+            'note' => __('Storing a submission is an action in Ninja Forms. A form without a "save" action keeps nothing, however healthy it looks.', 'nibwp'),
         ];
     });
 }
@@ -250,8 +250,8 @@ function nibwp_nf_info(array $input): array|WP_Error
 /* ── Ability 2 — forms ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-forms', [
-    'label'       => __('Ninja Forms — Forms', domain: 'nibwp'),
-    'description' => __('List, read, rename and duplicate Ninja Forms forms, and get the shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Forms', 'nibwp'),
+    'description' => 'List, read, rename and duplicate Ninja Forms forms, and get the shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -290,7 +290,7 @@ function nibwp_nf_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename', 'duplicate', 'shortcode'], strict: true) && $form_id <= 0) {
-        return nibwp_nf_err('nibwp_nf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_nf_err('nibwp_nf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_nf_try(static function () use ($action, $form_id, $input) {
@@ -342,7 +342,7 @@ function nibwp_nf_forms(array $input): array|WP_Error
             case 'rename':
                 $title = trim((string) ($input['title'] ?? ''));
                 if ($title === '') {
-                    throw new \RuntimeException(__('A title is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A title is required.', 'nibwp'));
                 }
 
                 // The model, not the factory: update_setting() takes two
@@ -350,7 +350,7 @@ function nibwp_nf_forms(array $input): array|WP_Error
                 // as one array.
                 $model = nibwp_nf_model($form_id);
                 if ($model === null || !method_exists($model, 'update_setting')) {
-                    throw new \RuntimeException(__('This Ninja Forms version does not expose updating a form setting.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('This Ninja Forms version does not expose updating a form setting.', 'nibwp'));
                 }
                 $model->update_setting('title', $title);
                 $model->save();
@@ -364,12 +364,12 @@ function nibwp_nf_forms(array $input): array|WP_Error
                 $factory = Ninja_Forms()->form($form_id);
 
                 if (!method_exists($factory, 'export_form') || !method_exists(Ninja_Forms()->form(), 'import_form')) {
-                    throw new \RuntimeException(__('This Ninja Forms version does not expose exporting or importing a form.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('This Ninja Forms version does not expose exporting or importing a form.', 'nibwp'));
                 }
 
                 $export = $factory->export_form(true);
                 if (empty($export)) {
-                    throw new \RuntimeException(__('Ninja Forms returned nothing to copy.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Ninja Forms returned nothing to copy.', 'nibwp'));
                 }
 
                 $new_id = Ninja_Forms()->form()->import_form($export);
@@ -380,15 +380,15 @@ function nibwp_nf_forms(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'shortcode' => sprintf('[ninja_form id=%d]', $form_id)];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
 /* ── Ability 3 — fields ─────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-fields', [
-    'label'       => __('Ninja Forms — Fields', domain: 'nibwp'),
-    'description' => __('Read the fields on a form, with the keys that submissions and merge tags reference.', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Fields', 'nibwp'),
+    'description' => 'Read the fields on a form, with the keys that submissions and merge tags reference.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -432,7 +432,7 @@ function nibwp_nf_fields(array $input): array|WP_Error
 
     return nibwp_nf_try(static function () use ($form, $form_id, $input) {
         if (!method_exists($form, 'get_fields')) {
-            throw new \RuntimeException(__('This Ninja Forms version does not expose form fields.', domain: 'nibwp'));
+            throw new \RuntimeException(__('This Ninja Forms version does not expose form fields.', 'nibwp'));
         }
 
         $fields = (array) $form->get_fields();
@@ -457,7 +457,7 @@ function nibwp_nf_fields(array $input): array|WP_Error
                 }
             }
 
-            throw new \RuntimeException(__('No field with that ID on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No field with that ID on this form.', 'nibwp'));
         }
 
         return [
@@ -475,8 +475,8 @@ function nibwp_nf_fields(array $input): array|WP_Error
 /* ── Ability 4 — actions ────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-actions', [
-    'label'       => __('Ninja Forms — Actions', domain: 'nibwp'),
-    'description' => __('Read what a form does on submit — email, save, redirect, success message — and enable or disable one.', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Actions', 'nibwp'),
+    'description' => 'Read what a form does on submit — email, save, redirect, success message — and enable or disable one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -527,10 +527,10 @@ function nibwp_nf_actions(array $input): array|WP_Error
         if ($action === 'list') {
             $warnings = [];
             if (!$summary['has_email']) {
-                $warnings[] = __('No active email action — nobody is told about a submission.', domain: 'nibwp');
+                $warnings[] = __('No active email action — nobody is told about a submission.', 'nibwp');
             }
             if (!$summary['has_save']) {
-                $warnings[] = __('No active save action — submissions are not stored anywhere.', domain: 'nibwp');
+                $warnings[] = __('No active save action — submissions are not stored anywhere.', 'nibwp');
             }
 
             return [
@@ -545,7 +545,7 @@ function nibwp_nf_actions(array $input): array|WP_Error
 
         $action_id = (int) ($input['action_id'] ?? 0);
         if ($action_id <= 0) {
-            throw new \RuntimeException(__('An action_id is required. List them first.', domain: 'nibwp'));
+            throw new \RuntimeException(__('An action_id is required. List them first.', 'nibwp'));
         }
 
         $match = null;
@@ -556,7 +556,7 @@ function nibwp_nf_actions(array $input): array|WP_Error
         }
 
         if ($match === null) {
-            throw new \RuntimeException(__('That action does not belong to this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('That action does not belong to this form.', 'nibwp'));
         }
 
         if ($action === 'get') {
@@ -567,7 +567,7 @@ function nibwp_nf_actions(array $input): array|WP_Error
         $model = Ninja_Forms()->form($form_id)->get_action($action_id);
 
         if (!is_object($model) || !method_exists($model, 'update_setting')) {
-            throw new \RuntimeException(__('This Ninja Forms version does not expose updating an action.', domain: 'nibwp'));
+            throw new \RuntimeException(__('This Ninja Forms version does not expose updating an action.', 'nibwp'));
         }
 
         $model->update_setting('active', $enabled ? 1 : 0);
@@ -577,9 +577,9 @@ function nibwp_nf_actions(array $input): array|WP_Error
         // from that moment on, so it is called out rather than left implicit.
         $warning = '';
         if (!$enabled && $match['type'] === 'save') {
-            $warning = __('The save action is now off. Submissions from this point are not stored anywhere.', domain: 'nibwp');
+            $warning = __('The save action is now off. Submissions from this point are not stored anywhere.', 'nibwp');
         } elseif (!$enabled && $match['type'] === 'email') {
-            $warning = __('The email action is now off. Nobody will be told about new submissions.', domain: 'nibwp');
+            $warning = __('The email action is now off. Nobody will be told about new submissions.', 'nibwp');
         }
 
         return ['form_id' => $form_id, 'action_id' => $action_id, 'active' => $enabled, 'warning' => $warning];
@@ -589,8 +589,8 @@ function nibwp_nf_actions(array $input): array|WP_Error
 /* ── Ability 5 — submissions ────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-submissions', [
-    'label'       => __('Ninja Forms — Submissions', domain: 'nibwp'),
-    'description' => __('List and read the submissions a form has stored (read-only).', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Submissions', 'nibwp'),
+    'description' => 'List and read the submissions a form has stored (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -636,7 +636,7 @@ function nibwp_nf_submissions(array $input): array|WP_Error
 
     return nibwp_nf_try(static function () use ($form, $form_id, $input) {
         if (!method_exists($form, 'get_subs')) {
-            throw new \RuntimeException(__('This Ninja Forms version does not expose submissions.', domain: 'nibwp'));
+            throw new \RuntimeException(__('This Ninja Forms version does not expose submissions.', 'nibwp'));
         }
 
         $subs = (array) $form->get_subs();
@@ -646,7 +646,7 @@ function nibwp_nf_submissions(array $input): array|WP_Error
         // The distinction that matters: nothing stored, versus nothing
         // arrived. Only the actions can tell them apart.
         $context = ($subs === [] && !$summary['has_save'])
-            ? __('This form has no active save action, so submissions were never recorded. An empty list here is not evidence that none arrived.', domain: 'nibwp')
+            ? __('This form has no active save action, so submissions were never recorded. An empty list here is not evidence that none arrived.', 'nibwp')
             : '';
 
         if ($action === 'count') {
@@ -656,7 +656,7 @@ function nibwp_nf_submissions(array $input): array|WP_Error
         if ($action === 'get') {
             $sub_id = (int) ($input['sub_id'] ?? 0);
             if ($sub_id <= 0) {
-                throw new \RuntimeException(__('A valid submission ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid submission ID is required.', 'nibwp'));
             }
 
             foreach ($subs as $sub) {
@@ -670,7 +670,7 @@ function nibwp_nf_submissions(array $input): array|WP_Error
                 }
             }
 
-            throw new \RuntimeException(__('No submission with that ID on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No submission with that ID on this form.', 'nibwp'));
         }
 
         $page = nibwp_nf_paginate($input);
@@ -698,8 +698,8 @@ function nibwp_nf_submissions(array $input): array|WP_Error
 /* ── Ability 6 — settings ───────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-settings', [
-    'label'       => __('Ninja Forms — Form settings', domain: 'nibwp'),
-    'description' => __('Read a form\'s settings, and change one by key.', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Form settings', 'nibwp'),
+    'description' => 'Read a form\'s settings, and change one by key.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -743,14 +743,14 @@ function nibwp_nf_settings_ability(array $input): array|WP_Error
         if ((string) ($input['action'] ?? 'get') === 'set') {
             $key = (string) ($input['key'] ?? '');
             if ($key === '') {
-                throw new \RuntimeException(__('A setting key is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A setting key is required.', 'nibwp'));
             }
             if (!array_key_exists('value', $input)) {
-                throw new \RuntimeException(__('A value is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A value is required.', 'nibwp'));
             }
             $model = nibwp_nf_model($form_id);
             if ($model === null || !method_exists($model, 'update_setting')) {
-                throw new \RuntimeException(__('This Ninja Forms version does not expose updating a form setting.', domain: 'nibwp'));
+                throw new \RuntimeException(__('This Ninja Forms version does not expose updating a form setting.', 'nibwp'));
             }
 
             $before = nibwp_nf_settings($model)[$key] ?? null;
@@ -767,8 +767,8 @@ function nibwp_nf_settings_ability(array $input): array|WP_Error
 /* ── Ability 7 — export ─────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-export', [
-    'label'       => __('Ninja Forms — Export submissions', domain: 'nibwp'),
-    'description' => __('Export a form\'s stored submissions as rows or CSV, with field labels as headers (read-only).', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Export submissions', 'nibwp'),
+    'description' => 'Export a form\'s stored submissions as rows or CSV, with field labels as headers (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -842,7 +842,7 @@ function nibwp_nf_export(array $input): array|WP_Error
         if ((string) ($input['format'] ?? 'rows') === 'csv') {
             $handle = fopen('php://temp', 'r+');
             if ($handle === false) {
-                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', 'nibwp'));
             }
             fputcsv($handle, $columns);
             foreach ($rows as $record) {
@@ -862,8 +862,8 @@ function nibwp_nf_export(array $input): array|WP_Error
 /* ── Ability 8 — audit ──────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-audit', [
-    'label'       => __('Ninja Forms — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the two ways a Ninja Forms form loses data: no email action, and no save action (read-only).', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Audit', 'nibwp'),
+    'description' => 'Check every form for the two ways a Ninja Forms form loses data: no email action, and no save action (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -922,8 +922,8 @@ function nibwp_nf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'blocker',
                     'code'     => 'no_email_no_save',
-                    'message'  => __('Neither an email nor a save action. Every submission is acknowledged and then lost with no record anywhere.', domain: 'nibwp'),
-                    'fix'      => __('Add an email action, a save action, or both, in the Ninja Forms builder.', domain: 'nibwp'),
+                    'message'  => __('Neither an email nor a save action. Every submission is acknowledged and then lost with no record anywhere.', 'nibwp'),
+                    'fix'      => __('Add an email action, a save action, or both, in the Ninja Forms builder.', 'nibwp'),
                 ];
             } elseif (!$summary['has_save']) {
                 $findings[] = [
@@ -931,8 +931,8 @@ function nibwp_nf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_save_action',
-                    'message'  => __('No save action. Submissions are emailed but never stored, so there is no record to go back to.', domain: 'nibwp'),
-                    'fix'      => __('Add a save action if a history is wanted.', domain: 'nibwp'),
+                    'message'  => __('No save action. Submissions are emailed but never stored, so there is no record to go back to.', 'nibwp'),
+                    'fix'      => __('Add a save action if a history is wanted.', 'nibwp'),
                 ];
             } elseif (!$summary['has_email']) {
                 $findings[] = [
@@ -940,8 +940,8 @@ function nibwp_nf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_email_action',
-                    'message'  => __('No email action. Submissions are stored but nobody is told, so they accumulate unread.', domain: 'nibwp'),
-                    'fix'      => __('Add an email action, or confirm the entries are only read in the admin.', domain: 'nibwp'),
+                    'message'  => __('No email action. Submissions are stored but nobody is told, so they accumulate unread.', 'nibwp'),
+                    'fix'      => __('Add an email action, or confirm the entries are only read in the admin.', 'nibwp'),
                 ];
             }
 
@@ -951,8 +951,8 @@ function nibwp_nf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_fields',
-                    'message'  => __('The form has no fields, so there is nothing to submit.', domain: 'nibwp'),
-                    'fix'      => __('Add fields in the Ninja Forms builder.', domain: 'nibwp'),
+                    'message'  => __('The form has no fields, so there is nothing to submit.', 'nibwp'),
+                    'fix'      => __('Add fields in the Ninja Forms builder.', 'nibwp'),
                 ];
             }
         }
@@ -971,8 +971,8 @@ function nibwp_nf_audit(array $input): array|WP_Error
 /* ── Ability 9 — delete ─────────────────────────────────────────────── */
 
 wp_register_ability('nibwp/ninjaforms-delete', [
-    'label'       => __('Ninja Forms — Delete', domain: 'nibwp'),
-    'description' => __('Permanently delete a form or a submission. Irreversible.', domain: 'nibwp'),
+    'label'       => __('Ninja Forms — Delete', 'nibwp'),
+    'description' => 'Permanently delete a form or a submission. Irreversible.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1009,7 +1009,7 @@ function nibwp_nf_delete(array $input): array|WP_Error
     if (!(bool) ($input['confirm'] ?? false)) {
         return nibwp_nf_err(
             'nibwp_nf_unconfirmed',
-            __('This permanently destroys data and cannot be undone — Ninja Forms has no trash for forms. Re-issue with confirm true if that is intended.', domain: 'nibwp')
+            __('This permanently destroys data and cannot be undone — Ninja Forms has no trash for forms. Re-issue with confirm true if that is intended.', 'nibwp')
         );
     }
 
@@ -1036,7 +1036,7 @@ function nibwp_nf_delete(array $input): array|WP_Error
         if ($action === 'delete_submission') {
             $sub_id = (int) ($input['sub_id'] ?? 0);
             if ($sub_id <= 0) {
-                throw new \RuntimeException(__('A valid submission ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid submission ID is required.', 'nibwp'));
             }
 
             // Submissions are nf_sub posts, so this is the reliable path
@@ -1046,6 +1046,6 @@ function nibwp_nf_delete(array $input): array|WP_Error
             return ['sub_id' => $sub_id, 'deleted' => true, 'reversible' => false];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }

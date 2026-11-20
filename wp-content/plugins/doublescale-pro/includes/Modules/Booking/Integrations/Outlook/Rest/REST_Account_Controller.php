@@ -20,8 +20,12 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @var array<string, array{callback: string}>
 	 */
 	protected $entities = array(
-		'calendars' => array(
+		'calendars'   => array(
 			'callback' => 'fetch_calendars',
+		),
+		// Called by the "Enable Microsoft Teams" checkbox before it saves.
+		'check-teams' => array(
+			'callback' => 'check_teams_capabilities',
 		),
 	);
 }

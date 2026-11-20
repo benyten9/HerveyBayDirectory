@@ -16,7 +16,7 @@
 
 namespace DoubleScale\Modules\Booking\Services;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Core\Communication\EmailIdentityResolver;
 use DoubleScale\Core\Utils\Utils as CoreUtils;
 use DoubleScale\Modules\Emails\Emails;
@@ -749,8 +749,7 @@ final class EmailNotifications {
 		$subject = $this->merge_tags_manager->process_merge_tags( $subject, $booking );
 		$body    = $this->merge_tags_manager->process_merge_tags( $body, $booking );
 
-		$general = (array) get_option( 'doublescale_booking_settings', array() );
-		$general = isset( $general['general'] ) && is_array( $general['general'] ) ? $general['general'] : array();
+		$general = \DoubleScale\Modules\Booking\Helpers\BookingSettings::all()['general'];
 
 		$attachments = array();
 		if ( ! empty( $general['include_ics'] ) ) {

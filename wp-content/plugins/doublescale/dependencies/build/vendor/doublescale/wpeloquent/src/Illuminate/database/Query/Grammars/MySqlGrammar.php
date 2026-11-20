@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Query\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Query\Grammars;
 
-use Illuminate\Support\Str;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Database\Query\JsonExpression;
-class MySqlGrammar extends \Illuminate\Database\Query\Grammars\Grammar
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Query\JsonExpression;
+class MySqlGrammar extends Grammar
 {
     /**
      * The grammar specific operators.

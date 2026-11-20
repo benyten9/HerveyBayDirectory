@@ -23,12 +23,14 @@ use DoubleScale\Modules\Campaigns\Models\CampaignModel;
 use DoubleScale\Modules\Campaigns\Services\CampaignAnalytics;
 use DoubleScale\Modules\Campaigns\Services\CampaignStatusManager;
 use DoubleScale\Core\Constants\TrackingStatus;
+use DoubleScale\Modules\Campaigns\Services\CampaignMessageQuery;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Modules\Campaigns\Models\TemplateModel;
 use DoubleScale\Modules\Campaigns\Services\TemplateFieldMapper;
 use DoubleScale\Modules\Contacts\Models\ContactUnsubscribeModel;
 use DoubleScale\Core\Constants\MessageSourceTypes;
+use DoubleScale\Modules\Campaigns\Services\WhatsappErrorCodes;
 
 /**
  * AbstractCampaignController class
@@ -85,15 +87,52 @@ abstract class AbstractCampaignController extends RestController {
 	/**
 	 * Get campaign query - default implementation filters by channel if set
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	protected function get_campaign_query() {
+		$query = CampaignModel::query();
 		if ( $this->channel ) {
 			// Convert string to integer for database query (accessors don't work in WHERE)
 			$type_int = CampaignChannel::to_integer( $this->channel );
-			return CampaignModel::query()->whereRaw( 'type = ?', array( $type_int ) );
+			$query->whereRaw( 'type = ?', array( $type_int ) );
 		}
-		return CampaignModel::query();
+		// A Campaign Agent works on the campaigns they created.
+		$user_id = get_current_user_id();
+		if ( $user_id > 0 && ! Permissions::sees_all_records( 'campaigns', $user_id ) ) {
+			$query->where( 'created_by', $user_id );
+		}
+		return $query;
+	}
+
+	/**
+	 * Who may use a campaign route: anyone who runs campaigns, and for a single
+	 * campaign, a Campaign Agent only when they created it (anyone else's
+	 * answers like a missing one).
+	 *
+	 * @param WP_REST_Request $request      Request.
+	 * @param bool            $manager_only Routes for campaign managers only.
+	 * @return bool|WP_Error
+	 */
+	protected function campaign_permission( $request, bool $manager_only = false ) {
+		$mod = $this->campaigns_module_guard();
+		if ( $mod instanceof WP_Error ) {
+			return $mod;
+		}
+
+		if ( ! ( $manager_only ? Permissions::can_manage_campaigns() : Permissions::can_use_campaigns() ) ) {
+			return false;
+		}
+
+		$id      = (int) $request->get_param( 'id' );
+		$user_id = get_current_user_id();
+		if ( $id > 0 && ! Permissions::sees_all_records( 'campaigns', $user_id ) ) {
+			$mine = CampaignModel::query()->where( 'id', $id )->where( 'created_by', $user_id )->exists();
+			if ( ! $mine ) {
+				return new WP_Error( 'rest_campaign_not_found', __( 'Campaign not found.', 'doublescale' ), array( 'status' => 404 ) );
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -101,27 +140,10 @@ abstract class AbstractCampaignController extends RestController {
 	 *
 	 * @param int $campaign_id
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	protected function get_campaign_message_query( $campaign_id ) {
-		if ( ! $this->channel ) {
-			return CommunicationTrackingModel::query()
-				->where( 'source_type', \DoubleScale\Core\Constants\MessageSourceTypes::CAMPAIGN )
-				->where( 'source_id', $campaign_id );
-		}
-
-		$mode_map = array(
-			'email'    => CommunicationTrackingModel::MODE_EMAIL,
-			'sms'      => CommunicationTrackingModel::MODE_SMS,
-			'whatsapp' => CommunicationTrackingModel::MODE_WHATSAPP,
-		);
-
-		$mode = $mode_map[ $this->channel ] ?? CommunicationTrackingModel::MODE_EMAIL;
-
-		return CommunicationTrackingModel::query()
-			->where( 'mode', $mode )
-			->where( 'source_type', \DoubleScale\Core\Constants\MessageSourceTypes::CAMPAIGN )
-			->where( 'source_id', $campaign_id );
+		return CampaignMessageQuery::for_campaign( $campaign_id, $this->channel ?: null );
 	}
 
 	/**
@@ -289,6 +311,12 @@ abstract class AbstractCampaignController extends RestController {
 				$query->where( 'name', 'like', '%' . $keywords . '%' );
 			}
 
+			// Specific campaigns by id: a picker loads the names of a saved selection this way.
+			$include = array_filter( wp_parse_id_list( $request->get_param( 'include' ) ?? array() ) );
+			if ( $include ) {
+				$query->whereIn( 'id', $include );
+			}
+
 			// Status filter
 			if ( $status ) {
 				$query->where( 'status', $status );
@@ -441,7 +469,7 @@ abstract class AbstractCampaignController extends RestController {
 			if ( isset( $campaign_data['settings']['filters'] ) ) {
 				$filters                = $campaign_data['settings']['filters'] ?? array();
 				$contact_filter         = \DoubleScale\Modules\Campaigns\Services\CampaignContactFilter::instance();
-				$campaign_data['count'] = $contact_filter->get_contact_count( $this->channel, $filters );
+				$campaign_data['count'] = $contact_filter->get_contact_count( $this->channel, $filters, Permissions::campaign_audience_owner( (int) ( $campaign->created_by ?? 0 ) ) );
 			}
 
 			// Note: is_attached / templates cleanup is handled unconditionally inside the
@@ -513,9 +541,12 @@ abstract class AbstractCampaignController extends RestController {
 				return new WP_Error( 'error', sprintf( __( '%s Campaigns not found', 'doublescale' ), ucfirst( $this->channel ) ), array( 'status' => 404 ) );
 			}
 
-			$this->cancel_scheduled_work( $campaigns->pluck( 'id' )->map( 'intval' )->all() );
+			// Only the campaigns found above: this channel's, and for a
+			// Campaign Agent, their own.
+			$found = $campaigns->pluck( 'id' )->map( 'intval' )->all();
+			$this->cancel_scheduled_work( $found );
 
-			CampaignModel::destroy( $campaign_ids );
+			CampaignModel::destroy( $found );
 
 			return new WP_REST_Response( null, 204 );
 		} catch ( \Exception $e ) {
@@ -653,22 +684,30 @@ abstract class AbstractCampaignController extends RestController {
 			$per_page    = $request->get_param( 'per_page' ) ?: 10;
 			$page        = $request->get_param( 'page' ) ?: 1;
 			$status      = $request->get_param( 'status' ) ?: '';
+			$error_code  = sanitize_text_field( (string) $request->get_param( 'error_code' ) );
 
-			$query = $this->get_campaign_message_query( $campaign_id );
-
-			// Apply status filter if provided
-			if ( ! empty( $status ) && $status !== 'all' ) {
-				$this->apply_message_status_filter( $query, $status );
-			}
+			// Same builder the "select all matching" bulk target resolves
+			// against, so the rows listed and the contacts tagged never drift.
+			//
+			// No channel: this route serves every channel, and $this->channel
+			// is scratch state other handlers on this same controller overwrite
+			// with the last campaign they touched. Within one process (REST
+			// calls made internally, abilities, tests) that leaked into this
+			// listing and hid every message of a different mode.
+			$query = CampaignMessageQuery::filtered( $campaign_id, $status, $error_code );
 
 			$campaign_messages = $query->with( 'contact', 'template' )
 				->paginate( $per_page, array( '*' ), 'page', $page );
 
-			$failed_query = $this->get_campaign_message_query( $campaign_id );
-			$this->apply_message_status_filter( $failed_query, 'failed' );
+			// Counted the same way as the listing, so the warning banner and
+			// the Failed rows beneath it agree.
+			$failed_query = CampaignMessageQuery::filtered( $campaign_id, 'failed' );
 
 			$response                 = $campaign_messages->jsonSerialize();
 			$response['failed_total'] = (int) $failed_query->count();
+			$response['failure_causes'] = $response['failed_total'] > 0
+				? $this->get_failure_causes( (int) $campaign_id )
+				: array();
 
 			return new WP_REST_Response( $response, 200 );
 		} catch ( \Exception $e ) {
@@ -802,38 +841,81 @@ abstract class AbstractCampaignController extends RestController {
 	 * Apply status filter to message query
 	 * Can be overridden by child classes for type-specific filtering
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param string                                $status
 	 * @return void
 	 */
 	protected function apply_message_status_filter( $query, $status ) {
-		// Common status filters across all campaign types
-		switch ( $status ) {
-			case 'failed':
-				$query->where( 'status', TrackingStatus::FAILED );
-				break;
-			case 'sent':
-				$query->where( 'status', TrackingStatus::SENT );
-				break;
-			case 'pending':
-				$query->where( 'status', TrackingStatus::PENDING );
-				break;
-			case 'delivered':
-				$query->where( 'status', TrackingStatus::DELIVERED );
-				break;
-			case 'opened':
-				// Email-specific: check opened column
-				$query->where( 'opened', 1 );
-				break;
-			case 'clicked':
-				// Email-specific: check clicked column
-				$query->where( 'clicked', 1 );
-				break;
-			case 'scheduled':
-				// Scheduled messages
-				$query->where( 'status', TrackingStatus::SCHEDULED );
-				break;
+		CampaignMessageQuery::apply_status( $query, $status );
+	}
+
+	/**
+	 * Restrict a message query to a structured error_info code.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query      Query.
+	 * @param string                                $error_code Code stored in error_info.
+	 * @return void
+	 */
+	protected function apply_error_code_filter( $query, $error_code ) {
+		CampaignMessageQuery::apply_error_code( $query, $error_code );
+	}
+
+	/**
+	 * Grouped failure causes for the Messages tab chips.
+	 *
+	 * @param int $campaign_id Campaign id.
+	 * @return array<int, array{code:string,label:string,count:int,retriable:bool}>
+	 */
+	protected function get_failure_causes( $campaign_id ) {
+		global $wpdb;
+
+		$cache_key = 'doublescale_failure_causes_' . (int) $campaign_id;
+		$cached    = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			return $cached;
 		}
+
+		$tracking = $wpdb->prefix . 'doublescale_communication_tracking';
+		$meta     = $wpdb->prefix . 'doublescale_communication_tracking_meta';
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT
+					CASE
+						WHEN JSON_VALID(m.meta_value) THEN JSON_UNQUOTE(JSON_EXTRACT(m.meta_value, '$.code'))
+						ELSE ''
+					END AS code,
+					COUNT(*) AS cnt
+				 FROM {$tracking} t
+				 INNER JOIN {$meta} m
+					ON m.communication_tracking_id = t.id
+				   AND m.meta_key = 'error_info'
+				 WHERE t.source_id = %d
+				   AND t.source_type = %d
+				   AND t.status = %d
+				 GROUP BY code
+				 ORDER BY cnt DESC",
+				$campaign_id,
+				MessageSourceTypes::CAMPAIGN,
+				TrackingStatus::FAILED
+			)
+		);
+
+		$causes = array();
+		foreach ( (array) $rows as $row ) {
+			$code = (string) ( $row->code ?? '' );
+			$int  = ctype_digit( $code ) ? (int) $code : 0;
+			$causes[] = array(
+				'code'      => $code,
+				'label'     => WhatsappErrorCodes::label( $code ),
+				'count'     => (int) $row->cnt,
+				'retriable' => $int ? ! WhatsappErrorCodes::is_opt_out( $int ) : true,
+			);
+		}
+
+		set_transient( $cache_key, $causes, 5 * MINUTE_IN_SECONDS );
+
+		return $causes;
 	}
 
 	/**
@@ -1074,55 +1156,30 @@ abstract class AbstractCampaignController extends RestController {
 	}
 
 	/**
-	 * Permission checks - all return the same for campaigns
+	 * Permission checks: campaign managers use every campaign, a Campaign
+	 * Agent their own (see campaign_permission()).
 	 */
 	public function get_items_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 	public function get_item_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 	public function create_item_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 	public function update_item_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 	public function delete_item_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 	public function delete_items_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 	public function get_analytics_permissions_check( $request ) {
-		$mod = $this->campaigns_module_guard();
-		if ( $mod instanceof WP_Error ) {
-			return $mod;
-		}
-		return Permissions::has_crm_manager_access();
+		// One campaign's figures go with the campaign; totals across every
+		// campaign are for campaign managers.
+		return $this->campaign_permission( $request, ! $request->get_param( 'id' ) );
 	}
 }

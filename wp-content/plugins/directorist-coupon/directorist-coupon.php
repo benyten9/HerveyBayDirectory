@@ -3,7 +3,7 @@
  * Plugin Name:       Directorist - Coupon
  * Plugin URI:        https://wpwax.com
  * Description:       Allow discounts and promotional deals with an easy-to-use coupon system.
- * Version:           2.5.0
+ * Version:           2.5.1
  * Requires at least: 5.2
  * Author:            wpWax
  * Author URI:        https://wpwax.com
@@ -155,6 +155,7 @@ if ( ! class_exists( 'SWBDPCoupon' ) ) {
                 require_once( SWBDPC_PLUGIN_DIR_PATH . 'includes.php' );
                 
                 SWBDPCIncludeClasses::includes();
+                \DirectoristCoupon\MCP\Integration::boot();
             
                 $classes_name = [
                     'SWBDPCEnqueue',
@@ -251,6 +252,7 @@ if ( ! class_exists( 'SWBDPCoupon' ) ) {
                 
         if ( ! directorist_coupon_is_compaitable( $current_core_version, $required_core_version ) ) {
             directorist_coupon_incompatibility_notice( 'Directorist', $required_core_version, $current_core_version );
+            return;
         }
 
         SWBDPCoupon();

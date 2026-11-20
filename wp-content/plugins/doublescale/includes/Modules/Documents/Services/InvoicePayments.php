@@ -90,7 +90,12 @@ class InvoicePayments {
 			return InvoiceStatus::DRAFT;
 		}
 
-		if ( $amount_paid >= $total && $total > 0 ) {
+		// Nothing to pay is paid (a 0 total sat "Unpaid", then "Overdue").
+		if ( $total <= 0 ) {
+			return InvoiceStatus::PAID;
+		}
+
+		if ( $amount_paid >= $total ) {
 			return InvoiceStatus::PAID;
 		}
 

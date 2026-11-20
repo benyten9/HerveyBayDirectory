@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use Countable;
-use Illuminate\Contracts\Support\MessageBag as MessageBagContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\MessageBag as MessageBagContract;
 /**
  * @mixin \Illuminate\Contracts\Support\MessageBag
  */
@@ -33,7 +33,7 @@ class ViewErrorBag implements Countable
      */
     public function getBag($key)
     {
-        return \Illuminate\Support\Arr::get($this->bags, $key) ?: new \Illuminate\Support\MessageBag();
+        return Arr::get($this->bags, $key) ?: new MessageBag();
     }
     /**
      * Get all the bags.

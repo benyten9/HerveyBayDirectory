@@ -14,7 +14,7 @@ namespace DoubleScale\Modules\Automations\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 
 /**
@@ -184,8 +184,12 @@ class AbandonedCartModel extends Model {
 		// Retrieving: attach items product data
 		static::retrieved(
 			function( $cart ) {
+				// WooCommerce switched off: keep the stored items as they are.
+				if ( ! function_exists( 'wc_get_product' ) ) {
+					return;
+				}
 				$items = $cart->items;
-				foreach ( $items as $id => $item ) {
+				foreach ( (array) $items as $id => $item ) {
 					$product = wc_get_product( $item['product_id'] );
 					if ( $product ) {
 						$product_data = array(

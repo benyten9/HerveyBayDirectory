@@ -45,7 +45,7 @@ function nibwp_figma_pro_gate()
 /* ── detect-builder ──────────────────────────────────────────────────────── */
 wp_register_ability('nibwp/figma-pro-detect-builder', [
     'label'       => __('Figma Pro — detect builder', 'nibwp'),
-    'description' => __('Report the WordPress page builders active on this site, which emitters are implemented, the active enhancer skills (acss-pro, seo-pro), and whether Figma is connected. Call first to decide the convert target.', 'nibwp'),
+    'description' => 'Report the WordPress page builders active on this site, which emitters are implemented, the active enhancer skills (acss-pro, seo-pro), and whether Figma is connected. Call first to decide the convert target.',
     'category'    => 'content',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'execute_callback'    => 'nibwp_figma_pro_ability_detect',
@@ -64,7 +64,7 @@ function nibwp_figma_pro_ability_detect(array $input): array|WP_Error
 /* ── analyze ─────────────────────────────────────────────────────────────── */
 wp_register_ability('nibwp/figma-pro-analyze', [
     'label'       => __('Figma Pro — analyze a frame', 'nibwp'),
-    'description' => __('Read-only. Fetch a Figma frame/component by URL and report the detected structure (sections, containers, text, images) + warnings, without creating anything. Use before convert to confirm the target.', 'nibwp'),
+    'description' => 'Read-only. Fetch a Figma frame/component by URL and report the detected structure (sections, containers, text, images) + warnings, without creating anything. Use before convert to confirm the target.',
     'category'    => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -95,7 +95,7 @@ function nibwp_figma_pro_ability_analyze(array $input): array|WP_Error
 /* ── pull (cache a frame into the local library — the primary verb) ──────── */
 wp_register_ability('nibwp/figma-pull', [
     'label'       => __('Figma Pro — pull a frame into the library', 'nibwp'),
-    'description' => __('Pull a Figma frame/element (by URL) into NibWP\'s local library: renders + caches a 2× image, extracts the CSS tokens (colors + type ramp), and keeps the structure. Does NOT convert. Use this to "grab this frame" so the user + AI can decide later what to build from it, in any workflow or builder.', 'nibwp'),
+    'description' => 'Pull a Figma frame/element (by URL) into NibWP\'s local library: renders + caches a 2× image, extracts the CSS tokens (colors + type ramp), and keeps the structure. Does NOT convert. Use this to "grab this frame" so the user + AI can decide later what to build from it, in any workflow or builder.',
     'category'    => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -127,7 +127,7 @@ function nibwp_figma_pro_ability_pull(array $input): array|WP_Error
 /* ── list / get (the pulled library) ─────────────────────────────────────── */
 wp_register_ability('nibwp/figma-list', [
     'label'       => __('Figma Pro — list pulled frames', 'nibwp'),
-    'description' => __('List the Figma frames/elements already pulled into NibWP\'s library — id, name, cached image, and token summary. Reference these by id with nibwp/figma-get.', 'nibwp'),
+    'description' => 'List the Figma frames/elements already pulled into NibWP\'s library — id, name, cached image, and token summary. Reference these by id with nibwp/figma-get.',
     'category'    => 'content',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'execute_callback'    => 'nibwp_figma_pro_ability_list',
@@ -159,7 +159,7 @@ function nibwp_figma_pro_ability_list(array $input): array|WP_Error
 
 wp_register_ability('nibwp/figma-get', [
     'label'       => __('Figma Pro — get a pulled frame', 'nibwp'),
-    'description' => __('Get one pulled frame by id: cached image, CSS tokens (colors + type ramp + :root css), structure summary, and the original Figma URL. Feed the tokens/image to a builder, or call nibwp/figma-pro-fetch with the url for builder-neutral HTML.', 'nibwp'),
+    'description' => 'Get one pulled frame by id: cached image, CSS tokens (colors + type ramp + :root css), structure summary, and the original Figma URL. Feed the tokens/image to a builder, or call nibwp/figma-pro-fetch with the url for builder-neutral HTML.',
     'category'    => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -199,7 +199,7 @@ function nibwp_figma_pro_ability_get(array $input): array|WP_Error
 /* ── fetch (builder-neutral artifact) ────────────────────────────────────── */
 wp_register_ability('nibwp/figma-pro-fetch', [
     'label'       => __('Figma Pro — fetch neutral artifact', 'nibwp'),
-    'description' => __('Read a Figma frame/component (by URL) and return builder-NEUTRAL semantic HTML + design summary + the recommended builder ability for this site. This is the hand-off artifact: pass the html to any active builder skill\'s html-to-* ability (etchwp-pro / elementor-pro / bricks-pro / oxygen / kadence-pro) to build natively, or use nibwp/figma-pro-convert to route + persist. Read-only; creates nothing.', 'nibwp'),
+    'description' => 'Read a Figma frame/component (by URL) and return builder-NEUTRAL semantic HTML + design summary + the recommended builder ability for this site. This is the hand-off artifact: pass the html to any active builder skill\'s html-to-* ability (etchwp-pro / elementor-pro / bricks-pro / oxygen / kadence-pro) to build natively, or use nibwp/figma-pro-convert to route + persist. Read-only; creates nothing.',
     'category'    => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -278,7 +278,7 @@ function nibwp_figma_pro_resolve_ref(array $input)
 /* ── convert ─────────────────────────────────────────────────────────────── */
 wp_register_ability('nibwp/figma-pro-convert', [
     'label'       => __('Figma Pro — convert to WordPress', 'nibwp'),
-    'description' => __('Convert a Figma frame/component (by URL) into WordPress. ROUTER: fetches the design, detects the active builder, and either (a) returns a hand-off {html, next_ability} for the active builder skill (etchwp/elementor/bricks/oxygen/kadence) to build natively, or (b) with builder="gutenberg" (or when no builder skill is present) persists a core-blocks DRAFT directly. Sideloads images. dry_run=true reports the structure + route without building.', 'nibwp'),
+    'description' => 'Convert a Figma frame/component (by URL) into WordPress. ROUTER: fetches the design, detects the active builder, and either (a) returns a hand-off {html, next_ability} for the active builder skill (etchwp/elementor/bricks/oxygen/kadence) to build natively, or (b) with builder="gutenberg" (or when no builder skill is present) persists a core-blocks DRAFT directly. Sideloads images. dry_run=true reports the structure + route without building.',
     'category'    => 'content',
     'input_schema' => [
         'type' => 'object',

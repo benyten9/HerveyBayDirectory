@@ -108,10 +108,15 @@ class CurlMultiEmailDispatchStrategy implements BatchDispatchStrategyInterface {
 
 	/**
 	 * @inheritDoc
+	 *
+	 * Uses the max batch size of the mailer the template's From routes to (the
+	 * one that sends the batch), capped by the filterable default.
 	 */
 	public function get_batch_size() {
+		$from_email = $this->template ? ( $this->template->get_setting( 'from_email' ) ?: get_option( 'admin_email' ) ) : null;
+
 		return min(
-			\DoubleScale\Modules\Emails\CurlMultiEmailSender::get_max_batch_size(),
+			\DoubleScale\Modules\Emails\CurlMultiEmailSender::get_max_batch_size( $from_email ),
 			apply_filters( 'doublescale_campaign_curl_multi_batch_size', 100, $this->channel )
 		);
 	}

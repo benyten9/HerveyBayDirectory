@@ -15,6 +15,8 @@ use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Notifications\Models\NotificationModel;
 use DoubleScale\Modules\Notifications\Services\NotificationPreferences;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * NotificationHeartbeat class
  */
@@ -102,6 +104,7 @@ class NotificationHeartbeat {
 				->whereIn( 'subcategory', $browser_enabled_subcats )
 				->excludeSystemForNonAdmin( $is_admin )
 				->orderBy( 'created_at', 'desc' )
+				->orderBy( 'id', 'desc' )
 				->take( 3 )
 				->get();
 

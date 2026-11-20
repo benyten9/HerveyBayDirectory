@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Exceptions;
+namespace DoubleScale\Vendor\Carbon\Exceptions;
 
 use Throwable;
-class BadComparisonUnitException extends \Carbon\Exceptions\UnitException
+class BadComparisonUnitException extends UnitException
 {
     /**
      * The unit.

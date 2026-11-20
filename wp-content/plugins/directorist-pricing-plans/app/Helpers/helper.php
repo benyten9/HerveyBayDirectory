@@ -78,6 +78,16 @@ function directorist_get_pricing_plan_by_id( int $id ) {
     return directorist_pricing_plan_repository()->get_by_id( $id );
 }
 
+/**
+ * Get the payable plan price, including free plans with a stale stored price.
+ *
+ * @param stdClass $plan Pricing plan or package billing data.
+ * @return float
+ */
+function directorist_get_plan_effective_price( stdClass $plan ): float {
+    return PlanFeeType::FREE === ( $plan->fee_type ?? '' ) ? 0.0 : (float) ( $plan->price ?? 0 );
+}
+
 function directorist_plan_has_listing_quota( ?stdClass $plan ): bool {
     if ( ! $plan ) {
         return false;
@@ -132,6 +142,14 @@ function directorist_is_listing_plan_meta_migrated(): bool {
     $migrations = get_option( 'directorist_pricing_plans_migrations', [] );
 
     return is_array( $migrations ) && in_array( 'listing-plan-meta-v4-0-2', $migrations, true );
+}
+
+function directorist_is_listing_display_priority_enabled(): bool {
+    $enabled = function_exists( 'get_directorist_option' )
+        ? (bool) get_directorist_option( 'enable_listing_display_priority', false )
+        : false;
+
+    return (bool) apply_filters( 'directorist_is_listing_display_priority_enabled', $enabled );
 }
 
 function directorist_allow_multiple_plans_per_directory_type(): bool {

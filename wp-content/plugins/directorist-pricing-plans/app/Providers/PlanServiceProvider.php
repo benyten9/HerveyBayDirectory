@@ -286,6 +286,7 @@ class PlanServiceProvider implements Provider {
     }
 
     public function before_update_listing_status( int $id, string $status ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         if ( 'publish' !== $status ) {
             return;
         }
@@ -485,6 +486,7 @@ class PlanServiceProvider implements Provider {
     }
 
     public function handle_package_expiry_event( array $package_data ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $package_id = (int) ( $package_data['package_id'] ?? 0 );
 
         if ( ! $package_id ) {
@@ -582,6 +584,7 @@ class PlanServiceProvider implements Provider {
     }
 
     public function activate_fallback_plan( int $user_id, int $fallback_plan_id, int $current_directory_type_id, int $source_plan_id = 0 ): bool {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
         $plan            = $plan_repository->get_by_id( $fallback_plan_id );
 
@@ -592,7 +595,7 @@ class PlanServiceProvider implements Provider {
         $currency  = atbdp_get_payment_currency();
         $order_dto = ( new OrderDTO )->set_user_id( $user_id )->set_ref_type( OrderRefType::PRICING_PLAN )->set_ref( $plan->id )->set_currency( $currency )->set_status( OrderStatus::PAID );
 
-        $order_dto->set_amount( $plan->price )->set_sub_total( $plan->price );
+        $order_dto->set_amount( directorist_get_plan_effective_price( $plan ) )->set_sub_total( directorist_get_plan_effective_price( $plan ) );
 
         if ( $plan->is_taxable ) {
             $order_dto->set_tax_type( $plan->tax_type )->set_tax_rate( $plan->tax_rate );
@@ -638,6 +641,7 @@ class PlanServiceProvider implements Provider {
      * @throws Exception
      */
     public function handle_listing_plan_approval_validation( int $directory_type_id, int $listing_id, bool $is_featured_listing, ?stdClass $current_package = null ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         if ( ! $current_package ) {
             $current_package = directorist_get_listing_package( $listing_id );
         }

@@ -64,6 +64,12 @@
                     max-width: 400px;
                     min-height: 60px;
                     font-family: monospace;
+                    /* One IP address per line. */
+                    /*rtl:begin:ignore*/
+                    direction: ltr;
+                    unicode-bidi: isolate;
+                    text-align: left;
+                    /*rtl:end:ignore*/
                     font-size: 13px;
                 }
                 .nibwp-tool-checklist {

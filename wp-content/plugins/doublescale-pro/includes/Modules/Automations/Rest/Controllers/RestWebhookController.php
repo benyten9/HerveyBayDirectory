@@ -30,7 +30,7 @@ class RestWebhookController extends RestController {
 	/**
 	 * REST base — kept as `automations` so the public route stays at
 	 * `/wp-json/doublescale/v1/automations/webhook`, matching webhook URLs
-	 * already configured by Pro users in third-party tools (Zapier, etc.).
+	 * already configured by Pro users in third-party tools.
 	 *
 	 * @var string
 	 */

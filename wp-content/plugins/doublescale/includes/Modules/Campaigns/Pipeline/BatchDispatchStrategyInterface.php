@@ -45,7 +45,7 @@ interface BatchDispatchStrategyInterface {
 	 * - Advancing $ctx->offset for every contact processed
 	 *
 	 * @param CampaignContext                          $ctx
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts
 	 * @return BatchResult
 	 */
 	public function process_batch( CampaignContext $ctx, $contacts );

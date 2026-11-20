@@ -1482,6 +1482,17 @@ jQuery(document).ready(function ($) {
 
     $("#seopress-your-schema .box-left > p ~ div").hide();
 
+    // Book is opt-in and uses the existing classic schema mapping controls.
+    const bookSelector = "#seopress-your-schema input[name='seopress_pro_rich_snippets_type']";
+    $("#seopress-your-schema .wrap-rich-snippets-book").toggle($(bookSelector + ":checked").val() === "book");
+    $(bookSelector).on('change', function() {
+        const isBook = $(this).val() === "book";
+        $("#seopress-your-schema .wrap-rich-snippets-book").toggle(isBook);
+        if (isBook) {
+            $("#seopress-your-schema .box-left > p ~ div").not(".wrap-rich-snippets-book").hide();
+        }
+    });
+
     //Rich Snippets Select
     if (
         $(

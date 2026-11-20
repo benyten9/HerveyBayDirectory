@@ -86,6 +86,7 @@ class ExpiredListingRenewalService {
      * @return array<string, mixed>
      */
     public function complete_pay_per_listing_renewal( int $listing_id, int $plan_id, int $user_id ): array {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $context      = $this->build_listing_context( $listing_id, $user_id, true );
         $plan         = $context['plan'];
         $was_featured = (bool) $context['summary']['was_featured'];
@@ -117,6 +118,7 @@ class ExpiredListingRenewalService {
      * @return array<string, mixed>
      */
     public function renew_listing( int $listing_id, ?int $user_id = null ): array {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $context = $this->build_listing_context( $listing_id, $user_id, true );
         $package = $context['package'];
         $plan    = $context['plan'];
@@ -161,6 +163,7 @@ class ExpiredListingRenewalService {
      * @return array<string, int>
      */
     public function renew( int $package_id, ?int $user_id = null ): array {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $context = $this->build_context( $package_id, $user_id, true );
         $package = $context['package'];
         $summary = $context['summary'];

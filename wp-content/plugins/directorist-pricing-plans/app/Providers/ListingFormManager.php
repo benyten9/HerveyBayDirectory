@@ -206,13 +206,18 @@ class ListingFormManager implements Provider {
                 return $this->notice( __( 'You already have multiple active plans. You cannot purchase or activate a new plan at this time. Please select one of your existing plans to submit a listing.', 'directorist-pricing-plans' ) );
             }
 
-            // No plan selected yet — show the plan selection page (existing plans only).
+            // Keep owned packages selectable even when their plans are hidden from sale.
+            $include_plan_ids = array_map( 'absint', wp_list_pluck( $active_packages, 'plan_id' ) );
+
+            if ( $allow_multiple ) {
+                $available_plans  = directorist_pricing_plan_repository()->get_by_directory_type( $directory->term_id );
+                $include_plan_ids = array_values( array_unique( array_merge( $include_plan_ids, array_map( 'absint', wp_list_pluck( $available_plans, 'id' ) ) ) ) );
+            }
+
+            // No plan selected yet — show owned packages and eligible public plans.
             do_action( 'directorist_before_pricing_plan_page', $data );
 
-            return $this->render_plans(
-                $data,
-                $allow_multiple ? [] : array_map( 'absint', wp_list_pluck( $active_packages, 'plan_id' ) )
-            );
+            return $this->render_plans( $data, $include_plan_ids );
         }
 
         // Single active package: proceed with the existing quota-check flow.

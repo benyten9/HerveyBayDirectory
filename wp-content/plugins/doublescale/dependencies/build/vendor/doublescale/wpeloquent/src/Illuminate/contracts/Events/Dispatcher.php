@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Events;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Events;
 
 interface Dispatcher
 {

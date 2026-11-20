@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
-use Illuminate\Support\Fluent;
-use Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
 /**
  * @method ColumnDefinition after(string $column) Place the column "after" another column (MySQL)
  * @method ColumnDefinition always() Used as a modifier for generatedAs() (PostgreSQL)

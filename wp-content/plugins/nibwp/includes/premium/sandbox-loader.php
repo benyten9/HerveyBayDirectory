@@ -103,11 +103,11 @@ add_action('plugins_loaded', static function (): void {
         $lead = ($report && $report['is_external'])
             ? esc_html__(
                 'A fatal error during startup suspended every sandbox plugin. The error came from outside the sandbox, so another plugin is the likely cause.',
-                domain: 'nibwp',
+                'nibwp',
             )
             : esc_html__(
                 'A fatal error during startup suspended every sandbox plugin.',
-                domain: 'nibwp',
+                'nibwp',
             );
 
         $detail = '';
@@ -125,7 +125,7 @@ add_action('plugins_loaded', static function (): void {
                 '<br><small>%s</small>',
                 sprintf(
                     /* translators: %s: sandbox file name */
-                    esc_html__('Loading at the time: %s', domain: 'nibwp'),
+                    esc_html__('Loading at the time: %s', 'nibwp'),
                     '<code>' . esc_html($report['sandbox_file']) . '</code>',
                 ),
             );
@@ -134,11 +134,11 @@ add_action('plugins_loaded', static function (): void {
         wp_admin_notice(
             sprintf(
                 '<strong>%s</strong> %s%s<br><a href="%s" class="button button-primary" style="margin-top:8px;">%s</a>',
-                esc_html__('NIBWP Sandbox: Safe mode is active.', domain: 'nibwp'),
+                esc_html__('NIBWP Sandbox: Safe mode is active.', 'nibwp'),
                 $lead,
                 $detail,
                 esc_url(admin_url('admin.php?page=nibwp-sandbox')),
-                esc_html__('Review and exit safe mode', domain: 'nibwp'),
+                esc_html__('Review and exit safe mode', 'nibwp'),
             ),
             [
                 'type' => 'error',

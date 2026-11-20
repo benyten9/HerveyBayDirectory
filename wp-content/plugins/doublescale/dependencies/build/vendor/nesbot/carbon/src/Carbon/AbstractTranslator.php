@@ -8,9 +8,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-use Carbon\MessageFormatter\MessageFormatterMapper;
+use DoubleScale\Vendor\Carbon\MessageFormatter\MessageFormatterMapper;
 use Closure;
 use ReflectionException;
 use ReflectionFunction;
@@ -59,7 +59,7 @@ abstract class AbstractTranslator extends Translation\Translator
     public static function get($locale = null)
     {
         $locale = $locale ?: 'en';
-        $key = static::class === \Carbon\Translator::class ? $locale : static::class . '|' . $locale;
+        $key = static::class === Translator::class ? $locale : static::class . '|' . $locale;
         if (!isset(static::$singletons[$key])) {
             static::$singletons[$key] = new static($locale);
         }
@@ -187,7 +187,7 @@ abstract class AbstractTranslator extends Translation\Translator
             $domain = 'messages';
         }
         $catalogue = $this->getCatalogue($locale);
-        $format = $this instanceof \Carbon\TranslatorStrongTypeInterface ? $this->getFromCatalogue($catalogue, (string) $id, $domain) : $this->getCatalogue($locale)->get((string) $id, $domain);
+        $format = $this instanceof TranslatorStrongTypeInterface ? $this->getFromCatalogue($catalogue, (string) $id, $domain) : $this->getCatalogue($locale)->get((string) $id, $domain);
         // @codeCoverageIgnore
         if ($format instanceof Closure) {
             // @codeCoverageIgnoreStart

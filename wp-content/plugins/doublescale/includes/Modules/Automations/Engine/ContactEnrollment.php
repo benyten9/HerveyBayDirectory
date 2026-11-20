@@ -7,10 +7,13 @@
 
 namespace DoubleScale\Modules\Automations\Engine;
 
+use DoubleScale\Core\Scope\OwnerScope;
+use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\Settings\PhoneAsWhatsappSetting;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Contacts\Services\LeadRouter;
 use DoubleScale\Core\Validators\PhoneValidator;
 
 defined( 'ABSPATH' ) || exit;
@@ -40,6 +43,17 @@ final class ContactEnrollment {
 
 		if ( ! $contact ) {
 			$contact = $this->maybe_create_contact();
+		}
+
+		// A workflow built by an agent who is limited to their own contacts
+		// runs on contacts that agent owns and on unassigned ones (the team's,
+		// which the agent can see) — never on a colleague's.
+		$creator = (int) ( $this->automation->created_by ?? 0 );
+		if ( $creator > 0
+			&& Permissions::is_scoped_agent( $creator )
+			&& (int) ( $contact->owner_id ?? 0 ) > 0
+			&& ! OwnerScope::for_user( $creator )->owns_contact( $contact ) ) {
+			return false;
 		}
 
 		$automation_contact = $this->automation->contacts()->where( 'contact_id', $contact->id )->first();
@@ -90,16 +104,139 @@ final class ContactEnrollment {
 
 	public function maybe_create_contact(): ContactModel {
 		$lookup     = ContactModel::normalize_contact_data( $this->args );
-		$contact    = ContactModel::find_by_identifiers( $lookup );
-		$attributes = $this->prepare_contact_attributes( $contact );
+		$contact    = $this->find_contact( $lookup );
+		$attributes = $this->without_numbers_held_by_others(
+			$this->prepare_contact_attributes( $contact ),
+			$contact
+		);
 
 		if ( ! $contact ) {
-			$contact = ContactModel::create( $attributes );
+			$contact = self::creating_for(
+				$this->automation,
+				static function () use ( $attributes ) {
+					return ContactModel::create( $attributes );
+				}
+			);
 		} else {
 			$contact->update( $attributes );
 		}
 
 		return $contact;
+	}
+
+	/**
+	 * Who owns a contact this workflow creates, or null to follow lead routing.
+	 *
+	 * Setting `new_contact_owner`: 'routing', 'workflow_owner' or a user id.
+	 * A workflow built by an agent always gives new contacts to that agent —
+	 * agents own what they bring in, and in private mode their workflows only
+	 * run on contacts they own. Otherwise the default is lead routing, so a
+	 * site-wide "form submitted" workflow doesn't hand every lead to the admin.
+	 *
+	 * @return int|null
+	 */
+	public static function new_contact_owner( AutomationModel $automation ): ?int {
+		$creator = (int) ( $automation->created_by ?? 0 );
+
+		if ( $creator > 0 && Permissions::is_agent_tier( $creator ) ) {
+			return $creator;
+		}
+
+		$choice = (string) $automation->get_setting( 'new_contact_owner', 'routing' );
+
+		if ( 'workflow_owner' === $choice ) {
+			return ( $creator > 0 && LeadRouter::is_valid_owner( $creator ) ) ? $creator : null;
+		}
+
+		$user_id = (int) $choice;
+
+		return ( $user_id > 0 && LeadRouter::is_valid_owner( $user_id ) ) ? $user_id : null;
+	}
+
+	/**
+	 * Run $create (which may create a contact) so a new contact gets this
+	 * workflow's owner. Used here and by triggers that create the contact
+	 * themselves (e.g. Webhook Received).
+	 *
+	 * @template T
+	 * @param AutomationModel $automation Workflow.
+	 * @param callable(): T   $create     Code that creates or updates the contact.
+	 * @return T
+	 */
+	public static function creating_for( AutomationModel $automation, callable $create ) {
+		$owner = self::new_contact_owner( $automation );
+		if ( null === $owner ) {
+			// "Lead routing rules": the Automations rule in Team settings decides.
+			return LeadRouter::with_context(
+				'automation',
+				array( 'workflow_owner_id' => (int) ( $automation->created_by ?? 0 ) ),
+				$create
+			);
+		}
+
+		// actor_id 0: the workflow's choice wins over whoever is logged in.
+		return LeadRouter::with_context(
+			'automation',
+			array(
+				'actor_id' => 0,
+				'owner_id' => $owner,
+			),
+			$create
+		);
+	}
+
+	/**
+	 * The existing contact these trigger args belong to.
+	 *
+	 * An email names one person. A phone or WhatsApp match only joins the args
+	 * to a contact that has no email of its own; one with a different email is
+	 * someone else sharing the number (a household, a company line), and taking
+	 * it over would overwrite their email and name with the buyer's.
+	 *
+	 * @param array<string, mixed> $lookup Normalized trigger args.
+	 *
+	 * @return ContactModel|null
+	 */
+	private function find_contact( array $lookup ) {
+		$match = ContactModel::find_identifier_conflict( $lookup );
+		if ( ! $match ) {
+			return null;
+		}
+
+		$has_email = null !== ( $lookup['email'] ?? null );
+		if ( $has_email && 'email' !== $match['field'] && '' !== trim( (string) $match['contact']->email ) ) {
+			return null;
+		}
+
+		return $match['contact'];
+	}
+
+	/**
+	 * Drop a phone or WhatsApp number that another contact already holds.
+	 *
+	 * Both columns are unique, so saving it would throw and the contact would
+	 * never enter the automation. The run matters more than the number, which
+	 * stays with the contact who has it.
+	 *
+	 * @param array<string, mixed> $attributes Contact attributes about to be saved.
+	 * @param ContactModel|null    $contact    Contact being updated, null when creating.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function without_numbers_held_by_others( array $attributes, $contact ): array {
+		$exclude_id = $contact ? (int) $contact->id : null;
+
+		foreach ( array( 'phone', 'whatsapp_phone' ) as $field ) {
+			if ( empty( $attributes[ $field ] ) ) {
+				continue;
+			}
+
+			if ( ContactModel::find_identifier_conflict( array( $field => $attributes[ $field ] ), $exclude_id ) ) {
+				unset( $attributes[ $field ] );
+			}
+		}
+
+		return $attributes;
 	}
 
 	/**
@@ -155,10 +292,12 @@ final class ContactEnrollment {
 			unset( $attributes['country'] );
 		}
 
-		// Never overwrite an existing non-empty phone field with the same-or-empty
-		// incoming value churn; only fill blanks on update.
+		// Never overwrite an existing non-empty phone or name; only fill blanks on
+		// update. A trigger's name is what someone typed next to an email (a
+		// public booking, a guest checkout): it must not rename the person who
+		// already owns that email in the CRM.
 		if ( $existing ) {
-			foreach ( array( 'phone', 'whatsapp_phone' ) as $field ) {
+			foreach ( array( 'phone', 'whatsapp_phone', 'first_name', 'last_name' ) as $field ) {
 				if ( isset( $attributes[ $field ] ) && ! empty( $existing->{$field} ) ) {
 					unset( $attributes[ $field ] );
 				}

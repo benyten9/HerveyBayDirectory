@@ -117,6 +117,7 @@ global $perfmatters_script_manager_settings;
 $perfmatters_script_manager_settings = get_option('perfmatters_script_manager_settings');
 
 //load styles
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted plugin stylesheet contents.
 echo '<style id="perfmatters-script-manager-css">' . file_get_contents(plugin_dir_path(__DIR__) . 'css/script-manager.css') . '</style>';
 
 //build array of existing plugin disables
@@ -163,16 +164,16 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 			echo "<span id='pmsm-menu-toggle'><span class='dashicons dashicons-menu'></span></span>";
 
 			//logo
-			echo "<img src='" . plugins_url('img/logo-light.svg', dirname(__FILE__)) . "' title='Perfmatters' id='perfmatters-logo' />";
+			echo "<img src='" . esc_url(plugins_url('img/logo-light.svg', dirname(__FILE__))) . "' title='Perfmatters' id='perfmatters-logo' />";
 
 		echo "</div>";
 	
 		//main navigation
 		echo "<form method='POST'>";
 			echo "<div id='perfmatters-script-manager-tabs'>";
-				echo "<button name='tab' value=''" . ($pmsm_tab == 'main' ? " class='active'" : "")  . " title='" . __('Script Manager', 'perfmatters') . "'><span class='dashicons dashicons-admin-settings'></span>" . __('Script Manager', 'perfmatters') . "</button>";
-				echo "<button name='tab' value='global'" . ($pmsm_tab == 'global' ? " class='active'" : "")  . " title='" . __('Global View', 'perfmatters') . "'><span class='dashicons dashicons-admin-site'></span>" . __('Global View', 'perfmatters') . "</button>";
-				echo "<button name='tab' value='settings'" . ($pmsm_tab == 'settings' ? " class='active'" : "")  . " title='" . __('Settings', 'perfmatters') . "'><span class='dashicons dashicons-admin-generic'></span>" . __('Settings', 'perfmatters') . "</button>";
+				echo "<button name='tab' value=''" . ($pmsm_tab == 'main' ? " class='active'" : "")  . " title='" . esc_attr__('Script Manager', 'perfmatters') . "'><span class='dashicons dashicons-admin-settings'></span>" . esc_html__('Script Manager', 'perfmatters') . "</button>";
+				echo "<button name='tab' value='global'" . ($pmsm_tab == 'global' ? " class='active'" : "")  . " title='" . esc_attr__('Global View', 'perfmatters') . "'><span class='dashicons dashicons-admin-site'></span>" . esc_html__('Global View', 'perfmatters') . "</button>";
+				echo "<button name='tab' value='settings'" . ($pmsm_tab == 'settings' ? " class='active'" : "")  . " title='" . esc_attr__('Settings', 'perfmatters') . "'><span class='dashicons dashicons-admin-generic'></span>" . esc_html__('Settings', 'perfmatters') . "</button>";
 			echo "</div>";
 		echo "</form>";
 
@@ -194,14 +195,14 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 							wp_nonce_field('pmsm_disclaimer_close', 'pmsm_disclaimer_close_nonce');
 							echo '<button type="submit" id="pmsm-disclaimer-close" name="pmsm_disclaimer_close"/><span class="dashicons dashicons-dismiss"></span></button>';
 						echo '</form>';
-							_e('We recommend testing Script Manager changes on a staging/dev site first, as you could break your site\'s appearance.', 'perfmatters');
-							echo ' <a href="https://perfmatters.io/docs/disable-scripts-per-post-page/" target="_blank">' . __('View Documentation', 'perfmatters') . '</a>';
+							esc_html_e('We recommend testing Script Manager changes on a staging/dev site first, as you could break your site\'s appearance.', 'perfmatters');
+							echo ' <a href="https://perfmatters.io/docs/disable-scripts-per-post-page/" target="_blank">' . esc_html__('View Documentation', 'perfmatters') . '</a>';
 					echo '</div>';
 				}
 
 				//testing mode
 				if(!empty($perfmatters_script_manager_settings['testing_mode'])) {
-					echo '<div class="pmsm-notice pmsm-notice-warning">' . __('You are in Testing Mode. Changes will only be visible to logged-in admins.') . '</div>';
+					echo '<div class="pmsm-notice pmsm-notice-warning">' . esc_html__('You are in Testing Mode. Changes will only be visible to logged-in admins.', 'perfmatters') . '</div>';
 				}
 			echo '</div>';
 
@@ -216,8 +217,8 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 
 						//title bar
 						echo "<div class='perfmatters-script-manager-title-bar'>";
-							echo "<h1>" . __('Script Manager', 'perfmatters') . "</h1>";
-							echo "<p>" . __('Manage scripts loading on the current page.', 'perfmatters') . "</p>";
+							echo "<h1>" . esc_html__('Script Manager', 'perfmatters') . "</h1>";
+							echo "<p>" . esc_html__('Manage scripts loading on the current page.', 'perfmatters') . "</p>";
 						echo "</div>";
 
 						//load master array
@@ -228,7 +229,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 						foreach($master_array['resources'] as $category => $groups) {
 							echo '<div class="pmsm-category-container">';
 								if(!empty($groups)) {
-									echo "<h3>" . $category . "</h3>";
+									echo "<h3>" . esc_html($category) . "</h3>";
 									if($category != "misc") {
 										echo "<div style='background: #ffffff; padding: 10px;'>";
 										foreach($groups as $group => $details) {
@@ -242,7 +243,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 													echo "<div class='perfmatters-script-manager-status' style='display: flex; align-items: center; white-space: nowrap; margin-left: 10px;'>";
 
 														if(!empty($details['size'])) {
-															echo "<span class='pmsm-group-tag pmsm-group-size'>" . __('Total size', 'perfmatters') . ": " . round($details['size'] / 1024, 1) . " KB</span>";
+															echo "<span class='pmsm-group-tag pmsm-group-size'>" . esc_html__('Total size', 'perfmatters') . ": " . esc_html(round($details['size'] / 1024, 1)) . " KB</span>";
 														}
 
 													    perfmatters_script_manager_print_status($category, $group);
@@ -271,10 +272,10 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 						//loading wrapper
 						echo "<div id='pmsm-loading-wrapper'>";
 							if(function_exists('is_amp_endpoint') && is_amp_endpoint()) {
-								echo "<span class='pmsm-loading-text'>" . __('The Script Manager does not support AMP pages.', 'perfmatters') . "</span>";
+								echo "<span class='pmsm-loading-text'>" . esc_html__('The Script Manager does not support AMP pages.', 'perfmatters') . "</span>";
 							}
 							else {
-								echo '<span class="pmsm-loading-text">' . __('Loading Scripts', 'perfmatters') . '<svg class="perfmatters-button-spinner" viewBox="0 0 100 100" role="presentation" focusable="false" style="background: rgba(0,0,0,.1); border-radius: 100%; width: 16px; height: auto; margin: 0px 0px 0px 8px; overflow: visible; opacity: 1; background-color: transparent;"><circle cx="50" cy="50" r="50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #EDF3F9;"></circle><path d="m 50 0 a 50 50 0 0 1 50 50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #4A89DD; stroke-linecap: round; transform-origin: 50% 50%; animation: 1.4s linear 0s infinite normal both running perfmatters-spinner;"></path></svg></span>';
+								echo '<span class="pmsm-loading-text">' . esc_html__('Loading Scripts', 'perfmatters') . '<svg class="perfmatters-button-spinner" viewBox="0 0 100 100" role="presentation" focusable="false" style="background: rgba(0,0,0,.1); border-radius: 100%; width: 16px; height: auto; margin: 0px 0px 0px 8px; overflow: visible; opacity: 1; background-color: transparent;"><circle cx="50" cy="50" r="50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #EDF3F9;"></circle><path d="m 50 0 a 50 50 0 0 1 50 50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #4A89DD; stroke-linecap: round; transform-origin: 50% 50%; animation: 1.4s linear 0s infinite normal both running perfmatters-spinner;"></path></svg></span>';
 							}
 						echo "</div>";
 
@@ -288,8 +289,8 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 
 						//title bar
 						echo "<div class='perfmatters-script-manager-title-bar'>";
-							echo "<h1>" . __('Settings', 'perfmatters') . "</h1>";
-							echo "<p>" . __('View and manage all of your Script Manager settings.', 'perfmatters') . "</p>";
+							echo "<h1>" . esc_html__('Settings', 'perfmatters') . "</h1>";
+							echo "<p>" . esc_html__('View and manage all of your Script Manager settings.', 'perfmatters') . "</p>";
 						echo "</div>";
 
 						//settings container
@@ -307,7 +308,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 										            'option' => 'perfmatters_script_manager_settings'
 										        );
 												perfmatters_print_input($args);
-												echo "<div>" . __('Add WordPress archives to your Script Manager selection options. Archive posts will no longer be grouped with their post type.', 'perfmatters') . "</div>";
+												echo "<div>" . esc_html__('Add WordPress archives to your Script Manager selection options. Archive posts will no longer be grouped with their post type.', 'perfmatters') . "</div>";
 											echo "</td>";
 										echo "</tr>";
 										echo "<tr>";
@@ -318,7 +319,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 										            'option' => 'perfmatters_script_manager_settings'
 										        );
 												perfmatters_print_input($args);
-												echo "<div>" . __('Show dependencies for each script.', 'perfmatters') . "</div>";
+												echo "<div>" . esc_html__('Show dependencies for each script.', 'perfmatters') . "</div>";
 											echo "</td>";
 										echo "</tr>";
 										echo "<tr>";
@@ -329,7 +330,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 										            'option' => 'perfmatters_script_manager_settings'
 										        );
 												perfmatters_print_input($args);
-												echo "<div>" . __('Restrict your Script Manager configuration to logged-in admins only.', 'perfmatters') . ' <a href="https://perfmatters.io/docs/testing-mode/" target="_blank">' . __('View Documentation', 'perfmatters') . '</a>' . "</div>";
+												echo "<div>" . esc_html__('Restrict your Script Manager configuration to logged-in admins only.', 'perfmatters') . ' <a href="https://perfmatters.io/docs/testing-mode/" target="_blank">' . esc_html__('View Documentation', 'perfmatters') . '</a>' . "</div>";
 											echo "</td>";
 										echo "</tr>";
 										echo "<tr>";
@@ -341,9 +342,9 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 										            'option' => 'perfmatters_script_manager_settings'
 										        );
 												perfmatters_print_input($args);
-												echo "<div>" . __('Must-use (MU) mode requires elevated permissions and a file to be copied into the mu-plugins directory. This gives you more control and the ability to disable plugin queries, inline CSS, etc.', 'perfmatters') . ' <a href="https://perfmatters.io/docs/mu-mode/" target="_blank">' . __('View Documentation', 'perfmatters') . '</a>' . "</div>";
+												echo "<div>" . esc_html__('Must-use (MU) mode requires elevated permissions and a file to be copied into the mu-plugins directory. This gives you more control and the ability to disable plugin queries, inline CSS, etc.', 'perfmatters') . ' <a href="https://perfmatters.io/docs/mu-mode/" target="_blank">' . esc_html__('View Documentation', 'perfmatters') . '</a>' . "</div>";
 
-												echo "<div style='background: #faf3c4; padding: 10px; margin-top: 7px;'><strong>" . __('Warning', 'perfmatters') . ":</strong> " . __('Any previous plugin-level disables will now disable the entire plugin. Please review your existing Script Manager configuration before enabling this option.', 'perfmatters') . "</div>";
+												echo "<div style='background: #faf3c4; padding: 10px; margin-top: 7px;'><strong>" . esc_html__('Warning', 'perfmatters') . ":</strong> " . esc_html__('Any previous plugin-level disables will now disable the entire plugin. Please review your existing Script Manager configuration before enabling this option.', 'perfmatters') . "</div>";
 
 												//mu plugin file check
 												if(!empty($perfmatters_script_manager_settings['mu_mode'])) {
@@ -371,7 +372,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 														$mu_class = "pmsm-mu-missing";
 													}
 
-													echo "<div class='" . $mu_class . "'>" . $mu_message . "</div>";
+													echo "<div class='" . esc_attr($mu_class) . "'>" . esc_html($mu_message) . "</div>";
 												}
 
 											echo "</td>";
@@ -384,7 +385,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 										            'option' => 'perfmatters_script_manager_settings'
 										        );
 												perfmatters_print_input($args);
-												echo "<div>" . __('Hide the disclaimer message box across all Script Manager views.', 'perfmatters') . "</div>";
+												echo "<div>" . esc_html__('Hide the disclaimer message box across all Script Manager views.', 'perfmatters') . "</div>";
 											echo "</td>";
 										echo "</tr>";
 										echo "<tr>";
@@ -392,10 +393,10 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 											echo "<td>";
 												//Reset Form
 												echo "<div>";
-													echo "<input type='submit' name='pmsm-reset' id='pmsm-reset' class='pmsm-reset' value='" . __('Reset Script Manager', 'perfmatters') . "' />";
+													echo "<input type='submit' name='pmsm-reset' id='pmsm-reset' class='pmsm-reset' value='" . esc_attr__('Reset Script Manager', 'perfmatters') . "' />";
 												echo "</div>";
 												echo "<div>";
-													echo "<span class='perfmatters-tooltip-text'>" . __('Remove and reset all of your existing Script Manager settings.', 'perfmatters') . "</span>";
+													echo "<span class='perfmatters-tooltip-text'>" . esc_html__('Remove and reset all of your existing Script Manager settings.', 'perfmatters') . "</span>";
 												echo "</div>";
 											echo "</td>";
 										echo "</tr>";
@@ -418,7 +419,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 							echo "<div id='pmsm-save' style='display: flex; align-items: center;'>";
 								if($pmsm_tab != 'global') {
 							        echo '<button type="submit" id="submit" name="pmsm_save_' . esc_attr($pmsm_tab) . '" class="button button-secondary" style="display: flex; align-items: center;">';
-							            echo '<span class="perfmatters-button-text">' . __('Save Changes', 'perfmatters') . '</span>';
+							            echo '<span class="perfmatters-button-text">' . esc_html__('Save Changes', 'perfmatters') . '</span>';
 							            echo '<svg class="perfmatters-button-spinner" viewBox="0 0 100 100" role="presentation" focusable="false" style="background: rgba(0,0,0,.1); border-radius: 100%; width: 16px; height: 28px; margin: 0px 2px; overflow: visible; opacity: 1; background-color: transparent; display: none;"><circle cx="50" cy="50" r="50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #fff;"></circle><path d="m 50 0 a 50 50 0 0 1 50 50" vector-effect="non-scaling-stroke" style="fill: transparent; stroke-width: 1.5px; stroke: #4A89DD; stroke-linecap: round; transform-origin: 50% 50%; animation: 1.4s linear 0s infinite normal both running perfmatters-spinner;"></path></svg>';
 							        echo '</button>';
 							        echo '<div id="pmsm-message" class="pmsm-message" style="margin-left: 10px; "></div>';
@@ -426,7 +427,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 							echo "</div>";
 
 							//copyright
-							echo "<div class='pmsm-copyright'>© " . date("Y") . " Perfmatters</div>";
+							echo "<div class='pmsm-copyright'>© " . esc_html(gmdate("Y")) . " Perfmatters</div>";
 
 						echo "</div>";
 
@@ -437,7 +438,7 @@ echo "<div id='perfmatters-script-manager-wrapper'>";
 
 		//hidden reset form
 		if($pmsm_tab == 'settings') {
-			echo "<form method='POST' id='pmsm-reset-form' pmsm-confirm=\"" . __('Are you sure? This will remove and reset all of your existing Script Manager settings and cannot be undone!') . "\">";
+			echo "<form method='POST' id='pmsm-reset-form' pmsm-confirm=\"" . esc_attr__('Are you sure? This will remove and reset all of your existing Script Manager settings and cannot be undone!', 'perfmatters') . "\">";
 				wp_nonce_field('pmsm_reset', 'pmsm_reset_nonce');
 				echo "<input type='hidden' name='tab' value='settings' />";
 				echo "<input type='hidden' name='perfmatters_script_manager_settings_reset' class='pmsm-reset' value='submit' />";

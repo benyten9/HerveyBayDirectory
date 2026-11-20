@@ -14,6 +14,7 @@ namespace DoubleScale\Modules\Tracking\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Tracking\Email;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel;
 
@@ -29,7 +30,8 @@ class TrackingService {
 	 * @return object|null Page visit model instance or null when not available.
 	 */
 	public function record_page_visit( int $contact_id, string $url, string $referrer = '', string $user_agent = '' ) {
-		if ( ! class_exists( '\DoubleScale\Pro\Modules\WebsiteTracking\Models\PageVisitModel' ) ) {
+		// Page visits are the Website Tracking module's data: none recorded while it is off.
+		if ( ! doublescale_module_data_ready( 'websitetracking' ) || ! class_exists( '\DoubleScale\Pro\Modules\WebsiteTracking\Models\PageVisitModel' ) ) {
 			return null;
 		}
 		return \DoubleScale\Pro\Modules\WebsiteTracking\Models\PageVisitModel::create(
@@ -46,16 +48,16 @@ class TrackingService {
 	 * Record an email open event.
 	 *
 	 * @param int $tracking_id Communication tracking record ID.
-	 * @return bool
+	 * @return bool Whether this call recorded the first open.
 	 */
 	public function record_open( int $tracking_id ): bool {
 		$tracking = CommunicationTrackingModel::find( $tracking_id );
 		if ( ! $tracking ) {
 			return false;
 		}
-		$tracking->opened    = true;
-		$tracking->opened_at = current_time( 'mysql', true );
-		return $tracking->save();
+
+		// One place records an open, so whoever listens for it hears this one too.
+		return Email::record_open( $tracking );
 	}
 
 	/**

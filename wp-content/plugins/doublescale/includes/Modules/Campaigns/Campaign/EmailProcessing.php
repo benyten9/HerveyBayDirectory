@@ -331,24 +331,6 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	}
 
 	/**
-	 * The configured "emails per second" cap for this channel.
-	 *
-	 * Same resolution the pipeline uses for the per-email strategy
-	 * (InitialiseStep + CampaignRateLimiter), so the cURL Multi mailer paces
-	 * its chunks to the number the admin actually set instead of its own
-	 * hard-coded 10/s.
-	 *
-	 * @return int Emails per second (>= 1).
-	 */
-	protected function get_max_per_second() {
-		$max = $this->settings['max_in_second']
-			?? $this->rate_limiter->get_default_per_second_limit( $this->channel );
-		$max = (int) apply_filters( "doublescale_{$this->channel}_max_per_second", (int) $max );
-
-		return max( 1, $max );
-	}
-
-	/**
 	 * Send a batch of emails via cURL Multi
 	 *
 	 * This method reuses the same logic as send_email_batch but uses
@@ -358,7 +340,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @param CampaignModel                            $campaign Campaign model
 	 * @param TemplateModel                            $template Template model
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts Collection of contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts Collection of contacts
 	 *
 	 * @return array Result array
 	 */
@@ -409,7 +391,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @param CampaignModel                            $campaign        Campaign model
 	 * @param TemplateModel                            $template        Template model
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
 	 * @param string                                   $subject         Email subject
 	 * @param string                                   $body            Template body
 	 * @param array                                    $merge_tag_keys  Merge tag keys
@@ -570,6 +552,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		$failed      = $result['failed'] ?? array();
 		$message_ids = $result['message_ids'] ?? array();
 
+		$delivered = 0;
 		foreach ( $tracking_records as $email => $tracking ) {
 			if ( isset( $failed[ $email ] ) ) {
 				$tracking->status = TrackingStatus::FAILED;
@@ -577,9 +560,11 @@ class EmailProcessing extends AbstractCampaignProcessing {
 				$tracking->status      = TrackingStatus::SENT;
 				$tracking->sent_at     = current_time( 'mysql', true );
 				$tracking->external_id = $message_ids[ $email ] ?? '';
+				++$delivered;
 			}
 			$tracking->save();
 		}
+		$this->count_sent( $delivered );
 
 		doublescale_get_logger()->info(
 			__( 'Curl Multi email batch completed', 'doublescale' ),
@@ -609,7 +594,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @param CampaignModel                            $campaign        Campaign model
 	 * @param TemplateModel                            $template        Template model
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
 	 * @param string                                   $subject         Email subject
 	 * @param string                                   $body            Template body (JSON)
 	 * @param array                                    $merge_tag_keys  Merge tag keys
@@ -862,6 +847,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 		$failed      = $result['failed'] ?? array();
 		$message_ids = $result['message_ids'] ?? array();
 
+		$delivered = 0;
 		foreach ( $tracking_records as $email => $tracking ) {
 			if ( isset( $failed[ $email ] ) ) {
 				$tracking->status = TrackingStatus::FAILED;
@@ -869,9 +855,11 @@ class EmailProcessing extends AbstractCampaignProcessing {
 				$tracking->status      = TrackingStatus::SENT;
 				$tracking->sent_at     = current_time( 'mysql', true );
 				$tracking->external_id = $message_ids[ $email ] ?? '';
+				++$delivered;
 			}
 			$tracking->save();
 		}
+		$this->count_sent( $delivered );
 
 		return array(
 			'success'     => empty( $failed ),
@@ -909,7 +897,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @param CampaignModel                            $campaign Campaign model
 	 * @param TemplateModel                            $template Template model
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts Collection of contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts Collection of contacts
 	 *
 	 * @return array Result array
 	 */
@@ -1069,7 +1057,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @param CampaignModel                            $campaign        Campaign model
 	 * @param TemplateModel                            $template        Template model
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
 	 * @param string                                   $subject         Email subject
 	 * @param string                                   $body            Template body (JSON)
 	 * @param array                                    $merge_tag_keys  Merge tag keys
@@ -1282,11 +1270,13 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			);
 		}
 
+		$from_email = $this->get_bulk_from_email( $template );
+
 		// Render body with specific section IDs
 		$rendered_body = $this->render_builder_content_for_bulk_with_sections( $body, $section_ids );
 
 		// Get footer content
-		$footer = $this->get_bulk_footer_content( $rendered_body );
+		$footer = $this->get_bulk_footer_content( $rendered_body, $from_email );
 
 		// Inject footer into body
 		if ( strpos( $rendered_body, '</body>' ) !== false ) {
@@ -1304,15 +1294,15 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			$rendered_body .= $tracking_pixel;
 		}
 
-		// Convert Plugin merge tags to mailer-specific recipient variables
-		$converted_subject = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $subject );
-		$converted_body    = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $rendered_body );
+		// Convert Plugin merge tags to the recipient variables of the mailer the From routes to
+		$converted_subject = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $subject, $from_email );
+		$converted_body    = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $rendered_body, $from_email );
 
 		// Prepare batch data
 		$batch_data = array(
 			'subject'             => $converted_subject,
 			'html'                => $converted_body,
-			'from_email'          => $template->get_setting( 'from_email' ) ?: get_option( 'admin_email' ),
+			'from_email'          => $from_email,
 			'from_name'           => $template->get_setting( 'from_name' ) ?: get_bloginfo( 'name' ),
 			'reply_to'            => $template->get_setting( 'reply_to' ) ?: '',
 			'recipients'          => $recipients,
@@ -1361,6 +1351,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			$tracking->external_id = $message_id;
 			$tracking->save();
 		}
+		$this->count_sent( count( $tracking_records ) );
 
 		return array(
 			'success'    => true,
@@ -1376,7 +1367,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @param CampaignModel                            $campaign        Campaign model
 	 * @param TemplateModel                            $template        Template model
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts        Collection of contacts
 	 * @param string                                   $subject         Email subject
 	 * @param string                                   $body            Template body
 	 * @param array                                    $merge_tag_keys  Merge tag keys
@@ -1457,11 +1448,13 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			);
 		}
 
+		$from_email = $this->get_bulk_from_email( $template );
+
 		// Render builder content if needed (without personalization - that's handled by recipient variables)
 		$body = $this->render_builder_content_for_bulk( $body ); // to return html without change format
 
 		// Get footer content
-		$footer = $this->get_bulk_footer_content( $body ); // to return html with convert merge tags format to mailer format
+		$footer = $this->get_bulk_footer_content( $body, $from_email ); // to return html with convert merge tags format to mailer format
 
 		// Inject footer into body (for builder emails)
 		if ( strpos( $body, '</body>' ) !== false ) {
@@ -1480,15 +1473,15 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			$body .= $tracking_pixel;
 		}
 
-		// Convert Plugin merge tags to mailer-specific recipient variables
-		$subject = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $subject );
-		$body    = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $body );
+		// Convert Plugin merge tags to the recipient variables of the mailer the From routes to
+		$subject = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $subject, $from_email );
+		$body    = \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables( $body, $from_email );
 
 		// Prepare batch data
 		$batch_data = array(
 			'subject'             => $subject,
 			'html'                => $body,
-			'from_email'          => $template->get_setting( 'from_email' ) ?: get_option( 'admin_email' ),
+			'from_email'          => $from_email,
 			'from_name'           => $template->get_setting( 'from_name' ) ?: get_bloginfo( 'name' ),
 			'reply_to'            => $template->get_setting( 'reply_to' ) ?: '',
 			'recipients'          => $recipients,
@@ -1538,6 +1531,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 			$tracking->external_id = $message_id;
 			$tracking->save();
 		}
+		$this->count_sent( count( $tracking_records ) );
 
 		doublescale_get_logger()->info(
 			__( 'Bulk email batch sent successfully', 'doublescale' ),
@@ -1665,11 +1659,25 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @return string Footer HTML with recipient variable placeholders
 	 */
-	protected function get_bulk_footer_content( $body = '' ) {
+	protected function get_bulk_footer_content( $body = '', $from_email = null ) {
 		// Convert merge tags to mailer-specific format
 		return \DoubleScale\Modules\Emails\BulkEmailSender::convert_merge_tags_to_recipient_variables(
-			EmailTrackingHelper::resolve_footer( $body, $this->settings['email_footer'] ?? null )
+			EmailTrackingHelper::resolve_footer( $body, $this->settings['email_footer'] ?? null ),
+			$from_email
 		);
+	}
+
+	/**
+	 * From email a bulk batch is sent with — the address the SMTP module routes by.
+	 *
+	 * Merge-tag conversion must use the same address, or it converts for the
+	 * Default connection's mailer while the batch goes out through another.
+	 *
+	 * @param TemplateModel $template Campaign template.
+	 * @return string
+	 */
+	protected function get_bulk_from_email( TemplateModel $template ) {
+		return $template->get_setting( 'from_email' ) ?: get_option( 'admin_email' );
 	}
 
 	/**
@@ -1695,7 +1703,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param \Illuminate\Database\Eloquent\Collection $contacts Contacts collection
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $contacts Contacts collection
 	 * @param string                                   $body     Template body (JSON)
 	 *
 	 * @return void
@@ -1868,8 +1876,8 @@ class EmailProcessing extends AbstractCampaignProcessing {
 
 		// Footer decision lives in one place for every send path.
 		$email_footer  = EmailTrackingHelper::resolve_footer( $message, $this->settings['email_footer'] ?? null );
-		$footer_source = ! empty( $this->settings['email_footer'] ) ? 'campaign_settings'
-			: ( '' === $email_footer ? 'body_has_unsubscribe' : ( $email_footer === EmailTrackingHelper::get_default_footer() ? 'default' : 'global_settings' ) );
+		$footer_source = '' === $email_footer ? 'body_has_unsubscribe'
+			: ( $email_footer === EmailTrackingHelper::get_default_footer() ? 'default' : ( ! empty( $this->settings['email_footer'] ) ? 'campaign_settings' : 'global_settings' ) );
 		$global_settings = \DoubleScale\Core\Settings\Settings::get( 'email', array() );
 
 		// Add tracking pixel to footer
@@ -1892,7 +1900,7 @@ class EmailProcessing extends AbstractCampaignProcessing {
 				'body_has_unsubscribe'      => ( 'body_has_unsubscribe' === $footer_source ),
 				'campaign_settings_empty'   => empty( $this->settings['email_footer'] ),
 				'global_settings_empty'     => empty( $global_settings['email_footer'] ?? '' ),
-				'email_footer_preview'      => substr( $email_footer, 0, 100 ),
+				'email_footer_preview'      => mb_substr( $email_footer, 0, 100 ),
 			)
 		);
 
@@ -1911,14 +1919,44 @@ class EmailProcessing extends AbstractCampaignProcessing {
 	 * @return T
 	 */
 	protected function with_smtp_campaign_log_context( CampaignModel $campaign, callable $callback, ?CommunicationTrackingModel $tracking = null ) {
+		return $this->with_smtp_log_context( CampaignEmailLogSource::for_campaign( $campaign ), $callback, $tracking );
+	}
+
+	/**
+	 * Merge CRM deep-link info into the SMTP email log for a tracked send.
+	 *
+	 * Automations send through this same pipeline with a throw-away campaign
+	 * that has no database row, so the tracking record identifies the source.
+	 *
+	 * @template T
+	 * @param CommunicationTrackingModel $tracking Tracking record for this send.
+	 * @param callable(): T              $callback Operation that triggers wp_mail / SMTP send + log.
+	 * @return T
+	 */
+	protected function with_smtp_tracking_log_context( CommunicationTrackingModel $tracking, callable $callback ) {
+		return $this->with_smtp_log_context( CampaignEmailLogSource::for_tracking( $tracking ), $callback, $tracking );
+	}
+
+	/**
+	 * Push email log context for the duration of a send.
+	 *
+	 * @template T
+	 * @param array<string, mixed>            $context  crm_source fragment (may be empty).
+	 * @param callable(): T                   $callback Operation that triggers wp_mail / SMTP send + log.
+	 * @param CommunicationTrackingModel|null $tracking Tracking record, when the send has one.
+	 * @return T
+	 */
+	private function with_smtp_log_context( array $context, callable $callback, ?CommunicationTrackingModel $tracking = null ) {
 		if ( ! class_exists( EmailLogContext::class ) ) {
 			return $callback();
 		}
-		$context = CampaignEmailLogSource::for_campaign( $campaign );
 		if ( $tracking && $tracking->id ) {
 			// Lets the SMTP log store a reference to this send instead of the
 			// rendered body (see EmailLogHandler::add()).
 			$context['tracking_id'] = (int) $tracking->id;
+		}
+		if ( ! $context ) {
+			return $callback();
 		}
 		EmailLogContext::push( $context );
 		try {
@@ -2018,28 +2056,20 @@ class EmailProcessing extends AbstractCampaignProcessing {
 
 			$attachment_paths = EmailAttachmentResolver::resolve_template_paths( $template );
 
-			$campaign_for_log = $campaign_message->get_campaign();
-			if ( $campaign_for_log && class_exists( EmailLogContext::class ) ) {
-				$result = $this->with_smtp_campaign_log_context(
-					$campaign_for_log,
-					function () use ( $emails, $contact, $message_data, $complete_message, $attachment_paths ) {
-						return $emails->send(
-							$contact->email,
-							$message_data['subject'],
-							$complete_message,
-							$attachment_paths
-						);
-					},
-					$campaign_message
-				);
-			} else {
-				$result = $emails->send(
-					$contact->email,
-					$message_data['subject'],
-					$complete_message,
-					$attachment_paths
-				);
-			}
+			// Campaigns, email sequences and automations all land here; the
+			// tracking record says which one, so every tracked send logs by
+			// reference instead of storing the rendered body per recipient.
+			$result = $this->with_smtp_tracking_log_context(
+				$campaign_message,
+				function () use ( $emails, $contact, $message_data, $complete_message, $attachment_paths ) {
+					return $emails->send(
+						$contact->email,
+						$message_data['subject'],
+						$complete_message,
+						$attachment_paths
+					);
+				}
+			);
 
 			// Proper result validation - prevent false positives
 			if ( is_wp_error( $result ) ) {

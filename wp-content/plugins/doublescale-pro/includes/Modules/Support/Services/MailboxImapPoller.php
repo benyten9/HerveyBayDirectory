@@ -34,6 +34,7 @@ namespace DoubleScale\Pro\Modules\Support\Services;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Communication\PollBackoff;
 use DoubleScale\Modules\Support\Models\MailboxModel;
 use DoubleScale\Modules\Tracking\ImapClient;
 use DoubleScale\Pro\Modules\Inbox\Incoming\GraphMailClient;
@@ -96,6 +97,11 @@ final class MailboxImapPoller {
 	 * @return void
 	 */
 	private function poll_mailbox( MailboxModel $mailbox ): void {
+		$backoff = new PollBackoff( 'support_mailbox_' . (int) $mailbox->id );
+		if ( $backoff->should_skip() ) {
+			return;
+		}
+
 		$client = null;
 		try {
 			$config = $this->resolve_imap_config( $mailbox );
@@ -128,6 +134,7 @@ final class MailboxImapPoller {
 				);
 			}
 			$client->connect();
+			$backoff->record_success();
 
 			// Only ingest mail that arrived after this mailbox was connected, so
 			// the inbox's pre-existing unread backlog (newsletters, bounces, …)
@@ -166,11 +173,13 @@ final class MailboxImapPoller {
 				$this->mark_seen( $client, $message );
 			}
 		} catch ( \Throwable $e ) {
+			$retry_in = $backoff->record_failure( $e->getMessage() );
 			doublescale_get_logger()->error(
 				'Support mailbox IMAP poll failed',
 				array(
 					'source'     => 'support-pro-imap',
 					'mailbox_id' => (int) $mailbox->id,
+					'retry_in'   => $retry_in,
 					'exception'  => $e->getMessage(),
 					'file'       => $e->getFile(),
 					'line'       => $e->getLine(),

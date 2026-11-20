@@ -171,7 +171,7 @@ class PlanController extends Controller {
             // Fallback
             "is_fallback"               => "boolean",
             "fallback_plan_id"          => "numeric",
-            "listing_display_priority"  => "numeric",
+            "listing_display_priority"  => "numeric|min:1",
             "features"                  => "required|array",
             "app_configurations"        => "array",
         ];
@@ -263,7 +263,9 @@ class PlanController extends Controller {
                 ->set_trial_interval_count( absint( $request->get_param( "trial_interval_count" ) ) );
         }
 
-        if ( $dto->get_fee_type() === PlanFeeType::PAID && $dto->get_price() <= 0 ) {
+        if ( $dto->get_fee_type() === PlanFeeType::FREE ) {
+            $dto->set_price( 0 );
+        } elseif ( $dto->get_fee_type() === PlanFeeType::PAID && $dto->get_price() <= 0 ) {
             $dto->set_price( 1 );
         }
 
@@ -304,14 +306,7 @@ class PlanController extends Controller {
 
         $plan_id = absint( $request->get_param( "id" ) );
 
-        if ( $this->repository->is_assigned_to_packages( $plan_id ) ) {
-            throw new Exception(
-                __( 'This plan cannot be deleted because it is assigned to one or more user packages.', 'directorist-pricing-plans' ),
-                409
-            );
-        }
-
-        $this->repository->delete_by_id( $plan_id );
+        $this->repository->delete_plan( $plan_id );
 
         return Response::send(
             [

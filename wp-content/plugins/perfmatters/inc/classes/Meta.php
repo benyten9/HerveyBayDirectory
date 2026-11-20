@@ -72,10 +72,10 @@ class Meta
 
 			//individual input
 			echo '<div' . (!$details['value'] ? ' class="hidden"' : '') . '>';
-				echo '<label for="perfmatters_exclude_' . $id . '">';
-					echo '<input type="hidden" name="perfmatters_exclude_' . $id . '" value="1" />';
-					echo '<input type="checkbox" name="perfmatters_exclude_' . $id . '" id="perfmatters_exclude_' . $id . '"' . (!$meta ? " checked" : "") . ' value="" class="widefat" />';
-					echo $details['name'];
+				echo '<label for="perfmatters_exclude_' . esc_attr($id) . '">';
+					echo '<input type="hidden" name="perfmatters_exclude_' . esc_attr($id) . '" value="1" />';
+					echo '<input type="checkbox" name="perfmatters_exclude_' . esc_attr($id) . '" id="perfmatters_exclude_' . esc_attr($id) . '"' . (!$meta ? " checked" : "") . ' value="" class="widefat" />';
+					echo esc_html($details['name']);
 				echo '</label>';
 			echo '</div>';
 		}
@@ -86,7 +86,7 @@ class Meta
 			echo '<style>.perfmatters-clear-post-used-css{display:inline-block;margin-top:10px}.perfmatters-clear-post-used-css .spinner{display:none;float:none}.perfmatters-clear-post-used-css .spinner.is-active{display:inline-block}.perfmatters-clear-post-used-css .dashicons-yes{display:none;margin:2px 10px;color:green;font-size:26px}</style>';
 
 			echo '<div class="perfmatters-clear-post-used-css">';
-				echo '<a class="button button-secondary" id="perfmatters-clear-post-used-css" value="1">' . __('Clear Used CSS', 'perfmatters') . '</a>';
+				echo '<a class="button button-secondary" id="perfmatters-clear-post-used-css" value="1">' . esc_html__('Clear Used CSS', 'perfmatters') . '</a>';
 				echo '<span class="spinner"></span>';
 				echo '<span class="dashicons dashicons-yes"></span>';
 				echo wp_nonce_field('perfmatters_clear_post_used_css', 'perfmatters_clear_post_used_css', false, false);

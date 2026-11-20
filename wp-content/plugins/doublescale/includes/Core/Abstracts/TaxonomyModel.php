@@ -4,10 +4,10 @@ namespace DoubleScale\Core\Abstracts;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 
 class TaxonomyModel extends Model {
 
@@ -98,7 +98,7 @@ class TaxonomyModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function contacts() {
 		return $this->belongsToMany(
@@ -163,6 +163,30 @@ class TaxonomyModel extends Model {
 		}
 
 		return (int) $query->count();
+	}
+
+	/**
+	 * Split a list's members by their subscription to it.
+	 *
+	 * `contacts_count` counts everyone on the list; the contacts screen a list
+	 * links to shows only the subscribed ones. These two numbers let the Lists
+	 * screen show both, so they add up. Tags have no subscription: null.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @return array{subscribed:int,unsubscribed:int}|null
+	 */
+	public function get_subscription_counts() {
+		if ( 'list' !== $this->model_slug ) {
+			return null;
+		}
+
+		$subscribed = (int) $this->contacts()->wherePivot( 'status', 'subscribed' )->distinct()->count();
+
+		return array(
+			'subscribed'   => $subscribed,
+			'unsubscribed' => max( 0, (int) $this->contacts()->distinct()->count() - $subscribed ),
+		);
 	}
 
 	/**
@@ -333,14 +357,9 @@ class TaxonomyModel extends Model {
 			}
 		);
 
-		// Retrieved event - always calculate contacts_count
-		// Count distinct contacts in the relationship to ensure accuracy
-		$dispatcher->listen(
-			"eloquent.retrieved: {$model_name}",
-			function ( $taxonomy ) {
-				$taxonomy->contacts_count = $taxonomy->contacts()->distinct()->count();
-			}
-		);
+		// contacts_count used to be counted here, on every load of every tag and
+		// list (a query each, 20 for one page of contacts). The Tags and Lists
+		// endpoints add it themselves (RestTaxonomyController::attach_contacts_counts()).
 	}
 
 	/**

@@ -38,39 +38,40 @@ echo '<div id="perfmatters-admin" class="wrap">';
 					if(!is_network_admin()) {
 
 						//options
-						echo '<a href="#" rel="options-general"><span class="dashicons dashicons-dashboard"></span>' . __('General', 'perfmatters') . '</a>';
-						echo '<a href="#js" rel="options-js"><span class="dashicons dashicons-media-code"></span>' . __('JavaScript', 'perfmatters') . '</a>';
-						echo '<a href="#css" rel="options-css"><span class="dashicons dashicons-admin-appearance"></span>' . __('CSS', 'perfmatters') . '</a>';
-						echo '<a href="#preload" rel="options-preload"><span class="dashicons dashicons-clock"></span>' . __('Preloading', 'perfmatters') . '</a>';
-						echo '<a href="#lazyload" rel="options-lazyload"><span class="dashicons dashicons-images-alt2"></span>' . __('Lazy Loading', 'perfmatters') . '</a>';
-						echo '<a href="#fonts" rel="options-fonts"><span class="dashicons dashicons-editor-paste-text"></span>' . __('Fonts', 'perfmatters') . '</a>';
-						echo '<a href="#cdn" rel="options-cdn"><span class="dashicons dashicons-admin-site-alt2"></span>' . __('CDN', 'perfmatters') . '</a>';
-						echo '<a href="#analytics" rel="options-analytics"><span class="dashicons dashicons-chart-bar"></span>' . __('Analytics', 'perfmatters') . '</a>';
+						echo '<a href="#" rel="options-general"><span class="dashicons dashicons-dashboard"></span>' . esc_html__('General', 'perfmatters') . '</a>';
+						echo '<a href="#cache" rel="cache-settings"><span class="dashicons dashicons-cloud"></span>' . esc_html__('Cache', 'perfmatters') . '<span class="perfmatters-beta">BETA</span></a>';
+						echo '<a href="#js" rel="options-js"><span class="dashicons dashicons-media-code"></span>' . esc_html__('JavaScript', 'perfmatters') . '</a>';
+						echo '<a href="#css" rel="options-css"><span class="dashicons dashicons-admin-appearance"></span>' . esc_html__('CSS', 'perfmatters') . '</a>';
+						echo '<a href="#preload" rel="options-preload"><span class="dashicons dashicons-clock"></span>' . esc_html__('Preloading', 'perfmatters') . '</a>';
+						echo '<a href="#lazyload" rel="options-lazyload"><span class="dashicons dashicons-images-alt2"></span>' . esc_html__('Lazy Loading', 'perfmatters') . '</a>';
+						echo '<a href="#fonts" rel="options-fonts"><span class="dashicons dashicons-editor-paste-text"></span>' . esc_html__('Fonts', 'perfmatters') . '</a>';
+						echo '<a href="#cdn" rel="options-cdn"><span class="dashicons dashicons-admin-site-alt2"></span>' . esc_html__('CDN', 'perfmatters') . '</a>';
+						echo '<a href="#analytics" rel="options-analytics"><span class="dashicons dashicons-chart-bar"></span>' . esc_html__('Analytics', 'perfmatters') . '</a>';
 
 						if(!Perfmatters\Config::$code_disabled) {
-							echo '<a href="#code" rel="code-code"><span class="dashicons dashicons-editor-code"></span>' . __('Code', 'perfmatters') . '</a>';
+							echo '<a href="#code" rel="code-code"><span class="dashicons dashicons-editor-code"></span>' . esc_html__('Code', 'perfmatters') . '</a>';
 						}
 
 						//spacer
 						echo '<hr style="border-top: 1px solid #f2f2f2; border-bottom: 0px; margin: 10px 0px;" />';
 
 						//tools
-						echo '<a href="#tools" rel="tools-plugin"><span class="dashicons dashicons-admin-tools"></span>' . __('Tools', 'perfmatters') . '</a>';
-						echo '<a href="#database" rel="tools-database"><span class="dashicons dashicons-database"></span>' . __('Database', 'perfmatters') . '</a>';
+						echo '<a href="#tools" rel="tools-plugin"><span class="dashicons dashicons-admin-tools"></span>' . esc_html__('Tools', 'perfmatters') . '</a>';
+						echo '<a href="#database" rel="tools-database"><span class="dashicons dashicons-database"></span>' . esc_html__('Database', 'perfmatters') . '</a>';
 					}
 					else {
 
 						//network
-						echo '<a href="#" rel="network-network" class="active"><span class="dashicons dashicons-admin-settings"></span>' . __('Network', 'perfmatters') . '</a>';
+						echo '<a href="#" rel="network-network" class="active"><span class="dashicons dashicons-admin-settings"></span>' . esc_html__('Network', 'perfmatters') . '</a>';
 					}
 
 					//license
 					if(!is_multisite() || is_network_admin()) {
-						echo '<a href="#license" rel="license-license"><span class="dashicons dashicons-admin-network"></span>' . __('License', 'perfmatters') . '</a>';
+						echo '<a href="#license" rel="license-license"><span class="dashicons dashicons-admin-network"></span>' . esc_html__('License', 'perfmatters') . '</a>';
 					}
 
 					//support
-					echo '<a href="#support" rel="support-support"><span class="dashicons dashicons-editor-help"></span>' . __('Support', 'perfmatters') . '</a>';
+					echo '<a href="#support" rel="support-support"><span class="dashicons dashicons-editor-help"></span>' . esc_html__('Support', 'perfmatters') . '</a>';
 
 				echo '</div>';
 			echo '</div>';
@@ -79,7 +80,7 @@ echo '<div id="perfmatters-admin" class="wrap">';
 			if(!get_option('perfmatters_close_cta')) {
 				echo '<a href="https://novashare.io/perfmatters-discount/?utm_campaign=plugin-cta&utm_source=perfmatters" target="_blank" id="perfmatters-cta" class="perfmatters-admin-block perfmatters-mobile-hide">';
 					echo '<span class="dashicons dashicons-tag" style="margin-right: 10px;"></span>';
-					echo '<span>' . __('Get 25% off our social sharing plugin.') . '</span>';
+					echo '<span>' . esc_html__('Get 25% off our social sharing plugin.', 'perfmatters') . '</span>';
 					echo '<span id="perfmatters-cta-close" class="dashicons dashicons-no-alt"></span>';
 				echo '</a>';
 			}
@@ -91,7 +92,7 @@ echo '<div id="perfmatters-admin" class="wrap">';
 			echo '<div id="perfmatters-settings" class="perfmatters-admin-block" data-pm-tab="options">';
 
 				//version number
-				echo '<span id="pm-version" class="perfmatters-mobile-hide">' . __('Version', 'perfmatters') . ' ' . PERFMATTERS_VERSION . '</span>';
+				echo '<span id="pm-version" class="perfmatters-mobile-hide">' . esc_html__('Version', 'perfmatters') . ' ' . PERFMATTERS_VERSION . '</span>';
 
 				if(!is_network_admin()) {
 
@@ -162,12 +163,14 @@ echo '<div id="perfmatters-admin" class="wrap">';
 						    	perfmatters_settings_section('perfmatters_options', 'perfmatters_analytics');
 						    echo '</section>';
 
-						    //code
+						    //code — shell tab + sibling panels (same pattern as cache.php; do not nest children inside code-code)
 						    if(!Perfmatters\Config::$code_disabled) {
-							    echo '<section id="code-code" class="section-content" data-pm-subnav="code-snippets">';
-							    	require_once('code.php');
-							    echo '</section>';
+							    echo '<section id="code-code" class="section-content" data-pm-subnav="code-snippets"></section>';
+							    require_once('code.php');
 							}
+
+							//cache (panels + subnav live in cache.php)
+							require_once('cache.php');
 
 					    echo '</div>';
 
@@ -228,6 +231,18 @@ echo '<div id="perfmatters-admin" class="wrap">';
 			echo '</div>';
 		echo '</div>';
 	echo '</div>';
+
+	//snackbar host — text from ?message=; JS adds is-visible so the opacity transition matches AJAX toasts
+	$toast_notice = '';
+	foreach(array('save_settings', 'import_settings', 'restore_defaults', 'import_snippets', 'remove_cloudflare_token') as $toast_action) {
+		$toast_notice = perfmatters_get_reload_notice_text($toast_action);
+		if($toast_notice !== '') {
+			break;
+		}
+	}
+	echo '<div id="perfmatters-action-toast" class="perfmatters-action-toast" role="status" aria-live="polite">';
+		echo $toast_notice !== '' ? esc_html($toast_notice) : '';
+	echo '</div>';
 echo '</div>';
 
 //display correct section based on URL hash
@@ -265,9 +280,12 @@ echo '</div>';
 		    	selectedNav.addClass('active');
 		    	selectedContent.addClass('active');
 
-		    	//display selected subnav
+		    	//display selected subnav (Cache Settings is the tab panel itself — hide it when Rules is shown)
 		    	var subNavContent = subnav ? tab + '-' + subnav : selectedContent.data('pm-subnav');
 		    	if(subNavContent) {
+		    		if(subnav && subNavContent !== selectedNav.attr('rel')) {
+		    			selectedContent.removeClass('active');
+		    		}
 		    		$('#' + subNavContent).addClass('active');
 		    	}
 

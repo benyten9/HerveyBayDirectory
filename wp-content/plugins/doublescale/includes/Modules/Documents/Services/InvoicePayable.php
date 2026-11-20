@@ -65,12 +65,13 @@ final class InvoicePayable {
 		}
 
 		$split = PaymentMode::split_modes( $invoice->allowed_payment_modes );
-		// Offline-only lists are staff recording methods. They do not restrict
-		// which configured online gateways appear on the public invoice.
-		if ( empty( $split['online'] ) ) {
+		// Nothing ticked (older invoices): every enabled gateway.
+		if ( empty( $split['online'] ) && empty( $split['offline'] ) ) {
 			return true;
 		}
 
+		// Otherwise only the gateways the invoice ticked, as the invoice form and
+		// the admin view say: only offline methods ticked means no online payment.
 		return in_array( $gateway_slug, $split['online'], true );
 	}
 

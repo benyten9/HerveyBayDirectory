@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Support\Traits;
+namespace DoubleScale\Vendor\Illuminate\Support\Traits;
 
-use Illuminate\Support\Fluent;
-use Illuminate\Contracts\Container\Container;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container;
 trait CapsuleManagerTrait
 {
     /**

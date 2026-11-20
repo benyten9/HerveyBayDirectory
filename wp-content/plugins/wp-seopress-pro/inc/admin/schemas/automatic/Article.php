@@ -110,7 +110,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php echo wp_kses_post( __( 'Headline <em>(max limit: 110)</em>', 'wp-seopress-pro' ) ); ?>
 			<code>headline</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_title', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_title', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The headline of the article', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -118,7 +118,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Description', 'wp-seopress-pro' ); ?>
 			<code>description</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_desc', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_desc', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The description of the article', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -126,7 +126,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Post author', 'wp-seopress-pro' ); ?>
 			<code>author</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_author', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_author', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The author of the article', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -134,7 +134,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Image', 'wp-seopress-pro' ); ?>
 			<code>image</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_img', 'image' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_img', 'image' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'The representative image of the article. Only a marked-up image that directly belongs to the article should be specified. ', 'wp-seopress-pro' ); ?><br>
 			<?php esc_html_e( 'Default value if empty: Post thumbnail (featured image)', 'wp-seopress-pro' ); ?></span>
 		<span class="field-required"><?php esc_html_e( 'Minimum size: 696px wide, JPG, PNG or GIF, crawlable and indexable (default: post thumbnail if available)', 'wp-seopress-pro' ); ?></span>
@@ -144,7 +144,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Coverage Start Date', 'wp-seopress-pro' ); ?>
 			<code>coverageStartDate</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_start_date', 'date' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_start_date', 'date' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php echo wp_kses_post( __( 'e.g. YYYY-MM-DD - To use with <strong>Live Blog Posting</strong> article type only', 'wp-seopress-pro' ) ); ?></span>
 	</p>
 	<p>
@@ -152,7 +152,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Coverage Start Time', 'wp-seopress-pro' ); ?>
 			<code>coverageStartTime</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_start_time', 'time' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_start_time', 'time' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php echo wp_kses_post( __( 'e.g. HH:MM - To use with <strong>Live Blog Posting</strong> article type only', 'wp-seopress-pro' ) ); ?></span>
 	</p>
 	<p>
@@ -160,7 +160,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Coverage End Date', 'wp-seopress-pro' ); ?>
 			<code>coverageEndDate</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_end_date', 'date' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_end_date', 'date' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php echo wp_kses_post( __( 'e.g. YYYY-MM-DD - To use with <strong>Live Blog Posting</strong> article type only', 'wp-seopress-pro' ) ); ?></span>
 	</p>
 	<p>
@@ -168,7 +168,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Coverage End Time', 'wp-seopress-pro' ); ?>
 			<code>coverageEndTime</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_end_time', 'time' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_coverage_end_time', 'time' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php echo wp_kses_post( __( 'e.g. HH:MM - To use with <strong>Live Blog Posting</strong> article type only', 'wp-seopress-pro' ) ); ?></span>
 	</p>
 	<p>
@@ -176,7 +176,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Speakable CSS Selector', 'wp-seopress-pro' ); ?>
 			<code>speakableCssSelector</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_speakable', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_article_speakable', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Addresses content in the annotated pages (such as class attribute)', 'wp-seopress-pro' ); ?></span>
 	</p>
 </div>

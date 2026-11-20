@@ -91,6 +91,9 @@ class Tasks {
 	 * @return integer|false False if not scheduled
 	 */
 	public function get_next_timestamp( $hook, $args = null ) {
+		if ( class_exists( \DoubleScale\Core\NextRunCache::class ) ) {
+			return \DoubleScale\Core\NextRunCache::get( "{$this->group}_$hook", $args, $this->group );
+		}
 		return as_next_scheduled_action( "{$this->group}_$hook", $args, $this->group );
 	}
 
@@ -277,6 +280,9 @@ class Tasks {
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
 			as_unschedule_all_actions( $full_hook, null, $this->group );
 		}
+		if ( class_exists( \DoubleScale\Core\NextRunCache::class ) ) {
+			\DoubleScale\Core\NextRunCache::forget( $full_hook );
+		}
 	}
 
 	/**
@@ -448,197 +454,20 @@ class Tasks {
 	}
 
 	/**
-	 * Clean up old Action Scheduler entries and orphaned task meta.
-	 *
-	 * - Purges any pending/failed actions whose hook has no registered WordPress
-	 *   callback (they can never succeed and only accumulate noise).
-	 * - Removes failed actions older than 1 day and completed actions older than
-	 *   3 days for all DoubleScale groups.
-	 * - Emergency mode: if the table exceeds 10 000 rows the cutoffs shrink to
-	 *   1 hour (failed) and 6 hours (complete) to drain any backlog quickly.
-	 * - Cleans orphaned task-meta rows.
+	 * Clean up old Action Scheduler entries: the free plugin's cleanup, which
+	 * only ever touches DoubleScale's own groups ({@see \DoubleScale\Core\Tasks::cleanup_old_tasks()}).
+	 * This copy used to purge every plugin's groups whose hooks were not
+	 * registered yet, deleting other plugins' queues.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return array Cleanup statistics
 	 */
 	public static function cleanup_old_tasks() {
-		global $wpdb;
-
-		$stats = array(
-			'actions_deleted'   => 0,
-			'orphaned_hooks'    => 0,
-			'orphaned_meta'     => 0,
-			'orphaned_claims'   => 0,
-			'emergency_mode'    => false,
-		);
-
-		// ── 1. Purge entirely-orphaned groups ────────────────────────────────────
-		$all_groups = $wpdb->get_results(
-			"SELECT group_id, slug FROM {$wpdb->prefix}actionscheduler_groups",
-			ARRAY_A
-		);
-
-		$orphaned_group_ids = array();
-
-		foreach ( (array) $all_groups as $group ) {
-			$group_hooks = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT DISTINCT hook
-					FROM {$wpdb->prefix}actionscheduler_actions
-					WHERE group_id = %d",
-					(int) $group['group_id']
-				)
-			);
-
-			if ( empty( $group_hooks ) ) {
-				continue;
-			}
-
-			$all_orphaned = true;
-			foreach ( $group_hooks as $hook ) {
-				if ( has_action( $hook ) ) {
-					$all_orphaned = false;
-					break;
-				}
-			}
-
-			if ( $all_orphaned ) {
-				$orphaned_group_ids[] = (int) $group['group_id'];
-			}
+		if ( class_exists( \DoubleScale\Core\Tasks::class ) && method_exists( \DoubleScale\Core\Tasks::class, 'is_own_group' ) ) {
+			return \DoubleScale\Core\Tasks::cleanup_old_tasks();
 		}
-
-		if ( ! empty( $orphaned_group_ids ) ) {
-			$ogid_placeholders = implode( ', ', array_fill( 0, count( $orphaned_group_ids ), '%d' ) );
-
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$orphaned_hooks_deleted = $wpdb->query(
-				$wpdb->prepare(
-					"DELETE a, l
-					FROM {$wpdb->prefix}actionscheduler_actions a
-					LEFT JOIN {$wpdb->prefix}actionscheduler_logs l ON a.action_id = l.action_id
-					WHERE a.group_id IN ($ogid_placeholders)",
-					...$orphaned_group_ids
-				)
-			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-			$stats['orphaned_hooks'] = $orphaned_hooks_deleted !== false ? (int) $orphaned_hooks_deleted : 0;
-
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$wpdb->query(
-				$wpdb->prepare(
-					"DELETE FROM {$wpdb->prefix}actionscheduler_groups
-					WHERE group_id IN ($ogid_placeholders)",
-					...$orphaned_group_ids
-				)
-			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		}
-
-		// ── 2. Determine cutoffs (emergency vs normal) ────────────────────────
-		$total_actions = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}actionscheduler_actions" );
-
-		if ( $total_actions > 10000 ) {
-			$stats['emergency_mode'] = true;
-			$failed_cutoff           = gmdate( 'Y-m-d H:i:s', strtotime( '-1 hour' ) );
-			$complete_cutoff         = gmdate( 'Y-m-d H:i:s', strtotime( '-6 hours' ) );
-		} else {
-			$failed_cutoff   = gmdate( 'Y-m-d H:i:s', strtotime( '-1 day' ) );
-			$complete_cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-3 days' ) );
-		}
-
-		// ── 3. Delete old completed/failed actions by DoubleScale groups ──────
-		$group_slugs = array(
-			'doublescale_campaigns',
-			'doublescale_automations',
-			'doublescale_daily',
-			'doublescale_abandoned_cart',
-			'doublescale_forms',
-			'doublescale_subscription',
-			'doublescale_sales',
-			'doublescale_support',
-			'doublescale_booking_payment',
-			'doublescale_booking_completion',
-			'doublescale-push',
-			'doublescale_smtp',
-		);
-
-		$placeholders = implode( ', ', array_fill( 0, count( $group_slugs ), '%s' ) );
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		$group_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT group_id FROM {$wpdb->prefix}actionscheduler_groups WHERE slug IN ($placeholders)",
-				...$group_slugs
-			)
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-		if ( ! empty( $group_ids ) ) {
-			$group_placeholders = implode( ', ', array_fill( 0, count( $group_ids ), '%d' ) );
-
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$deleted_failed = $wpdb->query(
-				$wpdb->prepare(
-					"DELETE a, l
-					FROM {$wpdb->prefix}actionscheduler_actions a
-					LEFT JOIN {$wpdb->prefix}actionscheduler_logs l ON a.action_id = l.action_id
-					WHERE a.group_id IN ($group_placeholders)
-					AND a.status = 'failed'
-					AND a.scheduled_date_gmt < %s",
-					...array_merge( $group_ids, array( $failed_cutoff ) )
-				)
-			);
-
-			$deleted_complete = $wpdb->query(
-				$wpdb->prepare(
-					"DELETE a, l
-					FROM {$wpdb->prefix}actionscheduler_actions a
-					LEFT JOIN {$wpdb->prefix}actionscheduler_logs l ON a.action_id = l.action_id
-					WHERE a.group_id IN ($group_placeholders)
-					AND a.status = 'complete'
-					AND a.scheduled_date_gmt < %s",
-					...array_merge( $group_ids, array( $complete_cutoff ) )
-				)
-			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-			$stats['actions_deleted'] = ( $deleted_failed !== false ? (int) $deleted_failed : 0 )
-				+ ( $deleted_complete !== false ? (int) $deleted_complete : 0 );
-		}
-
-		// ── 4. Orphaned claims ────────────────────────────────────────────────
-		// Action Scheduler's built-in QueueCleaner handles stale claims via its
-		// timeout mechanism — no manual intervention needed.
-		$stats['orphaned_claims'] = 0;
-
-		// ── 5. Clean up orphaned task meta ────────────────────────────────────
-		$orphaned_meta = $wpdb->query(
-			$wpdb->prepare(
-				"DELETE tm
-				FROM {$wpdb->prefix}doublescale_task_meta tm
-				LEFT JOIN {$wpdb->prefix}actionscheduler_actions a ON tm.action_id = a.action_id
-				WHERE tm.action_id IS NOT NULL
-				AND a.action_id IS NULL
-				AND tm.date_created < %s",
-				$failed_cutoff
-			)
-		);
-
-		$stats['orphaned_meta'] = $orphaned_meta !== false ? (int) $orphaned_meta : 0;
-
-		// ── 6. Log results ────────────────────────────────────────────────────
-		if ( function_exists( 'doublescale_get_logger' ) ) {
-			doublescale_get_logger()->info(
-				__( 'Task cleanup completed', 'doublescale' ),
-				array(
-					'code'  => 'task_cleanup_completed',
-					'stats' => $stats,
-				)
-			);
-		}
-
-		return $stats;
+		// An older free plugin still has the sweep that deletes other plugins' jobs: do nothing.
+		return array();
 	}
 }

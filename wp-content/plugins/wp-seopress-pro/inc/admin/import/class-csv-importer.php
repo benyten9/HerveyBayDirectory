@@ -524,6 +524,10 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 	 * @return bool
 	 */
 	public static function is_file_within_allowed_dirs( $file ) {
+		if ( function_exists( 'seopress_is_import_file' ) && seopress_is_import_file( $file ) ) {
+			return true;
+		}
+
 		$real = realpath( $file );
 
 		if ( false === $real || ! is_file( $real ) ) {
@@ -649,7 +653,7 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 
 		$this->params['delimiter'] = $delimiter;
 
-		$handle = fopen( $this->file, 'r' );
+		$handle = fopen( $this->file, 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- The CSV is read in chunks with ftell()/fgetcsv() so large files fit in memory; WP_Filesystem would load it whole.
 
 		if ( false === $handle ) {
 			$this->error = new WP_Error(
@@ -700,7 +704,7 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 
 		$this->file_position = ftell( $handle );
 
-		fclose( $handle );
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- The CSV is read in chunks with ftell()/fgetcsv() so large files fit in memory; WP_Filesystem would load it whole.
 
 		if ( ! empty( $this->params['mapping'] ) ) {
 			$this->set_mapped_keys();
@@ -760,27 +764,24 @@ class SEOPRESS_CSV_Importer extends SEOPRESS_Importer {
 	}
 
 	/**
-	 * Parse images list from a CSV. Images can be filenames or URLs.
+	 * Parse an image from a CSV. The image can be a filename or a URL.
 	 *
-	 * @param string $value field value
+	 * The social image metas hold a single image, so the cell is never split.
 	 *
-	 * @return array
+	 * @param string $value Field value.
+	 *
+	 * @return string
 	 */
 	public function parse_images_field( $value ) {
 		if ( empty( $value ) ) {
 			return '';
 		}
 
-		$images    = '';
-		$separator = apply_filters( 'seopress_metadata_import_image_separator', ',' );
-
 		if ( stristr( $value, '://' ) ) {
-			$images = esc_url_raw( $value );
-		} else {
-			$images = sanitize_file_name( $value );
+			return esc_url_raw( $value );
 		}
 
-		return $images;
+		return sanitize_file_name( $value );
 	}
 
 	/**

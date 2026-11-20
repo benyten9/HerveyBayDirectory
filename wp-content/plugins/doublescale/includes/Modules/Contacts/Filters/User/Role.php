@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * Role class
@@ -108,43 +108,51 @@ class Role extends Filter {
 	 * @return Builder
 	 */
 	public function apply( Builder $query, $filter = array() ) {
+		global $wpdb;
+
 		$operator = isset( $filter['operator'] ) ? $filter['operator'] : 'is';
 		$value    = isset( $filter['value'] ) ? $filter['value'] : array();
 
-		if ( empty( $value ) ) {
+		// The role select sends one role as text; older rules saved a list.
+		// Text used to reach a foreach and add no condition, so every WordPress
+		// user matched "Role is Editor".
+		$roles = array_values(
+			array_filter(
+				array_map( 'strval', is_array( $value ) ? $value : array( $value ) ),
+				static function ( $role ) {
+					return '' !== trim( $role );
+				}
+			)
+		);
+
+		if ( empty( $roles ) ) {
 			return $query;
 		}
 
+		// Any of the picked roles. Roles are stored serialized
+		// (s:6:"editor";b:1;): matching the quoted key keeps "editor" from
+		// matching "senior_editor".
+		$has_any_role = static function ( $user ) use ( $roles, $wpdb ) {
+			$user->whereHas(
+				'capability',
+				static function ( $meta ) use ( $roles, $wpdb ) {
+					$meta->where(
+						static function ( $any ) use ( $roles, $wpdb ) {
+							foreach ( $roles as $role ) {
+								$any->orWhere( 'meta_value', 'like', '%"' . $wpdb->esc_like( $role ) . '"%' );
+							}
+						}
+					);
+				}
+			);
+		};
+
 		switch ( $operator ) {
 			case 'is':
-				$query->whereHas(
-					'user',
-					function ( $query ) use ( $value ) {
-						$query->whereHas(
-							'capability',
-							function ( $query ) use ( $value ) {
-								foreach ( $value as $role ) {
-									$query->where( 'meta_value', 'like', '%' . $role . '%' );
-								}
-							}
-						);
-					}
-				);
+				$query->whereHas( 'user', $has_any_role );
 				break;
 			case 'is_not':
-				$query->whereDoesntHave(
-					'user',
-					function ( $query ) use ( $value ) {
-						$query->whereHas(
-							'capability',
-							function ( $query ) use ( $value ) {
-								foreach ( $value as $role ) {
-									$query->where( 'meta_value', 'like', '%' . $role . '%' );
-								}
-							}
-						);
-					}
-				);
+				$query->whereDoesntHave( 'user', $has_any_role );
 				break;
 		}
 

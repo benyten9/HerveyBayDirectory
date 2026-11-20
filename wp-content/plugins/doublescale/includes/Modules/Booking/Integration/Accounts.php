@@ -15,7 +15,7 @@ namespace DoubleScale\Modules\Booking\Integration;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Booking\Abstracts\Integration;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 /**
  * Integration Accounts class

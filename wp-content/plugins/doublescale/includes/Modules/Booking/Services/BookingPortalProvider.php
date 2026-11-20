@@ -184,24 +184,30 @@ final class BookingPortalProvider {
 	 * @return string
 	 */
 	private static function lifecycle_type( BookingModel $booking ): string {
-		if ( $booking->isCancelled() ) {
+		$status = (string) $booking->status;
+		// Declined by the host reads as cancelled; a missed meeting was never
+		// attended; a request the host never confirmed was never held.
+		if ( $booking->isCancelled() || 'rejected' === $status ) {
 			return 'booking_cancelled';
+		}
+		if ( 'no-show' === $status ) {
+			return 'booking_missed';
+		}
+		if ( in_array( $status, array( 'pending', 'waiting' ), true ) ) {
+			return 'booking_pending';
 		}
 		if ( $booking->isCompleted() ) {
 			return 'booking_completed';
-		}
-		if ( 'pending' === $booking->status ) {
-			return 'booking_pending';
 		}
 
 		return 'booking_scheduled';
 	}
 
 	/**
-	 * Count a contact's upcoming (not-cancelled, not-yet-ended) bookings.
+	 * Count a contact's upcoming (not cancelled or declined, not yet ended) bookings.
 	 *
 	 * Mirrors the Upcoming tab in {@see \DoubleScale\Modules\Booking\Rest\Controllers\RestPortalBookingController::get_bookings}:
-	 * excludes only `cancelled` (not `active()`) so waitlisted bookings are
+	 * excludes only cancelled and declined (not `active()`) so waitlisted bookings are
 	 * counted here too and the nav badge / summary card match the tab content.
 	 *
 	 * @param ContactModel|null $contact Resolved contact.
@@ -221,7 +227,7 @@ final class BookingPortalProvider {
 
 		try {
 			return (int) BookingModel::where( 'contact_id', (int) $contact->id )
-				->whereNotIn( 'status', array( 'cancelled' ) )
+				->whereNotIn( 'status', array( 'cancelled', 'rejected' ) )
 				->where( 'end_time', '>=', gmdate( 'Y-m-d H:i:s' ) )
 				->count();
 		} catch ( \Throwable $e ) {

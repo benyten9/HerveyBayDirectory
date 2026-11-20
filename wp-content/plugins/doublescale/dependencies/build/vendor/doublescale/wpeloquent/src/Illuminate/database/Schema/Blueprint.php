@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
 use Closure;
 use BadMethodCallException;
-use Illuminate\Support\Fluent;
-use Illuminate\Database\Connection;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Database\SQLiteConnection;
-use Illuminate\Database\Schema\Grammars\Grammar;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Database\SQLiteConnection;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Grammars\Grammar;
 class Blueprint
 {
     use Macroable;
@@ -525,7 +525,7 @@ class Blueprint
      */
     public function char($column, $length = null)
     {
-        $length = $length ?: \Illuminate\Database\Schema\Builder::$defaultStringLength;
+        $length = $length ?: Builder::$defaultStringLength;
         return $this->addColumn('char', $column, \compact('length'));
     }
     /**
@@ -537,7 +537,7 @@ class Blueprint
      */
     public function string($column, $length = null)
     {
-        $length = $length ?: \Illuminate\Database\Schema\Builder::$defaultStringLength;
+        $length = $length ?: Builder::$defaultStringLength;
         return $this->addColumn('string', $column, \compact('length'));
     }
     /**
@@ -1189,7 +1189,7 @@ class Blueprint
      */
     public function addColumn($type, $name, array $parameters = [])
     {
-        $this->columns[] = $column = new \Illuminate\Database\Schema\ColumnDefinition(\array_merge(\compact('type', 'name'), $parameters));
+        $this->columns[] = $column = new ColumnDefinition(\array_merge(\compact('type', 'name'), $parameters));
         return $column;
     }
     /**

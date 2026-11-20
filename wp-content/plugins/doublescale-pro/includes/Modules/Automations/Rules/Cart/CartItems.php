@@ -60,7 +60,26 @@ class CartItems extends Rule
 	 *
 	 * @since 1.0.0
 	 */
-	public $type = 'multiselect';
+	public $type = 'infinite_scroll_multiselect';
+
+	/**
+	 * Searched as the admin types (WooCommerce's REST API), never listed in full.
+	 *
+	 * @var string
+	 */
+	public $endpoint = '/wc/v3/products';
+
+	/**
+	 * How the editor reads the endpoint.
+	 *
+	 * @var array
+	 */
+	public $settings = array(
+		'rootArrayResponse' => true,
+		'perPage'           => 20,
+		'searchParamName'   => 'search',
+		'apiParams'         => array( 'status' => 'publish' ),
+	);
 
 	/**
 	 * Has options
@@ -100,25 +119,9 @@ class CartItems extends Rule
 	 */
 	public function get_options()
 	{
-		// Check if WooCommerce is available
-		if (! function_exists('wc_get_products')) {
-			return array();
-		}
-
-		$products = wc_get_products(
-			array(
-				'limit'  => -1,
-				'status' => 'publish',
-			)
-		);
-
-		$options = array();
-		if (! empty($products)) {
-			foreach ($products as $product) {
-				$options[$product->get_id()] = $product->get_name();
-			}
-		}
-		return $options;
+		// The picker searches products on demand (endpoint above); listing
+		// every product here ran on each DoubleScale admin page.
+		return array();
 	}
 
 	/**

@@ -11,7 +11,6 @@ use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenException;
 use Perfmatters\Vendor\Sabberworm\CSS\Position\Position;
 use Perfmatters\Vendor\Sabberworm\CSS\Position\Positionable;
 use Perfmatters\Vendor\Sabberworm\CSS\ShortClassNameProvider;
-use function Perfmatters\Vendor\Safe\preg_match;
 /**
  * Abstract base class for specific classes of CSS values: `Size`, `Color`, `CSSString` and `URL`, and another
  * abstract subclass `ValueList`.
@@ -131,7 +130,6 @@ abstract class Value implements CSSElement, Positionable
      */
     public static function parsePrimitiveValue(ParserState $parserState)
     {
-        $value = null;
         $parserState->consumeWhiteSpace();
         if (\is_numeric($parserState->peek()) || $parserState->comes('-.') && \is_numeric($parserState->peek(1, 2)) || ($parserState->comes('-') || $parserState->comes('.')) && \is_numeric($parserState->peek(1, 1))) {
             $value = Size::parse($parserState);
@@ -189,13 +187,21 @@ abstract class Value implements CSSElement, Positionable
         // Code points outside BMP can use up to six digits
         $range = '';
         $parserState->consume('U+');
-        do {
+        while (\true) {
             if ($parserState->comes('-')) {
                 $codepointMaxLength = 13;
                 // Max length is 2 six-digit code points + the dash(-) between them
             }
             $range .= $parserState->consume(1);
-        } while (\strlen($range) < $codepointMaxLength && preg_match('/[A-Fa-f0-9\\?-]/', $parserState->peek()) === 1);
+            if (\strlen($range) >= $codepointMaxLength) {
+                break;
+            }
+            $matchResult = \preg_match('/[A-Fa-f0-9\\?-]/', $parserState->peek());
+            \assert(\is_int($matchResult));
+            if ($matchResult !== 1) {
+                break;
+            }
+        }
         return "U+{$range}";
     }
 }

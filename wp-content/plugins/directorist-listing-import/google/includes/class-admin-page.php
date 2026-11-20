@@ -105,6 +105,8 @@ class Admin_Page {
 				'searching'         => __( 'Searching Google Places…', 'directorist-listing-import' ),
 				/* translators: %d: number of places found */
 				'preview_heading'   => __( 'Found %d place(s). Select which to import:', 'directorist-listing-import' ),
+				/* translators: 1: new place count, 2: already-imported place count */
+				'new_preview_heading' => __( 'Found %1$d new place(s); skipped %2$d already imported. Select which to import:', 'directorist-listing-import' ),
 				'select_all'        => __( 'Select All', 'directorist-listing-import' ),
 				'deselect_all'      => __( 'Deselect All', 'directorist-listing-import' ),
 				/* translators: %d: number of selected places */
@@ -121,6 +123,8 @@ class Admin_Page {
 					/* translators: %d: updated count */
 					'updated'           => __( '%d listing(s) refreshed with new data from Google.', 'directorist-listing-import' ),
 					'no_results'        => __( 'No places found for that keyword and location.', 'directorist-listing-import' ),
+					/* translators: %d: already-imported place count */
+					'no_new_results'    => __( 'No new listings are available. %d matching place(s) are already imported. Google provides at most 60 results for one search.', 'directorist-listing-import' ),
 					/* translators: %d: review count */
 					'reviews'           => __( '%d Google review(s) imported as Directorist reviews.', 'directorist-listing-import' ),
 					/* translators: %d: description count */
@@ -443,7 +447,7 @@ class Admin_Page {
 							name="max_results"
 							class="small-text"
 							min="1"
-							max="60"
+							max="20"
 							value="<?php echo esc_attr( $this->settings->get_max_results() ); ?>"
 						>
 					</td>
@@ -463,7 +467,6 @@ class Admin_Page {
 								type="checkbox"
 								name="import_reviews"
 								value="1"
-								checked
 							>
 							<?php esc_html_e( 'Only a few Google review comments can be imported, but the rating is based on the full Google review score.', 'directorist-listing-import' ); ?>
 						</label>
@@ -474,8 +477,18 @@ class Admin_Page {
 					<th scope="row"><?php esc_html_e( 'Import Photos', 'directorist-listing-import' ); ?></th>
 					<td>
 						<label>
-							<input type="checkbox" name="import_photos" value="1" checked>
+							<input type="checkbox" name="import_photos" value="1">
 							<?php esc_html_e( 'Sideload first Google photo as listing featured image', 'directorist-listing-import' ); ?>
+						</label>
+					</td>
+				</tr>
+
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Find New Listings Only', 'directorist-listing-import' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="find_new_only" value="1" checked>
+							<?php esc_html_e( 'Skip already imported businesses and continue through Google results to find the next new listings', 'directorist-listing-import' ); ?>
 						</label>
 					</td>
 				</tr>
@@ -491,6 +504,13 @@ class Admin_Page {
 				</tr>
 
 			</table>
+
+			<div class="dgbi-cost-control">
+				<strong><?php esc_html_e( 'Manage Google API costs', 'directorist-listing-import' ); ?></strong>
+				<p>
+					<?php esc_html_e( 'Google may charge for Places API usage when you search and import businesses. To stay in control of spending, set a monthly budget and email alerts in Google Cloud Console.', 'directorist-listing-import' ); ?>
+				</p>
+			</div>
 
 			<?php
 			submit_button(
@@ -613,7 +633,8 @@ class Admin_Page {
 			if ( empty( $_POST['dgbi_clear_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['dgbi_clear_nonce'] ), 'dgbi_clear_history_action' ) ) {
 				wp_die( esc_html__( 'Security check failed.', 'directorist-listing-import' ) );
 			}
-			update_option( 'dgbi_import_history', [], 'no' );
+			\DLI_MCP_Compatibility::native_lock();
+			update_option( 'dgbi_import_history', [], false );
 			wp_safe_redirect( add_query_arg(
 				[ 'page' => DLI_PAGE_SLUG, 'tab' => 'google', 'google_tab' => 'history', 'dgbi_cleared' => '1' ],
 				admin_url( 'edit.php?post_type=at_biz_dir' )
@@ -641,6 +662,10 @@ class Admin_Page {
 			// Settings saved
 			if ( ! empty( $_GET['dgbi_settings_saved'] ) ) {
 				echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'directorist-listing-import' ) . '</p></div>';
+			}
+
+			if ( ! empty( $_GET['dgbi_key_removed'] ) ) {
+				echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__( 'API key removed. Imports will not work until a new key is added.', 'directorist-listing-import' ) . '</p></div>';
 			}
 
 			if ( ! empty( $_GET['dgbi_mapping_saved'] ) ) {

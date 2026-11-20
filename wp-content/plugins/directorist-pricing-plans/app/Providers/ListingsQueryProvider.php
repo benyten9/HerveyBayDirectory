@@ -5,103 +5,37 @@ namespace DirectoristPricingPlan\App\Providers;
 defined( 'ABSPATH' ) || exit;
 
 use DirectoristPricingPlan\WpMVC\Contracts\Provider;
-use DirectoristPricingPlan\App\Models\UserPackage;
+use DirectoristPricingPlan\App\Models\Plan;
 
 class ListingsQueryProvider implements Provider {
+    private ?array $listing_display_priorities = null;
+
     public function boot() {
+        if ( ! directorist_is_listing_display_priority_enabled() ) {
+            return;
+        }
+
         // Remove the default featured query argument
         add_filter( 'directorist_query_arg_has_featured', [$this, 'handle_query_arg_has_featured'], 10, 2 );
         
         // Sort listings by featured and display priority
-        add_filter( 'posts_fields', [$this, 'add_listing_display_priority_field'], 10, 2 );
-        add_filter( 'posts_join', [$this, 'add_listing_display_priority_joins'], 10, 2 );
-        add_filter( 'posts_groupby', [$this, 'add_listing_display_priority_groupby'], 10, 2 );
         add_filter( 'posts_orderby', [$this, 'add_listing_display_priority_orderby'], 1, 2 );
     }
 
     public function handle_query_arg_has_featured( bool $has_featured, array $params ) {
-        if ( ! $this->is_frontend_request() ) {
+        if ( ! directorist_is_listing_display_priority_enabled() || ! $this->is_frontend_request() ) {
             return $has_featured;
         }
 
         return false;
     }
 
-    public function add_listing_display_priority_field( string $fields, $query ) {
-        // Only modify directorist listing queries
-        if ( ! $this->is_core_query( $query ) ) {
-            return $fields;
-        }
-
-        $fields .= ', COALESCE( MAX( CAST( dpp_featured_meta.meta_value AS UNSIGNED ) ), 0 ) AS listing_featured';
-        $fields .= ", {$this->get_listing_display_priority_field_sql()} AS listing_display_priority";
-        
-        return $fields;
-    }
-
-    public function add_listing_display_priority_joins( string $join, $query ) {
-        // Only modify directorist listing queries
-        if ( ! $this->is_core_query( $query ) ) {
-            return $join;
-        }
-
-        global $wpdb;
-
-        $packages_table = $wpdb->prefix . UserPackage::get_table_name();
-
-        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, Squiz.Strings.ConcatenationSpacing.PaddingFound -- Table names are from $wpdb/model metadata.
-        $join .= " LEFT JOIN {$wpdb->postmeta} AS dpp_directory_meta"
-            . " ON {$wpdb->posts}.ID = dpp_directory_meta.post_id"
-            . " AND dpp_directory_meta.meta_key = '_directory_type'";
-
-        $join .= " LEFT JOIN {$wpdb->postmeta} AS dpp_featured_meta"
-            . " ON {$wpdb->posts}.ID = dpp_featured_meta.post_id"
-            . " AND dpp_featured_meta.meta_key = '_featured'";
-
-        $join .= " LEFT JOIN {$packages_table} AS dpp_directory_package"
-            . " ON dpp_directory_package.user_id = {$wpdb->posts}.post_author"
-            . " AND dpp_directory_package.directory_type_id = CAST( dpp_directory_meta.meta_value AS UNSIGNED )";
-
-        if ( directorist_is_listing_plan_meta_migrated() ) {
-            $join .= " LEFT JOIN {$wpdb->postmeta} AS dpp_pricing_plan_meta"
-                . " ON {$wpdb->posts}.ID = dpp_pricing_plan_meta.post_id"
-                . " AND dpp_pricing_plan_meta.meta_key = '_plan_id'";
-
-            $join .= " LEFT JOIN {$packages_table} AS dpp_plan_package"
-                . " ON dpp_plan_package.user_id = {$wpdb->posts}.post_author"
-                . " AND dpp_plan_package.plan_id = CAST( dpp_pricing_plan_meta.meta_value AS UNSIGNED )";
-        }
-        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, Squiz.Strings.ConcatenationSpacing.PaddingFound
-
-        return $join;
-    }
-
-    public function add_listing_display_priority_groupby( string $groupby, $query ) {
-        if ( ! $this->is_core_query( $query ) ) {
-            return $groupby;
-        }
-
-        global $wpdb;
-
-        $posts_id = "{$wpdb->posts}.ID";
-
-        if ( empty( $groupby ) ) {
-            return $posts_id;
-        }
-
-        if ( false !== strpos( str_replace( '`', '', $groupby ), $posts_id ) ) {
-            return $groupby;
-        }
-
-        return "{$groupby}, {$posts_id}";
-    }
-
     public function add_listing_display_priority_orderby( string $orderby, $query ) {
-        if ( ! $this->is_core_query( $query ) ) {
+        if ( ! directorist_is_listing_display_priority_enabled() || ! $this->is_core_query( $query ) ) {
             return $orderby;
         }
 
-        $priority_orderby = ' listing_featured DESC, listing_display_priority DESC';
+        $priority_orderby = $this->get_listing_priority_orderby_sql() . ' DESC';
         
         if ( empty( $orderby ) ) {
             $orderby = $priority_orderby;
@@ -128,11 +62,70 @@ class ListingsQueryProvider implements Provider {
         return ! is_admin();
     }
 
-    private function get_listing_display_priority_field_sql(): string {
-        if ( ! directorist_is_listing_plan_meta_migrated() ) {
-            return 'COALESCE( MAX( dpp_directory_package.listing_display_priority ), 0 )';
+    private function get_listing_priority_orderby_sql(): string {
+        global $wpdb;
+
+        $priorities    = $this->get_listing_display_priorities();
+        $cases         = [];
+        $plan_priority = '0';
+
+        foreach ( $priorities as $plan_id => $priority ) {
+            $cases[] = sprintf( 'WHEN %d THEN %d', $plan_id, $priority );
         }
 
-        return 'COALESCE( MAX( dpp_plan_package.listing_display_priority ), 0 )';
+        if ( ! empty( $cases ) ) {
+            $plan_priority = sprintf( 'CASE CAST( dpp_order_meta.meta_value AS UNSIGNED ) %s ELSE 0 END', implode( ' ', $cases ) );
+        }
+
+        $priority_values = array_merge( [0], array_values( $priorities ) );
+        $featured_weight = max( $priority_values ) - min( $priority_values ) + 1;
+        $featured_key    = '_featured';
+        $plan_key        = directorist_plan_key();
+
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The interpolated values are integer-only CASE fragments generated above.
+        $orderby = $wpdb->prepare(
+            "COALESCE( (
+                SELECT
+                    COALESCE( MAX( CASE WHEN dpp_order_meta.meta_key = %s THEN CAST( dpp_order_meta.meta_value AS UNSIGNED ) END ), 0 ) * {$featured_weight}
+                    + COALESCE( MAX( CASE WHEN dpp_order_meta.meta_key = %s THEN {$plan_priority} END ), 0 )
+                FROM {$wpdb->postmeta} AS dpp_order_meta
+                WHERE dpp_order_meta.post_id = {$wpdb->posts}.ID
+                    AND dpp_order_meta.meta_key IN ( %s, %s )
+            ), 0 )",
+            $featured_key,
+            $plan_key,
+            $featured_key,
+            $plan_key
+        );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+        return $orderby;
+    }
+
+    private function get_listing_display_priorities(): array {
+        if ( null !== $this->listing_display_priorities ) {
+            return $this->listing_display_priorities;
+        }
+
+        global $wpdb;
+
+        $plans_table = $wpdb->prefix . Plan::get_table_name();
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is from wpdb/model metadata.
+        $plans = $wpdb->get_results( "SELECT id, listing_display_priority FROM {$plans_table}" );
+
+        $this->listing_display_priorities = [];
+
+        foreach ( $plans as $plan ) {
+            $plan_id = absint( $plan->id );
+
+            if ( ! $plan_id ) {
+                continue;
+            }
+
+            $this->listing_display_priorities[ $plan_id ] = (int) $plan->listing_display_priority;
+        }
+
+        return $this->listing_display_priorities;
     }
 }

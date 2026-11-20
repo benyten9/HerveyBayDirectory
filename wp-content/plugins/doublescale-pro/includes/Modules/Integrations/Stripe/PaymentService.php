@@ -56,8 +56,14 @@ class PaymentService {
 		return $this->client;
 	}
 
+	/**
+	 * Only a key Stripe.js accepts is ever handed to a browser.
+	 *
+	 * @return string
+	 */
 	public function publishable_key(): string {
-		return (string) ( $this->mode_settings['publishable_key'] ?? '' );
+		$key = (string) ( $this->mode_settings['publishable_key'] ?? '' );
+		return null === Integration::key_problem( 'publishable', $key, (string) ( $this->mode_settings['mode'] ?? '' ) ) ? $key : '';
 	}
 
 	/**

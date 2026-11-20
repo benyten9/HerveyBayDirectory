@@ -21,8 +21,9 @@ use DoubleScale\Modules\Booking\Services\BookingValidator;
 use DoubleScale\Modules\Booking\Services\BookingEvents;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use DoubleScale\Modules\Booking\Models\EventModel;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Models\UserModel;
+use DoubleScale\Modules\Booking\Capabilities;
 
 class BookingActions {
 
@@ -50,21 +51,53 @@ class BookingActions {
 	}
 
 
+	/**
+	 * Run an organizer action from an emailed link
+	 * (?doublescale_booking_action=reject|confirm&id=<hash>).
+	 *
+	 * The booking hash is not a secret from the attendee (it is in their own
+	 * confirmation link), so it cannot authorize anything: the visitor must be
+	 * logged in and allowed to manage the booking, and only a booking still
+	 * awaiting approval can be approved or rejected here. Attendee cancel and
+	 * reschedule go through the booking pages, which apply the event's rules.
+	 */
 	public function process_booking_action( $action_type, $new_status, $log_message, $log_details ) {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- public booking action link (cancel/reschedule); identity comes from the hash `id`; validate_booking() below verifies the booking is real before mutating anything.
-		$action = Arr::get( $_GET, 'doublescale_booking_action', null );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- emailed organizer link; authorized by login + capability below.
+		$action = sanitize_key( (string) Arr::get( $_GET, 'doublescale_booking_action', '' ) );
 		if ( $action_type !== $action ) {
 			return;
 		}
 
-		try {
-			$id = sanitize_text_field( wp_unslash( Arr::get( $_GET, 'id', null ) ) );
+		$id = sanitize_text_field( wp_unslash( (string) Arr::get( $_GET, 'id', '' ) ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		if ( ! is_user_logged_in() ) {
+			$back = add_query_arg(
+				array(
+					'doublescale_booking_action' => $action_type,
+					'id'                         => $id,
+				),
+				home_url( '/' )
+			);
+			wp_safe_redirect( wp_login_url( $back ) );
+			exit;
+		}
+
+		try {
 			$booking = $this->bookingValidatorClass::validate_booking( $id );
+
+			if ( ! Capabilities::can_manage_booking( $booking->id ) ) {
+				throw new \Exception( esc_html__( 'You do not have permission to manage this booking.', 'doublescale' ) );
+			}
 
 			if ( $booking->status === $new_status ) {
 				/* translators: %s: booking status */
 				throw new \Exception( esc_html( sprintf( __( 'Booking is already %s', 'doublescale' ), $new_status ) ) );
+			}
+
+			if ( 'pending' !== $booking->status ) {
+				/* translators: %s: booking status */
+				throw new \Exception( esc_html( sprintf( __( 'This booking is %s and can no longer be changed from this link.', 'doublescale' ), $booking->status ) ) );
 			}
 
 			$booking->status = $new_status;
@@ -83,9 +116,18 @@ class BookingActions {
 				BookingEvents::emit( $lifecycle_event, (int) $booking->id, array( 'actor' => 'organizer' ) );
 			}
 
-			wp_send_json_success( $this->generate_success_message( ucfirst( $action_type ), $new_status ) );
+			wp_safe_redirect( $booking->getDetailsUrl() );
+			exit;
 		} catch ( \Exception $e ) {
-			wp_send_json_error( $this->generate_error_message( ucfirst( $action_type ), $e->getMessage() ) );
+			wp_die(
+				esc_html( $e->getMessage() ),
+				/* translators: %s: action verb such as Reject or Confirm */
+				esc_html( sprintf( __( '%s Failed', 'doublescale' ), ucfirst( $action_type ) ) ),
+				array(
+					'response'  => 403,
+					'back_link' => true,
+				)
+			);
 		}
 	}
 
@@ -126,7 +168,5 @@ class BookingActions {
 	private function booking_actions() {
 		$this->process_booking_action( 'reject', 'rejected', __( 'Booking rejected', 'doublescale' ), __( 'Booking rejected by Organizer', 'doublescale' ) );
 		$this->process_booking_action( 'confirm', 'scheduled', __( 'Booking confirmed', 'doublescale' ), __( 'Booking confirmed by Organizer', 'doublescale' ) );
-		$this->process_booking_action( 'reschedule', 'rescheduled', __( 'Booking rescheduled', 'doublescale' ), __( 'Booking rescheduled by Attendee', 'doublescale' ) );
-		$this->process_booking_action( 'cancel', 'cancelled', __( 'Booking cancelled', 'doublescale' ), __( 'Booking cancelled by Attendee', 'doublescale' ) );
 	}
 }

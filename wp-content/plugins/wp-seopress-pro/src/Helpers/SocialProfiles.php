@@ -81,7 +81,7 @@ class SocialProfiles {
 	 *
 	 * @param int $user_id The user ID.
 	 *
-	 * @return array<string> Deduplicated array of URLs.
+	 * @return list<string> Deduplicated list of URLs, sequentially indexed.
 	 */
 	public static function getSameAs( $user_id ) {
 		$same_as = array();
@@ -119,6 +119,8 @@ class SocialProfiles {
 			}
 		}
 
-		return array_unique( array_filter( $same_as ) );
+		// Reindexed: array_unique() keeps the keys of what it kept, and a list
+		// with gaps is encoded as a JSON object, which is not valid sameAs.
+		return array_values( array_unique( array_filter( $same_as ) ) );
 	}
 }

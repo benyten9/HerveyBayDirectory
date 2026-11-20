@@ -68,7 +68,7 @@ abstract class BaseSupportAction extends Action {
 	 * @param array                  $settings           Step settings (expects 'affects').
 	 * @param AutomationContactModel $automation_contact Automation contact model.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection<int, TicketModel>
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection<int, TicketModel>
 	 */
 	protected function get_target_tickets( $settings, AutomationContactModel $automation_contact ) {
 		if ( ! $this->support_storage_ready() ) {

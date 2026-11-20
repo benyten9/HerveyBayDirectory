@@ -167,6 +167,8 @@ class ButtonBlock extends EmailBlock {
 		// Button style (matches frontend getButtonStyle function)
 		$button_padding_string = $this->format_button_padding_multiplied( $global_settings['padding'] );
 
+		$decoration = $this->format_button_text_decoration( $global_settings );
+
 		$button_styles = array(
 			'display'          => $props['align'] === 'full' ? 'block' : 'inline-block',
 			'font-family'      => $global_settings['font'],
@@ -175,7 +177,9 @@ class ButtonBlock extends EmailBlock {
 			'border-radius'    => $global_settings['borderRadius'] . 'px',
 			'font-weight'      => $global_settings['bold'] ? 'bold' : 'normal',
 			'font-style'       => $global_settings['italic'] ? 'italic' : 'normal',
-			'text-decoration'  => $this->format_button_text_decoration( $global_settings ),
+			// Inline !important beats Gmail's default link underline. Tertiary
+			// buttons have no fill, so that extra line is visible.
+			'text-decoration'  => $decoration . ' !important',
 			'white-space'      => 'normal',
 			'word-wrap'        => 'break-word',
 			'overflow-wrap'    => 'break-word',
@@ -192,10 +196,11 @@ class ButtonBlock extends EmailBlock {
 		}
 
 		$button_style = $this->build_style_string( $button_styles );
+		$label        = '<span style="text-decoration: ' . esc_attr( $decoration ) . ' !important;">' . $text . '</span>';
 
 		// Simple div structure matching frontend exactly
 		return "<div style=\"{$container_style}\">
-			<a href=\"{$url}\" style=\"{$button_style}\">{$text}</a>
+			<a href=\"{$url}\" style=\"{$button_style}\">{$label}</a>
 		</div>";
 	}
 

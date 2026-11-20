@@ -209,6 +209,7 @@ class DirectoryController extends Controller {
             "SELECT post.ID
             FROM {$wpdb->posts} AS post
             WHERE post.post_type = %s
+                AND post.post_status NOT IN ( %s, %s )
                 AND NOT EXISTS (
                     SELECT 1
                     FROM {$wpdb->term_relationships} AS directory_relationship
@@ -220,6 +221,8 @@ class DirectoryController extends Controller {
             ORDER BY post.ID DESC",
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             ATBDP_POST_TYPE,
+            'auto-draft',
+            'trash',
             ATBDP_DIRECTORY_TYPE
         );
 

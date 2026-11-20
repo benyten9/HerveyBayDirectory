@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
 use Exception;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Validator as ValidatorFacade;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Facades\Validator as ValidatorFacade;
 class ValidationException extends Exception
 {
     /**

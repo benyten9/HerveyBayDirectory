@@ -9,7 +9,7 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Google;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Pro\Modules\Booking\Integrations\OAuthConfig;
 use DoubleScale\Modules\Booking\Models\CalendarModel;
 use WP_Error;
@@ -90,7 +90,7 @@ class App {
 	 */
 	public function get_auth_uri( $host_id, $app_credentials = array() ) {
 		if ( empty( $host_id ) ) {
-			return new \WP_Error( 'no_host_id', \esc_html__( 'No host ID found!', 'doublescale' ) );
+			return new \WP_Error( 'no_host_id', \esc_html__( 'No host ID found!', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
 		// Check if we have custom app credentials
@@ -214,6 +214,13 @@ class App {
 		$calendar = CalendarModel::find( $host_id );
 		if ( empty( $calendar ) ) {
 			return;
+		}
+
+		// Only someone who may manage this calendar connects an account to it:
+		// the calendar's bookings are copied into the connected account.
+		if ( ! class_exists( '\\DoubleScale\\Modules\\Booking\\Capabilities' )
+			|| ! \DoubleScale\Modules\Booking\Capabilities::can_manage_calendar( (int) $host_id ) ) {
+			\wp_die( \esc_html__( 'Sorry, you are not allowed to connect an account to this calendar.', 'doublescale' ), '', array( 'response' => 403 ) );
 		}
 
 		// ensure authorize code.

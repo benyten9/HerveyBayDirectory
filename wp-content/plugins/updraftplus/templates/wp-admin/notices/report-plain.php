@@ -7,11 +7,13 @@ echo wp_kses($title, array()).': ';
 
 echo wp_kses($text, array());
 
+if (isset($button_meta) && 'inline' == $button_meta) echo ' '.wp_kses($button_text, array()).' '.wp_kses($text2, array()).' ';
+
 if (!empty($discount_code)) echo esc_html($discount_code).' ';
 
-if (!empty($button_link) && (!empty($button_meta) || !empty($button_text))) {
+if ((!empty($button_report_link) || !empty($button_link)) && (!empty($button_meta) || !empty($button_text))) {
 
-	$link = apply_filters('updraftplus_com_link', $button_link);
+	$link = apply_filters('updraftplus_com_link', !empty($button_report_link) ? $button_report_link : $button_link);
 
 	global $updraftplus_admin;
 	$updraftplus_admin->include_template(

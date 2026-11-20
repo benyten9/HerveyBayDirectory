@@ -275,7 +275,7 @@ function nibwp_kadence_elements_cpt(): string
 
 wp_register_ability('nibwp/kadence-info', [
     'label'       => __('Kadence — Info', 'nibwp'),
-    'description' => __('Detect the Kadence theme + Kadence Blocks + Kadence Pro, versions, the settings storage mode, the global color palette size, Elements support, and the available hook locations.', 'nibwp'),
+    'description' => 'Detect the Kadence theme + Kadence Blocks + Kadence Pro, versions, the settings storage mode, the global color palette size, Elements support, and the available hook locations.',
     'category'    => 'kadence',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -331,7 +331,7 @@ function nibwp_kadence_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/kadence-settings', [
     'label'       => __('Kadence — Settings', 'nibwp'),
-    'description' => __('Read and write Kadence theme settings (layout, content width, header rows, navigation, sidebars, footer, structure, branding). Each setting is a Kadence option key. Actions: get, update, list_saved.', 'nibwp'),
+    'description' => 'Read and write Kadence theme settings (layout, content width, header rows, navigation, sidebars, footer, structure, branding). Each setting is a Kadence option key. Actions: get, update, list_saved.',
     'category'    => 'kadence',
     'input_schema' => [
         'type' => 'object',
@@ -388,7 +388,7 @@ function nibwp_kadence_settings_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/kadence-colors', [
     'label'       => __('Kadence — Colors', 'nibwp'),
-    'description' => __('Read/write the Kadence Global Color Palette (the 9 palette swatches surfaced everywhere in the theme + Blocks) and arbitrary color setting keys. Actions: get, list_palette, set_palette, set_color, update.', 'nibwp'),
+    'description' => 'Read/write the Kadence Global Color Palette (the 9 palette swatches surfaced everywhere in the theme + Blocks) and arbitrary color setting keys. Actions: get, list_palette, set_palette, set_color, update.',
     'category'    => 'kadence',
     'input_schema' => [
         'type' => 'object',
@@ -473,7 +473,7 @@ function nibwp_kadence_colors_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/kadence-typography', [
     'label'       => __('Kadence — Typography', 'nibwp'),
-    'description' => __('Read/write Kadence typography: the base body font, heading font, per-tag fonts (h1–h6), buttons and widget-title fonts. Each font is a Kadence option holding family/variant/size/lineHeight/etc. Actions: get, update, set_font, font_keys.', 'nibwp'),
+    'description' => 'Read/write Kadence typography: the base body font, heading font, per-tag fonts (h1–h6), buttons and widget-title fonts. Each font is a Kadence option holding family/variant/size/lineHeight/etc. Actions: get, update, set_font, font_keys.',
     'category'    => 'kadence',
     'input_schema' => [
         'type' => 'object',
@@ -539,7 +539,7 @@ function nibwp_kadence_typography_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/kadence-blocks', [
     'label'       => __('Kadence — Blocks', 'nibwp'),
-    'description' => __('Read/write the Kadence Blocks plugin global settings: the Blocks color palette, per-block default config, enabled blocks, default typography and editor width. Actions: get, update, get_option, set_option.', 'nibwp'),
+    'description' => 'Read/write the Kadence Blocks plugin global settings: the Blocks color palette, per-block default config, enabled blocks, default typography and editor width. Actions: get, update, get_option, set_option.',
     'category'    => 'kadence',
     'input_schema' => [
         'type' => 'object',
@@ -658,7 +658,7 @@ function nibwp_kadence_blocks_decode($value)
 
 wp_register_ability('nibwp/kadence-elements', [
     'label'       => __('Kadence — Elements (Pro)', 'nibwp'),
-    'description' => __('Manage Kadence Pro Elements: custom hooked content placed at theme hook locations, with display conditions. Actions: list, get, hooks, create, update, set_conditions, delete.', 'nibwp'),
+    'description' => 'Manage Kadence Pro Elements: custom hooked content placed at theme hook locations, with display conditions. Actions: list, get, hooks, create, update, set_conditions, delete.',
     'category'    => 'kadence',
     'input_schema' => [
         'type' => 'object',

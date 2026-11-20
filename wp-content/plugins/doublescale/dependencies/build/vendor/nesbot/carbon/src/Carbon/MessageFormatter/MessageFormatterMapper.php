@@ -8,7 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\MessageFormatter;
+namespace DoubleScale\Vendor\Carbon\MessageFormatter;
 
 use ReflectionMethod;
 use DoubleScale\Vendor\Symfony\Component\Translation\Formatter\MessageFormatter;
@@ -17,7 +17,7 @@ use DoubleScale\Vendor\Symfony\Component\Translation\Formatter\MessageFormatterI
 $transMethod = new ReflectionMethod(MessageFormatterInterface::class, 'format');
 require $transMethod->getParameters()[0]->hasType() ? __DIR__ . '/../../../lazy/Carbon/MessageFormatter/MessageFormatterMapperStrongType.php' : __DIR__ . '/../../../lazy/Carbon/MessageFormatter/MessageFormatterMapperWeakType.php';
 // @codeCoverageIgnoreEnd
-final class MessageFormatterMapper extends \Carbon\MessageFormatter\LazyMessageFormatter
+final class MessageFormatterMapper extends LazyMessageFormatter
 {
     /**
      * Wrapped formatter.

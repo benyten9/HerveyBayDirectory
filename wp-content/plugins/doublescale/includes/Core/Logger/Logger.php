@@ -158,6 +158,10 @@ class Logger implements LoggerInterface {
 			);
 		}
 
+		// Fires for every entry, before the site's log level filters it, so a
+		// running workflow step can report its own error as the failure reason.
+		do_action( 'doublescale_log_entry', $level, $message, $context );
+
 		if ( $this->should_handle( $level ) ) {
 			$timestamp = time();
 			$message   = apply_filters( 'doublescale_log_message', $message, $level, $context );

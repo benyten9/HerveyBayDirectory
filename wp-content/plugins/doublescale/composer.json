@@ -57,7 +57,8 @@
             "test -f dependencies/vendor/autoload.php || (echo 'ERROR: Run cd dependencies && composer install before scope:vendor' >&2 && exit 1)",
             "@php php-scoper.phar add-prefix --config=dependencies/scoper.inc.php --force --output-dir=dependencies/build",
             "@php tools/fix-scoper-output.php",
-            "cd dependencies && composer dump-autoload --working-dir=build --classmap-authoritative --no-scripts"
+            "cd dependencies && composer dump-autoload --working-dir=build --classmap-authoritative --no-scripts",
+            "@php tools/prune-scoper-function-aliases.php"
         ],
         "format": "phpcbf --standard=phpcs.xml.dist --report-summary --report-source",
         "lint": "phpcs --standard=phpcs.xml.dist",

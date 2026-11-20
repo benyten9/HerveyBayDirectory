@@ -70,6 +70,9 @@ function seopress_get_schema_html_part( $type, $data, $key_schema = 0 ) {
 		case 'product':
 			seopress_get_schema_metaboxe_product( $data, $key_schema );
 			break;
+		case 'book':
+			seopress_get_schema_metaboxe_book( $data, $key_schema );
+			break;
 		case 'software':
 			seopress_get_schema_metaboxe_software( $data, $key_schema );
 			break;
@@ -91,7 +94,11 @@ function seopress_get_schema_html_part( $type, $data, $key_schema = 0 ) {
  * @return array
  */
 function seopress_get_keys_rich_snippets() {
-	return array(
+	$book_keys = array();
+	foreach ( \SEOPressPro\Helpers\Schemas\Book::meta_keys() as $meta_key ) {
+		$book_keys[ $meta_key ] = array( 'key' => $meta_key, 'post_key' => ltrim( $meta_key, '_' ) );
+	}
+	return $book_keys + array(
 		'_seopress_pro_rich_snippets_type'                 => array(
 			'key'      => '_seopress_pro_rich_snippets_type',
 			'post_key' => 'seopress_pro_rich_snippets_type',
@@ -676,6 +683,10 @@ function seopress_get_keys_rich_snippets() {
 			'key'      => '_seopress_pro_rich_snippets_service_area',
 			'post_key' => 'seopress_pro_rich_snippets_service_area',
 		),
+		'_seopress_pro_rich_snippets_service_provider_source' => array(
+			'key' => '_seopress_pro_rich_snippets_service_provider_source',
+			'post_key' => 'seopress_pro_rich_snippets_service_provider_source',
+		),
 		'_seopress_pro_rich_snippets_service_provider_name' => array(
 			'key'      => '_seopress_pro_rich_snippets_service_provider_name',
 			'post_key' => 'seopress_pro_rich_snippets_service_provider_name',
@@ -849,6 +860,12 @@ function seopress_pro_admin_std_metaboxe_display() {
 				'key_html_part' => 'product',
 			),
 			array(
+				'file' => dirname( __DIR__ ) . '/schemas/manual/Book.php',
+				'value' => 'book',
+				'label' => esc_html__( 'Book', 'wp-seopress-pro' ),
+				'key_html_part' => 'book',
+			),
+			array(
 				'file'          => dirname( __DIR__ ) . '/schemas/manual/SoftwareApp.php',
 				'value'         => 'softwareapp',
 				'label'         => esc_html__( 'Software Application', 'wp-seopress-pro' ),
@@ -934,14 +951,14 @@ function seopress_pro_admin_std_metaboxe_display() {
 						</option>
 						<?php foreach ( $options_schemas_available as $item ) { ?>
 						<option
-							value="<?php echo $item['value']; ?>">
-							<?php echo $item['label']; ?><?php if ( ! empty( $item['deprecated'] ) ) { echo ' (' . esc_html__( 'Deprecated', 'wp-seopress-pro' ) . ')'; } ?>
+							value="<?php echo esc_attr( $item['value'] ); ?>">
+							<?php echo esc_html( $item['label'] ); ?><?php if ( ! empty( $item['deprecated'] ) ) { echo ' (' . esc_html__( 'Deprecated', 'wp-seopress-pro' ) . ')'; } ?>
 						</option>
 						<?php } ?>
 					</select>
 				</div>
 				<a href="#"
-					class="js-delete-schema-manual <?php echo $btn_classes_tertiary; ?> is-destructive"
+					class="js-delete-schema-manual <?php echo esc_attr( $btn_classes_tertiary ); ?> is-destructive"
 					data-key="[X]">
 					<?php esc_html_e( 'Delete schema', 'wp-seopress-pro' ); ?>
 				</a>
@@ -950,7 +967,7 @@ function seopress_pro_admin_std_metaboxe_display() {
 	</template>
 		<?php foreach ( $options_schemas_available as $item ) { ?>
 	<template
-		id="schema-template-<?php echo $item['value']; ?>">
+		id="schema-template-<?php echo esc_attr( $item['value'] ); ?>">
 			<?php seopress_get_schema_html_part( $item['key_html_part'], array(), 'X' ); ?>
 	</template>
 	<?php } ?>
@@ -967,14 +984,14 @@ function seopress_pro_admin_std_metaboxe_display() {
 						</option>
 						<?php foreach ( $options_schemas_available as $item ) { ?>
 						<option
-							value="<?php echo $item['value']; ?>">
-							<?php echo $item['label']; ?><?php if ( ! empty( $item['deprecated'] ) ) { echo ' (' . esc_html__( 'Deprecated', 'wp-seopress-pro' ) . ')'; } ?>
+							value="<?php echo esc_attr( $item['value'] ); ?>">
+							<?php echo esc_html( $item['label'] ); ?><?php if ( ! empty( $item['deprecated'] ) ) { echo ' (' . esc_html__( 'Deprecated', 'wp-seopress-pro' ) . ')'; } ?>
 						</option>
 						<?php } ?>
 					</select>
 				</div>
 				<a href="#"
-					class="js-delete-schema-manual <?php echo $btn_classes_tertiary; ?> is-destructive"
+					class="js-delete-schema-manual <?php echo esc_attr( $btn_classes_tertiary ); ?> is-destructive"
 					data-key="[X]">
 					<?php esc_html_e( 'Delete schema', 'wp-seopress-pro' ); ?>
 				</a>
@@ -997,7 +1014,7 @@ function seopress_pro_admin_std_metaboxe_display() {
 			<div class="schemas-bar-new">
 				<p>
 					<a href="#" id="js-add-schema-manual"
-						class="<?php echo seopress_btn_secondary_classes(); ?>">
+						class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?>">
 						<?php esc_html_e( 'Add a schema', 'wp-seopress-pro' ); ?>
 					</a>
 				</p>
@@ -1018,7 +1035,7 @@ function seopress_pro_admin_std_metaboxe_display() {
 						}
 						?>
 						<div class="box-schema-item"
-							data-key="<?php echo $key; ?>">
+							data-key="<?php echo esc_attr( $key ); ?>">
 							<div class="wrap-rich-snippets-type">
 								<div>
 									<button type="button" class="js-handle-snippet-type" aria-expanded="true">
@@ -1026,21 +1043,21 @@ function seopress_pro_admin_std_metaboxe_display() {
 									</button>
 									<select id="seopress_pro_rich_snippets_type"
 										class="js-select_seopress_pro_rich_snippets_type"
-										name="seopress_pro_rich_snippets_data[<?php echo $key; ?>][seopress_pro_rich_snippets_type]">
+										name="seopress_pro_rich_snippets_data[<?php echo esc_attr( $key ); ?>][seopress_pro_rich_snippets_type]">
 										<option <?php echo selected( 'none', $seopress_pro_rich_snippets_type ); ?>
 											value="none"><?php esc_html_e( 'None', 'wp-seopress-pro' ); ?>
 										</option>
 									<?php foreach ( $options_schemas_available as $item ) { ?>
 										<option <?php echo selected( $item['value'], $seopress_pro_rich_snippets_type ); ?>
-											value="<?php echo $item['value']; ?>"><?php echo $item['label']; ?>
+											value="<?php echo esc_attr( $item['value'] ); ?>"><?php echo esc_html( $item['label'] ); ?>
 										</option>
 										<?php } ?>
 									</select>
 								</div>
 
 								<a href="#"
-									class="js-delete-schema-manual <?php echo $btn_classes_tertiary; ?> is-destructive"
-									data-key="<?php echo $key; ?>">
+									class="js-delete-schema-manual <?php echo esc_attr( $btn_classes_tertiary ); ?> is-destructive"
+									data-key="<?php echo esc_attr( $key ); ?>">
 								<?php esc_html_e( 'Delete schema', 'wp-seopress-pro' ); ?>
 								</a>
 							</div>
@@ -1058,11 +1075,22 @@ function seopress_pro_admin_std_metaboxe_display() {
 				?>
 			</div>
 			<p>
-				<a href="https://search.google.com/test/rich-results?url=<?php echo get_permalink(); ?>"
+				<a href="https://search.google.com/test/rich-results?url=<?php echo rawurlencode( get_permalink() ); ?>"
 					target="_blank"
-					class="<?php echo seopress_btn_secondary_classes(); ?>">
+					rel="noopener noreferrer"
+					class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?>">
 					<?php esc_html_e( 'Validate my schema', 'wp-seopress-pro' ); ?>
 				</a>
+				<a href="https://validator.schema.org/#url=<?php echo rawurlencode( get_permalink() ); ?>"
+					target="_blank"
+					rel="noopener noreferrer"
+					style="margin-left:8px;"
+					class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?>">
+					<?php esc_html_e( 'Schema Markup Validator', 'wp-seopress-pro' ); ?>
+				</a>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'The Schema Markup Validator checks schema.org markup. Google’s test only reports supported rich result types; a missing type there does not mean your markup is absent.', 'wp-seopress-pro' ); ?>
 			</p>
 		</div>
 	</div>
@@ -1098,9 +1126,12 @@ function seopress_pro_admin_std_metaboxe_display() {
 		}
 
 		if ( 'attachment' !== get_post_type( $post_id ) && 'seopress_schemas' !== get_post_type( $post_id ) ) {
-			// Automatic.
-			if ( isset( $_POST['seopress_pro_schemas'] ) ) {
-				update_post_meta( $post_id, '_seopress_pro_schemas', $_POST['seopress_pro_schemas'] );
+			// Automatic. Per-post overrides of the automatic schemas, one of
+			// which may hold a custom JSON-LD script: only that tag survives,
+			// as on the REST route and the Block Editor meta.
+			if ( isset( $_POST['seopress_pro_schemas'] ) && is_array( $_POST['seopress_pro_schemas'] ) ) {
+				$schemas = map_deep( wp_unslash( $_POST['seopress_pro_schemas'] ), 'seopress_pro_kses_json_ld' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by map_deep().
+				update_post_meta( $post_id, '_seopress_pro_schemas', wp_slash( $schemas ) );
 			}
 
 			// Disable all automatic schemas.
@@ -1111,8 +1142,9 @@ function seopress_pro_admin_std_metaboxe_display() {
 			}
 
 			// Disable automatic schemas individually.
-			if ( isset( $_POST['seopress_pro_rich_snippets_disable'] ) ) {
-				update_post_meta( $post_id, '_seopress_pro_rich_snippets_disable', $_POST['seopress_pro_rich_snippets_disable'] );
+			if ( isset( $_POST['seopress_pro_rich_snippets_disable'] ) && is_array( $_POST['seopress_pro_rich_snippets_disable'] ) ) {
+				$disabled = map_deep( wp_unslash( $_POST['seopress_pro_rich_snippets_disable'] ), 'sanitize_text_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by map_deep().
+				update_post_meta( $post_id, '_seopress_pro_rich_snippets_disable', wp_slash( $disabled ) );
 			} else {
 				delete_post_meta( $post_id, '_seopress_pro_rich_snippets_disable', '' );
 			}
@@ -1136,19 +1168,38 @@ function seopress_pro_admin_std_metaboxe_display() {
 					return;
 				}
 
-				$data_schemas           = $_POST['seopress_pro_rich_snippets_data'];
+				$data_schemas           = is_array( $_POST['seopress_pro_rich_snippets_data'] ) ? wp_unslash( $_POST['seopress_pro_rich_snippets_data'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each field is sanitized below.
 				$keys_rich_snippets     = seopress_get_keys_rich_snippets();
 				$data_pro_rich_snippets = array();
 
 				foreach ( $data_schemas as $number_item => $value ) {
+					if ( ! is_array( $value ) ) {
+						continue;
+					}
+
 					foreach ( $keys_rich_snippets as $key => $item ) {
-						if ( isset( $value[ $item['post_key'] ] ) ) {
-							$data_pro_rich_snippets[ $number_item ][ $item['key'] ] = $value[ $item['post_key'] ];
+						if ( ! isset( $value[ $item['post_key'] ] ) ) {
+							continue;
 						}
+
+						// The custom schema keeps its JSON-LD script tag and
+						// nothing else; every other field is plain text that
+						// keeps its line breaks, as on the Block Editor meta:
+						// recipe ingredients and steps are one per line.
+						$field_value = $value[ $item['post_key'] ];
+						if ( '_seopress_pro_rich_snippets_custom' === $item['key'] ) {
+							$field_value = seopress_pro_kses_json_ld( $field_value );
+						} elseif ( is_array( $field_value ) ) {
+							$field_value = map_deep( $field_value, 'sanitize_textarea_field' );
+						} else {
+							$field_value = sanitize_textarea_field( $field_value );
+						}
+
+						$data_pro_rich_snippets[ $number_item ][ $item['key'] ] = $field_value;
 					}
 				}
 
-				update_post_meta( $post_id, '_seopress_pro_schemas_manual', array_values( $data_pro_rich_snippets ) );
+				update_post_meta( $post_id, '_seopress_pro_schemas_manual', wp_slash( array_values( $data_pro_rich_snippets ) ) );
 			}
 		}
 	}
@@ -1158,7 +1209,7 @@ function seopress_pro_admin_std_metaboxe_display() {
 if ( '1' == seopress_get_toggle_option( 'rich-snippets' ) && '1' === seopress_pro_get_service( 'OptionPro' )->getRichSnippetEnable() ) {
 	if ( is_user_logged_in() ) {
 		if ( is_super_admin() ) {
-			echo seopress_pro_admin_std_metaboxe_display();
+			seopress_pro_admin_std_metaboxe_display();
 		} else {
 			global $wp_roles;
 
@@ -1170,10 +1221,10 @@ if ( '1' == seopress_get_toggle_option( 'rich-snippets' ) && '1' === seopress_pr
 					if ( array_key_exists( $seopress_user_role, seopress_advanced_security_metaboxe_sdt_role_hook_option() ) ) {
 						// Do nothing.
 					} else {
-						echo seopress_pro_admin_std_metaboxe_display();
+						seopress_pro_admin_std_metaboxe_display();
 					}
 				} else {
-					echo seopress_pro_admin_std_metaboxe_display();
+					seopress_pro_admin_std_metaboxe_display();
 				}
 			}
 		}

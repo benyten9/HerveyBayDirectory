@@ -8,9 +8,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\PHPStan;
+namespace DoubleScale\Vendor\Carbon\PHPStan;
 
-use Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
 use DoubleScale\Vendor\PHPStan\Reflection\ReflectionProvider;
 use ReflectionClass;
 use ReflectionException;
@@ -55,12 +55,12 @@ final class MacroScanner
      *
      * @return Macro
      */
-    public function getMethod(string $className, string $methodName) : \Carbon\PHPStan\Macro
+    public function getMethod(string $className, string $methodName) : Macro
     {
         $reflectionClass = new ReflectionClass($className);
         $property = $reflectionClass->getProperty('globalMacros');
         $property->setAccessible(\true);
         $macro = $property->getValue()[$methodName];
-        return new \Carbon\PHPStan\Macro($className, $methodName, $macro);
+        return new Macro($className, $methodName, $macro);
     }
 }

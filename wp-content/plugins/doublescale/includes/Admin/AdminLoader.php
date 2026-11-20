@@ -370,5 +370,7 @@ class AdminLoader {
 	</div>
 	</div>
 		<?php
+		// Printed here, outside the app, so an older Pro's bundle shows it too.
+		\DoubleScale\Compat\ProMessagingEngineCheck::render_app_banner();
 	}
 }

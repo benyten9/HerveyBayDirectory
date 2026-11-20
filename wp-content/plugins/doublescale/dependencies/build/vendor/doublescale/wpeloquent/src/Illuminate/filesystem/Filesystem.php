@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Filesystem;
+namespace DoubleScale\Vendor\Illuminate\Filesystem;
 
 use ErrorException;
 use FilesystemIterator;
 use DoubleScale\Vendor\Symfony\Component\Finder\Finder;
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Contracts\Filesystem\FileNotFoundException;
 class Filesystem
 {
     use Macroable;

@@ -9,7 +9,7 @@ namespace DoubleScale\Modules\Booking\Renderer;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 class BookingPageRenderer extends BaseTemplateRenderer {
 
@@ -67,6 +67,10 @@ class BookingPageRenderer extends BaseTemplateRenderer {
 
 		if ( ! $event ) {
 			\doublescale_safe_redirect( home_url() );
+		}
+
+		if ( ! $event->is_open_for_booking() ) {
+			return $this->render_unavailable();
 		}
 
 		// Prepare event data

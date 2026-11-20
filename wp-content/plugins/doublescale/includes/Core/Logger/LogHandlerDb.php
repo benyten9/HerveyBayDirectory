@@ -82,12 +82,46 @@ class LogHandlerDb implements LogHandlerInterface {
 		$insert = array(
 			'timestamp' => gmdate( 'Y-m-d H:i:s', $timestamp ),
 			'level'     => LogLevels::get_level_severity( $level ),
-			'message'   => $message,
+			'message'   => self::scrub_utf8( $message ),
 			'source'    => $source,
-			'context'   => $context,
+			'context'   => self::scrub_utf8( $context ),
 		);
 
-		return LogModel::create( $insert );
+		// A log write must never break the operation being logged. `context` is
+		// JSON-cast, so one torn multibyte character (e.g. a byte-level substr()
+		// of Arabic text) used to throw JsonEncodingException out of here and
+		// turn a WhatsApp message Meta had already accepted into a failed send.
+		try {
+			return LogModel::create( $insert );
+		} catch ( \Throwable $e ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'DoubleScale logger: could not store log entry: ' . $e->getMessage() );
+			return false;
+		}
+	}
+
+	/**
+	 * Replace invalid UTF-8 byte sequences in a string, or recursively in an array.
+	 *
+	 * @param mixed $value Value to clean.
+	 *
+	 * @return mixed
+	 */
+	private static function scrub_utf8( $value ) {
+		if ( is_array( $value ) ) {
+			return array_map( array( __CLASS__, 'scrub_utf8' ), $value );
+		}
+
+		if ( ! is_string( $value ) ) {
+			return $value;
+		}
+
+		// mbstring is not guaranteed on every host; WordPress's own scrubber is.
+		if ( ! function_exists( 'mb_check_encoding' ) ) {
+			return wp_check_invalid_utf8( $value, true );
+		}
+
+		return mb_check_encoding( $value, 'UTF-8' ) ? $value : mb_convert_encoding( $value, 'UTF-8', 'UTF-8' );
 	}
 
 	/**

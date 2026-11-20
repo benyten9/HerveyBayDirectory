@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Contacts\Filters\Traits;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Utils\DateWithin;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * DateWithinContactFilter trait

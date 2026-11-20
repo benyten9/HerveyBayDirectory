@@ -92,7 +92,7 @@ final class SupportConversationHelper {
 	}
 
 	/**
-	 * Opening channel (`web` or `email`) from the first reply activity.
+	 * Opening channel (`web`, `email` or `chat`) from the first reply activity.
 	 *
 	 * @param TicketModel $ticket Ticket model.
 	 * @return string
@@ -105,7 +105,7 @@ final class SupportConversationHelper {
 		$data   = is_array( $activity->data ) ? $activity->data : array();
 		$source = isset( $data['source'] ) ? strtolower( (string) $data['source'] ) : 'web';
 
-		return in_array( $source, array( 'web', 'email' ), true ) ? $source : 'web';
+		return in_array( $source, array( 'web', 'email', 'chat' ), true ) ? $source : 'web';
 	}
 
 	/**

@@ -219,7 +219,7 @@ if (
 	AutomationModuleStorage::is_ready( 'tasks', TaskModel::class )
 	&& AutomationModuleStorage::is_ready( 'custom-fields', CustomFieldModel::class )
 ) {
-	$custom_fields = CustomFieldModel::where( 'scope', 'task' )->get();
+	$custom_fields = CustomFieldModel::cached_for_scope( 'task' );
 }
 
 if ( ! empty( $custom_fields ) ) {

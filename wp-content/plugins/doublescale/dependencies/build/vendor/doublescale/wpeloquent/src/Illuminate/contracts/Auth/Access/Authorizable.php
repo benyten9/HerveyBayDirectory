@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Auth\Access;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Auth\Access;
 
 interface Authorizable
 {

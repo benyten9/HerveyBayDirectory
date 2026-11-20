@@ -72,10 +72,35 @@ final class PortalIdentity {
 		if ( ! $user || 0 === (int) $user->ID || empty( $user->user_email ) ) {
 			return null;
 		}
+		// Anyone can make an account with a client's address on some sites:
+		// only a login that proved it owns it sees that client.
+		if ( ! PortalEmailConfirmation::is_confirmed( $user ) ) {
+			return null;
+		}
 
 		$contact = ContactModel::where( 'email', strtolower( trim( (string) $user->user_email ) ) )->first();
 
 		return $contact instanceof ContactModel ? $contact : null;
+	}
+
+	/**
+	 * The WordPress account a contact logs in to the portal with: the user
+	 * whose email is the contact's — the same match {@see current_contact()}
+	 * makes in the other direction, so a screen that says "this contact can
+	 * log in" is never wrong about it.
+	 *
+	 * @param ContactModel $contact Contact.
+	 * @return \WP_User|null
+	 */
+	public static function user_for_contact( ContactModel $contact ): ?\WP_User {
+		$email = strtolower( trim( (string) $contact->email ) );
+		if ( '' === $email || ! is_email( $email ) ) {
+			return null;
+		}
+
+		$user = get_user_by( 'email', $email );
+
+		return $user instanceof \WP_User ? $user : null;
 	}
 
 	/**

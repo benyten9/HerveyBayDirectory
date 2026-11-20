@@ -77,6 +77,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			Rest\Controllers\RestListController::class,
 			Rest\Controllers\RestTagController::class,
 			Rest\Controllers\RestImportExportController::class,
+			Rest\Controllers\RestLeadRoutingController::class,
 		);
 	}
 
@@ -87,6 +88,11 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		$container->get( ImportExport\Importers\Manager::class );
 		$container->get( Services\ContactAttachmentActivityLogger::class )->register();
 		Services\ContactMergeNotifier::register();
+		// Assigning a deal, task, ticket, document or booking on a contact makes
+		// the assignee a collaborator on it (CRM Agent scoping).
+		Services\ContactCollaboratorSync::register();
+		// A WhatsApp number changed: the old number's 24-hour window goes with it.
+		Services\WhatsappNumberChange::register();
 
 		add_action(
 			'doublescale_ready',
@@ -118,7 +124,8 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		add_action(
 			'doublescale_ready',
 			static function (): void {
-				if ( ! function_exists( 'doublescale_is_module_active' ) || ! doublescale_is_module_active( 'forms' ) ) {
+				// Form submissions are the Forms module's data.
+				if ( ! doublescale_module_data_ready( 'forms' ) ) {
 					return;
 				}
 				if ( ! class_exists( Filters\Submission\FormSubmission::class, true ) ) {
@@ -160,7 +167,10 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 				$mgr = Filters\FiltersManager::instance();
 
 				try {
-					$custom_fields = \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::where( 'scope', 'contact' )->get();
+					$cf_model      = \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class;
+					$custom_fields = method_exists( $cf_model, 'cached_for_scope' )
+						? $cf_model::cached_for_scope( 'contact' )
+						: $cf_model::where( 'scope', 'contact' )->get();
 					foreach ( $custom_fields as $custom_field ) {
 						$slug = 'contact_field_' . $custom_field->id;
 						if ( array_key_exists( $slug, $mgr->get_filters() ) ) {
@@ -176,9 +186,36 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		);
 
 		/**
+		 * Register the WooCommerce "Last Purchase" filter only while WooCommerce is
+		 * active: it reads WooCommerce's order tables. With no filter the group is
+		 * empty and the module gate drops it from every filter picker.
+		 */
+		add_action(
+			'doublescale_ready',
+			static function (): void {
+				if ( ! function_exists( 'doublescale_is_plugin_active' ) || ! doublescale_is_plugin_active( 'woocommerce' ) ) {
+					return;
+				}
+				if ( ! class_exists( Filters\Woocommerce\LastPurchase::class, true ) ) {
+					return;
+				}
+				$mgr = Filters\FiltersManager::instance();
+				if ( array_key_exists( 'woocommerce_last_purchase', $mgr->get_filters() ) ) {
+					return;
+				}
+				try {
+					$mgr->register( new Filters\Woocommerce\LastPurchase() );
+				} catch ( \Throwable $e ) {
+					// Duplicate registration or invalid state — do not break bootstrap.
+				}
+			},
+			20
+		);
+
+		/**
 		 * Register Activity filters that query Pro-owned tables only when their owning
-		 * modules are active. `page_visits` lives under `websitetracking` (Pro, non-toggleable);
-		 * `form_submissions` lives under `forms` (Pro, toggleable). Hiding the filters at
+		 * modules' data can be read. `page_visits` lives under `websitetracking` (Pro, toggleable);
+		 * `form_submissions` lives under `forms` (toggleable). Hiding the filters at
 		 * registration time keeps them out of segment builder UIs and prevents SQL errors
 		 * against missing tables on Free-standalone installs or when modules are disabled.
 		 */
@@ -191,7 +228,8 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 
 				$mgr = Filters\FiltersManager::instance();
 
-				if ( doublescale_is_module_active( 'websitetracking' )
+				// Page visits are Pro's WebsiteTracking data.
+				if ( doublescale_module_data_ready( 'websitetracking' )
 					&& class_exists( Filters\Activity\PageVisited::class, true )
 					&& ! array_key_exists( 'activity_page_visited', $mgr->get_filters() ) ) {
 					try {
@@ -204,8 +242,8 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 				// "Was Active" sums activities + form_submissions + page_visits. Only register
 				// when at least one of the Pro tables it depends on is available; apply() will
 				// skip any missing table at query time as a defense-in-depth fallback.
-				$has_websitetracking = doublescale_is_module_active( 'websitetracking' );
-				$has_forms           = doublescale_is_module_active( 'forms' );
+				$has_websitetracking = doublescale_module_data_ready( 'websitetracking' );
+				$has_forms           = doublescale_module_data_ready( 'forms' );
 				if ( ( $has_websitetracking || $has_forms )
 					&& class_exists( Filters\Activity\WasActiveInactive::class, true ) ) {
 					try {
@@ -255,6 +293,16 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	 * @since 1.0.0
 	 */
 	private function load_contact_scoped_automation_rules(): void {
+		// Read only when a condition or segment is evaluated, or a screen lists
+		// the rules: include the files on first read (see DefersRegistration).
+		\DoubleScale\Modules\Automations\Services\RulesManager::instance()->defer(
+			function () {
+				$this->require_contact_scoped_automation_rules();
+			}
+		);
+	}
+
+	private function require_contact_scoped_automation_rules(): void {
 		$this->loadManifestOrGlobs(
 			array(
 				'includes/Modules/Automations/Rules/Contact/*.php',

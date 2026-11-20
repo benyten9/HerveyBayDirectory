@@ -20,7 +20,7 @@ class RenderGSCInspectUrl {
 			<?php esc_html_e( 'Inspect the current post URL with Google Search Console and get informations about your indexing, crawling, rich snippets and more.', 'wp-seopress-pro' ); ?>
 		</p>
 
-		<button id="seopress_inspect_url" type="button" class="<?php echo seopress_btn_secondary_classes(); ?>"><?php esc_html_e( 'Inspect URL with Google', 'wp-seopress-pro' ); ?></button>
+		<button id="seopress_inspect_url" type="button" class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?>"><?php esc_html_e( 'Inspect URL with Google', 'wp-seopress-pro' ); ?></button>
 		<span class="spinner"></span>
 
 		<?php if ( empty( $google_api_key ) ) { ?>
@@ -40,9 +40,9 @@ class RenderGSCInspectUrl {
 		} elseif ( isset( $data->error ) ) {
 			if ( isset( $data->error->message ) ) {
 				?>
-				<p class="seopress-notice is-error"><?php echo '<strong>' . $data->error->code . '</strong>: ' . $data->error->message; ?></p>
+				<p class="seopress-notice is-error"><strong><?php echo esc_html( $data->error->code ); ?></strong>: <?php echo esc_html( $data->error->message ); ?></p>
 				<?php } elseif ( isset( $data->error_description ) ) { ?>
-					<p class="seopress-notice is-error"><?php echo '<strong>' . $data->error . '</strong>: ' . $data->error_description; ?></p>
+					<p class="seopress-notice is-error"><strong><?php echo esc_html( $data->error ); ?></strong>: <?php echo esc_html( $data->error_description ); ?></p>
 					<?php
 				}
 		} else {
@@ -51,7 +51,7 @@ class RenderGSCInspectUrl {
 			// Full report
 			$inspectionResultLink = $data->inspectionResult->inspectionResultLink ? $data->inspectionResult->inspectionResultLink : '';
 			if ( ! empty( $inspectionResultLink ) ) {
-				echo '<a href="' . $inspectionResultLink . '" class="' . seopress_btn_secondary_classes() . '" target="_blank">' . esc_html__( 'View Full Report', 'wp-seopress-pro' ) . '</a>';
+				echo '<a href="' . esc_url( $inspectionResultLink ) . '" class="' . esc_attr( seopress_btn_secondary_classes() ) . '" target="_blank">' . esc_html__( 'View Full Report', 'wp-seopress-pro' ) . '</a>';
 			}
 
 			// Indexing Verdict
@@ -154,7 +154,7 @@ class RenderGSCInspectUrl {
 			}
 
 			// Crawl
-			$lastCrawlTime = $data->inspectionResult->indexStatusResult->lastCrawlTime ? date( 'F j, Y - h:i:s A', strtotime( $data->inspectionResult->indexStatusResult->lastCrawlTime ) ) : '';
+			$lastCrawlTime = $data->inspectionResult->indexStatusResult->lastCrawlTime ? gmdate( 'F j, Y - h:i:s A', strtotime( $data->inspectionResult->indexStatusResult->lastCrawlTime ) ) : '';
 			$crawledAs     = $data->inspectionResult->indexStatusResult->crawledAs ? $data->inspectionResult->indexStatusResult->crawledAs : '';
 			if ( ! empty( $crawledAs ) ) {
 				switch ( $crawledAs ) {
@@ -295,20 +295,20 @@ class RenderGSCInspectUrl {
 				foreach ( $render as $key_analysis => $analysis ) {
 					if ( $key_analysis === 'general' ) {
 						?>
-							<div class="seopress-gsc-analysis seopress-gsc-summary seopress-notice <?php echo $verdict_class; ?>">
-								<div class="seopress-gsc-verdict"><?php echo $analysis['title']; ?></div>
-								<p><?php echo $analysis['desc']; ?></p>
+							<div class="seopress-gsc-analysis seopress-gsc-summary seopress-notice <?php echo esc_attr( $verdict_class ); ?>">
+								<div class="seopress-gsc-verdict"><?php echo esc_html( $analysis['title'] ); ?></div>
+								<p><?php echo esc_html( $analysis['desc'] ); ?></p>
 							</div>
 							<?php
 					} else {
 						if ( ! empty( $analysis['title'] ) ) {
 							?>
-								<div class="seopress-gsc-cat"><?php echo $analysis['title']; ?></div>
+								<div class="seopress-gsc-cat"><?php echo esc_html( $analysis['title'] ); ?></div>
 								<?php
 						}
 						if ( ! empty( $analysis['desc'] ) ) {
 							?>
-								<p><?php echo $analysis['desc']; ?></p>
+								<p><?php echo esc_html( $analysis['desc'] ); ?></p>
 								<?php
 						}
 						if ( ! empty( $analysis['analysis'] ) ) {
@@ -316,7 +316,7 @@ class RenderGSCInspectUrl {
 								<div class="seopress-gsc-analysis">
 								<?php foreach ( $analysis['analysis'] as $key => $value ) { ?>
 										<div class="seopress-gsc-item">
-										<div class="seopress-gsc-item-name"><?php echo $key; ?></div>
+										<div class="seopress-gsc-item-name"><?php echo esc_html( $key ); ?></div>
 										<div class="seopress-gsc-item-value">
 											<?php
 											if ( is_array( $value ) ) {
@@ -330,14 +330,14 @@ class RenderGSCInspectUrl {
 																foreach ( $elements as $element ) {
 																	echo '<ul>';
 																	if ( ! empty( $element->richResultType ) ) {
-																		echo '<li><strong>' . $element->richResultType . '</strong>';
+																		echo '<li><strong>' . esc_html( $element->richResultType ) . '</strong>';
 																	}
 																	if ( ! empty( $element->items ) ) {
 																		foreach ( $element->items as $schemas ) {
 																			if ( ! empty( $schemas ) ) {
 																				echo '<ul>';
 																				foreach ( $schemas as $schema ) {
-																					echo '<li><span class="dashicons dashicons-minus"></span>' . $schema . '</li>';
+																					echo '<li><span class="dashicons dashicons-minus"></span>' . esc_html( $schema ) . '</li>';
 																				}
 																				echo '</ul>';
 																			}
@@ -346,12 +346,12 @@ class RenderGSCInspectUrl {
 																	echo '</li></ul>';
 																}
 															} else {
-																echo '<li>' . $elements . '</li>';
+																echo '<li>' . esc_html( $elements ) . '</li>';
 															}
 														} else {
 															?>
 														<li>
-															<?php echo $elements; ?>
+															<?php echo esc_html( $elements ); ?>
 														</li>
 															<?php
 														}
@@ -361,7 +361,7 @@ class RenderGSCInspectUrl {
 													<?php
 												}
 											} else {
-												echo $value;
+												echo esc_html( $value );
 											}
 											?>
 										</div>

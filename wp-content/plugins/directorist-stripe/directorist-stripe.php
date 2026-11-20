@@ -7,7 +7,7 @@ use DirectoristStripe\WpMVC\App;
 /**
  * Plugin Name:       Directorist - Stripe Payment Gateway
  * Description:       Accept payments securely using Stripe, ensuring a smooth checkout experience.
- * Version:           3.0.1
+ * Version:           3.0.3
  * Requires Plugins:  directorist
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -26,7 +26,7 @@ require_once __DIR__ . '/app/Helpers/helper.php';
 require_once __DIR__ . '/app/Helpers/EDDPluginUpdaterStripe.php';
 
 final class DirectoristStripe {
-    private const MINIMUM_DIRECTORIST_VERSION = '8.8.0';
+    private const MINIMUM_DIRECTORIST_VERSION = '8.11';
 
     public static DirectoristStripe $instance;
 

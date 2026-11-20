@@ -16,7 +16,7 @@ use WP_Error;
 use WP_REST_Server;
 use WP_REST_Request;
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Pro\Modules\Booking\Integrations\Zoom\Api;
 
 /**
@@ -433,7 +433,15 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 	 * @return bool|\WP_Error
 	 */
 	public function create_item_permissions_check( $request ) {
-		return current_user_can( 'manage_options' ) || current_user_can( 'doublescale_booking_manage_own_calendars' );
+		if ( $this->can_manage_requested_calendar( $request ) ) {
+			return true;
+		}
+
+		return new \WP_Error(
+			'rest_forbidden',
+			__( 'Sorry, you are not allowed to add this account.', 'doublescale' ),
+			array( 'status' => rest_authorization_required_code() )
+		);
 	}
 
 	/**
@@ -508,5 +516,22 @@ class REST_Account_Controller extends Abstract_REST_Account_Controller {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * The calendar in the URL must be one the user may manage (their own, or
+	 * any with "manage all calendars"): "manages own calendars" alone let
+	 * anyone with a calendar attach accounts to a colleague's.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	private function can_manage_requested_calendar( $request ) {
+		$calendar_id = absint( $request->get_param( 'calendar_id' ) );
+		if ( ! $calendar_id || ! class_exists( '\\DoubleScale\\Modules\\Booking\\Capabilities' ) ) {
+			return false;
+		}
+
+		return (bool) \DoubleScale\Modules\Booking\Capabilities::can_manage_calendar( $calendar_id );
 	}
 }

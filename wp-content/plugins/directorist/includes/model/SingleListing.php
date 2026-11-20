@@ -6,6 +6,7 @@
 namespace Directorist;
 
 use \ATBDP_Permalink;
+use Directorist\Fields\Conditional_Logic;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -85,6 +86,7 @@ class Directorist_Single_Listing {
             ]
         );
         $submission_form_fields = directorist_submission_form_fields_raw( $this->type );
+        $listing_field_values   = $this->get_conditional_field_values( $submission_form_fields );
 
         if ( ! empty( $single_fields['fields'] ) ) {
             foreach ( $single_fields['fields'] as $key => $value ) {
@@ -115,6 +117,12 @@ class Directorist_Single_Listing {
 
                 // Added form_field, field_key, label, widget_group from submission form
                 $form_data = $submission_form_fields['fields'][ $form_key ];
+
+                // A saved value can outlive the category where its field is visible.
+                if ( ! Conditional_Logic::should_show_field( $form_data, $listing_field_values ) ) {
+                    unset( $single_fields['fields'][ $key ] );
+                    continue;
+                }
 
                 $single_fields['fields'][ $key ]['form_data'] = $form_data;
 
@@ -157,6 +165,43 @@ class Directorist_Single_Listing {
         }
 
         return $content_data;
+    }
+
+    private function get_conditional_field_values( array $submission_form_fields ) {
+        $tax_input = [];
+
+        foreach ( [ ATBDP_CATEGORY, ATBDP_TAGS, ATBDP_LOCATION ] as $taxonomy ) {
+            $term_ids = wp_get_post_terms( $this->id, $taxonomy, [ 'fields' => 'ids' ] );
+            $tax_input[ $taxonomy ] = is_wp_error( $term_ids ) ? [] : $term_ids;
+        }
+
+        $values = [
+            'tax_input'       => $tax_input,
+            'listing_title'   => get_the_title( $this->id ),
+            'listing_content' => $this->post ? $this->post->post_content : '',
+        ];
+
+        foreach ( $submission_form_fields['fields'] ?? [] as $widget_key => $field ) {
+            if ( empty( $field['field_key'] ) ) {
+                continue;
+            }
+
+            $field_key = $field['field_key'];
+            if ( in_array( $field_key, [ 'listing_title', 'listing_content' ], true ) ) {
+                $value = $values[ $field_key ];
+            } else {
+                $value = get_post_meta( $this->id, '_' . $field_key, true );
+
+                if ( '' === $value ) {
+                    $value = get_post_meta( $this->id, $field_key, true );
+                }
+            }
+
+            $values[ $field_key ]  = $value;
+            $values[ $widget_key ] = $value;
+        }
+
+        return $values;
     }
 
     public function section_template( $section_data ) {
@@ -420,6 +465,9 @@ class Directorist_Single_Listing {
      * @return string Single Listing content html.
      */
     public function single_page_content() {
+        if ( ! Listing_Visibility::can_read_single( $this->id ) ) {
+            return Listing_Visibility::denied_single_content( $this->id );
+        }
         $page_id = (int) get_directorist_type_option( $this->type, 'single_listing_page' );
 
         // Bail if custom single listing page is disabled
@@ -1061,13 +1109,14 @@ class Directorist_Single_Listing {
     public function edit_link() {
         $id = $this->id;
         $redirect = '';
-        if ( isset( $_GET['redirect'] ) ) {
+        if ( isset( $_GET['redirect'] ) && is_string( $_GET['redirect'] ) ) {
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $redirect = wp_validate_redirect( wp_unslash( $_GET['redirect'] ), '' );
         }
         
-        $payment = isset( $_GET['payment'] ) ? sanitize_text_field( wp_unslash( $_GET['payment'] ) ) : '';
-        $edit_link = ! empty( $payment ) ? add_query_arg( 'redirect', $redirect, ATBDP_Permalink::get_edit_listing_page_link( $id ) ) : ATBDP_Permalink::get_edit_listing_page_link( $id );
+        $payment = isset( $_GET['payment'] ) && is_string( $_GET['payment'] ) ? sanitize_text_field( wp_unslash( $_GET['payment'] ) ) : '';
+        // Keep the validated destination as one query value, including its own query and fragment.
+        $edit_link = ! empty( $payment ) && '' !== $redirect ? add_query_arg( 'redirect', rawurlencode( $redirect ), ATBDP_Permalink::get_edit_listing_page_link( $id ) ) : ATBDP_Permalink::get_edit_listing_page_link( $id );
         
         return $edit_link;
     }
@@ -1200,6 +1249,9 @@ class Directorist_Single_Listing {
         if ( ! is_singular( ATBDP_POST_TYPE ) ) {
             return;
         }
+        if ( ! Listing_Visibility::can_read_single( $this->id ) ) {
+            return Listing_Visibility::denied_single_content( $this->id );
+        }
 
         $args = [
             'listing' => $this,
@@ -1278,6 +1330,9 @@ class Directorist_Single_Listing {
 
     // TODO: When it's compatible with `the_content()` template tag then we won't have to use do_shortcode and wpautop functions.
     public function get_contents() {
+        if ( ! Listing_Visibility::can_read_single( $this->id ) ) {
+            return Listing_Visibility::denied_single_content( $this->id );
+        }
         $content = $this->post->post_content;
         $content = wpautop( $content );
         $content = $this->filter_single_listing_content( $content );
@@ -1392,6 +1447,9 @@ class Directorist_Single_Listing {
     }
 
     public function map_data() {
+        if ( ! Listing_Visibility::can_read_single( $this->id ) ) {
+            return wp_json_encode( [] );
+        }
         $id      = $this->id;
 
         $manual_lat = get_post_meta( $id, '_manual_lat', true );
@@ -1488,12 +1546,24 @@ class Directorist_Single_Listing {
         $info_content .= "<div class='map-listing-card-single__content__info'>";
 
         if ( ! empty( $phone ) && ! empty( $display_phone_map ) ) {
-            $info_content .= "<div class='directorist-info-item map-listing-card-single__content__phone'>" . directorist_icon( 'fas fa-phone-alt', false ) . "<div class='directorist-info-item'><a href='tel:{$phone}'>{$phone}</a></div></div>";
+            $info_content .= sprintf(
+                "<div class='directorist-info-item map-listing-card-single__content__phone'>%s<div class='directorist-info-item'><a href='tel:%s'>%s</a></div></div>",
+                directorist_icon( 'fas fa-phone-alt', false ),
+                esc_attr( $phone ),
+                esc_html( $phone )
+            );
         }
 
         if ( ! empty( $display_address_map ) && ! empty( $ad ) ) {
-            $info_content .= "<div class='directorist-info-item map-listing-card-single__content__address'>" . directorist_icon( 'fas fa-map-marker-alt', false ) . "<div class='directorist-info-item'>";
-            $info_content .= apply_filters( "atbdp_address_in_map_info_window", "<a href='http://www.google.com/maps?daddr={$manual_lat},{$manual_lng}' target='_blank'>{$ad}</a></div></div>" );
+            $directions_url = esc_url(
+                add_query_arg(
+                    'daddr',
+                    esc_attr( $manual_lat ) . ',' . esc_attr( $manual_lng ),
+                    'http://www.google.com/maps'
+                )
+            );
+            $info_content  .= "<div class='directorist-info-item map-listing-card-single__content__address'>" . directorist_icon( 'fas fa-map-marker-alt', false ) . "<div class='directorist-info-item'>";
+            $info_content  .= apply_filters( "atbdp_address_in_map_info_window", "<a href='{$directions_url}' target='_blank'>{$ad}</a></div></div>" );
         }
 
         $info_content .= "</div>";
@@ -1520,7 +1590,6 @@ class Directorist_Single_Listing {
         $cat_icon = directorist_icon( $cat_icon, false );
 
         $args = [
-            'listing'               => $this,
             'default_latitude'      => get_directorist_option( 'default_latitude', '40.7127753' ),
             'default_longitude'     => get_directorist_option( 'default_longitude', '-74.0059728' ),
             'manual_lat'            => $manual_lat,

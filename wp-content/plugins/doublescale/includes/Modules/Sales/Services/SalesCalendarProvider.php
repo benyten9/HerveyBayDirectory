@@ -155,7 +155,7 @@ final class SalesCalendarProvider {
 	 *
 	 * @param mixed  $query Eloquent query builder (limit + get applied here).
 	 * @param string $kind  Kind label for the log entry.
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	private function safe_get( $query, string $kind ) {
 		$model = $query->getModel();

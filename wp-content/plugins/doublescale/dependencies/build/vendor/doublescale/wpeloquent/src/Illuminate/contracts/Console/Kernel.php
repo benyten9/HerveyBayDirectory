@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Console;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Console;
 
 interface Kernel
 {

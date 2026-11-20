@@ -195,3 +195,58 @@ if ( ! class_exists( \DoubleScale\Core\Database\NullableCurrencyColumn::class ) 
 
 	class_alias( DoubleScale_Pro_Stub_NullableCurrencyColumn::class, \DoubleScale\Core\Database\NullableCurrencyColumn::class );
 }
+
+/*
+ * DoubleScale (free) before 1.9.9 has no doublescale_module_data_ready():
+ * the same check (module on + its tables exist), so Pro's cross-module reads
+ * work with an older free too. Pro's own models come from
+ * doublescale_pro_module_data_models() (pro-plugin-bootstrap.php), read at call time.
+ */
+if ( ! function_exists( 'doublescale_module_data_ready' ) ) {
+	function doublescale_module_data_ready( string $slug ): bool {
+		$models = array_merge(
+			array(
+				'automations' => \DoubleScale\Modules\Automations\Models\AutomationModel::class,
+				'booking'     => \DoubleScale\Modules\Booking\Models\CalendarModel::class,
+				'campaigns'   => \DoubleScale\Modules\Campaigns\Models\CampaignModel::class,
+				'documents'   => \DoubleScale\Modules\Documents\Models\InvoiceModel::class,
+				'forms'       => \DoubleScale\Modules\Forms\Models\FormModel::class,
+				'support'     => \DoubleScale\Modules\Support\Models\TicketModel::class,
+			),
+			doublescale_pro_module_data_models()
+		);
+		if ( isset( $models[ $slug ] ) && function_exists( 'doublescale_is_module_storage_ready' ) ) {
+			return doublescale_is_module_storage_ready( $slug, $models[ $slug ] );
+		}
+
+		return function_exists( 'doublescale_is_module_active' ) && doublescale_is_module_active( $slug );
+	}
+}
+
+if ( ! function_exists( 'doublescale_module_data_error' ) ) {
+	function doublescale_module_data_error( string $slug ): ?\WP_Error {
+		if ( doublescale_module_data_ready( $slug ) ) {
+			return null;
+		}
+
+		return new \WP_Error(
+			'module_disabled',
+			/* translators: %s: module slug */
+			sprintf( __( 'The "%s" module is disabled.', 'doublescale' ), $slug ),
+			array( 'status' => 404 )
+		);
+	}
+}
+
+if ( ! function_exists( 'doublescale_table_exists' ) ) {
+	function doublescale_table_exists( string $suffix ): bool {
+		static $seen = array();
+		global $wpdb;
+		$table = $wpdb->prefix . 'doublescale_' . $suffix;
+		if ( ! isset( $seen[ $table ] ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one existence check per request.
+			$seen[ $table ] = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
+		}
+		return $seen[ $table ];
+	}
+}

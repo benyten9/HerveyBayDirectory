@@ -27,6 +27,7 @@ class ListingOrderService {
     }
 
     public function assign_order( int $listing_id ): int {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $context = $this->get_pay_per_listing_context( $listing_id );
 
         if ( 'expired' === get_post_status( $listing_id ) ) {
@@ -49,6 +50,7 @@ class ListingOrderService {
     }
 
     public function renew_listing( int $listing_id ): int {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         $context = $this->get_pay_per_listing_context( $listing_id );
 
         if ( 'expired' !== get_post_status( $listing_id ) ) {
@@ -62,6 +64,7 @@ class ListingOrderService {
     }
 
     public function create_assignment_order( int $listing_id, stdClass $package, stdClass $plan ): int {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         return $this->create_order( $listing_id, $package, $plan, false );
     }
 
@@ -119,8 +122,8 @@ class ListingOrderService {
             ->set_ref( (string) $plan->id )
             ->set_currency( atbdp_get_payment_currency() )
             ->set_status( OrderStatus::PAID )
-            ->set_amount( (float) $plan->price )
-            ->set_sub_total( (float) $plan->price );
+            ->set_amount( directorist_get_plan_effective_price( $plan ) )
+            ->set_sub_total( directorist_get_plan_effective_price( $plan ) );
 
         if ( ! empty( $plan->is_featured ) ) {
             $order_dto->set_is_featured_listing( true );

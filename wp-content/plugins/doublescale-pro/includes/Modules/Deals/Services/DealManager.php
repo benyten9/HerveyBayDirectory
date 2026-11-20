@@ -158,7 +158,7 @@ final class DealManager
 
 		// Sales Rep can only update their own deals and cannot change core fields
 		// Sales Manager, CRM Manager, and Administrator can update any deal
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			if ($deal->owner_id != get_current_user_id()) {
 				return null;
 			} else {
@@ -250,7 +250,7 @@ final class DealManager
 
 		// Sales Rep can only move their own deals within the same pipeline
 		// Sales Manager, CRM Manager, and Administrator can move any deal
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			if ($deal->owner_id != $user_id && $deal->pipeline_id != $pipeline_id_for_stage) {
 				return false;
 			}
@@ -364,7 +364,7 @@ final class DealManager
 	 *
 	 * @param array $filters Filter criteria
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public function get_deals_with_filters($filters = array())
 	{
@@ -401,7 +401,7 @@ final class DealManager
 
 		// Sales Rep can only see their own deals
 		// Sales Manager, CRM Manager, and Administrator can see all deals
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			$query = $query->where('owner_id', get_current_user_id());
 		}
 		// Filter by owner (for users with broader access)
@@ -478,7 +478,7 @@ final class DealManager
 	 *
 	 * @param int|null $owner_id Filter by owner
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public function get_overdue_deals($owner_id = null)
 	{
@@ -489,7 +489,7 @@ final class DealManager
 
 		// Sales Rep can only see their own overdue deals
 		// Sales Manager, CRM Manager, and Administrator can see all overdue deals
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			$owner_id = get_current_user_id();
 		}
 
@@ -516,7 +516,7 @@ final class DealManager
 
 		// Sales Rep can only see their own statistics
 		// Sales Manager, CRM Manager, and Administrator can see all statistics
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			$user_id = get_current_user_id();
 		}
 
@@ -763,7 +763,7 @@ final class DealManager
 		$due      = 0.0;
 		$invoices = array();
 
-		if ( class_exists( InvoiceModel::class ) && ! empty( $invoice_ids ) ) {
+		if ( doublescale_module_data_ready( 'documents' ) && ! empty( $invoice_ids ) ) {
 			$rows = InvoiceModel::whereIn( 'id', $invoice_ids )->get();
 			foreach ( $rows as $invoice ) {
 				$invoice_total = (float) $invoice->total;
@@ -783,7 +783,7 @@ final class DealManager
 		}
 
 		$proposals = array();
-		if ( class_exists( ProposalModel::class ) && ! empty( $proposal_ids ) ) {
+		if ( doublescale_module_data_ready( 'documents' ) && ! empty( $proposal_ids ) ) {
 			$rows = ProposalModel::whereIn( 'id', $proposal_ids )->get();
 			foreach ( $rows as $proposal ) {
 				$proposals[] = array(
@@ -842,6 +842,11 @@ final class DealManager
 			? ActivityAssociationModel::ENTITY_TYPE_INVOICE
 			: ActivityAssociationModel::ENTITY_TYPE_PROPOSAL;
 
+		// Already linked: linking again would only add a duplicate activity.
+		if ( in_array( (int) $doc_id, array_map( 'intval', $this->get_linked_document_ids( $deal_id, $entity_type ) ), true ) ) {
+			return true;
+		}
+
 		$activity_data = array(
 			'title'       => sprintf(
 				/* translators: 1: document type, 2: document id */
@@ -854,14 +859,14 @@ final class DealManager
 			'event_key'   => 'invoice' === $type ? 'invoice_linked' : 'proposal_linked',
 		);
 
-		if ( 'invoice' === $type && class_exists( InvoiceModel::class ) ) {
+		if ( 'invoice' === $type && doublescale_module_data_ready( 'documents' ) ) {
 			$invoice = InvoiceModel::find( $doc_id );
 			if ( $invoice ) {
 				$activity_data['invoice_number'] = (string) $invoice->invoice_number;
 			}
 		}
 
-		if ( 'proposal' === $type && class_exists( ProposalModel::class ) ) {
+		if ( 'proposal' === $type && doublescale_module_data_ready( 'documents' ) ) {
 			$proposal = ProposalModel::find( $doc_id );
 			if ( $proposal ) {
 				$activity_data['proposal_number'] = (string) $proposal->proposal_number;
@@ -918,14 +923,14 @@ final class DealManager
 		$doc_currency = null;
 		$sent_at      = null;
 
-		if ( 'invoice' === $type && class_exists( InvoiceModel::class ) ) {
+		if ( 'invoice' === $type && doublescale_module_data_ready( 'documents' ) ) {
 			$invoice = InvoiceModel::find( $doc_id );
 			if ( $invoice ) {
 				$attrs        = $invoice->getAttributes();
 				$doc_currency = $attrs['currency'] ?? null;
 				$sent_at      = $attrs['sent_at'] ?? null;
 			}
-		} elseif ( 'proposal' === $type && class_exists( ProposalModel::class ) ) {
+		} elseif ( 'proposal' === $type && doublescale_module_data_ready( 'documents' ) ) {
 			$proposal = ProposalModel::find( $doc_id );
 			if ( $proposal ) {
 				$attrs        = $proposal->getAttributes();

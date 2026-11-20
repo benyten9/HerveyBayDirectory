@@ -67,7 +67,7 @@ class SendEmailSequence extends Action {
 	 */
 	public function process_action( AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact ) {
 		if ( ! AutomationModuleStorage::is_ready( 'campaigns', Email_Sequence_Model::class ) ) {
-			return false;
+			return self::failed( __( 'Campaigns are turned off, so the email sequence could not start. Turn Campaigns on under Control Modules.', 'doublescale' ) );
 		}
 
 		$email_sequence_id = $step->get_setting( 'email_sequence_id' );
@@ -84,7 +84,7 @@ class SendEmailSequence extends Action {
 				'Email sequence ID not provided in automation action',
 				$log_context
 			);
-			return false;
+			return self::failed( __( 'No email sequence is selected in this step. Open the step and choose a sequence.', 'doublescale' ) );
 		}
 
 		$email_sequence = Email_Sequence_Model::find( $email_sequence_id );
@@ -94,7 +94,8 @@ class SendEmailSequence extends Action {
 				'Email sequence not found or invalid type',
 				$log_context
 			);
-			return false;
+			/* translators: %d: email sequence id. */
+			return self::failed( sprintf( __( 'The email sequence selected in this step (#%d) no longer exists. Open the step and choose another one.', 'doublescale' ), (int) $email_sequence_id ) );
 		}
 
 		$contact = $automation_contact->contact;
@@ -146,12 +147,29 @@ class SendEmailSequence extends Action {
 			return true;
 		}
 
+		$message = is_array( $result ) && ! empty( $result['message'] )
+			? (string) $result['message']
+			: __( 'The contact could not be enrolled in the email sequence.', 'doublescale' );
+
 		doublescale_get_logger()->error(
 			'Failed to start email sequence via automation',
-			$log_context
+			array_merge( $log_context, array( 'reason' => $message ) )
 		);
 
-		return false;
+		return self::failed( $message );
+	}
+
+	/**
+	 * A failed result with its reason, shown on the step in the workflow's reports.
+	 *
+	 * @param string $message Why the step failed.
+	 * @return array{success: false, message: string}
+	 */
+	private static function failed( string $message ): array {
+		return array(
+			'success' => false,
+			'message' => $message,
+		);
 	}
 
 	/**

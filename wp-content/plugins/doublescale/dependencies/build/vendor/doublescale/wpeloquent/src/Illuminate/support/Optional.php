@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use ArrayAccess;
 use ArrayObject;
 class Optional implements ArrayAccess
 {
-    use \Illuminate\Support\Traits\Macroable {
+    use Traits\Macroable {
         __call as macroCall;
     }
     /**
@@ -61,7 +61,7 @@ class Optional implements ArrayAccess
      */
     public function offsetExists($key)
     {
-        return \Illuminate\Support\Arr::accessible($this->value) && \Illuminate\Support\Arr::exists($this->value, $key);
+        return Arr::accessible($this->value) && Arr::exists($this->value, $key);
     }
     /**
      * Get an item at a given offset.
@@ -71,7 +71,7 @@ class Optional implements ArrayAccess
      */
     public function offsetGet($key)
     {
-        return \Illuminate\Support\Arr::get($this->value, $key);
+        return Arr::get($this->value, $key);
     }
     /**
      * Set the item at a given offset.
@@ -82,7 +82,7 @@ class Optional implements ArrayAccess
      */
     public function offsetSet($key, $value)
     {
-        if (\Illuminate\Support\Arr::accessible($this->value)) {
+        if (Arr::accessible($this->value)) {
             $this->value[$key] = $value;
         }
     }
@@ -94,7 +94,7 @@ class Optional implements ArrayAccess
      */
     public function offsetUnset($key)
     {
-        if (\Illuminate\Support\Arr::accessible($this->value)) {
+        if (Arr::accessible($this->value)) {
             unset($this->value[$key]);
         }
     }

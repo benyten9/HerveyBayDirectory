@@ -117,6 +117,33 @@ class SiteAudit implements ExecuteHooks {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Permission for the audit actions that call an AI provider.
+	 *
+	 * Managing the audit is not permission to use AI. The `bot` area is
+	 * delegable to any role in Advanced > Security, and that delegation says
+	 * nothing about generation, so an editor given the audit but deliberately
+	 * excluded from AI could otherwise generate and write alt text for every
+	 * image in the report. The base capability stays the one this area already
+	 * required, so nothing new is demanded of anyone: only the role
+	 * restriction is layered on. See SEC-05.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return bool
+	 */
+	public function generationPermissionCallback() {
+		if ( ! $this->permissionCallback() ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'seopress_ai_generation_check' ) ) {
+			return true;
+		}
+
+		return (bool) seopress_ai_generation_check( null, seopress_capability( 'manage_options', 'bot' ), 'bulk' );
+	}
+
 	public function register() {
 		$permission = array( $this, 'permissionCallback' );
 
@@ -277,7 +304,7 @@ class SiteAudit implements ExecuteHooks {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'processGenerateAlt' ),
-				'permission_callback' => $permission,
+				'permission_callback' => array( $this, 'generationPermissionCallback' ),
 				'args'                => array(
 					'id' => array(
 						'validate_callback' => function ( $param ) {
@@ -484,9 +511,16 @@ class SiteAudit implements ExecuteHooks {
 		// the site. Rationale: keeps the score interpretable (no arbitrary
 		// multiplier) so a mildly unoptimized site lands in the 60–80 range
 		// rather than bottoming out at 0.
-		$denominator = max( 1, $total_crawled );
-		$penalty     = ( $by_priority['high'] * 3 + $by_priority['medium'] * 2 + $by_priority['low'] * 1 ) / $denominator;
-		$score       = (int) max( 0, min( 100, round( 100 - $penalty ) ) );
+		// No crawled URL means no score: reporting 100 here showed a perfect
+		// site after a scan where no page could be fetched. The same goes for
+		// a last scan that analysed nothing on a site with earlier results:
+		// those rows are still in the issues table, and their score would be
+		// shown as the result of the scan that just failed.
+		$score = null;
+		if ( $total_crawled > 0 && ! $this->lastScanAnalysedNothing() ) {
+			$penalty = ( $by_priority['high'] * 3 + $by_priority['medium'] * 2 + $by_priority['low'] * 1 ) / $total_crawled;
+			$score   = (int) max( 0, min( 100, round( 100 - $penalty ) ) );
+		}
 
 		$payload = array(
 			'totalCrawled' => $total_crawled,
@@ -536,6 +570,29 @@ class SiteAudit implements ExecuteHooks {
 		}
 
 		return sanitize_text_field( substr( (string) $scan_date, 0, 16 ) );
+	}
+
+	/**
+	 * Whether the last completed site audit analysed no page.
+	 *
+	 * Such a scan is stored in the history with `total_crawled = 0` (see
+	 * seopress_site_audit_completed_scan_totals()), which the history endpoint
+	 * already reads as "no score". The Overview reads the same row so its
+	 * score cannot disagree with the history below it.
+	 *
+	 * @return bool False when no audit has completed yet.
+	 */
+	private function lastScanAnalysedNothing() { // phpcs:ignore -- camelCase matches the surrounding methods.
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'seopress_site_audit_history';
+
+		// Direct query, uncached, for the same reason as getLastScanDate().
+		$total_crawled = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			"SELECT total_crawled FROM {$table} ORDER BY scan_date DESC, id DESC LIMIT 1" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+
+		return null !== $total_crawled && 0 === (int) $total_crawled;
 	}
 
 	/**
@@ -1096,25 +1153,34 @@ class SiteAudit implements ExecuteHooks {
 
 		$dom_result = $request_preview->getDomById( $post_id, null );
 		if ( ! is_array( $dom_result ) || empty( $dom_result['success'] ) ) {
+			$code = is_array( $dom_result ) && isset( $dom_result['code'] ) ? (string) $dom_result['code'] : '';
+
 			return new \WP_Error(
 				'seopress_audit_fetch_failed',
-				__( 'Could not fetch the page content.', 'wp-seopress-pro' ),
-				array( 'status' => 500 )
+				sprintf(
+					/* translators: %s: reason why the page could not be fetched */
+					__( 'Could not fetch the page content. %s', 'wp-seopress-pro' ),
+					$this->getFetchFailureReason( $code )
+				),
+				array(
+					'status'     => 500,
+					'fetch_code' => sanitize_key( $code ),
+				)
 			);
 		}
 
-		$dom_filter    = seopress_get_service( 'DomFilterContent' );
-		$dom_analysis  = seopress_get_service( 'DomAnalysis' );
-		$ca_database   = seopress_get_service( 'ContentAnalysisDatabase' );
-		$get_analysis  = seopress_get_service( 'GetContentAnalysis' );
+		$dom_filter   = seopress_get_service( 'DomFilterContent' );
+		$dom_analysis = seopress_get_service( 'DomAnalysis' );
+		$ca_database  = seopress_get_service( 'ContentAnalysisDatabase' );
 
-		$data          = $dom_filter->getData( $dom_result['body'], $post_id );
-		$data          = $dom_analysis->getDataAnalyze( $data, array( 'id' => $post_id ) );
-		$data['score'] = $dom_analysis->getScore( $post );
-		$keywords      = $dom_analysis->getKeywords( array( 'id' => $post_id ) );
+		$data     = $dom_filter->getData( $dom_result['body'], $post_id );
+		$data     = $dom_analysis->getDataAnalyze( $data, array( 'id' => $post_id ) );
+		$keywords = $dom_analysis->getKeywords( array( 'id' => $post_id ) );
 
+		// Scoring reads the saved analysis, just as it does in the batch worker.
 		$ca_database->saveData( $post_id, $data, $keywords );
-		$get_analysis->getAnalyzes( $post );
+		$data['score'] = $dom_analysis->getScore( $post );
+		$ca_database->saveData( $post_id, $data, $keywords );
 
 		return new \WP_REST_Response(
 			array(
@@ -1383,7 +1449,9 @@ class SiteAudit implements ExecuteHooks {
 				'priorityMedium'  => (int) $row->priority_medium,
 				'priorityLow'     => (int) $row->priority_low,
 				'priorityGood'    => (int) $row->priority_good,
-				'healthScore'     => (int) $row->health_score,
+				// A scan that crawled no URL has no score. Rows written
+				// before 10.4.0 stored 100 for such a scan.
+				'healthScore'     => (int) $row->total_crawled > 0 ? (int) $row->health_score : null,
 			);
 		}
 
@@ -1512,7 +1580,7 @@ class SiteAudit implements ExecuteHooks {
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function processScan( \WP_REST_Request $request ) {
 		$action = $request->get_param( 'action' );
@@ -1557,6 +1625,7 @@ class SiteAudit implements ExecuteHooks {
 		delete_option( 'seopress_pro_site_audit_post_count' );
 		delete_option( 'seopress_pro_site_audit_log' );
 		delete_option( 'seopress_pro_site_audit_last_error' );
+		delete_option( 'seopress_pro_site_audit_fetch_failures' );
 		delete_option( 'seopress_pro_site_audit_heartbeat' );
 
 		// The stuck-offset bookkeeping belongs to the run that wrote it. Left
@@ -1571,7 +1640,15 @@ class SiteAudit implements ExecuteHooks {
 
 		// Queue the first batch. The cron hook re-enters run_task_fn() and
 		// schedules every subsequent batch via wp_schedule_single_event().
-		wp_schedule_single_event( time(), 'seopress_site_audit_run_task_cron', array( 0 ) );
+		$scheduled = wp_schedule_single_event( time(), 'seopress_site_audit_run_task_cron', array( 0 ), true );
+		if ( is_wp_error( $scheduled ) || false === $scheduled ) {
+			update_option( 'seopress_pro_site_audit_running', 0, false );
+			return new \WP_Error(
+				'seopress_audit_schedule_failed',
+				__( 'Could not schedule Site Audit. Check the WordPress cron configuration and try again.', 'wp-seopress-pro' ),
+				array( 'status' => 500 )
+			);
+		}
 
 		// Start the self-heal watchdog now, at kickoff, so the scan can recover
 		// even if this very first batch never runs (e.g. a broken cron setup).
@@ -1600,7 +1677,10 @@ class SiteAudit implements ExecuteHooks {
 	/**
 	 * Build the scan status payload from the plugin options set by the crawler.
 	 *
-	 * @return array<string, int|string|bool>
+	 * `failed` counts the pages skipped because their HTML could not be
+	 * fetched, and `lastFailure` names the last of them with the reason.
+	 *
+	 * @return array<string, mixed>
 	 */
 	private function getScanStatus() {
 		$running   = (int) get_option( 'seopress_pro_site_audit_running', 0 );
@@ -1608,20 +1688,62 @@ class SiteAudit implements ExecuteHooks {
 		$total     = (int) get_option( 'seopress_pro_site_audit_count_posts', 0 );
 		$log       = sanitize_text_field( (string) get_option( 'seopress_pro_site_audit_log', '' ) );
 		$duration  = (int) get_option( 'seopress_pro_site_audit_scan_duration', 0 );
+		$failures  = get_option( 'seopress_pro_site_audit_fetch_failures', array() );
 
 		$percent = 0;
 		if ( $total > 0 ) {
 			$percent = min( 100, (int) floor( ( $processed / $total ) * 100 ) );
 		}
 
+		$failed       = is_array( $failures ) && isset( $failures['count'] ) ? (int) $failures['count'] : 0;
+		$last_failure = null;
+		if ( $failed > 0 && isset( $failures['last'] ) && is_array( $failures['last'] ) ) {
+			$code         = isset( $failures['last']['code'] ) ? (string) $failures['last']['code'] : '';
+			$last_failure = array(
+				'url'    => isset( $failures['last']['url'] ) ? esc_url_raw( $failures['last']['url'] ) : '',
+				'code'   => sanitize_key( $code ),
+				'reason' => $this->getFetchFailureReason( $code ),
+			);
+		}
+
 		return array(
-			'running'   => 1 === $running,
-			'processed' => $processed,
-			'total'     => $total,
-			'percent'   => $percent,
-			'log'       => $log,
-			'duration'  => $duration,
+			'running'     => 1 === $running,
+			'processed'   => $processed,
+			'total'       => $total,
+			'percent'     => $percent,
+			'log'         => $log,
+			'duration'    => $duration,
+			'failed'      => $failed,
+			'lastFailure' => $last_failure,
 		);
+	}
+
+	/**
+	 * Explain why the HTML of a page could not be fetched.
+	 *
+	 * @param string|int $code A failure code returned by RequestPreview::getDomById().
+	 *
+	 * @return string
+	 */
+	private function getFetchFailureReason( $code ) {
+		switch ( (string) $code ) {
+			case 'blocked':
+				return __( 'The request was blocked by a firewall, a CDN or a bot protection.', 'wp-seopress-pro' );
+			case 'http_error':
+				return __( 'The server did not answer with the page (HTTP status other than 200). A firewall or a bot protection on the host often causes this.', 'wp-seopress-pro' );
+			case 'unreachable':
+				return __( 'The page could not be reached (connection error or timeout).', 'wp-seopress-pro' );
+			case 'redirected':
+				return __( 'The page redirects to another site.', 'wp-seopress-pro' );
+			case 'empty':
+				return __( 'The server returned an empty page.', 'wp-seopress-pro' );
+			case '404':
+				return __( 'The page was not found (HTTP 404).', 'wp-seopress-pro' );
+			case '401':
+				return __( 'The page requires authentication (HTTP 401).', 'wp-seopress-pro' );
+			default:
+				return __( 'The page could not be fetched.', 'wp-seopress-pro' );
+		}
 	}
 
 	/**

@@ -31,7 +31,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/etchwp-pro-audit', [
     'label'       => __('EtchWP Pro — Audit rendered styling', 'nibwp'),
-    'description' => __('Finds Etch content that renders unstyled: elements with no class, references to styles this site does not have, and trees that reference no styles at all.', 'nibwp'),
+    'description' => 'Finds Etch content that renders unstyled: elements with no class, references to styles this site does not have, and trees that reference no styles at all.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

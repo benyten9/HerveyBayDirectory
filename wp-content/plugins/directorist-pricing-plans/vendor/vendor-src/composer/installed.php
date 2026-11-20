@@ -13,7 +13,7 @@
         'deliciousbrains/wp-background-processing' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => 'be0a5e62f2c1e7603ebe3dea75f91102f1a2c1cb',
+            'reference' => '07bd3fbb28eba7d8101dfd6b7e05deaddc531e97',
             'type' => 'library',
             'install_path' => __DIR__ . '/../deliciousbrains/wp-background-processing',
             'aliases' => array(
@@ -33,7 +33,7 @@
         'laravel/serializable-closure' => array(
             'pretty_version' => '1.x-dev',
             'version' => '1.9999999.9999999.9999999-dev',
-            'reference' => '8be68b9a31863c40ccccac14f7e885e274b8ea62',
+            'reference' => '38c220b38bacdb9f83eb5d60de07908a9553ebc4',
             'type' => 'library',
             'install_path' => __DIR__ . '/../laravel/serializable-closure',
             'aliases' => array(),

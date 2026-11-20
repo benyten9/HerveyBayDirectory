@@ -14,7 +14,7 @@ namespace DoubleScale\Modules\Contacts\Filters\User;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 
 /**
@@ -56,7 +56,7 @@ class IsUser extends Filter {
 	 *
 	 * @since 1.0.0
 	 */
-	public $type = 'boolean';
+	public $type = 'none'; // Yes / No is the operator: no value to enter.
 
 	/**
 	 * Get operators

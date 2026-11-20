@@ -126,26 +126,13 @@ if ( ! class_exists( 'SWBDPCouponCPT' ) ) {
                 return;
             }
 
-            $get_coup_des       = isset( $_POST['swbdpc_coupon_descrip'] ) ? sanitize_text_field( $_POST['swbdpc_coupon_descrip'] ) : '';
-            $get_coup_code      = isset( $_POST['swbdpc_coupon_code'] ) ? $this->sanitize_special_characters( $_POST['swbdpc_coupon_code'] ) : '';
-            $get_coup_type      = isset( $_POST['swbdpc_coupon_type'] ) ? sanitize_text_field( $_POST['swbdpc_coupon_type'] ) : '';
-            $get_fixed_products = isset( $_POST['swbdpc_fixed_products'] ) ? SWBDPCHelperFunctions::normalize_plan_ids( directorist_clean( $_POST['swbdpc_fixed_products'] ) ) : array();
-            $get_coup_amount    = isset( $_POST['swbdpc_coupon_amount'] ) ? (int) $_POST['swbdpc_coupon_amount'] : '';
-            $get_coup_expiry    = isset( $_POST['swbdpc_coupon_expiry'] ) ? sanitize_text_field( $_POST['swbdpc_coupon_expiry'] ) : '';
-            $get_coup_use_lim   = isset( $_POST['swbdpc_coupon_usage_limit'] ) ? (int) $_POST['swbdpc_coupon_usage_limit'] : 1;
-
-            update_post_meta( $post_id, 'swbdpc_coupon_descrip', $get_coup_des );
-            update_post_meta( $post_id, 'swbdpc_coupon_code', $get_coup_code );
-            update_post_meta( $post_id, 'swbdpc_coupon_type', $get_coup_type );
-            update_post_meta( $post_id, 'swbdpc_fixed_products', $get_fixed_products );
-            update_post_meta( $post_id, 'swbdpc_coupon_amount', $get_coup_amount );
-            update_post_meta( $post_id, 'swbdpc_coupon_expiry', $get_coup_expiry );
-            update_post_meta( $post_id, 'swbdpc_coupon_usage_limit', $get_coup_use_lim );
-        }
-
-        private function sanitize_special_characters( $string ) {
-            $string = str_replace(' ', '_', $string);
-            return preg_replace('/[^a-zA-Z0-9_.]/', '', $string);
+            if ( SWBDPC_POST_TYPE !== get_post_type( $post_id ) ) {
+                return;
+            }
+            $result = SWBDPCCouponService::save( $post_id, SWBDPCCouponService::submitted() );
+            if ( is_wp_error( $result ) ) {
+                wp_die( esc_html( $result->get_error_message() ), 'Invalid coupon', [ 'response' => 400, 'back_link' => true ] );
+            }
         }
 
         /**

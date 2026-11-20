@@ -226,7 +226,7 @@ class Capabilities {
 	 */
 	public static function ensure_capabilities_synced(): void {
 		$current = (string) get_option( 'doublescale_booking_caps_version', '' );
-		if ( self::CAPS_SYNC_VERSION === $current ) {
+		if ( self::CAPS_SYNC_VERSION === $current && self::roles_hold_their_caps() ) {
 			return;
 		}
 
@@ -236,6 +236,28 @@ class Capabilities {
 		if ( is_user_logged_in() ) {
 			wp_get_current_user()->get_role_caps();
 		}
+	}
+
+	/**
+	 * Whether the booking roles still hold the caps the version flag says they have.
+	 *
+	 * Roles can be re-created with only their base caps (plugin re-activation, a role
+	 * editor, another plugin resetting roles) while the version flag stays current; without
+	 * this check a Booking Agent is then locked out of Booking until the flag changes.
+	 */
+	private static function roles_hold_their_caps(): bool {
+		foreach ( array( UserRoles::BOOKING_MANAGER, UserRoles::BOOKING_AGENT ) as $role_slug ) {
+			$role = get_role( $role_slug );
+			if ( ! $role ) {
+				continue;
+			}
+			foreach ( self::get_caps_for_role( $role_slug ) as $capability ) {
+				if ( empty( $role->capabilities[ $capability ] ) ) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**

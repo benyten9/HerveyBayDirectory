@@ -83,17 +83,41 @@ final class Module extends AbstractModule {
 		set_transient( 'doublescale_register_tasks_lock_inbox', 1, MINUTE_IN_SECONDS );
 		$tasks = new \DoubleScale\Pro\Modules\Tasks\Tasks( 'doublescale_campaigns' );
 
+		$interval = self::poll_interval();
+
+		// A changed interval must replace the existing recurring action —
+		// Action Scheduler keeps the interval it was created with.
+		$applied = (int) get_option( 'doublescale_inbox_poll_interval_applied', 0 );
+		if ( $applied !== $interval ) {
+			$tasks->unschedule_all( 'doublescale_email_inbound' );
+			$tasks->unschedule_all( 'doublescale_user_email_accounts' );
+			update_option( 'doublescale_inbox_poll_interval_applied', $interval, false );
+		}
+
 		$settings = \DoubleScale\Pro\Settings::get( 'email_inbound', array() );
 		if ( ! empty( $settings['enabled'] ) ) {
 			if ( $tasks->get_next_timestamp( 'doublescale_email_inbound' ) === false ) {
-				$tasks->schedule_recurring( time(), 60, 'doublescale_email_inbound' );
+				$tasks->schedule_recurring( time(), $interval, 'doublescale_email_inbound' );
 			}
 		}
 
 		if ( get_option( 'doublescale_has_user_email_accounts' ) ) {
 			if ( $tasks->get_next_timestamp( 'doublescale_user_email_accounts' ) === false ) {
-				$tasks->schedule_recurring( time(), 60, 'doublescale_user_email_accounts' );
+				$tasks->schedule_recurring( time(), $interval, 'doublescale_user_email_accounts' );
 			}
 		}
+	}
+
+	/**
+	 * Seconds between mailbox polls.
+	 *
+	 * Every run costs a WP bootstrap plus an IMAP connect, so hosts with strict
+	 * CPU budgets can stretch this via the filter. Clamped to 60s–1h.
+	 *
+	 * @return int
+	 */
+	public static function poll_interval() {
+		$interval = (int) apply_filters( 'doublescale_inbox_poll_interval', 60 );
+		return max( 60, min( HOUR_IN_SECONDS, $interval ) );
 	}
 }

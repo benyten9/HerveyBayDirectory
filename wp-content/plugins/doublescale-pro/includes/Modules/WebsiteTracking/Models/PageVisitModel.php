@@ -10,7 +10,8 @@
 
 namespace DoubleScale\Pro\Modules\WebsiteTracking\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 
 /**
  * PageVisitModel class
@@ -72,7 +73,7 @@ class PageVisitModel extends Model
 	 * Contact relationship
 	 *
 	 * @since 1.2.0
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact()
 	{

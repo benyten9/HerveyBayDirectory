@@ -34,6 +34,7 @@ namespace DoubleScale\Modules\Support\Rest\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Support\Services\TicketProject;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
@@ -42,11 +43,14 @@ use DoubleScale\Modules\Support\Models\MailboxModel;
 use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Support\Services\AttachmentService;
 use DoubleScale\Modules\Support\Services\ContactResolver;
+use DoubleScale\Modules\Support\Services\ReplyAuthor;
 use DoubleScale\Modules\Support\Services\TicketService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use DoubleScale\Modules\Portal\Services\ClientSeen;
+use DoubleScale\Modules\Portal\Services\PortalScope;
 
 /**
  * RestPortalController class.
@@ -59,6 +63,13 @@ class RestPortalController extends RestController {
 	 * @var string
 	 */
 	protected $rest_base = 'support/portal';
+
+	/**
+	 * Signed-in client's contact (false when none), by WordPress user id.
+	 *
+	 * @var array<int, ContactModel|false>
+	 */
+	private $viewers = array();
 
 	/**
 	 * Register routes.
@@ -224,9 +235,23 @@ class RestPortalController extends RestController {
 			);
 		}
 
-		$query = TicketModel::query()
-			->where( 'contact_id', $contact->id )
-			->with( array( 'mailbox' ) );
+		$query = TicketModel::query()->with( array( 'mailbox', 'contact' ) );
+		// "mine" narrows a company member's list to tickets they opened.
+		if ( 'mine' === $request->get_param( 'scope' ) ) {
+			$query->where( 'contact_id', $contact->id );
+		} else {
+			PortalScope::apply( $query, (int) $contact->id, 'tickets' );
+		}
+
+		// A project's tickets: only where the client may see them (the project
+		// is theirs and shows tickets). The ticket scope above still applies.
+		$project_id = (int) $request->get_param( 'project_id' );
+		if ( $project_id > 0 ) {
+			if ( ! TicketProject::portal_allowed( $project_id, $contact ) ) {
+				return new WP_Error( 'project_not_found', __( 'Project not found.', 'doublescale' ), array( 'status' => 404 ) );
+			}
+			$query->where( 'project_id', $project_id );
+		}
 
 		// Filter: status (single or comma-separated).
 		$status = $request->get_param( 'status' );
@@ -344,9 +369,13 @@ class RestPortalController extends RestController {
 		);
 		$attachments_map = ( new AttachmentService() )->map_for_activities( $activity_ids );
 
-		$data = array();
+		$customer_email = self::customer_email( $ticket );
+		// The client opened the conversation: the team's replies are seen.
+		ClientSeen::ticket_replies_seen( $activities, $customer_email );
+		$requester = $this->colleague_requester( $ticket );
+		$data      = array();
 		foreach ( $activities as $activity ) {
-			$data[] = $this->shape_portal_activity( $activity, $attachments_map );
+			$data[] = $this->shape_portal_activity( $activity, $attachments_map, $customer_email, $requester );
 		}
 
 		return new WP_REST_Response(
@@ -435,9 +464,33 @@ class RestPortalController extends RestController {
 			$create_data['attachment_hashes'] = $params['attachment_hashes'];
 		}
 
+		// Sharing is opt-in: the member ticks "Share with my company" (and
+		// picks which one when they belong to several).
+		if ( ! empty( $params['share_with_company'] ) ) {
+			$create_data['company_id'] = PortalScope::share_company( $this->viewer_contact_id(), 'tickets', $params['company_id'] ?? 0 );
+		}
+
+		// Filed under one of their projects that shows tickets to clients.
+		$project_id = isset( $params['project_id'] ) ? (int) $params['project_id'] : 0;
+		if ( $project_id > 0 ) {
+			$viewer = $this->viewer_contact();
+			if ( ! $viewer || ! TicketProject::portal_allowed( $project_id, $viewer ) ) {
+				return new WP_Error(
+					'project_not_available',
+					__( 'You cannot open a ticket under this project.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		$ticket = $this->service()->create_ticket( $create_data );
 		if ( is_wp_error( $ticket ) ) {
 			return $ticket;
+		}
+
+		if ( $project_id > 0 ) {
+			$ticket->project_id = $project_id;
+			$ticket->save();
 		}
 
 		return new WP_REST_Response( $this->shape_portal_ticket( $ticket ), 201 );
@@ -489,20 +542,22 @@ class RestPortalController extends RestController {
 		if ( ! empty( $params['attachment_hashes'] ) && is_array( $params['attachment_hashes'] ) ) {
 			$reply_data['attachment_hashes'] = $params['attachment_hashes'];
 		}
+		// A colleague on a company ticket replies as themselves, so the thread
+		// never credits their words to the person who opened it.
+		$viewer = $this->viewer_contact();
+		if ( $viewer && (int) $viewer->id !== (int) $ticket->contact_id ) {
+			$reply_data['from_email'] = (string) $viewer->email;
+			$reply_data['from_name']  = self::short_name( $viewer );
+		}
 
+		// A customer's reply reopens the ticket (TicketService::add_reply).
 		$activity = $this->service()->add_reply( $ticket, $reply_data );
 		if ( is_wp_error( $activity ) ) {
 			return $activity;
 		}
 
-		// Customer replying to a closed/resolved ticket re-opens it so the
-		// agent inbox sees the new message. Matches the QuillSupport behaviour.
-		if ( in_array( $ticket->status, array( 'resolved', 'closed' ), true ) ) {
-			$this->service()->update_ticket( $ticket, array( 'status' => 'open' ) );
-		}
-
 		$attachments_map = ( new AttachmentService() )->map_for_activities( array( (int) $activity->id ) );
-		return new WP_REST_Response( $this->shape_portal_activity( $activity, $attachments_map ), 201 );
+		return new WP_REST_Response( $this->shape_portal_activity( $activity, $attachments_map, self::customer_email( $ticket ), $this->colleague_requester( $ticket ) ), 201 );
 	}
 
 	/**
@@ -523,10 +578,8 @@ class RestPortalController extends RestController {
 		}
 
 		$ticket_id = (int) $request->get_param( 'ticket_id' );
-		$ticket    = TicketModel::where( 'id', $ticket_id )
-			->where( 'contact_id', $contact->id )
-			->first();
-		if ( ! $ticket ) {
+		$ticket    = TicketModel::where( 'id', $ticket_id )->first();
+		if ( ! $ticket || ! PortalScope::owns( $ticket, (int) $contact->id, 'tickets' ) ) {
 			return new WP_Error( 'not_found', __( 'Ticket not found.', 'doublescale' ), array( 'status' => 404 ) );
 		}
 
@@ -668,12 +721,11 @@ class RestPortalController extends RestController {
 		}
 
 		$id     = (int) $request->get_param( 'id' );
-		$ticket = TicketModel::with( array( 'mailbox' ) )
+		$ticket = TicketModel::with( array( 'mailbox', 'contact' ) )
 			->where( 'id', $id )
-			->where( 'contact_id', $contact->id )
 			->first();
 
-		if ( ! $ticket ) {
+		if ( ! $ticket || ! PortalScope::owns( $ticket, (int) $contact->id, 'tickets' ) ) {
 			return new WP_Error(
 				'not_found',
 				__( 'Ticket not found.', 'doublescale' ),
@@ -692,7 +744,9 @@ class RestPortalController extends RestController {
 	 * @return array
 	 */
 	private function shape_portal_ticket( TicketModel $ticket ): array {
-		$custom_data = is_array( $ticket->custom_data ) ? $ticket->custom_data : array();
+		// Only the fields a customer may see: never the team-only ones or the
+		// CC list the ticket keeps alongside them.
+		$custom_data = self::portal_custom_data( is_array( $ticket->custom_data ) ? $ticket->custom_data : array() );
 		return array(
 			'id'             => (int) $ticket->id,
 			'title'          => (string) $ticket->title,
@@ -706,17 +760,104 @@ class RestPortalController extends RestController {
 			) : null,
 			'created_at'     => $ticket->created_at ? (string) $ticket->created_at : null,
 			'updated_at'     => $ticket->updated_at ? (string) $ticket->updated_at : null,
+			// Company-shared tickets: who opened it, so colleagues can tell.
+			'shared'         => ! empty( $ticket->company_id ),
+			'company_id'     => $ticket->company_id ? (int) $ticket->company_id : null,
+			'requester'      => (int) $ticket->contact_id === $this->viewer_contact_id() ? null : self::requester( $ticket ),
+			'is_mine'        => (int) $ticket->contact_id === $this->viewer_contact_id(),
+			// The linked project, only when the client can open it in the portal.
+			'project'        => $ticket->project_id && $this->viewer_contact()
+				? TicketProject::portal_summary( (int) $ticket->project_id, $this->viewer_contact() )
+				: null,
+			// Merged into another request of the same customer: it goes on there.
+			'merged_into'    => (int) $ticket->merged_into_id > 0 ? (int) $ticket->merged_into_id : null,
 		);
+	}
+
+	/**
+	 * Name of the contact who opened a ticket (first name and last initial
+	 * only), for colleagues who see it through their company.
+	 *
+	 * @param TicketModel $ticket Ticket.
+	 * @return array{contact_id:int, name:string}|null
+	 */
+	private static function requester( TicketModel $ticket ): ?array {
+		if ( ! $ticket->contact ) {
+			return null;
+		}
+		return array(
+			'contact_id' => (int) $ticket->contact_id,
+			'name'       => self::short_name( $ticket->contact ),
+		);
+	}
+
+	/**
+	 * Whether an emailed or colleague's reply came from this address.
+	 *
+	 * @param array<string, mixed> $data  Reply data.
+	 * @param string               $email Address.
+	 */
+	private static function sent_by( array $data, string $email ): bool {
+		$from = isset( $data['from_email'] ) ? strtolower( trim( (string) $data['from_email'] ) ) : '';
+		return '' !== $from && strtolower( trim( $email ) ) === $from;
+	}
+
+	/**
+	 * A client's name as colleagues see it: first name and last initial, else
+	 * their email.
+	 *
+	 * @param ContactModel $contact Contact.
+	 */
+	private static function short_name( ContactModel $contact ): string {
+		$first = trim( (string) $contact->first_name );
+		$last  = trim( (string) $contact->last_name );
+		$name  = trim( $first . ' ' . ( '' !== $last ? mb_substr( $last, 0, 1 ) . '.' : '' ) );
+		return '' !== $name ? $name : (string) $contact->email;
+	}
+
+	/**
+	 * The signed-in client's contact id (0 when none), looked up once per request.
+	 */
+	private function viewer_contact_id(): int {
+		$viewer = $this->viewer_contact();
+		return $viewer ? (int) $viewer->id : 0;
+	}
+
+	/**
+	 * The signed-in client's contact, looked up once per request.
+	 */
+	private function viewer_contact(): ?ContactModel {
+		$user_id = get_current_user_id();
+		if ( ! array_key_exists( $user_id, $this->viewers ) ) {
+			$this->viewers[ $user_id ] = $this->lookup_contact_for_current_user() ?? false;
+		}
+		return $this->viewers[ $user_id ] ?: null;
+	}
+
+	/**
+	 * The requester's name when the viewer is a colleague on a company ticket,
+	 * else null (the viewer opened it).
+	 *
+	 * @param TicketModel $ticket Ticket.
+	 */
+	private function colleague_requester( TicketModel $ticket ): ?string {
+		if ( (int) $ticket->contact_id === $this->viewer_contact_id() ) {
+			return null;
+		}
+		$requester = self::requester( $ticket );
+		return $requester ? $requester['name'] : null;
 	}
 
 	/**
 	 * Shape an activity row for the portal conversation view.
 	 *
-	 * @param ActivityModel                                $activity Activity row.
+	 * @param ActivityModel                                $activity        Activity row.
 	 * @param array<int, array<int, array<string, mixed>>> $attachments_map Attachments keyed by activity id.
+	 * @param string                                       $customer_email  The ticket's contact email.
+	 * @param string|null                                  $requester       Requester's name when a colleague is viewing a company ticket.
 	 * @return array
 	 */
-	private function shape_portal_activity( ActivityModel $activity, array $attachments_map = array() ): array {
+	private function shape_portal_activity( ActivityModel $activity, array $attachments_map = array(), string $customer_email = '', ?string $requester = null ): array {
 		$kind_map = array(
 			ActivityTypes::SUPPORT_REPLY => 'reply',
 			ActivityTypes::SUPPORT_EVENT => 'event',
@@ -725,31 +866,34 @@ class RestPortalController extends RestController {
 		$data     = is_array( $activity->data ) ? $activity->data : array();
 
 		// Match the admin RestReplyController shape so the renderer can reuse
-		// the same `ConversationItem` type. Portal-specific additions: strip
-		// `contact_id` (agent-internal) and add `is_self` so the renderer can
-		// right-align the customer's own bubbles.
+		// the same `ConversationItem` type. Portal-specific additions: `is_self`
+		// so the renderer can right-align the customer's own bubbles, and only
+		// the data the thread prints ({@see ReplyAuthor::public_data()}).
 		//
-		// "Self" = the message was authored by the customer, not an agent. Two
-		// shapes count as the customer's own message. (a) NULL `user_id`:
-		// customer replies are deliberately written that way (see add_reply():
-		// `author_user_id = null`), as are inbound email replies. (b) `user_id`
-		// === the current (owning) user: the opening message of a web-created
-		// ticket is credited to the logged-in customer (TicketService, source
-		// `web`, no explicit author), so it carries their WP id, not NULL. The
-		// portal only ever returns tickets the current user OWNS, so matching
-		// get_current_user_id() is safe and correctly flags that opening message
-		// as self. An agent reply (or an agent filing on the customer's behalf)
-		// carries a different id and stays "not self". Testing only
-		// `empty(user_id)` mislabels the customer's own opening message.
+		// "Self" = the customer wrote it. A reply with a `user_id` is theirs when
+		// it is the current (owning) user's: the opening message of a web-created
+		// ticket is credited to the logged-in customer. The portal only returns
+		// tickets the current user OWNS, so matching get_current_user_id() is safe.
+		// A reply with no `user_id` is theirs unless it came from another address
+		// (someone CC'd, a teammate answering from their mailbox) or the system
+		// posted it ({@see ReplyAuthor::authorless_is_customer()}).
 		$current_user_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
-		$is_self         = ActivityTypes::SUPPORT_REPLY === $activity->activity_type
-			&& ( empty( $activity->user_id ) || (int) $activity->user_id === $current_user_id );
+		$is_reply        = ActivityTypes::SUPPORT_REPLY === $activity->activity_type;
+		$is_customer     = $is_reply && empty( $activity->user_id ) && ReplyAuthor::authorless_is_customer( $data, $customer_email );
+		// On a company ticket a colleague is viewing, the requester's emailed
+		// replies are theirs, not the viewer's.
+		$viewer  = $this->viewer_contact();
+		$is_self = $is_reply && ( empty( $activity->user_id )
+			? ( $is_customer && null === $requester ) || ( $viewer && self::sent_by( $data, (string) $viewer->email ) )
+			: (int) $activity->user_id === $current_user_id );
 
-		// Resolve the `user` shown to the customer. We expose only the WP
-		// display_name — never the agent's WP id or email:
+		// Resolve the `user` shown to the customer. We expose only a name —
+		// never the agent's WP id or email:
 		// - The customer's OWN reply → their own id + display name.
 		// - A staff (agent) REPLY → the agent's display_name, so the customer
 		// sees who helped them (no id, no email).
+		// - Someone else's emailed reply → the sender's name; a system message
+		// → none (the thread says "Support team").
 		// - Lifecycle events (created, status changed, …) → authorless rows.
 		$user = null;
 		if ( $is_self ) {
@@ -759,14 +903,15 @@ class RestPortalController extends RestController {
 					'display_name' => (string) $activity->user->display_name,
 				);
 			}
-		} elseif (
-			ActivityTypes::SUPPORT_REPLY === $activity->activity_type
-			&& $activity->relationLoaded( 'user' )
-			&& $activity->user
-		) {
+		} elseif ( $is_reply && $activity->relationLoaded( 'user' ) && $activity->user ) {
 			$user = array(
 				'display_name' => (string) $activity->user->display_name,
 			);
+		} elseif ( $is_customer && null !== $requester ) {
+			$user = array( 'display_name' => $requester );
+		} elseif ( $is_reply && empty( $activity->user_id ) ) {
+			$sender = ReplyAuthor::sender_name( $data );
+			$user   = null !== $sender ? array( 'display_name' => $sender ) : null;
 		}
 
 		$aid = (int) $activity->id;
@@ -776,7 +921,7 @@ class RestPortalController extends RestController {
 			'kind'        => $kind,
 			'type'        => $activity->activity_type,
 			'user_id'     => $is_self && $activity->user_id ? (int) $activity->user_id : null,
-			'data'        => $data,
+			'data'        => ReplyAuthor::public_data( (string) $activity->activity_type, $data ),
 			'is_self'     => $is_self,
 			'user'        => $user,
 			'attachments' => isset( $attachments_map[ $aid ] ) ? $attachments_map[ $aid ] : array(),
@@ -808,6 +953,41 @@ class RestPortalController extends RestController {
 		if ( ! class_exists( $class ) ) {
 			return array();
 		}
-		return ( new $class() )->render( $custom_data );
+		return ( new $class() )->render( $custom_data, 'portal' );
+	}
+
+	/**
+	 * The stored custom fields a customer may see: those defined for the
+	 * portal (or both sides). Without Pro there are no definitions to show.
+	 *
+	 * @param array<string, mixed> $custom_data Stored ticket custom data.
+	 * @return array<string, mixed>
+	 */
+	private static function portal_custom_data( array $custom_data ): array {
+		$class = '\\DoubleScale\\Pro\\Modules\\Support\\Services\\CustomFieldsService';
+		if ( ! class_exists( $class ) || array() === $custom_data ) {
+			return array();
+		}
+		$keys = array();
+		foreach ( ( new $class() )->get_definitions( 'portal' ) as $field ) {
+			if ( ! empty( $field['key'] ) ) {
+				$keys[ (string) $field['key'] ] = true;
+			}
+		}
+
+		return array_intersect_key( $custom_data, $keys );
+	}
+
+	/**
+	 * The ticket's contact email, to tell the customer's own emailed replies
+	 * from someone else's.
+	 *
+	 * @param TicketModel $ticket Ticket.
+	 * @return string
+	 */
+	private static function customer_email( TicketModel $ticket ): string {
+		$ticket->loadMissing( 'contact' );
+
+		return $ticket->contact ? (string) $ticket->contact->email : '';
 	}
 }

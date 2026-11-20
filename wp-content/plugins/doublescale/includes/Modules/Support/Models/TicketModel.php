@@ -15,7 +15,7 @@ namespace DoubleScale\Modules\Support\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
@@ -34,6 +34,7 @@ use DoubleScale\Modules\Support\Constants\TicketStatus;
  * @property string                                                              $priority
  * @property int                                                                 $mailbox_id
  * @property int                                                                 $contact_id
+ * @property int|null                                                            $project_id    Linked Pro project (null = none).
  * @property int|null                                                            $agent_user_id
  * @property string|null                                                         $product
  * @property string|null                                                         $message_id
@@ -45,7 +46,7 @@ use DoubleScale\Modules\Support\Constants\TicketStatus;
  * @property \DoubleScale\Modules\Contacts\Models\ContactModel|null              $contact
  * @property \DoubleScale\Core\Models\UserModel|null                             $agent
  * @property MailboxModel|null                                                   $mailbox
- * @property \Illuminate\Database\Eloquent\Collection<int, AttachmentModel>      $attachments
+ * @property \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection<int, AttachmentModel>      $attachments
  */
 class TicketModel extends Model {
 
@@ -75,6 +76,8 @@ class TicketModel extends Model {
 		'priority',
 		'mailbox_id',
 		'contact_id',
+		'company_id',
+		'project_id',
 		'agent_user_id',
 		'product',
 		'message_id',
@@ -103,7 +106,7 @@ class TicketModel extends Model {
 	/**
 	 * Customer (the contact who owns this ticket).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
@@ -112,7 +115,7 @@ class TicketModel extends Model {
 	/**
 	 * Assigned agent (a WordPress user).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function agent() {
 		return $this->belongsTo( UserModel::class, 'agent_user_id', 'ID' );
@@ -126,7 +129,7 @@ class TicketModel extends Model {
 	 * row is removed (see RestMailboxController::delete_item), so there is no
 	 * "no channel" / orphaned-ticket state.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function mailbox() {
 		return $this->belongsTo( MailboxModel::class, 'mailbox_id', 'id' );
@@ -136,7 +139,7 @@ class TicketModel extends Model {
 	 * Attachments uploaded against this ticket — both temp uploads
 	 * (pre-activity) and finalised attachments.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function attachments() {
 		return $this->hasMany( AttachmentModel::class, 'attachable_id', 'id' )
@@ -147,7 +150,7 @@ class TicketModel extends Model {
 	 * Full conversation log — every reply, note, and system event linked to
 	 * this ticket through `activity_associations.entity_type=3`.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function conversations() {
 		return ActivityModel::forTicket( $this->id );
@@ -157,7 +160,7 @@ class TicketModel extends Model {
 	 * Tag models for the IDs stored in `tag_ids` JSON. Returns an empty
 	 * collection when `tag_ids` is unset or non-array.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public function tags() {
 		$ids = is_array( $this->tag_ids ) ? array_filter( array_map( 'intval', $this->tag_ids ) ) : array();
@@ -180,10 +183,10 @@ class TicketModel extends Model {
 	/**
 	 * Scope: filter by exact status.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $status Status value.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByStatus( $query, $status ) {
 		return $query->where( 'status', $status );
@@ -192,9 +195,9 @@ class TicketModel extends Model {
 	/**
 	 * Scope: only open tickets.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeOpen( $query ) {
 		return $query->where( 'status', TicketStatus::OPEN );
@@ -203,9 +206,9 @@ class TicketModel extends Model {
 	/**
 	 * Scope: every status except 'closed' — the typical inbox filter.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeActive( $query ) {
 		return $query->whereIn( 'status', TicketStatus::get_active_statuses() );
@@ -214,10 +217,10 @@ class TicketModel extends Model {
 	/**
 	 * Scope: filter by assigned agent (WP user id).
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $agent_user_id Agent WP user id.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByAgent( $query, $agent_user_id ) {
 		return $query->where( 'agent_user_id', $agent_user_id );
@@ -226,10 +229,10 @@ class TicketModel extends Model {
 	/**
 	 * Scope: filter by customer.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $contact_id Contact id.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByContact( $query, $contact_id ) {
 		return $query->where( 'contact_id', $contact_id );
@@ -238,10 +241,10 @@ class TicketModel extends Model {
 	/**
 	 * Scope: filter by mailbox channel.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $mailbox_id Mailbox id.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByMailbox( $query, $mailbox_id ) {
 		return $query->where( 'mailbox_id', $mailbox_id );
@@ -250,10 +253,10 @@ class TicketModel extends Model {
 	/**
 	 * Scope: tickets carrying a given tag id (via JSON_CONTAINS on `tag_ids`).
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $tag_id Tag id.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeWithTag( $query, $tag_id ) {
 		return $query->whereRaw( 'JSON_CONTAINS(tag_ids, ?)', array( (string) (int) $tag_id ) );

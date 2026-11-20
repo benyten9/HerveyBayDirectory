@@ -97,7 +97,7 @@ class UpdateCustomFieldProject extends BaseProjectAction {
 			return array();
 		}
 
-		$custom_fields = CustomFieldModel::where( 'scope', 'project' )->get();
+		$custom_fields = CustomFieldModel::cached_for_scope( 'project' );
 		$options       = array();
 		foreach ( $custom_fields as $custom_field ) {
 			$options[ $custom_field->id ] = array(

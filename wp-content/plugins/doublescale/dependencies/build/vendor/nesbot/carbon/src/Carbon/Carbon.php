@@ -8,10 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
-use Carbon\Traits\Date;
-use Carbon\Traits\DeprecatedProperties;
+use DoubleScale\Vendor\Carbon\Traits\Date;
+use DoubleScale\Vendor\Carbon\Traits\DeprecatedProperties;
 use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
@@ -505,7 +505,7 @@ use DateTimeZone;
  *
  * </autodoc>
  */
-class Carbon extends DateTime implements \Carbon\CarbonInterface
+class Carbon extends DateTime implements CarbonInterface
 {
     use Date;
     /**

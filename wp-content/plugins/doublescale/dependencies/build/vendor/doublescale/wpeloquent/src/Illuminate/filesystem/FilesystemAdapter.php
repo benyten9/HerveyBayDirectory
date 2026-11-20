@@ -1,15 +1,15 @@
 <?php
 
-namespace Illuminate\Filesystem;
+namespace DoubleScale\Vendor\Illuminate\Filesystem;
 
 use RuntimeException;
-use Illuminate\Http\File;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Http\File;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Support\Carbon;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Support\Carbon;
+use DoubleScale\Vendor\Illuminate\Http\UploadedFile;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
 use League\Flysystem\AdapterInterface;
 use DoubleScale\Vendor\PHPUnit\Framework\Assert as PHPUnit;
 use League\Flysystem\FileExistsException;
@@ -20,10 +20,10 @@ use League\Flysystem\FileNotFoundException;
 use League\Flysystem\Rackspace\RackspaceAdapter;
 use League\Flysystem\Adapter\Local as LocalAdapter;
 use DoubleScale\Vendor\Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Contracts\Filesystem\Cloud as CloudFilesystemContract;
-use Illuminate\Contracts\Filesystem\Filesystem as FilesystemContract;
-use Illuminate\Contracts\Filesystem\FileExistsException as ContractFileExistsException;
-use Illuminate\Contracts\Filesystem\FileNotFoundException as ContractFileNotFoundException;
+use DoubleScale\Vendor\Illuminate\Contracts\Filesystem\Cloud as CloudFilesystemContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Filesystem\Filesystem as FilesystemContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Filesystem\FileExistsException as ContractFileExistsException;
+use DoubleScale\Vendor\Illuminate\Contracts\Filesystem\FileNotFoundException as ContractFileNotFoundException;
 /**
  * @mixin \League\Flysystem\FilesystemInterface
  */

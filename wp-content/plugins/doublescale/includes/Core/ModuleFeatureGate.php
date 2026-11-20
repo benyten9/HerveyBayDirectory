@@ -81,6 +81,7 @@ function doublescale_phantom_module_toggle_slugs(): array {
 		'product_catalog',
 		'tasks',
 		'projects',
+		'websitetracking',
 	);
 
 	return array_values( array_unique( apply_filters( 'doublescale_phantom_module_toggle_slugs', $slugs ) ) );
@@ -117,6 +118,7 @@ function doublescale_child_module_parent_map(): array {
 		'subscriptions'   => 'sales',
 		'credit_notes'    => 'sales',
 		'product_catalog' => 'sales',
+		'knowledge_base'  => 'support',
 	);
 
 	/**
@@ -166,7 +168,8 @@ function doublescale_module_setting_enabled( string $slug, array $stored, bool $
 		return $proposals || $invoices;
 	}
 
-	return array_key_exists( $slug, doublescale_child_module_parent_map() );
+	// Child modules and the client portal are on until the user opts out.
+	return \DoubleScale\Core\ModuleManager::is_enabled_by_default( $slug );
 }
 
 /**
@@ -202,7 +205,7 @@ function doublescale_phantom_module_admin_meta( string $slug ): ?array {
 			);
 		case 'leadscoring':
 			return array(
-				'label'       => __( 'Lead scoring', 'doublescale' ),
+				'label'       => __( 'Lead Scoring', 'doublescale' ),
 				'description' => __( 'Score contacts from behavior and profile data for prioritization.', 'doublescale' ),
 			);
 		case 'credit_notes':
@@ -444,8 +447,10 @@ function doublescale_is_module_active( string $slug ): bool {
 /**
  * Whether a module is active and its representative DB table exists.
  *
- * Use before eager automation catalog queries (get_fields / get_options / rule
- * registration) so missing migrations do not fatal the admin bootstrap.
+ * The check before reading another module's data. A module's tables exist only
+ * once it has been switched on, so any code that reads another module's tables
+ * (relations, joins, counts, reports, dashboard figures, cascading deletes)
+ * asks this first and treats the data as absent when it says no.
  *
  * @param string $slug        Module slug.
  * @param string $model_class Eloquent model class that maps to the table name.
@@ -462,13 +467,124 @@ function doublescale_is_module_storage_ready( string $slug, string $model_class 
 	try {
 		global $wpdb;
 		$table = ( new $model_class() )->getTable();
-		// Escape `_` / `%` — SHOW TABLES uses LIKE, and table names contain underscores.
-		$like = $wpdb->esc_like( $table );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) === $table;
 	} catch ( \Throwable $e ) {
 		return false;
 	}
+
+	// Tables are never dropped while the plugin is installed, so a table found
+	// once is remembered (per schema revision) instead of probed on every
+	// request; a missing one is only remembered for this request.
+	static $seen = array();
+	if ( ! isset( $seen[ $table ] ) ) {
+		$ready = get_option( 'doublescale_ready_tables', array() );
+		$ready = is_array( $ready ) ? $ready : array();
+		$rev   = defined( 'DOUBLESCALE_SCHEMA_REV' ) ? DOUBLESCALE_SCHEMA_REV : '';
+		if ( isset( $ready[ $table ] ) && $ready[ $table ] === $rev ) {
+			$seen[ $table ] = true;
+		} else {
+			// Escape `_` / `%` — SHOW TABLES uses LIKE, and table names contain underscores.
+			$like = $wpdb->esc_like( $table );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$seen[ $table ] = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ) === $table;
+			if ( $seen[ $table ] ) {
+				$ready[ $table ] = $rev;
+				update_option( 'doublescale_ready_tables', $ready, true );
+			}
+		}
+	}
+
+	return $seen[ $table ];
+}
+
+/**
+ * The model whose table stands for each module's data, by module slug.
+ * Pro adds its modules through the `doublescale_module_data_models` filter.
+ *
+ * @return array<string, class-string>
+ */
+function doublescale_module_data_models(): array {
+	return (array) apply_filters(
+		'doublescale_module_data_models',
+		array(
+			'automations' => \DoubleScale\Modules\Automations\Models\AutomationModel::class,
+			'booking'     => \DoubleScale\Modules\Booking\Models\CalendarModel::class,
+			'campaigns'   => \DoubleScale\Modules\Campaigns\Models\CampaignModel::class,
+			'documents'   => \DoubleScale\Modules\Documents\Models\InvoiceModel::class,
+			'forms'       => \DoubleScale\Modules\Forms\Models\FormModel::class,
+			'smtp'        => \DoubleScale\Modules\Smtp\Models\SmtpEmailLogModel::class,
+			'support'     => \DoubleScale\Modules\Support\Models\TicketModel::class,
+		)
+	);
+}
+
+/**
+ * Whether another module's data can be read: the module is on and its tables
+ * exist. THE check before any cross-module query (relations, joins, counts,
+ * reports, dashboard figures, cascading deletes): a module's tables exist only
+ * once it has been switched on, and its data counts as absent while it is off.
+ *
+ * Never use class_exists() on a model for this: the class is there whenever
+ * the plugin is installed, whether its module is on or not.
+ *
+ * @param string $slug Module slug (documents = invoices and proposals).
+ */
+function doublescale_module_data_ready( string $slug ): bool {
+	$models = doublescale_module_data_models();
+	if ( isset( $models[ $slug ] ) ) {
+		return doublescale_is_module_storage_ready( $slug, $models[ $slug ] );
+	}
+
+	// No data model listed: the module must at least be installed (a Pro
+	// module on a free-only site has no data) and on.
+	$installed = doublescale_module_slug_to_class_map();
+	return isset( $installed[ $slug ] ) && doublescale_is_module_active( $slug );
+}
+
+/**
+ * Whether a DoubleScale table exists (suffix after `{prefix}doublescale_`).
+ *
+ * For keeping references consistent, NOT for deciding what to show: when a
+ * contact is deleted or merged, its rows in another module's table are
+ * cleaned up or repointed whenever that table exists, even while the module
+ * is off, so the data is still right if the module is switched back on.
+ * Reads use doublescale_module_data_ready().
+ *
+ * @param string $suffix Table name without `{prefix}doublescale_`.
+ */
+function doublescale_table_exists( string $suffix ): bool {
+	static $seen = array();
+	global $wpdb;
+	$table = $wpdb->prefix . 'doublescale_' . $suffix;
+	if ( ! isset( $seen[ $table ] ) ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one existence check per request.
+		$seen[ $table ] = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) === $table;
+	}
+	return $seen[ $table ];
+}
+
+/**
+ * REST guard for another module's data: the 404 `module_disabled` error that
+ * RestController::require_module() gives, while doublescale_module_data_ready()
+ * says no; null when the data can be read. Routes stay registered (the route
+ * manifest lists them); their handlers answer this while the module is off.
+ *
+ * @param string $slug Module slug.
+ * @return \WP_Error|null
+ */
+function doublescale_module_data_error( string $slug ): ?\WP_Error {
+	if ( doublescale_module_data_ready( $slug ) ) {
+		return null;
+	}
+
+	return new \WP_Error(
+		'module_disabled',
+		sprintf(
+			/* translators: %s: module slug */
+			__( 'The "%s" module is disabled.', 'doublescale' ),
+			$slug
+		),
+		array( 'status' => 404 )
+	);
 }
 
 if ( ! function_exists( 'doublescale_flush_module_enabled_cache' ) ) {

@@ -9,8 +9,9 @@ namespace DoubleScale\Modules\Documents\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Documents\Constants\ProposalStatus;
 use DoubleScale\Modules\Sales\Services\SalesNumbering;
@@ -42,6 +43,7 @@ class ProposalModel extends Model {
 		'template',
 		'template_color',
 		'contact_id',
+		'company_id',
 		'assigned_user_id',
 		'date',
 		'open_till',
@@ -94,30 +96,30 @@ class ProposalModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function assigned_user() {
 		return $this->belongsTo( UserModel::class, 'assigned_user_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasOne
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasOne
 	 */
 	public function invoice() {
 		return $this->hasOne( InvoiceModel::class, 'proposal_id', 'id' );
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $status Status value.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByStatus( $query, $status ) {
 		return $query->where( 'status', $status );
@@ -153,6 +155,12 @@ class ProposalModel extends Model {
 				);
 				$proposal->subtotal = $totals['subtotal'];
 				$proposal->total    = $totals['total'];
+
+				// Out of draft by any path: the client's amount stops following
+				// the store's currency. No status yet is a new draft.
+				if ( ! in_array( (string) $proposal->status, array( '', ProposalStatus::DRAFT ), true ) ) {
+					DocumentCurrency::freeze_on_send( $proposal );
+				}
 			}
 		);
 

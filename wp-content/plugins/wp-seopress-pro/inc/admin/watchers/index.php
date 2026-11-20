@@ -213,7 +213,7 @@ if ( '1' == seopress_get_toggle_option( '404' ) && apply_filters( 'seopress_post
 		foreach ( $notices as $key => $notice ) {
 			$href_button = seopress_get_redirection_create_url(
 				(string) ( $notice['before_url'] ?? '' ),
-				'update' === $notice['type'] ? (string) ( $notice['new_url'] ?? '' ) : ''
+				'update' === ( $notice['type'] ?? '' ) ? (string) ( $notice['new_url'] ?? '' ) : ''
 			);
 			?>
 
@@ -230,15 +230,17 @@ if ( '1' == seopress_get_toggle_option( '404' ) && apply_filters( 'seopress_post
 			<?php
 				printf(
 					'<a href="%s" class="notice-dismiss" style="text-decoration:none;"><span class="screen-reader-text">' . esc_html__( 'Dismiss this notice', 'wp-seopress-pro' ) . '</span></a>',
-					wp_nonce_url(
-						add_query_arg(
-							array(
-								'action' => 'seopress_dismiss_notice_need_to_redirect',
-								'id'     => $notice['id'],
+					esc_url(
+						wp_nonce_url(
+							add_query_arg(
+								array(
+									'action' => 'seopress_dismiss_notice_need_to_redirect',
+									'id'     => $notice['id'],
+								),
+								admin_url( 'admin-post.php' )
 							),
-							admin_url( 'admin-post.php' )
-						),
-						'seopress_dismiss_notice_need_to_redirect'
+							'seopress_dismiss_notice_need_to_redirect'
+						)
 					)
 				);
 			?>
@@ -252,22 +254,48 @@ if ( '1' == seopress_get_toggle_option( '404' ) && apply_filters( 'seopress_post
 </div>
 			<?php
 		}
+	}
 
-		if ( count( $notices ) > 1 ) {
-			?>
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const $ = jQuery
-		$("#js-view-all-notices").on("click", function(e) {
-			e.preventDefault()
-			$(".notice-redirect-hide").each(function(key, item) {
-				$(item).slideToggle()
-			})
-		})
-	})
-</script>
-			<?php
+	add_action( 'admin_enqueue_scripts', 'seopress_notice_need_to_redirect_script' );
+
+	/**
+	 * Register the "View all notices" toggle used by the redirection suggestions
+	 * notice.
+	 *
+	 * Printed as an inline <script> inside the notice until 10.3, which left it
+	 * at the mercy of anything filtering admin notice HTML: a sanitiser strips
+	 * the tags and keeps their contents, so the JavaScript showed up as text at
+	 * the top of every admin page. Registering it through the script API puts it
+	 * out of reach of notice filtering, and is where a script belongs anyway.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @return void
+	 */
+	function seopress_notice_need_to_redirect_script() {
+		$notices = seopress_get_option_post_need_redirects();
+
+		if ( ! $notices || count( $notices ) < 2 ) {
+			return;
 		}
+
+		if ( ! current_user_can( seopress_capability( 'edit_redirections', 'notice' ) ) ) {
+			return;
+		}
+
+		wp_enqueue_script( 'jquery' );
+
+		wp_add_inline_script(
+			'jquery-core',
+			'jQuery(function($){
+	$(document).on("click", "#js-view-all-notices", function(e){
+		e.preventDefault();
+		$(".notice-redirect-hide").each(function(key, item){
+			$(item).slideToggle();
+		});
+	});
+});'
+		);
 	}
 
 	add_action( 'admin_post_seopress_dismiss_notice_need_to_redirect', 'seopress_dismiss_notice_need_to_redirect' );

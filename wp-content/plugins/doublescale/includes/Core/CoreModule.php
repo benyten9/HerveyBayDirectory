@@ -45,7 +45,8 @@ final class CoreModule extends AbstractModule {
 		$task_meta        = $base . 'includes/Core/Database/Migrations/TaskMetaTable.php';
 		$attachments      = $base . 'includes/Core/Database/Migrations/AttachmentsTable.php';
 		$migrate_legacy   = $base . 'includes/Core/Database/Migrations/MigrateLegacyAttachments.php';
-		return array_merge( array( $task_meta, $attachments, $migrate_legacy ), $logger );
+		$rate_limits      = $base . 'includes/Core/Database/Migrations/RateLimitsTable.php';
+		return array_merge( array( $task_meta, $attachments, $migrate_legacy, $rate_limits ), $logger );
 	}
 
 	public function register( Container $container ): void {
@@ -66,6 +67,7 @@ final class CoreModule extends AbstractModule {
 			Rest\Controllers\RestAdminCalendarController::class,
 			Rest\Controllers\RestModulesController::class,
 			Rest\Controllers\RestMcpSettingsController::class,
+			Rest\Controllers\RestClientIpController::class,
 			Rest\Controllers\RestPluginsController::class,
 			Rest\Controllers\RestSiteVerificationController::class,
 			Rest\Controllers\RestLicenseController::class,
@@ -74,6 +76,7 @@ final class CoreModule extends AbstractModule {
 			Settings\Rest\RestSettingsControllerPro::class,
 			Logger\Rest\RestLogController::class,
 			UserRoles\Rest\RestUserManagementController::class,
+			\DoubleScale\Admin\Rest\RestCatalogController::class,
 		);
 	}
 

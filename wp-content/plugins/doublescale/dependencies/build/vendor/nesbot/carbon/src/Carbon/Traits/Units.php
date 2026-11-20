@@ -8,12 +8,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\CarbonConverterInterface;
-use Carbon\CarbonInterface;
-use Carbon\CarbonInterval;
-use Carbon\Exceptions\UnitException;
+use DoubleScale\Vendor\Carbon\CarbonConverterInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterval;
+use DoubleScale\Vendor\Carbon\Exceptions\UnitException;
 use Closure;
 use DateInterval;
 use DoubleScale\Vendor\DateMalformedStringException;

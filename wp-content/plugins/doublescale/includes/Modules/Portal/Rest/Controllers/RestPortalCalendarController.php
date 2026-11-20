@@ -23,6 +23,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\Utils\CalendarWindow;
+use DoubleScale\Modules\Portal\Services\PortalAccessGate;
 use DoubleScale\Modules\Portal\Services\PortalIdentity;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -102,7 +103,7 @@ class RestPortalCalendarController extends RestController {
 		 * @param string                                            $end_inclusive Window end, inclusive end-of-day (Y-m-d H:i:s).
 		 */
 		$events = (array) apply_filters( 'doublescale_portal_calendar_events', array(), $contact, $start, $end_inclusive );
-		$events = array_values( array_filter( $events, 'is_array' ) );
+		$events = PortalAccessGate::calendar( array_values( array_filter( $events, 'is_array' ) ), $contact );
 
 		return new WP_REST_Response( array( 'data' => $events ), 200 );
 	}

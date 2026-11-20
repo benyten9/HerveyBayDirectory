@@ -128,15 +128,17 @@ class Local_Business_Widget extends WP_Widget {
 		$separator = apply_filters( 'seopress_lb_widget_opening_hours_separator', $separator );
 
 		// Helper function to format time based on display format and separator.
+		// Escaped here: the result is printed into the widget, and the stored
+		// hours, like the filterable separator, are not guaranteed to be digits.
 		$format_time = function ( $hours, $mins ) use ( $display_format, $separator ) {
 			if ( '12h' === $display_format ) {
 				$time           = $hours . ':' . $mins;
-				$formatted_time = date( 'g:i A', strtotime( $time ) );
+				$formatted_time = gmdate( 'g:i A', strtotime( $time ) );
 				// Replace the colon with the custom separator.
 				$formatted_time = str_replace( ':', $separator, $formatted_time );
-				return $formatted_time;
+				return esc_html( $formatted_time );
 			} else {
-				return $hours . $separator . $mins;
+				return esc_html( $hours . $separator . $mins );
 			}
 		};
 
@@ -323,7 +325,7 @@ class Local_Business_Widget extends WP_Widget {
 
 		$html = apply_filters( 'seopress_lb_widget_html', $html );
 
-		echo $html;
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Admin markup assembled above, its dynamic parts already escaped.
 	}
 
 	/**

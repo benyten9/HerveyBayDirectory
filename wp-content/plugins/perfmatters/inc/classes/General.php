@@ -372,7 +372,7 @@ class General {
             }
 
             //return 410 for all feed requests
-            wp_die(__('RSS feeds have been disabled.', 'perfmatters'), '', ['response' => 410]);
+            wp_die(esc_html__('RSS feeds have been disabled.', 'perfmatters'), '', ['response' => 410]);
         }, 1);
     }
 
@@ -419,7 +419,8 @@ class General {
                 'sureforms',
                 'surecart',
                 'sliderrevolution',
-                'mollie'
+                'mollie',
+                'generateblocks-pro'
             ]);
 
             if(Utilities::match_in_array($rest_route, $exceptions)) {
@@ -527,7 +528,7 @@ class General {
         //disable comment feed requests
         add_action('template_redirect', function(): void {
             if(is_comment_feed()) {
-                wp_die(__('Comments are disabled.', 'perfmatters'), '', ['response' => 403]);
+                wp_die(esc_html__('Comments are disabled.', 'perfmatters'), '', ['response' => 403]);
             }
         }, 9);
 
@@ -633,12 +634,12 @@ class General {
 
         //disable comments pages
         if($pagenow == 'comment.php' || $pagenow == 'edit-comments.php') {
-            wp_die(__('Comments are disabled.', 'perfmatters'), '', ['response' => 403]);
+            wp_die(esc_html__('Comments are disabled.', 'perfmatters'), '', ['response' => 403]);
         }
 
         //disable discussion page
         if($pagenow == 'options-discussion.php') {
-            wp_die(__('Comments are disabled.', 'perfmatters'), '', ['response' => 403]);
+            wp_die(esc_html__('Comments are disabled.', 'perfmatters'), '', ['response' => 403]);
         }
     }
 
@@ -670,6 +671,10 @@ class General {
     //disable woocommerce scripts
     public static function disable_woocommerce_scripts() {
         if(class_exists('WooCommerce')) {
+
+            if(Utilities::is_page_builder()) {
+                return;
+            }
 
             if(!apply_filters('perfmatters_disable_woocommerce_scripts', true)) {
                 return;
@@ -1035,7 +1040,9 @@ class General {
         }
         //Requesting wp-login.php Directly, Disabled
         elseif($perfmatters_wp_login) {
-            self::disable_login_url();
+            // Finish wp_loaded before rendering, so theme setup hooked there has run.
+            add_action('wp_loaded', [__CLASS__, 'disable_login_url'], PHP_INT_MAX);
+            return;
         } 
         //Requesting Hidden Login Form
         elseif($pagenow === 'wp-login.php') {
@@ -1062,7 +1069,16 @@ class General {
 
         //Disable customize.php from Redirecting to Login URL
         if(!is_user_logged_in() && $pagenow === 'customize.php') {
-            self::disable_login_url();
+
+            // WP_Customize_Manager::setup_theme() (priority 10) calls auth_redirect()
+            // for logged-out requests. setup_theme runs before the theme's functions.php,
+            // so loading a 404 template here fatals when header.php calls theme functions.
+            // Unhook that redirect. wp_loaded() sends the disabled response after
+            // the theme has finished registering its options.
+            global $wp_customize;
+            if(isset($wp_customize) && $wp_customize instanceof \WP_Customize_Manager) {
+                remove_action('setup_theme', [$wp_customize, 'setup_theme']);
+            }
         }
     }
 
@@ -1108,7 +1124,9 @@ class General {
         $options = Config::$options;
 
         if(!empty($options['login_url_behavior'])) {
-            if($options['login_url_behavior'] == '404') {
+            // Theme templates assume a front-end request. Admin requests never boot
+            // that environment, so use the message there instead of the template.
+            if($options['login_url_behavior'] == '404' && !is_admin() && did_action('after_setup_theme')) {
                 $template = get_query_template('404');
                 global $wp_query;
                 $wp_query->set_404();
@@ -1175,6 +1193,7 @@ class General {
     public static function insert_header_code(): void {
         add_action('wp_head', function() {
             if(!empty(Config::$options['assets']['header_code'])) {
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted admin custom code.
                 echo Config::$options['assets']['header_code'];
             }
         });
@@ -1184,6 +1203,7 @@ class General {
         if(function_exists('wp_body_open') && version_compare(get_bloginfo('version'), '5.2' , '>=')) {
             add_action('wp_body_open', function() {
                 if(!empty(Config::$options['assets']['body_code'])) {
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted admin custom code.
                     echo Config::$options['assets']['body_code'];
                 }
             });
@@ -1193,6 +1213,7 @@ class General {
     public static function insert_footer_code(): void {
         add_action('wp_footer', function() {
             if(!empty(Config::$options['assets']['footer_code'])) {
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted admin custom code.
                 echo Config::$options['assets']['footer_code'];
             }
         });

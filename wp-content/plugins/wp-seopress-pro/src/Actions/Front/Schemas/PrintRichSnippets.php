@@ -30,7 +30,7 @@ class PrintRichSnippets implements ExecuteHooksFrontend {
 			return;
 		}
 
-		$schemas = get_post_meta( get_the_ID(), '_seopress_pro_schemas_manual', true );
+		$schemas = get_post_meta( seopress_pro_get_the_id(), '_seopress_pro_schemas_manual', true );
 		if ( empty( $schemas ) || ! is_array( $schemas ) ) {
 			return;
 		}
@@ -57,7 +57,7 @@ class PrintRichSnippets implements ExecuteHooksFrontend {
 		foreach ( $jsons as $key => $json ) {
 			if ( null === $json ) {
 				continue;
-			} ?><script type="application/ld+json"><?php echo apply_filters( 'seopress_rich_snippets_' . $jsonsNeedToCreate[ $key ] . '_html', $json, $context ); ?></script>
+			} ?><script type="application/ld+json"><?php echo apply_filters( 'seopress_rich_snippets_' . $jsonsNeedToCreate[ $key ] . '_html', $json, $context ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties. ?></script>
 			<?php
 				echo "\n";
 		}
@@ -71,7 +71,7 @@ class PrintRichSnippets implements ExecuteHooksFrontend {
 			// parse is printed unchanged.
 			$json = seopress_pro_json_ld_normalize_custom( $json );
 
-			echo apply_filters( 'seopress_rich_snippets_custom_' . $key . '_html', $json, $context );
+			echo apply_filters( 'seopress_rich_snippets_custom_' . $key . '_html', $json, $context ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Admin markup assembled above, its dynamic parts already escaped.
 			echo "\n";
 		}
 		?>

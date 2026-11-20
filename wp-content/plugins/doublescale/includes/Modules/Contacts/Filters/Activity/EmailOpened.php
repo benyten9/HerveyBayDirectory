@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 use DoubleScale\Modules\Contacts\Filters\Traits\TimeframeContactFilter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 
 /**

@@ -5,9 +5,6 @@ namespace Perfmatters\Vendor\Sabberworm\CSS\Parsing;
 
 use Perfmatters\Vendor\Sabberworm\CSS\Comment\Comment;
 use Perfmatters\Vendor\Sabberworm\CSS\Settings;
-use function Perfmatters\Vendor\Safe\iconv;
-use function Perfmatters\Vendor\Safe\preg_match;
-use function Perfmatters\Vendor\Safe\preg_split;
 /**
  * @internal since 8.7.0
  */
@@ -102,9 +99,12 @@ class ParserState
         if ($result === null) {
             throw new UnexpectedTokenException('', $this->peek(5), 'identifier', $this->lineNumber);
         }
-        $character = null;
         while (!$this->isEnd() && ($character = $this->parseCharacter(\true)) !== null) {
-            if (preg_match('/[a-zA-Z0-9\\x{00A0}-\\x{FFFF}_-]/Sux', $character) !== 0) {
+            $matchResult = \preg_match('/[a-zA-Z0-9\\x{00A0}-\\x{FFFF}_-]/Sux', $character);
+            if (!\is_int($matchResult)) {
+                throw new \RuntimeException('The CSS is not valid UTF-8.', 1787112617);
+            }
+            if ($matchResult !== 0) {
                 $result .= $character;
             } else {
                 $result .= '\\' . $character;
@@ -126,13 +126,21 @@ class ParserState
             if ($this->comes('\\n') || $this->comes('\\r')) {
                 return '';
             }
-            if (preg_match('/[0-9a-fA-F]/Su', $this->peek()) === 0) {
+            $matchResult = \preg_match('/[0-9a-fA-F]/Su', $this->peek());
+            if (!\is_int($matchResult)) {
+                throw new \RuntimeException('The CSS is not valid UTF-8.', 1787112618);
+            }
+            if ($matchResult === 0) {
                 return $this->consume(1);
             }
             $hexCodePoint = $this->consumeExpression('/^[0-9a-fA-F]{1,6}/u', 6);
             if ($this->strlen($hexCodePoint) < 6) {
                 // Consume whitespace after incomplete unicode escape
-                if (preg_match('/\\s/isSu', $this->peek()) !== 0) {
+                $matchResult = \preg_match('/\\s/isSu', $this->peek());
+                if (!\is_int($matchResult)) {
+                    throw new \RuntimeException('The CSS is not valid UTF-8.', 1787112619);
+                }
+                if ($matchResult !== 0) {
                     if ($this->comes('Perfmatters\\Vendor\\r\\n')) {
                         $this->consume(2);
                     } else {
@@ -146,7 +154,12 @@ class ParserState
                 $utf32EncodedCharacter .= \chr($codePoint & 0xff);
                 $codePoint = $codePoint >> 8;
             }
-            return iconv('utf-32le', $this->charset, $utf32EncodedCharacter);
+            // The suppression is needed because `\iconv` emits a notice, as well as returning `false`, on failure.
+            $convertedCharacter = @\iconv('utf-32le', $this->charset, $utf32EncodedCharacter);
+            if (!\is_string($convertedCharacter)) {
+                throw new \RuntimeException('The Unicode escape sequence could not be converted to the target character set.', 1787112620);
+            }
+            return $convertedCharacter;
         }
         if ($isForIdentifier) {
             $peek = \ord($this->peek());
@@ -177,7 +190,14 @@ class ParserState
     {
         $consumed = '';
         do {
-            while (preg_match('/\\s/isSu', $this->peek()) === 1) {
+            while (\true) {
+                $matchResult = \preg_match('/\\s/isSu', $this->peek());
+                if (!\is_int($matchResult)) {
+                    throw new \RuntimeException('The CSS is not valid UTF-8.', 1787112621);
+                }
+                if ($matchResult !== 1) {
+                    break;
+                }
                 $consumed .= $this->consume(1);
             }
             if ($this->parserSettings->usesLenientParsing()) {
@@ -273,7 +293,11 @@ class ParserState
     {
         $matches = null;
         $input = $maximumLength !== null ? $this->peek($maximumLength) : $this->inputLeft();
-        if (preg_match($expression, $input, $matches, \PREG_OFFSET_CAPTURE) !== 1) {
+        $matchResult = \preg_match($expression, $input, $matches, \PREG_OFFSET_CAPTURE);
+        if (!\is_int($matchResult)) {
+            throw new \RuntimeException('The CSS is not valid UTF-8.', 1787112622);
+        }
+        if ($matchResult !== 1) {
             throw new UnexpectedTokenException($expression, $this->peek(5), 'expression', $this->lineNumber);
         }
         return $this->consume($matches[0][0]);
@@ -390,7 +414,10 @@ class ParserState
     {
         if ($this->parserSettings->hasMultibyteSupport()) {
             if ($this->streql($this->charset, 'utf-8')) {
-                $result = preg_split('//u', $string, -1, \PREG_SPLIT_NO_EMPTY);
+                $result = \preg_split('//u', $string, -1, \PREG_SPLIT_NO_EMPTY);
+                if (!\is_array($result)) {
+                    throw new \RuntimeException('The CSS is not valid UTF-8.', 1787112623);
+                }
             } else {
                 $length = \mb_strlen($string, $this->charset);
                 $result = [];

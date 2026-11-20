@@ -111,7 +111,7 @@ final class IncomingWebhookService {
 			'sender'   => array(
 				'first_name' => 'Jane',
 				'last_name'  => 'Doe',
-				'email'      => '[email protected]',
+				'email'      => 'jane.doe@example.com',
 			),
 		);
 	}

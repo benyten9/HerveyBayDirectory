@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-fix', [
     'label'       => __('SEO Pro — Apply Fixes', 'nibwp'),
-    'description' => __('Apply validated corrections surfaced by seo-pro-audit: set a canonical URL, toggle noindex/nofollow, write a missing title/description, set OG overrides — for one or many posts. Validate-gated. Run dry_run:true first, then dry_run:false.', 'nibwp'),
+    'description' => 'Apply validated corrections surfaced by seo-pro-audit: set a canonical URL, toggle noindex/nofollow, write a missing title/description, set OG overrides — for one or many posts. Validate-gated. Run dry_run:true first, then dry_run:false.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

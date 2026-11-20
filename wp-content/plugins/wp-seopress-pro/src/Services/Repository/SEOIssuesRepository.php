@@ -78,7 +78,7 @@ class SEOIssuesRepository extends AbstractRepository {
 
 		$sql = $wpdb->prepare( "SELECT id FROM {$tableName} WHERE post_id = %d AND issue_name = %s", $postId, $issue_name );
 
-		$result = $wpdb->get_results( $sql );
+		$result = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 		return ! empty( $result );
 	}
@@ -278,7 +278,7 @@ class SEOIssuesRepository extends AbstractRepository {
 			$strColumns
 		);
 
-		$result = $wpdb->get_results( $sql, ARRAY_A );
+		$result = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 		if ( empty( $result ) ) {
 			return null;

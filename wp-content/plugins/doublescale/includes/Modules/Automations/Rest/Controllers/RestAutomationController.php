@@ -30,6 +30,7 @@ use DoubleScale\Modules\Automations\Services\GoalsManager;
 use DoubleScale\Modules\Automations\Services\VersionManager;
 use DoubleScale\Modules\Automations\Services\WorkflowPortabilityManager;
 use DoubleScale\Modules\Automations\Support\ConditionSettings;
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\Models\TrackingTemplateModel;
@@ -569,8 +570,8 @@ class RestAutomationController extends RestController {
 		if ( ! empty( $form_id ) && ! empty( $trigger_id ) && in_array( $trigger_id, array_keys( $forms ) ) ) {
 			$form_instance = $forms[ $trigger_id ];
 			if ( $form_instance && method_exists( $form_instance, 'register_field_rules_for_form' ) ) {
-				// For Elementor forms, set the post_id property before getting fields
-				if ( $trigger_id === 'elementor' && ! empty( $post_id ) ) {
+				// Page-based builders (Elementor, Bricks) need the page before the fields.
+				if ( ! empty( $post_id ) && property_exists( $form_instance, 'post_id' ) ) {
 					$form_instance->post_id = $post_id;
 				}
 				$form_instance->register_field_rules_for_form( $form_id );
@@ -639,8 +640,8 @@ class RestAutomationController extends RestController {
 		if ( ! empty( $form_id ) && ! empty( $trigger_id ) && in_array( $trigger_id, array_keys( $forms ) ) ) {
 			$form_instance = $forms[ $trigger_id ];
 			if ( $form_instance ) {
-				// For Elementor forms, set the post_id property before getting fields
-				if ( $trigger_id === 'elementor' && ! empty( $post_id ) ) {
+				// Page-based builders (Elementor, Bricks) need the page before the fields.
+				if ( ! empty( $post_id ) && property_exists( $form_instance, 'post_id' ) ) {
 					$form_instance->post_id = $post_id;
 				}
 				$form_instance->register_merge_tags_for_form( $form_id );
@@ -670,7 +671,11 @@ class RestAutomationController extends RestController {
 			$from     = $request->get_param( 'from' ) ?? null;
 			$to       = $request->get_param( 'to' ) ?? null;
 
-			$query       = AutomationModel::query();
+			$query = AutomationModel::query();
+			// Automation Agents list only the workflows they created
+			if ( ! Permissions::can_manage_all_automations() ) {
+				$query->where( 'created_by', get_current_user_id() );
+			}
 			$total_count = $query->count();
 
 			if ( $keyword ) {
@@ -741,6 +746,16 @@ class RestAutomationController extends RestController {
 
 			$query = AutomationContactModel::where( 'automation_id', $id );
 
+			// An agent limited to their own contacts sees only those runs.
+			if ( ! OwnerScope::current()->sees_all( 'contacts' ) ) {
+				$query->whereHas(
+					'contact',
+					static function ( $q ) {
+						OwnerScope::current()->apply_contact_visibility( $q );
+					}
+				);
+			}
+
 			// Apply keyword search if provided
 			if ( ! empty( $keyword ) ) {
 				$query->whereHas(
@@ -772,7 +787,8 @@ class RestAutomationController extends RestController {
 	 */
 	public function get_item( $request ) {
 		try {
-			$id         = $request->get_param( 'id' );
+			$id = $request->get_param( 'id' );
+			AutomationModel::delete_draft_steps( $id );
 			$automation = AutomationModel::with(
 				array(
 					'steps' => function ( $query ) {
@@ -1348,7 +1364,7 @@ class RestAutomationController extends RestController {
 			}
 
 			$contact = ContactModel::find( $contact_id );
-			if ( ! $contact ) {
+			if ( ! $contact || ! OwnerScope::current()->can_view_contact( $contact ) ) {
 				return new WP_Error( 'not_found', __( 'Contact not found.', 'doublescale' ), array( 'status' => 404 ) );
 			}
 
@@ -1426,6 +1442,14 @@ class RestAutomationController extends RestController {
 
 			// Cap the lookup so a crafted request cannot ask for an unbounded IN () list.
 			$contact_ids = array_slice( $contact_ids, 0, 100 );
+
+			if ( ! OwnerScope::current()->sees_all( 'contacts' ) ) {
+				$contact_ids = OwnerScope::current()->apply_contact_visibility( ContactModel::whereIn( 'id', $contact_ids ) )
+					->pluck( 'id' )->map( 'intval' )->all();
+				if ( empty( $contact_ids ) ) {
+					return new WP_REST_Response( array( 'data' => array() ), 200 );
+				}
+			}
 
 			$rows = AutomationContactModel::where( 'automation_id', $id )
 				->whereIn( 'contact_id', $contact_ids )
@@ -1962,45 +1986,45 @@ class RestAutomationController extends RestController {
 			),
 			'woocommerce' => array(
 				'order'        => array(
-					'plugin' => 'woocommerce/woocommerce.php',
+					'plugin' => 'woocommerce',
 					'label'  => 'WooCommerce',
 				),
 				'cart'         => array(
-					'plugin' => 'woocommerce/woocommerce.php',
+					'plugin' => 'woocommerce',
 					'label'  => 'WooCommerce',
 				),
 				'review'       => array(
-					'plugin' => 'woocommerce/woocommerce.php',
+					'plugin' => 'woocommerce',
 					'label'  => 'WooCommerce',
 				),
 				'subscription' => array(
-					'plugin' => 'woocommerce-subscriptions/woocommerce-subscriptions.php',
+					'plugin' => 'woocommerce-subscriptions',
 					'label'  => 'WooCommerce Subscriptions',
 				),
 				'wishlist'     => array(
-					'plugin' => 'woocommerce-wishlists/woocommerce-wishlists.php',
+					'plugin' => 'woocommerce-wishlists',
 					'label'  => 'WooCommerce Wishlists',
 				),
 				'membership'   => array(
-					'plugin' => 'woocommerce-memberships/woocommerce-memberships.php',
+					'plugin' => 'woocommerce-memberships',
 					'label'  => 'WooCommerce Memberships',
 				),
 			),
 			'edd'         => array(
 				'order' => array(
-					'plugin' => 'easy-digital-downloads/easy-digital-downloads.php',
+					'plugin' => 'easy-digital-downloads',
 					'label'  => 'Easy Digital Downloads',
 				),
 			),
 			'lms'         => array(
 				'learndash' => array(
-					'plugin' => 'sfwd-lms/sfwd_lms.php',
+					'plugin' => 'learndash',
 					'label'  => 'LearnDash',
 				),
 			),
 			'memberpress' => array(
 				'memberpress' => array(
-					'plugin' => 'memberpress/memberpress.php',
+					'plugin' => 'memberpress',
 					'label'  => 'MemberPress',
 				),
 			),
@@ -2044,19 +2068,19 @@ class RestAutomationController extends RestController {
 			),
 			'pmpro'       => array(
 				'pmpro' => array(
-					'plugin' => 'paid-memberships-pro/paid-memberships-pro.php',
+					'plugin' => 'paid-memberships-pro',
 					'label'  => 'Paid Memberships Pro',
 				),
 			),
 			'tutorlms'    => array(
 				'tutorlms' => array(
-					'plugin' => 'tutor/tutor.php',
+					'plugin' => 'tutor',
 					'label'  => 'Tutor LMS',
 				),
 			),
 			'memberpress' => array(
 				'memberpress' => array(
-					'plugin' => 'memberpress/memberpress.php',
+					'plugin' => 'memberpress',
 					'label'  => 'MemberPress',
 				),
 			),
@@ -2272,11 +2296,11 @@ class RestAutomationController extends RestController {
 			),
 			'woocommerce' => array(
 				'order'  => array(
-					'plugin' => 'woocommerce/woocommerce.php',
+					'plugin' => 'woocommerce',
 					'label'  => 'WooCommerce',
 				),
 				'coupon' => array(
-					'plugin' => 'woocommerce/woocommerce.php',
+					'plugin' => 'woocommerce',
 					'label'  => 'WooCommerce',
 				),
 			),
@@ -2288,7 +2312,7 @@ class RestAutomationController extends RestController {
 			),
 			'lms'         => array(
 				'learndash' => array(
-					'plugin' => 'sfwd-lms/sfwd_lms.php',
+					'plugin' => 'learndash',
 					'label'  => 'LearnDash',
 				),
 			),
@@ -2313,10 +2337,6 @@ class RestAutomationController extends RestController {
 					'plugin' => '',
 					'label'  => 'Double Scale Pro',
 				),
-				'zapier'       => array(
-					'plugin' => '',
-					'label'  => 'Double Scale Pro',
-				),
 				'http_request' => array(
 					'plugin' => '',
 					'label'  => 'Double Scale Pro',
@@ -2324,13 +2344,13 @@ class RestAutomationController extends RestController {
 			),
 			'pmpro'       => array(
 				'pmpro' => array(
-					'plugin' => 'paid-memberships-pro/paid-memberships-pro.php',
+					'plugin' => 'paid-memberships-pro',
 					'label'  => 'Paid Memberships Pro',
 				),
 			),
 			'memberpress' => array(
 				'memberpress' => array(
-					'plugin' => 'memberpress/memberpress.php',
+					'plugin' => 'memberpress',
 					'label'  => 'MemberPress',
 				),
 			),
@@ -2459,54 +2479,54 @@ class RestAutomationController extends RestController {
 		// Define plugin dependencies based on rule group
 		$plugin_dependencies = array(
 			'woocommerce'               => array(
-				'plugin'     => 'woocommerce/woocommerce.php',
+				'plugin'     => 'woocommerce',
 				'label'      => 'WooCommerce',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'woocommerce_current_order' => array(
-				'plugin'     => 'woocommerce/woocommerce.php',
+				'plugin'     => 'woocommerce',
 				'label'      => 'WooCommerce',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'woocommerce_membership'    => array(
-				'plugin'     => 'woocommerce-memberships/woocommerce-memberships.php',
+				'plugin'     => 'woocommerce-memberships',
 				'label'      => 'WooCommerce Memberships',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce-memberships/woocommerce-memberships.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce-memberships' ),
 			),
 			'woocommerce_whishlist'     => array(
-				'plugin'     => 'woocommerce-wishlist/woocommerce-wishlist.php',
+				'plugin'     => 'woocommerce-wishlists',
 				'label'      => 'WooCommerce Wishlist',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce-wishlist/woocommerce-wishlist.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce-wishlists' ),
 			),
 			'woocommerce_subscription'  => array(
-				'plugin'     => 'woocommerce-subscriptions/woocommerce-subscriptions.php',
+				'plugin'     => 'woocommerce-subscriptions',
 				'label'      => 'WooCommerce Subscriptions',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce-subscriptions' ),
 			),
 			'woocommerce_review'        => array(
-				'plugin'     => 'woocommerce/woocommerce.php',
+				'plugin'     => 'woocommerce',
 				'label'      => 'WooCommerce',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'cart'                      => array(
-				'plugin'     => 'woocommerce/woocommerce.php',
+				'plugin'     => 'woocommerce',
 				'label'      => 'WooCommerce',
-				'is_enabled' => doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'learndash'                 => array(
-				'plugin'     => 'sfwd-lms/sfwd_lms.php',
+				'plugin'     => 'learndash',
 				'label'      => 'LearnDash',
-				'is_enabled' => doublescale_is_plugin_active( 'sfwd-lms/sfwd_lms.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'learndash' ),
 			),
 			'memberpress'               => array(
-				'plugin'     => 'memberpress/memberpress.php',
+				'plugin'     => 'memberpress',
 				'label'      => 'MemberPress',
-				'is_enabled' => doublescale_is_plugin_active( 'memberpress/memberpress.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'memberpress' ),
 			),
 			'pmpro'                     => array(
-				'plugin'     => 'paid-memberships-pro/paid-memberships-pro.php',
+				'plugin'     => 'paid-memberships-pro',
 				'label'      => 'Paid Memberships Pro',
-				'is_enabled' => doublescale_is_plugin_active( 'paid-memberships-pro/paid-memberships-pro.php' ),
+				'is_enabled' => doublescale_is_plugin_active( 'paid-memberships-pro' ),
 			),
 			'proposal'                  => array(
 				'label'      => __( 'Proposals & Invoices', 'doublescale' ),
@@ -2634,7 +2654,7 @@ class RestAutomationController extends RestController {
 		$plugin_dependencies = array(
 			'woocommerce' => array(
 				'coupon' => array(
-					'plugin' => 'woocommerce/woocommerce.php',
+					'plugin' => 'woocommerce',
 					'label'  => 'WooCommerce',
 				),
 			),
@@ -2815,7 +2835,12 @@ class RestAutomationController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function get_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		// Routes under one workflow (its steps, contacts…) need that workflow;
+		// the rest (the list, triggers, actions, rules) need the module.
+		if ( null !== $request->get_param( 'id' ) ) {
+			return $this->can_edit_requested_automation( $request );
+		}
+		return Permissions::can_access_automations();
 	}
 
 	/**
@@ -2828,11 +2853,11 @@ class RestAutomationController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function get_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_requested_automation( $request );
 	}
 
 	/**
-	 * Create item permissions check
+	 * Create item permissions check: anyone who may build workflows (they become its owner).
 	 *
 	 * @since 1.0.0
 	 *
@@ -2841,11 +2866,18 @@ class RestAutomationController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function create_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		if ( ! Permissions::can_manage_all_automations() && ! current_user_can( 'doublescale_manage_own_automations' ) ) {
+			return false;
+		}
+		// duplicating a workflow also needs access to the original
+		if ( null !== $request->get_param( 'id' ) ) {
+			return $this->can_edit_requested_automation( $request );
+		}
+		return true;
 	}
 
 	/**
-	 * Update item permissions check
+	 * Update item permissions check: one workflow, or (bulk export) every listed one.
 	 *
 	 * @since 1.0.0
 	 *
@@ -2854,11 +2886,14 @@ class RestAutomationController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function update_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		if ( null !== $request->get_param( 'id' ) ) {
+			return $this->can_edit_requested_automation( $request );
+		}
+		return $this->can_edit_listed_automations( $request );
 	}
 
 	/**
-	 * Delete items permissions check
+	 * Delete items permissions check: every listed workflow must be the user's to delete.
 	 *
 	 * @since 1.0.0
 	 *
@@ -2867,7 +2902,7 @@ class RestAutomationController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function delete_items_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_listed_automations( $request );
 	}
 
 	/**
@@ -2880,6 +2915,42 @@ class RestAutomationController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function delete_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->can_edit_requested_automation( $request );
+	}
+
+	/**
+	 * The workflow in the route (`id`) is one the user may open and change.
+	 * A workflow that doesn't exist passes, so the handler can answer 404.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	private function can_edit_requested_automation( $request ) {
+		if ( ! Permissions::can_access_automations() ) {
+			return false;
+		}
+		$automation = AutomationModel::find( (int) $request->get_param( 'id' ) );
+		return ! $automation || Permissions::can_edit_automation( $automation );
+	}
+
+	/**
+	 * Every workflow in the request's `ids` is one the user may change.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	private function can_edit_listed_automations( $request ) {
+		if ( ! Permissions::can_access_automations() ) {
+			return false;
+		}
+		if ( Permissions::can_manage_all_automations() ) {
+			return true;
+		}
+		foreach ( (array) $request->get_param( 'ids' ) as $id ) {
+			if ( ! Permissions::can_edit_automation( (int) $id ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

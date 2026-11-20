@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules;
 
 class Word
 {

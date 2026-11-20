@@ -309,6 +309,7 @@ class SEOPRESS_Admin_Setup_Wizard {
 		$docs_links        = function_exists( 'seopress_get_docs_links' ) ? seopress_get_docs_links() : array();
 		$indexing_data     = $this->get_react_indexing_data();
 		$dynamic_variables = function_exists( 'seopress_get_dyn_variables' ) ? seopress_get_dyn_variables() : array();
+		$variable_aliases  = function_exists( 'seopress_get_dyn_variable_aliases' ) ? seopress_get_dyn_variable_aliases() : array();
 
 		$wizard_data = array(
 			'ADMIN_URL'              => admin_url(),
@@ -364,6 +365,7 @@ class SEOPRESS_Admin_Setup_Wizard {
 			'ADVANCED'               => $this->get_react_advanced_data(),
 			'AI'                     => $this->get_react_ai_data( $docs_links ),
 			'DYNAMIC_VARIABLES'      => $dynamic_variables,
+			'VARIABLE_ALIASES'       => $variable_aliases,
 			'PREVIEW_VALUES'         => array(
 				'%%sitetitle%%' => get_bloginfo( 'name' ),
 				'%%tagline%%'   => get_bloginfo( 'description' ),
@@ -481,10 +483,8 @@ class SEOPRESS_Admin_Setup_Wizard {
 	 * @return array
 	 */
 	private function get_react_initial_values() {
-		$titles  = get_option( 'seopress_titles_option_name' );
-		$social  = get_option( 'seopress_social_option_name' );
-		$user    = wp_get_current_user();
-		$user_em = isset( $user->user_email ) ? $user->user_email : '';
+		$titles = get_option( 'seopress_titles_option_name' );
+		$social = get_option( 'seopress_social_option_name' );
 
 		$default_site_title = '%%sitetitle%% %%sep%% %%tagline%%';
 		$saved_site_title   = isset( $titles['seopress_titles_home_site_title'] ) ? (string) $titles['seopress_titles_home_site_title'] : '';
@@ -505,7 +505,11 @@ class SEOPRESS_Admin_Setup_Wizard {
 				// than blanking the values for users who set them in the past.
 				'knowledge_name'   => isset( $social['seopress_social_knowledge_name'] ) ? (string) $social['seopress_social_knowledge_name'] : '',
 				'knowledge_img'    => isset( $social['seopress_social_knowledge_img'] ) ? (string) $social['seopress_social_knowledge_img'] : '',
-				'knowledge_email'  => isset( $social['seopress_social_knowledge_email'] ) ? (string) $social['seopress_social_knowledge_email'] : $user_em,
+				// No default: this hidden field is saved as is, and anything in it
+				// ends up in the Organization's public contactPoint. Prefilling it
+				// with the current user's address published that address on every
+				// site set up through the wizard.
+				'knowledge_email'  => isset( $social['seopress_social_knowledge_email'] ) ? (string) $social['seopress_social_knowledge_email'] : '',
 				'knowledge_phone'  => isset( $social['seopress_social_knowledge_phone'] ) ? (string) $social['seopress_social_knowledge_phone'] : '',
 				'knowledge_tax_id' => isset( $social['seopress_social_knowledge_tax_id'] ) ? (string) $social['seopress_social_knowledge_tax_id'] : '',
 			),
@@ -826,7 +830,7 @@ class SEOPRESS_Admin_Setup_Wizard {
 		$seopress_social_option['seopress_social_accounts_instagram'] = isset( $_POST['knowledge_insta'] ) ? sanitize_text_field( wp_unslash( $_POST['knowledge_insta'] ) ) : '';
 		$seopress_social_option['seopress_social_accounts_youtube']   = isset( $_POST['knowledge_yt'] ) ? sanitize_text_field( wp_unslash( $_POST['knowledge_yt'] ) ) : '';
 		$seopress_social_option['seopress_social_accounts_linkedin']  = isset( $_POST['knowledge_li'] ) ? sanitize_text_field( wp_unslash( $_POST['knowledge_li'] ) ) : '';
-		$seopress_social_option['seopress_social_accounts_extra']     = isset( $_POST['knowledge_extra'] ) ? sanitize_textarea_field( wp_unslash( $_POST['knowledge_extra'] ) ) : '';
+		$seopress_social_option['seopress_social_accounts_extra']     = isset( $_POST['knowledge_extra'] ) ? seopress_sanitize_urls_list( wp_unslash( $_POST['knowledge_extra'] ) ) : '';
 
 		// Save options.
 		update_option( 'seopress_social_option_name', $seopress_social_option, false );

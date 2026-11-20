@@ -62,7 +62,7 @@ function nibwp_wpf_err(string $code, string $message): WP_Error
 function nibwp_wpf_guard(): ?WP_Error
 {
     if (!nibwp_wpf_available()) {
-        return nibwp_wpf_err('nibwp_wpf_missing', __('WPForms is not active on this site.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_missing', __('WPForms is not active on this site.', 'nibwp'));
     }
 
     return null;
@@ -98,18 +98,18 @@ function nibwp_wpf_handler()
 function nibwp_wpf_form(int $form_id)
 {
     if ($form_id <= 0) {
-        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $handler = nibwp_wpf_handler();
     if ($handler === null) {
-        return nibwp_wpf_err('nibwp_wpf_no_handler', __('The WPForms form handler is unavailable.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_no_handler', __('The WPForms form handler is unavailable.', 'nibwp'));
     }
 
     $post = $handler->get($form_id);
 
     if (!$post || !is_object($post)) {
-        return nibwp_wpf_err('nibwp_wpf_not_found', __('No WPForms form with that ID.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_not_found', __('No WPForms form with that ID.', 'nibwp'));
     }
 
     $data = json_decode((string) ($post->post_content ?? ''), true);
@@ -129,12 +129,12 @@ function nibwp_wpf_save(int $form_id, array $data)
 {
     $handler = nibwp_wpf_handler();
     if ($handler === null) {
-        return nibwp_wpf_err('nibwp_wpf_no_handler', __('The WPForms form handler is unavailable.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_no_handler', __('The WPForms form handler is unavailable.', 'nibwp'));
     }
 
     $result = $handler->update($form_id, $data);
 
-    return $result ? true : nibwp_wpf_err('nibwp_wpf_save_failed', __('WPForms refused the update.', domain: 'nibwp'));
+    return $result ? true : nibwp_wpf_err('nibwp_wpf_save_failed', __('WPForms refused the update.', 'nibwp'));
 }
 
 /** Clamp pagination to the house 1..100 window. */
@@ -168,8 +168,8 @@ function nibwp_wpf_field_rows(array $data): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-info', [
-    'label'       => __('WPForms — Info', domain: 'nibwp'),
-    'description' => __('Detect WPForms, whether it is Lite or Pro, how many forms exist, and whether submissions are being stored at all (read-only).', domain: 'nibwp'),
+    'label'       => __('WPForms — Info', 'nibwp'),
+    'description' => 'Detect WPForms, whether it is Lite or Pro, how many forms exist, and whether submissions are being stored at all (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -207,7 +207,7 @@ function nibwp_wpf_info(array $input): array|WP_Error
             'stores_entries' => nibwp_wpf_pro(),
             'note' => nibwp_wpf_pro()
                 ? ''
-                : __('This is WPForms Lite, which does not store submissions. Entries are emailed and not kept, so there is no history to read.', domain: 'nibwp'),
+                : __('This is WPForms Lite, which does not store submissions. Entries are emailed and not kept, so there is no history to read.', 'nibwp'),
         ];
     });
 }
@@ -217,8 +217,8 @@ function nibwp_wpf_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-forms', [
-    'label'       => __('WPForms — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, rename and duplicate WPForms forms, and get the shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('WPForms — Forms', 'nibwp'),
+    'description' => 'List, read, create, rename and duplicate WPForms forms, and get the shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -260,13 +260,13 @@ function nibwp_wpf_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename', 'duplicate', 'shortcode'], strict: true) && $form_id <= 0) {
-        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_wpf_try(static function () use ($action, $form_id, $input) {
         $handler = nibwp_wpf_handler();
         if ($handler === null) {
-            throw new \RuntimeException(__('The WPForms form handler is unavailable.', domain: 'nibwp'));
+            throw new \RuntimeException(__('The WPForms form handler is unavailable.', 'nibwp'));
         }
 
         if ($action === 'list') {
@@ -288,11 +288,11 @@ function nibwp_wpf_forms(array $input): array|WP_Error
         }
 
         if ($action === 'create') {
-            $title = (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp'));
+            $title = (string) ($input['title'] ?? __('Untitled form', 'nibwp'));
             $new_id = $handler->add($title, [], ['builder' => false]);
 
             if (!$new_id) {
-                throw new \RuntimeException(__('WPForms refused to create the form.', domain: 'nibwp'));
+                throw new \RuntimeException(__('WPForms refused to create the form.', 'nibwp'));
             }
 
             return [
@@ -324,7 +324,7 @@ function nibwp_wpf_forms(array $input): array|WP_Error
             case 'rename':
                 $title = trim((string) ($input['title'] ?? ''));
                 if ($title === '') {
-                    throw new \RuntimeException(__('A title is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A title is required.', 'nibwp'));
                 }
                 $data = $form['data'];
                 $data['settings']['form_title'] = $title;
@@ -341,7 +341,7 @@ function nibwp_wpf_forms(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'shortcode' => sprintf('[wpforms id="%d"]', $form_id)];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -350,8 +350,8 @@ function nibwp_wpf_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-fields', [
-    'label'       => __('WPForms — Fields', domain: 'nibwp'),
-    'description' => __('List, read, add, update and remove the fields on a form.', domain: 'nibwp'),
+    'label'       => __('WPForms — Fields', 'nibwp'),
+    'description' => 'List, read, add, update and remove the fields on a form.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -397,7 +397,7 @@ function nibwp_wpf_fields(array $input): array|WP_Error
     $field_id = (int) ($input['field_id'] ?? 0);
 
     if (in_array($action, ['get', 'update', 'delete'], strict: true) && $field_id <= 0) {
-        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid field ID is required.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid field ID is required.', 'nibwp'));
     }
 
     return nibwp_wpf_try(static function () use ($form, $action, $field_id, $input) {
@@ -413,7 +413,7 @@ function nibwp_wpf_fields(array $input): array|WP_Error
 
         if ($action === 'get') {
             if (!isset($fields[$field_id])) {
-                throw new \RuntimeException(__('No field with that ID on this form.', domain: 'nibwp'));
+                throw new \RuntimeException(__('No field with that ID on this form.', 'nibwp'));
             }
 
             return ['form_id' => $form_id, 'field' => $fields[$field_id]];
@@ -422,7 +422,7 @@ function nibwp_wpf_fields(array $input): array|WP_Error
         if ($action === 'add') {
             $new = (array) ($input['field'] ?? []);
             if (($new['type'] ?? '') === '') {
-                throw new \RuntimeException(__('A field type is required — text, email, textarea, select, checkbox, and so on.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A field type is required — text, email, textarea, select, checkbox, and so on.', 'nibwp'));
             }
 
             // Never reuse an ID: notifications reference fields by ID, and a
@@ -441,7 +441,7 @@ function nibwp_wpf_fields(array $input): array|WP_Error
         }
 
         if (!isset($fields[$field_id])) {
-            throw new \RuntimeException(__('No field with that ID on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No field with that ID on this form.', 'nibwp'));
         }
 
         if ($action === 'update') {
@@ -461,7 +461,7 @@ function nibwp_wpf_fields(array $input): array|WP_Error
             'form_id'  => $form_id,
             'field_id' => $field_id,
             'deleted'  => true,
-            'note'     => __('Any notification referencing this field ID will now render that line empty.', domain: 'nibwp'),
+            'note'     => __('Any notification referencing this field ID will now render that line empty.', 'nibwp'),
         ];
     });
 }
@@ -471,8 +471,8 @@ function nibwp_wpf_fields(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-notifications', [
-    'label'       => __('WPForms — Notifications', domain: 'nibwp'),
-    'description' => __('Read and configure the emails a form sends on submit — recipient, subject, message, and whether each is enabled.', domain: 'nibwp'),
+    'label'       => __('WPForms — Notifications', 'nibwp'),
+    'description' => 'Read and configure the emails a form sends on submit — recipient, subject, message, and whether each is enabled.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -510,8 +510,8 @@ function nibwp_wpf_notifications(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/wpforms-confirmations', [
-    'label'       => __('WPForms — Confirmations', domain: 'nibwp'),
-    'description' => __('Read and configure what a visitor sees after submitting — a message, a page, or a redirect.', domain: 'nibwp'),
+    'label'       => __('WPForms — Confirmations', 'nibwp'),
+    'description' => 'Read and configure what a visitor sees after submitting — a message, a page, or a redirect.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -566,7 +566,7 @@ function nibwp_wpf_settings_collection(array $input, string $collection, string 
     $key = (string) ($input[$singular . '_id'] ?? '');
 
     if (in_array($action, ['update', 'delete'], strict: true) && $key === '') {
-        return nibwp_wpf_err('nibwp_wpf_bad_id', __('An ID is required. List them first.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_bad_id', __('An ID is required. List them first.', 'nibwp'));
     }
 
     return nibwp_wpf_try(static function () use ($form, $action, $collection, $singular, $key, $input) {
@@ -603,7 +603,7 @@ function nibwp_wpf_settings_collection(array $input, string $collection, string 
                 'count'     => count($rows),
                 'enabled'   => $enabled,
                 'warning'   => ($collection === 'notifications' && $enabled === 0)
-                    ? __('No enabled notification. On WPForms Lite nothing is stored either, so submissions to this form are lost entirely.', domain: 'nibwp')
+                    ? __('No enabled notification. On WPForms Lite nothing is stored either, so submissions to this form are lost entirely.', 'nibwp')
                     : '',
             ];
         }
@@ -611,7 +611,7 @@ function nibwp_wpf_settings_collection(array $input, string $collection, string 
         if ($action === 'add') {
             $value = (array) ($input[$singular] ?? []);
             if ($value === []) {
-                throw new \RuntimeException(__('An object is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('An object is required.', 'nibwp'));
             }
 
             $next = 1;
@@ -626,7 +626,7 @@ function nibwp_wpf_settings_collection(array $input, string $collection, string 
         }
 
         if (!array_key_exists($key, $items)) {
-            throw new \RuntimeException(__('Nothing with that ID on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('Nothing with that ID on this form.', 'nibwp'));
         }
 
         if ($action === 'update') {
@@ -650,8 +650,8 @@ function nibwp_wpf_settings_collection(array $input, string $collection, string 
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-settings', [
-    'label'       => __('WPForms — Form settings', domain: 'nibwp'),
-    'description' => __('Read and change a form\'s settings: title, description, submit button, anti-spam, and the rest of the settings object.', domain: 'nibwp'),
+    'label'       => __('WPForms — Form settings', 'nibwp'),
+    'description' => 'Read and change a form\'s settings: title, description, submit button, anti-spam, and the rest of the settings object.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -697,7 +697,7 @@ function nibwp_wpf_settings(array $input): array|WP_Error
         if ((string) ($input['action'] ?? 'get') === 'set') {
             $changes = (array) ($input['settings'] ?? []);
             if ($changes === []) {
-                throw new \RuntimeException(__('Nothing to set.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Nothing to set.', 'nibwp'));
             }
 
             // Refused rather than merged: these two are collections keyed by ID
@@ -706,7 +706,7 @@ function nibwp_wpf_settings(array $input): array|WP_Error
                 if (array_key_exists($guarded, $changes)) {
                     throw new \RuntimeException(sprintf(
                         /* translators: %s: the settings key */
-                        __('Edit %s through its own ability — merging it here rewrites entries inside the collection.', domain: 'nibwp'),
+                        __('Edit %s through its own ability — merging it here rewrites entries inside the collection.', 'nibwp'),
                         $guarded
                     ));
                 }
@@ -733,8 +733,8 @@ function nibwp_wpf_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-entries', [
-    'label'       => __('WPForms — Entries', domain: 'nibwp'),
-    'description' => __('List and read stored entries, and mark them read or starred. Needs WPForms Pro — Lite stores nothing.', domain: 'nibwp'),
+    'label'       => __('WPForms — Entries', 'nibwp'),
+    'description' => 'List and read stored entries, and mark them read or starred. Needs WPForms Pro — Lite stores nothing.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -774,7 +774,7 @@ function nibwp_wpf_entries(array $input): array|WP_Error
     if (!nibwp_wpf_pro()) {
         return nibwp_wpf_err(
             'nibwp_wpf_lite_no_entries',
-            __('WPForms Lite does not store entries — past submissions were never saved, only emailed. There is no history to read and nothing here can recover them; this is not an empty result but an absent feature. Storing entries needs WPForms Pro.', domain: 'nibwp')
+            __('WPForms Lite does not store entries — past submissions were never saved, only emailed. There is no history to read and nothing here can recover them; this is not an empty result but an absent feature. Storing entries needs WPForms Pro.', 'nibwp')
         );
     }
 
@@ -782,7 +782,7 @@ function nibwp_wpf_entries(array $input): array|WP_Error
     $entry_handler = $wpforms->entry ?? null;
 
     if ($entry_handler === null) {
-        return nibwp_wpf_err('nibwp_wpf_no_entry_handler', __('The WPForms entry handler is unavailable.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_no_entry_handler', __('The WPForms entry handler is unavailable.', 'nibwp'));
     }
 
     return nibwp_wpf_try(static function () use ($entry_handler, $input) {
@@ -796,7 +796,7 @@ function nibwp_wpf_entries(array $input): array|WP_Error
         if ($action === 'get') {
             $entry_id = (int) ($input['entry_id'] ?? 0);
             if ($entry_id <= 0) {
-                throw new \RuntimeException(__('A valid entry ID is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A valid entry ID is required.', 'nibwp'));
             }
 
             return ['entry_id' => $entry_id, 'entry' => $entry_handler->get($entry_id)];
@@ -818,8 +818,8 @@ function nibwp_wpf_entries(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-audit', [
-    'label'       => __('WPForms — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the faults that lose enquiries: no enabled notification, no confirmation, and no fields (read-only).', domain: 'nibwp'),
+    'label'       => __('WPForms — Audit', 'nibwp'),
+    'description' => 'Check every form for the faults that lose enquiries: no enabled notification, no confirmation, and no fields (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -882,9 +882,9 @@ function nibwp_wpf_audit(array $input): array|WP_Error
                     'severity' => 'blocker',
                     'code'     => 'no_enabled_notification',
                     'message'  => $lite
-                        ? __('No enabled notification, and Lite stores nothing. Submissions to this form are lost entirely.', domain: 'nibwp')
-                        : __('No enabled notification. Entries are stored but nobody is told.', domain: 'nibwp'),
-                    'fix'      => __('Enable or add one with nibwp/wpforms-notifications.', domain: 'nibwp'),
+                        ? __('No enabled notification, and Lite stores nothing. Submissions to this form are lost entirely.', 'nibwp')
+                        : __('No enabled notification. Entries are stored but nobody is told.', 'nibwp'),
+                    'fix'      => __('Enable or add one with nibwp/wpforms-notifications.', 'nibwp'),
                 ];
             }
 
@@ -894,8 +894,8 @@ function nibwp_wpf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_confirmation',
-                    'message'  => __('No confirmation, so a visitor gets no acknowledgement after submitting.', domain: 'nibwp'),
-                    'fix'      => __('Add one with nibwp/wpforms-confirmations.', domain: 'nibwp'),
+                    'message'  => __('No confirmation, so a visitor gets no acknowledgement after submitting.', 'nibwp'),
+                    'fix'      => __('Add one with nibwp/wpforms-confirmations.', 'nibwp'),
                 ];
             }
 
@@ -905,8 +905,8 @@ function nibwp_wpf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_fields',
-                    'message'  => __('The form has no fields, so there is nothing to submit.', domain: 'nibwp'),
-                    'fix'      => __('Add fields with nibwp/wpforms-fields.', domain: 'nibwp'),
+                    'message'  => __('The form has no fields, so there is nothing to submit.', 'nibwp'),
+                    'fix'      => __('Add fields with nibwp/wpforms-fields.', 'nibwp'),
                 ];
             }
         }
@@ -929,8 +929,8 @@ function nibwp_wpf_audit(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wpforms-delete', [
-    'label'       => __('WPForms — Delete', domain: 'nibwp'),
-    'description' => __('Trash or permanently delete a WPForms form. Irreversible where stated.', domain: 'nibwp'),
+    'label'       => __('WPForms — Delete', 'nibwp'),
+    'description' => 'Trash or permanently delete a WPForms form. Irreversible where stated.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -967,13 +967,13 @@ function nibwp_wpf_delete(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if ($form_id <= 0) {
-        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wpf_err('nibwp_wpf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     if ($action === 'delete' && !(bool) ($input['confirm'] ?? false)) {
         return nibwp_wpf_err(
             'nibwp_wpf_unconfirmed',
-            __('This permanently destroys the form, and its entries on Pro. Trashing is reversible; re-issue with confirm true if deletion is intended.', domain: 'nibwp')
+            __('This permanently destroys the form, and its entries on Pro. Trashing is reversible; re-issue with confirm true if deletion is intended.', 'nibwp')
         );
     }
 

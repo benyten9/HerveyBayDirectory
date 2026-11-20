@@ -11,7 +11,7 @@ namespace DoubleScale\Pro\Modules\EmailBlocks\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * SavedBlockModel class

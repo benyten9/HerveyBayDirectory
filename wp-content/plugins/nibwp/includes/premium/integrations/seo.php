@@ -33,11 +33,8 @@ function nibwp_seo_detect_plugin(): ?array
 // --- Ability: nibwp/seo-get-post-meta ---
 
 wp_register_ability('nibwp/seo-get-post-meta', [
-    'label' => __('SEO – Get Post Meta', domain: 'nibwp'),
-    'description' => __(
-        'Get SEO metadata for a post. Auto-detects active SEO plugin (Yoast, Rank Math, or AIOSEO) and returns normalized SEO data.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Get Post Meta', 'nibwp'),
+    'description' => 'Get SEO metadata for a post. Auto-detects active SEO plugin (Yoast, Rank Math, or AIOSEO) and returns normalized SEO data.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -211,11 +208,8 @@ function nibwp_seo_get_post_meta(array $input): array|WP_Error
 // --- Ability: nibwp/seo-update-post-meta ---
 
 wp_register_ability('nibwp/seo-update-post-meta', [
-    'label' => __('SEO – Update Post Meta', domain: 'nibwp'),
-    'description' => __(
-        'Update SEO metadata for a post. Auto-detects the active SEO plugin and updates the appropriate meta fields.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Update Post Meta', 'nibwp'),
+    'description' => 'Update SEO metadata for a post. Auto-detects the active SEO plugin and updates the appropriate meta fields.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -389,11 +383,8 @@ function nibwp_seo_update_post_meta(array $input): array|WP_Error
 // --- Ability: nibwp/seo-analyze-content ---
 
 wp_register_ability('nibwp/seo-analyze-content', [
-    'label' => __('SEO – Analyze Content', domain: 'nibwp'),
-    'description' => __(
-        'Analyze content for SEO quality. Checks keyword density, title length, meta description, readability, internal/external links, image alt text, and more.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Analyze Content', 'nibwp'),
+    'description' => 'Analyze content for SEO quality. Checks keyword density, title length, meta description, readability, internal/external links, image alt text, and more.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -780,11 +771,8 @@ function nibwp_seo_count_syllables(string $text): int
 // --- Ability: nibwp/seo-get-sitemap-info ---
 
 wp_register_ability('nibwp/seo-get-sitemap-info', [
-    'label' => __('SEO – Get Sitemap Info', domain: 'nibwp'),
-    'description' => __(
-        'Get information about the site\'s XML sitemap including URL, provider, indexed URLs count, and included post types.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Get Sitemap Info', 'nibwp'),
+    'description' => 'Get information about the site\'s XML sitemap including URL, provider, indexed URLs count, and included post types.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -899,11 +887,8 @@ function nibwp_seo_get_sitemap_info(array $input): array|WP_Error
 // --- Ability: nibwp/seo-bulk-get-meta ---
 
 wp_register_ability('nibwp/seo-bulk-get-meta', [
-    'label' => __('SEO – Bulk Get Meta', domain: 'nibwp'),
-    'description' => __(
-        'Get SEO metadata for multiple posts at once. Efficient batch query supporting up to 50 posts per request.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Bulk Get Meta', 'nibwp'),
+    'description' => 'Get SEO metadata for multiple posts at once. Efficient batch query supporting up to 50 posts per request.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',

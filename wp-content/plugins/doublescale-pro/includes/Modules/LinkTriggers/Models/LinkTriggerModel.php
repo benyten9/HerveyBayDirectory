@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\LinkTriggers\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 class LinkTriggerModel extends Model {
 

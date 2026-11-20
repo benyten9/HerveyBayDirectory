@@ -2,6 +2,7 @@
 
 namespace Elementor\Modules\Mcp\Abilities;
 
+use Elementor\Modules\AtomicWidgets\PropTypes\Prop_Sensitivity;
 use Elementor\Modules\AtomicWidgets\PropsResolver\Render_Props_Resolver;
 use Elementor\Modules\AtomicWidgets\Styles\Local_Style_Serializer;
 use Elementor\Modules\AtomicWidgets\Utils\Element_Structure_Title;
@@ -9,9 +10,15 @@ use Elementor\Modules\DefaultStyles\Default_Styles_Repository;
 use Elementor\Modules\GlobalClasses\Utils\Atomic_Elements_Utils;
 use Elementor\Modules\Interactions\Props\Interaction_Item_Prop_Type;
 use Elementor\Modules\Mcp\Abilities\Appliers\V3_Node_Bridge;
-use Elementor\Modules\Mcp\Abilities\Appliers\V3\V3_Non_Style_Allowlist;
+use Elementor\Modules\Mcp\Abilities\Appliers\V3\V3_Control_Visibility;
 use Elementor\Modules\Mcp\Abilities\Appliers\V3\V3_Style_Serializer;
-use Elementor\Modules\Mcp\Abilities\Appliers\V3\V3_Widget_Bridge_Registry;
+use Elementor\Modules\Mcp\Abilities\Appliers\V3\Maps\V3_Map_Default_Styles;
+use Elementor\Modules\Mcp\Abilities\Appliers\V3\Maps\V3_Map_Settings_Reader;
+use Elementor\Modules\Mcp\Abilities\Appliers\V3\Maps\V3_Widget_Map_Registry;
+use Elementor\Modules\Mcp\Abilities\Utils\Atomic_Container_Presentation;
+use Elementor\Modules\Mcp\Abilities\Utils\Document_Mutation_Links;
+use Elementor\Modules\Mcp\Abilities\Utils\Document_Mutation_Save;
+use Elementor\Modules\Mcp\Abilities\Utils\Editor_Settings;
 use Elementor\Modules\Mcp\Abilities\Utils\Element_Default_Styles_Builder;
 use Elementor\Modules\Mcp\Abilities\Utils\Element_Tag_Resolver;
 use Elementor\Modules\Mcp\Abilities\Utils\Widget_Context_Helper;
@@ -26,8 +33,11 @@ class Get_Structure_Ability extends Abstract_Ability {
 
 	private ?Default_Styles_Repository $default_styles_repository;
 
-	public function __construct( ?Default_Styles_Repository $default_styles_repository = null ) {
+	private ?V3_Map_Default_Styles $v3_default_styles;
+
+	public function __construct( ?Default_Styles_Repository $default_styles_repository = null, ?V3_Map_Default_Styles $v3_default_styles = null ) {
 		$this->default_styles_repository = $default_styles_repository;
+		$this->v3_default_styles = $v3_default_styles;
 	}
 
 	protected function get_ability_id(): string {
@@ -37,15 +47,17 @@ class Get_Structure_Ability extends Abstract_Ability {
 	protected function get_definition(): Ability_Definition {
 		return new Ability_Definition(
 			__( 'Get Elementor Page Structure', 'elementor' ),
-			__( 'Returns a lean Elementor element tree skeleton (id, elType, widgetType, version, title, nested elements) for a single post or page ID. Each node is tagged with version=3 (legacy) or version=4 (atomic). Only version=4 nodes can be modified via elementor/manage-elements or referenced by elementor/build-composition element_config; version=3 nodes are returned for context only and must be edited directly in the Elementor editor. Optionally scope to a subtree via element_id. Set include_content=true (requires element_id) to also return each V4 node\'s settings, styles (as { __style_id, css } where css is a raw CSS string round-trippable to manage-elements.update.style / build-composition.style in replace mode), interactions, its rendered HTML tag when known, and default_styles (a raw CSS string of the widget base layer followed by the kit\'s site-wide default layer for that tag, in browser cascade order — includes selectors, @media(--breakpoint) blocks, and pseudo-states as the frontend renders them). V3 nodes are returned with empty settings and styles. Only works for posts that were saved with Elementor.', 'elementor' ),
+			__( 'Returns a lean Elementor element tree skeleton (id, elType, widgetType, title, nested elements) for a single post or page ID. V4 (atomic, `e-` types) nodes and the V3 widgets elementor/list-widget-schemas lists can be modified via elementor/manage-elements or referenced by elementor/build-composition element_config; their elementor/get-widget-schemas response has `widget_version` 3 for V3 widgets. Other V3 nodes are returned for context only and must be edited directly in the Elementor editor, except for their layer name. `title` is the layer name shown in the Structure panel: rename any node (v3 or v4) with elementor/manage-elements `editor_settings.name`, never through `settings`. Optionally scope to a subtree via element_id. Set include_content=true (requires element_id) to also return each node\'s settings and styles, plus editor_settings (name, decorative) when set; editor_settings is separate from settings and is written back through the `editor_settings` input. On published pages the tree includes staged MCP changes (`staged: true`). V4 settings use the same plain shape that manage-elements.update.settings / build-composition.element_config accept, so a value can be sent back as-is. All nodes return styles as { css } where css is a raw CSS string round-trippable to manage-elements.update.style / build-composition.style in replace mode; V4 nodes additionally include __style_id when a local style is present, interactions, the rendered HTML tag, and default_styles; V3 widgets with `style_targets` additionally include default_styles in the same style-target CSS as their styles. Only works for posts saved with Elementor.', 'elementor' ),
 			'elementor',
 			[
 				'type' => 'object',
 				'properties' => [
 					'elements' => [
 						'type' => 'array',
-						'description' => 'Skeleton of Elementor elements (id, elType, widgetType, version, title, nested elements). When include_content is true, V4 nodes also include settings, styles (as { __style_id, css } — raw CSS string with @media(--breakpoint) + &:hover/&:focus/&:active), interactions, tag (rendered HTML wrapper tag when known), and default_styles (raw CSS string: widget base layer + kit site-wide default for that tag, in cascade order). V3 nodes always have empty settings and styles.',
+						'description' => 'Skeleton of Elementor elements (id, elType, widgetType, title, nested elements). When include_content is true, all nodes include settings and styles (as { css } — raw CSS string). V4 nodes additionally include __style_id when a local style exists, interactions, tag (rendered HTML wrapper tag when known), and default_styles (raw CSS string, in cascade order: `.e-con` shell styles of atomic elements, including document-root rules for top-level elements + widget base layer + kit site-wide default for that tag). V3 widgets with `style_targets` include settings, styles.css and default_styles (the styles the widget shows before any style is set, in the same style-target CSS); other V3 widgets return empty settings and styles.css.',
 					],
+					'staged' => Document_Mutation_Links::staged_schema_property(),
+					'llm_instructions' => Document_Mutation_Links::llm_instructions_schema_property(),
 				],
 			],
 			[
@@ -54,6 +66,7 @@ class Get_Structure_Ability extends Abstract_Ability {
 					'idempotent' => true,
 					'destructive' => false,
 				],
+				'mutates_page' => false,
 			],
 			function () {
 				return current_user_can( 'edit_posts' );
@@ -73,7 +86,7 @@ class Get_Structure_Ability extends Abstract_Ability {
 					'include_content' => [
 						'type' => 'boolean',
 						'default' => false,
-						'description' => 'If true, includes each V4 node\'s settings, styles (as { __style_id, css } — raw CSS string), interactions, rendered tag, and default_styles (raw CSS string: base layer + kit default for that tag). The styles.css value is round-trippable to build-composition.style / manage-elements.update.style in replace mode. Requires element_id.',
+						'description' => 'If true, includes each node\'s settings (plain shape, writable as-is) and styles ({ css } — raw CSS string round-trippable to build-composition.style / manage-elements.update.style in replace mode). V4 nodes also include interactions, rendered tag, and default_styles; V3 widgets with `style_targets` also include default_styles. Requires element_id.',
 					],
 				],
 			]
@@ -105,6 +118,8 @@ class Get_Structure_Ability extends Abstract_Ability {
 			);
 		}
 
+		$document_root_ids = array_column( $elements, 'id' );
+
 		if ( '' !== $element_id ) {
 			$subtree = Utils::find_element_recursive( $elements, $element_id );
 
@@ -119,13 +134,22 @@ class Get_Structure_Ability extends Abstract_Ability {
 			$elements = [ $subtree ];
 		}
 
-		return [
-			'elements' => $this->prune_elements( $elements, $include_content ),
+		$is_staged = Document_Mutation_Save::is_staged( $document );
+
+		$response = [
+			'elements' => $this->prune_elements( $elements, $include_content, $document_root_ids ),
+			'staged' => $is_staged,
 		];
+
+		if ( $is_staged ) {
+			$response['llm_instructions'] = Document_Mutation_Links::staged_read_instructions();
+		}
+
+		return $response;
 	}
 
-	private function prune_elements( array $elements, bool $include_content = false ): array {
-		return Plugin::$instance->db->iterate_data( $elements, function ( $node ) use ( $include_content ) {
+	private function prune_elements( array $elements, bool $include_content = false, array $document_root_ids = [] ): array {
+		return Plugin::$instance->db->iterate_data( $elements, function ( $node ) use ( $include_content, $document_root_ids ) {
 			$skeleton = [
 				'id' => $node['id'] ?? null,
 				'elType' => $node['elType'] ?? null,
@@ -146,15 +170,21 @@ class Get_Structure_Ability extends Abstract_Ability {
 			}
 
 			if ( $include_content ) {
-				$this->populate_content( $skeleton, $node );
+				$this->populate_content( $skeleton, $node, in_array( $node['id'] ?? null, $document_root_ids, true ) );
 			}
 
 			return $skeleton;
 		} );
 	}
 
-	private function populate_content( array &$skeleton, array $node ): void {
+	private function populate_content( array &$skeleton, array $node, bool $is_document_root ): void {
 		$skeleton['interactions'] = $this->normalize_interactions( $node['interactions'] ?? null );
+
+		$editor_settings = Editor_Settings::read( $node );
+
+		if ( ! empty( $editor_settings ) ) {
+			$skeleton['editor_settings'] = $editor_settings;
+		}
 
 		if ( V3_Node_Bridge::is_v3_node( $node ) ) {
 			$this->populate_v3_content( $skeleton, $node );
@@ -167,15 +197,15 @@ class Get_Structure_Ability extends Abstract_Ability {
 
 		if ( ! $props_schema ) {
 			$skeleton['settings'] = (object) [];
-			$skeleton['styles'] = (object) [];
+			$skeleton['styles'] = [ 'css' => '' ];
 			return;
 		}
 
 		$skeleton['settings'] = $this->serialize_settings_for_llm( $props_schema, $raw_settings );
-		$skeleton['styles'] = Local_Style_Serializer::serialize( $node['styles'] ?? [] );
+		$skeleton['styles'] = $this->normalize_styles( Local_Style_Serializer::serialize( $node['styles'] ?? [] ) );
 
-		$resolved_settings = is_array( $skeleton['settings'] ) ? $skeleton['settings'] : [];
-		$this->populate_default_styles( $skeleton, $node, $config, $resolved_settings );
+		$rendered_settings = $this->resolve_rendered_settings( $props_schema, $raw_settings );
+		$this->populate_default_styles( $skeleton, $node, $config, $rendered_settings, $is_document_root );
 	}
 
 	private function serialize_settings_for_llm( array $props_schema, $raw_settings ) {
@@ -183,29 +213,47 @@ class Get_Structure_Ability extends Abstract_Ability {
 			return (object) [];
 		}
 
-		$schema = array_intersect_key( $props_schema, $raw_settings );
-		$serialized = [];
+		// Sensitive props (e.g. API keys) are never returned to agents.
+		$props_schema = Prop_Sensitivity::without_sensitive_props( $props_schema );
+
+		[ $serialized, $static_schema ] = $this->split_dynamic_settings( $props_schema, $raw_settings );
+
+		if ( ! empty( $static_schema ) ) {
+			$serialized += Render_Props_Resolver::for_plain()->resolve( $static_schema, $raw_settings );
+		}
+
+		return ! empty( $serialized ) ? $serialized : (object) [];
+	}
+
+	private function resolve_rendered_settings( array $props_schema, $raw_settings ): array {
+		if ( ! is_array( $raw_settings ) ) {
+			return [];
+		}
+
+		[ , $static_schema ] = $this->split_dynamic_settings( $props_schema, $raw_settings );
+
+		return empty( $static_schema ) ? [] : Render_Props_Resolver::for_settings()->resolve( $static_schema, $raw_settings );
+	}
+
+	private function split_dynamic_settings( array $props_schema, array $raw_settings ): array {
+		$dynamic_settings = [];
 		$static_schema = [];
 
-		foreach ( $schema as $key => $prop_type ) {
+		foreach ( array_intersect_key( $props_schema, $raw_settings ) as $key => $prop_type ) {
 			$dynamic = Dynamic_Tag_Llm_Resolver::try_serialize( $raw_settings[ $key ] );
 
 			if ( null !== $dynamic ) {
-				$serialized[ $key ] = $dynamic;
+				$dynamic_settings[ $key ] = $dynamic;
 				continue;
 			}
 
 			$static_schema[ $key ] = $prop_type;
 		}
 
-		if ( ! empty( $static_schema ) ) {
-			$serialized += Render_Props_Resolver::for_settings()->resolve( $static_schema, $raw_settings );
-		}
-
-		return ! empty( $serialized ) ? $serialized : (object) [];
+		return [ $dynamic_settings, $static_schema ];
 	}
 
-	private function populate_default_styles( array &$skeleton, array $node, array $config, array $resolved_settings ): void {
+	private function populate_default_styles( array &$skeleton, array $node, array $config, array $resolved_settings, bool $is_document_root ): void {
 		$base_styles = is_array( $config['base_styles'] ?? null ) ? $config['base_styles'] : [];
 		$props_schema = is_array( $config['atomic_props_schema'] ?? null ) ? $config['atomic_props_schema'] : [];
 		$tag = $this->resolve_html_tag( $node, $resolved_settings );
@@ -213,7 +261,9 @@ class Get_Structure_Ability extends Abstract_Ability {
 		$default_styles_css = Element_Default_Styles_Builder::render(
 			$base_styles,
 			$tag,
-			$this->get_default_styles_repository()
+			$this->get_default_styles_repository(),
+			null,
+			Atomic_Container_Presentation::applies_to( $config ) ? Atomic_Container_Presentation::to_css_string( $is_document_root ) : ''
 		);
 
 		if ( null !== $tag ) {
@@ -249,26 +299,36 @@ class Get_Structure_Ability extends Abstract_Ability {
 		return $this->default_styles_repository;
 	}
 
+	private function normalize_styles( array $serialized ): array {
+		return empty( $serialized ) ? [ 'css' => '' ] : $serialized;
+	}
+
 	private function populate_v3_content( array &$skeleton, array $node ): void {
-		$widget_type = (string) ( $node['widgetType'] ?? '' );
+		$widget_type = (string) ( $node['widgetType'] ?? $node['elType'] ?? '' );
 		$raw_settings = is_array( $node['settings'] ?? null ) ? $node['settings'] : [];
 
-		$allowed = V3_Widget_Bridge_Registry::get_non_style_keys( $widget_type );
+		$map = V3_Widget_Map_Registry::instance()->get_map( $widget_type );
 
-		if ( empty( $allowed ) && empty( V3_Widget_Bridge_Registry::get_style_overrides( $widget_type ) ) ) {
+		if ( null === $map ) {
 			$skeleton['settings'] = (object) [];
-			$skeleton['style'] = '';
+			$skeleton['styles'] = [ 'css' => '' ];
 			return;
 		}
 
-		$filter = V3_Non_Style_Allowlist::filter( $widget_type, $raw_settings );
-		$allowed_settings = $filter['allowed'];
-
-		$widget_config = Widget_Context_Helper::get_widget_config( $widget_type );
-		$style = ( new V3_Style_Serializer() )->serialize( $raw_settings, $widget_type, $widget_config ?? [] );
+		$allowed_settings = V3_Map_Settings_Reader::read( $map, $raw_settings );
+		$style_settings = $map->get_settings_host()->read( $node );
+		$style = ( new V3_Style_Serializer() )->serialize( $style_settings, $widget_type );
 
 		$skeleton['settings'] = ! empty( $allowed_settings ) ? $allowed_settings : (object) [];
-		$skeleton['style'] = $style;
+		$skeleton['styles'] = [ 'css' => $style ];
+
+		$this->v3_default_styles ??= V3_Map_Default_Styles::create_default();
+		$skeleton['default_styles'] = $this->v3_default_styles->render(
+			$map,
+			$style_settings,
+			V3_Widget_Map_Registry::instance()->get_registered_controls( $widget_type ),
+			V3_Control_Visibility::for_widget( $widget_type )
+		);
 	}
 
 	private function normalize_interactions( $interactions ): array {
@@ -331,7 +391,8 @@ class Get_Structure_Ability extends Abstract_Ability {
 	}
 
 	private function get_editable_document( int $post_id ) {
-		$document = Plugin::$instance->documents->get( $post_id );
+		$document = Plugin::$instance->documents->get_doc_or_auto_save( $post_id, get_current_user_id() )
+			?? Plugin::$instance->documents->get( $post_id );
 
 		if ( ! $document ) {
 			return new \WP_Error(

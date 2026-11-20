@@ -25,7 +25,7 @@ use DoubleScale\Core\Constants\MessageDirection;
 use DoubleScale\Core\Constants\MessageSourceTypes;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Core\Utils\Utils as CoreUtils;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
 defined( 'ABSPATH' ) || exit;
 

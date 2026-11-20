@@ -35,13 +35,16 @@ class SearchConsole {
 	}
 
 	public function handle( $options = array() ) {
-		// Cleaning old data
-		delete_post_meta_by_key( '_seopress_search_console_analysis_clicks' );
-		delete_post_meta_by_key( '_seopress_search_console_analysis_ctr' );
-		delete_post_meta_by_key( '_seopress_search_console_analysis_impressions' );
-		delete_post_meta_by_key( '_seopress_search_console_analysis_position' );
-
 		$client = seopress_pro_get_service( 'GoogleClient' )->getClient();
+
+		// An absent or invalid service account key leaves the client null, which would
+		// otherwise raise an \Error that the catch blocks below do not intercept.
+		if ( null === $client ) {
+			return array(
+				'error'  => __( 'No valid Google service account key found. Check the key pasted in SEO, Instant Indexing.', 'wp-seopress-pro' ),
+				'status' => 'error',
+			);
+		}
 
 		$range = $this->getDateRange( $options );
 
@@ -59,6 +62,13 @@ class SearchConsole {
 			if ( ! property_exists( $response, 'rows' ) ) {
 				return array();
 			}
+
+			// Keep the previous metrics until a replacement response is available.
+			delete_post_meta_by_key( '_seopress_search_console_analysis_clicks' );
+			delete_post_meta_by_key( '_seopress_search_console_analysis_ctr' );
+			delete_post_meta_by_key( '_seopress_search_console_analysis_impressions' );
+			delete_post_meta_by_key( '_seopress_search_console_analysis_position' );
+			delete_post_meta_by_key( '_seopress_search_console_analysis_rows' );
 
 			return array(
 				'data'   => $response->rows,
@@ -82,6 +92,15 @@ class SearchConsole {
 		}
 
 		$client = seopress_pro_get_service( 'GoogleClient' )->getClient();
+
+		// An absent or invalid service account key leaves the client null, which would
+		// otherwise raise an \Error that the catch blocks below do not intercept.
+		if ( null === $client ) {
+			return array(
+				'error'  => __( 'No valid Google service account key found. Check the key pasted in SEO, Instant Indexing.', 'wp-seopress-pro' ),
+				'status' => 'error',
+			);
+		}
 
 		$url = $this->getUrl();
 
@@ -125,7 +144,7 @@ class SearchConsole {
 
 		// Iterate over each row and print the query (keyword) and clicks.
 		foreach ( $rows as $row ) {
-			echo 'Keyword: ', $row->getKeys()[0], ', Clicks: ', $row->getClicks(), "\n";
+			echo 'Keyword: ', esc_html( $row->getKeys()[0] ), ', Clicks: ', esc_html( $row->getClicks() ), "\n";
 		}
 	}
 
@@ -194,19 +213,62 @@ class SearchConsole {
 			return;
 		}
 
-		update_post_meta( $postId, '_seopress_search_console_analysis_clicks', sanitize_text_field( $clicks ) );
-		update_post_meta( $postId, '_seopress_search_console_analysis_ctr', sanitize_text_field( $ctr ) );
-		update_post_meta( $postId, '_seopress_search_console_analysis_impressions', sanitize_text_field( $impressions ) );
-		update_post_meta( $postId, '_seopress_search_console_analysis_position', sanitize_text_field( $position ) );
+		// Several rows can resolve to the same post (trailing slash, query
+		// string, case). Keep each row of this sync by URL, so the post shows
+		// their sum, and a row saved twice replaces itself instead of counting
+		// twice. handle() clears these rows when a new sync starts.
+		$rows = get_post_meta( $postId, '_seopress_search_console_analysis_rows', true );
+		$rows = is_array( $rows ) ? $rows : array();
+
+		$rows[ $url ] = array(
+			'clicks'      => (float) $clicks,
+			'ctr'         => (float) $ctr,
+			'impressions' => (float) $impressions,
+			'position'    => (float) $position,
+		);
+
+		update_post_meta( $postId, '_seopress_search_console_analysis_rows', $rows );
+
+		$data = self::sumRows( $rows );
+
+		update_post_meta( $postId, '_seopress_search_console_analysis_clicks', sanitize_text_field( $data['clicks'] ) );
+		update_post_meta( $postId, '_seopress_search_console_analysis_ctr', sanitize_text_field( $data['ctr'] ) );
+		update_post_meta( $postId, '_seopress_search_console_analysis_impressions', sanitize_text_field( $data['impressions'] ) );
+		update_post_meta( $postId, '_seopress_search_console_analysis_position', sanitize_text_field( $data['position'] ) );
 
 		return array(
 			'post_id' => $postId,
-			'data'    => array(
-				'clicks'      => $clicks,
-				'ctr'         => $ctr,
-				'impressions' => $impressions,
-				'position'    => $position,
-			),
+			'data'    => $data,
+		);
+	}
+
+	/**
+	 * Metrics of a post from all the Search Console rows that resolve to it.
+	 *
+	 * Clicks and impressions add up. The CTR is recomputed from the totals and
+	 * the position is weighted by impressions: a row seen 20 times at position 1
+	 * and a row seen 8,416 times at position 12 do not rank at 6.5.
+	 *
+	 * @param array $rows Metrics of each row, keyed by URL.
+	 *
+	 * @return array clicks, ctr, impressions, position.
+	 */
+	protected static function sumRows( $rows ) {
+		$clicks      = 0;
+		$impressions = 0;
+		$weighted    = 0;
+
+		foreach ( $rows as $row ) {
+			$clicks      += $row['clicks'];
+			$impressions += $row['impressions'];
+			$weighted    += $row['position'] * $row['impressions'];
+		}
+
+		return array(
+			'clicks'      => $clicks,
+			'ctr'         => $impressions > 0 ? $clicks / $impressions : 0,
+			'impressions' => $impressions,
+			'position'    => $impressions > 0 ? $weighted / $impressions : 0,
 		);
 	}
 }

@@ -156,6 +156,11 @@ final class KeySubject {
 			UserRoles::BOOKING_AGENT,
 			UserRoles::PROJECT_MANAGER,
 			UserRoles::PROJECT_MEMBER,
+			UserRoles::AUTOMATION_MANAGER,
+			UserRoles::AUTOMATION_AGENT,
+			// The help center's search and read abilities.
+			UserRoles::HELP_CENTER_MANAGER,
+			UserRoles::HELP_CENTER_AGENT,
 		);
 	}
 }

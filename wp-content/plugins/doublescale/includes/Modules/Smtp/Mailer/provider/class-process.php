@@ -226,6 +226,24 @@ abstract class Process {
 	abstract function set_subject( $subject );
 
 	/**
+	 * Clean a subject line for an API body.
+	 *
+	 * Only line breaks and other control characters go (they would split the
+	 * header); everything else is kept. `sanitize_text_field()` was used here
+	 * before and deleted anything that looked like a tag or a %-escape, so
+	 * "Order <today>" went out as "Order".
+	 *
+	 * @param string $subject Subject.
+	 *
+	 * @return string
+	 */
+	protected static function sanitize_subject( $subject ) {
+		$subject = wp_check_invalid_utf8( (string) $subject, true );
+
+		return trim( preg_replace( '/[\x00-\x1F\x7F]+/', ' ', $subject ) );
+	}
+
+	/**
 	 * Set the email content.
 	 *
 	 * @since 1.0.0

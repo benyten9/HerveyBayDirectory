@@ -99,7 +99,7 @@ echo '<section id="code-settings" class="section-content pm-child" data-pm-paren
 							$custom_theme_name = \Perfmatters\Admin\CodeMirror::get_custom_theme_name();
 
 							echo '<div>';
-								echo __('Current custom theme', 'perfmatters') . ': <code>' . esc_html(!empty($custom_theme_name) ? $custom_theme_name : __('unknown', 'perfmatters')) . '</code>';
+								echo esc_html__('Current custom theme', 'perfmatters') . ': <code>' . esc_html(!empty($custom_theme_name) ? $custom_theme_name : __('unknown', 'perfmatters')) . '</code>';
 							echo '</div>';
 						}
 						perfmatters_tooltip(__('Upload a custom .css CodeMirror 5 theme stylesheet.', 'perfmatters'));

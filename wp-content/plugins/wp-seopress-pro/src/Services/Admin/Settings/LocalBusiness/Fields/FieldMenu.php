@@ -17,7 +17,7 @@ trait FieldMenu {
 		printf(
 		/* translators: 1: home URL */
 			esc_html__( 'e.g. %s', 'wp-seopress-pro' ),
-			get_home_url()
+			esc_url( get_home_url() )
 		);
 		?>
 	"

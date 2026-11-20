@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Validation\Rules;
+namespace DoubleScale\Vendor\Illuminate\Validation\Rules;
 
 class Dimensions
 {

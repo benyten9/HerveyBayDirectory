@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static bool has($key)
@@ -12,7 +12,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Config\Repository
  */
-class Config extends \Illuminate\Support\Facades\Facade
+class Config extends Facade
 {
     /**
      * Get the registered name of the component.

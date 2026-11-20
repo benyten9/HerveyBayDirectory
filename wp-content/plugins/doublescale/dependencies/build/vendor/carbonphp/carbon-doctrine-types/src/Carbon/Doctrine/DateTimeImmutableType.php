@@ -1,13 +1,13 @@
 <?php
 
-namespace Carbon\Doctrine;
+namespace DoubleScale\Vendor\Carbon\Doctrine;
 
-use Carbon\CarbonImmutable;
-use Doctrine\DBAL\Types\VarDateTimeImmutableType;
-class DateTimeImmutableType extends VarDateTimeImmutableType implements \Carbon\Doctrine\CarbonDoctrineType
+use DoubleScale\Vendor\Carbon\CarbonImmutable;
+use DoubleScale\Vendor\Doctrine\DBAL\Types\VarDateTimeImmutableType;
+class DateTimeImmutableType extends VarDateTimeImmutableType implements CarbonDoctrineType
 {
     /** @use CarbonTypeConverter<CarbonImmutable> */
-    use \Carbon\Doctrine\CarbonTypeConverter;
+    use CarbonTypeConverter;
     /**
      * @return class-string<CarbonImmutable>
      */

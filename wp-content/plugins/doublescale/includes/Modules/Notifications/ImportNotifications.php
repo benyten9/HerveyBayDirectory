@@ -12,6 +12,8 @@ namespace DoubleScale\Modules\Notifications;
 use DoubleScale\Modules\Notifications\Services\NotificationService;
 use DoubleScale\Modules\Notifications\Services\NotificationCategories;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * ImportNotifications class
  *

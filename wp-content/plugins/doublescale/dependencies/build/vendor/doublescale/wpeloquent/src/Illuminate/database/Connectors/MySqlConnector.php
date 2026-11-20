@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 use PDO;
-class MySqlConnector extends \Illuminate\Database\Connectors\Connector implements \Illuminate\Database\Connectors\ConnectorInterface
+class MySqlConnector extends Connector implements ConnectorInterface
 {
     /**
      * Establish a database connection.

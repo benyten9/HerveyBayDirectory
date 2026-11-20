@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-migrate', [
     'label'       => __('SEO Pro — Migrate', 'nibwp'),
-    'description' => __('Port SEO meta from one engine to another (Yoast / Rank Math / AIOSEO / SEOPress / Slim SEO). Actions are via dry_run: dry_run:true returns a per-post diff of what would be written; dry_run:false migrates. Reads from from_engine, writes to to_engine. Skips posts that already have data on the target unless overwrite:true.', 'nibwp'),
+    'description' => 'Port SEO meta from one engine to another (Yoast / Rank Math / AIOSEO / SEOPress / Slim SEO). Actions are via dry_run: dry_run:true returns a per-post diff of what would be written; dry_run:false migrates. Reads from from_engine, writes to to_engine. Skips posts that already have data on the target unless overwrite:true.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

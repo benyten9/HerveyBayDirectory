@@ -35,7 +35,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 <?php else : ?>
 
 <div class="updraft-ad-container updated">
-	<div class="updraft_notice_container">
+	<div class="updraft_notice_container<?php if (isset($campaign) && 'blackfriday' == $campaign) echo ' updraft_notice_blackfriday'; ?>">
 		<div class="updraft_advert_content_left">
 			<img src="<?php echo esc_url(UPDRAFTPLUS_URL.'/images/'.$image);?>" width="60" height="60" alt="<?php esc_attr_e('notice image', 'updraftplus');?>" />
 		</div>

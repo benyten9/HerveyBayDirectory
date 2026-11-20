@@ -62,9 +62,15 @@ class Minify
             }
 
             //minify and save file
-			$minifier_class = "\\MatthiasMullie\\Minify\\" . strtoupper($ext);
-			$minifier = new $minifier_class($file_path);
-		    $minifier->minify($minified_path);
+			try {
+				$minifier_class = "\\MatthiasMullie\\Minify\\" . strtoupper($ext);
+				$minifier = new $minifier_class($file_path);
+				$minifier->minify($minified_path);
+			}
+			catch(\MatthiasMullie\Minify\Exceptions\IOException $e) {
+				error_log('Perfmatters: ' . $e->getMessage());
+				return;
+			}
 		}
 
 		//check if minified file is smaller than original
@@ -178,14 +184,14 @@ class Minify
         }
 
         delete_transient('perfmatters_minified_cleared');
-        echo '<div class="notice notice-success is-dismissible"><p><strong>' . __('Minified JS/CSS cleared.', 'perfmatters' ) . '</strong></p></div>';
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Minified JS/CSS cleared.', 'perfmatters') . '</p></div>';
     }
 
     //clear minified JS/CSS from admin bar
     public static function admin_bar_clear_minified() {
 
         if(!current_user_can('manage_options') || !perfmatters_network_access()) {
-            wp_die(__('Sorry, you are not allowed to do that.'), 403);
+            wp_die(esc_html__('Sorry, you are not allowed to do that.', 'perfmatters'), 403);
         }
 
         if(!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key($_GET['_wpnonce']), 'perfmatters_clear_minified')) {

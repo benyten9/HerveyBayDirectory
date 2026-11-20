@@ -22,6 +22,7 @@ use DoubleScale\Modules\Campaigns\Models\CampaignModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Core\Constants\CampaignChannel;
+use DoubleScale\Core\Constants\MessageSourceTypes;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Modules\Campaigns\Services\CampaignRateLimiter;
 use DoubleScale\Core\PluginKernel;
@@ -122,7 +123,7 @@ class CampaignResender {
 				return;
 			}
 
-			while ( call_user_func( $this->fn_execution_time ) < $this->max_execution_time && ! Utils::is_memory_limit_reached() ) {
+			while ( true ) {
 				usleep( 100000 ); // 0.1 s
 
 				if ( $last_offset >= $count ) {
@@ -138,9 +139,19 @@ class CampaignResender {
 				}
 
 				foreach ( $failed_messages as $message ) {
-					$this->resend_single_message( $campaign, $message->contact, $message );
+					$contact = $message->contact;
+					if ( $contact ) {
+						$this->resend_single_message( $campaign, $contact, $message );
+					} else {
+						$message->status = TrackingStatus::SCHEDULED;
+						$message->save();
+					}
 					++$last_offset;
 					update_option( $offset_key, $last_offset );
+				}
+
+				if ( call_user_func( $this->fn_execution_time ) >= $this->max_execution_time || Utils::is_memory_limit_reached() ) {
+					break;
 				}
 			}
 		} catch ( \Exception $e ) {
@@ -171,8 +182,21 @@ class CampaignResender {
 		$message->status = TrackingStatus::SCHEDULED;
 		$message->save();
 
+		$hook = "process_campaign_{$this->channel}";
+
+		if ( CampaignChannel::STR_WHATSAPP === $this->channel ) {
+			PluginKernel::instance()->campaigns_tasks->schedule_single(
+				time() + 1,
+				$hook,
+				$campaign,
+				$contact,
+				$message
+			);
+			return;
+		}
+
 		PluginKernel::instance()->campaigns_tasks->enqueue_sync(
-			"process_campaign_{$this->channel}",
+			$hook,
 			$campaign,
 			$contact,
 			$message
@@ -191,6 +215,8 @@ class CampaignResender {
 		$campaign->status = ! empty( $settings['automated'] ) ? 'active' : 'completed';
 		$campaign->save();
 		update_option( $offset_key, 0 );
+		delete_option( 'doublescale_resend_error_code_' . $campaign->id );
+		delete_transient( 'doublescale_failure_causes_' . $campaign->id );
 
 		doublescale_get_logger()->info(
 			/* translators: %s: channel name */
@@ -209,11 +235,15 @@ class CampaignResender {
 	 * @return int
 	 */
 	private function get_failed_messages_count( CampaignModel $campaign ) {
-		$mode = call_user_func( $this->fn_get_message_mode );
-		return $campaign->messages()
+		$mode  = call_user_func( $this->fn_get_message_mode );
+		$query = $campaign->messages()
 			->where( 'mode', $mode )
-			->where( 'status', TrackingStatus::FAILED )
-			->count();
+			->where( 'status', TrackingStatus::FAILED );
+
+		$this->apply_error_code_scope( $query, $campaign );
+		$this->skip_recipients_in_cooldown( $query );
+
+		return $query->count();
 	}
 
 	/**
@@ -222,15 +252,148 @@ class CampaignResender {
 	 * @param CampaignModel $campaign
 	 * @param int           $offset
 	 * @param int           $limit
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	private function get_failed_messages( CampaignModel $campaign, $offset, $limit ) {
-		$mode = call_user_func( $this->fn_get_message_mode );
-		return $campaign->messages()
+		$mode  = call_user_func( $this->fn_get_message_mode );
+		$query = $campaign->messages()
 			->where( 'mode', $mode )
-			->where( 'status', TrackingStatus::FAILED )
+			->where( 'status', TrackingStatus::FAILED );
+
+		$this->apply_error_code_scope( $query, $campaign );
+		$this->skip_recipients_in_cooldown( $query );
+
+		return $query
 			->offset( $offset )
 			->limit( $limit )
 			->get();
+	}
+
+	/**
+	 * Leave out recipients Meta asked us to leave alone for now.
+	 *
+	 * Meta's per-user marketing cap (131049) is about the person, not the
+	 * account: it drops marketing messages to someone who has had too many
+	 * lately, from any business. Resending straight away fails the same way,
+	 * so admins end up in a resend loop that reaches nobody and only feeds
+	 * the number's quality rating. Those messages stay failed and become
+	 * resendable once the recipient's own window has moved on; every other
+	 * failure resends as before.
+	 *
+	 * Applied to the count and to the batch alike, so the resend offsets stay
+	 * in step.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
+	 * @return void
+	 */
+	private function skip_recipients_in_cooldown( $query ) {
+		self::exclude_recipients_in_cooldown( $query, (string) $this->channel );
+	}
+
+	/**
+	 * The filter itself, shared with the Retry Sending endpoint so the button
+	 * and the resend it starts agree on what can be retried now.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query   Query over the tracking table.
+	 * @param string                                $channel Campaign channel slug.
+	 * @return void
+	 */
+	public static function exclude_recipients_in_cooldown( $query, $channel ) {
+		if ( CampaignChannel::STR_WHATSAPP !== $channel ) {
+			return;
+		}
+
+		$cooldown = WhatsappErrorCodes::recipient_cooldown_seconds();
+		if ( $cooldown <= 0 ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$meta   = $wpdb->prefix . 'doublescale_communication_tracking_meta';
+		$table  = ( new CommunicationTrackingModel() )->getTable();
+		$codes  = array_map( 'strval', WhatsappErrorCodes::recipient_cooldown_codes() );
+		$since  = gmdate( 'Y-m-d H:i:s', time() - $cooldown );
+		$holes  = implode( ',', array_fill( 0, count( $codes ), '?' ) );
+		$params = array_merge( $codes, array( $since ) );
+
+		$query->whereRaw(
+			"NOT EXISTS (
+				SELECT 1 FROM {$meta} m
+				WHERE m.communication_tracking_id = {$table}.id
+				  AND m.meta_key = 'error_info'
+				  AND JSON_VALID(m.meta_value)
+				  AND JSON_UNQUOTE(JSON_EXTRACT(m.meta_value, '$.code')) IN ({$holes})
+				  AND {$table}.updated_at >= ?
+			)",
+			$params
+		);
+	}
+
+	/**
+	 * When the first capped recipient of a campaign may be retried, or null.
+	 *
+	 * @param int $campaign_id Campaign id.
+	 * @return int|null Unix time.
+	 */
+	public static function first_cooldown_release( $campaign_id ) {
+		$cooldown = WhatsappErrorCodes::recipient_cooldown_seconds();
+		if ( $cooldown <= 0 ) {
+			return null;
+		}
+
+		global $wpdb;
+
+		$meta  = $wpdb->prefix . 'doublescale_communication_tracking_meta';
+		$table = ( new CommunicationTrackingModel() )->getTable();
+		$codes = implode( ',', array_map( 'intval', WhatsappErrorCodes::recipient_cooldown_codes() ) );
+
+		$first = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MIN(t.updated_at) FROM {$table} t
+				 INNER JOIN {$meta} m ON m.communication_tracking_id = t.id AND m.meta_key = 'error_info'
+				 WHERE t.source_id = %d AND t.source_type = %d AND t.mode = %d AND t.status = %d
+				   AND JSON_VALID(m.meta_value)
+				   AND JSON_UNQUOTE(JSON_EXTRACT(m.meta_value, '$.code')) IN ({$codes})
+				   AND t.updated_at >= %s",
+				(int) $campaign_id,
+				MessageSourceTypes::CAMPAIGN,
+				CommunicationTrackingModel::MODE_WHATSAPP,
+				TrackingStatus::FAILED,
+				gmdate( 'Y-m-d H:i:s', time() - $cooldown )
+			)
+		);
+
+		return $first ? strtotime( $first . ' UTC' ) + $cooldown : null;
+	}
+
+	/**
+	 * Restrict a failed-message query to a scoped error_info code, if any.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query    Query.
+	 * @param CampaignModel                         $campaign Campaign.
+	 * @return void
+	 */
+	private function apply_error_code_scope( $query, CampaignModel $campaign ) {
+		$code = sanitize_text_field( (string) get_option( 'doublescale_resend_error_code_' . $campaign->id, '' ) );
+		if ( '' === $code ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$meta  = $wpdb->prefix . 'doublescale_communication_tracking_meta';
+		$table = ( new CommunicationTrackingModel() )->getTable();
+
+		$query->whereRaw(
+			"EXISTS (
+				SELECT 1 FROM {$meta} m
+				WHERE m.communication_tracking_id = {$table}.id
+				  AND m.meta_key = 'error_info'
+				  AND JSON_VALID(m.meta_value)
+				  AND JSON_UNQUOTE(JSON_EXTRACT(m.meta_value, '$.code')) = ?
+			)",
+			array( $code )
+		);
 	}
 }

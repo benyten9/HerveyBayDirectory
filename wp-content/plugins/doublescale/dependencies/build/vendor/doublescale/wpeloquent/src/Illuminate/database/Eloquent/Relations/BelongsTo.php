@@ -1,12 +1,12 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\Concerns\SupportsDefaultModels;
-class BelongsTo extends \Illuminate\Database\Eloquent\Relations\Relation
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Concerns\SupportsDefaultModels;
+class BelongsTo extends Relation
 {
     use SupportsDefaultModels;
     /**

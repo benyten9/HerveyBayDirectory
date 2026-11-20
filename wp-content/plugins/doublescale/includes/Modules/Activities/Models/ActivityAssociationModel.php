@@ -14,7 +14,7 @@ namespace DoubleScale\Modules\Activities\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * Activity_Source_Model class
@@ -114,7 +114,7 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function activity() {
 		return $this->belongsTo( ActivityModel::class, 'activity_id', 'id' );
@@ -126,7 +126,7 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\MorphTo
 	 */
 	public function entity() {
 		return $this->morphTo( 'entity', 'entity_type', 'entity_id' );
@@ -137,7 +137,7 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function deal() {
 		$deal_model = doublescale_resolve_deal_model_class();
@@ -145,7 +145,8 @@ class ActivityAssociationModel extends Model {
 			return $this->belongsTo( $deal_model, 'entity_id', 'id' )
 				->where( 'entity_type', self::ENTITY_TYPE_DEAL );
 		}
-		return null;
+		// Deals are another module's data: matches nothing while it is off.
+		return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
@@ -154,9 +155,14 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function campaign() {
+		// Campaigns' data: matches nothing while the module is off (both
+		// campaign models read its table).
+		if ( ! doublescale_module_data_ready( 'campaigns' ) ) {
+			return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
+		}
 		if ( class_exists( '\DoubleScale\Modules\Campaigns\Models\CampaignModel' ) ) {
 			return $this->belongsTo( '\DoubleScale\Modules\Campaigns\Models\CampaignModel', 'entity_id', 'id' )
 				->where( 'entity_type', self::ENTITY_TYPE_CAMPAIGN );
@@ -173,7 +179,7 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( \DoubleScale\Modules\Contacts\Models\ContactModel::class, 'entity_id', 'id' )
@@ -186,14 +192,15 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function proposal() {
-		if ( class_exists( '\DoubleScale\Modules\Documents\Models\ProposalModel' ) ) {
+		if ( doublescale_module_data_ready( 'documents' ) ) {
 			return $this->belongsTo( '\DoubleScale\Modules\Documents\Models\ProposalModel', 'entity_id', 'id' )
 				->where( 'entity_type', self::ENTITY_TYPE_PROPOSAL );
 		}
-		return null;
+		// Another module's data: matches nothing while it is off.
+		return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
@@ -202,36 +209,38 @@ class ActivityAssociationModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function invoice() {
-		if ( class_exists( '\DoubleScale\Modules\Documents\Models\InvoiceModel' ) ) {
+		if ( doublescale_module_data_ready( 'documents' ) ) {
 			return $this->belongsTo( '\DoubleScale\Modules\Documents\Models\InvoiceModel', 'entity_id', 'id' )
 				->where( 'entity_type', self::ENTITY_TYPE_INVOICE );
 		}
-		return null;
+		// Another module's data: matches nothing while it is off.
+		return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
 	 * Get project association (if entity_type is ENTITY_TYPE_PROJECT).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function project() {
-		if ( class_exists( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel' ) ) {
+		if ( doublescale_module_data_ready( 'projects' ) ) {
 			return $this->belongsTo( '\DoubleScale\Pro\Modules\Projects\Models\ProjectModel', 'entity_id', 'id' )
 				->where( 'entity_type', self::ENTITY_TYPE_PROJECT );
 		}
-		return null;
+		// Another module's data: matches nothing while it is off.
+		return $this->belongsTo( static::class, 'entity_id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
 	 * Scope: Filter by entity type
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $type Entity type.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByEntityType( $query, $type ) {
 		return $query->where( 'entity_type', $type );
@@ -240,11 +249,11 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by entity
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $type Entity type.
 	 * @param int                                   $id Entity ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByEntity( $query, $type, $id ) {
 		return $query->where( 'entity_type', $type )->where( 'entity_id', $id );
@@ -253,10 +262,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by deal
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $deal_id Deal ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForDeal( $query, $deal_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_DEAL )->where( 'entity_id', $deal_id );
@@ -265,10 +274,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by campaign
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $campaign_id Campaign ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForCampaign( $query, $campaign_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_CAMPAIGN )->where( 'entity_id', $campaign_id );
@@ -277,10 +286,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by ticket
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $ticket_id Support ticket ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForTicket( $query, $ticket_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_TICKET )->where( 'entity_id', $ticket_id );
@@ -289,10 +298,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by task
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $task_id Task ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForTask( $query, $task_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_TASK )->where( 'entity_id', $task_id );
@@ -301,10 +310,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by contact
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $contact_id Contact ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForContact( $query, $contact_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_CONTACT )->where( 'entity_id', $contact_id );
@@ -313,10 +322,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by proposal (structure-only until wired).
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $proposal_id Proposal ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForProposal( $query, $proposal_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_PROPOSAL )->where( 'entity_id', $proposal_id );
@@ -325,10 +334,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by invoice (structure-only until wired).
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $invoice_id Invoice ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForInvoice( $query, $invoice_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_INVOICE )->where( 'entity_id', $invoice_id );
@@ -337,10 +346,10 @@ class ActivityAssociationModel extends Model {
 	/**
 	 * Scope: Filter by project.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param int                                   $project_id Project ID.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeForProject( $query, $project_id ) {
 		return $query->where( 'entity_type', self::ENTITY_TYPE_PROJECT )->where( 'entity_id', $project_id );

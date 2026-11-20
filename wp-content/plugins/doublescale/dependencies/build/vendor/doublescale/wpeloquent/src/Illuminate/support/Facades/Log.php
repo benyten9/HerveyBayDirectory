@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static void emergency(string $message, array $context = [])
@@ -17,7 +17,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Log\Logger
  */
-class Log extends \Illuminate\Support\Facades\Facade
+class Log extends Facade
 {
     /**
      * Get the registered name of the component.

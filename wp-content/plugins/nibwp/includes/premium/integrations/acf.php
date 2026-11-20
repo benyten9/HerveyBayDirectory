@@ -12,11 +12,8 @@ if (!defined('ABSPATH')) {
 // --- Ability: nibwp/acf-manage-fields ---
 
 wp_register_ability('nibwp/acf-manage-fields', [
-    'label' => __('ACF Manage Fields', domain: 'nibwp'),
-    'description' => __(
-        'CRUD operations for Advanced Custom Fields field groups and fields. List, get, create, update, and delete ACF field groups including their field definitions and location rules.',
-        domain: 'nibwp',
-    ),
+    'label' => __('ACF Manage Fields', 'nibwp'),
+    'description' => 'CRUD operations for Advanced Custom Fields field groups and fields. List, get, create, update, and delete ACF field groups including their field definitions and location rules.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',
@@ -241,11 +238,8 @@ function nibwp_acf_manage_fields(array $input): array|WP_Error
 // --- Ability: nibwp/acf-manage-options ---
 
 wp_register_ability('nibwp/acf-manage-options', [
-    'label' => __('ACF Manage Options', domain: 'nibwp'),
-    'description' => __(
-        'Manage ACF options pages and their field values. List existing options pages, create new ones, retrieve option values, and update them.',
-        domain: 'nibwp',
-    ),
+    'label' => __('ACF Manage Options', 'nibwp'),
+    'description' => 'Manage ACF options pages and their field values. List existing options pages, create new ones, retrieve option values, and update them.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',

@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use Throwable;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 trait DetectsLostConnections
 {
     /**

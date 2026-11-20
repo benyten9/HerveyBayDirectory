@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/bricks-pro-figma-to-component', [
     'label'       => __('Bricks Pro — Figma frame to Bricks template', 'nibwp'),
-    'description' => __('Discoverable entry for Figma → Bricks. Real Figma extraction runs agent-side (Figma MCP or screenshot). Agent then submits the built Bricks payload via html-to-component for validation + persistence.', 'nibwp'),
+    'description' => 'Discoverable entry for Figma → Bricks. Real Figma extraction runs agent-side (Figma MCP or screenshot). Agent then submits the built Bricks payload via html-to-component for validation + persistence.',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

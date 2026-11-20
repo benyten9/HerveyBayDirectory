@@ -143,12 +143,10 @@ class CommandPaletteIndex {
 			self::setting( 'pro/bc-enable', __( 'Enable Breadcrumbs', 'wp-seopress-pro' ), array( 'breadcrumbs', 'enable' ), $ctx, $page, $tab, 'seopress_breadcrumbs_enable' ),
 			self::setting( 'pro/bc-json', __( 'Enable JSON-LD Breadcrumbs', 'wp-seopress-pro' ), array( 'json-ld', 'breadcrumbs', 'schema' ), $ctx, $page, $tab, 'seopress_breadcrumbs_json_enable' ),
 			self::setting( 'pro/bc-sep', __( 'Breadcrumbs Separator', 'wp-seopress-pro' ), array( 'separator', 'breadcrumbs' ), $ctx, $page, $tab, 'seopress_breadcrumbs_separator' ),
-			self::setting( 'pro/bc-sep-disable', __( 'Disable default breadcrumbs separator', 'wp-seopress-pro' ), array( 'separator', 'disable', 'breadcrumbs' ), $ctx, $page, $tab, 'seopress_breadcrumbs_separator_disable' ),
 			self::setting( 'pro/bc-cpt', __( 'Post type to show in Breadcrumbs', 'wp-seopress-pro' ), array( 'post type', 'breadcrumbs' ), $ctx, $page, $tab, 'seopress_breadcrumbs_cpt' ),
 			self::setting( 'pro/bc-tax', __( 'Taxonomy to show in Breadcrumbs', 'wp-seopress-pro' ), array( 'taxonomy', 'breadcrumbs' ), $ctx, $page, $tab, 'seopress_breadcrumbs_tax' ),
 			self::setting( 'pro/bc-no-blog', __( 'Remove Posts page', 'wp-seopress-pro' ), array( 'posts page', 'blog', 'remove' ), $ctx, $page, $tab, 'seopress_breadcrumbs_remove_blog_page' ),
 			self::setting( 'pro/bc-no-shop', __( 'Remove Shop page', 'wp-seopress-pro' ), array( 'shop', 'woocommerce', 'remove' ), $ctx, $page, $tab, 'seopress_breadcrumbs_remove_shop_page' ),
-			self::setting( 'pro/bc-storefront', __( 'Storefront compatibility', 'wp-seopress-pro' ), array( 'storefront', 'theme' ), $ctx, $page, $tab, 'seopress_breadcrumbs_storefront' ),
 		);
 	}
 
@@ -320,6 +318,7 @@ class CommandPaletteIndex {
 			self::setting( 'pro/sd-logo', __( 'Publisher logo', 'wp-seopress-pro' ), array( 'publisher', 'logo', 'image' ), $ctx, $page, $tab, 'seopress_rich_snippets_publisher_logo' ),
 			self::setting( 'pro/sd-profile', __( 'Enable ProfilePage Schema', 'wp-seopress-pro' ), array( 'profile', 'schema', 'author' ), $ctx, $page, $tab, 'seopress_rich_snippets_profilepage_enable' ),
 			self::setting( 'pro/sd-video-youtube', __( 'Auto-fill Video schema from first YouTube video', 'wp-seopress-pro' ), array( 'video', 'youtube', 'schema', 'structured data' ), $ctx, $page, $tab, 'seopress_xml_sitemap_video_schema_youtube_enable' ),
+			self::setting( 'pro/sd-video-youtube-api-key', __( 'YouTube Data API key', 'wp-seopress-pro' ), array( 'youtube', 'api key', 'video', 'quota' ), $ctx, $page, $tab, 'seopress_video_youtube_api_key' ),
 		);
 	}
 

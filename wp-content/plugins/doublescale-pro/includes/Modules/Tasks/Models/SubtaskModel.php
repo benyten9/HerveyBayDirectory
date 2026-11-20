@@ -15,7 +15,7 @@ namespace DoubleScale\Pro\Modules\Tasks\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
 
 /**
@@ -115,7 +115,7 @@ class SubtaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function task() {
 		return $this->belongsTo( TaskModel::class, 'task_id', 'id' );
@@ -126,7 +126,7 @@ class SubtaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function group() {
 		return $this->belongsTo( SubtaskGroupModel::class, 'group_id', 'id' );
@@ -137,7 +137,7 @@ class SubtaskModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function assignedUser() {
 		return $this->belongsTo( UserModel::class, 'assigned_to', 'ID' );
@@ -146,9 +146,9 @@ class SubtaskModel extends Model {
 	/**
 	 * Pending reminders that are due and not yet sent.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopePendingReminders( $query ) {
 		$now            = current_time( 'mysql' );

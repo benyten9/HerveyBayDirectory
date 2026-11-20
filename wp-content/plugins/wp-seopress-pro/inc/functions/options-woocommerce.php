@@ -41,17 +41,19 @@ if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 		 */
 		function seopress_woocommerce_product_og_price_hook() {
 			if ( seopress_pro_get_service( 'OptionPro' )->getWCOGPriceEnable() === '1' ) {
-				$product = wc_get_product( get_the_id() );
+				$product = wc_get_product( seopress_pro_get_the_id() );
 
-				// Sale price.
+				// Sale price. wc_get_product() returns false, not null, when the ID
+				// is not a product - a page builder leaving its loop item in the
+				// global $post used to get us here and fatal on method_exists().
 				$get_sale_price = '';
-				if ( isset( $product ) && method_exists( $product, 'get_sale_price' ) ) {
+				if ( $product instanceof \WC_Product && method_exists( $product, 'get_sale_price' ) ) {
 					$get_sale_price = $product->get_sale_price();
 				}
 
 				// Sale price with tax (regular price as fallback if not available).
 				$get_sale_price_with_tax = '';
-				if ( isset( $product ) && method_exists( $product, 'get_price' ) && function_exists( 'wc_get_price_including_tax' ) ) {
+				if ( $product instanceof \WC_Product && method_exists( $product, 'get_price' ) && function_exists( 'wc_get_price_including_tax' ) ) {
 					$get_sale_price_with_tax = wc_get_price_including_tax( $product, array( 'price' => $get_sale_price ) );
 				}
 
@@ -59,7 +61,7 @@ if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 
 				$og_price = '<meta property="product:price:amount" content="' . $get_sale_price_with_tax . '">';
 
-				echo "\n" . $og_price . "\n";
+				echo "\n" . $og_price . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 			}
 		}
 		add_action( 'wp_head', 'seopress_woocommerce_product_og_price_hook', 1 );
@@ -78,7 +80,7 @@ if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 
 				$og_currency = '<meta property="product:price:currency" content="' . $currency . '">';
 
-				echo "\n" . $og_currency . "\n";
+				echo "\n" . $og_currency . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 			}
 		}
 		add_action( 'wp_head', 'seopress_woocommerce_product_og_currency_hook', 1 );

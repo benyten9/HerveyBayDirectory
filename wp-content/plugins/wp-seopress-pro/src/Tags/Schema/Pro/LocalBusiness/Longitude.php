@@ -23,6 +23,6 @@ class Longitude implements GetTagValue {
 
 		$value = seopress_pro_get_service( 'OptionPro' )->getLocalBusinessLongitude();
 
-		return apply_filters( 'seopress_pro_get_tag_schema_local_business_latitude', $value, $context );
+		return apply_filters( 'seopress_pro_get_tag_schema_local_business_longitude', $value, $context );
 	}
 }

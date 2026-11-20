@@ -8,11 +8,11 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Cli;
+namespace DoubleScale\Vendor\Carbon\Cli;
 
 class Invoker
 {
-    public const CLI_CLASS_NAME = 'Carbon\\Cli';
+    public const CLI_CLASS_NAME = 'DoubleScale\\Vendor\\Carbon\\Cli';
     protected function runWithCli(string $className, array $parameters) : bool
     {
         $cli = new $className();

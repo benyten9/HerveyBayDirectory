@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/tutorlms-builder-build-course', [
     'label'       => __('Tutor LMS Builder — Build course', 'nibwp'),
-    'description' => __('Validate an agent-built Tutor LMS course tree (course + topics + lessons + quizzes with questions) and persist it through the Tutor LMS integration. dry_run:true validates; dry_run:false commits.', 'nibwp'),
+    'description' => 'Validate an agent-built Tutor LMS course tree (course + topics + lessons + quizzes with questions) and persist it through the Tutor LMS integration. dry_run:true validates; dry_run:false commits.',
     'category'    => 'tutorlms-builder',
     'input_schema' => [
         'type' => 'object',

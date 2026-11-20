@@ -9,6 +9,8 @@
 
 namespace DoubleScale\Modules\Notifications\Services;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * NotificationCategories class
  *
@@ -272,6 +274,13 @@ class NotificationCategories {
 	 * @var string
 	 */
 	const CONTACTS_BOUNCED = 'contact_bounced';
+
+	/**
+	 * Contacts subcategory: a client uploaded or removed a file in the client portal
+	 *
+	 * @var string
+	 */
+	const CONTACTS_PORTAL_FILES = 'contact_portal_files';
 
 	/**
 	 * Pipeline subcategory: Deal value changed
@@ -761,6 +770,10 @@ class NotificationCategories {
 					'label'       => __( 'Contact Bounced', 'doublescale' ),
 					'description' => __( 'Notifications when email to a contact bounces.', 'doublescale' ),
 				),
+				self::CONTACTS_PORTAL_FILES => array(
+					'label'       => __( 'Client Portal Attachments', 'doublescale' ),
+					'description' => __( 'Notifications when a client uploads or removes a file in the client portal (administrators and CRM managers).', 'doublescale' ),
+				),
 			),
 			self::PIPELINE       => array(
 				self::PIPELINE_DEAL_WON_LOST      => array(
@@ -1177,10 +1190,12 @@ class NotificationCategories {
 	public static function get_required_capability( $category ) {
 		$map = array(
 			self::CAMPAIGNS    => 'doublescale_manage',
-			self::AUTOMATIONS  => 'doublescale_manage',
+			// Automation staff too; which workflows reach whom is decided by the sender (owner + managers).
+			self::AUTOMATIONS  => 'doublescale_view_automations',
 			self::FORMS        => 'doublescale_manage',
 			self::INTEGRATIONS => 'doublescale_manage',
-			self::PROJECTS     => 'doublescale_project_read_all_projects',
+			// Every project role: members hear about the projects they own.
+			self::PROJECTS     => 'doublescale_project_read_own_projects',
 			self::SYSTEM       => 'manage_options',
 			// CONTACTS, PIPELINE, TASKS, EMAIL_TRACKING - accessible by all CRM users.
 		);

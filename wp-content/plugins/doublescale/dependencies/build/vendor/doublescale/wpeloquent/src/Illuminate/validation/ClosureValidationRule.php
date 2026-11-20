@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
-use Illuminate\Contracts\Validation\Rule as RuleContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Validation\Rule as RuleContract;
 class ClosureValidationRule implements RuleContract
 {
     /**

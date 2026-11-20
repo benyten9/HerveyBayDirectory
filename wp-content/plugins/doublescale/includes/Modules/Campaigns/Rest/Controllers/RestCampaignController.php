@@ -19,7 +19,10 @@ use WP_REST_Server;
 use DoubleScale\Modules\Campaigns\Abstracts\AbstractCampaignController;
 use DoubleScale\Modules\Campaigns\Models\CampaignModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Campaigns\Services\CampaignResender;
 use DoubleScale\Modules\Campaigns\Services\CampaignStatusManager;
+use DoubleScale\Modules\Campaigns\Services\ChannelAvailability;
+use DoubleScale\Modules\Campaigns\Services\ChannelEngineRegistry;
 use DoubleScale\Pro\Modules\Inbox\Services\MessageProviderRegistry;
 use DoubleScale\Modules\Emails\EmailAttachmentResolver;
 use DoubleScale\Modules\Emails\Emails;
@@ -97,10 +100,15 @@ class RestCampaignController extends AbstractCampaignController {
 					'callback'            => array( $this, 'get_campaign_messages' ),
 					'permission_callback' => array( $this, 'get_item_permissions_check' ),
 					'args'                => array(
-						'status' => array(
+						'status'     => array(
 							'description' => __( 'Message status filter', 'doublescale' ),
 							'type'        => 'string',
-							'enum'        => array( 'all', 'sent', 'opened', 'clicked', 'failed', 'pending', 'delivered', 'scheduled' ),
+							'enum'        => array( 'all', 'sent', 'opened', 'clicked', 'failed', 'pending', 'delivered', 'read', 'scheduled' ),
+							'required'    => false,
+						),
+						'error_code' => array(
+							'description' => __( 'Filter failed messages by structured error_info code', 'doublescale' ),
+							'type'        => 'string',
 							'required'    => false,
 						),
 					),
@@ -221,6 +229,58 @@ class RestCampaignController extends AbstractCampaignController {
 					'callback'            => array( $this, 'resend_failed_messages' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
 					'args'                => array(
+						'id'         => array(
+							'description' => __( 'Campaign ID', 'doublescale' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'error_code' => array(
+							'description' => __( 'Retry only failed messages with this error_info code', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => false,
+						),
+					),
+				),
+			)
+		);
+
+		// Rename at any status. The name is internal, but update_item() only
+		// accepts drafts, so a sent campaign could never be renamed.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/rename',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'rename_item' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id'   => array(
+							'description' => __( 'Campaign ID', 'doublescale' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+						'name' => array(
+							'description'       => __( 'New campaign name', 'doublescale' ),
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+					),
+				),
+			)
+		);
+
+		// Resume a campaign paused because Meta restricted the sending number.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/resume',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'resume_campaign' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
 						'id' => array(
 							'description' => __( 'Campaign ID', 'doublescale' ),
 							'type'        => 'integer',
@@ -256,6 +316,56 @@ class RestCampaignController extends AbstractCampaignController {
 			)
 		);
 
+		// How many of the filtered contacts this channel can actually reach.
+		//
+		// The Recipients step counted through the generic contacts endpoint,
+		// which knows nothing about the channel. A WhatsApp campaign then
+		// promised the whole matched audience while the send path quietly
+		// dropped everyone without a `whatsapp_phone`.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/reachable-recipients',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'get_reachable_recipients' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'channel' => array(
+							'description' => __( 'Campaign channel', 'doublescale' ),
+							'type'        => 'string',
+							'required'    => true,
+							'enum'        => CampaignChannel::get_core_channel_strings(),
+						),
+						'filters' => array(
+							'description' => __( 'Recipient filter groups', 'doublescale' ),
+							'type'        => 'array',
+						),
+					),
+				),
+			)
+		);
+
+		// Undo a schedule: the operator changed their mind before it ran.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/cancel-schedule',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'cancel_campaign_schedule' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Campaign ID', 'doublescale' ),
+							'type'        => 'integer',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
 		// Send test message endpoint (unified for all channels).
 		register_rest_route(
 			$this->namespace,
@@ -266,43 +376,59 @@ class RestCampaignController extends AbstractCampaignController {
 					'callback'            => array( $this, 'send_test_message' ),
 					'permission_callback' => array( $this, 'create_item_permissions_check' ),
 					'args'                => array(
-						'channel'    => array(
+						'channel'            => array(
 							'description' => __( 'Channel type', 'doublescale' ),
 							'type'        => 'string',
 							'required'    => true,
 							'enum'        => CampaignChannel::get_core_channel_strings(),
 						),
 						// Email parameters.
-						'email'      => array(
+						'email'              => array(
 							'description' => __( 'Email address (for email channel)', 'doublescale' ),
 							'type'        => 'string',
 						),
-						'subject'    => array(
+						'subject'            => array(
 							'description' => __( 'Email subject (for email channel)', 'doublescale' ),
 							'type'        => 'string',
 						),
-						'from_name'  => array(
+						'from_name'          => array(
 							'description' => __( 'From name (for email channel)', 'doublescale' ),
 							'type'        => 'string',
 						),
-						'from_email' => array(
+						'from_email'         => array(
 							'description' => __( 'From email (for email channel)', 'doublescale' ),
 							'type'        => 'string',
 						),
-						'reply_to'   => array(
+						'reply_to'           => array(
 							'description' => __( 'Reply-to email (for email channel)', 'doublescale' ),
 							'type'        => 'string',
 						),
 						// Sms/Whatsapp parameters.
-						'phone'      => array(
+						'phone'              => array(
 							'description' => __( 'Phone number (for Sms/Whatsapp channels)', 'doublescale' ),
 							'type'        => 'string',
 						),
+						// Whatsapp parameters. Whatsapp only sends pre-approved
+						// business templates, so the body comes from the template
+						// rather than from operator-typed text.
+						'template_id'        => array(
+							'description' => __( 'Approved template ID (for Whatsapp channel)', 'doublescale' ),
+							'type'        => 'integer',
+						),
+						'template_variables' => array(
+							'description' => __( 'Template variable mappings keyed by slot (for Whatsapp channel)', 'doublescale' ),
+							'type'        => 'object',
+						),
 						// Common parameter.
-						'message'    => array(
-							'description' => __( 'Message content (body for email, message for Sms/Whatsapp)', 'doublescale' ),
+						//
+						// Deliberately not `required`: a Whatsapp test carries a
+						// template instead of a body, and a blanket requirement
+						// rejected it during argument validation, before the
+						// handler could explain anything. Each channel enforces
+						// its own content requirement below.
+						'message'            => array(
+							'description' => __( 'Message content (body for email, message for Sms; Whatsapp uses template_id)', 'doublescale' ),
 							'type'        => 'string',
-							'required'    => true,
 						),
 					),
 				),
@@ -393,30 +519,41 @@ class RestCampaignController extends AbstractCampaignController {
 		// Set channel from type parameter (string: 'email', 'sms', 'whatsapp').
 		$type = $request->get_param( 'type' );
 
-		// WhatsApp campaigns are disabled.
-		// WhatsApp messaging is still available for automations and individual contact messaging,
-		// but bulk campaigns are not supported due to Meta's WhatsApp Business Api limitations:
-		// - Template-only messaging outside 24-hour conversation window
-		// - Strict approval process for templates
-		// - Rate limits and quality scoring that make bulk campaigns impractical
-		// See: includes/services/class-whatsapp-conversation-window.php for conversation window logic
-		if ( $type === CampaignChannel::STR_WHATSAPP ) {
-			return new WP_Error(
-				'whatsapp_campaigns_disabled',
-				__( 'Whatsapp campaigns are not available. WhatsApp messaging is supported for automations and individual contact messaging only.', 'doublescale' ),
-				array( 'status' => 400 )
-			);
-		}
+		// A channel may be created only when it can actually deliver. This is
+		// the same predicate send_via_provider() enforces, so the gate and the
+		// send path cannot disagree — a campaign that passes here will not
+		// discover at send time that no provider was ever connected.
+		$valid_campaign_channels = ChannelAvailability::sendable_campaign_channels();
 
-		// Validate it's a valid channel string (email or sms only for campaigns).
-		$valid_campaign_channels = array( CampaignChannel::STR_EMAIL );
-		if ( class_exists( \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class ) ) {
-			$valid_campaign_channels[] = CampaignChannel::STR_SMS;
-		}
 		if ( ! in_array( $type, $valid_campaign_channels, true ) ) {
+			// Distinguish "this channel exists but is not set up" from "this is
+			// not a channel". The first is actionable by the user; conflating
+			// them is what left WhatsApp looking permanently unavailable.
+			if ( in_array( $type, CampaignChannel::get_core_channel_strings(), true ) ) {
+				// Connecting a provider cannot help when nothing runs the
+				// channel; say which plugin to install or update instead.
+				if ( ! ChannelAvailability::has_engine( $type ) ) {
+					return ChannelAvailability::engine_unavailable_error( $type );
+				}
+
+				return new WP_Error(
+					"{$type}_provider_not_configured",
+					sprintf(
+						/* translators: %s: channel name, e.g. "whatsapp". */
+						__( 'No %s provider is connected. Connect one in Settings → Integrations before creating this campaign.', 'doublescale' ),
+						$type
+					),
+					array( 'status' => 403 )
+				);
+			}
+
 			return new WP_Error(
 				'invalid_type',
-				__( 'Invalid campaign type. Must be "email" or "sms".', 'doublescale' ),
+				sprintf(
+					/* translators: %s: comma-separated list of valid campaign types. */
+					__( 'Invalid campaign type. Must be one of: %s.', 'doublescale' ),
+					implode( ', ', $valid_campaign_channels )
+				),
 				array( 'status' => 400 )
 			);
 		}
@@ -531,7 +668,7 @@ class RestCampaignController extends AbstractCampaignController {
 	 * already handles this: when channel is null, it returns an unfiltered query.
 	 * IDs are unique so no type filter is needed.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	protected function get_campaign_query() {
 		if ( $this->channel ) {
@@ -564,7 +701,9 @@ class RestCampaignController extends AbstractCampaignController {
 			return $this->send_test_email( $request );
 		}
 
-		if ( $channel === CampaignChannel::STR_SMS && ! class_exists( \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class ) ) {
+		$engine = ChannelEngineRegistry::get( $channel );
+
+		if ( $channel === CampaignChannel::STR_SMS && ! $engine ) {
 			return new WP_Error(
 				'pro_feature_required',
 				__( 'Sms campaigns require Plugin Pro', 'doublescale' ),
@@ -572,7 +711,52 @@ class RestCampaignController extends AbstractCampaignController {
 			);
 		}
 
+		// An engine that brings its own test send — Pro's WhatsApp engine —
+		// runs it, so the send logic lives with the engine that owns the
+		// channel. Every other engine keeps the provider path below.
+		if ( $engine && method_exists( $engine, 'send_test_message' ) ) {
+			return $engine->send_test_message( $request );
+		}
+
 		return $this->send_test_provider_message( $request, $channel );
+	}
+
+	/**
+	 * A test send has no triggering post: point the "Last Post" merge tags at the
+	 * latest published post, so the test shows a real example.
+	 *
+	 * @return bool Whether a post was set (and end_test_post() must clear it).
+	 */
+	private function begin_test_post() {
+		$merge_tags = MergeTagsManager::instance();
+		if ( $merge_tags->get_current_post_id() ) {
+			return false;
+		}
+		$latest = get_posts(
+			array(
+				'numberposts' => 1,
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'fields'      => 'ids',
+			)
+		);
+		if ( ! $latest ) {
+			return false;
+		}
+		$merge_tags->set_current_post_id( (int) $latest[0] );
+		return true;
+	}
+
+	/**
+	 * Clear the post begin_test_post() set.
+	 *
+	 * @param bool $was_set What begin_test_post() returned.
+	 * @return void
+	 */
+	private function end_test_post( $was_set ) {
+		if ( $was_set ) {
+			MergeTagsManager::instance()->set_current_post_id( null );
+		}
 	}
 
 	/**
@@ -625,8 +809,15 @@ class RestCampaignController extends AbstractCampaignController {
 				$attachment_paths = EmailAttachmentResolver::resolve_paths( $attachment_paths );
 			}
 
-			$contact      = ContactModel::get_by_email( $email ) ?? null;
-			$body_content = $this->process_merge_tags( $for_testing_body, $contact );
+			$contact = ContactModel::get_by_email( $email ) ?? null;
+
+			$test_post = $this->begin_test_post();
+			try {
+				$subject      = $this->process_merge_tags( $subject, $contact );
+				$body_content = $this->process_merge_tags( $for_testing_body, $contact );
+			} finally {
+				$this->end_test_post( $test_post );
+			}
 			$body_content = EmailTrackingHelper::prepare_test_email_body( $body_content, $email, $contact );
 
 			$result = $emails->send(
@@ -729,59 +920,64 @@ class RestCampaignController extends AbstractCampaignController {
 			$failed_emails = array();
 
 			// Send to each recipient
-			foreach ( $emails as $recipient_email ) {
-				$email_sender               = new Emails();
-				$email_sender->from_address = $from_email;
-				$email_sender->from_name    = $from_name;
-				if ( ! empty( $reply_to ) && is_email( $reply_to ) ) {
-					$email_sender->reply_to = $reply_to;
-				}
+			$test_post = $this->begin_test_post();
+			try {
+				foreach ( $emails as $recipient_email ) {
+					$email_sender               = new Emails();
+					$email_sender->from_address = $from_email;
+					$email_sender->from_name    = $from_name;
+					if ( ! empty( $reply_to ) && is_email( $reply_to ) ) {
+						$email_sender->reply_to = $reply_to;
+					}
 
-				// Get contact for merge tags
-				$contact = ContactModel::get_by_email( $recipient_email ) ?? null;
+					// Get contact for merge tags
+					$contact = ContactModel::get_by_email( $recipient_email ) ?? null;
 
-				// Prefer the live builder JSON from the request (what the canvas
-				// is showing, including Theme → Link Style). Fall back to the
-				// saved template so older clients still work.
-				$email_renderer = new EmailRenderer();
-				$live_body      = $request->get_param( 'body' );
-				$body_content   = '';
-				if ( ! empty( $live_body ) ) {
-					$decoded = is_array( $live_body ) ? $live_body : json_decode( (string) $live_body, true );
-					if ( is_array( $decoded ) ) {
-						if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
-							$decoded = $decoded['value'];
-						}
-						if ( isset( $decoded['sections'] ) ) {
-							$body_content = $email_renderer->render_from_builder_data( $decoded, $contact );
+					// Prefer the live builder JSON from the request (what the canvas
+					// is showing, including Theme → Link Style). Fall back to the
+					// saved template so older clients still work.
+					$email_renderer = new EmailRenderer();
+					$live_body      = $request->get_param( 'body' );
+					$body_content   = '';
+					if ( ! empty( $live_body ) ) {
+						$decoded = is_array( $live_body ) ? $live_body : json_decode( (string) $live_body, true );
+						if ( is_array( $decoded ) ) {
+							if ( isset( $decoded['type'] ) && 'builder' === $decoded['type'] && isset( $decoded['value'] ) ) {
+								$decoded = $decoded['value'];
+							}
+							if ( isset( $decoded['sections'] ) ) {
+								$body_content = $email_renderer->render_from_builder_data( $decoded, $contact );
+							}
 						}
 					}
+					if ( '' === $body_content ) {
+						$body_content = $email_renderer->render_template( $template_id, $contact );
+					}
+
+					if ( empty( $body_content ) ) {
+						++$failed_count;
+						$failed_emails[] = $recipient_email;
+						continue;
+					}
+
+					// Process subject with merge tags
+					$processed_subject = MergeTagsManager::instance()->process_merge_tags( $subject, $contact );
+					$body_content      = EmailTrackingHelper::prepare_test_email_body( $body_content, $recipient_email, $contact );
+
+					$attachment_paths = EmailAttachmentResolver::resolve_template_paths( $template );
+
+					// Send email
+					$result = $email_sender->send( $recipient_email, $processed_subject, $body_content, $attachment_paths );
+
+					if ( $result ) {
+						++$sent_count;
+					} else {
+						++$failed_count;
+						$failed_emails[] = $recipient_email;
+					}
 				}
-				if ( '' === $body_content ) {
-					$body_content = $email_renderer->render_template( $template_id, $contact );
-				}
-
-				if ( empty( $body_content ) ) {
-					++$failed_count;
-					$failed_emails[] = $recipient_email;
-					continue;
-				}
-
-				// Process subject with merge tags
-				$processed_subject = MergeTagsManager::instance()->process_merge_tags( $subject, $contact );
-				$body_content      = EmailTrackingHelper::prepare_test_email_body( $body_content, $recipient_email, $contact );
-
-				$attachment_paths = EmailAttachmentResolver::resolve_template_paths( $template );
-
-				// Send email
-				$result = $email_sender->send( $recipient_email, $processed_subject, $body_content, $attachment_paths );
-
-				if ( $result ) {
-					++$sent_count;
-				} else {
-					++$failed_count;
-					$failed_emails[] = $recipient_email;
-				}
+			} finally {
+				$this->end_test_post( $test_post );
 			}
 
 			// Prepare response
@@ -856,6 +1052,48 @@ class RestCampaignController extends AbstractCampaignController {
 				);
 			}
 
+			// Whatsapp is template-driven: Meta only accepts pre-approved
+			// business templates for an outbound test, so there is no body for
+			// the operator to type. Resolve the body from the selected template
+			// and let the template's ContentSid reach the provider.
+			$template          = null;
+			$template_settings = array();
+
+			if ( $channel === CampaignChannel::STR_WHATSAPP ) {
+				$template_id = (int) $request->get_param( 'template_id' );
+
+				if ( ! $template_id ) {
+					return new WP_Error(
+						'missing_template',
+						__( 'Select an approved WhatsApp template before sending a test.', 'doublescale' ),
+						array( 'status' => 400 )
+					);
+				}
+
+				$template = TemplateModel::find( $template_id );
+
+				if ( ! $template ) {
+					return new WP_Error(
+						'template_not_found',
+						__( 'The selected WhatsApp template no longer exists.', 'doublescale' ),
+						array( 'status' => 404 )
+					);
+				}
+
+				$content_sid = $template->get_whatsapp_content_sid();
+
+				if ( empty( $content_sid ) ) {
+					return new WP_Error(
+						'template_not_approved',
+						__( 'This campaign lost its link to the approved Meta template. Go back to the Set-up info step, pick the template again, and save.', 'doublescale' ),
+						array( 'status' => 422 )
+					);
+				}
+
+				$message           = $template->body;
+				$template_settings = $template->get_whatsapp_header_settings();
+			}
+
 			if ( empty( $message ) ) {
 				return new WP_Error(
 					'missing_message',
@@ -864,8 +1102,12 @@ class RestCampaignController extends AbstractCampaignController {
 				);
 			}
 
-			// Get provider for this channel
-			$provider = MessageProviderRegistry::instance()->get_provider( $channel );
+			// Get provider for this channel. The registry ships with Pro, so a
+			// free-only install must report a missing provider rather than
+			// fatal on an undefined class.
+			$provider = class_exists( MessageProviderRegistry::class )
+				? MessageProviderRegistry::instance()->get_provider( $channel )
+				: null;
 
 			if ( ! $provider ) {
 				return new WP_Error(
@@ -899,6 +1141,30 @@ class RestCampaignController extends AbstractCampaignController {
 				'To'   => $phone,
 				'Body' => $processed_message,
 			);
+
+			// Whatsapp sends the approved template, not the body. Mirror the
+			// campaign send path so a test exercises the same provider contract:
+			// ContentSid plus the per-slot variables, and the header/button
+			// definition for media and interactive templates.
+			if ( $channel === CampaignChannel::STR_WHATSAPP && $template ) {
+				$variable_mappings = $request->get_param( 'template_variables' );
+
+				if ( ! is_array( $variable_mappings ) || empty( $variable_mappings ) ) {
+					$variable_mappings = $template->get_whatsapp_variable_mappings();
+				}
+
+				$content_variables = array();
+				foreach ( $variable_mappings as $slot => $value ) {
+					$content_variables[ (string) $slot ] = $this->process_merge_tags( $value, $contact );
+				}
+
+				$message_data['ContentSid']       = $template->get_whatsapp_content_sid();
+				$message_data['ContentVariables'] = $content_variables;
+
+				if ( ! empty( $template_settings ) ) {
+					$message_data['TemplateSettings'] = $template_settings;
+				}
+			}
 
 			// Add webhook URL for tracking (skip for non-routable URLs like localhost)
 			$webhooks_enabled = apply_filters( 'doublescale_provider_webhooks_enable', true );
@@ -980,7 +1246,8 @@ class RestCampaignController extends AbstractCampaignController {
 			}
 
 			// Get campaigns to verify they exist
-			$campaigns = CampaignModel::whereIn( 'id', $campaign_ids )->get();
+			// Every channel; a Campaign Agent's own campaigns only.
+			$campaigns = $this->get_campaign_query()->whereIn( 'id', $campaign_ids )->get();
 
 			if ( $campaigns->isEmpty() ) {
 				return new WP_Error(
@@ -991,11 +1258,12 @@ class RestCampaignController extends AbstractCampaignController {
 			}
 
 			// Delete campaigns (works across all types: email, sms, whatsapp)
-			CampaignModel::destroy( $campaign_ids );
+			$found = $campaigns->pluck( 'id' )->map( 'intval' )->all();
+			CampaignModel::destroy( $found );
 
 			return new WP_REST_Response(
 				array(
-					'deleted' => count( $campaign_ids ),
+					'deleted' => count( $found ),
 					'message' => __( 'Campaigns deleted successfully', 'doublescale' ),
 				),
 				200
@@ -1012,7 +1280,7 @@ class RestCampaignController extends AbstractCampaignController {
 	 * @return bool
 	 */
 	public function bulk_delete_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		return $this->campaign_permission( $request );
 	}
 
 	/**
@@ -1025,6 +1293,171 @@ class RestCampaignController extends AbstractCampaignController {
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
 	 */
+	/**
+	 * Resume a campaign paused because Meta restricted the sending number.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function resume_campaign( $request ) {
+		$campaign = \DoubleScale\Modules\Campaigns\Services\WhatsappAccountPause::resume( (int) $request->get_param( 'id' ) );
+		if ( is_wp_error( $campaign ) ) {
+			return $campaign;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'status'  => (string) $campaign->status,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Count how many filtered contacts this channel can actually reach.
+	 *
+	 * Deliberately built on CampaignContactFilter — the same class the send
+	 * pipeline uses — so the number the Recipients step shows and the number
+	 * that receives a message cannot drift apart.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_reachable_recipients( $request ) {
+		try {
+			$channel = (string) $request->get_param( 'channel' );
+			$filters = $request->get_param( 'filters' );
+			$filters = is_array( $filters ) ? $filters : array();
+
+			$filter = new \DoubleScale\Modules\Campaigns\Services\CampaignContactFilter();
+
+			// Reachable: subscribed on this channel AND carrying the channel's
+			// recipient field.
+			// A Campaign Agent's audience is the contacts they own.
+			$owner     = Permissions::campaign_audience_owner();
+			$reachable = (int) $filter->get_filtered_contacts( $channel, $filters, $owner )->count();
+
+			// Matched: the same audience without the recipient-field gate, so
+			// the difference is exactly what the send path would skip.
+			$matched = (int) $filter->count_matching_contacts( $channel, $filters, $owner );
+
+			return rest_ensure_response(
+				array(
+					'channel'   => $channel,
+					'matched'   => $matched,
+					'reachable' => $reachable,
+					'skipped'   => max( 0, $matched - $reachable ),
+				)
+			);
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'reachable_count_failed', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Cancel a scheduled campaign, returning it to draft.
+	 *
+	 * The screen offered a "Cancel Schedule" button that only navigated away,
+	 * so a campaign the operator thought they had stopped still sent on time.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function cancel_campaign_schedule( $request ) {
+		try {
+			$campaign = CampaignModel::find( (int) $request->get_param( 'id' ) );
+
+			if ( ! $campaign ) {
+				return new WP_Error(
+					'campaign_not_found',
+					__( 'Campaign not found', 'doublescale' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			// Only a pending schedule can be undone. A send already running is
+			// stopped by pausing it, not by rewinding it to draft.
+			if ( CampaignStatusManager::SCHEDULED !== $campaign->status ) {
+				return new WP_Error(
+					'campaign_not_scheduled',
+					__( 'Only a scheduled campaign can have its schedule cancelled.', 'doublescale' ),
+					array( 'status' => 409 )
+				);
+			}
+
+			$campaign->status = CampaignStatusManager::DRAFT;
+			// Clear the time too: a stale execute_at would re-arm the campaign
+			// the moment anything set it back to scheduled.
+			$campaign->execute_at = null;
+			$campaign->save();
+
+			return rest_ensure_response(
+				array(
+					'success' => true,
+					'status'  => CampaignStatusManager::DRAFT,
+					'message' => __( 'Schedule cancelled. The campaign is back in draft.', 'doublescale' ),
+				)
+			);
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'cancel_schedule_failed', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
+	/**
+	 * Rename a campaign, whatever its status.
+	 *
+	 * Only the name changes — status, settings and schedule are untouched, so
+	 * this is safe on a campaign that is sending or already sent.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function rename_item( $request ) {
+		$name = trim( (string) $request->get_param( 'name' ) );
+
+		if ( '' === $name ) {
+			return new WP_Error(
+				'invalid_campaign_name',
+				__( 'Campaign name is required', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// doublescale_campaigns.name is varchar(255).
+		if ( mb_strlen( $name ) > 255 ) {
+			return new WP_Error(
+				'invalid_campaign_name',
+				__( 'Campaign name must be 255 characters or fewer', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		try {
+			$campaign = CampaignModel::find( (int) $request->get_param( 'id' ) );
+
+			if ( ! $campaign ) {
+				return new WP_Error(
+					'campaign_not_found',
+					__( 'Campaign not found', 'doublescale' ),
+					array( 'status' => 404 )
+				);
+			}
+
+			$campaign->name = $name;
+			$campaign->save();
+
+			return rest_ensure_response(
+				array(
+					'id'   => (int) $campaign->id,
+					'name' => $campaign->name,
+				)
+			);
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'rename_failed', $e->getMessage(), array( 'status' => 500 ) );
+		}
+	}
+
 	public function resend_failed_messages( $request ) {
 		try {
 			$campaign_id = (int) $request->get_param( 'id' );
@@ -1038,17 +1471,87 @@ class RestCampaignController extends AbstractCampaignController {
 				);
 			}
 
-			$failed_count = CommunicationTrackingModel::query()
-				->where( 'source_type', MessageSourceTypes::CAMPAIGN )
-				->where( 'source_id', $campaign_id )
-				->where( 'status', TrackingStatus::FAILED )
-				->count();
+			$channel = is_numeric( $campaign->type )
+				? CampaignChannel::to_string( (int) $campaign->type )
+				: (string) $campaign->type;
+
+			// Pin the channel to THIS campaign. get_campaign_message_query()
+			// filters on $this->channel, which is controller state left over
+			// from whichever request touched it last — so an email retry that
+			// followed a WhatsApp request counted WhatsApp rows and reported
+			// "no failed messages" for a campaign that plainly had some.
+			$this->channel = $channel;
+
+			$error_code   = sanitize_text_field( (string) $request->get_param( 'error_code' ) );
+			$failed_query = $this->get_campaign_message_query( $campaign_id );
+			$this->apply_message_status_filter( $failed_query, 'failed' );
+			if ( '' !== $error_code ) {
+				$this->apply_error_code_filter( $failed_query, $error_code );
+			}
+			$failed_count = (int) $failed_query->count();
 
 			if ( $failed_count < 1 ) {
 				return new WP_Error(
 					'no_failed_messages',
 					__( 'No failed messages to resend', 'doublescale' ),
 					array( 'status' => 400 )
+				);
+			}
+
+			// A retry is a send. Creating this campaign was gated on a provider
+			// that can deliver, and so is a single-message resend — but bulk
+			// retry checked nothing, so an unconfigured site happily queued the
+			// whole batch to fail again. Check before touching the status, so a
+			// refused retry leaves the campaign exactly as it was instead of
+			// stranding it in `resending`.
+			if ( $channel && ! ChannelAvailability::is_channel_sendable( $channel ) ) {
+				if ( ! ChannelAvailability::has_engine( $channel ) ) {
+					return ChannelAvailability::engine_unavailable_error( $channel );
+				}
+
+				return new WP_Error(
+					"{$channel}_provider_not_configured",
+					sprintf(
+						/* translators: %s: channel name, e.g. "whatsapp". */
+						__( 'No %s provider is connected. Connect one in Settings → Integrations before retrying these messages.', 'doublescale' ),
+						$channel
+					),
+					// 409, not 403: a fixable state conflict, not a licensing wall.
+					array( 'status' => 409 )
+				);
+			}
+
+			// Meta's per-user marketing cap (131049): those recipients are
+			// skipped by the resend for a day. Count them the same way here,
+			// so a click that could only reach capped recipients is refused
+			// with the reason instead of flipping the campaign to "resending"
+			// and sending nothing.
+			$retryable_query = clone $failed_query;
+			CampaignResender::exclude_recipients_in_cooldown( $retryable_query, (string) $channel );
+			$retryable_count = (int) $retryable_query->count();
+			$held_back       = max( 0, $failed_count - $retryable_count );
+
+			if ( $retryable_count < 1 && $held_back > 0 ) {
+				$release = CampaignResender::first_cooldown_release( $campaign_id );
+
+				return new WP_Error(
+					'recipients_in_cooldown',
+					sprintf(
+						/* translators: 1: number of messages, 2: human time difference, e.g. "20 hours". */
+						_n(
+							'%1$d failed message was held back by Meta\'s per-user marketing limit — the recipient has had too many marketing messages lately, from any business. Retrying now would fail the same way; it can be retried in about %2$s.',
+							'%1$d failed messages were held back by Meta\'s per-user marketing limit — the recipients have had too many marketing messages lately, from any business. Retrying now would fail the same way; they can be retried in about %2$s.',
+							$held_back,
+							'doublescale'
+						),
+						$held_back,
+						human_time_diff( time(), $release ? $release : time() + DAY_IN_SECONDS )
+					),
+					array(
+						'status'     => 409,
+						'held_back'  => $held_back,
+						'retry_from' => $release ? gmdate( 'Y-m-d H:i:s', $release ) : null,
+					)
 				);
 			}
 
@@ -1071,9 +1574,13 @@ class RestCampaignController extends AbstractCampaignController {
 				$campaign->save();
 			}
 
-			$channel = is_numeric( $campaign->type )
-				? CampaignChannel::to_string( (int) $campaign->type )
-				: (string) $campaign->type;
+			$scope_key = 'doublescale_resend_error_code_' . $campaign_id;
+			if ( '' !== $error_code ) {
+				update_option( $scope_key, $error_code );
+			} else {
+				delete_option( $scope_key );
+			}
+			delete_transient( 'doublescale_failure_causes_' . $campaign_id );
 
 			if ( $channel ) {
 				PluginKernel::instance()->campaigns_tasks->enqueue_async( "doublescale_{$channel}_campaigns" );
@@ -1084,7 +1591,15 @@ class RestCampaignController extends AbstractCampaignController {
 					'success'      => true,
 					'status'       => CampaignStatusManager::RESENDING,
 					'failed_count' => (int) $failed_count,
-					'message'      => __( 'Resend process initiated. All failed messages will be retried automatically.', 'doublescale' ),
+					'held_back'    => (int) $held_back,
+					'message'      => $held_back > 0
+						? sprintf(
+							/* translators: 1: messages being retried, 2: messages held back. */
+							__( 'Retrying %1$d failed messages. %2$d more were held back by Meta\'s per-user marketing limit and can be retried later.', 'doublescale' ),
+							$retryable_count,
+							$held_back
+						)
+						: __( 'Resend process initiated. All failed messages will be retried automatically.', 'doublescale' ),
 				)
 			);
 		} catch ( \Exception $e ) {
@@ -1094,6 +1609,31 @@ class RestCampaignController extends AbstractCampaignController {
 				array( 'status' => 500 )
 			);
 		}
+	}
+
+	/**
+	 * Seconds left before a recipient Meta capped may be messaged again.
+	 *
+	 * @param \DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel $tracking Failed message.
+	 * @return int Zero when nothing is holding it back.
+	 */
+	private function recipient_cooldown_remaining( $tracking ) {
+		$cooldown = \DoubleScale\Modules\Campaigns\Services\WhatsappErrorCodes::recipient_cooldown_seconds();
+		if ( $cooldown <= 0 || ! $tracking || CommunicationTrackingModel::MODE_WHATSAPP !== (int) $tracking->mode ) {
+			return 0;
+		}
+
+		$info = \DoubleScale\Modules\Tracking\Models\CommunicationTrackingMetaModel::get_error_info( (int) $tracking->id );
+		$info = is_string( $info ) ? json_decode( $info, true ) : $info;
+		$code = is_array( $info ) ? ( $info['code'] ?? '' ) : '';
+
+		if ( ! \DoubleScale\Modules\Campaigns\Services\WhatsappErrorCodes::is_recipient_cooldown( $code ) ) {
+			return 0;
+		}
+
+		$last = strtotime( (string) $tracking->updated_at . ' UTC' );
+
+		return $last ? max( 0, ( $last + $cooldown ) - time() ) : 0;
 	}
 
 	/**
@@ -1156,25 +1696,33 @@ class RestCampaignController extends AbstractCampaignController {
 					$processor = EmailProcessing::instance();
 					break;
 				case CampaignChannel::CHANNEL_SMS:
-					if ( class_exists( \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class ) ) {
-						$processor = \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::instance();
-					} else {
-						return new WP_Error(
-							'pro_feature_required',
-							__( 'Sms campaigns require Plugin Pro', 'doublescale' ),
-							array( 'status' => 403 )
-						);
+					$processor = ChannelEngineRegistry::get( CampaignChannel::STR_SMS );
+					if ( ! $processor ) {
+						return ChannelAvailability::engine_unavailable_error( CampaignChannel::STR_SMS );
 					}
 					break;
 				case CampaignChannel::CHANNEL_WHATSAPP:
-					// WhatsApp processing is only available in Pro version
-					if ( class_exists( '\DoubleScale\Modules\Campaigns\Campaign\WhatsappProcessing' ) ) {
-						$processor = \DoubleScale\Modules\Campaigns\Campaign\WhatsappProcessing::instance();
-					} else {
+					// The engine that owns WhatsApp on this site — Pro's copy once
+					// it ships one, free's otherwise. None at all means a free that
+					// no longer ships the engine next to a Pro that predates it;
+					// connecting a provider would not help, so say so first.
+					$processor = ChannelEngineRegistry::get( CampaignChannel::STR_WHATSAPP );
+					if ( ! $processor ) {
+						return ChannelAvailability::engine_unavailable_error( CampaignChannel::STR_WHATSAPP );
+					}
+					// The old guard here tested class_exists() on
+					// WhatsappProcessing and returned "requires Pro" otherwise.
+					// That class ships in FREE, so the check was always true
+					// and the error branch unreachable — and its message was
+					// wrong anyway. What a resend actually needs is a provider
+					// that can deliver, which is what this asks.
+					if ( ! ChannelAvailability::is_channel_sendable( CampaignChannel::STR_WHATSAPP ) ) {
 						return new WP_Error(
-							'pro_feature_required',
-							__( 'Whatsapp campaigns require Plugin Pro', 'doublescale' ),
-							array( 'status' => 403 )
+							'whatsapp_provider_not_configured',
+							__( 'No WhatsApp provider is connected. Connect one in Settings → Integrations to resend these messages.', 'doublescale' ),
+							// 409, not 403: this is a fixable state conflict,
+							// not a licensing wall.
+							array( 'status' => 409 )
 						);
 					}
 					break;
@@ -1184,6 +1732,22 @@ class RestCampaignController extends AbstractCampaignController {
 						__( 'Invalid campaign type', 'doublescale' ),
 						array( 'status' => 400 )
 					);
+			}
+
+			// Meta's per-user marketing cap is about the recipient, not the
+			// account: resending inside their window fails the same way and
+			// only costs quality. Say so instead of queueing a certain fail.
+			$cooldown = $this->recipient_cooldown_remaining( $tracking );
+			if ( $cooldown > 0 ) {
+				return new WP_Error(
+					'recipient_in_cooldown',
+					sprintf(
+						/* translators: %s: human time difference, e.g. "3 hours". */
+						__( 'Meta held this marketing message back because of how many marketing messages this person has already received — from any business. Your number and your daily limit are fine. This contact can be messaged again in about %s.', 'doublescale' ),
+						human_time_diff( time(), time() + $cooldown )
+					),
+					array( 'status' => 409 )
+				);
 			}
 
 			// Use the processor's resend_single_message method

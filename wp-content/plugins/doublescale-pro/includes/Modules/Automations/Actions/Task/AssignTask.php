@@ -56,13 +56,30 @@ class AssignTask extends BaseTaskAction {
 			return false;
 		}
 
-		$assignee = (int) $step->get_setting( 'assignee' );
-		if ( $assignee <= 0 ) {
+		$picked = (int) $step->get_setting( 'assignee' );
+		if ( 0 === $picked ) {
 			return false;
 		}
 
+		list( $assignee, $note ) = $this->resolve_assignee( $picked, (int) $task->entity_type, (int) $task->entity_id );
+		if ( $assignee <= 0 ) {
+			return array(
+				'status'  => 'skipped',
+				/* translators: %s: why nobody could take the task */
+				'message' => sprintf( __( 'The task was not reassigned: %s', 'doublescale' ), $note ),
+			);
+		}
+
 		$task->assigned_to = $assignee;
-		return (bool) $task->save();
+		if ( ! $task->save() ) {
+			return false;
+		}
+
+		// The run log says when the task went to the record's owner instead.
+		return '' === $note ? true : array(
+			'success' => true,
+			'message' => $note,
+		);
 	}
 
 	/**

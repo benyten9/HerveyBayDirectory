@@ -24,6 +24,12 @@ class FormSchemaAvailable {
 
 		return array(
 			array(
+				'class' => '\\SEOPressPro\\Services\\Forms\\Schemas\\FormSchemaBook',
+				'type' => 'book',
+				'label' => __( 'Book', 'wp-seopress-pro' ),
+				'notices' => array(),
+			),
+			array(
 				'class'   => '\\SEOPressPro\\Services\\Forms\\Schemas\\FormSchemaArticle',
 				'type'    => 'articles',
 				'label'   => __( 'Article (WebPage)', 'wp-seopress-pro' ),

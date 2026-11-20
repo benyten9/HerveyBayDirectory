@@ -175,9 +175,12 @@ add_action('wp_abilities_api_init', static function (): void {
     // A handful (forms / CRM / LMS / membership / utilities) are bundled in
     // plugin-integrations.php — load that file once if ANY bundled key is on.
     $integrations_dir = __DIR__ . '/integrations/';
-    $bundled_keys = ['forms', 'fluentcrm', 'edd', 'events', 'buddypress',
-                     'learndash', 'lifterlms', 'memberpress', 'givewp',
-                     'translatepress', 'wpml'];
+    $bundled_keys = ['forms', 'learndash', 'memberpress', 'wpml'];
+    // The rest were lifted out into their own files, one ability each, so
+    // they get the same depth and the same mutation-tested check as every
+    // integration written since. These four stay: 'forms' is genuinely one
+    // ability over eleven form plugins, and LearnDash, MemberPress and WPML
+    // are premium, so there is no source on disk to deepen them against yet.
 
     $bundled_loaded = false;
     foreach (nibwp_premium_integrations() as $key) {

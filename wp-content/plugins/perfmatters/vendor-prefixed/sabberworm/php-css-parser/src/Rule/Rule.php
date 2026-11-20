@@ -4,11 +4,21 @@ declare (strict_types=1);
 namespace Perfmatters\Vendor\Sabberworm\CSS\Rule;
 
 use Perfmatters\Vendor\Sabberworm\CSS\Property\Declaration;
-use function Perfmatters\Vendor\Safe\class_alias;
+// @phpstan-ignore function.impossibleType
 if (!\class_exists(Rule::class, \false) && !\interface_exists(Rule::class, \false)) {
-    /**
-     * @deprecated in v9.2, will be removed in v10.0.  Use `Property\Declaration` instead, which is a direct
-     *             replacement.
-     */
-    class_alias(Declaration::class, Rule::class);
+    $aliasWasCreated = \class_alias(Declaration::class, Rule::class);
+    \assert($aliasWasCreated);
+    // The test is expected to evaluate to false,
+    // but allows for the deprecation notice to be picked up by IDEs like PHPStorm.
+    // @phpstan-ignore function.impossibleType, booleanNot.alwaysTrue, booleanAnd.alwaysTrue
+    if (!\class_exists(Rule::class, \false) && !\interface_exists(Rule::class, \false)) {
+        /**
+         * @deprecated in v9.2, will be removed in v10.0.  Use `Property\Declaration` instead, which is a direct
+         *             replacement.
+         * @internal
+         */
+        class Rule
+        {
+        }
+    }
 }

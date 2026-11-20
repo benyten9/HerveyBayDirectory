@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-use Carbon\Factory;
+use DoubleScale\Vendor\Carbon\Factory;
 use InvalidArgumentException;
 /**
  * @see https://carbon.nesbot.com/docs/
@@ -87,7 +87,7 @@ class DateFactory
      *
      * @var string
      */
-    const DEFAULT_CLASS_NAME = \Illuminate\Support\Carbon::class;
+    const DEFAULT_CLASS_NAME = Carbon::class;
     /**
      * The type (class) of dates that should be created.
      *

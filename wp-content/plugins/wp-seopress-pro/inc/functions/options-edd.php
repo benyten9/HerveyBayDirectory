@@ -25,7 +25,7 @@ if ( is_plugin_active( 'easy-digital-downloads/easy-digital-downloads.php' ) || 
 
 					$seopress_social_og_price = '<meta property="product:price:amount" content="' . $price . '">';
 
-					echo "\n" . $seopress_social_og_price . "\n";
+					echo "\n" . $seopress_social_og_price . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 				}
 			}
 		}
@@ -46,7 +46,7 @@ if ( is_plugin_active( 'easy-digital-downloads/easy-digital-downloads.php' ) || 
 
 					$seopress_social_og_currency = '<meta property="product:price:currency" content="' . $currency . '">';
 
-					echo "\n" . $seopress_social_og_currency . "\n";
+					echo "\n" . $seopress_social_og_currency . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 				}
 			}
 		}

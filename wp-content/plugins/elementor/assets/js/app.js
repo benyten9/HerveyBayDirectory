@@ -1123,7 +1123,7 @@ _elementor_router = __toESM(_elementor_router);
 //#endregion
 //#region node_modules/@reach/router/es/lib/utils.js
 	var import_browser$1, startsWith, pick, resolve, insertParams, validateRedirect, paramRe, SEGMENT_POINTS, STATIC_POINTS, DYNAMIC_POINTS, SPLAT_PENALTY, ROOT_POINTS, isRootSegment, isDynamic, isSplat, rankRoute, rankRoutes, segmentize, addQuery, reservedNames, shallowCompare;
-	var init_utils$5 = __esmMin((() => {
+	var init_utils$6 = __esmMin((() => {
 		import_browser$1 = /* @__PURE__ */ __toESM(require_browser());
 		startsWith = function startsWith(string, search) {
 			return string.substr(0, search.length) === search;
@@ -1474,13 +1474,13 @@ _elementor_router = __toESM(_elementor_router);
 	function RedirectRequest(uri) {
 		this.uri = uri;
 	}
-	var import_prop_types$56, import_browser, import_lib, _extends$1, createNamedContext, LocationContext, Location, LocationProvider, BaseContext, Router, RouterImpl, FocusContext, FocusHandler, initialRender, focusHandlerCount, FocusHandlerImpl, k$1, forwardRef$1, Link$10, isRedirect, redirectTo, RedirectImpl, Redirect, useLocation, useNavigate, stripSlashes, createRoute, shouldNavigate;
+	var import_prop_types$88, import_browser, import_lib, _extends$1, createNamedContext, LocationContext, Location, LocationProvider, BaseContext, Router, RouterImpl, FocusContext, FocusHandler, initialRender, focusHandlerCount, FocusHandlerImpl, k$1, forwardRef$1, Link$10, isRedirect, redirectTo, RedirectImpl, Redirect, useLocation, useNavigate, stripSlashes, createRoute, shouldNavigate;
 	var init_es$1 = __esmMin((() => {
-		import_prop_types$56 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$88 = /* @__PURE__ */ __toESM(require_prop_types());
 		import_browser = /* @__PURE__ */ __toESM(require_browser());
 		import_lib = /* @__PURE__ */ __toESM(require_lib());
 		init_react_lifecycles_compat_es();
-		init_utils$5();
+		init_utils$6();
 		init_history();
 		_extends$1 = Object.assign || function(target) {
 			for (var i = 1; i < arguments.length; i++) {
@@ -1562,7 +1562,7 @@ _elementor_router = __toESM(_elementor_router);
 			return LocationProvider;
 		}(react.default.Component);
 		LocationProvider.defaultProps = { history: globalHistory };
-		LocationProvider.propTypes = { history: import_prop_types$56.default.object.isRequired };
+		LocationProvider.propTypes = { history: import_prop_types$88.default.object.isRequired };
 		BaseContext = createNamedContext("Base", {
 			baseuri: "/",
 			basepath: "/"
@@ -1787,7 +1787,7 @@ _elementor_router = __toESM(_elementor_router);
 			});
 		});
 		Link$10.displayName = "Link";
-		Link$10.propTypes = { to: import_prop_types$56.default.string.isRequired };
+		Link$10.propTypes = { to: import_prop_types$88.default.string.isRequired };
 		isRedirect = function isRedirect(o) {
 			return o instanceof RedirectRequest;
 		};
@@ -1859,8 +1859,8 @@ _elementor_router = __toESM(_elementor_router);
 			});
 		};
 		Redirect.propTypes = {
-			from: import_prop_types$56.default.string,
-			to: import_prop_types$56.default.string.isRequired
+			from: import_prop_types$88.default.string,
+			to: import_prop_types$88.default.string.isRequired
 		};
 		useLocation = function useLocation() {
 			var context = (0, react.useContext)(LocationContext);
@@ -2041,7 +2041,7 @@ init_es$1();
 //#endregion
 //#region app/assets/js/utils/utils.js
 	var pxToRem, arrayToClassName, isOneOf, arrayToObjectByKey, htmlDecodeTextContent;
-	var init_utils$4 = __esmMin((() => {
+	var init_utils$5 = __esmMin((() => {
 		init_typeof$1();
 		pxToRem = function pxToRem(pixels) {
 			if (!pixels) return;
@@ -2077,13 +2077,10 @@ init_es$1();
 
 //#endregion
 //#region \0app-scss:/home/runner/work/elementor/elementor/app/assets/js/ui/grid/grid.scss
-init_extends();
-init_toConsumableArray();
-init_utils$4();
+	var init_grid$1 = __esmMin((() => {}));
 
 //#endregion
 //#region app/assets/js/ui/grid/grid.js
-	var import_prop_types$55 = /* @__PURE__ */ __toESM(require_prop_types());
 	function Grid$14(props) {
 		var propsMap = {
 			direction: "--direction{{ -VALUE }}",
@@ -2112,7 +2109,6 @@ init_utils$4();
 			className: arrayToClassName(classes)
 		}, props.children);
 	}
-	__name(Grid$14, "Grid");
 	function getPropsClasses(propsMap, props) {
 		var classes = [];
 		for (var prop in propsMap) if (props[prop]) {
@@ -2135,52 +2131,60 @@ init_utils$4();
 	function isValidPropValue(propValue) {
 		return propValue && "boolean" !== typeof propValue;
 	}
-	Grid$14.propTypes = {
-		className: import_prop_types$55.default.string,
-		direction: import_prop_types$55.default.oneOf([
-			"row",
-			"column",
-			"row-reverse",
-			"column-reverse"
-		]),
-		justify: import_prop_types$55.default.oneOf([
-			"start",
-			"center",
-			"end",
-			"space-between",
-			"space-evenly",
-			"space-around",
-			"stretch"
-		]),
-		alignContent: import_prop_types$55.default.oneOf([
-			"start",
-			"center",
-			"end",
-			"space-between",
-			"stretch"
-		]),
-		alignItems: import_prop_types$55.default.oneOf([
-			"start",
-			"center",
-			"end",
-			"baseline",
-			"stretch"
-		]),
-		container: import_prop_types$55.default.bool,
-		item: import_prop_types$55.default.bool,
-		noWrap: import_prop_types$55.default.bool,
-		wrapReverse: import_prop_types$55.default.bool,
-		zeroMinWidth: import_prop_types$55.default.bool,
-		spacing: import_prop_types$55.default.number,
-		xs: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.bool]),
-		sm: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.bool]),
-		md: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.bool]),
-		lg: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.bool]),
-		xl: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.bool]),
-		xxl: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.bool]),
-		children: import_prop_types$55.default.any.isRequired
-	};
-	Grid$14.defaultProps = { className: "" };
+	var import_prop_types$87;
+	var init_grid = __esmMin((() => {
+		import_prop_types$87 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_toConsumableArray();
+		init_utils$5();
+		init_grid$1();
+		__name(Grid$14, "Grid");
+		Grid$14.propTypes = {
+			className: import_prop_types$87.default.string,
+			direction: import_prop_types$87.default.oneOf([
+				"row",
+				"column",
+				"row-reverse",
+				"column-reverse"
+			]),
+			justify: import_prop_types$87.default.oneOf([
+				"start",
+				"center",
+				"end",
+				"space-between",
+				"space-evenly",
+				"space-around",
+				"stretch"
+			]),
+			alignContent: import_prop_types$87.default.oneOf([
+				"start",
+				"center",
+				"end",
+				"space-between",
+				"stretch"
+			]),
+			alignItems: import_prop_types$87.default.oneOf([
+				"start",
+				"center",
+				"end",
+				"baseline",
+				"stretch"
+			]),
+			container: import_prop_types$87.default.bool,
+			item: import_prop_types$87.default.bool,
+			noWrap: import_prop_types$87.default.bool,
+			wrapReverse: import_prop_types$87.default.bool,
+			zeroMinWidth: import_prop_types$87.default.bool,
+			spacing: import_prop_types$87.default.number,
+			xs: import_prop_types$87.default.oneOfType([import_prop_types$87.default.number, import_prop_types$87.default.bool]),
+			sm: import_prop_types$87.default.oneOfType([import_prop_types$87.default.number, import_prop_types$87.default.bool]),
+			md: import_prop_types$87.default.oneOfType([import_prop_types$87.default.number, import_prop_types$87.default.bool]),
+			lg: import_prop_types$87.default.oneOfType([import_prop_types$87.default.number, import_prop_types$87.default.bool]),
+			xl: import_prop_types$87.default.oneOfType([import_prop_types$87.default.number, import_prop_types$87.default.bool]),
+			xxl: import_prop_types$87.default.oneOfType([import_prop_types$87.default.number, import_prop_types$87.default.bool]),
+			children: import_prop_types$87.default.any.isRequired
+		};
+		Grid$14.defaultProps = { className: "" };
+	}));
 
 //#endregion
 //#region app/assets/js/hooks/use-action.js
@@ -2442,18 +2446,18 @@ init_utils$4();
 			ref: popoverRef
 		}, props.children);
 	}
-	var import_prop_types$54;
+	var import_prop_types$86;
 	var init_popover_dialog = __esmMin((() => {
-		import_prop_types$54 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$86 = /* @__PURE__ */ __toESM(require_prop_types());
 		PopoverDialog.propTypes = {
-			targetRef: import_prop_types$54.default.oneOfType([import_prop_types$54.default.func, import_prop_types$54.default.shape({ current: import_prop_types$54.default.any })]).isRequired,
-			trigger: import_prop_types$54.default.string,
-			direction: import_prop_types$54.default.string,
-			offsetTop: import_prop_types$54.default.oneOfType([import_prop_types$54.default.string, import_prop_types$54.default.number]),
-			offsetLeft: import_prop_types$54.default.oneOfType([import_prop_types$54.default.string, import_prop_types$54.default.number]),
-			wrapperClass: import_prop_types$54.default.string,
-			children: import_prop_types$54.default.any,
-			hideAfter: import_prop_types$54.default.number
+			targetRef: import_prop_types$86.default.oneOfType([import_prop_types$86.default.func, import_prop_types$86.default.shape({ current: import_prop_types$86.default.any })]).isRequired,
+			trigger: import_prop_types$86.default.string,
+			direction: import_prop_types$86.default.string,
+			offsetTop: import_prop_types$86.default.oneOfType([import_prop_types$86.default.string, import_prop_types$86.default.number]),
+			offsetLeft: import_prop_types$86.default.oneOfType([import_prop_types$86.default.string, import_prop_types$86.default.number]),
+			wrapperClass: import_prop_types$86.default.string,
+			children: import_prop_types$86.default.any,
+			hideAfter: import_prop_types$86.default.number
 		};
 		PopoverDialog.defaultProps = {
 			direction: "bottom",
@@ -2496,20 +2500,21 @@ init_utils$4();
 
 //#endregion
 //#region app/assets/js/ui/atoms/icon.js
-	var import_prop_types$53, _excluded$4, Icon$2;
+	var import_prop_types$85, _excluded$5, Icon$2;
 	var init_icon = __esmMin((() => {
-		import_prop_types$53 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$85 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_extends();
 		init_objectWithoutProperties();
-		_excluded$4 = ["className"];
+		_excluded$5 = ["className"];
 		Icon$2 = (0, react.forwardRef)(function(props, ref) {
 			var className = props.className;
-			var rest = _objectWithoutProperties(props, _excluded$4);
+			var rest = _objectWithoutProperties(props, _excluded$5);
 			return /*#__PURE__*/ react.default.createElement("i", _extends({
 				ref,
 				className: "eps-icon ".concat(className)
 			}, rest));
 		});
-		Icon$2.propTypes = { className: import_prop_types$53.default.string.isRequired };
+		Icon$2.propTypes = { className: import_prop_types$85.default.string.isRequired };
 		Icon$2.defaultProps = { className: "" };
 	}));
 
@@ -2526,9 +2531,9 @@ init_utils$4();
 			return !!t;
 		})();
 	}
-	var import_prop_types$52, Button$29;
-	var init_button = __esmMin((() => {
-		import_prop_types$52 = /* @__PURE__ */ __toESM(require_prop_types());
+	var import_prop_types$84, Button$30;
+	var init_button$1 = __esmMin((() => {
+		import_prop_types$84 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_extends();
 		init_classCallCheck();
 		init_createClass();
@@ -2540,7 +2545,7 @@ init_utils$4();
 		init_icon();
 		__name(_callSuper$18, "_callSuper");
 		__name(_isNativeReflectConstruct$19, "_isNativeReflectConstruct");
-		Button$29 = /*#__PURE__*/ function(_React$Component) {
+		Button$30 = /*#__PURE__*/ function(_React$Component) {
 			function Button() {
 				_classCallCheck(this, Button);
 				return _callSuper$18(this, Button, arguments);
@@ -2634,38 +2639,38 @@ init_utils$4();
 				}
 			]);
 		}(react.default.Component);
-		_defineProperty$1(Button$29, "propTypes", {
-			text: import_prop_types$52.default.string.isRequired,
-			hideText: import_prop_types$52.default.bool,
-			icon: import_prop_types$52.default.string,
-			tooltip: import_prop_types$52.default.string,
-			id: import_prop_types$52.default.string,
-			className: import_prop_types$52.default.string,
-			url: import_prop_types$52.default.string,
-			onClick: import_prop_types$52.default.func,
-			variant: import_prop_types$52.default.oneOf([
+		_defineProperty$1(Button$30, "propTypes", {
+			text: import_prop_types$84.default.string.isRequired,
+			hideText: import_prop_types$84.default.bool,
+			icon: import_prop_types$84.default.string,
+			tooltip: import_prop_types$84.default.string,
+			id: import_prop_types$84.default.string,
+			className: import_prop_types$84.default.string,
+			url: import_prop_types$84.default.string,
+			onClick: import_prop_types$84.default.func,
+			variant: import_prop_types$84.default.oneOf([
 				"contained",
 				"underlined",
 				"outlined",
 				""
 			]),
-			color: import_prop_types$52.default.oneOf([
+			color: import_prop_types$84.default.oneOf([
 				"primary",
 				"secondary",
 				"cta",
 				"link",
 				"disabled"
 			]),
-			size: import_prop_types$52.default.oneOf([
+			size: import_prop_types$84.default.oneOf([
 				"sm",
 				"md",
 				"lg"
 			]),
-			target: import_prop_types$52.default.string,
-			rel: import_prop_types$52.default.string,
-			elRef: import_prop_types$52.default.object
+			target: import_prop_types$84.default.string,
+			rel: import_prop_types$84.default.string,
+			elRef: import_prop_types$84.default.object
 		});
-		_defineProperty$1(Button$29, "defaultProps", {
+		_defineProperty$1(Button$30, "defaultProps", {
 			id: "",
 			className: "",
 			variant: "",
@@ -2692,7 +2697,7 @@ init_utils$4();
 			return p.apply(e, t);
 		} : p;
 	}
-	var Button$28;
+	var Button$29;
 	var init_header_button = __esmMin((() => {
 		init_classCallCheck();
 		init_createClass();
@@ -2701,10 +2706,10 @@ init_utils$4();
 		init_get();
 		init_inherits();
 		init_defineProperty$1();
-		init_button();
+		init_button$1();
 		__name(_callSuper$17, "_callSuper");
 		__name(_isNativeReflectConstruct$18, "_isNativeReflectConstruct");
-		Button$28 = /*#__PURE__*/ function(_BaseButton) {
+		Button$29 = /*#__PURE__*/ function(_BaseButton) {
 			function Button() {
 				_classCallCheck(this, Button);
 				return _callSuper$17(this, Button, arguments);
@@ -2722,8 +2727,8 @@ init_utils$4();
 					return "eps-app__header-btn " + _superPropGet(Button, "getClassName", this, 3)([]);
 				}
 			}]);
-		}(Button$29);
-		_defineProperty$1(Button$28, "defaultProps", Object.assign({}, Button$29.defaultProps, {
+		}(Button$30);
+		_defineProperty$1(Button$29, "defaultProps", Object.assign({}, Button$30.defaultProps, {
 			hideText: true,
 			includeHeaderBtnClass: true
 		}));
@@ -2740,26 +2745,26 @@ init_utils$4();
 		var tools = "";
 		if (props.buttons.length) {
 			var buttons = props.buttons.map(function(button) {
-				return /*#__PURE__*/ react.default.createElement(Button$28, _extends({ key: button.id }, button));
+				return /*#__PURE__*/ react.default.createElement(Button$29, _extends({ key: button.id }, button));
 			});
 			tools = /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, buttons);
 		}
-		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__header-buttons" }, /*#__PURE__*/ react.default.createElement(Button$28, {
+		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__header-buttons" }, /*#__PURE__*/ react.default.createElement(Button$29, {
 			text: (0, _wordpress_i18n.__)("Close", "elementor"),
 			icon: "eicon-close",
 			className: "eps-app__close-button",
 			onClick: actionOnClose
 		}), tools);
 	}
-	var import_prop_types$51;
+	var import_prop_types$83;
 	var init_header_buttons = __esmMin((() => {
-		import_prop_types$51 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$83 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_extends();
 		init_use_action();
 		init_header_button();
 		HeaderButtons.propTypes = {
-			buttons: import_prop_types$51.default.arrayOf(import_prop_types$51.default.object),
-			onClose: import_prop_types$51.default.func
+			buttons: import_prop_types$83.default.arrayOf(import_prop_types$83.default.object),
+			onClose: import_prop_types$83.default.func
 		};
 		HeaderButtons.defaultProps = { buttons: [] };
 	}));
@@ -2779,10 +2784,12 @@ init_utils$4();
 
 //#endregion
 //#region app/assets/js/layout/header.js
+	var import_prop_types$82 = /* @__PURE__ */ __toESM(require_prop_types());
 	init_extends();
+	init_grid();
 	init_header_buttons();
 	init_use_page_title();
-	function Header$1(props) {
+	function Header$2(props) {
 		usePageTitle({ title: props.title });
 		var TitleTag = "span";
 		var titleAttrs = {};
@@ -2803,24 +2810,24 @@ init_utils$4();
 			onClose: props.onClose
 		}));
 	}
-	__name(Header$1, "Header");
-	Header$1.propTypes = {
-		title: import_prop_types$55.default.string,
-		titleRedirectRoute: import_prop_types$55.default.string,
-		buttons: import_prop_types$55.default.arrayOf(import_prop_types$55.default.object),
-		onClose: import_prop_types$55.default.func
+	__name(Header$2, "Header");
+	Header$2.propTypes = {
+		title: import_prop_types$82.default.string,
+		titleRedirectRoute: import_prop_types$82.default.string,
+		buttons: import_prop_types$82.default.arrayOf(import_prop_types$82.default.object),
+		onClose: import_prop_types$82.default.func
 	};
-	Header$1.defaultProps = { buttons: [] };
+	Header$2.defaultProps = { buttons: [] };
 
 //#endregion
 //#region app/assets/js/layout/sidebar.js
 	function Sidebar(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__sidebar" }, props.children);
 	}
-	var import_prop_types$50;
+	var import_prop_types$81;
 	var init_sidebar = __esmMin((() => {
-		import_prop_types$50 = /* @__PURE__ */ __toESM(require_prop_types());
-		Sidebar.propTypes = { children: import_prop_types$50.default.object };
+		import_prop_types$81 = /* @__PURE__ */ __toESM(require_prop_types());
+		Sidebar.propTypes = { children: import_prop_types$81.default.object };
 	}));
 
 //#endregion
@@ -2828,12 +2835,12 @@ init_utils$4();
 	function Content(props) {
 		return /*#__PURE__*/ react.default.createElement("main", { className: "eps-app__content ".concat(props.className) }, props.children);
 	}
-	var import_prop_types$49;
+	var import_prop_types$80;
 	var init_content = __esmMin((() => {
-		import_prop_types$49 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$80 = /* @__PURE__ */ __toESM(require_prop_types());
 		Content.propTypes = {
-			children: import_prop_types$49.default.any,
-			className: import_prop_types$49.default.string
+			children: import_prop_types$80.default.any,
+			className: import_prop_types$80.default.string
 		};
 		Content.defaultProps = { className: "" };
 	}));
@@ -2846,12 +2853,12 @@ init_content();
 		return /*#__PURE__*/ react.default.createElement("footer", { className: "eps-app__footer" }, props.children);
 	}
 	__name(Footer$1, "Footer");
-	Footer$1.propTypes = { children: import_prop_types$55.default.object };
+	Footer$1.propTypes = { children: import_prop_types$82.default.object };
 
 //#endregion
 //#region app/assets/js/layout/page.js
 	function Page(props) {
-		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__lightbox ".concat(props.className) }, /*#__PURE__*/ react.default.createElement("div", { className: "eps-app" }, /*#__PURE__*/ react.default.createElement(Header$1, {
+		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__lightbox ".concat(props.className) }, /*#__PURE__*/ react.default.createElement("div", { className: "eps-app" }, /*#__PURE__*/ react.default.createElement(Header$2, {
 			title: props.title,
 			buttons: props.headerButtons,
 			titleRedirectRoute: props.titleRedirectRoute,
@@ -2865,14 +2872,14 @@ init_content();
 		}()));
 	}
 	Page.propTypes = {
-		title: import_prop_types$55.default.string,
-		titleRedirectRoute: import_prop_types$55.default.string,
-		className: import_prop_types$55.default.string,
-		headerButtons: import_prop_types$55.default.arrayOf(import_prop_types$55.default.object),
-		sidebar: import_prop_types$55.default.object,
-		content: import_prop_types$55.default.object.isRequired,
-		footer: import_prop_types$55.default.object,
-		onClose: import_prop_types$55.default.func
+		title: import_prop_types$82.default.string,
+		titleRedirectRoute: import_prop_types$82.default.string,
+		className: import_prop_types$82.default.string,
+		headerButtons: import_prop_types$82.default.arrayOf(import_prop_types$82.default.object),
+		sidebar: import_prop_types$82.default.object,
+		content: import_prop_types$82.default.object.isRequired,
+		footer: import_prop_types$82.default.object,
+		onClose: import_prop_types$82.default.func
 	};
 	Page.defaultProps = { className: "" };
 
@@ -2908,14 +2915,13 @@ init_content();
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog-wrapper.js
-	init_button();
 	function DialogWrapper(props) {
 		var WrapperTag = "div";
 		if (props.onSubmit) WrapperTag = "form";
 		return /*#__PURE__*/ react.default.createElement("section", { className: "eps-modal__overlay" }, /*#__PURE__*/ react.default.createElement(WrapperTag, {
 			className: "eps-modal eps-dialog",
 			onSubmit: props.onSubmit
-		}, props.onClose && /*#__PURE__*/ react.default.createElement(Button$29, {
+		}, props.onClose && /*#__PURE__*/ react.default.createElement(Button$30, {
 			onClick: props.onClose,
 			text: (0, _wordpress_i18n.__)("Close", "elementor"),
 			hideText: true,
@@ -2923,23 +2929,31 @@ init_content();
 			className: "eps-dialog__close-button"
 		}), props.children));
 	}
-	DialogWrapper.propTypes = {
-		onClose: import_prop_types$55.default.func,
-		onSubmit: import_prop_types$55.default.func,
-		children: import_prop_types$55.default.any
-	};
+	var import_prop_types$79;
+	var init_dialog_wrapper = __esmMin((() => {
+		import_prop_types$79 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_button$1();
+		DialogWrapper.propTypes = {
+			onClose: import_prop_types$79.default.func,
+			onSubmit: import_prop_types$79.default.func,
+			children: import_prop_types$79.default.any
+		};
+	}));
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog-content.js
 	function DialogContent$4(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-dialog__content" }, props.children);
 	}
-	__name(DialogContent$4, "DialogContent");
-	DialogContent$4.propTypes = { children: import_prop_types$55.default.any };
+	var import_prop_types$78;
+	var init_dialog_content = __esmMin((() => {
+		import_prop_types$78 = /* @__PURE__ */ __toESM(require_prop_types());
+		__name(DialogContent$4, "DialogContent");
+		DialogContent$4.propTypes = { children: import_prop_types$78.default.any };
+	}));
 
 //#endregion
 //#region app/assets/js/ui/atoms/heading.js
-	init_utils$4();
 	function Heading$11(props) {
 		var baseClassName = "eps";
 		var classes = [props.className];
@@ -2948,45 +2962,48 @@ init_content();
 			return react.default.createElement(props.tag, { className: arrayToClassName(classes) }, props.children);
 		}, null);
 	}
-	__name(Heading$11, "Heading");
-	Heading$11.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.oneOfType([
-			import_prop_types$55.default.string,
-			import_prop_types$55.default.object,
-			import_prop_types$55.default.arrayOf(import_prop_types$55.default.object)
-		]).isRequired,
-		tag: import_prop_types$55.default.oneOf([
-			"h1",
-			"h2",
-			"h3",
-			"h4",
-			"h5",
-			"h6"
-		]),
-		variant: import_prop_types$55.default.oneOf([
-			"display-1",
-			"display-2",
-			"display-3",
-			"display-4",
-			"h1",
-			"h2",
-			"h3",
-			"h4",
-			"h5",
-			"h6"
-		]).isRequired
-	};
-	Heading$11.defaultProps = {
-		className: "",
-		tag: "h1"
-	};
+	var import_prop_types$77;
+	var init_heading = __esmMin((() => {
+		import_prop_types$77 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_utils$5();
+		__name(Heading$11, "Heading");
+		Heading$11.propTypes = {
+			className: import_prop_types$77.default.string,
+			children: import_prop_types$77.default.oneOfType([
+				import_prop_types$77.default.string,
+				import_prop_types$77.default.object,
+				import_prop_types$77.default.arrayOf(import_prop_types$77.default.object)
+			]).isRequired,
+			tag: import_prop_types$77.default.oneOf([
+				"h1",
+				"h2",
+				"h3",
+				"h4",
+				"h5",
+				"h6"
+			]),
+			variant: import_prop_types$77.default.oneOf([
+				"display-1",
+				"display-2",
+				"display-3",
+				"display-4",
+				"h1",
+				"h2",
+				"h3",
+				"h4",
+				"h5",
+				"h6"
+			]).isRequired
+		};
+		Heading$11.defaultProps = {
+			className: "",
+			tag: "h1"
+		};
+	}));
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog-title.js
-	init_defineProperty$1();
-	init_extends();
-	function ownKeys$39(e, r) {
+	function ownKeys$51(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -2996,33 +3013,39 @@ init_content();
 		}
 		return t;
 	}
-	__name(ownKeys$39, "ownKeys");
-	function _objectSpread$38(e) {
+	function _objectSpread$50(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$39(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$51(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$39(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$51(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$38, "_objectSpread");
 	function DialogTitle$3(props) {
 		return /*#__PURE__*/ react.default.createElement(Heading$11, _extends({}, props, { className: "eps-dialog__title ".concat(props.className) }));
 	}
-	__name(DialogTitle$3, "DialogTitle");
-	DialogTitle$3.propTypes = _objectSpread$38(_objectSpread$38({}, Heading$11.propTypes), {}, { className: import_prop_types$55.default.string });
-	DialogTitle$3.defaultProps = _objectSpread$38(_objectSpread$38({}, Heading$11.propTypes), {}, {
-		variant: "h3",
-		tag: "h3",
-		className: ""
-	});
+	var import_prop_types$76;
+	var init_dialog_title = __esmMin((() => {
+		import_prop_types$76 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_defineProperty$1();
+		init_extends();
+		init_heading();
+		__name(ownKeys$51, "ownKeys");
+		__name(_objectSpread$50, "_objectSpread");
+		__name(DialogTitle$3, "DialogTitle");
+		DialogTitle$3.propTypes = _objectSpread$50(_objectSpread$50({}, Heading$11.propTypes), {}, { className: import_prop_types$76.default.string });
+		DialogTitle$3.defaultProps = _objectSpread$50(_objectSpread$50({}, Heading$11.propTypes), {}, {
+			variant: "h3",
+			tag: "h3",
+			className: ""
+		});
+	}));
 
 //#endregion
 //#region app/assets/js/ui/atoms/text.js
-	init_utils$4();
 	function Text$11(props) {
 		var baseClassName = "eps";
 		var classes = [props.className];
@@ -3032,30 +3055,33 @@ init_content();
 			return react.default.createElement(props.tag, { className: arrayToClassName(classes) }, props.children);
 		}, null);
 	}
-	__name(Text$11, "Text");
-	Text$11.propTypes = {
-		className: import_prop_types$55.default.string,
-		variant: import_prop_types$55.default.oneOf([
-			"xl",
-			"lg",
-			"md",
-			"sm",
-			"xs",
-			"xxs"
-		]),
-		tag: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired
-	};
-	Text$11.defaultProps = {
-		className: "",
-		tag: "p"
-	};
+	var import_prop_types$75;
+	var init_text = __esmMin((() => {
+		import_prop_types$75 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_utils$5();
+		__name(Text$11, "Text");
+		Text$11.propTypes = {
+			className: import_prop_types$75.default.string,
+			variant: import_prop_types$75.default.oneOf([
+				"xl",
+				"lg",
+				"md",
+				"sm",
+				"xs",
+				"xxs"
+			]),
+			tag: import_prop_types$75.default.string,
+			children: import_prop_types$75.default.any.isRequired
+		};
+		Text$11.defaultProps = {
+			className: "",
+			tag: "p"
+		};
+	}));
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog-text.js
-	init_defineProperty$1();
-	init_extends();
-	function ownKeys$38(e, r) {
+	function ownKeys$50(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -3065,42 +3091,48 @@ init_content();
 		}
 		return t;
 	}
-	__name(ownKeys$38, "ownKeys");
-	function _objectSpread$37(e) {
+	function _objectSpread$49(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$38(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$50(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$38(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$50(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$37, "_objectSpread");
 	function DialogText(props) {
 		return /*#__PURE__*/ react.default.createElement(Text$11, _extends({ variant: "xs" }, props, { className: "eps-dialog__text ".concat(props.className) }));
 	}
-	DialogText.propTypes = _objectSpread$37({}, Text$11.propTypes);
-	DialogText.defaultProps = _objectSpread$37(_objectSpread$37({}, Text$11.defaultProps), {}, {
-		tag: "p",
-		variant: "sm"
-	});
+	var init_dialog_text = __esmMin((() => {
+		init_defineProperty$1();
+		init_extends();
+		init_text();
+		__name(ownKeys$50, "ownKeys");
+		__name(_objectSpread$49, "_objectSpread");
+		DialogText.propTypes = _objectSpread$49({}, Text$11.propTypes);
+		DialogText.defaultProps = _objectSpread$49(_objectSpread$49({}, Text$11.defaultProps), {}, {
+			tag: "p",
+			variant: "sm"
+		});
+	}));
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog-actions.js
 	function DialogActions$4(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-dialog__buttons" }, props.children);
 	}
-	__name(DialogActions$4, "DialogActions");
-	DialogActions$4.propTypes = { children: import_prop_types$55.default.any };
+	var import_prop_types$74;
+	var init_dialog_actions = __esmMin((() => {
+		import_prop_types$74 = /* @__PURE__ */ __toESM(require_prop_types());
+		__name(DialogActions$4, "DialogActions");
+		DialogActions$4.propTypes = { children: import_prop_types$74.default.any };
+	}));
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog-button.js
-	init_defineProperty$1();
-	init_extends();
-	init_button();
-	function ownKeys$37(e, r) {
+	function ownKeys$49(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -3110,30 +3142,41 @@ init_content();
 		}
 		return t;
 	}
-	__name(ownKeys$37, "ownKeys");
-	function _objectSpread$36(e) {
+	function _objectSpread$48(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$37(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$49(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$37(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$49(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$36, "_objectSpread");
 	function DialogButton(props) {
-		return /*#__PURE__*/ react.default.createElement(Button$29, _extends({}, props, { className: "eps-dialog__button ".concat(props.className) }));
+		return /*#__PURE__*/ react.default.createElement(Button$30, _extends({}, props, { className: "eps-dialog__button ".concat(props.className) }));
 	}
-	DialogButton.propTypes = _objectSpread$36(_objectSpread$36({}, Button$29.propTypes), {}, {
-		tabIndex: import_prop_types$55.default.string,
-		type: import_prop_types$55.default.string
-	});
-	DialogButton.defaultProps = _objectSpread$36(_objectSpread$36({}, Button$29.defaultProps), {}, {
-		tabIndex: "0",
-		type: "button"
-	});
+	var import_prop_types$73;
+	var init_dialog_button = __esmMin((() => {
+		import_prop_types$73 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_defineProperty$1();
+		init_extends();
+		init_button$1();
+		__name(ownKeys$49, "ownKeys");
+		__name(_objectSpread$48, "_objectSpread");
+		DialogButton.propTypes = _objectSpread$48(_objectSpread$48({}, Button$30.propTypes), {}, {
+			tabIndex: import_prop_types$73.default.string,
+			type: import_prop_types$73.default.string
+		});
+		DialogButton.defaultProps = _objectSpread$48(_objectSpread$48({}, Button$30.defaultProps), {}, {
+			tabIndex: "0",
+			type: "button"
+		});
+	}));
+
+//#endregion
+//#region \0app-scss:/home/runner/work/elementor/elementor/app/assets/js/ui/dialog/dialog.scss
+	var init_dialog$1 = __esmMin((() => {}));
 
 //#endregion
 //#region app/assets/js/ui/dialog/dialog.js
@@ -3159,31 +3202,42 @@ init_content();
 			tabIndex: "1"
 		})));
 	}
-	__name(Dialog$9, "Dialog");
-	Dialog$9.propTypes = {
-		title: import_prop_types$55.default.any,
-		text: import_prop_types$55.default.any,
-		children: import_prop_types$55.default.any,
-		onSubmit: import_prop_types$55.default.func,
-		onClose: import_prop_types$55.default.func,
-		dismissButtonText: import_prop_types$55.default.string.isRequired,
-		dismissButtonOnClick: import_prop_types$55.default.func,
-		dismissButtonUrl: import_prop_types$55.default.string,
-		dismissButtonTarget: import_prop_types$55.default.string,
-		approveButtonText: import_prop_types$55.default.string.isRequired,
-		approveButtonOnClick: import_prop_types$55.default.func,
-		approveButtonUrl: import_prop_types$55.default.string,
-		approveButtonColor: import_prop_types$55.default.string,
-		approveButtonTarget: import_prop_types$55.default.string,
-		approveButtonRef: import_prop_types$55.default.object
-	};
-	Dialog$9.defaultProps = {};
-	Dialog$9.Wrapper = DialogWrapper;
-	Dialog$9.Content = DialogContent$4;
-	Dialog$9.Title = DialogTitle$3;
-	Dialog$9.Text = DialogText;
-	Dialog$9.Actions = DialogActions$4;
-	Dialog$9.Button = DialogButton;
+	var import_prop_types$72;
+	var init_dialog = __esmMin((() => {
+		import_prop_types$72 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_dialog_wrapper();
+		init_dialog_content();
+		init_dialog_title();
+		init_dialog_text();
+		init_dialog_actions();
+		init_dialog_button();
+		init_dialog$1();
+		__name(Dialog$9, "Dialog");
+		Dialog$9.propTypes = {
+			title: import_prop_types$72.default.any,
+			text: import_prop_types$72.default.any,
+			children: import_prop_types$72.default.any,
+			onSubmit: import_prop_types$72.default.func,
+			onClose: import_prop_types$72.default.func,
+			dismissButtonText: import_prop_types$72.default.string.isRequired,
+			dismissButtonOnClick: import_prop_types$72.default.func,
+			dismissButtonUrl: import_prop_types$72.default.string,
+			dismissButtonTarget: import_prop_types$72.default.string,
+			approveButtonText: import_prop_types$72.default.string.isRequired,
+			approveButtonOnClick: import_prop_types$72.default.func,
+			approveButtonUrl: import_prop_types$72.default.string,
+			approveButtonColor: import_prop_types$72.default.string,
+			approveButtonTarget: import_prop_types$72.default.string,
+			approveButtonRef: import_prop_types$72.default.object
+		};
+		Dialog$9.defaultProps = {};
+		Dialog$9.Wrapper = DialogWrapper;
+		Dialog$9.Content = DialogContent$4;
+		Dialog$9.Title = DialogTitle$3;
+		Dialog$9.Text = DialogText;
+		Dialog$9.Actions = DialogActions$4;
+		Dialog$9.Button = DialogButton;
+	}));
 
 //#endregion
 //#region app/assets/js/organisms/error-boundary.js
@@ -3193,6 +3247,7 @@ init_content();
 	init_getPrototypeOf();
 	init_inherits();
 	init_defineProperty$1();
+	init_dialog();
 	function _callSuper$16(t, o, e) {
 		return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct$17() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
 	}
@@ -3244,10 +3299,10 @@ init_content();
 		}]);
 	}(react.default.Component);
 	_defineProperty$1(ErrorBoundary, "propTypes", {
-		children: import_prop_types$55.default.any,
-		title: import_prop_types$55.default.string,
-		text: import_prop_types$55.default.string,
-		learnMoreUrl: import_prop_types$55.default.string
+		children: import_prop_types$82.default.any,
+		title: import_prop_types$82.default.string,
+		text: import_prop_types$82.default.string,
+		learnMoreUrl: import_prop_types$82.default.string
 	});
 	_defineProperty$1(ErrorBoundary, "defaultProps", {
 		title: (0, _wordpress_i18n.__)("App could not be loaded", "elementor"),
@@ -3325,7 +3380,7 @@ init_content();
 			setState
 		} }, props.children);
 	}
-	AppProvider.propTypes = { children: import_prop_types$55.default.object.isRequired };
+	AppProvider.propTypes = { children: import_prop_types$82.default.object.isRequired };
 
 //#endregion
 //#region node_modules/styled-components/node_modules/tslib/tslib.es6.mjs
@@ -5063,7 +5118,7 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 	*/
 	init_es$1();
 	var Suspense = react.default.Suspense;
-	function App$1() {
+	function App$2() {
 		var isDarkMode = (0, react.useContext)(AppContext).state.isDarkMode;
 		var theme = { config: { variants: {
 			light: !isDarkMode,
@@ -5072,7 +5127,7 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 		_elementor_router.default.appHistory = createHistory(createHashSource());
 		return /*#__PURE__*/ react.default.createElement(ErrorBoundary, null, /*#__PURE__*/ react.default.createElement(LocationProvider, { history: _elementor_router.default.appHistory }, /*#__PURE__*/ react.default.createElement(ot, { theme }, /*#__PURE__*/ react.default.createElement(Suspense, { fallback: null }, /*#__PURE__*/ react.default.createElement(Router, null, _elementor_router.default.getRoutes(), /*#__PURE__*/ react.default.createElement(Index$5, { path: "/" }), /*#__PURE__*/ react.default.createElement(NotFound, { default: true }))))));
 	}
-	__name(App$1, "App");
+	__name(App$2, "App");
 
 //#endregion
 //#region app/modules/import-export/assets/js/context/utils/reducer-utils.js
@@ -5080,7 +5135,7 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 	init_defineProperty$1();
 	init_classCallCheck();
 	init_createClass();
-	function ownKeys$36(e, r) {
+	function ownKeys$48(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -5090,19 +5145,19 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 		}
 		return t;
 	}
-	__name(ownKeys$36, "ownKeys");
-	function _objectSpread$35(e) {
+	__name(ownKeys$48, "ownKeys");
+	function _objectSpread$47(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$36(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$48(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$36(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$48(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$35, "_objectSpread");
+	__name(_objectSpread$47, "_objectSpread");
 	var ReducerUtils = /*#__PURE__*/ function() {
 		function ReducerUtils() {
 			_classCallCheck(this, ReducerUtils);
@@ -5112,8 +5167,8 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 			value: function updateArray(state, key, value, action) {
 				if ("add" === action) {
 					if (state[key].includes(value)) return state;
-					return _objectSpread$35(_objectSpread$35({}, state), {}, _defineProperty$1({}, key, [].concat(_toConsumableArray(state[key]), [value])));
-				} else if ("remove" === action) return _objectSpread$35(_objectSpread$35({}, state), {}, _defineProperty$1({}, key, state[key].filter(function(item) {
+					return _objectSpread$47(_objectSpread$47({}, state), {}, _defineProperty$1({}, key, [].concat(_toConsumableArray(state[key]), [value])));
+				} else if ("remove" === action) return _objectSpread$47(_objectSpread$47({}, state), {}, _defineProperty$1({}, key, state[key].filter(function(item) {
 					return item !== value;
 				})));
 				return state;
@@ -5124,7 +5179,7 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 //#endregion
 //#region app/modules/import-export/assets/js/context/shared-context/shared-context-reducer.js
 	init_defineProperty$1();
-	function ownKeys$35(e, r) {
+	function ownKeys$47(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -5134,31 +5189,31 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 		}
 		return t;
 	}
-	__name(ownKeys$35, "ownKeys");
-	function _objectSpread$34(e) {
+	__name(ownKeys$47, "ownKeys");
+	function _objectSpread$46(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$35(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$47(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$35(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$47(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$34, "_objectSpread");
+	__name(_objectSpread$46, "_objectSpread");
 	var reducer$3 = function reducer(state, _ref) {
 		var type = _ref.type;
 		var payload = _ref.payload;
 		switch (type) {
 			case "ADD_INCLUDE": return ReducerUtils.updateArray(state, "includes", payload, "add");
 			case "REMOVE_INCLUDE": return ReducerUtils.updateArray(state, "includes", payload, "remove");
-			case "SET_REFERRER": return _objectSpread$34(_objectSpread$34({}, state), {}, { referrer: payload });
-			case "SET_INCLUDES": return _objectSpread$34(_objectSpread$34({}, state), {}, { includes: payload });
-			case "SET_CPT": return _objectSpread$34(_objectSpread$34({}, state), {}, { customPostTypes: payload });
-			case "SET_SELECTED_CPT": return _objectSpread$34(_objectSpread$34({}, state), {}, { selectedCustomPostTypes: payload });
-			case "SET_CURRENT_PAGE_NAME": return _objectSpread$34(_objectSpread$34({}, state), {}, { currentPage: payload });
-			case "SET_RETURN_TO": return _objectSpread$34(_objectSpread$34({}, state), {}, { returnTo: payload });
+			case "SET_REFERRER": return _objectSpread$46(_objectSpread$46({}, state), {}, { referrer: payload });
+			case "SET_INCLUDES": return _objectSpread$46(_objectSpread$46({}, state), {}, { includes: payload });
+			case "SET_CPT": return _objectSpread$46(_objectSpread$46({}, state), {}, { customPostTypes: payload });
+			case "SET_SELECTED_CPT": return _objectSpread$46(_objectSpread$46({}, state), {}, { selectedCustomPostTypes: payload });
+			case "SET_CURRENT_PAGE_NAME": return _objectSpread$46(_objectSpread$46({}, state), {}, { currentPage: payload });
+			case "SET_RETURN_TO": return _objectSpread$46(_objectSpread$46({}, state), {}, { returnTo: payload });
 			default: return state;
 		}
 	};
@@ -5240,12 +5295,12 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 			dispatch
 		} }, props.children);
 	}
-	SharedContextProvider.propTypes = { children: import_prop_types$55.default.object.isRequired };
+	SharedContextProvider.propTypes = { children: import_prop_types$82.default.object.isRequired };
 
 //#endregion
 //#region app/modules/import-export/assets/js/context/import-context/import-context-reducer.js
 	init_defineProperty$1();
-	function ownKeys$34(e, r) {
+	function ownKeys$46(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -5255,37 +5310,37 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 		}
 		return t;
 	}
-	__name(ownKeys$34, "ownKeys");
-	function _objectSpread$33(e) {
+	__name(ownKeys$46, "ownKeys");
+	function _objectSpread$45(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$34(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$46(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$34(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$46(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$33, "_objectSpread");
+	__name(_objectSpread$45, "_objectSpread");
 	var reducer$2 = function reducer(state, _ref) {
 		var type = _ref.type;
 		var payload = _ref.payload;
 		switch (type) {
-			case "SET_ID": return _objectSpread$33(_objectSpread$33({}, state), {}, { id: payload });
-			case "SET_FILE": return _objectSpread$33(_objectSpread$33({}, state), {}, { file: payload });
-			case "SET_KIT_SOURCE": return _objectSpread$33(_objectSpread$33({}, state), {}, { source: payload });
+			case "SET_ID": return _objectSpread$45(_objectSpread$45({}, state), {}, { id: payload });
+			case "SET_FILE": return _objectSpread$45(_objectSpread$45({}, state), {}, { file: payload });
+			case "SET_KIT_SOURCE": return _objectSpread$45(_objectSpread$45({}, state), {}, { source: payload });
 			case "ADD_OVERRIDE_CONDITION": return ReducerUtils.updateArray(state, "overrideConditions", payload, "add");
 			case "REMOVE_OVERRIDE_CONDITION": return ReducerUtils.updateArray(state, "overrideConditions", payload, "remove");
-			case "SET_UPLOADED_DATA": return _objectSpread$33(_objectSpread$33({}, state), {}, { uploadedData: payload });
-			case "SET_IMPORTED_DATA": return _objectSpread$33(_objectSpread$33({}, state), {}, { importedData: payload });
-			case "SET_PLUGINS": return _objectSpread$33(_objectSpread$33({}, state), {}, { plugins: payload });
-			case "SET_REQUIRED_PLUGINS": return _objectSpread$33(_objectSpread$33({}, state), {}, { requiredPlugins: payload });
-			case "SET_IMPORTED_PLUGINS": return _objectSpread$33(_objectSpread$33({}, state), {}, { importedPlugins: payload });
-			case "SET_IS_PRO_INSTALLED_DURING_PROCESS": return _objectSpread$33(_objectSpread$33({}, state), {}, { isProInstalledDuringProcess: payload });
-			case "SET_ACTION_TYPE": return _objectSpread$33(_objectSpread$33({}, state), {}, { actionType: payload });
-			case "SET_IS_RESOLVED": return _objectSpread$33(_objectSpread$33({}, state), {}, { isResolvedData: payload });
-			case "SET_PLUGINS_STATE": return _objectSpread$33(_objectSpread$33({}, state), {}, { pluginsState: payload });
+			case "SET_UPLOADED_DATA": return _objectSpread$45(_objectSpread$45({}, state), {}, { uploadedData: payload });
+			case "SET_IMPORTED_DATA": return _objectSpread$45(_objectSpread$45({}, state), {}, { importedData: payload });
+			case "SET_PLUGINS": return _objectSpread$45(_objectSpread$45({}, state), {}, { plugins: payload });
+			case "SET_REQUIRED_PLUGINS": return _objectSpread$45(_objectSpread$45({}, state), {}, { requiredPlugins: payload });
+			case "SET_IMPORTED_PLUGINS": return _objectSpread$45(_objectSpread$45({}, state), {}, { importedPlugins: payload });
+			case "SET_IS_PRO_INSTALLED_DURING_PROCESS": return _objectSpread$45(_objectSpread$45({}, state), {}, { isProInstalledDuringProcess: payload });
+			case "SET_ACTION_TYPE": return _objectSpread$45(_objectSpread$45({}, state), {}, { actionType: payload });
+			case "SET_IS_RESOLVED": return _objectSpread$45(_objectSpread$45({}, state), {}, { isResolvedData: payload });
+			case "SET_PLUGINS_STATE": return _objectSpread$45(_objectSpread$45({}, state), {}, { pluginsState: payload });
 			default: return state;
 		}
 	};
@@ -5318,11 +5373,11 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 		} }, props.children);
 	}
 	__name(ImportContextProvider$1, "ImportContextProvider");
-	ImportContextProvider$1.propTypes = { children: import_prop_types$55.default.object.isRequired };
+	ImportContextProvider$1.propTypes = { children: import_prop_types$82.default.object.isRequired };
 
 //#endregion
 //#region app/assets/js/hooks/use-query-params.js
-	function ownKeys$33(e, r) {
+	function ownKeys$45(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -5332,12 +5387,12 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 		}
 		return t;
 	}
-	function _objectSpread$32(e) {
+	function _objectSpread$44(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$33(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$45(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$33(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$45(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -5354,7 +5409,7 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 			var key = _pair$split2[0];
 			hashParams[key] = _pair$split2[1];
 		});
-		var queryParams = _objectSpread$32(_objectSpread$32({}, urlParams), hashParams);
+		var queryParams = _objectSpread$44(_objectSpread$44({}, urlParams), hashParams);
 		return { getAll: function getAll() {
 			return queryParams;
 		} };
@@ -5362,8 +5417,8 @@ var import_shallowequal = /* @__PURE__ */ __toESM(require_shallowequal());
 	var init_use_query_params = __esmMin((() => {
 		init_defineProperty$1();
 		init_slicedToArray();
-		__name(ownKeys$33, "ownKeys");
-		__name(_objectSpread$32, "_objectSpread");
+		__name(ownKeys$45, "ownKeys");
+		__name(_objectSpread$44, "_objectSpread");
 	}));
 
 //#endregion
@@ -5375,23 +5430,25 @@ init_use_query_params();
 	function ContentLayout(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "e-app-import-export-content-layout" }, /*#__PURE__*/ react.default.createElement("div", { className: "e-app-import-export-content-layout__container" }, props.children));
 	}
-	ContentLayout.propTypes = { children: import_prop_types$55.default.any.isRequired };
+	ContentLayout.propTypes = { children: import_prop_types$82.default.any.isRequired };
 
 //#endregion
 //#region app/assets/js/ui/modal/modal-section.js
-	init_utils$4();
+	init_utils$5();
 	function ModalSection(props) {
 		return /*#__PURE__*/ react.default.createElement("section", { className: arrayToClassName(["eps-modal__section", props.className]) }, props.children);
 	}
 	ModalSection.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any
 	};
 	ModalSection.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/modal/modal-tip.js
-	init_utils$4();
+	init_utils$5();
+	init_heading();
+	init_text();
 	function ModalTip(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: arrayToClassName(["eps-modal__tip", props.className]) }, /*#__PURE__*/ react.default.createElement(Heading$11, {
 			variant: "h3",
@@ -5399,9 +5456,9 @@ init_use_query_params();
 		}, props.title), props.description && /*#__PURE__*/ react.default.createElement(Text$11, { variant: "xs" }, props.description));
 	}
 	ModalTip.propTypes = {
-		className: import_prop_types$55.default.string,
-		title: import_prop_types$55.default.string,
-		description: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		title: import_prop_types$82.default.string,
+		description: import_prop_types$82.default.string
 	};
 	ModalTip.defaultProps = {
 		className: "",
@@ -5413,10 +5470,12 @@ init_use_query_params();
 	init_extends();
 	init_defineProperty$1();
 	init_slicedToArray();
-	init_utils$4();
-	init_button();
+	init_utils$5();
+	init_button$1();
+	init_grid();
 	init_icon();
-	function ownKeys$32(e, r) {
+	init_text();
+	function ownKeys$44(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -5426,19 +5485,19 @@ init_use_query_params();
 		}
 		return t;
 	}
-	__name(ownKeys$32, "ownKeys");
-	function _objectSpread$31(e) {
+	__name(ownKeys$44, "ownKeys");
+	function _objectSpread$43(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$32(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$44(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$32(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$44(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$31, "_objectSpread");
+	__name(_objectSpread$43, "_objectSpread");
 	function ModalProvider$1(props) {
 		var _useState2 = _slicedToArray((0, react.useState)(props.show), 2);
 		var show = _useState2[0];
@@ -5451,7 +5510,7 @@ init_use_query_params();
 			setShow(true);
 			if (props.setShow) props.setShow(true);
 		};
-		var modalAttrs = _objectSpread$31(_objectSpread$31({}, props), {}, {
+		var modalAttrs = _objectSpread$43(_objectSpread$43({}, props), {}, {
 			show,
 			hideModal,
 			showModal
@@ -5459,18 +5518,18 @@ init_use_query_params();
 		(0, react.useEffect)(function() {
 			setShow(props.show);
 		}, [props.show]);
-		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, props.toggleButtonProps && /*#__PURE__*/ react.default.createElement(Button$29, _extends({}, props.toggleButtonProps, { onClick: showModal })), /*#__PURE__*/ react.default.createElement(Modal, modalAttrs, props.children));
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, props.toggleButtonProps && /*#__PURE__*/ react.default.createElement(Button$30, _extends({}, props.toggleButtonProps, { onClick: showModal })), /*#__PURE__*/ react.default.createElement(Modal, modalAttrs, props.children));
 	}
 	__name(ModalProvider$1, "ModalProvider");
 	ModalProvider$1.propTypes = {
-		children: import_prop_types$55.default.node.isRequired,
-		toggleButtonProps: import_prop_types$55.default.object,
-		title: import_prop_types$55.default.string,
-		icon: import_prop_types$55.default.string,
-		show: import_prop_types$55.default.bool,
-		setShow: import_prop_types$55.default.func,
-		onOpen: import_prop_types$55.default.func,
-		onClose: import_prop_types$55.default.func
+		children: import_prop_types$82.default.node.isRequired,
+		toggleButtonProps: import_prop_types$82.default.object,
+		title: import_prop_types$82.default.string,
+		icon: import_prop_types$82.default.string,
+		show: import_prop_types$82.default.bool,
+		setShow: import_prop_types$82.default.func,
+		onOpen: import_prop_types$82.default.func,
+		onClose: import_prop_types$82.default.func
 	};
 	ModalProvider$1.defaultProps = { show: false };
 	ModalProvider$1.Section = ModalSection;
@@ -5514,7 +5573,7 @@ init_use_query_params();
 		}, props.title)), /*#__PURE__*/ react.default.createElement(Grid$14, { item: true }, /*#__PURE__*/ react.default.createElement("div", {
 			className: "eps-modal__close-wrapper",
 			ref: closeRef
-		}, /*#__PURE__*/ react.default.createElement(Button$29, {
+		}, /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("Close", "elementor"),
 			hideText: true,
 			icon: "eicon-close",
@@ -5522,35 +5581,36 @@ init_use_query_params();
 		})))), /*#__PURE__*/ react.default.createElement("div", { className: "eps-modal__body" }, props.children)));
 	};
 	Modal.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired,
-		title: import_prop_types$55.default.string.isRequired,
-		icon: import_prop_types$55.default.string,
-		show: import_prop_types$55.default.bool,
-		setShow: import_prop_types$55.default.func,
-		hideModal: import_prop_types$55.default.func,
-		showModal: import_prop_types$55.default.func,
-		closeModal: import_prop_types$55.default.func,
-		onOpen: import_prop_types$55.default.func,
-		onClose: import_prop_types$55.default.func
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired,
+		title: import_prop_types$82.default.string.isRequired,
+		icon: import_prop_types$82.default.string,
+		show: import_prop_types$82.default.bool,
+		setShow: import_prop_types$82.default.func,
+		hideModal: import_prop_types$82.default.func,
+		showModal: import_prop_types$82.default.func,
+		closeModal: import_prop_types$82.default.func,
+		onOpen: import_prop_types$82.default.func,
+		onClose: import_prop_types$82.default.func
 	};
 	Modal.defaultProps = { className: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/info-modal/info-modal-section.js
-	init_utils$4();
+	init_utils$5();
 	function InfoModalSection(props) {
 		return /*#__PURE__*/ react.default.createElement(ModalProvider$1.Section, { className: arrayToClassName(["e-app-import-export-info-modal__section", props.className]) }, props.children);
 	}
 	InfoModalSection.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any
 	};
 	InfoModalSection.defaultProps = { className: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/info-modal/info-modal-heading.js
-	init_utils$4();
+	init_utils$5();
+	init_heading();
 	function InfoModalHeading(props) {
 		return /*#__PURE__*/ react.default.createElement(Heading$11, {
 			variant: "h3",
@@ -5559,18 +5619,19 @@ init_use_query_params();
 		}, props.children);
 	}
 	InfoModalHeading.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.oneOfType([
-			import_prop_types$55.default.string,
-			import_prop_types$55.default.object,
-			import_prop_types$55.default.arrayOf(import_prop_types$55.default.object)
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.oneOfType([
+			import_prop_types$82.default.string,
+			import_prop_types$82.default.object,
+			import_prop_types$82.default.arrayOf(import_prop_types$82.default.object)
 		]).isRequired
 	};
 	InfoModalHeading.defaultProps = { className: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/info-modal/info-modal-text.js
-	init_utils$4();
+	init_utils$5();
+	init_text();
 	function InfoModalText(props) {
 		return /*#__PURE__*/ react.default.createElement(Text$11, {
 			variant: "sm",
@@ -5578,19 +5639,19 @@ init_use_query_params();
 		}, props.children);
 	}
 	InfoModalText.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	InfoModalText.defaultProps = { className: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/info-modal/info-modal-tip.js
 	init_extends();
-	init_utils$4();
+	init_utils$5();
 	function InfoModalTip(props) {
 		return /*#__PURE__*/ react.default.createElement(ModalProvider$1.Tip, _extends({}, props, { className: arrayToClassName(["e-app-import-export-info-modal__tip", props.className]) }));
 	}
-	InfoModalTip.propTypes = { className: import_prop_types$55.default.string };
+	InfoModalTip.propTypes = { className: import_prop_types$82.default.string };
 	InfoModalTip.defaultProps = { className: "" };
 
 //#endregion
@@ -5617,13 +5678,13 @@ init_use_query_params();
 		return /*#__PURE__*/ react.default.createElement(ModalProvider$1, _extends({}, attrs, { title: props.title }), props.children);
 	}
 	InfoModal.propTypes = {
-		show: import_prop_types$55.default.bool,
-		setShow: import_prop_types$55.default.func,
-		title: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired,
-		onOpen: import_prop_types$55.default.func,
-		onClose: import_prop_types$55.default.func,
-		referrer: import_prop_types$55.default.string
+		show: import_prop_types$82.default.bool,
+		setShow: import_prop_types$82.default.func,
+		title: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired,
+		onOpen: import_prop_types$82.default.func,
+		onClose: import_prop_types$82.default.func,
+		referrer: import_prop_types$82.default.string
 	};
 	InfoModal.Section = InfoModalSection;
 	InfoModal.Heading = InfoModalHeading;
@@ -5633,7 +5694,7 @@ init_use_query_params();
 //#endregion
 //#region app/assets/js/ui/molecules/inline-link.js
 	init_es$1();
-	init_utils$4();
+	init_utils$5();
 	function InlineLink(props) {
 		var baseClassName = "eps-inline-link";
 		var className = arrayToClassName([
@@ -5668,26 +5729,26 @@ init_use_query_params();
 		return props.url.includes("http") ? getExternalLink() : getRouterLink();
 	}
 	InlineLink.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any,
-		url: import_prop_types$55.default.string,
-		target: import_prop_types$55.default.string,
-		rel: import_prop_types$55.default.string,
-		text: import_prop_types$55.default.string,
-		color: import_prop_types$55.default.oneOf([
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any,
+		url: import_prop_types$82.default.string,
+		target: import_prop_types$82.default.string,
+		rel: import_prop_types$82.default.string,
+		text: import_prop_types$82.default.string,
+		color: import_prop_types$82.default.oneOf([
 			"primary",
 			"secondary",
 			"cta",
 			"link",
 			"disabled"
 		]),
-		underline: import_prop_types$55.default.oneOf([
+		underline: import_prop_types$82.default.oneOf([
 			"none",
 			"hover",
 			"always"
 		]),
-		italic: import_prop_types$55.default.bool,
-		onClick: import_prop_types$55.default.func
+		italic: import_prop_types$82.default.bool,
+		onClick: import_prop_types$82.default.func
 	};
 	InlineLink.defaultProps = {
 		className: "",
@@ -5954,6 +6015,12 @@ init_use_query_params();
 					export: "design_system_export",
 					opened: "design_system_opened"
 				},
+				default_styles: {
+					panelOpened: "default_styles_panel_opened",
+					tagSaved: "default_styles_tag_saved",
+					saveFailed: "default_styles_save_failed",
+					changesDiscarded: "default_styles_changes_discarded"
+				},
 				components: {
 					createClicked: "component_create_clicked",
 					createCancelled: "component_creation_cancelled",
@@ -6018,7 +6085,7 @@ init_use_query_params();
 
 //#endregion
 //#region app/assets/js/event-track/apps-event-tracking.js
-	function ownKeys$31(e, r) {
+	function ownKeys$43(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -6028,12 +6095,12 @@ init_use_query_params();
 		}
 		return t;
 	}
-	function _objectSpread$30(e) {
+	function _objectSpread$42(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$31(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$43(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$31(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$43(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -6103,8 +6170,8 @@ init_use_query_params();
 		init_classCallCheck();
 		init_createClass();
 		init_events_config();
-		__name(ownKeys$31, "ownKeys");
-		__name(_objectSpread$30, "_objectSpread");
+		__name(ownKeys$43, "ownKeys");
+		__name(_objectSpread$42, "_objectSpread");
 		__name(_createForOfIteratorHelper$4, "_createForOfIteratorHelper");
 		__name(_unsupportedIterableToArray$4, "_unsupportedIterableToArray");
 		__name(_arrayLikeToArray$4, "_arrayLikeToArray");
@@ -6212,13 +6279,13 @@ init_use_query_params();
 				{
 					key: "sendExportKitCustomization",
 					value: function sendExportKitCustomization(payload) {
-						return this.dispatchEvent(EVENTS_MAP.EXPORT_KIT_CUSTOMIZATION, _objectSpread$30({ trigger: eventsConfig.triggers.click }, payload));
+						return this.dispatchEvent(EVENTS_MAP.EXPORT_KIT_CUSTOMIZATION, _objectSpread$42({ trigger: eventsConfig.triggers.click }, payload));
 					}
 				},
 				{
 					key: "sendImportKitCustomization",
 					value: function sendImportKitCustomization(payload) {
-						return this.dispatchEvent(EVENTS_MAP.IMPORT_KIT_CUSTOMIZATION, _objectSpread$30({ trigger: eventsConfig.triggers.click }, payload));
+						return this.dispatchEvent(EVENTS_MAP.IMPORT_KIT_CUSTOMIZATION, _objectSpread$42({ trigger: eventsConfig.triggers.click }, payload));
 					}
 				},
 				{
@@ -6226,13 +6293,13 @@ init_use_query_params();
 					value: function sendKitImportStatus() {
 						var error = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null;
 						var isError = !!error;
-						return this.dispatchEvent(EVENTS_MAP.KIT_IMPORT_STATUS, _objectSpread$30({ kit_import_status: !isError }, isError && { kit_import_error: error.message }));
+						return this.dispatchEvent(EVENTS_MAP.KIT_IMPORT_STATUS, _objectSpread$42({ kit_import_status: !isError }, isError && { kit_import_error: error.message }));
 					}
 				},
 				{
 					key: "sendKitCloudLibraryApply",
 					value: function sendKitCloudLibraryApply(kitId, kitApplyUrl) {
-						return this.dispatchEvent(EVENTS_MAP.KIT_CLOUD_LIBRARY_APPLY, _objectSpread$30({
+						return this.dispatchEvent(EVENTS_MAP.KIT_CLOUD_LIBRARY_APPLY, _objectSpread$42({
 							trigger: eventsConfig.triggers.click,
 							kit_cloud_id: kitId
 						}, kitApplyUrl && { kit_apply_url: kitApplyUrl }));
@@ -6336,7 +6403,7 @@ init_use_query_params();
 	init_slicedToArray();
 	init_apps_event_tracking();
 	init_redirect();
-	function ownKeys$30(e, r) {
+	function ownKeys$42(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -6346,20 +6413,20 @@ init_use_query_params();
 		}
 		return t;
 	}
-	__name(ownKeys$30, "ownKeys");
-	function _objectSpread$29(e) {
+	__name(ownKeys$42, "ownKeys");
+	function _objectSpread$41(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$30(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$42(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$30(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$42(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$29, "_objectSpread");
-	function Layout(props) {
+	__name(_objectSpread$41, "_objectSpread");
+	function Layout$1(props) {
 		var _useState2 = _slicedToArray((0, react.useState)(false), 2);
 		var showInfoModal = _useState2[0];
 		var setShowInfoModal = _useState2[1];
@@ -6390,7 +6457,7 @@ init_use_query_params();
 				show: showInfoModal,
 				setShow: setShowInfoModal
 			};
-			if ("kit-library" === sharedContext.data.referrer || referrer) infoModalProps = _objectSpread$29(_objectSpread$29({ referrer }, infoModalProps), {}, {
+			if ("kit-library" === sharedContext.data.referrer || referrer) infoModalProps = _objectSpread$41(_objectSpread$41({ referrer }, infoModalProps), {}, {
 				onOpen: function onOpen() {
 					return eventTracking("kit-library/modal-open", null, null, "load", "info");
 				},
@@ -6401,7 +6468,7 @@ init_use_query_params();
 			return /*#__PURE__*/ react.default.createElement(ContentLayout, null, props.children, "import" === props.type ? /*#__PURE__*/ react.default.createElement(ImportInfoModal, infoModalProps) : /*#__PURE__*/ react.default.createElement(ExportInfoModal, infoModalProps));
 		};
 		var getInfoButtonProps = function getInfoButtonProps() {
-			return _objectSpread$29(_objectSpread$29({}, infoButtonProps), {}, { onClick: function onClick() {
+			return _objectSpread$41(_objectSpread$41({}, infoButtonProps), {}, { onClick: function onClick() {
 				eventTracking("kit-library/seek-more-info", "app_header");
 				setShowInfoModal(true);
 			} });
@@ -6430,17 +6497,21 @@ init_use_query_params();
 		}, [referrer]);
 		return /*#__PURE__*/ react.default.createElement(Page, config);
 	}
-	Layout.propTypes = {
-		type: import_prop_types$55.default.oneOf(["import", "export"]),
-		headerButtons: import_prop_types$55.default.arrayOf(import_prop_types$55.default.object),
-		children: import_prop_types$55.default.object.isRequired,
-		footer: import_prop_types$55.default.object
+	__name(Layout$1, "Layout");
+	Layout$1.propTypes = {
+		type: import_prop_types$82.default.oneOf(["import", "export"]),
+		headerButtons: import_prop_types$82.default.arrayOf(import_prop_types$82.default.object),
+		children: import_prop_types$82.default.object.isRequired,
+		footer: import_prop_types$82.default.object
 	};
-	Layout.defaultProps = { headerButtons: [] };
+	Layout$1.defaultProps = { headerButtons: [] };
 
 //#endregion
 //#region app/modules/import-export/assets/js/ui/page-header/page-header.js
-	init_utils$4();
+	init_utils$5();
+	init_grid();
+	init_heading();
+	init_text();
 	function PageHeader$1(props) {
 		var classes = ["e-app-import-export-page-header", props.className];
 		return /*#__PURE__*/ react.default.createElement("div", { className: arrayToClassName(classes) }, /*#__PURE__*/ react.default.createElement(Grid$14, { container: true }, /*#__PURE__*/ react.default.createElement(Grid$14, {
@@ -6463,12 +6534,12 @@ init_use_query_params();
 	}
 	__name(PageHeader$1, "PageHeader");
 	PageHeader$1.propTypes = {
-		className: import_prop_types$55.default.string,
-		heading: import_prop_types$55.default.string,
-		description: import_prop_types$55.default.oneOfType([
-			import_prop_types$55.default.string,
-			import_prop_types$55.default.array,
-			import_prop_types$55.default.object
+		className: import_prop_types$82.default.string,
+		heading: import_prop_types$82.default.string,
+		description: import_prop_types$82.default.oneOfType([
+			import_prop_types$82.default.string,
+			import_prop_types$82.default.array,
+			import_prop_types$82.default.object
 		])
 	};
 	PageHeader$1.defaultProps = { className: "" };
@@ -6843,7 +6914,7 @@ init_use_query_params();
 
 //#endregion
 //#region app/assets/js/hooks/use-ajax.js
-	function ownKeys$29(e, r) {
+	function ownKeys$41(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -6853,12 +6924,12 @@ init_use_query_params();
 		}
 		return t;
 	}
-	function _objectSpread$28(e) {
+	function _objectSpread$40(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$29(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$41(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$29(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$41(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -6889,7 +6960,7 @@ init_use_query_params();
 								for (var key in config.data) formData.append(key, config.data[key]);
 								if (!config.data.nonce) formData.append("_nonce", elementorCommon.config.ajax.nonce);
 							}
-							var options = _objectSpread$28(_objectSpread$28({
+							var options = _objectSpread$40(_objectSpread$40({
 								type: "post",
 								url: elementorCommon.config.ajax.url,
 								headers: {},
@@ -6920,7 +6991,7 @@ init_use_query_params();
 			if (ajax) runRequest(ajax).then(function(response) {
 				var status = response.success ? "success" : "error";
 				setAjaxState(function(prevState) {
-					return _objectSpread$28(_objectSpread$28({}, prevState), {}, {
+					return _objectSpread$40(_objectSpread$40({}, prevState), {}, {
 						status,
 						response: response === null || response === void 0 ? void 0 : response.data
 					});
@@ -6929,14 +7000,14 @@ init_use_query_params();
 				var _error$responseJSON;
 				var response = 408 === error.status ? "timeout" : (_error$responseJSON = error.responseJSON) === null || _error$responseJSON === void 0 ? void 0 : _error$responseJSON.data;
 				setAjaxState(function(prevState) {
-					return _objectSpread$28(_objectSpread$28({}, prevState), {}, {
+					return _objectSpread$40(_objectSpread$40({}, prevState), {}, {
 						status: "error",
 						response
 					});
 				});
 			}).finally(function() {
 				setAjaxState(function(prevState) {
-					return _objectSpread$28(_objectSpread$28({}, prevState), {}, { isComplete: true });
+					return _objectSpread$40(_objectSpread$40({}, prevState), {}, { isComplete: true });
 				});
 			});
 		}, [ajax]);
@@ -6954,8 +7025,8 @@ init_use_query_params();
 		init_asyncToGenerator();
 		init_slicedToArray();
 		import_regenerator$4 = /* @__PURE__ */ __toESM(require_regenerator());
-		__name(ownKeys$29, "ownKeys");
-		__name(_objectSpread$28, "_objectSpread");
+		__name(ownKeys$41, "ownKeys");
+		__name(_objectSpread$40, "_objectSpread");
 	}));
 
 //#endregion
@@ -7018,7 +7089,7 @@ init_use_query_params();
 		for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
 		return n;
 	}
-	function ownKeys$28(e, r) {
+	function ownKeys$40(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -7028,12 +7099,12 @@ init_use_query_params();
 		}
 		return t;
 	}
-	function _objectSpread$27(e) {
+	function _objectSpread$39(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$28(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$40(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$28(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$40(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -7056,7 +7127,7 @@ init_use_query_params();
 			var file = _ref.file;
 			var kitLibraryNonce = _ref.kitLibraryNonce;
 			var _ref$source = _ref.source;
-			setAjax({ data: _objectSpread$27(_objectSpread$27({
+			setAjax({ data: _objectSpread$39(_objectSpread$39({
 				action: UPLOAD_KIT_KEY,
 				source: _ref$source === void 0 ? "" : _ref$source
 			}, file ? { e_import_file: file } : null), {}, { kit_id: kitId }, kitLibraryNonce ? { e_kit_library_nonce: kitLibraryNonce } : {}) });
@@ -7090,7 +7161,7 @@ init_use_query_params();
 								var _error$responseJSON;
 								var response = 408 === error.status ? "timeout" : (_error$responseJSON = error.responseJSON) === null || _error$responseJSON === void 0 ? void 0 : _error$responseJSON.data;
 								setKitState(function(prevState) {
-									return _objectSpread$27(_objectSpread$27({}, prevState), {}, {
+									return _objectSpread$39(_objectSpread$39({}, prevState), {}, {
 										status: KIT_STATUS_MAP.ERROR,
 										data: response || {}
 									});
@@ -7154,7 +7225,7 @@ init_use_query_params();
 								stopIterations = true;
 								var response = 408 === error.status ? "timeout" : (_error$responseJSON2 = error.responseJSON) === null || _error$responseJSON2 === void 0 ? void 0 : _error$responseJSON2.data;
 								setKitState(function(prevState) {
-									return _objectSpread$27(_objectSpread$27({}, prevState), {
+									return _objectSpread$39(_objectSpread$39({}, prevState), {
 										status: KIT_STATUS_MAP.ERROR,
 										data: response || {}
 									});
@@ -7268,7 +7339,7 @@ init_use_query_params();
 				} else if ("error" === ajaxState.status) newState.status = KIT_STATUS_MAP.ERROR;
 				newState.data = ajaxState.response || {};
 				setKitState(function(prevState) {
-					return _objectSpread$27(_objectSpread$27({}, prevState), newState);
+					return _objectSpread$39(_objectSpread$39({}, prevState), newState);
 				});
 			}
 		}, [ajaxState.status]);
@@ -7293,8 +7364,8 @@ init_use_query_params();
 		__name(_createForOfIteratorHelper$3, "_createForOfIteratorHelper");
 		__name(_unsupportedIterableToArray$3, "_unsupportedIterableToArray");
 		__name(_arrayLikeToArray$3, "_arrayLikeToArray");
-		__name(ownKeys$28, "ownKeys");
-		__name(_objectSpread$27, "_objectSpread");
+		__name(ownKeys$40, "ownKeys");
+		__name(_objectSpread$39, "_objectSpread");
 		KIT_SOURCE_MAP = {
 			CLOUD: "cloud",
 			FILE: "file"
@@ -7316,6 +7387,7 @@ init_use_query_params();
 //#endregion
 //#region app/modules/import-export/assets/js/shared/process-failed-dialog/process-failed-dialog.js
 	init_es$1();
+	init_dialog();
 	init_use_query_params();
 	init_use_action();
 	init_use_kit$1();
@@ -7422,14 +7494,14 @@ init_use_query_params();
 		});
 	}
 	ProcessFailedDialog.propTypes = {
-		onApprove: import_prop_types$55.default.func,
-		onDismiss: import_prop_types$55.default.func,
-		errorType: import_prop_types$55.default.string,
-		approveButton: import_prop_types$55.default.string,
-		dismissButton: import_prop_types$55.default.string,
-		onModalClose: import_prop_types$55.default.func,
-		onError: import_prop_types$55.default.func,
-		onLearnMore: import_prop_types$55.default.func
+		onApprove: import_prop_types$82.default.func,
+		onDismiss: import_prop_types$82.default.func,
+		errorType: import_prop_types$82.default.string,
+		approveButton: import_prop_types$82.default.string,
+		dismissButton: import_prop_types$82.default.string,
+		onModalClose: import_prop_types$82.default.func,
+		onError: import_prop_types$82.default.func,
+		onLearnMore: import_prop_types$82.default.func
 	};
 	ProcessFailedDialog.defaultProps = {
 		errorType: "general",
@@ -7439,14 +7511,16 @@ init_use_query_params();
 
 //#endregion
 //#region app/assets/js/ui/molecules/notice.js
-	init_utils$4();
+	init_utils$5();
+	init_text();
 	init_icon();
+	init_grid();
 	var iconsClassesMap = {
 		danger: "eicon-warning",
 		info: "eicon-info-circle-o",
 		warning: "eicon-warning"
 	};
-	function Notice(props) {
+	function Notice$1(props) {
 		var baseClassName = "eps-notice";
 		var classes = [baseClassName, props.className];
 		if (props.color) classes.push(baseClassName + "-semantic", baseClassName + "--" + props.color);
@@ -7471,25 +7545,28 @@ init_use_query_params();
 			className: baseClassName + "__button-container"
 		}, props.button));
 	}
-	Notice.propTypes = {
-		className: import_prop_types$55.default.string,
-		color: import_prop_types$55.default.string,
-		label: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired,
-		icon: import_prop_types$55.default.string,
-		withIcon: import_prop_types$55.default.bool,
-		button: import_prop_types$55.default.object
+	__name(Notice$1, "Notice");
+	Notice$1.propTypes = {
+		className: import_prop_types$82.default.string,
+		color: import_prop_types$82.default.string,
+		label: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired,
+		icon: import_prop_types$82.default.string,
+		withIcon: import_prop_types$82.default.bool,
+		button: import_prop_types$82.default.object
 	};
-	Notice.defaultProps = {
+	Notice$1.defaultProps = {
 		className: "",
 		withIcon: true,
 		button: null
 	};
 
 //#endregion
+//#region \0app-scss:/home/runner/work/elementor/elementor/app/assets/js/molecules/upload-file.scss
+	var init_upload_file$1 = __esmMin((() => {}));
+
+//#endregion
 //#region app/assets/js/molecules/upload-file.js
-	init_button();
-	init_utils$4();
 	function UploadFile(props) {
 		var fileInput = (0, react.useRef)(null);
 		var classes = ["e-app-upload-file", props.className];
@@ -7512,7 +7589,7 @@ init_use_query_params();
 					});
 				}
 			}
-		}), /*#__PURE__*/ react.default.createElement(Button$29, {
+		}), /*#__PURE__*/ react.default.createElement(Button$30, {
 			className: "e-app-upload-file__button",
 			text: props.text,
 			variant: props.variant,
@@ -7543,34 +7620,42 @@ init_use_query_params();
 			}
 		}));
 	}
-	UploadFile.propTypes = {
-		className: import_prop_types$55.default.string,
-		type: import_prop_types$55.default.string,
-		onWpMediaSelect: import_prop_types$55.default.func,
-		text: import_prop_types$55.default.string,
-		onFileSelect: import_prop_types$55.default.func,
-		isLoading: import_prop_types$55.default.bool,
-		filetypes: import_prop_types$55.default.array.isRequired,
-		onError: import_prop_types$55.default.func,
-		variant: import_prop_types$55.default.string,
-		color: import_prop_types$55.default.string,
-		onButtonClick: import_prop_types$55.default.func,
-		onFileChoose: import_prop_types$55.default.func
-	};
-	UploadFile.defaultProps = {
-		className: "",
-		type: "file-explorer",
-		text: (0, _wordpress_i18n.__)("Select File", "elementor"),
-		onError: function onError() {},
-		variant: "contained",
-		color: "primary"
-	};
+	var import_prop_types$71;
+	var init_upload_file = __esmMin((() => {
+		import_prop_types$71 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_button$1();
+		init_utils$5();
+		init_upload_file$1();
+		UploadFile.propTypes = {
+			className: import_prop_types$71.default.string,
+			type: import_prop_types$71.default.string,
+			onWpMediaSelect: import_prop_types$71.default.func,
+			text: import_prop_types$71.default.string,
+			onFileSelect: import_prop_types$71.default.func,
+			isLoading: import_prop_types$71.default.bool,
+			filetypes: import_prop_types$71.default.array.isRequired,
+			onError: import_prop_types$71.default.func,
+			variant: import_prop_types$71.default.string,
+			color: import_prop_types$71.default.string,
+			onButtonClick: import_prop_types$71.default.func,
+			onFileChoose: import_prop_types$71.default.func
+		};
+		UploadFile.defaultProps = {
+			className: "",
+			type: "file-explorer",
+			text: (0, _wordpress_i18n.__)("Select File", "elementor"),
+			onError: function onError() {},
+			variant: "contained",
+			color: "primary"
+		};
+	}));
+
+//#endregion
+//#region \0app-scss:/home/runner/work/elementor/elementor/app/assets/js/ui/atoms/drag-drop.scss
+	var init_drag_drop$1 = __esmMin((() => {}));
 
 //#endregion
 //#region app/assets/js/ui/atoms/drag-drop.js
-	init_extends();
-	init_slicedToArray();
-	init_utils$4();
 	function DragDrop(props) {
 		var _useState2 = _slicedToArray((0, react.useState)(false), 2);
 		var isDragOver = _useState2[0];
@@ -7603,21 +7688,30 @@ init_use_query_params();
 			}
 		}, { className: getClassName() }), props.children);
 	}
-	DragDrop.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any,
-		onDrop: import_prop_types$55.default.func,
-		onDragLeave: import_prop_types$55.default.func,
-		onDragOver: import_prop_types$55.default.func,
-		isLoading: import_prop_types$55.default.bool
-	};
-	DragDrop.defaultProps = { className: "" };
+	var import_prop_types$70;
+	var init_drag_drop = __esmMin((() => {
+		import_prop_types$70 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_extends();
+		init_slicedToArray();
+		init_utils$5();
+		init_drag_drop$1();
+		DragDrop.propTypes = {
+			className: import_prop_types$70.default.string,
+			children: import_prop_types$70.default.any,
+			onDrop: import_prop_types$70.default.func,
+			onDragLeave: import_prop_types$70.default.func,
+			onDragOver: import_prop_types$70.default.func,
+			isLoading: import_prop_types$70.default.bool
+		};
+		DragDrop.defaultProps = { className: "" };
+	}));
+
+//#endregion
+//#region \0app-scss:/home/runner/work/elementor/elementor/app/assets/js/organisms/drop-zone.scss
+	var init_drop_zone$1 = __esmMin((() => {}));
 
 //#endregion
 //#region app/assets/js/organisms/drop-zone.js
-	init_extends();
-	init_utils$4();
-	init_icon();
 	function DropZone$1(props) {
 		var classes = ["e-app-drop-zone", props.className];
 		return /*#__PURE__*/ react.default.createElement("section", { className: arrayToClassName(classes) }, /*#__PURE__*/ react.default.createElement(DragDrop, _extends({}, { onDrop: function onDrop(event) {
@@ -7656,57 +7750,70 @@ init_use_query_params();
 			className: "e-app-drop-zone__description"
 		}, props.description)));
 	}
-	__name(DropZone$1, "DropZone");
-	DropZone$1.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any,
-		type: import_prop_types$55.default.string,
-		onFileSelect: import_prop_types$55.default.func.isRequired,
-		onWpMediaSelect: import_prop_types$55.default.func,
-		heading: import_prop_types$55.default.string,
-		text: import_prop_types$55.default.string,
-		secondaryText: import_prop_types$55.default.string,
-		buttonText: import_prop_types$55.default.string,
-		buttonVariant: import_prop_types$55.default.string,
-		buttonColor: import_prop_types$55.default.string,
-		icon: import_prop_types$55.default.string,
-		showButton: import_prop_types$55.default.bool,
-		showIcon: import_prop_types$55.default.bool,
-		isLoading: import_prop_types$55.default.bool,
-		filetypes: import_prop_types$55.default.array.isRequired,
-		onError: import_prop_types$55.default.func,
-		description: import_prop_types$55.default.string,
-		onButtonClick: import_prop_types$55.default.func,
-		onFileChoose: import_prop_types$55.default.func
-	};
-	DropZone$1.defaultProps = {
-		className: "",
-		type: "file-explorer",
-		icon: "eicon-library-upload",
-		showButton: true,
-		showIcon: true,
-		onError: function onError() {}
-	};
+	var import_prop_types$69;
+	var init_drop_zone = __esmMin((() => {
+		import_prop_types$69 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_extends();
+		init_utils$5();
+		init_upload_file();
+		init_drag_drop();
+		init_icon();
+		init_heading();
+		init_text();
+		init_drop_zone$1();
+		__name(DropZone$1, "DropZone");
+		DropZone$1.propTypes = {
+			className: import_prop_types$69.default.string,
+			children: import_prop_types$69.default.any,
+			type: import_prop_types$69.default.string,
+			onFileSelect: import_prop_types$69.default.func.isRequired,
+			onWpMediaSelect: import_prop_types$69.default.func,
+			heading: import_prop_types$69.default.string,
+			text: import_prop_types$69.default.string,
+			secondaryText: import_prop_types$69.default.string,
+			buttonText: import_prop_types$69.default.string,
+			buttonVariant: import_prop_types$69.default.string,
+			buttonColor: import_prop_types$69.default.string,
+			icon: import_prop_types$69.default.string,
+			showButton: import_prop_types$69.default.bool,
+			showIcon: import_prop_types$69.default.bool,
+			isLoading: import_prop_types$69.default.bool,
+			filetypes: import_prop_types$69.default.array.isRequired,
+			onError: import_prop_types$69.default.func,
+			description: import_prop_types$69.default.string,
+			onButtonClick: import_prop_types$69.default.func,
+			onFileChoose: import_prop_types$69.default.func
+		};
+		DropZone$1.defaultProps = {
+			className: "",
+			type: "file-explorer",
+			icon: "eicon-library-upload",
+			showButton: true,
+			showIcon: true,
+			onError: function onError() {}
+		};
+	}));
 
 //#endregion
 //#region app/assets/js/molecules/elementor-loading.js
 	function ElementorLoading(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loading" }, /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader-wrapper" }, /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader" }, /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader-boxes" }, /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader-box" }), /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader-box" }), /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader-box" }), /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loader-box" }))), /*#__PURE__*/ react.default.createElement("div", { className: "elementor-loading-title" }, props.loadingText)));
 	}
-	var import_prop_types$48;
+	var import_prop_types$68;
 	var init_elementor_loading = __esmMin((() => {
-		import_prop_types$48 = /* @__PURE__ */ __toESM(require_prop_types());
-		ElementorLoading.propTypes = { loadingText: import_prop_types$48.default.string };
+		import_prop_types$68 = /* @__PURE__ */ __toESM(require_prop_types());
+		ElementorLoading.propTypes = { loadingText: import_prop_types$68.default.string };
 		ElementorLoading.defaultProps = { loadingText: (0, _wordpress_i18n.__)("Loading", "elementor") };
 	}));
 
 //#endregion
 //#region \0app-scss:/home/runner/work/elementor/elementor/app/assets/js/ui/atoms/checkbox.scss
+init_drop_zone();
 init_elementor_loading();
 
 //#endregion
 //#region app/assets/js/ui/atoms/checkbox.js
-	init_utils$4();
+	init_utils$5();
 	function Checkbox$5(_ref) {
 		var className = _ref.className;
 		var checked = _ref.checked;
@@ -7732,14 +7839,14 @@ init_elementor_loading();
 	}
 	__name(Checkbox$5, "Checkbox");
 	Checkbox$5.propTypes = {
-		className: import_prop_types$55.default.string,
-		checked: import_prop_types$55.default.bool,
-		disabled: import_prop_types$55.default.bool,
-		indeterminate: import_prop_types$55.default.bool,
-		rounded: import_prop_types$55.default.bool,
-		error: import_prop_types$55.default.bool,
-		onChange: import_prop_types$55.default.func,
-		id: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		checked: import_prop_types$82.default.bool,
+		disabled: import_prop_types$82.default.bool,
+		indeterminate: import_prop_types$82.default.bool,
+		rounded: import_prop_types$82.default.bool,
+		error: import_prop_types$82.default.bool,
+		onChange: import_prop_types$82.default.func,
+		id: import_prop_types$82.default.string
 	};
 	Checkbox$5.defaultProps = {
 		className: "",
@@ -7755,8 +7862,9 @@ init_elementor_loading();
 	init_slicedToArray();
 	init_es$1();
 	init_use_query_params();
-	init_button();
+	init_button$1();
 	init_apps_event_tracking();
+	init_dialog();
 	init_use_kit$1();
 	function ImportKit$1() {
 		var sharedContext = (0, react.useContext)(SharedContext);
@@ -7873,7 +7981,7 @@ init_elementor_loading();
 				kitId
 			});
 		}, [source, kitId]);
-		return /*#__PURE__*/ react.default.createElement(Layout, { type: "import" }, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import" }, isLoadingKitFromCloud ? /*#__PURE__*/ react.default.createElement(ElementorLoading, null) : /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, "kit-library" === referrer && /*#__PURE__*/ react.default.createElement(Button$29, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, { type: "import" }, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import" }, isLoadingKitFromCloud ? /*#__PURE__*/ react.default.createElement(ElementorLoading, null) : /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, "kit-library" === referrer && /*#__PURE__*/ react.default.createElement(Button$30, {
 			className: "e-app-import__back-to-library",
 			icon: "eicon-chevron-left",
 			text: (0, _wordpress_i18n.__)("Back to Website Templates", "elementor"),
@@ -7881,7 +7989,7 @@ init_elementor_loading();
 		}), /*#__PURE__*/ react.default.createElement(PageHeader$1, {
 			heading: (0, _wordpress_i18n.__)("Import a Website Template", "elementor"),
 			description: /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, (0, _wordpress_i18n.__)("Upload a .zip file with style, site settings, content, etc. Then, we’ll apply them to your site.", "elementor"), " ", getLearnMoreLink())
-		}), /*#__PURE__*/ react.default.createElement(Notice, {
+		}), /*#__PURE__*/ react.default.createElement(Notice$1, {
 			label: (0, _wordpress_i18n.__)("Heads up!", "elementor"),
 			color: "warning",
 			className: "e-app-import__notice"
@@ -8075,27 +8183,27 @@ init_elementor_loading();
 			ref: childRef
 		}, props.children);
 	}
-	var import_prop_types$47;
+	var import_prop_types$67;
 	var init_tooltip = __esmMin((() => {
-		import_prop_types$47 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$67 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
-		init_utils$4();
+		init_utils$5();
 		init_preload_helper();
 		__name(Tooltip$2, "Tooltip");
 		Tooltip$2.propTypes = {
-			className: import_prop_types$47.default.string,
-			offset: import_prop_types$47.default.number,
-			show: import_prop_types$47.default.bool,
-			direction: import_prop_types$47.default.oneOf([
+			className: import_prop_types$67.default.string,
+			offset: import_prop_types$67.default.number,
+			show: import_prop_types$67.default.bool,
+			direction: import_prop_types$67.default.oneOf([
 				"top",
 				"right",
 				"left",
 				"down"
 			]),
-			tag: import_prop_types$47.default.string.isRequired,
-			title: import_prop_types$47.default.string.isRequired,
-			disabled: import_prop_types$47.default.bool,
-			children: import_prop_types$47.default.any
+			tag: import_prop_types$67.default.string.isRequired,
+			title: import_prop_types$67.default.string.isRequired,
+			disabled: import_prop_types$67.default.bool,
+			children: import_prop_types$67.default.any
 		};
 		Tooltip$2.defaultProps = {
 			className: "",
@@ -8130,9 +8238,9 @@ init_tooltip();
 		}());
 	}
 	TemplatesFeatures.propTypes = {
-		features: import_prop_types$55.default.object,
-		isLocked: import_prop_types$55.default.bool,
-		showTooltip: import_prop_types$55.default.bool
+		features: import_prop_types$82.default.object,
+		isLocked: import_prop_types$82.default.bool,
+		showTooltip: import_prop_types$82.default.bool
 	};
 	TemplatesFeatures.defaultProps = { showTooltip: false };
 
@@ -8167,8 +8275,8 @@ init_tooltip();
 		}, [sharedContext.data.includes]);
 	}
 	KitContentCheckbox.propTypes = {
-		className: import_prop_types$55.default.string,
-		type: import_prop_types$55.default.string.isRequired
+		className: import_prop_types$82.default.string,
+		type: import_prop_types$82.default.string.isRequired
 	};
 	KitContentCheckbox.defaultProps = { className: "" };
 
@@ -8202,13 +8310,13 @@ init_tooltip();
 	}
 	__name(Select$2, "Select");
 	Select$2.propTypes = {
-		className: import_prop_types$55.default.string,
-		onChange: import_prop_types$55.default.func,
-		options: import_prop_types$55.default.array,
-		elRef: import_prop_types$55.default.object,
-		multiple: import_prop_types$55.default.bool,
-		value: import_prop_types$55.default.oneOfType([import_prop_types$55.default.array, import_prop_types$55.default.string]),
-		onClick: import_prop_types$55.default.func
+		className: import_prop_types$82.default.string,
+		onChange: import_prop_types$82.default.func,
+		options: import_prop_types$82.default.array,
+		elRef: import_prop_types$82.default.object,
+		multiple: import_prop_types$82.default.bool,
+		value: import_prop_types$82.default.oneOfType([import_prop_types$82.default.array, import_prop_types$82.default.string]),
+		onClick: import_prop_types$82.default.func
 	};
 	Select$2.defaultProps = {
 		className: "",
@@ -8218,7 +8326,7 @@ init_tooltip();
 //#endregion
 //#region app/assets/js/ui/molecules/select2.js
 	init_defineProperty$1();
-	function ownKeys$27(e, r) {
+	function ownKeys$39(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -8228,19 +8336,19 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$27, "ownKeys");
-	function _objectSpread$26(e) {
+	__name(ownKeys$39, "ownKeys");
+	function _objectSpread$38(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$27(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$39(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$27(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$39(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$26, "_objectSpread");
+	__name(_objectSpread$38, "_objectSpread");
 	/**
 	* Default settings of the select 2
 	*
@@ -8263,7 +8371,7 @@ init_tooltip();
 	function Select2(props) {
 		var ref = react.default.useRef(null);
 		react.default.useEffect(function() {
-			var $select2 = jQuery(ref.current).select2(_objectSpread$26(_objectSpread$26(_objectSpread$26({}, getDefaultSettings()), props.settings), {}, { placeholder: props.placeholder })).on("select2:select select2:unselect", props.onChange);
+			var $select2 = jQuery(ref.current).select2(_objectSpread$38(_objectSpread$38(_objectSpread$38({}, getDefaultSettings()), props.settings), {}, { placeholder: props.placeholder })).on("select2:select select2:unselect", props.onChange);
 			if (props.onReady) props.onReady($select2);
 			return function() {
 				$select2.select2("destroy").off("select2:select select2:unselect");
@@ -8282,13 +8390,13 @@ init_tooltip();
 		});
 	}
 	Select2.propTypes = {
-		value: import_prop_types$55.default.oneOfType([import_prop_types$55.default.array, import_prop_types$55.default.string]),
-		onChange: import_prop_types$55.default.func,
-		onReady: import_prop_types$55.default.func,
-		options: import_prop_types$55.default.array,
-		settings: import_prop_types$55.default.object,
-		multiple: import_prop_types$55.default.bool,
-		placeholder: import_prop_types$55.default.string
+		value: import_prop_types$82.default.oneOfType([import_prop_types$82.default.array, import_prop_types$82.default.string]),
+		onChange: import_prop_types$82.default.func,
+		onReady: import_prop_types$82.default.func,
+		options: import_prop_types$82.default.array,
+		settings: import_prop_types$82.default.object,
+		multiple: import_prop_types$82.default.bool,
+		placeholder: import_prop_types$82.default.string
 	};
 	Select2.defaultProps = {
 		settings: {},
@@ -8301,8 +8409,8 @@ init_tooltip();
 //#region app/assets/js/ui/atoms/text-field.js
 	init_extends();
 	init_defineProperty$1();
-	init_utils$4();
-	function ownKeys$26(e, r) {
+	init_utils$5();
+	function ownKeys$38(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -8312,19 +8420,19 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$26, "ownKeys");
-	function _objectSpread$25(e) {
+	__name(ownKeys$38, "ownKeys");
+	function _objectSpread$37(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$26(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$38(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$26(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$38(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$25, "_objectSpread");
+	__name(_objectSpread$37, "_objectSpread");
 	function TextField(props) {
 		var classNameBase = "eps-text-field";
 		var classes = [
@@ -8333,7 +8441,7 @@ init_tooltip();
 			_defineProperty$1({}, classNameBase + "--outlined", "outlined" === props.variant),
 			_defineProperty$1({}, classNameBase + "--standard", "standard" === props.variant)
 		];
-		var validProps = _objectSpread$25(_objectSpread$25({}, props), {}, { className: arrayToClassName(classes) });
+		var validProps = _objectSpread$37(_objectSpread$37({}, props), {}, { className: arrayToClassName(classes) });
 		if (validProps.multiline) {
 			delete validProps.multiline;
 			return /*#__PURE__*/ react.default.createElement("textarea", validProps);
@@ -8341,10 +8449,10 @@ init_tooltip();
 		return /*#__PURE__*/ react.default.createElement("input", _extends({}, validProps, { type: "text" }));
 	}
 	TextField.propTypes = {
-		className: import_prop_types$55.default.string,
-		multiline: import_prop_types$55.default.bool,
-		variant: import_prop_types$55.default.oneOf(["standard", "outlined"]),
-		children: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		multiline: import_prop_types$82.default.bool,
+		variant: import_prop_types$82.default.oneOf(["standard", "outlined"]),
+		children: import_prop_types$82.default.string
 	};
 	TextField.defaultProps = {
 		className: "",
@@ -8354,6 +8462,7 @@ init_tooltip();
 //#endregion
 //#region app/modules/import-export/assets/js/shared/cpt-select-box/cpt-select-box.js
 	init_slicedToArray();
+	init_text();
 	function CptSelectBox() {
 		var sharedContext = (0, react.useContext)(SharedContext);
 		var customPostTypes = (sharedContext.data || []).customPostTypes;
@@ -8404,18 +8513,18 @@ init_tooltip();
 //#endregion
 //#region app/assets/js/molecules/go-pro-button.js
 	init_extends();
-	init_button();
-	init_utils$4();
+	init_button$1();
+	init_utils$5();
 	function GoProButton(props) {
 		var classes = ["e-app-go-pro-button", props.className];
-		return /*#__PURE__*/ react.default.createElement(Button$29, _extends({}, props, {
+		return /*#__PURE__*/ react.default.createElement(Button$30, _extends({}, props, {
 			className: arrayToClassName(classes),
 			text: props.text
 		}));
 	}
 	GoProButton.propTypes = {
-		className: import_prop_types$55.default.string,
-		text: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		text: import_prop_types$82.default.string
 	};
 	GoProButton.defaultProps = {
 		className: "",
@@ -8429,8 +8538,8 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/ui/atoms/box.js
-	init_utils$4();
-	function Box$22(props) {
+	init_utils$5();
+	function Box$23(props) {
 		var baseClassName = "eps-box";
 		var classes = [baseClassName, props.className];
 		var style = {};
@@ -8443,21 +8552,21 @@ init_tooltip();
 			className: arrayToClassName(classes)
 		}, props.children);
 	}
-	__name(Box$22, "Box");
-	Box$22.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.oneOfType([
-			import_prop_types$55.default.string,
-			import_prop_types$55.default.object,
-			import_prop_types$55.default.arrayOf(import_prop_types$55.default.object)
+	__name(Box$23, "Box");
+	Box$23.propTypes = {
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.oneOfType([
+			import_prop_types$82.default.string,
+			import_prop_types$82.default.object,
+			import_prop_types$82.default.arrayOf(import_prop_types$82.default.object)
 		]).isRequired
 	};
-	Box$22.defaultProps = { className: "" };
+	Box$23.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/molecules/list-item.js
-	init_utils$4();
+	init_utils$5();
 	function ListItem(props) {
 		var baseClassName = "eps-list__item";
 		var classes = [baseClassName, props.className];
@@ -8472,15 +8581,15 @@ init_tooltip();
 		}, props.children);
 	}
 	ListItem.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	ListItem.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/molecules/list.js
-	init_utils$4();
+	init_utils$5();
 	function List(props) {
 		var baseClassName = "eps-list";
 		var classes = [baseClassName, props.className];
@@ -8496,11 +8605,11 @@ init_tooltip();
 		}, props.children);
 	}
 	List.propTypes = {
-		className: import_prop_types$55.default.string,
-		divided: import_prop_types$55.default.any,
-		separated: import_prop_types$55.default.any,
-		padding: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.oneOfType([import_prop_types$55.default.object, import_prop_types$55.default.arrayOf(import_prop_types$55.default.object)]).isRequired
+		className: import_prop_types$82.default.string,
+		divided: import_prop_types$82.default.any,
+		separated: import_prop_types$82.default.any,
+		padding: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.oneOfType([import_prop_types$82.default.object, import_prop_types$82.default.arrayOf(import_prop_types$82.default.object)]).isRequired
 	};
 	List.defaultProps = { className: "" };
 	List.Item = ListItem;
@@ -8509,8 +8618,11 @@ init_tooltip();
 //#region app/modules/import-export/assets/js/shared/kit-content/kit-content.js
 	init_defineProperty$1();
 	init_slicedToArray();
+	init_heading();
+	init_text();
+	init_grid();
 	init_apps_event_tracking();
-	function ownKeys$25(e, r) {
+	function ownKeys$37(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -8520,19 +8632,19 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$25, "ownKeys");
-	function _objectSpread$24(e) {
+	__name(ownKeys$37, "ownKeys");
+	function _objectSpread$36(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$25(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$37(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$25(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$37(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$24, "_objectSpread");
+	__name(_objectSpread$36, "_objectSpread");
 	function KitContent(_ref) {
 		var contentData = _ref.contentData;
 		var hasPro = _ref.hasPro;
@@ -8553,7 +8665,7 @@ init_tooltip();
 		};
 		var setContainerHoverState = function setContainerHoverState(index, state) {
 			setContainerHover(function(prevState) {
-				return _objectSpread$24(_objectSpread$24({}, prevState), {}, _defineProperty$1({}, index, state));
+				return _objectSpread$36(_objectSpread$36({}, prevState), {}, _defineProperty$1({}, index, state));
 			});
 		};
 		var eventTracking = function eventTracking(event, chosenPart) {
@@ -8568,7 +8680,7 @@ init_tooltip();
 			}
 		};
 		if (!contentData.length) return null;
-		return /*#__PURE__*/ react.default.createElement(Box$22, null, /*#__PURE__*/ react.default.createElement(List, {
+		return /*#__PURE__*/ react.default.createElement(Box$23, null, /*#__PURE__*/ react.default.createElement(List, {
 			separated: true,
 			className: "e-app-export-kit-content"
 		}, contentData.map(function(_ref2, index) {
@@ -8619,9 +8731,9 @@ init_tooltip();
 		})));
 	}
 	KitContent.propTypes = {
-		className: import_prop_types$55.default.string,
-		contentData: import_prop_types$55.default.array.isRequired,
-		hasPro: import_prop_types$55.default.bool
+		className: import_prop_types$82.default.string,
+		contentData: import_prop_types$82.default.array.isRequired,
+		hasPro: import_prop_types$82.default.bool
 	};
 	KitContent.defaultProps = { className: "" };
 
@@ -8659,12 +8771,12 @@ init_tooltip();
 				payload: cptObjectToOptionsArray(manifest === null || manifest === void 0 ? void 0 : manifest["custom-post-type-title"], "label")
 			});
 		}, []);
-		if (!kitData.length && hasPlugins) return /*#__PURE__*/ react.default.createElement(Notice, {
+		if (!kitData.length && hasPlugins) return /*#__PURE__*/ react.default.createElement(Notice$1, {
 			color: "info",
 			label: (0, _wordpress_i18n.__)("Note:", "elementor")
 		}, (0, _wordpress_i18n.__)("The Website Kit you’re using contains plugins for functionality, but no content or pages, etc.", "elementor"));
-		if (!kitData.length) return /*#__PURE__*/ react.default.createElement(Notice, { color: "danger" }, (0, _wordpress_i18n.__)("You can’t use this Website Kit because it doesn’t contain any content, pages, etc. Try again with a different file.", "elementor"), " ", /*#__PURE__*/ react.default.createElement(InlineLink, { onClick: onResetProcess }, (0, _wordpress_i18n.__)("Go Back", "elementor")));
-		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, !isAllRequiredPluginsSelected && /*#__PURE__*/ react.default.createElement(Notice, {
+		if (!kitData.length) return /*#__PURE__*/ react.default.createElement(Notice$1, { color: "danger" }, (0, _wordpress_i18n.__)("You can’t use this Website Kit because it doesn’t contain any content, pages, etc. Try again with a different file.", "elementor"), " ", /*#__PURE__*/ react.default.createElement(InlineLink, { onClick: onResetProcess }, (0, _wordpress_i18n.__)("Go Back", "elementor")));
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, !isAllRequiredPluginsSelected && /*#__PURE__*/ react.default.createElement(Notice$1, {
 			color: "warning",
 			label: (0, _wordpress_i18n.__)("Required plugins are still missing.", "elementor"),
 			className: "e-app-import-content__plugins-notice"
@@ -8674,17 +8786,18 @@ init_tooltip();
 		}));
 	}
 	ImportContentDisplay.propTypes = {
-		manifest: import_prop_types$55.default.object,
-		hasPro: import_prop_types$55.default.bool,
-		hasPlugins: import_prop_types$55.default.bool,
-		isAllRequiredPluginsSelected: import_prop_types$55.default.bool,
-		onResetProcess: import_prop_types$55.default.func
+		manifest: import_prop_types$82.default.object,
+		hasPro: import_prop_types$82.default.bool,
+		hasPlugins: import_prop_types$82.default.bool,
+		isAllRequiredPluginsSelected: import_prop_types$82.default.bool,
+		onResetProcess: import_prop_types$82.default.func
 	};
 
 //#endregion
 //#region app/assets/js/organisms/wizard-footer.js
 	init_extends();
-	init_utils$4();
+	init_utils$5();
+	init_grid();
 	function WizardFooter(props) {
 		var baseClassName = "e-app-wizard-footer";
 		var classes = [baseClassName, props.className];
@@ -8692,13 +8805,13 @@ init_tooltip();
 		return /*#__PURE__*/ react.default.createElement(Grid$14, _extends({ container: true }, props, { className: arrayToClassName(classes) }), props.children);
 	}
 	WizardFooter.propTypes = {
-		className: import_prop_types$55.default.string,
-		justify: import_prop_types$55.default.any,
-		separator: import_prop_types$55.default.any,
-		children: import_prop_types$55.default.oneOfType([
-			import_prop_types$55.default.string,
-			import_prop_types$55.default.object,
-			import_prop_types$55.default.arrayOf(import_prop_types$55.default.object)
+		className: import_prop_types$82.default.string,
+		justify: import_prop_types$82.default.any,
+		separator: import_prop_types$82.default.any,
+		children: import_prop_types$82.default.oneOfType([
+			import_prop_types$82.default.string,
+			import_prop_types$82.default.object,
+			import_prop_types$82.default.arrayOf(import_prop_types$82.default.object)
 		]).isRequired
 	};
 	WizardFooter.defaultProps = { className: "" };
@@ -8713,14 +8826,14 @@ init_tooltip();
 		}, props.children);
 	}
 	ActionsFooter.propTypes = {
-		children: import_prop_types$55.default.any,
-		className: import_prop_types$55.default.string
+		children: import_prop_types$82.default.any,
+		className: import_prop_types$82.default.string
 	};
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-content/components/import-content-footer/import-content-footer.js
 	init_es$1();
-	init_button();
+	init_button$1();
 	function ImportContentFooter(_ref) {
 		var hasPlugins = _ref.hasPlugins;
 		var hasConflicts = _ref.hasConflicts;
@@ -8734,7 +8847,7 @@ init_tooltip();
 			else if (hasPlugins) return "import/plugins-activation";
 			return "import/process";
 		};
-		return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$29, {
+		return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("Previous", "elementor"),
 			variant: "contained",
 			onClick: function onClick() {
@@ -8742,7 +8855,7 @@ init_tooltip();
 				if (hasPlugins) navigate("import/plugins/");
 				else onResetProcess();
 			}
-		}), /*#__PURE__*/ react.default.createElement(Button$29, {
+		}), /*#__PURE__*/ react.default.createElement(Button$30, {
 			variant: "contained",
 			text: (0, _wordpress_i18n.__)("Import", "elementor"),
 			color: isImportAllowed ? "primary" : "disabled",
@@ -8753,12 +8866,12 @@ init_tooltip();
 		}));
 	}
 	ImportContentFooter.propTypes = {
-		hasPlugins: import_prop_types$55.default.bool,
-		hasConflicts: import_prop_types$55.default.bool,
-		isImportAllowed: import_prop_types$55.default.bool,
-		onResetProcess: import_prop_types$55.default.func.isRequired,
-		onPreviousClick: import_prop_types$55.default.func,
-		onImportClick: import_prop_types$55.default.func
+		hasPlugins: import_prop_types$82.default.bool,
+		hasConflicts: import_prop_types$82.default.bool,
+		isImportAllowed: import_prop_types$82.default.bool,
+		onResetProcess: import_prop_types$82.default.func.isRequired,
+		onPreviousClick: import_prop_types$82.default.func,
+		onImportClick: import_prop_types$82.default.func
 	};
 
 //#endregion
@@ -8834,7 +8947,7 @@ init_tooltip();
 		(0, react.useEffect)(function() {
 			if (!file) navigateToMainScreen();
 		}, [file]);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "import",
 			footer: getFooter()
 		}, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import-content" }, /*#__PURE__*/ react.default.createElement(PageHeader$1, {
@@ -8878,15 +8991,18 @@ init_tooltip();
 		});
 	}
 	ConflictCheckbox.propTypes = {
-		className: import_prop_types$55.default.string,
-		id: import_prop_types$55.default.number.isRequired,
-		onCheck: import_prop_types$55.default.func
+		className: import_prop_types$82.default.string,
+		id: import_prop_types$82.default.number.isRequired,
+		onCheck: import_prop_types$82.default.func
 	};
 	ConflictCheckbox.defaultProps = { className: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-resolver/components/conflict/conflict.js
-	init_button();
+	init_heading();
+	init_text();
+	init_grid();
+	init_button$1();
 	init_apps_event_tracking();
 	function Conflict(props) {
 		var _importContext$data$u;
@@ -8901,7 +9017,7 @@ init_tooltip();
 			return (summaryTitle === null || summaryTitle === void 0 ? void 0 : summaryTitle.single) || templateType;
 		};
 		var getEditTemplateButton = function getEditTemplateButton(editUrl, title) {
-			return /*#__PURE__*/ react.default.createElement(Button$29, {
+			return /*#__PURE__*/ react.default.createElement(Button$30, {
 				className: "e-app-import-resolver-conflicts__edit-template",
 				url: editUrl,
 				target: "_blank",
@@ -8961,14 +9077,14 @@ init_tooltip();
 		}, (0, _wordpress_i18n.__)("Existing", "elementor"), ": ", props.conflictData.template_title, " ", getEditTemplateButton(props.conflictData.edit_url, props.conflictData.template_title)))));
 	}
 	Conflict.propTypes = {
-		importedId: import_prop_types$55.default.number,
-		conflictData: import_prop_types$55.default.object,
-		onClick: import_prop_types$55.default.func
+		importedId: import_prop_types$82.default.number,
+		conflictData: import_prop_types$82.default.object,
+		onClick: import_prop_types$82.default.func
 	};
 
 //#endregion
 //#region app/assets/js/ui/card/card-header.js
-	init_utils$4();
+	init_utils$5();
 	function CardHeader$4(props) {
 		var classNameBase = "eps-card__header";
 		var classes = [classNameBase, props.className];
@@ -8984,17 +9100,17 @@ init_tooltip();
 	}
 	__name(CardHeader$4, "CardHeader");
 	CardHeader$4.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		passive: import_prop_types$55.default.bool,
-		active: import_prop_types$55.default.bool,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		passive: import_prop_types$82.default.bool,
+		active: import_prop_types$82.default.bool,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	CardHeader$4.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/card/card-body.js
-	init_utils$4();
+	init_utils$5();
 	function CardBody$4(props) {
 		var classNameBase = "eps-card__body";
 		var classes = [classNameBase, props.className];
@@ -9010,11 +9126,11 @@ init_tooltip();
 	}
 	__name(CardBody$4, "CardBody");
 	CardBody$4.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		passive: import_prop_types$55.default.bool,
-		active: import_prop_types$55.default.bool,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		passive: import_prop_types$82.default.bool,
+		active: import_prop_types$82.default.bool,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	CardBody$4.defaultProps = { className: "" };
 
@@ -9032,11 +9148,11 @@ init_tooltip();
 	}
 	__name(CardImage$5, "CardImage");
 	CardImage$5.propTypes = {
-		className: import_prop_types$55.default.string,
-		src: import_prop_types$55.default.string.isRequired,
-		alt: import_prop_types$55.default.string.isRequired,
-		children: import_prop_types$55.default.any,
-		onError: import_prop_types$55.default.func
+		className: import_prop_types$82.default.string,
+		src: import_prop_types$82.default.string.isRequired,
+		alt: import_prop_types$82.default.string.isRequired,
+		children: import_prop_types$82.default.any,
+		onError: import_prop_types$82.default.func
 	};
 	CardImage$5.defaultProps = {
 		className: "",
@@ -9050,14 +9166,14 @@ init_tooltip();
 	}
 	__name(CardOverlay$4, "CardOverlay");
 	CardOverlay$4.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.object.isRequired
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.object.isRequired
 	};
 	CardOverlay$4.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/card/card-footer.js
-	init_utils$4();
+	init_utils$5();
 	function CardFooter(props) {
 		var classNameBase = "eps-card__footer";
 		var classes = [classNameBase, props.className];
@@ -9072,59 +9188,59 @@ init_tooltip();
 		}, props.children);
 	}
 	CardFooter.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		passive: import_prop_types$55.default.bool,
-		active: import_prop_types$55.default.bool,
-		children: import_prop_types$55.default.object.isRequired
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		passive: import_prop_types$82.default.bool,
+		active: import_prop_types$82.default.bool,
+		children: import_prop_types$82.default.object.isRequired
 	};
 	CardFooter.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/card/card-headline.js
-	init_utils$4();
+	init_utils$5();
 	function CardHeadline(props) {
 		var classes = ["eps-card__headline", props.className];
 		return /*#__PURE__*/ react.default.createElement("h4", { className: arrayToClassName(classes) }, props.children);
 	}
 	CardHeadline.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	CardHeadline.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/card/card-divider.js
-	init_utils$4();
+	init_utils$5();
 	function CardDivider(props) {
 		var classes = ["eps-card__divider", props.className];
 		return /*#__PURE__*/ react.default.createElement("hr", { className: arrayToClassName(classes) });
 	}
-	CardDivider.propTypes = { className: import_prop_types$55.default.string };
+	CardDivider.propTypes = { className: import_prop_types$82.default.string };
 	CardDivider.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/card/card.js
-	var Card$4 = react.default.forwardRef(function(props, ref) {
+	var Card$5 = react.default.forwardRef(function(props, ref) {
 		return /*#__PURE__*/ react.default.createElement("article", {
 			className: "eps-card ".concat(props.className),
 			ref
 		}, props.children);
 	});
-	Card$4.propTypes = {
-		type: import_prop_types$55.default.string,
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any
+	Card$5.propTypes = {
+		type: import_prop_types$82.default.string,
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any
 	};
-	Card$4.defaultProps = { className: "" };
-	Card$4.displayName = "Card";
-	Card$4.Header = CardHeader$4;
-	Card$4.Body = CardBody$4;
-	Card$4.Image = CardImage$5;
-	Card$4.Overlay = CardOverlay$4;
-	Card$4.Footer = CardFooter;
-	Card$4.Headline = CardHeadline;
-	Card$4.Divider = CardDivider;
+	Card$5.defaultProps = { className: "" };
+	Card$5.displayName = "Card";
+	Card$5.Header = CardHeader$4;
+	Card$5.Body = CardBody$4;
+	Card$5.Image = CardImage$5;
+	Card$5.Overlay = CardOverlay$4;
+	Card$5.Footer = CardFooter;
+	Card$5.Headline = CardHeadline;
+	Card$5.Divider = CardDivider;
 
 //#endregion
 //#region app/assets/js/molecules/collapse-context.js
@@ -9133,7 +9249,7 @@ init_tooltip();
 //#endregion
 //#region app/assets/js/molecules/collapse-toggle.js
 	init_defineProperty$1();
-	init_utils$4();
+	init_utils$5();
 	function CollapseToggle(props) {
 		var context = (0, react.useContext)(CollapseContext);
 		var style = { "--e-app-collapse-toggle-icon-spacing": pxToRem(props.iconSpacing) };
@@ -9148,11 +9264,11 @@ init_tooltip();
 		return /*#__PURE__*/ react.default.createElement("div", attrs, props.children, props.active && props.showIcon && /*#__PURE__*/ react.default.createElement("i", { className: "eicon-caret-down e-app-collapse-toggle__icon" }));
 	}
 	CollapseToggle.propTypes = {
-		className: import_prop_types$55.default.string,
-		iconSpacing: import_prop_types$55.default.number,
-		showIcon: import_prop_types$55.default.bool,
-		active: import_prop_types$55.default.bool,
-		children: import_prop_types$55.default.any
+		className: import_prop_types$82.default.string,
+		iconSpacing: import_prop_types$82.default.number,
+		showIcon: import_prop_types$82.default.bool,
+		active: import_prop_types$82.default.bool,
+		children: import_prop_types$82.default.any
 	};
 	CollapseToggle.defaultProps = {
 		className: "",
@@ -9167,8 +9283,8 @@ init_tooltip();
 		return /*#__PURE__*/ react.default.createElement("div", { className: "e-app-collapse-content" }, props.children);
 	}
 	CollapseContent.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any
 	};
 	CollapseContent.defaultProps = { className: "" };
 
@@ -9176,7 +9292,7 @@ init_tooltip();
 //#region app/assets/js/molecules/collapse.js
 	init_defineProperty$1();
 	init_slicedToArray();
-	init_utils$4();
+	init_utils$5();
 	function Collapse$1(props) {
 		var _useState2 = _slicedToArray((0, react.useState)(props.isOpened), 2);
 		var isOpened = _useState2[0];
@@ -9202,10 +9318,10 @@ init_tooltip();
 	}
 	__name(Collapse$1, "Collapse");
 	Collapse$1.propTypes = {
-		className: import_prop_types$55.default.string,
-		isOpened: import_prop_types$55.default.bool,
-		onChange: import_prop_types$55.default.func,
-		children: import_prop_types$55.default.oneOfType([import_prop_types$55.default.node, import_prop_types$55.default.arrayOf(import_prop_types$55.default.node)])
+		className: import_prop_types$82.default.string,
+		isOpened: import_prop_types$82.default.bool,
+		onChange: import_prop_types$82.default.func,
+		children: import_prop_types$82.default.oneOfType([import_prop_types$82.default.node, import_prop_types$82.default.arrayOf(import_prop_types$82.default.node)])
 	};
 	Collapse$1.defaultProps = {
 		className: "",
@@ -9216,22 +9332,22 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/ui/panel/panel-header.js
-	init_utils$4();
+	init_utils$5();
 	function PanelHeader(props) {
 		return /*#__PURE__*/ react.default.createElement(Collapse$1.Toggle, {
 			active: props.toggle,
 			showIcon: props.showIcon
-		}, /*#__PURE__*/ react.default.createElement(Card$4.Header, {
+		}, /*#__PURE__*/ react.default.createElement(Card$5.Header, {
 			padding: "20",
 			className: arrayToClassName(["eps-panel__header", props.className])
 		}, props.children));
 	}
 	PanelHeader.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		toggle: import_prop_types$55.default.bool,
-		showIcon: import_prop_types$55.default.bool,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		toggle: import_prop_types$82.default.bool,
+		showIcon: import_prop_types$82.default.bool,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	PanelHeader.defaultProps = {
 		className: "",
@@ -9242,29 +9358,29 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/ui/panel/panel-headline.js
-	init_utils$4();
+	init_utils$5();
 	function PanelHeadline(props) {
-		return /*#__PURE__*/ react.default.createElement(Card$4.Headline, { className: arrayToClassName(["eps-panel__headline", props.className]) }, props.children);
+		return /*#__PURE__*/ react.default.createElement(Card$5.Headline, { className: arrayToClassName(["eps-panel__headline", props.className]) }, props.children);
 	}
 	PanelHeadline.propTypes = {
-		className: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	PanelHeadline.defaultProps = { className: "" };
 
 //#endregion
 //#region app/assets/js/ui/panel/panel-body.js
-	init_utils$4();
+	init_utils$5();
 	function PanelBody(props) {
-		return /*#__PURE__*/ react.default.createElement(Collapse$1.Content, null, /*#__PURE__*/ react.default.createElement(Card$4.Body, {
+		return /*#__PURE__*/ react.default.createElement(Collapse$1.Content, null, /*#__PURE__*/ react.default.createElement(Card$5.Body, {
 			padding: props.padding,
 			className: arrayToClassName(["eps-panel__body", props.className])
 		}, props.children));
 	}
 	PanelBody.propTypes = {
-		className: import_prop_types$55.default.string,
-		padding: import_prop_types$55.default.string,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		padding: import_prop_types$82.default.string,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	PanelBody.defaultProps = {
 		className: "",
@@ -9273,15 +9389,15 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/ui/panel/panel.js
-	init_utils$4();
+	init_utils$5();
 	function Panel$1(props) {
-		return /*#__PURE__*/ react.default.createElement(Collapse$1, { isOpened: props.isOpened }, /*#__PURE__*/ react.default.createElement(Card$4, { className: arrayToClassName(["eps-panel", props.className]) }, props.children));
+		return /*#__PURE__*/ react.default.createElement(Collapse$1, { isOpened: props.isOpened }, /*#__PURE__*/ react.default.createElement(Card$5, { className: arrayToClassName(["eps-panel", props.className]) }, props.children));
 	}
 	__name(Panel$1, "Panel");
 	Panel$1.propTypes = {
-		className: import_prop_types$55.default.string,
-		isOpened: import_prop_types$55.default.bool,
-		children: import_prop_types$55.default.any.isRequired
+		className: import_prop_types$82.default.string,
+		isOpened: import_prop_types$82.default.bool,
+		children: import_prop_types$82.default.any.isRequired
 	};
 	Panel$1.defaultProps = {
 		className: "",
@@ -9295,7 +9411,7 @@ init_tooltip();
 //#region app/modules/import-export/assets/js/pages/import/import-resolver/import-resolver.js
 	init_slicedToArray();
 	init_es$1();
-	init_button();
+	init_button$1();
 	init_apps_event_tracking();
 	function ImportResolver() {
 		var _importContext$data;
@@ -9316,14 +9432,14 @@ init_tooltip();
 			});
 		};
 		var getFooter = function getFooter() {
-			return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$29, {
+			return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$30, {
 				text: (0, _wordpress_i18n.__)("Previous", "elementor"),
 				variant: "contained",
 				onClick: function onClick() {
 					eventTracking("kit-library/go-back");
 					navigate("import/content");
 				}
-			}), /*#__PURE__*/ react.default.createElement(Button$29, {
+			}), /*#__PURE__*/ react.default.createElement(Button$30, {
 				text: (0, _wordpress_i18n.__)("Next", "elementor"),
 				variant: "contained",
 				color: "primary",
@@ -9364,17 +9480,17 @@ init_tooltip();
 				payload: ImportResolver.name
 			});
 		}, []);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "import",
 			footer: getFooter()
 		}, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import-resolver" }, /*#__PURE__*/ react.default.createElement(PageHeader$1, {
 			heading: (0, _wordpress_i18n.__)("Import a Website Kit to your site", "elementor"),
 			description: [/*#__PURE__*/ react.default.createElement(react.default.Fragment, { key: "description-first-line" }, (0, _wordpress_i18n.__)("Parts of this kit overlap with your site’s templates, design and settings. The items you leave checked on this list will replace your current design.", "elementor"), " ", getLearnMoreLink())]
-		}), isHomePageOverride() && /*#__PURE__*/ react.default.createElement(Notice, {
+		}), isHomePageOverride() && /*#__PURE__*/ react.default.createElement(Notice$1, {
 			className: "e-app-import-resolver__notice",
 			label: (0, _wordpress_i18n.__)("Note:", "elementor"),
 			color: "warning"
-		}, (0, _wordpress_i18n.__)("Your site's homepage will be determined by the kit. You can change this later.", "elementor")), /*#__PURE__*/ react.default.createElement(Panel$1, { isOpened: true }, /*#__PURE__*/ react.default.createElement(Panel$1.Header, { toggle: false }, /*#__PURE__*/ react.default.createElement(Panel$1.Headline, null, (0, _wordpress_i18n.__)("Select the items you want to keep and apply:", "elementor"))), /*#__PURE__*/ react.default.createElement(Panel$1.Body, { padding: "20" }, /*#__PURE__*/ react.default.createElement(Box$22, { className: "e-app-import-resolver-conflicts__container" }, /*#__PURE__*/ react.default.createElement(List, {
+		}, (0, _wordpress_i18n.__)("Your site's homepage will be determined by the kit. You can change this later.", "elementor")), /*#__PURE__*/ react.default.createElement(Panel$1, { isOpened: true }, /*#__PURE__*/ react.default.createElement(Panel$1.Header, { toggle: false }, /*#__PURE__*/ react.default.createElement(Panel$1.Headline, null, (0, _wordpress_i18n.__)("Select the items you want to keep and apply:", "elementor"))), /*#__PURE__*/ react.default.createElement(Panel$1.Body, { padding: "20" }, /*#__PURE__*/ react.default.createElement(Box$23, { className: "e-app-import-resolver-conflicts__container" }, /*#__PURE__*/ react.default.createElement(List, {
 			separated: true,
 			className: "e-app-import-resolver-conflicts"
 		}, Object.entries(conflicts).map(function(_ref2, index) {
@@ -9397,8 +9513,11 @@ init_tooltip();
 
 //#endregion
 //#region app/modules/import-export/assets/js/ui/wizard-step/wizard-step.js
-	init_utils$4();
+	init_utils$5();
+	init_grid();
 	init_icon();
+	init_heading();
+	init_text();
 	function WizardStep(props) {
 		var classes = ["e-app-import-export-wizard-step", props.className];
 		return /*#__PURE__*/ react.default.createElement(Grid$14, {
@@ -9431,20 +9550,20 @@ init_tooltip();
 		}, props.notice)));
 	}
 	WizardStep.propTypes = {
-		className: import_prop_types$55.default.string,
-		image: import_prop_types$55.default.string,
-		icon: import_prop_types$55.default.string,
-		heading: import_prop_types$55.default.string,
-		description: import_prop_types$55.default.oneOfType([import_prop_types$55.default.string, import_prop_types$55.default.object]),
-		info: import_prop_types$55.default.oneOfType([import_prop_types$55.default.string, import_prop_types$55.default.object]),
-		notice: import_prop_types$55.default.oneOfType([import_prop_types$55.default.string, import_prop_types$55.default.object]),
-		children: import_prop_types$55.default.any
+		className: import_prop_types$82.default.string,
+		image: import_prop_types$82.default.string,
+		icon: import_prop_types$82.default.string,
+		heading: import_prop_types$82.default.string,
+		description: import_prop_types$82.default.oneOfType([import_prop_types$82.default.string, import_prop_types$82.default.object]),
+		info: import_prop_types$82.default.oneOfType([import_prop_types$82.default.string, import_prop_types$82.default.object]),
+		notice: import_prop_types$82.default.oneOfType([import_prop_types$82.default.string, import_prop_types$82.default.object]),
+		children: import_prop_types$82.default.any
 	};
 	WizardStep.defaultProps = { className: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/file-process/file-process.js
-	init_utils$4();
+	init_utils$5();
 	function FileProcess(props) {
 		return /*#__PURE__*/ react.default.createElement(WizardStep, {
 			className: arrayToClassName(["e-app-import-export-file-process", props.className]),
@@ -9459,11 +9578,11 @@ init_tooltip();
 		}));
 	}
 	FileProcess.propTypes = {
-		className: import_prop_types$55.default.string,
-		onDialogApprove: import_prop_types$55.default.func,
-		onDialogDismiss: import_prop_types$55.default.func,
-		errorType: import_prop_types$55.default.string,
-		info: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		onDialogApprove: import_prop_types$82.default.func,
+		onDialogDismiss: import_prop_types$82.default.func,
+		errorType: import_prop_types$82.default.string,
+		info: import_prop_types$82.default.string
 	};
 	FileProcess.defaultProps = { className: "" };
 
@@ -9482,7 +9601,7 @@ init_tooltip();
 		NOT_INSTALLED: "Not Installed"
 	});
 	var baseEndpoint = elementorCommon.config.urls.rest + "wp/v2/plugins/";
-	var getInitialState$1 = function getInitialState() {
+	var getInitialState = function getInitialState() {
 		return {
 			status: PLUGINS_RESPONSE_MAP.INITIAL,
 			data: null
@@ -9490,7 +9609,7 @@ init_tooltip();
 	};
 	function usePlugins() {
 		var _useState2 = _slicedToArray((0, react.useState)(function() {
-			return getInitialState$1();
+			return getInitialState();
 		}), 2);
 		var response = _useState2[0];
 		var setResponse = _useState2[1];
@@ -9562,7 +9681,7 @@ init_tooltip();
 			});
 		};
 		var reset = function reset() {
-			return setResponse(getInitialState$1());
+			return setResponse(getInitialState());
 		};
 		(0, react.useEffect)(function() {
 			fetchData();
@@ -9585,6 +9704,8 @@ init_tooltip();
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins-activation/components/plugin-status-item/plugin-status-item.js
+	init_grid();
+	init_text();
 	var ACTIVE = PLUGIN_STATUS_MAP.ACTIVE;
 	var INACTIVE = PLUGIN_STATUS_MAP.INACTIVE;
 	var NOT_INSTALLED = PLUGIN_STATUS_MAP.NOT_INSTALLED;
@@ -9611,8 +9732,8 @@ init_tooltip();
 	}
 	__name(PluginStatusItem$1, "PluginStatusItem");
 	PluginStatusItem$1.propTypes = {
-		name: import_prop_types$55.default.string.isRequired,
-		status: import_prop_types$55.default.string.isRequired
+		name: import_prop_types$82.default.string.isRequired,
+		status: import_prop_types$82.default.string.isRequired
 	};
 
 //#endregion
@@ -9620,7 +9741,7 @@ init_tooltip();
 	init_toConsumableArray();
 	init_defineProperty$1();
 	init_slicedToArray();
-	function ownKeys$24(e, r) {
+	function ownKeys$36(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -9630,19 +9751,19 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$24, "ownKeys");
-	function _objectSpread$23(e) {
+	__name(ownKeys$36, "ownKeys");
+	function _objectSpread$35(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$24(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$36(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$24(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$36(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$23, "_objectSpread");
+	__name(_objectSpread$35, "_objectSpread");
 	var ACTION_STATUS_MAP = Object.freeze({
 		ACTIVATED: "activated",
 		INSTALLED: "installed",
@@ -9702,7 +9823,7 @@ init_tooltip();
 		}, [response.status]);
 		(0, react.useEffect)(function() {
 			if (actionStatus) {
-				var pluginData = ACTION_STATUS_MAP.FAILED === actionStatus ? _objectSpread$23(_objectSpread$23({}, currentPlugin), {}, { status: ACTION_STATUS_MAP.FAILED }) : response.data;
+				var pluginData = ACTION_STATUS_MAP.FAILED === actionStatus ? _objectSpread$35(_objectSpread$35({}, currentPlugin), {}, { status: ACTION_STATUS_MAP.FAILED }) : response.data;
 				setBulk(function(prevState) {
 					var processedPlugins = _toConsumableArray(prevState);
 					processedPlugins[ready.length] = pluginData;
@@ -9728,6 +9849,7 @@ init_tooltip();
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins-activation/import-plugins-activation.js
 	init_es$1();
+	init_grid();
 	function ImportPluginsActivation() {
 		var importContext = (0, react.useContext)(ImportContext$1);
 		var sharedContext = (0, react.useContext)(SharedContext);
@@ -9758,7 +9880,7 @@ init_tooltip();
 		(0, react.useEffect)(function() {
 			if (importContext.data.importedPlugins.length) navigate("/import/process");
 		}, [importContext.data.importedPlugins]);
-		return /*#__PURE__*/ react.default.createElement(Layout, { type: "import" }, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import-plugins-activation" }, /*#__PURE__*/ react.default.createElement(FileProcess, { info: (0, _wordpress_i18n.__)("Activating plugins:", "elementor") }), /*#__PURE__*/ react.default.createElement(Grid$14, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, { type: "import" }, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import-plugins-activation" }, /*#__PURE__*/ react.default.createElement(FileProcess, { info: (0, _wordpress_i18n.__)("Activating plugins:", "elementor") }), /*#__PURE__*/ react.default.createElement(Grid$14, {
 			container: true,
 			justify: "center"
 		}, /*#__PURE__*/ react.default.createElement(Grid$14, {
@@ -9777,8 +9899,6 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/organisms/unfiltered-files-dialog.js
-	init_slicedToArray();
-	init_use_ajax();
 	function UnfilteredFilesDialog(props) {
 		var show = props.show;
 		var setShow = props.setShow;
@@ -9844,26 +9964,34 @@ init_tooltip();
 			onClose: onClose || onDismiss || onReady
 		}));
 	}
-	UnfilteredFilesDialog.propTypes = {
-		show: import_prop_types$55.default.bool,
-		setShow: import_prop_types$55.default.func.isRequired,
-		onReady: import_prop_types$55.default.func.isRequired,
-		onCancel: import_prop_types$55.default.func.isRequired,
-		onDismiss: import_prop_types$55.default.func,
-		confirmModalText: import_prop_types$55.default.string.isRequired,
-		errorModalText: import_prop_types$55.default.string.isRequired,
-		onLoad: import_prop_types$55.default.func,
-		onEnable: import_prop_types$55.default.func,
-		onClose: import_prop_types$55.default.func
-	};
-	UnfilteredFilesDialog.defaultProps = {
-		show: false,
-		onReady: function onReady() {},
-		onCancel: function onCancel() {}
-	};
+	var import_prop_types$66;
+	var init_unfiltered_files_dialog = __esmMin((() => {
+		import_prop_types$66 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_slicedToArray();
+		init_dialog();
+		init_use_ajax();
+		UnfilteredFilesDialog.propTypes = {
+			show: import_prop_types$66.default.bool,
+			setShow: import_prop_types$66.default.func.isRequired,
+			onReady: import_prop_types$66.default.func.isRequired,
+			onCancel: import_prop_types$66.default.func.isRequired,
+			onDismiss: import_prop_types$66.default.func,
+			confirmModalText: import_prop_types$66.default.string.isRequired,
+			errorModalText: import_prop_types$66.default.string.isRequired,
+			onLoad: import_prop_types$66.default.func,
+			onEnable: import_prop_types$66.default.func,
+			onClose: import_prop_types$66.default.func
+		};
+		UnfilteredFilesDialog.defaultProps = {
+			show: false,
+			onReady: function onReady() {},
+			onCancel: function onCancel() {}
+		};
+	}));
 
 //#endregion
 //#region app/modules/import-export/assets/js/hooks/use-plugins-data.js
+init_unfiltered_files_dialog();
 	var PLUGINS_KEYS = Object.freeze({
 		ELEMENTOR: "Elementor",
 		ELEMENTOR_PRO: "Elementor Pro"
@@ -9894,8 +10022,8 @@ init_tooltip();
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins/hooks/use-import-plugins-data.js
 	init_defineProperty$1();
-	init_utils$4();
-	function ownKeys$23(e, r) {
+	init_utils$5();
+	function ownKeys$35(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -9905,19 +10033,19 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$23, "ownKeys");
-	function _objectSpread$22(e) {
+	__name(ownKeys$35, "ownKeys");
+	function _objectSpread$34(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$23(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$35(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$23(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$35(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$22, "_objectSpread");
+	__name(_objectSpread$34, "_objectSpread");
 	var MISSING_PLUGINS_KEY = "missing";
 	var EXISTING_PLUGINS_KEY = "existing";
 	var ELEMENTOR_PRO_PLUGIN_KEY = "Elementor Pro";
@@ -9936,7 +10064,7 @@ init_tooltip();
 			pluginsToInstall.forEach(function(plugin) {
 				var installedPluginData = installedPluginsMap[plugin.name];
 				var group = PLUGIN_STATUS_MAP.ACTIVE === (installedPluginData === null || installedPluginData === void 0 ? void 0 : installedPluginData.status) ? EXISTING_PLUGINS_KEY : MISSING_PLUGINS_KEY;
-				var pluginData = installedPluginData || _objectSpread$22(_objectSpread$22({}, plugin), {}, { status: PLUGIN_STATUS_MAP.NOT_INSTALLED });
+				var pluginData = installedPluginData || _objectSpread$34(_objectSpread$34({}, plugin), {}, { status: PLUGIN_STATUS_MAP.NOT_INSTALLED });
 				if (installedPluginData && !getIsMinVersionExist(installedPluginData.version, plugin.version)) data.minVersionMissing.push(plugin);
 				if (ELEMENTOR_PRO_PLUGIN_KEY === pluginData.name) data.proData = pluginData;
 				data[group].push(pluginData);
@@ -10167,7 +10295,7 @@ init_tooltip();
 				navigate("import/plugins-activation");
 			}
 		}, [missing]);
-		return /*#__PURE__*/ react.default.createElement(Layout, { type: "import" }, /*#__PURE__*/ react.default.createElement("section", null, /*#__PURE__*/ react.default.createElement(FileProcess, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, { type: "import" }, /*#__PURE__*/ react.default.createElement("section", null, /*#__PURE__*/ react.default.createElement(FileProcess, {
 			info: uploadedData && (0, _wordpress_i18n.__)("Importing your content, templates and site settings", "elementor"),
 			errorType,
 			onDialogApprove: onCancelProcess,
@@ -10204,6 +10332,7 @@ init_tooltip();
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/kit-data/components/site-area/site-area.js
+	init_text();
 	init_icon();
 	init_apps_event_tracking();
 	function SiteArea(_ref) {
@@ -10226,19 +10355,20 @@ init_tooltip();
 		}, /*#__PURE__*/ react.default.createElement(Text$11, { className: "e-app-import-export-kit-data__site-area" }, text, " ", link && /*#__PURE__*/ react.default.createElement(Icon$2, { className: "eicon-editor-external-link" })));
 	}
 	SiteArea.propTypes = {
-		text: import_prop_types$55.default.string,
-		link: import_prop_types$55.default.string
+		text: import_prop_types$82.default.string,
+		link: import_prop_types$82.default.string
 	};
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/kit-data/components/included/included.js
+	init_text();
 	function Included(_ref) {
 		var data = _ref.data;
 		return /*#__PURE__*/ react.default.createElement(Text$11, { className: "e-app-import-export-kit-data__included" }, data.filter(function(value) {
 			return value;
 		}).join(" | "));
 	}
-	Included.propTypes = { data: import_prop_types$55.default.array };
+	Included.propTypes = { data: import_prop_types$82.default.array };
 
 //#endregion
 //#region app/assets/js/ui/table/table-context.js
@@ -10246,40 +10376,40 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/ui/table/table.head.js
-	init_utils$4();
+	init_utils$5();
 	function TableHead(props) {
 		return /*#__PURE__*/ react.default.createElement("thead", { className: arrayToClassName(["eps-table__head", props.className]) }, props.children);
 	}
 	TableHead.propTypes = {
-		children: import_prop_types$55.default.any.isRequired,
-		className: import_prop_types$55.default.string
+		children: import_prop_types$82.default.any.isRequired,
+		className: import_prop_types$82.default.string
 	};
 
 //#endregion
 //#region app/assets/js/ui/table/table-body.js
-	init_utils$4();
+	init_utils$5();
 	function TableBody(props) {
 		return /*#__PURE__*/ react.default.createElement("tbody", { className: arrayToClassName(["eps-table__body", props.className]) }, props.children);
 	}
 	TableBody.propTypes = {
-		children: import_prop_types$55.default.any.isRequired,
-		className: import_prop_types$55.default.string
+		children: import_prop_types$82.default.any.isRequired,
+		className: import_prop_types$82.default.string
 	};
 
 //#endregion
 //#region app/assets/js/ui/table/table-row.js
-	init_utils$4();
+	init_utils$5();
 	function TableRow(props) {
 		return /*#__PURE__*/ react.default.createElement("tr", { className: arrayToClassName(["eps-table__row", props.className]) }, props.children);
 	}
 	TableRow.propTypes = {
-		children: import_prop_types$55.default.any.isRequired,
-		className: import_prop_types$55.default.string
+		children: import_prop_types$82.default.any.isRequired,
+		className: import_prop_types$82.default.string
 	};
 
 //#endregion
 //#region app/assets/js/ui/table/table-cell.js
-	init_utils$4();
+	init_utils$5();
 	function TableCell(props) {
 		return /*#__PURE__*/ react.default.createElement(function Element() {
 			return react.default.createElement(props.tag, {
@@ -10289,16 +10419,16 @@ init_tooltip();
 		}, null);
 	}
 	TableCell.propTypes = {
-		children: import_prop_types$55.default.any,
-		className: import_prop_types$55.default.string,
-		colSpan: import_prop_types$55.default.oneOfType([import_prop_types$55.default.number, import_prop_types$55.default.string]),
-		tag: import_prop_types$55.default.oneOf(["td", "th"]).isRequired
+		children: import_prop_types$82.default.any,
+		className: import_prop_types$82.default.string,
+		colSpan: import_prop_types$82.default.oneOfType([import_prop_types$82.default.number, import_prop_types$82.default.string]),
+		tag: import_prop_types$82.default.oneOf(["td", "th"]).isRequired
 	};
 
 //#endregion
 //#region app/assets/js/ui/table/table-checkbox.js
 	init_toConsumableArray();
-	init_utils$4();
+	init_utils$5();
 	function TableCheckbox(props) {
 		var _ref = (0, react.useContext)(Context) || {};
 		var selected = _ref.selected;
@@ -10337,17 +10467,17 @@ init_tooltip();
 		});
 	}
 	TableCheckbox.propTypes = {
-		className: import_prop_types$55.default.string,
-		index: import_prop_types$55.default.number,
-		initialChecked: import_prop_types$55.default.bool,
-		allSelectedCount: import_prop_types$55.default.number
+		className: import_prop_types$82.default.string,
+		index: import_prop_types$82.default.number,
+		initialChecked: import_prop_types$82.default.bool,
+		allSelectedCount: import_prop_types$82.default.number
 	};
 
 //#endregion
 //#region app/assets/js/ui/table/table.js
 	init_defineProperty$1();
 	init_slicedToArray();
-	init_utils$4();
+	init_utils$5();
 	function Table(_ref) {
 		var className = _ref.className;
 		var initialSelected = _ref.initialSelected;
@@ -10383,14 +10513,14 @@ init_tooltip();
 	Table.Cell = TableCell;
 	Table.Checkbox = TableCheckbox;
 	Table.propTypes = {
-		children: import_prop_types$55.default.any.isRequired,
-		className: import_prop_types$55.default.string,
-		headers: import_prop_types$55.default.array,
-		initialDisabled: import_prop_types$55.default.array,
-		initialSelected: import_prop_types$55.default.array,
-		rows: import_prop_types$55.default.array,
-		selection: import_prop_types$55.default.bool,
-		onSelect: import_prop_types$55.default.func
+		children: import_prop_types$82.default.any.isRequired,
+		className: import_prop_types$82.default.string,
+		headers: import_prop_types$82.default.array,
+		initialDisabled: import_prop_types$82.default.array,
+		initialSelected: import_prop_types$82.default.array,
+		rows: import_prop_types$82.default.array,
+		selection: import_prop_types$82.default.bool,
+		onSelect: import_prop_types$82.default.func
 	};
 	Table.defaultProps = {
 		selection: false,
@@ -10400,7 +10530,7 @@ init_tooltip();
 
 //#endregion
 //#region app/assets/js/molecules/data-table.js
-	init_utils$4();
+	init_utils$5();
 	function DataTable(_ref) {
 		var className = _ref.className;
 		var onSelect = _ref.onSelect;
@@ -10433,15 +10563,15 @@ init_tooltip();
 		})));
 	}
 	DataTable.propTypes = {
-		className: import_prop_types$55.default.string,
-		headers: import_prop_types$55.default.array,
-		rows: import_prop_types$55.default.array,
-		initialDisabled: import_prop_types$55.default.array,
-		initialSelected: import_prop_types$55.default.array,
-		layout: import_prop_types$55.default.array,
-		onSelect: import_prop_types$55.default.func,
-		selection: import_prop_types$55.default.bool,
-		withHeader: import_prop_types$55.default.bool
+		className: import_prop_types$82.default.string,
+		headers: import_prop_types$82.default.array,
+		rows: import_prop_types$82.default.array,
+		initialDisabled: import_prop_types$82.default.array,
+		initialSelected: import_prop_types$82.default.array,
+		layout: import_prop_types$82.default.array,
+		onSelect: import_prop_types$82.default.func,
+		selection: import_prop_types$82.default.bool,
+		withHeader: import_prop_types$82.default.bool
 	};
 	DataTable.defaultProps = {
 		className: "",
@@ -10456,7 +10586,7 @@ init_tooltip();
 //#region app/modules/import-export/assets/js/shared/kit-data/hooks/use-kit-data.js
 	init_defineProperty$1();
 	init_slicedToArray();
-	function ownKeys$22(e, r) {
+	function ownKeys$34(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -10466,19 +10596,19 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$22, "ownKeys");
-	function _objectSpread$21(e) {
+	__name(ownKeys$34, "ownKeys");
+	function _objectSpread$33(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$22(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$34(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$22(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$34(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$21, "_objectSpread");
+	__name(_objectSpread$33, "_objectSpread");
 	function useKitData(kitData) {
 		var getLabel = function getLabel(type, key, amount) {
 			var _kitData$configData;
@@ -10515,9 +10645,9 @@ init_tooltip();
 		var getContent = function getContent() {
 			var content = (kitData === null || kitData === void 0 ? void 0 : kitData.content) || {};
 			var wpContent = (kitData === null || kitData === void 0 ? void 0 : kitData["wp-content"]) || {};
-			var mergedContent = _objectSpread$21({}, content);
+			var mergedContent = _objectSpread$33({}, content);
 			for (var key in mergedContent) mergedContent[key] = Object.keys(mergedContent[key]).concat(wpContent[key] || []);
-			mergedContent = _objectSpread$21(_objectSpread$21({}, wpContent), mergedContent);
+			mergedContent = _objectSpread$33(_objectSpread$33({}, wpContent), mergedContent);
 			return Object.entries(mergedContent).map(function(_ref3) {
 				var _ref4 = _slicedToArray(_ref3, 2);
 				var key = _ref4[0];
@@ -10602,20 +10732,20 @@ init_tooltip();
 			layout: [1, 3]
 		});
 	}
-	KitData.propTypes = { data: import_prop_types$55.default.object };
+	KitData.propTypes = { data: import_prop_types$82.default.object };
 	var kit_data_default = (0, react.memo)(KitData);
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-complete/components/failed-plugins-notice/failed-plugins-notice.js
-	init_button();
+	init_button$1();
 	function FailedPluginsNotice(_ref) {
 		var failedPlugins = _ref.failedPlugins;
-		return /*#__PURE__*/ react.default.createElement(Notice, {
+		return /*#__PURE__*/ react.default.createElement(Notice$1, {
 			className: "e-app-import-failed-plugins-notice",
 			label: (0, _wordpress_i18n.__)("Important:", "elementor"),
 			color: "warning",
 			button: function getButton() {
-				return /*#__PURE__*/ react.default.createElement(Button$29, {
+				return /*#__PURE__*/ react.default.createElement(Button$30, {
 					text: (0, _wordpress_i18n.__)("Learn more", "elementor"),
 					variant: "outlined",
 					color: "secondary",
@@ -10628,18 +10758,18 @@ init_tooltip();
 			return _ref2.name;
 		}).join(" | "));
 	}
-	FailedPluginsNotice.propTypes = { failedPlugins: import_prop_types$55.default.array };
+	FailedPluginsNotice.propTypes = { failedPlugins: import_prop_types$82.default.array };
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-complete/components/connect-pro-notice/connect-pro-notice.js
-	init_button();
+	init_button$1();
 	function ConnectProNotice() {
-		return /*#__PURE__*/ react.default.createElement(Notice, {
+		return /*#__PURE__*/ react.default.createElement(Notice$1, {
 			className: "e-app-import-connect-pro-notice",
 			label: (0, _wordpress_i18n.__)("Tip:", "elementor"),
 			color: "info",
 			button: function getButton() {
-				return /*#__PURE__*/ react.default.createElement(Button$29, {
+				return /*#__PURE__*/ react.default.createElement(Button$30, {
 					text: (0, _wordpress_i18n.__)("Let’s do it", "elementor"),
 					variant: "outlined",
 					color: "secondary",
@@ -10653,7 +10783,7 @@ init_tooltip();
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-complete/components/import-complete-footer/import-complete-footer.js
-	init_button();
+	init_button$1();
 	init_use_action();
 	init_apps_event_tracking();
 	function ImportCompleteFooter(_ref) {
@@ -10668,14 +10798,14 @@ init_tooltip();
 				event_type: eventType
 			});
 		};
-		return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, seeItLiveUrl && /*#__PURE__*/ react.default.createElement(Button$29, {
+		return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, seeItLiveUrl && /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("See It Live", "elementor"),
 			variant: "contained",
 			onClick: function onClick() {
 				eventTracking("kit-library/see-it-live");
 				window.open(seeItLiveUrl, "_blank");
 			}
-		}), /*#__PURE__*/ react.default.createElement(Button$29, {
+		}), /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("Got It", "elementor"),
 			variant: "contained",
 			color: "primary",
@@ -10686,8 +10816,8 @@ init_tooltip();
 		}));
 	}
 	ImportCompleteFooter.propTypes = {
-		seeItLiveUrl: import_prop_types$55.default.string,
-		referrer: import_prop_types$55.default.string
+		seeItLiveUrl: import_prop_types$82.default.string,
+		referrer: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -10793,7 +10923,7 @@ init_tooltip();
 				payload: ImportComplete$1.name
 			});
 		}, []);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "import",
 			footer: /*#__PURE__*/ react.default.createElement(ImportCompleteFooter, {
 				seeItLiveUrl,
@@ -10816,6 +10946,7 @@ init_tooltip();
 
 //#endregion
 //#region app/modules/import-export/assets/js/shared/plugins-selection/components/plugins-table.js
+	init_text();
 	init_icon();
 	function PluginsTable(_ref) {
 		var plugins = _ref.plugins;
@@ -10871,13 +11002,13 @@ init_tooltip();
 		});
 	}
 	PluginsTable.propTypes = {
-		onSelect: import_prop_types$55.default.func,
-		initialDisabled: import_prop_types$55.default.array,
-		initialSelected: import_prop_types$55.default.array,
-		plugins: import_prop_types$55.default.array,
-		withHeader: import_prop_types$55.default.bool,
-		withStatus: import_prop_types$55.default.bool,
-		layout: import_prop_types$55.default.array
+		onSelect: import_prop_types$82.default.func,
+		initialDisabled: import_prop_types$82.default.array,
+		initialSelected: import_prop_types$82.default.array,
+		plugins: import_prop_types$82.default.array,
+		withHeader: import_prop_types$82.default.bool,
+		withStatus: import_prop_types$82.default.bool,
+		layout: import_prop_types$82.default.array
 	};
 	PluginsTable.defaultProps = {
 		initialDisabled: [],
@@ -10924,14 +11055,14 @@ init_tooltip();
 		});
 	}
 	PluginsSelection.propTypes = {
-		initialDisabled: import_prop_types$55.default.array,
-		initialSelected: import_prop_types$55.default.array,
-		layout: import_prop_types$55.default.array,
-		onSelect: import_prop_types$55.default.func,
-		plugins: import_prop_types$55.default.array,
-		selection: import_prop_types$55.default.bool,
-		withHeader: import_prop_types$55.default.bool,
-		withStatus: import_prop_types$55.default.bool
+		initialDisabled: import_prop_types$82.default.array,
+		initialSelected: import_prop_types$82.default.array,
+		layout: import_prop_types$82.default.array,
+		onSelect: import_prop_types$82.default.func,
+		plugins: import_prop_types$82.default.array,
+		selection: import_prop_types$82.default.bool,
+		withHeader: import_prop_types$82.default.bool,
+		withStatus: import_prop_types$82.default.bool
 	};
 	PluginsSelection.defaultProps = {
 		initialDisabled: [],
@@ -10945,6 +11076,7 @@ init_tooltip();
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins/components/plugins-to-import/plugins-to-import.js
+	init_heading();
 	var layout$2 = [
 		3,
 		1,
@@ -10988,10 +11120,11 @@ init_tooltip();
 			layout: layout$2
 		}));
 	}
-	PluginsToImport.propTypes = { plugins: import_prop_types$55.default.array };
+	PluginsToImport.propTypes = { plugins: import_prop_types$82.default.array };
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins/components/existing-plugins/existing-plugins.js
+	init_heading();
 	var layout$1 = [4, 1];
 	function ExistingPlugins(_ref) {
 		var plugins = _ref.plugins;
@@ -11018,15 +11151,18 @@ init_tooltip();
 			layout: layout$1
 		}));
 	}
-	ExistingPlugins.propTypes = { plugins: import_prop_types$55.default.array };
+	ExistingPlugins.propTypes = { plugins: import_prop_types$82.default.array };
 
 //#endregion
 //#region app/modules/import-export/assets/js/ui/message-banner/message-banner.js
+	init_heading();
+	init_text();
+	init_grid();
 	function MessageBanner(_ref) {
 		var heading = _ref.heading;
 		var description = _ref.description;
 		var button = _ref.button;
-		return /*#__PURE__*/ react.default.createElement(Box$22, {
+		return /*#__PURE__*/ react.default.createElement(Box$23, {
 			className: "e-app-import-export-message-banner",
 			padding: "20"
 		}, /*#__PURE__*/ react.default.createElement(Grid$14, {
@@ -11043,14 +11179,15 @@ init_tooltip();
 		}())), button && /*#__PURE__*/ react.default.createElement(Grid$14, { item: true }, button)));
 	}
 	MessageBanner.propTypes = {
-		heading: import_prop_types$55.default.string,
-		description: import_prop_types$55.default.oneOfType([import_prop_types$55.default.string, import_prop_types$55.default.array]),
-		button: import_prop_types$55.default.object
+		heading: import_prop_types$82.default.string,
+		description: import_prop_types$82.default.oneOfType([import_prop_types$82.default.string, import_prop_types$82.default.array]),
+		button: import_prop_types$82.default.object
 	};
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins/components/pro-banner/pro-banner.js
 	init_slicedToArray();
+	init_dialog();
 	function ProBanner(_ref) {
 		var onRefresh = _ref.onRefresh;
 		var _useState2 = _slicedToArray((0, react.useState)(false), 2);
@@ -11084,18 +11221,18 @@ init_tooltip();
 		}));
 	}
 	ProBanner.propTypes = {
-		status: import_prop_types$55.default.string,
-		onRefresh: import_prop_types$55.default.func
+		status: import_prop_types$82.default.string,
+		onRefresh: import_prop_types$82.default.func
 	};
 	ProBanner.defaultProps = { status: "" };
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/import/import-plugins/components/import-plugins-footer/import-plugins-footer.js
-	init_button();
+	init_button$1();
 	function ImportPluginsFooter(props) {
 		var importContext = (0, react.useContext)(ImportContext$1);
 		var navigateToMainScreen = useImportActions().navigateToMainScreen;
-		return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$29, {
+		return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("Previous", "elementor"),
 			variant: "contained",
 			onClick: function onClick() {
@@ -11107,7 +11244,7 @@ init_tooltip();
 				(_props$onPreviousClic = props.onPreviousClick) === null || _props$onPreviousClic === void 0 || _props$onPreviousClic.call(props);
 				navigateToMainScreen();
 			}
-		}), /*#__PURE__*/ react.default.createElement(Button$29, {
+		}), /*#__PURE__*/ react.default.createElement(Button$30, {
 			variant: "contained",
 			text: (0, _wordpress_i18n.__)("Next", "elementor"),
 			color: "primary",
@@ -11119,13 +11256,13 @@ init_tooltip();
 		}));
 	}
 	ImportPluginsFooter.propTypes = {
-		onPreviousClick: import_prop_types$55.default.func,
-		onNextClick: import_prop_types$55.default.func
+		onPreviousClick: import_prop_types$82.default.func,
+		onNextClick: import_prop_types$82.default.func
 	};
 
 //#endregion
 //#region app/modules/import-export/assets/js/ui/loader/loader.js
-	init_utils$4();
+	init_utils$5();
 	init_icon();
 	function Loader(_ref) {
 		var absoluteCenter = _ref.absoluteCenter;
@@ -11134,7 +11271,7 @@ init_tooltip();
 		if (absoluteCenter) classes.push(baseClassName + "--absolute-center");
 		return /*#__PURE__*/ react.default.createElement(Icon$2, { className: arrayToClassName(classes) });
 	}
-	Loader.propTypes = { absoluteCenter: import_prop_types$55.default.bool };
+	Loader.propTypes = { absoluteCenter: import_prop_types$82.default.bool };
 	Loader.defaultProps = { absoluteCenter: false };
 
 //#endregion
@@ -11199,7 +11336,7 @@ init_tooltip();
 				handleProInstallationStatus();
 			}
 		}, [importPluginsData]);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "import",
 			footer: /*#__PURE__*/ react.default.createElement(ImportPluginsFooter, {
 				onPreviousClick: function onPreviousClick() {
@@ -11212,7 +11349,7 @@ init_tooltip();
 		}, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-import-plugins" }, !importPluginsData && /*#__PURE__*/ react.default.createElement(Loader, { absoluteCenter: true }), /*#__PURE__*/ react.default.createElement(PageHeader$1, {
 			heading: (0, _wordpress_i18n.__)("Select which plugins to include", "elementor"),
 			description: (0, _wordpress_i18n.__)("All items are already selected by default. Uncheck the ones you don't want.", "elementor")
-		}), !!(minVersionMissing !== null && minVersionMissing !== void 0 && minVersionMissing.length) && /*#__PURE__*/ react.default.createElement(Notice, {
+		}), !!(minVersionMissing !== null && minVersionMissing !== void 0 && minVersionMissing.length) && /*#__PURE__*/ react.default.createElement(Notice$1, {
 			label: (0, _wordpress_i18n.__)(" Recommended:", "elementor"),
 			className: "e-app-import-plugins__versions-notice",
 			color: "warning"
@@ -11230,7 +11367,7 @@ init_tooltip();
 //#endregion
 //#region app/modules/import-export/assets/js/context/export-context/export-context-reducer.js
 	init_defineProperty$1();
-	function ownKeys$21(e, r) {
+	function ownKeys$33(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -11240,30 +11377,30 @@ init_tooltip();
 		}
 		return t;
 	}
-	__name(ownKeys$21, "ownKeys");
-	function _objectSpread$20(e) {
+	__name(ownKeys$33, "ownKeys");
+	function _objectSpread$32(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$21(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$33(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$21(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$33(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$20, "_objectSpread");
+	__name(_objectSpread$32, "_objectSpread");
 	var reducer$1 = function reducer(state, _ref) {
 		var type = _ref.type;
 		var payload = _ref.payload;
 		switch (type) {
-			case "SET_DOWNLOAD_URL": return _objectSpread$20(_objectSpread$20({}, state), {}, { downloadUrl: payload });
-			case "SET_EXPORTED_DATA": return _objectSpread$20(_objectSpread$20({}, state), {}, { exportedData: payload });
-			case "SET_PLUGINS": return _objectSpread$20(_objectSpread$20({}, state), {}, { plugins: payload });
-			case "SET_IS_EXPORT_PROCESS_STARTED": return _objectSpread$20(_objectSpread$20({}, state), {}, { isExportProcessStarted: payload });
-			case "SET_KIT_TITLE": return _objectSpread$20(_objectSpread$20({}, state), {}, { kitInfo: _objectSpread$20(_objectSpread$20({}, state.kitInfo), {}, { title: payload }) });
-			case "SET_KIT_DESCRIPTION": return _objectSpread$20(_objectSpread$20({}, state), {}, { kitInfo: _objectSpread$20(_objectSpread$20({}, state.kitInfo), {}, { description: payload }) });
-			case "SET_KIT_SAVE_SOURCE": return _objectSpread$20(_objectSpread$20({}, state), {}, { kitInfo: _objectSpread$20(_objectSpread$20({}, state.kitInfo), {}, { source: payload }) });
+			case "SET_DOWNLOAD_URL": return _objectSpread$32(_objectSpread$32({}, state), {}, { downloadUrl: payload });
+			case "SET_EXPORTED_DATA": return _objectSpread$32(_objectSpread$32({}, state), {}, { exportedData: payload });
+			case "SET_PLUGINS": return _objectSpread$32(_objectSpread$32({}, state), {}, { plugins: payload });
+			case "SET_IS_EXPORT_PROCESS_STARTED": return _objectSpread$32(_objectSpread$32({}, state), {}, { isExportProcessStarted: payload });
+			case "SET_KIT_TITLE": return _objectSpread$32(_objectSpread$32({}, state), {}, { kitInfo: _objectSpread$32(_objectSpread$32({}, state.kitInfo), {}, { title: payload }) });
+			case "SET_KIT_DESCRIPTION": return _objectSpread$32(_objectSpread$32({}, state), {}, { kitInfo: _objectSpread$32(_objectSpread$32({}, state.kitInfo), {}, { description: payload }) });
+			case "SET_KIT_SAVE_SOURCE": return _objectSpread$32(_objectSpread$32({}, state), {}, { kitInfo: _objectSpread$32(_objectSpread$32({}, state.kitInfo), {}, { source: payload }) });
 			default: return state;
 		}
 	};
@@ -11292,7 +11429,7 @@ init_tooltip();
 		} }, props.children);
 	}
 	__name(ExportContextProvider$1, "ExportContextProvider");
-	ExportContextProvider$1.propTypes = { children: import_prop_types$55.default.object.isRequired };
+	ExportContextProvider$1.propTypes = { children: import_prop_types$82.default.object.isRequired };
 
 //#endregion
 //#region app/modules/import-export/assets/js/context/connect-state-context.js
@@ -11330,7 +11467,7 @@ init_tooltip();
 		return /*#__PURE__*/ react.default.createElement(ConnectStateContext$1.Provider, { value }, children);
 	}
 	__name(ConnectStateProvider$1, "ConnectStateProvider");
-	ConnectStateProvider$1.propTypes = { children: import_prop_types$55.default.node.isRequired };
+	ConnectStateProvider$1.propTypes = { children: import_prop_types$82.default.node.isRequired };
 
 //#endregion
 //#region node_modules/@babel/runtime/helpers/esm/inheritsLoose.js
@@ -11556,7 +11693,7 @@ init_tooltip();
 		if (typeof AbortController === "function") return new AbortController();
 	}
 	var isServer$2;
-	var init_utils$3 = __esmMin((() => {
+	var init_utils$4 = __esmMin((() => {
 		init_extends();
 		isServer$2 = typeof window === "undefined";
 		__name(scheduleMicrotask$1, "scheduleMicrotask");
@@ -11568,7 +11705,7 @@ init_tooltip();
 	var init_focusManager = __esmMin((() => {
 		init_inheritsLoose();
 		init_subscribable();
-		init_utils$3();
+		init_utils$4();
 		FocusManager = /*#__PURE__*/ function(_Subscribable) {
 			_inheritsLoose(FocusManager, _Subscribable);
 			function FocusManager() {
@@ -11639,7 +11776,7 @@ init_tooltip();
 	var init_onlineManager = __esmMin((() => {
 		init_inheritsLoose();
 		init_subscribable();
-		init_utils$3();
+		init_utils$4();
 		OnlineManager = /*#__PURE__*/ function(_Subscribable) {
 			_inheritsLoose(OnlineManager, _Subscribable);
 			function OnlineManager() {
@@ -11715,7 +11852,7 @@ init_tooltip();
 	var init_retryer = __esmMin((() => {
 		init_focusManager();
 		init_onlineManager();
-		init_utils$3();
+		init_utils$4();
 		CancelledError = function CancelledError(options) {
 			this.revert = options == null ? void 0 : options.revert;
 			this.silent = options == null ? void 0 : options.silent;
@@ -11822,7 +11959,7 @@ init_tooltip();
 //#region node_modules/react-query/es/core/notifyManager.js
 	var NotifyManager, notifyManager;
 	var init_notifyManager = __esmMin((() => {
-		init_utils$3();
+		init_utils$4();
 		NotifyManager = /*#__PURE__*/ function() {
 			function NotifyManager() {
 				this.queue = [];
@@ -11903,7 +12040,7 @@ init_tooltip();
 	var Query;
 	var init_query = __esmMin((() => {
 		init_extends();
-		init_utils$3();
+		init_utils$4();
 		init_notifyManager();
 		init_logger$1();
 		init_retryer();
@@ -12234,7 +12371,7 @@ init_tooltip();
 	var QueryCache;
 	var init_queryCache = __esmMin((() => {
 		init_inheritsLoose();
-		init_utils$3();
+		init_utils$4();
 		init_query();
 		init_notifyManager();
 		init_subscribable();
@@ -12395,7 +12532,7 @@ init_tooltip();
 		init_logger$1();
 		init_notifyManager();
 		init_retryer();
-		init_utils$3();
+		init_utils$4();
 		Mutation = /*#__PURE__*/ function() {
 			function Mutation(config) {
 				this.options = _extends({}, config.defaultOptions, config.options);
@@ -12530,7 +12667,7 @@ init_tooltip();
 		init_inheritsLoose();
 		init_notifyManager();
 		init_mutation();
-		init_utils$3();
+		init_utils$4();
 		init_subscribable();
 		MutationCache = /*#__PURE__*/ function(_Subscribable) {
 			_inheritsLoose(MutationCache, _Subscribable);
@@ -12708,7 +12845,7 @@ init_tooltip();
 	}
 	var init_infiniteQueryBehavior = __esmMin((() => {
 		init_retryer();
-		init_utils$3();
+		init_utils$4();
 	}));
 
 //#endregion
@@ -12716,7 +12853,7 @@ init_tooltip();
 	var QueryClient;
 	var init_queryClient = __esmMin((() => {
 		init_extends();
-		init_utils$3();
+		init_utils$4();
 		init_queryCache();
 		init_mutationCache();
 		init_focusManager();
@@ -12982,7 +13119,7 @@ init_tooltip();
 	var init_queryObserver = __esmMin((() => {
 		init_extends();
 		init_inheritsLoose();
-		init_utils$3();
+		init_utils$4();
 		init_notifyManager();
 		init_focusManager();
 		init_subscribable();
@@ -13418,7 +13555,7 @@ init_tooltip();
 		init_queryClient();
 		init_queryObserver();
 		init_inheritsLoose();
-		init_utils$3();
+		init_utils$4();
 		init_notifyManager();
 		init_subscribable();
 		init_extends();
@@ -13526,7 +13663,7 @@ init_tooltip();
 		if (typeof _useErrorBoundary === "boolean") return _useErrorBoundary;
 		return !!suspense;
 	}
-	var init_utils$2 = __esmMin((() => {}));
+	var init_utils$3 = __esmMin((() => {}));
 
 //#endregion
 //#region node_modules/react-query/es/react/useMutation.js
@@ -13563,10 +13700,10 @@ init_tooltip();
 	var init_useMutation = __esmMin((() => {
 		init_extends();
 		init_notifyManager();
-		init_utils$3();
+		init_utils$4();
 		init_mutationObserver();
 		init_QueryClientProvider();
-		init_utils$2();
+		init_utils$3();
 	}));
 
 //#endregion
@@ -13626,7 +13763,7 @@ init_tooltip();
 		init_notifyManager();
 		init_QueryErrorResetBoundary();
 		init_QueryClientProvider();
-		init_utils$2();
+		init_utils$3();
 	}));
 
 //#endregion
@@ -13636,7 +13773,7 @@ init_tooltip();
 	}
 	var init_useQuery = __esmMin((() => {
 		init_core();
-		init_utils$3();
+		init_utils$4();
 		init_useBaseQuery();
 	}));
 
@@ -13652,7 +13789,7 @@ init_tooltip();
 		init_QueryClientProvider();
 		init_QueryErrorResetBoundary();
 		init_notifyManager();
-		init_utils$3();
+		init_utils$4();
 		init_useMutation();
 		init_useQuery();
 		init_inheritsLoose();
@@ -13676,6 +13813,8 @@ init_tooltip();
 //#region app/modules/import-export/assets/js/pages/export/export-kit/components/kit-information/components/kit-name/kit-name.js
 init_es();
 	init_slicedToArray();
+	init_grid();
+	init_text();
 	function KitName() {
 		var _exportContext$data$k;
 		var exportContext = (0, react.useContext)(ExportContext$1);
@@ -13721,6 +13860,8 @@ init_es();
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/export/export-kit/components/kit-information/components/kit-description/kit-description.js
+	init_grid();
+	init_text();
 	function KitDescription() {
 		var exportContext = (0, react.useContext)(ExportContext$1);
 		return /*#__PURE__*/ react.default.createElement(Grid$14, {
@@ -13742,8 +13883,9 @@ init_es();
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/export/export-kit/components/kit-information/kit-information.js
+	init_grid();
 	function KitInformation() {
-		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(Box$22, null, /*#__PURE__*/ react.default.createElement(List, {
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(Box$23, null, /*#__PURE__*/ react.default.createElement(List, {
 			padding: "24 40",
 			separated: true,
 			className: "e-app-export-kit-information"
@@ -13763,12 +13905,13 @@ init_es();
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/export/export-kit/export-kit.js
-	init_button();
+	init_button$1();
+	init_grid();
 	function ExportKit$1() {
 		var exportContext = (0, react.useContext)(ExportContext$1);
 		var sharedContext = (0, react.useContext)(SharedContext);
 		var getFooter = function getFooter() {
-			return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$29, {
+			return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, /*#__PURE__*/ react.default.createElement(Button$30, {
 				variant: "contained",
 				text: (0, _wordpress_i18n.__)("Next", "elementor"),
 				color: exportContext.data.kitInfo.title ? "primary" : "disabled",
@@ -13792,7 +13935,7 @@ init_es();
 				payload: cptObjectToOptionsArray((_elementorAppConfig$i = elementorAppConfig["import-export"].summaryTitles.content) === null || _elementorAppConfig$i === void 0 ? void 0 : _elementorAppConfig$i.customPostTypes, "plural")
 			});
 		}, []);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "export",
 			footer: getFooter()
 		}, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-export-kit" }, /*#__PURE__*/ react.default.createElement(PageHeader$1, {
@@ -13809,21 +13952,21 @@ init_es();
 //#endregion
 //#region app/assets/js/molecules/dashboard-button.js
 	init_extends();
-	init_button();
+	init_button$1();
 	init_use_action();
-	init_utils$4();
+	init_utils$5();
 	function DashboardButton(props) {
 		var action = useAction();
 		var classes = ["e-app-dashboard-button", props.className];
-		return /*#__PURE__*/ react.default.createElement(Button$29, _extends({}, props, {
+		return /*#__PURE__*/ react.default.createElement(Button$30, _extends({}, props, {
 			className: arrayToClassName(classes),
 			text: props.text,
 			onClick: action.backToDashboard
 		}));
 	}
 	DashboardButton.propTypes = {
-		className: import_prop_types$55.default.string,
-		text: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		text: import_prop_types$82.default.string
 	};
 	DashboardButton.defaultProps = {
 		className: "",
@@ -13836,7 +13979,7 @@ init_es();
 //#region app/modules/import-export/assets/js/pages/export/export-complete/export-complete.js
 	init_es$1();
 	init_use_kit$1();
-	init_button();
+	init_button$1();
 	var INVALID_FILENAME_CHARS$1 = /[<>:"/\\|?*]/g;
 	function ExportComplete$1() {
 		var _exportContext$data;
@@ -13845,7 +13988,7 @@ init_es();
 		var navigate = useNavigate();
 		var downloadLink = (0, react.useRef)(null);
 		var getFooter = function getFooter() {
-			return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, isSavedToCloud ? /*#__PURE__*/ react.default.createElement(Button$29, {
+			return /*#__PURE__*/ react.default.createElement(ActionsFooter, null, isSavedToCloud ? /*#__PURE__*/ react.default.createElement(Button$30, {
 				text: (0, _wordpress_i18n.__)("Open library", "elementor"),
 				variant: "contained",
 				color: "primary",
@@ -13892,7 +14035,7 @@ init_es();
 		var description = (0, react.useMemo)(function() {
 			return isSavedToCloud ? /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, (0, _wordpress_i18n.__)("You can find it in the My Website Templates tab.", "elementor"), " ", getTakeMeThereLink()) : (0, _wordpress_i18n.__)("Once the download is complete, you can upload it to be used for other sites.", "elementor");
 		}, [isSavedToCloud]);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "export",
 			footer: getFooter()
 		}, /*#__PURE__*/ react.default.createElement(WizardStep, {
@@ -13932,7 +14075,7 @@ init_es();
 			onSelect
 		});
 	}
-	ExportPluginsSelection.propTypes = { onSelect: import_prop_types$55.default.func.isRequired };
+	ExportPluginsSelection.propTypes = { onSelect: import_prop_types$82.default.func.isRequired };
 	var export_plugins_selection_default = (0, react.memo)(ExportPluginsSelection);
 
 //#endregion
@@ -14026,7 +14169,7 @@ init_use_cloud_kits_eligibility();
 //#endregion
 //#region app/modules/import-export/assets/js/pages/export/export-plugins/components/export-plugins-footer/export-plugins-footer.js
 	init_use_kit$1();
-	init_button();
+	init_button$1();
 	function ExportPluginsFooter(_ref) {
 		var isKitReady = _ref.isKitReady;
 		var exportContext = (0, react.useContext)(ExportContext$1);
@@ -14096,14 +14239,14 @@ init_use_cloud_kits_eligibility();
 				payload: KIT_SOURCE_MAP.CLOUD
 			});
 		};
-		return /*#__PURE__*/ react.default.createElement(ActionsFooter, { className: "e-app-export-actions-container" }, /*#__PURE__*/ react.default.createElement(Button$29, {
+		return /*#__PURE__*/ react.default.createElement(ActionsFooter, { className: "e-app-export-actions-container" }, /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("Back", "elementor"),
 			variant: "contained",
 			url: "/export"
 		}), function renderCloudButton() {
 			if (!isConnected) {
 				var _elementorAppConfig;
-				return /*#__PURE__*/ react.default.createElement(Button$29, {
+				return /*#__PURE__*/ react.default.createElement(Button$30, {
 					elRef: connectButtonRef,
 					text: (0, _wordpress_i18n.__)("Save to library", "elementor"),
 					variant: "outlined",
@@ -14111,25 +14254,25 @@ init_use_cloud_kits_eligibility();
 					url: ((_elementorAppConfig = elementorAppConfig) === null || _elementorAppConfig === void 0 || (_elementorAppConfig = _elementorAppConfig["cloud-library"]) === null || _elementorAppConfig === void 0 || (_elementorAppConfig = _elementorAppConfig.library_connect_url) === null || _elementorAppConfig === void 0 ? void 0 : _elementorAppConfig.replace(/&#038;/g, "&")) || "#"
 				});
 			}
-			if (isConnecting || isCheckingEligibility) return /*#__PURE__*/ react.default.createElement(Button$29, {
+			if (isConnecting || isCheckingEligibility) return /*#__PURE__*/ react.default.createElement(Button$30, {
 				variant: "outlined",
 				color: "secondary",
 				icon: "eicon-loading eicon-animation-spin"
 			});
-			if (!isCloudKitsEligible) return /*#__PURE__*/ react.default.createElement(Button$29, {
+			if (!isCloudKitsEligible) return /*#__PURE__*/ react.default.createElement(Button$30, {
 				text: (0, _wordpress_i18n.__)("Save to library", "elementor"),
 				variant: "outlined",
 				color: "secondary",
 				onClick: handleUpgradeClick
 			});
-			return /*#__PURE__*/ react.default.createElement(Button$29, {
+			return /*#__PURE__*/ react.default.createElement(Button$30, {
 				text: (0, _wordpress_i18n.__)("Save to library", "elementor"),
 				variant: "outlined",
 				color: "secondary",
 				url: "/export/process",
 				onClick: handleUploadClick
 			});
-		}(), /*#__PURE__*/ react.default.createElement(Button$29, {
+		}(), /*#__PURE__*/ react.default.createElement(Button$30, {
 			text: (0, _wordpress_i18n.__)("Export as .zip", "elementor"),
 			variant: "contained",
 			color: isKitReady && !isCheckingEligibility ? "primary" : "disabled",
@@ -14144,7 +14287,7 @@ init_use_cloud_kits_eligibility();
 			}
 		}));
 	}
-	ExportPluginsFooter.propTypes = { isKitReady: import_prop_types$55.default.bool.isRequired };
+	ExportPluginsFooter.propTypes = { isKitReady: import_prop_types$82.default.bool.isRequired };
 
 //#endregion
 //#region app/modules/import-export/assets/js/pages/export/export-plugins/export-plugins.js
@@ -14180,7 +14323,7 @@ init_use_cloud_kits_eligibility();
 			if (hasIncludes && plugins.length) setIsKitReady(true);
 			else setIsKitReady(plugins.length > 1);
 		}, [plugins]);
-		return /*#__PURE__*/ react.default.createElement(Layout, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, {
 			type: "export",
 			footer: /*#__PURE__*/ react.default.createElement(ExportPluginsFooter, { isKitReady })
 		}, /*#__PURE__*/ react.default.createElement("section", { className: "e-app-export-plugins" }, /*#__PURE__*/ react.default.createElement(PageHeader$1, {
@@ -14323,7 +14466,7 @@ init_use_cloud_kits_eligibility();
 		(0, react.useEffect)(function() {
 			if (exportedData) navigate("export/complete");
 		}, [exportedData]);
-		return /*#__PURE__*/ react.default.createElement(Layout, { type: "export" }, /*#__PURE__*/ react.default.createElement(FileProcess, {
+		return /*#__PURE__*/ react.default.createElement(Layout$1, { type: "export" }, /*#__PURE__*/ react.default.createElement(FileProcess, {
 			errorType,
 			onDialogApprove: onDialogDismiss,
 			onDialogDismiss
@@ -14439,7 +14582,7 @@ init_use_cloud_kits_eligibility();
 	init_slicedToArray();
 	init_defineProperty$1();
 	init_toConsumableArray();
-	function ownKeys$20(e, r) {
+	function ownKeys$32(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -14449,19 +14592,19 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$20, "ownKeys");
-	function _objectSpread$19(e) {
+	__name(ownKeys$32, "ownKeys");
+	function _objectSpread$31(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$20(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$32(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$20(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$32(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$19, "_objectSpread");
+	__name(_objectSpread$31, "_objectSpread");
 	var ExportContext = (0, react.createContext)();
 	var EXPORT_STATUS = {
 		PENDING: "PENDING",
@@ -14502,25 +14645,25 @@ init_use_cloud_kits_eligibility();
 		var type = _ref.type;
 		var payload = _ref.payload;
 		switch (type) {
-			case "SET_DOWNLOAD_URL": return _objectSpread$19(_objectSpread$19({}, state), {}, { downloadUrl: payload });
-			case "SET_EXPORTED_DATA": return _objectSpread$19(_objectSpread$19({}, state), {}, { exportedData: payload });
-			case "SET_PLUGINS": return _objectSpread$19(_objectSpread$19({}, state), {}, { plugins: payload });
-			case "SET_EXPORT_STATUS": return _objectSpread$19(_objectSpread$19({}, state), {}, { exportStatus: payload });
-			case "SET_KIT_TITLE": return _objectSpread$19(_objectSpread$19({}, state), {}, { kitInfo: _objectSpread$19(_objectSpread$19({}, state.kitInfo), {}, { title: payload }) });
-			case "SET_KIT_DESCRIPTION": return _objectSpread$19(_objectSpread$19({}, state), {}, { kitInfo: _objectSpread$19(_objectSpread$19({}, state.kitInfo), {}, { description: payload }) });
-			case "SET_KIT_SAVE_SOURCE": return _objectSpread$19(_objectSpread$19({}, state), {}, { kitInfo: _objectSpread$19(_objectSpread$19({}, state.kitInfo), {}, { source: payload }) });
-			case "ADD_INCLUDE": return _objectSpread$19(_objectSpread$19({}, state), {}, { includes: state.includes.includes(payload) ? state.includes : [].concat(_toConsumableArray(state.includes), [payload]) });
-			case "REMOVE_INCLUDE": return _objectSpread$19(_objectSpread$19({}, state), {}, {
+			case "SET_DOWNLOAD_URL": return _objectSpread$31(_objectSpread$31({}, state), {}, { downloadUrl: payload });
+			case "SET_EXPORTED_DATA": return _objectSpread$31(_objectSpread$31({}, state), {}, { exportedData: payload });
+			case "SET_PLUGINS": return _objectSpread$31(_objectSpread$31({}, state), {}, { plugins: payload });
+			case "SET_EXPORT_STATUS": return _objectSpread$31(_objectSpread$31({}, state), {}, { exportStatus: payload });
+			case "SET_KIT_TITLE": return _objectSpread$31(_objectSpread$31({}, state), {}, { kitInfo: _objectSpread$31(_objectSpread$31({}, state.kitInfo), {}, { title: payload }) });
+			case "SET_KIT_DESCRIPTION": return _objectSpread$31(_objectSpread$31({}, state), {}, { kitInfo: _objectSpread$31(_objectSpread$31({}, state.kitInfo), {}, { description: payload }) });
+			case "SET_KIT_SAVE_SOURCE": return _objectSpread$31(_objectSpread$31({}, state), {}, { kitInfo: _objectSpread$31(_objectSpread$31({}, state.kitInfo), {}, { source: payload }) });
+			case "ADD_INCLUDE": return _objectSpread$31(_objectSpread$31({}, state), {}, { includes: state.includes.includes(payload) ? state.includes : [].concat(_toConsumableArray(state.includes), [payload]) });
+			case "REMOVE_INCLUDE": return _objectSpread$31(_objectSpread$31({}, state), {}, {
 				includes: state.includes.filter(function(item) {
 					return item !== payload;
 				}),
-				customization: _objectSpread$19(_objectSpread$19({}, state.customization), {}, _defineProperty$1({}, payload, null))
+				customization: _objectSpread$31(_objectSpread$31({}, state.customization), {}, _defineProperty$1({}, payload, null))
 			});
-			case "SET_CUSTOMIZATION": return _objectSpread$19(_objectSpread$19({}, state), {}, { customization: _objectSpread$19(_objectSpread$19({}, state.customization), {}, _defineProperty$1({}, payload.key, payload.value)) });
-			case "SET_DATA_FOR_ANALYTICS": return _objectSpread$19(_objectSpread$19({}, state), {}, { analytics: { customization: _objectSpread$19(_objectSpread$19({}, (_state$analytics = state.analytics) === null || _state$analytics === void 0 ? void 0 : _state$analytics.customization), {}, _defineProperty$1({}, payload.key, payload.value)) } });
-			case "SET_MEDIA_FORMAT_VALIDATION": return _objectSpread$19(_objectSpread$19({}, state), {}, { showMediaFormatValidation: payload });
-			case "SET_VALIDATION_ERRORS": return _objectSpread$19(_objectSpread$19({}, state), {}, { validationErrors: _objectSpread$19(_objectSpread$19({}, state.validationErrors), payload) });
-			case "RESET_STATE": return _objectSpread$19({}, initialState$1);
+			case "SET_CUSTOMIZATION": return _objectSpread$31(_objectSpread$31({}, state), {}, { customization: _objectSpread$31(_objectSpread$31({}, state.customization), {}, _defineProperty$1({}, payload.key, payload.value)) });
+			case "SET_DATA_FOR_ANALYTICS": return _objectSpread$31(_objectSpread$31({}, state), {}, { analytics: { customization: _objectSpread$31(_objectSpread$31({}, (_state$analytics = state.analytics) === null || _state$analytics === void 0 ? void 0 : _state$analytics.customization), {}, _defineProperty$1({}, payload.key, payload.value)) } });
+			case "SET_MEDIA_FORMAT_VALIDATION": return _objectSpread$31(_objectSpread$31({}, state), {}, { showMediaFormatValidation: payload });
+			case "SET_VALIDATION_ERRORS": return _objectSpread$31(_objectSpread$31({}, state), {}, { validationErrors: _objectSpread$31(_objectSpread$31({}, state.validationErrors), payload) });
+			case "RESET_STATE": return _objectSpread$31({}, initialState$1);
 			default: return state;
 		}
 	}
@@ -14543,7 +14686,7 @@ init_use_cloud_kits_eligibility();
 		};
 		return /*#__PURE__*/ react.default.createElement(ExportContext.Provider, { value }, children);
 	}
-	ExportContextProvider.propTypes = { children: import_prop_types$55.default.node.isRequired };
+	ExportContextProvider.propTypes = { children: import_prop_types$82.default.node.isRequired };
 	function useExportContext() {
 		var context = (0, react.useContext)(ExportContext);
 		if (!context) throw new Error("useExportContext must be used within an ExportContextProvider");
@@ -14555,13 +14698,13 @@ init_use_cloud_kits_eligibility();
 	init_extends();
 	init_defineProperty$1();
 	init_objectWithoutProperties();
-	var _excluded$3 = [
+	var _excluded$4 = [
 		"children",
 		"topBar",
 		"footer",
 		"sx"
 	];
-	function ownKeys$19(e, r) {
+	function ownKeys$31(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -14571,19 +14714,19 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$19, "ownKeys");
-	function _objectSpread$18(e) {
+	__name(ownKeys$31, "ownKeys");
+	function _objectSpread$30(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$19(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$31(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$19(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$31(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$18, "_objectSpread");
+	__name(_objectSpread$30, "_objectSpread");
 	function BaseLayout(props) {
 		var _elementorAppConfig$i;
 		var _elementorCommon;
@@ -14592,11 +14735,11 @@ init_use_cloud_kits_eligibility();
 		var footer = props.footer;
 		var _props$sx = props.sx;
 		var sx = _props$sx === void 0 ? {} : _props$sx;
-		var rest = _objectWithoutProperties(props, _excluded$3);
+		var rest = _objectWithoutProperties(props, _excluded$4);
 		var uiTheme = ((_elementorAppConfig$i = elementorAppConfig["import-export-customization"]) === null || _elementorAppConfig$i === void 0 ? void 0 : _elementorAppConfig$i.uiTheme) || "auto";
 		var colorScheme = "dark" === uiTheme || "auto" === uiTheme && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		var isRTL = ((_elementorCommon = elementorCommon) === null || _elementorCommon === void 0 || (_elementorCommon = _elementorCommon.config) === null || _elementorCommon === void 0 ? void 0 : _elementorCommon.isRTL) || false;
-		return /*#__PURE__*/ react.default.createElement(_elementor_ui.DirectionProvider, { rtl: isRTL }, /*#__PURE__*/ react.default.createElement(_elementor_ui.ThemeProvider, { colorScheme }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, _extends({ sx: _objectSpread$18({
+		return /*#__PURE__*/ react.default.createElement(_elementor_ui.DirectionProvider, { rtl: isRTL }, /*#__PURE__*/ react.default.createElement(_elementor_ui.ThemeProvider, { colorScheme }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, _extends({ sx: _objectSpread$30({
 			height: "100vh",
 			display: "flex",
 			flexDirection: "column",
@@ -14618,10 +14761,10 @@ init_use_cloud_kits_eligibility();
 		} }, footer))));
 	}
 	BaseLayout.propTypes = {
-		children: import_prop_types$55.default.node.isRequired,
-		topBar: import_prop_types$55.default.node,
-		footer: import_prop_types$55.default.node,
-		sx: import_prop_types$55.default.object
+		children: import_prop_types$82.default.node.isRequired,
+		topBar: import_prop_types$82.default.node,
+		footer: import_prop_types$82.default.node,
+		sx: import_prop_types$82.default.object
 	};
 
 //#endregion
@@ -14649,10 +14792,10 @@ init_use_cloud_kits_eligibility();
 		} }, children));
 	}
 	CenteredContent.propTypes = {
-		children: import_prop_types$55.default.node.isRequired,
-		hasFooter: import_prop_types$55.default.bool,
-		offsetHeight: import_prop_types$55.default.number,
-		maxWidth: import_prop_types$55.default.string
+		children: import_prop_types$82.default.node.isRequired,
+		hasFooter: import_prop_types$82.default.bool,
+		offsetHeight: import_prop_types$82.default.number,
+		maxWidth: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -14660,8 +14803,8 @@ init_use_cloud_kits_eligibility();
 	init_extends();
 	init_defineProperty$1();
 	init_objectWithoutProperties();
-	var _excluded$2 = ["children", "sx"];
-	function ownKeys$18(e, r) {
+	var _excluded$3 = ["children", "sx"];
+	function ownKeys$30(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -14671,27 +14814,27 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$18, "ownKeys");
-	function _objectSpread$17(e) {
+	__name(ownKeys$30, "ownKeys");
+	function _objectSpread$29(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$18(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$30(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$18(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$30(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$17, "_objectSpread");
+	__name(_objectSpread$29, "_objectSpread");
 	function Footer(props) {
 		var children = props.children;
 		var _props$sx = props.sx;
 		var sx = _props$sx === void 0 ? {} : _props$sx;
-		var rest = _objectWithoutProperties(props, _excluded$2);
+		var rest = _objectWithoutProperties(props, _excluded$3);
 		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, _extends({
 			component: "footer",
-			sx: _objectSpread$17({
+			sx: _objectSpread$29({
 				mt: "auto",
 				py: 2,
 				px: 3,
@@ -14704,8 +14847,8 @@ init_use_cloud_kits_eligibility();
 		}, rest), children);
 	}
 	Footer.propTypes = {
-		children: import_prop_types$55.default.node,
-		sx: import_prop_types$55.default.object
+		children: import_prop_types$82.default.node,
+		sx: import_prop_types$82.default.object
 	};
 
 //#endregion
@@ -14752,7 +14895,7 @@ init_use_cloud_kits_eligibility();
 	init_slicedToArray();
 	init_toConsumableArray();
 	init_defineProperty$1();
-	function ownKeys$17(e, r) {
+	function ownKeys$29(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -14762,19 +14905,19 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$17, "ownKeys");
-	function _objectSpread$16(e) {
+	__name(ownKeys$29, "ownKeys");
+	function _objectSpread$28(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$17(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$29(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$17(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$29(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$16, "_objectSpread");
+	__name(_objectSpread$28, "_objectSpread");
 	var IMPORT_STATUS = {
 		PENDING: "PENDING",
 		UPLOADING: "UPLOADING",
@@ -14787,26 +14930,26 @@ init_use_cloud_kits_eligibility();
 		var type = _ref.type;
 		var payload = _ref.payload;
 		switch (type) {
-			case "SET_IMPORT_STATUS": return _objectSpread$16(_objectSpread$16({}, state), {}, { importStatus: payload });
-			case "SET_FILE": return _objectSpread$16(_objectSpread$16({}, state), {}, { file: payload });
-			case "SET_UPLOADED_DATA": return _objectSpread$16(_objectSpread$16({}, state), {}, { uploadedData: payload });
-			case "SET_IMPORTED_DATA": return _objectSpread$16(_objectSpread$16({}, state), {}, { importedData: payload });
-			case "SET_KIT_UPLOAD_PARAMS": return _objectSpread$16(_objectSpread$16({}, state), {}, { kitUploadParams: payload });
-			case "SET_ACTION_TYPE": return _objectSpread$16(_objectSpread$16({}, state), {}, { actionType: payload });
-			case "SET_RETURN_TO": return _objectSpread$16(_objectSpread$16({}, state), {}, { returnTo: payload });
-			case "SET_NO_AUTOMATIC_REDIRECT": return _objectSpread$16(_objectSpread$16({}, state), {}, { noAutomaticRedirect: payload });
-			case "SET_RUNNERS_STATE": return _objectSpread$16(_objectSpread$16({}, state), {}, { runnersState: _objectSpread$16(_objectSpread$16({}, state.runnersState), payload) });
-			case "ADD_INCLUDE": return _objectSpread$16(_objectSpread$16({}, state), {}, { includes: state.includes.includes(payload) ? state.includes : [].concat(_toConsumableArray(state.includes), [payload]) });
-			case "ADD_INCLUDES": return _objectSpread$16(_objectSpread$16({}, state), {}, { includes: Array.from(new Set([].concat(_toConsumableArray(state.includes), _toConsumableArray(payload)))) });
-			case "REMOVE_INCLUDE": return _objectSpread$16(_objectSpread$16({}, state), {}, {
+			case "SET_IMPORT_STATUS": return _objectSpread$28(_objectSpread$28({}, state), {}, { importStatus: payload });
+			case "SET_FILE": return _objectSpread$28(_objectSpread$28({}, state), {}, { file: payload });
+			case "SET_UPLOADED_DATA": return _objectSpread$28(_objectSpread$28({}, state), {}, { uploadedData: payload });
+			case "SET_IMPORTED_DATA": return _objectSpread$28(_objectSpread$28({}, state), {}, { importedData: payload });
+			case "SET_KIT_UPLOAD_PARAMS": return _objectSpread$28(_objectSpread$28({}, state), {}, { kitUploadParams: payload });
+			case "SET_ACTION_TYPE": return _objectSpread$28(_objectSpread$28({}, state), {}, { actionType: payload });
+			case "SET_RETURN_TO": return _objectSpread$28(_objectSpread$28({}, state), {}, { returnTo: payload });
+			case "SET_NO_AUTOMATIC_REDIRECT": return _objectSpread$28(_objectSpread$28({}, state), {}, { noAutomaticRedirect: payload });
+			case "SET_RUNNERS_STATE": return _objectSpread$28(_objectSpread$28({}, state), {}, { runnersState: _objectSpread$28(_objectSpread$28({}, state.runnersState), payload) });
+			case "ADD_INCLUDE": return _objectSpread$28(_objectSpread$28({}, state), {}, { includes: state.includes.includes(payload) ? state.includes : [].concat(_toConsumableArray(state.includes), [payload]) });
+			case "ADD_INCLUDES": return _objectSpread$28(_objectSpread$28({}, state), {}, { includes: Array.from(new Set([].concat(_toConsumableArray(state.includes), _toConsumableArray(payload)))) });
+			case "REMOVE_INCLUDE": return _objectSpread$28(_objectSpread$28({}, state), {}, {
 				includes: state.includes.filter(function(item) {
 					return item !== payload;
 				}),
-				customization: _objectSpread$16(_objectSpread$16({}, state.customization), {}, _defineProperty$1({}, payload, null))
+				customization: _objectSpread$28(_objectSpread$28({}, state.customization), {}, _defineProperty$1({}, payload, null))
 			});
-			case "RESET_STATE": return _objectSpread$16({}, initialState);
-			case "SET_CUSTOMIZATION": return _objectSpread$16(_objectSpread$16({}, state), {}, { customization: _objectSpread$16(_objectSpread$16({}, state.customization), {}, _defineProperty$1({}, payload.key, payload.value)) });
-			case "SET_DURATION": return _objectSpread$16(_objectSpread$16({}, state), {}, { duration: payload });
+			case "RESET_STATE": return _objectSpread$28({}, initialState);
+			case "SET_CUSTOMIZATION": return _objectSpread$28(_objectSpread$28({}, state), {}, { customization: _objectSpread$28(_objectSpread$28({}, state.customization), {}, _defineProperty$1({}, payload.key, payload.value)) });
+			case "SET_DURATION": return _objectSpread$28(_objectSpread$28({}, state), {}, { duration: payload });
 			default: return state;
 		}
 	};
@@ -14851,7 +14994,7 @@ init_use_cloud_kits_eligibility();
 			isOldElementorVersion
 		} }, props.children);
 	}
-	ImportContextProvider.propTypes = { children: import_prop_types$55.default.node.isRequired };
+	ImportContextProvider.propTypes = { children: import_prop_types$82.default.node.isRequired };
 	function useImportContext() {
 		var context = (0, react.useContext)(ImportContext);
 		if (!context) throw new Error("useImportContext must be used within an ImportContextProvider");
@@ -14924,15 +15067,15 @@ init_use_cloud_kits_eligibility();
 			"aria-label": (0, _wordpress_i18n.__)("Close", "elementor")
 		}, /*#__PURE__*/ react.default.createElement(_elementor_icons.XIcon, null))));
 	}
-	PageHeader.propTypes = { title: import_prop_types$55.default.string };
+	PageHeader.propTypes = { title: import_prop_types$82.default.string };
 
 //#endregion
 //#region app/modules/import-export-customization/assets/js/shared/components/layout/top-bar.js
 	init_extends();
 	init_defineProperty$1();
 	init_objectWithoutProperties();
-	var _excluded$1 = ["children", "sx"];
-	function ownKeys$16(e, r) {
+	var _excluded$2 = ["children", "sx"];
+	function ownKeys$28(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -14942,28 +15085,28 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$16, "ownKeys");
-	function _objectSpread$15(e) {
+	__name(ownKeys$28, "ownKeys");
+	function _objectSpread$27(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$16(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$28(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$16(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$28(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$15, "_objectSpread");
+	__name(_objectSpread$27, "_objectSpread");
 	function TopBar(props) {
 		var children = props.children;
 		var _props$sx = props.sx;
 		var sx = _props$sx === void 0 ? {} : _props$sx;
-		var rest = _objectWithoutProperties(props, _excluded$1);
+		var rest = _objectWithoutProperties(props, _excluded$2);
 		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.AppBar, _extends({
 			position: "static",
 			elevation: 0,
-			sx: _objectSpread$15({ backgroundColor: "background.default" }, sx)
+			sx: _objectSpread$27({ backgroundColor: "background.default" }, sx)
 		}, rest), /*#__PURE__*/ react.default.createElement(_elementor_ui.Toolbar, { sx: {
 			minHeight: {
 				xs: 56,
@@ -14974,8 +15117,8 @@ init_use_cloud_kits_eligibility();
 		} }, children)), /*#__PURE__*/ react.default.createElement(_elementor_ui.Divider, null));
 	}
 	TopBar.propTypes = {
-		children: import_prop_types$55.default.node,
-		sx: import_prop_types$55.default.object
+		children: import_prop_types$82.default.node,
+		sx: import_prop_types$82.default.object
 	};
 
 //#endregion
@@ -15151,11 +15294,124 @@ init_use_cloud_kits_eligibility();
 	};
 
 //#endregion
+//#region app/modules/import-export-customization/assets/js/shared/constants.js
+	var KIT_SECTIONS = Object.freeze({
+		CONTENT: "content",
+		TEMPLATES: "templates",
+		SETTINGS: "settings",
+		PLUGINS: "plugins"
+	});
+	var KIT_SECTION_ITEMS = Object.freeze({
+		CONTENT_CUSTOM_POST_TYPES: "content/custom-post-types",
+		CONTENT_MEDIA_FORMAT: "content/media-format",
+		SETTINGS_DESIGN_SYSTEM: "settings/design-system",
+		SETTINGS_THEME: "settings/theme",
+		SETTINGS_GLOBAL_CLASSES: "settings/design-system/global-classes",
+		SETTINGS_GLOBAL_VARIABLES: "settings/design-system/global-variables",
+		SETTINGS_DEFAULT_STYLES: "settings/design-system/default-styles",
+		SETTINGS_GLOBAL_COLORS: "settings/global-colors",
+		SETTINGS_GLOBAL_FONTS: "settings/global-fonts",
+		SETTINGS_THEME_STYLE_SETTINGS: "settings/theme-style-settings",
+		SETTINGS_GENERAL_SETTINGS: "settings/general-settings",
+		SETTINGS_EXPERIMENTS: "settings/experiments",
+		SETTINGS_CUSTOM_FONTS: "settings/custom-fonts",
+		SETTINGS_CUSTOM_ICONS: "settings/custom-icons",
+		SETTINGS_CUSTOM_CODE: "settings/custom-code",
+		PLUGINS_PLUGIN_LIST: "plugins/plugin-list"
+	});
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/utils.js
+	function isExperimentActive(experimentName) {
+		var _common$config;
+		var common = typeof globalThis !== "undefined" ? globalThis.elementorCommon : void 0;
+		return !!(common !== null && common !== void 0 && (_common$config = common.config) !== null && _common$config !== void 0 && (_common$config = _common$config.experimentalFeatures) !== null && _common$config !== void 0 && _common$config[experimentName]);
+	}
+	function isAtomicElementsFeatureActive() {
+		return isExperimentActive("e_atomic_elements");
+	}
+	function getCustomizationDialogsRegistry() {
+		var _globalThis$elementor;
+		var _globalThis$elementor2;
+		return (_globalThis$elementor = (_globalThis$elementor2 = globalThis.elementorModules) === null || _globalThis$elementor2 === void 0 || (_globalThis$elementor2 = _globalThis$elementor2.importExport) === null || _globalThis$elementor2 === void 0 ? void 0 : _globalThis$elementor2.customizationDialogsRegistry) !== null && _globalThis$elementor !== void 0 ? _globalThis$elementor : null;
+	}
+	function getCustomizationDialog(dialogKey) {
+		var _getCustomizationDial;
+		var _getCustomizationDial2;
+		var _getCustomizationDial3;
+		return (_getCustomizationDial = (_getCustomizationDial2 = getCustomizationDialogsRegistry()) === null || _getCustomizationDial2 === void 0 || (_getCustomizationDial3 = _getCustomizationDial2.get) === null || _getCustomizationDial3 === void 0 ? void 0 : _getCustomizationDial3.call(_getCustomizationDial2, dialogKey)) !== null && _getCustomizationDial !== void 0 ? _getCustomizationDial : null;
+	}
+	function getCustomizationDialogChildren(dialogKey) {
+		var _getCustomizationDial4;
+		var _getCustomizationDial5;
+		var _getCustomizationDial6;
+		return (_getCustomizationDial4 = (_getCustomizationDial5 = getCustomizationDialogsRegistry()) === null || _getCustomizationDial5 === void 0 || (_getCustomizationDial6 = _getCustomizationDial5.getAll) === null || _getCustomizationDial6 === void 0 || (_getCustomizationDial6 = _getCustomizationDial6.call(_getCustomizationDial5)) === null || _getCustomizationDial6 === void 0 ? void 0 : _getCustomizationDial6.filter(function(dialog) {
+			return dialog.parentKey === dialogKey;
+		})) !== null && _getCustomizationDial4 !== void 0 ? _getCustomizationDial4 : [];
+	}
+	function getAvailableCustomizationDialogChildren(dialogKey) {
+		return getCustomizationDialogChildren(dialogKey).filter(function(child) {
+			return child.isAvailable();
+		}).sort(function(first, second) {
+			return first.order - second.order;
+		});
+	}
+	var SITE_SETTINGS_MANIFEST_KEY = "site-settings";
+	var WP_CONTENT_MANIFEST_KEY = "wp-content";
+	var CUSTOM_POST_TYPE_TITLES_MANIFEST_KEY = "custom-post-type-title";
+	function getImportManifest(contextData) {
+		var _contextData$data$upl;
+		var _contextData$data;
+		return (_contextData$data$upl = contextData === null || contextData === void 0 || (_contextData$data = contextData.data) === null || _contextData$data === void 0 || (_contextData$data = _contextData$data.uploadedData) === null || _contextData$data === void 0 ? void 0 : _contextData$data.manifest) !== null && _contextData$data$upl !== void 0 ? _contextData$data$upl : null;
+	}
+	function getManifestItem(contextData, manifestKey) {
+		var _getImportManifest;
+		return (_getImportManifest = getImportManifest(contextData)) === null || _getImportManifest === void 0 ? void 0 : _getImportManifest[manifestKey];
+	}
+	function getSiteSettingsManifest(contextData) {
+		return getManifestItem(contextData, SITE_SETTINGS_MANIFEST_KEY);
+	}
+	function isSiteSettingExported(contextData, settingKey) {
+		var _getSiteSettingsManif;
+		return !!((_getSiteSettingsManif = getSiteSettingsManifest(contextData)) !== null && _getSiteSettingsManif !== void 0 && _getSiteSettingsManif[settingKey]);
+	}
+	function isClassesExported(contextData) {
+		return isSiteSettingExported(contextData, "classes");
+	}
+	function isVariablesExported(contextData) {
+		return isSiteSettingExported(contextData, "variables");
+	}
+	function isDefaultStylesExported(contextData) {
+		return isSiteSettingExported(contextData, "defaultStyles");
+	}
+	function isThemeExported(contextData) {
+		if (contextData !== null && contextData !== void 0 && contextData.isOldExport) return !!getManifestItem(contextData, "theme");
+		return isSiteSettingExported(contextData, "theme");
+	}
+	function isSiteSettingsExported(contextData) {
+		var siteSettings = getSiteSettingsManifest(contextData);
+		return !!siteSettings && Object.values(siteSettings).some(Boolean);
+	}
+	function isContentSettingsExported(contextData) {
+		return !!(getManifestItem(contextData, "taxonomies") || getManifestItem(contextData, "content") || getManifestItem(contextData, WP_CONTENT_MANIFEST_KEY) || getManifestItem(contextData, CUSTOM_POST_TYPE_TITLES_MANIFEST_KEY));
+	}
+	function getImportedClassesCount(contextData) {
+		var _getSiteSettingsManif2;
+		var _getSiteSettingsManif3;
+		return (_getSiteSettingsManif2 = (_getSiteSettingsManif3 = getSiteSettingsManifest(contextData)) === null || _getSiteSettingsManif3 === void 0 ? void 0 : _getSiteSettingsManif3.classesCount) !== null && _getSiteSettingsManif2 !== void 0 ? _getSiteSettingsManif2 : 0;
+	}
+	function getImportedVariablesCount(contextData) {
+		var _getSiteSettingsManif4;
+		var _getSiteSettingsManif5;
+		return (_getSiteSettingsManif4 = (_getSiteSettingsManif5 = getSiteSettingsManifest(contextData)) === null || _getSiteSettingsManif5 === void 0 ? void 0 : _getSiteSettingsManif5.variablesCount) !== null && _getSiteSettingsManif4 !== void 0 ? _getSiteSettingsManif4 : 0;
+	}
+
+//#endregion
 //#region app/modules/import-export-customization/assets/js/shared/components/kit-plugins-customization-dialog.js
 	init_defineProperty$1();
 	init_slicedToArray();
 	init_apps_event_tracking();
-	function ownKeys$15(e, r) {
+	function ownKeys$27(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -15165,20 +15421,20 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$15, "ownKeys");
-	function _objectSpread$14(e) {
+	__name(ownKeys$27, "ownKeys");
+	function _objectSpread$26(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$15(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$27(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$15(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$27(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$14, "_objectSpread");
-	var transformAnalyticsData$2 = function transformAnalyticsData(payload) {
+	__name(_objectSpread$26, "_objectSpread");
+	var transformAnalyticsData$3 = function transformAnalyticsData(payload) {
 		var transformed = {};
 		for (var _i = 0, _Object$entries = Object.entries(payload); _i < _Object$entries.length; _i++) {
 			var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2);
@@ -15189,19 +15445,113 @@ init_use_cloud_kits_eligibility();
 		return transformed;
 	};
 	var REQUIRED_PLUGINS = ["elementor/elementor"];
-	function KitPluginsCustomizationDialog(_ref) {
+	var pluginDataPropType = import_prop_types$82.default.shape({
+		name: import_prop_types$82.default.string.isRequired,
+		version: import_prop_types$82.default.string,
+		pluginUri: import_prop_types$82.default.string
+	});
+	function PluginListSection(_ref) {
+		var handleSelectAll = _ref.handleSelectAll;
+		var handleToggleChange = _ref.handleToggleChange;
+		var isAllSelected = _ref.isAllSelected;
+		var isIndeterminate = _ref.isIndeterminate;
+		var isLoading = _ref.isLoading;
+		var isRequiredPlugin = _ref.isRequiredPlugin;
+		var plugins = _ref.plugins;
+		var pluginsList = _ref.pluginsList;
+		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			mb: 3,
+			border: 1,
+			borderRadius: 1,
+			borderColor: "action.focus",
+			p: 2.5
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, { variant: "h6" }, (0, _wordpress_i18n.__)("Plugin name and version", "elementor")), isLoading ? /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
+			spacing: 3,
+			alignItems: "center",
+			sx: { py: 8 }
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.CircularProgress, { size: 30 })) : /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { sx: { mt: 2 } }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { py: 1.5 } }, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
+			control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
+				checked: isAllSelected,
+				indeterminate: isIndeterminate,
+				onChange: handleSelectAll,
+				color: "info",
+				size: "medium",
+				sx: { py: 0 }
+			}),
+			label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+				variant: "body1",
+				sx: { fontWeight: 500 }
+			}, (0, _wordpress_i18n.__)("All plugins", "elementor"))
+		})), Object.entries(pluginsList).map(function(_ref2) {
+			var _ref3 = _slicedToArray(_ref2, 2);
+			var pluginKey = _ref3[0];
+			var pluginData = _ref3[1];
+			var isRequired = isRequiredPlugin(pluginKey);
+			return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, {
+				key: pluginKey,
+				sx: { py: 1.5 }
+			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
+				control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
+					checked: !!plugins[pluginKey],
+					onChange: function onChange() {
+						return handleToggleChange(pluginKey);
+					},
+					color: "info",
+					size: "medium",
+					sx: { py: 0 },
+					disabled: isRequired
+				}),
+				label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+					variant: "body1",
+					sx: {
+						fontWeight: 400,
+						color: isRequired ? "text.disabled" : "inherit"
+					}
+				}, pluginData.name)
+			}), pluginData.version && /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+				variant: "body1",
+				color: "text.secondary",
+				sx: {
+					fontWeight: 400,
+					ml: 4
+				}
+			}, pluginData.pluginUri ? /*#__PURE__*/ react.default.createElement(_elementor_ui.Link, {
+				href: pluginData.pluginUri,
+				target: "_blank",
+				rel: "noopener noreferrer",
+				color: "info.light",
+				underline: "hover",
+				sx: {
+					display: "inline-flex",
+					alignItems: "center",
+					gap: .5
+				}
+			}, (0, _wordpress_i18n.__)("Version", "elementor"), " ", pluginData.version, /*#__PURE__*/ react.default.createElement(_elementor_icons.ExternalLinkIcon, null)) : /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, (0, _wordpress_i18n.__)("Version", "elementor"), " ", pluginData.version)));
+		})));
+	}
+	PluginListSection.propTypes = {
+		handleSelectAll: import_prop_types$82.default.func.isRequired,
+		handleToggleChange: import_prop_types$82.default.func.isRequired,
+		isAllSelected: import_prop_types$82.default.bool.isRequired,
+		isIndeterminate: import_prop_types$82.default.bool.isRequired,
+		isLoading: import_prop_types$82.default.bool.isRequired,
+		isRequiredPlugin: import_prop_types$82.default.func.isRequired,
+		plugins: import_prop_types$82.default.objectOf(import_prop_types$82.default.bool).isRequired,
+		pluginsList: import_prop_types$82.default.objectOf(pluginDataPropType).isRequired
+	};
+	function KitPluginsCustomizationDialog(_ref4) {
 		var _useContextDetection;
 		var _data$uploadedData2;
 		var _data$includes;
-		var _data$customization2;
-		var open = _ref.open;
-		var handleClose = _ref.handleClose;
-		var handleSaveChanges = _ref.handleSaveChanges;
-		var _ref2 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
-		var _ref2$isImport = _ref2.isImport;
-		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
-		var _ref2$contextData = _ref2.contextData;
-		var contextData = _ref2$contextData === void 0 ? {} : _ref2$contextData;
+		var _data$customization3;
+		var open = _ref4.open;
+		var handleClose = _ref4.handleClose;
+		var handleSaveChanges = _ref4.handleSaveChanges;
+		var _ref5 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
+		var _ref5$isImport = _ref5.isImport;
+		var isImport = _ref5$isImport === void 0 ? false : _ref5$isImport;
+		var _ref5$contextData = _ref5.contextData;
+		var contextData = _ref5$contextData === void 0 ? {} : _ref5$contextData;
 		var _contextData$data = contextData.data;
 		var data = _contextData$data === void 0 ? null : _contextData$data;
 		var _contextData$isOldEle = contextData.isOldElementorVersion;
@@ -15227,22 +15577,24 @@ init_use_cloud_kits_eligibility();
 		var _useState2 = _slicedToArray((0, react.useState)({}), 2);
 		var plugins = _useState2[0];
 		var setPlugins = _useState2[1];
-		var initialState = (data === null || data === void 0 || (_data$includes = data.includes) === null || _data$includes === void 0 ? void 0 : _data$includes.includes("plugins")) || false;
+		var initialState = (data === null || data === void 0 || (_data$includes = data.includes) === null || _data$includes === void 0 ? void 0 : _data$includes.includes(KIT_SECTIONS.PLUGINS)) || false;
 		(0, react.useEffect)(function() {
 			var _data$customization;
+			var _data$customization2;
 			if (0 === Object.keys(pluginsList).length) return;
-			var initialPluginsState = {};
-			if (data !== null && data !== void 0 && (_data$customization = data.customization) !== null && _data$customization !== void 0 && _data$customization.plugins) initialPluginsState = data.customization.plugins;
-			else Object.keys(pluginsList).forEach(function(pluginKey) {
-				initialPluginsState[pluginKey] = initialState;
-			});
+			var savedPluginsState = (data === null || data === void 0 || (_data$customization = data.customization) === null || _data$customization === void 0 ? void 0 : _data$customization.plugins) || {};
+			var hasSavedPluginsState = !!(data !== null && data !== void 0 && (_data$customization2 = data.customization) !== null && _data$customization2 !== void 0 && _data$customization2.plugins);
+			var initialPluginsState = Object.keys(pluginsList).reduce(function(acc, pluginKey) {
+				acc[pluginKey] = hasSavedPluginsState ? !!savedPluginsState[pluginKey] : initialState;
+				return acc;
+			}, {});
 			REQUIRED_PLUGINS.forEach(function(pluginKey) {
 				if (initialPluginsState.hasOwnProperty(pluginKey)) initialPluginsState[pluginKey] = true;
 			});
 			setPlugins(initialPluginsState);
 		}, [
 			pluginsList,
-			data === null || data === void 0 || (_data$customization2 = data.customization) === null || _data$customization2 === void 0 ? void 0 : _data$customization2.plugins,
+			data === null || data === void 0 || (_data$customization3 = data.customization) === null || _data$customization3 === void 0 ? void 0 : _data$customization3.plugins,
 			initialState
 		]);
 		var isRequiredPlugin = (0, react.useCallback)(function(pluginKey) {
@@ -15270,14 +15622,14 @@ init_use_cloud_kits_eligibility();
 		var handleToggleChange = (0, react.useCallback)(function(settingKey) {
 			if (isRequiredPlugin(settingKey)) return;
 			setPlugins(function(prev) {
-				return _objectSpread$14(_objectSpread$14({}, prev), {}, _defineProperty$1({}, settingKey, !prev[settingKey]));
+				return _objectSpread$26(_objectSpread$26({}, prev), {}, _defineProperty$1({}, settingKey, !prev[settingKey]));
 			});
 		}, [isRequiredPlugin]);
 		var handleSelectAll = (0, react.useCallback)(function() {
 			var allNonRequiredSelected = nonRequiredPlugins.every(function(pluginKey) {
 				return plugins[pluginKey];
 			});
-			var newState = _objectSpread$14({}, plugins);
+			var newState = _objectSpread$26({}, plugins);
 			nonRequiredPlugins.forEach(function(pluginKey) {
 				newState[pluginKey] = !allNonRequiredSelected;
 			});
@@ -15288,95 +15640,17 @@ init_use_cloud_kits_eligibility();
 		}, [plugins, nonRequiredPlugins]);
 		var getPluginsSelection = (0, react.useCallback)(function() {
 			var selectedPlugins = {};
-			Object.entries(plugins).forEach(function(_ref3) {
-				var _ref4 = _slicedToArray(_ref3, 2);
-				var pluginKey = _ref4[0];
-				selectedPlugins[pluginKey] = _ref4[1];
+			Object.entries(plugins).forEach(function(_ref6) {
+				var _ref7 = _slicedToArray(_ref6, 2);
+				var pluginKey = _ref7[0];
+				selectedPlugins[pluginKey] = _ref7[1];
 			});
 			return selectedPlugins;
 		}, [plugins]);
 		(0, react.useEffect)(function() {
 			if (open) AppsEventTracking.sendPageViewsWebsiteTemplates(elementorCommon.eventsManager.config.secondaryLocations.kitLibrary.kitExportCustomizationEdit);
 		}, [open]);
-		var SettingSection = function SettingSection(_ref5) {
-			var title = _ref5.title;
-			var description = _ref5.description;
-			var children = _ref5.children;
-			var settingKey = _ref5.settingKey;
-			return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, {
-				key: settingKey,
-				sx: {
-					mb: 3,
-					border: 1,
-					borderRadius: 1,
-					borderColor: "action.focus",
-					p: 2.5
-				}
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-				display: "flex",
-				justifyContent: "space-between",
-				alignItems: "center"
-			} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, { variant: "h6" }, title), description && /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-				variant: "body1",
-				color: "text.secondary"
-			}, description))), children && /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { mt: 2 } }, children));
-		};
-		SettingSection.propTypes = {
-			title: import_prop_types$55.default.string.isRequired,
-			description: import_prop_types$55.default.string,
-			children: import_prop_types$55.default.node,
-			settingKey: import_prop_types$55.default.string
-		};
-		var SubSetting = function SubSetting(_ref6) {
-			var label = _ref6.label;
-			var settingKey = _ref6.settingKey;
-			var version = _ref6.version;
-			var pluginUri = _ref6.pluginUri;
-			var isRequired = isRequiredPlugin(settingKey);
-			return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { py: 1.5 } }, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
-				control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
-					checked: plugins[settingKey],
-					onChange: function onChange() {
-						return handleToggleChange(settingKey);
-					},
-					color: "info",
-					size: "medium",
-					sx: { py: 0 },
-					disabled: isRequired
-				}),
-				label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-					variant: "body1",
-					sx: {
-						fontWeight: 400,
-						color: isRequired ? "text.disabled" : "inherit"
-					}
-				}, label)
-			}), version && /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-				variant: "body1",
-				color: "text.secondary",
-				sx: {
-					fontWeight: 400,
-					ml: 4
-				}
-			}, pluginUri ? /*#__PURE__*/ react.default.createElement(_elementor_ui.Link, {
-				href: pluginUri,
-				target: "_blank",
-				rel: "noopener noreferrer",
-				color: "info.light",
-				underline: "hover",
-				sx: {
-					display: "inline-flex",
-					alignItems: "center",
-					gap: .5
-				}
-			}, (0, _wordpress_i18n.__)("Version", "elementor"), " ", version, /*#__PURE__*/ react.default.createElement(_elementor_icons.ExternalLinkIcon, null)) : /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, (0, _wordpress_i18n.__)("Version", "elementor"), " ", version)));
-		};
-		SubSetting.propTypes = {
-			label: import_prop_types$55.default.string.isRequired,
-			settingKey: import_prop_types$55.default.string.isRequired,
-			version: import_prop_types$55.default.string,
-			pluginUri: import_prop_types$55.default.string
-		};
+		var registeredSections = getAvailableCustomizationDialogChildren(KIT_SECTIONS.PLUGINS);
 		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Dialog, {
 			open,
 			onClose: handleClose,
@@ -15386,41 +15660,28 @@ init_use_cloud_kits_eligibility();
 		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.DialogHeader, { onClose: handleClose }, /*#__PURE__*/ react.default.createElement(_elementor_ui.DialogTitle, null, (0, _wordpress_i18n.__)("Edit plugins", "elementor"))), /*#__PURE__*/ react.default.createElement(_elementor_ui.DialogContent, {
 			dividers: true,
 			sx: { p: 3 }
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, isOldElementorVersion && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), isLoading ? /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
-			spacing: 3,
-			alignItems: "center",
-			sx: { py: 8 }
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.CircularProgress, { size: 30 })) : /*#__PURE__*/ react.default.createElement(SettingSection, { title: (0, _wordpress_i18n.__)("Plugin name and version", "elementor") }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { py: 1.5 } }, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
-			control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
-				checked: isAllSelected,
-				indeterminate: isIndeterminate,
-				onChange: handleSelectAll,
-				color: "info",
-				size: "medium",
-				sx: { py: 0 }
-			}),
-			label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-				variant: "body1",
-				sx: { fontWeight: 500 }
-			}, (0, _wordpress_i18n.__)("All plugins", "elementor"))
-		})), Object.entries(pluginsList).map(function(_ref7) {
-			var _ref8 = _slicedToArray(_ref7, 2);
-			var pluginKey = _ref8[0];
-			var pluginData = _ref8[1];
-			return /*#__PURE__*/ react.default.createElement(SubSetting, {
-				key: pluginKey,
-				label: pluginData.name,
-				settingKey: pluginKey,
-				version: pluginData.version,
-				pluginUri: pluginData.pluginUri
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, isOldElementorVersion && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), registeredSections.map(function(section) {
+			var SectionComponent = section.component;
+			return /*#__PURE__*/ react.default.createElement(SectionComponent, {
+				key: section.key,
+				handleSelectAll,
+				handleToggleChange,
+				isAllSelected,
+				isIndeterminate,
+				isLoading,
+				isRequiredPlugin,
+				plugins,
+				pluginsList
 			});
-		}))))), /*#__PURE__*/ react.default.createElement(_elementor_ui.DialogActions, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Button, {
+		}))), /*#__PURE__*/ react.default.createElement(_elementor_ui.DialogActions, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Button, {
 			onClick: handleClose,
 			color: "secondary"
 		}, (0, _wordpress_i18n.__)("Cancel", "elementor")), /*#__PURE__*/ react.default.createElement(_elementor_ui.Button, {
 			onClick: function onClick() {
 				var pluginsSelection = getPluginsSelection();
-				handleSaveChanges("plugins", pluginsSelection, Object.values(pluginsSelection).some(Boolean), transformAnalyticsData$2(pluginsSelection));
+				var hasEnabledCustomization = Object.values(pluginsSelection).some(Boolean);
+				var transformedAnalytics = transformAnalyticsData$3(pluginsSelection);
+				handleSaveChanges(KIT_SECTIONS.PLUGINS, pluginsSelection, hasEnabledCustomization, transformedAnalytics);
 				handleClose();
 			},
 			variant: "contained",
@@ -15429,9 +15690,9 @@ init_use_cloud_kits_eligibility();
 		}, (0, _wordpress_i18n.__)("Save changes", "elementor"))));
 	}
 	KitPluginsCustomizationDialog.propTypes = {
-		open: import_prop_types$55.default.bool.isRequired,
-		handleClose: import_prop_types$55.default.func.isRequired,
-		handleSaveChanges: import_prop_types$55.default.func.isRequired
+		open: import_prop_types$82.default.bool.isRequired,
+		handleClose: import_prop_types$82.default.func.isRequired,
+		handleSaveChanges: import_prop_types$82.default.func.isRequired
 	};
 
 //#endregion
@@ -15465,19 +15726,19 @@ init_use_cloud_kits_eligibility();
 		}, (0, _wordpress_i18n.__)("Save changes", "elementor"))));
 	}
 	KitCustomizationDialog.propTypes = {
-		open: import_prop_types$55.default.bool.isRequired,
-		handleClose: import_prop_types$55.default.func.isRequired,
-		handleSaveChanges: import_prop_types$55.default.func.isRequired,
-		children: import_prop_types$55.default.node.isRequired,
-		title: import_prop_types$55.default.string.isRequired,
-		saveDisabled: import_prop_types$55.default.bool
+		open: import_prop_types$82.default.bool.isRequired,
+		handleClose: import_prop_types$82.default.func.isRequired,
+		handleSaveChanges: import_prop_types$82.default.func.isRequired,
+		children: import_prop_types$82.default.node.isRequired,
+		title: import_prop_types$82.default.string.isRequired,
+		saveDisabled: import_prop_types$82.default.bool
 	};
 
 //#endregion
 //#region app/modules/import-export-customization/assets/js/shared/components/customization-list-setting-section.js
 	init_toConsumableArray();
 	init_slicedToArray();
-	init_utils$4();
+	init_utils$5();
 	var DEFAULT_VISIBLE_ITEMS_COUNT = 16;
 	function ListSettingSection(_ref) {
 		var items = _ref.items;
@@ -15579,18 +15840,18 @@ init_use_cloud_kits_eligibility();
 		}, showMore ? (0, _wordpress_i18n.__)("Show less", "elementor") : (0, _wordpress_i18n.__)("Show more", "elementor")));
 	}
 	ListSettingSection.propTypes = {
-		title: import_prop_types$55.string.isRequired,
-		children: import_prop_types$55.node,
-		loading: import_prop_types$55.bool,
-		disabled: import_prop_types$55.bool,
-		checked: import_prop_types$55.bool,
-		settingKey: import_prop_types$55.string,
-		onSettingChange: import_prop_types$55.func.isRequired,
-		items: import_prop_types$55.arrayOf(import_prop_types$55.shape({
-			label: import_prop_types$55.string.isRequired,
-			value: import_prop_types$55.oneOfType([import_prop_types$55.string, import_prop_types$55.number])
+		title: import_prop_types$82.string.isRequired,
+		children: import_prop_types$82.node,
+		loading: import_prop_types$82.bool,
+		disabled: import_prop_types$82.bool,
+		checked: import_prop_types$82.bool,
+		settingKey: import_prop_types$82.string,
+		onSettingChange: import_prop_types$82.func.isRequired,
+		items: import_prop_types$82.arrayOf(import_prop_types$82.shape({
+			label: import_prop_types$82.string.isRequired,
+			value: import_prop_types$82.oneOfType([import_prop_types$82.string, import_prop_types$82.number])
 		})),
-		settings: import_prop_types$55.arrayOf(import_prop_types$55.oneOfType([import_prop_types$55.string, import_prop_types$55.number]))
+		settings: import_prop_types$82.arrayOf(import_prop_types$82.oneOfType([import_prop_types$82.string, import_prop_types$82.number]))
 	};
 
 //#endregion
@@ -15647,15 +15908,15 @@ init_use_cloud_kits_eligibility();
 		}()), children && /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { mt: 1 } }, children));
 	};
 	SettingSection.propTypes = {
-		title: import_prop_types$55.string.isRequired,
-		description: import_prop_types$55.string,
-		children: import_prop_types$55.node,
-		hasToggle: import_prop_types$55.bool,
-		checked: import_prop_types$55.bool,
-		disabled: import_prop_types$55.bool,
-		settingKey: import_prop_types$55.string,
-		onSettingChange: import_prop_types$55.func,
-		notExported: import_prop_types$55.bool
+		title: import_prop_types$82.string.isRequired,
+		description: import_prop_types$82.string,
+		children: import_prop_types$82.node,
+		hasToggle: import_prop_types$82.bool,
+		checked: import_prop_types$82.bool,
+		disabled: import_prop_types$82.bool,
+		settingKey: import_prop_types$82.string,
+		onSettingChange: import_prop_types$82.func,
+		notExported: import_prop_types$82.bool
 	};
 
 //#endregion
@@ -15736,7 +15997,7 @@ init_use_cloud_kits_eligibility();
 	init_defineProperty$1();
 	init_slicedToArray();
 	init_apps_event_tracking();
-	function ownKeys$14(e, r) {
+	function ownKeys$26(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -15746,20 +16007,20 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$14, "ownKeys");
-	function _objectSpread$13(e) {
+	__name(ownKeys$26, "ownKeys");
+	function _objectSpread$25(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$14(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$26(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$14(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$26(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$13, "_objectSpread");
-	var transformAnalyticsData$1 = function transformAnalyticsData(payload, customPostTypes) {
+	__name(_objectSpread$25, "_objectSpread");
+	var transformAnalyticsData$2 = function transformAnalyticsData(payload, customPostTypes) {
 		var optionsArray = [{
 			key: "customPostTypes",
 			options: customPostTypes
@@ -15786,21 +16047,174 @@ init_use_cloud_kits_eligibility();
 		title: (0, _wordpress_i18n.__)("Save media to the cloud", "elementor"),
 		description: (0, _wordpress_i18n.__)("All images and files are stored with the template. Keeps everything intact, but the file is larger.", "elementor")
 	}];
-	function KitContentCustomizationDialog(_ref) {
+	var customPostTypePropType = import_prop_types$82.default.shape({
+		label: import_prop_types$82.default.string.isRequired,
+		value: import_prop_types$82.default.oneOfType([import_prop_types$82.default.string, import_prop_types$82.default.number]).isRequired
+	});
+	var refPropType = import_prop_types$82.default.oneOfType([import_prop_types$82.default.func, import_prop_types$82.default.shape({ current: import_prop_types$82.default.any })]);
+	var contentSettingsPropType = import_prop_types$82.default.shape({
+		customPostTypes: import_prop_types$82.default.arrayOf(import_prop_types$82.default.oneOfType([import_prop_types$82.default.string, import_prop_types$82.default.number])).isRequired,
+		mediaFormat: import_prop_types$82.default.string
+	});
+	function CustomPostTypesSection(_ref) {
+		var customPostTypes = _ref.customPostTypes;
+		var isImport = _ref.isImport;
+		var _onSettingChange = _ref.onSettingChange;
+		var settings = _ref.settings;
+		return isImport && !(customPostTypes !== null && customPostTypes !== void 0 && customPostTypes.length) ? /*#__PURE__*/ react.default.createElement(SettingSection, {
+			title: (0, _wordpress_i18n.__)("Custom post types", "elementor"),
+			settingKey: "customPostTypes",
+			notExported: true
+		}) : /*#__PURE__*/ react.default.createElement(ListSettingSection, {
+			settingKey: "customPostTypes",
+			title: (0, _wordpress_i18n.__)("Custom post types", "elementor"),
+			onSettingChange: function onSettingChange(selectedCustomPostTypes) {
+				_onSettingChange("customPostTypes", selectedCustomPostTypes);
+			},
+			settings: settings.customPostTypes,
+			items: customPostTypes
+		});
+	}
+	CustomPostTypesSection.propTypes = {
+		customPostTypes: import_prop_types$82.default.arrayOf(customPostTypePropType).isRequired,
+		isImport: import_prop_types$82.default.bool.isRequired,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		settings: contentSettingsPropType.isRequired
+	};
+	function MediaFormatSection(_ref2) {
+		var alertRef = _ref2.alertRef;
+		var isCloudKitsEligible = _ref2.isCloudKitsEligible;
+		var isImport = _ref2.isImport;
+		var mediaFormatSectionRef = _ref2.mediaFormatSectionRef;
+		var onSettingChange = _ref2.onSettingChange;
+		var settings = _ref2.settings;
+		var showMediaFormatValidation = _ref2.showMediaFormatValidation;
+		if (isImport) return /*#__PURE__*/ react.default.createElement(SettingSection, {
+			title: (0, _wordpress_i18n.__)("Media format", "elementor"),
+			settingKey: "mediaFormat",
+			hasToggle: false
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
+			icon: /*#__PURE__*/ react.default.createElement(_elementor_ui.SvgIcon, {
+				color: "info",
+				viewBox: "0 0 24 24"
+			}, /*#__PURE__*/ react.default.createElement("path", {
+				d: "M11.8623 14.7549C12.3665 14.8061 12.7598 15.2322 12.7598 15.75C12.7598 16.2678 12.3665 16.6939 11.8623 16.7451L11.7598 16.75H11.75C11.1977 16.75 10.75 16.3023 10.75 15.75C10.75 15.1977 11.1977 14.75 11.75 14.75H11.7598L11.8623 14.7549Z",
+				fill: "currentColor"
+			}), /*#__PURE__*/ react.default.createElement("path", {
+				d: "M11.75 7C12.1642 7 12.5 7.33579 12.5 7.75V12.75C12.5 13.1642 12.1642 13.5 11.75 13.5C11.3358 13.5 11 13.1642 11 12.75V7.75C11 7.33579 11.3358 7 11.75 7Z",
+				fill: "currentColor"
+			}), /*#__PURE__*/ react.default.createElement("path", {
+				fillRule: "evenodd",
+				clipRule: "evenodd",
+				d: "M11.75 2C17.1348 2 21.5 6.36522 21.5 11.75C21.5 17.1348 17.1348 21.5 11.75 21.5C6.36522 21.5 2 17.1348 2 11.75C2 6.36522 6.36522 2 11.75 2ZM11.75 3.5C7.19365 3.5 3.5 7.19365 3.5 11.75C3.5 16.3063 7.19365 20 11.75 20C16.3063 20 20 16.3063 20 11.75C20 7.19365 16.3063 3.5 11.75 3.5Z",
+				fill: "currentColor"
+			})),
+			sx: {
+				backgroundColor: "transparent",
+				p: 0
+			}
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			color: "text.primary"
+		}, /*#__PURE__*/ react.default.createElement("strong", null, (0, _wordpress_i18n.__)("Note:", "elementor")), " ", (0, _wordpress_i18n.__)("The media will be uploaded automatically, just as it was saved during export", "elementor"))));
+		if (!isCloudKitsEligible) return null;
+		return /*#__PURE__*/ react.default.createElement(SettingSection, {
+			ref: mediaFormatSectionRef,
+			description: (0, _wordpress_i18n.__)("Select how do you want to save & export the media files.", "elementor"),
+			title: (0, _wordpress_i18n.__)("Media format", "elementor"),
+			settingKey: "mediaFormat",
+			hasToggle: false
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { pt: 2.5 } }, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControl, {
+			component: "fieldset",
+			sx: { width: "100%" }
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.RadioGroup, {
+			value: settings.mediaFormat,
+			onChange: function onChange(event) {
+				onSettingChange("mediaFormat", event.target.value);
+			},
+			sx: { width: "100%" }
+		}, MEDIA_FORMAT_CONFIG.map(function(option, index) {
+			return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, {
+				key: option.value,
+				sx: {
+					border: 1,
+					borderColor: settings.mediaFormat === option.value ? "info.light" : "divider",
+					borderRadius: 2,
+					p: 1,
+					mb: index < MEDIA_FORMAT_CONFIG.length - 1 ? 1.5 : 0,
+					width: "100%"
+				}
+			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
+				value: option.value,
+				control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Radio, {
+					color: "info",
+					"data-testid": "media-format-".concat(option.value)
+				}),
+				label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+					variant: "body2",
+					sx: { mb: .25 }
+				}, option.title), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+					variant: "body2",
+					color: "text.secondary"
+				}, option.description)),
+				sx: {
+					alignItems: "flex-start",
+					m: 0,
+					width: "100%"
+				}
+			}));
+		}))), showMediaFormatValidation && /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
+			ref: alertRef,
+			icon: /*#__PURE__*/ react.default.createElement(_elementor_ui.SvgIcon, {
+				color: "error",
+				viewBox: "0 0 24 24"
+			}, /*#__PURE__*/ react.default.createElement("path", {
+				d: "M11.8623 14.7549C12.3665 14.8061 12.7598 15.2322 12.7598 15.75C12.7598 16.2678 12.3665 16.6939 11.8623 16.7451L11.7598 16.75H11.75C11.1977 16.75 10.75 16.3023 10.75 15.75C10.75 15.1977 11.1977 14.75 11.75 14.75H11.7598L11.8623 14.7549Z",
+				fill: "currentColor"
+			}), /*#__PURE__*/ react.default.createElement("path", {
+				d: "M11.75 7C12.1642 7 12.5 7.33579 12.5 7.75V12.75C12.5 13.1642 12.1642 13.5 11.75 13.5C11.3358 13.5 11 13.1642 11 12.75V7.75C11 7.33579 11.3358 7 11.75 7Z",
+				fill: "currentColor"
+			}), /*#__PURE__*/ react.default.createElement("path", {
+				fillRule: "evenodd",
+				clipRule: "evenodd",
+				d: "M11.75 2C17.1348 2 21.5 6.36522 21.5 11.75C21.5 17.1348 17.1348 21.5 11.75 21.5C6.36522 21.5 2 17.1348 2 11.75C2 6.36522 6.36522 2 11.75 2ZM11.75 3.5C7.19365 3.5 3.5 7.19365 3.5 11.75C3.5 16.3063 7.19365 20 11.75 20C16.3063 20 20 16.3063 20 11.75C20 7.19365 16.3063 3.5 11.75 3.5Z",
+				fill: "currentColor"
+			})),
+			sx: {
+				mt: 2,
+				ml: 1,
+				backgroundColor: "transparent",
+				p: 0
+			}
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			color: "text.primary"
+		}, /*#__PURE__*/ react.default.createElement("strong", null, (0, _wordpress_i18n.__)("Note:", "elementor")), " ", (0, _wordpress_i18n.__)("To export a ZIP, go to Edit Content, choose 'Link to Media', then Export as ZIP.", "elementor"), /*#__PURE__*/ react.default.createElement("br", null), (0, _wordpress_i18n.__)("Or, save this template to the cloud instead.", "elementor")))));
+	}
+	MediaFormatSection.propTypes = {
+		alertRef: refPropType,
+		isCloudKitsEligible: import_prop_types$82.default.bool.isRequired,
+		isImport: import_prop_types$82.default.bool.isRequired,
+		mediaFormatSectionRef: refPropType,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		settings: contentSettingsPropType.isRequired,
+		showMediaFormatValidation: import_prop_types$82.default.bool.isRequired
+	};
+	function KitContentCustomizationDialog(_ref3) {
 		var _useContextDetection;
 		var _data$customization$c2;
-		var open = _ref.open;
-		var handleClose = _ref.handleClose;
-		var _handleSaveChanges = _ref.handleSaveChanges;
-		var _ref$isCloudKitsEligi = _ref.isCloudKitsEligible;
-		var isCloudKitsEligible = _ref$isCloudKitsEligi === void 0 ? false : _ref$isCloudKitsEligi;
-		var _ref$showMediaFormatV = _ref.showMediaFormatValidation;
-		var showMediaFormatValidation = _ref$showMediaFormatV === void 0 ? false : _ref$showMediaFormatV;
-		var _ref2 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
-		var _ref2$isImport = _ref2.isImport;
-		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
-		var _ref2$contextData = _ref2.contextData;
-		var contextData = _ref2$contextData === void 0 ? {} : _ref2$contextData;
+		var open = _ref3.open;
+		var handleClose = _ref3.handleClose;
+		var _handleSaveChanges = _ref3.handleSaveChanges;
+		var _ref3$isCloudKitsElig = _ref3.isCloudKitsEligible;
+		var isCloudKitsEligible = _ref3$isCloudKitsElig === void 0 ? false : _ref3$isCloudKitsElig;
+		var _ref3$showMediaFormat = _ref3.showMediaFormatValidation;
+		var showMediaFormatValidation = _ref3$showMediaFormat === void 0 ? false : _ref3$showMediaFormat;
+		var _ref4 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
+		var _ref4$isImport = _ref4.isImport;
+		var isImport = _ref4$isImport === void 0 ? false : _ref4$isImport;
+		var _ref4$contextData = _ref4.contextData;
+		var contextData = _ref4$contextData === void 0 ? {} : _ref4$contextData;
 		var _contextData$data = contextData.data;
 		var data = _contextData$data === void 0 ? null : _contextData$data;
 		var _contextData$isOldEle = contextData.isOldElementorVersion;
@@ -15820,14 +16234,14 @@ init_use_cloud_kits_eligibility();
 		(0, react.useEffect)(function() {
 			if (customPostTypes) setSettings(function(prevSettings) {
 				var _data$customization$c;
-				return _objectSpread$13(_objectSpread$13({}, prevSettings), {}, { customPostTypes: ((_data$customization$c = data.customization.content) === null || _data$customization$c === void 0 ? void 0 : _data$customization$c.customPostTypes) || customPostTypes.map(function(_ref3) {
-					return _ref3.value;
+				return _objectSpread$25(_objectSpread$25({}, prevSettings), {}, { customPostTypes: ((_data$customization$c = data.customization.content) === null || _data$customization$c === void 0 ? void 0 : _data$customization$c.customPostTypes) || customPostTypes.map(function(_ref5) {
+					return _ref5.value;
 				}) });
 			});
 		}, [customPostTypes, (_data$customization$c2 = data.customization.content) === null || _data$customization$c2 === void 0 ? void 0 : _data$customization$c2.customPostTypes]);
 		(0, react.useEffect)(function() {
 			if (open) setSettings(function(prevState) {
-				if (!data.includes.includes("content")) return {
+				if (!data.includes.includes(KIT_SECTIONS.CONTENT)) return {
 					customPostTypes: [],
 					mediaFormat: MEDIA_FORMAT_OPTIONS.LINK
 				};
@@ -15852,389 +16266,43 @@ init_use_cloud_kits_eligibility();
 		}, [showMediaFormatValidation]);
 		var handleSettingsChange = function handleSettingsChange(settingKey, payload) {
 			setSettings(function(prev) {
-				return _objectSpread$13(_objectSpread$13({}, prev), {}, _defineProperty$1({}, settingKey, payload));
+				return _objectSpread$25(_objectSpread$25({}, prev), {}, _defineProperty$1({}, settingKey, payload));
 			});
 		};
+		var registeredSections = getAvailableCustomizationDialogChildren(KIT_SECTIONS.CONTENT);
 		return /*#__PURE__*/ react.default.createElement(KitCustomizationDialog, {
 			open,
 			title: (0, _wordpress_i18n.__)("Edit content", "elementor"),
 			handleClose,
 			handleSaveChanges: function handleSaveChanges() {
-				_handleSaveChanges("content", settings, true, transformAnalyticsData$1(settings, customPostTypes));
+				var transformedAnalytics = transformAnalyticsData$2(settings, customPostTypes);
+				_handleSaveChanges(KIT_SECTIONS.CONTENT, settings, true, transformedAnalytics);
 				handleClose();
 			}
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, isOldElementorVersion && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), isImport && !(customPostTypes !== null && customPostTypes !== void 0 && customPostTypes.length) ? /*#__PURE__*/ react.default.createElement(SettingSection, {
-			title: (0, _wordpress_i18n.__)("Custom post types", "elementor"),
-			settingKey: "customPostTypes",
-			notExported: true
-		}) : /*#__PURE__*/ react.default.createElement(ListSettingSection, {
-			settingKey: "customPostTypes",
-			title: (0, _wordpress_i18n.__)("Custom post types", "elementor"),
-			onSettingChange: function onSettingChange(selectedCustomPostTypes) {
-				handleSettingsChange("customPostTypes", selectedCustomPostTypes);
-			},
-			settings: settings.customPostTypes,
-			items: customPostTypes
-		}), function renderMediaFormatSection() {
-			if (isImport) return /*#__PURE__*/ react.default.createElement(SettingSection, {
-				title: (0, _wordpress_i18n.__)("Media format", "elementor"),
-				settingKey: "mediaFormat",
-				hasToggle: false
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
-				icon: /*#__PURE__*/ react.default.createElement(_elementor_ui.SvgIcon, {
-					color: "info",
-					viewBox: "0 0 24 24"
-				}, /*#__PURE__*/ react.default.createElement("path", {
-					d: "M11.8623 14.7549C12.3665 14.8061 12.7598 15.2322 12.7598 15.75C12.7598 16.2678 12.3665 16.6939 11.8623 16.7451L11.7598 16.75H11.75C11.1977 16.75 10.75 16.3023 10.75 15.75C10.75 15.1977 11.1977 14.75 11.75 14.75H11.7598L11.8623 14.7549Z",
-					fill: "currentColor"
-				}), /*#__PURE__*/ react.default.createElement("path", {
-					d: "M11.75 7C12.1642 7 12.5 7.33579 12.5 7.75V12.75C12.5 13.1642 12.1642 13.5 11.75 13.5C11.3358 13.5 11 13.1642 11 12.75V7.75C11 7.33579 11.3358 7 11.75 7Z",
-					fill: "currentColor"
-				}), /*#__PURE__*/ react.default.createElement("path", {
-					fillRule: "evenodd",
-					clipRule: "evenodd",
-					d: "M11.75 2C17.1348 2 21.5 6.36522 21.5 11.75C21.5 17.1348 17.1348 21.5 11.75 21.5C6.36522 21.5 2 17.1348 2 11.75C2 6.36522 6.36522 2 11.75 2ZM11.75 3.5C7.19365 3.5 3.5 7.19365 3.5 11.75C3.5 16.3063 7.19365 20 11.75 20C16.3063 20 20 16.3063 20 11.75C20 7.19365 16.3063 3.5 11.75 3.5Z",
-					fill: "currentColor"
-				})),
-				sx: {
-					backgroundColor: "transparent",
-					p: 0
-				}
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-				variant: "body2",
-				color: "text.primary"
-			}, /*#__PURE__*/ react.default.createElement("strong", null, (0, _wordpress_i18n.__)("Note:", "elementor")), " ", (0, _wordpress_i18n.__)("The media will be uploaded automatically, just as it was saved during export", "elementor"))));
-			if (!isImport && !isCloudKitsEligible) return null;
-			return /*#__PURE__*/ react.default.createElement(SettingSection, {
-				ref: mediaFormatSectionRef,
-				description: (0, _wordpress_i18n.__)("Select how do you want to save & export the media files.", "elementor"),
-				title: (0, _wordpress_i18n.__)("Media format", "elementor"),
-				settingKey: "mediaFormat",
-				hasToggle: false
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: { pt: 2.5 } }, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControl, {
-				component: "fieldset",
-				sx: { width: "100%" }
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.RadioGroup, {
-				value: settings.mediaFormat,
-				onChange: function onChange(event) {
-					handleSettingsChange("mediaFormat", event.target.value);
-				},
-				sx: { width: "100%" }
-			}, MEDIA_FORMAT_CONFIG.map(function(option, index) {
-				return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, {
-					key: option.value,
-					sx: {
-						border: 1,
-						borderColor: settings.mediaFormat === option.value ? "info.light" : "divider",
-						borderRadius: 2,
-						p: 1,
-						mb: index < MEDIA_FORMAT_CONFIG.length - 1 ? 1.5 : 0,
-						width: "100%"
-					}
-				}, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
-					value: option.value,
-					control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Radio, {
-						color: "info",
-						"data-testid": "media-format-".concat(option.value)
-					}),
-					label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-						variant: "body2",
-						sx: { mb: .25 }
-					}, option.title), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-						variant: "body2",
-						color: "text.secondary"
-					}, option.description)),
-					sx: {
-						alignItems: "flex-start",
-						m: 0,
-						width: "100%"
-					}
-				}));
-			}))), showMediaFormatValidation && /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
-				ref: alertRef,
-				icon: /*#__PURE__*/ react.default.createElement(_elementor_ui.SvgIcon, {
-					color: "error",
-					viewBox: "0 0 24 24"
-				}, /*#__PURE__*/ react.default.createElement("path", {
-					d: "M11.8623 14.7549C12.3665 14.8061 12.7598 15.2322 12.7598 15.75C12.7598 16.2678 12.3665 16.6939 11.8623 16.7451L11.7598 16.75H11.75C11.1977 16.75 10.75 16.3023 10.75 15.75C10.75 15.1977 11.1977 14.75 11.75 14.75H11.7598L11.8623 14.7549Z",
-					fill: "currentColor"
-				}), /*#__PURE__*/ react.default.createElement("path", {
-					d: "M11.75 7C12.1642 7 12.5 7.33579 12.5 7.75V12.75C12.5 13.1642 12.1642 13.5 11.75 13.5C11.3358 13.5 11 13.1642 11 12.75V7.75C11 7.33579 11.3358 7 11.75 7Z",
-					fill: "currentColor"
-				}), /*#__PURE__*/ react.default.createElement("path", {
-					fillRule: "evenodd",
-					clipRule: "evenodd",
-					d: "M11.75 2C17.1348 2 21.5 6.36522 21.5 11.75C21.5 17.1348 17.1348 21.5 11.75 21.5C6.36522 21.5 2 17.1348 2 11.75C2 6.36522 6.36522 2 11.75 2ZM11.75 3.5C7.19365 3.5 3.5 7.19365 3.5 11.75C3.5 16.3063 7.19365 20 11.75 20C16.3063 20 20 16.3063 20 11.75C20 7.19365 16.3063 3.5 11.75 3.5Z",
-					fill: "currentColor"
-				})),
-				sx: {
-					mt: 2,
-					ml: 1,
-					backgroundColor: "transparent",
-					p: 0
-				}
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-				variant: "body2",
-				color: "text.primary"
-			}, /*#__PURE__*/ react.default.createElement("strong", null, (0, _wordpress_i18n.__)("Note:", "elementor")), " ", (0, _wordpress_i18n.__)("To export a ZIP, go to Edit Content, choose 'Link to Media', then Export as ZIP.", "elementor"), /*#__PURE__*/ react.default.createElement("br", null), (0, _wordpress_i18n.__)("Or, save this template to the cloud instead.", "elementor")))));
-		}()));
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, isOldElementorVersion && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), registeredSections.map(function(section) {
+			var SectionComponent = section.component;
+			return /*#__PURE__*/ react.default.createElement(SectionComponent, {
+				key: section.key,
+				alertRef,
+				customPostTypes,
+				data,
+				isCloudKitsEligible,
+				isImport,
+				isOldExport: contextData === null || contextData === void 0 ? void 0 : contextData.isOldExport,
+				mediaFormatSectionRef,
+				onSettingChange: handleSettingsChange,
+				open,
+				settings,
+				showMediaFormatValidation
+			});
+		})));
 	}
 	KitContentCustomizationDialog.propTypes = {
-		open: import_prop_types$55.default.bool.isRequired,
-		handleClose: import_prop_types$55.default.func.isRequired,
-		handleSaveChanges: import_prop_types$55.default.func.isRequired,
-		isCloudKitsEligible: import_prop_types$55.default.bool,
-		showMediaFormatValidation: import_prop_types$55.default.bool
-	};
-
-//#endregion
-//#region app/modules/import-export-customization/assets/js/shared/components/classes-variables-section.js
-	init_slicedToArray();
-	var SubSettingRow = function SubSettingRow(_ref) {
-		var label = _ref.label;
-		var checked = _ref.checked;
-		var _onChange = _ref.onChange;
-		var _ref$disabled = _ref.disabled;
-		var disabled = _ref$disabled === void 0 ? false : _ref$disabled;
-		var _ref$limitExceeded = _ref.limitExceeded;
-		var limitExceeded = _ref$limitExceeded === void 0 ? false : _ref$limitExceeded;
-		var _ref$overLimitCount = _ref.overLimitCount;
-		var overLimitCount = _ref$overLimitCount === void 0 ? 0 : _ref$overLimitCount;
-		var onReviewClick = _ref.onReviewClick;
-		var _ref$overrideAll = _ref.overrideAll;
-		var overrideAll = _ref$overrideAll === void 0 ? false : _ref$overrideAll;
-		var onOverrideAllChange = _ref.onOverrideAllChange;
-		var _ref$showOverrideOpti = _ref.showOverrideOption;
-		var showOverrideOption = _ref$showOverrideOpti === void 0 ? false : _ref$showOverrideOpti;
-		var _ref$notExported = _ref.notExported;
-		if (_ref$notExported === void 0 ? false : _ref$notExported) return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-			display: "flex",
-			justifyContent: "space-between",
-			alignItems: "center",
-			px: 1.25
-		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-			variant: "body1",
-			color: "text.primary"
-		}, label), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-			variant: "body1",
-			color: "text.secondary"
-		}, (0, _wordpress_i18n.__)("Not exported", "elementor")));
-		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-			display: "flex",
-			justifyContent: "space-between",
-			alignItems: "center",
-			px: 1.25
-		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
-			direction: "row",
-			alignItems: "center",
-			spacing: 1,
-			sx: { flex: 1 }
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-			variant: "body1",
-			color: "text.primary"
-		}, label), limitExceeded && overLimitCount > 0 && /*#__PURE__*/ react.default.createElement(_elementor_ui.Chip, {
-			label: "".concat(overLimitCount, " ").concat((0, _wordpress_i18n.__)("over limit", "elementor")),
-			size: "tiny",
-			sx: {
-				height: 20,
-				borderColor: "warning.main",
-				color: "warning.main",
-				backgroundColor: "transparent",
-				"& .MuiChip-label": {
-					px: .75,
-					fontSize: 12
-				}
-			},
-			variant: "outlined"
-		}), limitExceeded && onReviewClick && /*#__PURE__*/ react.default.createElement(_elementor_ui.Link, {
-			component: "button",
-			variant: "body2",
-			color: "info.main",
-			onClick: onReviewClick,
-			sx: {
-				display: "flex",
-				alignItems: "center",
-				gap: .5,
-				textDecoration: "none",
-				"&:hover": { textDecoration: "underline" }
-			}
-		}, (0, _wordpress_i18n.__)("Review", "elementor"), /*#__PURE__*/ react.default.createElement(_elementor_icons.ExternalLinkIcon, { sx: { fontSize: 16 } }))), /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
-			direction: "row",
-			alignItems: "center",
-			spacing: 1
-		}, showOverrideOption && limitExceeded && /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
-			direction: "row",
-			alignItems: "center",
-			spacing: .5
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
-			control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
-				checked: overrideAll,
-				onChange: function onChange(e) {
-					return onOverrideAllChange === null || onOverrideAllChange === void 0 ? void 0 : onOverrideAllChange(e.target.checked);
-				},
-				color: "info",
-				size: "small",
-				sx: { p: 0 }
-			}),
-			label: (0, _wordpress_i18n.__)("Override all", "elementor"),
-			sx: {
-				gap: 1,
-				mr: 0,
-				"& .MuiFormControlLabel-label": { fontSize: 14 }
-			}
-		}), /*#__PURE__*/ react.default.createElement(_elementor_ui.Tooltip, {
-			title: (0, _wordpress_i18n.__)("This will delete all existing items and replace them with the imported ones", "elementor"),
-			placement: "top",
-			arrow: true
-		}, /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, { sx: {
-			fontSize: 16,
-			color: "warning.main",
-			cursor: "pointer"
-		} }))), /*#__PURE__*/ react.default.createElement(_elementor_ui.Switch, {
-			checked,
-			onChange: function onChange(e, isChecked) {
-				return _onChange === null || _onChange === void 0 ? void 0 : _onChange(isChecked);
-			},
-			color: "info",
-			size: "medium",
-			disabled: disabled || limitExceeded && !overrideAll
-		})));
-	};
-	SubSettingRow.propTypes = {
-		label: import_prop_types$55.default.string.isRequired,
-		checked: import_prop_types$55.default.bool,
-		onChange: import_prop_types$55.default.func,
-		disabled: import_prop_types$55.default.bool,
-		limitExceeded: import_prop_types$55.default.bool,
-		overLimitCount: import_prop_types$55.default.number,
-		onReviewClick: import_prop_types$55.default.func,
-		overrideAll: import_prop_types$55.default.bool,
-		onOverrideAllChange: import_prop_types$55.default.func,
-		showOverrideOption: import_prop_types$55.default.bool,
-		notExported: import_prop_types$55.default.bool
-	};
-	function ClassesVariablesSection(_ref2) {
-		var _settings$classesOver;
-		var _settings$variablesOv;
-		var _settings$classes;
-		var _settings$variables;
-		var settings = _ref2.settings;
-		var onSettingChange = _ref2.onSettingChange;
-		var _ref2$isImport = _ref2.isImport;
-		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
-		var _ref2$classesExported = _ref2.classesExported;
-		var classesExported = _ref2$classesExported === void 0 ? true : _ref2$classesExported;
-		var _ref2$variablesExport = _ref2.variablesExported;
-		var variablesExported = _ref2$variablesExport === void 0 ? true : _ref2$variablesExport;
-		var _ref2$classesLimitExc = _ref2.classesLimitExceeded;
-		var classesLimitExceeded = _ref2$classesLimitExc === void 0 ? false : _ref2$classesLimitExc;
-		var _ref2$variablesLimitE = _ref2.variablesLimitExceeded;
-		var variablesLimitExceeded = _ref2$variablesLimitE === void 0 ? false : _ref2$variablesLimitE;
-		var _ref2$classesOverLimi = _ref2.classesOverLimitCount;
-		var classesOverLimitCount = _ref2$classesOverLimi === void 0 ? 0 : _ref2$classesOverLimi;
-		var _ref2$variablesOverLi = _ref2.variablesOverLimitCount;
-		var variablesOverLimitCount = _ref2$variablesOverLi === void 0 ? 0 : _ref2$variablesOverLi;
-		var onClassesReviewClick = _ref2.onClassesReviewClick;
-		var onVariablesReviewClick = _ref2.onVariablesReviewClick;
-		var _ref2$disabled = _ref2.disabled;
-		var disabled = _ref2$disabled === void 0 ? false : _ref2$disabled;
-		var _ref2$notExported = _ref2.notExported;
-		var notExported = _ref2$notExported === void 0 ? false : _ref2$notExported;
-		var _useState2 = _slicedToArray((0, react.useState)((_settings$classesOver = settings.classesOverrideAll) !== null && _settings$classesOver !== void 0 ? _settings$classesOver : false), 2);
-		var classesOverrideAll = _useState2[0];
-		var setClassesOverrideAll = _useState2[1];
-		var _useState4 = _slicedToArray((0, react.useState)((_settings$variablesOv = settings.variablesOverrideAll) !== null && _settings$variablesOv !== void 0 ? _settings$variablesOv : false), 2);
-		var variablesOverrideAll = _useState4[0];
-		var setVariablesOverrideAll = _useState4[1];
-		var hasLimitWarning = isImport && (classesLimitExceeded || variablesLimitExceeded);
-		var classesNotExported = isImport && !classesExported;
-		var variablesNotExported = isImport && !variablesExported;
-		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-			mb: 3,
-			border: 1,
-			borderRadius: 1,
-			borderColor: "action.focus",
-			p: 2.5
-		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { spacing: 2.5 }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-			display: "flex",
-			justifyContent: "space-between",
-			alignItems: "center"
-		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, { variant: "h6" }, (0, _wordpress_i18n.__)("Classes & variables", "elementor"))), hasLimitWarning && !notExported && /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
-			severity: "warning",
-			icon: /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, { sx: { color: "warning.main" } }),
-			sx: {
-				alignItems: "center",
-				backgroundColor: "warning.background",
-				"& .MuiAlert-message": {
-					display: "flex",
-					alignItems: "center",
-					gap: .75
-				}
-			}
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-			variant: "body2",
-			component: "span",
-			sx: { fontWeight: 500 },
-			color: "text.secondary"
-		}, (0, _wordpress_i18n.__)("Import limit reached.", "elementor")), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-			variant: "body2",
-			component: "span",
-			color: "text.secondary"
-		}, (0, _wordpress_i18n.__)("To resolve this, review existing items or choose to override", "elementor"))), /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { spacing: 1.5 }, /*#__PURE__*/ react.default.createElement(SubSettingRow, {
-			label: (0, _wordpress_i18n.__)("Classes", "elementor"),
-			checked: (_settings$classes = settings.classes) !== null && _settings$classes !== void 0 ? _settings$classes : false,
-			onChange: function onChange(isChecked) {
-				return onSettingChange("classes", isChecked);
-			},
-			disabled,
-			limitExceeded: isImport && classesLimitExceeded && !classesNotExported,
-			overLimitCount: classesOverLimitCount,
-			onReviewClick: onClassesReviewClick,
-			overrideAll: classesOverrideAll,
-			onOverrideAllChange: function onOverrideAllChange(checked) {
-				setClassesOverrideAll(checked);
-				onSettingChange("classesOverrideAll", checked);
-			},
-			showOverrideOption: isImport && !classesNotExported,
-			notExported: classesNotExported
-		}), /*#__PURE__*/ react.default.createElement(SubSettingRow, {
-			label: (0, _wordpress_i18n.__)("Variables", "elementor"),
-			checked: (_settings$variables = settings.variables) !== null && _settings$variables !== void 0 ? _settings$variables : false,
-			onChange: function onChange(isChecked) {
-				return onSettingChange("variables", isChecked);
-			},
-			disabled,
-			limitExceeded: isImport && variablesLimitExceeded && !variablesNotExported,
-			overLimitCount: variablesOverLimitCount,
-			onReviewClick: onVariablesReviewClick,
-			overrideAll: variablesOverrideAll,
-			onOverrideAllChange: function onOverrideAllChange(checked) {
-				setVariablesOverrideAll(checked);
-				onSettingChange("variablesOverrideAll", checked);
-			},
-			showOverrideOption: isImport && !variablesNotExported,
-			notExported: variablesNotExported
-		}))));
-	}
-	ClassesVariablesSection.propTypes = {
-		settings: import_prop_types$55.default.shape({
-			classes: import_prop_types$55.default.bool,
-			variables: import_prop_types$55.default.bool,
-			classesOverrideAll: import_prop_types$55.default.bool,
-			variablesOverrideAll: import_prop_types$55.default.bool
-		}).isRequired,
-		onSettingChange: import_prop_types$55.default.func.isRequired,
-		isImport: import_prop_types$55.default.bool,
-		classesExported: import_prop_types$55.default.bool,
-		variablesExported: import_prop_types$55.default.bool,
-		classesLimitExceeded: import_prop_types$55.default.bool,
-		variablesLimitExceeded: import_prop_types$55.default.bool,
-		classesOverLimitCount: import_prop_types$55.default.number,
-		variablesOverLimitCount: import_prop_types$55.default.number,
-		onClassesReviewClick: import_prop_types$55.default.func,
-		onVariablesReviewClick: import_prop_types$55.default.func,
-		disabled: import_prop_types$55.default.bool,
-		notExported: import_prop_types$55.default.bool
+		open: import_prop_types$82.default.bool.isRequired,
+		handleClose: import_prop_types$82.default.func.isRequired,
+		handleSaveChanges: import_prop_types$82.default.func.isRequired,
+		isCloudKitsEligible: import_prop_types$82.default.bool,
+		showMediaFormatValidation: import_prop_types$82.default.bool
 	};
 
 //#endregion
@@ -16316,10 +16384,10 @@ init_use_cloud_kits_eligibility();
 		}, (0, _wordpress_i18n.__)("Save and override", "elementor"))));
 	}
 	OverrideConfirmationDialog.propTypes = {
-		open: import_prop_types$55.default.bool.isRequired,
-		onClose: import_prop_types$55.default.func.isRequired,
-		onConfirm: import_prop_types$55.default.func.isRequired,
-		type: import_prop_types$55.default.oneOf([
+		open: import_prop_types$82.default.bool.isRequired,
+		onClose: import_prop_types$82.default.func.isRequired,
+		onConfirm: import_prop_types$82.default.func.isRequired,
+		type: import_prop_types$82.default.oneOf([
 			"classes",
 			"variables",
 			"both"
@@ -16480,12 +16548,460 @@ init_use_cloud_kits_eligibility();
 	}
 
 //#endregion
-//#region app/modules/import-export-customization/assets/js/shared/components/kit-settings-customization-dialog.js
-	init_defineProperty$1();
-	init_asyncToGenerator();
+//#region app/modules/import-export-customization/assets/js/shared/components/classes-variables-section.js
 	init_slicedToArray();
-	init_apps_event_tracking();
-	function ownKeys$13(e, r) {
+	var SubSettingRow = function SubSettingRow(_ref) {
+		var label = _ref.label;
+		var checked = _ref.checked;
+		var _onChange = _ref.onChange;
+		var _ref$disabled = _ref.disabled;
+		var disabled = _ref$disabled === void 0 ? false : _ref$disabled;
+		var _ref$limitExceeded = _ref.limitExceeded;
+		var limitExceeded = _ref$limitExceeded === void 0 ? false : _ref$limitExceeded;
+		var _ref$overLimitCount = _ref.overLimitCount;
+		var overLimitCount = _ref$overLimitCount === void 0 ? 0 : _ref$overLimitCount;
+		var onReviewClick = _ref.onReviewClick;
+		var _ref$overrideAll = _ref.overrideAll;
+		var overrideAll = _ref$overrideAll === void 0 ? false : _ref$overrideAll;
+		var onOverrideAllChange = _ref.onOverrideAllChange;
+		var _ref$showOverrideOpti = _ref.showOverrideOption;
+		var showOverrideOption = _ref$showOverrideOpti === void 0 ? false : _ref$showOverrideOpti;
+		var _ref$notExported = _ref.notExported;
+		var notExported = _ref$notExported === void 0 ? false : _ref$notExported;
+		var switchId = (0, react.useId)();
+		if (notExported) return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			display: "flex",
+			justifyContent: "space-between",
+			alignItems: "center",
+			px: 1.25
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body1",
+			color: "text.primary"
+		}, label), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body1",
+			color: "text.secondary"
+		}, (0, _wordpress_i18n.__)("Not exported", "elementor")));
+		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			display: "flex",
+			justifyContent: "space-between",
+			alignItems: "center",
+			px: 1.25
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
+			direction: "row",
+			alignItems: "center",
+			spacing: 1,
+			sx: { flex: 1 }
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body1",
+			color: "text.primary",
+			component: "label",
+			htmlFor: switchId
+		}, label), limitExceeded && overLimitCount > 0 && /*#__PURE__*/ react.default.createElement(_elementor_ui.Chip, {
+			label: "".concat(overLimitCount, " ").concat((0, _wordpress_i18n.__)("over limit", "elementor")),
+			size: "tiny",
+			sx: {
+				height: 20,
+				borderColor: "warning.main",
+				color: "warning.main",
+				backgroundColor: "transparent",
+				"& .MuiChip-label": {
+					px: .75,
+					fontSize: 12
+				}
+			},
+			variant: "outlined"
+		}), limitExceeded && onReviewClick && /*#__PURE__*/ react.default.createElement(_elementor_ui.Link, {
+			component: "button",
+			variant: "body2",
+			color: "info.main",
+			onClick: onReviewClick,
+			sx: {
+				display: "flex",
+				alignItems: "center",
+				gap: .5,
+				textDecoration: "none",
+				"&:hover": { textDecoration: "underline" }
+			}
+		}, (0, _wordpress_i18n.__)("Review", "elementor"), /*#__PURE__*/ react.default.createElement(_elementor_icons.ExternalLinkIcon, { sx: { fontSize: 16 } }))), /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
+			direction: "row",
+			alignItems: "center",
+			spacing: 1
+		}, showOverrideOption && limitExceeded && /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
+			direction: "row",
+			alignItems: "center",
+			spacing: .5
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
+			control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
+				checked: overrideAll,
+				onChange: function onChange(e) {
+					return onOverrideAllChange === null || onOverrideAllChange === void 0 ? void 0 : onOverrideAllChange(e.target.checked);
+				},
+				color: "info",
+				size: "small",
+				sx: { p: 0 }
+			}),
+			label: (0, _wordpress_i18n.__)("Override all", "elementor"),
+			sx: {
+				gap: 1,
+				mr: 0,
+				"& .MuiFormControlLabel-label": { fontSize: 14 }
+			}
+		}), /*#__PURE__*/ react.default.createElement(_elementor_ui.Tooltip, {
+			title: (0, _wordpress_i18n.__)("This will delete all existing items and replace them with the imported ones", "elementor"),
+			placement: "top",
+			arrow: true
+		}, /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, { sx: {
+			fontSize: 16,
+			color: "warning.main",
+			cursor: "pointer"
+		} }))), /*#__PURE__*/ react.default.createElement(_elementor_ui.Switch, {
+			checked,
+			onChange: function onChange(e, isChecked) {
+				return _onChange === null || _onChange === void 0 ? void 0 : _onChange(isChecked);
+			},
+			color: "info",
+			size: "medium",
+			disabled: disabled || limitExceeded && !overrideAll,
+			inputProps: { id: switchId }
+		})));
+	};
+	SubSettingRow.propTypes = {
+		label: import_prop_types$82.default.string.isRequired,
+		checked: import_prop_types$82.default.bool,
+		onChange: import_prop_types$82.default.func,
+		disabled: import_prop_types$82.default.bool,
+		limitExceeded: import_prop_types$82.default.bool,
+		overLimitCount: import_prop_types$82.default.number,
+		onReviewClick: import_prop_types$82.default.func,
+		overrideAll: import_prop_types$82.default.bool,
+		onOverrideAllChange: import_prop_types$82.default.func,
+		showOverrideOption: import_prop_types$82.default.bool,
+		notExported: import_prop_types$82.default.bool
+	};
+	function ClassesVariablesSection(_ref2) {
+		var _settings$classesOver;
+		var _settings$variablesOv;
+		var _settings$classes;
+		var _settings$variables;
+		var _settings$defaultStyl;
+		var settings = _ref2.settings;
+		var onSettingChange = _ref2.onSettingChange;
+		var _ref2$isImport = _ref2.isImport;
+		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
+		var _ref2$classesExported = _ref2.classesExported;
+		var classesExported = _ref2$classesExported === void 0 ? true : _ref2$classesExported;
+		var _ref2$defaultStylesEx = _ref2.defaultStylesExported;
+		var defaultStylesExported = _ref2$defaultStylesEx === void 0 ? true : _ref2$defaultStylesEx;
+		var _ref2$variablesExport = _ref2.variablesExported;
+		var variablesExported = _ref2$variablesExport === void 0 ? true : _ref2$variablesExport;
+		var _ref2$classesLimitExc = _ref2.classesLimitExceeded;
+		var classesLimitExceeded = _ref2$classesLimitExc === void 0 ? false : _ref2$classesLimitExc;
+		var _ref2$variablesLimitE = _ref2.variablesLimitExceeded;
+		var variablesLimitExceeded = _ref2$variablesLimitE === void 0 ? false : _ref2$variablesLimitE;
+		var _ref2$classesOverLimi = _ref2.classesOverLimitCount;
+		var classesOverLimitCount = _ref2$classesOverLimi === void 0 ? 0 : _ref2$classesOverLimi;
+		var _ref2$variablesOverLi = _ref2.variablesOverLimitCount;
+		var variablesOverLimitCount = _ref2$variablesOverLi === void 0 ? 0 : _ref2$variablesOverLi;
+		var onClassesReviewClick = _ref2.onClassesReviewClick;
+		var onVariablesReviewClick = _ref2.onVariablesReviewClick;
+		var _ref2$disabled = _ref2.disabled;
+		var disabled = _ref2$disabled === void 0 ? false : _ref2$disabled;
+		var _ref2$notExported = _ref2.notExported;
+		var notExported = _ref2$notExported === void 0 ? false : _ref2$notExported;
+		var _useState2 = _slicedToArray((0, react.useState)((_settings$classesOver = settings.classesOverrideAll) !== null && _settings$classesOver !== void 0 ? _settings$classesOver : false), 2);
+		var classesOverrideAll = _useState2[0];
+		var setClassesOverrideAll = _useState2[1];
+		var _useState4 = _slicedToArray((0, react.useState)((_settings$variablesOv = settings.variablesOverrideAll) !== null && _settings$variablesOv !== void 0 ? _settings$variablesOv : false), 2);
+		var variablesOverrideAll = _useState4[0];
+		var setVariablesOverrideAll = _useState4[1];
+		var hasLimitWarning = isImport && (classesLimitExceeded || variablesLimitExceeded);
+		var classesNotExported = isImport && !classesExported;
+		var defaultStylesNotExported = isImport && !defaultStylesExported;
+		var variablesNotExported = isImport && !variablesExported;
+		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			mb: 3,
+			border: 1,
+			borderRadius: 1,
+			borderColor: "action.focus",
+			p: 2.5
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { spacing: 2.5 }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			display: "flex",
+			justifyContent: "space-between",
+			alignItems: "center"
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, { variant: "h6" }, (0, _wordpress_i18n.__)("Classes, variables & default styles", "elementor"))), hasLimitWarning && !notExported && /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
+			severity: "warning",
+			icon: /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, { sx: { color: "warning.main" } }),
+			sx: {
+				alignItems: "center",
+				backgroundColor: "warning.background",
+				"& .MuiAlert-message": {
+					display: "flex",
+					alignItems: "center",
+					gap: .75
+				}
+			}
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			component: "span",
+			sx: { fontWeight: 500 },
+			color: "text.secondary"
+		}, (0, _wordpress_i18n.__)("Import limit reached.", "elementor")), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			component: "span",
+			color: "text.secondary"
+		}, (0, _wordpress_i18n.__)("To resolve this, review existing items or choose to override", "elementor"))), /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { spacing: 1.5 }, /*#__PURE__*/ react.default.createElement(SubSettingRow, {
+			label: (0, _wordpress_i18n.__)("Classes", "elementor"),
+			checked: (_settings$classes = settings.classes) !== null && _settings$classes !== void 0 ? _settings$classes : false,
+			onChange: function onChange(isChecked) {
+				return onSettingChange("classes", isChecked);
+			},
+			disabled,
+			limitExceeded: isImport && classesLimitExceeded && !classesNotExported,
+			overLimitCount: classesOverLimitCount,
+			onReviewClick: onClassesReviewClick,
+			overrideAll: classesOverrideAll,
+			onOverrideAllChange: function onOverrideAllChange(checked) {
+				setClassesOverrideAll(checked);
+				onSettingChange("classesOverrideAll", checked);
+			},
+			showOverrideOption: isImport && !classesNotExported,
+			notExported: classesNotExported
+		}), /*#__PURE__*/ react.default.createElement(SubSettingRow, {
+			label: (0, _wordpress_i18n.__)("Variables", "elementor"),
+			checked: (_settings$variables = settings.variables) !== null && _settings$variables !== void 0 ? _settings$variables : false,
+			onChange: function onChange(isChecked) {
+				return onSettingChange("variables", isChecked);
+			},
+			disabled,
+			limitExceeded: isImport && variablesLimitExceeded && !variablesNotExported,
+			overLimitCount: variablesOverLimitCount,
+			onReviewClick: onVariablesReviewClick,
+			overrideAll: variablesOverrideAll,
+			onOverrideAllChange: function onOverrideAllChange(checked) {
+				setVariablesOverrideAll(checked);
+				onSettingChange("variablesOverrideAll", checked);
+			},
+			showOverrideOption: isImport && !variablesNotExported,
+			notExported: variablesNotExported
+		}), /*#__PURE__*/ react.default.createElement(SubSettingRow, {
+			label: (0, _wordpress_i18n.__)("Default Styles", "elementor"),
+			checked: (_settings$defaultStyl = settings.defaultStyles) !== null && _settings$defaultStyl !== void 0 ? _settings$defaultStyl : false,
+			onChange: function onChange(isChecked) {
+				return onSettingChange("defaultStyles", isChecked);
+			},
+			disabled,
+			notExported: defaultStylesNotExported
+		}))));
+	}
+	ClassesVariablesSection.propTypes = {
+		settings: import_prop_types$82.default.shape({
+			classes: import_prop_types$82.default.bool,
+			defaultStyles: import_prop_types$82.default.bool,
+			variables: import_prop_types$82.default.bool,
+			classesOverrideAll: import_prop_types$82.default.bool,
+			variablesOverrideAll: import_prop_types$82.default.bool
+		}).isRequired,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		isImport: import_prop_types$82.default.bool,
+		classesExported: import_prop_types$82.default.bool,
+		defaultStylesExported: import_prop_types$82.default.bool,
+		variablesExported: import_prop_types$82.default.bool,
+		classesLimitExceeded: import_prop_types$82.default.bool,
+		variablesLimitExceeded: import_prop_types$82.default.bool,
+		classesOverLimitCount: import_prop_types$82.default.number,
+		variablesOverLimitCount: import_prop_types$82.default.number,
+		onClassesReviewClick: import_prop_types$82.default.func,
+		onVariablesReviewClick: import_prop_types$82.default.func,
+		disabled: import_prop_types$82.default.bool,
+		notExported: import_prop_types$82.default.bool
+	};
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/components/settings-customization-sections.js
+	function SettingsGroupSection(_ref) {
+		var children = _ref.children;
+		var title = _ref.title;
+		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			mb: 3,
+			border: 1,
+			borderRadius: 1,
+			borderColor: "action.focus",
+			p: 2.5
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { spacing: 1.5 }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, { variant: "h6" }, title), children));
+	}
+	SettingsGroupSection.propTypes = {
+		children: import_prop_types$82.default.node,
+		title: import_prop_types$82.default.string.isRequired
+	};
+	function DesignSystemLimitAlert() {
+		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Alert, {
+			severity: "warning",
+			icon: /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, { sx: { color: "warning.main" } }),
+			sx: {
+				alignItems: "center",
+				backgroundColor: "warning.background",
+				"& .MuiAlert-message": {
+					display: "flex",
+					alignItems: "center",
+					gap: .75
+				}
+			}
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			component: "span",
+			sx: { fontWeight: 500 },
+			color: "text.secondary"
+		}, (0, _wordpress_i18n.__)("Import limit reached.", "elementor")), /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+			variant: "body2",
+			component: "span",
+			color: "text.secondary"
+		}, (0, _wordpress_i18n.__)("To resolve this, review existing items or choose to override", "elementor")));
+	}
+	function DesignSystemSettingsSection(_ref2) {
+		var children = _ref2.children;
+		var isImport = _ref2.isImport;
+		var classesLimitExceeded = _ref2.classesLimitExceeded;
+		var notExported = _ref2.notExported;
+		var variablesLimitExceeded = _ref2.variablesLimitExceeded;
+		return /*#__PURE__*/ react.default.createElement(SettingsGroupSection, { title: (0, _wordpress_i18n.__)("Classes, variables & default styles", "elementor") }, isImport && (classesLimitExceeded || variablesLimitExceeded) && !notExported && /*#__PURE__*/ react.default.createElement(DesignSystemLimitAlert, null), children);
+	}
+	DesignSystemSettingsSection.propTypes = {
+		children: import_prop_types$82.default.node,
+		isImport: import_prop_types$82.default.bool,
+		classesLimitExceeded: import_prop_types$82.default.bool,
+		notExported: import_prop_types$82.default.bool,
+		variablesLimitExceeded: import_prop_types$82.default.bool
+	};
+	function ThemeSettingsRow(_ref3) {
+		var contextData = _ref3.contextData;
+		var isImport = _ref3.isImport;
+		var onSettingChange = _ref3.onSettingChange;
+		var settings = _ref3.settings;
+		var themeExported = isThemeExported(contextData);
+		return isImport && !themeExported ? /*#__PURE__*/ react.default.createElement(SettingSection, {
+			title: (0, _wordpress_i18n.__)("Theme", "elementor"),
+			settingKey: "theme",
+			notExported: true
+		}) : /*#__PURE__*/ react.default.createElement(SettingSection, {
+			checked: settings.theme,
+			title: (0, _wordpress_i18n.__)("Theme", "elementor"),
+			description: (0, _wordpress_i18n.__)("Only public WordPress themes are supported", "elementor"),
+			settingKey: "theme",
+			onSettingChange,
+			disabled: isImport && !themeExported
+		});
+	}
+	ThemeSettingsRow.propTypes = {
+		contextData: import_prop_types$82.default.object,
+		isImport: import_prop_types$82.default.bool,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		settings: import_prop_types$82.default.object.isRequired
+	};
+	function GlobalClassesSettingsRow(_ref4) {
+		var _settings$classes;
+		var _settings$classesOver;
+		var classesLimitExceeded = _ref4.classesLimitExceeded;
+		var classesOverLimitCount = _ref4.classesOverLimitCount;
+		var classesReviewClick = _ref4.classesReviewClick;
+		var contextData = _ref4.contextData;
+		var isImport = _ref4.isImport;
+		var onSettingChange = _ref4.onSettingChange;
+		var settings = _ref4.settings;
+		var classesExported = isClassesExported(contextData);
+		var classesNotExported = isImport && !classesExported;
+		return /*#__PURE__*/ react.default.createElement(SubSettingRow, {
+			label: (0, _wordpress_i18n.__)("Classes", "elementor"),
+			checked: (_settings$classes = settings.classes) !== null && _settings$classes !== void 0 ? _settings$classes : false,
+			onChange: function onChange(isChecked) {
+				return onSettingChange("classes", isChecked);
+			},
+			limitExceeded: isImport && classesLimitExceeded && !classesNotExported,
+			overLimitCount: classesOverLimitCount,
+			onReviewClick: classesReviewClick,
+			overrideAll: (_settings$classesOver = settings.classesOverrideAll) !== null && _settings$classesOver !== void 0 ? _settings$classesOver : false,
+			onOverrideAllChange: function onOverrideAllChange(checked) {
+				return onSettingChange("classesOverrideAll", checked);
+			},
+			showOverrideOption: isImport && !classesNotExported,
+			notExported: classesNotExported
+		});
+	}
+	GlobalClassesSettingsRow.propTypes = {
+		classesLimitExceeded: import_prop_types$82.default.bool,
+		classesOverLimitCount: import_prop_types$82.default.number,
+		classesReviewClick: import_prop_types$82.default.func,
+		contextData: import_prop_types$82.default.object,
+		isImport: import_prop_types$82.default.bool,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		settings: import_prop_types$82.default.object.isRequired
+	};
+	function GlobalVariablesSettingsRow(_ref5) {
+		var _settings$variables;
+		var _settings$variablesOv;
+		var contextData = _ref5.contextData;
+		var isImport = _ref5.isImport;
+		var onSettingChange = _ref5.onSettingChange;
+		var settings = _ref5.settings;
+		var variablesLimitExceeded = _ref5.variablesLimitExceeded;
+		var variablesOverLimitCount = _ref5.variablesOverLimitCount;
+		var variablesReviewClick = _ref5.variablesReviewClick;
+		var variablesExported = isVariablesExported(contextData);
+		var variablesNotExported = isImport && !variablesExported;
+		return /*#__PURE__*/ react.default.createElement(SubSettingRow, {
+			label: (0, _wordpress_i18n.__)("Variables", "elementor"),
+			checked: (_settings$variables = settings.variables) !== null && _settings$variables !== void 0 ? _settings$variables : false,
+			onChange: function onChange(isChecked) {
+				return onSettingChange("variables", isChecked);
+			},
+			limitExceeded: isImport && variablesLimitExceeded && !variablesNotExported,
+			overLimitCount: variablesOverLimitCount,
+			onReviewClick: variablesReviewClick,
+			overrideAll: (_settings$variablesOv = settings.variablesOverrideAll) !== null && _settings$variablesOv !== void 0 ? _settings$variablesOv : false,
+			onOverrideAllChange: function onOverrideAllChange(checked) {
+				return onSettingChange("variablesOverrideAll", checked);
+			},
+			showOverrideOption: isImport && !variablesNotExported,
+			notExported: variablesNotExported
+		});
+	}
+	GlobalVariablesSettingsRow.propTypes = {
+		contextData: import_prop_types$82.default.object,
+		isImport: import_prop_types$82.default.bool,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		settings: import_prop_types$82.default.object.isRequired,
+		variablesLimitExceeded: import_prop_types$82.default.bool,
+		variablesOverLimitCount: import_prop_types$82.default.number,
+		variablesReviewClick: import_prop_types$82.default.func
+	};
+	function DefaultStylesSettingsRow(_ref6) {
+		var _settings$defaultStyl;
+		var contextData = _ref6.contextData;
+		var isImport = _ref6.isImport;
+		var onSettingChange = _ref6.onSettingChange;
+		var settings = _ref6.settings;
+		var defaultStylesExported = isDefaultStylesExported(contextData);
+		return /*#__PURE__*/ react.default.createElement(SubSettingRow, {
+			label: (0, _wordpress_i18n.__)("Default Styles", "elementor"),
+			checked: (_settings$defaultStyl = settings.defaultStyles) !== null && _settings$defaultStyl !== void 0 ? _settings$defaultStyl : false,
+			onChange: function onChange(isChecked) {
+				return onSettingChange("defaultStyles", isChecked);
+			},
+			notExported: isImport && !defaultStylesExported
+		});
+	}
+	DefaultStylesSettingsRow.propTypes = {
+		contextData: import_prop_types$82.default.object,
+		isImport: import_prop_types$82.default.bool,
+		onSettingChange: import_prop_types$82.default.func.isRequired,
+		settings: import_prop_types$82.default.object.isRequired
+	};
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/registry/base.js
+	init_defineProperty$1();
+	init_classCallCheck();
+	init_createClass();
+	function ownKeys$25(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -16495,33 +17011,324 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$13, "ownKeys");
-	function _objectSpread$12(e) {
+	__name(ownKeys$25, "ownKeys");
+	function _objectSpread$24(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$13(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$25(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$13(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$25(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$12, "_objectSpread");
-	function isExperimentActive$1(experimentName) {
-		var _elementorCommon;
-		return !!((_elementorCommon = elementorCommon) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.config) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.experimentalFeatures) !== null && _elementorCommon !== void 0 && _elementorCommon[experimentName]);
+	__name(_objectSpread$24, "_objectSpread");
+	var BaseRegistry = /*#__PURE__*/ function() {
+		function BaseRegistry() {
+			_classCallCheck(this, BaseRegistry);
+			this.sections = /* @__PURE__ */ new Map();
+		}
+		return _createClass(BaseRegistry, [
+			{
+				key: "register",
+				value: function register(section) {
+					if (!section.key || !section.title) throw new Error("Template type must have key and title");
+					var existingSection = this.get(section.key);
+					var formattedSection = this.formatSection(_objectSpread$24(_objectSpread$24({}, existingSection), section));
+					this.sections.set(section.key, formattedSection);
+				}
+			},
+			{
+				key: "formatSection",
+				value: function formatSection(section) {
+					return _objectSpread$24({
+						key: section.key,
+						parentKey: section.parentKey || null,
+						title: section.title,
+						description: section.description || "",
+						isPlaceholder: !!section.isPlaceholder,
+						useParentDefault: section.useParentDefault !== false,
+						getInitialState: section.getInitialState || null,
+						component: section.component || null,
+						order: section.order || 10,
+						isAvailable: section.isAvailable || function() {
+							return true;
+						}
+					}, section);
+				}
+			},
+			{
+				key: "getAll",
+				value: function getAll() {
+					return Array.from(this.sections.values()).filter(function(type) {
+						return type.isAvailable();
+					}).sort(function(first, second) {
+						return first.order - second.order;
+					});
+				}
+			},
+			{
+				key: "get",
+				value: function get(key) {
+					return this.sections.get(key);
+				}
+			}
+		]);
+	}();
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/registry/customization-dialogs-base.js
+	function getThemeInitialState(_ref) {
+		var contextData = _ref.contextData;
+		var includesSettings = _ref.includesSettings;
+		if (!_ref.isImport) return includesSettings;
+		return includesSettings && isThemeExported(contextData);
 	}
-	__name(isExperimentActive$1, "isExperimentActive");
-	function isClassesFeatureActive$1() {
-		return isExperimentActive$1("e_atomic_elements");
+	function createSiteSettingsInitialStateResolver(manifestKey) {
+		return function(_ref2) {
+			var _getSiteSettingsManif;
+			var contextData = _ref2.contextData;
+			var includesSettings = _ref2.includesSettings;
+			if (!_ref2.isImport) return includesSettings;
+			return includesSettings && !!((_getSiteSettingsManif = getSiteSettingsManifest(contextData)) !== null && _getSiteSettingsManif !== void 0 && _getSiteSettingsManif[manifestKey]);
+		};
 	}
-	__name(isClassesFeatureActive$1, "isClassesFeatureActive");
-	function isVariablesFeatureActive$1() {
-		return isExperimentActive$1("e_atomic_elements");
+	function createCustomizationDialogsRegistry() {
+		var customizationDialogsRegistry = new BaseRegistry();
+		[
+			{
+				key: KIT_SECTIONS.CONTENT,
+				title: "Content"
+			},
+			{
+				key: KIT_SECTION_ITEMS.CONTENT_CUSTOM_POST_TYPES,
+				parentKey: KIT_SECTIONS.CONTENT,
+				title: "Custom post types",
+				order: 20
+			},
+			{
+				key: KIT_SECTION_ITEMS.CONTENT_MEDIA_FORMAT,
+				parentKey: KIT_SECTIONS.CONTENT,
+				title: "Media format",
+				order: 30
+			},
+			{
+				key: KIT_SECTIONS.TEMPLATES,
+				title: "Templates"
+			},
+			{
+				key: KIT_SECTIONS.SETTINGS,
+				title: "Settings"
+			},
+			{
+				key: KIT_SECTION_ITEMS.SETTINGS_THEME,
+				parentKey: KIT_SECTIONS.SETTINGS,
+				title: "Theme",
+				order: 10,
+				settingKey: "theme",
+				getInitialState: getThemeInitialState
+			},
+			{
+				key: KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM,
+				parentKey: KIT_SECTIONS.SETTINGS,
+				title: "Classes, variables & default styles",
+				order: 20,
+				isAvailable: isAtomicElementsFeatureActive
+			},
+			{
+				key: KIT_SECTION_ITEMS.SETTINGS_GLOBAL_CLASSES,
+				parentKey: KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM,
+				title: "Classes",
+				order: 10,
+				settingKey: "classes",
+				isAvailable: isAtomicElementsFeatureActive,
+				getInitialState: createSiteSettingsInitialStateResolver("classes")
+			},
+			{
+				key: KIT_SECTION_ITEMS.SETTINGS_GLOBAL_VARIABLES,
+				parentKey: KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM,
+				title: "Variables",
+				order: 20,
+				settingKey: "variables",
+				isAvailable: isAtomicElementsFeatureActive,
+				getInitialState: createSiteSettingsInitialStateResolver("variables")
+			},
+			{
+				key: KIT_SECTION_ITEMS.SETTINGS_DEFAULT_STYLES,
+				parentKey: KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM,
+				title: "Default styles",
+				order: 30,
+				settingKey: "defaultStyles",
+				isAvailable: isAtomicElementsFeatureActive,
+				getInitialState: createSiteSettingsInitialStateResolver("defaultStyles")
+			},
+			{
+				key: KIT_SECTIONS.PLUGINS,
+				title: "Plugins"
+			},
+			{
+				key: KIT_SECTION_ITEMS.PLUGINS_PLUGIN_LIST,
+				parentKey: KIT_SECTIONS.PLUGINS,
+				title: "Plugin list",
+				order: 10
+			}
+		].forEach(function(entry) {
+			return customizationDialogsRegistry.register(entry);
+		});
+		return customizationDialogsRegistry;
 	}
-	__name(isVariablesFeatureActive$1, "isVariablesFeatureActive");
-	var transformAnalyticsData = function transformAnalyticsData(payload) {
+	var customizationDialogsRegistry = createCustomizationDialogsRegistry();
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/registry/customization-dialogs.js
+	init_defineProperty$1();
+	function ownKeys$24(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	__name(ownKeys$24, "ownKeys");
+	function _objectSpread$23(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$24(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$24(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	__name(_objectSpread$23, "_objectSpread");
+	var CUSTOMIZATION_DIALOGS_READY_EVENT = "elementor/import-export-customization/ready";
+	var REGISTRY_STATE_KEY = "__elementorImportExportCustomization";
+	var coreCustomizationDialogsBase = createCustomizationDialogsRegistry();
+	var UI_REGISTRATIONS = [
+		{
+			key: KIT_SECTION_ITEMS.CONTENT_CUSTOM_POST_TYPES,
+			title: "Custom post types",
+			component: CustomPostTypesSection
+		},
+		{
+			key: KIT_SECTION_ITEMS.CONTENT_MEDIA_FORMAT,
+			title: "Media format",
+			component: MediaFormatSection
+		},
+		{
+			key: KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM,
+			title: "Classes, variables & default styles",
+			component: DesignSystemSettingsSection
+		},
+		{
+			key: KIT_SECTION_ITEMS.SETTINGS_THEME,
+			title: "Theme",
+			component: ThemeSettingsRow
+		},
+		{
+			key: KIT_SECTION_ITEMS.SETTINGS_GLOBAL_CLASSES,
+			title: "Classes",
+			component: GlobalClassesSettingsRow
+		},
+		{
+			key: KIT_SECTION_ITEMS.SETTINGS_GLOBAL_VARIABLES,
+			title: "Variables",
+			component: GlobalVariablesSettingsRow
+		},
+		{
+			key: KIT_SECTION_ITEMS.SETTINGS_DEFAULT_STYLES,
+			title: "Default styles",
+			component: DefaultStylesSettingsRow
+		},
+		{
+			key: KIT_SECTION_ITEMS.PLUGINS_PLUGIN_LIST,
+			title: "Plugin list",
+			component: PluginListSection
+		}
+	];
+	function createCoreUiRegistration(registration) {
+		return _objectSpread$23(_objectSpread$23(_objectSpread$23({}, coreCustomizationDialogsBase.get(registration.key)), registration), {}, { isPlaceholder: false });
+	}
+	function registerCustomizationDialogs(registry) {
+		if (!(registry !== null && registry !== void 0 && registry.register)) return registry;
+		UI_REGISTRATIONS.map(createCoreUiRegistration).forEach(function(registration) {
+			return registry.register(registration);
+		});
+		var state = getRegistryState(registry);
+		if (state) state.supportsComponentOverrides = true;
+		return registry;
+	}
+	function getRegistryState(registry) {
+		if (!registry) return null;
+		registry[REGISTRY_STATE_KEY] = registry[REGISTRY_STATE_KEY] || {
+			hasDispatchedReadyEvent: false,
+			hasRegisteredUi: false,
+			isInitialized: false,
+			supportsComponentOverrides: false
+		};
+		return registry[REGISTRY_STATE_KEY];
+	}
+	function initializeCustomizationDialogsRegistration() {
+		var registry = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : getCustomizationDialogsRegistry();
+		var state = getRegistryState(registry);
+		if (!state || state.isInitialized) return registry;
+		state.isInitialized = true;
+		return registry;
+	}
+	function createRegisteredCustomizationDialogsRegistry() {
+		return registerCustomizationDialogs(createCustomizationDialogsRegistry());
+	}
+	function prepareCustomizationDialogsForRender() {
+		var registry = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : getCustomizationDialogsRegistry();
+		var currentState = getRegistryState(registry);
+		if (!currentState) return registry;
+		if (currentState.hasRegisteredUi) return registry;
+		registerCustomizationDialogs(registry);
+		currentState.hasRegisteredUi = true;
+		if (!currentState.hasDispatchedReadyEvent) {
+			globalThis.dispatchEvent(new CustomEvent(CUSTOMIZATION_DIALOGS_READY_EVENT));
+			currentState.hasDispatchedReadyEvent = true;
+		}
+		return registry;
+	}
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/components/kit-settings-customization-dialog.js
+	init_extends();
+	init_defineProperty$1();
+	init_toConsumableArray();
+	init_asyncToGenerator();
+	init_slicedToArray();
+	init_apps_event_tracking();
+	function ownKeys$23(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	__name(ownKeys$23, "ownKeys");
+	function _objectSpread$22(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$23(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$23(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	__name(_objectSpread$22, "_objectSpread");
+	var transformAnalyticsData$1 = function transformAnalyticsData(payload) {
 		var transformed = {};
 		for (var _i = 0, _Object$entries = Object.entries(payload); _i < _Object$entries.length; _i++) {
 			var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2);
@@ -16570,54 +17377,62 @@ init_use_cloud_kits_eligibility();
 		}));
 		return _fetchManagerUrl.apply(this, arguments);
 	}
-	function getInitialState(contextData, isImport) {
-		var _data$uploadedData;
-		var data = contextData.data;
-		var initialState = data.includes.includes("settings");
-		if (isImport && !(contextData !== null && contextData !== void 0 && contextData.isOldExport) && !(data !== null && data !== void 0 && (_data$uploadedData = data.uploadedData) !== null && _data$uploadedData !== void 0 && (_data$uploadedData = _data$uploadedData.manifest) !== null && _data$uploadedData !== void 0 && (_data$uploadedData = _data$uploadedData["site-settings"]) !== null && _data$uploadedData !== void 0 && _data$uploadedData.theme)) initialState = false;
-		return initialState;
+	function getRegistryChildren(registry, parentKey) {
+		return registry.getAll().filter(function(item) {
+			return item.parentKey === parentKey;
+		}).sort(function(first, second) {
+			return first.order - second.order;
+		});
 	}
-	function isExported(contextData) {
+	var coreSettingsRegistry = createRegisteredCustomizationDialogsRegistry();
+	function mergeCoreSettingsEntries(parentKey, registeredEntries) {
+		var coreEntries = getRegistryChildren(coreSettingsRegistry, parentKey);
+		if (!coreEntries.length) return registeredEntries;
+		var coreEntryByKey = new Set(coreEntries.map(function(entry) {
+			return entry.key;
+		}));
+		var registeredEntriesMap = new Map(registeredEntries.map(function(entry) {
+			return [entry.key, entry];
+		}));
+		return [].concat(_toConsumableArray(coreEntries.map(function(entry) {
+			return _objectSpread$22(_objectSpread$22({}, entry), registeredEntriesMap.get(entry.key));
+		})), _toConsumableArray(registeredEntries.filter(function(entry) {
+			return !coreEntryByKey.has(entry.key);
+		}))).sort(function(first, second) {
+			return first.order - second.order;
+		});
+	}
+	function getRegisteredSettingsChildren(parentKey) {
+		return mergeCoreSettingsEntries(parentKey, getAvailableCustomizationDialogChildren(parentKey));
+	}
+	function buildSettingsTree() {
+		return getRegisteredSettingsChildren(arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : KIT_SECTIONS.SETTINGS).map(function(item) {
+			return _objectSpread$22(_objectSpread$22({}, item), {}, { children: buildSettingsTree(item.key) });
+		});
+	}
+	function collectSettingRows(tree) {
+		return tree.flatMap(function(item) {
+			if (item.children.length) return collectSettingRows(item.children);
+			return item.settingKey ? [item] : [];
+		});
+	}
+	function getInitialSettings(contextData, isImport, registeredRows) {
+		var _contextData$data;
+		var _contextData$data$cus;
 		var _contextData$data2;
-		if (contextData !== null && contextData !== void 0 && contextData.isOldExport) {
-			var _contextData$data;
-			return contextData === null || contextData === void 0 || (_contextData$data = contextData.data) === null || _contextData$data === void 0 || (_contextData$data = _contextData$data.uploadedData) === null || _contextData$data === void 0 || (_contextData$data = _contextData$data.manifest) === null || _contextData$data === void 0 ? void 0 : _contextData$data.theme;
-		}
-		return contextData === null || contextData === void 0 || (_contextData$data2 = contextData.data) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.uploadedData) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.manifest) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2["site-settings"]) === null || _contextData$data2 === void 0 ? void 0 : _contextData$data2.theme;
-	}
-	function isClassesExported(contextData) {
-		var _contextData$data3;
-		return !!(contextData !== null && contextData !== void 0 && (_contextData$data3 = contextData.data) !== null && _contextData$data3 !== void 0 && (_contextData$data3 = _contextData$data3.uploadedData) !== null && _contextData$data3 !== void 0 && (_contextData$data3 = _contextData$data3.manifest) !== null && _contextData$data3 !== void 0 && (_contextData$data3 = _contextData$data3["site-settings"]) !== null && _contextData$data3 !== void 0 && _contextData$data3.classes);
-	}
-	function isVariablesExported(contextData) {
-		var _contextData$data4;
-		return !!(contextData !== null && contextData !== void 0 && (_contextData$data4 = contextData.data) !== null && _contextData$data4 !== void 0 && (_contextData$data4 = _contextData$data4.uploadedData) !== null && _contextData$data4 !== void 0 && (_contextData$data4 = _contextData$data4.manifest) !== null && _contextData$data4 !== void 0 && (_contextData$data4 = _contextData$data4["site-settings"]) !== null && _contextData$data4 !== void 0 && _contextData$data4.variables);
-	}
-	function getClassesVariablesInitialState(contextData, isImport) {
-		var _contextData$data5;
-		var includesSettings = contextData === null || contextData === void 0 || (_contextData$data5 = contextData.data) === null || _contextData$data5 === void 0 || (_contextData$data5 = _contextData$data5.includes) === null || _contextData$data5 === void 0 ? void 0 : _contextData$data5.includes("settings");
-		return {
-			classes: includesSettings && (!isImport || isClassesExported(contextData)),
-			variables: includesSettings && (!isImport || isVariablesExported(contextData)),
-			classesOverrideAll: false,
-			variablesOverrideAll: false
-		};
+		var includesSettings = contextData === null || contextData === void 0 || (_contextData$data = contextData.data) === null || _contextData$data === void 0 || (_contextData$data = _contextData$data.includes) === null || _contextData$data === void 0 ? void 0 : _contextData$data.includes(KIT_SECTIONS.SETTINGS);
+		var customization = (_contextData$data$cus = contextData === null || contextData === void 0 || (_contextData$data2 = contextData.data) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.customization) === null || _contextData$data2 === void 0 ? void 0 : _contextData$data2.settings) !== null && _contextData$data$cus !== void 0 ? _contextData$data$cus : {};
+		return _objectSpread$22(_objectSpread$22({}, registeredRows.reduce(function(state, row) {
+			if (!row.settingKey) return state;
+			return _objectSpread$22(_objectSpread$22({}, state), {}, _defineProperty$1({}, row.settingKey, row.getInitialState ? row.getInitialState({
+				contextData,
+				includesSettings,
+				isImport
+			}) : includesSettings));
+		}, {})), customization);
 	}
 	function KitSettingsCustomizationDialog(_ref) {
 		var _useContextDetection;
-		var _contextData$data7;
-		var _contextData$data8;
-		var _contextData$data9;
-		var _contextData$data0;
-		var _contextData$data$upl;
-		var _contextData$data1;
-		var _contextData$data$upl2;
-		var _contextData$data10;
-		var _contextData$data11;
-		var _settings$classes;
-		var _settings$variables;
-		var _settings$classesOver;
-		var _settings$variablesOv;
 		var open = _ref.open;
 		var handleClose = _ref.handleClose;
 		var handleSaveChanges = _ref.handleSaveChanges;
@@ -16626,26 +17441,17 @@ init_use_cloud_kits_eligibility();
 		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
 		var _ref2$contextData = _ref2.contextData;
 		var contextData = _ref2$contextData === void 0 ? {} : _ref2$contextData;
-		var _contextData$data6 = contextData.data;
-		var data = _contextData$data6 === void 0 ? null : _contextData$data6;
-		var showClassesSection = isClassesFeatureActive$1();
-		var showVariablesSection = isVariablesFeatureActive$1();
-		var showClassesVariablesSection = showClassesSection || showVariablesSection;
-		var initialState = (0, react.useMemo)(function() {
-			return getInitialState(contextData, isImport);
-		}, [
-			contextData === null || contextData === void 0 || (_contextData$data7 = contextData.data) === null || _contextData$data7 === void 0 ? void 0 : _contextData$data7.includes,
-			contextData === null || contextData === void 0 ? void 0 : contextData.isOldExport,
-			contextData === null || contextData === void 0 || (_contextData$data8 = contextData.data) === null || _contextData$data8 === void 0 || (_contextData$data8 = _contextData$data8.uploadedData) === null || _contextData$data8 === void 0 ? void 0 : _contextData$data8.manifest,
-			isImport
-		]);
-		var classesVariablesInitialState = (0, react.useMemo)(function() {
-			return getClassesVariablesInitialState(contextData, isImport);
-		}, [
-			contextData === null || contextData === void 0 || (_contextData$data9 = contextData.data) === null || _contextData$data9 === void 0 ? void 0 : _contextData$data9.includes,
-			contextData === null || contextData === void 0 || (_contextData$data0 = contextData.data) === null || _contextData$data0 === void 0 || (_contextData$data0 = _contextData$data0.uploadedData) === null || _contextData$data0 === void 0 ? void 0 : _contextData$data0.manifest,
-			isImport
-		]);
+		var _contextData$data3 = contextData.data;
+		var data = _contextData$data3 === void 0 ? null : _contextData$data3;
+		var settingsTree = (0, react.useMemo)(buildSettingsTree);
+		var registeredRows = (0, react.useMemo)(function() {
+			return collectSettingRows(settingsTree);
+		}, [settingsTree]);
+		var rowByKey = (0, react.useMemo)(function() {
+			return new Map(registeredRows.map(function(row) {
+				return [row.key, row];
+			}));
+		}, [registeredRows]);
 		var _useClassesVariablesL = useClassesVariablesLimits({
 			open,
 			isImport
@@ -16655,8 +17461,8 @@ init_use_cloud_kits_eligibility();
 		var classesLimit = _useClassesVariablesL.classesLimit;
 		var variablesLimit = _useClassesVariablesL.variablesLimit;
 		var calculateLimitInfo = _useClassesVariablesL.calculateLimitInfo;
-		var importedClassesCount = (_contextData$data$upl = contextData === null || contextData === void 0 || (_contextData$data1 = contextData.data) === null || _contextData$data1 === void 0 || (_contextData$data1 = _contextData$data1.uploadedData) === null || _contextData$data1 === void 0 || (_contextData$data1 = _contextData$data1.manifest) === null || _contextData$data1 === void 0 || (_contextData$data1 = _contextData$data1["site-settings"]) === null || _contextData$data1 === void 0 ? void 0 : _contextData$data1.classesCount) !== null && _contextData$data$upl !== void 0 ? _contextData$data$upl : 0;
-		var importedVariablesCount = (_contextData$data$upl2 = contextData === null || contextData === void 0 || (_contextData$data10 = contextData.data) === null || _contextData$data10 === void 0 || (_contextData$data10 = _contextData$data10.uploadedData) === null || _contextData$data10 === void 0 || (_contextData$data10 = _contextData$data10.manifest) === null || _contextData$data10 === void 0 || (_contextData$data10 = _contextData$data10["site-settings"]) === null || _contextData$data10 === void 0 ? void 0 : _contextData$data10.variablesCount) !== null && _contextData$data$upl2 !== void 0 ? _contextData$data$upl2 : 0;
+		var importedClassesCount = getImportedClassesCount(contextData);
+		var importedVariablesCount = getImportedVariablesCount(contextData);
 		var classesLimitInfo = (0, react.useMemo)(function() {
 			return calculateLimitInfo(existingClassesCount, importedClassesCount, classesLimit);
 		}, [
@@ -16674,26 +17480,24 @@ init_use_cloud_kits_eligibility();
 			calculateLimitInfo
 		]);
 		var _useState2 = _slicedToArray((0, react.useState)(function() {
-			if (data.customization.settings) return _objectSpread$12({}, data.customization.settings);
-			return _objectSpread$12({ theme: initialState }, showClassesVariablesSection ? classesVariablesInitialState : {});
+			return getInitialSettings(contextData, isImport, registeredRows);
 		}), 2);
 		var settings = _useState2[0];
 		var setSettings = _useState2[1];
 		(0, react.useEffect)(function() {
-			if (open) if (data.customization.settings) setSettings(_objectSpread$12({}, data.customization.settings));
-			else setSettings(_objectSpread$12({ theme: initialState }, showClassesVariablesSection ? classesVariablesInitialState : {}));
+			if (open) setSettings(getInitialSettings(contextData, isImport, registeredRows));
 		}, [open]);
 		(0, react.useEffect)(function() {
 			if (open) AppsEventTracking.sendPageViewsWebsiteTemplates(elementorCommon.eventsManager.config.secondaryLocations.kitLibrary.kitExportCustomizationEdit);
 		}, [open]);
-		var handleToggleChange = function handleToggleChange(settingKey) {
+		var handleToggleChange = function handleToggleChange(settingKey, isChecked) {
 			setSettings(function(prev) {
-				return _objectSpread$12(_objectSpread$12({}, prev), {}, _defineProperty$1({}, settingKey, !prev[settingKey]));
+				return _objectSpread$22(_objectSpread$22({}, prev), {}, _defineProperty$1({}, settingKey, void 0 === isChecked ? !prev[settingKey] : isChecked));
 			});
 		};
-		var handleClassesVariablesChange = function handleClassesVariablesChange(settingKey, value) {
+		var handleSettingChange = function handleSettingChange(settingKey, value) {
 			setSettings(function(prev) {
-				return _objectSpread$12(_objectSpread$12({}, prev), {}, _defineProperty$1({}, settingKey, value));
+				return _objectSpread$22(_objectSpread$22({}, prev), {}, _defineProperty$1({}, settingKey, value));
 			});
 		};
 		var handleReviewClick = (0, react.useCallback)(/*#__PURE__*/ function() {
@@ -16704,8 +17508,8 @@ init_use_cloud_kits_eligibility();
 				return import_regenerator$1.default.wrap(function(_context) {
 					while (1) switch (_context.prev = _context.next) {
 						case 0:
-							transformedAnalytics = transformAnalyticsData(settings);
-							handleSaveChanges("settings", settings, true, transformedAnalytics);
+							transformedAnalytics = transformAnalyticsData$1(settings);
+							handleSaveChanges(KIT_SECTIONS.SETTINGS, settings, true, transformedAnalytics);
 							handleClose();
 							_context.prev = 1;
 							_context.next = 2;
@@ -16740,11 +17544,78 @@ init_use_cloud_kits_eligibility();
 		}, [handleReviewClick]);
 		var classesNotExported = isImport && !isClassesExported(contextData);
 		var variablesNotExported = isImport && !isVariablesExported(contextData);
-		var classesVariablesNotExported = classesNotExported && variablesNotExported;
+		var defaultStylesNotExported = isImport && !isDefaultStylesExported(contextData);
+		var designSystemSettingsNotExported = classesNotExported && variablesNotExported && defaultStylesNotExported;
 		var classesLimitExceeded = isImport && classesLimitInfo.isExceeded;
 		var variablesLimitExceeded = isImport && variablesLimitInfo.isExceeded;
 		var classesOverLimitCount = classesLimitInfo.overLimitCount;
 		var variablesOverLimitCount = variablesLimitInfo.overLimitCount;
+		var hasThemeRow = rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_THEME);
+		var topLevelSettingsKeys = (0, react.useMemo)(function() {
+			return new Set(settingsTree.map(function(item) {
+				return item.key;
+			}));
+		}, [settingsTree]);
+		var hasSiteSettingsRows = rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_GLOBAL_COLORS) || rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_GLOBAL_FONTS) || rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_THEME_STYLE_SETTINGS);
+		var hasCustomFilesRows = rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_CUSTOM_FONTS) || rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_CUSTOM_ICONS) || rowByKey.has(KIT_SECTION_ITEMS.SETTINGS_CUSTOM_CODE);
+		var getRegisteredRowProps = function getRegisteredRowProps(rowKey) {
+			var props = {
+				data,
+				contextData,
+				isImport,
+				settings
+			};
+			switch (rowKey) {
+				case KIT_SECTION_ITEMS.SETTINGS_GLOBAL_CLASSES: return _objectSpread$22(_objectSpread$22({}, props), {}, {
+					classesLimitExceeded,
+					classesOverLimitCount,
+					classesReviewClick: handleClassesReviewClick,
+					onSettingChange: handleSettingChange
+				});
+				case KIT_SECTION_ITEMS.SETTINGS_GLOBAL_VARIABLES: return _objectSpread$22(_objectSpread$22({}, props), {}, {
+					onSettingChange: handleSettingChange,
+					variablesLimitExceeded,
+					variablesOverLimitCount,
+					variablesReviewClick: handleVariablesReviewClick
+				});
+				case KIT_SECTION_ITEMS.SETTINGS_DEFAULT_STYLES: return _objectSpread$22(_objectSpread$22({}, props), {}, { onSettingChange: handleSettingChange });
+				default: return _objectSpread$22(_objectSpread$22({}, props), {}, { onSettingChange: handleToggleChange });
+			}
+		};
+		var getRegisteredSectionProps = function getRegisteredSectionProps(sectionKey) {
+			if (KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM === sectionKey) return {
+				isImport,
+				classesLimitExceeded,
+				variablesLimitExceeded,
+				notExported: designSystemSettingsNotExported,
+				settings,
+				onSettingChange: handleSettingChange,
+				classesExported: !classesNotExported,
+				defaultStylesExported: !defaultStylesNotExported,
+				variablesExported: !variablesNotExported,
+				classesOverLimitCount,
+				variablesOverLimitCount,
+				onClassesReviewClick: handleClassesReviewClick,
+				onVariablesReviewClick: handleVariablesReviewClick
+			};
+			return {};
+		};
+		var renderRegisteredRow = function renderRegisteredRow(rowKey) {
+			var row = rowByKey.get(rowKey);
+			if (!(row !== null && row !== void 0 && row.component) || row.isPlaceholder) return null;
+			var RowComponent = row.component;
+			return /*#__PURE__*/ react.default.createElement(RowComponent, _extends({ key: row.key }, getRegisteredRowProps(rowKey)));
+		};
+		var _renderSettingsTreeItem = function renderSettingsTreeItem(item) {
+			if (!item.children.length) return renderRegisteredRow(item.key);
+			var renderedChildren = item.children.map(function(child) {
+				return _renderSettingsTreeItem(child);
+			}).filter(Boolean);
+			if (!renderedChildren.length && item.isPlaceholder) return null;
+			if (!item.component) return renderedChildren;
+			var SectionComponent = item.component;
+			return /*#__PURE__*/ react.default.createElement(SectionComponent, _extends({ key: item.key }, getRegisteredSectionProps(item.key)), renderedChildren);
+		};
 		var _useState4 = _slicedToArray((0, react.useState)({
 			open: false,
 			type: "classes"
@@ -16752,7 +17623,8 @@ init_use_cloud_kits_eligibility();
 		var confirmationDialog = _useState4[0];
 		var setConfirmationDialog = _useState4[1];
 		var performSave = (0, react.useCallback)(function() {
-			handleSaveChanges("settings", settings, true, transformAnalyticsData(settings));
+			var transformedAnalytics = transformAnalyticsData$1(settings);
+			handleSaveChanges(KIT_SECTIONS.SETTINGS, settings, true, transformedAnalytics);
 			handleClose();
 		}, [
 			settings,
@@ -16803,37 +17675,9 @@ init_use_cloud_kits_eligibility();
 			title: (0, _wordpress_i18n.__)("Edit settings & configurations", "elementor"),
 			handleClose,
 			handleSaveChanges: handleSaveClick
-		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, (contextData === null || contextData === void 0 ? void 0 : contextData.isOldElementorVersion) && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), isImport && !isExported(contextData) ? /*#__PURE__*/ react.default.createElement(SettingSection, {
-			title: (0, _wordpress_i18n.__)("Theme", "elementor"),
-			settingKey: "theme",
-			notExported: true
-		}) : /*#__PURE__*/ react.default.createElement(SettingSection, {
-			key: "theme",
-			checked: settings.theme,
-			title: (0, _wordpress_i18n.__)("Theme", "elementor"),
-			description: (0, _wordpress_i18n.__)("Only public WordPress themes are supported", "elementor"),
-			settingKey: "theme",
-			onSettingChange: handleToggleChange,
-			disabled: isImport && !(contextData !== null && contextData !== void 0 && (_contextData$data11 = contextData.data) !== null && _contextData$data11 !== void 0 && (_contextData$data11 = _contextData$data11.uploadedData) !== null && _contextData$data11 !== void 0 && (_contextData$data11 = _contextData$data11.manifest) !== null && _contextData$data11 !== void 0 && (_contextData$data11 = _contextData$data11["site-settings"]) !== null && _contextData$data11 !== void 0 && _contextData$data11.theme)
-		}), showClassesVariablesSection && /*#__PURE__*/ react.default.createElement(ClassesVariablesSection, {
-			settings: {
-				classes: (_settings$classes = settings.classes) !== null && _settings$classes !== void 0 ? _settings$classes : false,
-				variables: (_settings$variables = settings.variables) !== null && _settings$variables !== void 0 ? _settings$variables : false,
-				classesOverrideAll: (_settings$classesOver = settings.classesOverrideAll) !== null && _settings$classesOver !== void 0 ? _settings$classesOver : false,
-				variablesOverrideAll: (_settings$variablesOv = settings.variablesOverrideAll) !== null && _settings$variablesOv !== void 0 ? _settings$variablesOv : false
-			},
-			onSettingChange: handleClassesVariablesChange,
-			isImport,
-			classesExported: !classesNotExported && showClassesSection,
-			variablesExported: !variablesNotExported && showVariablesSection,
-			classesLimitExceeded,
-			variablesLimitExceeded,
-			classesOverLimitCount,
-			variablesOverLimitCount,
-			onClassesReviewClick: handleClassesReviewClick,
-			onVariablesReviewClick: handleVariablesReviewClick,
-			notExported: classesVariablesNotExported
-		}))), /*#__PURE__*/ react.default.createElement(OverrideConfirmationDialog, {
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, (contextData === null || contextData === void 0 ? void 0 : contextData.isOldElementorVersion) && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), hasThemeRow && renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_THEME), topLevelSettingsKeys.has(KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM) && _renderSettingsTreeItem(settingsTree.find(function(item) {
+			return item.key === KIT_SECTION_ITEMS.SETTINGS_DESIGN_SYSTEM;
+		})), hasSiteSettingsRows && /*#__PURE__*/ react.default.createElement(SettingsGroupSection, { title: (0, _wordpress_i18n.__)("Site settings", "elementor") }, renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_GLOBAL_COLORS), renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_GLOBAL_FONTS), renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_THEME_STYLE_SETTINGS)), renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_GENERAL_SETTINGS), renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_EXPERIMENTS), hasCustomFilesRows && /*#__PURE__*/ react.default.createElement(SettingsGroupSection, { title: (0, _wordpress_i18n.__)("Custom files", "elementor") }, renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_CUSTOM_FONTS), renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_CUSTOM_ICONS), renderRegisteredRow(KIT_SECTION_ITEMS.SETTINGS_CUSTOM_CODE)))), /*#__PURE__*/ react.default.createElement(OverrideConfirmationDialog, {
 			open: confirmationDialog.open,
 			onClose: handleConfirmationClose,
 			onConfirm: handleConfirmationConfirm,
@@ -16841,16 +17685,141 @@ init_use_cloud_kits_eligibility();
 		}));
 	}
 	KitSettingsCustomizationDialog.propTypes = {
-		open: import_prop_types$55.default.bool.isRequired,
-		handleClose: import_prop_types$55.default.func.isRequired,
-		handleSaveChanges: import_prop_types$55.default.func.isRequired
+		open: import_prop_types$82.default.bool.isRequired,
+		handleClose: import_prop_types$82.default.func.isRequired,
+		handleSaveChanges: import_prop_types$82.default.func.isRequired
+	};
+
+//#endregion
+//#region app/modules/import-export-customization/assets/js/shared/components/kit-templates-customization-dialog.js
+	init_slicedToArray();
+	init_defineProperty$1();
+	init_apps_event_tracking();
+	function ownKeys$22(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	__name(ownKeys$22, "ownKeys");
+	function _objectSpread$21(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$22(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$22(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	__name(_objectSpread$21, "_objectSpread");
+	function getRegisteredSections() {
+		return getAvailableCustomizationDialogChildren(KIT_SECTIONS.TEMPLATES);
+	}
+	function getInitialTemplatesState(contextData, isImport, registeredSections) {
+		var _contextData$data;
+		var _contextData$data$cus;
+		var _contextData$data2;
+		var includesTemplates = contextData === null || contextData === void 0 || (_contextData$data = contextData.data) === null || _contextData$data === void 0 || (_contextData$data = _contextData$data.includes) === null || _contextData$data === void 0 ? void 0 : _contextData$data.includes(KIT_SECTIONS.TEMPLATES);
+		var customization = (_contextData$data$cus = contextData === null || contextData === void 0 || (_contextData$data2 = contextData.data) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.customization) === null || _contextData$data2 === void 0 ? void 0 : _contextData$data2.templates) !== null && _contextData$data$cus !== void 0 ? _contextData$data$cus : {};
+		var sectionStates = registeredSections.reduce(function(state, section) {
+			var _customization$sectio;
+			if (!section.settingKey) return state;
+			var initialValue = section.getInitialState ? section.getInitialState({
+				contextData,
+				includesTemplates,
+				isImport
+			}) : { enabled: includesTemplates };
+			return _objectSpread$21(_objectSpread$21({}, state), {}, _defineProperty$1({}, section.settingKey, (_customization$sectio = customization[section.settingKey]) !== null && _customization$sectio !== void 0 ? _customization$sectio : initialValue));
+		}, {});
+		return _objectSpread$21(_objectSpread$21({}, customization), sectionStates);
+	}
+	var transformAnalyticsData = function transformAnalyticsData(payload) {
+		var transformed = {};
+		for (var _i = 0, _Object$entries = Object.entries(payload); _i < _Object$entries.length; _i++) {
+			var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2);
+			var key = _Object$entries$_i[0];
+			var value = _Object$entries$_i[1];
+			transformed[key] = transformValueForAnalytics(key, value, []);
+		}
+		return transformed;
+	};
+	function KitTemplatesCustomizationDialog(_ref) {
+		var _useContextDetection;
+		var open = _ref.open;
+		var handleClose = _ref.handleClose;
+		var _handleSaveChanges = _ref.handleSaveChanges;
+		var _ref2 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
+		var _ref2$isImport = _ref2.isImport;
+		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
+		var _ref2$contextData = _ref2.contextData;
+		var contextData = _ref2$contextData === void 0 ? {} : _ref2$contextData;
+		var _contextData$data3 = contextData.data;
+		var data = _contextData$data3 === void 0 ? null : _contextData$data3;
+		var _contextData$isOldExp = contextData.isOldExport;
+		var isOldExport = _contextData$isOldExp === void 0 ? false : _contextData$isOldExp;
+		var _contextData$isOldEle = contextData.isOldElementorVersion;
+		var isOldElementorVersion = _contextData$isOldEle === void 0 ? false : _contextData$isOldEle;
+		var registeredSections = (0, react.useMemo)(function() {
+			return getRegisteredSections();
+		}, []);
+		var _useState2 = _slicedToArray((0, react.useState)(function() {
+			return getInitialTemplatesState(contextData, isImport, registeredSections);
+		}), 2);
+		var templates = _useState2[0];
+		var setTemplates = _useState2[1];
+		(0, react.useEffect)(function() {
+			if (open) setTemplates(getInitialTemplatesState(contextData, isImport, registeredSections));
+		}, [open]);
+		(0, react.useEffect)(function() {
+			if (open) AppsEventTracking.sendPageViewsWebsiteTemplates(elementorCommon.eventsManager.config.secondaryLocations.kitLibrary.kitExportCustomizationEdit);
+		}, [open]);
+		var handleSectionStateChange = (0, react.useCallback)(function(settingKey, newState) {
+			var mergeMode = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : false;
+			setTemplates(function(prev) {
+				return _objectSpread$21(_objectSpread$21({}, prev), {}, _defineProperty$1({}, settingKey, mergeMode ? _objectSpread$21(_objectSpread$21({}, prev[settingKey]), newState) : newState));
+			});
+		}, []);
+		return /*#__PURE__*/ react.default.createElement(KitCustomizationDialog, {
+			open,
+			title: (0, _wordpress_i18n.__)("Edit templates", "elementor"),
+			handleClose,
+			handleSaveChanges: function handleSaveChanges() {
+				var hasEnabledCustomization = Object.values(templates).some(function(sectionState) {
+					return sectionState === null || sectionState === void 0 ? void 0 : sectionState.enabled;
+				});
+				_handleSaveChanges(KIT_SECTIONS.TEMPLATES, templates, hasEnabledCustomization, transformAnalyticsData(templates));
+				handleClose();
+			},
+			minHeight: "auto"
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, { gap: 2 }, isOldElementorVersion && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), registeredSections.map(function(section) {
+			var SectionComponent = section.component;
+			return /*#__PURE__*/ react.default.createElement(SectionComponent, {
+				key: section.key,
+				data,
+				isImport,
+				isOldExport,
+				onSectionStateChange: handleSectionStateChange,
+				templates
+			});
+		})));
+	}
+	KitTemplatesCustomizationDialog.propTypes = {
+		open: import_prop_types$82.default.bool.isRequired,
+		handleClose: import_prop_types$82.default.func.isRequired,
+		handleSaveChanges: import_prop_types$82.default.func.isRequired
 	};
 
 //#endregion
 //#region app/modules/import-export-customization/assets/js/shared/kit-content-data.js
 	var kitContentData = [
 		{
-			type: "content",
+			type: KIT_SECTIONS.CONTENT,
 			data: {
 				title: (0, _wordpress_i18n.__)("Content", "elementor"),
 				features: { open: [
@@ -16866,7 +17835,7 @@ init_use_cloud_kits_eligibility();
 			required: false
 		},
 		{
-			type: "templates",
+			type: KIT_SECTIONS.TEMPLATES,
 			data: {
 				title: (0, _wordpress_i18n.__)("Templates", "elementor"),
 				features: {
@@ -16885,15 +17854,16 @@ init_use_cloud_kits_eligibility();
 					tooltip: (0, _wordpress_i18n.__)("To import or export these components, you’ll need Elementor Pro.", "elementor")
 				}
 			},
-			dialog: null,
+			dialog: KitTemplatesCustomizationDialog,
 			required: false
 		},
 		{
-			type: "settings",
+			type: KIT_SECTIONS.SETTINGS,
 			data: {
 				title: (0, _wordpress_i18n.__)("Settings & configurations", "elementor"),
 				features: { open: [
 					(0, _wordpress_i18n.__)("Classes", "elementor"),
+					(0, _wordpress_i18n.__)("Default Styles", "elementor"),
 					(0, _wordpress_i18n.__)("Variables", "elementor"),
 					(0, _wordpress_i18n.__)("Global Colors", "elementor"),
 					(0, _wordpress_i18n.__)("Global Fonts", "elementor"),
@@ -16910,7 +17880,7 @@ init_use_cloud_kits_eligibility();
 			required: false
 		},
 		{
-			type: "plugins",
+			type: KIT_SECTIONS.PLUGINS,
 			data: {
 				title: (0, _wordpress_i18n.__)("Plugins", "elementor"),
 				features: { open: [(0, _wordpress_i18n.__)("All plugins are required for this website templates to work", "elementor")] }
@@ -16956,46 +17926,175 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/import-export-customization/assets/js/shared/components/kit-parts-selection.js
+	init_defineProperty$1();
 	init_slicedToArray();
 	init_apps_event_tracking();
-	function isExperimentActive(experimentName) {
-		var _common$config;
-		var common = typeof globalThis !== "undefined" ? globalThis.elementorCommon : void 0;
-		return !!(common !== null && common !== void 0 && (_common$config = common.config) !== null && _common$config !== void 0 && (_common$config = _common$config.experimentalFeatures) !== null && _common$config !== void 0 && _common$config[experimentName]);
+	function ownKeys$21(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
 	}
-	function isClassesFeatureActive() {
-		return isExperimentActive("e_atomic_elements");
+	__name(ownKeys$21, "ownKeys");
+	function _objectSpread$20(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$21(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$21(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
 	}
-	function isVariablesFeatureActive() {
-		return isExperimentActive("e_atomic_elements");
-	}
-	function KitPartsSelection(_ref) {
-		var _useContextDetection;
-		var _contextData$data$upl;
-		var _contextData$data2;
-		var _contextData$data$upl2;
-		var _contextData$data3;
-		var _contextData$data4;
-		var _contextData$data5;
+	__name(_objectSpread$20, "_objectSpread");
+	var kitPartItemPropType = import_prop_types$82.default.shape({
+		type: import_prop_types$82.default.string.isRequired,
+		checked: import_prop_types$82.default.bool.isRequired,
+		data: import_prop_types$82.default.shape({
+			title: import_prop_types$82.default.string.isRequired,
+			features: import_prop_types$82.default.shape({
+				open: import_prop_types$82.default.arrayOf(import_prop_types$82.default.string).isRequired,
+				locked: import_prop_types$82.default.arrayOf(import_prop_types$82.default.string),
+				tooltip: import_prop_types$82.default.string
+			}).isRequired
+		}).isRequired
+	});
+	function DefaultKitPartSelectionSection(_ref) {
+		var data = _ref.data;
+		var item = _ref.item;
+		var DialogComponent = _ref.DialogComponent;
+		var isActive = _ref.isActive;
+		var disabled = _ref.disabled;
+		var isLockedFeaturesNoPro = _ref.isLockedFeaturesNoPro;
+		var hasSettingsLimitWarning = _ref.hasSettingsLimitWarning;
 		var onCheckboxChange = _ref.onCheckboxChange;
-		var testId = _ref.testId;
+		var onOpenDialog = _ref.onOpenDialog;
+		var onCloseDialog = _ref.onCloseDialog;
 		var handleSaveCustomization = _ref.handleSaveCustomization;
-		var _ref$isCloudKitsEligi = _ref.isCloudKitsEligible;
-		var isCloudKitsEligible = _ref$isCloudKitsEligi === void 0 ? false : _ref$isCloudKitsEligi;
-		var _ref$showMediaFormatV = _ref.showMediaFormatValidation;
-		var showMediaFormatValidation = _ref$showMediaFormatV === void 0 ? false : _ref$showMediaFormatV;
+		var isImport = _ref.isImport;
+		var isOldExport = _ref.isOldExport;
+		var isOldElementorVersion = _ref.isOldElementorVersion;
+		var isCloudKitsEligible = _ref.isCloudKitsEligible;
+		var showMediaFormatValidation = _ref.showMediaFormatValidation;
+		var renderFeatureDescription = _ref.renderFeatureDescription;
+		var renderEditControl = _ref.renderEditControl;
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, {
+			"data-testid": "KitPartsSelectionRow-".concat(item.type),
+			sx: {
+				mb: 3,
+				border: 1,
+				borderRadius: 1,
+				borderColor: "action.focus",
+				p: 2.5
+			}
+		}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			display: "flex",
+			justifyContent: "space-between",
+			alignItems: "flex-start"
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			flex: 1,
+			opacity: isLockedFeaturesNoPro ? .5 : 1
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
+			display: "flex",
+			alignItems: "center"
+		} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
+			control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
+				color: "info",
+				checked: item.checked,
+				onChange: onCheckboxChange,
+				disabled,
+				sx: {
+					p: 0,
+					mx: 1
+				},
+				"data-testid": "KitContentDataSelection-".concat(item.type),
+				"data-type": item.type
+			}),
+			label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
+				color: "text.primary",
+				variant: "body1",
+				sx: { fontWeight: 500 }
+			}, item.data.title),
+			sx: { "& .MuiFormControlLabel-label.Mui-disabled": { color: "text.primary" } }
+		}), KIT_SECTIONS.SETTINGS === item.type && hasSettingsLimitWarning && /*#__PURE__*/ react.default.createElement(_elementor_ui.Tooltip, {
+			title: (0, _wordpress_i18n.__)("Limit exceeded. Click 'Edit' to review conflicts or override existing items", "elementor"),
+			placement: "top",
+			arrow: true
+		}, /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, {
+			sx: {
+				fontSize: 20,
+				color: "warning.main",
+				ml: .5
+			},
+			"aria-hidden": true
+		}))), renderFeatureDescription(item, isLockedFeaturesNoPro)), renderEditControl(item, isLockedFeaturesNoPro, onOpenDialog))), DialogComponent && /*#__PURE__*/ react.default.createElement(DialogComponent, {
+			data,
+			open: isActive,
+			handleClose: onCloseDialog,
+			handleSaveChanges: handleSaveCustomization,
+			isImport,
+			isOldExport,
+			isOldElementorVersion,
+			isCloudKitsEligible,
+			showMediaFormatValidation
+		}));
+	}
+	DefaultKitPartSelectionSection.propTypes = {
+		data: import_prop_types$82.default.object,
+		item: kitPartItemPropType.isRequired,
+		DialogComponent: import_prop_types$82.default.elementType,
+		isActive: import_prop_types$82.default.bool.isRequired,
+		disabled: import_prop_types$82.default.bool.isRequired,
+		isLockedFeaturesNoPro: import_prop_types$82.default.bool.isRequired,
+		hasSettingsLimitWarning: import_prop_types$82.default.bool.isRequired,
+		onCheckboxChange: import_prop_types$82.default.func.isRequired,
+		onOpenDialog: import_prop_types$82.default.func.isRequired,
+		onCloseDialog: import_prop_types$82.default.func.isRequired,
+		handleSaveCustomization: import_prop_types$82.default.func.isRequired,
+		isImport: import_prop_types$82.default.bool.isRequired,
+		isOldExport: import_prop_types$82.default.bool.isRequired,
+		isOldElementorVersion: import_prop_types$82.default.bool.isRequired,
+		isCloudKitsEligible: import_prop_types$82.default.bool.isRequired,
+		showMediaFormatValidation: import_prop_types$82.default.bool.isRequired,
+		renderFeatureDescription: import_prop_types$82.default.func.isRequired,
+		renderEditControl: import_prop_types$82.default.func.isRequired
+	};
+	function KitPartsSelection(_ref2) {
+		var _useContextDetection;
+		var _onCheckboxChange = _ref2.onCheckboxChange;
+		var testId = _ref2.testId;
+		var handleSaveCustomization = _ref2.handleSaveCustomization;
+		var _ref2$isCloudKitsElig = _ref2.isCloudKitsEligible;
+		var isCloudKitsEligible = _ref2$isCloudKitsElig === void 0 ? false : _ref2$isCloudKitsElig;
+		var _ref2$showMediaFormat = _ref2.showMediaFormatValidation;
+		var showMediaFormatValidation = _ref2$showMediaFormat === void 0 ? false : _ref2$showMediaFormat;
 		var _useState2 = _slicedToArray((0, react.useState)(null), 2);
 		var activeDialog = _useState2[0];
 		var setActiveDialog = _useState2[1];
-		var _ref2 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
-		var _ref2$isImport = _ref2.isImport;
-		var isImport = _ref2$isImport === void 0 ? false : _ref2$isImport;
-		var _ref2$contextData = _ref2.contextData;
-		var contextData = _ref2$contextData === void 0 ? {} : _ref2$contextData;
+		var _useState4 = _slicedToArray((0, react.useState)(false), 2);
+		var isRegistryPrepared = _useState4[0];
+		var setIsRegistryPrepared = _useState4[1];
+		var _ref3 = (_useContextDetection = useContextDetection()) !== null && _useContextDetection !== void 0 ? _useContextDetection : {};
+		var _ref3$isImport = _ref3.isImport;
+		var isImport = _ref3$isImport === void 0 ? false : _ref3$isImport;
+		var _ref3$contextData = _ref3.contextData;
+		var contextData = _ref3$contextData === void 0 ? {} : _ref3$contextData;
 		var _contextData$data = contextData.data;
 		var data = _contextData$data === void 0 ? null : _contextData$data;
-		var showClassesSection = isClassesFeatureActive();
-		var showVariablesSection = isVariablesFeatureActive();
+		var _contextData$isOldExp = contextData.isOldExport;
+		var isOldExport = _contextData$isOldExp === void 0 ? false : _contextData$isOldExp;
+		var _contextData$isOldEle = contextData.isOldElementorVersion;
+		var isOldElementorVersion = _contextData$isOldEle === void 0 ? false : _contextData$isOldEle;
+		(0, react.useLayoutEffect)(function() {
+			prepareCustomizationDialogsForRender();
+			setIsRegistryPrepared(true);
+		}, []);
+		var showDesignSystemSettingsSection = isAtomicElementsFeatureActive();
 		var _useClassesVariablesL = useClassesVariablesLimits({
 			open: true,
 			isImport
@@ -17005,10 +18104,10 @@ init_use_cloud_kits_eligibility();
 		var classesLimit = _useClassesVariablesL.classesLimit;
 		var variablesLimit = _useClassesVariablesL.variablesLimit;
 		var calculateLimitInfo = _useClassesVariablesL.calculateLimitInfo;
-		var importedClassesCount = (_contextData$data$upl = contextData === null || contextData === void 0 || (_contextData$data2 = contextData.data) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.uploadedData) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.manifest) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2["site-settings"]) === null || _contextData$data2 === void 0 ? void 0 : _contextData$data2.classesCount) !== null && _contextData$data$upl !== void 0 ? _contextData$data$upl : 0;
-		var importedVariablesCount = (_contextData$data$upl2 = contextData === null || contextData === void 0 || (_contextData$data3 = contextData.data) === null || _contextData$data3 === void 0 || (_contextData$data3 = _contextData$data3.uploadedData) === null || _contextData$data3 === void 0 || (_contextData$data3 = _contextData$data3.manifest) === null || _contextData$data3 === void 0 || (_contextData$data3 = _contextData$data3["site-settings"]) === null || _contextData$data3 === void 0 ? void 0 : _contextData$data3.variablesCount) !== null && _contextData$data$upl2 !== void 0 ? _contextData$data$upl2 : 0;
-		var isClassesExportedInManifest = !!(contextData !== null && contextData !== void 0 && (_contextData$data4 = contextData.data) !== null && _contextData$data4 !== void 0 && (_contextData$data4 = _contextData$data4.uploadedData) !== null && _contextData$data4 !== void 0 && (_contextData$data4 = _contextData$data4.manifest) !== null && _contextData$data4 !== void 0 && (_contextData$data4 = _contextData$data4["site-settings"]) !== null && _contextData$data4 !== void 0 && _contextData$data4.classes);
-		var isVariablesExportedInManifest = !!(contextData !== null && contextData !== void 0 && (_contextData$data5 = contextData.data) !== null && _contextData$data5 !== void 0 && (_contextData$data5 = _contextData$data5.uploadedData) !== null && _contextData$data5 !== void 0 && (_contextData$data5 = _contextData$data5.manifest) !== null && _contextData$data5 !== void 0 && (_contextData$data5 = _contextData$data5["site-settings"]) !== null && _contextData$data5 !== void 0 && _contextData$data5.variables);
+		var importedClassesCount = getImportedClassesCount(contextData);
+		var importedVariablesCount = getImportedVariablesCount(contextData);
+		var isClassesExportedInManifest = isClassesExported(contextData);
+		var isVariablesExportedInManifest = isVariablesExported(contextData);
 		var classesLimitInfo = (0, react.useMemo)(function() {
 			return calculateLimitInfo(existingClassesCount, importedClassesCount, classesLimit);
 		}, [
@@ -17025,56 +18124,34 @@ init_use_cloud_kits_eligibility();
 			variablesLimit,
 			calculateLimitInfo
 		]);
-		var hasSettingsLimitWarning = isImport && (showClassesSection && isClassesExportedInManifest && classesLimitInfo.isExceeded || showVariablesSection && isVariablesExportedInManifest && variablesLimitInfo.isExceeded);
+		var hasSettingsLimitWarning = showDesignSystemSettingsSection && isImport && (isClassesExportedInManifest && classesLimitInfo.isExceeded || isVariablesExportedInManifest && variablesLimitInfo.isExceeded);
 		(0, react.useEffect)(function() {
-			if (showMediaFormatValidation && !isImport) setActiveDialog("content");
+			if (showMediaFormatValidation && !isImport) setActiveDialog(KIT_SECTIONS.CONTENT);
 		}, [showMediaFormatValidation, isImport]);
-		var isSiteSettingsExported = function isSiteSettingsExported() {
-			var _contextData$data6;
-			var siteSettings = contextData === null || contextData === void 0 || (_contextData$data6 = contextData.data) === null || _contextData$data6 === void 0 || (_contextData$data6 = _contextData$data6.uploadedData) === null || _contextData$data6 === void 0 || (_contextData$data6 = _contextData$data6.manifest) === null || _contextData$data6 === void 0 ? void 0 : _contextData$data6["site-settings"];
-			if (!siteSettings) return false;
-			return Object.values(siteSettings).some(Boolean);
-		};
-		var isContentSettingsExported = function isContentSettingsExported() {
-			var _contextData$data7;
-			var _contextData$data8;
-			var _contextData$data9;
-			var _contextData$data0;
-			var taxonomies = contextData === null || contextData === void 0 || (_contextData$data7 = contextData.data) === null || _contextData$data7 === void 0 || (_contextData$data7 = _contextData$data7.uploadedData) === null || _contextData$data7 === void 0 || (_contextData$data7 = _contextData$data7.manifest) === null || _contextData$data7 === void 0 ? void 0 : _contextData$data7.taxonomies;
-			var content = contextData === null || contextData === void 0 || (_contextData$data8 = contextData.data) === null || _contextData$data8 === void 0 || (_contextData$data8 = _contextData$data8.uploadedData) === null || _contextData$data8 === void 0 || (_contextData$data8 = _contextData$data8.manifest) === null || _contextData$data8 === void 0 ? void 0 : _contextData$data8.content;
-			var wpContent = contextData === null || contextData === void 0 || (_contextData$data9 = contextData.data) === null || _contextData$data9 === void 0 || (_contextData$data9 = _contextData$data9.uploadedData) === null || _contextData$data9 === void 0 || (_contextData$data9 = _contextData$data9.manifest) === null || _contextData$data9 === void 0 ? void 0 : _contextData$data9["wp-content"];
-			var customPostTypes = contextData === null || contextData === void 0 || (_contextData$data0 = contextData.data) === null || _contextData$data0 === void 0 || (_contextData$data0 = _contextData$data0.uploadedData) === null || _contextData$data0 === void 0 || (_contextData$data0 = _contextData$data0.manifest) === null || _contextData$data0 === void 0 ? void 0 : _contextData$data0["custom-post-type-title"];
-			return taxonomies || content || wpContent || customPostTypes;
-		};
 		var isExported = function isExported(item) {
-			var _contextData$data1;
 			switch (item.type) {
-				case "settings": return isSiteSettingsExported();
-				case "content": return isContentSettingsExported();
-				default: return contextData === null || contextData === void 0 || (_contextData$data1 = contextData.data) === null || _contextData$data1 === void 0 || (_contextData$data1 = _contextData$data1.uploadedData) === null || _contextData$data1 === void 0 || (_contextData$data1 = _contextData$data1.manifest) === null || _contextData$data1 === void 0 ? void 0 : _contextData$data1[item.type];
+				case KIT_SECTIONS.SETTINGS: return isSiteSettingsExported(contextData);
+				case KIT_SECTIONS.CONTENT: return isContentSettingsExported(contextData);
+				default: return getManifestItem(contextData, item.type);
 			}
+		};
+		var hasLockedFeatures = function hasLockedFeatures(item) {
+			var _item$data$features$l;
+			var _item$data$features;
+			return ((_item$data$features$l = (_item$data$features = item.data.features) === null || _item$data$features === void 0 || (_item$data$features = _item$data$features.locked) === null || _item$data$features === void 0 ? void 0 : _item$data$features.length) !== null && _item$data$features$l !== void 0 ? _item$data$features$l : 0) > 0;
 		};
 		var isDisabled = function isDisabled(item) {
-			var _item$data$features;
-			var _contextData$data10;
-			if ((_item$data$features = item.data.features) !== null && _item$data$features !== void 0 && _item$data$features.locked && !elementorAppConfig.hasPro) return true;
+			var _contextData$data2;
+			if (hasLockedFeatures(item) && !elementorAppConfig.hasPro) return true;
 			if (isImport) return !isExported(item) || item.required;
-			return item.required && (contextData === null || contextData === void 0 || (_contextData$data10 = contextData.data) === null || _contextData$data10 === void 0 || (_contextData$data10 = _contextData$data10.includes) === null || _contextData$data10 === void 0 ? void 0 : _contextData$data10.includes(item.type));
+			return item.required && (contextData === null || contextData === void 0 || (_contextData$data2 = contextData.data) === null || _contextData$data2 === void 0 || (_contextData$data2 = _contextData$data2.includes) === null || _contextData$data2 === void 0 ? void 0 : _contextData$data2.includes(item.type));
 		};
 		var isEditDisabled = function isEditDisabled(item) {
-			if (isImport) {
-				var _contextData$data11;
-				var manifestKey = "settings" === item.type ? "site-settings" : item.type;
-				return !(contextData !== null && contextData !== void 0 && (_contextData$data11 = contextData.data) !== null && _contextData$data11 !== void 0 && (_contextData$data11 = _contextData$data11.uploadedData) !== null && _contextData$data11 !== void 0 && (_contextData$data11 = _contextData$data11.manifest) !== null && _contextData$data11 !== void 0 && _contextData$data11[manifestKey]);
-			}
+			if (isImport) return !getManifestItem(contextData, KIT_SECTIONS.SETTINGS === item.type ? "site-settings" : item.type);
 			return false;
 		};
-		var getDialogComponent = function getDialogComponent(item) {
-			var _window$elementorModu;
-			var _reg$get;
-			var reg = (_window$elementorModu = window.elementorModules) === null || _window$elementorModu === void 0 || (_window$elementorModu = _window$elementorModu.importExport) === null || _window$elementorModu === void 0 ? void 0 : _window$elementorModu.customizationDialogsRegistry;
-			var registered = reg === null || reg === void 0 || (_reg$get = reg.get) === null || _reg$get === void 0 ? void 0 : _reg$get.call(reg, item.type);
-			return (registered === null || registered === void 0 ? void 0 : registered.component) || item.dialog;
+		var getRegistryEntry = function getRegistryEntry(item) {
+			return getCustomizationDialog(item.type);
 		};
 		var renderFeatureDescription = function renderFeatureDescription(item, isLockedFeaturesNoPro) {
 			var _item$data$features2;
@@ -17099,31 +18176,7 @@ init_use_cloud_kits_eligibility();
 				placement: "top"
 			}, description) : description;
 		};
-		var renderCheckboxControl = function renderCheckboxControl(item, disabled) {
-			return /*#__PURE__*/ react.default.createElement(_elementor_ui.FormControlLabel, {
-				control: /*#__PURE__*/ react.default.createElement(_elementor_ui.Checkbox, {
-					color: "info",
-					checked: data.includes.includes(item.type),
-					onChange: function onChange() {
-						return onCheckboxChange(item.type);
-					},
-					disabled,
-					sx: {
-						p: 0,
-						mx: 1
-					},
-					"data-testid": "KitContentDataSelection-".concat(item.type),
-					"data-type": item.type
-				}),
-				label: /*#__PURE__*/ react.default.createElement(_elementor_ui.Typography, {
-					color: "text.primary",
-					variant: "body1",
-					sx: { fontWeight: 500 }
-				}, item.data.title),
-				sx: { "& .MuiFormControlLabel-label.Mui-disabled": { color: "text.primary" } }
-			});
-		};
-		var getSectionEditButton = function getSectionEditButton(item, isLockedFeaturesNoPro) {
+		var renderEditControl = function renderEditControl(item, isLockedFeaturesNoPro, onOpenDialog) {
 			if (isLockedFeaturesNoPro) return /*#__PURE__*/ react.default.createElement(_elementor_ui.Button, {
 				variant: "contained",
 				color: "promotion",
@@ -17138,18 +18191,14 @@ init_use_cloud_kits_eligibility();
 			}, (0, _wordpress_i18n.__)("Upgrade", "elementor"));
 			if (!isImport) return /*#__PURE__*/ react.default.createElement(_elementor_ui.Button, {
 				color: "secondary",
-				onClick: function onClick() {
-					return setActiveDialog(item.type);
-				},
+				onClick: onOpenDialog,
 				sx: { alignSelf: "center" },
 				"data-type": item.type,
 				disabled: isEditDisabled(item)
 			}, (0, _wordpress_i18n.__)("Edit", "elementor"));
 			return isExported(item) ? /*#__PURE__*/ react.default.createElement(_elementor_ui.Button, {
 				color: "secondary",
-				onClick: function onClick() {
-					return setActiveDialog(item.type);
-				},
+				onClick: onOpenDialog,
 				sx: { alignSelf: "center" },
 				"data-type": item.type,
 				disabled: isEditDisabled(item)
@@ -17159,66 +18208,50 @@ init_use_cloud_kits_eligibility();
 				sx: { alignSelf: "center" }
 			}, (0, _wordpress_i18n.__)("Not exported", "elementor"));
 		};
+		if (!isRegistryPrepared) return null;
 		return /*#__PURE__*/ react.default.createElement(_elementor_ui.Stack, {
 			spacing: 2,
 			"data-testid": testId
 		}, (contextData === null || contextData === void 0 ? void 0 : contextData.isOldExport) && /*#__PURE__*/ react.default.createElement(ReExportBanner, null), (contextData === null || contextData === void 0 ? void 0 : contextData.isOldElementorVersion) && /*#__PURE__*/ react.default.createElement(UpgradeVersionBanner, null), kitContentData.map(function(item) {
-			var _item$data$features5;
-			var isLockedFeaturesNoPro = ((_item$data$features5 = item.data.features) === null || _item$data$features5 === void 0 ? void 0 : _item$data$features5.locked) && !elementorAppConfig.hasPro;
+			var registryEntry = getRegistryEntry(item);
+			var isLockedFeaturesNoPro = hasLockedFeatures(item) && !elementorAppConfig.hasPro;
 			var disabled = isDisabled(item);
-			var DialogComponent = getDialogComponent(item);
-			return /*#__PURE__*/ react.default.createElement(react.Fragment, { key: item.type }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, {
-				"data-testid": "KitPartsSelectionRow-".concat(item.type),
-				key: item.type,
-				sx: {
-					mb: 3,
-					border: 1,
-					borderRadius: 1,
-					borderColor: "action.focus",
-					p: 2.5
-				}
-			}, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-				display: "flex",
-				justifyContent: "space-between",
-				alignItems: "flex-start"
-			} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-				flex: 1,
-				opacity: isLockedFeaturesNoPro ? .5 : 1
-			} }, /*#__PURE__*/ react.default.createElement(_elementor_ui.Box, { sx: {
-				display: "flex",
-				alignItems: "center"
-			} }, renderCheckboxControl(item, disabled), "settings" === item.type && hasSettingsLimitWarning && /*#__PURE__*/ react.default.createElement(_elementor_ui.Tooltip, {
-				title: (0, _wordpress_i18n.__)("Limit exceeded. Click 'Edit' to review conflicts or override existing items", "elementor"),
-				placement: "top",
-				arrow: true
-			}, /*#__PURE__*/ react.default.createElement(_elementor_icons.AlertTriangleFilledIcon, {
-				sx: {
-					fontSize: 20,
-					color: "warning.main",
-					ml: .5
+			var DialogComponent = (registryEntry === null || registryEntry === void 0 ? void 0 : registryEntry.component) || item.dialog;
+			var SectionComponent = (registryEntry === null || registryEntry === void 0 ? void 0 : registryEntry.section) || DefaultKitPartSelectionSection;
+			return /*#__PURE__*/ react.default.createElement(react.Fragment, { key: item.type }, /*#__PURE__*/ react.default.createElement(SectionComponent, {
+				data,
+				item: _objectSpread$20(_objectSpread$20({}, item), {}, { checked: data.includes.includes(item.type) }),
+				DialogComponent,
+				isActive: activeDialog === item.type,
+				disabled,
+				isLockedFeaturesNoPro,
+				hasSettingsLimitWarning,
+				onCheckboxChange: function onCheckboxChange() {
+					return _onCheckboxChange(item.type);
 				},
-				"aria-hidden": true
-			}))), renderFeatureDescription(item, isLockedFeaturesNoPro)), getSectionEditButton(item, isLockedFeaturesNoPro))), DialogComponent && /*#__PURE__*/ react.default.createElement(DialogComponent, {
-				open: activeDialog === item.type,
-				handleClose: function handleClose() {
+				onOpenDialog: function onOpenDialog() {
+					return setActiveDialog(item.type);
+				},
+				onCloseDialog: function onCloseDialog() {
 					return setActiveDialog(null);
 				},
-				data,
-				handleSaveChanges: handleSaveCustomization,
+				handleSaveCustomization,
 				isImport,
-				isOldExport: contextData.isOldExport,
-				isOldElementorVersion: contextData.isOldElementorVersion,
+				isOldExport,
+				isOldElementorVersion,
 				isCloudKitsEligible,
-				showMediaFormatValidation
+				showMediaFormatValidation,
+				renderFeatureDescription,
+				renderEditControl
 			}));
 		}));
 	}
 	KitPartsSelection.propTypes = {
-		onCheckboxChange: import_prop_types$55.default.func.isRequired,
-		testId: import_prop_types$55.default.string,
-		handleSaveCustomization: import_prop_types$55.default.func.isRequired,
-		isCloudKitsEligible: import_prop_types$55.default.bool,
-		showMediaFormatValidation: import_prop_types$55.default.bool
+		onCheckboxChange: import_prop_types$82.default.func.isRequired,
+		testId: import_prop_types$82.default.string,
+		handleSaveCustomization: import_prop_types$82.default.func.isRequired,
+		isCloudKitsEligible: import_prop_types$82.default.bool,
+		showMediaFormatValidation: import_prop_types$82.default.bool
 	};
 
 //#endregion
@@ -17242,11 +18275,11 @@ init_use_cloud_kits_eligibility();
 		}));
 	}
 	CompleteIcon.propTypes = {
-		imageSrc: import_prop_types$55.default.string.isRequired,
-		altText: import_prop_types$55.default.string.isRequired,
-		width: import_prop_types$55.default.string,
-		marginBottom: import_prop_types$55.default.number,
-		testId: import_prop_types$55.default.string
+		imageSrc: import_prop_types$82.default.string.isRequired,
+		altText: import_prop_types$82.default.string.isRequired,
+		width: import_prop_types$82.default.string,
+		marginBottom: import_prop_types$82.default.number,
+		testId: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -17279,12 +18312,12 @@ init_use_cloud_kits_eligibility();
 		}, linkText))));
 	}
 	CompleteHeading.propTypes = {
-		title: import_prop_types$55.default.string.isRequired,
-		subtitle: import_prop_types$55.default.string.isRequired,
-		linkText: import_prop_types$55.default.string,
-		linkHref: import_prop_types$55.default.string,
-		linkOnClick: import_prop_types$55.default.func,
-		testId: import_prop_types$55.default.string
+		title: import_prop_types$82.default.string.isRequired,
+		subtitle: import_prop_types$82.default.string.isRequired,
+		linkText: import_prop_types$82.default.string,
+		linkHref: import_prop_types$82.default.string,
+		linkOnClick: import_prop_types$82.default.func,
+		testId: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -17307,9 +18340,9 @@ init_use_cloud_kits_eligibility();
 		}, subTitle));
 	}
 	SummarySection.propTypes = {
-		title: import_prop_types$55.default.string.isRequired,
-		subTitle: import_prop_types$55.default.string.isRequired,
-		sectionKey: import_prop_types$55.default.string.isRequired
+		title: import_prop_types$82.default.string.isRequired,
+		subTitle: import_prop_types$82.default.string.isRequired,
+		sectionKey: import_prop_types$82.default.string.isRequired
 	};
 
 //#endregion
@@ -17349,11 +18382,11 @@ init_use_cloud_kits_eligibility();
 		})));
 	}
 	CompleteSummary.propTypes = {
-		summaryData: import_prop_types$55.default.objectOf(import_prop_types$55.default.shape({
-			title: import_prop_types$55.default.string.isRequired,
-			subTitle: import_prop_types$55.default.string.isRequired
+		summaryData: import_prop_types$82.default.objectOf(import_prop_types$82.default.shape({
+			title: import_prop_types$82.default.string.isRequired,
+			subTitle: import_prop_types$82.default.string.isRequired
 		})).isRequired,
-		testId: import_prop_types$55.default.string
+		testId: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -17380,10 +18413,10 @@ init_use_cloud_kits_eligibility();
 	}
 	__name(DownloadLink$1, "DownloadLink");
 	DownloadLink$1.propTypes = {
-		message: import_prop_types$55.default.string.isRequired,
-		linkText: import_prop_types$55.default.string.isRequired,
-		onClick: import_prop_types$55.default.func.isRequired,
-		testId: import_prop_types$55.default.string
+		message: import_prop_types$82.default.string.isRequired,
+		linkText: import_prop_types$82.default.string.isRequired,
+		onClick: import_prop_types$82.default.func.isRequired,
+		testId: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -18247,7 +19280,7 @@ init_use_cloud_kits_eligibility();
 			color: "text.secondary"
 		}, (0, _wordpress_i18n.__)("This usually takes a few moments.", "elementor"), /*#__PURE__*/ react.default.createElement("br", null), (0, _wordpress_i18n.__)("Don't close this window until the process is finished.", "elementor")));
 	}
-	ExportProcessing.propTypes = { statusText: import_prop_types$55.default.string.isRequired };
+	ExportProcessing.propTypes = { statusText: import_prop_types$82.default.string.isRequired };
 
 //#endregion
 //#region app/modules/import-export-customization/assets/js/shared/components/error/processing-error-dialog.js
@@ -18267,8 +19300,8 @@ init_use_cloud_kits_eligibility();
 	}
 	__name(Link$3, "Link");
 	Link$3.propTypes = {
-		href: import_prop_types$55.default.string.isRequired,
-		children: import_prop_types$55.default.node.isRequired
+		href: import_prop_types$82.default.string.isRequired,
+		children: import_prop_types$82.default.node.isRequired
 	};
 	var messagesContent = {
 		general: {
@@ -18419,10 +19452,10 @@ init_use_cloud_kits_eligibility();
 		}, resolveText()), /*#__PURE__*/ react.default.createElement(_elementor_ui.DialogActions, null, renderButtons()));
 	}
 	ProcessingErrorDialog.propTypes = {
-		error: import_prop_types$55.default.any,
-		handleClose: import_prop_types$55.default.func,
-		handleTryAgain: import_prop_types$55.default.func,
-		handleExportAsZip: import_prop_types$55.default.func
+		error: import_prop_types$82.default.any,
+		handleClose: import_prop_types$82.default.func,
+		handleTryAgain: import_prop_types$82.default.func,
+		handleExportAsZip: import_prop_types$82.default.func
 	};
 
 //#endregion
@@ -18514,6 +19547,7 @@ init_use_cloud_kits_eligibility();
 		}).map(function(_ref3) {
 			return _slicedToArray(_ref3, 1)[0];
 		})).map(function(setting) {
+			if ("defaultStyles" === setting) return (0, _wordpress_i18n.__)("Default Styles", "elementor");
 			return formatToTitleCase(setting);
 		});
 		return formattedSettings.length > 0 ? formattedSettings.join(" | ") : "";
@@ -18884,7 +19918,7 @@ init_use_cloud_kits_eligibility();
 //#region app/modules/import-export-customization/assets/js/import/components/drop-zone.js
 	init_extends();
 	init_objectWithoutProperties();
-	var _excluded = [
+	var _excluded$1 = [
 		"onFileSelect",
 		"onError",
 		"filetypes",
@@ -18935,7 +19969,7 @@ init_use_cloud_kits_eligibility();
 		var onFileChoose = _ref3.onFileChoose;
 		var _ref3$helperText = _ref3.helperText;
 		var helperText = _ref3$helperText === void 0 ? (0, _wordpress_i18n.__)("Upload a .zip file", "elementor") : _ref3$helperText;
-		var props = _objectWithoutProperties(_ref3, _excluded);
+		var props = _objectWithoutProperties(_ref3, _excluded$1);
 		var _useDropZone = useDropZone({
 			onFileSelect,
 			onError,
@@ -19010,15 +20044,15 @@ init_use_cloud_kits_eligibility();
 		}))));
 	};
 	DropZone.propTypes = {
-		className: import_prop_types$55.default.string,
-		onFileSelect: import_prop_types$55.default.func.isRequired,
-		onError: import_prop_types$55.default.func,
-		filetypes: import_prop_types$55.default.array,
-		isLoading: import_prop_types$55.default.bool,
-		error: import_prop_types$55.default.shape({ message: import_prop_types$55.default.string.isRequired }),
-		onButtonClick: import_prop_types$55.default.func,
-		onFileChoose: import_prop_types$55.default.func,
-		helperText: import_prop_types$55.default.string
+		className: import_prop_types$82.default.string,
+		onFileSelect: import_prop_types$82.default.func.isRequired,
+		onError: import_prop_types$82.default.func,
+		filetypes: import_prop_types$82.default.array,
+		isLoading: import_prop_types$82.default.bool,
+		error: import_prop_types$82.default.shape({ message: import_prop_types$82.default.string.isRequired }),
+		onButtonClick: import_prop_types$82.default.func,
+		onFileChoose: import_prop_types$82.default.func,
+		helperText: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -19027,7 +20061,7 @@ init_use_cloud_kits_eligibility();
 	init_asyncToGenerator();
 	init_slicedToArray();
 	init_apps_event_tracking();
-	function ownKeys$12(e, r) {
+	function ownKeys$20(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -19037,19 +20071,19 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$12, "ownKeys");
-	function _objectSpread$11(e) {
+	__name(ownKeys$20, "ownKeys");
+	function _objectSpread$19(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$12(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$20(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$12(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$20(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$11, "_objectSpread");
+	__name(_objectSpread$19, "_objectSpread");
 	function useUploadKit() {
 		var _useImportContext = useImportContext();
 		var data = _useImportContext.data;
@@ -19107,7 +20141,7 @@ init_use_cloud_kits_eligibility();
 							_context.next = 1;
 							return fetch(uploadUrl, {
 								method: "POST",
-								headers: _objectSpread$11({ "X-WP-Nonce": ((_window$wpApiSettings = window.wpApiSettings) === null || _window$wpApiSettings === void 0 ? void 0 : _window$wpApiSettings.nonce) || "" }, "string" === typeof uploadData ? { "Content-Type": "application/json" } : null),
+								headers: _objectSpread$19({ "X-WP-Nonce": ((_window$wpApiSettings = window.wpApiSettings) === null || _window$wpApiSettings === void 0 ? void 0 : _window$wpApiSettings.nonce) || "" }, "string" === typeof uploadData ? { "Content-Type": "application/json" } : null),
 								body: uploadData
 							});
 						case 1:
@@ -19382,7 +20416,7 @@ init_use_cloud_kits_eligibility();
 	init_slicedToArray();
 	init_es$1();
 	init_apps_event_tracking();
-	function ownKeys$11(e, r) {
+	function ownKeys$19(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -19392,19 +20426,19 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$11, "ownKeys");
-	function _objectSpread$10(e) {
+	__name(ownKeys$19, "ownKeys");
+	function _objectSpread$18(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$11(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$19(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$11(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$19(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$10, "_objectSpread");
+	__name(_objectSpread$18, "_objectSpread");
 	function ImportComplete() {
 		var _data$uploadedData;
 		var _data$kitUploadParams;
@@ -19579,7 +20613,7 @@ init_use_cloud_kits_eligibility();
 		var isFromKitsLibrary = "kit-library" === kitSource;
 		(0, react.useEffect)(function() {
 			var _uploadedData$manifes;
-			AppsEventTracking.sendImportKitCustomization(_objectSpread$10(_objectSpread$10(_objectSpread$10({
+			AppsEventTracking.sendImportKitCustomization(_objectSpread$18(_objectSpread$18(_objectSpread$18({
 				kit_source: kitSource,
 				kit_import_content: includes.includes("content"),
 				kit_import_templates: includes.includes("templates"),
@@ -20110,8 +21144,8 @@ init_use_cloud_kits_eligibility();
 		}, name, " ", status));
 	}
 	PluginStatusItem.propTypes = {
-		name: import_prop_types$55.default.string.isRequired,
-		status: import_prop_types$55.default.string
+		name: import_prop_types$82.default.string.isRequired,
+		status: import_prop_types$82.default.string
 	};
 
 //#endregion
@@ -20152,7 +21186,7 @@ init_use_cloud_kits_eligibility();
 			});
 		}))));
 	}
-	PluginActivation.propTypes = { plugins: import_prop_types$55.default.arrayOf(import_prop_types$55.default.string) };
+	PluginActivation.propTypes = { plugins: import_prop_types$82.default.arrayOf(import_prop_types$82.default.string) };
 
 //#endregion
 //#region app/modules/import-export-customization/assets/js/import/pages/import-process.js
@@ -20299,6 +21333,7 @@ init_use_cloud_kits_eligibility();
 			path: "/import-customization/*",
 			component: Import
 		}]);
+		initializeCustomizationDialogsRegistration();
 		var _iterator = _createForOfIteratorHelper(this.routes);
 		var _step;
 		try {
@@ -20541,7 +21576,7 @@ init_use_cloud_kits_eligibility();
 	init_possibleConstructorReturn();
 	init_getPrototypeOf();
 	init_inherits();
-	function ownKeys$10(e, r) {
+	function ownKeys$18(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -20551,19 +21586,19 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	__name(ownKeys$10, "ownKeys");
-	function _objectSpread$9(e) {
+	__name(ownKeys$18, "ownKeys");
+	function _objectSpread$17(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$10(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$18(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$10(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$18(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
 		return e;
 	}
-	__name(_objectSpread$9, "_objectSpread");
+	__name(_objectSpread$17, "_objectSpread");
 	function _callSuper$8(t, o, e) {
 		return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct$8() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
 	}
@@ -20591,7 +21626,7 @@ init_use_cloud_kits_eligibility();
 		}, {
 			key: "defaultCommands",
 			value: function defaultCommands() {
-				return _objectSpread$9({}, [
+				return _objectSpread$17({}, [
 					"apply-kit",
 					"approve-import",
 					"approve-selection",
@@ -20646,7 +21681,7 @@ init_use_cloud_kits_eligibility();
 					"cloud-import",
 					"cloud-delete"
 				].reduce(function(allCommands, command) {
-					return _objectSpread$9(_objectSpread$9({}, allCommands), {}, _defineProperty$1({}, command, function() {}));
+					return _objectSpread$17(_objectSpread$17({}, allCommands), {}, _defineProperty$1({}, command, function() {}));
 				}, {}));
 			}
 		}]);
@@ -20843,9 +21878,9 @@ init_use_cloud_kits_eligibility();
 			className: "e-kit-library__error-screen-description"
 		}, props.description, " ", " ", !props.newLineButton && /*#__PURE__*/ react.default.createElement(ErrorScreenButton, props.button)), props.newLineButton && /*#__PURE__*/ react.default.createElement(ErrorScreenButton, props.button));
 	}
-	var import_prop_types$46, ErrorScreenButton;
+	var import_prop_types$65, ErrorScreenButton;
 	var init_error_screen = __esmMin((() => {
-		import_prop_types$46 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$65 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_error_screen$1();
 		ErrorScreenButton = function ErrorScreenButton(props) {
 			return /*#__PURE__*/ react.default.createElement(_elementor_app_ui.Button, {
@@ -20860,18 +21895,18 @@ init_use_cloud_kits_eligibility();
 			});
 		};
 		ErrorScreenButton.propTypes = {
-			text: import_prop_types$46.default.string,
-			action: import_prop_types$46.default.func,
-			url: import_prop_types$46.default.string,
-			target: import_prop_types$46.default.string,
-			color: import_prop_types$46.default.oneOf([
+			text: import_prop_types$65.default.string,
+			action: import_prop_types$65.default.func,
+			url: import_prop_types$65.default.string,
+			target: import_prop_types$65.default.string,
+			color: import_prop_types$65.default.oneOf([
 				"primary",
 				"secondary",
 				"cta",
 				"link",
 				"disabled"
 			]),
-			variant: import_prop_types$46.default.oneOf([
+			variant: import_prop_types$65.default.oneOf([
 				"contained",
 				"underlined",
 				"outlined",
@@ -20879,23 +21914,23 @@ init_use_cloud_kits_eligibility();
 			])
 		};
 		ErrorScreen.propTypes = {
-			title: import_prop_types$46.default.string,
-			description: import_prop_types$46.default.string,
-			newLineButton: import_prop_types$46.default.bool,
-			button: import_prop_types$46.default.shape({
-				text: import_prop_types$46.default.string,
-				action: import_prop_types$46.default.func,
-				url: import_prop_types$46.default.string,
-				target: import_prop_types$46.default.string,
-				category: import_prop_types$46.default.string,
-				color: import_prop_types$46.default.oneOf([
+			title: import_prop_types$65.default.string,
+			description: import_prop_types$65.default.string,
+			newLineButton: import_prop_types$65.default.bool,
+			button: import_prop_types$65.default.shape({
+				text: import_prop_types$65.default.string,
+				action: import_prop_types$65.default.func,
+				url: import_prop_types$65.default.string,
+				target: import_prop_types$65.default.string,
+				category: import_prop_types$65.default.string,
+				color: import_prop_types$65.default.oneOf([
 					"primary",
 					"secondary",
 					"cta",
 					"link",
 					"disabled"
 				]),
-				variant: import_prop_types$46.default.oneOf([
+				variant: import_prop_types$65.default.oneOf([
 					"contained",
 					"underlined",
 					"outlined",
@@ -20930,15 +21965,15 @@ init_use_cloud_kits_eligibility();
 			style: props.style
 		}, props.children);
 	}
-	var import_prop_types$45;
+	var import_prop_types$64;
 	var init_badge = __esmMin((() => {
-		import_prop_types$45 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$64 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_badge$1();
 		Badge.propTypes = {
-			children: import_prop_types$45.default.node,
-			className: import_prop_types$45.default.string,
-			style: import_prop_types$45.default.object,
-			variant: import_prop_types$45.default.oneOf(["sm", "md"])
+			children: import_prop_types$64.default.node,
+			className: import_prop_types$64.default.string,
+			style: import_prop_types$64.default.object,
+			variant: import_prop_types$64.default.oneOf(["sm", "md"])
 		};
 		Badge.defaultProps = {
 			className: "",
@@ -21087,7 +22122,7 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/models/taxonomy-transformer.js
-	function ownKeys$9(e, r) {
+	function ownKeys$17(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -21097,12 +22132,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$8(e) {
+	function _objectSpread$16(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$9(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$17(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$9(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$17(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -21116,7 +22151,7 @@ init_use_cloud_kits_eligibility();
 				return _ref.key === formattedTaxonomy.type;
 			});
 			if (!taxonomyType) return map;
-			if (!map[formattedTaxonomy.type]) map[formattedTaxonomy.type] = _objectSpread$8({}, taxonomyType);
+			if (!map[formattedTaxonomy.type]) map[formattedTaxonomy.type] = _objectSpread$16({}, taxonomyType);
 			if (!map[formattedTaxonomy.type].data.find(function(_ref2) {
 				return _ref2.text === formattedTaxonomy.text;
 			})) map[formattedTaxonomy.type].data.push(formattedTaxonomy);
@@ -21160,8 +22195,8 @@ init_use_cloud_kits_eligibility();
 		init_defineProperty$1();
 		init_tiers();
 		init_taxonomy();
-		__name(ownKeys$9, "ownKeys");
-		__name(_objectSpread$8, "_objectSpread");
+		__name(ownKeys$17, "ownKeys");
+		__name(_objectSpread$16, "_objectSpread");
 		FREE = "free";
 		ESSENTIAL = "essential";
 		ADVANCED = "advanced";
@@ -21204,22 +22239,22 @@ init_use_cloud_kits_eligibility();
 			}
 		}));
 	}
-	var import_prop_types$44;
+	var import_prop_types$63;
 	var init_filter_indication_text = __esmMin((() => {
-		import_prop_types$44 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$63 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_use_selected_taxonomies();
 		init_badge();
 		init_filter_indication_text$1();
 		init_taxonomy_transformer();
 		FilterIndicationText.propTypes = {
-			queryParams: import_prop_types$44.default.shape({
-				search: import_prop_types$44.default.string,
-				taxonomies: import_prop_types$44.default.objectOf(import_prop_types$44.default.arrayOf(import_prop_types$44.default.string)),
-				favorite: import_prop_types$44.default.bool
+			queryParams: import_prop_types$63.default.shape({
+				search: import_prop_types$63.default.string,
+				taxonomies: import_prop_types$63.default.objectOf(import_prop_types$63.default.arrayOf(import_prop_types$63.default.string)),
+				favorite: import_prop_types$63.default.bool
 			}),
-			resultCount: import_prop_types$44.default.number.isRequired,
-			onClear: import_prop_types$44.default.func.isRequired,
-			onRemoveTag: import_prop_types$44.default.func.isRequired
+			resultCount: import_prop_types$63.default.number.isRequired,
+			onClear: import_prop_types$63.default.func.isRequired,
+			onRemoveTag: import_prop_types$63.default.func.isRequired
 		};
 	}));
 
@@ -21233,19 +22268,19 @@ init_use_cloud_kits_eligibility();
 		var children = _ref.children;
 		return /*#__PURE__*/ react.default.createElement(ReturnToContext.Provider, { value }, children);
 	}
-	var import_prop_types$43, ReturnToContext;
+	var import_prop_types$62, ReturnToContext;
 	var init_return_to_context = __esmMin((() => {
-		import_prop_types$43 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$62 = /* @__PURE__ */ __toESM(require_prop_types());
 		ReturnToContext = (0, react.createContext)(null);
 		ReturnToProvider.propTypes = {
-			children: import_prop_types$43.default.any,
-			value: import_prop_types$43.default.string
+			children: import_prop_types$62.default.any,
+			value: import_prop_types$62.default.string
 		};
 	}));
 
 //#endregion
 //#region app/modules/kit-library/assets/js/components/layout/header.js
-	function Header(props) {
+	function Header$1(props) {
 		var returnTo = useReturnTo();
 		var onClose = (0, react.useCallback)(function() {
 			if (window.top !== window) {
@@ -21268,19 +22303,20 @@ init_use_cloud_kits_eligibility();
 			onClose
 		})));
 	}
-	var import_prop_types$42;
-	var init_header = __esmMin((() => {
-		import_prop_types$42 = /* @__PURE__ */ __toESM(require_prop_types());
+	var import_prop_types$61;
+	var init_header$1 = __esmMin((() => {
+		import_prop_types$61 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_header_buttons();
 		init_return_to_context();
 		init_redirect();
-		Header.propTypes = {
-			startColumn: import_prop_types$42.default.node,
-			endColumn: import_prop_types$42.default.node,
-			centerColumn: import_prop_types$42.default.node,
-			buttons: import_prop_types$42.default.arrayOf(import_prop_types$42.default.object),
-			kitName: import_prop_types$42.default.string,
-			pageId: import_prop_types$42.default.string
+		__name(Header$1, "Header");
+		Header$1.propTypes = {
+			startColumn: import_prop_types$61.default.node,
+			endColumn: import_prop_types$61.default.node,
+			centerColumn: import_prop_types$61.default.node,
+			buttons: import_prop_types$61.default.arrayOf(import_prop_types$61.default.object),
+			kitName: import_prop_types$61.default.string,
+			pageId: import_prop_types$61.default.string
 		};
 	}));
 
@@ -21338,7 +22374,7 @@ init_use_cloud_kits_eligibility();
 			shouldShowImportButton,
 			navigate
 		]);
-		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(Header, { buttons }), /*#__PURE__*/ react.default.createElement(PopoverDialog, {
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(Header$1, { buttons }), /*#__PURE__*/ react.default.createElement(PopoverDialog, {
 			targetRef: importRef,
 			wrapperClass: "e-kit-library__tooltip"
 		}, (0, _wordpress_i18n.__)("Import Website Template", "elementor")), /*#__PURE__*/ react.default.createElement(_elementor_app_ui.ModalProvider, {
@@ -21362,17 +22398,17 @@ init_use_cloud_kits_eligibility();
 			color: "link"
 		}), " ", (0, _wordpress_i18n.__)("about using templates", "elementor")))));
 	}
-	var import_prop_types$41;
+	var import_prop_types$60;
 	var init_index_header = __esmMin((() => {
-		import_prop_types$41 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$60 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
-		init_header();
+		init_header$1();
 		init_es$1();
 		init_popover_dialog();
 		init_index_header$1();
 		IndexHeader.propTypes = {
-			refetch: import_prop_types$41.default.func.isRequired,
-			isFetching: import_prop_types$41.default.bool
+			refetch: import_prop_types$60.default.func.isRequired,
+			isFetching: import_prop_types$60.default.bool
 		};
 	}));
 
@@ -21389,16 +22425,16 @@ init_use_cloud_kits_eligibility();
 			});
 		}), props.tagsFilterSlot);
 	}
-	var import_prop_types$40;
+	var import_prop_types$59;
 	var init_index_sidebar = __esmMin((() => {
-		import_prop_types$40 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$59 = /* @__PURE__ */ __toESM(require_prop_types());
 		IndexSidebar.propTypes = {
-			tagsFilterSlot: import_prop_types$40.default.node,
-			menuItems: import_prop_types$40.default.arrayOf(import_prop_types$40.default.shape({
-				label: import_prop_types$40.default.string,
-				icon: import_prop_types$40.default.string,
-				isActive: import_prop_types$40.default.bool,
-				url: import_prop_types$40.default.string
+			tagsFilterSlot: import_prop_types$59.default.node,
+			menuItems: import_prop_types$59.default.arrayOf(import_prop_types$59.default.shape({
+				label: import_prop_types$59.default.string,
+				icon: import_prop_types$59.default.string,
+				isActive: import_prop_types$59.default.bool,
+				url: import_prop_types$59.default.string
 			}))
 		};
 	}));
@@ -21577,11 +22613,11 @@ init_use_cloud_kits_eligibility();
 		var _quotaData$storage$su = _quotaData$storage.subscriptionId;
 		return currentUsage > 0 && "" === (_quotaData$storage$su === void 0 ? "" : _quotaData$storage$su);
 	}
-	var init_utils$1 = __esmMin((() => {}));
+	var init_utils$2 = __esmMin((() => {}));
 
 //#endregion
 //#region app/modules/kit-library/assets/js/hooks/use-kits.js
-	function ownKeys$8(e, r) {
+	function ownKeys$16(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -21591,12 +22627,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$7(e) {
+	function _objectSpread$15(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$8(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$16(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$8(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$16(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -21629,7 +22665,7 @@ init_use_cloud_kits_eligibility();
 		var force = _useState2[0];
 		var setForce = _useState2[1];
 		var _useState4 = _slicedToArray((0, react.useState)(function() {
-			return _objectSpread$7(_objectSpread$7({ ready: false }, defaultQueryParams$1), initialQueryParams);
+			return _objectSpread$15(_objectSpread$15({ ready: false }, defaultQueryParams$1), initialQueryParams);
 		}), 2);
 		var queryParams = _useState4[0];
 		var setQueryParams = _useState4[1];
@@ -21637,7 +22673,7 @@ init_use_cloud_kits_eligibility();
 			return setForce(true);
 		}, [setForce]);
 		var clearQueryParams = (0, react.useCallback)(function() {
-			return setQueryParams(_objectSpread$7(_objectSpread$7({ ready: true }, defaultQueryParams$1), initialQueryParams));
+			return setQueryParams(_objectSpread$15(_objectSpread$15({ ready: true }, defaultQueryParams$1), initialQueryParams));
 		}, [setQueryParams]);
 		var query = useQuery([KEY$5], function() {
 			return fetchKits$1(force);
@@ -21655,7 +22691,7 @@ init_use_cloud_kits_eligibility();
 				return setForce(false);
 			});
 		}, [force]);
-		return _objectSpread$7(_objectSpread$7({}, query), {}, {
+		return _objectSpread$15(_objectSpread$15({}, query), {}, {
 			data,
 			queryParams,
 			setQueryParams,
@@ -21674,16 +22710,16 @@ init_use_cloud_kits_eligibility();
 		init_taxonomy();
 		init_taxonomy_transformer();
 		init_es();
-		init_utils$1();
-		__name(ownKeys$8, "ownKeys");
-		__name(_objectSpread$7, "_objectSpread");
+		init_utils$2();
+		__name(ownKeys$16, "ownKeys");
+		__name(_objectSpread$15, "_objectSpread");
 		KEY$5 = "kits";
 		defaultQueryParams$1 = {
 			favorite: false,
 			search: "",
 			taxonomies: TaxonomyTypes.reduce(function(current, _ref) {
 				var key = _ref.key;
-				return _objectSpread$7(_objectSpread$7({}, current), {}, _defineProperty$1({}, key, []));
+				return _objectSpread$15(_objectSpread$15({}, current), {}, _defineProperty$1({}, key, []));
 			}, {}),
 			order: {
 				direction: "asc",
@@ -21853,7 +22889,7 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/hooks/use-kit-library-tracking.js
-	function ownKeys$7(e, r) {
+	function ownKeys$15(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -21863,12 +22899,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$6(e) {
+	function _objectSpread$14(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$7(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$15(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$7(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$15(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -21878,8 +22914,8 @@ init_use_cloud_kits_eligibility();
 	var init_use_kit_library_tracking = __esmMin((() => {
 		init_defineProperty$1();
 		init_events_config();
-		__name(ownKeys$7, "ownKeys");
-		__name(_objectSpread$6, "_objectSpread");
+		__name(ownKeys$15, "ownKeys");
+		__name(_objectSpread$14, "_objectSpread");
 		SESSION_TIMEOUT = 1800 * 1e3;
 		useKitLibraryTracking = function useKitLibraryTracking() {
 			var sessionStartTime = (0, react.useRef)(Date.now());
@@ -21912,7 +22948,7 @@ init_use_cloud_kits_eligibility();
 			}, []);
 			var addTriggerToProperties = (0, react.useCallback)(function(properties, trigger) {
 				if (!trigger) return properties;
-				return _objectSpread$6(_objectSpread$6({}, properties), {}, { trigger: eventsConfig.triggers[trigger] || trigger });
+				return _objectSpread$14(_objectSpread$14({}, properties), {}, { trigger: eventsConfig.triggers[trigger] || trigger });
 			}, []);
 			var trackWithActivity = (0, react.useCallback)(function(eventName, properties) {
 				var callback = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
@@ -22147,10 +23183,10 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/context/tracking-context.js
-	var import_prop_types$39, TrackingContext, TrackingProvider, useTracking;
+	var import_prop_types$58, TrackingContext, TrackingProvider, useTracking;
 	var init_tracking_context = __esmMin((() => {
 		init_use_kit_library_tracking();
-		import_prop_types$39 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$58 = /* @__PURE__ */ __toESM(require_prop_types());
 		TrackingContext = (0, react.createContext)();
 		TrackingProvider = function TrackingProvider(_ref) {
 			var children = _ref.children;
@@ -22166,7 +23202,7 @@ init_use_cloud_kits_eligibility();
 			if (!context) throw new Error("useTracking must be used within a TrackingProvider");
 			return context;
 		};
-		TrackingProvider.propTypes = { children: import_prop_types$39.default.node };
+		TrackingProvider.propTypes = { children: import_prop_types$58.default.node };
 	}));
 
 //#endregion
@@ -22206,25 +23242,25 @@ init_use_cloud_kits_eligibility();
 			}
 		});
 	}
-	var import_prop_types$38;
+	var import_prop_types$57;
 	var init_favorites_actions = __esmMin((() => {
-		import_prop_types$38 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$57 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_use_kit_favorites_mutations();
 		init_tracking_context();
 		init_favorites_actions$1();
 		FavoritesActions.propTypes = {
-			isFavorite: import_prop_types$38.default.bool,
-			id: import_prop_types$38.default.string,
-			name: import_prop_types$38.default.string,
-			source: import_prop_types$38.default.string,
-			index: import_prop_types$38.default.number,
-			queryParams: import_prop_types$38.default.string
+			isFavorite: import_prop_types$57.default.bool,
+			id: import_prop_types$57.default.string,
+			name: import_prop_types$57.default.string,
+			source: import_prop_types$57.default.string,
+			index: import_prop_types$57.default.number,
+			queryParams: import_prop_types$57.default.string
 		};
 	}));
 
 //#endregion
 //#region app/modules/kit-library/assets/js/context/settings-context.js
-	function ownKeys$6(e, r) {
+	function ownKeys$14(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -22234,12 +23270,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$5(e) {
+	function _objectSpread$13(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$6(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$14(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$6(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$14(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -22266,7 +23302,7 @@ init_use_cloud_kits_eligibility();
 		var setSettings = _useState2[1];
 		var updateSettings = (0, react.useCallback)(function(newSettings) {
 			setSettings(function(prev) {
-				return _objectSpread$5(_objectSpread$5({}, prev), newSettings);
+				return _objectSpread$13(_objectSpread$13({}, prev), newSettings);
 			});
 		}, [setSettings]);
 		(0, react.useEffect)(function() {
@@ -22278,17 +23314,17 @@ init_use_cloud_kits_eligibility();
 			updateSettings
 		} }, props.children);
 	}
-	var import_prop_types$37, SettingsContext;
+	var import_prop_types$56, SettingsContext;
 	var init_settings_context = __esmMin((() => {
-		import_prop_types$37 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$56 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_defineProperty$1();
 		init_slicedToArray();
-		__name(ownKeys$6, "ownKeys");
-		__name(_objectSpread$5, "_objectSpread");
+		__name(ownKeys$14, "ownKeys");
+		__name(_objectSpread$13, "_objectSpread");
 		SettingsContext = (0, react.createContext)({});
 		SettingsProvider.propTypes = {
-			children: import_prop_types$37.default.any,
-			value: import_prop_types$37.default.object.isRequired
+			children: import_prop_types$56.default.any,
+			value: import_prop_types$56.default.object.isRequired
 		};
 	}));
 
@@ -22350,9 +23386,9 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/components/kit-list-item.js
-	var import_prop_types$36, KitListItem, kit_list_item_default;
+	var import_prop_types$55, KitListItem, kit_list_item_default;
 	var init_kit_list_item = __esmMin((() => {
-		import_prop_types$36 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$55 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_badge();
 		init_favorites_actions();
 		init_kit();
@@ -22410,10 +23446,10 @@ init_use_cloud_kits_eligibility();
 			}))))));
 		};
 		KitListItem.propTypes = {
-			model: import_prop_types$36.default.instanceOf(Kit).isRequired,
-			index: import_prop_types$36.default.number,
-			queryParams: import_prop_types$36.default.string,
-			source: import_prop_types$36.default.string
+			model: import_prop_types$55.default.instanceOf(Kit).isRequired,
+			index: import_prop_types$55.default.number,
+			queryParams: import_prop_types$55.default.string,
+			source: import_prop_types$55.default.string
 		};
 		kit_list_item_default = react.default.memo(KitListItem);
 	}));
@@ -22467,16 +23503,16 @@ init_use_cloud_kits_eligibility();
 			});
 		}));
 	}
-	var import_prop_types$35;
+	var import_prop_types$54;
 	var init_kit_list = __esmMin((() => {
-		import_prop_types$35 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$54 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_kit();
 		init_kit_list_item();
 		init_new_page_kit_list_item();
 		KitList.propTypes = {
-			data: import_prop_types$35.default.arrayOf(import_prop_types$35.default.instanceOf(Kit)),
-			queryParams: import_prop_types$35.default.shape({ search: import_prop_types$35.default.string }),
-			source: import_prop_types$35.default.string
+			data: import_prop_types$54.default.arrayOf(import_prop_types$54.default.instanceOf(Kit)),
+			queryParams: import_prop_types$54.default.shape({ search: import_prop_types$54.default.string }),
+			source: import_prop_types$54.default.string
 		};
 	}));
 
@@ -22485,15 +23521,15 @@ init_use_cloud_kits_eligibility();
 	function Index$1(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__lightbox" }, /*#__PURE__*/ react.default.createElement("div", { className: "eps-app" }, props.header, /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__main" }, props.sidebar && /*#__PURE__*/ react.default.createElement(Sidebar, null, props.sidebar), props.children)));
 	}
-	var import_prop_types$34;
-	var init_layout = __esmMin((() => {
-		import_prop_types$34 = /* @__PURE__ */ __toESM(require_prop_types());
+	var import_prop_types$53;
+	var init_layout$1 = __esmMin((() => {
+		import_prop_types$53 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_sidebar();
 		__name(Index$1, "Index");
 		Index$1.propTypes = {
-			header: import_prop_types$34.default.node,
-			sidebar: import_prop_types$34.default.node,
-			children: import_prop_types$34.default.node
+			header: import_prop_types$53.default.node,
+			sidebar: import_prop_types$53.default.node,
+			children: import_prop_types$53.default.node
 		};
 	}));
 
@@ -22506,11 +23542,11 @@ init_use_cloud_kits_eligibility();
 	function PageLoader(props) {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "e-kit-library__page-loader ".concat(props.className) }, /*#__PURE__*/ react.default.createElement(_elementor_app_ui.Icon, { className: "eicon-loading eicon-animation-spin" }));
 	}
-	var import_prop_types$33;
+	var import_prop_types$52;
 	var init_page_loader = __esmMin((() => {
-		import_prop_types$33 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$52 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_page_loader$1();
-		PageLoader.propTypes = { className: import_prop_types$33.default.string };
+		PageLoader.propTypes = { className: import_prop_types$52.default.string };
 		PageLoader.defaultProps = { className: "" };
 	}));
 
@@ -22563,19 +23599,19 @@ init_use_cloud_kits_eligibility();
 			}
 		}));
 	}
-	var import_prop_types$32;
+	var import_prop_types$51;
 	var init_search_input = __esmMin((() => {
-		import_prop_types$32 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$51 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
 		init_use_debounced_callback();
 		init_search_input$1();
 		SearchInput.propTypes = {
-			placeholder: import_prop_types$32.default.string,
-			value: import_prop_types$32.default.string.isRequired,
-			onChange: import_prop_types$32.default.func.isRequired,
-			className: import_prop_types$32.default.string,
-			size: import_prop_types$32.default.oneOf(["md", "sm"]),
-			debounceTimeout: import_prop_types$32.default.number
+			placeholder: import_prop_types$51.default.string,
+			value: import_prop_types$51.default.string.isRequired,
+			onChange: import_prop_types$51.default.func.isRequired,
+			className: import_prop_types$51.default.string,
+			size: import_prop_types$51.default.oneOf(["md", "sm"]),
+			debounceTimeout: import_prop_types$51.default.number
 		};
 		SearchInput.defaultProps = {
 			className: "",
@@ -22639,24 +23675,24 @@ init_use_cloud_kits_eligibility();
 			}
 		}));
 	}
-	var import_prop_types$31;
+	var import_prop_types$50;
 	var init_sort_select = __esmMin((() => {
-		import_prop_types$31 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$50 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
 		init_sort_select$1();
 		SortSelect.propTypes = {
-			options: import_prop_types$31.default.arrayOf(import_prop_types$31.default.shape({
-				label: import_prop_types$31.default.string.isRequired,
-				value: import_prop_types$31.default.oneOfType([import_prop_types$31.default.string, import_prop_types$31.default.number]).isRequired
+			options: import_prop_types$50.default.arrayOf(import_prop_types$50.default.shape({
+				label: import_prop_types$50.default.string.isRequired,
+				value: import_prop_types$50.default.oneOfType([import_prop_types$50.default.string, import_prop_types$50.default.number]).isRequired
 			})).isRequired,
-			value: import_prop_types$31.default.shape({
-				direction: import_prop_types$31.default.oneOf(["asc", "desc"]).isRequired,
-				by: import_prop_types$31.default.string.isRequired
+			value: import_prop_types$50.default.shape({
+				direction: import_prop_types$50.default.oneOf(["asc", "desc"]).isRequired,
+				by: import_prop_types$50.default.string.isRequired
 			}).isRequired,
-			onChange: import_prop_types$31.default.func.isRequired,
-			onChangeSortValue: import_prop_types$31.default.func,
-			onSortSelectOpen: import_prop_types$31.default.func,
-			onChangeSortDirection: import_prop_types$31.default.func
+			onChange: import_prop_types$50.default.func.isRequired,
+			onChangeSortValue: import_prop_types$50.default.func,
+			onSortSelectOpen: import_prop_types$50.default.func,
+			onChangeSortDirection: import_prop_types$50.default.func
 		};
 	}));
 
@@ -22681,17 +23717,17 @@ init_use_cloud_kits_eligibility();
 			}
 		}, /*#__PURE__*/ react.default.createElement("span", null, props.title), /*#__PURE__*/ react.default.createElement("i", { className: "eicon-chevron-right eps-collapse__icon" })), /*#__PURE__*/ react.default.createElement("div", { className: "eps-collapse__content" }, props.children));
 	}
-	var import_prop_types$30;
+	var import_prop_types$49;
 	var init_collapse = __esmMin((() => {
-		import_prop_types$30 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$49 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_collapse$1();
 		Collapse.propTypes = {
-			isOpen: import_prop_types$30.default.bool,
-			onChange: import_prop_types$30.default.func,
-			className: import_prop_types$30.default.string,
-			title: import_prop_types$30.default.node,
-			onClick: import_prop_types$30.default.func,
-			children: import_prop_types$30.default.oneOfType([import_prop_types$30.default.node, import_prop_types$30.default.arrayOf(import_prop_types$30.default.node)])
+			isOpen: import_prop_types$49.default.bool,
+			onChange: import_prop_types$49.default.func,
+			className: import_prop_types$49.default.string,
+			title: import_prop_types$49.default.node,
+			onClick: import_prop_types$49.default.func,
+			children: import_prop_types$49.default.oneOfType([import_prop_types$49.default.node, import_prop_types$49.default.arrayOf(import_prop_types$49.default.node)])
 		};
 		Collapse.defaultProps = {
 			className: "",
@@ -22701,9 +23737,9 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/components/taxonomies-filter-list.js
-	var import_prop_types$29, MIN_TAGS_LENGTH_FOR_SEARCH_INPUT, TaxonomiesFilterList, taxonomies_filter_list_default;
+	var import_prop_types$48, MIN_TAGS_LENGTH_FOR_SEARCH_INPUT, TaxonomiesFilterList, taxonomies_filter_list_default;
 	var init_taxonomies_filter_list = __esmMin((() => {
-		import_prop_types$29 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$48 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_toConsumableArray();
 		init_slicedToArray();
 		init_taxonomy();
@@ -22764,17 +23800,17 @@ init_use_cloud_kits_eligibility();
 			})));
 		};
 		TaxonomiesFilterList.propTypes = {
-			taxonomiesByType: import_prop_types$29.default.shape({
-				key: import_prop_types$29.default.string,
-				label: import_prop_types$29.default.string,
-				data: import_prop_types$29.default.arrayOf(import_prop_types$29.default.instanceOf(Taxonomy)),
-				isOpenByDefault: import_prop_types$29.default.bool
+			taxonomiesByType: import_prop_types$48.default.shape({
+				key: import_prop_types$48.default.string,
+				label: import_prop_types$48.default.string,
+				data: import_prop_types$48.default.arrayOf(import_prop_types$48.default.instanceOf(Taxonomy)),
+				isOpenByDefault: import_prop_types$48.default.bool
 			}),
-			selected: import_prop_types$29.default.objectOf(import_prop_types$29.default.arrayOf(import_prop_types$29.default.string)),
-			onSelect: import_prop_types$29.default.func,
-			onCollapseChange: import_prop_types$29.default.func,
-			category: import_prop_types$29.default.string,
-			onChange: import_prop_types$29.default.func
+			selected: import_prop_types$48.default.objectOf(import_prop_types$48.default.arrayOf(import_prop_types$48.default.string)),
+			onSelect: import_prop_types$48.default.func,
+			onCollapseChange: import_prop_types$48.default.func,
+			category: import_prop_types$48.default.string,
+			onChange: import_prop_types$48.default.func
 		};
 		taxonomies_filter_list_default = react.default.memo(TaxonomiesFilterList);
 	}));
@@ -22786,7 +23822,7 @@ init_use_cloud_kits_eligibility();
 //#endregion
 //#region app/modules/kit-library/assets/js/components/taxonomies-filter.js
 	function TaxonomiesFilter(props) {
-		var taxonomiesByType = useMemo$7(function() {
+		var taxonomiesByType = useMemo$10(function() {
 			return getTaxonomyFilterItems(props.taxonomies);
 		}, [props.taxonomies]);
 		return /*#__PURE__*/ react.default.createElement("div", { className: "e-kit-library__tags-filter" }, taxonomiesByType.map(function(group) {
@@ -22799,19 +23835,19 @@ init_use_cloud_kits_eligibility();
 			});
 		}));
 	}
-	var import_prop_types$28, useMemo$7;
+	var import_prop_types$47, useMemo$10;
 	var init_taxonomies_filter = __esmMin((() => {
-		import_prop_types$28 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$47 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_taxonomies_filter_list();
 		init_taxonomy();
 		init_taxonomy_transformer();
 		init_tags_filter();
-		useMemo$7 = react.default.useMemo;
+		useMemo$10 = react.default.useMemo;
 		TaxonomiesFilter.propTypes = {
-			selected: import_prop_types$28.default.objectOf(import_prop_types$28.default.arrayOf(import_prop_types$28.default.string)),
-			onSelect: import_prop_types$28.default.func,
-			taxonomies: import_prop_types$28.default.arrayOf(import_prop_types$28.default.instanceOf(Taxonomy)),
-			category: import_prop_types$28.default.string
+			selected: import_prop_types$47.default.objectOf(import_prop_types$47.default.arrayOf(import_prop_types$47.default.string)),
+			onSelect: import_prop_types$47.default.func,
+			taxonomies: import_prop_types$47.default.arrayOf(import_prop_types$47.default.instanceOf(Taxonomy)),
+			category: import_prop_types$47.default.string
 		};
 	}));
 
@@ -22848,12 +23884,12 @@ init_use_cloud_kits_eligibility();
 		};
 		return /*#__PURE__*/ react.default.createElement(ConnectStateContext.Provider, { value }, children);
 	}
-	var import_prop_types$27, ConnectStateContext;
+	var import_prop_types$46, ConnectStateContext;
 	var init_connect_state_context = __esmMin((() => {
 		init_slicedToArray();
-		import_prop_types$27 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$46 = /* @__PURE__ */ __toESM(require_prop_types());
 		ConnectStateContext = (0, react.createContext)();
-		ConnectStateProvider.propTypes = { children: import_prop_types$27.default.node.isRequired };
+		ConnectStateProvider.propTypes = { children: import_prop_types$46.default.node.isRequired };
 	}));
 
 //#endregion
@@ -22929,7 +23965,7 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/hooks/use-taxonomies.js
-	function ownKeys$5(e, r) {
+	function ownKeys$13(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -22939,12 +23975,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$4(e) {
+	function _objectSpread$12(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$5(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$13(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$5(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$13(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -22966,7 +24002,7 @@ init_use_cloud_kits_eligibility();
 				return setForce(false);
 			});
 		}, [force]);
-		return _objectSpread$4(_objectSpread$4({}, query), {}, { forceRefetch });
+		return _objectSpread$12(_objectSpread$12({}, query), {}, { forceRefetch });
 	}
 	function fetchTaxonomies(force) {
 		return $e.data.get("kit-taxonomies/index", { force: force ? 1 : void 0 }, { refresh: true }).then(function(response) {
@@ -22983,8 +24019,8 @@ init_use_cloud_kits_eligibility();
 		init_slicedToArray();
 		init_taxonomy();
 		init_es();
-		__name(ownKeys$5, "ownKeys");
-		__name(_objectSpread$4, "_objectSpread");
+		__name(ownKeys$13, "ownKeys");
+		__name(_objectSpread$12, "_objectSpread");
 		KEY$3 = "tags";
 	}));
 
@@ -23014,12 +24050,12 @@ init_use_cloud_kits_eligibility();
 			setLastFilter
 		} }, props.children);
 	}
-	var import_prop_types$26, LastFilterContext;
+	var import_prop_types$45, LastFilterContext;
 	var init_last_filter_context = __esmMin((() => {
-		import_prop_types$26 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$45 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
 		LastFilterContext = (0, react.createContext)({});
-		LastFilterProvider.propTypes = { children: import_prop_types$26.default.any };
+		LastFilterProvider.propTypes = { children: import_prop_types$45.default.any };
 	}));
 
 //#endregion
@@ -23028,7 +24064,7 @@ init_use_cloud_kits_eligibility();
 
 //#endregion
 //#region app/modules/kit-library/assets/js/pages/index/index.js
-	function ownKeys$4(e, r) {
+	function ownKeys$12(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -23038,12 +24074,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$3(e) {
+	function _objectSpread$11(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$4(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$12(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$4(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$12(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -23058,9 +24094,9 @@ init_use_cloud_kits_eligibility();
 	function useTaxonomiesSelection(setQueryParams) {
 		return [(0, react.useCallback)(function(type, callback) {
 			return setQueryParams(function(prev) {
-				var taxonomies = _objectSpread$3({}, prev.taxonomies);
+				var taxonomies = _objectSpread$11({}, prev.taxonomies);
 				taxonomies[type] = callback(prev.taxonomies[type]);
-				return _objectSpread$3(_objectSpread$3({}, prev), {}, { taxonomies });
+				return _objectSpread$11(_objectSpread$11({}, prev), {}, { taxonomies });
 			});
 		}, [setQueryParams]), (0, react.useCallback)(function(taxonomy) {
 			return setQueryParams(function(prev) {
@@ -23068,11 +24104,11 @@ init_use_cloud_kits_eligibility();
 					var _ref2 = _slicedToArray(_ref, 2);
 					var key = _ref2[0];
 					var groupedTaxonomies = _ref2[1];
-					return _objectSpread$3(_objectSpread$3({}, current), {}, _defineProperty$1({}, key, groupedTaxonomies.filter(function(item) {
+					return _objectSpread$11(_objectSpread$11({}, current), {}, _defineProperty$1({}, key, groupedTaxonomies.filter(function(item) {
 						return item !== taxonomy;
 					})));
 				}, {});
-				return _objectSpread$3(_objectSpread$3({}, prev), {}, { taxonomies });
+				return _objectSpread$11(_objectSpread$11({}, prev), {}, { taxonomies });
 			});
 		}, [setQueryParams])];
 	}
@@ -23101,11 +24137,11 @@ init_use_cloud_kits_eligibility();
 			var routerQueryParams = Object.keys(defaultQueryParams$1).reduce(function(current, key) {
 				var queryArg = wp.url.getQueryArg(location.pathname, key);
 				if (!queryArg) return current;
-				return _objectSpread$3(_objectSpread$3({}, current), {}, _defineProperty$1({}, key, queryArg));
+				return _objectSpread$11(_objectSpread$11({}, current), {}, _defineProperty$1({}, key, queryArg));
 			}, {});
 			setQueryParams(function(prev) {
-				return _objectSpread$3(_objectSpread$3(_objectSpread$3({}, prev), routerQueryParams), {}, {
-					taxonomies: _objectSpread$3(_objectSpread$3({}, prev.taxonomies), routerQueryParams.taxonomies),
+				return _objectSpread$11(_objectSpread$11(_objectSpread$11({}, prev), routerQueryParams), {}, {
+					taxonomies: _objectSpread$11(_objectSpread$11({}, prev.taxonomies), routerQueryParams.taxonomies),
 					ready: true
 				});
 			});
@@ -23200,7 +24236,7 @@ init_use_cloud_kits_eligibility();
 			value: queryParams.search,
 			onChange: function onChange(value) {
 				setQueryParams(function(prev) {
-					return _objectSpread$3(_objectSpread$3({}, prev), {}, { search: value });
+					return _objectSpread$11(_objectSpread$11({}, prev), {}, { search: value });
 				});
 			}
 		}), isFilterActive && /*#__PURE__*/ react.default.createElement(FilterIndicationText, {
@@ -23216,7 +24252,7 @@ init_use_cloud_kits_eligibility();
 			value: queryParams.order,
 			onChange: function onChange(order) {
 				return setQueryParams(function(prev) {
-					return _objectSpread$3(_objectSpread$3({}, prev), {}, { order });
+					return _objectSpread$11(_objectSpread$11({}, prev), {}, { order });
 				});
 			},
 			onChangeSortValue: function onChangeSortValue(value) {
@@ -23224,7 +24260,7 @@ init_use_cloud_kits_eligibility();
 					return option.value === value;
 				}).label;
 				setQueryParams(function(prev) {
-					return _objectSpread$3(_objectSpread$3({}, prev), {}, { order: _objectSpread$3(_objectSpread$3({}, prev.order), {}, { by: value }) });
+					return _objectSpread$11(_objectSpread$11({}, prev), {}, { order: _objectSpread$11(_objectSpread$11({}, prev.order), {}, { by: value }) });
 				});
 				tracking.trackKitlibSorterSelected(label);
 			}
@@ -23253,9 +24289,9 @@ init_use_cloud_kits_eligibility();
 			isFilterActive
 		}), /*#__PURE__*/ react.default.createElement(EnvatoPromotion, { category: path })))));
 	}
-	var import_prop_types$25;
+	var import_prop_types$44;
 	var init_index = __esmMin((() => {
-		import_prop_types$25 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$44 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_toConsumableArray();
 		init_slicedToArray();
 		init_defineProperty$1();
@@ -23266,7 +24302,7 @@ init_use_cloud_kits_eligibility();
 		init_index_header();
 		init_index_sidebar();
 		init_kit_list();
-		init_layout();
+		init_layout$1();
 		init_page_loader();
 		init_search_input();
 		init_sort_select();
@@ -23279,12 +24315,12 @@ init_use_cloud_kits_eligibility();
 		init_es$1();
 		init_tracking_context();
 		init_index$1();
-		__name(ownKeys$4, "ownKeys");
-		__name(_objectSpread$3, "_objectSpread");
+		__name(ownKeys$12, "ownKeys");
+		__name(_objectSpread$11, "_objectSpread");
 		Index.propTypes = {
-			path: import_prop_types$25.default.string,
-			initialQueryParams: import_prop_types$25.default.object,
-			renderNoResultsComponent: import_prop_types$25.default.func
+			path: import_prop_types$44.default.string,
+			initialQueryParams: import_prop_types$44.default.object,
+			renderNoResultsComponent: import_prop_types$44.default.func
 		};
 	}));
 
@@ -23316,23 +24352,23 @@ init_use_cloud_kits_eligibility();
 			}
 		});
 	}
-	var import_prop_types$24;
+	var import_prop_types$43;
 	var init_favorites = __esmMin((() => {
 		init_index();
 		init_error_screen();
 		init_es$1();
-		import_prop_types$24 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$43 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_tracking_context();
-		Favorites.propTypes = { path: import_prop_types$24.default.string };
+		Favorites.propTypes = { path: import_prop_types$43.default.string };
 	}));
 
 //#endregion
 //#region app/modules/kit-library/assets/js/components/kit-list-cloud-item.js
-	var import_prop_types$23, PLACEHOLDER_IMAGE_SRC, PopoverItem, KitActionsPopover, KitListCloudItem, kit_list_cloud_item_default;
+	var import_prop_types$42, PLACEHOLDER_IMAGE_SRC, PopoverItem, KitActionsPopover, KitListCloudItem, kit_list_cloud_item_default;
 	var init_kit_list_cloud_item = __esmMin((() => {
 		init_slicedToArray();
 		init_es$1();
-		import_prop_types$23 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$42 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_kit();
 		init_apps_event_tracking();
 		init_use_kit$1();
@@ -23361,10 +24397,10 @@ init_use_cloud_kits_eligibility();
 			}, /*#__PURE__*/ react.default.createElement("i", { className: icon }), /*#__PURE__*/ react.default.createElement("span", null, title));
 		};
 		PopoverItem.propTypes = {
-			className: import_prop_types$23.default.string,
-			icon: import_prop_types$23.default.string.isRequired,
-			title: import_prop_types$23.default.string.isRequired,
-			onClick: import_prop_types$23.default.func.isRequired
+			className: import_prop_types$42.default.string,
+			icon: import_prop_types$42.default.string.isRequired,
+			title: import_prop_types$42.default.string.isRequired,
+			onClick: import_prop_types$42.default.func.isRequired
 		};
 		KitActionsPopover = function KitActionsPopover(_ref2) {
 			var isOpen = _ref2.isOpen;
@@ -23385,10 +24421,10 @@ init_use_cloud_kits_eligibility();
 			}));
 		};
 		KitActionsPopover.propTypes = {
-			isOpen: import_prop_types$23.default.bool.isRequired,
-			onClose: import_prop_types$23.default.func.isRequired,
-			onDelete: import_prop_types$23.default.func.isRequired,
-			className: import_prop_types$23.default.string
+			isOpen: import_prop_types$42.default.bool.isRequired,
+			onClose: import_prop_types$42.default.func.isRequired,
+			onDelete: import_prop_types$42.default.func.isRequired,
+			className: import_prop_types$42.default.string
 		};
 		KitListCloudItem = function KitListCloudItem(props) {
 			var _props$model;
@@ -23462,17 +24498,17 @@ init_use_cloud_kits_eligibility();
 			}))))));
 		};
 		KitListCloudItem.propTypes = {
-			model: import_prop_types$23.default.instanceOf(Kit).isRequired,
-			index: import_prop_types$23.default.number,
-			source: import_prop_types$23.default.string,
-			onDelete: import_prop_types$23.default.func.isRequired
+			model: import_prop_types$42.default.instanceOf(Kit).isRequired,
+			index: import_prop_types$42.default.number,
+			source: import_prop_types$42.default.string,
+			onDelete: import_prop_types$42.default.func.isRequired
 		};
 		kit_list_cloud_item_default = react.default.memo(KitListCloudItem);
 	}));
 
 //#endregion
 //#region app/modules/kit-library/assets/js/hooks/use-cloud-kits.js
-	function ownKeys$3(e, r) {
+	function ownKeys$11(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -23482,12 +24518,12 @@ init_use_cloud_kits_eligibility();
 		}
 		return t;
 	}
-	function _objectSpread$2(e) {
+	function _objectSpread$10(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$3(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$11(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$3(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$11(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -23519,7 +24555,7 @@ init_use_cloud_kits_eligibility();
 		var force = _useState2[0];
 		var setForce = _useState2[1];
 		var _useState4 = _slicedToArray((0, react.useState)(function() {
-			return _objectSpread$2(_objectSpread$2({ ready: false }, defaultQueryParams), initialQueryParams);
+			return _objectSpread$10(_objectSpread$10({ ready: false }, defaultQueryParams), initialQueryParams);
 		}), 2);
 		var queryParams = _useState4[0];
 		var setQueryParams = _useState4[1];
@@ -23527,7 +24563,7 @@ init_use_cloud_kits_eligibility();
 			return setForce(true);
 		}, [setForce]);
 		var clearQueryParams = (0, react.useCallback)(function() {
-			return setQueryParams(_objectSpread$2(_objectSpread$2({ ready: true }, defaultQueryParams), initialQueryParams));
+			return setQueryParams(_objectSpread$10(_objectSpread$10({ ready: true }, defaultQueryParams), initialQueryParams));
 		}, [setQueryParams]);
 		var query = useQuery([KEY$2], function() {
 			return fetchKits(force);
@@ -23544,7 +24580,7 @@ init_use_cloud_kits_eligibility();
 				return setForce(false);
 			});
 		}, [force]);
-		return _objectSpread$2(_objectSpread$2({}, query), {}, {
+		return _objectSpread$10(_objectSpread$10({}, query), {}, {
 			data,
 			queryParams,
 			setQueryParams,
@@ -23560,9 +24596,9 @@ init_use_cloud_kits_eligibility();
 		init_slicedToArray();
 		init_kit();
 		init_es();
-		init_utils$1();
-		__name(ownKeys$3, "ownKeys");
-		__name(_objectSpread$2, "_objectSpread");
+		init_utils$2();
+		__name(ownKeys$11, "ownKeys");
+		__name(_objectSpread$10, "_objectSpread");
 		KEY$2 = "cloud-kits";
 		defaultQueryParams = {
 			search: "",
@@ -23654,17 +24690,17 @@ searchFilter: function searchFilter(data, queryParams) {
 			approveButtonColor: "danger"
 		});
 	}
-	var import_prop_types$22;
+	var import_prop_types$41;
 	var init_kit_cloud_delete_dialog = __esmMin((() => {
-		import_prop_types$22 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$41 = /* @__PURE__ */ __toESM(require_prop_types());
 		KitCloudDeleteDialog.propTypes = {
-			onDeleteClick: import_prop_types$22.default.func.isRequired,
-			onCancelClick: import_prop_types$22.default.func.isRequired,
-			show: import_prop_types$22.default.bool.isRequired,
-			isLoading: import_prop_types$22.default.bool.isRequired,
-			kit: import_prop_types$22.default.shape({
-				id: import_prop_types$22.default.string,
-				title: import_prop_types$22.default.string
+			onDeleteClick: import_prop_types$41.default.func.isRequired,
+			onCancelClick: import_prop_types$41.default.func.isRequired,
+			show: import_prop_types$41.default.bool.isRequired,
+			isLoading: import_prop_types$41.default.bool.isRequired,
+			kit: import_prop_types$41.default.shape({
+				id: import_prop_types$41.default.string,
+				title: import_prop_types$41.default.string
 			})
 		};
 	}));
@@ -23732,9 +24768,9 @@ searchFilter: function searchFilter(data, queryParams) {
 			isLoading
 		}));
 	}
-	var import_prop_types$21, import_regenerator;
+	var import_prop_types$40, import_regenerator;
 	var init_kit_list_cloud = __esmMin((() => {
-		import_prop_types$21 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$40 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_asyncToGenerator();
 		init_slicedToArray();
 		import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
@@ -23743,8 +24779,8 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_use_kit_cloud_mutation();
 		init_kit_cloud_delete_dialog();
 		KitListCloud.propTypes = {
-			data: import_prop_types$21.default.arrayOf(import_prop_types$21.default.instanceOf(Kit)),
-			source: import_prop_types$21.default.string
+			data: import_prop_types$40.default.arrayOf(import_prop_types$40.default.instanceOf(Kit)),
+			source: import_prop_types$40.default.string
 		};
 	}));
 
@@ -23805,9 +24841,9 @@ searchFilter: function searchFilter(data, queryParams) {
 			rel: "noopener noreferrer"
 		}, (0, _wordpress_i18n.__)("Upgrade now", "elementor")))));
 	}
-	var import_prop_types$20, QUOTA_BAR_CLASSNAME, BYTES_TO_GB, BYTES_TO_MB, convertBytesToGB, convertBytesToMB, formatDisplayValues;
+	var import_prop_types$39, QUOTA_BAR_CLASSNAME, BYTES_TO_GB, BYTES_TO_MB, convertBytesToGB, convertBytesToMB, formatDisplayValues;
 	var init_quota_bar = __esmMin((() => {
-		import_prop_types$20 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$39 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_quota_bar$1();
 		QUOTA_BAR_CLASSNAME = "e-kit-library__quota-bar";
 		BYTES_TO_GB = 1024 * 1024 * 1024;
@@ -23850,10 +24886,10 @@ searchFilter: function searchFilter(data, queryParams) {
 			};
 		};
 		QuotaBar.propTypes = {
-			used: import_prop_types$20.default.number,
-			total: import_prop_types$20.default.number,
-			unit: import_prop_types$20.default.string,
-			label: import_prop_types$20.default.string
+			used: import_prop_types$39.default.number,
+			total: import_prop_types$39.default.number,
+			unit: import_prop_types$39.default.string,
+			label: import_prop_types$39.default.string
 		};
 	}));
 
@@ -23914,13 +24950,13 @@ searchFilter: function searchFilter(data, queryParams) {
 			"aria-label": (0, _wordpress_i18n.__)("Dismiss notification", "elementor")
 		}, /*#__PURE__*/ react.default.createElement("i", { className: "eicon-close" })));
 	}
-	var import_prop_types$19, QUOTA_NOTIFICATION_CLASSNAME;
+	var import_prop_types$38, QUOTA_NOTIFICATION_CLASSNAME;
 	var init_quota_notification = __esmMin((() => {
 		init_slicedToArray();
-		import_prop_types$19 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$38 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_quota_notification$1();
 		QUOTA_NOTIFICATION_CLASSNAME = "e-kit-library__quota-notification";
-		QuotaNotification.propTypes = { usagePercentage: import_prop_types$19.default.number.isRequired };
+		QuotaNotification.propTypes = { usagePercentage: import_prop_types$38.default.number.isRequired };
 	}));
 
 //#endregion
@@ -23995,21 +25031,21 @@ searchFilter: function searchFilter(data, queryParams) {
 			className: "e-kit-library__connect-button"
 		})))));
 	}
-	var import_prop_types$18;
+	var import_prop_types$37;
 	var init_connect_screen = __esmMin((() => {
-		import_prop_types$18 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$37 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_content();
 		init_index_header();
 		init_index_sidebar();
-		init_layout();
+		init_layout$1();
 		init_apps_event_tracking();
 		init_tiers();
 		ConnectScreen.propTypes = {
-			onConnectSuccess: import_prop_types$18.default.func,
-			onConnectError: import_prop_types$18.default.func,
-			menuItems: import_prop_types$18.default.array.isRequired,
-			forceRefetch: import_prop_types$18.default.func.isRequired,
-			isFetching: import_prop_types$18.default.bool.isRequired
+			onConnectSuccess: import_prop_types$37.default.func,
+			onConnectError: import_prop_types$37.default.func,
+			menuItems: import_prop_types$37.default.array.isRequired,
+			forceRefetch: import_prop_types$37.default.func.isRequired,
+			isFetching: import_prop_types$37.default.bool.isRequired
 		};
 	}));
 
@@ -24020,14 +25056,16 @@ searchFilter: function searchFilter(data, queryParams) {
 		var showPlanUpgradeMessage = !_ref.isCloudKitsAvailable && hasSubscription;
 		var content = (0, react.useMemo)(function() {
 			return showPlanUpgradeMessage ? {
-				heading: (0, _wordpress_i18n.__)("Access Website Templates with a plan upgrade", "elementor"),
-				description: (0, _wordpress_i18n.__)("Your current plan doesn't include saving and importing Website Templates. Upgrade to the Advanced plan or higher to use this feature.", "elementor"),
-				buttonText: (0, _wordpress_i18n.__)("Compare plans", "elementor"),
+				heading: (0, _wordpress_i18n.__)("Website Templates aren't included in your plan", "elementor"),
+				description: WEBSITE_TEMPLATE_DESCRIPTION,
+				buttonText: (0, _wordpress_i18n.__)("View upgrade options", "elementor"),
+				note: WEBSITE_TEMPLATE_AVAILABILITY_NOTE,
 				url: UPGRADE_URLS.ADVANCED_PLAN
 			} : {
-				heading: (0, _wordpress_i18n.__)("It's time to level up", "elementor"),
-				description: (0, _wordpress_i18n.__)("Upgrade to Elementor Pro to import your own website template and save templates that you can reuse on any of your connected websites.", "elementor"),
-				buttonText: (0, _wordpress_i18n.__)("Upgrade now", "elementor"),
+				heading: (0, _wordpress_i18n.__)("Save and reuse complete websites", "elementor"),
+				description: WEBSITE_TEMPLATE_DESCRIPTION,
+				buttonText: (0, _wordpress_i18n.__)("See plans", "elementor"),
+				note: WEBSITE_TEMPLATE_AVAILABILITY_NOTE,
 				url: UPGRADE_URLS.GO_PRO
 			};
 		}, [showPlanUpgradeMessage]);
@@ -24036,7 +25074,7 @@ searchFilter: function searchFilter(data, queryParams) {
 			alignItems: "center",
 			justify: "center",
 			direction: "column",
-			className: "e-kit-library__error-screen"
+			className: "e-kit-library__error-screen e-kit-library__error-screen--upgrade"
 		}, /*#__PURE__*/ react.default.createElement("i", {
 			className: "eicon-library-subscription-upgrade",
 			"aria-hidden": "true"
@@ -24055,19 +25093,21 @@ searchFilter: function searchFilter(data, queryParams) {
 			},
 			target: "_blank",
 			className: "e-kit-library__upgrade-button"
-		}));
+		}), /*#__PURE__*/ react.default.createElement("p", { className: "e-kit-library__error-screen-note" }, content.note));
 	}
-	var import_prop_types$17, UPGRADE_URLS;
+	var import_prop_types$36, UPGRADE_URLS, WEBSITE_TEMPLATE_DESCRIPTION, WEBSITE_TEMPLATE_AVAILABILITY_NOTE;
 	var init_upgrade_message = __esmMin((() => {
-		import_prop_types$17 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$36 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_apps_event_tracking();
 		UPGRADE_URLS = {
 			ADVANCED_PLAN: "https://go.elementor.com/go-pro-cloud-website-templates-library-advanced/",
 			GO_PRO: "https://go.elementor.com/go-pro-cloud-website-templates-library/"
 		};
+		WEBSITE_TEMPLATE_DESCRIPTION = (0, _wordpress_i18n.__)("Save your entire website as a Website Template - including content, global styles, settings, and media - and reuse it across your connected sites.", "elementor");
+		WEBSITE_TEMPLATE_AVAILABILITY_NOTE = (0, _wordpress_i18n.__)("Available on selected plans. Website Templates are different from Cloud Templates, which are used for individual design elements rather than complete websites.", "elementor");
 		UpgradeMessage.propTypes = {
-			hasSubscription: import_prop_types$17.default.bool.isRequired,
-			isCloudKitsAvailable: import_prop_types$17.default.bool.isRequired
+			hasSubscription: import_prop_types$36.default.bool.isRequired,
+			isCloudKitsAvailable: import_prop_types$36.default.bool.isRequired
 		};
 	}));
 
@@ -24097,20 +25137,20 @@ searchFilter: function searchFilter(data, queryParams) {
 			isCloudKitsAvailable
 		}))));
 	}
-	var import_prop_types$16;
+	var import_prop_types$35;
 	var init_upgrade_screen = __esmMin((() => {
-		import_prop_types$16 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$35 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_content();
 		init_index_header();
 		init_index_sidebar();
-		init_layout();
+		init_layout$1();
 		init_apps_event_tracking();
 		init_upgrade_message();
 		UpgradeScreen.propTypes = {
-			menuItems: import_prop_types$16.default.array.isRequired,
-			forceRefetch: import_prop_types$16.default.func.isRequired,
-			isFetching: import_prop_types$16.default.bool.isRequired,
-			cloudKitsData: import_prop_types$16.default.object.isRequired
+			menuItems: import_prop_types$35.default.array.isRequired,
+			forceRefetch: import_prop_types$35.default.func.isRequired,
+			isFetching: import_prop_types$35.default.bool.isRequired,
+			cloudKitsData: import_prop_types$35.default.object.isRequired
 		};
 	}));
 
@@ -24324,18 +25364,18 @@ searchFilter: function searchFilter(data, queryParams) {
 			className: "e-kit-library__upgrade-button"
 		})))));
 	}
-	var import_prop_types$15;
+	var import_prop_types$34;
 	var init_deactivated_screen = __esmMin((() => {
-		import_prop_types$15 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$34 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_content();
 		init_index_header();
 		init_index_sidebar();
-		init_layout();
+		init_layout$1();
 		init_deactivated_icon();
 		DeactivatedScreen.propTypes = {
-			menuItems: import_prop_types$15.default.array.isRequired,
-			forceRefetch: import_prop_types$15.default.func.isRequired,
-			isFetching: import_prop_types$15.default.bool.isRequired
+			menuItems: import_prop_types$34.default.array.isRequired,
+			forceRefetch: import_prop_types$34.default.func.isRequired,
+			isFetching: import_prop_types$34.default.bool.isRequired
 		};
 	}));
 
@@ -24355,24 +25395,24 @@ searchFilter: function searchFilter(data, queryParams) {
 			})
 		}, /*#__PURE__*/ react.default.createElement("div", { className: "e-kit-library__index-layout-container" }, /*#__PURE__*/ react.default.createElement(Content, { className: "e-kit-library__index-layout-main" }, /*#__PURE__*/ react.default.createElement(PageLoader, null))));
 	}
-	var import_prop_types$14;
+	var import_prop_types$33;
 	var init_full_page_loader = __esmMin((() => {
-		import_prop_types$14 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$33 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_content();
 		init_index_header();
 		init_index_sidebar();
-		init_layout();
+		init_layout$1();
 		init_page_loader();
 		FullPageLoader.propTypes = {
-			menuItems: import_prop_types$14.default.array.isRequired,
-			forceRefetch: import_prop_types$14.default.func.isRequired,
-			isFetching: import_prop_types$14.default.bool.isRequired
+			menuItems: import_prop_types$33.default.array.isRequired,
+			forceRefetch: import_prop_types$33.default.func.isRequired,
+			isFetching: import_prop_types$33.default.bool.isRequired
 		};
 	}));
 
 //#endregion
 //#region app/modules/kit-library/assets/js/pages/cloud/cloud.js
-	function ownKeys$2(e, r) {
+	function ownKeys$10(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -24382,12 +25422,12 @@ searchFilter: function searchFilter(data, queryParams) {
 		}
 		return t;
 	}
-	function _objectSpread$1(e) {
+	function _objectSpread$9(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$2(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$10(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$2(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$10(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -24492,7 +25532,7 @@ searchFilter: function searchFilter(data, queryParams) {
 			value: queryParams.search,
 			onChange: function onChange(value) {
 				setQueryParams(function(prev) {
-					return _objectSpread$1(_objectSpread$1({}, prev), {}, { search: value });
+					return _objectSpread$9(_objectSpread$9({}, prev), {}, { search: value });
 				});
 			}
 		})), /*#__PURE__*/ react.default.createElement(_elementor_app_ui.Grid, {
@@ -24536,7 +25576,7 @@ searchFilter: function searchFilter(data, queryParams) {
 			isFilterActive
 		}))))));
 	}
-	var import_prop_types$13;
+	var import_prop_types$32;
 	var init_cloud = __esmMin((() => {
 		init_defineProperty$1();
 		init_content();
@@ -24544,7 +25584,7 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_index_header();
 		init_index_sidebar();
 		init_kit_list_cloud();
-		init_layout();
+		init_layout$1();
 		init_quota_bar();
 		init_quota_notification();
 		init_search_input();
@@ -24555,18 +25595,18 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_use_connect_state();
 		init_use_page_title();
 		init_apps_event_tracking();
-		init_utils$1();
-		import_prop_types$13 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_utils$2();
+		import_prop_types$32 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_connect_screen();
 		init_upgrade_screen();
 		init_deactivated_screen();
 		init_full_page_loader();
 		init_index$1();
-		__name(ownKeys$2, "ownKeys");
-		__name(_objectSpread$1, "_objectSpread");
+		__name(ownKeys$10, "ownKeys");
+		__name(_objectSpread$9, "_objectSpread");
 		Cloud.propTypes = {
-			path: import_prop_types$13.default.string,
-			renderNoResultsComponent: import_prop_types$13.default.func
+			path: import_prop_types$32.default.string,
+			renderNoResultsComponent: import_prop_types$32.default.func
 		};
 	}));
 
@@ -24604,15 +25644,15 @@ searchFilter: function searchFilter(data, queryParams) {
 			onClose: props.onClose
 		});
 	}
-	var import_prop_types$12;
+	var import_prop_types$31;
 	var init_kit_already_applied_dialog = __esmMin((() => {
-		import_prop_types$12 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$31 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_tracking_context();
 		init_use_query_params();
 		KitAlreadyAppliedDialog.propTypes = {
-			id: import_prop_types$12.default.string.isRequired,
-			dismissButtonOnClick: import_prop_types$12.default.func.isRequired,
-			onClose: import_prop_types$12.default.func.isRequired
+			id: import_prop_types$31.default.string.isRequired,
+			dismissButtonOnClick: import_prop_types$31.default.func.isRequired,
+			onClose: import_prop_types$31.default.func.isRequired
 		};
 	}));
 
@@ -24661,18 +25701,18 @@ searchFilter: function searchFilter(data, queryParams) {
 			onClose: props.onClose
 		});
 	}
-	var import_prop_types$11;
+	var import_prop_types$30;
 	var init_apply_kit_dialog = __esmMin((() => {
-		import_prop_types$11 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$30 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_es$1();
 		init_tracking_context();
 		init_return_to_context();
 		ApplyKitDialog.propTypes = {
-			id: import_prop_types$11.default.string.isRequired,
-			downloadLink: import_prop_types$11.default.string.isRequired,
-			nonce: import_prop_types$11.default.string.isRequired,
-			onClose: import_prop_types$11.default.func.isRequired,
-			title: import_prop_types$11.default.string
+			id: import_prop_types$30.default.string.isRequired,
+			downloadLink: import_prop_types$30.default.string.isRequired,
+			nonce: import_prop_types$30.default.string.isRequired,
+			onClose: import_prop_types$30.default.func.isRequired,
+			title: import_prop_types$30.default.string
 		};
 		ApplyKitDialog.defaultProps = { title: "Kit" };
 	}));
@@ -24697,16 +25737,16 @@ searchFilter: function searchFilter(data, queryParams) {
 			onClose: props.onClose
 		});
 	}
-	var import_prop_types$10;
+	var import_prop_types$29;
 	var init_kit_dialog = __esmMin((() => {
-		import_prop_types$10 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$29 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
 		init_kit_already_applied_dialog();
 		init_apply_kit_dialog();
 		KitDialog.propTypes = {
-			id: import_prop_types$10.default.string.isRequired,
-			downloadLinkData: import_prop_types$10.default.object.isRequired,
-			onClose: import_prop_types$10.default.func.isRequired
+			id: import_prop_types$29.default.string.isRequired,
+			downloadLinkData: import_prop_types$29.default.object.isRequired,
+			onClose: import_prop_types$29.default.func.isRequired
 		};
 	}));
 
@@ -24714,8 +25754,8 @@ searchFilter: function searchFilter(data, queryParams) {
 //#region app/modules/kit-library/assets/js/components/connect-dialog.js
 	function ConnectDialog(props) {
 		var settings = useSettingsContext().settings;
-		var approveButtonRef = useRef$2();
-		useEffect$2(function() {
+		var approveButtonRef = useRef$7();
+		useEffect$12(function() {
 			jQuery(approveButtonRef.current).elementorConnect({
 				success: function success(e, data) {
 					return props.onSuccess(data);
@@ -24747,18 +25787,18 @@ searchFilter: function searchFilter(data, queryParams) {
 			}
 		});
 	}
-	var import_prop_types$9, _React, useEffect$2, useRef$2;
+	var import_prop_types$28, _React, useEffect$12, useRef$7;
 	var init_connect_dialog = __esmMin((() => {
-		import_prop_types$9 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$28 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_settings_context();
 		_React = react.default;
-		useEffect$2 = _React.useEffect;
-		useRef$2 = _React.useRef;
+		useEffect$12 = _React.useEffect;
+		useRef$7 = _React.useRef;
 		ConnectDialog.propTypes = {
-			onClose: import_prop_types$9.default.func.isRequired,
-			onError: import_prop_types$9.default.func.isRequired,
-			onSuccess: import_prop_types$9.default.func.isRequired,
-			pageId: import_prop_types$9.default.string
+			onClose: import_prop_types$28.default.func.isRequired,
+			onError: import_prop_types$28.default.func.isRequired,
+			onSuccess: import_prop_types$28.default.func.isRequired,
+			pageId: import_prop_types$28.default.string
 		};
 	}));
 
@@ -24783,17 +25823,17 @@ searchFilter: function searchFilter(data, queryParams) {
 			}
 		}));
 	}
-	var import_prop_types$8;
+	var import_prop_types$27;
 	var init_header_back_button = __esmMin((() => {
-		import_prop_types$8 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$27 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_last_filter_context();
 		init_es$1();
 		init_tracking_context();
 		init_header_back_button$1();
 		HeaderBackButton.propTypes = {
-			pageId: import_prop_types$8.default.string.isRequired,
-			kitName: import_prop_types$8.default.string.isRequired,
-			kitId: import_prop_types$8.default.string.isRequired
+			pageId: import_prop_types$27.default.string.isRequired,
+			kitName: import_prop_types$27.default.string.isRequired,
+			kitId: import_prop_types$27.default.string.isRequired
 		};
 	}));
 
@@ -25048,21 +26088,21 @@ searchFilter: function searchFilter(data, queryParams) {
 			onError: function onError(message) {
 				return setError({ message });
 			}
-		}), /*#__PURE__*/ react.default.createElement(Header, _extends({
+		}), /*#__PURE__*/ react.default.createElement(Header$1, _extends({
 			startColumn: /*#__PURE__*/ react.default.createElement(HeaderBackButton, _extends({}, kitData, { kitId: props.model.id })),
 			centerColumn: props.centerColumn,
 			buttons
 		}, kitData)));
 	}
-	var import_prop_types$7;
+	var import_prop_types$26;
 	var init_item_header = __esmMin((() => {
-		import_prop_types$7 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$26 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_extends();
 		init_toConsumableArray();
 		init_slicedToArray();
 		init_kit_dialog();
 		init_connect_dialog();
-		init_header();
+		init_header$1();
 		init_header_back_button();
 		init_kit();
 		init_use_download_link_mutation();
@@ -25073,10 +26113,10 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_tracking_context();
 		init_item_header$1();
 		ItemHeader.propTypes = {
-			model: import_prop_types$7.default.instanceOf(Kit).isRequired,
-			centerColumn: import_prop_types$7.default.node,
-			buttons: import_prop_types$7.default.arrayOf(import_prop_types$7.default.object),
-			pageId: import_prop_types$7.default.string
+			model: import_prop_types$26.default.instanceOf(Kit).isRequired,
+			centerColumn: import_prop_types$26.default.node,
+			buttons: import_prop_types$26.default.arrayOf(import_prop_types$26.default.object),
+			pageId: import_prop_types$26.default.string
 		};
 	}));
 
@@ -25149,17 +26189,17 @@ searchFilter: function searchFilter(data, queryParams) {
 			url: "/kit-library/preview/".concat(props.kitId, "?document_id=").concat(props.document.id)
 		})))));
 	}
-	var import_prop_types$6;
+	var import_prop_types$25;
 	var init_overview_content_group_item = __esmMin((() => {
-		import_prop_types$6 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$25 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_document();
 		OverviewContentGroupItem.propTypes = {
-			document: import_prop_types$6.default.instanceOf(Document).isRequired,
-			kitId: import_prop_types$6.default.string.isRequired,
-			kitTitle: import_prop_types$6.default.string.isRequired,
-			groupData: import_prop_types$6.default.shape({
-				label: import_prop_types$6.default.string,
-				id: import_prop_types$6.default.string
+			document: import_prop_types$25.default.instanceOf(Document).isRequired,
+			kitId: import_prop_types$25.default.string.isRequired,
+			kitTitle: import_prop_types$25.default.string.isRequired,
+			groupData: import_prop_types$25.default.shape({
+				label: import_prop_types$25.default.string,
+				id: import_prop_types$25.default.string
 			}).isRequired
 		};
 	}));
@@ -25186,15 +26226,15 @@ searchFilter: function searchFilter(data, queryParams) {
 			});
 		})));
 	}
-	var import_prop_types$5;
+	var import_prop_types$24;
 	var init_overview_content_group = __esmMin((() => {
-		import_prop_types$5 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$24 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_content_type();
 		init_overview_content_group_item();
 		OverviewContentGroup.propTypes = {
-			contentType: import_prop_types$5.default.instanceOf(ContentType),
-			kitId: import_prop_types$5.default.string.isRequired,
-			kitTitle: import_prop_types$5.default.string.isRequired
+			contentType: import_prop_types$24.default.instanceOf(ContentType),
+			kitId: import_prop_types$24.default.string.isRequired,
+			kitTitle: import_prop_types$24.default.string.isRequired
 		};
 	}));
 
@@ -25233,9 +26273,9 @@ searchFilter: function searchFilter(data, queryParams) {
 			}, contentType.documents.length, " ", contentType.label);
 		})));
 	}
-	var import_prop_types$4;
+	var import_prop_types$23;
 	var init_overview_sidebar = __esmMin((() => {
-		import_prop_types$4 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$23 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
 		init_collapse();
 		init_content_type();
@@ -25243,9 +26283,9 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_kit();
 		init_overview_sidebar$1();
 		OverviewSidebar.propTypes = {
-			model: import_prop_types$4.default.instanceOf(Kit).isRequired,
-			index: import_prop_types$4.default.number,
-			groupedKitContent: import_prop_types$4.default.arrayOf(import_prop_types$4.default.instanceOf(ContentType))
+			model: import_prop_types$23.default.instanceOf(Kit).isRequired,
+			index: import_prop_types$23.default.number,
+			groupedKitContent: import_prop_types$23.default.arrayOf(import_prop_types$23.default.instanceOf(ContentType))
 		};
 	}));
 
@@ -25318,7 +26358,7 @@ searchFilter: function searchFilter(data, queryParams) {
 
 //#endregion
 //#region app/modules/kit-library/assets/js/hooks/use-kit-document-by-type.js
-	function ownKeys$1(e, r) {
+	function ownKeys$9(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -25328,12 +26368,12 @@ searchFilter: function searchFilter(data, queryParams) {
 		}
 		return t;
 	}
-	function _objectSpread(e) {
+	function _objectSpread$8(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys$1(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$9(Object(t), !0).forEach(function(r) {
 				_defineProperty$1(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$9(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -25347,12 +26387,13 @@ searchFilter: function searchFilter(data, queryParams) {
 				return a.order - b.order;
 			});
 		}, [kit, contentTypesQuery.data]);
-		return _objectSpread(_objectSpread({}, contentTypesQuery), {}, { data });
+		return _objectSpread$8(_objectSpread$8({}, contentTypesQuery), {}, { data });
 	}
 	var init_use_kit_document_by_type = __esmMin((() => {
 		init_defineProperty$1();
 		init_use_content_types();
-		__name(ownKeys$1, "ownKeys");
+		__name(ownKeys$9, "ownKeys");
+		__name(_objectSpread$8, "_objectSpread");
 	}));
 
 //#endregion
@@ -25411,13 +26452,13 @@ searchFilter: function searchFilter(data, queryParams) {
 			});
 		})));
 	}
-	var import_prop_types$3;
+	var import_prop_types$22;
 	var init_overview = __esmMin((() => {
-		import_prop_types$3 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$22 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_content();
 		init_elementor_loading();
 		init_item_header();
-		init_layout();
+		init_layout$1();
 		init_overview_content_group();
 		init_overview_sidebar();
 		init_use_kit();
@@ -25426,7 +26467,7 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_es$1();
 		init_overview$1();
 		__name(useHeaderButtons$1, "useHeaderButtons");
-		Overview.propTypes = { id: import_prop_types$3.default.string };
+		Overview.propTypes = { id: import_prop_types$22.default.string };
 	}));
 
 //#endregion
@@ -25458,14 +26499,14 @@ searchFilter: function searchFilter(data, queryParams) {
 			});
 		}));
 	}
-	var import_prop_types$2;
+	var import_prop_types$21;
 	var init_preview_responsive_controls = __esmMin((() => {
-		import_prop_types$2 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$21 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_preview();
 		init_preview_responsive_controls$1();
 		PreviewResponsiveControls.propTypes = {
-			active: import_prop_types$2.default.string,
-			onChange: import_prop_types$2.default.func.isRequired
+			active: import_prop_types$21.default.string,
+			onChange: import_prop_types$21.default.func.isRequired
 		};
 		PreviewResponsiveControls.defaultProps = { active: "desktop" };
 	}));
@@ -25495,13 +26536,13 @@ searchFilter: function searchFilter(data, queryParams) {
 			ref
 		}));
 	}
-	var import_prop_types$1;
+	var import_prop_types$20;
 	var init_preview_iframe = __esmMin((() => {
-		import_prop_types$1 = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$20 = /* @__PURE__ */ __toESM(require_prop_types());
 		PreviewIframe.propTypes = {
-			previewUrl: import_prop_types$1.default.string.isRequired,
-			style: import_prop_types$1.default.object,
-			onLoaded: import_prop_types$1.default.func
+			previewUrl: import_prop_types$20.default.string.isRequired,
+			style: import_prop_types$20.default.object,
+			onLoaded: import_prop_types$20.default.func
 		};
 		PreviewIframe.defaultProps = {
 			style: {
@@ -25623,13 +26664,13 @@ searchFilter: function searchFilter(data, queryParams) {
 			}
 		}));
 	}
-	var import_prop_types, breakpoints;
+	var import_prop_types$19, breakpoints;
 	var init_preview = __esmMin((() => {
-		import_prop_types = /* @__PURE__ */ __toESM(require_prop_types());
+		import_prop_types$19 = /* @__PURE__ */ __toESM(require_prop_types());
 		init_slicedToArray();
 		init_elementor_loading();
 		init_item_header();
-		init_layout();
+		init_layout$1();
 		init_page_loader();
 		init_preview_responsive_controls();
 		init_use_kit();
@@ -25668,7 +26709,7 @@ searchFilter: function searchFilter(data, queryParams) {
 				}
 			}
 		];
-		Preview.propTypes = { id: import_prop_types.default.string };
+		Preview.propTypes = { id: import_prop_types$19.default.string };
 	}));
 
 //#endregion
@@ -26207,7 +27248,7 @@ searchFilter: function searchFilter(data, queryParams) {
 
 //#endregion
 //#region \0@oxc-project+runtime@0.140.0/helpers/esm/objectSpread2.js
-	function ownKeys(e, r) {
+	function ownKeys$8(e, r) {
 		var t = Object.keys(e);
 		if (Object.getOwnPropertySymbols) {
 			var o = Object.getOwnPropertySymbols(e);
@@ -26220,9 +27261,9 @@ searchFilter: function searchFilter(data, queryParams) {
 	function _objectSpread2(e) {
 		for (var r = 1; r < arguments.length; r++) {
 			var t = null != arguments[r] ? arguments[r] : {};
-			r % 2 ? ownKeys(Object(t), !0).forEach(function(r) {
+			r % 2 ? ownKeys$8(Object(t), !0).forEach(function(r) {
 				_defineProperty(e, r, t[r]);
-			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r) {
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$8(Object(t)).forEach(function(r) {
 				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
 			});
 		}
@@ -26230,6 +27271,7 @@ searchFilter: function searchFilter(data, queryParams) {
 	}
 	var init_objectSpread2 = __esmMin((() => {
 		init_defineProperty();
+		__name(ownKeys$8, "ownKeys");
 	}));
 
 //#endregion
@@ -26663,7 +27705,7 @@ searchFilter: function searchFilter(data, queryParams) {
 		});
 	}
 	var isServer$1, displayValue;
-	var init_utils = __esmMin((() => {
+	var init_utils$1 = __esmMin((() => {
 		init_extends();
 		init_objectWithoutPropertiesLoose();
 		init_theme();
@@ -26678,9 +27720,9 @@ searchFilter: function searchFilter(data, queryParams) {
 
 //#endregion
 //#region node_modules/react-query/es/devtools/styledComponents.js
-	var Panel, ActiveQueryPanel, Button, QueryKeys, QueryKey, Code, Input, Select;
+	var Panel, ActiveQueryPanel, Button$1, QueryKeys, QueryKey, Code, Input, Select;
 	var init_styledComponents = __esmMin((() => {
-		init_utils();
+		init_utils$1();
 		Panel = styled("div", function(_props, theme) {
 			return {
 				fontSize: "clamp(12px, 1.5vw, 14px)",
@@ -26704,7 +27746,7 @@ searchFilter: function searchFilter(data, queryParams) {
 		}, { "(max-width: 700px)": function maxWidth700px(_props, theme) {
 			return { borderTop: "2px solid " + theme.gray };
 		} });
-		Button = styled("button", function(props, theme) {
+		Button$1 = styled("button", function(props, theme) {
 			return {
 				appearance: "none",
 				fontSize: ".9em",
@@ -26869,7 +27911,7 @@ searchFilter: function searchFilter(data, queryParams) {
 	var init_Explorer = __esmMin((() => {
 		init_objectWithoutPropertiesLoose();
 		init_extends();
-		init_utils();
+		init_utils$1();
 		Entry = styled("div", {
 			fontFamily: "Menlo, monospace",
 			fontSize: "1em",
@@ -27128,7 +28170,7 @@ searchFilter: function searchFilter(data, queryParams) {
 			handleDragStart: function handleDragStart(e) {
 				return _handleDragStart(panelRef.current, e);
 			}
-		})), isResolvedOpen ? /*#__PURE__*/ react.default.createElement(Button, _extends({
+		})), isResolvedOpen ? /*#__PURE__*/ react.default.createElement(Button$1, _extends({
 			type: "button",
 			"aria-controls": "ReactQueryDevtoolsPanel",
 			"aria-haspopup": "true",
@@ -27186,12 +28228,12 @@ searchFilter: function searchFilter(data, queryParams) {
 		init_es();
 		init_match_sorter_esm();
 		init_useLocalStorage();
-		init_utils();
+		init_utils$1();
 		init_styledComponents();
 		init_theme();
 		init_Explorer();
 		init_Logo();
-		init_utils$3();
+		init_utils$4();
 		isServer = typeof window === "undefined";
 		__name(ReactQueryDevtools$1, "ReactQueryDevtools");
 		getStatusRank = function getStatusRank(q) {
@@ -27393,7 +28435,7 @@ searchFilter: function searchFilter(data, queryParams) {
 					key,
 					value: key
 				}, "Sort by ", key);
-			})), /*#__PURE__*/ react.default.createElement(Button, {
+			})), /*#__PURE__*/ react.default.createElement(Button$1, {
 				type: "button",
 				onClick: function onClick() {
 					return setSortDesc(function(old) {
@@ -27476,7 +28518,7 @@ searchFilter: function searchFilter(data, queryParams) {
 				position: "sticky",
 				top: 0,
 				zIndex: 1
-			} }, "Actions"), /*#__PURE__*/ react.default.createElement("div", { style: { padding: "0.5em" } }, /*#__PURE__*/ react.default.createElement(Button, {
+			} }, "Actions"), /*#__PURE__*/ react.default.createElement("div", { style: { padding: "0.5em" } }, /*#__PURE__*/ react.default.createElement(Button$1, {
 				type: "button",
 				onClick: function handleRefetch() {
 					var promise = activeQuery == null ? void 0 : activeQuery.fetch();
@@ -27484,7 +28526,7 @@ searchFilter: function searchFilter(data, queryParams) {
 				},
 				disabled: activeQuery.state.isFetching,
 				style: { background: defaultTheme.active }
-			}, "Refetch"), " ", /*#__PURE__*/ react.default.createElement(Button, {
+			}, "Refetch"), " ", /*#__PURE__*/ react.default.createElement(Button$1, {
 				type: "button",
 				onClick: function onClick() {
 					return queryClient.invalidateQueries(activeQuery);
@@ -27493,13 +28535,13 @@ searchFilter: function searchFilter(data, queryParams) {
 					background: defaultTheme.warning,
 					color: defaultTheme.inputTextColor
 				}
-			}, "Invalidate"), " ", /*#__PURE__*/ react.default.createElement(Button, {
+			}, "Invalidate"), " ", /*#__PURE__*/ react.default.createElement(Button$1, {
 				type: "button",
 				onClick: function onClick() {
 					return queryClient.resetQueries(activeQuery);
 				},
 				style: { background: defaultTheme.gray }
-			}, "Reset"), " ", /*#__PURE__*/ react.default.createElement(Button, {
+			}, "Reset"), " ", /*#__PURE__*/ react.default.createElement(Button$1, {
 				type: "button",
 				onClick: function onClick() {
 					return queryClient.removeQueries(activeQuery);
@@ -27547,16 +28589,16 @@ searchFilter: function searchFilter(data, queryParams) {
 
 //#endregion
 //#region app/modules/kit-library/assets/js/app.js
-	var app_exports = /* @__PURE__ */ __exportAll({ default: () => App });
+	var app_exports$1 = /* @__PURE__ */ __exportAll({ default: () => App$1 });
 	function AppContent() {
 		var returnTo = useQueryParams().getAll().return_to;
 		return /*#__PURE__*/ react.default.createElement(SettingsProvider, { value: elementorAppConfig["kit-library"] }, /*#__PURE__*/ react.default.createElement(ReturnToProvider, { value: returnTo }, /*#__PURE__*/ react.default.createElement(ConnectStateProvider, null, /*#__PURE__*/ react.default.createElement(TrackingProvider, null, /*#__PURE__*/ react.default.createElement(LastFilterProvider, null, /*#__PURE__*/ react.default.createElement(Router, null, /*#__PURE__*/ react.default.createElement(Index, { path: "/" }), /*#__PURE__*/ react.default.createElement(Favorites, { path: "/favorites" }), /*#__PURE__*/ react.default.createElement(Preview, { path: "/preview/:id" }), /*#__PURE__*/ react.default.createElement(Overview, { path: "/overview/:id" }), /*#__PURE__*/ react.default.createElement(Cloud, { path: "/cloud" })))))));
 	}
-	function App() {
+	function App$1() {
 		return /*#__PURE__*/ react.default.createElement("div", { className: "e-kit-library" }, /*#__PURE__*/ react.default.createElement(QueryClientProvider, { client: queryClient }, /*#__PURE__*/ react.default.createElement(AppContent, null), elementorCommon.config.isElementorDebug && /*#__PURE__*/ react.default.createElement(import_devtools.ReactQueryDevtools, { initialIsOpen: false })));
 	}
 	var import_devtools, queryClient;
-	var init_app = __esmMin((() => {
+	var init_app$1 = __esmMin((() => {
 		init_favorites();
 		init_index();
 		init_cloud();
@@ -27576,6 +28618,7 @@ searchFilter: function searchFilter(data, queryParams) {
 			retry: false,
 			staleTime: 1e3 * 60 * 30
 		} } });
+		__name(App$1, "App");
 	}));
 
 //#endregion
@@ -27594,7 +28637,7 @@ searchFilter: function searchFilter(data, queryParams) {
 			_elementor_router.default.addRoute({
 				path: "/kit-library/*",
 				component: react.default.lazy(function() {
-					return __vitePreload(() => Promise.resolve().then(() => (init_app(), app_exports)), void 0);
+					return __vitePreload(() => Promise.resolve().then(() => (init_app$1(), app_exports$1)), void 0);
 				})
 			});
 		}
@@ -27608,7 +28651,4772 @@ searchFilter: function searchFilter(data, queryParams) {
 	}();
 
 //#endregion
+//#region app/modules/onboarding/assets/js/context/context.js
+	function ownKeys$7(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$7(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$7(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$7(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	function ContextProvider(props) {
+		var onboardingConfig = elementorAppConfig.onboarding;
+		var _useState2 = _slicedToArray((0, react.useState)({
+			hasPro: elementorAppConfig.hasPro,
+			isLibraryConnected: onboardingConfig.isLibraryConnected,
+			isHelloThemeInstalled: onboardingConfig.helloInstalled,
+			isHelloThemeActivated: onboardingConfig.helloActivated,
+			siteName: onboardingConfig.siteName,
+			siteLogo: onboardingConfig.siteLogo,
+			proNotice: "",
+			currentStep: "",
+			nextStep: "",
+			steps: {
+				account: false,
+				hello: false,
+				chooseFeatures: false,
+				siteName: false,
+				siteLogo: false,
+				goodToGo: false
+			}
+		}), 2);
+		var state = _useState2[0];
+		var setState = _useState2[1];
+		var updateState = (0, react.useCallback)(function(newState) {
+			setState(function(prev) {
+				return _objectSpread$7(_objectSpread$7({}, prev), newState);
+			});
+		}, [setState]);
+		return /*#__PURE__*/ react.default.createElement(OnboardingContext.Provider, { value: {
+			state,
+			setState,
+			updateState,
+			getStateObjectToUpdate: function getStateObjectToUpdate(stateObject, mainChangedPropertyKey, subChangedPropertyKey, subChangedPropertyValue) {
+				var mutatedStateCopy = JSON.parse(JSON.stringify(stateObject));
+				mutatedStateCopy[mainChangedPropertyKey][subChangedPropertyKey] = subChangedPropertyValue;
+				return mutatedStateCopy;
+			}
+		} }, props.children);
+	}
+	var import_prop_types$18, OnboardingContext;
+	var init_context = __esmMin((() => {
+		import_prop_types$18 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_defineProperty$1();
+		init_slicedToArray();
+		__name(ownKeys$7, "ownKeys");
+		__name(_objectSpread$7, "_objectSpread");
+		OnboardingContext = (0, react.createContext)({});
+		ContextProvider.propTypes = { children: import_prop_types$18.default.any };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/event-queue.js
+	function enqueueEvent(name, payload) {
+		var dedupeKey = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
+		try {
+			var queue = getEventQueue();
+			if (dedupeKey && queue.some(function(item) {
+				return item.dedupeKey === dedupeKey;
+			})) return;
+			queue.push({
+				name,
+				payload,
+				timestamp: Date.now(),
+				dedupeKey
+			});
+			while (queue.length > MAX_QUEUE_SIZE) queue.shift();
+			sessionStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+		} catch (error) {}
+	}
+	function getEventQueue() {
+		try {
+			var raw = sessionStorage.getItem(STORAGE_KEY);
+			if (!raw) return [];
+			var parsed = JSON.parse(raw);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch (error) {
+			return [];
+		}
+	}
+	function clearEventQueue() {
+		try {
+			sessionStorage.removeItem(STORAGE_KEY);
+		} catch (error) {}
+	}
+	var STORAGE_KEY, MAX_QUEUE_SIZE;
+	var init_event_queue = __esmMin((() => {
+		STORAGE_KEY = "elementor_core_onboarding_event_queue";
+		MAX_QUEUE_SIZE = 200;
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/storage-manager.js
+	function getString(key) {
+		return localStorage.getItem(key);
+	}
+	function setString(key, value) {
+		localStorage.setItem(key, value);
+	}
+	function remove(key) {
+		localStorage.removeItem(key);
+	}
+	function getObject(key) {
+		var storedString = getString(key);
+		if (!storedString) return null;
+		try {
+			var parsed = JSON.parse(storedString);
+			if (parsed && "object" === _typeof$1(parsed)) return parsed;
+			return null;
+		} catch (error) {
+			remove(key);
+			return null;
+		}
+	}
+	function setObject(key, value) {
+		try {
+			setString(key, JSON.stringify(value));
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+	function getArray(key) {
+		var storedArray = getObject(key);
+		return Array.isArray(storedArray) ? storedArray : [];
+	}
+	function appendToArray(key, item) {
+		var existingArray = getArray(key);
+		existingArray.push(item);
+		return setObject(key, existingArray);
+	}
+	function getNumber(key) {
+		var defaultValue = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 0;
+		var storedString = getString(key);
+		if (!storedString) return defaultValue;
+		var parsed = parseInt(storedString, 10);
+		return isNaN(parsed) ? defaultValue : parsed;
+	}
+	function setNumber(key, value) {
+		setString(key, value.toString());
+	}
+	function incrementNumber(key) {
+		var increment = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 1;
+		var newValue = getNumber(key) + increment;
+		setNumber(key, newValue);
+		return newValue;
+	}
+	function exists(key) {
+		return getString(key) !== null;
+	}
+	function clearMultiple(keys) {
+		keys.forEach(function(key) {
+			return remove(key);
+		});
+	}
+	function clearAllOnboardingData() {
+		clearMultiple([
+			ONBOARDING_STORAGE_KEYS.START_TIME,
+			ONBOARDING_STORAGE_KEYS.INITIATED,
+			ONBOARDING_STORAGE_KEYS.STEP1_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP2_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP3_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP4_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE,
+			ONBOARDING_STORAGE_KEYS.STEP4_HAS_PREVIOUS_CLICK,
+			ONBOARDING_STORAGE_KEYS.EDITOR_LOAD_TRACKED,
+			ONBOARDING_STORAGE_KEYS.POST_ONBOARDING_CLICK_COUNT,
+			ONBOARDING_STORAGE_KEYS.CREATE_ACCOUNT_FLOW,
+			ONBOARDING_STORAGE_KEYS.PENDING_CREATE_ACCOUNT_STATUS,
+			ONBOARDING_STORAGE_KEYS.PENDING_CREATE_MY_ACCOUNT,
+			ONBOARDING_STORAGE_KEYS.PENDING_TOP_UPGRADE,
+			ONBOARDING_STORAGE_KEYS.PENDING_TOP_UPGRADE_NO_CLICK,
+			ONBOARDING_STORAGE_KEYS.PENDING_CONNECT_STATUS,
+			ONBOARDING_STORAGE_KEYS.PENDING_STEP1_CLICKED_CONNECT,
+			ONBOARDING_STORAGE_KEYS.PENDING_STEP1_END_STATE,
+			ONBOARDING_STORAGE_KEYS.PENDING_EXIT,
+			ONBOARDING_STORAGE_KEYS.PENDING_AB_101_START_AS_FREE_USER,
+			ONBOARDING_STORAGE_KEYS.PENDING_TOP_UPGRADE_MOUSEOVER,
+			ONBOARDING_STORAGE_KEYS.STEP1_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP2_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP3_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP4_START_TIME
+		]);
+		clearEventQueue();
+		for (var i = 1; i <= 4; i++) remove("elementor_onboarding_click_".concat(i, "_data"));
+		remove(ONBOARDING_STORAGE_KEYS.STEP1_END_STATE_SENT);
+		remove(ONBOARDING_STORAGE_KEYS.STEP2_END_STATE_SENT);
+		remove(ONBOARDING_STORAGE_KEYS.STEP3_END_STATE_SENT);
+		remove(ONBOARDING_STORAGE_KEYS.STEP4_END_STATE_SENT);
+		remove(ONBOARDING_STORAGE_KEYS.CREATE_ACCOUNT_FLOW);
+		remove(ONBOARDING_STORAGE_KEYS.STEP2_THEMES_LOADED_SENT);
+	}
+	function clearExperimentData() {
+		clearMultiple([
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT101_VARIANT,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT101_STARTED,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT201_VARIANT,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT201_STARTED,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT202_VARIANT,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT202_STARTED,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT401_VARIANT,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT401_STARTED,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT402_VARIANT,
+			ONBOARDING_STORAGE_KEYS.EXPERIMENT402_STARTED,
+			ONBOARDING_STORAGE_KEYS.PENDING_EXPERIMENT_DATA
+		]);
+	}
+	function getStepStartTime(stepNumber) {
+		var key = {
+			1: ONBOARDING_STORAGE_KEYS.STEP1_START_TIME,
+			2: ONBOARDING_STORAGE_KEYS.STEP2_START_TIME,
+			3: ONBOARDING_STORAGE_KEYS.STEP3_START_TIME,
+			4: ONBOARDING_STORAGE_KEYS.STEP4_START_TIME
+		}[stepNumber];
+		return key ? getNumber(key) : null;
+	}
+	function setStepStartTime(stepNumber, timestamp) {
+		var key = {
+			1: ONBOARDING_STORAGE_KEYS.STEP1_START_TIME,
+			2: ONBOARDING_STORAGE_KEYS.STEP2_START_TIME,
+			3: ONBOARDING_STORAGE_KEYS.STEP3_START_TIME,
+			4: ONBOARDING_STORAGE_KEYS.STEP4_START_TIME
+		}[stepNumber];
+		if (key) {
+			setNumber(key, timestamp);
+			return true;
+		}
+		return false;
+	}
+	function clearStepStartTime$1(stepNumber) {
+		var key = {
+			1: ONBOARDING_STORAGE_KEYS.STEP1_START_TIME,
+			2: ONBOARDING_STORAGE_KEYS.STEP2_START_TIME,
+			3: ONBOARDING_STORAGE_KEYS.STEP3_START_TIME,
+			4: ONBOARDING_STORAGE_KEYS.STEP4_START_TIME
+		}[stepNumber];
+		if (key) remove(key);
+	}
+	var ONBOARDING_STORAGE_KEYS, StorageManager;
+	var init_storage_manager = __esmMin((() => {
+		init_typeof$1();
+		init_event_queue();
+		ONBOARDING_STORAGE_KEYS = {
+			START_TIME: "elementor_onboarding_start_time",
+			INITIATED: "elementor_onboarding_initiated",
+			STEP1_ACTIONS: "elementor_onboarding_step1_actions",
+			STEP2_ACTIONS: "elementor_onboarding_step2_actions",
+			STEP3_ACTIONS: "elementor_onboarding_step3_actions",
+			STEP4_ACTIONS: "elementor_onboarding_step4_actions",
+			STEP1_START_TIME: "elementor_onboarding_s1_start_time",
+			STEP2_START_TIME: "elementor_onboarding_s2_start_time",
+			STEP3_START_TIME: "elementor_onboarding_s3_start_time",
+			STEP4_START_TIME: "elementor_onboarding_s4_start_time",
+			STEP4_SITE_STARTER_CHOICE: "elementor_onboarding_s4_site_starter_choice",
+			STEP4_HAS_PREVIOUS_CLICK: "elementor_onboarding_s4_has_previous_click",
+			EDITOR_LOAD_TRACKED: "elementor_onboarding_editor_load_tracked",
+			POST_ONBOARDING_CLICK_COUNT: "elementor_onboarding_click_count",
+			CREATE_ACCOUNT_FLOW: "elementor_onboarding_create_account_flow",
+			PENDING_CONNECT_STATUS: "elementor_onboarding_pending_connect_status",
+			PENDING_CREATE_ACCOUNT_STATUS: "elementor_onboarding_pending_create_account_status",
+			PENDING_CREATE_MY_ACCOUNT: "elementor_onboarding_pending_create_my_account",
+			PENDING_TOP_UPGRADE: "elementor_onboarding_pending_top_upgrade",
+			PENDING_TOP_UPGRADE_NO_CLICK: "elementor_onboarding_pending_top_upgrade_no_click",
+			PENDING_STEP1_CLICKED_CONNECT: "elementor_onboarding_pending_step1_clicked_connect",
+			PENDING_STEP1_END_STATE: "elementor_onboarding_pending_step1_end_state",
+			PENDING_EXIT: "elementor_onboarding_pending_exit",
+			PENDING_AB_101_START_AS_FREE_USER: "elementor_onboarding_pending_ab_101_start_as_free_user",
+			PENDING_TOP_UPGRADE_MOUSEOVER: "elementor_onboarding_pending_top_upgrade_mouseover",
+			EXPERIMENT101_VARIANT: "elementor_onboarding_experiment101_variant",
+			EXPERIMENT101_STARTED: "elementor_onboarding_experiment101_started",
+			EXPERIMENT201_VARIANT: "elementor_onboarding_experiment201_variant",
+			EXPERIMENT201_STARTED: "elementor_onboarding_experiment201_started",
+			EXPERIMENT202_VARIANT: "elementor_onboarding_experiment202_variant",
+			EXPERIMENT202_STARTED: "elementor_onboarding_experiment202_started",
+			EXPERIMENT401_VARIANT: "elementor_onboarding_experiment401_variant",
+			EXPERIMENT401_STARTED: "elementor_onboarding_experiment401_started",
+			EXPERIMENT402_VARIANT: "elementor_onboarding_experiment402_variant",
+			EXPERIMENT402_STARTED: "elementor_onboarding_experiment402_started",
+			PENDING_EXPERIMENT_DATA: "elementor_onboarding_pending_experiment_data",
+			STEP1_END_STATE_SENT: "elementor_onboarding_step1_end_state_sent",
+			STEP2_END_STATE_SENT: "elementor_onboarding_step2_end_state_sent",
+			STEP3_END_STATE_SENT: "elementor_onboarding_step3_end_state_sent",
+			STEP4_END_STATE_SENT: "elementor_onboarding_step4_end_state_sent",
+			STEP2_THEMES_LOADED_SENT: "elementor_onboarding_step2_themes_loaded_sent"
+		};
+		__name(clearStepStartTime$1, "clearStepStartTime");
+		StorageManager = {
+			getString,
+			setString,
+			remove,
+			getObject,
+			setObject,
+			getArray,
+			appendToArray,
+			getNumber,
+			setNumber,
+			incrementNumber,
+			exists,
+			clearMultiple,
+			clearAllOnboardingData,
+			clearExperimentData,
+			getStepStartTime,
+			setStepStartTime,
+			clearStepStartTime: clearStepStartTime$1
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/onboarding-event-names.js
+	function ownKeys$6(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$6(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$6(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$6(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	function stepLocationL1(stepNumber) {
+		return String(stepNumber);
+	}
+	function createCoreOnboardingPayload(partial) {
+		return _objectSpread$6({ window_name: "core_onboarding" }, partial);
+	}
+	function createEditorPayload(partial) {
+		return _objectSpread$6({ window_name: "editor" }, partial);
+	}
+	var ONBOARDING_EVENTS, STEP_TARGET_NAMES;
+	var init_onboarding_event_names = __esmMin((() => {
+		init_defineProperty$1();
+		__name(ownKeys$6, "ownKeys");
+		__name(_objectSpread$6, "_objectSpread");
+		ONBOARDING_EVENTS = {
+			INITIALIZED: "core_onboarding_initialized",
+			RESUME: "core_onboarding_resume",
+			STEP_VIEWED: "core_onboarding_step_viewed",
+			LOGIN_TYPE: "core_onboarding_login_type",
+			CONNECT: "core_onboarding_connect",
+			THEME_SELECTED: "core_onboarding_theme_selected",
+			THEME_UNSELECTED: "core_onboarding_theme_unselected",
+			PRO_FEATURES_SELECTED: "core_onboarding_pro_features_selected",
+			BACK_CLICKED: "core_onboarding_back_clicked",
+			SKIP_CLICKED: "core_onboarding_skip_clicked",
+			UPGRADE_CLICKED: "core_onboarding_upgrade_clicked",
+			EXIT_CLICKED: "core_onboarding_exit_clicked",
+			SITE_STARTER_SELECTED: "core_onboarding_site_starter_selected",
+			STEP_COMPLETED: "core_onboarding_step_completed",
+			SUMMARY: "core_onboarding_summary",
+			ERROR_REPORTED: "core_onboarding_error_reported",
+			EDITOR_LOADED: "core_onboarding_editor_loaded",
+			POST_CLICK: "core_onboarding_post_click",
+			SESSION_REPLAY_START: "core_onboarding_session_replay_start"
+		};
+		STEP_TARGET_NAMES = {
+			1: "connect",
+			2: "hello_theme",
+			3: "pro_features",
+			4: "site_starter"
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/event-dispatcher.js
+	function ownKeys$5(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$5(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$5(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$5(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	function canSendEvents() {
+		var _elementorCommon;
+		return ((_elementorCommon = elementorCommon) === null || _elementorCommon === void 0 || (_elementorCommon = _elementorCommon.config) === null || _elementorCommon === void 0 || (_elementorCommon = _elementorCommon.editor_events) === null || _elementorCommon === void 0 ? void 0 : _elementorCommon.can_send_events) || false;
+	}
+	function isEventsManagerAvailable() {
+		var _elementorCommon2;
+		return ((_elementorCommon2 = elementorCommon) === null || _elementorCommon2 === void 0 ? void 0 : _elementorCommon2.eventsManager) && "function" === typeof elementorCommon.eventsManager.dispatchEvent;
+	}
+	function isMixpanelInitialized() {
+		var _elementorCommon3;
+		var _elementorCommon4;
+		var _elementorCommon4$isM;
+		var configuredInstance = (_elementorCommon3 = elementorCommon) === null || _elementorCommon3 === void 0 || (_elementorCommon3 = _elementorCommon3.config) === null || _elementorCommon3 === void 0 || (_elementorCommon3 = _elementorCommon3.editor_events) === null || _elementorCommon3 === void 0 ? void 0 : _elementorCommon3.mixpanelInstance;
+		if (configuredInstance !== null && configuredInstance !== void 0 && configuredInstance.isInitialized) return true;
+		if ((_elementorCommon4 = elementorCommon) !== null && _elementorCommon4 !== void 0 && (_elementorCommon4 = _elementorCommon4.eventsManager) !== null && _elementorCommon4 !== void 0 && (_elementorCommon4$isM = _elementorCommon4.isMixpanelReady) !== null && _elementorCommon4$isM !== void 0 && _elementorCommon4$isM.call(_elementorCommon4)) return true;
+		return false;
+	}
+	function isAnalyticsReady() {
+		var _elementorCommon$even;
+		var _elementorCommon$even2;
+		return isEventsManagerAvailable() && canSendEvents() && isMixpanelInitialized() && ((_elementorCommon$even = (_elementorCommon$even2 = elementorCommon.eventsManager).isMixpanelReady) === null || _elementorCommon$even === void 0 ? void 0 : _elementorCommon$even.call(_elementorCommon$even2));
+	}
+	function initializeAndEnableTracking(onReady) {
+		if (!isEventsManagerAvailable()) return;
+		var finishInitialization = function finishInitialization() {
+			if (!elementorCommon.eventsManager.trackingEnabled) elementorCommon.eventsManager.enableTracking();
+			if (onReady) onReady();
+		};
+		if (isMixpanelInitialized()) {
+			finishInitialization();
+			return;
+		}
+		try {
+			elementorCommon.eventsManager.initializeMixpanel(function() {
+				finishInitialization();
+			});
+		} catch (error) {
+			if (onReady) onReady();
+		}
+	}
+	function flushQueueInternal() {
+		var queued = _toConsumableArray(getEventQueue()).sort(function(a, b) {
+			return a.timestamp - b.timestamp;
+		});
+		var stillPending = [];
+		queued.forEach(function(event) {
+			if (!(event !== null && event !== void 0 && event.name) || !(event !== null && event !== void 0 && event.payload)) return;
+			if (true !== dispatch(event.name, event.payload)) stillPending.push(event);
+		});
+		if (0 === stillPending.length) {
+			clearEventQueue();
+			return;
+		}
+		try {
+			sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stillPending));
+		} catch (error) {}
+	}
+	function dispatch(eventName) {
+		var payload = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+		if (!isEventsManagerAvailable()) return false;
+		if (!canSendEvents()) return false;
+		if (!isAnalyticsReady()) return false;
+		try {
+			elementorCommon.eventsManager.dispatchEvent(eventName, payload);
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+	function trackEvent(eventName, payload) {
+		var dedupeKey = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
+		var fullPayload = payload.window_name ? payload : createCoreOnboardingPayload(payload);
+		if (!canSendEvents()) {
+			enqueueEvent(eventName, fullPayload, dedupeKey);
+			return false;
+		}
+		if (!isAnalyticsReady()) {
+			enqueueEvent(eventName, fullPayload, dedupeKey);
+			initializeAndEnableTracking(function() {
+				flushQueueInternal();
+			});
+			return false;
+		}
+		var dispatchResult = false;
+		initializeAndEnableTracking(function() {
+			dispatchResult = dispatch(eventName, fullPayload);
+		});
+		return dispatchResult;
+	}
+	function flushQueue(afterFlush) {
+		if (!canSendEvents() || !isEventsManagerAvailable()) return;
+		initializeAndEnableTracking(function() {
+			flushQueueInternal();
+			if (afterFlush) afterFlush();
+		});
+	}
+	function dispatchIfAllowed(eventName) {
+		var payload = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+		if (canSendEvents()) return dispatch(eventName, payload);
+		return false;
+	}
+	function dispatchEditorEvent(eventName) {
+		return trackEvent(eventName, createEditorPayload(arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}));
+	}
+	function dispatchPostClickEvent(clickOrder, clickData) {
+		var formattedAction = formatClickAction(clickData.title, clickData.selector);
+		return trackEvent(ONBOARDING_EVENTS.POST_CLICK, createEditorPayload({
+			interaction_type: "click",
+			target_type: "element",
+			target_name: "post_onboarding_click",
+			interaction_result: "click_recorded",
+			target_value: String(clickOrder),
+			target_location: "editor",
+			location_l1: "editor",
+			metadata: { click_action: formattedAction }
+		}));
+	}
+	function formatClickAction(title, selector) {
+		if (!title && !selector) return "";
+		if (!title) return selector;
+		if (!selector) return title;
+		return "".concat(title, " / ").concat(selector);
+	}
+	var ONBOARDING_EVENTS_MAP, ONBOARDING_STEP_NAMES, EventDispatcher;
+	var init_event_dispatcher = __esmMin((() => {
+		init_toConsumableArray();
+		init_defineProperty$1();
+		init_event_queue();
+		init_onboarding_event_names();
+		__name(ownKeys$5, "ownKeys");
+		__name(_objectSpread$5, "_objectSpread");
+		ONBOARDING_EVENTS_MAP = _objectSpread$5(_objectSpread$5({}, ONBOARDING_EVENTS), {}, { SESSION_REPLAY_START: ONBOARDING_EVENTS.SESSION_REPLAY_START });
+		ONBOARDING_STEP_NAMES = {
+			CONNECT: "connect",
+			HELLO_BIZ: "hello_theme",
+			PRO_FEATURES: "pro_features",
+			SITE_STARTER: "site_starter",
+			SITE_NAME: "site_name",
+			SITE_LOGO: "site_logo",
+			ONBOARDING_START: "onboarding_start"
+		};
+		EventDispatcher = {
+			canSendEvents,
+			isEventsManagerAvailable,
+			initializeAndEnableTracking,
+			dispatch,
+			trackEvent,
+			flushQueue,
+			dispatchIfAllowed,
+			dispatchEditorEvent,
+			dispatchPostClickEvent,
+			formatClickAction,
+			ONBOARDING_EVENTS
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/timing-manager.js
+	function ownKeys$4(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$4(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$4(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$4(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	function getCurrentTime() {
+		return Date.now();
+	}
+	function initializeOnboardingStartTime() {
+		var startTime = getCurrentTime();
+		setNumber(ONBOARDING_STORAGE_KEYS.START_TIME, startTime);
+		setString(ONBOARDING_STORAGE_KEYS.INITIATED, "true");
+		return startTime;
+	}
+	function getOnboardingStartTime() {
+		return getNumber(ONBOARDING_STORAGE_KEYS.START_TIME);
+	}
+	function hasOnboardingStarted() {
+		return exists(ONBOARDING_STORAGE_KEYS.START_TIME);
+	}
+	function trackStepStartTime(stepNumber) {
+		var existingStartTime = getStepStartTime(stepNumber);
+		if (existingStartTime) return existingStartTime;
+		var currentTime = getCurrentTime();
+		setStepStartTime(stepNumber, currentTime);
+		return currentTime;
+	}
+	function calculateStepTimeSpent(stepNumber) {
+		var stepStartTime = getStepStartTime(stepNumber);
+		if (!stepStartTime) return null;
+		var currentTime = getCurrentTime();
+		return Math.round((currentTime - stepStartTime) / 1e3);
+	}
+	function clearStepStartTime(stepNumber) {
+		clearStepStartTime$1(stepNumber);
+	}
+	function calculateTotalTimeSpent() {
+		var startTime = getOnboardingStartTime();
+		if (!startTime) return null;
+		var currentTime = getCurrentTime();
+		return {
+			startTime,
+			currentTime,
+			timeSpent: Math.round((currentTime - startTime) / 1e3)
+		};
+	}
+	function formatTimeForEvent(timeInSeconds) {
+		if (null === timeInSeconds || timeInSeconds === void 0) return null;
+		return "".concat(timeInSeconds, "s");
+	}
+	function createTimeSpentData() {
+		var stepNumber = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null;
+		var totalTimeData = calculateTotalTimeSpent();
+		var result = {};
+		if (totalTimeData) {
+			result.time_spent = formatTimeForEvent(totalTimeData.timeSpent);
+			result.onboarding_start_time = totalTimeData.startTime;
+		}
+		if (stepNumber) {
+			var stepTimeSpent = calculateStepTimeSpent(stepNumber);
+			if (stepTimeSpent !== null) result.step_time_spent = formatTimeForEvent(stepTimeSpent);
+		}
+		return Object.keys(result).length > 0 ? result : null;
+	}
+	function addTimingToEventData(eventData) {
+		var timingData = createTimeSpentData(arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null);
+		if (timingData) return _objectSpread$4(_objectSpread$4({}, eventData), timingData);
+		return eventData;
+	}
+	function clearStaleSessionData() {
+		var recentStepStartTimes = [];
+		var currentTime = getCurrentTime();
+		var recentStepStartTimeThresholdMs = 5e3;
+		[
+			ONBOARDING_STORAGE_KEYS.STEP1_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP2_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP3_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP4_START_TIME
+		].forEach(function(key) {
+			var value = getString(key);
+			if (value) {
+				if (currentTime - parseInt(value, 10) < recentStepStartTimeThresholdMs) recentStepStartTimes.push(key);
+			}
+		});
+		[
+			ONBOARDING_STORAGE_KEYS.START_TIME,
+			ONBOARDING_STORAGE_KEYS.INITIATED,
+			ONBOARDING_STORAGE_KEYS.STEP1_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP2_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP3_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP4_ACTIONS,
+			ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE,
+			ONBOARDING_STORAGE_KEYS.STEP4_HAS_PREVIOUS_CLICK,
+			ONBOARDING_STORAGE_KEYS.EDITOR_LOAD_TRACKED,
+			ONBOARDING_STORAGE_KEYS.POST_ONBOARDING_CLICK_COUNT,
+			ONBOARDING_STORAGE_KEYS.CREATE_ACCOUNT_FLOW
+		].forEach(function(key) {
+			if (!recentStepStartTimes.includes(key)) remove(key);
+		});
+		[
+			ONBOARDING_STORAGE_KEYS.STEP1_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP2_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP3_START_TIME,
+			ONBOARDING_STORAGE_KEYS.STEP4_START_TIME
+		].forEach(function(key) {
+			if (!recentStepStartTimes.includes(key)) remove(key);
+		});
+	}
+	function isWithinTimeThreshold(timestamp) {
+		var thresholdMs = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 5e3;
+		return getCurrentTime() - timestamp < thresholdMs;
+	}
+	var TimingManager;
+	var init_timing_manager = __esmMin((() => {
+		init_defineProperty$1();
+		init_storage_manager();
+		__name(ownKeys$4, "ownKeys");
+		__name(_objectSpread$4, "_objectSpread");
+		TimingManager = {
+			getCurrentTime,
+			initializeOnboardingStartTime,
+			getOnboardingStartTime,
+			hasOnboardingStarted,
+			trackStepStartTime,
+			calculateStepTimeSpent,
+			clearStepStartTime,
+			calculateTotalTimeSpent,
+			formatTimeForEvent,
+			createTimeSpentData,
+			addTimingToEventData,
+			clearStaleSessionData,
+			isWithinTimeThreshold
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/click-tracker.js
+	function ownKeys$3(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$3(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$3(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$3(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	var clickTracker;
+	var init_click_tracker = __esmMin((() => {
+		init_defineProperty$1();
+		init_classCallCheck();
+		init_createClass();
+		init_storage_manager();
+		init_event_dispatcher();
+		__name(ownKeys$3, "ownKeys");
+		__name(_objectSpread$3, "_objectSpread");
+		clickTracker = new (/* @__PURE__ */ function() {
+			function ClickTracker() {
+				_classCallCheck(this, ClickTracker);
+				this.DEDUPLICATION_WINDOW_MS = 150;
+				this.MAX_CLICKS = 3;
+				this.lastClickTime = 0;
+				this.lastClickElement = null;
+				this.clickHandler = null;
+				this.selectTimeoutWindow = 100;
+				this.lastSelectClickTime = 0;
+			}
+			return _createClass(ClickTracker, [
+				{
+					key: "setupClickTracking",
+					value: function setupClickTracking() {
+						var _this = this;
+						if ("undefined" === typeof document) return;
+						if (this.clickHandler) return;
+						this.clickHandler = function(event) {
+							_this.trackClick(event);
+						};
+						document.addEventListener("click", this.clickHandler, true);
+					}
+				},
+				{
+					key: "trackClick",
+					value: function trackClick(event) {
+						var _target$tagName;
+						if (StorageManager.getNumber(ONBOARDING_STORAGE_KEYS.POST_ONBOARDING_CLICK_COUNT) >= this.MAX_CLICKS) return;
+						var target = event.target;
+						if (!this.shouldTrackClick(target)) return;
+						var currentTime = Date.now();
+						var timeSinceLastClick = currentTime - this.lastClickTime;
+						if (this.isDuplicateClick(target, timeSinceLastClick)) return;
+						this.lastClickTime = currentTime;
+						this.lastClickElement = target;
+						if ("select" === ((_target$tagName = target.tagName) === null || _target$tagName === void 0 ? void 0 : _target$tagName.toLowerCase())) this.lastSelectClickTime = currentTime;
+						var newCount = StorageManager.incrementNumber(ONBOARDING_STORAGE_KEYS.POST_ONBOARDING_CLICK_COUNT);
+						var clickData = this.extractClickData(target);
+						this.storeClickData(newCount, clickData);
+						this.dispatchClickEvent(newCount);
+						if (newCount >= this.MAX_CLICKS) this.cleanup();
+					}
+				},
+				{
+					key: "shouldTrackClick",
+					value: function shouldTrackClick(element) {
+						var _element$tagName;
+						var _element$tagName2;
+						if ("option" === ((_element$tagName = element.tagName) === null || _element$tagName === void 0 ? void 0 : _element$tagName.toLowerCase())) return false;
+						if (element.closest("select") && "select" !== ((_element$tagName2 = element.tagName) === null || _element$tagName2 === void 0 ? void 0 : _element$tagName2.toLowerCase())) return false;
+						if (this.isWithinSelectTimeout(element)) return false;
+						if (this.isSelectRelatedRecentClick(element)) return false;
+						var excludedSelectors = [
+							".announcements-container",
+							".announcements-screen-overlay",
+							".announcements-screen",
+							".notifications-container",
+							".notifications-overlay",
+							".close-button"
+						];
+						for (var _i = 0, _excludedSelectors = excludedSelectors; _i < _excludedSelectors.length; _i++) {
+							var selector = _excludedSelectors[_i];
+							if (element.closest(selector)) return false;
+						}
+						return true;
+					}
+				},
+				{
+					key: "isWithinSelectTimeout",
+					value: function isWithinSelectTimeout(element) {
+						if (!this.lastSelectClickTime) return false;
+						if (Date.now() - this.lastSelectClickTime <= this.selectTimeoutWindow) {
+							var _element$tagName3;
+							var isSelectElement = "select" === ((_element$tagName3 = element.tagName) === null || _element$tagName3 === void 0 ? void 0 : _element$tagName3.toLowerCase());
+							var isInSelectControl = !!element.closest(".elementor-control-input-wrapper select");
+							if (isSelectElement || isInSelectControl) return true;
+						}
+						return false;
+					}
+				},
+				{
+					key: "isSelectRelatedRecentClick",
+					value: function isSelectRelatedRecentClick(element) {
+						var _this$lastClickElemen;
+						var _element$tagName4;
+						if (!this.lastClickElement || !this.lastClickTime) return false;
+						if (Date.now() - this.lastClickTime > 500) return false;
+						var wasLastClickSelect = "select" === ((_this$lastClickElemen = this.lastClickElement.tagName) === null || _this$lastClickElemen === void 0 ? void 0 : _this$lastClickElemen.toLowerCase());
+						var isCurrentClickSelect = "select" === ((_element$tagName4 = element.tagName) === null || _element$tagName4 === void 0 ? void 0 : _element$tagName4.toLowerCase());
+						if (wasLastClickSelect && isCurrentClickSelect) {
+							var lastSelectControl = this.lastClickElement.closest(".elementor-control");
+							var currentSelectControl = element.closest(".elementor-control");
+							if (lastSelectControl && currentSelectControl && lastSelectControl === currentSelectControl) return true;
+						}
+						return false;
+					}
+				},
+				{
+					key: "isDuplicateClick",
+					value: function isDuplicateClick(target, timeSinceLastClick) {
+						if (timeSinceLastClick > (this.shouldUseExtendedWindow(this.lastClickElement, target) ? this.DEDUPLICATION_WINDOW_MS * 3 : this.DEDUPLICATION_WINDOW_MS)) return false;
+						if (!this.lastClickElement) return false;
+						var isSameElement = this.lastClickElement === target;
+						var isRelatedElement = this.areElementsRelated(this.lastClickElement, target);
+						return isSameElement || isRelatedElement;
+					}
+				},
+				{
+					key: "shouldUseExtendedWindow",
+					value: function shouldUseExtendedWindow(element1, element2) {
+						var _element1$tagName;
+						var _element2$tagName;
+						if (!element1 || !element2) return false;
+						var isElement1Select = "select" === ((_element1$tagName = element1.tagName) === null || _element1$tagName === void 0 ? void 0 : _element1$tagName.toLowerCase());
+						var isElement2Select = "select" === ((_element2$tagName = element2.tagName) === null || _element2$tagName === void 0 ? void 0 : _element2$tagName.toLowerCase());
+						return isElement1Select || isElement2Select;
+					}
+				},
+				{
+					key: "areElementsRelated",
+					value: function areElementsRelated(element1, element2) {
+						if (!element1 || !element2) return false;
+						var isSelectRelated = this.areSelectRelated(element1, element2);
+						var isParentChild = element1.contains(element2) || element2.contains(element1);
+						var shareCommonParent = element1.parentElement === element2.parentElement;
+						var bothInSameControl = element1.closest(".elementor-control") === element2.closest(".elementor-control");
+						return isSelectRelated || isParentChild || shareCommonParent || bothInSameControl;
+					}
+				},
+				{
+					key: "areSelectRelated",
+					value: function areSelectRelated(element1, element2) {
+						var _element1$tagName2;
+						var _element2$tagName2;
+						var _element1$tagName3;
+						var _element2$tagName3;
+						var isElement1Select = "select" === ((_element1$tagName2 = element1.tagName) === null || _element1$tagName2 === void 0 ? void 0 : _element1$tagName2.toLowerCase());
+						var isElement2Select = "select" === ((_element2$tagName2 = element2.tagName) === null || _element2$tagName2 === void 0 ? void 0 : _element2$tagName2.toLowerCase());
+						var isElement1Option = "option" === ((_element1$tagName3 = element1.tagName) === null || _element1$tagName3 === void 0 ? void 0 : _element1$tagName3.toLowerCase());
+						var isElement2Option = "option" === ((_element2$tagName3 = element2.tagName) === null || _element2$tagName3 === void 0 ? void 0 : _element2$tagName3.toLowerCase());
+						if (isElement1Select && isElement2Select && element1 === element2) return true;
+						if (isElement1Select && isElement2Option || isElement1Option && isElement2Select) return true;
+						var element1SelectParent = element1.closest("select");
+						var element2SelectParent = element2.closest("select");
+						if (element1SelectParent && element2SelectParent && element1SelectParent === element2SelectParent) return true;
+						if (element1SelectParent && element1SelectParent === element2) return true;
+						if (element2SelectParent && element2SelectParent === element1) return true;
+						return false;
+					}
+				},
+				{
+					key: "extractClickData",
+					value: function extractClickData(element) {
+						var title = this.findMeaningfulTitle(element);
+						var selector = this.generateSelector(element);
+						return {
+							title: title.substring(0, 100),
+							selector
+						};
+					}
+				},
+				{
+					key: "findMeaningfulTitle",
+					value: function findMeaningfulTitle(element) {
+						var directTitle = this.extractTitleFromElement(element);
+						if (directTitle && directTitle.trim().length > 0) return directTitle.trim();
+						var currentElement = element.parentElement;
+						var attempts = 0;
+						var maxAttempts = 3;
+						while (currentElement && attempts < maxAttempts) {
+							var title = this.extractTitleFromElement(currentElement);
+							if (title && title.trim().length > 0) return title.trim();
+							currentElement = currentElement.parentElement;
+							attempts++;
+						}
+						return this.generateFallbackTitle(element);
+					}
+				},
+				{
+					key: "extractTitleFromElement",
+					value: function extractTitleFromElement(element) {
+						var _element$tagName5;
+						var _element$textContent;
+						var _element$tagName6;
+						var _element$innerText;
+						var _element$querySelecto;
+						var _element$querySelecto2;
+						var _element$querySelecto3;
+						var controlFieldContainer = element.closest(".elementor-control-field");
+						if (controlFieldContainer) {
+							var labelElement = controlFieldContainer.querySelector("label");
+							if (labelElement && labelElement.textContent) return labelElement.textContent.trim();
+						}
+						var sources = [
+							element.getAttribute("placeholder"),
+							element.getAttribute("aria-label"),
+							element.title,
+							element.getAttribute("data-title"),
+							"select" === ((_element$tagName5 = element.tagName) === null || _element$tagName5 === void 0 ? void 0 : _element$tagName5.toLowerCase()) ? "" : (_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim(),
+							"select" === ((_element$tagName6 = element.tagName) === null || _element$tagName6 === void 0 ? void 0 : _element$tagName6.toLowerCase()) ? "" : (_element$innerText = element.innerText) === null || _element$innerText === void 0 ? void 0 : _element$innerText.trim(),
+							(_element$querySelecto = element.querySelector(".elementor-widget-title")) === null || _element$querySelecto === void 0 || (_element$querySelecto = _element$querySelecto.textContent) === null || _element$querySelecto === void 0 ? void 0 : _element$querySelecto.trim(),
+							(_element$querySelecto2 = element.querySelector(".elementor-heading-title")) === null || _element$querySelecto2 === void 0 || (_element$querySelecto2 = _element$querySelecto2.textContent) === null || _element$querySelecto2 === void 0 ? void 0 : _element$querySelecto2.trim(),
+							(_element$querySelecto3 = element.querySelector(".elementor-button-text")) === null || _element$querySelecto3 === void 0 || (_element$querySelecto3 = _element$querySelecto3.textContent) === null || _element$querySelecto3 === void 0 ? void 0 : _element$querySelecto3.trim()
+						];
+						for (var _i2 = 0, _sources = sources; _i2 < _sources.length; _i2++) {
+							var source = _sources[_i2];
+							if (source && source.length > 0 && source !== "undefined") return source;
+						}
+						return "";
+					}
+				},
+				{
+					key: "generateFallbackTitle",
+					value: function generateFallbackTitle(element) {
+						var _element$tagName7;
+						var tagName = ((_element$tagName7 = element.tagName) === null || _element$tagName7 === void 0 ? void 0 : _element$tagName7.toLowerCase()) || "element";
+						var className = element.className || "";
+						if (className.includes("eicon-")) {
+							var iconClass = className.split(" ").find(function(cls) {
+								return cls.startsWith("eicon-");
+							});
+							if (iconClass) return iconClass.replace("eicon-", "").replace("-", " ");
+						}
+						if (className.includes("elementor-button")) return "Elementor Button";
+						if (className.includes("elementor-widget")) return "Elementor Widget";
+						return "".concat(tagName, " element");
+					}
+				},
+				{
+					key: "generateSelector",
+					value: function generateSelector(element) {
+						var selectorParts = [];
+						var currentElement = element;
+						for (var i = 0; i < 4 && currentElement && currentElement !== document.body; i++) {
+							var selector = currentElement.tagName.toLowerCase();
+							if (0 === i && currentElement.id) selector += "#".concat(currentElement.id);
+							else if (currentElement.classList.length > 0) {
+								var classes = Array.from(currentElement.classList).slice(0, 3);
+								selector += ".".concat(classes.join("."));
+							}
+							selectorParts.unshift(selector);
+							currentElement = currentElement.parentElement;
+						}
+						return selectorParts.join(" > ");
+					}
+				},
+				{
+					key: "storeClickData",
+					value: function storeClickData(clickCount, clickData) {
+						var dataKey = "elementor_onboarding_click_".concat(clickCount, "_data");
+						var dataToStore = _objectSpread$3(_objectSpread$3({}, clickData), {}, {
+							timestamp: Date.now(),
+							clickCount
+						});
+						StorageManager.setObject(dataKey, dataToStore);
+					}
+				},
+				{
+					key: "getStoredClickData",
+					value: function getStoredClickData(clickCount) {
+						var dataKey = "elementor_onboarding_click_".concat(clickCount, "_data");
+						return StorageManager.getObject(dataKey);
+					}
+				},
+				{
+					key: "dispatchClickEvent",
+					value: function dispatchClickEvent(clickCount) {
+						var storedClickData = this.getStoredClickData(clickCount);
+						if (!storedClickData) return;
+						EventDispatcher.dispatchPostClickEvent(clickCount, storedClickData);
+					}
+				},
+				{
+					key: "cleanup",
+					value: function cleanup() {
+						if (this.clickHandler) {
+							document.removeEventListener("click", this.clickHandler, true);
+							this.clickHandler = null;
+						}
+						this.lastSelectClickTime = 0;
+						StorageManager.clearAllOnboardingData();
+						StorageManager.clearExperimentData();
+					}
+				}
+			]);
+		}())();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/post-onboarding-tracker.js
+	var postOnboardingTracker;
+	var init_post_onboarding_tracker = __esmMin((() => {
+		init_classCallCheck();
+		init_createClass();
+		init_storage_manager();
+		init_event_dispatcher();
+		init_onboarding_event_names();
+		init_click_tracker();
+		postOnboardingTracker = new (/* @__PURE__ */ function() {
+			function PostOnboardingTracker() {
+				_classCallCheck(this, PostOnboardingTracker);
+			}
+			return _createClass(PostOnboardingTracker, [
+				{
+					key: "checkAndSendEditorLoadedFromOnboarding",
+					value: function checkAndSendEditorLoadedFromOnboarding() {
+						if (!StorageManager.getString(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE)) return;
+						if (StorageManager.exists(ONBOARDING_STORAGE_KEYS.EDITOR_LOAD_TRACKED)) {
+							this.setupPostOnboardingClickTracking();
+							return;
+						}
+						this.sendEditorLoadedEvent();
+						StorageManager.setString(ONBOARDING_STORAGE_KEYS.EDITOR_LOAD_TRACKED, "true");
+						this.setupPostOnboardingClickTracking();
+					}
+				},
+				{
+					key: "sendEditorLoadedEvent",
+					value: function sendEditorLoadedEvent() {
+						var choiceData = StorageManager.getObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE);
+						var siteStarterChoice = choiceData === null || choiceData === void 0 ? void 0 : choiceData.site_starter;
+						if (!siteStarterChoice) return;
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.EDITOR_LOADED, {
+							window_name: "editor",
+							interaction_type: "load",
+							target_type: "loaded",
+							target_name: "editor_from_onboarding",
+							interaction_result: "editor_loaded",
+							target_value: siteStarterChoice,
+							target_location: "editor",
+							location_l1: "editor"
+						});
+					}
+				},
+				{
+					key: "setupPostOnboardingClickTracking",
+					value: function setupPostOnboardingClickTracking() {
+						if (!StorageManager.exists(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE)) return;
+						if (StorageManager.getNumber(ONBOARDING_STORAGE_KEYS.POST_ONBOARDING_CLICK_COUNT) >= clickTracker.MAX_CLICKS) return;
+						clickTracker.setupClickTracking();
+					}
+				},
+				{
+					key: "cleanupPostOnboardingTracking",
+					value: function cleanupPostOnboardingTracking() {
+						clickTracker.cleanup();
+					}
+				},
+				{
+					key: "clearAllOnboardingStorage",
+					value: function clearAllOnboardingStorage() {
+						StorageManager.clearAllOnboardingData();
+						StorageManager.clearExperimentData();
+					}
+				}
+			]);
+		}())();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/modules/onboarding-tracker.js
+	function ownKeys$2(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$2(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$2(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$2(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	function _classPrivateFieldInitSpec(e, t, a) {
+		_checkPrivateRedeclaration(e, t), t.set(e, a);
+	}
+	function _checkPrivateRedeclaration(e, t) {
+		if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object");
+	}
+	function _classPrivateFieldSet(s, a, r) {
+		return s.set(_assertClassBrand(s, a), r), r;
+	}
+	function _classPrivateFieldGet(s, a) {
+		return s.get(_assertClassBrand(s, a));
+	}
+	function _assertClassBrand(e, t, n) {
+		if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n;
+		throw new TypeError("Private element is not present on this object");
+	}
+	var _hasAttemptedSessionRecording, onboardingTracker;
+	var init_onboarding_tracker = __esmMin((() => {
+		init_defineProperty$1();
+		init_toConsumableArray();
+		init_typeof$1();
+		init_classCallCheck();
+		init_createClass();
+		init_storage_manager();
+		init_event_dispatcher();
+		init_onboarding_event_names();
+		init_event_queue();
+		init_timing_manager();
+		init_post_onboarding_tracker();
+		__name(ownKeys$2, "ownKeys");
+		__name(_objectSpread$2, "_objectSpread");
+		_hasAttemptedSessionRecording = /*#__PURE__*/ new WeakMap();
+		onboardingTracker = new (/* @__PURE__ */ function() {
+			function OnboardingTracker() {
+				_classCallCheck(this, OnboardingTracker);
+				_classPrivateFieldInitSpec(this, _hasAttemptedSessionRecording, false);
+				this.initializeEventListeners();
+			}
+			return _createClass(OnboardingTracker, [
+				{
+					key: "initializeEventListeners",
+					value: function initializeEventListeners() {
+						var _this = this;
+						if ("undefined" === typeof document) return;
+						document.addEventListener("click", function(event) {
+							if (event.target.closest(".e-onboarding__cards-grid")) _this.handleStep4CardClick(event);
+						}, true);
+						this.setupUrlChangeDetection();
+						this.setupSessionRecordingCleanup();
+					}
+				},
+				{
+					key: "setupSessionRecordingCleanup",
+					value: function setupSessionRecordingCleanup() {
+						this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
+						window.addEventListener("beforeunload", this.handleBeforeUnload);
+					}
+				},
+				{
+					key: "handleBeforeUnload",
+					value: function handleBeforeUnload() {
+						this.stopSessionRecordingIfNeeded();
+					}
+				},
+				{
+					key: "onDestroy",
+					value: function onDestroy() {
+						this.stopSessionRecordingIfNeeded();
+						window.removeEventListener("beforeunload", this.handleBeforeUnload);
+					}
+				},
+				{
+					key: "setupUrlChangeDetection",
+					value: function setupUrlChangeDetection() {
+						var _this2 = this;
+						var lastUrl = window.location.href;
+						var urlChangeDetector = function urlChangeDetector() {
+							var currentUrl = window.location.href;
+							if (currentUrl !== lastUrl) {
+								if (currentUrl.includes("goodToGo") || currentUrl.includes("step4") || currentUrl.includes("site_starter")) setTimeout(function() {
+									TimingManager.trackStepStartTime(4);
+									_this2.checkAndSendReturnToStep4();
+								}, 100);
+								lastUrl = currentUrl;
+							}
+						};
+						setInterval(urlChangeDetector, 500);
+						window.addEventListener("popstate", function() {
+							setTimeout(urlChangeDetector, 100);
+						});
+					}
+				},
+				{
+					key: "dispatchEvent",
+					value: function dispatchEvent(eventName, payload) {
+						return EventDispatcher.dispatch(eventName, payload);
+					}
+				},
+				{
+					key: "sendEventOrStore",
+					value: function sendEventOrStore(eventType, eventData) {
+						switch (eventType) {
+							case "SKIP":
+								this.trackSkipClicked(eventData.currentStep);
+								break;
+							case "TOP_UPGRADE":
+								if ("no_click" === eventData.upgradeClicked || "already_pro_user" === eventData.upgradeClicked) return;
+								this.trackUpgradeClicked(eventData.currentStep, eventData.upgradeClicked);
+								break;
+							case "CREATE_MY_ACCOUNT":
+								this.markCreateAccountFlow(eventData.createAccountClicked);
+								this.trackLoginType(eventData.currentStep, "create_account", "topbar" === eventData.createAccountClicked ? "header" : "login_step");
+								break;
+							case "STEP1_CLICKED_CONNECT":
+								this.trackLoginType(eventData.currentStep, "connect", "login_step");
+								break;
+							case "AB_101_START_AS_FREE_USER":
+								this.trackLoginType(eventData.currentStep, "guest", "login_step");
+								break;
+							case "EXIT":
+								this.trackExitClicked(eventData.currentStep);
+								break;
+							default: break;
+						}
+					}
+				},
+				{
+					key: "markCreateAccountFlow",
+					value: function markCreateAccountFlow(createAccountClicked) {
+						StorageManager.setString(ONBOARDING_STORAGE_KEYS.CREATE_ACCOUNT_FLOW, this.validateCreateAccountClicked(createAccountClicked));
+					}
+				},
+				{
+					key: "trackInitialized",
+					value: function trackInitialized() {
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.INITIALIZED, {
+							interaction_type: "load",
+							target_type: "loaded",
+							target_name: "onboarding_first_load",
+							interaction_result: "onboarding_loaded",
+							target_location: "onboarding",
+							interaction_description: "first step of the onboarding funnel"
+						}, "core_onboarding_initialized");
+					}
+				},
+				{
+					key: "hasResumeProgress",
+					value: function hasResumeProgress() {
+						if (!TimingManager.hasOnboardingStarted()) return false;
+						for (var stepNumber = 1; stepNumber <= 4; stepNumber++) {
+							var stepConfig = this.getStepConfig(stepNumber);
+							if (stepConfig && StorageManager.getArray(stepConfig.storageKey).length > 0) return true;
+							if (StorageManager.getStepStartTime(stepNumber)) return true;
+						}
+						return StorageManager.exists(ONBOARDING_STORAGE_KEYS.STEP1_END_STATE_SENT);
+					}
+				},
+				{
+					key: "getResumeStepNumber",
+					value: function getResumeStepNumber() {
+						for (var stepNumber = 4; stepNumber >= 1; stepNumber--) if (StorageManager.getStepStartTime(stepNumber)) return stepNumber;
+						return 1;
+					}
+				},
+				{
+					key: "trackResume",
+					value: function trackResume(stepNumber) {
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.RESUME, {
+							interaction_type: "onboarding_load",
+							target_type: "reloaded",
+							target_name: "reloaded",
+							interaction_result: "onboarding_load",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding",
+							location_l1: stepLocationL1(stepNumber),
+							interaction_description: "onboarding step loaded"
+						}, "core_onboarding_resume");
+					}
+				},
+				{
+					key: "trackStepViewed",
+					value: function trackStepViewed(stepNumber) {
+						if (!stepNumber || stepNumber > 4) return;
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.STEP_VIEWED, {
+							interaction_type: "step_load",
+							target_type: "loaded",
+							target_name: STEP_TARGET_NAMES[stepNumber],
+							interaction_result: "step_load",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding",
+							location_l1: stepLocationL1(stepNumber),
+							interaction_description: "onboarding step loaded"
+						}, "step_viewed_".concat(stepNumber));
+					}
+				},
+				{
+					key: "trackLoginType",
+					value: function trackLoginType(currentStep, loginType, locationL2) {
+						var stepNumber = this.getStepNumber(currentStep) || 1;
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.LOGIN_TYPE, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "login",
+							interaction_result: "guest" === loginType ? "skip_and_onboarding_initialization" : "login_option selected",
+							target_value: loginType,
+							target_location: "onboarding",
+							location_l1: "login_step",
+							location_l2: locationL2,
+							interaction_description: "user connect process loaded from onboarding"
+						});
+						this.trackStepAction(stepNumber, "login_type:".concat(loginType), { location_l2: locationL2 });
+					}
+				},
+				{
+					key: "trackConnect",
+					value: function trackConnect(status) {
+						var data = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null;
+						var errorMessage = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null;
+						var targetName = StorageManager.exists(ONBOARDING_STORAGE_KEYS.CREATE_ACCOUNT_FLOW) ? "create_account" : "connect";
+						var validatedStatus = this.validateConnectStatus(status);
+						var success = "success" === validatedStatus;
+						var metadata = {
+							tracking_opted_in: (data === null || data === void 0 ? void 0 : data.tracking_opted_in) || false,
+							user_tier: (data === null || data === void 0 ? void 0 : data.access_tier) || null
+						};
+						if (!success) metadata.error = errorMessage || "connect_failed";
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.CONNECT, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: targetName,
+							interaction_result: "user_connect",
+							target_value: validatedStatus,
+							target_location: "onboarding",
+							location_l1: "connect_flow",
+							interaction_description: "user connect process loaded from onboarding",
+							metadata
+						});
+						if (!success) this.trackErrorReported(1, "request", targetName, errorMessage || "connect_failed");
+						if (success) StorageManager.remove(ONBOARDING_STORAGE_KEYS.CREATE_ACCOUNT_FLOW);
+					}
+				},
+				{
+					key: "trackSkipClicked",
+					value: function trackSkipClicked(currentStep) {
+						var stepNumber = this.getStepNumber(currentStep);
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.SKIP_CLICKED, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "skip",
+							interaction_result: "skip_step",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding_navigation",
+							location_l1: "footer",
+							location_l2: stepLocationL1(stepNumber)
+						});
+					}
+				},
+				{
+					key: "trackBackClicked",
+					value: function trackBackClicked(currentStep) {
+						var stepNumber = this.getStepNumber(currentStep);
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.BACK_CLICKED, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "back",
+							interaction_result: "redirect_back",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding_navigation",
+							location_l1: "footer",
+							location_l2: stepLocationL1(stepNumber)
+						});
+					}
+				},
+				{
+					key: "trackUpgradeClicked",
+					value: function trackUpgradeClicked(currentStep, upgradeClicked) {
+						var stepNumber = this.getStepNumber(currentStep);
+						var locationL2 = "on_tooltip" === upgradeClicked ? "tooltip" : "header";
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.UPGRADE_CLICKED, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "upgrade",
+							interaction_result: "pricing_page_opened",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding_navigation",
+							location_l1: locationL2,
+							location_l2: stepLocationL1(stepNumber)
+						});
+					}
+				},
+				{
+					key: "trackExitClicked",
+					value: function trackExitClicked(currentStep) {
+						var stepNumber = this.getStepNumber(currentStep);
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.EXIT_CLICKED, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "exit",
+							interaction_result: "exit_onboarding",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding_navigation",
+							location_l1: "header",
+							location_l2: stepLocationL1(stepNumber)
+						});
+						this.trackOnboardingSummary(stepNumber);
+						clearEventQueue();
+					}
+				},
+				{
+					key: "trackThemeSelected",
+					value: function trackThemeSelected(theme, interactionResult) {
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.THEME_SELECTED, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "continue_with_hello",
+							interaction_result: interactionResult,
+							target_value: theme,
+							target_location: "onboarding",
+							location_l1: "2",
+							location_l2: "2",
+							interaction_description: "user installed a certain theme"
+						});
+					}
+				},
+				{
+					key: "trackThemeUnselected",
+					value: function trackThemeUnselected() {
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.THEME_UNSELECTED, {
+							interaction_type: "click",
+							target_type: "button",
+							target_name: "hello_theme",
+							interaction_result: "theme_install_skipped",
+							target_value: "hello_theme",
+							target_location: "onboarding",
+							location_l1: "2",
+							location_l2: "2",
+							interaction_description: "user unselected hello theme box and continued"
+						});
+					}
+				},
+				{
+					key: "trackProFeaturesSelected",
+					value: function trackProFeaturesSelected(selectedFeatures, openedPricing) {
+						var featureKeys = this.extractSelectedFeatureKeys(selectedFeatures);
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.PRO_FEATURES_SELECTED, {
+							interaction_type: "click",
+							target_type: "cards",
+							target_name: openedPricing ? "upgrade_now" : "skip",
+							interaction_result: openedPricing ? "pricing_page" : "step_skipped",
+							target_value: featureKeys,
+							target_location: "onboarding",
+							location_l1: "3",
+							location_l2: "3",
+							interaction_description: "user selected pro features and continued"
+						});
+					}
+				},
+				{
+					key: "trackSiteStarterSelected",
+					value: function trackSiteStarterSelected(siteStarter) {
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.SITE_STARTER_SELECTED, {
+							interaction_type: "click",
+							target_type: "card",
+							target_name: siteStarter,
+							interaction_result: "site_starter_selected",
+							target_value: siteStarter,
+							target_location: "onboarding",
+							location_l1: "4",
+							location_l2: "4"
+						});
+					}
+				},
+				{
+					key: "trackErrorReported",
+					value: function trackErrorReported(stepNumber, targetType, targetName, errorBody) {
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.ERROR_REPORTED, {
+							interaction_type: "action_failed",
+							target_type: targetType,
+							target_name: targetName,
+							interaction_result: "error_reported",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding",
+							location_l1: stepLocationL1(stepNumber),
+							interaction_description: "onboarding step loaded",
+							metadata: { error_title: errorBody }
+						});
+					}
+				},
+				{
+					key: "trackOnboardingSummary",
+					value: function trackOnboardingSummary() {
+						var lastStepNumber = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : 4;
+						var metadata = { summary: this.buildSummaryMetadata() };
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.SUMMARY, {
+							interaction_type: "onboarding_complete",
+							target_type: "summary",
+							target_name: "ob_summary",
+							interaction_result: "onboarding_final_choices",
+							target_location: "onboarding",
+							location_l1: "summary",
+							location_l2: stepLocationL1(lastStepNumber),
+							interaction_description: "trigger event upon onboarding completion or when flow is closed abruptly",
+							metadata
+						}, "core_onboarding_summary");
+					}
+				},
+				{
+					key: "buildSummaryMetadata",
+					value: function buildSummaryMetadata() {
+						var _elementorCommon$conf;
+						var _this3 = this;
+						var isGuest = StorageManager.getArray(ONBOARDING_STORAGE_KEYS.STEP1_ACTIONS).some(function(action) {
+							return action.action && action.action.includes("guest");
+						});
+						var isConnected = ((_elementorCommon$conf = elementorCommon.config.library_connect) === null || _elementorCommon$conf === void 0 ? void 0 : _elementorCommon$conf.is_connected) || false;
+						var siteStarter = StorageManager.getObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE);
+						return [
+							{
+								key: "login_type",
+								value: isGuest ? "guest" : "elementor_login"
+							},
+							{
+								key: "connect",
+								value: isConnected
+							},
+							{
+								key: "site_starter",
+								value: (siteStarter === null || siteStarter === void 0 ? void 0 : siteStarter.site_starter) || "skip"
+							},
+							{
+								key: "steps_completed",
+								value: [
+									1,
+									2,
+									3,
+									4
+								].filter(function(step) {
+									return StorageManager.exists(_this3.getEndStateSentKey(step));
+								}).length
+							}
+						];
+					}
+				},
+				{
+					key: "updateLibraryConnectConfig",
+					value: function updateLibraryConnectConfig(data) {
+						if (!elementorCommon.config.library_connect) return;
+						elementorCommon.config.library_connect.is_connected = true;
+						elementorCommon.config.library_connect.current_access_level = data.kits_access_level || data.access_level || 0;
+						elementorCommon.config.library_connect.current_access_tier = data.access_tier;
+						elementorCommon.config.library_connect.plan_type = data.plan_type;
+						elementorCommon.config.library_connect.user_id = data.user_id || null;
+					}
+				},
+				{
+					key: "sendUpgradeNowStep3",
+					value: function sendUpgradeNowStep3(selectedFeatures, currentStep) {
+						this.trackProFeaturesSelected(selectedFeatures, true);
+						this.trackStepAction(this.getStepNumber(currentStep), "upgrade_now", { pro_features_checked: this.extractSelectedFeatureKeys(selectedFeatures) });
+					}
+				},
+				{
+					key: "extractSelectedFeatureKeys",
+					value: function extractSelectedFeatureKeys(selectedFeatures) {
+						if (!selectedFeatures || _typeof$1(selectedFeatures) !== "object") return [];
+						if (Array.isArray(selectedFeatures)) return this.extractFromLegacyArrayFormat(selectedFeatures);
+						return this.extractFromObjectFormat(selectedFeatures);
+					}
+				},
+				{
+					key: "extractFromLegacyArrayFormat",
+					value: function extractFromLegacyArrayFormat(selectedFeatures) {
+						return selectedFeatures.filter(function(feature) {
+							return feature && feature.is_checked;
+						}).map(function(feature) {
+							return feature.key;
+						}).filter(function(key) {
+							return key;
+						});
+					}
+				},
+				{
+					key: "extractFromObjectFormat",
+					value: function extractFromObjectFormat(selectedFeatures) {
+						var allFeatures = [];
+						if (Array.isArray(selectedFeatures.one)) allFeatures.push.apply(allFeatures, _toConsumableArray(selectedFeatures.one));
+						if (Array.isArray(selectedFeatures.essential)) allFeatures.push.apply(allFeatures, _toConsumableArray(selectedFeatures.essential));
+						if (Array.isArray(selectedFeatures.advanced)) allFeatures.push.apply(allFeatures, _toConsumableArray(selectedFeatures.advanced));
+						return allFeatures;
+					}
+				},
+				{
+					key: "sendTopUpgrade",
+					value: function sendTopUpgrade(currentStep, upgradeClicked) {
+						var stepNumber = this.getStepNumber(currentStep);
+						if (stepNumber) this.trackStepAction(stepNumber, "top_upgrade", { upgrade_clicked: upgradeClicked });
+						return this.sendEventOrStore("TOP_UPGRADE", {
+							currentStep,
+							upgradeClicked
+						});
+					}
+				},
+				{
+					key: "cancelDelayedNoClickEvent",
+					value: function cancelDelayedNoClickEvent() {
+						StorageManager.remove(ONBOARDING_STORAGE_KEYS.PENDING_TOP_UPGRADE_NO_CLICK);
+					}
+				},
+				{
+					key: "initiateCoreOnboarding",
+					value: function initiateCoreOnboarding() {
+						TimingManager.clearStaleSessionData();
+						if (!TimingManager.hasOnboardingStarted()) TimingManager.initializeOnboardingStartTime();
+						this.trackInitialized();
+						if (this.hasResumeProgress()) this.trackResume(this.getResumeStepNumber());
+					}
+				},
+				{
+					key: "storeSiteStarterChoice",
+					value: function storeSiteStarterChoice(siteStarter) {
+						var existingChoice = StorageManager.getObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE);
+						if (this.isReturnScenario(existingChoice, siteStarter)) this.sendReturnEventAndUpdateChoice(existingChoice, siteStarter);
+						else this.storeInitialChoice(siteStarter);
+					}
+				},
+				{
+					key: "isReturnScenario",
+					value: function isReturnScenario(existingChoice, siteStarter) {
+						return existingChoice && existingChoice.site_starter !== siteStarter;
+					}
+				},
+				{
+					key: "sendReturnEventAndUpdateChoice",
+					value: function sendReturnEventAndUpdateChoice(existingChoice, siteStarter) {
+						this.trackSiteStarterSelected(siteStarter);
+						this.updateChoiceWithReturnTracking(existingChoice, siteStarter);
+					}
+				},
+				{
+					key: "updateChoiceWithReturnTracking",
+					value: function updateChoiceWithReturnTracking(existingChoice, siteStarter) {
+						var choiceData = {
+							site_starter: siteStarter,
+							original_choice: existingChoice.site_starter,
+							timestamp: TimingManager.getCurrentTime(),
+							return_event_sent: true
+						};
+						StorageManager.setObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE, choiceData);
+					}
+				},
+				{
+					key: "storeInitialChoice",
+					value: function storeInitialChoice(siteStarter) {
+						var choiceData = {
+							site_starter: siteStarter,
+							timestamp: TimingManager.getCurrentTime(),
+							return_event_sent: false
+						};
+						StorageManager.setObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE, choiceData);
+					}
+				},
+				{
+					key: "checkAndSendReturnToStep4",
+					value: function checkAndSendReturnToStep4() {
+						var choiceData = StorageManager.getObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE);
+						if (!choiceData) return;
+						if (this.shouldSendReturnEvent(choiceData)) {
+							this.trackSiteStarterSelected(choiceData.site_starter);
+							this.markReturnEventAsSent(choiceData);
+						}
+						this.resetStep4EndStateTracking();
+					}
+				},
+				{
+					key: "resetStep4EndStateTracking",
+					value: function resetStep4EndStateTracking() {
+						StorageManager.remove(ONBOARDING_STORAGE_KEYS.STEP4_END_STATE_SENT);
+						StorageManager.remove(ONBOARDING_STORAGE_KEYS.STEP4_ACTIONS);
+						this.trackStepAction(4, "returned_to_step4", {
+							return_detected: true,
+							timestamp: TimingManager.getCurrentTime()
+						});
+					}
+				},
+				{
+					key: "shouldSendReturnEvent",
+					value: function shouldSendReturnEvent(choiceData) {
+						return !choiceData.return_event_sent && choiceData.original_choice && choiceData.original_choice !== choiceData.site_starter;
+					}
+				},
+				{
+					key: "markReturnEventAsSent",
+					value: function markReturnEventAsSent(choiceData) {
+						choiceData.return_event_sent = true;
+						StorageManager.setObject(ONBOARDING_STORAGE_KEYS.STEP4_SITE_STARTER_CHOICE, choiceData);
+					}
+				},
+				{
+					key: "handleSiteStarterChoice",
+					value: function handleSiteStarterChoice(siteStarter) {
+						TimingManager.trackStepStartTime(4);
+						this.storeSiteStarterChoice(siteStarter);
+						this.trackStepAction(4, "site_starter", { source_type: siteStarter });
+						this.sendStep4SiteStarter(siteStarter);
+						this.sendStepEndState(4);
+					}
+				},
+				{
+					key: "sendStep4SiteStarter",
+					value: function sendStep4SiteStarter(siteStarter) {
+						this.trackSiteStarterSelected(siteStarter);
+					}
+				},
+				{
+					key: "checkAndSendEditorLoadedFromOnboarding",
+					value: function checkAndSendEditorLoadedFromOnboarding() {
+						return postOnboardingTracker.checkAndSendEditorLoadedFromOnboarding();
+					}
+				},
+				{
+					key: "sendExitButtonEvent",
+					value: function sendExitButtonEvent(currentStep) {
+						var stepNumber = this.getStepNumber(currentStep);
+						this.trackStepAction(stepNumber, "exit:x_button", { exit_type: "x_button" });
+						this.sendStepEndState(stepNumber);
+						return this.sendEventOrStore("EXIT", {
+							currentStep,
+							exitType: "x_button"
+						});
+					}
+				},
+				{
+					key: "trackStepAction",
+					value: function trackStepAction(stepNumber, action) {
+						var additionalData = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+						var stepConfig = this.getStepConfig(stepNumber);
+						if (stepConfig) this.trackStepActionInternal(stepNumber, action, stepConfig.storageKey, additionalData);
+					}
+				},
+				{
+					key: "sendStepEndState",
+					value: function sendStepEndState(stepNumber) {
+						var stepConfig = this.getStepConfig(stepNumber);
+						if (stepConfig) this.sendStepEndStateInternal(stepNumber, stepConfig.storageKey, stepConfig.eventName, stepConfig.stepName);
+					}
+				},
+				{
+					key: "trackStepActionInternal",
+					value: function trackStepActionInternal(stepNumber, action, storageKey) {
+						var additionalData = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
+						var stepConfig = this.getStepConfig(stepNumber);
+						var actualStorageKey = storageKey || (stepConfig ? stepConfig.storageKey : null);
+						if (!actualStorageKey) return;
+						var existingActions = StorageManager.getArray(actualStorageKey);
+						var actionData = _objectSpread$2({
+							action,
+							timestamp: TimingManager.getCurrentTime()
+						}, additionalData);
+						existingActions.push(actionData);
+						StorageManager.setObject(actualStorageKey, existingActions);
+					}
+				},
+				{
+					key: "getEndStateSentKey",
+					value: function getEndStateSentKey(stepNumber) {
+						return {
+							1: ONBOARDING_STORAGE_KEYS.STEP1_END_STATE_SENT,
+							2: ONBOARDING_STORAGE_KEYS.STEP2_END_STATE_SENT,
+							3: ONBOARDING_STORAGE_KEYS.STEP3_END_STATE_SENT,
+							4: ONBOARDING_STORAGE_KEYS.STEP4_END_STATE_SENT
+						}[stepNumber];
+					}
+				},
+				{
+					key: "sendStepEndStateInternal",
+					value: function sendStepEndStateInternal(stepNumber, storageKey, eventName, stepName) {
+						var initialActions = StorageManager.getArray(storageKey);
+						this.sendHoverEventsFromStepActions(initialActions, stepNumber);
+						var actions = StorageManager.getArray(storageKey);
+						if (0 === actions.length) return;
+						var endStateSentKey = this.getEndStateSentKey(stepNumber);
+						if (StorageManager.exists(endStateSentKey)) return;
+						var stepTimeSpent = TimingManager.calculateStepTimeSpent(stepNumber);
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.STEP_COMPLETED, {
+							interaction_type: "step_complete",
+							target_type: "summary",
+							target_name: STEP_TARGET_NAMES[stepNumber],
+							interaction_result: "step_completed",
+							target_value: stepLocationL1(stepNumber),
+							target_location: "onboarding",
+							location_l1: stepLocationL1(stepNumber),
+							metadata: {
+								actions,
+								time_spent_s: stepTimeSpent
+							}
+						}, endStateSentKey);
+						if (ONBOARDING_STEP_NAMES.SITE_STARTER === stepName) {
+							this.stopSessionRecordingIfNeeded();
+							this.trackOnboardingSummary(stepNumber);
+							clearEventQueue();
+						}
+						StorageManager.remove(storageKey);
+						StorageManager.setString(endStateSentKey, "true");
+						TimingManager.clearStepStartTime(stepNumber);
+					}
+				},
+				{
+					key: "getStepNumber",
+					value: function getStepNumber(pageId) {
+						if (this.isNumericPageId(pageId)) return pageId;
+						if (this.isStringNumericPageId(pageId)) return this.convertStringToNumber(pageId);
+						return this.mapPageIdToStepNumber(pageId);
+					}
+				},
+				{
+					key: "isNumericPageId",
+					value: function isNumericPageId(pageId) {
+						return "number" === typeof pageId;
+					}
+				},
+				{
+					key: "isStringNumericPageId",
+					value: function isStringNumericPageId(pageId) {
+						return "string" === typeof pageId && !isNaN(pageId);
+					}
+				},
+				{
+					key: "convertStringToNumber",
+					value: function convertStringToNumber(pageId) {
+						return parseInt(pageId, 10);
+					}
+				},
+				{
+					key: "mapPageIdToStepNumber",
+					value: function mapPageIdToStepNumber(pageId) {
+						return this.getStepMappings()[pageId] || null;
+					}
+				},
+				{
+					key: "getStepMappings",
+					value: function getStepMappings() {
+						return {
+							account: 1,
+							connect: 1,
+							hello: 2,
+							hello_biz: 2,
+							chooseFeatures: 3,
+							pro_features: 3,
+							site_starter: 4,
+							goodToGo: 4,
+							siteName: 5,
+							siteLogo: 6
+						};
+					}
+				},
+				{
+					key: "getStepName",
+					value: function getStepName(stepNumber) {
+						return {
+							1: ONBOARDING_STEP_NAMES.CONNECT,
+							2: ONBOARDING_STEP_NAMES.HELLO_BIZ,
+							3: ONBOARDING_STEP_NAMES.PRO_FEATURES,
+							4: ONBOARDING_STEP_NAMES.SITE_STARTER,
+							5: ONBOARDING_STEP_NAMES.SITE_NAME,
+							6: ONBOARDING_STEP_NAMES.SITE_LOGO
+						}[stepNumber] || "unknown";
+					}
+				},
+				{
+					key: "getStepConfig",
+					value: function getStepConfig(stepNumber) {
+						return {
+							1: {
+								storageKey: ONBOARDING_STORAGE_KEYS.STEP1_ACTIONS,
+								eventName: ONBOARDING_EVENTS.STEP_COMPLETED,
+								stepName: ONBOARDING_STEP_NAMES.CONNECT
+							},
+							2: {
+								storageKey: ONBOARDING_STORAGE_KEYS.STEP2_ACTIONS,
+								eventName: ONBOARDING_EVENTS.STEP_COMPLETED,
+								stepName: ONBOARDING_STEP_NAMES.HELLO_BIZ
+							},
+							3: {
+								storageKey: ONBOARDING_STORAGE_KEYS.STEP3_ACTIONS,
+								eventName: ONBOARDING_EVENTS.STEP_COMPLETED,
+								stepName: ONBOARDING_STEP_NAMES.PRO_FEATURES
+							},
+							4: {
+								storageKey: ONBOARDING_STORAGE_KEYS.STEP4_ACTIONS,
+								eventName: ONBOARDING_EVENTS.STEP_COMPLETED,
+								stepName: ONBOARDING_STEP_NAMES.SITE_STARTER
+							}
+						}[stepNumber] || null;
+					}
+				},
+				{
+					key: "sendConnectionSuccessEvents",
+					value: function sendConnectionSuccessEvents(data) {
+						var _this4 = this;
+						this.sendAppropriateStatusEvent("success", data);
+						EventDispatcher.flushQueue(function() {
+							_this4.sendStoredExperimentData();
+						});
+					}
+				},
+				{
+					key: "sendConnectionFailureEvents",
+					value: function sendConnectionFailureEvents() {
+						this.sendAppropriateStatusEvent("fail");
+					}
+				},
+				{
+					key: "validateConnectStatus",
+					value: function validateConnectStatus(status) {
+						if ("success" === status || "fail" === status) return status;
+						return "fail";
+					}
+				},
+				{
+					key: "validateCreateAccountStatus",
+					value: function validateCreateAccountStatus(status) {
+						if ("success" === status || "fail" === status) return status;
+						return "fail";
+					}
+				},
+				{
+					key: "validateCreateAccountClicked",
+					value: function validateCreateAccountClicked(clickedValue) {
+						if ("topbar" === clickedValue || "main_cta" === clickedValue) return clickedValue;
+						return "main_cta";
+					}
+				},
+				{
+					key: "sendAppropriateStatusEvent",
+					value: function sendAppropriateStatusEvent(status) {
+						var data = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null;
+						this.trackConnect(status, data);
+					}
+				},
+				{
+					key: "handleStep4CardClick",
+					value: function handleStep4CardClick() {
+						if (StorageManager.exists(ONBOARDING_STORAGE_KEYS.STEP4_HAS_PREVIOUS_CLICK)) this.checkAndSendReturnToStep4();
+						else StorageManager.setString(ONBOARDING_STORAGE_KEYS.STEP4_HAS_PREVIOUS_CLICK, "true");
+					}
+				},
+				{
+					key: "setupAllUpgradeButtons",
+					value: function setupAllUpgradeButtons(currentStep) {
+						var _this5 = this;
+						var upgradeButtons = document.querySelectorAll(".elementor-button[href*=\"upgrade\"], .e-btn[href*=\"upgrade\"], .eps-button[href*=\"upgrade\"]");
+						upgradeButtons.forEach(function(button) {
+							_this5.setupSingleUpgradeButton(button, currentStep);
+						});
+						return upgradeButtons.length;
+					}
+				},
+				{
+					key: "setupSingleUpgradeButton",
+					value: function setupSingleUpgradeButton(buttonElement, currentStep) {
+						var _this6 = this;
+						if (!this.isValidButtonElement(buttonElement)) return null;
+						this.cleanupButtonTracking(buttonElement);
+						if (this.isButtonAlreadyTrackedForStep(buttonElement, currentStep)) return null;
+						this.markButtonAsTracked(buttonElement, currentStep);
+						var eventHandlers = this.createUpgradeButtonEventHandlers(buttonElement, currentStep);
+						this.attachEventHandlersToButton(buttonElement, eventHandlers);
+						return function() {
+							_this6.cleanupButtonTracking(buttonElement);
+						};
+					}
+				},
+				{
+					key: "isValidButtonElement",
+					value: function isValidButtonElement(buttonElement) {
+						return !!buttonElement;
+					}
+				},
+				{
+					key: "isButtonAlreadyTrackedForStep",
+					value: function isButtonAlreadyTrackedForStep(buttonElement, currentStep) {
+						var existingStep = buttonElement.dataset.onboardingStep;
+						return buttonElement.dataset.onboardingTracked && existingStep === currentStep;
+					}
+				},
+				{
+					key: "markButtonAsTracked",
+					value: function markButtonAsTracked(buttonElement, currentStep) {
+						buttonElement.dataset.onboardingTracked = "true";
+						buttonElement.dataset.onboardingStep = currentStep;
+					}
+				},
+				{
+					key: "createUpgradeButtonEventHandlers",
+					value: function createUpgradeButtonEventHandlers(buttonElement, currentStep) {
+						var _this7 = this;
+						var hasClicked = false;
+						var hasHovered = false;
+						return {
+							handleMouseEnter: function handleMouseEnter() {
+								if (!hasHovered) {
+									hasHovered = true;
+									_this7.trackUpgradeHoverAction(currentStep, buttonElement);
+								}
+							},
+							handleMouseLeave: function handleMouseLeave() {},
+							handleClick: function handleClick() {
+								if (_this7.preventDuplicateClick(hasClicked)) return;
+								hasClicked = true;
+								_this7.sendUpgradeClickEvent(buttonElement, currentStep);
+							}
+						};
+					}
+				},
+				{
+					key: "preventDuplicateClick",
+					value: function preventDuplicateClick(hasClicked) {
+						return hasClicked;
+					}
+				},
+				{
+					key: "sendUpgradeClickEvent",
+					value: function sendUpgradeClickEvent(buttonElement, currentStep) {
+						var upgradeClickedValue = this.determineUpgradeClickedValue(buttonElement);
+						var stepNumber = this.getStepNumber(currentStep);
+						if (stepNumber) {
+							var stepConfig = this.getStepConfig(stepNumber);
+							var hoverData = this.pendingHoverActions && this.pendingHoverActions[stepNumber];
+							if (stepConfig) {
+								var actualStorageKey = stepConfig.storageKey;
+								var existingActions = StorageManager.getArray(actualStorageKey);
+								var noClickIndex = existingActions.findIndex(function(action) {
+									return "upgrade_topbar" === action.action && "no_click" === action.upgrade_clicked;
+								});
+								if (noClickIndex !== -1) {
+									existingActions.splice(noClickIndex, 1);
+									StorageManager.setObject(actualStorageKey, existingActions);
+								}
+							}
+							var actionData = {
+								upgrade_clicked: upgradeClickedValue,
+								click_timestamp: TimingManager.getCurrentTime()
+							};
+							if (hoverData) {
+								actionData.upgrade_hovered = hoverData.upgrade_hovered;
+								actionData.hover_timestamp = hoverData.hover_timestamp;
+							}
+							this.trackStepAction(stepNumber, "upgrade_topbar", actionData);
+							if (this.pendingHoverActions && this.pendingHoverActions[stepNumber]) delete this.pendingHoverActions[stepNumber];
+						}
+						this.sendEventOrStore("TOP_UPGRADE", {
+							currentStep,
+							upgradeClicked: upgradeClickedValue
+						});
+					}
+				},
+				{
+					key: "trackUpgradeHoverAction",
+					value: function trackUpgradeHoverAction(currentStep, buttonElement) {
+						var stepNumber = this.getStepNumber(currentStep);
+						if (!stepNumber) return;
+						var upgradeHoverValue = this.determineUpgradeClickedValue(buttonElement);
+						if (!this.pendingHoverActions) this.pendingHoverActions = {};
+						this.pendingHoverActions[stepNumber] = {
+							upgrade_hovered: upgradeHoverValue,
+							hover_timestamp: TimingManager.getCurrentTime()
+						};
+					}
+				},
+				{
+					key: "sendHoverEventsFromStepActions",
+					value: function sendHoverEventsFromStepActions(actions, stepNumber) {
+						if (!this.pendingHoverActions || !this.pendingHoverActions[stepNumber]) return;
+						if (actions.some(function(action) {
+							return action.action && "upgrade_topbar" === action.action;
+						})) {
+							delete this.pendingHoverActions[stepNumber];
+							return;
+						}
+						var hoverData = this.pendingHoverActions[stepNumber];
+						var stepConfig = this.getStepConfig(stepNumber);
+						if (stepConfig) this.trackStepActionInternal(stepNumber, "upgrade_topbar", stepConfig.storageKey, {
+							upgrade_hovered: hoverData.upgrade_hovered,
+							hover_timestamp: hoverData.hover_timestamp
+						});
+						delete this.pendingHoverActions[stepNumber];
+					}
+				},
+				{
+					key: "hasExistingUpgradeClickEvent",
+					value: function hasExistingUpgradeClickEvent(stepNumber) {
+						var stepConfig = this.getStepConfig(stepNumber);
+						if (!stepConfig) return false;
+						return StorageManager.getArray(stepConfig.storageKey).some(function(action) {
+							return action.action && "upgrade_topbar" === action.action && action.upgrade_clicked && "no_click" !== action.upgrade_clicked;
+						});
+					}
+				},
+				{
+					key: "attachEventHandlersToButton",
+					value: function attachEventHandlersToButton(buttonElement, eventHandlers) {
+						var handleMouseEnter = eventHandlers.handleMouseEnter;
+						var handleMouseLeave = eventHandlers.handleMouseLeave;
+						var handleClick = eventHandlers.handleClick;
+						buttonElement._onboardingHandlers = {
+							mouseenter: handleMouseEnter,
+							mouseleave: handleMouseLeave,
+							click: handleClick
+						};
+						buttonElement.addEventListener("mouseenter", handleMouseEnter);
+						buttonElement.addEventListener("mouseleave", handleMouseLeave);
+						buttonElement.addEventListener("click", handleClick);
+					}
+				},
+				{
+					key: "cleanupButtonTracking",
+					value: function cleanupButtonTracking(buttonElement) {
+						if (!buttonElement) return;
+						this.removeExistingEventHandlers(buttonElement);
+						this.clearTrackingDataAttributes(buttonElement);
+					}
+				},
+				{
+					key: "removeExistingEventHandlers",
+					value: function removeExistingEventHandlers(buttonElement) {
+						if (buttonElement._onboardingHandlers) {
+							var handlers = buttonElement._onboardingHandlers;
+							buttonElement.removeEventListener("mouseenter", handlers.mouseenter);
+							buttonElement.removeEventListener("mouseleave", handlers.mouseleave);
+							buttonElement.removeEventListener("click", handlers.click);
+							delete buttonElement._onboardingHandlers;
+						}
+					}
+				},
+				{
+					key: "clearTrackingDataAttributes",
+					value: function clearTrackingDataAttributes(buttonElement) {
+						delete buttonElement.dataset.onboardingTracked;
+						delete buttonElement.dataset.onboardingStep;
+					}
+				},
+				{
+					key: "determineUpgradeClickedValue",
+					value: function determineUpgradeClickedValue(buttonElement) {
+						var _elementorCommon$conf2;
+						var _elementorCommon$conf3;
+						if ((_elementorCommon$conf2 = elementorCommon.config.library_connect) !== null && _elementorCommon$conf2 !== void 0 && _elementorCommon$conf2.is_connected && "pro" === ((_elementorCommon$conf3 = elementorCommon.config.library_connect) === null || _elementorCommon$conf3 === void 0 ? void 0 : _elementorCommon$conf3.current_access_tier)) return "already_pro_user";
+						if (buttonElement.closest(".e-app__popover") || buttonElement.closest(".elementor-tooltip") || buttonElement.closest(".e-onboarding__go-pro-content")) return "on_tooltip";
+						if (buttonElement.closest(".eps-app__header")) return "on_topbar";
+						return "on_topbar";
+					}
+				},
+				{
+					key: "trackExitAndSendEndState",
+					value: function trackExitAndSendEndState(currentStep) {
+						this.trackStepAction(currentStep, "exit");
+						this.sendStepEndState(currentStep);
+					}
+				},
+				{
+					key: "startSessionRecordingIfNeeded",
+					value: function startSessionRecordingIfNeeded() {
+						var _elementorCommon;
+						var _elementorCommon2;
+						var _elementorCommon2$fea;
+						var _this8 = this;
+						if (_classPrivateFieldGet(_hasAttemptedSessionRecording, this)) return;
+						if (!((_elementorCommon = elementorCommon) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.config) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.editor_events) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.session_replays) !== null && _elementorCommon !== void 0 && _elementorCommon.coreOnboarding)) return;
+						var featureFlagPromise = (_elementorCommon2 = elementorCommon) === null || _elementorCommon2 === void 0 || (_elementorCommon2 = _elementorCommon2.eventsManager) === null || _elementorCommon2 === void 0 || (_elementorCommon2$fea = _elementorCommon2.featureFlagIsActive) === null || _elementorCommon2$fea === void 0 ? void 0 : _elementorCommon2$fea.call(_elementorCommon2, "core-onboarding-session-replays");
+						if (!featureFlagPromise) return;
+						_classPrivateFieldSet(_hasAttemptedSessionRecording, this, true);
+						featureFlagPromise.then(function(isFeatureFlagActive) {
+							if (!isFeatureFlagActive) return;
+							_this8.startSessionRecording();
+						}).catch(function() {});
+					}
+				},
+				{
+					key: "startSessionRecording",
+					value: function startSessionRecording() {
+						var _elementorCommon3;
+						var _elementorCommon3$isS;
+						var _elementorCommon$even;
+						EventDispatcher.trackEvent(ONBOARDING_EVENTS.SESSION_REPLAY_START, {
+							interaction_type: "load",
+							target_type: "loaded",
+							target_name: "session_replay",
+							interaction_result: "session_replay_started",
+							target_location: "onboarding",
+							location_l1: "1"
+						}, "core_onboarding_session_replay_start");
+						if (!EventDispatcher.canSendEvents()) return;
+						if ((_elementorCommon3 = elementorCommon) !== null && _elementorCommon3 !== void 0 && (_elementorCommon3 = _elementorCommon3.eventsManager) !== null && _elementorCommon3 !== void 0 && (_elementorCommon3$isS = _elementorCommon3.isSessionRecordingInProgress) !== null && _elementorCommon3$isS !== void 0 && _elementorCommon3$isS.call(_elementorCommon3)) return;
+						(_elementorCommon$even = elementorCommon.eventsManager) === null || _elementorCommon$even === void 0 || _elementorCommon$even.startSessionRecording();
+					}
+				},
+				{
+					key: "stopSessionRecordingIfNeeded",
+					value: function stopSessionRecordingIfNeeded() {
+						var _elementorCommon$even2;
+						if (!_classPrivateFieldGet(_hasAttemptedSessionRecording, this)) return;
+						(_elementorCommon$even2 = elementorCommon.eventsManager) === null || _elementorCommon$even2 === void 0 || _elementorCommon$even2.stopSessionRecording();
+						_classPrivateFieldSet(_hasAttemptedSessionRecording, this, false);
+					}
+				},
+				{
+					key: "onStepLoad",
+					value: function onStepLoad(currentStep) {
+						var stepNumber = this.getStepNumber(currentStep);
+						TimingManager.trackStepStartTime(stepNumber);
+						this.trackStepViewed(stepNumber);
+						if (1 === stepNumber || "account" === currentStep) this.sendExperimentStarted(101);
+						if (2 === stepNumber || "hello" === currentStep || "hello_biz" === currentStep) {
+							this.startSessionRecordingIfNeeded();
+							this.sendExperimentStarted(201);
+							this.sendExperimentStarted(202);
+						}
+						if (4 === stepNumber || "goodToGo" === currentStep) {
+							this.checkAndSendReturnToStep4();
+							this.sendExperimentStarted(401);
+							this.sendExperimentStarted(402);
+						}
+					}
+				},
+				{
+					key: "sendThemeInstalled",
+					value: function sendThemeInstalled(theme) {
+						this.trackThemeSelected(theme, "theme_installed");
+					}
+				},
+				{
+					key: "sendThemeMarked",
+					value: function sendThemeMarked() {
+						this.trackThemeUnselected();
+					}
+				},
+				{
+					key: "sendThemeActivated",
+					value: function sendThemeActivated(theme) {
+						this.trackThemeSelected(theme, "theme_activated");
+					}
+				},
+				{
+					key: "reportThemeInstallError",
+					value: function reportThemeInstallError(errorBody) {
+						this.trackErrorReported(2, "install", "install_hello_theme", errorBody);
+					}
+				},
+				{
+					key: "setupPostOnboardingClickTracking",
+					value: function setupPostOnboardingClickTracking() {
+						return postOnboardingTracker.setupPostOnboardingClickTracking();
+					}
+				},
+				{
+					key: "cleanupPostOnboardingTracking",
+					value: function cleanupPostOnboardingTracking() {
+						return postOnboardingTracker.cleanupPostOnboardingTracking();
+					}
+				},
+				{
+					key: "clearAllOnboardingStorage",
+					value: function clearAllOnboardingStorage() {
+						return postOnboardingTracker.clearAllOnboardingStorage();
+					}
+				},
+				{
+					key: "getExperimentConfigs",
+					value: function getExperimentConfigs() {
+						return {
+							101: {
+								name: "core_onboarding_experiment101",
+								enabledKey: "isExperiment101Enabled",
+								variantKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT101_VARIANT,
+								startedKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT101_STARTED
+							},
+							201: {
+								name: "core_onboarding_experiment201",
+								enabledKey: "isExperiment201Enabled",
+								variantKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT201_VARIANT,
+								startedKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT201_STARTED
+							},
+							202: {
+								name: "core_onboarding_experiment202",
+								enabledKey: "isExperiment202Enabled",
+								variantKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT202_VARIANT,
+								startedKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT202_STARTED
+							},
+							401: {
+								name: "core_onboarding_experiment401",
+								enabledKey: "isExperiment401Enabled",
+								variantKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT401_VARIANT,
+								startedKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT401_STARTED
+							},
+							402: {
+								name: "core_onboarding_experiment402",
+								enabledKey: "isExperiment402Enabled",
+								variantKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT402_VARIANT,
+								startedKey: ONBOARDING_STORAGE_KEYS.EXPERIMENT402_STARTED
+							}
+						};
+					}
+				},
+				{
+					key: "isExperimentEnabled",
+					value: function isExperimentEnabled(experimentId) {
+						var _elementorAppConfig;
+						var config = this.getExperimentConfigs()[experimentId];
+						if (!config) return false;
+						return ((_elementorAppConfig = elementorAppConfig) === null || _elementorAppConfig === void 0 || (_elementorAppConfig = _elementorAppConfig.onboarding) === null || _elementorAppConfig === void 0 ? void 0 : _elementorAppConfig[config.enabledKey]) || false;
+					}
+				},
+				{
+					key: "getExperimentVariant",
+					value: function getExperimentVariant(experimentId) {
+						var config = this.getExperimentConfigs()[experimentId];
+						if (!config) return null;
+						return StorageManager.getString(config.variantKey) || null;
+					}
+				},
+				{
+					key: "assignExperimentVariant",
+					value: function assignExperimentVariant(experimentId) {
+						var config = this.getExperimentConfigs()[experimentId];
+						if (!config || !this.isExperimentEnabled(experimentId)) return null;
+						var variant = Math.random() < .5 ? "A" : "B";
+						StorageManager.setString(config.variantKey, variant);
+						return variant;
+					}
+				},
+				{
+					key: "sendExperimentStarted",
+					value: function sendExperimentStarted(experimentId) {
+						var config = this.getExperimentConfigs()[experimentId];
+						if (!config) return;
+						if (StorageManager.exists(config.startedKey)) return;
+						var variant = this.getExperimentVariant(experimentId);
+						if (!variant) {
+							variant = this.assignExperimentVariant(experimentId);
+							if (!variant) return;
+						}
+						var eventData = {
+							"Experiment name": config.name,
+							"Variant name": variant
+						};
+						if (EventDispatcher.canSendEvents()) if (EventDispatcher.dispatch("$experiment_started", eventData)) StorageManager.setString(config.startedKey, "true");
+						else this.storeExperimentDataForLater(experimentId, eventData);
+						else this.storeExperimentDataForLater(experimentId, eventData);
+					}
+				},
+				{
+					key: "storeExperimentDataForLater",
+					value: function storeExperimentDataForLater(experimentId, eventData) {
+						var config = this.getExperimentConfigs()[experimentId];
+						if (!config) return;
+						var experimentEntry = {
+							experimentId,
+							eventData,
+							timestamp: TimingManager.getCurrentTime(),
+							startedKey: config.startedKey
+						};
+						var existingExperiments = StorageManager.getArray(ONBOARDING_STORAGE_KEYS.PENDING_EXPERIMENT_DATA);
+						existingExperiments.push(experimentEntry);
+						StorageManager.setObject(ONBOARDING_STORAGE_KEYS.PENDING_EXPERIMENT_DATA, existingExperiments);
+					}
+				},
+				{
+					key: "sendStoredExperimentData",
+					value: function sendStoredExperimentData() {
+						var storedExperiments = StorageManager.getArray(ONBOARDING_STORAGE_KEYS.PENDING_EXPERIMENT_DATA);
+						if (0 === storedExperiments.length) return;
+						var remainingExperiments = [];
+						storedExperiments.forEach(function(experiment) {
+							if (EventDispatcher.dispatch("$experiment_started", experiment.eventData)) {
+								StorageManager.setString(experiment.startedKey, "true");
+								return;
+							}
+							remainingExperiments.push(experiment);
+						});
+						if (0 === remainingExperiments.length) {
+							StorageManager.remove(ONBOARDING_STORAGE_KEYS.PENDING_EXPERIMENT_DATA);
+							return;
+						}
+						StorageManager.setObject(ONBOARDING_STORAGE_KEYS.PENDING_EXPERIMENT_DATA, remainingExperiments);
+					}
+				}
+			]);
+		}())();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/onboarding-event-tracking.js
+	var OnboardingEventTracking;
+	var init_onboarding_event_tracking = __esmMin((() => {
+		init_onboarding_tracker();
+		OnboardingEventTracking = onboardingTracker;
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/connect.js
+	function Connect(props) {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var getStateObjectToUpdate = _useContext.getStateObjectToUpdate;
+		var buttonRef = props.buttonRef;
+		var successCallback = props.successCallback;
+		var errorCallback = props.errorCallback;
+		var handleCoreConnectionLogic = (0, react.useCallback)(function(event, data) {
+			var isTrackingOptedInConnect = data.tracking_opted_in && elementorCommon.config.editor_events;
+			OnboardingEventTracking.updateLibraryConnectConfig(data);
+			if (isTrackingOptedInConnect) {
+				elementorCommon.config.editor_events.can_send_events = true;
+				EventDispatcher.initializeAndEnableTracking();
+				OnboardingEventTracking.sendConnectionSuccessEvents(data);
+			}
+		}, []);
+		var defaultConnectSuccessCallback = (0, react.useCallback)(function() {
+			var stateToUpdate = getStateObjectToUpdate(state, "steps", "account", "completed");
+			stateToUpdate.isLibraryConnected = true;
+			updateState(stateToUpdate);
+		}, [
+			state,
+			getStateObjectToUpdate,
+			updateState
+		]);
+		(0, react.useEffect)(function() {
+			jQuery(buttonRef.current).elementorConnect({
+				success: function success(event, data) {
+					handleCoreConnectionLogic(event, data);
+					if (successCallback) successCallback(event, data);
+					else defaultConnectSuccessCallback();
+				},
+				error: function error() {
+					if (errorCallback) errorCallback();
+				},
+				popup: {
+					width: 726,
+					height: 534
+				}
+			});
+		}, [
+			buttonRef,
+			successCallback,
+			errorCallback,
+			handleCoreConnectionLogic,
+			defaultConnectSuccessCallback
+		]);
+		return null;
+	}
+	var import_prop_types$17;
+	var init_connect = __esmMin((() => {
+		import_prop_types$17 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_context();
+		init_onboarding_event_tracking();
+		init_event_dispatcher();
+		Connect.propTypes = {
+			buttonRef: import_prop_types$17.default.object.isRequired,
+			successCallback: import_prop_types$17.default.func,
+			errorCallback: import_prop_types$17.default.func
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/checklist.js
+	function Checklist(props) {
+		return /*#__PURE__*/ react.default.createElement("ul", { className: "e-onboarding__checklist" }, props.children);
+	}
+	var import_prop_types$16;
+	var init_checklist = __esmMin((() => {
+		import_prop_types$16 = /* @__PURE__ */ __toESM(require_prop_types());
+		Checklist.propTypes = { children: import_prop_types$16.default.any.isRequired };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/checklist-item.js
+	function ChecklistItem(props) {
+		return /*#__PURE__*/ react.default.createElement("li", { className: "e-onboarding__checklist-item" }, /*#__PURE__*/ react.default.createElement("i", { className: "eicon-check-circle" }), props.children);
+	}
+	var import_prop_types$15;
+	var init_checklist_item = __esmMin((() => {
+		import_prop_types$15 = /* @__PURE__ */ __toESM(require_prop_types());
+		ChecklistItem.propTypes = { children: import_prop_types$15.default.string };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/button.js
+	function Button(props) {
+		var buttonSettings = props.buttonSettings;
+		var type = props.type;
+		var buttonClasses = "e-onboarding__button";
+		if (type) buttonClasses += " e-onboarding__button-".concat(type);
+		if (buttonSettings.className) buttonSettings.className += " " + buttonClasses;
+		else buttonSettings.className = buttonClasses;
+		var elRef = buttonSettings.elRef;
+		var buttonProps = _objectWithoutProperties(buttonSettings, _excluded);
+		if (buttonSettings.href) return /*#__PURE__*/ react.default.createElement("a", _extends({ ref: elRef }, buttonProps), buttonSettings.text);
+		return /*#__PURE__*/ react.default.createElement("div", _extends({ ref: elRef }, buttonProps), buttonSettings.text);
+	}
+	var import_prop_types$14, _excluded;
+	var init_button = __esmMin((() => {
+		import_prop_types$14 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_extends();
+		init_objectWithoutProperties();
+		_excluded = ["elRef"];
+		Button.propTypes = {
+			buttonSettings: import_prop_types$14.default.object.isRequired,
+			type: import_prop_types$14.default.string
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/utils.js
+	function ownKeys$1(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread$1(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys$1(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	var optionsWithoutOne, optionsWithOne, getOptions, setSelectedFeatureList, safeDispatchEvent, getTrackingExperimentName, getActiveExperiment, addExperimentTrackingToUrl;
+	var init_utils = __esmMin((() => {
+		init_toConsumableArray();
+		init_defineProperty$1();
+		init_onboarding_event_tracking();
+		__name(ownKeys$1, "ownKeys");
+		__name(_objectSpread$1, "_objectSpread");
+		optionsWithoutOne = [
+			{
+				plan: "essential",
+				text: (0, _wordpress_i18n.__)("Templates & Theme Builder", "elementor")
+			},
+			{
+				plan: "advanced",
+				text: (0, _wordpress_i18n.__)("WooCommerce Builder", "elementor")
+			},
+			{
+				plan: "essential",
+				text: (0, _wordpress_i18n.__)("Lead Collection & Form Builder", "elementor")
+			},
+			{
+				plan: "essential",
+				text: (0, _wordpress_i18n.__)("Dynamic Content", "elementor")
+			},
+			{
+				plan: "advanced",
+				text: (0, _wordpress_i18n.__)("Popup Builder", "elementor")
+			},
+			{
+				plan: "advanced",
+				text: (0, _wordpress_i18n.__)("Custom Code & CSS", "elementor")
+			},
+			{
+				plan: "essential",
+				text: (0, _wordpress_i18n.__)("Motion Effects & Animations", "elementor")
+			},
+			{
+				plan: "advanced",
+				text: (0, _wordpress_i18n.__)("Notes & Collaboration", "elementor")
+			}
+		];
+		optionsWithOne = [
+			{
+				plan: "essential",
+				text: (0, _wordpress_i18n.__)("Theme Builder", "elementor")
+			},
+			{
+				plan: "one",
+				text: (0, _wordpress_i18n.__)("AI for code, images, & layouts", "elementor")
+			},
+			{
+				plan: "essential",
+				text: (0, _wordpress_i18n.__)("Lead Collection", "elementor")
+			},
+			{
+				plan: "one",
+				text: (0, _wordpress_i18n.__)("Image optimization", "elementor")
+			},
+			{
+				plan: "advanced",
+				text: (0, _wordpress_i18n.__)("Custom Code & CSS", "elementor")
+			},
+			{
+				plan: "one",
+				text: (0, _wordpress_i18n.__)("Accessibility scans and fixes", "elementor")
+			},
+			{
+				plan: "one",
+				text: (0, _wordpress_i18n.__)("Email deliverability", "elementor")
+			},
+			{
+				plan: "advanced",
+				text: (0, _wordpress_i18n.__)("WooCommerce Builder", "elementor")
+			}
+		];
+		getOptions = function getOptions() {
+			return (arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false) ? optionsWithOne : optionsWithoutOne;
+		};
+		setSelectedFeatureList = function setSelectedFeatureList(_ref) {
+			var checked = _ref.checked;
+			var id = _ref.id;
+			var text = _ref.text;
+			var selectedFeatures = _ref.selectedFeatures;
+			var setSelectedFeatures = _ref.setSelectedFeatures;
+			var tier = id.split("-")[0];
+			if (checked) setSelectedFeatures(_objectSpread$1(_objectSpread$1({}, selectedFeatures), {}, _defineProperty$1({}, tier, [].concat(_toConsumableArray(selectedFeatures[tier]), [text]))));
+			else setSelectedFeatures(_objectSpread$1(_objectSpread$1({}, selectedFeatures), {}, _defineProperty$1({}, tier, selectedFeatures[tier].filter(function(item) {
+				return item !== text;
+			}))));
+		};
+		safeDispatchEvent = function safeDispatchEvent(eventName, eventData) {
+			try {
+				var _elementorCommon;
+				var _elementorCommon$disp;
+				(_elementorCommon = elementorCommon) === null || _elementorCommon === void 0 || (_elementorCommon = _elementorCommon.eventsManager) === null || _elementorCommon === void 0 || (_elementorCommon$disp = _elementorCommon.dispatchEvent) === null || _elementorCommon$disp === void 0 || _elementorCommon$disp.call(_elementorCommon, eventName, eventData);
+			} catch (error) {}
+		};
+		getTrackingExperimentName = function getTrackingExperimentName(internalName) {
+			var _elementorAppConfig;
+			return (((_elementorAppConfig = elementorAppConfig) === null || _elementorAppConfig === void 0 || (_elementorAppConfig = _elementorAppConfig.onboarding) === null || _elementorAppConfig === void 0 ? void 0 : _elementorAppConfig.experimentNames) || {})[internalName.replace("core_onboarding_experiment", "")] || internalName;
+		};
+		getActiveExperiment = function getActiveExperiment() {
+			var experimentConfigs = OnboardingEventTracking.getExperimentConfigs();
+			for (var experimentId in experimentConfigs) {
+				var _elementorAppConfig2;
+				var config = experimentConfigs[experimentId];
+				if (((_elementorAppConfig2 = elementorAppConfig) === null || _elementorAppConfig2 === void 0 || (_elementorAppConfig2 = _elementorAppConfig2.onboarding) === null || _elementorAppConfig2 === void 0 ? void 0 : _elementorAppConfig2[config.enabledKey]) || false) {
+					var variant = localStorage.getItem(config.variantKey);
+					if (variant) return {
+						name: getTrackingExperimentName(config.name),
+						variant
+					};
+				}
+			}
+			return null;
+		};
+		addExperimentTrackingToUrl = function addExperimentTrackingToUrl(url) {
+			var buttonName = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null;
+			if (!url || typeof url !== "string") return url;
+			var activeExperiment = getActiveExperiment();
+			if (!activeExperiment) return url;
+			var separator = url.includes("?") ? "&" : "?";
+			var trackingParams = "e_na=".concat(encodeURIComponent(activeExperiment.name), "&e_va=").concat(encodeURIComponent(activeExperiment.variant));
+			if (buttonName) trackingParams += "&e_bu=".concat(encodeURIComponent(buttonName));
+			return url + separator + trackingParams;
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/go-pro-popover.js
+	function GoProPopover(props) {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var upgradeButtonRef = (0, react.useRef)(null);
+		var alreadyHaveProButtonRef = (0, react.useCallback)(function(alreadyHaveProButton) {
+			if (!alreadyHaveProButton) return;
+			if (!state.currentStep || "" === state.currentStep) return;
+			var existingHandler = alreadyHaveProButton._elementorProHandler;
+			if (existingHandler) alreadyHaveProButton.removeEventListener("click", existingHandler);
+			var clickHandler = function clickHandler(event) {
+				event.preventDefault();
+				if (!state.currentStep || "" === state.currentStep) return;
+				var stepNumber = OnboardingEventTracking.getStepNumber(state.currentStep);
+				OnboardingEventTracking.trackStepAction(stepNumber, "upgrade_already_pro");
+				OnboardingEventTracking.cancelDelayedNoClickEvent();
+				if (stepNumber) OnboardingEventTracking.sendTopUpgrade(stepNumber, "already_pro_user");
+				elementorCommon.events.dispatchEvent({
+					event: "already have pro",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+				window.open(alreadyHaveProButton.href + "&mode=popup", "elementorUploadPro", "toolbar=no, menubar=no, width=728, height=531, top=100, left=100");
+				elementorCommon.elements.$body.off("elementor/upload-and-install-pro/success").on("elementor/upload-and-install-pro/success", function() {
+					updateState({
+						hasPro: true,
+						proNotice: {
+							color: "success",
+							children: (0, _wordpress_i18n.__)("Pro is now active! You can continue.", "elementor")
+						}
+					});
+				});
+			};
+			alreadyHaveProButton._elementorProHandler = clickHandler;
+			alreadyHaveProButton.addEventListener("click", clickHandler);
+		}, [state.currentStep, updateState]);
+		var getElProButton = {
+			text: elementorAppConfig.onboarding.experiment ? (0, _wordpress_i18n.__)("Upgrade now", "elementor") : (0, _wordpress_i18n.__)("Upgrade Now", "elementor"),
+			className: "e-onboarding__go-pro-cta",
+			target: "_blank",
+			href: addExperimentTrackingToUrl("https://elementor.com/pro/?utm_source=onboarding-wizard&utm_campaign=gopro&utm_medium=wp-dash&utm_content=top-bar-dropdown&utm_term=" + elementorAppConfig.onboarding.onboardingVersion, "upgrade-popover"),
+			tabIndex: 0,
+			elRef: function elRef(buttonElement) {
+				if (!buttonElement) return;
+				upgradeButtonRef.current = buttonElement;
+			},
+			onClick: function onClick() {
+				if (!state.currentStep || "" === state.currentStep) return;
+				var stepNumber = OnboardingEventTracking.getStepNumber(state.currentStep);
+				OnboardingEventTracking.cancelDelayedNoClickEvent();
+				if (stepNumber) OnboardingEventTracking.sendTopUpgrade(stepNumber, "on_tooltip");
+				elementorCommon.events.dispatchEvent({
+					event: "get elementor pro",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+			}
+		};
+		var targetRef = props.goProButtonRef || upgradeButtonRef;
+		return /*#__PURE__*/ react.default.createElement(PopoverDialog, {
+			targetRef,
+			wrapperClass: "e-onboarding__go-pro"
+		}, /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__go-pro-content" }, /*#__PURE__*/ react.default.createElement("h2", { className: "e-onboarding__go-pro-title" }, (0, _wordpress_i18n.__)("Ready to Get Elementor Pro?", "elementor")), /*#__PURE__*/ react.default.createElement(Checklist, null, /*#__PURE__*/ react.default.createElement(ChecklistItem, null, (0, _wordpress_i18n.__)("90+ Basic & Pro widgets", "elementor")), /*#__PURE__*/ react.default.createElement(ChecklistItem, null, (0, _wordpress_i18n.__)("300+ Basic & Pro templates", "elementor")), /*#__PURE__*/ react.default.createElement(ChecklistItem, null, (0, _wordpress_i18n.__)("Premium Support", "elementor"))), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__go-pro-paragraph" }, (0, _wordpress_i18n.__)("And so much more!", "elementor")), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__go-pro-paragraph" }, /*#__PURE__*/ react.default.createElement(Button, { buttonSettings: getElProButton })), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__go-pro-paragraph" }, /*#__PURE__*/ react.default.createElement("a", {
+			tabIndex: "0",
+			className: "e-onboarding__go-pro-already-have",
+			ref: alreadyHaveProButtonRef,
+			href: elementorAppConfig.onboarding.urls.uploadPro,
+			rel: "opener"
+		}, (0, _wordpress_i18n.__)("Already have Elementor Pro?", "elementor")))));
+	}
+	var import_prop_types$13;
+	var init_go_pro_popover = __esmMin((() => {
+		init_context();
+		init_popover_dialog();
+		init_checklist();
+		init_checklist_item();
+		init_button();
+		import_prop_types$13 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_onboarding_event_tracking();
+		init_utils();
+		GoProPopover.propTypes = {
+			buttonsConfig: import_prop_types$13.default.array.isRequired,
+			goProButtonRef: import_prop_types$13.default.object
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/layout/header.js
+	function Header(props) {
+		usePageTitle({ title: props.title });
+		var state = (0, react.useContext)(OnboardingContext).state;
+		var trackXButtonExit = function trackXButtonExit() {
+			var stepNumber = OnboardingEventTracking.getStepNumber(state.currentStep);
+			OnboardingEventTracking.sendExitButtonEvent(stepNumber || state.currentStep);
+		};
+		return /*#__PURE__*/ react.default.createElement(Grid$14, {
+			container: true,
+			alignItems: "center",
+			justify: "space-between",
+			className: "eps-app__header e-onboarding__header"
+		}, /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__logo-title-wrapper e-onboarding__header-logo" }, /*#__PURE__*/ react.default.createElement("i", { className: "eps-app__logo eicon-elementor-circle" }), /*#__PURE__*/ react.default.createElement("img", {
+			src: elementorCommon.config.urls.assets + "images/logo-platform.svg",
+			alt: (0, _wordpress_i18n.__)("Elementor Logo", "elementor")
+		})), /*#__PURE__*/ react.default.createElement(HeaderButtons, {
+			buttons: props.buttons,
+			onClose: function onClose() {
+				trackXButtonExit();
+				elementorCommon.events.dispatchEvent({
+					event: "close modal",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+				setTimeout(function() {
+					window.top.location = elementorAppConfig.admin_url;
+				}, 100);
+			}
+		}), !state.hasPro && /*#__PURE__*/ react.default.createElement(GoProPopover, {
+			buttonsConfig: props.buttons,
+			goProButtonRef: props.goProButtonRef
+		}));
+	}
+	var import_prop_types$12;
+	var init_header = __esmMin((() => {
+		import_prop_types$12 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_context();
+		init_grid();
+		init_go_pro_popover();
+		init_header_buttons();
+		init_use_page_title();
+		init_onboarding_event_tracking();
+		Header.propTypes = {
+			title: import_prop_types$12.default.string,
+			buttons: import_prop_types$12.default.arrayOf(import_prop_types$12.default.object),
+			goProButtonRef: import_prop_types$12.default.object
+		};
+		Header.defaultProps = { buttons: [] };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/progress-bar/progress-bar-item.js
+	function ProgressBarItem(props) {
+		var state = (0, react.useContext)(OnboardingContext).state;
+		var stepCompleted = "completed" === state.steps[props.id];
+		var stepSkipped = "skipped" === state.steps[props.id];
+		var isExperiment101VariantB = "B" === localStorage.getItem(ONBOARDING_STORAGE_KEYS.EXPERIMENT101_VARIANT);
+		var itemClasses = "e-onboarding__progress-bar-item";
+		if (props.id === state.currentStep) itemClasses += " e-onboarding__progress-bar-item--active";
+		else if (stepCompleted) itemClasses += " e-onboarding__progress-bar-item--completed";
+		else if (stepSkipped) itemClasses += " e-onboarding__progress-bar-item--skipped";
+		if (isExperiment101VariantB && 0 === props.index) return null;
+		var itemIndex = isExperiment101VariantB ? props.index : props.index + 1;
+		return /*#__PURE__*/ react.default.createElement("div", {
+			onClick: props.onClick,
+			className: itemClasses
+		}, /*#__PURE__*/ react.default.createElement("div", {
+			className: "e-onboarding__progress-bar-item-icon",
+			"data-item-count": !stepCompleted ? itemIndex : null
+		}, stepCompleted ? /*#__PURE__*/ react.default.createElement("i", { className: "eicon-check" }) : ""), props.title);
+	}
+	var import_prop_types$11;
+	var init_progress_bar_item = __esmMin((() => {
+		import_prop_types$11 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_context();
+		init_onboarding_event_tracking();
+		ProgressBarItem.propTypes = {
+			index: import_prop_types$11.default.number.isRequired,
+			id: import_prop_types$11.default.string.isRequired,
+			title: import_prop_types$11.default.string.isRequired,
+			route: import_prop_types$11.default.string,
+			onClick: import_prop_types$11.default.func
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/progress-bar/progress-bar.js
+	function ProgressBar() {
+		var state = (0, react.useContext)(OnboardingContext).state;
+		var navigate = useNavigate();
+		var isExperiment401VariantB = "B" === localStorage.getItem(ONBOARDING_STORAGE_KEYS.EXPERIMENT401_VARIANT);
+		var isExperiment402VariantB = "B" === localStorage.getItem(ONBOARDING_STORAGE_KEYS.EXPERIMENT402_VARIANT);
+		var progressBarItemsConfig = [{
+			id: "account",
+			title: (0, _wordpress_i18n.__)("Elementor Account", "elementor"),
+			route: "account"
+		}];
+		if (!elementorAppConfig.onboarding.helloActivated) progressBarItemsConfig.push({
+			id: "hello",
+			title: (0, _wordpress_i18n.__)("Hello Theme", "elementor"),
+			route: "hello"
+		});
+		if (elementorAppConfig.onboarding.experiment) progressBarItemsConfig.push({
+			id: "chooseFeatures",
+			title: (0, _wordpress_i18n.__)("Choose Features", "elementor"),
+			route: "chooseFeatures"
+		});
+		else progressBarItemsConfig.push({
+			id: "siteName",
+			title: (0, _wordpress_i18n.__)("Site Name", "elementor"),
+			route: "site-name"
+		}, {
+			id: "siteLogo",
+			title: (0, _wordpress_i18n.__)("Site Logo", "elementor"),
+			route: "site-logo"
+		});
+		var goodToGoTitle = isExperiment401VariantB || isExperiment402VariantB ? (0, _wordpress_i18n.__)("Start Creating Site", "elementor") : (0, _wordpress_i18n.__)("Good to Go", "elementor");
+		progressBarItemsConfig.push({
+			id: "goodToGo",
+			title: goodToGoTitle,
+			route: "good-to-go"
+		});
+		var progressBarItems = progressBarItemsConfig.map(function(itemConfig, index) {
+			itemConfig.index = index;
+			if (state.steps[itemConfig.id]) itemConfig.onClick = function() {
+				var currentStepNumber = OnboardingEventTracking.getStepNumber(state.currentStep);
+				var nextStepNumber = OnboardingEventTracking.getStepNumber(itemConfig.id);
+				if (nextStepNumber < currentStepNumber) OnboardingEventTracking.trackBackClicked(state.currentStep);
+				if (4 === currentStepNumber) {
+					OnboardingEventTracking.trackStepAction(4, "stepper_clicks", {
+						from_step: currentStepNumber,
+						to_step: nextStepNumber
+					});
+					OnboardingEventTracking.sendStepEndState(4);
+				}
+				elementorCommon.events.dispatchEvent({
+					event: "step click",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep,
+						next_step: itemConfig.id
+					}
+				});
+				navigate("/onboarding/" + itemConfig.id);
+			};
+			return /*#__PURE__*/ react.default.createElement(ProgressBarItem, _extends({ key: itemConfig.id }, itemConfig));
+		});
+		return /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__progress-bar" }, progressBarItems);
+	}
+	var init_progress_bar = __esmMin((() => {
+		init_extends();
+		init_context();
+		init_es$1();
+		init_progress_bar_item();
+		init_onboarding_event_tracking();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/layout/layout.js
+	function getCurrentStepForTracking(pageId, currentStep) {
+		return pageId || currentStep || "account";
+	}
+	function shouldResetupButtonTracking(buttonRef, pageId, currentStep) {
+		if (!buttonRef) return false;
+		var currentStepForTracking = getCurrentStepForTracking(pageId, currentStep);
+		return buttonRef.dataset.onboardingStep !== currentStepForTracking;
+	}
+	function Layout(props) {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var stepNumber = (0, react.useMemo)(function() {
+			return OnboardingEventTracking.getStepNumber(props.pageId);
+		}, [props.pageId]);
+		var goProButtonRef = (0, react.useRef)();
+		var setupTopbarUpgradeTracking = (0, react.useCallback)(function(buttonElement) {
+			if (!buttonElement) return;
+			var currentStep = getCurrentStepForTracking(props.pageId, state.currentStep);
+			goProButtonRef.current = buttonElement;
+			return OnboardingEventTracking.setupSingleUpgradeButton(buttonElement, currentStep);
+		}, [state.currentStep, props.pageId]);
+		var handleTopbarConnectSuccess = (0, react.useCallback)(function() {
+			updateState({ isLibraryConnected: true });
+		}, [updateState]);
+		(0, react.useEffect)(function() {
+			elementorCommon.events.dispatchEvent({
+				event: "modal load",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: props.pageId,
+					user_state: elementorCommon.config.library_connect.is_connected ? "logged" : "anon"
+				}
+			});
+			if (goProButtonRef.current) setupTopbarUpgradeTracking(goProButtonRef.current);
+			updateState({
+				currentStep: props.pageId,
+				nextStep: props.nextStep || "",
+				proNotice: null
+			});
+		}, [
+			setupTopbarUpgradeTracking,
+			stepNumber,
+			props.pageId,
+			props.nextStep,
+			updateState
+		]);
+		(0, react.useEffect)(function() {
+			if (shouldResetupButtonTracking(goProButtonRef.current, props.pageId, state.currentStep)) setupTopbarUpgradeTracking(goProButtonRef.current);
+		}, [
+			state.currentStep,
+			props.pageId,
+			setupTopbarUpgradeTracking
+		]);
+		var headerButtons = [];
+		var createAccountButton = {
+			id: "create-account",
+			text: (0, _wordpress_i18n.__)("Create Account", "elementor"),
+			hideText: false,
+			elRef: (0, react.useRef)(),
+			url: elementorAppConfig.onboarding.urls.signUp + elementorAppConfig.onboarding.utms.connectTopBar,
+			target: "_blank",
+			rel: "opener",
+			onClick: function onClick() {
+				OnboardingEventTracking.sendEventOrStore("CREATE_MY_ACCOUNT", {
+					currentStep: stepNumber,
+					createAccountClicked: "topbar"
+				});
+				elementorCommon.events.dispatchEvent({
+					event: "create account",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep,
+						source: "header"
+					}
+				});
+			}
+		};
+		if (state.isLibraryConnected) headerButtons.push({
+			id: "my-elementor",
+			text: (0, _wordpress_i18n.__)("My Elementor", "elementor"),
+			hideText: false,
+			icon: "eicon-user-circle-o",
+			url: addExperimentTrackingToUrl("https://my.elementor.com/websites/?utm_source=onboarding-wizard&utm_medium=wp-dash&utm_campaign=my-account&utm_content=top-bar&utm_term=" + elementorAppConfig.onboarding.onboardingVersion, "my-elementor-topbar"),
+			target: "_blank",
+			onClick: function onClick() {
+				elementorCommon.events.dispatchEvent({
+					event: "my elementor click",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep,
+						source: "header"
+					}
+				});
+			}
+		});
+		else headerButtons.push(createAccountButton);
+		if (!state.hasPro) headerButtons.push({
+			id: "go-pro",
+			text: (0, _wordpress_i18n.__)("Upgrade", "elementor"),
+			hideText: false,
+			className: "eps-button__go-pro-btn",
+			url: addExperimentTrackingToUrl("https://elementor.com/pro/?utm_source=onboarding-wizard&utm_campaign=gopro&utm_medium=wp-dash&utm_content=top-bar&utm_term=" + elementorAppConfig.onboarding.onboardingVersion, "upgrade-topbar"),
+			target: "_blank",
+			elRef: setupTopbarUpgradeTracking,
+			onClick: function onClick() {
+				var currentStep = getCurrentStepForTracking(props.pageId, state.currentStep);
+				var currentStepNumber = OnboardingEventTracking.getStepNumber(currentStep);
+				OnboardingEventTracking.trackStepAction(currentStepNumber, "upgrade_topbar");
+				elementorCommon.events.dispatchEvent({
+					event: "go pro",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: currentStep
+					}
+				});
+			}
+		});
+		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__lightbox" }, /*#__PURE__*/ react.default.createElement("div", { className: "eps-app e-onboarding ".concat(props.className || "") }, !state.isLibraryConnected && /*#__PURE__*/ react.default.createElement(Connect, {
+			buttonRef: createAccountButton.elRef,
+			successCallback: handleTopbarConnectSuccess
+		}), /*#__PURE__*/ react.default.createElement(Header, {
+			title: (0, _wordpress_i18n.__)("Getting Started", "elementor"),
+			buttons: headerButtons,
+			goProButtonRef
+		}), /*#__PURE__*/ react.default.createElement("div", { className: "eps-app__main e-onboarding__page-" + props.pageId }, /*#__PURE__*/ react.default.createElement(Content, { className: "e-onboarding__content" }, /*#__PURE__*/ react.default.createElement(ProgressBar, null), props.children))));
+	}
+	var import_prop_types$10;
+	var init_layout = __esmMin((() => {
+		import_prop_types$10 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_context();
+		init_header();
+		init_progress_bar();
+		init_content();
+		init_connect();
+		init_onboarding_event_tracking();
+		init_utils();
+		Layout.propTypes = {
+			pageId: import_prop_types$10.default.string.isRequired,
+			nextStep: import_prop_types$10.default.string,
+			className: import_prop_types$10.default.string,
+			children: import_prop_types$10.default.any.isRequired
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/notice.js
+	function Notice(props) {
+		return /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__notice e-onboarding__notice--".concat(props.noticeState.type) }, /*#__PURE__*/ react.default.createElement("i", { className: props.noticeState.icon }), /*#__PURE__*/ react.default.createElement("span", { className: "e-onboarding__notice-text" }, props.noticeState.message));
+	}
+	var import_prop_types$9;
+	var init_notice = __esmMin((() => {
+		import_prop_types$9 = /* @__PURE__ */ __toESM(require_prop_types());
+		Notice.propTypes = { noticeState: import_prop_types$9.default.object };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/skip-button.js
+	function SkipButton(props) {
+		var button = props.button;
+		var className = props.className;
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var navigate = useNavigate();
+		var action = button.action || function skipStep() {
+			var mutatedState = JSON.parse(JSON.stringify(state));
+			mutatedState.steps[state.currentStep] = "skipped";
+			updateState(mutatedState);
+			if (state.nextStep) navigate("onboarding/" + state.nextStep);
+		};
+		delete button.action;
+		button.onClick = function(event) {
+			var stepNumber = OnboardingEventTracking.getStepNumber(state.currentStep);
+			if (2 === stepNumber) OnboardingEventTracking.sendThemeMarked();
+			OnboardingEventTracking.trackStepAction(stepNumber, "skipped");
+			OnboardingEventTracking.sendStepEndState(stepNumber);
+			OnboardingEventTracking.sendEventOrStore("SKIP", { currentStep: stepNumber });
+			if (4 === stepNumber) OnboardingEventTracking.sendEventOrStore("EXIT", {
+				currentStep: stepNumber,
+				exitType: "skip_button"
+			});
+			elementorCommon.events.dispatchEvent({
+				event: "skip",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep
+				}
+			});
+			if (button.href) {
+				event.preventDefault();
+				setTimeout(function() {
+					window.location.href = button.href;
+				}, 100);
+			} else action();
+		};
+		return /*#__PURE__*/ react.default.createElement(Button, {
+			buttonSettings: button,
+			className,
+			type: "skip"
+		});
+	}
+	var import_prop_types$8;
+	var init_skip_button = __esmMin((() => {
+		import_prop_types$8 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_context();
+		init_es$1();
+		init_button();
+		init_onboarding_event_tracking();
+		SkipButton.propTypes = {
+			button: import_prop_types$8.default.object.isRequired,
+			className: import_prop_types$8.default.string
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/layout/footer-buttons.js
+	function FooterButtons(_ref) {
+		var actionButton = _ref.actionButton;
+		var skipButton = _ref.skipButton;
+		var className = _ref.className;
+		var classNames = "e-onboarding__footer";
+		if (className) classNames += " " + className;
+		return /*#__PURE__*/ react.default.createElement(Grid$14, {
+			container: true,
+			alignItems: "center",
+			justify: "space-between",
+			className: classNames
+		}, actionButton && /*#__PURE__*/ react.default.createElement(Button, {
+			buttonSettings: actionButton,
+			type: "action"
+		}), skipButton && /*#__PURE__*/ react.default.createElement(SkipButton, { button: skipButton }));
+	}
+	var import_prop_types$7;
+	var init_footer_buttons = __esmMin((() => {
+		import_prop_types$7 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_grid();
+		init_button();
+		init_skip_button();
+		FooterButtons.propTypes = {
+			actionButton: import_prop_types$7.default.object,
+			skipButton: import_prop_types$7.default.object,
+			className: import_prop_types$7.default.string
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/layout/page-content-layout.js
+	function PageContentLayout(props) {
+		var state = (0, react.useContext)(OnboardingContext).state;
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(Grid$14, {
+			container: true,
+			alignItems: "center",
+			justify: "space-between",
+			className: "e-onboarding__page-content"
+		}, /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__page-content-start" }, /*#__PURE__*/ react.default.createElement("h1", { className: "e-onboarding__page-content-section-title" }, props.title, props.secondLineTitle && /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("br", null), props.secondLineTitle)), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__page-content-section-text" }, props.children)), props.image && /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__page-content-end" }, /*#__PURE__*/ react.default.createElement("img", {
+			src: props.image,
+			alt: "Information"
+		}))), props.noticeState && /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__notice-container" }, props.noticeState || state.proNotice ? function printNotices() {
+			return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, props.noticeState && /*#__PURE__*/ react.default.createElement(Notice, { noticeState: props.noticeState }), state.proNotice && /*#__PURE__*/ react.default.createElement(Notice, { noticeState: state.proNotice }));
+		}() : /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__notice-empty-spacer" })), /*#__PURE__*/ react.default.createElement(FooterButtons, {
+			actionButton: props.actionButton,
+			skipButton: props.skipButton
+		}));
+	}
+	var import_prop_types$6;
+	var init_page_content_layout = __esmMin((() => {
+		import_prop_types$6 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_context();
+		init_grid();
+		init_notice();
+		init_footer_buttons();
+		PageContentLayout.propTypes = {
+			title: import_prop_types$6.default.string,
+			secondLineTitle: import_prop_types$6.default.string,
+			children: import_prop_types$6.default.any,
+			image: import_prop_types$6.default.string,
+			actionButton: import_prop_types$6.default.object,
+			skipButton: import_prop_types$6.default.object,
+			noticeState: import_prop_types$6.default.any
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/account-screen-config.js
+	function getDefaultIllustrationUrl() {
+		return elementorCommon.config.urls.assets + "images/app/onboarding/Illustration_Account.svg";
+	}
+	function getLegacyAccountScreenConfig() {
+		var _elementorAppConfig$o;
+		var _elementorAppConfig$o2;
+		return (_elementorAppConfig$o = (_elementorAppConfig$o2 = elementorAppConfig.onboarding) === null || _elementorAppConfig$o2 === void 0 ? void 0 : _elementorAppConfig$o2.accountScreen) !== null && _elementorAppConfig$o !== void 0 ? _elementorAppConfig$o : null;
+	}
+	function resolveDisconnectedAccountHeadlines(accountScreen) {
+		if (accountScreen) return {
+			title: accountScreen.headlineLine1,
+			secondLineTitle: accountScreen.headlineLine2
+		};
+		if (elementorAppConfig.onboarding.experiment) return {
+			title: (0, _wordpress_i18n.__)("You're here!", "elementor"),
+			secondLineTitle: (0, _wordpress_i18n.__)("Let's get connected.", "elementor")
+		};
+		return {
+			title: (0, _wordpress_i18n.__)("You're here! Let's set things up.", "elementor"),
+			secondLineTitle: ""
+		};
+	}
+	function resolveAccountScreenImage(accountScreen) {
+		if (!accountScreen) return getDefaultIllustrationUrl();
+		return getAccountScreenIllustrationUrl(accountScreen);
+	}
+	function getAccountScreenIllustrationUrl(config) {
+		if (!(config !== null && config !== void 0 && config.showIllustration)) return null;
+		if (config.illustrationUrl) return config.illustrationUrl;
+		return getDefaultIllustrationUrl();
+	}
+	function buildDisconnectedPageTexts(config) {
+		if (!config) return null;
+		var pageTexts = { listItems: config.benefits.map(function(text, index) {
+			return config.showBenefits[index] ? text : null;
+		}).filter(Boolean) };
+		if (config.showDescription && config.description) pageTexts.firstLine = config.description;
+		return pageTexts;
+	}
+	var init_account_screen_config = __esmMin((() => {}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/account-content-a.js
+	function AccountContentA(_ref) {
+		var _pageTexts$listItems;
+		var actionButton = _ref.actionButton;
+		var skipButton = _ref.skipButton;
+		var noticeState = _ref.noticeState;
+		var pageTexts = _ref.pageTexts;
+		var state = _ref.state;
+		var connectSuccessCallback = _ref.connectSuccessCallback;
+		var connectFailureCallback = _ref.connectFailureCallback;
+		var accountScreen = !state.isLibraryConnected ? getLegacyAccountScreenConfig() : null;
+		var _resolveDisconnectedA = resolveDisconnectedAccountHeadlines(accountScreen);
+		var title = _resolveDisconnectedA.title;
+		var secondLineTitle = _resolveDisconnectedA.secondLineTitle;
+		var image = resolveAccountScreenImage(accountScreen);
+		return /*#__PURE__*/ react.default.createElement(PageContentLayout, {
+			image,
+			title,
+			secondLineTitle,
+			actionButton,
+			skipButton,
+			noticeState
+		}, actionButton.ref && !state.isLibraryConnected && /*#__PURE__*/ react.default.createElement(Connect, {
+			buttonRef: actionButton.ref,
+			successCallback: function successCallback(event, data) {
+				return connectSuccessCallback(event, data);
+			},
+			errorCallback: connectFailureCallback
+		}), pageTexts.firstLine && /*#__PURE__*/ react.default.createElement("span", null, pageTexts.firstLine), ((_pageTexts$listItems = pageTexts.listItems) === null || _pageTexts$listItems === void 0 ? void 0 : _pageTexts$listItems.length) > 0 && /*#__PURE__*/ react.default.createElement("ul", null, pageTexts.listItems.map(function(listItem, index) {
+			return /*#__PURE__*/ react.default.createElement("li", { key: "listItem" + index }, listItem);
+		})));
+	}
+	var import_prop_types$5;
+	var init_account_content_a = __esmMin((() => {
+		import_prop_types$5 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_connect();
+		init_page_content_layout();
+		init_account_screen_config();
+		AccountContentA.propTypes = {
+			actionButton: import_prop_types$5.default.shape({ ref: import_prop_types$5.default.object }).isRequired,
+			skipButton: import_prop_types$5.default.object,
+			noticeState: import_prop_types$5.default.object,
+			pageTexts: import_prop_types$5.default.shape({
+				firstLine: import_prop_types$5.default.node,
+				listItems: import_prop_types$5.default.arrayOf(import_prop_types$5.default.string)
+			}).isRequired,
+			state: import_prop_types$5.default.shape({ isLibraryConnected: import_prop_types$5.default.bool }).isRequired,
+			connectSuccessCallback: import_prop_types$5.default.func.isRequired,
+			connectFailureCallback: import_prop_types$5.default.func.isRequired
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/account-content-b.js
+	function AccountContentB(_ref) {
+		var state = _ref.state;
+		var connectSuccessCallback = _ref.connectSuccessCallback;
+		var connectFailureCallback = _ref.connectFailureCallback;
+		var updateState = _ref.updateState;
+		var getStateObjectToUpdate = _ref.getStateObjectToUpdate;
+		var navigate = _ref.navigate;
+		var nextStep = _ref.nextStep;
+		var pageId = _ref.pageId;
+		var handleConnectClick = function handleConnectClick() {
+			OnboardingEventTracking.trackStepAction(1, "create");
+			OnboardingEventTracking.sendEventOrStore("CREATE_MY_ACCOUNT", {
+				currentStep: 1,
+				createAccountClicked: "main_cta"
+			});
+		};
+		var handleGuestClick = function handleGuestClick() {
+			OnboardingEventTracking.trackStepAction(1, "skip");
+			OnboardingEventTracking.sendEventOrStore("SKIP", { currentStep: 1 });
+			OnboardingEventTracking.sendStepEndState(1);
+			OnboardingEventTracking.sendEventOrStore("AB_101_START_AS_FREE_USER", { currentStep: 1 });
+			updateState(getStateObjectToUpdate(state, "steps", pageId, "skipped"));
+			navigate("onboarding/" + nextStep);
+		};
+		var actionButtonRef = (0, react.useRef)();
+		return /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding101-variant-b-content" }, /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding101-variant-b-icon" }, /*#__PURE__*/ react.default.createElement("svg", {
+			width: "104",
+			height: "104",
+			viewBox: "0 0 104 104",
+			fill: "none",
+			xmlns: "http://www.w3.org/2000/svg"
+		}, /*#__PURE__*/ react.default.createElement("rect", {
+			width: "104",
+			height: "104",
+			rx: "24",
+			fill: "#FE7AE3"
+		}), /*#__PURE__*/ react.default.createElement("path", {
+			fillRule: "evenodd",
+			clipRule: "evenodd",
+			d: "M22.242 71.0334C18.3768 65.2487 16.3137 58.4477 16.3137 51.4904C16.3137 42.1611 20.0198 33.2138 26.6167 26.6169C33.2135 20.0201 42.1609 16.314 51.4902 16.314C58.4474 16.314 65.2484 18.377 71.0332 22.2423C76.8179 26.1075 81.3266 31.6013 83.989 38.029C86.6514 44.4566 87.348 51.5294 85.9907 58.353C84.6334 65.1765 81.2833 71.4444 76.3637 76.3639C71.4442 81.2835 65.1763 84.6337 58.3528 85.991C51.5292 87.3483 44.4564 86.6517 38.0287 83.9892C31.6011 81.3268 26.1073 76.8182 22.242 71.0334ZM42.6974 36.8324H36.8356V66.147H42.6974V36.8324ZM66.1449 36.8324H48.5594V42.6942H66.1449V36.8324ZM66.1449 48.5562H48.5594V54.418H66.1449V48.5562ZM66.1449 60.2852H48.5594V66.147H66.1449V60.2852Z",
+			fill: "#91013B"
+		}))), /*#__PURE__*/ react.default.createElement("p", { className: "e-onboarding101-variant-b-description e-onboarding101-variant-b-welcome" }, (0, _wordpress_i18n.__)("Welcome!", "elementor")), /*#__PURE__*/ react.default.createElement("h1", { className: "e-onboarding101-variant-b-title" }, (0, _wordpress_i18n.__)("Connect your account to enable your full creative workspace", "elementor")), /*#__PURE__*/ react.default.createElement("p", { className: "e-onboarding101-variant-b-description" }, (0, _wordpress_i18n.__)("Access beautiful templates, ready-made blocks, and a single dashboard to manage all your sites in one place", "elementor")), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding101-variant-b-buttons" }, /*#__PURE__*/ react.default.createElement("a", {
+			ref: actionButtonRef,
+			href: elementorAppConfig.onboarding.urls.signUp + elementorAppConfig.onboarding.utms.connectCta,
+			className: "e-onboarding101-variant-b-button e-onboarding101-variant-b-button--primary",
+			onClick: handleConnectClick,
+			role: "button"
+		}, (0, _wordpress_i18n.__)("Connect your account", "elementor")), /*#__PURE__*/ react.default.createElement("button", {
+			className: "e-onboarding101-variant-b-button e-onboarding101-variant-b-button--secondary",
+			onClick: handleGuestClick
+		}, (0, _wordpress_i18n.__)("Continue as a guest", "elementor"))), actionButtonRef && !state.isLibraryConnected && /*#__PURE__*/ react.default.createElement(Connect, {
+			buttonRef: actionButtonRef,
+			successCallback: function successCallback(event, data) {
+				return connectSuccessCallback(event, data);
+			},
+			errorCallback: connectFailureCallback
+		}));
+	}
+	var import_prop_types$4;
+	var init_account_content_b = __esmMin((() => {
+		import_prop_types$4 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_connect();
+		init_onboarding_event_tracking();
+		AccountContentB.propTypes = {
+			state: import_prop_types$4.default.shape({ isLibraryConnected: import_prop_types$4.default.bool }).isRequired,
+			connectSuccessCallback: import_prop_types$4.default.func.isRequired,
+			connectFailureCallback: import_prop_types$4.default.func.isRequired,
+			updateState: import_prop_types$4.default.func.isRequired,
+			getStateObjectToUpdate: import_prop_types$4.default.func.isRequired,
+			navigate: import_prop_types$4.default.func.isRequired,
+			nextStep: import_prop_types$4.default.string.isRequired,
+			pageId: import_prop_types$4.default.string.isRequired
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/account.js
+	function Account() {
+		var _accountScreen$existi;
+		var _accountScreen$existi2;
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var getStateObjectToUpdate = _useContext.getStateObjectToUpdate;
+		var _useState2 = _slicedToArray((0, react.useState)(null), 2);
+		var noticeState = _useState2[0];
+		var setNoticeState = _useState2[1];
+		var nextStep = getNextStep();
+		var navigate = useNavigate();
+		var pageId = "account";
+		var actionButtonRef = (0, react.useRef)();
+		var alreadyHaveAccountLinkRef = (0, react.useRef)();
+		(0, react.useEffect)(function() {
+			if (!state.isLibraryConnected) {
+				var _elementorCommon$even;
+				safeDispatchEvent("view_account_setup", {
+					location: "plugin_onboarding",
+					trigger: ((_elementorCommon$even = elementorCommon.eventsManager) === null || _elementorCommon$even === void 0 || (_elementorCommon$even = _elementorCommon$even.config) === null || _elementorCommon$even === void 0 || (_elementorCommon$even = _elementorCommon$even.triggers) === null || _elementorCommon$even === void 0 ? void 0 : _elementorCommon$even.pageLoaded) || "page_loaded",
+					step_number: 1,
+					step_name: "account_setup",
+					is_library_connected: (state === null || state === void 0 ? void 0 : state.isLibraryConnected) || false
+				});
+			}
+			OnboardingEventTracking.setupAllUpgradeButtons(state.currentStep);
+			OnboardingEventTracking.onStepLoad(1);
+		}, []);
+		var experiment101Variant = localStorage.getItem(ONBOARDING_STORAGE_KEYS.EXPERIMENT101_VARIANT);
+		var accountScreen = !state.isLibraryConnected && "B" !== experiment101Variant ? getLegacyAccountScreenConfig() : null;
+		var skipButton;
+		if ("completed" !== state.steps[pageId]) {
+			var _accountScreen$skipCt;
+			skipButton = {
+				text: (_accountScreen$skipCt = accountScreen === null || accountScreen === void 0 ? void 0 : accountScreen.skipCtaLabel) !== null && _accountScreen$skipCt !== void 0 ? _accountScreen$skipCt : (0, _wordpress_i18n.__)("Skip setup", "elementor"),
+				action: function action() {
+					var _elementorCommon$even2;
+					OnboardingEventTracking.trackStepAction(1, "skip");
+					OnboardingEventTracking.sendEventOrStore("SKIP", { currentStep: 1 });
+					OnboardingEventTracking.sendStepEndState(1);
+					safeDispatchEvent("skip_setup", {
+						location: "plugin_onboarding",
+						trigger: ((_elementorCommon$even2 = elementorCommon.eventsManager) === null || _elementorCommon$even2 === void 0 || (_elementorCommon$even2 = _elementorCommon$even2.config) === null || _elementorCommon$even2 === void 0 || (_elementorCommon$even2 = _elementorCommon$even2.triggers) === null || _elementorCommon$even2 === void 0 ? void 0 : _elementorCommon$even2.click) || "click",
+						step_number: 1,
+						step_name: "account_setup"
+					});
+					updateState(getStateObjectToUpdate(state, "steps", pageId, "skipped"));
+					navigate("onboarding/" + nextStep);
+				}
+			};
+		}
+		var pageTexts = {};
+		if (state.isLibraryConnected) pageTexts = {
+			firstLine: /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, (0, _wordpress_i18n.__)("To get the most out of Elementor, we'll help you take your", "elementor"), " ", /*#__PURE__*/ react.default.createElement("br", null), " ", (0, _wordpress_i18n.__)("first steps:", "elementor")),
+			listItems: elementorAppConfig.onboarding.experiment ? [
+				(0, _wordpress_i18n.__)("Set your site's theme", "elementor"),
+				(0, _wordpress_i18n.__)("Choose additional features", "elementor"),
+				(0, _wordpress_i18n.__)("Choose how to start creating", "elementor")
+			] : [
+				(0, _wordpress_i18n.__)("Set your site's theme", "elementor"),
+				(0, _wordpress_i18n.__)("Give your site a name & logo", "elementor"),
+				(0, _wordpress_i18n.__)("Choose how to start creating", "elementor")
+			]
+		};
+		else {
+			var cdnPageTexts = buildDisconnectedPageTexts(accountScreen);
+			if (cdnPageTexts) pageTexts = cdnPageTexts;
+			else if (elementorAppConfig.onboarding.experiment) pageTexts = {
+				firstLine: /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, (0, _wordpress_i18n.__)("To get the most of Elementor, we'll connect your account.", "elementor"), "  ", /*#__PURE__*/ react.default.createElement("br", null), " ", (0, _wordpress_i18n.__)("Then you can:", "elementor")),
+				listItems: [
+					(0, _wordpress_i18n.__)("Access dozens of professionally designed templates", "elementor"),
+					(0, _wordpress_i18n.__)("Manage all your sites from the My Elementor dashboard", "elementor"),
+					(0, _wordpress_i18n.__)("Unlock tools that streamline your workflow and site setup", "elementor")
+				]
+			};
+			else pageTexts = {
+				firstLine: (0, _wordpress_i18n.__)("To get the most out of Elementor, we'll connect your account.", "elementor") + " " + (0, _wordpress_i18n.__)("Then you can:", "elementor"),
+				listItems: [
+					(0, _wordpress_i18n.__)("Choose from countless professional templates", "elementor"),
+					(0, _wordpress_i18n.__)("Manage your site with our handy dashboard", "elementor"),
+					(0, _wordpress_i18n.__)("Take part in the community forum, share & grow together", "elementor")
+				]
+			};
+		}
+		var actionButton = { role: "button" };
+		if (state.isLibraryConnected) {
+			actionButton.text = (0, _wordpress_i18n.__)("Let's do it", "elementor");
+			actionButton.onClick = function() {
+				elementorCommon.events.dispatchEvent({
+					event: "next",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+				updateState(getStateObjectToUpdate(state, "steps", pageId, "completed"));
+				navigate("onboarding/" + nextStep);
+			};
+		} else {
+			var _accountScreen$primar;
+			actionButton.text = (_accountScreen$primar = accountScreen === null || accountScreen === void 0 ? void 0 : accountScreen.primaryCtaLabel) !== null && _accountScreen$primar !== void 0 ? _accountScreen$primar : (0, _wordpress_i18n.__)("Start setup", "elementor");
+			actionButton.href = elementorAppConfig.onboarding.urls.signUp + elementorAppConfig.onboarding.utms.connectCta;
+			actionButton.ref = actionButtonRef;
+			actionButton.onClick = function() {
+				var _elementorCommon$even3;
+				OnboardingEventTracking.trackStepAction(1, "create");
+				OnboardingEventTracking.sendEventOrStore("CREATE_MY_ACCOUNT", {
+					currentStep: 1,
+					createAccountClicked: "main_cta"
+				});
+				safeDispatchEvent("new_account_connect", {
+					location: "plugin_onboarding",
+					trigger: ((_elementorCommon$even3 = elementorCommon.eventsManager) === null || _elementorCommon$even3 === void 0 || (_elementorCommon$even3 = _elementorCommon$even3.config) === null || _elementorCommon$even3 === void 0 || (_elementorCommon$even3 = _elementorCommon$even3.triggers) === null || _elementorCommon$even3 === void 0 ? void 0 : _elementorCommon$even3.click) || "click",
+					step_number: 1,
+					step_name: "account_setup",
+					button_text: "Start setup"
+				});
+			};
+		}
+		var connectSuccessCallback = function connectSuccessCallback() {
+			var stateToUpdate = getStateObjectToUpdate(state, "steps", pageId, "completed");
+			stateToUpdate.isLibraryConnected = true;
+			updateState(stateToUpdate);
+			elementorCommon.events.dispatchEvent({
+				event: "indication prompt",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep,
+					action_state: "success",
+					action: "connect account"
+				}
+			});
+			setNoticeState({
+				type: "success",
+				icon: "eicon-check-circle-o",
+				message: "Alrighty - your account is connected."
+			});
+			OnboardingEventTracking.sendStepEndState(1);
+			navigate("onboarding/" + nextStep);
+		};
+		function getNextStep() {
+			if (!state.isHelloThemeActivated) return "hello";
+			return elementorAppConfig.onboarding.experiment ? "chooseFeatures" : "siteName";
+		}
+		var connectFailureCallback = function connectFailureCallback() {
+			elementorCommon.events.dispatchEvent({
+				event: "indication prompt",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep,
+					action_state: "failure",
+					action: "connect account"
+				}
+			});
+			OnboardingEventTracking.sendConnectionFailureEvents();
+			setNoticeState({
+				type: "error",
+				icon: "eicon-warning",
+				message: (0, _wordpress_i18n.__)("Oops, the connection failed. Try again.", "elementor")
+			});
+			navigate("onboarding/" + nextStep);
+		};
+		var ContentComponent = "B" === experiment101Variant ? AccountContentB : AccountContentA;
+		return /*#__PURE__*/ react.default.createElement(Layout, {
+			pageId,
+			nextStep,
+			className: "B" === experiment101Variant ? "e-onboarding101-variant-b" : ""
+		}, /*#__PURE__*/ react.default.createElement(ContentComponent, {
+			actionButton,
+			skipButton,
+			noticeState,
+			pageTexts,
+			state,
+			connectSuccessCallback,
+			connectFailureCallback,
+			updateState,
+			getStateObjectToUpdate,
+			navigate,
+			nextStep,
+			pageId
+		}), !state.isLibraryConnected && "B" !== experiment101Variant && (!accountScreen || accountScreen.showExistingAccount) && /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__footnote" }, /*#__PURE__*/ react.default.createElement("p", null, ((_accountScreen$existi = accountScreen === null || accountScreen === void 0 ? void 0 : accountScreen.existingAccountPrefix) !== null && _accountScreen$existi !== void 0 ? _accountScreen$existi : (0, _wordpress_i18n.__)("Already have an account?", "elementor")) + " ", /*#__PURE__*/ react.default.createElement("a", {
+			ref: alreadyHaveAccountLinkRef,
+			href: elementorAppConfig.onboarding.urls.connect + elementorAppConfig.onboarding.utms.connectCtaLink,
+			onClick: function onClick() {
+				var _elementorCommon$even4;
+				OnboardingEventTracking.trackStepAction(1, "connect");
+				OnboardingEventTracking.sendEventOrStore("STEP1_CLICKED_CONNECT", { currentStep: state.currentStep });
+				safeDispatchEvent("existing_account_connect", {
+					location: "plugin_onboarding",
+					trigger: ((_elementorCommon$even4 = elementorCommon.eventsManager) === null || _elementorCommon$even4 === void 0 || (_elementorCommon$even4 = _elementorCommon$even4.config) === null || _elementorCommon$even4 === void 0 || (_elementorCommon$even4 = _elementorCommon$even4.triggers) === null || _elementorCommon$even4 === void 0 ? void 0 : _elementorCommon$even4.click) || "click",
+					step_number: 1,
+					step_name: "account_setup",
+					button_text: "Click here to connect"
+				});
+			}
+		}, (_accountScreen$existi2 = accountScreen === null || accountScreen === void 0 ? void 0 : accountScreen.existingAccountLinkText) !== null && _accountScreen$existi2 !== void 0 ? _accountScreen$existi2 : (0, _wordpress_i18n.__)("Click here to connect", "elementor"))), /*#__PURE__*/ react.default.createElement(Connect, {
+			buttonRef: alreadyHaveAccountLinkRef,
+			successCallback: connectSuccessCallback,
+			errorCallback: connectFailureCallback
+		})));
+	}
+	var init_account = __esmMin((() => {
+		init_slicedToArray();
+		init_es$1();
+		init_context();
+		init_connect();
+		init_layout();
+		init_account_content_a();
+		init_account_content_b();
+		init_utils();
+		init_onboarding_event_tracking();
+		init_account_screen_config();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/theme-selection-content-a.js
+	function ThemeSelectionContentA(_ref) {
+		var actionButton = _ref.actionButton;
+		var skipButton = _ref.skipButton;
+		var noticeState = _ref.noticeState;
+		return /*#__PURE__*/ react.default.createElement(PageContentLayout, {
+			image: elementorCommon.config.urls.assets + "images/app/onboarding/Illustration_Hello.svg",
+			title: (0, _wordpress_i18n.__)("Every site starts with a theme.", "elementor"),
+			actionButton,
+			skipButton,
+			noticeState
+		}, /*#__PURE__*/ react.default.createElement("p", null, (0, _wordpress_i18n.__)("Hello is Elementor's official blank canvas theme optimized to build your website exactly the way you want.", "elementor")), !elementorAppConfig.onboarding.experiment && /*#__PURE__*/ react.default.createElement("p", null, (0, _wordpress_i18n.__)("Here's why:", "elementor")), /*#__PURE__*/ react.default.createElement("ul", { className: "e-onboarding__feature-list" }, /*#__PURE__*/ react.default.createElement("li", null, (0, _wordpress_i18n.__)("Light-weight and fast loading", "elementor")), /*#__PURE__*/ react.default.createElement("li", null, (0, _wordpress_i18n.__)("Great for SEO", "elementor")), /*#__PURE__*/ react.default.createElement("li", null, (0, _wordpress_i18n.__)("Already being used by 1M+ web creators", "elementor"))));
+	}
+	var import_prop_types$3;
+	var init_theme_selection_content_a = __esmMin((() => {
+		import_prop_types$3 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_page_content_layout();
+		ThemeSelectionContentA.propTypes = {
+			actionButton: import_prop_types$3.default.object.isRequired,
+			skipButton: import_prop_types$3.default.object.isRequired,
+			noticeState: import_prop_types$3.default.object
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/hello-theme.js
+	function HelloTheme() {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var getStateObjectToUpdate = _useContext.getStateObjectToUpdate;
+		var _useAjax = useAjax();
+		var activateHelloThemeAjaxState = _useAjax.ajaxState;
+		var setActivateHelloThemeAjaxState = _useAjax.setAjax;
+		var _useState2 = _slicedToArray((0, react.useState)(false), 2);
+		var helloInstalledInOnboarding = _useState2[0];
+		var setHelloInstalledInOnboarding = _useState2[1];
+		var _useState4 = _slicedToArray((0, react.useState)(false), 2);
+		var isInstalling = _useState4[0];
+		var setIsInstalling = _useState4[1];
+		var noticeStateSuccess = (0, react.useMemo)(function() {
+			return {
+				type: "success",
+				icon: "eicon-check-circle-o",
+				message: (0, _wordpress_i18n.__)("Your site's got Hello theme. High-five!", "elementor")
+			};
+		}, []);
+		var _useState6 = _slicedToArray((0, react.useState)(state.isHelloThemeActivated ? noticeStateSuccess : null), 2);
+		var noticeState = _useState6[0];
+		var setNoticeState = _useState6[1];
+		var _useState8 = _slicedToArray((0, react.useState)([]), 2);
+		var activeTimeouts = _useState8[0];
+		var setActiveTimeouts = _useState8[1];
+		var navigate = useNavigate();
+		var pageId = "hello";
+		var nextStep = elementorAppConfig.onboarding.experiment ? "chooseFeatures" : "siteName";
+		var goToNextScreen = (0, react.useCallback)(function() {
+			return navigate("onboarding/" + nextStep);
+		}, [navigate, nextStep]);
+		var _useState0 = _slicedToArray((0, react.useState)(getContinueButtonText(state.isHelloThemeActivated)), 2);
+		var actionButtonText = _useState0[0];
+		var setActionButtonText = _useState0[1];
+		/**
+		* Setup
+		*
+		* If Hello Theme is already activated when onboarding starts, This screen is unneeded and is marked as 'completed'
+		* and skipped.
+		*/
+		(0, react.useEffect)(function() {
+			if (!helloInstalledInOnboarding && state.isHelloThemeActivated) {
+				updateState(getStateObjectToUpdate(state, "steps", pageId, "completed"));
+				goToNextScreen();
+			}
+			OnboardingEventTracking.setupAllUpgradeButtons(state.currentStep);
+			OnboardingEventTracking.onStepLoad(2);
+		}, [
+			getStateObjectToUpdate,
+			goToNextScreen,
+			helloInstalledInOnboarding,
+			pageId,
+			state,
+			updateState
+		]);
+		(0, react.useEffect)(function() {
+			setActionButtonText(getContinueButtonText(state.isHelloThemeActivated));
+		}, [state.isHelloThemeActivated]);
+		var resetScreenContent = function resetScreenContent() {
+			activeTimeouts.forEach(function(timeoutID) {
+				return clearTimeout(timeoutID);
+			});
+			setActiveTimeouts([]);
+			setIsInstalling(false);
+			setActionButtonText(getContinueButtonText(state.isHelloThemeActivated));
+		};
+		/**
+		* Callbacks
+		*/
+		var onHelloThemeActivationSuccess = (0, react.useCallback)(function() {
+			setIsInstalling(false);
+			elementorCommon.events.dispatchEvent({
+				event: "indication prompt",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep,
+					action_state: "success",
+					action: "hello theme activation"
+				}
+			});
+			setNoticeState(noticeStateSuccess);
+			setActionButtonText((0, _wordpress_i18n.__)("Next", "elementor"));
+			var stateToUpdate = getStateObjectToUpdate(state, "steps", pageId, "completed");
+			stateToUpdate.isHelloThemeActivated = true;
+			updateState(stateToUpdate);
+			setHelloInstalledInOnboarding(true);
+			OnboardingEventTracking.sendThemeInstalled("hello");
+			OnboardingEventTracking.sendStepEndState(2);
+			goToNextScreen();
+		}, [
+			getStateObjectToUpdate,
+			goToNextScreen,
+			noticeStateSuccess,
+			state,
+			updateState
+		]);
+		var onErrorInstallHelloTheme = function onErrorInstallHelloTheme() {
+			elementorCommon.events.dispatchEvent({
+				event: "indication prompt",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep,
+					action_state: "failure",
+					action: "hello theme install"
+				}
+			});
+			setNoticeState({
+				type: "error",
+				icon: "eicon-warning",
+				message: (0, _wordpress_i18n.__)("There was a problem installing Hello Theme.", "elementor")
+			});
+			OnboardingEventTracking.reportThemeInstallError("hello_theme_install_failed");
+			resetScreenContent();
+		};
+		var activateHelloTheme = function activateHelloTheme() {
+			setIsInstalling(true);
+			updateState({ isHelloThemeInstalled: true });
+			setActivateHelloThemeAjaxState({ data: {
+				action: "elementor_activate_hello_theme",
+				theme_slug: HELLO_THEME_SLUG
+			} });
+		};
+		var installHelloTheme = function installHelloTheme() {
+			if (!isInstalling) setIsInstalling(true);
+			wp.updates.ajax("install-theme", {
+				slug: HELLO_THEME_SLUG,
+				success: function success() {
+					return activateHelloTheme();
+				},
+				error: function error() {
+					return onErrorInstallHelloTheme();
+				}
+			});
+		};
+		var sendNextButtonEvent = function sendNextButtonEvent() {
+			elementorCommon.events.dispatchEvent({
+				event: "next",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep
+				}
+			});
+		};
+		/**
+		* Action Button
+		*/
+		var actionButton = {
+			text: actionButtonText,
+			role: "button"
+		};
+		if (isInstalling) actionButton.className = "e-onboarding__button--processing";
+		if (state.isHelloThemeActivated) actionButton.onClick = function() {
+			sendNextButtonEvent();
+			OnboardingEventTracking.sendStepEndState(2);
+			goToNextScreen();
+		};
+		else actionButton.onClick = function() {
+			sendNextButtonEvent();
+			if (state.isHelloThemeInstalled && !state.isHelloThemeActivated) activateHelloTheme();
+			else if (!state.isHelloThemeInstalled) installHelloTheme();
+			else {
+				OnboardingEventTracking.sendStepEndState(2);
+				goToNextScreen();
+			}
+		};
+		/**
+		* Skip Button
+		*/
+		var skipButton = {};
+		if (isInstalling) skipButton.className = "e-onboarding__button-skip--disabled";
+		if ("completed" !== state.steps[pageId]) skipButton.text = (0, _wordpress_i18n.__)("Skip", "elementor");
+		/**
+		* Set timeouts for updating the 'Next' button text if the Hello Theme installation is taking too long.
+		*/
+		(0, react.useEffect)(function() {
+			if (isInstalling) setActionButtonText(/*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("i", {
+				className: "eicon-loading eicon-animation-spin",
+				"aria-hidden": "true"
+			})));
+			var actionTextTimeouts = [];
+			var timeout4 = setTimeout(function() {
+				if (!isInstalling) return;
+				setActionButtonText(/*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("i", {
+					className: "eicon-loading eicon-animation-spin",
+					"aria-hidden": "true"
+				}), /*#__PURE__*/ react.default.createElement("span", { className: "e-onboarding__action-button-text" }, (0, _wordpress_i18n.__)("Hold on, this can take a minute...", "elementor"))));
+			}, 4e3);
+			actionTextTimeouts.push(timeout4);
+			var timeout30 = setTimeout(function() {
+				if (!isInstalling) return;
+				setActionButtonText(/*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("i", {
+					className: "eicon-loading eicon-animation-spin",
+					"aria-hidden": "true"
+				}), /*#__PURE__*/ react.default.createElement("span", { className: "e-onboarding__action-button-text" }, (0, _wordpress_i18n.__)("Okay, now we're really close...", "elementor"))));
+			}, 3e4);
+			actionTextTimeouts.push(timeout30);
+			setActiveTimeouts(actionTextTimeouts);
+		}, [isInstalling]);
+		(0, react.useEffect)(function() {
+			if ("initial" !== activateHelloThemeAjaxState.status) {
+				var _activateHelloThemeAj;
+				if ("success" === activateHelloThemeAjaxState.status && (_activateHelloThemeAj = activateHelloThemeAjaxState.response) !== null && _activateHelloThemeAj !== void 0 && _activateHelloThemeAj.helloThemeActivated) onHelloThemeActivationSuccess();
+				else if ("error" === activateHelloThemeAjaxState.status) {
+					elementorCommon.events.dispatchEvent({
+						event: "indication prompt",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							step: state.currentStep,
+							action_state: "failure",
+							action: "hello theme activation"
+						}
+					});
+					setNoticeState({
+						type: "error",
+						icon: "eicon-warning",
+						message: (0, _wordpress_i18n.__)("There was a problem activating Hello Theme.", "elementor")
+					});
+					OnboardingEventTracking.reportThemeInstallError("hello_theme_activation_failed");
+					resetScreenContent();
+				}
+			}
+		}, [activateHelloThemeAjaxState.status]);
+		return /*#__PURE__*/ react.default.createElement(Layout, {
+			pageId,
+			nextStep
+		}, /*#__PURE__*/ react.default.createElement(ThemeSelectionContentA, {
+			actionButton,
+			skipButton,
+			noticeState
+		}), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__footnote" }, (0, _wordpress_i18n.__)("You can switch your theme later on", "elementor")));
+	}
+	var HELLO_THEME_SLUG, getContinueButtonText;
+	var init_hello_theme = __esmMin((() => {
+		init_slicedToArray();
+		init_context();
+		init_es$1();
+		init_use_ajax();
+		init_layout();
+		init_theme_selection_content_a();
+		init_onboarding_event_tracking();
+		HELLO_THEME_SLUG = "hello-elementor";
+		getContinueButtonText = function getContinueButtonText(isHelloThemeActivated) {
+			if (isHelloThemeActivated) return (0, _wordpress_i18n.__)("Next", "elementor");
+			return (0, _wordpress_i18n.__)("Continue with Hello Theme", "elementor");
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/site-name.js
+	function SiteName() {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var getStateObjectToUpdate = _useContext.getStateObjectToUpdate;
+		var _useAjax = useAjax();
+		var ajaxState = _useAjax.ajaxState;
+		var setAjax = _useAjax.setAjax;
+		var _useState2 = _slicedToArray((0, react.useState)(null), 2);
+		var noticeState = _useState2[0];
+		var setNoticeState = _useState2[1];
+		var _useState4 = _slicedToArray((0, react.useState)(state.siteName), 2);
+		var siteNameInputValue = _useState4[0];
+		var setSiteNameInputValue = _useState4[1];
+		var pageId = "siteName";
+		var nextStep = "siteLogo";
+		var navigate = useNavigate();
+		var nameInputRef = (0, react.useRef)();
+		var actionButton = {
+			text: (0, _wordpress_i18n.__)("Next", "elementor"),
+			onClick: function onClick() {
+				elementorCommon.events.dispatchEvent({
+					event: "next",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+				if (nameInputRef.current.value !== state.siteName && "" !== nameInputRef.current.value) setAjax({ data: {
+					action: "elementor_update_site_name",
+					data: JSON.stringify({ siteName: nameInputRef.current.value })
+				} });
+				else if (nameInputRef.current.value === state.siteName) {
+					updateState(getStateObjectToUpdate(state, "steps", pageId, "completed"));
+					navigate("onboarding/" + nextStep);
+				} else {
+					updateState(getStateObjectToUpdate(state, "steps", pageId, "skipped"));
+					navigate("onboarding/" + nextStep);
+				}
+			}
+		};
+		var skipButton;
+		if ("completed" !== state.steps[pageId]) skipButton = { text: (0, _wordpress_i18n.__)("Skip", "elementor") };
+		if (!siteNameInputValue) actionButton.className = "e-onboarding__button--disabled";
+		(0, react.useEffect)(function() {
+			if ("initial" !== ajaxState.status) {
+				var _ajaxState$response;
+				if ("success" === ajaxState.status && (_ajaxState$response = ajaxState.response) !== null && _ajaxState$response !== void 0 && _ajaxState$response.siteNameUpdated) {
+					var stateToUpdate = getStateObjectToUpdate(state, "steps", pageId, "completed");
+					stateToUpdate.siteName = nameInputRef.current.value;
+					updateState(stateToUpdate);
+					navigate("onboarding/" + nextStep);
+				} else if ("error" === ajaxState.status) {
+					elementorCommon.events.dispatchEvent({
+						event: "indication prompt",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							step: state.currentStep,
+							action_state: "failure",
+							action: "site name update"
+						}
+					});
+					setNoticeState({
+						type: "error",
+						icon: "eicon-warning",
+						message: (0, _wordpress_i18n.__)("Sorry, the name wasn't saved. Try again, or skip for now.", "elementor")
+					});
+				}
+			}
+		}, [ajaxState.status]);
+		return /*#__PURE__*/ react.default.createElement(Layout, {
+			pageId,
+			nextStep
+		}, /*#__PURE__*/ react.default.createElement(PageContentLayout, {
+			image: elementorCommon.config.urls.assets + "images/app/onboarding/Illustration_Setup.svg",
+			title: (0, _wordpress_i18n.__)("Now, let's give your site a name.", "elementor"),
+			actionButton,
+			skipButton,
+			noticeState
+		}, /*#__PURE__*/ react.default.createElement("p", null, (0, _wordpress_i18n.__)("This is what your site is called on the WP dashboard, and can be changed later from the general settings - it's not your website's URL.", "elementor")), /*#__PURE__*/ react.default.createElement("input", {
+			className: "e-onboarding__text-input e-onboarding__site-name-input",
+			type: "text",
+			placeholder: "e.g. Eric's Space Shuttles",
+			defaultValue: state.siteName || "",
+			ref: nameInputRef,
+			onChange: function onChange(event) {
+				return setSiteNameInputValue(event.target.value);
+			}
+		})));
+	}
+	var init_site_name = __esmMin((() => {
+		init_slicedToArray();
+		init_context();
+		init_es$1();
+		init_use_ajax();
+		init_layout();
+		init_page_content_layout();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/site-logo.js
+	function SiteLogo() {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var getStateObjectToUpdate = _useContext.getStateObjectToUpdate;
+		var _useState2 = _slicedToArray((0, react.useState)(state.siteLogo.id ? state.siteLogo : null), 2);
+		var file = _useState2[0];
+		var setFile = _useState2[1];
+		var _useState4 = _slicedToArray((0, react.useState)(false), 2);
+		var isUploading = _useState4[0];
+		var setIsUploading = _useState4[1];
+		var _useState6 = _slicedToArray((0, react.useState)(false), 2);
+		var showUnfilteredFilesDialog = _useState6[0];
+		var setShowUnfilteredFilesDialog = _useState6[1];
+		var _useState8 = _slicedToArray((0, react.useState)(), 2);
+		var fileSource = _useState8[0];
+		var setFileSource = _useState8[1];
+		var _useState0 = _slicedToArray((0, react.useState)(null), 2);
+		var noticeState = _useState0[0];
+		var setNoticeState = _useState0[1];
+		var _useAjax = useAjax();
+		var updateLogoAjaxState = _useAjax.ajaxState;
+		var setUpdateLogoAjax = _useAjax.setAjax;
+		var _useAjax2 = useAjax();
+		var uploadImageAjaxState = _useAjax2.ajaxState;
+		var setUploadImageAjax = _useAjax2.setAjax;
+		var pageId = "siteLogo";
+		var nextStep = "goodToGo";
+		var navigate = useNavigate();
+		var actionButton = {
+			role: "button",
+			onClick: function onClick() {
+				elementorCommon.events.dispatchEvent({
+					event: "next",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+				if (file.id) if (file.id !== state.siteLogo.id) updateSiteLogo();
+				else {
+					updateState(getStateObjectToUpdate(state, "steps", pageId, "completed"));
+					navigate("onboarding/" + nextStep);
+				}
+			}
+		};
+		var skipButton;
+		if ("completed" !== state.steps[pageId]) skipButton = { text: (0, _wordpress_i18n.__)("Skip", "elementor") };
+		if (isUploading) actionButton.text = /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("i", {
+			className: "eicon-loading eicon-animation-spin",
+			"aria-hidden": "true"
+		}));
+		else actionButton.text = (0, _wordpress_i18n.__)("Next", "elementor");
+		if (!file) actionButton.className = "e-onboarding__button--disabled";
+		var updateSiteLogo = (0, react.useCallback)(function() {
+			setIsUploading(true);
+			setUpdateLogoAjax({ data: {
+				action: "elementor_update_site_logo",
+				data: JSON.stringify({ attachmentId: file.id })
+			} });
+		}, [file]);
+		var uploadSiteLogo = function uploadSiteLogo(fileToUpload) {
+			setIsUploading(true);
+			setUploadImageAjax({ data: {
+				action: "elementor_upload_site_logo",
+				fileToUpload
+			} });
+		};
+		var dismissUnfilteredFilesCallback = function dismissUnfilteredFilesCallback() {
+			setIsUploading(false);
+			setFile(null);
+			setShowUnfilteredFilesDialog(false);
+		};
+		var _onFileSelect = function onFileSelect(selectedFile) {
+			setFileSource("drop");
+			if ("image/svg+xml" === selectedFile.type && !elementorAppConfig.onboarding.isUnfilteredFilesEnabled) {
+				setFile(selectedFile);
+				setIsUploading(true);
+				setShowUnfilteredFilesDialog(true);
+			} else {
+				setFile(selectedFile);
+				setNoticeState(null);
+				uploadSiteLogo(selectedFile);
+			}
+		};
+		var onImageRemoveClick = function onImageRemoveClick() {
+			elementorCommon.events.dispatchEvent({
+				event: "remove selected logo",
+				version: "",
+				details: { placement: elementorAppConfig.onboarding.eventPlacement }
+			});
+			setFile(null);
+		};
+		/**
+		* Ajax Callbacks
+		*/
+		(0, react.useEffect)(function() {
+			if ("initial" !== uploadImageAjaxState.status) {
+				var _uploadImageAjaxState;
+				if ("success" === uploadImageAjaxState.status && (_uploadImageAjaxState = uploadImageAjaxState.response) !== null && _uploadImageAjaxState !== void 0 && (_uploadImageAjaxState = _uploadImageAjaxState.imageAttachment) !== null && _uploadImageAjaxState !== void 0 && _uploadImageAjaxState.id) {
+					elementorCommon.events.dispatchEvent({
+						event: "logo image uploaded",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							source: fileSource
+						}
+					});
+					setIsUploading(false);
+					setFile(uploadImageAjaxState.response.imageAttachment);
+					if (noticeState) setNoticeState(null);
+				} else if ("error" === uploadImageAjaxState.status) {
+					setIsUploading(false);
+					setFile(null);
+					elementorCommon.events.dispatchEvent({
+						event: "indication prompt",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							action_state: "failure",
+							action: "logo image upload"
+						}
+					});
+					setNoticeState({
+						type: "error",
+						icon: "eicon-warning",
+						message: "That didn't work. Try uploading your file again."
+					});
+				}
+			}
+		}, [uploadImageAjaxState.status]);
+		(0, react.useEffect)(function() {
+			if ("initial" !== updateLogoAjaxState.status) {
+				var _updateLogoAjaxState$;
+				if ("success" === updateLogoAjaxState.status && (_updateLogoAjaxState$ = updateLogoAjaxState.response) !== null && _updateLogoAjaxState$ !== void 0 && _updateLogoAjaxState$.siteLogoUpdated) {
+					elementorCommon.events.dispatchEvent({
+						event: "logo image updated",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							source: fileSource
+						}
+					});
+					setIsUploading(false);
+					if (noticeState) setNoticeState(null);
+					var stateToUpdate = getStateObjectToUpdate(state, "steps", pageId, "completed");
+					stateToUpdate.siteLogo = {
+						id: file.id,
+						url: file.url
+					};
+					updateState(stateToUpdate);
+					navigate("onboarding/" + nextStep);
+				} else if ("error" === updateLogoAjaxState.status) {
+					setIsUploading(false);
+					elementorCommon.events.dispatchEvent({
+						event: "indication prompt",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							step: state.currentStep,
+							action_state: "failure",
+							action: "update site logo"
+						}
+					});
+					setNoticeState({
+						type: "error",
+						icon: "eicon-warning",
+						message: "That didn't work. Try uploading your file again."
+					});
+				}
+			}
+		}, [updateLogoAjaxState.status]);
+		return /*#__PURE__*/ react.default.createElement(Layout, {
+			pageId,
+			nextStep
+		}, /*#__PURE__*/ react.default.createElement(PageContentLayout, {
+			image: elementorCommon.config.urls.assets + "images/app/onboarding/Illustration_Setup.svg",
+			title: (0, _wordpress_i18n.__)("Have a logo? Add it here.", "elementor"),
+			actionButton,
+			skipButton,
+			noticeState
+		}, /*#__PURE__*/ react.default.createElement("span", null, (0, _wordpress_i18n.__)("Otherwise, you can skip this and add one later.", "elementor")), file && !showUnfilteredFilesDialog ? /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__logo-container" + (isUploading ? " e-onboarding__is-uploading" : "") }, /*#__PURE__*/ react.default.createElement("div", {
+			className: "e-onboarding__logo-remove",
+			onClick: function onClick() {
+				return onImageRemoveClick();
+			}
+		}, /*#__PURE__*/ react.default.createElement("i", { className: "eicon-trash-o" })), /*#__PURE__*/ react.default.createElement("img", {
+			src: file.url,
+			alt: (0, _wordpress_i18n.__)("Potential Site Logo", "elementor")
+		})) : /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement(DropZone$1, {
+			className: "e-onboarding__drop-zone",
+			heading: (0, _wordpress_i18n.__)("Drop image here", "elementor"),
+			secondaryText: (0, _wordpress_i18n.__)("or", "elementor"),
+			buttonText: (0, _wordpress_i18n.__)("Open Media Library", "elementor"),
+			buttonVariant: "outlined",
+			buttonColor: "cta",
+			icon: "",
+			type: "wp-media",
+			filetypes: [
+				"jpg",
+				"jpeg",
+				"png",
+				"svg"
+			],
+			onFileSelect: function onFileSelect(selectedFile) {
+				return _onFileSelect(selectedFile);
+			},
+			onWpMediaSelect: function onWpMediaSelect(frame) {
+				var attachment = frame.state().get("selection").first().toJSON();
+				setFileSource("browse");
+				setFile(attachment);
+				setNoticeState(null);
+			},
+			onButtonClick: function onButtonClick() {
+				elementorCommon.events.dispatchEvent({
+					event: "browse file click",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+			},
+			onError: function onError(error) {
+				if ("file_not_allowed" === error.id) {
+					elementorCommon.events.dispatchEvent({
+						event: "indication prompt",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							step: state.currentStep,
+							action_state: "failure",
+							action: "logo upload format"
+						}
+					});
+					setNoticeState({
+						type: "error",
+						icon: "eicon-warning",
+						message: (0, _wordpress_i18n.__)("This file type is not supported. Try a different type of file", "elementor")
+					});
+				}
+			}
+		})), /*#__PURE__*/ react.default.createElement(UnfilteredFilesDialog, {
+			show: showUnfilteredFilesDialog,
+			setShow: setShowUnfilteredFilesDialog,
+			confirmModalText: (0, _wordpress_i18n.__)("This allows Elementor to scan your SVGs for malicious content. If you do not wish to allow this, use a different image format.", "elementor"),
+			errorModalText: (0, _wordpress_i18n.__)("There was a problem with enabling SVG uploads. Try again, or use another image format.", "elementor"),
+			onReady: function onReady() {
+				setShowUnfilteredFilesDialog(false);
+				elementorAppConfig.onboarding.isUnfilteredFilesEnabled = true;
+				uploadSiteLogo(file);
+			},
+			onDismiss: function onDismiss() {
+				return dismissUnfilteredFilesCallback();
+			},
+			onCancel: function onCancel() {
+				return dismissUnfilteredFilesCallback();
+			}
+		})));
+	}
+	var init_site_logo = __esmMin((() => {
+		init_slicedToArray();
+		init_context();
+		init_es$1();
+		init_use_ajax();
+		init_drop_zone();
+		init_unfiltered_files_dialog();
+		init_layout();
+		init_page_content_layout();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/card.js
+	function Card(_ref) {
+		var image = _ref.image;
+		var imageAlt = _ref.imageAlt;
+		var title = _ref.title;
+		var text = _ref.text;
+		var link = _ref.link;
+		var clickAction = _ref.clickAction;
+		var _ref$target = _ref.target;
+		var target = _ref$target === void 0 ? "_self" : _ref$target;
+		return /*#__PURE__*/ react.default.createElement("a", {
+			target,
+			className: "e-onboarding__card",
+			href: link,
+			onClick: function onClick() {
+				if (clickAction) clickAction();
+			}
+		}, /*#__PURE__*/ react.default.createElement("img", {
+			className: "e-onboarding__card-image",
+			src: image,
+			alt: imageAlt
+		}), !!title && /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__card-text" }, title), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__card-text-small" }, text)), !title && /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__card-text" }, text));
+	}
+	var import_prop_types$2;
+	var init_card = __esmMin((() => {
+		import_prop_types$2 = /* @__PURE__ */ __toESM(require_prop_types());
+		Card.propTypes = {
+			image: import_prop_types$2.default.string.isRequired,
+			imageAlt: import_prop_types$2.default.string.isRequired,
+			title: import_prop_types$2.default.string,
+			text: import_prop_types$2.default.string.isRequired,
+			link: import_prop_types$2.default.string.isRequired,
+			clickAction: import_prop_types$2.default.func,
+			target: import_prop_types$2.default.string
+		};
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/good-to-go-content-a.js
+	function ownKeys(e, r) {
+		var t = Object.keys(e);
+		if (Object.getOwnPropertySymbols) {
+			var o = Object.getOwnPropertySymbols(e);
+			r && (o = o.filter(function(r) {
+				return Object.getOwnPropertyDescriptor(e, r).enumerable;
+			})), t.push.apply(t, o);
+		}
+		return t;
+	}
+	function _objectSpread(e) {
+		for (var r = 1; r < arguments.length; r++) {
+			var t = null != arguments[r] ? arguments[r] : {};
+			r % 2 ? ownKeys(Object(t), !0).forEach(function(r) {
+				_defineProperty$1(e, r, t[r]);
+			}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r) {
+				Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
+			});
+		}
+		return e;
+	}
+	function GoodToGoContentA(_ref) {
+		var skipButton = _ref.skipButton;
+		var kitLibraryLink = elementorAppConfig.onboarding.urls.kitLibrary + "&referrer=onboarding";
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, /*#__PURE__*/ react.default.createElement("h1", { className: "e-onboarding__page-content-section-title" }, elementorAppConfig.onboarding.experiment ? (0, _wordpress_i18n.__)("Welcome aboard! What's next?", "elementor") : (0, _wordpress_i18n.__)("That's a wrap! What's next?", "elementor")), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__page-content-section-text" }, (0, _wordpress_i18n.__)("There are two ways to get started with Elementor:", "elementor")), /*#__PURE__*/ react.default.createElement(Grid$14, {
+			container: true,
+			alignItems: "center",
+			justify: "space-between",
+			className: "e-onboarding__cards-grid e-onboarding__page-content"
+		}, /*#__PURE__*/ react.default.createElement(Card, {
+			name: "blank",
+			image: elementorCommon.config.urls.assets + "images/app/onboarding/Blank_Canvas.svg",
+			imageAlt: (0, _wordpress_i18n.__)("Click here to create a new page and open it in Elementor Editor", "elementor"),
+			text: (0, _wordpress_i18n.__)("Edit a blank canvas with the Elementor Editor", "elementor"),
+			link: elementorAppConfig.onboarding.urls.createNewPage,
+			clickAction: function clickAction() {
+				OnboardingEventTracking.handleSiteStarterChoice("blank_canvas");
+			}
+		}), /*#__PURE__*/ react.default.createElement(Card, {
+			name: "template",
+			image: elementorCommon.config.urls.assets + "images/app/onboarding/Library.svg",
+			imageAlt: (0, _wordpress_i18n.__)("Click here to go to Elementor's Website Templates", "elementor"),
+			text: (0, _wordpress_i18n.__)("Choose a professionally-designed template or import your own", "elementor"),
+			link: kitLibraryLink,
+			clickAction: function clickAction() {
+				OnboardingEventTracking.handleSiteStarterChoice("kit_library");
+				location.href = kitLibraryLink;
+				location.reload();
+			}
+		})), /*#__PURE__*/ react.default.createElement(FooterButtons, {
+			skipButton: _objectSpread(_objectSpread({}, skipButton), {}, { target: "_self" }),
+			className: "e-onboarding__good-to-go-footer"
+		}));
+	}
+	var import_prop_types$1;
+	var init_good_to_go_content_a = __esmMin((() => {
+		init_defineProperty$1();
+		import_prop_types$1 = /* @__PURE__ */ __toESM(require_prop_types());
+		init_grid();
+		init_card();
+		init_footer_buttons();
+		init_onboarding_event_tracking();
+		GoodToGoContentA.propTypes = { skipButton: import_prop_types$1.default.object.isRequired };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/good-to-go.js
+	function GoodToGo() {
+		var pageId = "goodToGo";
+		(0, react.useEffect)(function() {
+			OnboardingEventTracking.checkAndSendReturnToStep4();
+			OnboardingEventTracking.onStepLoad(4);
+		}, []);
+		var skipButton = {
+			text: (0, _wordpress_i18n.__)("Skip", "elementor"),
+			href: elementorAppConfig.onboarding.urls.createNewPage
+		};
+		return /*#__PURE__*/ react.default.createElement(Layout, { pageId }, /*#__PURE__*/ react.default.createElement(GoodToGoContentA, { skipButton }));
+	}
+	var init_good_to_go = __esmMin((() => {
+		init_layout();
+		init_good_to_go_content_a();
+		init_onboarding_event_tracking();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/upload-and-install-pro.js
+	function UploadAndInstallPro() {
+		usePageTitle({ title: (0, _wordpress_i18n.__)("Upload and Install Elementor Pro", "elementor") });
+		var state = (0, react.useContext)(OnboardingContext).state;
+		var _useAjax = useAjax();
+		var installProZipAjaxState = _useAjax.ajaxState;
+		var setInstallProZipAjaxState = _useAjax.setAjax;
+		var _useState2 = _slicedToArray((0, react.useState)(null), 2);
+		var noticeState = _useState2[0];
+		var setNoticeState = _useState2[1];
+		var _useState4 = _slicedToArray((0, react.useState)(false), 2);
+		var isLoading = _useState4[0];
+		var setIsLoading = _useState4[1];
+		var _useState6 = _slicedToArray((0, react.useState)(), 2);
+		var fileSource = _useState6[0];
+		var setFileSource = _useState6[1];
+		var uploadProZip = (0, react.useCallback)(function(file) {
+			setIsLoading(true);
+			setInstallProZipAjaxState({ data: {
+				action: "elementor_upload_and_install_pro",
+				fileToUpload: file
+			} });
+		}, []);
+		var setErrorNotice = function setErrorNotice() {
+			var error = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null;
+			var step = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : "upload";
+			var errorMessage = (error === null || error === void 0 ? void 0 : error.message) || "That didn't work. Try uploading your file again.";
+			elementorCommon.events.dispatchEvent({
+				event: "indication prompt",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep,
+					action_state: "failure",
+					action: step + " pro",
+					source: fileSource
+				}
+			});
+			setNoticeState({
+				type: "error",
+				icon: "eicon-warning",
+				message: errorMessage
+			});
+		};
+		/**
+		* Ajax Callbacks
+		*/
+		(0, react.useEffect)(function() {
+			if ("initial" !== installProZipAjaxState.status) {
+				var _installProZipAjaxSta;
+				setIsLoading(false);
+				if ("success" === installProZipAjaxState.status && (_installProZipAjaxSta = installProZipAjaxState.response) !== null && _installProZipAjaxSta !== void 0 && _installProZipAjaxSta.elementorProInstalled) {
+					elementorCommon.events.dispatchEvent({
+						event: "pro uploaded",
+						version: "",
+						details: {
+							placement: elementorAppConfig.onboarding.eventPlacement,
+							step: state.currentStep,
+							source: fileSource
+						}
+					});
+					if (opener && opener !== window) {
+						opener.jQuery("body").trigger("elementor/upload-and-install-pro/success");
+						window.close();
+						opener.focus();
+					}
+				} else if ("error" === installProZipAjaxState.status) setErrorNotice("install");
+			}
+		}, [installProZipAjaxState.status]);
+		var onProUploadHelpLinkClick = function onProUploadHelpLinkClick() {
+			elementorCommon.events.dispatchEvent({
+				event: "pro plugin upload help",
+				version: "",
+				details: {
+					placement: elementorAppConfig.onboarding.eventPlacement,
+					step: state.currentStep
+				}
+			});
+		};
+		if (isLoading) return /*#__PURE__*/ react.default.createElement(ElementorLoading, { loadingText: (0, _wordpress_i18n.__)("Uploading", "elementor") });
+		return /*#__PURE__*/ react.default.createElement("div", { className: "eps-app e-onboarding__upload-pro" }, /*#__PURE__*/ react.default.createElement(Content, null, /*#__PURE__*/ react.default.createElement(DropZone$1, {
+			className: "e-onboarding__upload-pro-drop-zone",
+			onFileSelect: function onFileSelect(file, event, source) {
+				setFileSource(source);
+				uploadProZip(file);
+			},
+			onError: function onError(error) {
+				return setErrorNotice(error, "upload");
+			},
+			filetypes: ["zip"],
+			buttonColor: "cta",
+			buttonVariant: "contained",
+			heading: (0, _wordpress_i18n.__)("Import your Elementor Pro plugin file", "elementor"),
+			text: (0, _wordpress_i18n.__)("Drag & Drop your .zip file here", "elementor"),
+			secondaryText: (0, _wordpress_i18n.__)("or", "elementor"),
+			buttonText: (0, _wordpress_i18n.__)("Browse", "elementor")
+		}), noticeState && /*#__PURE__*/ react.default.createElement(Notice, { noticeState }), /*#__PURE__*/ react.default.createElement("div", { className: "e-onboarding__upload-pro-get-file" }, (0, _wordpress_i18n.__)("Don't know where to get the file from?", "elementor") + " ", /*#__PURE__*/ react.default.createElement("a", {
+			onClick: function onClick() {
+				return onProUploadHelpLinkClick();
+			},
+			href: addExperimentTrackingToUrl("https://my.elementor.com/subscriptions/" + elementorAppConfig.onboarding.utms.downloadPro, "get-pro-upload-step"),
+			target: "_blank"
+		}, (0, _wordpress_i18n.__)("Click here", "elementor")))));
+	}
+	var init_upload_and_install_pro = __esmMin((() => {
+		init_slicedToArray();
+		init_use_ajax();
+		init_use_page_title();
+		init_content();
+		init_drop_zone();
+		init_notice();
+		init_context();
+		init_elementor_loading();
+		init_utils();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/components/message.js
+	function Message(_ref) {
+		var tier = _ref.tier;
+		var _translatedString$spl2 = _slicedToArray((0, _wordpress_i18n.__)("Based on the features you chose, we recommend the %s plan, or higher", "elementor").split("%s"), 2);
+		var messageFirstPart = _translatedString$spl2[0];
+		var messageSecondPart = _translatedString$spl2[1];
+		return /*#__PURE__*/ react.default.createElement(react.default.Fragment, null, messageFirstPart, /*#__PURE__*/ react.default.createElement("strong", null, tier), messageSecondPart);
+	}
+	var import_prop_types;
+	var init_message = __esmMin((() => {
+		import_prop_types = /* @__PURE__ */ __toESM(require_prop_types());
+		init_slicedToArray();
+		Message.propTypes = { tier: import_prop_types.default.string.isRequired };
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/utils/use-button-action.js
+	function useButtonAction(pageId, nextPage) {
+		var _useContext = (0, react.useContext)(OnboardingContext);
+		var state = _useContext.state;
+		var updateState = _useContext.updateState;
+		var getStateObjectToUpdate = _useContext.getStateObjectToUpdate;
+		var navigate = useNavigate();
+		return {
+			state,
+			handleAction: function handleAction(action) {
+				updateState(getStateObjectToUpdate(state, "steps", pageId, action));
+				navigate("onboarding/" + nextPage);
+			}
+		};
+	}
+	var init_use_button_action = __esmMin((() => {
+		init_context();
+		init_es$1();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/pages/choose-features.js
+	function ChooseFeatures() {
+		var _elementorAppConfig$o;
+		var _elementorAppConfig;
+		var isEditorOneActive = (_elementorAppConfig$o = (_elementorAppConfig = elementorAppConfig) === null || _elementorAppConfig === void 0 || (_elementorAppConfig = _elementorAppConfig.onboarding) === null || _elementorAppConfig === void 0 ? void 0 : _elementorAppConfig.isEditorOneActive) !== null && _elementorAppConfig$o !== void 0 ? _elementorAppConfig$o : false;
+		var options = (0, react.useMemo)(function() {
+			return getOptions(isEditorOneActive);
+		}, [isEditorOneActive]);
+		var setAjax = useAjax().setAjax;
+		var tiers = {
+			one: (0, _wordpress_i18n.__)("One", "elementor"),
+			advanced: (0, _wordpress_i18n.__)("Advanced", "elementor"),
+			essential: (0, _wordpress_i18n.__)("Essential", "elementor")
+		};
+		var _useState2 = _slicedToArray((0, react.useState)({
+			one: [],
+			essential: [],
+			advanced: []
+		}), 2);
+		var selectedFeatures = _useState2[0];
+		var setSelectedFeatures = _useState2[1];
+		var _useState4 = _slicedToArray((0, react.useState)(tiers.essential), 2);
+		var tierName = _useState4[0];
+		var setTierName = _useState4[1];
+		var pageId = "chooseFeatures";
+		var nextStep = "goodToGo";
+		var _useButtonAction = useButtonAction(pageId, nextStep);
+		var state = _useButtonAction.state;
+		var handleAction = _useButtonAction.handleAction;
+		var upgradeUrl = elementorAppConfig.onboarding.urls.upgrade;
+		var pageHeading = elementorAppConfig.onboarding.pageHeading;
+		var pageSubheading = elementorAppConfig.onboarding.pageSubheading;
+		var actionButton = {
+			text: (0, _wordpress_i18n.__)("Upgrade Now", "elementor"),
+			href: addExperimentTrackingToUrl(upgradeUrl, "upgrade-step3"),
+			target: "_blank",
+			onClick: function onClick() {
+				OnboardingEventTracking.trackStepAction(3, "upgrade_now", { pro_features_checked: OnboardingEventTracking.extractSelectedFeatureKeys(selectedFeatures) });
+				elementorCommon.events.dispatchEvent({
+					event: "next",
+					version: "",
+					details: {
+						placement: elementorAppConfig.onboarding.eventPlacement,
+						step: state.currentStep
+					}
+				});
+				OnboardingEventTracking.sendUpgradeNowStep3(selectedFeatures, state.currentStep);
+				OnboardingEventTracking.sendStepEndState(3);
+				setAjax({ data: {
+					action: "elementor_save_onboarding_features",
+					data: JSON.stringify({ features: selectedFeatures })
+				} });
+				handleAction("completed");
+			}
+		};
+		var skipButton;
+		if ("completed" !== state.steps[pageId]) skipButton = {
+			text: (0, _wordpress_i18n.__)("Skip", "elementor"),
+			action: function action() {
+				OnboardingEventTracking.trackStepAction(3, "skipped");
+				OnboardingEventTracking.trackProFeaturesSelected(selectedFeatures, false);
+				OnboardingEventTracking.sendStepEndState(3);
+				setAjax({ data: {
+					action: "elementor_save_onboarding_features",
+					data: JSON.stringify({ features: selectedFeatures })
+				} });
+				handleAction("skipped");
+			}
+		};
+		if (!isFeatureSelected(selectedFeatures)) actionButton.className = "e-onboarding__button--disabled";
+		(0, react.useEffect)(function() {
+			if (isEditorOneActive && selectedFeatures.one && selectedFeatures.one.length > 0) setTierName(tiers.one);
+			else if (selectedFeatures.advanced && selectedFeatures.advanced.length > 0) setTierName(tiers.advanced);
+			else setTierName(tiers.essential);
+		}, [
+			selectedFeatures,
+			isEditorOneActive,
+			tiers.one,
+			tiers.advanced,
+			tiers.essential
+		]);
+		(0, react.useEffect)(function() {
+			OnboardingEventTracking.setupAllUpgradeButtons(state.currentStep);
+			OnboardingEventTracking.onStepLoad(3);
+		}, [state.currentStep]);
+		function isFeatureSelected(features) {
+			return !!features.one.length || !!features.advanced.length || !!features.essential.length;
+		}
+		return /*#__PURE__*/ react.default.createElement(Layout, {
+			pageId,
+			nextStep
+		}, /*#__PURE__*/ react.default.createElement(PageContentLayout, {
+			image: elementorCommon.config.urls.assets + "images/app/onboarding/Illustration_Setup.svg",
+			title: pageHeading,
+			actionButton,
+			skipButton
+		}, /*#__PURE__*/ react.default.createElement("p", null, pageSubheading), /*#__PURE__*/ react.default.createElement("form", { className: "e-onboarding__choose-features-section" }, options.map(function(option, index) {
+			var itemId = "".concat(option.plan, "-").concat(index);
+			return /*#__PURE__*/ react.default.createElement("label", {
+				key: itemId,
+				className: "e-onboarding__choose-features-section__label",
+				htmlFor: itemId
+			}, /*#__PURE__*/ react.default.createElement("input", {
+				className: "e-onboarding__choose-features-section__checkbox",
+				type: "checkbox",
+				onChange: function onChange(event) {
+					return setSelectedFeatureList({
+						checked: event.currentTarget.checked,
+						id: event.target.value,
+						text: option.text,
+						selectedFeatures,
+						setSelectedFeatures
+					});
+				},
+				id: itemId,
+				value: itemId
+			}), option.text);
+		})), /*#__PURE__*/ react.default.createElement("p", { className: "e-onboarding__choose-features-section__message" }, isFeatureSelected(selectedFeatures) && /*#__PURE__*/ react.default.createElement(Message, { tier: tierName }))));
+	}
+	var init_choose_features = __esmMin((() => {
+		init_slicedToArray();
+		init_use_ajax();
+		init_message();
+		init_utils();
+		init_layout();
+		init_page_content_layout();
+		init_use_button_action();
+		init_onboarding_event_tracking();
+	}));
+
+//#endregion
+//#region app/modules/onboarding/assets/js/app.js
+	var app_exports = /* @__PURE__ */ __exportAll({ default: () => App });
+	function App() {
+		(0, react.useEffect)(function() {
+			var _elementorAppConfig;
+			OnboardingEventTracking.initiateCoreOnboarding();
+			var darkThemeClassName = "eps-theme-dark";
+			var hasDarkMode = document.body.classList.contains(darkThemeClassName);
+			if (hasDarkMode) document.body.classList.remove(darkThemeClassName);
+			if (!((_elementorAppConfig = elementorAppConfig) !== null && _elementorAppConfig !== void 0 && (_elementorAppConfig = _elementorAppConfig.onboarding) !== null && _elementorAppConfig !== void 0 && _elementorAppConfig.onboardingAlreadyRan)) {
+				var formData = new FormData();
+				formData.append("_nonce", elementorCommon.config.ajax.nonce);
+				formData.append("action", "elementor_update_onboarding_option");
+				fetch(elementorCommon.config.ajax.url, {
+					method: "POST",
+					body: formData
+				});
+			}
+			elementorAppConfig.return_url = elementorAppConfig.admin_url;
+			return function() {
+				if (hasDarkMode) document.body.classList.add(darkThemeClassName);
+			};
+		}, []);
+		return /*#__PURE__*/ react.default.createElement(ContextProvider, null, /*#__PURE__*/ react.default.createElement(LocationProvider, { history: _elementor_router.default.appHistory }, /*#__PURE__*/ react.default.createElement(Router, null, /*#__PURE__*/ react.default.createElement(Account, { default: true }), /*#__PURE__*/ react.default.createElement(HelloTheme, { path: "hello" }), /*#__PURE__*/ react.default.createElement(ChooseFeatures, { path: "chooseFeatures" }), /*#__PURE__*/ react.default.createElement(SiteName, { path: "siteName" }), /*#__PURE__*/ react.default.createElement(SiteLogo, { path: "siteLogo" }), /*#__PURE__*/ react.default.createElement(GoodToGo, { path: "goodToGo" }), /*#__PURE__*/ react.default.createElement(UploadAndInstallPro, { path: "uploadAndInstallPro" }))));
+	}
+	var init_app = __esmMin((() => {
+		init_es$1();
+		init_context();
+		init_account();
+		init_hello_theme();
+		init_site_name();
+		init_site_logo();
+		init_good_to_go();
+		init_upload_and_install_pro();
+		init_choose_features();
+		init_onboarding_event_tracking();
+	}));
+
+//#endregion
 //#region app/modules/onboarding/assets/js/module.js
+	init_createClass();
+	init_classCallCheck();
+	init_preload_helper();
+	var Onboarding$1 = /*#__PURE__*/ _createClass(function Onboarding() {
+		_classCallCheck(this, Onboarding);
+		_elementor_router.default.addRoute({
+			path: "/onboarding/*",
+			component: react.default.lazy(function() {
+				return __vitePreload(() => Promise.resolve().then(() => (init_app(), app_exports)), void 0);
+			})
+		});
+	});
+
+//#endregion
+//#region app/modules/onboarding-new/assets/js/module.js
 	init_createClass();
 	init_classCallCheck();
 	var LazyApp = react.default.lazy(function() {
@@ -27627,13 +33435,15 @@ searchFilter: function searchFilter(data, queryParams) {
 //#endregion
 //#region app/assets/js/index.js
 	var _elementorCommon;
+	var _elementorCommon2;
 	new ImportExport();
 	new KitLibrary();
 	new _elementor_site_editor.Module();
-	new Onboarding();
-	if ((_elementorCommon = elementorCommon) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.config) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.experimentalFeatures) !== null && _elementorCommon !== void 0 && _elementorCommon["import-export-customization"]) new ImportExportCustomization();
+	if ((_elementorCommon = elementorCommon) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.config) !== null && _elementorCommon !== void 0 && (_elementorCommon = _elementorCommon.experimentalFeatures) !== null && _elementorCommon !== void 0 && _elementorCommon.e_onboarding) new Onboarding();
+	else new Onboarding$1();
+	if ((_elementorCommon2 = elementorCommon) !== null && _elementorCommon2 !== void 0 && (_elementorCommon2 = _elementorCommon2.config) !== null && _elementorCommon2 !== void 0 && (_elementorCommon2 = _elementorCommon2.experimentalFeatures) !== null && _elementorCommon2 !== void 0 && _elementorCommon2["import-export-customization"]) new ImportExportCustomization();
 	var AppWrapper = react.default.Fragment;
-	react_default.render(/*#__PURE__*/ react.default.createElement(AppWrapper, null, /*#__PURE__*/ react.default.createElement(AppProvider, null, /*#__PURE__*/ react.default.createElement(App$1, null))), document.getElementById("e-app"));
+	react_default.render(/*#__PURE__*/ react.default.createElement(AppWrapper, null, /*#__PURE__*/ react.default.createElement(AppProvider, null, /*#__PURE__*/ react.default.createElement(App$2, null))), document.getElementById("e-app"));
 
 //#endregion
 })(React, ReactDOM, elementorAppPackages.router, wp.i18n, elementorAppPackages.hooks, elementorV2.ui, elementorV2.icons, elementorAppPackages.appUi, elementorAppPackages.siteEditor);

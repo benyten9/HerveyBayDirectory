@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Validation;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Validation;
 
 interface Rule
 {

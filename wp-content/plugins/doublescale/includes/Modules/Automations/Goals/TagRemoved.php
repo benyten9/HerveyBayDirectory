@@ -128,6 +128,27 @@ class TagRemoved extends Goal {
 	}
 
 	/**
+	 * Already achieved on arrival: the contact has none of the goal's tags.
+	 *
+	 * @param AutomationContactModel $automation_contact Run, pointed at the goal step.
+	 * @param ContactModel           $contact            Contact.
+	 * @return bool
+	 */
+	public function is_met_now( AutomationContactModel $automation_contact, ContactModel $contact ) {
+		$step = $this->goal_step( $automation_contact );
+		if ( ! $step ) {
+			return false;
+		}
+		$goal_tags = array_map( 'intval', (array) $step->get_setting( 'tags', array() ) );
+		if ( empty( $goal_tags ) ) {
+			return false;
+		}
+		$has = array_map( 'intval', $contact->tags()->get()->pluck( 'id' )->toArray() );
+
+		return empty( array_intersect( $goal_tags, $has ) );
+	}
+
+	/**
 	 * Get fields
 	 *
 	 * @since 1.0.0

@@ -24,6 +24,21 @@ final class SalesSettings {
 	 * @return array<string, mixed>
 	 */
 	public static function defaults(): array {
+		/**
+		 * Filter the sales settings defaults, so add-ons (Pro e-invoicing)
+		 * can own keys that are read and saved alongside these.
+		 *
+		 * @param array<string, mixed> $defaults Defaults.
+		 */
+		$defaults = apply_filters( 'doublescale_sales_settings_defaults', self::base_defaults() );
+
+		return is_array( $defaults ) ? array_merge( self::base_defaults(), $defaults ) : self::base_defaults();
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private static function base_defaults(): array {
 		return array(
 			'proposal_email_subject'        => __( 'Proposal: {{sales:proposal_subject}}', 'doublescale' ),
 			'proposal_email_intro'          => __( 'Please review the proposal below and let us know if you would like to accept or decline.', 'doublescale' ),
@@ -53,6 +68,14 @@ final class SalesSettings {
 			'pdf_company_address'             => '',
 			'pdf_company_registration_number' => '',
 			'pdf_company_tax_vat_number'      => '',
+			// Rich text with {{sales:…}} merge tags, printed on every invoice:
+			// how to pay (under the totals) and the legal footer.
+			'invoice_payment_instructions'    => '',
+			'invoice_footer'                  => '',
+			// Untaxed lines: '' (not specified), E exempt, Z zero-rated, AE
+			// reverse charge — see DocumentTaxNote.
+			'zero_tax_category'               => '',
+			'zero_tax_note'                   => '',
 			'default_invoice_template'        => DocumentTemplate::DEFAULT,
 			'default_proposal_template'       => DocumentTemplate::DEFAULT,
 		);
@@ -71,6 +94,13 @@ final class SalesSettings {
 		$merged['enabled_online_gateways'] = self::get_resolved_enabled_online_gateways();
 		if ( ! doublescale_sales_online_payments_available() ) {
 			$merged['default_online_payment_gateways'] = array();
+		}
+		// Carry over the values first saved under Pro's e-invoicing keys.
+		if ( '' === (string) ( $stored['zero_tax_category'] ?? '' ) && ! empty( $stored['einvoice_zero_vat_category'] ) ) {
+			$merged['zero_tax_category'] = (string) $stored['einvoice_zero_vat_category'];
+		}
+		if ( '' === (string) ( $stored['zero_tax_note'] ?? '' ) && ! empty( $stored['einvoice_exemption_reason'] ) ) {
+			$merged['zero_tax_note'] = (string) $stored['einvoice_exemption_reason'];
 		}
 		$merged['rep_notification_templates'] = self::merge_rep_notification_templates(
 			$merged['rep_notification_templates'] ?? array()
@@ -199,10 +229,36 @@ final class SalesSettings {
 			$clean['pdf_company_address'] = sanitize_textarea_field( (string) $merged['pdf_company_address'] );
 		}
 
+		foreach ( array( 'invoice_payment_instructions', 'invoice_footer' ) as $invoice_text_key ) {
+			if ( array_key_exists( $invoice_text_key, $merged ) ) {
+				$clean[ $invoice_text_key ] = wp_kses_post( (string) $merged[ $invoice_text_key ] );
+			}
+		}
+
+		if ( array_key_exists( 'zero_tax_category', $merged ) ) {
+			$category                   = strtoupper( trim( (string) $merged['zero_tax_category'] ) );
+			$clean['zero_tax_category'] = in_array( $category, array( '', 'E', 'Z', 'AE' ), true ) ? $category : '';
+		}
+		if ( array_key_exists( 'zero_tax_note', $merged ) ) {
+			$clean['zero_tax_note'] = sanitize_textarea_field( (string) $merged['zero_tax_note'] );
+		}
+
 		foreach ( array( 'pdf_company_registration_number', 'pdf_company_tax_vat_number' ) as $legal_key ) {
 			if ( array_key_exists( $legal_key, $merged ) ) {
 				$clean[ $legal_key ] = sanitize_text_field( (string) $merged[ $legal_key ] );
 			}
+		}
+
+		/**
+		 * Sanitise add-on keys before they are saved. Only keys returned here
+		 * are stored, so an add-on cannot be bypassed by posting raw values.
+		 *
+		 * @param array<string, mixed> $extra  Sanitised add-on values (empty).
+		 * @param array<string, mixed> $merged Defaults + stored + submitted values.
+		 */
+		$extra = apply_filters( 'doublescale_sales_settings_sanitize', array(), $merged );
+		if ( is_array( $extra ) ) {
+			$clean = array_merge( $clean, $extra );
 		}
 
 		foreach ( array( 'default_invoice_template', 'default_proposal_template' ) as $template_key ) {

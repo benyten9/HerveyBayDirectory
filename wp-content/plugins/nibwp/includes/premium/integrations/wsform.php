@@ -56,7 +56,7 @@ function nibwp_wsform_guard(): ?WP_Error
     if (!nibwp_wsform_available()) {
         return nibwp_wsform_err(
             'nibwp_wsform_missing',
-            __('WS Form is not active on this site.', domain: 'nibwp')
+            __('WS Form is not active on this site.', 'nibwp')
         );
     }
 
@@ -83,7 +83,7 @@ function nibwp_wsform_paginate(array $in): array
 function nibwp_wsform_form_object(int $form_id, bool $published = false)
 {
     if ($form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     try {
@@ -171,8 +171,8 @@ function nibwp_wsform_native_abilities_live(): bool
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-info', [
-    'label'       => __('WS Form — Info', domain: 'nibwp'),
-    'description' => __('Detect WS Form, its edition and version, form and submission counts, and whether its own abilities are registered (read-only).', domain: 'nibwp'),
+    'label'       => __('WS Form — Info', 'nibwp'),
+    'description' => 'Detect WS Form, its edition and version, form and submission counts, and whether its own abilities are registered (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -235,8 +235,8 @@ function nibwp_wsform_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-forms', [
-    'label'       => __('WS Form — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, update, clone, publish, draft, restore and count WS Form forms, and get their shortcode or block markup.', domain: 'nibwp'),
+    'label'       => __('WS Form — Forms', 'nibwp'),
+    'description' => 'List, read, create, update, clone, publish, draft, restore and count WS Form forms, and get their shortcode or block markup.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -291,7 +291,7 @@ function nibwp_wsform_forms(array $input): array|WP_Error
 
     $needs_id = ['get', 'update_label', 'clone', 'publish', 'draft', 'restore', 'set_status', 'stats', 'shortcode', 'block', 'locations'];
     if (in_array($action, $needs_id, strict: true) && $id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required for this action.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required for this action.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $id, $input) {
@@ -319,7 +319,7 @@ function nibwp_wsform_forms(array $input): array|WP_Error
                 ];
 
             case 'create':
-                $form->label = (string) ($input['label'] ?? __('New form', domain: 'nibwp'));
+                $form->label = (string) ($input['label'] ?? __('New form', 'nibwp'));
                 $new_id = (int) $form->db_create();
 
                 return ['id' => $new_id, 'created' => true];
@@ -327,7 +327,7 @@ function nibwp_wsform_forms(array $input): array|WP_Error
             case 'create_from_template':
                 $template = (string) ($input['template'] ?? '');
                 if ($template === '') {
-                    throw new \RuntimeException(__('A template ID is required. List them with nibwp/wsform-templates.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A template ID is required. List them with nibwp/wsform-templates.', 'nibwp'));
                 }
                 $new_id = (int) $form->db_create_from_template($template);
 
@@ -363,7 +363,7 @@ function nibwp_wsform_forms(array $input): array|WP_Error
             case 'set_status':
                 $status = (string) ($input['status'] ?? '');
                 if ($status === '') {
-                    throw new \RuntimeException(__('A status is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A status is required.', 'nibwp'));
                 }
                 $form->db_set_status($status);
 
@@ -372,7 +372,7 @@ function nibwp_wsform_forms(array $input): array|WP_Error
             case 'stats':
                 $stat = class_exists('WS_Form_Form_Stat') ? new WS_Form_Form_Stat() : null;
                 if ($stat === null) {
-                    throw new \RuntimeException(__('Form statistics are unavailable in this WS Form edition.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Form statistics are unavailable in this WS Form edition.', 'nibwp'));
                 }
                 $stat->form_id = $id;
 
@@ -397,7 +397,7 @@ function nibwp_wsform_forms(array $input): array|WP_Error
                 return ['counts' => (array) $form->db_get_count_by_status()];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -406,8 +406,8 @@ function nibwp_wsform_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-json', [
-    'label'       => __('WS Form — Form JSON', domain: 'nibwp'),
-    'description' => __('Read a whole form as JSON, create a form from JSON, or replace an existing form\'s JSON in one call.', domain: 'nibwp'),
+    'label'       => __('WS Form — Form JSON', 'nibwp'),
+    'description' => 'Read a whole form as JSON, create a form from JSON, or replace an existing form\'s JSON in one call.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -452,13 +452,13 @@ function nibwp_wsform_json(array $input): array|WP_Error
     $id = (int) ($input['id'] ?? 0);
 
     if (in_array($action, ['get', 'update', 'checksum'], strict: true) && $id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     if (in_array($action, ['create', 'update'], strict: true)) {
         $raw = (string) ($input['json'] ?? '');
         if ($raw === '') {
-            return nibwp_wsform_err('nibwp_wsform_bad_json', __('A JSON string is required.', domain: 'nibwp'));
+            return nibwp_wsform_err('nibwp_wsform_bad_json', __('A JSON string is required.', 'nibwp'));
         }
         // Decoded here rather than inside the try: a syntax error in agent-supplied
         // JSON is a bad argument, not a WS Form failure, and should say so.
@@ -468,7 +468,7 @@ function nibwp_wsform_json(array $input): array|WP_Error
                 'nibwp_wsform_bad_json',
                 sprintf(
                     /* translators: %s: JSON parser error */
-                    __('The form JSON could not be parsed: %s', domain: 'nibwp'),
+                    __('The form JSON could not be parsed: %s', 'nibwp'),
                     json_last_error_msg()
                 )
             );
@@ -489,7 +489,7 @@ function nibwp_wsform_json(array $input): array|WP_Error
                 if (isset($object->id)) {
                     unset($object->id);
                 }
-                $form->label = isset($object->label) ? (string) $object->label : __('New form', domain: 'nibwp');
+                $form->label = isset($object->label) ? (string) $object->label : __('New form', 'nibwp');
                 $new_id = (int) $form->db_create();
                 $form->id = $new_id;
                 $object->id = $new_id;
@@ -508,7 +508,7 @@ function nibwp_wsform_json(array $input): array|WP_Error
                 return ['id' => $id, 'checksum' => $form->db_checksum()];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -517,8 +517,8 @@ function nibwp_wsform_json(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-fields', [
-    'label'       => __('WS Form — Fields', domain: 'nibwp'),
-    'description' => __('List, read, add, update, clone and delete fields on a form, and list the field types this install offers.', domain: 'nibwp'),
+    'label'       => __('WS Form — Fields', 'nibwp'),
+    'description' => 'List, read, add, update, clone and delete fields on a form, and list the field types this install offers.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -568,10 +568,10 @@ function nibwp_wsform_fields(array $input): array|WP_Error
     $field_id = (int) ($input['field_id'] ?? 0);
 
     if (in_array($action, ['get', 'update', 'clone', 'delete'], strict: true) && $field_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid field ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid field ID is required.', 'nibwp'));
     }
     if (in_array($action, ['list', 'add'], strict: true) && $form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $form_id, $field_id, $input) {
@@ -612,12 +612,12 @@ function nibwp_wsform_fields(array $input): array|WP_Error
             case 'add':
                 $section_id = (int) ($input['section_id'] ?? 0);
                 if ($section_id <= 0) {
-                    throw new \RuntimeException(__('A section_id is required. Read the form to find one, or create a section first.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A section_id is required. Read the form to find one, or create a section first.', 'nibwp'));
                 }
                 $field->form_id = $form_id;
                 $field->section_id = $section_id;
                 $field->type = (string) ($input['type'] ?? 'text');
-                $field->label = (string) ($input['label'] ?? __('New field', domain: 'nibwp'));
+                $field->label = (string) ($input['label'] ?? __('New field', 'nibwp'));
                 $new_id = (int) $field->db_create();
 
                 if (!empty($input['meta']) && is_array($input['meta'])) {
@@ -661,7 +661,7 @@ function nibwp_wsform_fields(array $input): array|WP_Error
                 return ['id' => $field_id, 'deleted' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -670,8 +670,8 @@ function nibwp_wsform_fields(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-tabs', [
-    'label'       => __('WS Form — Tabs', domain: 'nibwp'),
-    'description' => __('List, add, update, clone and delete a form\'s tabs — the top level of the WS Form layout, used for multi-step forms.', domain: 'nibwp'),
+    'label'       => __('WS Form — Tabs', 'nibwp'),
+    'description' => 'List, add, update, clone and delete a form\'s tabs — the top level of the WS Form layout, used for multi-step forms.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -713,10 +713,10 @@ function nibwp_wsform_tabs(array $input): array|WP_Error
     $tab_id = (int) ($input['tab_id'] ?? 0);
 
     if (in_array($action, ['update', 'clone', 'delete'], strict: true) && $tab_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid tab ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid tab ID is required.', 'nibwp'));
     }
     if (in_array($action, ['list', 'add'], strict: true) && $form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $form_id, $tab_id, $input) {
@@ -740,7 +740,7 @@ function nibwp_wsform_tabs(array $input): array|WP_Error
 
             case 'add':
                 $group->form_id = $form_id;
-                $group->label = (string) ($input['label'] ?? __('New tab', domain: 'nibwp'));
+                $group->label = (string) ($input['label'] ?? __('New tab', 'nibwp'));
 
                 return ['id' => (int) $group->db_create(), 'form_id' => $form_id, 'created' => true];
 
@@ -766,7 +766,7 @@ function nibwp_wsform_tabs(array $input): array|WP_Error
                 return ['id' => $tab_id, 'deleted' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -775,8 +775,8 @@ function nibwp_wsform_tabs(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-sections', [
-    'label'       => __('WS Form — Sections', domain: 'nibwp'),
-    'description' => __('List, add, update, clone and delete the sections inside a form\'s tabs. Sections hold the fields.', domain: 'nibwp'),
+    'label'       => __('WS Form — Sections', 'nibwp'),
+    'description' => 'List, add, update, clone and delete the sections inside a form\'s tabs. Sections hold the fields.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -819,10 +819,10 @@ function nibwp_wsform_sections(array $input): array|WP_Error
     $section_id = (int) ($input['section_id'] ?? 0);
 
     if (in_array($action, ['update', 'clone', 'delete'], strict: true) && $section_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid section ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid section ID is required.', 'nibwp'));
     }
     if (in_array($action, ['list', 'add'], strict: true) && $form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $form_id, $section_id, $input) {
@@ -850,11 +850,11 @@ function nibwp_wsform_sections(array $input): array|WP_Error
             case 'add':
                 $tab_id = (int) ($input['tab_id'] ?? 0);
                 if ($tab_id <= 0) {
-                    throw new \RuntimeException(__('A tab_id is required. List the form\'s tabs first.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A tab_id is required. List the form\'s tabs first.', 'nibwp'));
                 }
                 $section->form_id = $form_id;
                 $section->group_id = $tab_id;
-                $section->label = (string) ($input['label'] ?? __('New section', domain: 'nibwp'));
+                $section->label = (string) ($input['label'] ?? __('New section', 'nibwp'));
 
                 return ['id' => (int) $section->db_create(), 'tab_id' => $tab_id, 'created' => true];
 
@@ -880,7 +880,7 @@ function nibwp_wsform_sections(array $input): array|WP_Error
                 return ['id' => $section_id, 'deleted' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -893,8 +893,8 @@ function nibwp_wsform_sections(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-actions', [
-    'label'       => __('WS Form — Actions', domain: 'nibwp'),
-    'description' => __('Read and configure what a form does on submit: list configured actions, list the action types available, and add, update or remove one.', domain: 'nibwp'),
+    'label'       => __('WS Form — Actions', 'nibwp'),
+    'description' => 'Read and configure what a form does on submit: list configured actions, list the action types available, and add, update or remove one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -937,7 +937,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if ($action !== 'types' && $form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $form_id, $input) {
@@ -989,7 +989,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
             case 'add':
                 $type = (string) ($input['action_type'] ?? '');
                 if ($type === '') {
-                    throw new \RuntimeException(__('An action_type is required. List them with action=types.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('An action_type is required. List them with action=types.', 'nibwp'));
                 }
                 if (!is_object($grid)) {
                     $grid = (object) ['groups' => [(object) ['rows' => []]]];
@@ -1021,7 +1021,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
             case 'update':
                 $action_id = (string) ($input['action_id'] ?? '');
                 if ($action_id === '') {
-                    throw new \RuntimeException(__('An action_id is required. List the form\'s actions first.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('An action_id is required. List the form\'s actions first.', 'nibwp'));
                 }
                 $found = false;
                 foreach ($rows as $i => $row) {
@@ -1034,7 +1034,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
                     }
                 }
                 if (!$found) {
-                    throw new \RuntimeException(__('No action with that ID exists on this form.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No action with that ID exists on this form.', 'nibwp'));
                 }
                 $grid->groups[0]->rows = $rows;
                 $object->meta->action = $grid;
@@ -1045,7 +1045,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
             case 'delete':
                 $action_id = (string) ($input['action_id'] ?? '');
                 if ($action_id === '') {
-                    throw new \RuntimeException(__('An action_id is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('An action_id is required.', 'nibwp'));
                 }
                 $kept = [];
                 foreach ($rows as $row) {
@@ -1054,7 +1054,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
                     }
                 }
                 if (count($kept) === count($rows)) {
-                    throw new \RuntimeException(__('No action with that ID exists on this form.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('No action with that ID exists on this form.', 'nibwp'));
                 }
                 $grid->groups[0]->rows = $kept;
                 $object->meta->action = $grid;
@@ -1063,7 +1063,7 @@ function nibwp_wsform_actions(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'action_id' => $action_id, 'deleted' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1072,8 +1072,8 @@ function nibwp_wsform_actions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-submissions', [
-    'label'       => __('WS Form — Submissions', domain: 'nibwp'),
-    'description' => __('List and read form submissions, and change their state: status, starred, read/unread, and restore from trash.', domain: 'nibwp'),
+    'label'       => __('WS Form — Submissions', 'nibwp'),
+    'description' => 'List and read form submissions, and change their state: status, starred, read/unread, and restore from trash.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1122,10 +1122,10 @@ function nibwp_wsform_submissions(array $input): array|WP_Error
 
     $per_submission = ['get', 'set_status', 'star', 'unstar', 'mark_read', 'mark_unread', 'restore'];
     if (in_array($action, $per_submission, strict: true) && $submission_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid submission ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid submission ID is required.', 'nibwp'));
     }
     if (in_array($action, ['list', 'counts'], strict: true) && $form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $form_id, $submission_id, $input) {
@@ -1158,7 +1158,7 @@ function nibwp_wsform_submissions(array $input): array|WP_Error
             case 'set_status':
                 $status = (string) ($input['status'] ?? '');
                 if ($status === '') {
-                    throw new \RuntimeException(__('A status is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A status is required.', 'nibwp'));
                 }
                 $submit->id = $submission_id;
                 $submit->db_set_status($status);
@@ -1191,7 +1191,7 @@ function nibwp_wsform_submissions(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'counts' => (array) $submit->db_get_count_by_status()];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1200,8 +1200,8 @@ function nibwp_wsform_submissions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-export', [
-    'label'       => __('WS Form — Export submissions', domain: 'nibwp'),
-    'description' => __('Export a form\'s submissions as rows or CSV, with the column headers WS Form would use (read-only).', domain: 'nibwp'),
+    'label'       => __('WS Form — Export submissions', 'nibwp'),
+    'description' => 'Export a form\'s submissions as rows or CSV, with the column headers WS Form would use (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1240,13 +1240,13 @@ function nibwp_wsform_export(array $input): array|WP_Error
 
     $form_id = (int) ($input['form_id'] ?? 0);
     if ($form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     if (!class_exists('WS_Form_Submit_Export')) {
         return nibwp_wsform_err(
             'nibwp_wsform_no_export',
-            __('Submission export is unavailable in this WS Form edition.', domain: 'nibwp')
+            __('Submission export is unavailable in this WS Form edition.', 'nibwp')
         );
     }
 
@@ -1265,7 +1265,7 @@ function nibwp_wsform_export(array $input): array|WP_Error
         if ((string) ($input['format'] ?? 'rows') === 'csv') {
             $handle = fopen('php://temp', 'r+');
             if ($handle === false) {
-                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', 'nibwp'));
             }
             if (!empty($header)) {
                 fputcsv($handle, array_map(static fn($c) => is_scalar($c) ? (string) $c : '', (array) $header));
@@ -1295,8 +1295,8 @@ function nibwp_wsform_export(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-notes', [
-    'label'       => __('WS Form — Submission notes', domain: 'nibwp'),
-    'description' => __('Read, add, edit and remove the internal notes attached to a submission.', domain: 'nibwp'),
+    'label'       => __('WS Form — Submission notes', 'nibwp'),
+    'description' => 'Read, add, edit and remove the internal notes attached to a submission.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1333,7 +1333,7 @@ function nibwp_wsform_notes(array $input): array|WP_Error
     if (!class_exists('WS_Form_Submit_Note')) {
         return nibwp_wsform_err(
             'nibwp_wsform_no_notes',
-            __('Submission notes are unavailable in this WS Form edition.', domain: 'nibwp')
+            __('Submission notes are unavailable in this WS Form edition.', 'nibwp')
         );
     }
 
@@ -1342,10 +1342,10 @@ function nibwp_wsform_notes(array $input): array|WP_Error
     $note_id = (int) ($input['note_id'] ?? 0);
 
     if (in_array($action, ['list', 'create'], strict: true) && $submission_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid submission ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid submission ID is required.', 'nibwp'));
     }
     if (in_array($action, ['update', 'delete'], strict: true) && $note_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid note ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid note ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $submission_id, $note_id, $input) {
@@ -1380,7 +1380,7 @@ function nibwp_wsform_notes(array $input): array|WP_Error
                 return ['id' => $note_id, 'deleted' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1389,8 +1389,8 @@ function nibwp_wsform_notes(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-styles', [
-    'label'       => __('WS Form — Styles', domain: 'nibwp'),
-    'description' => __('List, read, create, update, clone, publish, draft and delete WS Form styles, and assign one to a form.', domain: 'nibwp'),
+    'label'       => __('WS Form — Styles', 'nibwp'),
+    'description' => 'List, read, create, update, clone, publish, draft and delete WS Form styles, and assign one to a form.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1435,7 +1435,7 @@ function nibwp_wsform_styles(array $input): array|WP_Error
     if (!class_exists('WS_Form_Style')) {
         return nibwp_wsform_err(
             'nibwp_wsform_no_styles',
-            __('Styles are unavailable in this WS Form edition.', domain: 'nibwp')
+            __('Styles are unavailable in this WS Form edition.', 'nibwp')
         );
     }
 
@@ -1444,7 +1444,7 @@ function nibwp_wsform_styles(array $input): array|WP_Error
 
     $needs_style = ['get', 'update', 'clone', 'publish', 'draft', 'delete', 'assign'];
     if (in_array($action, $needs_style, strict: true) && $style_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid style ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid style ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $style_id, $input) {
@@ -1464,7 +1464,7 @@ function nibwp_wsform_styles(array $input): array|WP_Error
                 return ['style' => $style->db_read(true, true)];
 
             case 'create':
-                $style->label = (string) ($input['label'] ?? __('New style', domain: 'nibwp'));
+                $style->label = (string) ($input['label'] ?? __('New style', 'nibwp'));
                 $new_id = (int) $style->db_create();
 
                 if (!empty($input['meta']) && is_array($input['meta'])) {
@@ -1511,7 +1511,7 @@ function nibwp_wsform_styles(array $input): array|WP_Error
             case 'assign':
                 $form_id = (int) ($input['form_id'] ?? 0);
                 if ($form_id <= 0) {
-                    throw new \RuntimeException(__('A form_id is required to assign a style.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A form_id is required to assign a style.', 'nibwp'));
                 }
                 $form = new WS_Form_Form();
                 $form->id = $form_id;
@@ -1522,7 +1522,7 @@ function nibwp_wsform_styles(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'style_id' => $style_id, 'assigned' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1531,8 +1531,8 @@ function nibwp_wsform_styles(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-templates', [
-    'label'       => __('WS Form — Templates', domain: 'nibwp'),
-    'description' => __('List the form templates this install offers, with their categories, so a form can be created from one (read-only).', domain: 'nibwp'),
+    'label'       => __('WS Form — Templates', 'nibwp'),
+    'description' => 'List the form templates this install offers, with their categories, so a form can be created from one (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1566,7 +1566,7 @@ function nibwp_wsform_templates(array $input): array|WP_Error
     if (!class_exists('WS_Form_Template')) {
         return nibwp_wsform_err(
             'nibwp_wsform_no_templates',
-            __('Templates are unavailable in this WS Form edition.', domain: 'nibwp')
+            __('Templates are unavailable in this WS Form edition.', 'nibwp')
         );
     }
 
@@ -1592,7 +1592,7 @@ function nibwp_wsform_templates(array $input): array|WP_Error
             case 'get':
                 $template_id = (string) ($input['template_id'] ?? '');
                 if ($template_id === '') {
-                    throw new \RuntimeException(__('A template_id is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A template_id is required.', 'nibwp'));
                 }
 
                 return ['template_id' => $template_id, 'template' => $template->read($template_id)];
@@ -1618,8 +1618,8 @@ function nibwp_wsform_templates(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-config', [
-    'label'       => __('WS Form — Configuration', domain: 'nibwp'),
-    'description' => __('Read WS Form configuration: field types, data sources, frameworks, plugin settings and the parse variables available to actions (read-only).', domain: 'nibwp'),
+    'label'       => __('WS Form — Configuration', 'nibwp'),
+    'description' => 'Read WS Form configuration: field types, data sources, frameworks, plugin settings and the parse variables available to actions (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1658,7 +1658,7 @@ function nibwp_wsform_config(array $input): array|WP_Error
     }
 
     if (!class_exists('WS_Form_Config')) {
-        return nibwp_wsform_err('nibwp_wsform_no_config', __('WS Form configuration is unavailable.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_no_config', __('WS Form configuration is unavailable.', 'nibwp'));
     }
 
     $section = (string) ($input['section'] ?? '');
@@ -1670,7 +1670,7 @@ function nibwp_wsform_config(array $input): array|WP_Error
 
             case 'data_sources':
                 if (!class_exists('WS_Form_Data_Source')) {
-                    throw new \RuntimeException(__('Data sources are unavailable in this WS Form edition.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('Data sources are unavailable in this WS Form edition.', 'nibwp'));
                 }
 
                 return ['data_sources' => WS_Form_Data_Source::get_settings()];
@@ -1688,7 +1688,7 @@ function nibwp_wsform_config(array $input): array|WP_Error
                 return ['file_types' => WS_Form_Config::get_file_types()];
         }
 
-        throw new \RuntimeException(__('Unknown configuration section.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown configuration section.', 'nibwp'));
     });
 }
 
@@ -1701,8 +1701,8 @@ function nibwp_wsform_config(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/wsform-delete', [
-    'label'       => __('WS Form — Delete', domain: 'nibwp'),
-    'description' => __('Permanently delete forms, submissions and expired submission data. Irreversible.', domain: 'nibwp'),
+    'label'       => __('WS Form — Delete', 'nibwp'),
+    'description' => 'Permanently delete forms, submissions and expired submission data. Irreversible.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1753,15 +1753,15 @@ function nibwp_wsform_delete(array $input): array|WP_Error
     if (in_array($action, $permanent, strict: true) && !$confirm) {
         return nibwp_wsform_err(
             'nibwp_wsform_unconfirmed',
-            __('This permanently destroys data. Re-issue the call with confirm set to true if that is intended.', domain: 'nibwp')
+            __('This permanently destroys data. Re-issue the call with confirm set to true if that is intended.', 'nibwp')
         );
     }
 
     if (in_array($action, ['trash_form', 'delete_form', 'delete_expired', 'empty_trash'], strict: true) && $form_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
     if (in_array($action, ['trash_submission', 'delete_submission'], strict: true) && $submission_id <= 0) {
-        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid submission ID is required.', domain: 'nibwp'));
+        return nibwp_wsform_err('nibwp_wsform_bad_id', __('A valid submission ID is required.', 'nibwp'));
     }
 
     return nibwp_wsform_try(static function () use ($action, $form_id, $submission_id) {
@@ -1809,6 +1809,6 @@ function nibwp_wsform_delete(array $input): array|WP_Error
                 return ['form_id' => $form_id, 'trash_emptied' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }

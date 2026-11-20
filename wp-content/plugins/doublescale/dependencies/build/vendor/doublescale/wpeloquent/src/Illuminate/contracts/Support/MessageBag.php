@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Support;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Support;
 
-interface MessageBag extends \Illuminate\Contracts\Support\Arrayable
+interface MessageBag extends Arrayable
 {
     /**
      * Get the keys present in the message bag.

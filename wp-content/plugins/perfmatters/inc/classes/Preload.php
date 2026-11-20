@@ -104,10 +104,25 @@ class Preload
             }
         }
 
+        if(empty($selectors) && empty($parent_selectors)) {
+            return $html;
+        }
+
+        //blank script/noscript contents for matching so tags inside JS strings are ignored
+        $clean_html = preg_replace(
+            '#(<(script|noscript)\b[^>]*>)(?:[^<]++|<(?!\/\2\b))*+(</\2>)#si',
+            '$1$3',
+            $html
+        );
+
+        if($clean_html === null) {
+            $clean_html = $html;
+        }
+
         //parent selectors
         if(!empty($parent_selectors)) {
 
-            $elements = HTML::get_selector_elements($html, array_keys($parent_selectors));
+            $elements = HTML::get_selector_elements($clean_html, array_keys($parent_selectors));
 
             if(!empty($elements)) {
                 foreach($elements as $element) {
@@ -135,7 +150,7 @@ class Preload
         //selectors
         if(!empty($selectors)) {
 
-            preg_match_all('#<(?>link|img|script)(\s[^>]*?(' . implode('|', array_keys($selectors)) . ').*?)>#is', $html, $matches, PREG_SET_ORDER);
+            preg_match_all('#<(?>link|img|script)(\s[^>]*?(' . implode('|', array_keys($selectors)) . ').*?)>#is', $clean_html, $matches, PREG_SET_ORDER);
 
             if(!empty($matches)) {
                 foreach($matches as $tag) {
@@ -513,10 +528,10 @@ class Preload
             if(!empty($options['preload']['preconnect']) && is_array($options['preload']['preconnect'])) {
                 foreach($options['preload']['preconnect'] as $line) {
                     if(is_array($line)) {
-                        echo "<link rel='preconnect' href='" . $line['url'] . "' " . (isset($line['crossorigin']) && $line['crossorigin'] ? "crossorigin" : "") . ">" . "\n";
+                        echo "<link rel='preconnect' href='" . esc_url($line['url']) . "' " . (isset($line['crossorigin']) && $line['crossorigin'] ? "crossorigin" : "") . ">" . "\n";
                     }
                     else {
-                        echo "<link rel='preconnect' href='" . $line . "' crossorigin>" . "\n";
+                        echo "<link rel='preconnect' href='" . esc_url($line) . "' crossorigin>" . "\n";
                     }
                 }
             }
@@ -529,7 +544,7 @@ class Preload
             $options = Config::$options;
             if(!empty($options['preload']['dns_prefetch']) && is_array($options['preload']['dns_prefetch'])) {
                 foreach($options['preload']['dns_prefetch'] as $url) {
-                    echo "<link rel='dns-prefetch' href='" . $url . "'>" . "\n";
+                    echo "<link rel='dns-prefetch' href='" . esc_url($url) . "'>" . "\n";
                 }
             }
         }, 1);

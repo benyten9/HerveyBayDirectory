@@ -26,7 +26,10 @@ class RemoteData extends IntegrationRemoteData {
 	 * @var array
 	 */
 	protected $entities = array(
-		'groups',
+		// None yet: Api has no get_groups() and no screen asks for Ontraport
+		// groups. This used to be a plain list ( 'groups' ), which registered
+		// `/ontraport/0` — a route that crashed with a PHP fatal. Add entities
+		// as 'name' => array( 'callback' => 'fetch_name' ) once the Api has them.
 	);
 
 	/**

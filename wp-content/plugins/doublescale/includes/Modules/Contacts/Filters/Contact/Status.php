@@ -67,9 +67,24 @@ class Status extends Filter {
 	 */
 	public function get_operators() {
 		return array(
-			'is'     => 'Is',
-			'is_not' => 'Is Not',
+			'is'     => __( 'Is', 'doublescale' ),
+			'is_not' => __( 'Is not', 'doublescale' ),
 		);
+	}
+
+	/**
+	 * The email subscription status.
+	 *
+	 * Contacts lost their single `status` column when subscriptions split per
+	 * channel (email / SMS / WhatsApp); querying it was an SQL error for every
+	 * value. The automation "Status" rule reads email_status too.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string
+	 */
+	protected function get_column() {
+		return 'email_status';
 	}
 
 	/**
@@ -83,7 +98,9 @@ class Status extends Filter {
 		return array(
 			'subscribed'   => __( 'Subscribed', 'doublescale' ),
 			'unsubscribed' => __( 'Unsubscribed', 'doublescale' ),
+			'unverified'   => __( 'Unverified', 'doublescale' ),
 			'bounced'      => __( 'Bounced', 'doublescale' ),
+			'blocked'      => __( 'Blocked', 'doublescale' ),
 		);
 	}
 }

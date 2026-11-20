@@ -91,8 +91,8 @@ function nibwp_builderius_tree_schema(): array
 
 nibwp_builderius_register(
     'builderius-list-templates',
-    __('Builderius – List Templates', domain: 'nibwp'),
-    __('List all Builderius templates with type/subtype, branch count, active commit and module count.', domain: 'nibwp'),
+    __('Builderius – List Templates', 'nibwp'),
+    __('List all Builderius templates with type/subtype, branch count, active commit and module count.', 'nibwp'),
     ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'nibwp_builderius_ability_list_templates'
 );
@@ -106,8 +106,8 @@ function nibwp_builderius_ability_list_templates(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-get-template',
-    __('Builderius – Get Template', domain: 'nibwp'),
-    __('Get a template\'s current config (module tree) plus its resolved branch/commit.', domain: 'nibwp'),
+    __('Builderius – Get Template', 'nibwp'),
+    __('Get a template\'s current config (module tree) plus its resolved branch/commit.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => ['template_id' => ['type' => 'integer', 'description' => 'The builderius_template post ID.']],
@@ -123,7 +123,7 @@ function nibwp_builderius_ability_get_template(array $input): array|WP_Error
     }
     $id = (int) ($input['template_id'] ?? 0);
     if (get_post_type($id) !== NIBWP_BLDR_CPT_TEMPLATE) {
-        return new WP_Error('not_found', __('No Builderius template with that id.', domain: 'nibwp'));
+        return new WP_Error('not_found', __('No Builderius template with that id.', 'nibwp'));
     }
     $resolved = nibwp_builderius_resolve_template($id);
     return [
@@ -137,8 +137,8 @@ function nibwp_builderius_ability_get_template(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-list-versions',
-    __('Builderius – List Versions', domain: 'nibwp'),
-    __('The git-like version graph for a template: branches and their commits.', domain: 'nibwp'),
+    __('Builderius – List Versions', 'nibwp'),
+    __('The git-like version graph for a template: branches and their commits.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => ['template_id' => ['type' => 'integer']],
@@ -157,12 +157,12 @@ function nibwp_builderius_ability_list_versions(array $input): array|WP_Error
 
 /** Register the simple CPT listers in one loop. */
 foreach ([
-    'builderius-list-components'        => [NIBWP_BLDR_CPT_COMPONENT, __('Builderius – List Components', domain: 'nibwp'), __('List reusable Builderius components.', domain: 'nibwp')],
-    'builderius-list-releases'          => [NIBWP_BLDR_CPT_RELEASE, __('Builderius – List Releases', domain: 'nibwp'), __('List Builderius releases (published commits).', domain: 'nibwp')],
-    'builderius-list-fragments'         => [NIBWP_BLDR_CPT_FRAGMENT, __('Builderius – List Fragments', domain: 'nibwp'), __('List saved Builderius fragments.', domain: 'nibwp')],
-    'builderius-list-global-settings'   => [NIBWP_BLDR_CPT_SETTINGS, __('Builderius – List Global Settings', domain: 'nibwp'), __('List Builderius global settings sets (CSS vars / design tokens).', domain: 'nibwp')],
-    'builderius-list-form-submissions'  => [NIBWP_BLDR_CPT_FORM_SUBM, __('Builderius – List Form Submissions', domain: 'nibwp'), __('List Builderius SmartForm submissions.', domain: 'nibwp')],
-    'builderius-list-starters'          => [NIBWP_BLDR_CPT_STARTER, __('Builderius – List Starters', domain: 'nibwp'), __('List Builderius starter sites.', domain: 'nibwp')],
+    'builderius-list-components'        => [NIBWP_BLDR_CPT_COMPONENT, __('Builderius – List Components', 'nibwp'), __('List reusable Builderius components.', 'nibwp')],
+    'builderius-list-releases'          => [NIBWP_BLDR_CPT_RELEASE, __('Builderius – List Releases', 'nibwp'), __('List Builderius releases (published commits).', 'nibwp')],
+    'builderius-list-fragments'         => [NIBWP_BLDR_CPT_FRAGMENT, __('Builderius – List Fragments', 'nibwp'), __('List saved Builderius fragments.', 'nibwp')],
+    'builderius-list-global-settings'   => [NIBWP_BLDR_CPT_SETTINGS, __('Builderius – List Global Settings', 'nibwp'), __('List Builderius global settings sets (CSS vars / design tokens).', 'nibwp')],
+    'builderius-list-form-submissions'  => [NIBWP_BLDR_CPT_FORM_SUBM, __('Builderius – List Form Submissions', 'nibwp'), __('List Builderius SmartForm submissions.', 'nibwp')],
+    'builderius-list-starters'          => [NIBWP_BLDR_CPT_STARTER, __('Builderius – List Starters', 'nibwp'), __('List Builderius starter sites.', 'nibwp')],
 ] as $slug => $meta) {
     [$pt, $label, $desc] = $meta;
     nibwp_builderius_register(
@@ -191,8 +191,8 @@ function nibwp_builderius_ability_list_cpt_starters(array $input): array|WP_Erro
 
 nibwp_builderius_register(
     'builderius-get-component',
-    __('Builderius – Get Component', domain: 'nibwp'),
-    __('Get a reusable component\'s config.', domain: 'nibwp'),
+    __('Builderius – Get Component', 'nibwp'),
+    __('Get a reusable component\'s config.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => ['component_id' => ['type' => 'integer']],
@@ -208,7 +208,7 @@ function nibwp_builderius_ability_get_component(array $input): array|WP_Error
     }
     $id = (int) ($input['component_id'] ?? 0);
     if (get_post_type($id) !== NIBWP_BLDR_CPT_COMPONENT) {
-        return new WP_Error('not_found', __('No Builderius component with that id.', domain: 'nibwp'));
+        return new WP_Error('not_found', __('No Builderius component with that id.', 'nibwp'));
     }
     $post = get_post($id);
     $config = $post ? nibwp_builderius_commit_config($post) : [];
@@ -217,8 +217,8 @@ function nibwp_builderius_ability_get_component(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-list-modules',
-    __('Builderius – List Modules', domain: 'nibwp'),
-    __('The Builderius module library — the element types you can author with, and the config format.', domain: 'nibwp'),
+    __('Builderius – List Modules', 'nibwp'),
+    __('The Builderius module library — the element types you can author with, and the config format.', 'nibwp'),
     ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'nibwp_builderius_ability_list_modules'
 );
@@ -239,8 +239,8 @@ function nibwp_builderius_ability_list_modules(array $input): array
 
 nibwp_builderius_register(
     'builderius-build-config',
-    __('Builderius – Build Config', domain: 'nibwp'),
-    __('Turn a nested module tree into a valid Builderius config (flat module map) and validate it — no write.', domain: 'nibwp'),
+    __('Builderius – Build Config', 'nibwp'),
+    __('Turn a nested module tree into a valid Builderius config (flat module map) and validate it — no write.', 'nibwp'),
     ['type' => 'object', 'properties' => ['tree' => nibwp_builderius_tree_schema()], 'required' => ['tree'], 'additionalProperties' => false],
     'nibwp_builderius_ability_build_config'
 );
@@ -248,7 +248,7 @@ function nibwp_builderius_ability_build_config(array $input): array|WP_Error
 {
     $tree = (array) ($input['tree'] ?? []);
     if ($tree === []) {
-        return new WP_Error('empty_tree', __('Provide a non-empty module tree.', domain: 'nibwp'));
+        return new WP_Error('empty_tree', __('Provide a non-empty module tree.', 'nibwp'));
     }
     $config = nibwp_builderius_build_config($tree);
     return ['config' => $config, 'validation' => nibwp_builderius_validate_config($config)];
@@ -260,8 +260,8 @@ function nibwp_builderius_ability_build_config(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-create-template',
-    __('Builderius – Create Template', domain: 'nibwp'),
-    __('Create a Builderius template (optionally with authored content). Fires Builderius\'s initial-commit listener.', domain: 'nibwp'),
+    __('Builderius – Create Template', 'nibwp'),
+    __('Create a Builderius template (optionally with authored content). Fires Builderius\'s initial-commit listener.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -299,8 +299,8 @@ function nibwp_builderius_ability_create_template(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-update-template',
-    __('Builderius – Update Template', domain: 'nibwp'),
-    __('Author/replace a template\'s content by committing a new config snapshot on its branch.', domain: 'nibwp'),
+    __('Builderius – Update Template', 'nibwp'),
+    __('Author/replace a template\'s content by committing a new config snapshot on its branch.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -327,7 +327,7 @@ function nibwp_builderius_ability_update_template(array $input): array|WP_Error
         return $config;
     }
     if ($config === []) {
-        return new WP_Error('empty_config', __('Provide tree or config to commit.', domain: 'nibwp'));
+        return new WP_Error('empty_config', __('Provide tree or config to commit.', 'nibwp'));
     }
     return nibwp_builderius_update_template(
         (int) ($input['template_id'] ?? 0),
@@ -339,8 +339,8 @@ function nibwp_builderius_ability_update_template(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-create-component',
-    __('Builderius – Create Component', domain: 'nibwp'),
-    __('Save a reusable Builderius component from a module tree/config.', domain: 'nibwp'),
+    __('Builderius – Create Component', 'nibwp'),
+    __('Save a reusable Builderius component from a module tree/config.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -368,8 +368,8 @@ function nibwp_builderius_ability_create_component(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-create-fragment',
-    __('Builderius – Create Fragment', domain: 'nibwp'),
-    __('Save a reusable Builderius fragment from a module tree/config.', domain: 'nibwp'),
+    __('Builderius – Create Fragment', 'nibwp'),
+    __('Save a reusable Builderius fragment from a module tree/config.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -397,8 +397,8 @@ function nibwp_builderius_ability_create_fragment(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-update-global-settings',
-    __('Builderius – Update Global Settings', domain: 'nibwp'),
-    __('Create a Builderius global-settings set (CSS variables / design tokens).', domain: 'nibwp'),
+    __('Builderius – Update Global Settings', 'nibwp'),
+    __('Create a Builderius global-settings set (CSS variables / design tokens).', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -426,8 +426,8 @@ function nibwp_builderius_ability_update_global_settings(array $input): array|WP
 
 nibwp_builderius_register(
     'builderius-create-branch',
-    __('Builderius – Create Branch', domain: 'nibwp'),
-    __('Create a new branch on a template (git-like), optionally based on a commit.', domain: 'nibwp'),
+    __('Builderius – Create Branch', 'nibwp'),
+    __('Create a new branch on a template (git-like), optionally based on a commit.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -456,8 +456,8 @@ function nibwp_builderius_ability_create_branch(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-export-config',
-    __('Builderius – Export Config', domain: 'nibwp'),
-    __('Export a template\'s current config (module tree) as portable JSON.', domain: 'nibwp'),
+    __('Builderius – Export Config', 'nibwp'),
+    __('Export a template\'s current config (module tree) as portable JSON.', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => ['template_id' => ['type' => 'integer']],
@@ -473,7 +473,7 @@ function nibwp_builderius_ability_export_config(array $input): array|WP_Error
     }
     $id = (int) ($input['template_id'] ?? 0);
     if (get_post_type($id) !== NIBWP_BLDR_CPT_TEMPLATE) {
-        return new WP_Error('not_found', __('No Builderius template with that id.', domain: 'nibwp'));
+        return new WP_Error('not_found', __('No Builderius template with that id.', 'nibwp'));
     }
     $resolved = nibwp_builderius_resolve_template($id);
     return ['template_id' => $id, 'title' => get_the_title($id), 'config' => $resolved['config']];
@@ -481,8 +481,8 @@ function nibwp_builderius_ability_export_config(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-import-config',
-    __('Builderius – Import Config', domain: 'nibwp'),
-    __('Create a template from an exported config ({modules:{…}}).', domain: 'nibwp'),
+    __('Builderius – Import Config', 'nibwp'),
+    __('Create a template from an exported config ({modules:{…}}).', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [
@@ -503,7 +503,7 @@ function nibwp_builderius_ability_import_config(array $input): array|WP_Error
     }
     $config = (array) ($input['config'] ?? []);
     if (!isset($config['modules'])) {
-        return new WP_Error('bad_config', __('config must contain a "modules" map.', domain: 'nibwp'));
+        return new WP_Error('bad_config', __('config must contain a "modules" map.', 'nibwp'));
     }
     return nibwp_builderius_create_template(
         (string) ($input['title'] ?? ''),
@@ -516,8 +516,8 @@ function nibwp_builderius_ability_import_config(array $input): array|WP_Error
 
 nibwp_builderius_register(
     'builderius-delete',
-    __('Builderius – Delete', domain: 'nibwp'),
-    __('Delete a Builderius record (template, component, fragment, release, branch, settings set).', domain: 'nibwp'),
+    __('Builderius – Delete', 'nibwp'),
+    __('Delete a Builderius record (template, component, fragment, release, branch, settings set).', 'nibwp'),
     [
         'type'       => 'object',
         'properties' => [

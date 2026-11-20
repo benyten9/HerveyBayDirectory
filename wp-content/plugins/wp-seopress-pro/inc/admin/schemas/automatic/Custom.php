@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 		<label for="seopress_pro_rich_snippets_custom_meta">
 			<?php esc_html_e( 'Custom schema', 'wp-seopress-pro' ); ?>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_custom', 'custom' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_custom', 'custom' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 	</p>
 
 	<p class="description">

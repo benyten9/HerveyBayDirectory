@@ -23,7 +23,7 @@ require_once __DIR__ . "/../lib/validator.php";
 
 wp_register_ability('nibwp/breakdance-pro-elements', [
     'label'       => __('Breakdance Pro — Element catalogue', 'nibwp'),
-    'description' => __('The elements registered on THIS site, with their categories, and the full control schema and property paths for any one of them. Read this before converting anything (read-only).', 'nibwp'),
+    'description' => 'The elements registered on THIS site, with their categories, and the full control schema and property paths for any one of them. Read this before converting anything (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -115,7 +115,7 @@ function nibwp_bdpro_elements_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-tokens', [
     'label'       => __('Breakdance Pro — Design tokens', 'nibwp'),
-    'description' => __('The variables, global selectors and design presets this site already uses, so generated sections match it instead of inventing a second design system (read-only).', 'nibwp'),
+    'description' => 'The variables, global selectors and design presets this site already uses, so generated sections match it instead of inventing a second design system (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -165,7 +165,7 @@ function nibwp_bdpro_tokens_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-validate', [
     'label'       => __('Breakdance Pro — Validate payload', 'nibwp'),
-    'description' => __('Check a node payload against this site\'s element registry and the Breakdance Pro rules without writing anything — element slugs, property paths, inline styling, tokens, accessibility and repetition (read-only).', 'nibwp'),
+    'description' => 'Check a node payload against this site\'s element registry and the Breakdance Pro rules without writing anything — element slugs, property paths, inline styling, tokens, accessibility and repetition (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',
@@ -218,7 +218,7 @@ function nibwp_bdpro_validate_ability(array $input)
 
 wp_register_ability('nibwp/breakdance-pro-audit', [
     'label'       => __('Breakdance Pro — Audit a page', 'nibwp'),
-    'description' => __('Read an existing Breakdance page and report what is wrong with it: unregistered elements left by a migration, hardcoded values that have variables, missing alt text, repeated blocks that should be a loop, and headings out of order (read-only).', 'nibwp'),
+    'description' => 'Read an existing Breakdance page and report what is wrong with it: unregistered elements left by a migration, hardcoded values that have variables, missing alt text, repeated blocks that should be a loop, and headings out of order (read-only).',
     'category'    => 'breakdance-pro',
     'input_schema' => [
         'type' => 'object',

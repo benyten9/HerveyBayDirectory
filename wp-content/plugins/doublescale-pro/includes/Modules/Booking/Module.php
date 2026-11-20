@@ -49,15 +49,22 @@ final class Module extends AbstractModule {
 	}
 
 	/**
-	 * Defensive presence check: free's Booking module must be loaded for any
-	 * of pro's integrations to function (they extend free abstracts). The
+	 * Defensive presence check: free's Booking module must be loaded and on
+	 * for any of pro's integrations to function (they extend free abstracts). The
 	 * `dependencies()` declaration above is advisory in the current registry
 	 * (`ModuleRegistry::sort_by_dependencies()` silently continues past
 	 * missing deps), so this guard belt-and-braces protects against Pro being
 	 * activated standalone.
 	 */
 	private function free_booking_present(): bool {
-		return class_exists( \DoubleScale\Modules\Booking\Module::class, false );
+		if ( ! class_exists( \DoubleScale\Modules\Booking\Module::class, false ) ) {
+			return false;
+		}
+
+		// Free's Booking code is always installed; Booking Pro also needs the
+		// module switched on. While Booking is off it adds nothing (no calendar
+		// integrations, routes or payment gateways).
+		return function_exists( 'doublescale_is_module_active' ) && doublescale_is_module_active( 'booking' );
 	}
 
 	public function register( Container $container ): void {
@@ -122,7 +129,9 @@ final class Module extends AbstractModule {
 			static function ( $payload ) {
 				$payload = (array) $payload;
 				if ( class_exists( \DoubleScale\Pro\Modules\Integrations\Stripe\Integration::class ) ) {
-					$payload['configured'] = (bool) \DoubleScale\Pro\Modules\Integrations\Stripe\Integration::instance()->is_configured();
+					// Booking checkout runs Stripe.js, so a publishable key it refuses is not set up.
+					$stripe                = \DoubleScale\Pro\Modules\Integrations\Stripe\Integration::instance();
+					$payload['configured'] = $stripe->is_configured() && '' !== $stripe->get_publishable_key();
 				}
 				return $payload;
 			}
@@ -181,13 +190,19 @@ final class Module extends AbstractModule {
 		$container->get( Services\WaitingListHandler::class );
 		$container->get( Services\BookingSmsNotifier::class );
 
-		// Eagerly instantiate the Stripe booking gateway so its constructor's
-		// `wp_ajax_*` and `doublescale_*` hook registrations always happen,
-		// even on requests (like the public booking AJAX endpoints) that don't
-		// otherwise apply the `doublescale_booking_payment_gateways` filter.
-		// Without this, `doublescale_booking_init_stripe` AJAX returns `0`
-		// because the handler was never bound.
-		PaymentGateways\BookingStripeHandler::instance();
+		// Eagerly register the Stripe booking gateway AND its AJAX handler on
+		// every request — including the public booking AJAX endpoints, which
+		// don't otherwise apply the `doublescale_booking_payment_gateways`
+		// filter. Both are needed:
+		// - the handler binds `doublescale_booking_init_stripe` & co. (without
+		//   it that AJAX returns `0`);
+		// - the handler resolves the gateway via GatewayManager (booking
+		//   context), which only knows it once StripeGateway::instance() ran.
+		//   Instantiating only the handler left the gateway registered solely
+		//   by Sales' loader, which is skipped while
+		//   doublescale_sales_documents_ready() is false — customers then saw
+		//   "Stripe is not configured." and could not pay for a booking.
+		PaymentGateways\Loader::register();
 
 		// Defensive REST-side primer: free's Module::boot() already eagerly
 		// instantiates integrations via the `doublescale_booking_integrations`

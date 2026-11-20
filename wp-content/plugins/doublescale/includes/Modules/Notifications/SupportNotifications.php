@@ -36,6 +36,8 @@ namespace DoubleScale\Modules\Notifications;
 use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Notifications\Services\NotificationCategories;
 use DoubleScale\Modules\Notifications\Services\NotificationService;
+use DoubleScale\Modules\Notifications\Services\ChatReplyNotice;
+use DoubleScale\Core\Tasks;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -54,6 +56,21 @@ class SupportNotifications {
 	private const CLOSED_STATUSES = array( 'resolved', 'closed' );
 
 	/**
+	 * Tickets a chat message opened again in this request: their "reopened"
+	 * notice is the chat's own (background, once), not a second one.
+	 *
+	 * @var array<int, bool>
+	 */
+	private static $chat_reopened = array();
+
+	/**
+	 * Background tasks for chat notices.
+	 *
+	 * @var Tasks|null
+	 */
+	private $tasks = null;
+
+	/**
 	 * Subscribe to the support lifecycle hooks fired by Free's TicketService.
 	 *
 	 * Skips registration entirely when the support module is disabled — Free's
@@ -68,6 +85,67 @@ class SupportNotifications {
 		add_action( 'doublescale_support_ticket_created', array( $this, 'on_ticket_created' ), 10, 1 );
 		add_action( 'doublescale_support_reply_created', array( $this, 'on_reply_created' ), 10, 2 );
 		add_action( 'doublescale_support_ticket_updated', array( $this, 'on_ticket_updated' ), 10, 3 );
+
+		// Live chat messages are told in the background (see chat_notice()).
+		$this->tasks = new Tasks( 'doublescale_support' );
+		$this->tasks->register_callback( 'chat_notice', array( $this, 'send_chat_notice' ), true );
+	}
+
+	/**
+	 * A message from the live help chat (Intercom style): no notice while a
+	 * team member has the ticket on screen or had it in the last two minutes,
+	 * at most one per ticket every ten minutes, and sent by a background task
+	 * so the visitor's message never waits for the emails. A message that
+	 * opens a solved ticket again is one "reopened" notice.
+	 *
+	 * @param TicketModel $ticket Ticket, before the reply changes its status.
+	 * @param string      $sender Who wrote it, '' for the requester.
+	 * @return void
+	 */
+	private function chat_notice( TicketModel $ticket, string $sender ): void {
+		$id      = (int) $ticket->id;
+		$reopens = in_array( (string) $ticket->status, self::CLOSED_STATUSES, true );
+		if ( $reopens ) {
+			self::$chat_reopened[ $id ] = true;
+		}
+		if ( ChatReplyNotice::viewed_lately( $id ) || ( ! $reopens && ChatReplyNotice::noticed_lately( $id ) ) ) {
+			return;
+		}
+		ChatReplyNotice::noticed( $id );
+
+		$kind = $reopens ? 'reopened' : 'reply';
+		if ( null === $this->tasks || false === $this->tasks->enqueue_async( 'chat_notice', $id, $kind, $sender ) ) {
+			// No queue: told now rather than never.
+			$this->send_chat_notice( $id, $kind, $sender );
+		}
+	}
+
+	/**
+	 * The background task: tell the team about a chat message.
+	 *
+	 * @param mixed $ticket_id Ticket.
+	 * @param mixed $kind      reply or reopened.
+	 * @param mixed $sender    Who wrote it, '' for the requester.
+	 * @return void
+	 */
+	public function send_chat_notice( $ticket_id, $kind = 'reply', $sender = '' ): void {
+		$this->safely(
+			TicketModel::find( (int) $ticket_id ),
+			function ( TicketModel $t ) use ( $kind, $sender ) {
+				if ( 'reopened' === $kind ) {
+					$this->notify( $t, __( 'Ticket reopened', 'doublescale' ), $this->ticket_subject_excerpt( $t ), NotificationCategories::SUPPORT_TICKET_REOPENED );
+					return;
+				}
+				$customer = '' !== (string) $sender ? (string) $sender : $this->customer_label( $t );
+				$this->notify(
+					$t,
+					/* translators: %s: customer name */
+					sprintf( __( '%s replied', 'doublescale' ), $customer ),
+					$this->ticket_subject_excerpt( $t ),
+					NotificationCategories::SUPPORT_CUSTOMER_REPLY
+				);
+			}
+		);
 	}
 
 	/**
@@ -105,10 +183,18 @@ class SupportNotifications {
 		if ( is_object( $activity ) && ! empty( $activity->user_id ) ) {
 			return;
 		}
+		// Whoever wrote it: a colleague on a company ticket, or someone CC'd,
+		// goes by their own name rather than the requester's.
+		$data   = is_object( $activity ) && isset( $activity->data ) && is_array( $activity->data ) ? $activity->data : array();
+		$sender = trim( (string) ( $data['from_name'] ?? '' ) );
+		if ( 'chat' === (string) ( $data['source'] ?? '' ) && $ticket instanceof TicketModel ) {
+			$this->chat_notice( $ticket, $sender );
+			return;
+		}
 		$this->safely(
 			$ticket,
-			function ( TicketModel $t ) {
-				$customer = $this->customer_label( $t );
+			function ( TicketModel $t ) use ( $sender ) {
+				$customer = '' !== $sender ? $sender : $this->customer_label( $t );
 				$this->notify(
 					$t,
 					/* translators: %s: customer name */
@@ -167,7 +253,7 @@ class SupportNotifications {
 							$this->ticket_subject_excerpt( $t ),
 							NotificationCategories::SUPPORT_TICKET_RESOLVED
 						);
-					} elseif ( 'open' === $new_status && in_array( $old_status, self::CLOSED_STATUSES, true ) ) {
+					} elseif ( 'open' === $new_status && in_array( $old_status, self::CLOSED_STATUSES, true ) && empty( self::$chat_reopened[ (int) $t->id ] ) ) {
 						$this->notify(
 							$t,
 							__( 'Ticket reopened', 'doublescale' ),
@@ -205,8 +291,18 @@ class SupportNotifications {
 			return;
 		}
 
-		// Unassigned ticket → fan out to the whole CRM team.
-		NotificationService::broadcast( $title, $body, $links, $subcategory, $metadata );
+		// Unassigned ticket → everyone who can see it: the people who manage all
+		// tickets. Agents only see tickets assigned to them, so an alert about an
+		// unassigned one would link them to a ticket they cannot open.
+		$managers = get_users(
+			array(
+				'capability__in' => array( 'doublescale_manage_all_tickets' ),
+				'fields'         => 'ID',
+			)
+		);
+		foreach ( $managers as $user_id ) {
+			NotificationService::create( (int) $user_id, $title, $body, $links, $subcategory, $metadata );
+		}
 	}
 
 	/**

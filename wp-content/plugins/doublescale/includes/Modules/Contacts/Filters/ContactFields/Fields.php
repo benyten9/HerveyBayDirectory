@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * Fields class
@@ -234,6 +234,60 @@ class Fields extends Filter {
 	}
 
 	/**
+	 * Whether the field stores several picked options as "a,b,c".
+	 *
+	 * @return bool
+	 */
+	protected function is_multi_choice() {
+		return in_array( $this->custom_field->type, array( 'multiselect', 'checkbox' ), true );
+	}
+
+	/**
+	 * The options picked in the rule, each one non-empty.
+	 *
+	 * @param mixed $value Filter value: a list, or one option.
+	 * @return string[]
+	 */
+	protected function picked_options( $value ) {
+		$options = array_map(
+			static function ( $item ) {
+				return trim( (string) $item );
+			},
+			is_array( $value ) ? $value : array( $value )
+		);
+
+		return array_values(
+			array_filter(
+				$options,
+				static function ( $item ) {
+					return '' !== $item;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Restrict a custom-field subquery to values holding any of the options.
+	 *
+	 * Each option is matched as a whole item of the stored "a,b,c" list. A LIKE
+	 * on the picked options joined together only matched a contact whose value
+	 * held them side by side in the same order, and "green" matched "greenish".
+	 *
+	 * @param mixed    $sub     Custom-field subquery.
+	 * @param string[] $options Picked options.
+	 * @return void
+	 */
+	protected function where_holds_any_option( $sub, array $options ) {
+		$sub->where(
+			static function ( $any ) use ( $options ) {
+				foreach ( $options as $option ) {
+					$any->orWhereRaw( "FIND_IN_SET(?, REPLACE(value, ', ', ',')) > 0", array( $option ) );
+				}
+			}
+		);
+	}
+
+	/**
 	 * Apply the filter to a contact query.
 	 *
 	 * @param Builder              $query  Contact query.
@@ -248,8 +302,11 @@ class Fields extends Filter {
 			return $query;
 		}
 
+		global $wpdb;
+
 		$field_id       = $this->custom_field->id;
 		$string_value   = $this->normalize_value( $value );
+		$like_value     = $wpdb->esc_like( $string_value );
 		$has_field_slug = 'custom_fields';
 
 		switch ( $operator ) {
@@ -281,17 +338,40 @@ class Fields extends Filter {
 				break;
 
 			case 'contains':
+				if ( $this->is_multi_choice() ) {
+					$options = $this->picked_options( $value );
+					$query->whereHas(
+						$has_field_slug,
+						function ( $sub ) use ( $field_id, $options ) {
+							$sub->where( 'custom_field_id', $field_id );
+							$this->where_holds_any_option( $sub, $options );
+						}
+					);
+					break;
+				}
 				$query->whereHas(
 					$has_field_slug,
-					function ( $sub ) use ( $field_id, $string_value ) {
-						$sub->where( 'custom_field_id', $field_id )->where( 'value', 'like', '%' . $string_value . '%' );
+					function ( $sub ) use ( $field_id, $like_value ) {
+						$sub->where( 'custom_field_id', $field_id )->where( 'value', 'like', '%' . $like_value . '%' );
 					}
 				);
 				break;
 
 			case 'does_not_contain':
+				if ( $this->is_multi_choice() ) {
+					$options = $this->picked_options( $value );
+					// Holds none of them — including contacts that never set the field.
+					$query->whereDoesntHave(
+						$has_field_slug,
+						function ( $sub ) use ( $field_id, $options ) {
+							$sub->where( 'custom_field_id', $field_id );
+							$this->where_holds_any_option( $sub, $options );
+						}
+					);
+					break;
+				}
 				$query->where(
-					function ( $outer ) use ( $has_field_slug, $field_id, $string_value ) {
+					function ( $outer ) use ( $has_field_slug, $field_id, $like_value ) {
 						$outer->whereDoesntHave(
 							$has_field_slug,
 							function ( $sub ) use ( $field_id ) {
@@ -299,8 +379,8 @@ class Fields extends Filter {
 							}
 						)->orWhereHas(
 							$has_field_slug,
-							function ( $sub ) use ( $field_id, $string_value ) {
-								$sub->where( 'custom_field_id', $field_id )->where( 'value', 'not like', '%' . $string_value . '%' );
+							function ( $sub ) use ( $field_id, $like_value ) {
+								$sub->where( 'custom_field_id', $field_id )->where( 'value', 'not like', '%' . $like_value . '%' );
 							}
 						);
 					}
@@ -310,8 +390,8 @@ class Fields extends Filter {
 			case 'starts_with':
 				$query->whereHas(
 					$has_field_slug,
-					function ( $sub ) use ( $field_id, $string_value ) {
-						$sub->where( 'custom_field_id', $field_id )->where( 'value', 'like', $string_value . '%' );
+					function ( $sub ) use ( $field_id, $like_value ) {
+						$sub->where( 'custom_field_id', $field_id )->where( 'value', 'like', $like_value . '%' );
 					}
 				);
 				break;
@@ -319,8 +399,8 @@ class Fields extends Filter {
 			case 'ends_with':
 				$query->whereHas(
 					$has_field_slug,
-					function ( $sub ) use ( $field_id, $string_value ) {
-						$sub->where( 'custom_field_id', $field_id )->where( 'value', 'like', '%' . $string_value );
+					function ( $sub ) use ( $field_id, $like_value ) {
+						$sub->where( 'custom_field_id', $field_id )->where( 'value', 'like', '%' . $like_value );
 					}
 				);
 				break;

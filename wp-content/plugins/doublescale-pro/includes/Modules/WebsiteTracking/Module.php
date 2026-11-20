@@ -34,11 +34,11 @@ final class Module extends AbstractModule {
 	}
 
 	public function label(): string {
-		return __( 'Website tracking', 'doublescale' );
+		return __( 'Website Tracking', 'doublescale' );
 	}
 
 	public function description(): string {
-		return __( 'Page visits, visitor cookies, and anonymous visit stitching.', 'doublescale' );
+		return __( 'See which pages your contacts visit on your website, on their timeline and in automations.', 'doublescale' );
 	}
 
 	public function version(): string {
@@ -46,7 +46,38 @@ final class Module extends AbstractModule {
 	}
 
 	public function is_toggleable(): bool {
-		return false;
+		return true;
+	}
+
+	/**
+	 * The module switch decides; a site that never saved it keeps the choice
+	 * it made in the old Settings → Website Tracking toggle (on by default).
+	 * Nothing is recorded while it is off.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		return (bool) apply_filters( 'doublescale_module_enabled_' . $this->slug(), self::switched_on() );
+	}
+
+	/**
+	 * Saved module switch, else the old settings toggle. Free's
+	 * Settings::is_website_tracking_enabled() uses the same rule; this copy
+	 * keeps it for Free releases that predate it.
+	 *
+	 * @return bool
+	 */
+	public static function switched_on(): bool {
+		$stored = get_option( 'doublescale_enabled_modules', array() );
+		if ( is_array( $stored ) && array_key_exists( 'websitetracking', $stored ) ) {
+			return (bool) $stored['websitetracking'];
+		}
+
+		$settings = get_option( 'doublescale_settings', array() );
+		$raw      = is_array( $settings ) && isset( $settings['website_tracking']['enabled'] ) ? $settings['website_tracking']['enabled'] : true;
+		$on       = filter_var( $raw, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+
+		return null === $on ? (bool) $raw : $on;
 	}
 
 	public function dependencies(): array {
@@ -83,5 +114,12 @@ final class Module extends AbstractModule {
 		parent::boot( $container );
 
 		Website::instance();
+
+		// Visits stored with the site's folder twice (before 16fc55ea) get
+		// their path back, once per site, in the background.
+		Services\VisitPathRepair::register();
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_page_visit_paths', '1', array( Services\VisitPathRepair::class, 'queue' ) );
+		}
 	}
 }

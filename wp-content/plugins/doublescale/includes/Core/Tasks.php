@@ -32,6 +32,13 @@ class Tasks {
 	private $group;
 
 	/**
+	 * Hook+callback pairs already wrapped, so none is registered twice.
+	 *
+	 * @var array<string, callable>
+	 */
+	private $registered_callbacks = array();
+
+	/**
 	 * Initialized
 	 *
 	 * @var boolean
@@ -78,7 +85,7 @@ class Tasks {
 	 * @return integer|false False if not scheduled
 	 */
 	public function get_next_timestamp( $hook, $args = null ) {
-		return as_next_scheduled_action( "{$this->group}_$hook", $args, $this->group );
+		return NextRunCache::get( "{$this->group}_$hook", $args, $this->group );
 	}
 
 	/**
@@ -245,12 +252,144 @@ class Tasks {
 	/**
 	 * Register callback
 	 *
-	 * @param string   $hook Hook name.
-	 * @param callable $callback The callback to be run when the action is called.
+	 * schedule_single() and enqueue_async() cannot hand models to Action
+	 * Scheduler (it stores arguments as JSON), so they stash the real
+	 * arguments in task meta and queue only ['meta_id' => N]. Action Scheduler
+	 * then fires the hook with array_values() of that, so the callback is
+	 * handed the bare meta id N.
+	 *
+	 * Most callbacks — in free and in Pro — were written against exactly that
+	 * and look the meta up themselves, so by default they keep receiving it
+	 * unchanged. A callback that wants its real arguments passes
+	 * $unwrap_queued_args = true instead of doing its own lookup.
+	 *
+	 * @param string   $hook               Hook name.
+	 * @param callable $callback           The callback to be run when the action is called.
+	 * @param bool     $unwrap_queued_args Deliver the queued arguments rather than
+	 *                                     the bare meta id Action Scheduler passes.
 	 * @return void
 	 */
-	public function register_callback( $hook, $callback ) {
-		add_action( "{$this->group}_$hook", $callback, 10, 999 );
+	public function register_callback( $hook, $callback, $unwrap_queued_args = false ) {
+		$full_hook = "{$this->group}_$hook";
+
+		// WordPress de-duplicates callbacks by identity, and a fresh closure is
+		// always unique — registering the same handler twice (boot order, a
+		// rebuilt processor) would then send every message twice. Reuse one
+		// wrapper per hook+callback so that de-duplication still works.
+		$key = $full_hook . '|' . $this->callback_id( $callback );
+
+		if ( ! isset( $this->registered_callbacks[ $key ] ) ) {
+			$queued_hook = $unwrap_queued_args ? $full_hook : null;
+
+			$this->registered_callbacks[ $key ] = function ( ...$args ) use ( $callback, $queued_hook ) {
+				$unwrapped = $this->resolve_task_arguments( $args, $queued_hook );
+
+				// A meta row that was cleaned up leaves nothing to run on;
+				// calling the callback with junk is worse than skipping.
+				if ( null === $unwrapped ) {
+					return;
+				}
+
+				return $callback( ...$unwrapped );
+			};
+		}
+
+		add_action( $full_hook, $this->registered_callbacks[ $key ], 10, 999 );
+	}
+
+	/**
+	 * Stable identity for a callback, so the same one is not wrapped twice.
+	 *
+	 * @param callable $callback Callback being registered.
+	 * @return string
+	 */
+	private function callback_id( $callback ) {
+		if ( is_string( $callback ) ) {
+			return $callback;
+		}
+
+		if ( is_array( $callback ) ) {
+			// Identify the instance, not the class: a processor rebuilt for a
+			// new request (or a new test) is a different handler and must be
+			// able to register again, or its tasks silently stop running.
+			$target = is_object( $callback[0] )
+				? spl_object_hash( $callback[0] )
+				: (string) $callback[0];
+
+			return $target . '::' . $callback[1];
+		}
+
+		return spl_object_hash( (object) $callback );
+	}
+
+	/**
+	 * Resolve the arguments a queued task should be invoked with.
+	 *
+	 * @param array       $args        Arguments as the hook received them.
+	 * @param string|null $queued_hook Full hook name when the callback opted in
+	 *                                 to unwrapping the bare meta id; null otherwise.
+	 * @return array|null The real arguments, or null when the meta is gone.
+	 */
+	private function resolve_task_arguments( array $args, $queued_hook = null ) {
+		if ( count( $args ) !== 1 ) {
+			return $args;
+		}
+
+		// The keyed wrapper, as do_action() and in-process callers pass it.
+		// Unwrapped for every hook, as it always has been.
+		if ( is_array( $args[0] ) && isset( $args[0]['meta_id'] ) ) {
+			$meta = $this->get_meta( (int) $args[0]['meta_id'] );
+
+			return empty( $meta ) ? null : $this->meta_arguments( $meta );
+		}
+
+		// The bare id, as Action Scheduler delivers it after array_values().
+		// Only for hooks that asked: everything else keeps receiving the id.
+		if ( null === $queued_hook || ! $this->looks_like_meta_id( $args[0] ) ) {
+			return $args;
+		}
+
+		$meta = $this->get_meta( (int) $args[0] );
+
+		// Gone before the action ran: nothing to run on. The opted-in hooks
+		// are never fired by hand with a lone integer, so this is a cleaned-up
+		// row, not a real argument.
+		if ( empty( $meta ) ) {
+			return null;
+		}
+
+		// Another hook's row — never hand one task's arguments to another.
+		if ( ( $meta['hook'] ?? '' ) !== $queued_hook ) {
+			return $args;
+		}
+
+		return $this->meta_arguments( $meta );
+	}
+
+	/**
+	 * The callback arguments stored in a task meta row.
+	 *
+	 * @param array $meta Row from get_meta().
+	 * @return array
+	 */
+	private function meta_arguments( array $meta ) {
+		$value = $meta['value'] ?? array();
+
+		return is_array( $value ) ? array_values( $value ) : array( $value );
+	}
+
+	/**
+	 * Whether a value has the shape of a task meta row id.
+	 *
+	 * @param mixed $value Candidate.
+	 * @return bool
+	 */
+	private function looks_like_meta_id( $value ) {
+		if ( is_int( $value ) ) {
+			return $value > 0;
+		}
+
+		return is_string( $value ) && ctype_digit( $value ) && (int) $value > 0;
 	}
 
 	/**
@@ -269,6 +408,7 @@ class Tasks {
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
 			as_unschedule_all_actions( $full_hook, null, $this->group );
 		}
+		NextRunCache::forget( $full_hook );
 	}
 
 	/**
@@ -500,11 +640,29 @@ class Tasks {
 		);
 	}
 
+	/** Action Scheduler groups the cleanup may treat as DoubleScale's own. */
+	public const OWN_GROUP_PREFIX = 'doublescale';
+
+	/**
+	 * Whether an Action Scheduler group is DoubleScale's. The unnamed group
+	 * and every other plugin's are not.
+	 *
+	 * @param string $slug Group slug.
+	 * @return bool
+	 */
+	public static function is_own_group( string $slug ): bool {
+		return 0 === strpos( $slug, self::OWN_GROUP_PREFIX );
+	}
+
 	/**
 	 * Clean up old Action Scheduler entries and orphaned task meta.
 	 *
-	 * - Purges any pending/failed actions whose hook has no registered WordPress
-	 *   callback (they can never succeed and only accumulate noise).
+	 * - Purges DoubleScale's own abandoned groups (every hook without a
+	 *   registered callback), never another plugin's: only group slugs starting
+	 *   with {@see self::OWN_GROUP_PREFIX}, and never a job still due in the
+	 *   future (a module switched off for a while keeps its reminders). Run it
+	 *   once every plugin has registered its hooks (cron, or after `wp_loaded`);
+	 *   earlier, other code's hooks look unregistered.
 	 * - Removes failed actions older than 1 day and completed actions older than
 	 *   3 days for all DoubleScale groups.
 	 * - Emergency mode: if the table exceeds 10 000 rows the cutoffs shrink to
@@ -539,6 +697,13 @@ class Tasks {
 		$orphaned_group_ids = array();
 
 		foreach ( (array) $all_groups as $group ) {
+			// Only DoubleScale's groups. Another plugin's hooks may simply not
+			// be registered yet, or only on some requests; its jobs are never
+			// ours to delete.
+			if ( ! self::is_own_group( (string) $group['slug'] ) ) {
+				continue;
+			}
+
 			// Check all distinct hooks in the group regardless of status.
 			// A group whose every hook has no registered callback is fully orphaned —
 			// pending/failed records will never run, and complete records have no
@@ -582,20 +747,23 @@ class Tasks {
 					"DELETE a, l
 					FROM {$wpdb->prefix}actionscheduler_actions a
 					LEFT JOIN {$wpdb->prefix}actionscheduler_logs l ON a.action_id = l.action_id
-					WHERE a.group_id IN ($ogid_placeholders)",
-					...$orphaned_group_ids
+					WHERE a.group_id IN ($ogid_placeholders)
+					AND NOT ( a.status = 'pending' AND a.scheduled_date_gmt > %s )",
+					...array_merge( $orphaned_group_ids, array( gmdate( 'Y-m-d H:i:s' ) ) )
 				)
 			);
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 			$stats['orphaned_hooks'] = $orphaned_hooks_deleted !== false ? (int) $orphaned_hooks_deleted : 0;
 
-			// Also remove the group rows themselves so they don't show in the admin UI.
+			// Also remove the group rows themselves so they don't show in the
+			// admin UI, once no job (a future one kept above) is left in them.
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			$wpdb->query(
 				$wpdb->prepare(
-					"DELETE FROM {$wpdb->prefix}actionscheduler_groups
-					WHERE group_id IN ($ogid_placeholders)",
+					"DELETE g FROM {$wpdb->prefix}actionscheduler_groups g
+					WHERE g.group_id IN ($ogid_placeholders)
+					AND NOT EXISTS ( SELECT 1 FROM {$wpdb->prefix}actionscheduler_actions a WHERE a.group_id = g.group_id )",
 					...$orphaned_group_ids
 				)
 			);

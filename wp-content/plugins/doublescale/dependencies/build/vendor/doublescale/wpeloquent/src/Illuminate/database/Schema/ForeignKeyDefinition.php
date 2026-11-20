@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
-use Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
 /**
  * @method ForeignKeyDefinition references(string|array $columns) Specify the referenced column(s)
  * @method ForeignKeyDefinition on(string $table) Specify the referenced table

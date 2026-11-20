@@ -27,7 +27,7 @@ function nibwp_rdr_guard(): ?WP_Error
     if (!class_exists('Red_Item')) {
         return new WP_Error(
             'nibwp_rdr_missing',
-            __('Redirection is not active on this site.', domain: 'nibwp')
+            __('Redirection is not active on this site.', 'nibwp')
         );
     }
 
@@ -56,11 +56,8 @@ function nibwp_rdr_shape($item): array
 }
 
 wp_register_ability('nibwp/redirection-manage', [
-    'label' => __('Redirection – Redirects & 404s', domain: 'nibwp'),
-    'description' => __(
-        'Manage Redirection: create, edit, enable, disable and delete redirects, organize them into groups, read the redirect log and the 404 log, and check what a given URL would do.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Redirection – Redirects & 404s', 'nibwp'),
+    'description' => 'Manage Redirection: create, edit, enable, disable and delete redirects, organize them into groups, read the redirect log and the 404 log, and check what a given URL would do.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -152,7 +149,7 @@ function nibwp_redirection_manage(array $input): array|WP_Error
     if (in_array($action, $irreversible, strict: true) && empty($input['confirm'])) {
         return new WP_Error(
             'nibwp_rdr_unconfirmed',
-            __('This cannot be undone. Re-issue the call with confirm set to true if that is intended.', domain: 'nibwp')
+            __('This cannot be undone. Re-issue the call with confirm set to true if that is intended.', 'nibwp')
         );
     }
 
@@ -161,7 +158,7 @@ function nibwp_redirection_manage(array $input): array|WP_Error
     } catch (\Throwable $e) {
         return new WP_Error('nibwp_rdr_failed', sprintf(
             /* translators: 1: action name, 2: error message. */
-            __('Redirection could not complete %1$s: %2$s', domain: 'nibwp'),
+            __('Redirection could not complete %1$s: %2$s', 'nibwp'),
             $action,
             $e->getMessage()
         ));
@@ -205,12 +202,12 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
             $code   = (int) ($in['http_code'] ?? 301);
 
             if ($source === '') {
-                return new WP_Error('nibwp_rdr_no_source', __('create_redirect needs a source_url.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_source', __('create_redirect needs a source_url.', 'nibwp'));
             }
             // 404 and 410 deliberately answer with nothing, so they are the one
             // pair that legitimately has no target.
             if ($target === '' && !in_array($code, [404, 410], true)) {
-                return new WP_Error('nibwp_rdr_no_target', __('create_redirect needs a target_url, unless http_code is 404 or 410.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_target', __('create_redirect needs a target_url, unless http_code is 404 or 410.', 'nibwp'));
             }
 
             $created = Red_Item::create([
@@ -246,11 +243,11 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
         case 'create_group':
             $name = trim((string) ($in['title'] ?? ''));
             if ($name === '') {
-                return new WP_Error('nibwp_rdr_no_name', __('create_group needs a title.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_name', __('create_group needs a title.', 'nibwp'));
             }
             $group = Red_Group::create($name, (int) ($in['group_id'] ?? 1));
             if (!$group) {
-                return new WP_Error('nibwp_rdr_group_failed', __('Redirection refused to create that group.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_group_failed', __('Redirection refused to create that group.', 'nibwp'));
             }
 
             return ['created' => true, 'group' => ['id' => (int) $group->get_id(), 'name' => (string) $group->get_name()]];
@@ -260,7 +257,7 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
             $id = (int) ($in['group_id'] ?? 0);
             $group = $id > 0 ? Red_Group::get($id) : false;
             if (!$group) {
-                return new WP_Error('nibwp_rdr_no_group', __('No group with that ID.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_group', __('No group with that ID.', 'nibwp'));
             }
 
             if ($action === 'delete_group') {
@@ -277,7 +274,7 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
         case 'list_logs':
         case 'clear_logs':
             if (!class_exists('Red_Redirect_Log')) {
-                return new WP_Error('nibwp_rdr_no_log', __('Redirection log is unavailable on this version.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_log', __('Redirection log is unavailable on this version.', 'nibwp'));
             }
             if ($action === 'clear_logs') {
                 Red_Redirect_Log::delete_all();
@@ -291,7 +288,7 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
         case 'clear_404s':
         case 'top_404s':
             if (!class_exists('Red_404_Log')) {
-                return new WP_Error('nibwp_rdr_no_log', __('Redirection 404 log is unavailable on this version.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_log', __('Redirection 404 log is unavailable on this version.', 'nibwp'));
             }
             if ($action === 'clear_404s') {
                 Red_404_Log::delete_all();
@@ -323,7 +320,7 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
         case 'check_url':
             $url = trim((string) ($in['url'] ?? ''));
             if ($url === '') {
-                return new WP_Error('nibwp_rdr_no_url', __('check_url needs a url to test.', domain: 'nibwp'));
+                return new WP_Error('nibwp_rdr_no_url', __('check_url needs a url to test.', 'nibwp'));
             }
 
             $path = (string) (wp_parse_url($url, PHP_URL_PATH) ?: $url);
@@ -347,14 +344,14 @@ function nibwp_rdr_dispatch(string $action, array $in, int $per_page, int $page)
                 'path'    => $path,
                 'matches' => $hits,
                 'note'    => $hits === []
-                    ? __('No enabled redirect matches this path.', domain: 'nibwp')
-                    : __('Redirection applies the first match in position order.', domain: 'nibwp'),
+                    ? __('No enabled redirect matches this path.', 'nibwp')
+                    : __('Redirection applies the first match in position order.', 'nibwp'),
             ];
     }
 
     return new WP_Error('nibwp_rdr_unknown_action', sprintf(
         /* translators: %s: the requested action. */
-        __('Unknown Redirection action: %s', domain: 'nibwp'),
+        __('Unknown Redirection action: %s', 'nibwp'),
         $action
     ));
 }
@@ -366,7 +363,7 @@ function nibwp_rdr_one(string $action, array $in): array|WP_Error
     $item = $id > 0 ? Red_Item::get_by_id($id) : false;
 
     if (!$item) {
-        return new WP_Error('nibwp_rdr_no_redirect', __('No redirect with that ID.', domain: 'nibwp'));
+        return new WP_Error('nibwp_rdr_no_redirect', __('No redirect with that ID.', 'nibwp'));
     }
 
     switch ($action) {

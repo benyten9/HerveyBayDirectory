@@ -17,6 +17,7 @@ if( ! class_exists( 'SWBDPCIncludeClasses' ) ){
         public static function includes()
         {
             $files = array( 
+                'Inc/Controller/Base/CouponService',
                 'Inc/Controller/Base/Enqueue',
                 'Inc/Controller/Base/Activate',
                 'Inc/Controller/Base/DynamicStyle',
@@ -28,6 +29,11 @@ if( ! class_exists( 'SWBDPCIncludeClasses' ) ){
                 'Inc/Controller/Admin/SWBDPCouponCPT',
                 'Inc/Controller/Admin/CustomWpListTable',
                 'Inc/View/AdminCallbacks',
+                'Inc/MCP/Schema',
+                'Inc/MCP/Checkout',
+                'Inc/MCP/RateLimit',
+                'Inc/MCP/Reader',
+                'Inc/MCP/Integration',
             );
 
             foreach( $files as $file ){
@@ -41,4 +47,4 @@ if( ! class_exists( 'SWBDPCIncludeClasses' ) ){
 
     }// End class
 
-} 
+}

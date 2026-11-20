@@ -21,6 +21,8 @@ use WC_Order;
  */
 class OrderStatusChanged extends Trigger
 {
+	use OrderTriggerPhone;
+
 	/**
 	 * Trigger Name
 	 *
@@ -100,6 +102,8 @@ class OrderStatusChanged extends Trigger
 			'first_name' => $order->get_billing_first_name(),
 			'last_name'  => $order->get_billing_last_name(),
 			'email'      => $order->get_billing_email(),
+			'phone'      => $this->resolve_order_phone($order),
+			'country'    => $this->resolve_order_country($order),
 			'data'       => array(
 				'order_id'    => $order->get_id(),
 				'from_status' => $old_status,

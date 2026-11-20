@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Booking\Data\BookingDataFormatter;
 use DoubleScale\Modules\Booking\Models\UserModel;
 use DoubleScale\Modules\Booking\Models\BookingModel;
-use DoubleScale\Modules\Booking\Managers\MergeTagsManager;
+use DoubleScale\Modules\Booking\Services\AttendeeChangePolicy;
 
 abstract class BaseTemplateRenderer {
 
@@ -28,8 +28,7 @@ abstract class BaseTemplateRenderer {
 	 */
 	protected function get_time_format(): string {
 		// Get global settings - using the correct option name
-		$global_settings = get_option( 'doublescale_booking_settings', array() );
-		return $global_settings['general']['time_format'] ?? '12';
+		return (string) \DoubleScale\Modules\Booking\Helpers\BookingSettings::all()['general']['time_format'];
 	}
 
 	/**
@@ -49,7 +48,7 @@ abstract class BaseTemplateRenderer {
 		foreach ( $booking->hosts as $host ) {
 			$hosts[] = array(
 				'name'  => $host->display_name ?? '',
-				'image' => $host->ID ? get_avatar_url( $host->ID ) : '',
+				'image' => $host->ID ? \DoubleScale\Modules\Booking\BookingUtils::host_image_url( $host->ID ) : '',
 				'email' => $host->user_email ?? '',
 			);
 		}
@@ -87,9 +86,13 @@ abstract class BaseTemplateRenderer {
 			$this->enqueue_deferred_assets();
 			wp_print_styles();
 			wp_print_head_scripts();
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- public booking page; `embed` only toggles layout chrome for iframe shortcodes.
+			$is_embedded = isset( $_GET['embed'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['embed'] ) );
+			$body_class  = 'doublescale-booking-body' . ( $is_embedded ? ' is-embedded' : '' );
 			?>
 		</head>
-		<body class="doublescale-booking-body">
+		<body class="<?php echo esc_attr( $body_class ); ?>">
 		<?php
 		return ob_get_clean();
 	}
@@ -197,7 +200,7 @@ abstract class BaseTemplateRenderer {
 			$hosts[] = array(
 				'id'    => $user->ID,
 				'name'  => $user->display_name,
-				'image' => get_avatar_url( $user->ID ),
+				'image' => \DoubleScale\Modules\Booking\BookingUtils::host_image_url( $user->ID ),
 			);
 		}
 
@@ -284,6 +287,35 @@ abstract class BaseTemplateRenderer {
 	}
 
 	/**
+	 * The "Back to <site>" link shown on top of the booking result pages.
+	 *
+	 * These pages have no theme header or footer, so without it a visitor who
+	 * just booked or cancelled has no way back to the site. Inside an embed the
+	 * visitor is already on the site's page, so there is no link.
+	 *
+	 * @return array{url: string, label: string}|null
+	 */
+	protected function back_to_site_link(): ?array {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- public booking page; the embed flags only toggle layout chrome.
+		$is_inline   = isset( $_GET['embed_type'] ) && 'Inline' === sanitize_text_field( wp_unslash( $_GET['embed_type'] ) );
+		$is_embedded = isset( $_GET['embed'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['embed'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		if ( $is_inline || $is_embedded ) {
+			return null;
+		}
+
+		$site_name = trim( html_entity_decode( get_bloginfo( 'name' ), ENT_QUOTES, 'UTF-8' ) );
+
+		return array(
+			'url'   => home_url( '/' ),
+			'label' => '' === $site_name
+				? __( 'Back to the website', 'doublescale' )
+				/* translators: %s: the site name. */
+				: sprintf( __( 'Back to %s', 'doublescale' ), $site_name ),
+		);
+	}
+
+	/**
 	 * Render template page helper
 	 */
 	protected function render_template_page( string $template_path, array $variables = array() ) {
@@ -302,6 +334,7 @@ abstract class BaseTemplateRenderer {
 				'inline_data'   => $inline_js_data,
 			)
 		);
+		$variables['back_to_site'] = $this->back_to_site_link();
 		extract( $variables );
 
 		echo $this->get_head( $variables['title'] ?? '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- internal trusted HTML head markup.
@@ -320,68 +353,21 @@ abstract class BaseTemplateRenderer {
 	 * @return array Returns array with 'can_cancel' boolean and 'message' string
 	 */
 	protected function check_cancellation_permissions( $advanced_settings, $booking_array, $timezone ) {
-		$can_cancel            = true;
-		$cancel_denied_message = '';
-
-		// Get booking model for merge tag processing
-		$find_booking = BookingModel::find( $booking_array['id'] );
-
-		// Process merge tags for permission denied message
-		$cancel_denied_message = MergeTagsManager::instance()->process_merge_tags(
-			$advanced_settings['permission_denied_message'] ?? '',
-			$find_booking
+		$booking = BookingModel::find( $booking_array['id'] ?? 0 );
+		// A booking that is over or under way first, as the portal and the
+		// cancel request answer.
+		$closed = $booking ? AttendeeChangePolicy::closed( $booking, AttendeeChangePolicy::CANCEL ) : null;
+		$result = $closed ?? AttendeeChangePolicy::check(
+			AttendeeChangePolicy::CANCEL,
+			(array) $advanced_settings,
+			(string) ( $booking_array['start_time'] ?? '' ),
+			(string) $timezone,
+			$booking
 		);
 
-		// Check if attendee cannot cancel at event start
-		if ( ! empty( $advanced_settings['attendee_cannot_cancel'] ) && $advanced_settings['attendee_cannot_cancel'] ) {
-			// Default restriction is 'event_start' so legacy events (which may
-			// have `attendee_cannot_cancel=true` without an explicit time key)
-			// behave like the UI's default radio selection instead of silently
-			// allowing cancellation.
-			$cancel_time_restriction = $advanced_settings['cannot_cancel_time'] ?? 'event_start';
-
-			if ( 'event_start' === $cancel_time_restriction ) {
-				$can_cancel            = false;
-				$cancel_denied_message = $cancel_denied_message ?: __( 'You do not have permission to cancel this booking.', 'doublescale' );
-			} else {
-				$cancel_time_value = (int) ( $advanced_settings['cannot_cancel_time_value'] ?? 24 );
-				$cancel_time_unit  = $advanced_settings['cannot_cancel_time_unit'] ?? 'hours';
-				if ( $cancel_time_value <= 0 ) {
-					$cancel_time_value = 24;
-				}
-				if ( ! in_array( $cancel_time_unit, array( 'minutes', 'hours', 'days' ), true ) ) {
-					$cancel_time_unit = 'hours';
-				}
-
-				if ( $cancel_time_restriction === 'less_than' ) {
-					try {
-						$start_time = $booking_array['start_time'] ?? '';
-						$start_dt   = new \DateTime( $start_time, new \DateTimeZone( 'UTC' ) );
-						$start_dt->setTimezone( new \DateTimeZone( $timezone ) );
-
-						$current_time     = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
-						$restriction_time = clone $start_dt;
-
-						// Calculate the restriction time based on settings
-						$time_modifier = "-{$cancel_time_value} {$cancel_time_unit}";
-						$restriction_time->modify( $time_modifier );
-
-						// If current time is past the restriction time, prevent cancellation
-						if ( $current_time >= $restriction_time ) {
-							$can_cancel            = false;
-							$cancel_denied_message = $cancel_denied_message ?: __( 'Cancellation is no longer allowed for this booking.', 'doublescale' );
-						}
-					} catch ( \Exception $e ) {
-						// If there's an error with time calculation, allow cancellation for safety
-						$can_cancel = true;
-					}
-				}
-			}
-		}
-
 		return array(
-			'can_cancel' => $can_cancel,
-			'message'    => $cancel_denied_message,
+			'can_cancel' => $result['allowed'],
+			'message'    => $result['message'],
 		);
 	}
 
@@ -394,65 +380,19 @@ abstract class BaseTemplateRenderer {
 	 * @return array Returns array with 'can_reschedule' boolean and 'message' string
 	 */
 	protected function check_reschedule_permissions( $advanced_settings, $booking_array, $timezone ) {
-		$can_reschedule            = true;
-		$reschedule_denied_message = '';
-
-		// Get booking model for merge tag processing
-		$find_booking = BookingModel::find( $booking_array['id'] );
-
-		// Process merge tags for permission denied message
-		$reschedule_denied_message = MergeTagsManager::instance()->process_merge_tags(
-			$advanced_settings['reschedule_denied_message'] ?? '',
-			$find_booking
+		$booking = BookingModel::find( $booking_array['id'] ?? 0 );
+		$closed  = $booking ? AttendeeChangePolicy::closed( $booking, AttendeeChangePolicy::RESCHEDULE ) : null;
+		$result  = $closed ?? AttendeeChangePolicy::check(
+			AttendeeChangePolicy::RESCHEDULE,
+			(array) $advanced_settings,
+			(string) ( $booking_array['start_time'] ?? '' ),
+			(string) $timezone,
+			$booking
 		);
 
-		if ( ! empty( $advanced_settings['attendee_cannot_reschedule'] ) && $advanced_settings['attendee_cannot_reschedule'] ) {
-			// Same defaulting logic as cancellation: legacy events without
-			// `cannot_reschedule_time` are treated as 'event_start'.
-			$reschedule_time_restriction = $advanced_settings['cannot_reschedule_time'] ?? 'event_start';
-
-			if ( 'event_start' === $reschedule_time_restriction ) {
-				$can_reschedule            = false;
-				$reschedule_denied_message = $reschedule_denied_message ?: __( 'You do not have permission to reschedule this booking.', 'doublescale' );
-			} else {
-				$reschedule_time_value = (int) ( $advanced_settings['cannot_reschedule_time_value'] ?? 24 );
-				$reschedule_time_unit  = $advanced_settings['cannot_reschedule_time_unit'] ?? 'hours';
-				if ( $reschedule_time_value <= 0 ) {
-					$reschedule_time_value = 24;
-				}
-				if ( ! in_array( $reschedule_time_unit, array( 'minutes', 'hours', 'days' ), true ) ) {
-					$reschedule_time_unit = 'hours';
-				}
-
-				if ( $reschedule_time_restriction === 'less_than' ) {
-					try {
-						$start_time = $booking_array['start_time'] ?? '';
-						$start_dt   = new \DateTime( $start_time, new \DateTimeZone( 'UTC' ) );
-						$start_dt->setTimezone( new \DateTimeZone( $timezone ) );
-
-						$current_time     = new \DateTime( 'now', new \DateTimeZone( $timezone ) );
-						$restriction_time = clone $start_dt;
-
-						// Calculate the restriction time based on settings
-						$time_modifier = "-{$reschedule_time_value} {$reschedule_time_unit}";
-						$restriction_time->modify( $time_modifier );
-
-						// If current time is past the restriction time, prevent rescheduling
-						if ( $current_time >= $restriction_time ) {
-							$can_reschedule            = false;
-							$reschedule_denied_message = $reschedule_denied_message ?: __( 'Rescheduling is no longer allowed for this booking.', 'doublescale' );
-						}
-					} catch ( \Exception $e ) {
-						// If there's an error with time calculation, allow rescheduling for safety
-						$can_reschedule = true;
-					}
-				}
-			}
-		}
-
 		return array(
-			'can_reschedule' => $can_reschedule,
-			'message'        => $reschedule_denied_message,
+			'can_reschedule' => $result['allowed'],
+			'message'        => $result['message'],
 		);
 	}
 

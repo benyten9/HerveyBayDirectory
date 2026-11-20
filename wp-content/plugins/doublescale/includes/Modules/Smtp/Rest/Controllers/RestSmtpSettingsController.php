@@ -138,6 +138,11 @@ class RestSmtpSettingsController extends RestController {
 		// after upgrading without requiring an extra Save if credentials already exist in connections.
 		if ( ! empty( $all_settings['connections'] ) && is_array( $all_settings['connections'] ) ) {
 			Settings::sync_oauth_apps_from_bundle( $all_settings );
+			Settings::persist_missing_connection_created_at();
+			$refreshed = Settings::get_all();
+			if ( is_array( $refreshed ) ) {
+				$all_settings = array_replace( $all_settings, $refreshed );
+			}
 		}
 
 		return new WP_REST_Response( $all_settings, 200 );
@@ -170,8 +175,9 @@ class RestSmtpSettingsController extends RestController {
 		}
 
 		if ( isset( $settings['connections'] ) ) {
-			$merged = array_replace( Settings::get_all(), $settings );
-			$valid  = SmtpConnectionValidator::validate_settings_connections( $merged );
+			$stored = Settings::get_all();
+			$merged = array_replace( $stored, $settings );
+			$valid  = SmtpConnectionValidator::validate_settings_connections( $merged, (array) ( $stored['connections'] ?? array() ) );
 			if ( is_wp_error( $valid ) ) {
 				return $valid;
 			}

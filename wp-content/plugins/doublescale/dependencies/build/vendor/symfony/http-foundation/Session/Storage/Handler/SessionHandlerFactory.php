@@ -10,10 +10,10 @@
  */
 namespace DoubleScale\Vendor\Symfony\Component\HttpFoundation\Session\Storage\Handler;
 
-use Doctrine\DBAL\Configuration;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Schema\DefaultSchemaManagerFactory;
-use Doctrine\DBAL\Tools\DsnParser;
+use DoubleScale\Vendor\Doctrine\DBAL\Configuration;
+use DoubleScale\Vendor\Doctrine\DBAL\DriverManager;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\DefaultSchemaManagerFactory;
+use DoubleScale\Vendor\Doctrine\DBAL\Tools\DsnParser;
 use DoubleScale\Vendor\Symfony\Component\Cache\Adapter\AbstractAdapter;
 use DoubleScale\Vendor\Symfony\Component\Cache\Traits\RedisClusterProxy;
 use DoubleScale\Vendor\Symfony\Component\Cache\Traits\RedisProxy;

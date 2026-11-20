@@ -14,10 +14,10 @@ namespace DoubleScale\Modules\Booking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 
-use WPEloquent\Eloquent\Model;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use DoubleScale\Modules\Booking\Helpers\IntegrationsHelper;
 use DoubleScale\Modules\Booking\Managers\IntegrationsManager;
 use DoubleScale\Modules\Booking\Managers\LocationsManager;
@@ -168,7 +168,7 @@ class EventModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function calendar() {
 		return $this->belongsTo( CalendarModel::class, 'calendar_id', 'id' );
@@ -179,7 +179,7 @@ class EventModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function meta() {
 		return $this->hasMany( EventMetaModel::class, 'event_id' );
@@ -192,7 +192,7 @@ class EventModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function bookings() {
 		return $this->hasMany( BookingModel::class, 'event_id' );
@@ -203,7 +203,7 @@ class EventModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function availability() {
 		return $this->belongsTo( AvailabilityModel::class, 'availability_id', 'id' );
@@ -826,8 +826,23 @@ class EventModel extends Model {
 			throw new \Exception( esc_html__( 'Invalid location', 'doublescale' ) );
 		}
 
-		$fields             = $this->fields ?? array();
-		$location_fields    = $this->processLocationFields( $event_location );
+		$fields          = $this->fields ?? array();
+		$location_fields = $this->processLocationFields( $event_location );
+
+		// The location question is rebuilt from the event's locations on every
+		// save; keep what the host set on it (its place in the question order,
+		// label, help text), or a reordered form falls apart on the next save.
+		$existing = is_array( $fields['location'] ?? null ) ? $fields['location'] : array();
+		foreach ( $location_fields as $key => $field ) {
+			if ( empty( $existing[ $key ] ) || ! is_array( $existing[ $key ] ) ) {
+				continue;
+			}
+			foreach ( array( 'order', 'label', 'helpText', 'placeholder', 'hidden', 'enabled' ) as $property ) {
+				if ( array_key_exists( $property, $existing[ $key ] ) ) {
+					$location_fields[ $key ][ $property ] = $existing[ $key ][ $property ];
+				}
+			}
+		}
 		$fields['location'] = $location_fields;
 
 		$this->update_meta( 'fields', $fields );
@@ -962,6 +977,26 @@ class EventModel extends Model {
 		}
 
 		return $start_date->getTimestamp() - $now->getTimestamp() >= $confirmation_time_value;
+	}
+
+	/**
+	 * Whether visitors may book this event. The owner's on/off switch in the
+	 * dashboard; a switched-off event keeps its existing bookings manageable.
+	 *
+	 * @return bool
+	 */
+	public function is_open_for_booking(): bool {
+		return ! $this->is_disabled;
+	}
+
+	/**
+	 * Whether the event appears on its calendar's public page. A private event
+	 * is bookable through its own link only.
+	 *
+	 * @return bool
+	 */
+	public function is_listed(): bool {
+		return $this->is_open_for_booking() && 'private' !== (string) $this->visibility;
 	}
 
 	/**
@@ -1765,7 +1800,7 @@ class EventModel extends Model {
 				$start = clone $start_date;
 
 				// Get user's preferred start of week from settings
-				$settings   = get_option( 'doublescale_booking_settings', array() );
+				$settings   = \DoubleScale\Modules\Booking\Helpers\BookingSettings::all();
 				$start_from = isset( $settings['general']['start_from'] ) ?
 					$settings['general']['start_from'] : 'Monday';
 				$start_from = ucfirst( strtolower( $start_from ) );
@@ -1908,7 +1943,7 @@ class EventModel extends Model {
 				$start = clone $start_date;
 
 				// Get user's preferred start of week from settings
-				$settings   = get_option( 'doublescale_booking_settings', array() );
+				$settings   = \DoubleScale\Modules\Booking\Helpers\BookingSettings::all();
 				$start_from = isset( $settings['general']['start_from'] ) ?
 					$settings['general']['start_from'] : 'Monday';
 				$start_from = ucfirst( strtolower( $start_from ) );
@@ -2104,7 +2139,7 @@ class EventModel extends Model {
 		}
 
 		// 'weeks' — jump to the last day of the configured week (Sun by default).
-		$settings   = get_option( 'doublescale_booking_settings', array() );
+		$settings   = \DoubleScale\Modules\Booking\Helpers\BookingSettings::all();
 		$start_from = isset( $settings['general']['start_from'] ) ? ucfirst( strtolower( $settings['general']['start_from'] ) ) : 'Monday';
 		$day_map    = array(
 			'Sunday'    => 0,
@@ -2390,16 +2425,18 @@ class EventModel extends Model {
 					throw new \Exception( esc_html__( 'Invalid days value. Must be between 0 and 3650', 'doublescale' ) );
 				}
 
-				// Clone to avoid modifying original date
-				$end_date = clone $created_date;
+				// "Days into the future" is a rolling window from today, not
+				// from when the event was created (that froze every event
+				// N days after creation: 60 by default).
+				$end_date = new \DateTime( 'now', $target_tz );
 				$end_date->modify( "+{$end_event_value} days" );
 				// Set to end of day for consistency
 				$end_date->setTime( 23, 59, 59 );
 				break;
 
 			case 'infinity':
-				// Clone to avoid modifying original date
-				$end_date = clone $created_date;
+				// Rolling, like "days": indefinitely means from today.
+				$end_date = new \DateTime( 'now', $target_tz );
 				$end_date->modify( '+5 years' );
 				// Set to end of day for consistency
 				$end_date->setTime( 23, 59, 59 );

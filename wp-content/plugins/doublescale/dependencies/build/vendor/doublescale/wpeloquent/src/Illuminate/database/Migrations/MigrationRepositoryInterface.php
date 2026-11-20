@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Migrations;
 
 interface MigrationRepositoryInterface
 {

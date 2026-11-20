@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Support\DateFactory;
+use DoubleScale\Vendor\Illuminate\Support\DateFactory;
 /**
  * @see https://carbon.nesbot.com/docs/
  * @see https://github.com/briannesbitt/Carbon/blob/master/src/Carbon/Factory.php
@@ -79,7 +79,7 @@ use Illuminate\Support\DateFactory;
  * @method static void useYearsOverflow($yearsOverflow = true)
  * @method static \Illuminate\Support\Carbon yesterday($tz = null)
  */
-class Date extends \Illuminate\Support\Facades\Facade
+class Date extends Facade
 {
     const DEFAULT_FACADE = DateFactory::class;
     /**

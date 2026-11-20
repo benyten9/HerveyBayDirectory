@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use DoubleScale\Modules\Campaigns\Models\CampaignModel;
 use DoubleScale\Modules\Campaigns\Services\CampaignContactFilter;
 use DoubleScale\Modules\Campaigns\Services\CampaignRateLimiter;
+use DoubleScale\Core\Constants\TrackingStatus;
 
 /**
  * CampaignContext class
@@ -96,6 +97,9 @@ class CampaignContext {
 	/** @var callable fn(int $campaign_id): void */
 	public $fn_continue;
 
+	/** @var callable|null fn(int $campaign_id, int $timestamp): void */
+	public $fn_continue_at;
+
 	/** @var callable fn(string $lock_key, int $duration): bool */
 	public $fn_refresh_lock;
 
@@ -153,6 +157,39 @@ class CampaignContext {
 	}
 
 	/**
+	 * Stop this run on purpose and resume at $timestamp: the shared daily cap
+	 * is used up, or workflow messages are going first. Progress is saved and
+	 * the no-progress watchdog is told this pause is not a stuck send.
+	 *
+	 * @param int    $timestamp When to resume (Unix time).
+	 * @param string $reason    Why the campaign waits.
+	 * @return void
+	 */
+	public function wait_until( $timestamp, $reason ) {
+		update_option( $this->offset_key, $this->offset );
+		delete_transient( "doublescale_{$this->channel}_campaign_last_offset_{$this->campaign->id}" );
+		delete_transient( "doublescale_{$this->channel}_campaign_no_progress_count_{$this->campaign->id}" );
+
+		doublescale_get_logger()->info(
+			/* translators: 1: channel, 2: reason, 3: resume time */
+			sprintf( __( 'Campaign %1$s waits (%2$s); resumes at %3$s', 'doublescale' ), $this->channel, $reason, wp_date( 'Y-m-d H:i', (int) $timestamp ) ),
+			array(
+				'code'        => "{$this->channel}_campaign_waiting",
+				'campaign_id' => $this->campaign->id,
+				'offset'      => $this->offset,
+				'reason'      => $reason,
+			)
+		);
+
+		if ( is_callable( $this->fn_continue_at ) ) {
+			call_user_func( $this->fn_continue_at, $this->campaign->id, (int) $timestamp );
+		} else {
+			$this->queue_continuation();
+		}
+		$this->abort();
+	}
+
+	/**
 	 * Signal all subsequent pipeline steps to skip.
 	 */
 	public function abort() {
@@ -164,5 +201,19 @@ class CampaignContext {
 	 */
 	public function is_complete() {
 		return $this->total > 0 && $this->offset >= $this->total;
+	}
+
+	/**
+	 * True when at least one tracking row is waiting on a deferred retry.
+	 *
+	 * Unit tests (and any stub campaign) may not expose Eloquent `messages()`.
+	 * Treat that as "no deferred retries" rather than fataling the pipeline.
+	 */
+	public function has_deferred_retries() {
+		if ( ! $this->campaign || ! method_exists( $this->campaign, 'messages' ) ) {
+			return false;
+		}
+
+		return (bool) $this->campaign->messages()->where( 'status', TrackingStatus::SCHEDULED )->exists();
 	}
 }

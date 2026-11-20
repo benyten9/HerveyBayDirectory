@@ -56,19 +56,22 @@ final class TaskCalendarProvider {
 			return $events;
 		}
 
+		// Only people who work on tasks see them on the calendar.
+		if ( ! Permissions::can_access_tasks_api( $viewer_id ) ) {
+			return $events;
+		}
+
 		list( $start, $end_inclusive ) = $window;
 		$end_date = substr( $end_inclusive, 0, 10 ); // due_date is a DATE column.
 
-		// Mirror RestTaskController: a sales rep sees tasks assigned to them or
-		// with a subtask assigned to them; everyone else (managers) sees all, or
-		// one staffer when $view_user is set.
-		$scope_user = Permissions::is_sales_rep( $viewer_id )
-			? $viewer_id
-			: ( $view_user > 0 ? $view_user : 0 );
-
+		// Mirror the Tasks list: someone who works on their own tasks sees those
+		// and their projects' tasks, and nobody else's; everyone else sees all,
+		// or one staffer when $view_user is set.
 		$query = TaskModel::whereBetween( 'due_date', array( $start, $end_date ) );
-		if ( $scope_user > 0 ) {
-			$query->visibleToSalesRep( $scope_user );
+		if ( ! $this->sees_all_tasks( $viewer_id ) ) {
+			TaskAccess::apply_visibility( $query, $viewer_id );
+		} elseif ( $view_user > 0 ) {
+			$query->visibleToSalesRep( $view_user );
 		}
 
 		$tasks = $query->orderBy( 'due_date' )->limit( self::MAX_ROWS )->get();
@@ -91,6 +94,19 @@ final class TaskCalendarProvider {
 		}
 
 		return $events;
+	}
+
+	/**
+	 * Whether the viewer sees every task (managers) rather than their own.
+	 *
+	 * @param int $viewer_id Viewer.
+	 * @return bool
+	 */
+	private function sees_all_tasks( int $viewer_id ): bool {
+		if ( method_exists( Permissions::class, 'sees_all_records' ) ) {
+			return Permissions::sees_all_records( 'tasks', $viewer_id );
+		}
+		return ! Permissions::is_sales_rep( $viewer_id );
 	}
 
 	/**

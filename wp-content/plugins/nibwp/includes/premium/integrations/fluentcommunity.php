@@ -87,7 +87,7 @@ function nibwp_fcom_arr($value): array
 
 wp_register_ability('nibwp/fluentcommunity-info', [
     'label'       => __('FluentCommunity — Info', 'nibwp'),
-    'description' => __('Detect FluentCommunity, its version, the portal slug, and counts of spaces, space groups, courses, members, feed posts, comments and reactions.', 'nibwp'),
+    'description' => 'Detect FluentCommunity, its version, the portal slug, and counts of spaces, space groups, courses, members, feed posts, comments and reactions.',
     'category'    => 'community',
     'input_schema' => ['type' => 'object', 'properties' => new stdClass(), 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -128,7 +128,7 @@ function nibwp_fcom_info_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentcommunity-spaces', [
     'label'       => __('FluentCommunity — Spaces', 'nibwp'),
-    'description' => __('Manage FluentCommunity Spaces, Space Groups and Courses. Actions: list, get, create, update, delete, list_groups, create_group. Set title, slug, description, privacy (public|private|secret), type (community|course), parent group and settings.', 'nibwp'),
+    'description' => 'Manage FluentCommunity Spaces, Space Groups and Courses. Actions: list, get, create, update, delete, list_groups, create_group. Set title, slug, description, privacy (public|private|secret), type (community|course), parent group and settings.',
     'category'    => 'community',
     'input_schema' => [
         'type' => 'object',
@@ -259,7 +259,7 @@ function nibwp_fcom_spaces_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentcommunity-members', [
     'label'       => __('FluentCommunity — Members', 'nibwp'),
-    'description' => __('Manage space membership and roles. Actions: list, add, remove, set_role, get. Roles: admin, moderator, member. Status: active, pending.', 'nibwp'),
+    'description' => 'Manage space membership and roles. Actions: list, add, remove, set_role, get. Roles: admin, moderator, member. Status: active, pending.',
     'category'    => 'community',
     'input_schema' => [
         'type' => 'object',
@@ -355,7 +355,7 @@ function nibwp_fcom_members_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentcommunity-feed', [
     'label'       => __('FluentCommunity — Feed', 'nibwp'),
-    'description' => __('Create and manage feed posts inside a space. Actions: list, get, create, update, delete, pin, unpin. Markdown in "message" is rendered the way the portal renders it.', 'nibwp'),
+    'description' => 'Create and manage feed posts inside a space. Actions: list, get, create, update, delete, pin, unpin. Markdown in "message" is rendered the way the portal renders it.',
     'category'    => 'community',
     'input_schema' => [
         'type' => 'object',
@@ -469,7 +469,7 @@ function nibwp_fcom_feed_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentcommunity-comments', [
     'label'       => __('FluentCommunity — Comments', 'nibwp'),
-    'description' => __('Manage comments on feed posts. Actions: list, add, update, delete. Supports threaded replies via parent_id.', 'nibwp'),
+    'description' => 'Manage comments on feed posts. Actions: list, add, update, delete. Supports threaded replies via parent_id.',
     'category'    => 'community',
     'input_schema' => [
         'type' => 'object',
@@ -563,7 +563,7 @@ function nibwp_fcom_comments_execute(array $input): array|WP_Error
 
 wp_register_ability('nibwp/fluentcommunity-reactions', [
     'label'       => __('FluentCommunity — Reactions', 'nibwp'),
-    'description' => __('Add or remove reactions (likes) on feed posts and comments, and list a reaction set. Actions: react, unreact, list. object_type: feed | comment.', 'nibwp'),
+    'description' => 'Add or remove reactions (likes) on feed posts and comments, and list a reaction set. Actions: react, unreact, list. object_type: feed | comment.',
     'category'    => 'community',
     'input_schema' => [
         'type' => 'object',
@@ -659,7 +659,7 @@ function nibwp_fcom_recount_reactions(int $objId, string $objType): void
 
 wp_register_ability('nibwp/fluentcommunity-profiles', [
     'label'       => __('FluentCommunity — Profiles', 'nibwp'),
-    'description' => __('Read/write member community profiles (XProfile) and gamification points. Actions: get, update, list, add_points, set_points. Fields: display_name, short_description, avatar, username, is_verified.', 'nibwp'),
+    'description' => 'Read/write member community profiles (XProfile) and gamification points. Actions: get, update, list, add_points, set_points. Fields: display_name, short_description, avatar, username, is_verified.',
     'category'    => 'community',
     'input_schema' => [
         'type' => 'object',

@@ -40,7 +40,7 @@ function nibwp_fc_guard(): ?WP_Error
     if (!defined('FLUENTCART_VERSION') && !class_exists('FluentCart\\App\\App')) {
         return new WP_Error(
             'nibwp_fc_missing',
-            __('FluentCart is not active on this site.', domain: 'nibwp')
+            __('FluentCart is not active on this site.', 'nibwp')
         );
     }
 
@@ -53,7 +53,7 @@ function nibwp_fc_pro_guard(): ?WP_Error
     if (!defined('FLUENTCART_PRO_VERSION') && !class_exists('FluentCartPro\\App\\App')) {
         return new WP_Error(
             'nibwp_fc_pro_missing',
-            __('This needs FluentCart Pro, which is not active on this site.', domain: 'nibwp')
+            __('This needs FluentCart Pro, which is not active on this site.', 'nibwp')
         );
     }
 
@@ -171,11 +171,8 @@ function nibwp_fc_shape(string $kind, $row): array
 }
 
 wp_register_ability('nibwp/fluentcart-manage', [
-    'label' => __('FluentCart – Store Manager', domain: 'nibwp'),
-    'description' => __(
-        'Run a FluentCart store: products and variations, stock, orders and their items and transactions, customers, coupons, subscriptions, abandoned carts, and revenue reporting.',
-        domain: 'nibwp',
-    ),
+    'label' => __('FluentCart – Store Manager', 'nibwp'),
+    'description' => 'Run a FluentCart store: products and variations, stock, orders and their items and transactions, customers, coupons, subscriptions, abandoned carts, and revenue reporting.',
     'category' => 'ecommerce',
     'input_schema' => [
         'type' => 'object',
@@ -284,7 +281,7 @@ function nibwp_fluentcart_manage(array $input): array|WP_Error
     if (in_array($action, $irreversible, strict: true) && !$confirm) {
         return new WP_Error(
             'nibwp_fc_unconfirmed',
-            __('This cannot be undone from here. Re-issue the call with confirm set to true if that is intended.', domain: 'nibwp')
+            __('This cannot be undone from here. Re-issue the call with confirm set to true if that is intended.', 'nibwp')
         );
     }
 
@@ -295,7 +292,7 @@ function nibwp_fluentcart_manage(array $input): array|WP_Error
         // nobody, but swallowing the reason helps less.
         return new WP_Error('nibwp_fc_failed', sprintf(
             /* translators: 1: action name, 2: error message. */
-            __('FluentCart could not complete %1$s: %2$s', domain: 'nibwp'),
+            __('FluentCart could not complete %1$s: %2$s', 'nibwp'),
             $action,
             $e->getMessage()
         ));
@@ -329,7 +326,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
             $id = (int) ($in['product_id'] ?? 0);
             $post = $id > 0 ? get_post($id) : null;
             if (!$post || $post->post_type !== 'fc_product') {
-                return new WP_Error('nibwp_fc_no_product', __('No FluentCart product with that ID.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_no_product', __('No FluentCart product with that ID.', 'nibwp'));
             }
 
             $variation = nibwp_fc_model('ProductVariation');
@@ -347,7 +344,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
         case 'create_product':
             $title = trim((string) ($in['title'] ?? ''));
             if ($title === '') {
-                return new WP_Error('nibwp_fc_no_title', __('A product needs a title.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_no_title', __('A product needs a title.', 'nibwp'));
             }
 
             $id = wp_insert_post([
@@ -364,13 +361,13 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
             return [
                 'created' => true,
                 'product' => nibwp_fc_shape('product', get_post($id)),
-                'note'    => __('Created without a variation, so it has no price yet and cannot be bought until one is added in FluentCart.', domain: 'nibwp'),
+                'note'    => __('Created without a variation, so it has no price yet and cannot be bought until one is added in FluentCart.', 'nibwp'),
             ];
 
         case 'update_product':
             $id = (int) ($in['product_id'] ?? 0);
             if ($id <= 0 || get_post_type($id) !== 'fc_product') {
-                return new WP_Error('nibwp_fc_no_product', __('No FluentCart product with that ID.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_no_product', __('No FluentCart product with that ID.', 'nibwp'));
             }
 
             $patch = ['ID' => $id];
@@ -380,7 +377,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
                 }
             }
             if (count($patch) === 1) {
-                return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send title, content or status.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send title, content or status.', 'nibwp'));
             }
 
             wp_update_post($patch);
@@ -390,7 +387,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
         case 'delete_product':
             $id = (int) ($in['product_id'] ?? 0);
             if ($id <= 0 || get_post_type($id) !== 'fc_product') {
-                return new WP_Error('nibwp_fc_no_product', __('No FluentCart product with that ID.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_no_product', __('No FluentCart product with that ID.', 'nibwp'));
             }
             wp_delete_post($id, true);
 
@@ -436,7 +433,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
         case 'list_abandoned_carts':
             $cart = nibwp_fc_model('Cart');
             if (!$cart) {
-                return new WP_Error('nibwp_fc_no_model', __('FluentCart carts are unavailable on this version.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_no_model', __('FluentCart carts are unavailable on this version.', 'nibwp'));
             }
             $rows = $cart::query()->orderBy('id', 'desc')->limit($per_page)->offset($offset)->get();
 
@@ -454,7 +451,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
         case 'list_activity':
             $activity = nibwp_fc_model('Activity');
             if (!$activity) {
-                return new WP_Error('nibwp_fc_no_model', __('FluentCart activity log is unavailable on this version.', domain: 'nibwp'));
+                return new WP_Error('nibwp_fc_no_model', __('FluentCart activity log is unavailable on this version.', 'nibwp'));
             }
             $rows = $activity::query()->orderBy('id', 'desc')->limit($per_page)->offset($offset)->get();
 
@@ -476,7 +473,7 @@ function nibwp_fc_dispatch(string $action, array $in, int $per_page, int $page):
 
     return new WP_Error('nibwp_fc_unknown_action', sprintf(
         /* translators: %s: the action that was requested. */
-        __('Unknown FluentCart action: %s', domain: 'nibwp'),
+        __('Unknown FluentCart action: %s', 'nibwp'),
         $action
     ));
 }
@@ -486,7 +483,7 @@ function nibwp_fc_variations(string $action, array $in, int $per_page, int $offs
 {
     $model = nibwp_fc_model('ProductVariation');
     if (!$model) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart variations are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart variations are unavailable on this version.', 'nibwp'));
     }
 
     if ($action === 'list_variations') {
@@ -506,7 +503,7 @@ function nibwp_fc_variations(string $action, array $in, int $per_page, int $offs
     $id = (int) ($in['variation_id'] ?? 0);
     $row = $id > 0 ? $model::query()->find($id) : null;
     if (!$row) {
-        return new WP_Error('nibwp_fc_no_variation', __('No variation with that ID.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_variation', __('No variation with that ID.', 'nibwp'));
     }
 
     if ($action === 'get_variation') {
@@ -515,7 +512,7 @@ function nibwp_fc_variations(string $action, array $in, int $per_page, int $offs
 
     if ($action === 'update_stock') {
         if (!isset($in['quantity'])) {
-            return new WP_Error('nibwp_fc_no_qty', __('update_stock needs a quantity.', domain: 'nibwp'));
+            return new WP_Error('nibwp_fc_no_qty', __('update_stock needs a quantity.', 'nibwp'));
         }
         $qty = max(0, (int) $in['quantity']);
         $row->total_stock  = $qty;
@@ -538,7 +535,7 @@ function nibwp_fc_variations(string $action, array $in, int $per_page, int $offs
         $touched = true;
     }
     if (!$touched) {
-        return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send price or title.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send price or title.', 'nibwp'));
     }
     $row->save();
 
@@ -550,7 +547,7 @@ function nibwp_fc_orders(string $action, array $in, int $per_page, int $offset):
 {
     $model = nibwp_fc_model('Order');
     if (!$model) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart orders are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart orders are unavailable on this version.', 'nibwp'));
     }
 
     if ($action === 'list_orders') {
@@ -576,7 +573,7 @@ function nibwp_fc_orders(string $action, array $in, int $per_page, int $offset):
     $id = (int) ($in['order_id'] ?? 0);
     $order = $id > 0 ? $model::query()->find($id) : null;
     if (!$order) {
-        return new WP_Error('nibwp_fc_no_order', __('No order with that ID.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_order', __('No order with that ID.', 'nibwp'));
     }
 
     if ($action === 'get_order') {
@@ -629,7 +626,7 @@ function nibwp_fc_orders(string $action, array $in, int $per_page, int $offset):
     if (!in_array($status, $allowed, strict: true)) {
         return new WP_Error('nibwp_fc_bad_status', sprintf(
             /* translators: %s: comma-separated list of allowed statuses. */
-            __('Order status must be one of: %s', domain: 'nibwp'),
+            __('Order status must be one of: %s', 'nibwp'),
             implode(', ', $allowed)
         ));
     }
@@ -642,7 +639,7 @@ function nibwp_fc_orders(string $action, array $in, int $per_page, int $offset):
         'updated' => true,
         'order'   => nibwp_fc_shape('order', $order->refresh()),
         'was'     => $was,
-        'note'    => __('Status only. No money moved — refunds happen in the payment gateway.', domain: 'nibwp'),
+        'note'    => __('Status only. No money moved — refunds happen in the payment gateway.', 'nibwp'),
     ];
 }
 
@@ -651,7 +648,7 @@ function nibwp_fc_customers(string $action, array $in, int $per_page, int $offse
 {
     $model = nibwp_fc_model('Customer');
     if (!$model) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart customers are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart customers are unavailable on this version.', 'nibwp'));
     }
 
     if ($action === 'list_customers') {
@@ -677,7 +674,7 @@ function nibwp_fc_customers(string $action, array $in, int $per_page, int $offse
     $id = (int) ($in['customer_id'] ?? 0);
     $customer = $id > 0 ? $model::query()->find($id) : null;
     if (!$customer) {
-        return new WP_Error('nibwp_fc_no_customer', __('No customer with that ID.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_customer', __('No customer with that ID.', 'nibwp'));
     }
 
     if ($action === 'get_customer') {
@@ -713,7 +710,7 @@ function nibwp_fc_customers(string $action, array $in, int $per_page, int $offse
         }
     }
     if (!$touched) {
-        return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send email, first_name, last_name or status.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send email, first_name, last_name or status.', 'nibwp'));
     }
     $customer->save();
 
@@ -725,7 +722,7 @@ function nibwp_fc_coupons(string $action, array $in, int $per_page, int $offset)
 {
     $model = nibwp_fc_model('Coupon');
     if (!$model) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart coupons are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart coupons are unavailable on this version.', 'nibwp'));
     }
 
     if ($action === 'list_coupons') {
@@ -741,10 +738,10 @@ function nibwp_fc_coupons(string $action, array $in, int $per_page, int $offset)
     if ($action === 'create_coupon') {
         $code = trim((string) ($in['code'] ?? ''));
         if ($code === '') {
-            return new WP_Error('nibwp_fc_no_code', __('A coupon needs a code.', domain: 'nibwp'));
+            return new WP_Error('nibwp_fc_no_code', __('A coupon needs a code.', 'nibwp'));
         }
         if ($model::query()->where('code', $code)->exists()) {
-            return new WP_Error('nibwp_fc_dupe_code', __('A coupon with that code already exists.', domain: 'nibwp'));
+            return new WP_Error('nibwp_fc_dupe_code', __('A coupon with that code already exists.', 'nibwp'));
         }
 
         $coupon = $model::query()->create([
@@ -761,7 +758,7 @@ function nibwp_fc_coupons(string $action, array $in, int $per_page, int $offset)
     $id = (int) ($in['coupon_id'] ?? 0);
     $coupon = $id > 0 ? $model::query()->find($id) : null;
     if (!$coupon) {
-        return new WP_Error('nibwp_fc_no_coupon', __('No coupon with that ID.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_coupon', __('No coupon with that ID.', 'nibwp'));
     }
 
     if ($action === 'get_coupon') {
@@ -783,7 +780,7 @@ function nibwp_fc_coupons(string $action, array $in, int $per_page, int $offset)
         }
     }
     if (!$touched) {
-        return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send code, title, type, amount or status.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_nothing', __('Nothing to update — send code, title, type, amount or status.', 'nibwp'));
     }
     $coupon->save();
 
@@ -799,7 +796,7 @@ function nibwp_fc_subscriptions(string $action, array $in, int $per_page, int $o
 
     $model = nibwp_fc_model('Subscription');
     if (!$model) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart subscriptions are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart subscriptions are unavailable on this version.', 'nibwp'));
     }
 
     if ($action === 'list_subscriptions') {
@@ -823,7 +820,7 @@ function nibwp_fc_subscriptions(string $action, array $in, int $per_page, int $o
     $id = (int) ($in['subscription_id'] ?? 0);
     $sub = $id > 0 ? $model::query()->find($id) : null;
     if (!$sub) {
-        return new WP_Error('nibwp_fc_no_subscription', __('No subscription with that ID.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_subscription', __('No subscription with that ID.', 'nibwp'));
     }
 
     if ($action === 'get_subscription') {
@@ -833,7 +830,7 @@ function nibwp_fc_subscriptions(string $action, array $in, int $per_page, int $o
     // cancel_subscription — confirm-gated upstream.
     $was = (string) $sub->status;
     if ($was === 'canceled') {
-        return ['subscription' => nibwp_fc_shape('subscription', $sub), 'note' => __('Already canceled; nothing changed.', domain: 'nibwp')];
+        return ['subscription' => nibwp_fc_shape('subscription', $sub), 'note' => __('Already canceled; nothing changed.', 'nibwp')];
     }
 
     $sub->status = 'canceled';
@@ -843,7 +840,7 @@ function nibwp_fc_subscriptions(string $action, array $in, int $per_page, int $o
         'canceled'     => true,
         'subscription' => nibwp_fc_shape('subscription', $sub->refresh()),
         'was'          => $was,
-        'note'         => __('Marked canceled in FluentCart. If the gateway holds the mandate, cancel it there too or it may keep charging.', domain: 'nibwp'),
+        'note'         => __('Marked canceled in FluentCart. If the gateway holds the mandate, cancel it there too or it may keep charging.', 'nibwp'),
     ];
 }
 
@@ -852,7 +849,7 @@ function nibwp_fc_reports(string $action, array $in): array|WP_Error
 {
     $orders = nibwp_fc_model('Order');
     if (!$orders) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart orders are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart orders are unavailable on this version.', 'nibwp'));
     }
 
     if ($action === 'store_info') {
@@ -899,7 +896,7 @@ function nibwp_fc_reports(string $action, array $in): array|WP_Error
     // top_products
     $items = nibwp_fc_model('OrderItem');
     if (!$items) {
-        return new WP_Error('nibwp_fc_no_model', __('FluentCart order items are unavailable on this version.', domain: 'nibwp'));
+        return new WP_Error('nibwp_fc_no_model', __('FluentCart order items are unavailable on this version.', 'nibwp'));
     }
 
     $tally = [];

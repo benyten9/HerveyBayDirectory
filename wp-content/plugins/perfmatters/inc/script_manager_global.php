@@ -8,8 +8,8 @@ wp_nonce_field('pmsm_global', 'pmsm_global_nonce');
 
 //title bar
 echo '<div class="perfmatters-script-manager-title-bar">';
-	echo '<h1>' . __('Global View', 'perfmatters') . '</h1>';
-	echo '<p>' . __('This is a visual representation of the Script Manager configuration across your entire site.', 'perfmatters') . '</p>';
+	echo '<h1>' . esc_html__('Global View', 'perfmatters') . '</h1>';
+	echo '<p>' . esc_html__('This is a visual representation of the Script Manager configuration across your entire site.', 'perfmatters') . '</p>';
 echo '</div>';
 
 $options = get_option('perfmatters_script_manager');
@@ -19,7 +19,7 @@ if(!empty($options)) {
 	foreach($options as $category => $types) {
 
 		//category header
-		echo '<h3>' . $category . '</h3>';
+		echo '<h3>' . esc_html($category) . '</h3>';
 
 		if(!empty($types)) {
 
@@ -34,7 +34,7 @@ if(!empty($options)) {
 				foreach($types as $type => $scripts) {
 					echo '<div class="perfmatters-script-manager-group">';
 						echo '<div class="pmsm-group-heading">';
-							echo '<h4>' . $type_names[$type] . '</h4>';
+							echo '<h4>' . esc_html($type_names[$type]) . '</h4>';
 						echo '</div>';
 
 						echo '<div class="perfmatters-script-manager-section">';
@@ -42,8 +42,8 @@ if(!empty($options)) {
 							echo '<table>';
 								echo '<thead>';
 									echo '<tr>';
-										echo '<th>' . __('Handle', 'perfmatters') . '</th>';
-										echo '<th>' . __('Setting', 'perfmatters') . '</th>';
+										echo '<th>' . esc_html__('Handle', 'perfmatters') . '</th>';
+										echo '<th>' . esc_html__('Setting', 'perfmatters') . '</th>';
 										echo '<th style="width: 40px;"></th>';
 									echo '</tr>';
 								echo '</thead>';
@@ -60,9 +60,9 @@ if(!empty($options)) {
 													$contains_junk = false;
 
 													echo '<tr>';
-														echo '<td>' . $script . '</td>';
+														echo '<td>' . esc_html($script) . '</td>';
 														echo '<td>';
-															echo $detail;
+															echo esc_html($detail);
 															if($detail == 'current' || $detail == 'post_types' || $detail == 'archives') {
 																if(!empty($values)) {
 
@@ -92,41 +92,41 @@ if(!empty($options)) {
 																				else {
 																					$permalink = get_permalink($value);
 																					if($permalink) {
-																						$valueString.= '<a href="' . $permalink . '" title="' . get_the_title($value) . '" target="_blank">' . $value . '</a>, ';
+																						$valueString.= '<a href="' . esc_url($permalink) . '" title="' . esc_attr(get_the_title($value)) . '" target="_blank">' . esc_html($value) . '</a>, ';
 																					}
 																					else {
-																						$valueString.= '<a style="color: orange; text-decoration: line-through;">' . $value . '</a>, ';
+																						$valueString.= '<a style="color: orange; text-decoration: line-through;">' . esc_html($value) . '</a>, ';
 																						$contains_junk = true;
 																					}
 																				}
 																			}
 																			else {
-																				$valueString.= '<a href="' . get_home_url() . '" target="_blank">homepage</a>, ';
+																				$valueString.= '<a href="' . esc_url(get_home_url()) . '" target="_blank">homepage</a>, ';
 																			}
 																		}
 																		else {
-																			$valueString.= $value . ', ';
+																			$valueString.= esc_html($value) . ', ';
 																		}
 																	}
-																	echo rtrim($valueString, ", ");
+																	echo wp_kses_post(rtrim($valueString, ', '));
 																	echo ')';
 																}
 															}
 															elseif($detail !== 'everywhere') {
-																echo ' (' . $values . ')';
+																echo ' (' . esc_html($values) . ')';
 															}
 														echo '</td>';
 														echo '<td style="text-align: right;">';
 
 															//refresh button
 															if($contains_junk) {
-																echo '<button class="pmsm-action-button" name="pmsm_global_refresh" title="Refresh" value="' . $category . '|' . $type . '|' . $script . '">';
+																echo '<button class="pmsm-action-button" name="pmsm_global_refresh" title="Refresh" value="' . esc_attr($category . '|' . $type . '|' . $script) . '">';
 																	echo '<span class="dashicons dashicons-update"></span>';
 																echo '</button>';
 															}
 
 															//trash button
-															echo '<button class="pmsm-action-button" name="pmsm_global_trash" title="Delete" value="' . $category . '|' . $type . '|' . $script . '|' . $detail . '" onClick="return confirm(\'Are you sure you want to delete this option?\');">';
+															echo '<button class="pmsm-action-button" name="pmsm_global_trash" title="Delete" value="' . esc_attr($category . '|' . $type . '|' . $script . '|' . $detail) . '" onClick="return confirm(\'Are you sure you want to delete this option?\');">';
 																echo '<span class="dashicons dashicons-trash"></span>';
 															echo '</button>';
 
@@ -147,6 +147,6 @@ if(!empty($options)) {
 }
 else {
 	echo '<div class="perfmatters-script-manager-section">';
-		echo '<p style="padding: 20px; text-align: center;">' . __("You don't have any scripts disabled yet.", 'perfmatters') . '</p>';
+		echo '<p style="padding: 20px; text-align: center;">' . esc_html__("You don't have any scripts disabled yet.", 'perfmatters') . '</p>';
 	echo '</div>';
 }

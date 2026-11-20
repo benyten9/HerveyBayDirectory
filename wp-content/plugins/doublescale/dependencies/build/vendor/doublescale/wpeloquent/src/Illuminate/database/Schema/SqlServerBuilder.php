@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
-class SqlServerBuilder extends \Illuminate\Database\Schema\Builder
+class SqlServerBuilder extends Builder
 {
     /**
      * Drop all tables from the database.

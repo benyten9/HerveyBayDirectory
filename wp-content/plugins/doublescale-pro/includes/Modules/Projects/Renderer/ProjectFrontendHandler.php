@@ -132,6 +132,15 @@ final class ProjectFrontendHandler {
 
 		wp_localize_script( self::HANDLE, 'doublescale_project_config', $config );
 
+		// Dates the way the site writes them (task due dates on the shared page).
+		if ( class_exists( \DoubleScale\Core\Settings\SiteDates::class ) ) {
+			wp_add_inline_script(
+				self::HANDLE,
+				'window.doublescaleSiteDates = ' . wp_json_encode( \DoubleScale\Core\Settings\SiteDates::config(), JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+				'before'
+			);
+		}
+
 		$business = class_exists( \DoubleScale\Modules\Documents\Services\DocumentPdf::class )
 			? \DoubleScale\Modules\Documents\Services\DocumentPdf::resolved_business_settings()
 			: array(
@@ -143,8 +152,8 @@ final class ProjectFrontendHandler {
 		wp_add_inline_script(
 			self::HANDLE,
 			'window.doublescaleConfig = window.doublescaleConfig || {};'
-			. 'window.doublescaleConfig.business = ' . wp_json_encode( $business ) . ';'
-			. 'window.doublescaleConfig.blogName = ' . wp_json_encode( get_bloginfo( 'name' ) ) . ';',
+			. 'window.doublescaleConfig.business = ' . wp_json_encode( $business, JSON_HEX_TAG | JSON_HEX_AMP ) . ';'
+			. 'window.doublescaleConfig.blogName = ' . wp_json_encode( get_bloginfo( 'name' ), JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
 			'before'
 		);
 
@@ -178,6 +187,6 @@ final class ProjectFrontendHandler {
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$hash = sanitize_text_field( wp_unslash( (string) $_GET[ ProjectUrl::HASH_QUERY_ARG ] ) );
-		return preg_match( '/^[a-f0-9]{32}$/', $hash ) ? $hash : '';
+		return preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ? $hash : '';
 	}
 }

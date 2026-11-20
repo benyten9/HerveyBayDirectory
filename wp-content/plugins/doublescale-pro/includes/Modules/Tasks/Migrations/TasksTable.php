@@ -84,7 +84,7 @@ class TasksTable extends Migration {
 			status VARCHAR(20) NOT NULL DEFAULT \'pending\' COMMENT \'DB status: pending/completed - display status calculated from due_date\',
 			status_id BIGINT(20) UNSIGNED NULL DEFAULT NULL,
 			priority VARCHAR(20) NOT NULL DEFAULT \'medium\',
-			due_date DATE NOT NULL,
+			due_date DATE NULL DEFAULT NULL,
 			due_time TIME DEFAULT NULL,
 			reminder_at DATETIME DEFAULT NULL COMMENT \'When to send reminder (date + time)\',
 			reminder_sent_at DATETIME DEFAULT NULL COMMENT \'When reminder was sent\',

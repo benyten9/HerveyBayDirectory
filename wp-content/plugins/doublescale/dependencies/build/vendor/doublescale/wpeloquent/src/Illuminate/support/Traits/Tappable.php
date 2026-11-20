@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Traits;
+namespace DoubleScale\Vendor\Illuminate\Support\Traits;
 
 trait Tappable
 {

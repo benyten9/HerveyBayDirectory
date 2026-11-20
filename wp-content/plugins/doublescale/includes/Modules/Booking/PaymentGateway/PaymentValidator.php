@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Booking\PaymentGateway;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use WP_Error;
 
 class PaymentValidator {

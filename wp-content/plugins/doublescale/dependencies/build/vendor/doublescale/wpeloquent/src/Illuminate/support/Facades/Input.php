@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static bool matchesType(string $actual, string $type)
@@ -86,7 +86,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Http\Request
  */
-class Input extends \Illuminate\Support\Facades\Facade
+class Input extends Facade
 {
     /**
      * Get an item from the input data.

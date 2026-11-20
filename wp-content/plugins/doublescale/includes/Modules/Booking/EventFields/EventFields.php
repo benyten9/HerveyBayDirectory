@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Booking\EventFields;
 
 defined( 'ABSPATH' ) || exit;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Traits\Singleton;
 
 /**

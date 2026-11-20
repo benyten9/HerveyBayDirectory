@@ -79,13 +79,18 @@ function seopress_pro_wizard_ai_assistant_data( $data ) {
 	// ChatCompletions, the assistant loader): the saved provider, or OpenAI when
 	// none was ever saved. Reporting any other provider would name one the plugin
 	// is never going to call.
-	$selected = $option_pro->getAIProvider();
+	// The getter returns null while the option has never been saved, and PHP 8.5
+	// deprecates null as an array offset, so normalize it to a string first.
+	$selected = (string) $option_pro->getAIProvider();
 	$selected = isset( $providers[ $selected ] ) ? $selected : 'openai';
 
 	$api_key = $usage->getLicenseKey( $selected );
 
+	// The wizard offers what the settings tab offers: under White Label the
+	// SEOPress AI Credits card is gone from both. `$providers` above stays the
+	// full map, so an already-selected provider still resolves its label below.
 	$offered = array();
-	foreach ( $providers as $slug => $provider ) {
+	foreach ( seopress_ai_get_visible_providers() as $slug => $provider ) {
 		$offered[] = array(
 			'value'        => $slug,
 			'label'        => $provider['label'],

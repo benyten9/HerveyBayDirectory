@@ -258,8 +258,17 @@ abstract class Rule {
 				if ( ! is_array( $rule_value ) || count( $rule_value ) < 2 ) {
 					return false;
 				}
-				$start_ts = strtotime( (string) $rule_value[0] );
-				$end_ts   = strtotime( (string) $rule_value[1] );
+				$start = trim( (string) $rule_value[0] );
+				$end   = trim( (string) $rule_value[1] );
+				if ( '' === $start || '' === $end ) {
+					return false;
+				}
+				if ( strtotime( $start ) > strtotime( $end ) ) {
+					list( $start, $end ) = array( $end, $start );
+				}
+				$start_ts = strtotime( $start );
+				// The date field sends whole days: the last one counts until its end.
+				$end_ts = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end ) ? strtotime( $end . ' 23:59:59' ) : strtotime( $end );
 				return false !== $start_ts && false !== $end_ts && $actual_ts >= $start_ts && $actual_ts <= $end_ts;
 
 			case 'within':

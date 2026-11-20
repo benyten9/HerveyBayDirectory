@@ -8,7 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon;
+namespace DoubleScale\Vendor\Carbon;
 
 use Closure;
 use DateTimeImmutable;
@@ -237,9 +237,9 @@ use DoubleScale\Vendor\Psr\Clock\ClockInterface;
  *
  * </autodoc>
  */
-class FactoryImmutable extends \Carbon\Factory implements ClockInterface
+class FactoryImmutable extends Factory implements ClockInterface
 {
-    protected $className = \Carbon\CarbonImmutable::class;
+    protected $className = CarbonImmutable::class;
     /**
      * Get a Carbon instance for the current date and time.
      *

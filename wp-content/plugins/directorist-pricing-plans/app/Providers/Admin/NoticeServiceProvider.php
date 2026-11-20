@@ -6,6 +6,7 @@ defined( "ABSPATH" ) || exit;
 
 use Directorist\Enums\Order\Status as OrderStatus;
 use Directorist\Repositories\OrderRepository;
+use DirectoristPricingPlan\App\Services\PackageRepairService;
 use DirectoristPricingPlan\WpMVC\Contracts\Provider;
 use DirectoristPricingPlan\App\Repositories\Admin\PlanRepository;
 use DirectoristPricingPlan\App\Jobs\UnassignedPlanOrderQueue;
@@ -41,85 +42,41 @@ class NoticeServiceProvider implements Provider {
             return;
         }
 
-        $missing_groups = $this->package_repository->get_missing_plan_groups();
-
-        if ( empty( $missing_groups ) ) {
+        $repair = directorist_pricing_plans_singleton( PackageRepairService::class );
+        $groups = $repair->get_groups();
+        if ( empty( $groups ) ) {
             return;
         }
 
-        $directory_type_ids = array_values(
-            array_unique(
-                array_map(
-                    function( $group ) {
-                        return (int) $group->directory_type_id;
-                    },
-                    array_filter(
-                        $missing_groups,
-                        function( $group ) {
-                            return 1 === (int) $group->directory_type_count;
-                        }
+        $directories = directorist_get_directories( [ 'hide_empty' => false, 'default_only' => false ] );
+        $plans       = directorist_pricing_plans_singleton( PlanRepository::class )->get_published_plans_by_directory_types( array_column( $directories, 'term_id' ) );
+        $options     = [];
+        foreach ( $directories as $directory ) {
+            $options[] = [
+                'id'    => (int) $directory->term_id,
+                'name'  => $directory->name,
+                'plans' => array_values(
+                    array_map(
+                        static function( $plan ) {
+                            return [ 'id' => (int) $plan->id, 'title' => $plan->title ?: '#' . $plan->id ];
+                        },
+                        array_filter( $plans, static function( $plan ) use ( $directory ) { return (int) $plan->directory_type_id === (int) $directory->term_id; } )
                     )
-                )
-            )
-        );
-        $directory_names    = [];
-
-        if ( ! empty( $directory_type_ids ) ) {
-            $terms = get_terms(
-                [
-                    'taxonomy'   => ATBDP_DIRECTORY_TYPE,
-                    'include'    => $directory_type_ids,
-                    'hide_empty' => false,
-                ]
-            );
-
-            if ( ! is_wp_error( $terms ) ) {
-                foreach ( $terms as $term ) {
-                    $directory_names[ (int) $term->term_id ] = $term->name;
-                }
-            }
-        }
-
-        /** @var PlanRepository $plan_repository */
-        $plan_repository = directorist_pricing_plans_singleton( PlanRepository::class );
-        $published_plans = $plan_repository->get_published_plans_by_directory_types( $directory_type_ids );
-        $plans_by_type   = [];
-
-        foreach ( $published_plans as $plan ) {
-            $directory_type_id                     = (int) $plan->directory_type_id;
-            $plans_by_type[ $directory_type_id ][] = [
-                'id'    => (int) $plan->id,
-                'title' => $plan->title ?: sprintf( '#%d', (int) $plan->id ),
+                ),
             ];
         }
-
-        $missing_plans = array_map(
-            function( $group ) use ( $directory_names, $plans_by_type ) {
-                $is_consistent     = 1 === (int) $group->directory_type_count;
-                $directory_type_id = $is_consistent ? (int) $group->directory_type_id : 0;
-
-                return [
-                    'missing_plan_id'               => (int) $group->plan_id,
-                    'directory_type_id'             => $directory_type_id,
-                    'directory_type_name'           => $is_consistent
-                        ? ( $directory_names[ $directory_type_id ] ?? sprintf( '#%d', $directory_type_id ) )
-                        : __( 'Multiple directory types', 'directorist-pricing-plans' ),
-                    'has_consistent_directory_type' => $is_consistent,
-                    'package_count'                 => (int) $group->package_count,
-                    'plans'                         => $is_consistent ? ( $plans_by_type[ $directory_type_id ] ?? [] ) : [],
-                ];
-            },
-            $missing_groups
-        );
-
+        foreach ( $groups as &$group ) {
+            $group['listing_count'] = count( $repair->get_listing_ids( $group ) );
+            unset( $group['packages'] );
+        }
+        unset( $group );
         wp_enqueue_script( 'directorist-pricing-plans-listing-table-notice' );
         wp_localize_script(
             'directorist-pricing-plans-listing-table-notice',
             'directoristMissingPlanRecoveryData',
-            [ 'missing_plans' => $missing_plans ]
+            [ 'groups' => array_values( $groups ), 'directories' => $options ]
         );
-
-        $this->render_missing_plan_recovery_notice( count( $missing_plans ) );
+        $this->render_missing_plan_recovery_notice( array_sum( array_column( $groups, 'package_count' ) ) );
     }
 
     /**
@@ -294,6 +251,7 @@ class NoticeServiceProvider implements Provider {
                 ON post.ID = directory_type.post_id
                 AND directory_type.meta_key = '_directory_type'
             WHERE post.post_type = %s
+                AND post.post_status NOT IN ( %s, %s )
                 AND NOT EXISTS (
                     SELECT 1
                     FROM {$wpdb->term_relationships} AS directory_relationship
@@ -305,6 +263,8 @@ class NoticeServiceProvider implements Provider {
             ORDER BY post.ID DESC",
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             ATBDP_POST_TYPE,
+            'auto-draft',
+            'trash',
             ATBDP_DIRECTORY_TYPE
         );
 
@@ -456,14 +416,14 @@ class NoticeServiceProvider implements Provider {
     private function render_missing_plan_recovery_notice( int $count ) {
         ?>
         <div class="notice notice-warning directorist-missing-plan-recovery-notice">
-            <p><strong><?php esc_html_e( 'User packages need plan recovery', 'directorist-pricing-plans' ); ?></strong></p>
+            <p><strong><?php esc_html_e( 'User packages need repair', 'directorist-pricing-plans' ); ?></strong></p>
             <p>
                 <?php
                 printf(
                     esc_html(
                         _n(
-                            '%d deleted pricing plan is still assigned to user packages. Assign a replacement plan to restore those packages.',
-                            '%d deleted pricing plans are still assigned to user packages. Assign replacement plans to restore those packages.',
+                            '%d package has a missing pricing plan or directory type. Repair affected packages to restore their assignments.',
+                            '%d packages have missing pricing plans or directory types. Repair affected packages to restore their assignments.',
                             $count,
                             'directorist-pricing-plans'
                         )
@@ -472,7 +432,7 @@ class NoticeServiceProvider implements Provider {
                 );
                 ?>
                 <button type="button" class="button button-primary directorist-missing-plan-recovery-btn" style="margin-left: 10px;">
-                    <?php esc_html_e( 'Assign Replacement Plans', 'directorist-pricing-plans' ); ?>
+                    <?php esc_html_e( 'Repair Packages', 'directorist-pricing-plans' ); ?>
                 </button>
             </p>
             <div class="directorist-missing-plan-recovery-modal"></div>

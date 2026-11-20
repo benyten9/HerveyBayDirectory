@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Validation\Rules;
+namespace DoubleScale\Vendor\Illuminate\Validation\Rules;
 
 class Exists
 {
-    use \Illuminate\Validation\Rules\DatabaseRule;
+    use DatabaseRule;
     /**
      * Convert the rule to a validation string.
      *

@@ -26,13 +26,20 @@ class Ajax
 
 		parse_str(stripslashes($_POST['form']), $form);
 		$reload = false;
+		$cache_progress = false;
 		
 		if(!empty($form['perfmatters_options'])) {
 
 			//reload UI when the CodeMirror theme setting changes
 			$current_options = get_option('perfmatters_options');
+			if(!is_array($current_options)) {
+				$current_options = array();
+			}
+
+			$options = $form['perfmatters_options'];
+
 			$old_editor_theme = $current_options['code']['editor_theme'] ?? '';
-			$new_editor_theme = $form['perfmatters_options']['code']['editor_theme'] ?? '';
+			$new_editor_theme = $options['code']['editor_theme'] ?? '';
 			if($old_editor_theme !== $new_editor_theme) {
 				$reload = true;
 			}
@@ -46,7 +53,41 @@ class Ajax
 				$reload = true;
 			}
 
-			update_option('perfmatters_options', $form['perfmatters_options']);
+			//cache lives under perfmatters_options[cache]; sanitize + keep stored slice if omitted
+			$old_cache = (isset($current_options['cache']) && is_array($current_options['cache'])) ? $current_options['cache'] : array();
+
+			if(isset($options['cache']) && is_array($options['cache'])) {
+				$options['cache'] = \Perfmatters\Cache\Config::sanitize($options['cache']);
+
+				//page / warmer / mobile / CF toggles reload; filter-only edits soft-refresh via progress
+				if($old_cache !== $options['cache']) {
+					if(self::cache_save_needs_reload($old_cache, $options['cache'])) {
+						$reload = true;
+					}
+					else {
+						$cache_progress = true;
+					}
+				}
+
+				//CF token is stored outside the cache option — masked field / Sync Rules need a reload
+				if(\Perfmatters\Cache\Cloudflare::token_was_updated()) {
+					$reload = true;
+					$cache_progress = false;
+				}
+			}
+			elseif(!empty($old_cache)) {
+				$options['cache'] = $old_cache;
+			}
+
+			//false when the array is unchanged — WP then skips update_option_perfmatters_options
+			$options_updated = update_option('perfmatters_options', $options);
+
+			//CF token lives outside this option; a token-only save never fires options_updated
+			if($options_updated === false && \Perfmatters\Cache\Cloudflare::token_was_updated()) {
+				$cache = (isset($options['cache']) && is_array($options['cache'])) ? $options['cache'] : array();
+				Config::$options['cache'] = $cache;
+				\Perfmatters\Cache\Cloudflare::after_settings_save($cache, $cache);
+			}
 		}
 		
 		if(!empty($form['perfmatters_tools'])) {
@@ -61,8 +102,23 @@ class Ajax
 		if($reload) {
 			$response['message_key'] = 'save_settings';
 		}
+		elseif(!empty($cache_progress)) {
+			$response['progress'] = \Perfmatters\Cache\Warmer::progress();
+		}
 
 		wp_send_json_success($response);
+	}
+
+	//page / warmer / mobile / CF toggles need new PHP chrome; filter edits can soft-refresh
+	private static function cache_save_needs_reload($old, $new)
+	{
+		foreach(array('page', 'warmer', 'page_mobile', 'cloudflare') as $key) {
+			if(!empty($old[$key]) !== !empty($new[$key])) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	//restore defaults ajax action

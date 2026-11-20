@@ -16,7 +16,7 @@ require_once __DIR__ . '/../lib/converter.php';
 // ── get-structure ──────────────────────────────────────────────────────────
 wp_register_ability('nibwp/elementor-pro-get-structure', [
     'label'       => __('Elementor Pro — get page structure', 'nibwp'),
-    'description' => __('Read the Elementor element tree of a page/post: element count, top-level containers, widget types used, and whether the stored data is valid. Use before refining or repairing.', 'nibwp'),
+    'description' => 'Read the Elementor element tree of a page/post: element count, top-level containers, widget types used, and whether the stored data is valid. Use before refining or repairing.',
     'category'    => 'elementor-pro',
     'input_schema' => [
         'type' => 'object',
@@ -75,7 +75,7 @@ function nibwp_elementor_pro_get_structure(array $input): array|WP_Error
 // ── repair ─────────────────────────────────────────────────────────────────
 wp_register_ability('nibwp/elementor-pro-repair', [
     'label'       => __('Elementor Pro — repair a broken/blank page', 'nibwp'),
-    'description' => __('Fix a page that renders blank because its _elementor_data was saved unslashed (corrupted JSON) or its CSS is stale. Re-normalises, re-saves the data correctly slashed, regenerates CSS, and round-trip verifies — reverting if anything is off.', 'nibwp'),
+    'description' => 'Fix a page that renders blank because its _elementor_data was saved unslashed (corrupted JSON) or its CSS is stale. Re-normalises, re-saves the data correctly slashed, regenerates CSS, and round-trip verifies — reverting if anything is off.',
     'category'    => 'elementor-pro',
     'input_schema' => [
         'type' => 'object',

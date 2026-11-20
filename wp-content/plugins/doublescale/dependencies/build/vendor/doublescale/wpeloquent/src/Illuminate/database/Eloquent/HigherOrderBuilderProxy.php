@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 /**
  * @mixin \Illuminate\Database\Eloquent\Builder
@@ -25,7 +25,7 @@ class HigherOrderBuilderProxy
      * @param Builder $builder
      * @param string $method
      */
-    public function __construct(\Illuminate\Database\Eloquent\Builder $builder, $method)
+    public function __construct(Builder $builder, $method)
     {
         $this->method = $method;
         $this->builder = $builder;

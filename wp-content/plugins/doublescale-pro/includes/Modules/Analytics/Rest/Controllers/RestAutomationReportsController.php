@@ -639,6 +639,21 @@ class RestAutomationReportsController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function get_items_permissions_check( $request ) {
+		// Automations data: 404 while Automations is off (before any lookup).
+		$off = doublescale_module_data_error( 'automations' );
+		if ( $off ) {
+			return $off;
+		}
+
+		// One workflow's reports: whoever may open that workflow (Automation
+		// Agents their own, managers every one).
+		if ( null !== $request->get_param( 'id' ) ) {
+			return Permissions::can_access_automations() && Permissions::can_edit_automation( (int) $request->get_param( 'id' ) );
+		}
+		if ( null !== $request->get_param( 'step_id' ) ) {
+			$step = \DoubleScale\Modules\Automations\Models\AutomationStepModel::find( (int) $request->get_param( 'step_id' ) );
+			return Permissions::can_access_automations() && ( ! $step || Permissions::can_edit_automation( (int) $step->automation_id ) );
+		}
 		return Permissions::has_crm_manager_access();
 	}
 }

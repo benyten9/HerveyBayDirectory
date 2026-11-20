@@ -22,6 +22,8 @@ use DoubleScale\Modules\Automations\Abstracts\Rule;
  */
 final class RulesManager {
 
+	use \DoubleScale\Core\DefersRegistration;
+
 
 	/**
 	 * Registed rules
@@ -83,6 +85,18 @@ final class RulesManager {
 		}
 		$forms = \DoubleScale\Modules\Forms\Services\FormsManager::instance()->get_all_forms();
 		foreach ( $forms as $form ) {
+			// The groups are built before the form integrations load, so a form's
+			// group would only hold its rules: no name (the condition picker
+			// showed the slug) and no trigger (offered to every workflow).
+			$this->groups[ $form->slug ] = array_merge(
+				array(
+					'name'        => $form->name,
+					'key'         => $form->slug,
+					'triggers'    => array( $form->slug ),
+					'is_disabled' => ! $form->is_enabled(),
+				),
+				$this->groups[ $form->slug ] ?? array( 'rules' => array() )
+			);
 			$this->register( new \DoubleScale\Pro\Modules\Automations\Rules\Forms\FormFieldRuleBackend( $form ) );
 		}
 	}
@@ -126,6 +140,13 @@ final class RulesManager {
 				'key'   => 'automation',
 				'rules' => array(),
 			),
+			// Values of the webhook that started the workflow (paths listed by the editor).
+			'webhook'                   => array(
+				'name'     => __( 'Webhook data', 'doublescale' ),
+				'key'      => 'webhook',
+				'triggers' => array( 'webhook_received' ),
+				'rules'    => array(),
+			),
 			'activity'                  => array(
 				'name'  => __( 'Activity', 'doublescale' ),
 				'key'   => 'activity',
@@ -136,27 +157,27 @@ final class RulesManager {
 				'key'         => 'woocommerce_current_order',
 				'rules'       => array(),
 				'triggers'    => array( 'wc_order_created', 'wc_order_completed', 'wc_order_refunded', 'wc_order_status_changed', 'wc_order_item_stock_reduced' ),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'woocommerce'               => array(
 				'name'        => __( 'WooCommerce', 'doublescale' ),
 				'key'         => 'woocommerce',
 				'rules'       => array(),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'woocommerce_membership'    => array(
 				'name'        => __( 'WooCommerce Membership', 'doublescale' ),
 				'key'         => 'woocommerce_membership',
 				'rules'       => array(),
 				'triggers'    => array( 'wc_membership_created', 'wc_membership_status_changed' ),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce-memberships/woocommerce-memberships.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce-memberships' ),
 			),
 			'woocommerce_whishlist'     => array(
 				'name'        => __( 'WooCommerce Whishlist', 'doublescale' ),
 				'key'         => 'woocommerce_whishlist',
 				'rules'       => array(),
 				'triggers'    => array( 'wc_user_adds_product_to_wishlist', 'wc_wishlist_item_on_sale', 'wc_wishlist_reminder' ),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce-wishlists/woocommerce-wishlists.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce-wishlists' ),
 			),
 			'woocommerce_subscription'  => array(
 				'name'        => __( 'WooCommerce Subscription', 'doublescale' ),
@@ -173,45 +194,45 @@ final class RulesManager {
 					'wc_subscription_before_renewal',
 					'wc_subscription_before_end',
 				),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce-subscriptions' ),
 			),
 			'woocommerce_review'        => array(
 				'name'        => __( 'WooCommerce Review', 'doublescale' ),
 				'key'         => 'woocommerce_review',
 				'rules'       => array(),
 				'triggers'    => array( 'wc_review_received' ),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'cart'                      => array(
 				'name'        => __( 'Cart', 'doublescale' ),
 				'key'         => 'cart',
 				'rules'       => array(),
 				'triggers'    => array( 'wc_abandoned_cart_created' ),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'learndash'                 => array(
 				'name'        => __( 'LearnDash', 'doublescale' ),
 				'key'         => 'learn_dash',
 				'rules'       => array(),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'sfwd-lms/sfwd_lms.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'learndash' ),
 			),
 			'tutorlms'                  => array(
 				'name'        => __( 'Tutor LMS', 'doublescale' ),
 				'key'         => 'tutorlms',
 				'rules'       => array(),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'tutor/tutor.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'tutor' ),
 			),
 			'lifterlms'                 => array(
 				'name'        => __( 'LifterLMS', 'doublescale' ),
 				'key'         => 'lifterlms',
 				'rules'       => array(),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'lifterlms/lifterlms.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'lifterlms' ),
 			),
 			'learnpress'                => array(
 				'name'        => __( 'LearnPress', 'doublescale' ),
 				'key'         => 'learnpress',
 				'rules'       => array(),
-				'is_disabled' => ! \doublescale_is_plugin_active( 'learnpress/learnpress.php' ),
+				'is_disabled' => ! \doublescale_is_plugin_active( 'learnpress' ),
 			),
 			'memberpress'               => array(
 				'name'        => __( 'MemberPress', 'doublescale' ),
@@ -240,6 +261,13 @@ final class RulesManager {
 				'rules'       => array(),
 				'triggers'    => array( 'surecart_order_success', 'surecart_order_refunded' ),
 				'is_disabled' => ! defined( 'SURECART_PLUGIN_FILE' ),
+			),
+			'fluentcart_current_order'  => array(
+				'name'        => __( 'FluentCart Current Order', 'doublescale' ),
+				'key'         => 'fluentcart_current_order',
+				'rules'       => array(),
+				'triggers'    => array( 'fluentcart_order_paid', 'fluentcart_order_refunded', 'fluentcart_order_status_changed' ),
+				'is_disabled' => ! \DoubleScale\Core\Services\FluentCartOrders::is_active(),
 			),
 
 			'submission'                => array(
@@ -423,7 +451,7 @@ final class RulesManager {
 			throw new Exception( 'Rule must be an instance of Rule' );
 		}
 
-		if ( isset( $this->rules[ $rule->slug ] ) ) {
+		if ( ! $this->claim_registration( (string) $rule->slug, isset( $this->rules[ $rule->slug ] ) ) ) {
 			return;
 		}
 
@@ -432,7 +460,7 @@ final class RulesManager {
 			'name'              => $rule->name,
 			'type'              => $rule->type,
 			'operators'         => $rule->get_operators(),
-			'options'           => $rule->get_options(),
+			'options'           => new DeferredValue( array( $rule, 'get_options' ) ),
 			'required_triggers' => $rule->required_triggers,
 			'is_automation'     => $rule->is_automation,
 		);
@@ -453,6 +481,7 @@ final class RulesManager {
 	 * @return array
 	 */
 	public function get_rules() {
+		$this->load_deferred();
 		return $this->rules;
 	}
 
@@ -466,6 +495,7 @@ final class RulesManager {
 	 * @return Rule|null
 	 */
 	public function get_rule( $slug ) {
+		$this->load_deferred();
 		if ( isset( $this->rules[ $slug ] ) ) {
 			return $this->rules[ $slug ];
 		}
@@ -487,7 +517,9 @@ final class RulesManager {
 	 * @return array
 	 */
 	public function get_groups() {
-		$groups = $this->groups;
+		$this->load_deferred();
+		$this->groups = DeferredValue::resolve( $this->groups );
+		$groups       = $this->groups;
 
 		if ( function_exists( 'doublescale_filter_automation_rules_groups_for_modules' ) ) {
 			$groups = doublescale_filter_automation_rules_groups_for_modules( $groups );

@@ -15,7 +15,7 @@ $claimer_phone = get_post_meta($post->ID, '_claimer_phone', true);
                    class="widefat"><?php _e('Select Listing for Claim', 'directorist-claim-listing'); ?></label>
         </td>
         <td class="field_lable">
-            <select id="dcl_select_listing" name="claimed_listing" class="atbdp-radio-list radio horizontal">
+            <select id="dcl_select_listing" disabled name="claimed_listing" class="atbdp-radio-list radio horizontal">
                 <?php
 
                 echo '<option>' . __("-Select a Listing-", 'directorist-claim-listing') . '</option>';
@@ -42,7 +42,7 @@ $claimer_phone = get_post_meta($post->ID, '_claimer_phone', true);
                    class="widefat"><?php _e('Claimed by', 'directorist-claim-listing'); ?></label>
         </td>
         <td class="field_lable">
-            <select id="dcl_listing_claimer" name="listing_claimer" class="atbdp-radio-list radio horizontal">
+            <select id="dcl_listing_claimer" disabled name="listing_claimer" class="atbdp-radio-list radio horizontal">
                 <?php
                 $current_author = isset($post_meta['_listing_claimer']) ? esc_attr($post_meta['_listing_claimer'][0]) : '';
                 $users = get_users();
@@ -75,7 +75,7 @@ $claimer_phone = get_post_meta($post->ID, '_claimer_phone', true);
             <label for="dcl_claimer_details"><?php _e('Claimer Details', 'directorist-claim-listing'); ?></label>
         </td>
         <td>
-            <textarea id="dcl_claimer_details" class="textarea" name="claimer_details" rows="6"
+            <textarea id="dcl_claimer_details" class="textarea" readonly name="claimer_details" rows="6"
                       cols="64"><?php if (isset($post_meta['_claimer_details'])) echo esc_textarea($post_meta['_claimer_details'][0]); ?></textarea>
         </td>
     </tr>
@@ -87,9 +87,13 @@ $claimer_phone = get_post_meta($post->ID, '_claimer_phone', true);
         </td>
 
         <td>
-            <input id="dcl_claimer_phone" type="tel"
-                   value="<?php echo !empty($claimer_phone) ? ($claimer_phone) : ''; ?>" name="claimer_phone">
+            <input id="dcl_claimer_phone" type="tel" readonly
+                   value="<?php echo !empty($claimer_phone) ? esc_attr($claimer_phone) : ''; ?>" name="claimer_phone">
         </td>
+    </tr>
+    <tr>
+        <td class="label"><label for="dcl-review-reason"><?php esc_html_e( 'Review outcome', 'directorist-claim-listing' ); ?></label></td>
+        <td><textarea id="dcl-review-reason" name="dcl_review_reason" maxlength="2000" rows="3"><?php echo esc_textarea( get_post_meta( $post_id, '_dcl_review_reason', true ) ); ?></textarea></td>
     </tr>
     </tbody>
 </table>

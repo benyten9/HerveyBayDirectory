@@ -28,6 +28,33 @@ class Completions {
 	private const SEOPRESS_PROXY_URL            = 'https://api.seopress.org';
 
 	/**
+	 * How many times the current request has already been retried on a refusal.
+	 *
+	 * An instance flag rather than a parameter: the four generation methods
+	 * have six arguments each already, and nothing outside this class has any
+	 * business setting it.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @var int
+	 */
+	private $refusal_retry_depth = 0;
+
+	/**
+	 * The size cap the last image fetch ran into, in bytes, or 0.
+	 *
+	 * fetchImageAsBase64() answers false for every failure, and the alt text
+	 * generator used to report all of them as "Could not fetch the image".
+	 * An image that is simply too large, with no smaller generated size to
+	 * fall back to, deserves its own message.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @var int
+	 */
+	protected $oversized_image_limit = 0;
+
+	/**
 	 * Get the provider endpoints.
 	 *
 	 * @param string $provider The provider name.
@@ -112,7 +139,7 @@ class Completions {
 			case 'mistral':
 				return 'mistral-small-latest';
 			case 'claude':
-				return 'claude-sonnet-4-6';
+				return 'claude-sonnet-5';
 			case 'seopress':
 				return 'openai/gpt-5.1';
 			default:
@@ -160,10 +187,486 @@ class Completions {
 					'magistral-medium-latest',
 				);
 			case 'claude':
-				return array( 'claude-sonnet-4-6', 'claude-haiku-4-5' );
+				return array( 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5' );
 			default:
 				return array();
 		}
+	}
+
+	/**
+	 * The order a provider's models are fallen back to.
+	 *
+	 * Deliberately not `getSupportedModels()`. That list is ordered for the
+	 * settings dropdown, which puts the default first, and following it meant a
+	 * site that had picked Terra and lost access to it was moved to Sol at
+	 * 30$/MTok of output instead of Luna at 1.20$: two and a half times the
+	 * bill of the model the user chose, decided for them, on a feature that
+	 * runs over every post on the site.
+	 *
+	 * So the fallback tries the cheaper tiers first: Luna before Terra before
+	 * Sol, lite before flash before pro, small before medium before large,
+	 * Haiku before Sonnet. A dearer model is only reached when every cheaper
+	 * one has been refused too, and the swap is then written to the AI log,
+	 * so it is never silent.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $provider The AI provider.
+	 *
+	 * @return string[]
+	 */
+	private function getFallbackModels( $provider ) {
+		$provider = strtolower( $provider );
+
+		switch ( $provider ) {
+			case 'openai':
+				$order = array( 'gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol' );
+				break;
+			case 'deepseek':
+				$order = array( 'deepseek-v4-flash', 'deepseek-v4-pro' );
+				break;
+			case 'gemini':
+				$order = array(
+					'gemini-2.5-flash-lite',
+					'gemini-2.5-flash',
+					'gemini-3-flash-preview',
+					'gemini-2.5-pro',
+					'gemini-3.1-pro-preview',
+				);
+				break;
+			case 'mistral':
+				$order = array(
+					'mistral-small-latest',
+					'magistral-small-latest',
+					'mistral-medium-latest',
+					'magistral-medium-latest',
+					'mistral-large-latest',
+				);
+				break;
+			case 'claude':
+				$order = array( 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-sonnet-5' );
+				break;
+			default:
+				$order = array();
+				break;
+		}
+
+		$supported = $this->getSupportedModels( $provider );
+
+		// The supported list is the authority on what exists: anything named
+		// here that is not in it is dropped, and anything it has that is not
+		// named here goes last rather than becoming unreachable.
+		$ordered = array_values( array_intersect( $order, $supported ) );
+
+		/**
+		 * Filter the order a provider's models are fallen back to.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string[] $ordered  Model names, the one tried first in front.
+		 * @param string   $provider The AI provider.
+		 */
+		$order = apply_filters(
+			'seopress_ai_model_fallback_order',
+			array_values( array_unique( array_merge( $ordered, $supported ) ) ),
+			$provider
+		);
+
+		// array_diff() throws on PHP 8 when a filter answers null.
+		return is_array( $order ) ? array_values( array_map( 'strval', $order ) ) : array();
+	}
+
+	/**
+	 * Models the provider has refused for this account, by provider.
+	 *
+	 * Kept in a transient rather than an option: a permission granted on the
+	 * provider's side must take effect on its own, without the user having to
+	 * find a button here.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $provider The AI provider.
+	 *
+	 * @return array Model names this account cannot call.
+	 */
+	public function getRefusedModels( $provider ) {
+		$refused = get_transient( $this->refusedModelsKey( $provider ) );
+
+		return is_array( $refused ) ? $refused : array();
+	}
+
+	/**
+	 * Where the refusals for a provider are stored.
+	 *
+	 * Scoped to the key in use, through a short digest of it, so entering a new
+	 * key starts from a clean slate on its own. The key itself never appears:
+	 * only eight hex characters derived from it.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $provider The AI provider.
+	 *
+	 * @return string
+	 */
+	private function refusedModelsKey( $provider ) {
+		$provider = strtolower( $provider );
+		$api_key  = (string) $this->getProviderApiKey( $provider );
+
+		return 'seopress_ai_refused_models_' . $provider . '_' . substr( md5( $api_key ), 0, 8 );
+	}
+
+	/**
+	 * Record that the provider refused a model for this account.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $provider The AI provider.
+	 * @param string $model    The model the provider would not serve.
+	 *
+	 * @return void
+	 */
+	public function rememberRefusedModel( $provider, $model ) {
+		$provider = strtolower( $provider );
+		$key      = $this->refusedModelsKey( $provider );
+
+		// Read again here rather than reusing a value fetched earlier in the
+		// request: a bulk generation refused on two items at once would
+		// otherwise write back a list missing the other one. A transient has no
+		// compare and set, so this narrows the window rather than closing it;
+		// the cost of losing an entry is one extra refused request, which
+		// records it again.
+		$refused = $this->getRefusedModels( $provider );
+
+		if ( in_array( $model, $refused, true ) ) {
+			return;
+		}
+
+		$refused[] = $model;
+
+		set_transient( $key, $refused, 6 * HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Forget the refusals for a provider.
+	 *
+	 * Called from ClearRefusedAiModels when the provider, the model or the key
+	 * changes: the user has just told us the situation is different, and making
+	 * them wait out a six hour transient to be believed is the trap this whole
+	 * feature was meant to avoid.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $provider The AI provider.
+	 *
+	 * @return void
+	 */
+	public function clearRefusedModels( $provider ) {
+		delete_transient( $this->refusedModelsKey( $provider ) );
+	}
+
+	/**
+	 * The model a "no access" error is about.
+	 *
+	 * The model actually sent is the answer whenever the caller knows it. The
+	 * message is only parsed as a fallback, and then against our own list
+	 * rather than loosely: whatever the provider phrases, only a model we could
+	 * have asked for is worth recording.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string      $provider The AI provider.
+	 * @param string      $haystack The provider's error body or message.
+	 * @param string|null $model    The model the request was sent with.
+	 *
+	 * @return string|null
+	 */
+	private function refusedModelFromMessage( $provider, $haystack, $model = null, $explicit = false ) {
+		$supported = $this->getSupportedModels( $provider );
+
+		// Only a marker that is about a model by definition lets the model
+		// that was sent stand in for one the body does not name. The generic
+		// ones are not: Gemini answers 403 PERMISSION_DENIED for an API that
+		// is not enabled, a key reported as leaked or a blocked referrer, and
+		// Claude 403 permission_error for workspace restrictions. Taking the
+		// sent model for those marked every model refused, one request at a
+		// time, and replaced Google's own explanation with ours.
+		if ( $explicit && null !== $model && '' !== $model && in_array( $model, $supported, true ) ) {
+			return $model;
+		}
+
+		$longest = null;
+
+		foreach ( $supported as $candidate ) {
+			if ( false === strpos( $haystack, $candidate ) ) {
+				continue;
+			}
+
+			// "gpt-5.6-sol" contains no other name, but a future list could
+			// nest one inside another: the longest match is the real one.
+			if ( null === $longest || strlen( $candidate ) > strlen( $longest ) ) {
+				$longest = $candidate;
+			}
+		}
+
+		return $longest;
+	}
+
+	/**
+	 * Whether the provider is saying this account may not call that model.
+	 *
+	 * Written against the shape of the answer rather than against each
+	 * provider's wording, because the wording is the part that changes and
+	 * there are five of them. A 403 or 404 that names a model we could have
+	 * asked for, and carries a refusal marker in any of the fields the
+	 * providers use for one, is a refusal:
+	 *
+	 * - OpenAI: `error.code` is `model_not_found`, or `error.message` says the
+	 *   project does not have access to the model;
+	 * - Claude: `error.type` is `not_found_error`;
+	 * - Gemini: `error.status` is `NOT_FOUND` or `PERMISSION_DENIED`;
+	 * - Mistral: a top level `message` with no nested error object.
+	 *
+	 * Requiring the model name is what keeps this from firing on an unrelated
+	 * 404, such as a wrong endpoint: that body does not name a model.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int   $response_code The HTTP status.
+	 * @param array $error_data    The decoded error body.
+	 *
+	 * @return bool
+	 */
+	private function isModelNotAllowed( $response_code, $error_data ) {
+		if ( ! in_array( (int) $response_code, array( 403, 404 ), true ) ) {
+			return false;
+		}
+
+		$markers = array(
+			isset( $error_data['error']['code'] ) && is_scalar( $error_data['error']['code'] ) ? (string) $error_data['error']['code'] : '',
+			isset( $error_data['error']['type'] ) && is_scalar( $error_data['error']['type'] ) ? (string) $error_data['error']['type'] : '',
+			isset( $error_data['error']['status'] ) && is_scalar( $error_data['error']['status'] ) ? (string) $error_data['error']['status'] : '',
+			isset( $error_data['type'] ) && is_scalar( $error_data['type'] ) ? (string) $error_data['type'] : '',
+		);
+
+		$refusals = array( 'model_not_found', 'not_found_error', 'not_found', 'permission_denied', 'invalid_model', 'permission_error' );
+
+		foreach ( $markers as $marker ) {
+			if ( '' !== $marker && in_array( strtolower( $marker ), $refusals, true ) ) {
+				return true;
+			}
+		}
+
+		$message = $this->errorMessageFrom( $error_data );
+
+		if ( '' === $message ) {
+			return false;
+		}
+
+		// A 403 or 404 whose message is about a model, however it is phrased.
+		foreach ( array( 'does not have access to model', 'not found for api version', 'is not found', 'no access to model', 'invalid model' ) as $phrase ) {
+			if ( false !== stripos( $message, $phrase ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether the refusal marker is about a model whatever the body says.
+	 *
+	 * OpenAI's `model_not_found` and Mistral's `invalid_model` can only mean
+	 * the model. Everything else isModelNotAllowed() accepts also covers
+	 * refusals that have nothing to do with it, so for those the body has to
+	 * name the model before it is recorded.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $error_data The decoded error body.
+	 *
+	 * @return bool
+	 */
+	private function isExplicitModelRefusal( $error_data ) {
+		foreach ( array( array( 'error', 'code' ), array( 'error', 'type' ), array( 'type' ) ) as $path ) {
+			$value = $error_data;
+
+			foreach ( $path as $segment ) {
+				$value = is_array( $value ) && isset( $value[ $segment ] ) ? $value[ $segment ] : null;
+			}
+
+			if ( is_scalar( $value ) && in_array( strtolower( (string) $value ), array( 'model_not_found', 'invalid_model' ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * The provider's own sentence, wherever it put it.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param array $error_data The decoded error body.
+	 *
+	 * @return string
+	 */
+	private function errorMessageFrom( $error_data ) {
+		foreach ( array( array( 'error', 'message' ), array( 'message' ), array( 'error' ) ) as $path ) {
+			$value = $error_data;
+
+			foreach ( $path as $segment ) {
+				if ( ! is_array( $value ) || ! isset( $value[ $segment ] ) ) {
+					$value = null;
+					break;
+				}
+
+				$value = $value[ $segment ];
+			}
+
+			if ( is_string( $value ) && '' !== $value ) {
+				return $value;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Record a refused model and say what has to change, or answer null.
+	 *
+	 * Every generation path calls this, which is the point: a site that only
+	 * uses automatic alt text on upload never reaches the title and description
+	 * path, and with the recording living there it would have stayed stuck on a
+	 * model it cannot call until someone read the logs.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string      $provider      The AI provider.
+	 * @param string|null $model         The model the request was sent with.
+	 * @param int         $response_code The HTTP status.
+	 * @param string      $response_body The raw body.
+	 *
+	 * @return string|null The sentence to show, or null when this is not a refusal.
+	 */
+	public function recordModelRefusal( $provider, $model, $response_code, $response_body ) {
+		$provider   = '' !== (string) $provider ? strtolower( (string) $provider ) : $this->getCurrentProvider();
+		$error_data = json_decode( (string) $response_body, true );
+
+		if ( ! is_array( $error_data ) || ! $this->isModelNotAllowed( $response_code, $error_data ) ) {
+			return null;
+		}
+
+		$haystack = (string) $response_body;
+		$refused  = $this->refusedModelFromMessage( $provider, $haystack, $model, $this->isExplicitModelRefusal( $error_data ) );
+
+		if ( null === $refused ) {
+			return null;
+		}
+
+		$this->rememberRefusedModel( $provider, $refused );
+
+		$remaining = array_values(
+			array_diff( $this->getFallbackModels( $provider ), $this->getRefusedModels( $provider ) )
+		);
+
+		// The retry was itself refused. Nothing was generated, and the user
+		// chose neither of the models this request tried, so say what was
+		// refused and that the next attempt uses another one.
+		if ( ! empty( $remaining ) && 0 !== $this->refusal_retry_depth ) {
+			return sprintf(
+				/* translators: 1: comma separated list of refused models, 2: model the next request uses. */
+				__( 'Your account cannot use these models: %1$s. Nothing was generated. Try again: the next request uses %2$s. Allow the model you want for your project in your provider dashboard, then save the AI settings again to go back to it. This is a model permission, not a billing limit.', 'wp-seopress-pro' ),
+				implode( ', ', $this->getRefusedModels( $provider ) ),
+				$remaining[0]
+			);
+		}
+
+		if ( ! empty( $remaining ) ) {
+			return sprintf(
+				/* translators: 1: model that was refused, 2: model used instead. */
+				__( 'Your account cannot use the %1$s model, so %2$s is being used instead. Allow %1$s for your project in your provider dashboard, then save the AI settings again to go back to it. This is a model permission, not a billing limit.', 'wp-seopress-pro' ),
+				$refused,
+				$remaining[0]
+			);
+		}
+
+		return __( 'Your account cannot use any of the available models. Allow at least one of them for your project in your provider dashboard, then save the AI settings again. This is a model permission, not a billing limit.', 'wp-seopress-pro' );
+	}
+
+	/**
+	 * Send the request again, once, now that the refused model is out.
+	 *
+	 * A retry that succeeds used to be silent: the result came back, the
+	 * success cleared the AI log, and the site had moved from Terra to Luna,
+	 * or from Sonnet to Haiku, without anyone being told. The refusal is put
+	 * back in the log the AI settings tab shows, so the swap is visible where
+	 * the provider settings are.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param callable $retry    Re-entry into the generation method.
+	 * @param string   $provider The provider that refused.
+	 * @param int      $code     The status of the refused response.
+	 * @param string   $refusal  What recordModelRefusal() said about it.
+	 *
+	 * @return mixed Whatever the generation method answers.
+	 */
+	private function retryAfterRefusal( $retry, $provider = '', $code = 0, $refusal = '' ) {
+		++$this->refusal_retry_depth;
+
+		try {
+			$result = $retry();
+		} finally {
+			$this->refusal_retry_depth = 0;
+		}
+
+		if ( is_array( $result ) && ! empty( $result['success'] ) && '' !== (string) $refusal ) {
+			$this->logApiError(
+				array(
+					'provider'      => $provider,
+					'response_code' => $code,
+					'response_body' => (string) $refusal,
+					'request_body'  => '',
+					'timestamp'     => current_time( 'mysql' ),
+				)
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Whether a refused request is worth sending once more.
+	 *
+	 * The refusal has just been recorded, so getAIModel() will answer a
+	 * different model: one retry turns a failed user action into a successful
+	 * one instead of asking them to click again. Only one, and only when
+	 * another model is actually available.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string      $provider The AI provider.
+	 * @param string|null $model    The model that was refused.
+	 *
+	 * @return bool
+	 */
+	private function shouldRetryAfterRefusal( $provider, $model ) {
+		if ( 0 !== $this->refusal_retry_depth ) {
+			return false;
+		}
+
+		$provider = '' !== (string) $provider ? strtolower( (string) $provider ) : $this->getCurrentProvider();
+
+		$usable = array_diff( $this->getFallbackModels( $provider ), $this->getRefusedModels( $provider ) );
+
+		if ( empty( $usable ) ) {
+			return false;
+		}
+
+		// The model is only replaceable if the one that failed is out of the
+		// running, which rememberRefusedModel() has just made true.
+		return null === $model || ! in_array( $model, $usable, true );
 	}
 
 	/**
@@ -175,16 +678,37 @@ class Completions {
 	 * markup. The full body still goes to the AI log transient for debugging;
 	 * the notice only ever gets one readable sentence.
 	 *
-	 * @param int    $response_code HTTP response code.
-	 * @param string $response_body Raw response body.
+	 * @param int         $response_code HTTP response code.
+	 * @param string      $response_body Raw response body.
+	 * @param string|null $provider      The provider that answered, when known.
+	 * @param string|null $model         The model the request was sent with.
+	 *
+	 * Public because the connection test needs the same treatment: it used to
+	 * decode `error.message` itself and print nothing for the HTML, empty and
+	 * plain-text bodies this already handles. See Usage::describeApiFailure().
 	 *
 	 * @return string Short, plain-text details for the error notice.
 	 */
-	private function formatApiErrorDetails( $response_code, $response_body ) {
+	public function formatApiErrorDetails( $response_code, $response_body, $provider = null, $model = null ) {
+		// A model this account may not call is not a billing problem, which is
+		// where the raw provider wording sends people. Record it so the next
+		// request picks another one, and say what actually has to change.
+		$refusal = $this->recordModelRefusal( (string) $provider, $model, $response_code, $response_body );
+
+		if ( null !== $refusal ) {
+			return $refusal;
+		}
+
 		// The provider's own error message, when the body is its JSON.
 		$error_data = json_decode( (string) $response_body, true );
+
 		if ( isset( $error_data['error']['message'] ) && is_string( $error_data['error']['message'] ) && '' !== $error_data['error']['message'] ) {
 			return $error_data['error']['message'];
+		}
+
+		// Mistral puts it at the top level instead of under `error`.
+		if ( isset( $error_data['message'] ) && is_string( $error_data['message'] ) && '' !== $error_data['message'] ) {
+			return $error_data['message'];
 		}
 
 		// An HTML body means the request never reached the API itself: CDN
@@ -262,6 +786,83 @@ class Completions {
 	 */
 	private function isGeminiProvider( $provider = 'openai' ) {
 		return strtolower( $provider ) === 'gemini';
+	}
+
+	/**
+	 * The image mime types a provider can actually read.
+	 *
+	 * OpenAI, Claude and Mistral read JPEG, PNG, GIF and WebP only. Gemini reads
+	 * HEIC and HEIF on top of those.
+	 *
+	 * WordPress 7.1 stopped refusing HEIC and HEIF uploads the server cannot
+	 * process, and skips the image editor support check entirely when the
+	 * browser handles the processing, so an attachment whose type no provider
+	 * reads now reaches the media library. The automatic generation hooked on
+	 * `add_attachment` runs on it, and without this list the file is base64
+	 * encoded and sent, which costs a request and comes back as an opaque
+	 * provider error.
+	 *
+	 * @since 10.3.0
+	 *
+	 * @param string $provider The AI provider (openai, gemini, claude, etc.).
+	 *
+	 * @return array The mime types that may be sent for analysis.
+	 */
+	public function getSupportedImageMimeTypes( $provider = 'openai' ) {
+		$mime_types = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' );
+
+		if ( $this->isGeminiProvider( $provider ) ) {
+			$mime_types[] = 'image/heic';
+			$mime_types[] = 'image/heif';
+		}
+
+		/**
+		 * Filters the image mime types sent to the AI provider for analysis.
+		 *
+		 * @since 10.3.0
+		 *
+		 * @param array  $mime_types The mime types that may be sent.
+		 * @param string $provider   The AI provider the request is going to.
+		 */
+		$mime_types = apply_filters( 'seopress_ai_supported_image_mime_types', $mime_types, $provider );
+
+		return is_array( $mime_types ) ? $mime_types : array();
+	}
+
+	/**
+	 * Whether an image of this type may be sent to the provider.
+	 *
+	 * The one check every path that sends an image goes through: the alt
+	 * text generation and the AI Assistant chat.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $mime_type The image mime type.
+	 * @param string $provider  The AI provider the image would go to.
+	 *
+	 * @return bool
+	 */
+	public function is_supported_image_mime_type( $mime_type, $provider = 'openai' ) {
+		return in_array( (string) $mime_type, $this->getSupportedImageMimeTypes( $provider ), true );
+	}
+
+	/**
+	 * The image mime type a URL names through its file extension.
+	 *
+	 * For a provider that is handed the URL and fetches it itself, the bytes
+	 * are never read here, so the extension is all there is to go on.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $url The image URL.
+	 *
+	 * @return string The mime type, or '' when the URL names no image type.
+	 */
+	public function get_image_url_mime_type( $url ) {
+		$path = wp_parse_url( (string) $url, PHP_URL_PATH );
+		$type = wp_check_filetype( wp_basename( (string) $path ), wp_get_mime_types() );
+
+		return ( ! empty( $type['type'] ) && 0 === strpos( $type['type'], 'image/' ) ) ? $type['type'] : '';
 	}
 
 	/**
@@ -505,8 +1106,11 @@ class Completions {
 			'messages'   => $messages,
 		);
 
-		// Add temperature if set (Claude supports 0-1 range).
-		if ( isset( $body['temperature'] ) ) {
+		// Sonnet 5 rejects custom sampling and enables thinking by default.
+		// These short metadata requests reserve their token budget for the answer.
+		if ( 'claude-sonnet-5' === $body['model'] ) {
+			$claude_body['thinking'] = array( 'type' => 'disabled' );
+		} elseif ( isset( $body['temperature'] ) ) {
 			$claude_body['temperature'] = min( 1, max( 0, $body['temperature'] ) );
 		}
 
@@ -642,7 +1246,492 @@ class Completions {
 	}
 
 	/**
-	 * Fetch an image from URL and convert to base64 for the multimodal APIs.
+	 * Image mime types the multimodal providers accept.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return string[]
+	 */
+	protected function allowed_image_mime_types() {
+		return array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif' );
+	}
+
+	/**
+	 * Upload subfolders whose files the web server refuses to serve.
+	 *
+	 * WooCommerce and Easy Digital Downloads keep paid downloads there and deny
+	 * direct access. Reading one from disk on behalf of a URL in the request
+	 * would bypass exactly that deny, whatever the parent product's status.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return string[] Paths relative to the uploads directory.
+	 */
+	protected function protected_upload_folders() {
+		/**
+		 * Filter the upload subfolders an image named by URL is never read from.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string[] $folders Relative to the uploads directory.
+		 */
+		$folders = apply_filters( 'seopress_ai_image_protected_folders', array( 'woocommerce_uploads', 'edd' ) );
+
+		return is_array( $folders ) ? array_filter( array_map( 'strval', $folders ) ) : array();
+	}
+
+	/**
+	 * Decide what the disk says about an attachment, once and for all.
+	 *
+	 * Resolving an id from a URL turned this into a file reader for anything
+	 * in the media library: a protected PDF under woocommerce_uploads or edd,
+	 * which the web server denies over HTTP, came back through it, and a large
+	 * video was read whole into memory and base64 encoded. The caller is
+	 * trusted to edit posts, not to read every file on the site.
+	 *
+	 * The answer is final whenever the file is on this server. A refusal used
+	 * to fall through to an HTTP request for the same URL, which served a
+	 * private post's image anyway, since uploads are public files; and an
+	 * image over the size cap fell through to a loopback request that was then
+	 * truncated, refused, and reported as "Could not fetch the image".
+	 *
+	 * The permission checks only apply when the id was resolved from a URL
+	 * that came in with the request. An explicit id is a decision the caller
+	 * already made: WP-CLI, a cron hook and the alt text ability all run with
+	 * no current user or with their own capability check, and asking
+	 * current_user_can() there would answer no for the wrong reason.
+	 *
+	 * `read_post`, not `edit_post`: this reads an image to send it to a
+	 * provider, it changes nothing. The chat asks `edit_post` of the post it
+	 * works on because it may write to it (wp-seopress-pro#1881).
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int  $attachment_id     The attachment.
+	 * @param int  $max_bytes         Largest file accepted.
+	 * @param bool $resolved_from_url Whether the id came from an untrusted URL.
+	 *
+	 * @return array|false|null The payload, false for a final refusal, or null
+	 *                          when there is no local file (offloaded media),
+	 *                          in which case the URL may be fetched.
+	 */
+	protected function local_attachment_image( $attachment_id, $max_bytes, $resolved_from_url = false ) {
+		$attachment_id = (int) $attachment_id;
+
+		if ( $attachment_id < 1 ) {
+			return null;
+		}
+
+		$path = get_attached_file( $attachment_id );
+
+		if ( ! $path || ! is_readable( $path ) ) {
+			return null;
+		}
+
+		// An image, and not an SVG: providers do not read it, and it is markup
+		// rather than pixels.
+		if ( ! wp_attachment_is_image( $attachment_id ) || 'image/svg+xml' === get_post_mime_type( $attachment_id ) ) {
+			return false;
+		}
+
+		if ( $resolved_from_url ) {
+			// The caller has to be allowed to see what it named. A private or
+			// protected attachment is not theirs to send anywhere.
+			if ( ! current_user_can( 'read_post', $attachment_id ) ) {
+				return false;
+			}
+
+			$uploads  = wp_get_upload_dir();
+			$base     = trailingslashit( wp_normalize_path( (string) $uploads['basedir'] ) );
+			$relative = ltrim( substr( wp_normalize_path( $path ), strlen( $base ) ), '/' );
+
+			foreach ( $this->protected_upload_folders() as $folder ) {
+				if ( 0 === strpos( $relative, trailingslashit( trim( wp_normalize_path( $folder ), '/' ) ) ) ) {
+					return false;
+				}
+			}
+		}
+
+		$file = $this->largest_file_under( $attachment_id, $path, $max_bytes );
+
+		if ( null === $file ) {
+			$this->oversized_image_limit = $max_bytes;
+
+			return false;
+		}
+
+		return $this->image_from_file( $attachment_id, $file );
+	}
+
+	/**
+	 * The attachment a generated size URL belongs to.
+	 *
+	 * attachment_url_to_postid() only matches the stored `_wp_attached_file`,
+	 * so `photo-1024x768.jpg` resolved to nothing and went out over HTTP,
+	 * past the `read_post` and protected folder checks that only apply to a
+	 * resolved attachment. The size suffix is stripped to find the parent,
+	 * then the file has to be one of that attachment's own sizes, so a file
+	 * that only looks like a size of something else is not mistaken for it.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $url An uploads URL that matched no attachment.
+	 *
+	 * @return int The attachment ID, or 0.
+	 */
+	protected function attachment_id_from_size_url( $url ) {
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		$file = wp_basename( $path );
+
+		if ( ! preg_match( '/^(.+)-\d+x\d+(\.[a-z0-9]+)$/i', $file, $matches ) ) {
+			return 0;
+		}
+
+		$base_url   = (string) preg_replace( '/[?#].*$/', '', $url );
+		$directory  = substr( $base_url, 0, strlen( $base_url ) - strlen( $file ) );
+		$candidates = array( $matches[1] . $matches[2], $matches[1] . '-scaled' . $matches[2] );
+
+		foreach ( $candidates as $candidate ) {
+			$attachment_id = attachment_url_to_postid( $directory . $candidate );
+
+			if ( ! $attachment_id ) {
+				continue;
+			}
+
+			$metadata = wp_get_attachment_metadata( $attachment_id );
+			$sizes    = is_array( $metadata ) && ! empty( $metadata['sizes'] ) && is_array( $metadata['sizes'] ) ? $metadata['sizes'] : array();
+
+			if ( in_array( $file, wp_list_pluck( $sizes, 'file' ), true ) ) {
+				return (int) $attachment_id;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * The original file, or the largest generated size that fits the cap.
+	 *
+	 * Sites that switch off `big_image_size_threshold`, which photographers
+	 * commonly do, and large PNG or GIF files under 2560px, have originals
+	 * over 5 MB. A provider describes a 2048px copy just as well, and every
+	 * caller that names its attachment used to get one from the old loopback
+	 * fetch of the displayed size, so falling back to a generated size keeps
+	 * that working.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int    $attachment_id The attachment.
+	 * @param string $path          Its file.
+	 * @param int    $max_bytes     Largest file accepted.
+	 *
+	 * @return string|null A readable path, or null when nothing fits.
+	 */
+	protected function largest_file_under( $attachment_id, $path, $max_bytes ) {
+		$size = filesize( $path );
+
+		if ( false !== $size && $size > 0 && $size <= $max_bytes ) {
+			return $path;
+		}
+
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+
+		if ( ! is_array( $metadata ) || empty( $metadata['sizes'] ) || ! is_array( $metadata['sizes'] ) ) {
+			return null;
+		}
+
+		$best      = null;
+		$best_area = 0;
+		$directory = trailingslashit( dirname( $path ) );
+
+		foreach ( $metadata['sizes'] as $intermediate ) {
+			if ( empty( $intermediate['file'] ) ) {
+				continue;
+			}
+
+			$candidate = $directory . wp_basename( $intermediate['file'] );
+
+			if ( ! is_readable( $candidate ) ) {
+				continue;
+			}
+
+			$bytes = filesize( $candidate );
+			$area  = (int) ( isset( $intermediate['width'] ) ? $intermediate['width'] : 0 ) * (int) ( isset( $intermediate['height'] ) ? $intermediate['height'] : 0 );
+
+			if ( false !== $bytes && $bytes > 0 && $bytes <= $max_bytes && $area > $best_area ) {
+				$best      = $candidate;
+				$best_area = $area;
+			}
+		}
+
+		return $best;
+	}
+
+	/**
+	 * Whether a URL resolves somewhere the server is allowed to fetch from.
+	 *
+	 * wp_safe_remote_get() refuses loopback, 10/8, 172.16/12 and 192.168/16.
+	 * Before WordPress 7.0 it does not refuse 169.254.0.0/16, which is where
+	 * the cloud metadata services live (169.254.169.254 on AWS, Azure and GCP
+	 * alike), nor 100.64.0.0/10, which some hosts use for internal services,
+	 * and PRO supports 6.5 and up. So they are checked here, on every hop:
+	 * fetchImageAsBase64() follows redirects itself so that a public URL
+	 * cannot hand the second request to one of them.
+	 *
+	 * Both address families are checked. Reading only the A records left a
+	 * host whose AAAA record points at a private IPv6 address unchecked.
+	 *
+	 * A host a site has already declared internal-but-allowed through core's
+	 * `http_request_host_is_external` filter (an in-house media server, say)
+	 * stays allowed, the way it is for every other remote request.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $url The URL about to be fetched.
+	 *
+	 * @return bool
+	 */
+	protected function remote_host_is_allowed( $url ) {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+
+		if ( ! is_string( $host ) || '' === $host ) {
+			return false;
+		}
+
+		$host = strtolower( trim( $host, '.[]' ) );
+
+		// The site's own host stays reachable. A local install, a staging box
+		// behind a VPN and a container all resolve to an address the checks
+		// below reject, and refusing the site its own media would be a
+		// regression rather than a fix.
+		$home_host = wp_parse_url( home_url(), PHP_URL_HOST );
+
+		if ( is_string( $home_host ) && strtolower( trim( $home_host, '.' ) ) === $host ) {
+			return true;
+		}
+
+		if ( apply_filters( 'http_request_host_is_external', false, $host, $url ) ) {
+			return true;
+		}
+
+		if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			$addresses = array( $host );
+		} else {
+			$addresses = $this->resolve_host( $host );
+
+			if ( array() === $addresses ) {
+				return false;
+			}
+		}
+
+		foreach ( $addresses as $address ) {
+			if ( ! $this->address_is_public( $address ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether one IPv4 or IPv6 address may be fetched from.
+	 *
+	 * filter_var()'s private and reserved flags are not enough on IPv6.
+	 * Before PHP 8.3 they accept IPv4-mapped addresses, and
+	 * `::ffff:169.254.169.254` reaches the metadata service through the IPv4
+	 * stack. On every version they accept NAT64, 6to4 and IPv4-compatible
+	 * addresses wrapping a private IPv4, as well as site-local and multicast.
+	 *
+	 * So the address is normalised first. An IPv4-mapped (`::ffff:0:0/96`) or
+	 * IPv4-compatible (`::/96`) address is checked as the IPv4 address it
+	 * carries. Any other IPv6 address has to be global unicast, `2000::/3`,
+	 * minus 6to4 (`2002::/16`) and Teredo (`2001::/32`), which embed an IPv4
+	 * address of their own. That also rules out NAT64 (`64:ff9b::/96`),
+	 * unique local, link-local, site-local and multicast.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $address An IP address.
+	 *
+	 * @return bool
+	 */
+	protected function address_is_public( $address ) {
+		$address = (string) $address;
+
+		if ( filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			$packed = inet_pton( $address );
+
+			if ( false === $packed || 16 !== strlen( $packed ) ) {
+				return false;
+			}
+
+			$prefix = substr( $packed, 0, 12 );
+
+			if ( str_repeat( "\0", 10 ) . "\xff\xff" === $prefix || str_repeat( "\0", 12 ) === $prefix ) {
+				return $this->address_is_public( inet_ntop( substr( $packed, 12 ) ) );
+			}
+
+			$first = ord( $packed[0] );
+
+			if ( 0x20 !== ( $first & 0xe0 ) ) {
+				return false;
+			}
+
+			if ( "\x20\x02" === substr( $packed, 0, 2 ) || "\x20\x01\0\0" === substr( $packed, 0, 4 ) ) {
+				return false;
+			}
+
+			return (bool) filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+		}
+
+		if ( ! filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+			return false;
+		}
+
+		// 100.64.0.0/10, the carrier grade NAT range, is neither private nor
+		// reserved as far as filter_var() is concerned.
+		$octets = explode( '.', $address );
+
+		return ! ( '100' === $octets[0] && 64 <= (int) $octets[1] && 127 >= (int) $octets[1] );
+	}
+
+	/**
+	 * Every address a host resolves to, IPv4 and IPv6.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $host The host name.
+	 *
+	 * @return string[]
+	 */
+	protected function resolve_host( $host ) {
+		/**
+		 * Short-circuit the resolution of a remote image host.
+		 *
+		 * Return an array of IPv4 and IPv6 addresses to use them instead of
+		 * asking DNS, for a split-horizon setup or for tests. Every address
+		 * returned is still checked.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string[]|null $addresses Null to resolve normally.
+		 * @param string        $host      The host name.
+		 */
+		$addresses = apply_filters( 'seopress_ai_image_host_addresses', null, $host );
+
+		if ( is_array( $addresses ) ) {
+			return array_values( array_filter( array_map( 'strval', $addresses ) ) );
+		}
+
+		$addresses = gethostbynamel( $host );
+		$addresses = is_array( $addresses ) ? $addresses : array();
+
+		if ( function_exists( 'dns_get_record' ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a host with no AAAA record is a warning on some resolvers, not an error.
+			$records = @dns_get_record( $host, DNS_AAAA );
+
+			foreach ( is_array( $records ) ? $records : array() as $record ) {
+				if ( ! empty( $record['ipv6'] ) ) {
+					$addresses[] = (string) $record['ipv6'];
+				}
+			}
+		}
+
+		return $addresses;
+	}
+
+	/**
+	 * The mime type of an image, read from its own bytes.
+	 *
+	 * Content-Type is the host's word for what it sent, and it is wrong in
+	 * both directions: an HTML error page served as image/png was base64
+	 * encoded and handed to the provider, while a real JPEG served as
+	 * application/octet-stream by an offloading plugin was refused.
+	 * getimagesizefromstring() reads the magic bytes instead, so what the
+	 * header claims stops mattering either way.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $bytes The image data.
+	 *
+	 * @return string|false The mime type, or false when the bytes are not a supported image.
+	 */
+	protected function sniff_image_mime_type( $bytes ) {
+		if ( ! is_string( $bytes ) || '' === $bytes || ! function_exists( 'getimagesizefromstring' ) ) {
+			return false;
+		}
+
+		// getimagesize() does not read HEIC or HEIF, so a real HEIC file came
+		// back as "not an image" and never reached Gemini, which reads it.
+		// Whether the provider in use reads the type is decided later, by
+		// getSupportedImageMimeTypes().
+		$heif_type = $this->heif_mime_type( $bytes );
+
+		if ( $heif_type ) {
+			return $heif_type;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a body that is not an image is a false return, not a warning to show anyone.
+		$size = @getimagesizefromstring( $bytes );
+
+		if ( ! is_array( $size ) || empty( $size['mime'] ) ) {
+			// getimagesize() reads AVIF only from PHP 8.1, and PRO runs on 7.4.
+			// Before that a real AVIF came back as "not an image", was dropped
+			// from the request, and the provider wrote alt text for a picture
+			// it never saw.
+			return $this->is_avif( $bytes ) ? 'image/avif' : false;
+		}
+
+		$mime_type = strtolower( $size['mime'] );
+
+		return in_array( $mime_type, $this->allowed_image_mime_types(), true ) ? $mime_type : false;
+	}
+
+	/**
+	 * Whether bytes are an AVIF image, read from the ISO BMFF brand.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $bytes The image data.
+	 *
+	 * @return bool
+	 */
+	protected function is_avif( $bytes ) {
+		return is_string( $bytes )
+			&& strlen( $bytes ) >= 12
+			&& 'ftyp' === substr( $bytes, 4, 4 )
+			&& in_array( substr( $bytes, 8, 4 ), array( 'avif', 'avis' ), true );
+	}
+
+	/**
+	 * The HEIC or HEIF mime type of bytes, read from the ISO BMFF major brand.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $bytes The image data.
+	 *
+	 * @return string|false image/heic, image/heif, or false for anything else.
+	 */
+	protected function heif_mime_type( $bytes ) {
+		if ( ! is_string( $bytes ) || strlen( $bytes ) < 12 || 'ftyp' !== substr( $bytes, 4, 4 ) ) {
+			return false;
+		}
+
+		$brand = substr( $bytes, 8, 4 );
+
+		if ( in_array( $brand, array( 'heic', 'heix', 'heim', 'heis', 'hevc', 'hevx' ), true ) ) {
+			return 'image/heic';
+		}
+
+		if ( in_array( $brand, array( 'mif1', 'msf1' ), true ) ) {
+			return 'image/heif';
+		}
+
+		return false;
+	}
+
+	/**
+	 * Fetch an image and convert it to base64 for the multimodal APIs.
 	 *
 	 * Public because it is part of this service's surface: the AI Assistant
 	 * builds its Claude and Gemini payloads in
@@ -659,6 +1748,27 @@ class Completions {
 	public function fetchImageAsBase64( $url, $attachment_id = 0 ) {
 		$url = is_string( $url ) ? $url : '';
 
+		/**
+		 * Filter the largest image the chat will read or download, in bytes.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int    $bytes Maximum size. Default 5 MB.
+		 * @param string $url   The image being fetched.
+		 */
+		$max_bytes = (int) apply_filters( 'seopress_ai_image_max_bytes', 5 * MB_IN_BYTES, $url );
+
+		$this->oversized_image_limit = 0;
+
+		if ( 1 > $max_bytes ) {
+			return false;
+		}
+
+		// A data URI carries its own bytes, so there is nothing to fetch.
+		if ( 0 === strpos( $url, 'data:' ) ) {
+			return $this->image_from_data_uri( $url, $max_bytes );
+		}
+
 		/*
 		 * Read the file from disk when we know which attachment this is.
 		 *
@@ -670,83 +1780,267 @@ class Completions {
 		 *
 		 * That last one is what a customer hit: a site where
 		 * wp_get_attachment_image_src() returns a root-relative path, so
-		 * wp_remote_get() answered "A valid URL was not provided." and the only
-		 * thing the user saw was "Could not fetch the image".
+		 * wp_remote_get() answered "A valid URL was not provided." and the
+		 * only thing the user saw was "Could not fetch the image".
 		 *
 		 * The file is on the same server in every one of those cases, so
 		 * reading it directly removes the whole class of failure. Offloaded
-		 * media (S3 and friends) has no local file, and falls through to the
+		 * media (S3 and friends) has no local file, so it falls through to the
 		 * HTTP path below.
 		 */
-		if ( $attachment_id ) {
-			$path = get_attached_file( $attachment_id );
-
-			if ( $path && is_readable( $path ) ) {
-				$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file, not a remote request.
-
-				if ( false !== $contents && '' !== $contents ) {
-					$mime_type = get_post_mime_type( $attachment_id );
-
-					return array(
-						'mime_type' => $mime_type ? $mime_type : 'image/jpeg',
-						'data'      => base64_encode( $contents ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- the API expects base64.
-					);
-				}
-			}
-		}
-
-		// Handle data URIs directly (already base64-encoded).
-		if ( strpos( $url, 'data:' ) === 0 ) {
-			if ( preg_match( '/^data:(image\/[^;]+);base64,(.+)$/', $url, $matches ) ) {
-				return array(
-					'mime_type' => $matches[1],
-					'data'      => $matches[2],
-				);
-			}
-			return false;
-		}
-
 		// A root-relative or protocol-relative URL is never a valid argument to
 		// wp_remote_get(); it answers "A valid URL was not provided." Sites do
 		// produce them, through a CDN plugin or an upload_url_path that was set
-		// relative, so resolve rather than fail.
+		// relative, so resolve rather than fail. Done before the uploads test
+		// below, so a relative uploads URL is still read from disk.
 		if ( 0 === strpos( $url, '//' ) ) {
 			$url = ( is_ssl() ? 'https:' : 'http:' ) . $url;
 		} elseif ( 0 === strpos( $url, '/' ) ) {
-			$url = home_url( $url );
+			// A root-relative path is relative to the host, not to home:
+			// home_url() appends it to the home path, so a site in /blog got
+			// /blog/blog/wp-content/... back.
+			$home = wp_parse_url( home_url() );
+
+			if ( ! empty( $home['scheme'] ) && ! empty( $home['host'] ) ) {
+				$url = $home['scheme'] . '://' . $home['host'] . ( ! empty( $home['port'] ) ? ':' . $home['port'] : '' ) . $url;
+			}
+		}
+
+		$resolved_from_url = false;
+
+		if ( ! $attachment_id && '' !== $url ) {
+			$uploads = wp_get_upload_dir();
+
+			// The id is resolved from the URL only when the URL is under the
+			// uploads directory, so an external one costs no query against
+			// the unindexed _wp_attached_file meta_value.
+			if ( ! empty( $uploads['baseurl'] ) && 0 === strpos( $url, $uploads['baseurl'] ) ) {
+				$attachment_id = attachment_url_to_postid( $url );
+
+				if ( ! $attachment_id ) {
+					$attachment_id = $this->attachment_id_from_size_url( $url );
+				}
+
+				$resolved_from_url = (bool) $attachment_id;
+			}
+		}
+
+		if ( $attachment_id ) {
+			$local = $this->local_attachment_image( $attachment_id, $max_bytes, $resolved_from_url );
+
+			// Anything but "no local file" is the final answer. See
+			// local_attachment_image().
+			if ( null !== $local ) {
+				return $local;
+			}
 		}
 
 		if ( '' === $url ) {
 			return false;
 		}
 
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout' => 30,
-			)
-		);
+		$image_body = $this->download_image( $url, $max_bytes );
 
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		if ( null === $image_body ) {
 			return false;
 		}
 
-		$image_body   = wp_remote_retrieve_body( $response );
-		$content_type = wp_remote_retrieve_header( $response, 'content-type' );
+		// A 200 proves the host answered, not that it answered with an image.
+		$mime_type = $this->sniff_image_mime_type( $image_body );
 
-		// Determine mime type.
-		$mime_type = 'image/jpeg'; // Default.
-		if ( strpos( $content_type, 'image/png' ) !== false ) {
-			$mime_type = 'image/png';
-		} elseif ( strpos( $content_type, 'image/gif' ) !== false ) {
-			$mime_type = 'image/gif';
-		} elseif ( strpos( $content_type, 'image/webp' ) !== false ) {
-			$mime_type = 'image/webp';
+		if ( ! $mime_type ) {
+			return false;
 		}
 
 		return array(
 			'mime_type' => $mime_type,
-			'data'      => base64_encode( $image_body ),
+			'data'      => base64_encode( $image_body ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- the API expects base64.
+		);
+	}
+
+	/**
+	 * Download an image, checking every host on the way.
+	 *
+	 * wp_safe_remote_get() revalidates redirect hops itself, but only against
+	 * what core refuses, and before 7.0 that leaves out the metadata ranges.
+	 * A public URL answering `302 Location: http://169.254.169.254/...` passed
+	 * the check made on the first URL and had the second hop go out. So
+	 * redirects are not followed by the transport: each Location is resolved
+	 * against the URL that sent it, checked, and requested on its own.
+	 *
+	 * The host is still resolved more than once (here, then by the
+	 * transport), so a DNS answer that changes between the two is not
+	 * covered.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $url       Where the image is.
+	 * @param int    $max_bytes Largest image accepted.
+	 *
+	 * @return string|null The body, or null when it was refused or failed.
+	 */
+	protected function download_image( $url, $max_bytes ) {
+		/**
+		 * Filter how many redirects an image download may follow.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int $redirects Default 2.
+		 */
+		$redirects = max( 0, (int) apply_filters( 'seopress_ai_image_max_redirects', 2 ) );
+		$current   = $url;
+
+		for ( $hop = 0; $hop <= $redirects; $hop++ ) {
+			if ( ! $this->remote_host_is_allowed( $current ) ) {
+				return null;
+			}
+
+			// wp_safe_remote_get() rather than wp_remote_get(): the URL comes
+			// from the request body, and esc_url_raw() is no defence against a
+			// private address. limit_response_size bounds what a host can make
+			// the worker hold in memory, raised by one byte so that a
+			// truncated body is distinguishable from a file exactly at the
+			// limit. It bounds memory, not time: the transfer still runs to
+			// the end. See SEC-02.
+			$response = wp_safe_remote_get(
+				$current,
+				array(
+					'timeout'             => 10,
+					'redirection'         => 0,
+					'limit_response_size' => $max_bytes + 1,
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return null;
+			}
+
+			$code = (int) wp_remote_retrieve_response_code( $response );
+
+			if ( in_array( $code, array( 301, 302, 303, 307, 308 ), true ) ) {
+				$location = wp_remote_retrieve_header( $response, 'location' );
+				$location = is_array( $location ) ? end( $location ) : (string) $location;
+
+				if ( '' === $location ) {
+					return null;
+				}
+
+				$current = \WP_Http::make_absolute_url( $location, $current );
+
+				continue;
+			}
+
+			if ( 200 !== $code ) {
+				return null;
+			}
+
+			$body = wp_remote_retrieve_body( $response );
+
+			// limit_response_size truncates the body rather than failing the
+			// request, and half an image is not an image: the provider bills
+			// the call and answers about nothing. Treat it as too large.
+			if ( ! is_string( $body ) ) {
+				return null;
+			}
+
+			if ( strlen( $body ) > $max_bytes ) {
+				$this->oversized_image_limit = $max_bytes;
+
+				return null;
+			}
+
+			return $body;
+		}
+
+		// Still redirecting after the last allowed hop.
+		return null;
+	}
+
+	/**
+	 * Decode an inline data URI into a provider payload.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $url       The data URI.
+	 * @param int    $max_bytes Largest image accepted.
+	 *
+	 * @return array|false
+	 */
+	protected function image_from_data_uri( $url, $max_bytes ) {
+		if ( ! preg_match( '#^data:(image/[a-z0-9.+-]+);base64,(.+)$#i', $url, $matches ) ) {
+			return false;
+		}
+
+		// Four base64 characters carry three bytes, so anything longer than
+		// this cannot fit under the cap and is not worth decoding.
+		if ( strlen( $matches[2] ) > ( (int) ceil( $max_bytes * 4 / 3 ) + 4 ) ) {
+			$this->oversized_image_limit = $max_bytes;
+
+			return false;
+		}
+
+		$decoded = base64_decode( $matches[2], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- decoding an inline image, not obfuscation.
+
+		if ( false === $decoded ) {
+			return false;
+		}
+
+		if ( strlen( $decoded ) > $max_bytes ) {
+			$this->oversized_image_limit = $max_bytes;
+
+			return false;
+		}
+
+		$mime_type = $this->sniff_image_mime_type( $decoded );
+
+		if ( ! $mime_type ) {
+			return false;
+		}
+
+		return array(
+			'mime_type' => $mime_type,
+			'data'      => base64_encode( $decoded ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- the API expects base64.
+		);
+	}
+
+	/**
+	 * Read a vetted attachment file from disk into a provider payload.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int    $attachment_id The attachment local_attachment_image() vetted.
+	 * @param string $path          The original or one of its generated sizes.
+	 *
+	 * @return array|false
+	 */
+	protected function image_from_file( $attachment_id, $path ) {
+		if ( ! $path || ! is_readable( $path ) ) {
+			return false;
+		}
+
+		$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file, not a remote request.
+
+		if ( false === $contents || '' === $contents ) {
+			return false;
+		}
+
+		// The bytes decide, not post_mime_type. The stored type is what
+		// WordPress recorded at upload, and it stops describing the file in
+		// both directions: since 6.7 core can write the main file in another
+		// format (image_editor_output_format, JPEG to WebP) without updating
+		// it, largest_file_under() may pick a generated size in that other
+		// format, and an offloading plugin may have saved
+		// application/octet-stream. A media_type that does not match the data
+		// is rejected by the provider, so read it from the data.
+		$mime_type = $this->sniff_image_mime_type( $contents );
+
+		if ( ! $mime_type ) {
+			return false;
+		}
+
+		return array(
+			'mime_type' => $mime_type,
+			'data'      => base64_encode( $contents ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- the API expects base64.
 		);
 	}
 
@@ -910,6 +2204,22 @@ class Completions {
 		$supported = $this->getSupportedModels( $provider );
 		if ( ! empty( $supported ) && ! in_array( $model, $supported, true ) ) {
 			$model = $this->getDefaultModel( $provider );
+		}
+
+		// A model the provider has already refused for this account cannot be
+		// rescued by retrying it. Move to the next one we support rather than
+		// leaving the feature dead with no way out from our own settings. The
+		// order is the fallback order, not the dropdown order: see
+		// getFallbackModels().
+		$refused = $this->getRefusedModels( $provider );
+		if ( ! empty( $refused ) && in_array( $model, $refused, true ) ) {
+			$usable = array_values( array_diff( $this->getFallbackModels( $provider ), $refused ) );
+
+			// All refused: keep the stored choice so the error names the model
+			// the user actually picked.
+			if ( ! empty( $usable ) ) {
+				$model = $usable[0];
+			}
 		}
 
 		return $model;
@@ -1234,6 +2544,11 @@ class Completions {
 		$provider = null,
 		$nonce = null
 	) {
+		// The arguments as the caller passed them, before anything below
+		// converts them, so a retry after a refused model replays the same
+		// call, every parameter included.
+		$call_args = func_get_args();
+
 		// Validate post_id.
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
@@ -1498,12 +2813,28 @@ class Completions {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
 
-				$message = sprintf(
+				// A model this account may not call has just been recorded, so
+				// getAIModel() now answers a different one: send the request
+				// once more rather than making the user click again.
+				$refusal = $this->recordModelRefusal( $provider, $model_name, $response_code, $response_body );
+
+				if ( null !== $refusal && $this->shouldRetryAfterRefusal( $provider, $model_name ) ) {
+					return $this->retryAfterRefusal(
+						function () use ( $call_args ) {
+							return $this->generateTitlesDesc( ...$call_args );
+						},
+						$provider,
+						$response_code,
+						$refusal
+					);
+				}
+
+				$message = null !== $refusal ? $refusal : sprintf(
 					/* translators: 1: provider name, 2: response code, 3: error details */
 					__( 'An error occurred with %1$s API. Response code: %2$s. Details: %3$s', 'wp-seopress-pro' ),
 					$this->getProviderName( $provider ),
 					$response_code,
-					$this->formatApiErrorDetails( $response_code, $response_body )
+					$this->formatApiErrorDetails( $response_code, $response_body, $provider, $model_name )
 				);
 
 				// Log detailed error information.
@@ -1544,8 +2875,8 @@ class Completions {
 				// An answer the model returned without a title is a failed
 				// generation: saving it would wipe the meta already in place.
 				// The image generator has always guarded its own saves this way.
-				if ( true === $autosave && '' !== $title ) {
-					update_post_meta( $post_id, '_seopress_titles_title', sanitize_text_field( html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
+				if ( true === $autosave ) {
+					$this->saveTitlesDesc( $post_id, array( 'title' => $title ) );
 				}
 			}
 
@@ -1560,8 +2891,8 @@ class Completions {
 			if ( empty( $meta ) || 'desc' === $meta ) {
 				$description = esc_attr( trim( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $result ) ) ) ), '"' ) );
 
-				if ( true === $autosave && '' !== $description ) {
-					update_post_meta( $post_id, '_seopress_titles_desc', sanitize_textarea_field( html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
+				if ( true === $autosave ) {
+					$this->saveTitlesDesc( $post_id, array( 'desc' => $description ) );
 				}
 			}
 		}
@@ -1594,6 +2925,30 @@ class Completions {
 		);
 
 		return $data;
+	}
+
+	/**
+	 * Save an SEO title and/or meta description on a post.
+	 *
+	 * Shared by the bulk generation that writes as it goes and by the bulk
+	 * review, which only writes the suggestions the user approved. An empty
+	 * value is never written: it would wipe the meta already in place.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int   $post_id The post ID.
+	 * @param array $values  'title' and/or 'desc'.
+	 *
+	 * @return void
+	 */
+	public function saveTitlesDesc( $post_id, $values ) {
+		if ( isset( $values['title'] ) && '' !== $values['title'] ) {
+			update_post_meta( $post_id, '_seopress_titles_title', sanitize_text_field( html_entity_decode( $values['title'], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
+		}
+
+		if ( isset( $values['desc'] ) && '' !== $values['desc'] ) {
+			update_post_meta( $post_id, '_seopress_titles_desc', sanitize_textarea_field( html_entity_decode( $values['desc'], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
+		}
 	}
 
 	/**
@@ -1690,6 +3045,11 @@ class Completions {
 	 * @return array{ success: bool, message: string, title: string, desc: string }
 	 */
 	public function generateTermTitlesDesc( $term_id, $taxonomy, $meta = '', $language = 'en_US', $provider = null ) {
+		// The arguments as the caller passed them, before anything below
+		// converts them, so a retry after a refused model replays the same
+		// call, every parameter included.
+		$call_args = func_get_args();
+
 		$term_id = absint( $term_id );
 		$term    = $term_id ? get_term( $term_id, $taxonomy ) : null;
 
@@ -1865,14 +3225,28 @@ class Completions {
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
-				$message       = sprintf(
+
+				$refusal = $this->recordModelRefusal( $provider, $model_name, $response_code, $response_body );
+
+				if ( null !== $refusal && $this->shouldRetryAfterRefusal( $provider, $model_name ) ) {
+					return $this->retryAfterRefusal(
+						function () use ( $call_args ) {
+							return $this->generateTermTitlesDesc( ...$call_args );
+						},
+						$provider,
+						$response_code,
+						$refusal
+					);
+				}
+
+				$message = null !== $refusal ? $refusal : sprintf(
 					/* translators: 1: provider name, 2: response code, 3: error details */
 					__( 'An error occurred with %1$s API. Response code: %2$s. Details: %3$s', 'wp-seopress-pro' ),
 					$this->getProviderName( $provider ),
 					$response_code,
 					// The details come from the provider's HTTP response: never
 					// trust them as markup.
-					esc_html( $this->formatApiErrorDetails( $response_code, $response_body ) )
+					esc_html( $this->formatApiErrorDetails( $response_code, $response_body, $provider, $model_name ) )
 				);
 				$this->logApiError(
 					array(
@@ -1956,6 +3330,11 @@ class Completions {
 		$language = 'en_US',
 		$provider = null
 	) {
+		// The arguments as the caller passed them, before anything below
+		// converts them, so a retry after a refused model replays the same
+		// call, every parameter included.
+		$call_args = func_get_args();
+
 		// Validate the post ID.
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
@@ -2194,7 +3573,25 @@ class Completions {
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
-				$message       = sprintf(
+
+				// Nothing recorded the refusal here, so a site that only uses
+				// this path stayed on a model it cannot call until someone read
+				// the logs. Record it, then send the request once more with the
+				// model getAIModel() answers now.
+				$refusal = $this->recordModelRefusal( $provider, $model_name, $response_code, $response_body );
+
+				if ( null !== $refusal && $this->shouldRetryAfterRefusal( $provider, $model_name ) ) {
+					return $this->retryAfterRefusal(
+						function () use ( $call_args ) {
+							return $this->generateSocialMetas( ...$call_args );
+						},
+						$provider,
+						$response_code,
+						$refusal
+					);
+				}
+
+				$message = null !== $refusal ? $refusal : sprintf(
 					/* translators: 1: provider name, 2: response code */
 					__( 'An error occurred with %1$s API, please try again. Response code: %2$s', 'wp-seopress-pro' ),
 					$this->getProviderName( $provider ),
@@ -2252,6 +3649,29 @@ class Completions {
 	}
 
 	/**
+	 * The result returned for an image whose type the provider cannot read.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $mime_type The image mime type.
+	 *
+	 * @return array
+	 */
+	private function unsupported_image_type_result( $mime_type ) {
+		return array(
+			'success'     => false,
+			'message'     => sprintf(
+				/* translators: %s: the image mime type, for example image/heic. */
+				__( '%s images are not supported for AI image analysis. Please use JPG, PNG, GIF, or WebP images.', 'wp-seopress-pro' ),
+				'' !== (string) $mime_type ? (string) $mime_type : __( 'Unknown', 'wp-seopress-pro' )
+			),
+			'alt_text'    => '',
+			'caption'     => '',
+			'description' => '',
+		);
+	}
+
+	/**
 	 * Generate alt text for an image.
 	 *
 	 * This function generates the alternative text for an image file.
@@ -2262,6 +3682,9 @@ class Completions {
 	 * @param bool   $update_empty_alt_text  Whether to update empty alt text (default is true).
 	 * @param string $provider  The AI provider to use (default is null, uses user's saved preference).
 	 * @param array  $fields    Specific fields to generate (default is null, generates all). Accepts: 'alt_text', 'caption', 'description'.
+	 * @param bool   $persist   Whether the generated values are written to the attachment (default true).
+	 *                          False answers the suggestion without touching it, which is what a
+	 *                          read-only caller needs.
 	 *
 	 * @return array The answer from AI: success, message, alt_text, caption, description.
 	 *               Always this shape, whatever $action is. Every early return
@@ -2274,8 +3697,14 @@ class Completions {
 		$language = 'en_US',
 		$update_empty_alt_text = true,
 		$provider = null,
-		$fields = null
+		$fields = null,
+		$persist = true
 	) {
+		// The arguments as the caller passed them, before anything below
+		// converts them, so a retry after a refused model replays the same
+		// call, every parameter included.
+		$call_args = func_get_args();
+
 		// Validate post_id.
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! get_post( $post_id ) ) {
@@ -2389,6 +3818,12 @@ class Completions {
 			);
 		}
 
+		// Any other type the provider cannot read is refused here rather than
+		// paid for: see getSupportedImageMimeTypes().
+		if ( ! $this->is_supported_image_mime_type( $mime_type, $provider ) ) {
+			return $this->unsupported_image_type_result( $mime_type );
+		}
+
 		// Fetch image as base64 for better compatibility (works with localhost, firewalls, etc.).
 		// The attachment ID is passed so the file can be read from disk rather
 		// than fetched over HTTP: see fetchImageAsBase64().
@@ -2396,13 +3831,29 @@ class Completions {
 		$image_data = $this->fetchImageAsBase64( $image_url, $post_id );
 
 		if ( ! $image_data ) {
+			$message = __( 'Could not fetch the image. Please check if the image URL is accessible.', 'wp-seopress-pro' );
+
+			if ( $this->oversized_image_limit > 0 ) {
+				$message = sprintf(
+					/* translators: %s: maximum file size, for example "5 MB" */
+					__( 'This image is too large to be analyzed. The limit is %s, and no smaller size of it is available.', 'wp-seopress-pro' ),
+					size_format( $this->oversized_image_limit )
+				);
+			}
+
 			return array(
 				'success'     => false,
-				'message'     => __( 'Could not fetch the image. Please check if the image URL is accessible.', 'wp-seopress-pro' ),
+				'message'     => $message,
 				'alt_text'    => '',
 				'caption'     => '',
 				'description' => '',
 			);
+		}
+
+		// What is sent is the type read from the bytes, which is not always the
+		// one recorded on the attachment, so it is checked as well.
+		if ( ! $this->is_supported_image_mime_type( $image_data['mime_type'], $provider ) ) {
+			return $this->unsupported_image_type_result( $image_data['mime_type'] );
 		}
 
 		// Create data URI for OpenAI (base64 format).
@@ -2590,7 +4041,25 @@ class Completions {
 			} else {
 				$response_code = wp_remote_retrieve_response_code( $response );
 				$response_body = wp_remote_retrieve_body( $response );
-				$message       = sprintf(
+
+				// Nothing recorded the refusal here, so a site that only uses
+				// this path stayed on a model it cannot call until someone read
+				// the logs. Record it, then send the request once more with the
+				// model getAIModel() answers now.
+				$refusal = $this->recordModelRefusal( $provider, $model_name, $response_code, $response_body );
+
+				if ( null !== $refusal && $this->shouldRetryAfterRefusal( $provider, $model_name ) ) {
+					return $this->retryAfterRefusal(
+						function () use ( $call_args ) {
+							return $this->generateImgAltText( ...$call_args );
+						},
+						$provider,
+						$response_code,
+						$refusal
+					);
+				}
+
+				$message = null !== $refusal ? $refusal : sprintf(
 					/* translators: 1: provider name, 2: response code */
 					__( 'An error occurred with %1$s API, please try again. Response code: %2$s', 'wp-seopress-pro' ),
 					$this->getProviderName( $provider ),
@@ -2699,29 +4168,28 @@ class Completions {
 			'description' => html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ),
 		);
 
-		// Save alt text to post meta (only if requested and if missing when $update_empty_alt_text is false).
-		if ( in_array( 'alt_text', $fields, true ) && ! empty( $alt_text ) && ( $update_empty_alt_text || empty( $current_alt_text ) ) ) {
-			update_post_meta( $post_id, '_wp_attachment_image_alt', apply_filters( 'seopress_update_alt', sanitize_text_field( html_entity_decode( $alt_text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ) );
-		}
-
-		// Save caption to post_excerpt (only if requested and if missing when $update_empty_alt_text is false).
-		if ( in_array( 'caption', $fields, true ) && ! empty( $caption ) && ( $update_empty_alt_text || empty( $current_caption ) ) ) {
-			wp_update_post(
-				array(
-					'ID'           => $post_id,
-					'post_excerpt' => apply_filters( 'seopress_update_caption', sanitize_text_field( html_entity_decode( $caption, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ),
-				)
+		// Save the requested fields, only the missing ones when $update_empty_alt_text is false.
+		if ( $persist ) {
+			$generated_values = array(
+				'alt_text'    => $alt_text,
+				'caption'     => $caption,
+				'description' => $description,
 			);
-		}
 
-		// Save description to post_content (only if requested and if missing when $update_empty_alt_text is false).
-		if ( in_array( 'description', $fields, true ) && ! empty( $description ) && ( $update_empty_alt_text || empty( $current_description ) ) ) {
-			wp_update_post(
-				array(
-					'ID'           => $post_id,
-					'post_content' => apply_filters( 'seopress_update_description', wp_kses_post( html_entity_decode( $description, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ),
-				)
+			$current = array(
+				'alt_text'    => $current_alt_text,
+				'caption'     => $current_caption,
+				'description' => $current_description,
 			);
+
+			$to_save = array();
+			foreach ( $fields as $field ) {
+				if ( $update_empty_alt_text || empty( $current[ $field ] ) ) {
+					$to_save[ $field ] = $generated_values[ $field ];
+				}
+			}
+
+			$this->saveImageMeta( $post_id, $to_save );
 		}
 
 		// One shape for one method. This used to answer the bare string when
@@ -2729,5 +4197,46 @@ class Completions {
 		// array, so the callers checking $result['alt_text'] or is_array()
 		// read a success as a failure and reported nothing generated.
 		return $data;
+	}
+
+	/**
+	 * Save image metadata on an attachment.
+	 *
+	 * Shared by the bulk generation that writes as it goes and by the bulk
+	 * review, which only writes the suggestions the user approved. An empty
+	 * value is never written: it would wipe the metadata already in place.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param int   $post_id The attachment ID.
+	 * @param array $values  'alt_text', 'caption' and/or 'description'.
+	 *
+	 * @return void
+	 */
+	public function saveImageMeta( $post_id, $values ) {
+		// Alt text goes to post meta.
+		if ( ! empty( $values['alt_text'] ) ) {
+			update_post_meta( $post_id, '_wp_attachment_image_alt', apply_filters( 'seopress_update_alt', sanitize_text_field( html_entity_decode( $values['alt_text'], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ) );
+		}
+
+		// Caption goes to post_excerpt.
+		if ( ! empty( $values['caption'] ) ) {
+			wp_update_post(
+				array(
+					'ID'           => $post_id,
+					'post_excerpt' => apply_filters( 'seopress_update_caption', sanitize_text_field( html_entity_decode( $values['caption'], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ),
+				)
+			);
+		}
+
+		// Description goes to post_content.
+		if ( ! empty( $values['description'] ) ) {
+			wp_update_post(
+				array(
+					'ID'           => $post_id,
+					'post_content' => apply_filters( 'seopress_update_description', wp_kses_post( html_entity_decode( $values['description'], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ), $post_id ),
+				)
+			);
+		}
 	}
 }

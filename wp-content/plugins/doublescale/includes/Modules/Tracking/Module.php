@@ -58,11 +58,6 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 			static fn() => Email::instance()
 		);
 
-		$container->singleton(
-			Whatsapp::class,
-			static fn() => Whatsapp::instance()
-		);
-
 		$container->singleton( Services\TrackingService::class );
 	}
 
@@ -70,6 +65,12 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		parent::boot( $container );
 
 		$container->get( Email::class );
-		$container->get( Whatsapp::class );
+
+		// Every Pro release boots its receivers on doublescale_modules_booted
+		// only when AbstractTracking is already loaded (class_exists( …, false )).
+		// Free's WhatsApp receiver used to load it and free no longer ships
+		// one, so load the base class itself — without it older Pro releases
+		// would silently stop answering SMS webhooks.
+		class_exists( Abstracts\AbstractTracking::class );
 	}
 }

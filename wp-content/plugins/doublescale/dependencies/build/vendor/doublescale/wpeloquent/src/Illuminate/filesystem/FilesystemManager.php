@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Filesystem;
+namespace DoubleScale\Vendor\Illuminate\Filesystem;
 
 use Closure;
 use DoubleScale\Vendor\Aws\S3\S3Client;
 use DoubleScale\Vendor\OpenCloud\Rackspace;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use InvalidArgumentException;
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Sftp\SftpAdapter;
@@ -17,7 +17,7 @@ use League\Flysystem\Rackspace\RackspaceAdapter;
 use League\Flysystem\Adapter\Local as LocalAdapter;
 use League\Flysystem\AwsS3v3\AwsS3Adapter as S3Adapter;
 use League\Flysystem\Cached\Storage\Memory as MemoryStore;
-use Illuminate\Contracts\Filesystem\Factory as FactoryContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Filesystem\Factory as FactoryContract;
 /**
  * @mixin \Illuminate\Contracts\Filesystem\Filesystem
  */
@@ -240,7 +240,7 @@ class FilesystemManager implements FactoryContract
         if ($config === \true) {
             return new MemoryStore();
         }
-        return new \Illuminate\Filesystem\Cache($this->app['cache']->store($config['store']), $config['prefix'] ?? 'flysystem', $config['expire'] ?? null);
+        return new Cache($this->app['cache']->store($config['store']), $config['prefix'] ?? 'flysystem', $config['expire'] ?? null);
     }
     /**
      * Adapt the filesystem implementation.
@@ -250,7 +250,7 @@ class FilesystemManager implements FactoryContract
      */
     protected function adapt(FilesystemInterface $filesystem)
     {
-        return new \Illuminate\Filesystem\FilesystemAdapter($filesystem);
+        return new FilesystemAdapter($filesystem);
     }
     /**
      * Set the given disk instance.

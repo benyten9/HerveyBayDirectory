@@ -1,16 +1,16 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use Closure;
 use Exception;
 use Throwable;
-use Illuminate\Database\Schema\SqlServerBuilder;
-use Doctrine\DBAL\Driver\PDOSqlsrv\Driver as DoctrineDriver;
-use Illuminate\Database\Query\Processors\SqlServerProcessor;
-use Illuminate\Database\Query\Grammars\SqlServerGrammar as QueryGrammar;
-use Illuminate\Database\Schema\Grammars\SqlServerGrammar as SchemaGrammar;
-class SqlServerConnection extends \Illuminate\Database\Connection
+use DoubleScale\Vendor\Illuminate\Database\Schema\SqlServerBuilder;
+use DoubleScale\Vendor\Doctrine\DBAL\Driver\PDOSqlsrv\Driver as DoctrineDriver;
+use DoubleScale\Vendor\Illuminate\Database\Query\Processors\SqlServerProcessor;
+use DoubleScale\Vendor\Illuminate\Database\Query\Grammars\SqlServerGrammar as QueryGrammar;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Grammars\SqlServerGrammar as SchemaGrammar;
+class SqlServerConnection extends Connection
 {
     /**
      * Execute a Closure within a transaction.

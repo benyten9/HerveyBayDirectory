@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use PDO;
 use Closure;
@@ -8,18 +8,18 @@ use Exception;
 use PDOStatement;
 use LogicException;
 use DateTimeInterface;
-use Illuminate\Support\Arr;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Database\Events\QueryExecuted;
-use Doctrine\DBAL\Connection as DoctrineConnection;
-use Illuminate\Database\Query\Processors\Processor;
-use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Database\Schema\Builder as SchemaBuilder;
-use Illuminate\Database\Query\Grammars\Grammar as QueryGrammar;
-class Connection implements \Illuminate\Database\ConnectionInterface
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Database\Query\Expression;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Database\Events\QueryExecuted;
+use DoubleScale\Vendor\Doctrine\DBAL\Connection as DoctrineConnection;
+use DoubleScale\Vendor\Illuminate\Database\Query\Processors\Processor;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder as QueryBuilder;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Builder as SchemaBuilder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Grammars\Grammar as QueryGrammar;
+class Connection implements ConnectionInterface
 {
-    use \Illuminate\Database\DetectsDeadlocks, \Illuminate\Database\DetectsLostConnections, \Illuminate\Database\Concerns\ManagesTransactions;
+    use DetectsDeadlocks, DetectsLostConnections, Concerns\ManagesTransactions;
     /**
      * The active PDO connection.
      *
@@ -322,7 +322,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
     protected function prepared(PDOStatement $statement)
     {
         $statement->setFetchMode($this->fetchMode);
-        $this->event(new \Illuminate\Database\Events\StatementPrepared($this, $statement));
+        $this->event(new Events\StatementPrepared($this, $statement));
         return $statement;
     }
     /**
@@ -518,7 +518,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
         // to re-establish connection and re-run the query with a fresh connection.
         try {
             $result = $this->runQueryCallback($query, $bindings, $callback);
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             $result = $this->handleQueryException($e, $query, $bindings, $callback);
         }
         // Once we have run the query we will calculate the time that it took to run and
@@ -545,7 +545,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
         try {
             $result = $callback($query, $bindings);
         } catch (Exception $e) {
-            throw new \Illuminate\Database\QueryException($query, $this->prepareBindings($bindings), $e);
+            throw new QueryException($query, $this->prepareBindings($bindings), $e);
         }
         return $result;
     }
@@ -585,7 +585,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
      *
      * @throws \Illuminate\Database\QueryException
      */
-    protected function handleQueryException(\Illuminate\Database\QueryException $e, $query, $bindings, Closure $callback)
+    protected function handleQueryException(QueryException $e, $query, $bindings, Closure $callback)
     {
         if ($this->transactions >= 1) {
             throw $e;
@@ -603,7 +603,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
      *
      * @throws \Illuminate\Database\QueryException
      */
-    protected function tryAgainIfCausedByLostConnection(\Illuminate\Database\QueryException $e, $query, $bindings, Closure $callback)
+    protected function tryAgainIfCausedByLostConnection(QueryException $e, $query, $bindings, Closure $callback)
     {
         if ($this->causedByLostConnection($e->getPrevious())) {
             $this->reconnect();
@@ -655,7 +655,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
     public function listen(Closure $callback)
     {
         if (isset($this->events)) {
-            $this->events->listen(\Illuminate\Database\Events\QueryExecuted::class, $callback);
+            $this->events->listen(Events\QueryExecuted::class, $callback);
         }
     }
     /**
@@ -671,11 +671,11 @@ class Connection implements \Illuminate\Database\ConnectionInterface
         }
         switch ($event) {
             case 'beganTransaction':
-                return $this->events->dispatch(new \Illuminate\Database\Events\TransactionBeginning($this));
+                return $this->events->dispatch(new Events\TransactionBeginning($this));
             case 'committed':
-                return $this->events->dispatch(new \Illuminate\Database\Events\TransactionCommitted($this));
+                return $this->events->dispatch(new Events\TransactionCommitted($this));
             case 'rollingBack':
-                return $this->events->dispatch(new \Illuminate\Database\Events\TransactionRolledBack($this));
+                return $this->events->dispatch(new Events\TransactionRolledBack($this));
         }
     }
     /**
@@ -719,7 +719,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
      */
     public function isDoctrineAvailable()
     {
-        return \class_exists('Doctrine\\DBAL\\Connection');
+        return \class_exists('DoubleScale\\Vendor\\Doctrine\\DBAL\\Connection');
     }
     /**
      * Get a Doctrine Schema Column instance.
@@ -862,7 +862,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
      * @param  \Illuminate\Database\Query\Grammars\Grammar  $grammar
      * @return $this
      */
-    public function setQueryGrammar(\Illuminate\Database\Query\Grammars\Grammar $grammar)
+    public function setQueryGrammar(Query\Grammars\Grammar $grammar)
     {
         $this->queryGrammar = $grammar;
         return $this;
@@ -882,7 +882,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
      * @param  \Illuminate\Database\Schema\Grammars\Grammar  $grammar
      * @return $this
      */
-    public function setSchemaGrammar(\Illuminate\Database\Schema\Grammars\Grammar $grammar)
+    public function setSchemaGrammar(Schema\Grammars\Grammar $grammar)
     {
         $this->schemaGrammar = $grammar;
         return $this;
@@ -1037,7 +1037,7 @@ class Connection implements \Illuminate\Database\ConnectionInterface
      * @param  \Illuminate\Database\Grammar  $grammar
      * @return \Illuminate\Database\Grammar
      */
-    public function withTablePrefix(\Illuminate\Database\Grammar $grammar)
+    public function withTablePrefix(Grammar $grammar)
     {
         $grammar->setTablePrefix($this->tablePrefix);
         return $grammar;

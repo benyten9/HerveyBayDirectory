@@ -93,7 +93,27 @@ class Store {
 				'description' => __( 'Remove Plugin branding and replace with your own plugin name, logo, menu icon, and brand colors.', 'doublescale' ),
 				'plugin_file' => self::resolve_white_label_plugin_file( $plugins_dir ),
 				'image'       => 'white-label/white-label.svg',
-				'plan'        => 'enterprise',
+				'plan'        => 'agency',
+			),
+			'time-tracking' => array(
+				'name'        => __( 'Time Tracking', 'doublescale' ),
+				'slug'        => 'time-tracking',
+				'description' => __( 'Timers and time sheets on projects, tasks, subtasks and deals. Turn tracked time into invoices.', 'doublescale' ),
+				'plugin_file' => file_exists( $plugins_dir . 'doublescale-time-tracking/doublescale-time-tracking.php' )
+					? 'doublescale-time-tracking/doublescale-time-tracking.php'
+					: 'DoubleScale-Time-Tracking/doublescale-time-tracking.php',
+				'image'       => 'time-tracking/time-tracking.svg',
+				'plan'        => 'plus',
+			),
+			'custom-objects' => array(
+				'name'        => __( 'Custom Objects', 'doublescale' ),
+				'slug'        => 'custom-objects',
+				'description' => __( 'Your own record types, such as properties, vehicles or policies, with their own fields, linked to contacts, companies and each other.', 'doublescale' ),
+				'plugin_file' => file_exists( $plugins_dir . 'DoubleScale-CustomObjects/doublescale-custom-objects.php' )
+					? 'DoubleScale-CustomObjects/doublescale-custom-objects.php'
+					: 'doublescale-custom-objects/doublescale-custom-objects.php',
+				'image'       => 'custom-objects/custom-objects.svg',
+				'plan'        => 'plus',
 			),
 			// 'ai-assistant'  => array(
 			// 	'name'        => __( 'AI Assistant', 'doublescale' ),

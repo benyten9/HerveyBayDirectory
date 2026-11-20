@@ -103,7 +103,7 @@ function seopress_get_schema_metaboxe_jobs( $seopress_pro_rich_snippets_data, $k
 			$i               = 1;
 			foreach ( $employment_type as $key => $value ) {
 				?>
-			<button type="button" class="<?php echo seopress_btn_secondary_classes(); ?> tag-title" id="seopress-tag-employment-<?php echo absint( $i ); ?>"
+			<button type="button" class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?> tag-title" id="seopress-tag-employment-<?php echo absint( $i ); ?>"
 				data-tag="<?php echo esc_attr( $key ); ?>"><span
 					class="dashicons dashicons-plus-alt2"></span><?php echo esc_attr( $value ); ?></button>
 					<?php
@@ -170,7 +170,7 @@ function seopress_get_schema_metaboxe_jobs( $seopress_pro_rich_snippets_data, $k
 			name="seopress_pro_rich_snippets_data[<?php echo esc_attr( $key_schema ); ?>][seopress_pro_rich_snippets_jobs_hiring_logo_height]"
 			value="" />
 		<input id="seopress_pro_rich_snippets_jobs_hiring_logo"
-			class="<?php echo seopress_btn_secondary_classes(); ?> seopress_media_upload" type="button"
+			class="<?php echo esc_attr( seopress_btn_secondary_classes() ); ?> seopress_media_upload" type="button"
 			value="<?php esc_html_e( 'Upload an Image', 'wp-seopress-pro' ); ?>" />
 	</p>
 	<p>

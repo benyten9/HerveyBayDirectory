@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Events;
+namespace DoubleScale\Vendor\Illuminate\Events;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Queue\Factory as QueueFactoryContract;
+use DoubleScale\Vendor\Illuminate\Support\ServiceProvider;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\Factory as QueueFactoryContract;
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -14,7 +14,7 @@ class EventServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton('events', function ($app) {
-            return (new \Illuminate\Events\Dispatcher($app))->setQueueResolver(function () use($app) {
+            return (new Dispatcher($app))->setQueueResolver(function () use($app) {
                 return $app->make(QueueFactoryContract::class);
             });
         });

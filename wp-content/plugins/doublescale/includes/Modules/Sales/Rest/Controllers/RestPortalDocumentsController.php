@@ -22,6 +22,8 @@ namespace DoubleScale\Modules\Sales\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Services\CurrencyResolver;
+use DoubleScale\Modules\Portal\Services\PortalAccessGate;
 use DoubleScale\Modules\Portal\Services\PortalIdentity;
 use DoubleScale\Modules\Documents\Constants\InvoiceStatus;
 use DoubleScale\Modules\Documents\Constants\ProposalStatus;
@@ -52,6 +54,11 @@ class RestPortalDocumentsController extends RestController {
 	 * Max rows returned across both document types.
 	 */
 	private const LIST_CAP = 100;
+
+	/**
+	 * Safety cap on the older documents kept because they wait for the client.
+	 */
+	private const WAITING_CAP = 500;
 
 	/**
 	 * Register routes.
@@ -100,24 +107,36 @@ class RestPortalDocumentsController extends RestController {
 		$rows = array();
 
 		if ( in_array( $type, array( 'all', 'invoice' ), true ) && doublescale_sales_child_module_active( 'documents' ) ) {
-			$invoices = InvoiceModel::where( 'contact_id', (int) $contact->id )
+			$invoices = \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
 				->where( 'status', '!=', InvoiceStatus::DRAFT )
 				->orderBy( 'id', 'desc' )
 				->limit( self::LIST_CAP )
 				->get();
-			foreach ( $invoices as $invoice ) {
-				$rows[] = $this->shape_invoice( $invoice );
+			// An invoice with money due stays listed however old it is.
+			$waiting = \DoubleScale\Modules\Portal\Services\PortalScope::apply( InvoiceModel::query(), (int) $contact->id, 'invoices' )
+				->whereIn( 'status', array( InvoiceStatus::UNPAID, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE ) )
+				->orderBy( 'id', 'desc' )
+				->limit( self::WAITING_CAP )
+				->get();
+			foreach ( self::unique_by_id( $invoices, $waiting ) as $invoice ) {
+				$rows[] = $this->shape_invoice( $invoice ) + array( '_waiting' => in_array( (string) $invoice->status, array( InvoiceStatus::UNPAID, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE ), true ) );
 			}
 		}
 
 		if ( in_array( $type, array( 'all', 'proposal' ), true ) && doublescale_sales_child_module_active( 'documents' ) ) {
-			$proposals = ProposalModel::where( 'contact_id', (int) $contact->id )
+			$proposals = \DoubleScale\Modules\Portal\Services\PortalScope::apply( ProposalModel::query(), (int) $contact->id, 'invoices' )
 				->where( 'status', '!=', ProposalStatus::DRAFT )
 				->orderBy( 'id', 'desc' )
 				->limit( self::LIST_CAP )
 				->get();
-			foreach ( $proposals as $proposal ) {
-				$rows[] = $this->shape_proposal( $proposal );
+			// A proposal waiting for an answer stays listed however old it is.
+			$waiting = \DoubleScale\Modules\Portal\Services\PortalScope::apply( ProposalModel::query(), (int) $contact->id, 'invoices' )
+				->whereIn( 'status', array( ProposalStatus::SENT, ProposalStatus::OPEN ) )
+				->orderBy( 'id', 'desc' )
+				->limit( self::WAITING_CAP )
+				->get();
+			foreach ( self::unique_by_id( $proposals, $waiting ) as $proposal ) {
+				$rows[] = $this->shape_proposal( $proposal ) + array( '_waiting' => in_array( (string) $proposal->status, array( ProposalStatus::SENT, ProposalStatus::OPEN ), true ) );
 			}
 		}
 
@@ -132,16 +151,24 @@ class RestPortalDocumentsController extends RestController {
 		 */
 		$rows = apply_filters( 'doublescale_portal_documents_rows', $rows, $contact, $type );
 
+		// Types hidden from this customer (one row per document module), whoever added them.
+		$rows = PortalAccessGate::document_rows( is_array( $rows ) ? $rows : array(), $contact );
+
 		usort(
 			$rows,
 			static function ( $a, $b ) {
 				return strcmp( (string) $b['_sort'], (string) $a['_sort'] );
 			}
 		);
-		$rows = array_slice( $rows, 0, self::LIST_CAP );
+		// The newest ones, and every older one still waiting for the client
+		// (Home's "Needs your attention" reads this list).
+		$rows = array_merge(
+			array_slice( $rows, 0, self::LIST_CAP ),
+			array_values( array_filter( array_slice( $rows, self::LIST_CAP ), static fn( $row ) => ! empty( $row['_waiting'] ) ) )
+		);
 		$data = array_map(
 			static function ( $row ) {
-				unset( $row['_sort'] );
+				unset( $row['_sort'], $row['_waiting'] );
 				return $row;
 			},
 			$rows
@@ -183,11 +210,15 @@ class RestPortalDocumentsController extends RestController {
 			'date'        => $invoice->invoice_date,
 			'due_date'    => $invoice->due_date,
 			'open_till'   => null,
-			'currency'    => (string) $invoice->currency,
+			// No currency of its own = the store's, as the invoice page shows.
+			'currency'    => CurrencyResolver::resolve( $invoice ),
 			'total'       => (float) $invoice->total,
 			'amount_paid' => (float) $invoice->amount_paid,
 			'balance'     => InvoiceShaper::balance( $invoice ),
 			'is_overdue'  => InvoiceShaper::is_overdue( $invoice ),
+			// Whether any online gateway takes it: "Needs your attention"
+			// offers "Pay" only then (bank-transfer-only invoices say "View").
+			'can_pay'     => InvoiceShaper::can_pay( $invoice ),
 			'is_expired'  => false,
 			'invoice_id'  => null,
 			// Raw hash drives the in-portal detail view (which mounts the public
@@ -214,7 +245,7 @@ class RestPortalDocumentsController extends RestController {
 			'date'        => $proposal->date,
 			'due_date'    => null,
 			'open_till'   => $proposal->open_till,
-			'currency'    => (string) $proposal->currency,
+			'currency'    => CurrencyResolver::resolve( $proposal ),
 			'total'       => (float) $proposal->total,
 			'amount_paid' => null,
 			'balance'     => null,
@@ -227,5 +258,23 @@ class RestPortalDocumentsController extends RestController {
 			'public_url'  => ProposalUrl::get_public_url( $proposal ),
 			'_sort'       => (string) $proposal->created_at,
 		);
+	}
+
+	/**
+	 * The newest documents, then the older waiting ones not among them.
+	 *
+	 * @param iterable $newest  Newest documents.
+	 * @param iterable $waiting Waiting documents.
+	 * @return array<int, mixed>
+	 */
+	private static function unique_by_id( $newest, $waiting ): array {
+		$out = array();
+		foreach ( array( $newest, $waiting ) as $set ) {
+			foreach ( $set as $document ) {
+				$out[ (int) $document->id ] = $out[ (int) $document->id ] ?? $document;
+			}
+		}
+
+		return array_values( $out );
 	}
 }

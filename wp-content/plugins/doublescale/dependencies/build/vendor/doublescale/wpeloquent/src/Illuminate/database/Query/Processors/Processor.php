@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Query\Processors;
+namespace DoubleScale\Vendor\Illuminate\Database\Query\Processors;
 
-use Illuminate\Database\Query\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder;
 class Processor
 {
     /**

@@ -64,9 +64,32 @@ class AddNewDeal extends BaseDealAction {
 		if ( empty( $title ) ) {
 			$title = 'no-title';
 		}
+		// Someone who does not work deals gets none: the contact's owner does
+		// when they can, else the deal starts without an owner. The log says so.
+		$owner = (int) $step->get_setting( 'owner' );
+		$note  = '';
+		if ( $owner > 0 && \DoubleScale\Pro\Modules\Deals\Services\DealOwnerRule::error( $owner ) ) {
+			$picked        = get_userdata( $owner );
+			$picked_name   = $picked ? $picked->display_name : '#' . $owner;
+			$contact_owner = (int) ( $automation_contact->contact->owner_id ?? 0 );
+			if ( $contact_owner > 0 && null === \DoubleScale\Pro\Modules\Deals\Services\DealOwnerRule::error( $contact_owner ) ) {
+				$owner = $contact_owner;
+				$note  = sprintf(
+					/* translators: 1: person picked in the step, 2: the contact's owner, who got the deal */
+					__( '%1$s cannot own deals, so the deal went to the contact\'s owner, %2$s.', 'doublescale' ),
+					$picked_name,
+					get_userdata( $contact_owner )->display_name
+				);
+			} else {
+				$owner = 0;
+				/* translators: %s: person picked in the step */
+				$note = sprintf( __( '%s cannot own deals, so the deal was created without an owner.', 'doublescale' ), $picked_name );
+			}
+		}
+
 		$data = array(
 			'title'       => $title,
-			'owner_id'    => $step->get_setting( 'owner' ),
+			'owner_id'    => $owner > 0 ? $owner : null,
 			'pipeline_id' => $step->get_setting( 'pipeline' ),
 			'stage_id'    => $step->get_setting( 'stage' ),
 			'contact_id'  => $automation_contact->contact->id,
@@ -78,7 +101,10 @@ class AddNewDeal extends BaseDealAction {
 		if ( ! $deal ) {
 			return false;
 		}
-		return true;
+		return '' === $note ? true : array(
+			'success' => true,
+			'message' => $note,
+		);
 	}
 
 	/**

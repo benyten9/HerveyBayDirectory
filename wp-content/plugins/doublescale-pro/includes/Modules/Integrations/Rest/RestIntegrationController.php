@@ -51,7 +51,7 @@ class RestIntegrationController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_provider_status' ),
-					'permission_callback' => array( $this, 'get_permissions_check' ),
+					'permission_callback' => array( $this, 'get_provider_status_permissions_check' ),
 					'args'                => array(
 						'channel' => array(
 							'description' => __( 'Channel type to check', 'doublescale'),
@@ -264,6 +264,22 @@ class RestIntegrationController extends RestController {
 	 */
 	public function get_permissions_check( $request ) {
 		return Permissions::has_crm_manager_access();
+	}
+
+	/**
+	 * Whether SMS / WhatsApp are connected: a yes/no the action library shows
+	 * beside those actions, so automation staff may read it too.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool
+	 */
+	public function get_provider_status_permissions_check( $request ) {
+		// Only whether SMS / WhatsApp is connected: campaign roles need it too,
+		// and everyone who opens a contact's SMS and WhatsApp tabs.
+		return Permissions::has_crm_manager_access()
+			|| Permissions::can_access_automations()
+			|| \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::can_use_campaigns()
+			|| Permissions::can_read_contacts();
 	}
 
 	/**

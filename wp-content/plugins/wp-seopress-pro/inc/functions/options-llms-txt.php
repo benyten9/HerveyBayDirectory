@@ -210,24 +210,44 @@ function seopress_llms_query_posts( $args, $lang = '' ) {
 	}
 
 	// WPML: switch language for the duration of the query, restore afterwards.
-	$wpml_active        = defined( 'ICL_SITEPRESS_VERSION' );
-	$wpml_previous_lang = null;
+	// The scope is closed with the token the helper hands back, never by naming
+	// the language we came from: on WPML 5.0 a language code only ever opens a
+	// scope, so restoring by name opens a second one and leaves every
+	// placeholder after this one resolving in the wrong language.
+	$wpml_scope = null;
+
+	// WPML is detected by the constant as before, plus by whether anything
+	// answers the filter this function already switches through. The second
+	// half only ever adds sites: a WPML compatibility layer that serves the
+	// hooks without the constant gets the same treatment as WPML itself.
+	$wpml_active = defined( 'ICL_SITEPRESS_VERSION' )
+		|| null !== apply_filters( 'wpml_current_language', null );
 
 	if ( $wpml_active ) {
-		$wpml_previous_lang = apply_filters( 'wpml_current_language', null );
-
-		if ( $query_all ) {
-			do_action( 'wpml_switch_language', 'all' );
-		} elseif ( ! empty( $lang ) ) {
-			do_action( 'wpml_switch_language', $lang );
+		$target_language = $query_all ? 'all' : $lang;
+		if ( ! empty( $target_language ) ) {
+			if ( function_exists( 'seopress_wpml_open_language_switch' ) ) {
+				$wpml_scope = seopress_wpml_open_language_switch( $target_language );
+			} else {
+				// Free versions before the shared helpers must still switch.
+				$previous   = apply_filters( 'wpml_current_language', null );
+				$wpml_scope = is_string( $previous ) ? $previous : '';
+				do_action( 'wpml_switch_language', $target_language );
+			}
 		}
 	}
 
-	$posts = get_posts( $args );
-
-	// Restore WPML language.
-	if ( $wpml_active && null !== $wpml_previous_lang ) {
-		do_action( 'wpml_switch_language', $wpml_previous_lang );
+	try {
+		$posts = get_posts( $args );
+	} finally {
+		// Restore WPML language.
+		if ( function_exists( 'seopress_wpml_close_language_switch' ) ) {
+			seopress_wpml_close_language_switch( $wpml_scope );
+		} elseif ( is_string( $wpml_scope ) ) {
+			$scoped = defined( 'ICL_SITEPRESS_VERSION' ) && version_compare( ICL_SITEPRESS_VERSION, '5.0', '>=' );
+			$scoped = (bool) apply_filters( 'seopress_wpml_scoped_language_switch', $scoped );
+			do_action( 'wpml_switch_language', '' === $wpml_scope || $scoped ? null : $wpml_scope );
+		}
 	}
 
 	return apply_filters( 'seopress_llms_query_posts', $posts, $args, $lang );
@@ -611,6 +631,22 @@ function seopress_serve_llms_txt( $do_parse, $wp, $extra_query_vars ) {
 		return $do_parse;
 	}
 
+	$seopress_llms = seopress_get_llms_txt_content();
+
+	// Set the content type header.
+	header( 'Content-Type: text/plain; charset=utf-8' );
+	header( 'X-Robots-Tag: noindex' );
+
+	// Output the content.
+	echo $seopress_llms; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML document assembled above.
+
+	// Exit to prevent WordPress from continuing.
+	exit;
+}
+add_filter( 'do_parse_request', 'seopress_serve_llms_txt', 0, 3 );
+
+/** Build the saved virtual file for serving and delivery diagnostics. */
+function seopress_get_llms_txt_content() {
 	// Get custom content from settings.
 	$seopress_llms = seopress_pro_get_service( 'OptionPro' )->getLlmsTxtFile();
 
@@ -625,14 +661,5 @@ function seopress_serve_llms_txt( $do_parse, $wp, $extra_query_vars ) {
 	// Apply filter to allow customization.
 	$seopress_llms = apply_filters( 'seopress_llms_txt_file', $seopress_llms );
 
-	// Set the content type header.
-	header( 'Content-Type: text/plain; charset=utf-8' );
-	header( 'X-Robots-Tag: noindex' );
-
-	// Output the content.
-	echo $seopress_llms;
-
-	// Exit to prevent WordPress from continuing.
-	exit;
+	return (string) $seopress_llms;
 }
-add_filter( 'do_parse_request', 'seopress_serve_llms_txt', 0, 3 );

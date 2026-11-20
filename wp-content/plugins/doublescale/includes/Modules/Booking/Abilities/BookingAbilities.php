@@ -166,7 +166,7 @@ final class BookingAbilities {
 	 *
 	 * @param array<string, mixed> $input    Ability input.
 	 * @param bool                 $sees_all Whether the caller sees every booking.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	private static function scoped_query( array $input, bool $sees_all ) {
 		$query = BookingModel::query();

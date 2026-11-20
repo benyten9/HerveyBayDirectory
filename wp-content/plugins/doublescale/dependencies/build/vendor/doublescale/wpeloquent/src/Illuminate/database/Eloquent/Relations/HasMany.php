@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Database\Eloquent\Collection;
-class HasMany extends \Illuminate\Database\Eloquent\Relations\HasOneOrMany
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+class HasMany extends HasOneOrMany
 {
     /**
      * Get the results of the relationship.

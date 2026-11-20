@@ -22,7 +22,7 @@ class ActionResult {
 
 	/**
 	 * @param mixed $result Raw process_action() return value.
-	 * @return array{outcome: string, message: string} outcome is completed|failed|skipped.
+	 * @return array{outcome: string, message: string} outcome is completed|failed|skipped|waiting.
 	 */
 	public static function interpret( $result ): array {
 		if ( true === $result ) {
@@ -48,6 +48,15 @@ class ActionResult {
 
 		$status  = isset( $result['status'] ) ? (string) $result['status'] : '';
 		$message = isset( $result['message'] ) ? trim( (string) $result['message'] ) : '';
+
+		// The step handed its work to a queue (e.g. the send queue): the
+		// contact waits on this step until the queue finishes it.
+		if ( 'queued' === $status ) {
+			return array(
+				'outcome' => 'waiting',
+				'message' => $message,
+			);
+		}
 
 		if ( 'skipped' === $status ) {
 			return array(

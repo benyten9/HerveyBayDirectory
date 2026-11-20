@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-class AggregateServiceProvider extends \Illuminate\Support\ServiceProvider
+class AggregateServiceProvider extends ServiceProvider
 {
     /**
      * The provider class names.

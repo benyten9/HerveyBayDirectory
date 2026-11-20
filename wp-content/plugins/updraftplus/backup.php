@@ -132,6 +132,8 @@ class UpdraftPlus_Backup {
 	private $pruning_number_of_files = 10;
 
 	private $minimum_time_to_cache_pruned_files = 25; // seconds
+	
+	private $connection_character_set;
 
 	/**
 	 * Current processing remote storage instance id
@@ -1608,6 +1610,14 @@ class UpdraftPlus_Backup {
 			$this->table_prefix_raw = $dbinfo['prefix'];
 		}
 
+		$this->connection_character_set = $this->set_connection_charset_utf8();
+		
+		if (!is_string($this->connection_character_set)) {
+			$updraftplus->log("Failed to set the connection charset to a compatible UTF8 character set; aborting");
+			$updraftplus->log(__("Failed to set the connection charset to a compatible UTF8 character set; aborting", 'updraftplus'), 'error');
+			return false;
+		}
+		
 		$this->dbinfo = $dbinfo;
 
 		do_action('updraftplus_backup_db_begin', $whichdb, $dbinfo, $already_done, $this);
@@ -2145,19 +2155,19 @@ class UpdraftPlus_Backup {
 		// Don't include the job data for any backups - so that when the database is restored, it doesn't continue an apparently incomplete backup
 		global $updraftplus;
 		$table_prefix = $updraftplus->get_table_prefix(false); // or we can just use $this->table_prefix_raw ??
+		// These might look similar, but the quotes are different
+		if ('win' == strtolower(substr(PHP_OS, 0, 3))) {
+			// Single quotes are required here because escapeshellarg() on Windows replaces double quotes with spaces (which would strip the quotes out of the WHERE clause and break the SQL syntax); single-quoted string literals are valid SQL on every platform, so there is no need for an OS check.
+			$updraft_jobdata = "'updraft_jobdata_%'";
+			$site_transient_update = "'_site_transient_update_%'";
+		} else {
+			$updraft_jobdata = '"updraft_jobdata_%"';
+			$site_transient_update = '"_site_transient_update_%"';
+		}
 		if ('wp' == $this->whichdb && (!empty($table_prefix) && strtolower($table_prefix.'sitemeta') == strtolower($table))) {
-			$where[] = 'meta_key NOT LIKE "updraft_jobdata_%"';
+			$where[] = 'meta_key NOT LIKE '.$updraft_jobdata.' AND meta_key NOT LIKE '.$site_transient_update;
 		} elseif ('wp' == $this->whichdb && (!empty($table_prefix) && strtolower($table_prefix.'options') == strtolower($table))) {
-			// These might look similar, but the quotes are different
-			if ('win' == strtolower(substr(PHP_OS, 0, 3))) {
-				$updraft_jobdata = "'updraft_jobdata_%'";
-				$site_transient_update = "'_site_transient_update_%'";
-			} else {
-				$updraft_jobdata = '"updraft_jobdata_%"';
-				$site_transient_update = '"_site_transient_update_%"';
-			}
-
-			$where[] = 'option_name NOT LIKE '.$updraft_jobdata.' AND option_name NOT LIKE '.$site_transient_update.'';
+			$where[] = 'option_name NOT LIKE '.$updraft_jobdata.' AND option_name NOT LIKE '.$site_transient_update;
 		}
 
 		return $where;
@@ -2247,7 +2257,6 @@ class UpdraftPlus_Backup {
 
 		$ret = false;
 		$any_output = false;
-		$gtid_found = false;
 		$writes = 0;
 		$write_bytes = 0;
 		$handle = (function_exists('popen') && function_exists('pclose')) ? popen($exec, 'r') : false;
@@ -2255,14 +2264,6 @@ class UpdraftPlus_Backup {
 			while (!feof($handle)) {
 				$w = fgets($handle, 1048576);
 				if (is_string($w) && $w) {
-
-					if (preg_match('/^SET @@GLOBAL.GTID_PURGED/i', $w)) $gtid_found = true;
-
-					if ($gtid_found) {
-						if (false !== strpos($w, ';')) $gtid_found = false;
-						continue;
-					}
-
 					$this->stow($w);
 					$writes++;
 					$write_bytes += strlen($w);
@@ -2986,6 +2987,44 @@ class UpdraftPlus_Backup {
 	}
 
 	/**
+	 * Set the database connection to the most capable available UTF-8
+	 * character set and collation.
+	 *
+	 * @return String|Boolean - the character set chosen, or false if the attempt failed
+	 */
+	private function set_connection_charset_utf8() {
+		
+		$actual_charset = false;
+		$actual_collate = false;
+		
+		foreach (array('utf8mb4', 'utf8') as $charset) {
+			
+			$settings = $this->wpdb_obj->determine_charset($charset, '');
+			
+			if (empty($settings['charset'])) continue;
+			
+			// dbh is protected, but available via the magic getter
+			$this->wpdb_obj->set_charset(
+				$this->wpdb_obj->dbh,
+				$settings['charset'],
+				$settings['collate']
+			);
+			
+		}
+		
+		$actual_charset = strtolower($this->wpdb_obj->get_var('SELECT @@character_set_connection'));
+		$actual_collate = strtolower($this->wpdb_obj->get_var('SELECT @@collation_connection'));
+		
+		if (strtolower($settings['charset']) === $actual_charset && strtolower($settings['collate']) === $actual_collate) {
+			return $actual_charset;
+		}
+		
+		if (preg_match('/^utf8/i', $actual_charset)) return $actual_charset;
+		
+		return false;
+	}
+	
+	/**
 	 * Stow the database backup header
 	 */
 	private function backup_db_header() {
@@ -2999,7 +3038,7 @@ class UpdraftPlus_Backup {
 		if ('wp' == $this->whichdb) {
 			$wp_upload_dir = wp_upload_dir();
 			$this->stow("# WordPress MySQL database backup\n");
-			$this->stow("# Created by UpdraftPlus version ".$updraftplus->version." (https://updraftplus.com)\n");
+			$this->stow("# Created by UpdraftPlus version ".$updraftplus->version." (https://teamupdraft.com/updraftplus/)\n");
 			$this->stow("# WordPress Version: $wp_version, running on PHP ".phpversion()." (".$server_software."), MySQL $mysql_version\n");
 			$this->stow("# Backup of: ".untrailingslashit(site_url())."\n");
 			$this->stow("# Home URL: ".untrailingslashit(home_url())."\n");
@@ -3056,7 +3095,7 @@ class UpdraftPlus_Backup {
 			$this->stow("# Site info: end\n");
 		} else {
 			$this->stow("# MySQL database backup (supplementary database ".$this->whichdb.")\n");
-			$this->stow("# Created by UpdraftPlus version ".$updraftplus->version." (https://updraftplus.com)\n");
+			$this->stow("# Created by UpdraftPlus version ".$updraftplus->version." (https://teamupdraft.com/updraftplus/)\n");
 			$this->stow("# WordPress Version: $wp_version, running on PHP ".phpversion()." (".$server_software."), MySQL $mysql_version\n");
 			$this->stow("# ".sprintf('External database: (%s)', $this->dbinfo['user'].'@'.$this->dbinfo['host'].'/'.$this->dbinfo['name'])."\n");
 			$this->stow("# Backup created by: ".untrailingslashit(site_url())."\n");
@@ -3086,7 +3125,7 @@ class UpdraftPlus_Backup {
 		$this->stow("/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;\n");
 		// N.B. Setting this as the mode matches the export behaviour of both mysqldump and phpMyAdmin
 		$this->stow("/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n");
-		$this->stow("/*!40101 SET NAMES ".$updraftplus->get_connection_charset($this->wpdb_obj)." */;\n");
+		$this->stow("/*!40101 SET NAMES {$this->connection_character_set} */;\n");
 		$this->stow("/*!40101 SET foreign_key_checks = 0 */;\n\n");
 
 		// This filter allows a user to add their own arbitrary content.
@@ -4438,7 +4477,7 @@ class UpdraftPlus_Backup {
 			$warn_msg = __('A zip error occurred', 'updraftplus').' - ';
 			if (!empty($quota_low)) {
 				/* translators: %s: Help URL */
-				$warn_msg = sprintf(__('your web hosting account is full; please see: %s', 'updraftplus'), 'https://updraftplus.com/faqs/how-much-free-disk-space-do-i-need-to-create-a-backup/');
+				$warn_msg = sprintf(__('your web hosting account is full; please see: %s', 'updraftplus'), 'https://teamupdraft.com/documentation/updraftplus/topics/backing-up/faqs/how-much-free-disk-space-do-i-need-to-create-a-backup/');
 			} else {
 				$warn_msg .= __('check your log for more details.', 'updraftplus');
 			}

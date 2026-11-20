@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Bus;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Bus;
 
-interface QueueingDispatcher extends \Illuminate\Contracts\Bus\Dispatcher
+interface QueueingDispatcher extends Dispatcher
 {
     /**
      * Dispatch a command to its appropriate handler behind a queue.

@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Console\Seeds;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Seeds;
 
-use Illuminate\Support\Composer;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Console\GeneratorCommand;
+use DoubleScale\Vendor\Illuminate\Support\Composer;
+use DoubleScale\Vendor\Illuminate\Filesystem\Filesystem;
+use DoubleScale\Vendor\Illuminate\Console\GeneratorCommand;
 class SeederMakeCommand extends GeneratorCommand
 {
     /**

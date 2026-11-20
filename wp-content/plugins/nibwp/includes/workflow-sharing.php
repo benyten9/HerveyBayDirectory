@@ -259,11 +259,18 @@ function nibwp_workflow_sharing_call(string $route, array $body)
     }
     if ($code < 200 || $code >= 300) {
         $msg = is_array($json) ? (string) ($json['message'] ?? '') : '';
+        if ($msg === '') {
+            return new WP_Error('hub_refused', sprintf(
+                /* translators: %d: HTTP status code */
+                __('The hub refused the workflow (HTTP %d).', 'nibwp'),
+                $code
+            ));
+        }
         return new WP_Error('hub_refused', sprintf(
             /* translators: 1: HTTP status code, 2: message from the hub */
-            __('The hub refused the workflow (HTTP %1$d)%2$s', 'nibwp'),
+            __('The hub refused the workflow (HTTP %1$d): %2$s', 'nibwp'),
             $code,
-            $msg !== '' ? ': ' . $msg : '.'
+            $msg
         ));
     }
     // A 200 that is not JSON is not a success. A parked domain, a maintenance

@@ -15,7 +15,7 @@ use SEOPress\Core\Hooks\ExecuteHooks;
  * plugin for the free tabs.
  *
  * On the React side, each Pro tab renders `<SyncMetaToEditor/>` (shipped
- * by Free) which mirrors its Formik state into Gutenberg's `core/editor`
+ * by Free) which mirrors its form state into Gutenberg's `core/editor`
  * meta on every change. The meta keys MUST therefore be exposed via
  * `show_in_rest` with a matching schema so Gutenberg's save POST validates
  * and persists them. Sanitizers below mirror the dedicated Pro REST

@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.3.0 - 22-09-2026 */
+/*! elementor-pro - v4.4.0 - 16-11-2026 */
 "use strict";
 (function() {
 	//#region \0rolldown/runtime.js

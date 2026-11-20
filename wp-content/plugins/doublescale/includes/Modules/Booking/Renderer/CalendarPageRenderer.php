@@ -34,6 +34,16 @@ class CalendarPageRenderer extends BaseTemplateRenderer {
 			return $this->render_unavailable();
 		}
 
+		// Switched-off and private events stay off the public list.
+		$calendar->setRelation(
+			'events',
+			$calendar->events->filter(
+				static function ( $event ) {
+					return $event->is_listed();
+				}
+			)->values()
+		);
+
 		$template_path = __DIR__ . '/templates/calendar.php';
 
 		return $this->render_template_page(

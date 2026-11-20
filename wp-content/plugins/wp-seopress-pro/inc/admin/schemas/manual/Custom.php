@@ -39,6 +39,7 @@ function seopress_get_schema_metaboxe_custom( $seopress_pro_rich_snippets_data, 
 			name="seopress_pro_rich_snippets_data[<?php echo esc_attr( $key_schema ); ?>][seopress_pro_rich_snippets_custom]"
 			placeholder="
 			<?php
+			// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- example.com URL inside a JSON-LD sample used as a textarea placeholder, nothing is ever fetched from it.
 			esc_html_e(
 				'e.g. <script type="application/ld+json">{
 				"@context": "https://schema.org/",
@@ -75,6 +76,7 @@ function seopress_get_schema_metaboxe_custom( $seopress_pro_rich_snippets_data, 
 			}</script>',
 				'wp-seopress-pro'
 			);
+			// phpcs:enable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 			?>
 							"
 			aria-label="<?php esc_html_e( 'Custom schema', 'wp-seopress-pro' ); ?>"><?php echo esc_textarea( $seopress_pro_rich_snippets_custom ); ?></textarea>

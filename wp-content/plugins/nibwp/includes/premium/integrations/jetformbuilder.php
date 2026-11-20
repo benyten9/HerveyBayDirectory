@@ -66,7 +66,7 @@ function nibwp_jfb_err(string $code, string $message): WP_Error
 function nibwp_jfb_guard(): ?WP_Error
 {
     if (!nibwp_jfb_available()) {
-        return nibwp_jfb_err('nibwp_jfb_missing', __('JetFormBuilder is not active on this site.', domain: 'nibwp'));
+        return nibwp_jfb_err('nibwp_jfb_missing', __('JetFormBuilder is not active on this site.', 'nibwp'));
     }
 
     return null;
@@ -90,13 +90,13 @@ function nibwp_jfb_try(callable $fn, string $code = 'nibwp_jfb_failed')
 function nibwp_jfb_form(int $form_id)
 {
     if ($form_id <= 0) {
-        return nibwp_jfb_err('nibwp_jfb_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_jfb_err('nibwp_jfb_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $post = get_post($form_id);
 
     if (!$post || $post->post_type !== NIBWP_JFB_POST_TYPE) {
-        return nibwp_jfb_err('nibwp_jfb_not_found', __('No JetFormBuilder form with that ID.', domain: 'nibwp'));
+        return nibwp_jfb_err('nibwp_jfb_not_found', __('No JetFormBuilder form with that ID.', 'nibwp'));
     }
 
     return $post;
@@ -149,7 +149,7 @@ function nibwp_jfb_meta_put(int $form_id, string $key, $value)
             'nibwp_jfb_bad_key',
             sprintf(
                 /* translators: 1: the key given, 2: the keys JetFormBuilder uses */
-                __('"%1$s" is not a JetFormBuilder meta key. Known keys: %2$s', domain: 'nibwp'),
+                __('"%1$s" is not a JetFormBuilder meta key. Known keys: %2$s', 'nibwp'),
                 $key,
                 implode(', ', nibwp_jfb_meta_keys())
             )
@@ -230,8 +230,8 @@ function nibwp_jfb_paginate(array $in): array
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-info', [
-    'label'       => __('JetFormBuilder — Info', domain: 'nibwp'),
-    'description' => __('Detect JetFormBuilder, its version, how many forms exist and whether records are being stored (read-only).', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Info', 'nibwp'),
+    'description' => 'Detect JetFormBuilder, its version, how many forms exist and whether records are being stored (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -267,7 +267,7 @@ function nibwp_jfb_info(array $input): array|WP_Error
             'post_type'  => NIBWP_JFB_POST_TYPE,
             'form_count' => (int) ($counts->publish ?? 0),
             'meta_keys'  => nibwp_jfb_meta_keys(),
-            'note'       => __('Fields are blocks in post_content; behavior lives in _jf_ post meta. Read nibwp/jetformbuilder-actions before assuming a form does anything on submit.', domain: 'nibwp'),
+            'note'       => __('Fields are blocks in post_content; behavior lives in _jf_ post meta. Read nibwp/jetformbuilder-actions before assuming a form does anything on submit.', 'nibwp'),
         ];
     });
 }
@@ -277,8 +277,8 @@ function nibwp_jfb_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-forms', [
-    'label'       => __('JetFormBuilder — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, rename and duplicate JetFormBuilder forms, and get the block or shortcode for embedding one.', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Forms', 'nibwp'),
+    'description' => 'List, read, create, rename and duplicate JetFormBuilder forms, and get the block or shortcode for embedding one.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -322,7 +322,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'rename', 'duplicate', 'embed'], strict: true) && $form_id <= 0) {
-        return nibwp_jfb_err('nibwp_jfb_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_jfb_err('nibwp_jfb_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_jfb_try(static function () use ($action, $form_id, $input) {
@@ -354,7 +354,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
         if ($action === 'create') {
             $new_id = wp_insert_post([
                 'post_type'    => NIBWP_JFB_POST_TYPE,
-                'post_title'   => (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp')),
+                'post_title'   => (string) ($input['title'] ?? __('Untitled form', 'nibwp')),
                 'post_status'  => 'publish',
                 'post_content' => nibwp_wp_prepare_post_content($input['content'] ?? ''),
             ], true);
@@ -366,7 +366,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
             return [
                 'form_id' => (int) $new_id,
                 'created' => true,
-                'note'    => __('No actions configured, so this form will submit and discard the data. Add one with nibwp/jetformbuilder-actions.', domain: 'nibwp'),
+                'note'    => __('No actions configured, so this form will submit and discard the data. Add one with nibwp/jetformbuilder-actions.', 'nibwp'),
             ];
         }
 
@@ -393,7 +393,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
             case 'rename':
                 $title = trim((string) ($input['title'] ?? ''));
                 if ($title === '') {
-                    throw new \RuntimeException(__('A title is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A title is required.', 'nibwp'));
                 }
                 wp_update_post(['ID' => $form_id, 'post_title' => $title]);
 
@@ -402,7 +402,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
             case 'duplicate':
                 $new_id = wp_insert_post([
                     'post_type'    => NIBWP_JFB_POST_TYPE,
-                    'post_title'   => $post->post_title . ' ' . __('(copy)', domain: 'nibwp'),
+                    'post_title'   => $post->post_title . ' ' . __('(copy)', 'nibwp'),
                     'post_status'  => $post->post_status,
                     // Read back from the database already unslashed, so it has to
                     // be slashed again or the copy loses every backslash the
@@ -433,7 +433,7 @@ function nibwp_jfb_forms(array $input): array|WP_Error
                 ];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -442,8 +442,8 @@ function nibwp_jfb_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-fields', [
-    'label'       => __('JetFormBuilder — Fields', domain: 'nibwp'),
-    'description' => __('The fields on a form, parsed out of its block markup, with the names that actions and records key on (read-only).', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Fields', 'nibwp'),
+    'description' => 'The fields on a form, parsed out of its block markup, with the names that actions and records key on (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -495,7 +495,7 @@ function nibwp_jfb_fields_ability(array $input): array|WP_Error
             'unusable' => $unusable,
             'warning' => $unusable === []
                 ? ''
-                : __('Some fields have no name attribute, so no action can read their values.', domain: 'nibwp'),
+                : __('Some fields have no name attribute, so no action can read their values.', 'nibwp'),
         ];
     });
 }
@@ -505,8 +505,8 @@ function nibwp_jfb_fields_ability(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-actions', [
-    'label'       => __('JetFormBuilder — Post-submit actions', domain: 'nibwp'),
-    'description' => __('Read and configure what a form does when it is submitted — send an email, insert a post, register a user, call a webhook, save a record.', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Post-submit actions', 'nibwp'),
+    'description' => 'Read and configure what a form does when it is submitted — send an email, insert a post, register a user, call a webhook, save a record.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -574,7 +574,7 @@ function nibwp_jfb_actions(array $input): array|WP_Error
                 'actions' => $rows,
                 'count'   => count($rows),
                 'warning' => $rows === []
-                    ? __('This form has no actions. It will accept a submission and do nothing with it — no email, no record, nothing.', domain: 'nibwp')
+                    ? __('This form has no actions. It will accept a submission and do nothing with it — no email, no record, nothing.', 'nibwp')
                     : '',
             ];
         }
@@ -589,7 +589,7 @@ function nibwp_jfb_actions(array $input): array|WP_Error
         if ($action === 'add') {
             $new = (array) ($input['new_action'] ?? []);
             if (($new['type'] ?? '') === '') {
-                throw new \RuntimeException(__('An action type is required — send_email, insert_post, register_user, call_webhook, and so on.', domain: 'nibwp'));
+                throw new \RuntimeException(__('An action type is required — send_email, insert_post, register_user, call_webhook, and so on.', 'nibwp'));
             }
 
             $current[] = $new;
@@ -600,7 +600,7 @@ function nibwp_jfb_actions(array $input): array|WP_Error
 
         $index = (int) ($input['index'] ?? -1);
         if (!array_key_exists($index, $current)) {
-            throw new \RuntimeException(__('No action at that position.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No action at that position.', 'nibwp'));
         }
 
         array_splice($current, $index, 1);
@@ -611,7 +611,7 @@ function nibwp_jfb_actions(array $input): array|WP_Error
             'index'   => $index,
             'deleted' => true,
             'warning' => $current === []
-                ? __('That was the last action. This form now does nothing on submit.', domain: 'nibwp')
+                ? __('That was the last action. This form now does nothing on submit.', 'nibwp')
                 : '',
         ];
     });
@@ -622,8 +622,8 @@ function nibwp_jfb_actions(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-settings', [
-    'label'       => __('JetFormBuilder — Settings', domain: 'nibwp'),
-    'description' => __('Read and change any of a form\'s settings meta: messages, general arguments, validation, spam protection, response limits, scheduling, prefill and save-progress.', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Settings', 'nibwp'),
+    'description' => 'Read and change any of a form\'s settings meta: messages, general arguments, validation, spam protection, response limits, scheduling, prefill and save-progress.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -684,7 +684,7 @@ function nibwp_jfb_settings(array $input): array|WP_Error
         }
 
         if ($key === '') {
-            throw new \RuntimeException(__('A meta_key is required.', domain: 'nibwp'));
+            throw new \RuntimeException(__('A meta_key is required.', 'nibwp'));
         }
 
         if ($action === 'get') {
@@ -692,7 +692,7 @@ function nibwp_jfb_settings(array $input): array|WP_Error
         }
 
         if (!array_key_exists('value', $input)) {
-            throw new \RuntimeException(__('A value is required.', domain: 'nibwp'));
+            throw new \RuntimeException(__('A value is required.', 'nibwp'));
         }
 
         $result = nibwp_jfb_meta_put($form_id, $key, $input['value']);
@@ -715,7 +715,7 @@ function nibwp_jfb_settings(array $input): array|WP_Error
             'submission_gates' => $gates,
             'warning'  => $gates === []
                 ? ''
-                : __('This form now restricts when or how often it can be submitted. Confirm that is intended.', domain: 'nibwp'),
+                : __('This form now restricts when or how often it can be submitted. Confirm that is intended.', 'nibwp'),
         ];
     });
 }
@@ -725,8 +725,8 @@ function nibwp_jfb_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-records', [
-    'label'       => __('JetFormBuilder — Records', domain: 'nibwp'),
-    'description' => __('Read stored form submissions, when the form has a save-record action keeping them (read-only).', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Records', 'nibwp'),
+    'description' => 'Read stored form submissions, when the form has a save-record action keeping them (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -791,8 +791,8 @@ function nibwp_jfb_records(array $input): array|WP_Error
                 'count'   => 0,
                 'storage_available' => false,
                 'note' => $has_save_action
-                    ? __('The form has a save-record action but the records table does not exist yet — it is created on the first stored submission.', domain: 'nibwp')
-                    : __('No records table on this site. JetFormBuilder only stores submissions for forms with a save-record action.', domain: 'nibwp'),
+                    ? __('The form has a save-record action but the records table does not exist yet — it is created on the first stored submission.', 'nibwp')
+                    : __('No records table on this site. JetFormBuilder only stores submissions for forms with a save-record action.', 'nibwp'),
             ];
         }
 
@@ -824,8 +824,8 @@ function nibwp_jfb_records(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-gateways', [
-    'label'       => __('JetFormBuilder — Payment gateways', domain: 'nibwp'),
-    'description' => __('Read a form\'s payment gateway configuration (read-only).', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Payment gateways', 'nibwp'),
+    'description' => 'Read a form\'s payment gateway configuration (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -878,8 +878,8 @@ function nibwp_jfb_gateways(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-audit', [
-    'label'       => __('JetFormBuilder — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the faults that lose submissions: no actions at all, fields with no name, and restrictions that have quietly closed a form (read-only).', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Audit', 'nibwp'),
+    'description' => 'Check every form for the faults that lose submissions: no actions at all, fields with no name, and restrictions that have quietly closed a form (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -931,8 +931,8 @@ function nibwp_jfb_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'blocker',
                     'code'     => 'no_actions',
-                    'message'  => __('No post-submit actions. This form accepts a submission, shows a success message and discards the data.', domain: 'nibwp'),
-                    'fix'      => __('Add one with nibwp/jetformbuilder-actions — send_email at minimum, or save_record to keep a copy.', domain: 'nibwp'),
+                    'message'  => __('No post-submit actions. This form accepts a submission, shows a success message and discards the data.', 'nibwp'),
+                    'fix'      => __('Add one with nibwp/jetformbuilder-actions — send_email at minimum, or save_record to keep a copy.', 'nibwp'),
                 ];
             }
 
@@ -945,8 +945,8 @@ function nibwp_jfb_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_fields',
-                    'message'  => __('No fields found in the block markup, so there is nothing to submit.', domain: 'nibwp'),
-                    'fix'      => __('Add fields in the JetFormBuilder editor.', domain: 'nibwp'),
+                    'message'  => __('No fields found in the block markup, so there is nothing to submit.', 'nibwp'),
+                    'fix'      => __('Add fields in the JetFormBuilder editor.', 'nibwp'),
                 ];
             } elseif ($unusable !== []) {
                 $findings[] = [
@@ -956,10 +956,10 @@ function nibwp_jfb_audit(array $input): array|WP_Error
                     'code'     => 'unnamed_fields',
                     'message'  => sprintf(
                         /* translators: %d: number of fields with no name */
-                        __('%d field(s) have no name attribute, so no action can read their values.', domain: 'nibwp'),
+                        __('%d field(s) have no name attribute, so no action can read their values.', 'nibwp'),
                         count($unusable)
                     ),
-                    'fix'      => __('Give each field a name in the editor.', domain: 'nibwp'),
+                    'fix'      => __('Give each field a name in the editor.', 'nibwp'),
                 ];
             }
 
@@ -973,10 +973,10 @@ function nibwp_jfb_audit(array $input): array|WP_Error
                         'code'     => 'restriction_' . ltrim($key, '_'),
                         'message'  => sprintf(
                             /* translators: %s: the restriction name */
-                            __('A %s is active on this form, which limits when or how often it accepts submissions.', domain: 'nibwp'),
+                            __('A %s is active on this form, which limits when or how often it accepts submissions.', 'nibwp'),
                             $label
                         ),
-                        'fix'      => __('Intentional on a campaign form; a leftover on a contact form.', domain: 'nibwp'),
+                        'fix'      => __('Intentional on a campaign form; a leftover on a contact form.', 'nibwp'),
                     ];
                 }
             }
@@ -999,8 +999,8 @@ function nibwp_jfb_audit(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/jetformbuilder-delete', [
-    'label'       => __('JetFormBuilder — Delete', domain: 'nibwp'),
-    'description' => __('Trash or permanently delete a JetFormBuilder form.', domain: 'nibwp'),
+    'label'       => __('JetFormBuilder — Delete', 'nibwp'),
+    'description' => 'Trash or permanently delete a JetFormBuilder form.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1044,7 +1044,7 @@ function nibwp_jfb_delete(array $input): array|WP_Error
     if ($action === 'delete' && !(bool) ($input['confirm'] ?? false)) {
         return nibwp_jfb_err(
             'nibwp_jfb_unconfirmed',
-            __('This permanently destroys the form along with its actions and settings. Trashing is reversible; re-issue with confirm true if deletion is intended.', domain: 'nibwp')
+            __('This permanently destroys the form along with its actions and settings. Trashing is reversible; re-issue with confirm true if deletion is intended.', 'nibwp')
         );
     }
 

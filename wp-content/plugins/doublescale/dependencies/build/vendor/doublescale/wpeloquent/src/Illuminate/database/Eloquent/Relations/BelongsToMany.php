@@ -1,16 +1,16 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-class BelongsToMany extends \Illuminate\Database\Eloquent\Relations\Relation
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\ModelNotFoundException;
+class BelongsToMany extends Relation
 {
-    use \Illuminate\Database\Eloquent\Relations\Concerns\InteractsWithPivotTable;
+    use Concerns\InteractsWithPivotTable;
     /**
      * The intermediate table for the relation.
      *
@@ -145,7 +145,7 @@ class BelongsToMany extends \Illuminate\Database\Eloquent\Relations\Relation
         if (!$model instanceof Model) {
             return $table;
         }
-        if ($model instanceof \Illuminate\Database\Eloquent\Relations\Pivot) {
+        if ($model instanceof Pivot) {
             $this->using($table);
         }
         return $model->getTable();
@@ -259,7 +259,7 @@ class BelongsToMany extends \Illuminate\Database\Eloquent\Relations\Relation
      */
     public function getPivotClass()
     {
-        return $this->using ?? \Illuminate\Database\Eloquent\Relations\Pivot::class;
+        return $this->using ?? Pivot::class;
     }
     /**
      * Specify the custom pivot model to use for the relationship.

@@ -78,7 +78,14 @@ final class Module extends AbstractSalesChildModule {
 	protected function boot_child( Container $container ): void {
 		unset( $container );
 
-		Migrations\SalesContractTableCurrencyNullable::ensure();
+		$checks = static function () {
+			Migrations\SalesContractTableCurrencyNullable::ensure();
+		};
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_contracts', DOUBLESCALE_PRO_VERSION, $checks );
+		} else {
+			$checks();
+		}
 
 		$this->loadModuleMergeTagFiles();
 

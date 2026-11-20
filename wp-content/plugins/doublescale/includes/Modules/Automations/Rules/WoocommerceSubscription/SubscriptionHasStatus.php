@@ -131,7 +131,7 @@ class SubscriptionHasStatus extends Rule {
 			return '';
 		}
 
-		$subscription_status = $subscription instanceof WC_Subscription ? 'wc-' . $subscription->get_status() : '';
+		$subscription_status = $subscription instanceof \WC_Subscription ? 'wc-' . $subscription->get_status() : '';
 
 		return $subscription_status ? $subscription_status : '';
 	}

@@ -9,7 +9,7 @@ declare (strict_types=1);
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\PHPStan;
+namespace DoubleScale\Vendor\Carbon\PHPStan;
 
 use Closure;
 use InvalidArgumentException;

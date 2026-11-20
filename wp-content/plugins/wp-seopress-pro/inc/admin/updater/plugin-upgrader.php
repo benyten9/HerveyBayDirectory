@@ -126,4 +126,38 @@ add_action( 'seopress_pro_upgrade', 'seopress_pro_new_upgrade', 10, 2 );
  * @param (string) $actual_version   The previous version.
  */
 function seopress_pro_new_upgrade( $seopress_version, $actual_version ) {
+	seopress_pro_migrate_video_schema_youtube_toggle();
+}
+
+/**
+ * Move the "Auto-fill Video schema from first YouTube video" toggle to the PRO option.
+ *
+ * 9.9 saved it from the XML sitemap screen, in `seopress_xml_sitemap_option_name`.
+ * 10.0 moved the field to the Structured Data Types tab, which saves
+ * `seopress_pro_option_name`, but the value was still read from the sitemap
+ * option: the toggle did nothing, and a site that had it on in 9.9 saw it off.
+ * A value already saved from the new screen wins.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_pro_migrate_video_schema_youtube_toggle() {
+	$key             = 'seopress_xml_sitemap_video_schema_youtube_enable';
+	$sitemap_options = get_option( 'seopress_xml_sitemap_option_name' );
+
+	if ( ! is_array( $sitemap_options ) || ! array_key_exists( $key, $sitemap_options ) ) {
+		return;
+	}
+
+	$pro_options = get_option( 'seopress_pro_option_name' );
+	$pro_options = is_array( $pro_options ) ? $pro_options : array();
+
+	if ( ! array_key_exists( $key, $pro_options ) ) {
+		$pro_options[ $key ] = $sitemap_options[ $key ];
+		update_option( 'seopress_pro_option_name', $pro_options );
+	}
+
+	unset( $sitemap_options[ $key ] );
+	update_option( 'seopress_xml_sitemap_option_name', $sitemap_options );
 }

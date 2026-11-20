@@ -102,7 +102,7 @@ class SubscriptionTotal extends Rule {
 			return '';
 		}
 
-		$price = $subscription instanceof WC_Subscription ? (float) $subscription->get_total() : 0;
+		$price = $subscription instanceof \WC_Subscription ? (float) $subscription->get_total() : 0;
 
 		return $price;
 	}

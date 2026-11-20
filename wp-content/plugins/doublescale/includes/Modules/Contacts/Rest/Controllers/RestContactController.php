@@ -27,7 +27,9 @@ use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\Constants\TrackingStatus;
 use DoubleScale\Core\Constants\MessageDirection;
 use DoubleScale\Core\Models\AttachmentModel;
+use DoubleScale\Modules\Portal\Services\PortalFileService;
 use DoubleScale\Core\Services\AttachmentService;
+use DoubleScale\Core\Services\FluentCartOrders;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Contacts\Models\ListModel;
 use DoubleScale\Core\Logger\Models\LogModel;
@@ -36,7 +38,10 @@ use DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 use DoubleScale\Modules\Contacts\Filters\Process as Contact_Filters_Process;
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Modules\Contacts\Services\ContactQueryBuilder;
+use DoubleScale\Modules\Contacts\Services\ContactCollaboratorService;
+use DoubleScale\Modules\Contacts\Services\ContactOwnershipGuard;
 use DoubleScale\Modules\Contacts\Services\ContactUpdateNotifier;
 use DoubleScale\Modules\Contacts\Services\ContactMergeService;
 use DoubleScale\Modules\Contacts\Services\EmailAttachmentService;
@@ -86,9 +91,11 @@ class RestContactController extends RestController {
 	private const CONTACT_ATTACHMENT_MAX_BYTES = 10485760;
 
 	/**
-	 * Maximum active attachments per contact.
+	 * Maximum active attachments per contact: high, a guard against a runaway
+	 * script rather than a quota (only the team uploads here; client uploads
+	 * have their own limits). Filter: `doublescale_attachment_max_count`.
 	 */
-	private const CONTACT_ATTACHMENT_MAX_COUNT = 20;
+	private const CONTACT_ATTACHMENT_MAX_COUNT = 500;
 
 	/**
 	 * Register the routes for the controller.
@@ -186,6 +193,106 @@ class RestContactController extends RestController {
 							'type'        => 'integer',
 							'required'    => true,
 						),
+						'identifiers' => array(
+							'description' => __( 'Email, phone or WhatsApp number the primary record is being saved with.', 'doublescale' ),
+							'type'        => 'object',
+							'required'    => false,
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/owner',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'set_owner' ),
+					'permission_callback' => array( $this, 'owner_permissions_check' ),
+					'args'                => array(
+						// Not `required`: WordPress counts a JSON null as missing, and
+						// null is how "Unassigned" is sent. The handler checks presence.
+						'owner_id' => array(
+							'description' => __( 'New owner user ID, or null for the unassigned pool.', 'doublescale' ),
+							'type'        => array( 'integer', 'null' ),
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/claim',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'claim_contact' ),
+					'permission_callback' => array( $this, 'claim_permissions_check' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/reassign-owner',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'reassign_owner' ),
+					'permission_callback' => array( $this, 'owner_permissions_check' ),
+					'args'                => array(
+						// Not `required`: WordPress counts a JSON null as missing, and
+						// null is how "Unassigned" is sent. The handler checks presence.
+						'owner_id' => array(
+							'description' => __( 'New owner user ID, or null for the unassigned pool.', 'doublescale' ),
+							'type'        => array( 'integer', 'null' ),
+						),
+						'ids'      => array(
+							'description' => __( 'Contact IDs to reassign.', 'doublescale' ),
+							'type'        => 'array',
+							'items'       => array( 'type' => 'integer' ),
+						),
+						'target'   => array(
+							'description' => __( 'Filter criteria (as the contacts list) selecting the contacts to reassign.', 'doublescale' ),
+							'type'        => 'object',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>[\d]+)/collaborators',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_collaborators' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'add_collaborator' ),
+					'permission_callback' => array( $this, 'collaborators_permissions_check' ),
+					'args'                => array(
+						'user_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'remove_collaborator' ),
+					'permission_callback' => array( $this, 'collaborators_permissions_check' ),
+					'args'                => array(
+						'user_id' => array(
+							'type'     => 'integer',
+							'required' => true,
+						),
 					),
 				),
 			)
@@ -262,7 +369,7 @@ class RestContactController extends RestController {
 				array(
 					'methods'             => WP_REST_Server::EDITABLE,
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'permission_callback' => array( $this, 'edit_item_permissions_check' ),
 					'args'                => $this->get_endpoint_args_for_item_schema( false ),
 				),
 				array(
@@ -300,6 +407,25 @@ class RestContactController extends RestController {
 						),
 						'page'     => array(
 							'description' => __( 'Page number.', 'doublescale' ),
+							'type'        => 'integer',
+						),
+					),
+				),
+			)
+		);
+
+		// Header figures of the contact profile.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/summary',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_summary' ),
+					'permission_callback' => array( $this, 'get_item_permissions_check' ),
+					'args'                => array(
+						'id' => array(
+							'description' => __( 'Contact ID.', 'doublescale' ),
 							'type'        => 'integer',
 						),
 					),
@@ -605,6 +731,16 @@ class RestContactController extends RestController {
 							'type'        => 'integer',
 							'default'     => 10,
 						),
+						'fluentcart_page'     => array(
+							'description' => __( 'FluentCart page number.', 'doublescale' ),
+							'type'        => 'integer',
+							'default'     => 1,
+						),
+						'fluentcart_per_page' => array(
+							'description' => __( 'FluentCart items per page.', 'doublescale' ),
+							'type'        => 'integer',
+							'default'     => 10,
+						),
 					),
 				),
 			)
@@ -680,6 +816,18 @@ class RestContactController extends RestController {
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_attachment' ),
 					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+				),
+				// Show or hide a team file in the contact's client portal.
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( $this, 'update_attachment_visibility' ),
+					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'args'                => array(
+						'client_visible' => array(
+							'type'     => 'boolean',
+							'required' => true,
+						),
+					),
 				),
 			)
 		);
@@ -900,12 +1048,15 @@ class RestContactController extends RestController {
 	public function get_lms_courses( $request ) {
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
+			}
 
-			$is_learndash_active  = doublescale_is_plugin_active( 'sfwd-lms/sfwd_lms.php' );
-			$is_tutor_active      = doublescale_is_plugin_active( 'tutor/tutor.php' );
-			$is_lifterlms_active  = doublescale_is_plugin_active( 'lifterlms/lifterlms.php' );
-			$is_learnpress_active = doublescale_is_plugin_active( 'learnpress/learnpress.php' );
+			$is_learndash_active  = doublescale_is_plugin_active( 'learndash' );
+			$is_tutor_active      = doublescale_is_plugin_active( 'tutor' );
+			$is_lifterlms_active  = doublescale_is_plugin_active( 'lifterlms' );
+			$is_learnpress_active = doublescale_is_plugin_active( 'learnpress' );
 
 			if ( ! $is_learndash_active && ! $is_tutor_active && ! $is_lifterlms_active && ! $is_learnpress_active ) {
 				return new WP_Error( 'error', 'No LMS plugin is active', array( 'status' => 400 ) );
@@ -1245,16 +1396,16 @@ class RestContactController extends RestController {
 		if ( ! class_exists( LeadScoringManager::class, true ) ) {
 			return new WP_Error( 'not_available', __( 'Lead scoring is not available', 'doublescale' ), array( 'status' => 404 ) );
 		}
-		if ( ! function_exists( 'doublescale_is_module_active' ) || ! doublescale_is_module_active( 'leadscoring' ) ) {
+		if ( ! doublescale_module_data_ready( 'leadscoring' ) ) {
 			return new WP_Error( 'not_available', __( 'Lead scoring is not available', 'doublescale' ), array( 'status' => 404 ) );
 		}
 
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
 			}
 
 			// Get the lead score data
@@ -1299,16 +1450,17 @@ class RestContactController extends RestController {
 	public function get_purchase_history( $request ) {
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
 			}
 
 			$results = array(
 				'edd'      => $this->get_edd_purchase_history( $contact, $request ),
 				'wc'       => $this->get_wc_purchase_history( $contact, $request ),
-				'surecart' => $this->get_surecart_purchase_history( $contact, $request ),
+				'surecart'   => $this->get_surecart_purchase_history( $contact, $request ),
+				'fluentcart' => $this->get_fluentcart_purchase_history( $contact, $request ),
 			);
 
 			return new WP_REST_Response( $results, 200 );
@@ -1324,12 +1476,12 @@ class RestContactController extends RestController {
 	 * wc_get_orders with a customer email), sorts newest-first, and sets revenue
 	 * from completed and processing orders only.
 	 *
-	 * @param \Illuminate\Contracts\Pagination\LengthAwarePaginator $contacts Paginated contacts.
+	 * @param \DoubleScale\Vendor\Illuminate\Contracts\Pagination\LengthAwarePaginator $contacts Paginated contacts.
 	 * @return void
 	 */
 	private function attach_wc_orders_to_contacts( $contacts ) {
 		if (
-			! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' )
+			! doublescale_is_plugin_active( 'woocommerce' )
 			|| ! class_exists( '\DoubleScale\Modules\Campaigns\Models\WcOrderModel' )
 			|| ! class_exists( 'Automattic\Woocommerce\Utilities\OrderUtil' )
 			|| ! \Automattic\Woocommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()
@@ -1351,7 +1503,7 @@ class RestContactController extends RestController {
 				continue;
 			}
 			$emails[] = $contact->email;
-			$user     = get_user_by( 'email', $contact->email );
+			$user     = ContactModel::wp_user_for_email( $contact->email );
 			if ( $user ) {
 				$customer_ids[]                         = (int) $user->ID;
 				$email_by_customer_id[ (int) $user->ID ] = $contact->email;
@@ -1686,7 +1838,7 @@ class RestContactController extends RestController {
 	private function get_wc_purchase_history( $contact, $request ) {
 		$result = $this->get_default_purchase_history();
 
-		if ( ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+		if ( ! doublescale_is_plugin_active( 'woocommerce' ) ) {
 			return $result;
 		}
 
@@ -1853,6 +2005,53 @@ class RestContactController extends RestController {
 	}
 
 	/**
+	 * Get FluentCart purchase history for a contact.
+	 *
+	 * Matches the FluentCart customer by email. Paid and partly refunded
+	 * orders are listed and counted; revenue is what was paid less refunds,
+	 * grouped by order currency (never summed across currencies).
+	 *
+	 * @param ContactModel    $contact
+	 * @param WP_REST_Request $request
+	 * @return array
+	 */
+	private function get_fluentcart_purchase_history( $contact, $request ) {
+		$result = $this->get_default_purchase_history();
+
+		if ( ! FluentCartOrders::is_active() ) {
+			return $result;
+		}
+
+		$result['currency'] = FluentCartOrders::store_currency();
+
+		$email   = (string) $contact->email;
+		$summary = FluentCartOrders::sale_summary_for_email( $email );
+
+		if ( 0 === $summary['count'] ) {
+			return $result;
+		}
+
+		$page     = max( 1, (int) $request->get_param( 'fluentcart_page' ) );
+		$per_page = max( 1, (int) $request->get_param( 'fluentcart_per_page' ) );
+
+		// The headline currency is the one with the most orders.
+		$counts = $summary['count_by_currency'];
+		arsort( $counts );
+		$currency = (string) array_key_first( $counts );
+		$revenue  = (float) ( $summary['revenue_by_currency'][ $currency ] ?? 0 );
+
+		$result['orders']              = FluentCartOrders::sale_orders_for_email( $email, $per_page, ( $page - 1 ) * $per_page );
+		$result['total']               = $summary['count'];
+		$result['currency']            = $currency;
+		$result['revenue']             = $revenue;
+		$result['average']             = $counts[ $currency ] > 0 ? round( $revenue / $counts[ $currency ], 2 ) : 0;
+		$result['revenue_by_currency'] = $summary['revenue_by_currency'];
+		$result['last_order']          = $summary['last_order'];
+
+		return $result;
+	}
+
+	/**
 	 * Unified endpoint to get ALL messages (campaigns + individual) for contact by channel
 	 *
 	 * @since 1.0.0
@@ -1868,8 +2067,9 @@ class RestContactController extends RestController {
 			$per_page   = $request->get_param( 'per_page' ) ?: 25;
 			$page       = $request->get_param( 'page' ) ?: 1;
 
-			// Validate contact exists (using helper)
-			$contact = $this->validate_contact_exists( $contact_id );
+			// The contact must be one this user can see (404 otherwise, as for
+			// the contact itself).
+			$contact = $this->resolve_visible_contact( $contact_id );
 			if ( is_wp_error( $contact ) ) {
 				return $contact;
 			}
@@ -1890,8 +2090,7 @@ class RestContactController extends RestController {
 					->where( 'source_id', $activity_id );
 			}
 
-			$messages_query->with(
-					array(
+			$relations = array(
 						'campaign'                    => function ( $query ) {
 							$query->select( 'id', 'name', 'type' );
 						},
@@ -1904,9 +2103,12 @@ class RestContactController extends RestController {
 						'communication_tracking_meta' => function ( $query ) {
 							$query->select( 'id', 'communication_tracking_id', 'meta_key', 'meta_value' );
 						}, // Include merge tag values for historical rendering
-					)
-				)
-				->orderBy( 'created_at', 'desc' );
+					);
+			// The campaign's name is the Campaigns module's data.
+			if ( ! doublescale_module_data_ready( 'campaigns' ) ) {
+				unset( $relations['campaign'] );
+			}
+			$messages_query->with( $relations )->orderBy( 'created_at', 'desc' );
 
 			// Execute paginated query
 			$messages = $messages_query->paginate( $per_page, array( '*' ), 'page', $page );
@@ -2108,13 +2310,201 @@ class RestContactController extends RestController {
 	 * @return ContactModel|WP_Error Contact model or WP_Error.
 	 */
 	private function validate_contact_exists( $contact_id ) {
-		$contact = ContactModel::find( $contact_id );
+		return $this->resolve_visible_contact( $contact_id, 'contact_not_found' );
+	}
+
+	/**
+	 * Load a contact the current user may SEE (owner, collaborator, or a role
+	 * that sees every contact). Every single-record route goes through here.
+	 *
+	 * A contact outside the caller's scope answers exactly like a contact
+	 * that does not exist: the same code, message and 404. Confirming "it
+	 * exists but it's not yours" would already tell an agent that a colleague
+	 * holds that email.
+	 *
+	 * @param int|string $contact_id Contact id.
+	 * @param string     $code       Error code for the 404.
+	 *
+	 * @return ContactModel|WP_Error
+	 */
+	private function resolve_visible_contact( $contact_id, $code = 'not_found' ) {
+		$contact = ContactModel::find( (int) $contact_id );
+
+		if ( $contact && ! OwnerScope::current()->can_view_contact( $contact ) ) {
+			$contact = null;
+		}
 
 		if ( ! $contact ) {
+			return new WP_Error( $code, __( 'Contact not found', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		return $contact;
+	}
+
+	/**
+	 * Load a contact the current user OWNS (or sees all). Reassignment,
+	 * deletion and merge need ownership; collaborating is not enough.
+	 *
+	 * @param int|string $contact_id Contact id.
+	 *
+	 * @return ContactModel|WP_Error
+	 */
+	/**
+	 * Honour an `owner_id` in a create/update request.
+	 *
+	 * Managers may set it (to a valid owner, or null for the unassigned pool);
+	 * a scoped agent may not pass anyone but themselves. On a change the
+	 * previous owner is remembered so `doublescale_contact_owner_changed`
+	 * can fire after the save.
+	 *
+	 * @param WP_REST_Request   $request      Request.
+	 * @param array             $contact_data Contact data being saved (by reference).
+	 * @param ContactModel|null $contact      Existing contact on update.
+	 *
+	 * @return WP_Error|null
+	 */
+	private function apply_requested_owner( $request, array &$contact_data, $contact = null ) {
+		if ( ! $request->has_param( 'owner_id' ) ) {
+			return null;
+		}
+
+		$requested = $request->get_param( 'owner_id' );
+		$requested = ( null === $requested || '' === $requested ) ? null : (int) $requested;
+		$current   = (int) get_current_user_id();
+
+		if ( ! Permissions::can_assign_contact_owner() ) {
+			// An agent naming themselves is a no-op; naming anyone else is refused.
+			if ( null !== $requested && $requested !== $current ) {
+				return new WP_Error(
+					'doublescale_cannot_assign_owner',
+					__( 'You cannot assign contacts to other team members.', 'doublescale' ),
+					array( 'status' => 403 )
+				);
+			}
+			return null;
+		}
+
+		if ( null !== $requested && ! \DoubleScale\Modules\Contacts\Services\LeadRouter::is_valid_owner( $requested ) ) {
 			return new WP_Error(
-				'contact_not_found',
-				__( 'Contact not found', 'doublescale' ),
-				array( 'status' => 404 )
+				'doublescale_invalid_owner',
+				__( 'That user cannot own contacts.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$contact_data['owner_id'] = $requested;
+
+		if ( $contact && (int) $contact->owner_id !== (int) $requested ) {
+			$this->pending_owner_change = array( (int) $contact->id, (int) $contact->owner_id, (int) $requested );
+		}
+
+		return null;
+	}
+
+	/**
+	 * The owner routes take an owner, or null for the unassigned pool.
+	 *
+	 * @return WP_Error
+	 */
+	private function missing_owner_error() {
+		return new WP_Error(
+			'rest_missing_callback_param',
+			/* translators: %s: parameter name */
+			sprintf( __( 'Missing parameter(s): %s', 'doublescale' ), 'owner_id' ),
+			array(
+				'status' => 400,
+				'params' => array( 'owner_id' ),
+			)
+		);
+	}
+
+	/**
+	 * (contact_id, old_owner, new_owner) recorded by apply_requested_owner()
+	 * and fired once the update has been saved.
+	 *
+	 * @var array{0:int,1:int,2:int}|null
+	 */
+	private $pending_owner_change = null;
+
+	/**
+	 * Fire `doublescale_contact_owner_changed` for a change recorded earlier.
+	 *
+	 * @return void
+	 */
+	private function flush_owner_change() {
+		if ( ! $this->pending_owner_change ) {
+			return;
+		}
+		list( $contact_id, $old, $new ) = $this->pending_owner_change;
+		$this->pending_owner_change     = null;
+
+		/**
+		 * Fires when a contact's owner changes.
+		 *
+		 * @param int $contact_id Contact id.
+		 * @param int $old_owner  Previous owner (0 = unassigned).
+		 * @param int $new_owner  New owner (0 = unassigned).
+		 */
+		do_action( 'doublescale_contact_owner_changed', $contact_id, $old, $new );
+	}
+
+	/**
+	 * Add `owner` ({id, name} or null) to each row, and `shared_with_me` for
+	 * rows a scoped agent sees only as a collaborator. One user query per page.
+	 *
+	 * @param array<int, array<string, mixed>> $rows Contact rows.
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function decorate_owners( array $rows ): array {
+		$owner_ids = array_values( array_unique( array_filter( array_map( 'intval', array_column( $rows, 'owner_id' ) ) ) ) );
+		$names     = array();
+
+		if ( ! empty( $owner_ids ) ) {
+			foreach ( get_users( array( 'include' => $owner_ids, 'fields' => array( 'ID', 'display_name' ) ) ) as $user ) {
+				$names[ (int) $user->ID ] = (string) $user->display_name;
+			}
+		}
+
+		$scope      = OwnerScope::current();
+		$scoped     = ! $scope->sees_all( 'contacts' );
+		$user_id    = (int) get_current_user_id();
+		$edit_any   = Permissions::can_edit_any_contact( $user_id );
+		$may_delete = Permissions::can_delete_contacts( $user_id );
+
+		foreach ( $rows as &$row ) {
+			$owner_id     = (int) ( $row['owner_id'] ?? 0 );
+			$row['owner'] = $owner_id > 0
+				? array(
+					'id'   => $owner_id,
+					'name' => $names[ $owner_id ] ?? '',
+				)
+				: null;
+			// Someone else's contact this agent works as a collaborator.
+			// (Unassigned rows show as "Unassigned", not as shared.)
+			$row['shared_with_me'] = $scoped && $owner_id > 0 && $owner_id !== $user_id;
+			// What this user may change (OwnerScope::can_edit_contact()):
+			// administrators and CRM Managers any contact, everyone else their own.
+			$row['can_edit']   = $edit_any || ( $owner_id > 0 && $owner_id === $user_id );
+			$row['can_delete'] = $may_delete && $row['can_edit'];
+		}
+		unset( $row );
+
+		return $rows;
+	}
+
+	private function resolve_owned_contact( $contact_id ) {
+		$contact = $this->resolve_visible_contact( $contact_id );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		// The edit rule: its owner, a CRM Manager or an administrator. Seeing
+		// every contact (a module manager) is not enough.
+		if ( ! OwnerScope::current()->can_edit_contact( $contact ) ) {
+			return new WP_Error(
+				'doublescale_contact_not_owned',
+				__( 'Only the owner of this contact can do that.', 'doublescale' ),
+				array( 'status' => 403 )
 			);
 		}
 
@@ -2160,12 +2550,14 @@ class RestContactController extends RestController {
 	 * @param array{field: string, contact: ContactModel}|null $conflict   Identifier conflict.
 	 * @return WP_Error|null
 	 */
-	private function merge_required_error( $primary_id, $conflict ) {
+	private function merge_required_error( $primary_id, $conflict, array $submitted = array() ) {
 		if ( ! $conflict || empty( $conflict['contact'] ) ) {
 			return null;
 		}
 
-		$preview = ( new ContactMergeService() )->preview( $primary_id, (int) $conflict['contact']->id );
+		// Judge the merge with the identifiers being saved: changing a contact's email to
+		// a duplicate's address is exactly the case a merge is for.
+		$preview = ( new ContactMergeService() )->preview( $primary_id, (int) $conflict['contact']->id, $submitted );
 		if ( is_wp_error( $preview ) || ! empty( $preview['blocking'] ) ) {
 			return null;
 		}
@@ -2285,6 +2677,12 @@ class RestContactController extends RestController {
 		// submitted; updating would then trade one duplicate for another.
 		$other = ContactModel::find_identifier_conflict( $contact_data, (int) $existing->id );
 		if ( $other ) {
+			// Never describe a colleague's contact to an agent.
+			$claim = ContactOwnershipGuard::assert_can_claim( $other['contact'] ?? null );
+			if ( is_wp_error( $claim ) ) {
+				return $claim;
+			}
+
 			$merge_error = $this->merge_required_error( (int) $existing->id, $other );
 			if ( $merge_error ) {
 				return $merge_error;
@@ -2292,8 +2690,18 @@ class RestContactController extends RestController {
 			return $this->identifier_conflict_error( $other );
 		}
 
+		// An agent updating an unassigned contact claims it.
+		$claimed = ContactOwnershipGuard::claims( $existing );
+		if ( $claimed ) {
+			$contact_data['owner_id'] = (int) get_current_user_id();
+		}
+
 		$changes = ContactUpdateNotifier::collect_field_changes( $existing, $contact_data );
 		$existing->update( $contact_data );
+
+		if ( $claimed ) {
+			do_action( 'doublescale_contact_owner_changed', (int) $existing->id, 0, (int) get_current_user_id() );
+		}
 
 		$sync_lists = $this->sync_lists( $request, $existing );
 		if ( is_wp_error( $sync_lists ) ) {
@@ -2326,9 +2734,11 @@ class RestContactController extends RestController {
 	 */
 	public function merge_item( $request ) {
 		$service = new ContactMergeService();
-		$result  = $service->merge(
+		$overrides = $request->get_param( 'identifiers' );
+		$result    = $service->merge(
 			(int) $request->get_param( 'primary_id' ),
-			(int) $request->get_param( 'source_id' )
+			(int) $request->get_param( 'source_id' ),
+			is_array( $overrides ) ? array_map( 'sanitize_text_field', $overrides ) : array()
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -2349,6 +2759,210 @@ class RestContactController extends RestController {
 	}
 
 	/**
+	 * Change one contact's owner.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function set_owner( $request ) {
+		if ( ! $request->has_param( 'owner_id' ) ) {
+			return $this->missing_owner_error();
+		}
+
+		$contact = $this->resolve_visible_contact( $request->get_param( 'id' ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		$data  = array();
+		$error = $this->apply_requested_owner( $request, $data, $contact );
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+
+		if ( array_key_exists( 'owner_id', $data ) ) {
+			$contact->owner_id = $data['owner_id'];
+			$contact->save();
+			$this->flush_owner_change();
+		}
+
+		$contact->load( array( 'lists', 'tags' ) );
+
+		return new WP_REST_Response( $contact, 200 );
+	}
+
+	/**
+	 * An agent takes an unassigned contact as their own.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function claim_contact( $request ) {
+		$contact = $this->resolve_visible_contact( $request->get_param( 'id' ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		if ( (int) $contact->owner_id > 0 ) {
+			return new WP_Error(
+				'doublescale_contact_already_owned',
+				__( 'This contact already has an owner.', 'doublescale' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		$user_id           = (int) get_current_user_id();
+		$contact->owner_id = $user_id;
+		$contact->save();
+
+		do_action( 'doublescale_contact_owner_changed', (int) $contact->id, 0, $user_id );
+
+		$contact->load( array( 'lists', 'tags' ) );
+
+		return new WP_REST_Response( $contact, 200 );
+	}
+
+	/**
+	 * Any agent-level team member who reads contacts may claim an unassigned
+	 * one. A role that never opens contacts (a Team Member working only on
+	 * custom records) must not become a contact's owner: ownership opens the
+	 * contact and everything that belongs to it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public function claim_permissions_check( $request ) {
+		return Permissions::is_agent_tier() && Permissions::can_read_contacts();
+	}
+
+	/**
+	 * Reassign many contacts to a new owner — explicit ids, or every contact
+	 * matching a list filter (the same `target` shape the bulk list/tag
+	 * actions take). Managers only.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function reassign_owner( $request ) {
+		if ( ! $request->has_param( 'owner_id' ) ) {
+			return $this->missing_owner_error();
+		}
+
+		$data  = array();
+		$error = $this->apply_requested_owner( $request, $data );
+		if ( is_wp_error( $error ) ) {
+			return $error;
+		}
+		$new_owner = $data['owner_id'] ?? null;
+
+		$ids    = $request->get_param( 'ids' );
+		$target = $request->get_param( 'target' );
+
+		if ( is_array( $ids ) && ! empty( $ids ) ) {
+			$query = ContactModel::whereIn( 'id', array_map( 'intval', $ids ) );
+		} elseif ( is_array( $target ) ) {
+			$criteria = array(
+				'keywords'           => $target['keywords'] ?? '',
+				'filters'            => ContactQueryBuilder::normalize_filters( $target['filters'] ?? null ),
+				'subscribed'         => $target['subscribed'] ?? false,
+				'campaign_type'      => $target['campaign_type'] ?? null,
+				'has_whatsapp_phone' => $target['has_whatsapp_phone'] ?? null,
+				'from'               => $target['from'] ?? null,
+				'to'                 => $target['to'] ?? null,
+			);
+			if ( ContactQueryBuilder::is_empty_criteria( $criteria ) && empty( $target['confirm_all'] ) ) {
+				return new WP_Error(
+					'doublescale_bulk_empty_target',
+					__( 'Reassigning every contact requires an explicit confirmation when no filter is applied.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+			$query = ContactQueryBuilder::from_criteria( $criteria );
+		} else {
+			return new WP_Error( 'doublescale_bulk_no_target', __( 'Pass contact ids or a filter target.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		$contact_ids = $query->pluck( 'id' )->map( 'intval' )->all();
+		if ( empty( $contact_ids ) ) {
+			return new WP_REST_Response( array( 'updated' => 0 ), 200 );
+		}
+
+		$previous = ContactModel::whereIn( 'id', $contact_ids )->pluck( 'owner_id', 'id' )->all();
+
+		$updated = ContactModel::whereIn( 'id', $contact_ids )->update( array( 'owner_id' => $new_owner ) );
+
+		foreach ( $previous as $contact_id => $old_owner ) {
+			if ( (int) $old_owner !== (int) $new_owner ) {
+				do_action( 'doublescale_contact_owner_changed', (int) $contact_id, (int) $old_owner, (int) $new_owner );
+			}
+		}
+
+		return new WP_REST_Response( array( 'updated' => (int) $updated ), 200 );
+	}
+
+	/**
+	 * Who collaborates on a contact.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_collaborators( $request ) {
+		$contact = $this->resolve_visible_contact( $request->get_param( 'id' ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		$rows = ContactCollaboratorService::for_contact( (int) $contact->id );
+		foreach ( $rows as &$row ) {
+			$user                 = get_userdata( $row['user_id'] );
+			$row['display_name']  = $user ? $user->display_name : '';
+			$row['email']         = $user ? $user->user_email : '';
+		}
+		unset( $row );
+
+		return new WP_REST_Response( $rows, 200 );
+	}
+
+	/**
+	 * Add a collaborator (manager, or the contact's owner).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function add_collaborator( $request ) {
+		$contact = $this->resolve_owned_contact( $request->get_param( 'id' ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		$user_id = (int) $request->get_param( 'user_id' );
+		if ( ! \DoubleScale\Modules\Contacts\Services\LeadRouter::is_valid_owner( $user_id ) ) {
+			return new WP_Error( 'doublescale_invalid_collaborator', __( 'That user cannot work contacts.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		ContactCollaboratorService::add( (int) $contact->id, $user_id, ContactCollaboratorService::REASON_MANUAL );
+
+		return $this->get_collaborators( $request );
+	}
+
+	/**
+	 * Remove a collaborator (manager, or the contact's owner).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function remove_collaborator( $request ) {
+		$contact = $this->resolve_owned_contact( $request->get_param( 'id' ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		ContactCollaboratorService::remove( (int) $contact->id, (int) $request->get_param( 'user_id' ) );
+
+		return $this->get_collaborators( $request );
+	}
+
+	/**
 	 * Permission check for unified messages endpoint
 	 *
 	 * @param WP_REST_Request $request
@@ -2356,7 +2970,9 @@ class RestContactController extends RestController {
 	 * @return bool
 	 */
 	public function get_messages_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		// The Emails, SMS and WhatsApp tabs of a contact the user can see
+		// (get_messages() checks the contact).
+		return Permissions::can_read_contacts();
 	}
 
 	/**
@@ -2387,7 +3003,8 @@ class RestContactController extends RestController {
 		try {
 			$per_page    = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
 			$page        = $request->get_param( 'page' ) ? $request->get_param( 'page' ) : 1;
-			$total_count = ContactModel::query()->count();
+			// The unfiltered total is the caller's whole world, not the site's.
+			$total_count = OwnerScope::current()->apply_contact_visibility( ContactModel::query() )->count();
 
 			// Start with base query and load relationships
 			// Load custom_fields when the CustomField model is available.
@@ -2406,12 +3023,19 @@ class RestContactController extends RestController {
 
 			$contacts = $contacts->paginate( $per_page, array( '*' ), 'page', $page );
 
+			// One query for the page's WordPress accounts (avatars, orders),
+			// instead of one per contact.
+			ContactModel::prime_wp_users( array_map( static function ( $c ) { return (string) $c->email; }, $contacts->items() ) );
+
 			$this->attach_wc_orders_to_contacts( $contacts );
 
 			$filtered_total = $contacts->total();
 
+			$payload         = $contacts->toArray();
+			$payload['data'] = $this->decorate_owners( (array) ( $payload['data'] ?? array() ) );
+
 			return new WP_REST_Response(
-				$contacts->toArray() + array(
+				$payload + array(
 					'total_count'    => $total_count,
 					'filtered_total' => $filtered_total,
 				),
@@ -2449,6 +3073,14 @@ class RestContactController extends RestController {
 
 			$existing = ContactModel::find_identifier_conflict( $contact_data );
 			if ( $existing ) {
+				// A scoped agent may not take over a contact someone else owns —
+				// and must not be shown that record. The guard answers before
+				// any of the offer/update paths below can reveal it.
+				$claim = ContactOwnershipGuard::assert_can_claim( $existing['contact'] ?? null );
+				if ( is_wp_error( $claim ) ) {
+					return $claim;
+				}
+
 				// The identifier already belongs to someone. Rather than a flat
 				// "already exists" that leaves the admin to hunt for the other
 				// record, offer it: show what would change, and update it on
@@ -2463,6 +3095,13 @@ class RestContactController extends RestController {
 				}
 
 				return $this->identifier_conflict_error( $existing );
+			}
+
+			// Owner: a manager may name one; an agent always owns what they create
+			// (LeadRouter ignores the request's pick for scoped agents).
+			$owner_error = $this->apply_requested_owner( $request, $contact_data );
+			if ( is_wp_error( $owner_error ) ) {
+				return $owner_error;
 			}
 
 			$contact = ContactModel::create( $contact_data );
@@ -2527,18 +3166,23 @@ class RestContactController extends RestController {
 				return new WP_Error( 'invalid_request', __( 'No contacts selected.', 'doublescale' ), array( 'status' => 400 ) );
 			}
 
-			$guard = $this->guard_contact_deletion( $contact_ids, $force );
+			// Only the contacts this user may delete (their own, or any for a
+			// CRM Manager) are checked and destroyed, never the rest of the
+			// requested ids.
+			$contacts = OwnerScope::current()->apply_contact_deletable( ContactModel::whereIn( 'id', $contact_ids ) )->get();
+
+			if ( ! $contacts || $contacts->isEmpty() ) {
+				return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
+			}
+
+			$deletable = array_map( 'intval', $contacts->pluck( 'id' )->all() );
+
+			$guard = $this->guard_contact_deletion( $deletable, $force );
 			if ( is_wp_error( $guard ) ) {
 				return $guard;
 			}
 
-			$contacts = ContactModel::find( $contact_ids );
-
-			if ( ! $contacts ) {
-				return new WP_Error( 'not_found', 'Contacts not found', array( 'status' => 404 ) );
-			}
-
-			ContactModel::destroy( $contact_ids );
+			ContactModel::destroy( $deletable );
 
 			return new WP_REST_Response( $contacts, 200 );
 		} catch ( Exception $e ) {
@@ -2559,10 +3203,18 @@ class RestContactController extends RestController {
 		try {
 			$contact_id = (int) $request->get_param( 'id' );
 			$force      = rest_sanitize_boolean( $request->get_param( 'force' ) );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
+			}
+
+			if ( ! OwnerScope::current()->can_delete_contact( $contact ) ) {
+				return new WP_Error(
+					'doublescale_contact_not_owned',
+					__( 'Only the contact\'s owner or a CRM Manager can delete it.', 'doublescale' ),
+					array( 'status' => 403 )
+				);
 			}
 
 			$guard = $this->guard_contact_deletion( array( $contact_id ), $force );
@@ -2590,6 +3242,13 @@ class RestContactController extends RestController {
 				array_map( 'intval', (array) $request->get_param( 'ids' ) )
 			)
 		);
+
+		// Only the contacts the caller may delete: related-record counts for
+		// anyone else's would describe a colleague's pipeline.
+		if ( ! empty( $contact_ids ) ) {
+			$contact_ids = OwnerScope::current()->apply_contact_deletable( ContactModel::whereIn( 'id', $contact_ids ) )
+				->pluck( 'id' )->map( 'intval' )->all();
+		}
 
 		if ( empty( $contact_ids ) ) {
 			return new WP_Error( 'invalid_request', __( 'No contacts selected.', 'doublescale' ), array( 'status' => 400 ) );
@@ -2949,10 +3608,10 @@ class RestContactController extends RestController {
 	public function get_item( $request ) {
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
 			}
 
 			// Load relationships — include custom_fields when the model is available.
@@ -2961,7 +3620,8 @@ class RestContactController extends RestController {
 				$contact->load( 'custom_fields' );
 			}
 
-			return new WP_REST_Response( $contact, 200 );
+			// The owner's name, as on the contacts list.
+			return new WP_REST_Response( $this->decorate_owners( array( $contact->toArray() ) )[0], 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 400 ) );
 		}
@@ -2979,17 +3639,33 @@ class RestContactController extends RestController {
 	public function update_item( $request ) {
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
+			}
+
+			// The owner, CRM Managers and administrators change a contact. A
+			// collaborator works it (activities, messages), a module manager
+			// reads it, and an unassigned contact is claimed first.
+			if ( ! OwnerScope::current()->can_edit_contact( $contact ) ) {
+				return new WP_Error(
+					'doublescale_contact_not_owned',
+					__( 'Only the contact\'s owner or a CRM Manager can edit it.', 'doublescale' ),
+					array( 'status' => 403 )
+				);
 			}
 
 			$contact_data = $this->prepare_contact( $request );
 
+			$owner_error = $this->apply_requested_owner( $request, $contact_data, $contact );
+			if ( is_wp_error( $owner_error ) ) {
+				return $owner_error;
+			}
+
 			$duplicate = ContactModel::find_identifier_conflict( $contact_data, (int) $contact_id );
 			if ( $duplicate ) {
-				$merge_error = $this->merge_required_error( (int) $contact_id, $duplicate );
+				$merge_error = $this->merge_required_error( (int) $contact_id, $duplicate, $contact_data );
 				if ( $merge_error ) {
 					return $merge_error;
 				}
@@ -2998,6 +3674,7 @@ class RestContactController extends RestController {
 
 			$changes      = ContactUpdateNotifier::collect_field_changes( $contact, $contact_data );
 			$contact->update( $contact_data );
+			$this->flush_owner_change();
 
 			$sync_lists = $this->sync_lists( $request, $contact );
 			if ( is_wp_error( $sync_lists ) ) {
@@ -3064,10 +3741,10 @@ class RestContactController extends RestController {
 	public function get_contact_notes( $request ) {
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
 			}
 
 			$per_page   = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
@@ -3105,12 +3782,18 @@ class RestContactController extends RestController {
 	 * @return WP_REST_Response $response The response data.
 	 */
 	public function get_automation_contacts( $request ) {
+		// A contact's workflow runs are the Automations module's data.
+		$disabled = $this->require_module_data( 'automations' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
 			}
 
 			$per_page = $request->get_param( 'per_page' ) ? $request->get_param( 'per_page' ) : 10;
@@ -3357,24 +4040,26 @@ class RestContactController extends RestController {
 
 			$dates              = Utils::get_dates_between_dates( $start_date, $end_date );
 			$type               = $dates['type'] ?? 'hour';
-			$total_contacts     = ContactModel::count();
-			$total_subscribed   = ContactModel::where( 'email_status', 'subscribed' )->count();
-			$total_unsubscribed = ContactModel::where( 'email_status', 'unsubscribed' )->count();
+			$scope              = OwnerScope::current();
+			$total_contacts     = $scope->apply_contact_visibility( ContactModel::query() )->count();
+			$total_subscribed   = $scope->apply_contact_visibility( ContactModel::where( 'email_status', 'subscribed' ) )->count();
+			$total_unsubscribed = $scope->apply_contact_visibility( ContactModel::where( 'email_status', 'unsubscribed' ) )->count();
 			$contacts           = array();
 
 			foreach ( $dates['dates'] as $date ) {
 				switch ( $type ) {
 					case 'hour':
-						$contacts[ $date ] = ContactModel::whereBetween( 'created_at', array( $date, gmdate( 'Y-m-d H:i:s', strtotime( $date . ' +1 hour' ) ) ) )->count();
+						$contacts[ $date ] = $scope->apply_contact_visibility( ContactModel::whereBetween( 'created_at', array( $date, gmdate( 'Y-m-d H:i:s', strtotime( $date . ' +1 hour' ) ) ) ) )->count();
 						break;
 					case 'day':
-						$contacts[ $date ] = ContactModel::whereDay( 'created_at', gmdate( 'd', strtotime( $date ) ) )->count();
+						// The whole date: whereDay() alone matches that day of every month.
+						$contacts[ $date ] = $scope->apply_contact_visibility( ContactModel::whereDate( 'created_at', gmdate( 'Y-m-d', strtotime( $date ) ) ) )->count();
 						break;
 					case 'month':
-						$contacts[ $date ] = ContactModel::whereMonth( 'created_at', gmdate( 'm', strtotime( $date ) ) )->count();
+						$contacts[ $date ] = $scope->apply_contact_visibility( ContactModel::whereYear( 'created_at', gmdate( 'Y', strtotime( $date ) ) )->whereMonth( 'created_at', gmdate( 'm', strtotime( $date ) ) ) )->count();
 						break;
 					case 'year':
-						$contacts[ $date ] = ContactModel::whereYear( 'created_at', gmdate( 'Y', strtotime( $date ) ) )->count();
+						$contacts[ $date ] = $scope->apply_contact_visibility( ContactModel::whereYear( 'created_at', gmdate( 'Y', strtotime( $date ) ) ) )->count();
 						break;
 				}
 			}
@@ -3393,6 +4078,25 @@ class RestContactController extends RestController {
 	}
 
 	/**
+	 * Figures for the contact profile's header tiles.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_summary( $request ) {
+		$contact = $this->resolve_visible_contact( $request->get_param( 'id' ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		return new WP_REST_Response(
+			\DoubleScale\Modules\Contacts\Services\ContactSummaryService::for_contact( (int) $contact->id ),
+			200
+		);
+	}
+
+	/**
 	 * Send optin email
 	 *
 	 * @since 1.0.0
@@ -3404,10 +4108,10 @@ class RestContactController extends RestController {
 	public function send_opt_in_email( $request ) {
 		try {
 			$contact_id = $request->get_param( 'id' );
-			$contact    = ContactModel::find( $contact_id );
+			$contact    = $this->resolve_visible_contact( $contact_id );
 
-			if ( ! $contact ) {
-				return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+			if ( is_wp_error( $contact ) ) {
+				return $contact;
 			}
 
 			if ( ! class_exists( '\DoubleScale\Modules\Emails\Emails' ) ) {
@@ -3509,15 +4213,29 @@ class RestContactController extends RestController {
 		// Route to appropriate sender based on channel. SMS and WhatsApp ship with
 		// the Pro plugin; in standalone-free mode we return a clear error rather
 		// than fatally crashing on a missing class.
-		$sender_class_by_channel = array(
-			CampaignChannel::STR_EMAIL    => \DoubleScale\Modules\Inbox\IndividualMessaging\EmailIndividualSender::class,
-			CampaignChannel::STR_SMS      => '\\DoubleScale\\Modules\\Inbox\\IndividualMessaging\\SmsIndividualSender',
-			CampaignChannel::STR_WHATSAPP => '\\DoubleScale\\Modules\\Inbox\\IndividualMessaging\\WhatsappIndividualSender',
+		// Pro's senders live in the DoubleScale\Pro namespace (older Pro builds used
+		// DoubleScale\Modules): the first class that exists sends.
+		$sender_classes_by_channel = array(
+			CampaignChannel::STR_EMAIL    => array( \DoubleScale\Modules\Inbox\IndividualMessaging\EmailIndividualSender::class ),
+			CampaignChannel::STR_SMS      => array(
+				'\\DoubleScale\\Pro\\Modules\\Inbox\\IndividualMessaging\\SmsIndividualSender',
+				'\\DoubleScale\\Modules\\Inbox\\IndividualMessaging\\SmsIndividualSender',
+			),
+			CampaignChannel::STR_WHATSAPP => array(
+				'\\DoubleScale\\Pro\\Modules\\Inbox\\IndividualMessaging\\WhatsappIndividualSender',
+				'\\DoubleScale\\Modules\\Inbox\\IndividualMessaging\\WhatsappIndividualSender',
+			),
 		);
 
-		$sender_class = $sender_class_by_channel[ $channel ] ?? null;
+		$sender_class = null;
+		foreach ( $sender_classes_by_channel[ $channel ] ?? array() as $candidate ) {
+			if ( class_exists( $candidate ) ) {
+				$sender_class = $candidate;
+				break;
+			}
+		}
 
-		if ( ! $sender_class || ! class_exists( $sender_class ) ) {
+		if ( ! $sender_class ) {
 			return new WP_Error(
 				'sender_unavailable',
 				__( 'Sending messages on this channel requires the DoubleScale Pro plugin.', 'doublescale' ),
@@ -3752,6 +4470,9 @@ class RestContactController extends RestController {
 			'has_whatsapp_phone' => $target['has_whatsapp_phone'] ?? null,
 			'from'               => $target['from'] ?? null,
 			'to'                 => $target['to'] ?? null,
+			// A campaign's Messages tab: "select all matching" on its status
+			// and failure-cause filters.
+			'campaign_messages'  => $target['campaign_messages'] ?? null,
 		);
 
 		// An empty target addresses every contact in the database. That is a
@@ -4014,20 +4735,27 @@ class RestContactController extends RestController {
 				return $contact;
 			}
 
-			$files = $request->get_file_params();
-			$file  = isset( $files['file'] ) && is_array( $files['file'] ) ? $files['file'] : null;
-			if ( ! $file ) {
-				return new WP_Error( 'no_file', __( 'No file was uploaded.', 'doublescale' ), array( 'status' => 400 ) );
-			}
-
+			// The team's allowance: files the contact uploaded from the client
+			// portal (contact_id set, no user_id) have their own cap there.
 			$existing_count = AttachmentModel::forType( self::CONTACT_ATTACHABLE_TYPE )
 				->where( 'attachable_id', (int) $contact->id )
 				->active()
+				->where(
+					static function ( $query ) {
+						$query->whereNotNull( 'user_id' )->orWhereNull( 'contact_id' );
+					}
+				)
 				->count();
 
 			$too_many = $this->guard_contact_attachment_count( (int) $existing_count );
 			if ( $too_many ) {
 				return $too_many;
+			}
+
+			$files = $request->get_file_params();
+			$file  = isset( $files['file'] ) && is_array( $files['file'] ) ? $files['file'] : null;
+			if ( ! $file ) {
+				return new WP_Error( 'no_file', __( 'No file was uploaded.', 'doublescale' ), array( 'status' => 400 ) );
 			}
 
 			$service    = $this->attachment_service();
@@ -4047,10 +4775,15 @@ class RestContactController extends RestController {
 				return $attachment;
 			}
 
+			// Shown in the client portal right away when the uploader asked to.
+			if ( rest_sanitize_boolean( $request->get_param( 'client_visible' ) ) && PortalFileService::set_client_visible( $attachment, true ) ) {
+				PortalFileService::notify_shared( $attachment, array( (int) $contact->id ) );
+			}
+
 			do_action( 'doublescale_contact_file_attached', $contact, $attachment );
 
 			return new WP_REST_Response(
-				$service->shape_for_api( $attachment ),
+				$this->shape_contact_attachment( $service, $attachment ),
 				201
 			);
 		} catch ( Exception $e ) {
@@ -4093,6 +4826,34 @@ class RestContactController extends RestController {
 	}
 
 	/**
+	 * Show or hide a team file in the contact's client portal. Files the
+	 * contact uploaded there are theirs already.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function update_attachment_visibility( $request ) {
+		$contact = $this->get_contact_for_attachment( $request );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
+		}
+
+		$attachment = $this->find_contact_attachment( $contact, (int) $request->get_param( 'attachment_id' ) );
+		if ( is_wp_error( $attachment ) ) {
+			return $attachment;
+		}
+		if ( empty( $attachment->user_id ) ) {
+			return new WP_Error( 'client_file', __( 'The client uploaded this file, so they already see it.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		if ( PortalFileService::set_client_visible( $attachment, rest_sanitize_boolean( $request->get_param( 'client_visible' ) ) ) ) {
+			PortalFileService::notify_shared( $attachment, array( (int) $contact->id ) );
+		}
+
+		return new WP_REST_Response( $this->shape_contact_attachment( $this->attachment_service(), $attachment ), 200 );
+	}
+
+	/**
 	 * Resolve a contact for attachment endpoints.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -4100,10 +4861,10 @@ class RestContactController extends RestController {
 	 */
 	private function get_contact_for_attachment( $request ) {
 		$contact_id = (int) $request->get_param( 'id' );
-		$contact    = ContactModel::find( $contact_id );
+		$contact    = $this->resolve_visible_contact( $contact_id );
 
-		if ( ! $contact ) {
-			return new WP_Error( 'not_found', 'Contact not found', array( 'status' => 404 ) );
+		if ( is_wp_error( $contact ) ) {
+			return $contact;
 		}
 
 		return $contact;
@@ -4125,7 +4886,28 @@ class RestContactController extends RestController {
 
 		$shaped = array();
 		foreach ( $rows as $attachment ) {
-			$shaped[] = $service->shape_for_api( $attachment );
+			$shaped[] = $this->shape_contact_attachment( $service, $attachment );
+		}
+
+		return $shaped;
+	}
+
+	/**
+	 * A contact attachment for the team, including who uploaded it: a team
+	 * member or the contact (client portal).
+	 *
+	 * @param AttachmentService $service    Attachment service.
+	 * @param AttachmentModel   $attachment Attachment.
+	 * @return array<string, mixed>
+	 */
+	private function shape_contact_attachment( AttachmentService $service, AttachmentModel $attachment ): array {
+		$shaped                = $service->shape_for_api( $attachment );
+		$shaped['uploaded_by'] = $service->uploader_for_api( $attachment );
+		// The team's files can be shown in the client portal; the client's own
+		// uploads have no switch.
+		if ( ! empty( $attachment->user_id ) ) {
+			$shaped['client_visible']   = PortalFileService::is_client_visible( $attachment );
+			$shaped['client_opened_at'] = ( (array) $attachment->meta )['client_opened_at'] ?? null;
 		}
 
 		return $shaped;
@@ -4158,7 +4940,14 @@ class RestContactController extends RestController {
 	 * @return WP_Error|null
 	 */
 	private function guard_contact_attachment_count( int $existing_count ): ?WP_Error {
-		if ( $existing_count >= self::CONTACT_ATTACHMENT_MAX_COUNT ) {
+		/**
+		 * Most files one contact (or Pro's project, deal or task) can hold.
+		 *
+		 * @param int    $max  Default 500.
+		 * @param string $type 'contact', 'project', 'deal' or 'task'.
+		 */
+		$max = max( 1, (int) apply_filters( 'doublescale_attachment_max_count', self::CONTACT_ATTACHMENT_MAX_COUNT, 'contact' ) );
+		if ( $existing_count >= $max ) {
 			return new WP_Error(
 				'too_many_files',
 				sprintf(
@@ -4166,10 +4955,10 @@ class RestContactController extends RestController {
 					_n(
 						'You can attach at most %d file to this contact.',
 						'You can attach at most %d files to this contact.',
-						self::CONTACT_ATTACHMENT_MAX_COUNT,
+						$max,
 						'doublescale'
 					),
-					self::CONTACT_ATTACHMENT_MAX_COUNT
+					$max
 				),
 				array( 'status' => 400 )
 			);
@@ -4195,7 +4984,16 @@ class RestContactController extends RestController {
 	 * @return bool $response Permission check result.
 	 */
 	public function get_items_permissions_check( $request ) {
-		return Permissions::can_read_contacts();
+		if ( Permissions::can_read_contacts() ) {
+			return true;
+		}
+		// The keyword-search shortcut below is served by get_items(), which
+		// builds its query through ContactQueryBuilder — scoped like any list.
+		// Automation staff pick one contact to test a workflow with ("Run
+		// manually"): a keyword search with a few results, never the full list.
+		$keywords = trim( (string) $request->get_param( 'keywords' ) );
+		$per_page = (int) $request->get_param( 'per_page' );
+		return Permissions::can_access_automations() && '' !== $keywords && $per_page > 0 && $per_page <= 10;
 	}
 
 	/**
@@ -4208,7 +5006,7 @@ class RestContactController extends RestController {
 	 * @return bool $response Permission check result.
 	 */
 	public function create_item_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_agent_access();
 	}
 
 	/**
@@ -4233,8 +5031,47 @@ class RestContactController extends RestController {
 	 *
 	 * @return bool $response Permission check result.
 	 */
+	public function edit_item_permissions_check( $request ) {
+		// Anyone who reads contacts reaches update_item(), which lets the
+		// owner, CRM Managers and administrators through, per record.
+		return Permissions::can_read_contacts();
+	}
+
+	/**
+	 * Merge and attachments: CRM Managers, and CRM Agents on their own
+	 * contacts (the handlers check ownership per record).
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 *
+	 * @return bool
+	 */
 	public function update_item_permissions_check( $request ) {
-		return Permissions::has_crm_manager_access();
+		// A CRM Agent edits (and merges) their own contacts; the handlers
+		// enforce ownership per record.
+		return Permissions::has_crm_manager_access() || Permissions::is_crm_agent();
+	}
+
+	/**
+	 * Who may change a contact's owner, or manage its collaborators.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 *
+	 * @return bool
+	 */
+	public function owner_permissions_check( $request ) {
+		return Permissions::can_assign_contact_owner();
+	}
+
+	/**
+	 * Who may add or remove collaborators: a manager, or the contact's owner.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 *
+	 * @return bool
+	 */
+	public function collaborators_permissions_check( $request ) {
+		// The handlers let the contact's owner (any role) and CRM Managers through.
+		return Permissions::can_read_contacts();
 	}
 
 	/**
@@ -4299,7 +5136,7 @@ class RestContactController extends RestController {
 	 * @return bool|WP_Error
 	 */
 	public function get_analytics_permissions_check( $request ) {
-		return Permissions::has_sales_rep_access();
+		return Permissions::has_agent_access();
 	}
 
 	/**

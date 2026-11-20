@@ -8,8 +8,6 @@ use Perfmatters\Vendor\Sabberworm\CSS\Parsing\ParserState;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedEOFException;
 use Perfmatters\Vendor\Sabberworm\CSS\Parsing\UnexpectedTokenException;
 use Perfmatters\Vendor\Sabberworm\CSS\ShortClassNameProvider;
-use function Perfmatters\Vendor\Safe\preg_match;
-use function Perfmatters\Vendor\Safe\preg_replace;
 /**
  * A `Size` consists of a numeric `size` value and a unit.
  * @internal
@@ -162,8 +160,17 @@ class Size extends PrimitiveValue
     {
         $locale = \localeconv();
         $decimalPoint = \preg_quote($locale['decimal_point'], '/');
-        $size = preg_match('/[\\d\\.]+e[+-]?\\d+/i', (string) $this->size) === 1 ? preg_replace("/{$decimalPoint}?0+\$/", '', \sprintf('%f', $this->size)) : (string) $this->size;
-        return preg_replace(["/{$decimalPoint}/", '/^(-?)0\\./'], ['.', '$1.'], $size) . ($this->unit ?? '');
+        $matchResult = \preg_match('/[\\d\\.]+e[+-]?\\d+/i', (string) $this->size);
+        \assert(\is_int($matchResult));
+        if ($matchResult === 1) {
+            $size = \preg_replace("/{$decimalPoint}?0+\$/", '', \sprintf('%f', $this->size));
+            \assert(\is_string($size));
+        } else {
+            $size = (string) $this->size;
+        }
+        $renderedSize = \preg_replace(["/{$decimalPoint}/", '/^(-?)0\\./'], ['.', '$1.'], $size);
+        \assert(\is_string($renderedSize));
+        return $renderedSize . ($this->unit ?? '');
     }
     /**
      * @return array<string, bool|int|float|string|array<mixed>|null>

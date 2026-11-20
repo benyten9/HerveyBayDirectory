@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Auth;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Auth;
 
 interface Guard
 {
@@ -41,5 +41,5 @@ interface Guard
      * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
      * @return void
      */
-    public function setUser(\Illuminate\Contracts\Auth\Authenticatable $user);
+    public function setUser(Authenticatable $user);
 }

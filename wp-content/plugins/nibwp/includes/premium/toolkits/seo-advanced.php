@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 // =============================================================================
 
 wp_register_ability('nibwp/seo-image-optimize', [
-    'label' => __('SEO – Image Optimize', domain: 'nibwp'),
-    'description' => __(
-        'Audit and fix image SEO issues such as missing alt text, titles, dimensions, lazy loading, and non-descriptive filenames.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Image Optimize', 'nibwp'),
+    'description' => 'Audit and fix image SEO issues such as missing alt text, titles, dimensions, lazy loading, and non-descriptive filenames.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -288,11 +285,8 @@ function nibwp_seo_image_optimize(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/seo-schema-markup', [
-    'label' => __('SEO – Schema Markup', domain: 'nibwp'),
-    'description' => __(
-        'Generate, get, or set structured data (JSON-LD) schema markup for posts.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Schema Markup', 'nibwp'),
+    'description' => 'Generate, get, or set structured data (JSON-LD) schema markup for posts.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -672,11 +666,8 @@ function nibwp_seo_generate_schema(WP_Post $post, string $type): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/seo-broken-links', [
-    'label' => __('SEO – Broken Links', domain: 'nibwp'),
-    'description' => __(
-        'Find broken internal and external links in post content.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Broken Links', 'nibwp'),
+    'description' => 'Find broken internal and external links in post content.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -846,11 +837,8 @@ function nibwp_seo_broken_links(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/seo-redirect-manager', [
-    'label' => __('SEO – Redirect Manager', domain: 'nibwp'),
-    'description' => __(
-        'Manage 301/302/307 redirects stored in WordPress options.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Redirect Manager', 'nibwp'),
+    'description' => 'Manage 301/302/307 redirects stored in WordPress options.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -1032,11 +1020,8 @@ function nibwp_seo_redirect_manager(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/seo-meta-bulk-generate', [
-    'label' => __('SEO – Bulk Generate Meta', domain: 'nibwp'),
-    'description' => __(
-        'Bulk generate SEO titles and meta descriptions from templates.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Bulk Generate Meta', 'nibwp'),
+    'description' => 'Bulk generate SEO titles and meta descriptions from templates.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',
@@ -1219,11 +1204,8 @@ function nibwp_seo_meta_bulk_generate(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/seo-internal-linking', [
-    'label' => __('SEO – Internal Linking Suggestions', domain: 'nibwp'),
-    'description' => __(
-        'Analyze a post and suggest internal linking opportunities to other content.',
-        domain: 'nibwp',
-    ),
+    'label' => __('SEO – Internal Linking Suggestions', 'nibwp'),
+    'description' => 'Analyze a post and suggest internal linking opportunities to other content.',
     'category' => 'seo',
     'input_schema' => [
         'type' => 'object',

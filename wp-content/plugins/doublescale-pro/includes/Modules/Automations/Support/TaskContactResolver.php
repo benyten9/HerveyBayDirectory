@@ -93,12 +93,7 @@ final class TaskContactResolver {
 	 * @return ContactModel|null
 	 */
 	private static function resolve_from_deal( int $deal_id ): ?ContactModel {
-		if ( ! class_exists( \DoubleScale\Pro\Modules\Deals\Models\DealModel::class ) ) {
-			return null;
-		}
-
-		if ( function_exists( 'doublescale_is_module_storage_ready' )
-			&& ! doublescale_is_module_storage_ready( 'deals', \DoubleScale\Pro\Modules\Deals\Models\DealModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'deals' ) ) {
 			return null;
 		}
 
@@ -116,12 +111,7 @@ final class TaskContactResolver {
 	 * @return ContactModel|null
 	 */
 	private static function resolve_from_project( int $project_id ): ?ContactModel {
-		if ( ! class_exists( \DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class ) ) {
-			return null;
-		}
-
-		if ( function_exists( 'doublescale_is_module_storage_ready' )
-			&& ! doublescale_is_module_storage_ready( 'projects', \DoubleScale\Pro\Modules\Projects\Models\ProjectModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'projects' ) ) {
 			return null;
 		}
 

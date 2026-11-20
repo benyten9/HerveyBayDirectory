@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules;
 
 final class Substitution
 {
@@ -9,16 +9,16 @@ final class Substitution
     private $from;
     /** @var Word */
     private $to;
-    public function __construct(\Doctrine\Inflector\Rules\Word $from, \Doctrine\Inflector\Rules\Word $to)
+    public function __construct(Word $from, Word $to)
     {
         $this->from = $from;
         $this->to = $to;
     }
-    public function getFrom() : \Doctrine\Inflector\Rules\Word
+    public function getFrom() : Word
     {
         return $this->from;
     }
-    public function getTo() : \Doctrine\Inflector\Rules\Word
+    public function getTo() : Word
     {
         return $this->to;
     }

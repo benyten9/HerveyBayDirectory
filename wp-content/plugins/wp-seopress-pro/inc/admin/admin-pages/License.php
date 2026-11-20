@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 
 if ( is_plugin_active( 'wp-seopress/seopress.php' ) ) {
 	if ( function_exists( 'seopress_admin_header' ) ) {
-		echo seopress_admin_header();
+		seopress_admin_header();
 	}
 }
 ?>

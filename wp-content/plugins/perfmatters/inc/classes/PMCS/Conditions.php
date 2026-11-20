@@ -464,12 +464,12 @@ class Conditions
         echo '<div class="condition perfmatters-input-row' . ($load_objects ? ' pmcs-condition-load-objects' : '') . ($hidden ? ' hidden screen-reader-text' : '') . '" data-object-type="' . esc_attr($object_type) . '" data-saved-object="' . esc_attr($selected_object) . '"' . (empty($value) ? ' style="display: none;"' : '') . '>';
             
             //primary condition select
-            echo '<select class="condition-select" name="conditions[' . $type . '][' . $row_count. '][rule]">';
-                echo '<option value="">' . __('Select an option', 'perfmatters') . '</option>';
+            echo '<select class="condition-select" name="conditions[' . esc_attr($type) . '][' . esc_attr($row_count) . '][rule]">';
+                echo '<option value="">' . esc_html__('Select an option', 'perfmatters') . '</option>';
                 
                 foreach($conditions as $group) {
 
-                    echo '<optgroup label="' . $group['label'] . '">';
+                    echo '<optgroup label="' . esc_attr($group['label']) . '">';
 
                         foreach($group['options'] as $id => $option) {
                             $option_meta = self::get_option_meta($option, $group);

@@ -57,7 +57,15 @@ $icons_url = plugins_url( 'includes/Modules/Booking/Renderer/templates/icons/', 
 										<span>
 											<?php
 											$location = $event['location'][0] ?? array();
-											echo esc_html( $location['type'] ?? 'MS Teams - Conferencing' );
+											$label    = '';
+											if ( ! empty( $location['type'] ) ) {
+												$manager = \DoubleScale\Modules\Booking\Managers\LocationsManager::instance();
+												$label   = $manager->get_location( $location['type'] ) ? $manager->get_location_label( $location ) : '';
+												if ( '' === (string) $label ) {
+													$label = \DoubleScale\Modules\Booking\Managers\LocationsManager::get_conferencing_label( $location['type'] );
+												}
+											}
+											echo esc_html( $label );
 											?>
 										</span>
 									</div>
@@ -68,7 +76,7 @@ $icons_url = plugins_url( 'includes/Modules/Booking/Renderer/templates/icons/', 
 						<div class="event-actions">
 							<a href="?doublescale_booking_calendar=<?php echo esc_attr( $calendar['slug'] ); ?>&event=<?php echo esc_attr( $event['slug'] ); ?>"
 								class="book-now-btn">
-								Book Now
+								<?php esc_html_e( 'Book Now', 'doublescale' ); ?>
 							</a>
 						</div>
 					</div>

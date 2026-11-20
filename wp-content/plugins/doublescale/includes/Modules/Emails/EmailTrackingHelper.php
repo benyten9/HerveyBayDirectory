@@ -197,31 +197,78 @@ class EmailTrackingHelper {
 	/**
 	 * Footer to append to an outgoing email, or '' when none should be.
 	 *
-	 * Order: campaign/template footer → global email footer → default
-	 * footer, but the default is only a safety net for emails that carry no
-	 * unsubscribe link of their own. Every send path must decide the footer
-	 * through here so the rule cannot drift between them.
+	 * An email that already carries its own unsubscribe link gets no footer:
+	 * its design has one, and a second footer under it reads as a mistake.
+	 * Otherwise: configured footer → global email footer → default footer, so
+	 * every email still ends with a way out. Every send path must decide the
+	 * footer through here so the rule cannot drift between them.
 	 *
 	 * @param string      $body            Email body in whatever form the caller has (HTML, builder JSON, pre-rendered bulk HTML).
-	 * @param string|null $campaign_footer Footer configured on the campaign/template, if any.
+	 * @param string|null $campaign_footer Footer from the sender's email settings, if any.
 	 * @return string
 	 */
 	public static function resolve_footer( $body, $campaign_footer = null ) {
-		if ( is_string( $campaign_footer ) && '' !== trim( $campaign_footer ) ) {
+		if ( self::has_unsubscribe_link( $body ) ) {
+			return '';
+		}
+
+		if ( self::is_custom_footer( $campaign_footer ) ) {
 			return $campaign_footer;
 		}
 
 		$global_settings = Settings::get( 'email', array() );
 		$global_footer   = is_array( $global_settings ) ? ( $global_settings['email_footer'] ?? '' ) : '';
-		if ( is_string( $global_footer ) && '' !== trim( $global_footer ) ) {
+		if ( self::is_custom_footer( $global_footer ) ) {
 			return $global_footer;
 		}
 
-		if ( self::has_unsubscribe_link( $body ) ) {
-			return '';
+		return self::get_default_footer();
+	}
+
+	/**
+	 * Whether a configured footer should be used as-is.
+	 *
+	 * The settings screen pre-fills the default footer and saves it back with
+	 * any other setting, so a saved copy of it is common, and rarely
+	 * byte-identical: the editor wraps it in its own markup, and older releases
+	 * stripped "{{contact:" out of its link. A copy is still "the default" and
+	 * keeps the default's rule: skipped when the email already carries its own
+	 * unsubscribe link, and sent with a working link otherwise. Only different
+	 * words, or a link that points somewhere else, make a footer custom.
+	 *
+	 * @param mixed $footer Configured footer.
+	 * @return bool
+	 */
+	private static function is_custom_footer( $footer ) {
+		if ( ! is_string( $footer ) || '' === trim( $footer ) ) {
+			return false;
 		}
 
-		return self::get_default_footer();
+		if ( self::footer_text( $footer ) !== self::footer_text( self::get_default_footer() ) ) {
+			return true;
+		}
+
+		preg_match_all( '/\bhref\s*=\s*([\'"])(.*?)\1/i', $footer, $links );
+		foreach ( $links[2] as $href ) {
+			if ( false === strpos( $href, 'unsubscribe_link' ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * The words a footer shows, with markup, entities, quote marks and spacing
+	 * evened out.
+	 *
+	 * @param string $html Footer HTML.
+	 * @return string
+	 */
+	private static function footer_text( $html ) {
+		$text = html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$text = str_replace( array( '"', "\u{2018}", "\u{2019}", "\u{201C}", "\u{201D}" ), "'", $text );
+		return trim( (string) preg_replace( '/[\s\x{00A0}]+/u', ' ', $text ) );
 	}
 
 	/**
@@ -511,7 +558,7 @@ class EmailTrackingHelper {
 					'source'     => 'test_email',
 				)
 			);
-		} catch ( \Illuminate\Database\QueryException $e ) {
+		} catch ( \DoubleScale\Vendor\Illuminate\Database\QueryException $e ) {
 			return ContactModel::get_by_email( $email );
 		}
 	}

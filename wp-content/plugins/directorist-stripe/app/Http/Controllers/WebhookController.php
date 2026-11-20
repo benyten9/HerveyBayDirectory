@@ -4,35 +4,32 @@ namespace DirectoristStripe\App\Http\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
-use WP_REST_Request;
-
+use DirectoristStripe\App\Providers\Admin\SettingsServiceProvider;
 use DirectoristStripe\Stripe\Stripe as StripeSDK;
 use DirectoristStripe\Stripe\WebhookEndpoint;
 use DirectoristStripe\WpMVC\RequestValidator\Validator;
+use WP_REST_Request;
 
 class WebhookController extends Controller {
     public function register( Validator $validator, WP_REST_Request $request ) {
-        $validator->validate(
-            [
-                'type' => 'required|string',
-                'key'  => 'required|string',
-            ]
-        );
+        $type = sanitize_key( (string) $request->get_param( 'type' ) );
+        $key  = sanitize_key( (string) $request->get_param( 'key' ) );
 
-        $type       = sanitize_text_field( (string) $request->get_param( 'type' ) );
-        $key        = sanitize_key( (string) $request->get_param( 'key' ) );
-        $secret_key = ( 'live' === $type )
-            ? get_directorist_option( 'stripe_live_sk' )
-            : get_directorist_option( 'stripe_test_sk' );
+        if ( ! $this->valid_key_and_type( $key, $type ) ) {
+            return $this->complete_action( $request, 'register', 'sandbox', 'stripe_test_webhook', 'error', 'stale' );
+        }
+
+        $saved_webhook = get_directorist_option( $key );
+
+        if ( '' !== SettingsServiceProvider::get_saved_webhook_id( $saved_webhook ) ) {
+            return $this->complete_action( $request, 'register', $type, $key, 'error', 'stale' );
+        }
+
+        $secret_key = get_directorist_option( 'live' === $type ? 'stripe_live_sk' : 'stripe_test_sk' );
 
         if ( empty( $secret_key ) ) {
-            error_log(
-                sprintf(
-                    'Directorist Stripe: Secret key not set for %s environment.',
-                    $type
-                )
-            );
-            $this->redirect( $this->settings_url() );
+            error_log( sprintf( 'Directorist Stripe: Secret key not set for %s environment.', $type ) );
+            return $this->complete_action( $request, 'register', $type, $key, 'error', 'credentials' );
         }
 
         StripeSDK::setApiKey( $secret_key );
@@ -52,6 +49,10 @@ class WebhookController extends Controller {
                 ]
             );
 
+            if ( empty( $webhook->id ) || empty( $webhook->secret ) ) {
+                throw new \Exception( 'Stripe did not return a webhook ID and secret.' );
+            }
+
             update_directorist_option(
                 $key,
                 [
@@ -59,40 +60,35 @@ class WebhookController extends Controller {
                     'secret' => $webhook->secret,
                 ]
             );
-        } catch ( \Exception $e ) {
-            error_log(
-                sprintf(
-                    'Directorist Stripe: Failed to register webhook - %s',
-                    $e->getMessage()
-                )
-            );
-        }
 
-        $this->redirect( $this->settings_url() );
+            return $this->complete_action( $request, 'register', $type, $key, 'success' );
+        } catch ( \Exception $e ) {
+            error_log( sprintf( 'Directorist Stripe: Failed to register webhook - %s', $e->getMessage() ) );
+            return $this->complete_action( $request, 'register', $type, $key, 'error', 'request' );
+        }
     }
 
     public function unregister( Validator $validator, WP_REST_Request $request ) {
-        $validator->validate(
-            [
-                'id'  => 'required|string',
-                'key' => 'required|string',
-            ]
-        );
+        $id   = sanitize_text_field( (string) $request->get_param( 'id' ) );
+        $key  = sanitize_key( (string) $request->get_param( 'key' ) );
+        $type = 'stripe_live_webhook' === $key ? 'live' : 'sandbox';
 
-        $id         = sanitize_text_field( (string) $request->get_param( 'id' ) );
-        $key        = sanitize_key( (string) $request->get_param( 'key' ) );
-        $secret_key = ( false !== strpos( $key, 'live' ) )
-            ? get_directorist_option( 'stripe_live_sk' )
-            : get_directorist_option( 'stripe_test_sk' );
+        if ( ! $this->valid_key_and_type( $key, $type ) ) {
+            return $this->complete_action( $request, 'unregister', 'sandbox', 'stripe_test_webhook', 'error', 'stale' );
+        }
+
+        $saved_webhook = get_directorist_option( $key );
+        $saved_id      = SettingsServiceProvider::get_saved_webhook_id( $saved_webhook );
+
+        if ( '' === $id || '' === $saved_id || ! hash_equals( $saved_id, $id ) ) {
+            return $this->complete_action( $request, 'unregister', $type, $key, 'error', 'stale' );
+        }
+
+        $secret_key = get_directorist_option( 'live' === $type ? 'stripe_live_sk' : 'stripe_test_sk' );
 
         if ( empty( $secret_key ) ) {
-            error_log(
-                sprintf(
-                    'Directorist Stripe: Secret key not set for webhook with key %s.',
-                    $key
-                )
-            );
-            $this->redirect( $this->settings_url() );
+            error_log( sprintf( 'Directorist Stripe: Secret key not set for webhook with key %s.', $key ) );
+            return $this->complete_action( $request, 'unregister', $type, $key, 'error', 'credentials' );
         }
 
         StripeSDK::setApiKey( $secret_key );
@@ -100,30 +96,51 @@ class WebhookController extends Controller {
         try {
             $webhook = WebhookEndpoint::retrieve( $id );
             $webhook->delete();
-
             update_directorist_option( $key, [] );
+
+            return $this->complete_action( $request, 'unregister', $type, $key, 'success' );
         } catch ( \Exception $e ) {
             if ( $this->is_missing_webhook_exception( $e ) ) {
-                update_directorist_option( $key, [] );
-
                 error_log(
                     sprintf(
-                        'Directorist Stripe: Stored webhook %s for %s was not found in Stripe. Local webhook setting cleared.',
+                        'Directorist Stripe: Stored webhook %s for %s was not found in this Stripe account. Local webhook setting retained.',
                         $id,
                         $key
                     )
                 );
 
-                $this->redirect( $this->settings_url() );
+                return $this->complete_action( $request, 'unregister', $type, $key, 'error', 'not_found' );
             }
 
-            error_log(
-                sprintf(
-                    'Directorist Stripe: Failed to unregister webhook %s - %s',
-                    $id,
-                    $e->getMessage()
-                )
-            );
+            error_log( sprintf( 'Directorist Stripe: Failed to unregister webhook %s - %s', $id, $e->getMessage() ) );
+            return $this->complete_action( $request, 'unregister', $type, $key, 'error', 'request' );
+        }
+    }
+
+    private function valid_key_and_type( string $key, string $type ): bool {
+        return ( 'stripe_live_webhook' === $key && 'live' === $type )
+            || ( 'stripe_test_webhook' === $key && 'sandbox' === $type );
+    }
+
+    private function complete_action( WP_REST_Request $request, string $operation, string $type, string $key, string $status, string $reason = '' ) {
+        if ( '1' === $request->get_header( 'x-directorist-async' ) ) {
+            $saved_webhook = get_directorist_option( $key );
+            $webhook_id    = SettingsServiceProvider::get_saved_webhook_id( $saved_webhook );
+            $action        = SettingsServiceProvider::get_webhook_button_config( $key, $type, $webhook_id );
+
+            return [
+                'status_code' => 200,
+                'data'        => [
+                    'success'      => 'success' === $status,
+                    'connected'    => '' !== $webhook_id,
+                    'webhook_id'   => $webhook_id,
+                    // Additive response: older Core continues using the fields above/below.
+                    'action_state' => SettingsServiceProvider::get_webhook_action_state( $key, $type, $webhook_id ),
+                    'message'      => SettingsServiceProvider::webhook_feedback_message( $operation, $status, $reason ),
+                    'action_url'   => $action['url'],
+                    'action_label' => $action['label'],
+                ],
+            ];
         }
 
         $this->redirect( $this->settings_url() );
@@ -139,7 +156,6 @@ class WebhookController extends Controller {
     }
 
     private function is_missing_webhook_exception( \Exception $exception ): bool {
-
         if ( method_exists( $exception, 'getHttpStatus' ) && 404 === (int) $exception->getHttpStatus() ) {
             return true;
         }

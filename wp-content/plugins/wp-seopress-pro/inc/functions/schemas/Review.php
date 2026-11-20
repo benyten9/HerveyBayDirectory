@@ -72,6 +72,6 @@ function seopress_automatic_rich_snippets_review_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_review_html', $json );
 
-		echo $json;
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties.
 	}
 }

@@ -8,21 +8,21 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
 use BadMethodCallException;
-use Carbon\Carbon;
-use Carbon\CarbonInterface;
-use Carbon\CarbonPeriod;
-use Carbon\CarbonTimeZone;
-use Carbon\Exceptions\BadComparisonUnitException;
-use Carbon\Exceptions\ImmutableException;
-use Carbon\Exceptions\InvalidTimeZoneException;
-use Carbon\Exceptions\InvalidTypeException;
-use Carbon\Exceptions\UnknownGetterException;
-use Carbon\Exceptions\UnknownMethodException;
-use Carbon\Exceptions\UnknownSetterException;
-use Carbon\Exceptions\UnknownUnitException;
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\CarbonPeriod;
+use DoubleScale\Vendor\Carbon\CarbonTimeZone;
+use DoubleScale\Vendor\Carbon\Exceptions\BadComparisonUnitException;
+use DoubleScale\Vendor\Carbon\Exceptions\ImmutableException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidTimeZoneException;
+use DoubleScale\Vendor\Carbon\Exceptions\InvalidTypeException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownGetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownMethodException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownSetterException;
+use DoubleScale\Vendor\Carbon\Exceptions\UnknownUnitException;
 use Closure;
 use DateInterval;
 use DatePeriod;
@@ -524,23 +524,23 @@ use Throwable;
  */
 trait Date
 {
-    use \Carbon\Traits\Boundaries;
-    use \Carbon\Traits\Comparison;
-    use \Carbon\Traits\Converter;
-    use \Carbon\Traits\Creator;
-    use \Carbon\Traits\Difference;
-    use \Carbon\Traits\Macro;
-    use \Carbon\Traits\MagicParameter;
-    use \Carbon\Traits\Modifiers;
-    use \Carbon\Traits\Mutability;
-    use \Carbon\Traits\ObjectInitialisation;
-    use \Carbon\Traits\Options;
-    use \Carbon\Traits\Rounding;
-    use \Carbon\Traits\Serialization;
-    use \Carbon\Traits\Test;
-    use \Carbon\Traits\Timestamp;
-    use \Carbon\Traits\Units;
-    use \Carbon\Traits\Week;
+    use Boundaries;
+    use Comparison;
+    use Converter;
+    use Creator;
+    use Difference;
+    use Macro;
+    use MagicParameter;
+    use Modifiers;
+    use Mutability;
+    use ObjectInitialisation;
+    use Options;
+    use Rounding;
+    use Serialization;
+    use Test;
+    use Timestamp;
+    use Units;
+    use Week;
     /**
      * Names of days of the week.
      *

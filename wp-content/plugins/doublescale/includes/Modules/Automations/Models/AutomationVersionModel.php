@@ -14,7 +14,7 @@ namespace DoubleScale\Modules\Automations\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * AutomationVersionModel class
@@ -83,7 +83,7 @@ class AutomationVersionModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function automation() {
 		return $this->belongsTo( AutomationModel::class, 'automation_id', 'id' );

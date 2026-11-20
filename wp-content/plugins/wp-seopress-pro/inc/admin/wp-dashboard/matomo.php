@@ -44,6 +44,38 @@ if ( '1' === seopress_get_toggle_option( 'google-analytics' ) && '1' !== seopres
 		}
 
 		/**
+		 * Render the last Matomo sync failure.
+		 *
+		 * @param array $sync_error The failure, from seopress_matomo_get_sync_error().
+		 *
+		 * @return void
+		 */
+		function seopress_matomo_dashboard_widget_display_error( $sync_error ) {
+			?>
+			<div class="notice notice-error inline seopress-matomo-sync-error">
+				<p><strong><?php echo esc_html( $sync_error['summary'] ); ?></strong></p>
+				<?php if ( '' !== $sync_error['hint'] ) { ?>
+					<p><?php echo esc_html( $sync_error['hint'] ); ?></p>
+				<?php } ?>
+				<?php if ( '' !== $sync_error['response'] ) { ?>
+					<p>
+						<?php esc_html_e( 'Response from Matomo:', 'wp-seopress-pro' ); ?>
+						<code style="overflow-wrap: anywhere;"><?php echo esc_html( $sync_error['response'] ); ?></code>
+					</p>
+				<?php } ?>
+				<?php if ( '' !== $sync_error['date'] ) { ?>
+					<p class="description">
+						<?php
+						/* translators: %s: date and time of the failed sync. */
+						echo esc_html( sprintf( __( 'Last attempt: %s', 'wp-seopress-pro' ), $sync_error['date'] ) );
+						?>
+					</p>
+				<?php } ?>
+			</div>
+			<?php
+		}
+
+		/**
 		 * Matomo Analytics Dashboard widget display.
 		 *
 		 * @return void
@@ -52,13 +84,17 @@ if ( '1' === seopress_get_toggle_option( 'google-analytics' ) && '1' !== seopres
 			if ( '' != seopress_google_analytics_matomo_widget_auth_token() ) {
 				$stats = get_transient( 'seopress_results_matomo' );
 
+				// Returning on an empty transient left an empty widget, which reads as
+				// "no visitors" rather than "Matomo refused us". Say which it is.
+				$sync_error = function_exists( 'seopress_matomo_get_sync_error' ) ? seopress_matomo_get_sync_error() : null;
+
 				$html = array();
 
-				if ( false === $stats ) {
-					return;
-				}
+				if ( false === $stats || ( is_array( $stats ) && isset( $stats['error'] ) ) || empty( $stats['all'] ) ) {
+					if ( null !== $sync_error ) {
+						seopress_matomo_dashboard_widget_display_error( $sync_error );
+					}
 
-				if ( empty( $stats['all'] ) ) {
 					return;
 				}
 
@@ -81,7 +117,8 @@ if ( '1' === seopress_get_toggle_option( 'google-analytics' ) && '1' !== seopres
 				}
 				if ( ! empty( $stats['avg_time_on_site'] ) ) {
 					$html[ __( 'Avg. Visit Duration (in seconds)', 'wp-seopress-pro' ) ] = is_numeric( $stats['avg_time_on_site'] ) ? number_format_i18n( $stats['avg_time_on_site'] ) : '';
-				} ?>
+				}
+				?>
 
 				<span class="spinner"></span>
 

@@ -54,7 +54,7 @@ function seopress_resolve_dynamic_field_placeholders( $template, $post_id = 0, $
 						stripslashes_deep(
 							wp_filter_nohtml_kses(
 								wp_strip_all_tags(
-									strip_shortcodes( get_post_meta( $post_id, $key, true ), true )
+									strip_shortcodes( seopress_get_meta_tag_value( 'post', $post_id, $key ), true )
 								)
 							)
 						)
@@ -66,19 +66,19 @@ function seopress_resolve_dynamic_field_placeholders( $template, $post_id = 0, $
 			$template = str_replace( $cf_search, $cf_replace, $template );
 		}
 
-		// Custom term taxonomies: %%_ct_<slug>%% → first attached term name.
+		// Custom term taxonomies: %%_ct_<slug>%% → primary term name, else the first attached one.
 		preg_match_all( '/%%_ct_(.*?)%%/', $template, $ct_matches );
 		if ( ! empty( $ct_matches[0] ) ) {
 			$ct_search  = array();
 			$ct_replace = array();
 			foreach ( $ct_matches[0] as $idx => $placeholder ) {
 				$slug = $ct_matches[1][ $idx ];
-				$term = wp_get_post_terms( $post_id, $slug );
-				if ( is_wp_error( $term ) || empty( $term[0] ) ) {
+				$term = \SEOPress\Helpers\Metas\PrimaryTerm::get_display_term( $post_id, $slug );
+				if ( null === $term ) {
 					continue;
 				}
 				$ct_search[]  = $placeholder;
-				$ct_replace[] = apply_filters( 'seopress_titles_custom_tax', esc_attr( $term[0]->name ), $slug );
+				$ct_replace[] = apply_filters( 'seopress_titles_custom_tax', esc_attr( $term->name ), $slug );
 			}
 			if ( ! empty( $ct_search ) ) {
 				$template = str_replace( $ct_search, $ct_replace, $template );
@@ -94,7 +94,7 @@ function seopress_resolve_dynamic_field_placeholders( $template, $post_id = 0, $
 		foreach ( $ucf_matches[0] as $idx => $placeholder ) {
 			$key           = $ucf_matches[1][ $idx ];
 			$ucf_search[]  = $placeholder;
-			$value         = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $key, true ) );
+			$value         = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $key ) );
 			$ucf_replace[] = apply_filters( 'seopress_titles_user_meta', $value, $key );
 		}
 		$template = str_replace( $ucf_search, $ucf_replace, $template );
@@ -206,7 +206,7 @@ function seopress_titles_the_title() {
 				}
 
 				foreach ( $matches['1'] as $key => $value ) {
-					$custom_field                                = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( get_post_meta( $post->ID, $value, true ), true ) ) ) ) ), $seopress_excerpt_length );
+					$custom_field                                = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( seopress_get_meta_tag_value( 'post', $post->ID, $value ), true ) ) ) ) ), $seopress_excerpt_length );
 					$seopress_titles_cf_template_replace_array[] = apply_filters( 'seopress_titles_custom_field', $custom_field, $value );
 				}
 			}
@@ -222,11 +222,18 @@ function seopress_titles_the_title() {
 				}
 
 				foreach ( $matches2['1'] as $key => $value ) {
-					$term = wp_get_post_terms( $post->ID, $value );
-					if ( ! is_wp_error( $term ) && isset( $term[0] ) ) {
-						$terms                                       = esc_attr( $term[0]->name );
-						$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
-					}
+					$term = \SEOPress\Helpers\Metas\PrimaryTerm::get_display_term( $post->ID, $value );
+
+					// One entry per placeholder, always. str_replace() pairs the
+					// two arrays positionally, so skipping a taxonomy with no
+					// term here used to move every later value onto a
+					// placeholder that was not its own: a page with no service
+					// but a location and a county published "Top-Rated
+					// Bracknell near Berkshire,". An empty slot is the correct
+					// answer; a neighbour's value is not.
+					$terms = null !== $term ? esc_attr( $term->name ) : '';
+
+					$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
 				}
 			}
 
@@ -241,7 +248,7 @@ function seopress_titles_the_title() {
 				}
 
 				foreach ( $matches3['1'] as $key => $value ) {
-					$user_meta                                    = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $value, true ) );
+					$user_meta                                    = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $value ) );
 					$seopress_titles_ucf_template_replace_array[] = apply_filters( 'seopress_titles_user_meta', $user_meta, $value );
 				}
 			}
@@ -277,7 +284,7 @@ function seopress_titles_the_title() {
 				}
 
 				foreach ( $matches['1'] as $key => $value ) {
-					$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( get_post_meta( $post->ID, $value, true ), true ) ) ) ) ), $seopress_excerpt_length );
+					$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( seopress_get_meta_tag_value( 'post', $post->ID, $value ), true ) ) ) ) ), $seopress_excerpt_length );
 				}
 			}
 
@@ -292,11 +299,18 @@ function seopress_titles_the_title() {
 				}
 
 				foreach ( $matches2['1'] as $key => $value ) {
-					$term = wp_get_post_terms( $post->ID, $value );
-					if ( ! is_wp_error( $term ) && isset( $term[0] ) ) {
-						$terms                                       = esc_attr( $term[0]->name );
-						$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
-					}
+					$term = \SEOPress\Helpers\Metas\PrimaryTerm::get_display_term( $post->ID, $value );
+
+					// One entry per placeholder, always. str_replace() pairs the
+					// two arrays positionally, so skipping a taxonomy with no
+					// term here used to move every later value onto a
+					// placeholder that was not its own: a page with no service
+					// but a location and a county published "Top-Rated
+					// Bracknell near Berkshire,". An empty slot is the correct
+					// answer; a neighbour's value is not.
+					$terms = null !== $term ? esc_attr( $term->name ) : '';
+
+					$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
 				}
 			}
 
@@ -311,7 +325,7 @@ function seopress_titles_the_title() {
 				}
 
 				foreach ( $matches3['1'] as $key => $value ) {
-					$seopress_titles_ucf_template_replace_array[] = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $value, true ) );
+					$seopress_titles_ucf_template_replace_array[] = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $value ) );
 				}
 			}
 
@@ -366,7 +380,7 @@ function seopress_titles_the_title() {
 			}
 
 			foreach ( $matches['1'] as $key => $value ) {
-				$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $term_id ? get_term_meta( $term_id, $value, true ) : '', true ) ) ) ) ), $seopress_excerpt_length );
+				$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $term_id ? seopress_get_meta_tag_value( 'term', $term_id, $value ) : '', true ) ) ) ) ), $seopress_excerpt_length );
 			}
 		}
 
@@ -388,7 +402,7 @@ function seopress_titles_the_title() {
 			}
 
 			foreach ( $matches['1'] as $key => $value ) {
-				$seopress_titles_cf_template_replace_array[] = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $value, true ) );
+				$seopress_titles_cf_template_replace_array[] = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $value ) );
 			}
 		}
 
@@ -539,7 +553,7 @@ function seopress_titles_the_description_content() {
 				}
 
 				foreach ( $matches['1'] as $key => $value ) {
-					$custom_field                                = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( get_post_meta( $post->ID, $value, true ), true ) ) ) ) ), $seopress_excerpt_length );
+					$custom_field                                = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( seopress_get_meta_tag_value( 'post', $post->ID, $value ), true ) ) ) ) ), $seopress_excerpt_length );
 					$seopress_titles_cf_template_replace_array[] = apply_filters( 'seopress_titles_custom_field', $custom_field, $value );
 				}
 			}
@@ -555,11 +569,18 @@ function seopress_titles_the_description_content() {
 				}
 
 				foreach ( $matches2['1'] as $key => $value ) {
-					$term = wp_get_post_terms( $post->ID, $value );
-					if ( ! is_wp_error( $term ) && isset( $term[0] ) ) {
-						$terms                                       = esc_attr( $term[0]->name );
-						$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
-					}
+					$term = \SEOPress\Helpers\Metas\PrimaryTerm::get_display_term( $post->ID, $value );
+
+					// One entry per placeholder, always. str_replace() pairs the
+					// two arrays positionally, so skipping a taxonomy with no
+					// term here used to move every later value onto a
+					// placeholder that was not its own: a page with no service
+					// but a location and a county published "Top-Rated
+					// Bracknell near Berkshire,". An empty slot is the correct
+					// answer; a neighbour's value is not.
+					$terms = null !== $term ? esc_attr( $term->name ) : '';
+
+					$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
 				}
 			}
 
@@ -574,7 +595,7 @@ function seopress_titles_the_description_content() {
 				}
 
 				foreach ( $matches3['1'] as $key => $value ) {
-					$user_meta                                    = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $value, true ) );
+					$user_meta                                    = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $value ) );
 					$seopress_titles_ucf_template_replace_array[] = apply_filters( 'seopress_titles_user_meta', $user_meta, $value );
 				}
 			}
@@ -610,7 +631,7 @@ function seopress_titles_the_description_content() {
 				}
 
 				foreach ( $matches['1'] as $key => $value ) {
-					$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( get_post_meta( $post->ID, $value, true ), true ) ) ) ) ), $seopress_excerpt_length );
+					$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( seopress_get_meta_tag_value( 'post', $post->ID, $value ), true ) ) ) ) ), $seopress_excerpt_length );
 				}
 			}
 
@@ -625,11 +646,18 @@ function seopress_titles_the_description_content() {
 				}
 
 				foreach ( $matches2['1'] as $key => $value ) {
-					$term = wp_get_post_terms( $post->ID, $value );
-					if ( ! is_wp_error( $term ) && isset( $term[0] ) ) {
-						$terms                                       = esc_attr( $term[0]->name );
-						$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
-					}
+					$term = \SEOPress\Helpers\Metas\PrimaryTerm::get_display_term( $post->ID, $value );
+
+					// One entry per placeholder, always. str_replace() pairs the
+					// two arrays positionally, so skipping a taxonomy with no
+					// term here used to move every later value onto a
+					// placeholder that was not its own: a page with no service
+					// but a location and a county published "Top-Rated
+					// Bracknell near Berkshire,". An empty slot is the correct
+					// answer; a neighbour's value is not.
+					$terms = null !== $term ? esc_attr( $term->name ) : '';
+
+					$seopress_titles_ct_template_replace_array[] = apply_filters( 'seopress_titles_custom_tax', $terms, $value );
 				}
 			}
 
@@ -644,7 +672,7 @@ function seopress_titles_the_description_content() {
 				}
 
 				foreach ( $matches3['1'] as $key => $value ) {
-					$seopress_titles_ucf_template_replace_array[] = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $value, true ) );
+					$seopress_titles_ucf_template_replace_array[] = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $value ) );
 				}
 			}
 
@@ -706,7 +734,7 @@ function seopress_titles_the_description_content() {
 			}
 
 			foreach ( $matches['1'] as $key => $value ) {
-				$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $term_id ? get_term_meta( $term_id, $value, true ) : '', true ) ) ) ) ), $seopress_excerpt_length );
+				$seopress_titles_cf_template_replace_array[] = wp_trim_words( esc_attr( stripslashes_deep( wp_filter_nohtml_kses( wp_strip_all_tags( strip_shortcodes( $term_id ? seopress_get_meta_tag_value( 'term', $term_id, $value ) : '', true ) ) ) ) ), $seopress_excerpt_length );
 			}
 		}
 
@@ -728,7 +756,7 @@ function seopress_titles_the_description_content() {
 			}
 
 			foreach ( $matches['1'] as $key => $value ) {
-				$seopress_titles_cf_template_replace_array[] = esc_attr( get_user_meta( get_the_author_meta( 'ID' ), $value, true ) );
+				$seopress_titles_cf_template_replace_array[] = esc_attr( seopress_get_meta_tag_value( 'user', get_the_author_meta( 'ID' ), $value ) );
 			}
 		}
 
@@ -766,10 +794,11 @@ function seopress_titles_the_description_content() {
  * The description.
  */
 function seopress_titles_the_description() {
-	if ( '' !== seopress_titles_the_description_content() ) {
-		$html  = '<meta name="description" content="' . seopress_titles_the_description_content() . '">';
+	$description = seopress_titles_the_description_content();
+	if ( '' !== $description ) {
+		$html  = '<meta name="description" content="' . esc_attr( $description ) . '">';
 		$html .= "\n";
-		echo $html;
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 	}
 }
 
@@ -781,7 +810,7 @@ if ( apply_filters( 'seopress_old_wp_head_description', true ) ) {
  * Noindex single CPT.
  */
 function seopress_titles_noindex_post_option() {
-	$_seopress_robots_index = get_post_meta( get_the_ID(), '_seopress_robots_index', true );
+	$_seopress_robots_index = get_post_meta( seopress_get_the_id(), '_seopress_robots_index', true );
 	if ( 'yes' === $_seopress_robots_index ) {
 		return $_seopress_robots_index;
 	}
@@ -794,13 +823,14 @@ function seopress_titles_noindex_bypass() {
 	// init.
 	$seopress_titles_noindex = '';
 	$page_id                 = get_option( 'page_for_posts' );
+	$post_id                 = seopress_get_the_id();
 	if ( is_singular() && true === post_password_required() ) { // if password required, set noindex.
 		$seopress_titles_noindex = 'noindex';
 	} elseif ( seopress_get_service( 'TitleOption' )->getTitleNoIndex() ) {
 		// Global Advanced tab.
 			$seopress_titles_noindex = seopress_get_service( 'TitleOption' )->getTitleNoIndex();
-	} elseif ( is_singular() && seopress_get_service( 'TitleOption' )->getSingleCptNoIndex() ) { // Single CPT Global.
-		$seopress_titles_noindex = seopress_get_service( 'TitleOption' )->getSingleCptNoIndex();
+	} elseif ( is_singular() && seopress_get_service( 'TitleOption' )->getSingleCptNoIndex( $post_id ) ) { // Single CPT Global.
+		$seopress_titles_noindex = seopress_get_service( 'TitleOption' )->getSingleCptNoIndex( $post_id );
 	} elseif ( is_singular() && seopress_titles_noindex_post_option() ) { // Single CPT Metaboxe.
 		$seopress_titles_noindex = seopress_titles_noindex_post_option();
 	} elseif ( is_home() && ! empty( get_post_meta( $page_id, '_seopress_robots_index', true ) ) ) { // BLOG PAGE.
@@ -833,7 +863,7 @@ function seopress_titles_noindex_bypass() {
 	$seopress_titles_noindex = apply_filters( 'seopress_titles_noindex_bypass', $seopress_titles_noindex );
 
 	// remove hreflang if noindex.
-	if ( '1' === $seopress_titles_noindex || true === $seopress_titles_noindex ) {
+	if ( ! empty( $seopress_titles_noindex ) ) {
 		// WPML.
 		add_filter( 'wpml_hreflangs', '__return_false' );
 
@@ -842,6 +872,9 @@ function seopress_titles_noindex_bypass() {
 
 		// TranslatePress.
 		add_filter( 'trp-exclude-hreflang', '__return_true' );
+
+		// GTranslate (paid plans, "Add hreflang tags" option), printed on wp_head priority 1.
+		remove_action( 'wp_head', 'gtranslate_add_hreflang_tags', 1 );
 	}
 	// Return noindex tag.
 	return $seopress_titles_noindex;
@@ -851,7 +884,7 @@ function seopress_titles_noindex_bypass() {
  * Nofollow bypass.
  */
 function seopress_titles_nofollow_post_option() {
-	$_seopress_robots_follow = get_post_meta( get_the_ID(), '_seopress_robots_follow', true );
+	$_seopress_robots_follow = get_post_meta( seopress_get_the_id(), '_seopress_robots_follow', true );
 	if ( 'yes' === $_seopress_robots_follow ) {
 		return $_seopress_robots_follow;
 	}
@@ -864,10 +897,11 @@ function seopress_titles_nofollow_bypass() {
 	// init.
 	$seopress_titles_nofollow = '';
 	$page_id                  = get_option( 'page_for_posts' );
+	$post_id                  = seopress_get_the_id();
 	if ( seopress_get_service( 'TitleOption' )->getTitleNoFollow() ) { // Single CPT Global Advanced tab.
 		$seopress_titles_nofollow = seopress_get_service( 'TitleOption' )->getTitleNoFollow();
-	} elseif ( is_singular() && seopress_get_service( 'TitleOption' )->getSingleCptNoFollow() ) { // Single CPT Global.
-		$seopress_titles_nofollow = seopress_get_service( 'TitleOption' )->getSingleCptNoFollow();
+	} elseif ( is_singular() && seopress_get_service( 'TitleOption' )->getSingleCptNoFollow( $post_id ) ) { // Single CPT Global.
+		$seopress_titles_nofollow = seopress_get_service( 'TitleOption' )->getSingleCptNoFollow( $post_id );
 	} elseif ( is_singular() && seopress_titles_nofollow_post_option() ) { // Single CPT Metaboxe.
 		$seopress_titles_nofollow = seopress_titles_nofollow_post_option();
 	} elseif ( is_home() && ! empty( get_post_meta( $page_id, '_seopress_robots_follow', true ) ) ) { // BLOG PAGE.
@@ -886,29 +920,31 @@ function seopress_titles_nofollow_bypass() {
  */
 function seopress_titles_single_cpt_date_hook() {
 	if ( ! is_front_page() && ! is_home() ) {
-		if ( is_singular() && '1' === seopress_get_service( 'TitleOption' )->getSingleCptDate() ) {
-			$seopress_get_current_pub_post_date = get_the_date( 'c' );
-			$seopress_get_current_up_post_date  = get_the_modified_date( 'c' );
+		$post_id = seopress_get_the_id();
+
+		if ( is_singular() && '1' === seopress_get_service( 'TitleOption' )->getSingleCptDate( $post_id ) ) {
+			$seopress_get_current_pub_post_date = get_the_date( 'c', $post_id );
+			$seopress_get_current_up_post_date  = get_the_modified_date( 'c', $post_id );
 			$html                               = '<meta property="article:published_time" content="' . $seopress_get_current_pub_post_date . '">';
 			$html                              .= "\n";
 
 			$html = apply_filters( 'seopress_titles_article_published_time', $html );
 
-			echo $html;
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 
 			$html  = '<meta property="article:modified_time" content="' . $seopress_get_current_up_post_date . '">';
 			$html .= "\n";
 
 			$html = apply_filters( 'seopress_titles_article_modified_time', $html );
 
-			echo $html;
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 
 			$html  = '<meta property="og:updated_time" content="' . $seopress_get_current_up_post_date . '">';
 			$html .= "\n";
 
 			$html = apply_filters( 'seopress_titles_og_updated_time', $html );
 
-			echo $html;
+			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 	}
 }
@@ -919,7 +955,7 @@ add_action( 'wp_head', 'seopress_titles_single_cpt_date_hook', 1 );
  * Nosnippet post option.
  */
 function seopress_titles_nosnippet_post_option() {
-	$_seopress_robots_snippet = get_post_meta( get_the_ID(), '_seopress_robots_snippet', true );
+	$_seopress_robots_snippet = get_post_meta( seopress_get_the_id(), '_seopress_robots_snippet', true );
 	if ( 'yes' === $_seopress_robots_snippet ) {
 		return $_seopress_robots_snippet;
 	}
@@ -948,7 +984,7 @@ function seopress_titles_nosnippet_bypass() {
  * Noimageindex post option.
  */
 function seopress_titles_noimageindex_post_option() {
-	$_seopress_robots_imageindex = get_post_meta( get_the_ID(), '_seopress_robots_imageindex', true );
+	$_seopress_robots_imageindex = get_post_meta( seopress_get_the_id(), '_seopress_robots_imageindex', true );
 	if ( 'yes' === $_seopress_robots_imageindex ) {
 		return $_seopress_robots_imageindex;
 	}
@@ -1070,7 +1106,7 @@ if ( '0' !== get_option( 'blog_public' ) ) {
 		if ( has_filter( 'seopress_titles_robots' ) ) {
 			$seopress_titles_robots = apply_filters( 'seopress_titles_robots', $seopress_titles_robots );
 		}
-		echo $seopress_titles_robots;
+		echo $seopress_titles_robots; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 	}
 	add_action( 'wp_head', 'seopress_titles_advanced_robots_hook', 1 );
 }
@@ -1110,7 +1146,7 @@ if ( seopress_get_service( 'TitleOption' )->getPagedRel() ) {
  * Canonical post option.
  */
 function seopress_titles_canonical_post_option() {
-	$_seopress_robots_canonical = get_post_meta( get_the_ID(), '_seopress_robots_canonical', true );
+	$_seopress_robots_canonical = get_post_meta( seopress_get_the_id(), '_seopress_robots_canonical', true );
 	if ( '' !== $_seopress_robots_canonical ) {
 		return $_seopress_robots_canonical;
 	}
@@ -1130,7 +1166,17 @@ function seopress_titles_canonical_term_option() {
 	}
 }
 
-if ( function_exists( 'seopress_titles_noindex_bypass' ) && '1' !== seopress_titles_noindex_bypass() && 'yes' !== seopress_titles_noindex_bypass() ) {// Remove Canonical if noindex.
+/**
+ * Noindexed pages omit canonicals by default. Keep that established policy
+ * unless a site explicitly opts in; the override does not change robots.
+ *
+ * Register the filter before wp_head loads this file. The canonical URL still
+ * follows the normal per-post, per-term and default URL rules below.
+ *
+ * @param bool $allow Whether to emit a canonical on a noindexed page. Default false.
+ */
+$seopress_canonical_noindex = function_exists( 'seopress_titles_noindex_bypass' ) ? seopress_titles_noindex_bypass() : null;
+if ( function_exists( 'seopress_titles_noindex_bypass' ) && ( ! in_array( $seopress_canonical_noindex, array( '1', 'yes' ), true ) || apply_filters( 'seopress_titles_canonical_on_noindex', false ) ) ) {
 	$page_id = get_option( 'page_for_posts' );
 	if ( is_singular() && seopress_titles_canonical_post_option() ) { // CUSTOM SINGLE CANONICAL.
 		/**
@@ -1142,7 +1188,7 @@ if ( function_exists( 'seopress_titles_noindex_bypass' ) && '1' !== seopress_tit
 			if ( has_filter( 'seopress_titles_canonical' ) ) {
 				$seopress_titles_canonical = apply_filters( 'seopress_titles_canonical', $seopress_titles_canonical );
 			}
-			echo $seopress_titles_canonical . "\n";
+			echo $seopress_titles_canonical . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 		add_action( 'wp_head', 'seopress_titles_canonical_post_hook', 1 );
 	} elseif ( is_home() && ! empty( get_post_meta( $page_id, '_seopress_robots_canonical', true ) ) ) { // BLOG PAGE.
@@ -1156,7 +1202,7 @@ if ( function_exists( 'seopress_titles_noindex_bypass' ) && '1' !== seopress_tit
 			if ( has_filter( 'seopress_titles_canonical' ) ) {
 				$seopress_titles_canonical = apply_filters( 'seopress_titles_canonical', $seopress_titles_canonical );
 			}
-			echo $seopress_titles_canonical . "\n";
+			echo $seopress_titles_canonical . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 		add_action( 'wp_head', 'seopress_titles_canonical_post_hook', 1, 1 );
 	} elseif ( ( is_tax() || is_category() || is_tag() ) && seopress_titles_canonical_term_option() ) { // CUSTOM TERM CANONICAL.
@@ -1169,7 +1215,7 @@ if ( function_exists( 'seopress_titles_noindex_bypass' ) && '1' !== seopress_tit
 			if ( has_filter( 'seopress_titles_canonical' ) ) {
 				$seopress_titles_canonical = apply_filters( 'seopress_titles_canonical', $seopress_titles_canonical );
 			}
-			echo $seopress_titles_canonical . "\n";
+			echo $seopress_titles_canonical . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 		add_action( 'wp_head', 'seopress_titles_canonical_term_hook', 1 );
 	} elseif ( ! is_404() ) { // DEFAULT CANONICAL.
@@ -1177,16 +1223,15 @@ if ( function_exists( 'seopress_titles_noindex_bypass' ) && '1' !== seopress_tit
 		 * Canonical hook.
 		 */
 		function seopress_titles_canonical_hook() {
-			global $wp;
+			global $wp, $wp_rewrite;
 
 			$current_url = user_trailingslashit( home_url( add_query_arg( array(), $wp->request ) ) );
+			$post_id     = seopress_get_the_id();
+			$wpml_scope  = null;
 			// WPML.
 			if ( class_exists( 'SitePress' ) ) {
-				$my_default_lang = '';
-				$my_current_lang = '';
-				$post_ID         = get_the_ID();
-				$post_type       = get_post_type( $post_ID );
-				$transl_status   = apply_filters( 'wpml_element_translation_type', null, $post_ID, $post_type );
+				$post_type     = get_post_type( $post_id );
+				$transl_status = apply_filters( 'wpml_element_translation_type', null, $post_id, $post_type );
 
 				// wpml_element_translation_type returns: 0 = no translation,
 				// 1 = original, 2 = translation. Only switch to the default
@@ -1195,38 +1240,48 @@ if ( function_exists( 'seopress_titles_noindex_bypass' ) && '1' !== seopress_tit
 				// default-language URL and breaks the canonical of translated
 				// posts.
 				if ( 0 === $transl_status ) {
-					$my_default_lang = apply_filters( 'wpml_default_language', null );
-					$my_current_lang = apply_filters( 'wpml_current_language', null );
-					do_action( 'wpml_switch_language', $my_default_lang );
+					$wpml_scope = seopress_wpml_open_language_switch( apply_filters( 'wpml_default_language', null ) );
 				}
 			}
 
-			if ( is_front_page() && ! is_paged() ) { // Front page with "Your latest posts" setting.
-				$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( home_url( '/' ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-			} elseif ( is_search() ) {
-				$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( get_home_url() . '/search/' . get_search_query() ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-			} elseif ( is_paged() && is_singular() ) {// Paginated pages.
-				$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( get_permalink() ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-			} elseif ( is_paged() ) {
-				$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( $current_url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-			} elseif ( is_singular() ) {
-				$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( get_permalink() ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-			} else {
-				$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( $current_url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
-			}
-
-			// WPML: Then switch back to the current language.
-			if ( class_exists( 'SitePress' ) ) {
-				if ( 0 === $transl_status ) {
-					do_action( 'wpml_switch_language', $my_current_lang );
+			try {
+				if ( is_front_page() && ! is_paged() && 'posts' === get_option( 'show_on_front' ) ) { // Latest posts; static front pages use their filtered permalink below.
+					$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( home_url( '/' ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
+				} elseif ( is_search() ) {
+					$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( get_home_url() . '/search/' . get_search_query() ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
+				} elseif ( is_paged() ) { // Paginated archives, and paginated loops on singular content: each page is its own canonical.
+					// get_pagenum_link() keeps the page number in both permalink styles, but also
+					// the request's query string. Pretty permalinks drop it, as before; plain
+					// permalinks keep only core query vars (?page_id=, ?cat=, ?paged=), not
+					// tracking or third-party parameters.
+					$paged_url   = get_pagenum_link( (int) get_query_var( 'paged' ), false );
+					$paged_query = wp_parse_url( $paged_url, PHP_URL_QUERY );
+					if ( $paged_query ) {
+						$paged_url = strtok( $paged_url, '?' );
+						if ( ! $wp_rewrite->using_permalinks() ) {
+							wp_parse_str( $paged_query, $paged_args );
+							$paged_url = add_query_arg( rawurlencode_deep( array_intersect_key( $paged_args, array_flip( $wp->public_query_vars ) ) ), $paged_url );
+						}
+					}
+					$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( $paged_url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
+				} elseif ( is_singular() ) {
+					$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( (string) get_permalink( $post_id ) ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
+				} else {
+					$seopress_titles_canonical = '<link rel="canonical" href="' . htmlspecialchars( urldecode( $current_url ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) . '">';
 				}
+			} finally {
+				// WPML: close the scope opened above rather than naming the
+				// language we came from. On WPML 5.0 a language code only ever
+				// opens a scope, so restoring by name would open a second one
+				// and leave the site switched for the rest of the page.
+				seopress_wpml_close_language_switch( $wpml_scope );
 			}
 
 			// Hook on post canonical URL - 'seopress_titles_canonical'.
 			if ( has_filter( 'seopress_titles_canonical' ) ) {
 				$seopress_titles_canonical = apply_filters( 'seopress_titles_canonical', $seopress_titles_canonical );
 			}
-			echo $seopress_titles_canonical . "\n";
+			echo $seopress_titles_canonical . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta tag assembled above, its values escaped at build time; third parties filter the whole tag.
 		}
 		add_action( 'wp_head', 'seopress_titles_canonical_hook', 1 );
 	}

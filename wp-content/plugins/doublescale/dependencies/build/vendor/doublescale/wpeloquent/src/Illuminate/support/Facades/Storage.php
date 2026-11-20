@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Filesystem\Filesystem;
+use DoubleScale\Vendor\Illuminate\Filesystem\Filesystem;
 /**
  * @method static \Illuminate\Contracts\Filesystem\Filesystem disk(string $name = null)
  *
  * @see \Illuminate\Filesystem\FilesystemManager
  */
-class Storage extends \Illuminate\Support\Facades\Facade
+class Storage extends Facade
 {
     /**
      * Replace the given disk with a local testing disk.

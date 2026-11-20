@@ -32,7 +32,8 @@ class InitialiseStep implements PipelineStepInterface {
 	 */
 	public function handle( CampaignContext $ctx, callable $next ) {
 		// Sync total contact count with the campaign record.
-		$count      = $ctx->contact_filter->get_contact_count( $ctx->channel, $ctx->filters );
+		// A Campaign Agent's campaign reaches only the contacts they own.
+		$count      = $ctx->contact_filter->get_contact_count( $ctx->channel, $ctx->filters, \DoubleScale\Core\UserRoles\Permissions::campaign_audience_owner( (int) ( $ctx->campaign->created_by ?? 0 ) ) );
 		$ctx->total = $count;
 
 		if ( $ctx->campaign->count !== $count ) {

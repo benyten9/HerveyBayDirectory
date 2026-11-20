@@ -25,9 +25,17 @@ class OverdueInvoices {
 	public function run(): void {
 		$today = current_time( 'Y-m-d' );
 
+		// Nothing to pay is paid, never overdue: settles those sent before
+		// that rule too. A status fix only, so no "paid" event fires.
+		InvoiceModel::query()
+			->whereIn( 'status', array( InvoiceStatus::UNPAID, InvoiceStatus::PARTIALLY_PAID, InvoiceStatus::OVERDUE ) )
+			->where( 'total', '<=', 0 )
+			->update( array( 'status' => InvoiceStatus::PAID ) );
+
 		InvoiceModel::query()
 			->whereIn( 'status', array( InvoiceStatus::UNPAID, InvoiceStatus::PARTIALLY_PAID ) )
 			->where( 'due_date', '<', $today )
+			->where( 'total', '>', 0 )
 			->update( array( 'status' => InvoiceStatus::OVERDUE ) );
 	}
 }

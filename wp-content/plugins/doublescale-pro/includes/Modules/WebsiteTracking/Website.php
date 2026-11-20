@@ -377,7 +377,10 @@ class Website {
 			}
 
 			$tracked = $this->track_page_visit(
-				home_url( $page['path'] ),
+				// The browser kept the whole path (a site in a folder keeps its
+				// folder in it): after the host, not after home_url(), or the
+				// folder comes twice.
+				self::site_origin() . '/' . ltrim( (string) $page['path'], '/' ),
 				$contact
 			);
 
@@ -392,6 +395,11 @@ class Website {
 				$all_tracked = false;
 				break;
 			}
+		}
+
+		if ( headers_sent() ) {
+			// Too late to change the browser's cookie (a page already printing).
+			return;
 		}
 
 		if ( $all_tracked ) {
@@ -413,6 +421,17 @@ class Website {
 				COOKIE_DOMAIN
 			);
 		}
+	}
+
+	/**
+	 * Scheme, host and port of the site, without its folder.
+	 *
+	 * @return string
+	 */
+	private static function site_origin(): string {
+		$home = wp_parse_url( home_url() );
+
+		return ( $home['scheme'] ?? 'http' ) . '://' . ( $home['host'] ?? '' ) . ( isset( $home['port'] ) ? ':' . $home['port'] : '' );
 	}
 
 	/**
@@ -453,18 +472,8 @@ class Website {
 			return;
 		}
 
-		// Check if tracking is enabled from settings
-		$settings          = get_option( 'doublescale_settings', array() );
-		$tracking_settings = isset( $settings['website_tracking'] ) ? $settings['website_tracking'] : array();
-		$enabled_raw       = isset( $tracking_settings['enabled'] ) ? $tracking_settings['enabled'] : true;
-		$enabled           = filter_var( $enabled_raw, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
-		if ( null === $enabled ) {
-			$enabled = (bool) $enabled_raw;
-		}
-
-		// Check if tracking is enabled
-		$tracking_enabled = apply_filters( 'doublescale_website_tracking_enabled', $enabled );
-		if ( ! $tracking_enabled ) {
+		// Check if tracking is enabled (Settings → Website Tracking)
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::website_tracking_enabled() ) {
 			return;
 		}
 
@@ -540,11 +549,9 @@ class Website {
 	public function cleanup_old_page_visits() {
 		 $settings = get_option( 'doublescale_settings', array() );
 
-		// Check if website tracking is enabled
+		// Retention applies only while tracking is on.
 		$tracking_settings = isset( $settings['website_tracking'] ) ? $settings['website_tracking'] : array();
-		$enabled           = isset( $tracking_settings['enabled'] ) ? $tracking_settings['enabled'] : true;
-
-		if ( ! $enabled ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::website_tracking_enabled() ) {
 			return;
 		}
 

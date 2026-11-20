@@ -219,7 +219,7 @@ if (
 	AutomationModuleStorage::is_ready( 'projects', ProjectModel::class )
 	&& AutomationModuleStorage::is_ready( 'custom-fields', CustomFieldModel::class )
 ) {
-	$custom_fields = CustomFieldModel::where( 'scope', 'project' )->get();
+	$custom_fields = CustomFieldModel::cached_for_scope( 'project' );
 }
 
 if ( ! empty( $custom_fields ) ) {

@@ -43,9 +43,11 @@ final class ListPreferencesManager {
 		'email_sequences',
 		'email_campaigns',
 		'sms_campaigns',
+		'whatsapp_campaigns',
 		'forms',
 		'sales_pipeline',
 		'tasks',
+		'projects',
 	);
 
 	/**
@@ -79,7 +81,7 @@ final class ListPreferencesManager {
 			unset( $all['contacts']['filters'] );
 		}
 
-		foreach ( array( 'email_campaigns', 'sms_campaigns' ) as $campaign_list_key ) {
+		foreach ( array( 'email_campaigns', 'sms_campaigns', 'whatsapp_campaigns' ) as $campaign_list_key ) {
 			if ( isset( $all[ $campaign_list_key ]['campaign_filters'] ) ) {
 				unset( $all[ $campaign_list_key ]['campaign_filters'] );
 			}
@@ -116,7 +118,7 @@ final class ListPreferencesManager {
 			unset( $prefs['filters'] );
 		}
 
-		if ( in_array( $list_key, array( 'email_campaigns', 'sms_campaigns' ), true ) ) {
+		if ( in_array( $list_key, array( 'email_campaigns', 'sms_campaigns', 'whatsapp_campaigns' ), true ) ) {
 			unset( $prefs['campaign_filters'] );
 		}
 
@@ -153,7 +155,7 @@ final class ListPreferencesManager {
 			unset( $merged['filters'] );
 		}
 
-		if ( in_array( $list_key, array( 'email_campaigns', 'sms_campaigns' ), true ) ) {
+		if ( in_array( $list_key, array( 'email_campaigns', 'sms_campaigns', 'whatsapp_campaigns' ), true ) ) {
 			unset( $merged['campaign_filters'] );
 		}
 

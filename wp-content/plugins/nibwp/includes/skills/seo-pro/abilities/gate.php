@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-gate', [
     'label'       => __('SEO Pro — Pre-publish Gate', 'nibwp'),
-    'description' => __('Validate a post (or a draft payload) against the SEO checklist before publishing: title/description length, canonical validity, robots sanity, duplicate titles, schema required fields, thin content, missing alt. Returns pass/fail + score + the exact failures. Read-only.', 'nibwp'),
+    'description' => 'Validate a post (or a draft payload) against the SEO checklist before publishing: title/description length, canonical validity, robots sanity, duplicate titles, schema required fields, thin content, missing alt. Returns pass/fail + score + the exact failures. Read-only.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

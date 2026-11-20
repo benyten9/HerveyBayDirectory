@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-redirects', [
     'label'       => __('SEO Pro — Redirects', 'nibwp'),
-    'description' => __('Turn 404s into 301s. Actions: list_404 (recent 404s when a logger is present — SEOPress / Slim SEO / Redirection), suggest (match a 404 path to the most similar existing URL), create (create a redirect via the available redirect backend). create writes and is token-gated.', 'nibwp'),
+    'description' => 'Turn 404s into 301s. Actions: list_404 (recent 404s when a logger is present — SEOPress / Slim SEO / Redirection), suggest (match a 404 path to the most similar existing URL), create (create a redirect via the available redirect backend). create writes and is token-gated.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

@@ -34,6 +34,7 @@ class AttachmentsTable extends Migration {
 			activity_id BIGINT(20) UNSIGNED NULL,
 			user_id BIGINT(20) UNSIGNED NULL,
 			contact_id BIGINT(20) UNSIGNED NULL,
+			company_id BIGINT(20) UNSIGNED NULL,
 			file_name VARCHAR(255) NOT NULL,
 			file_path VARCHAR(500) NOT NULL,
 			file_type VARCHAR(100) NOT NULL DEFAULT '',
@@ -51,6 +52,7 @@ class AttachmentsTable extends Migration {
 			KEY idx_activity_status (activity_id, status),
 			KEY idx_status (status),
 			KEY idx_user (user_id),
-			KEY idx_contact (contact_id)";
+			KEY idx_contact (contact_id),
+			KEY idx_company (company_id)";
 	}
 }

@@ -78,7 +78,7 @@ class RestWooProductController extends RestController {
 	public function get_items_permissions_check( $request ) {
 		unset( $request );
 
-		return Permissions::has_sales_rep_access();
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::has_agent_access();
 	}
 
 	/**

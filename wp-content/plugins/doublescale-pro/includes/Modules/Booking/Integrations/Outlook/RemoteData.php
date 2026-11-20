@@ -12,7 +12,7 @@
 
 namespace DoubleScale\Pro\Modules\Booking\Integrations\Outlook;
 
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Integration\RemoteData as Abstracts_RemoteData;
 
 /**
@@ -20,9 +20,22 @@ use DoubleScale\Modules\Booking\Integration\RemoteData as Abstracts_RemoteData;
  */
 class RemoteData extends Abstracts_RemoteData {
 
+	/**
+	 * Whether this Microsoft account can create Teams meetings.
+	 *
+	 * Returned with HTTP 200 either way, so the admin screen shows the message
+	 * (e.g. "needs a work or school account") instead of a generic failure.
+	 *
+	 * @return array{success: bool, message: string}
+	 */
+	public function check_teams_capabilities() {
+		$response = $this->integration->api->check_teams_capabilities();
 
-
-
+		return array(
+			'success' => ! empty( $response['success'] ),
+			'message' => (string) Arr::get( $response, 'data.message', '' ),
+		);
+	}
 
 	/**
 	 * Fetch Calendars

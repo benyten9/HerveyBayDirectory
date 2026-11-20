@@ -37,8 +37,8 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 		$seopress_thumbnail_size = apply_filters( 'seopress_schemas_post_thumbnail_size', 'large' );
 
 		$products_img = $schema_datas['img'];
-		if ( '' == $products_img && '' != get_the_post_thumbnail_url( get_the_ID(), $seopress_thumbnail_size ) ) {
-			$products_img = get_the_post_thumbnail_url( get_the_ID(), $seopress_thumbnail_size );
+		if ( '' == $products_img && '' != get_the_post_thumbnail_url( seopress_pro_get_the_id(), $seopress_thumbnail_size ) ) {
+			$products_img = get_the_post_thumbnail_url( seopress_pro_get_the_id(), $seopress_thumbnail_size );
 		}
 
 		$products_price = $schema_datas['price'];
@@ -49,20 +49,10 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 
 		$products_price_valid_date = $schema_datas['price_valid_date'];
 
-		// Only derive a date when none was mapped in the settings: the previous else branch
-		// overwrote the user-defined value with the fallback. Google expects ISO 8601
-		// (YYYY-MM-DD) for priceValidUntil, so never emit the US m-d-Y format here.
-		if ( empty( $products_price_valid_date ) ) {
-			$sale_to_date = ( isset( $product ) && method_exists( $product, 'get_date_on_sale_to' ) ) ? $product->get_date_on_sale_to() : null;
-
-			// WooCommerce restores the regular price when a sale ends but keeps the sale end
-			// date on the product, so this date is often already past. Google drops the
-			// product snippet when priceValidUntil is in the past, hence the future check.
-			if ( null !== $sale_to_date && $sale_to_date->getTimestamp() > time() ) {
-				$products_price_valid_date = $sale_to_date->date( 'Y-m-d' );
-			} else {
-				$products_price_valid_date = gmdate( 'Y-12-31', time() + YEAR_IN_SECONDS );
-			}
+		if ( ! empty( $schema_datas['price_valid_date_disabled'] ) ) {
+			$products_price_valid_date = '';
+		} elseif ( empty( $products_price_valid_date ) ) {
+			$products_price_valid_date = seopress_get_wc_schema_sale_end_date( isset( $product ) ? $product : null );
 		} else {
 			$products_price_valid_date = seopress_format_schema_date( $products_price_valid_date );
 		}
@@ -172,7 +162,7 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 			);
 		}
 
-		if ( isset( $product ) && true === comments_open( get_the_ID() ) ) { // If Reviews is true.
+		if ( isset( $product ) && true === comments_open( seopress_pro_get_the_id() ) ) { // If Reviews is true.
 			// Review.
 			$args = array(
 				'meta_key'    => 'rating',
@@ -182,7 +172,7 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 				'parent'      => 0,
 				'orderby'     => 'meta_value_num',
 				'order'       => 'DESC',
-				'post_id'     => get_the_ID(),
+				'post_id'     => seopress_pro_get_the_id(),
 				'post_type'   => 'product',
 			);
 
@@ -303,17 +293,11 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 				}
 
 				$variation_price_valid_date = '';
-				$variation_sale_to_date     = ( isset( $variation ) && method_exists( $variation, 'get_date_on_sale_to' ) ) ? $variation->get_date_on_sale_to() : null;
-
-				// Skip a sale end date that has already passed: WooCommerce keeps it on the
-				// variation after the sale ends, and Google drops the snippet when
-				// priceValidUntil is in the past.
-				if ( null !== $variation_sale_to_date && $variation_sale_to_date->getTimestamp() > time() ) {
-					$variation_price_valid_date = $variation_sale_to_date->date( 'Y-m-d' );
-				} elseif ( ! empty( $schema_datas['price_valid_date'] ) ) {
-					$variation_price_valid_date = seopress_format_schema_date( $schema_datas['price_valid_date'] );
-				} else {
-					$variation_price_valid_date = gmdate( 'Y-12-31', time() + YEAR_IN_SECONDS );
+				if ( empty( $schema_datas['price_valid_date_disabled'] ) ) {
+					$variation_price_valid_date = seopress_get_wc_schema_sale_end_date( $variation );
+					if ( '' === $variation_price_valid_date && ! empty( $schema_datas['price_valid_date'] ) ) {
+						$variation_price_valid_date = seopress_format_schema_date( $schema_datas['price_valid_date'] );
+					}
 				}
 
 				if ( ! empty( $product_global_ids ) && 'none' === $product_global_ids ) {
@@ -368,8 +352,11 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 					'priceCurrency'   => $products_currency,
 					'itemCondition'   => $products_condition,
 					'availability'    => $availability,
-					'priceValidUntil' => $variation_price_valid_date,
 				);
+
+				if ( '' !== $variation_price_valid_date ) {
+					$offer['priceValidUntil'] = $variation_price_valid_date;
+				}
 
 				// The variation price above follows the shop tax display setting, so the list
 				// price must be converted the same way to stay comparable.
@@ -418,13 +405,16 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 		} elseif ( '' != $products_price ) {
 			$json['offers'] = array(
 				'@type'           => 'Offer',
-				'url'             => get_permalink(),
+				'url'             => get_permalink( seopress_pro_get_the_id() ),
 				'priceCurrency'   => $products_currency,
 				'price'           => is_float( $products_price ) ? number_format( $products_price, 2, '.', '' ) : $products_price,
-				'priceValidUntil' => $products_price_valid_date,
 				'itemCondition'   => $products_condition,
 				'availability'    => $products_availability,
 			);
+
+			if ( '' !== $products_price_valid_date ) {
+				$json['offers']['priceValidUntil'] = $products_price_valid_date;
+			}
 
 			// Expose the strikethrough regular price when the product is discounted. The offer
 			// price here is the raw active price, so the list price is left raw too.
@@ -463,7 +453,7 @@ function seopress_automatic_rich_snippets_products_option( $schema_datas ) {
 
 		$json = apply_filters( 'seopress_schemas_auto_product_html', $json );
 
-		echo $json;
+		echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties.
 	}
 }
 
@@ -605,8 +595,8 @@ function seopress_maybe_convert_to_product_group( $json, $wc_product, $variation
 		}
 
 		foreach ( seopress_get_wc_variant_attributes( $variation ) as $property => $value ) {
-			$variant[ $property ]   = $value;
-			$varies_by[ $property ] = true;
+			$variant[ $property ]     = $value;
+			$varies_by[ $property ][] = $value;
 		}
 
 		$variant['offers'] = $variation_offer['offer'];
@@ -627,6 +617,11 @@ function seopress_maybe_convert_to_product_group( $json, $wc_product, $variation
 		$group_id = (string) $wc_product->get_id();
 	}
 	$json['productGroupID'] = $group_id;
+
+	// Count only values carried by the variants actually emitted above.
+	$varies_by = array_filter( $varies_by, function ( $values ) {
+		return count( array_unique( $values ) ) > 1;
+	} );
 
 	if ( ! empty( $varies_by ) ) {
 		$json['variesBy'] = array_map(
@@ -746,13 +741,16 @@ function seopress_get_out_of_stock_offer_schema( $wc_product, $currency, $condit
 
 	$offer = array(
 		'@type'           => 'Offer',
-		'url'             => get_permalink(),
+		'url'             => get_permalink( seopress_pro_get_the_id() ),
 		'priceCurrency'   => $currency,
 		'price'           => is_float( $price ) ? number_format( $price, 2, '.', '' ) : $price,
-		'priceValidUntil' => $price_valid_date,
 		'itemCondition'   => $condition,
 		'availability'    => seopress_check_ssl() . 'schema.org/' . $availability,
 	);
+
+	if ( '' !== $price_valid_date ) {
+		$offer['priceValidUntil'] = $price_valid_date;
+	}
 
 	$shipping_details = seopress_get_shipping_schema( $wc_product );
 	if ( ! empty( $shipping_details ) ) {
@@ -1040,19 +1038,65 @@ function seopress_get_shipping_schema( $wc_product ) {
 
 	// Cache computed shipping offers by shipping class (request-level).
 	static $shipping_offers_cache = array();
-	$cache_key                    = sprintf( '%d|%s', $shipping_class_id, (string) $currency );
+	// The signature carries everything the published rate depends on. It used
+	// to be the shipping class and the currency only, while the value also
+	// depended on the tax configuration, so a setting change was served from
+	// the cache for an hour.
+	$cache_key = sprintf(
+		'%d|%s|%s',
+		$shipping_class_id,
+		(string) $currency,
+		\SEOPressPro\Helpers\WooCommerceShipping::cache_signature( $wc_product )
+	);
 	if ( isset( $shipping_offers_cache[ $cache_key ] ) ) {
 		return $shipping_offers_cache[ $cache_key ];
 	}
 
-	// Persist cache if an object cache is available.
-	$object_cache_key = 'wc_shipping_details_' . md5( $cache_key );
+	// Persist cache if an object cache is available. The plugin version is part of the hash so
+	// offers cached by a previous release are not served after an update.
+	$object_cache_key = 'wc_shipping_details_' . md5( $cache_key . '|' . SEOPRESS_PRO_VERSION );
 	$cached           = wp_cache_get( $object_cache_key, 'seopress_pro' );
 	if ( is_array( $cached ) ) {
 		$shipping_offers_cache[ $cache_key ] = $cached;
 		return $cached;
 	}
 
+	// The offers before the filter, kept across requests: computing them looks
+	// up the tax rate of every destination of every zone.
+	$shipping_offers = \SEOPressPro\Helpers\WooCommerceShipping::get_cached_offers( 'auto|' . $cache_key );
+
+	if ( null === $shipping_offers ) {
+		$shipping_offers = seopress_pro_compute_wc_shipping_offers( $wc_product, $currency );
+		\SEOPressPro\Helpers\WooCommerceShipping::set_cached_offers( 'auto|' . $cache_key, $shipping_offers );
+	}
+
+	/**
+	 * Filter the generated WooCommerce shippingDetails schema.
+	 *
+	 * @since 9.5.0
+	 *
+	 * @param array      $shipping_offers ShippingDetails schema array.
+	 * @param WC_Product $wc_product      The current WooCommerce product.
+	 */
+	$shipping_offers = apply_filters( 'seopress_pro_wc_schema_shipping_details', $shipping_offers, $wc_product );
+
+	$shipping_offers_cache[ $cache_key ] = $shipping_offers;
+	wp_cache_set( $object_cache_key, $shipping_offers, 'seopress_pro', HOUR_IN_SECONDS );
+
+	return $shipping_offers;
+}
+
+/**
+ * One OfferShippingDetails per rate group, method and zone.
+ *
+ * @since 10.4.0
+ *
+ * @param WC_Product $wc_product The product being shipped.
+ * @param string     $currency   The shop currency.
+ *
+ * @return array
+ */
+function seopress_pro_compute_wc_shipping_offers( $wc_product, $currency ) {
 	// Create an offer for each rate in each zone.
 	$shipping_offers = array();
 
@@ -1074,48 +1118,46 @@ function seopress_get_shipping_schema( $wc_product ) {
 		foreach ( $zone['shipping_methods'] as $method ) {
 			// WC_Shipping_Zones::get_zones() returns every method, enabled or not. Publishing a
 			// disabled rate advertises a shipping cost the customer can never be charged.
-			if ( method_exists( $method, 'is_enabled' ) && ! $method->is_enabled() ) {
+			if ( ! \SEOPressPro\Helpers\WooCommerceShipping::is_delivery_method( $method ) ) {
 				continue;
 			}
 
-			$instance = $method->instance_settings;
+			// One zone is one list of locations, not one tax rate: a shop with
+			// per country rates charges a different amount to each country in
+			// it. Destinations landing on the same amount stay together, so a
+			// shop with a single rate emits exactly what it did before.
+			$rate_groups = \SEOPressPro\Helpers\WooCommerceShipping::group_by_amount( $method, $wc_product, $zone_shipping_destination );
 
-			// Free Shipping methods have no cost; min_amount is the order threshold, not the price.
-			if ( 'free_shipping' === $method->id ) {
-				$cost = 0;
-			} else {
-				$cost = isset( $instance['cost'] ) ? (float) $instance['cost'] : 0;
+			foreach ( $rate_groups as $rate_group ) {
+				$shipping_offers[] = array(
+					'@type'               => 'OfferShippingDetails',
+					'shippingDestination' => $rate_group['destinations'],
+					'shippingRate'        => array(
+						'@type'    => 'MonetaryAmount',
+						'value'    => $rate_group['amount'],
+						'currency' => $currency,
+					),
+				);
 			}
-			if ( $shipping_class_id && isset( $instance['type'] ) && 'class' === $instance['type'] ) {
-				$cost_key = 'class_cost_' . (int) $shipping_class_id;
-				if ( ! empty( $instance[ $cost_key ] ) ) {
-					$cost += (float) $instance[ $cost_key ];
-				}
-			}
-			$shipping_offers[] = array(
-				'@type'               => 'OfferShippingDetails',
-				'shippingDestination' => $zone_shipping_destination,
-				'shippingRate'        => array(
-					'@type'    => 'MonetaryAmount',
-					'value'    => $cost,
-					'currency' => $currency,
-				),
-			);
 		}
 	}
 
-	/**
-	 * Filter the generated WooCommerce shippingDetails schema.
-	 *
-	 * @since 9.5.0
-	 *
-	 * @param array      $shipping_offers ShippingDetails schema array.
-	 * @param WC_Product $wc_product      The current WooCommerce product.
-	 */
-	$shipping_offers = apply_filters( 'seopress_pro_wc_schema_shipping_details', $shipping_offers, $wc_product );
-
-	$shipping_offers_cache[ $cache_key ] = $shipping_offers;
-	wp_cache_set( $object_cache_key, $shipping_offers, 'seopress_pro', HOUR_IN_SECONDS );
-
 	return $shipping_offers;
+}
+
+/**
+ * Return a real expiry for the currently active sale, never an invented date.
+ *
+ * @param object|null $wc_product WooCommerce product or variation.
+ * @return string ISO date, or an empty string when the current price has no expiry.
+ */
+function seopress_get_wc_schema_sale_end_date( $wc_product ) {
+	if ( ! is_object( $wc_product ) || ! method_exists( $wc_product, 'is_on_sale' ) || ! $wc_product->is_on_sale()
+		|| ! method_exists( $wc_product, 'get_sale_price' ) || '' === $wc_product->get_sale_price()
+		|| ! method_exists( $wc_product, 'get_date_on_sale_to' ) ) {
+		return '';
+	}
+
+	$date = $wc_product->get_date_on_sale_to();
+	return $date && $date->getTimestamp() > time() ? $date->date( 'Y-m-d' ) : '';
 }

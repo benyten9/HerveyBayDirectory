@@ -80,27 +80,81 @@ class FormUtils {
 	public function prepare_entry( $entry ) {
 		$fields = array();
 		foreach ( $this->form_records_info['fields'] as $field_id => $field ) {
-			if ( isset( $entry->records['fields'][ $field_id ] ) ) {
-				switch ( $field['name'] ) {
-					case 'date':
-						$field_raw_value     = $field['block_type']->get_readable_value( $entry->records['fields'][ $field_id ]['value'], $this->form_data, 'raw' );
-						$fields[ $field_id ] = $field_raw_value;
+			$fields[ $field_id ] = null;
 
-						$field_utc_datetime                  = \DateTime::createFromFormat( 'Y-m-d', $field_raw_value, new \DateTimeZone( 'UTC' ) )->setTime( 0, 0, 0 );
-						$fields[ "{$field_id}_utc_iso8601" ] = $field_utc_datetime->format( 'c' );
-						$fields[ "{$field_id}_unix" ]        = $field_utc_datetime->getTimestamp();
-						break;
-					default:
-						$fields[ $field_id ] = $field['block_type']->get_readable_value( $entry->records['fields'][ $field_id ]['value'], $this->form_data, 'plain' );
+			if ( ! isset( $entry->records['fields'][ $field_id ] ) ) {
+				continue;
+			}
+
+			// One field's odd value must never break the visitor's submission:
+			// this runs inside Quill Forms' "entry processed" hook.
+			try {
+				if ( 'date' === $field['name'] ) {
+					$raw    = $field['block_type']->get_readable_value( $entry->records['fields'][ $field_id ]['value'], $this->form_data, 'raw' );
+					$fields = array_merge( $fields, self::date_values( $field_id, $raw ) );
+					continue;
 				}
-			} else {
-				$fields[ $field_id ] = null;
+
+				$fields[ $field_id ] = $field['block_type']->get_readable_value( $entry->records['fields'][ $field_id ]['value'], $this->form_data, 'plain' );
+			} catch ( \Throwable $e ) {
+				doublescale_get_logger()->error(
+					'Quill Forms: could not read a field of the submission',
+					array(
+						'code'     => 'quillforms_field_read_failed',
+						'form_id'  => $this->form_id,
+						'field_id' => $field_id,
+						'error'    => $e->getMessage(),
+					)
+				);
 			}
 		}
 
 		return array(
 			'fields' => $fields,
 		);
+	}
+
+	/**
+	 * A date answer as DoubleScale exposes it: the date itself plus its ISO 8601 and Unix forms.
+	 *
+	 * Quill Forms stores a date as Y-m-d, but an optional date that was cleared (or sent by an
+	 * API or import) is an empty or malformed string: that is "no answer", not an error.
+	 *
+	 * @param string $field_id Field (block) id.
+	 * @param mixed  $raw      The stored value.
+	 * @return array<string, mixed>
+	 */
+	public static function date_values( $field_id, $raw ) {
+		$empty = array(
+			$field_id                 => null,
+			"{$field_id}_utc_iso8601" => null,
+			"{$field_id}_unix"        => null,
+		);
+
+		if ( ! is_string( $raw ) || '' === trim( $raw ) ) {
+			return $empty;
+		}
+
+		$date = \DateTime::createFromFormat( '!Y-m-d', trim( $raw ), new \DateTimeZone( 'UTC' ) );
+		if ( ! $date ) {
+			return $empty;
+		}
+
+		return array(
+			$field_id                 => $date->format( 'Y-m-d' ),
+			"{$field_id}_utc_iso8601" => $date->format( 'c' ),
+			"{$field_id}_unix"        => $date->getTimestamp(),
+		);
+	}
+
+	/**
+	 * A field's block attributes (label, choices, yes/no labels…).
+	 *
+	 * @param string $field_id Block id.
+	 * @return array
+	 */
+	public function get_field_attributes( $field_id ) {
+		return $this->form_records_info['fields'][ $field_id ]['attributes'] ?? array();
 	}
 
 	/**
@@ -116,7 +170,7 @@ class FormUtils {
 			$field_label = $field['label'];
 			if ( empty( $field_label ) && null !== $field_label ) {
 				$field_label = sprintf( /* translators: %d - field ID. */
-					esc_html__( 'Field ID #%s', 'doublescale'),
+					esc_html__( 'Field ID #%s', 'doublescale' ),
 					$field_id
 				);
 			}
@@ -153,7 +207,7 @@ class FormUtils {
 			}
 			$this->form_records_info['fields'][ $block_data['id'] ] = array(
 				'name'       => $block_data['name'],
-				'label'      => $block_data['attributes']['label'],
+				'label'      => $block_data['attributes']['label'] ?? '',
 				'attributes' => $block_data['attributes'],
 				'block_type' => $block_type,
 			);

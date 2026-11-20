@@ -1,11 +1,11 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
-use Illuminate\Support\Collection;
-use Illuminate\Database\Migrations\Migrator;
+use DoubleScale\Vendor\Illuminate\Support\Collection;
+use DoubleScale\Vendor\Illuminate\Database\Migrations\Migrator;
 use DoubleScale\Vendor\Symfony\Component\Console\Input\InputOption;
-class StatusCommand extends \Illuminate\Database\Console\Migrations\BaseCommand
+class StatusCommand extends BaseCommand
 {
     /**
      * The console command name.

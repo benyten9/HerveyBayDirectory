@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Cache;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Cache;
 
 use Closure;
 use DoubleScale\Vendor\Psr\SimpleCache\CacheInterface;

@@ -146,9 +146,10 @@ class Ajax extends \Perfmatters\Ajax
 
 			//doc block
 	        $doc_block_string = PMCS::get_doc_block($snippet['meta']);
+	        $stored_code = PhpGuard::wrap($snippet['code'], $snippet['meta']['type'] ?? 'php');
 
 	        //save file content
-	       	if(file_put_contents($file, $doc_block_string . $snippet['code']) === false) {
+	       	if(file_put_contents($file, $doc_block_string . $stored_code) === false) {
 	       		continue;
 	       	}
 
@@ -171,6 +172,7 @@ class Ajax extends \Perfmatters\Ajax
 
 		wp_send_json_success(array(
 	    	'message' => sprintf(
+			    /* translators: %d: number of imported snippets */
 			    _n(
 		    		'Successfully imported %d Perfmatters code snippet.',
 			        'Successfully imported %d Perfmatters code snippets.',
@@ -260,8 +262,10 @@ class Ajax extends \Perfmatters\Ajax
 			} 
 			else {
 				$format = implode(', ', array_fill(0, count($post_status), '%s'));
-				$query = sprintf("SELECT ID, post_title from $wpdb->posts where post_type = '%s' AND post_status IN(%s) ORDER BY post_title", $type, $format);
-				$posts = $wpdb->get_results($wpdb->prepare($query, $post_status));
+				$posts = $wpdb->get_results($wpdb->prepare(
+					"SELECT ID, post_title FROM $wpdb->posts WHERE post_type = %s AND post_status IN($format) ORDER BY post_title",
+					array_merge(array($type), $post_status)
+				));
 			}
 
 			foreach($posts as $post) {

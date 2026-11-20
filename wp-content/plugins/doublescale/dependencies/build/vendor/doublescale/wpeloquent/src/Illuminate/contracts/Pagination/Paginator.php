@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Pagination;
 
 interface Paginator
 {

@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * Lists class
@@ -85,12 +85,13 @@ class Lists extends Filter {
 	 */
 	public function get_operators() {
 		return array(
-			'is'               => __( 'Matches', 'doublescale' ),
-			'is_not'           => __( 'Does not match', 'doublescale' ),
-			'contains'         => __( 'Has', 'doublescale' ),
-			'does_not_contain' => __( 'Does not have', 'doublescale' ),
-			'is_empty'         => __( 'Is empty', 'doublescale' ),
-			'is_not_empty'     => __( 'Is not empty', 'doublescale' ),
+			'is'                => __( 'Matches', 'doublescale' ),
+			'is_not'            => __( 'Does not match', 'doublescale' ),
+			'contains'          => __( 'Has', 'doublescale' ),
+			'does_not_contain'  => __( 'Does not have', 'doublescale' ),
+			'is_empty'          => __( 'Is empty', 'doublescale' ),
+			'is_not_empty'      => __( 'Is not empty', 'doublescale' ),
+			'unsubscribed_from' => __( 'Unsubscribed from', 'doublescale' ),
 		);
 	}
 
@@ -178,6 +179,17 @@ class Lists extends Filter {
 					'lists',
 					function ( $query ) use ( $pivot_status ) {
 						$query->where( $pivot_status, 'subscribed' );
+					}
+				);
+				break;
+			case 'unsubscribed_from':
+				// Still on the list, but no longer subscribed to it: the
+				// members "Has" leaves out, so the two add up to the list's count.
+				$query->whereHas(
+					'lists',
+					function ( $query ) use ( $value, $pivot_status ) {
+						$query->whereIn( $query->getModel()->getTable() . '.id', $value )
+							->where( $pivot_status, '!=', 'subscribed' );
 					}
 				);
 				break;

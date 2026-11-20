@@ -17,11 +17,26 @@ use WP_Error;
 use Directorist\AddListingForm\SubmissionController;
 use Directorist\Helper;
 use Directorist\Repositories\ListingRepository;
+use Directorist\Listing_Visibility;
 
 /**
  * Listings controller class.
  */
 class Listings_Controller extends Posts_Controller {
+    /**
+     * Keep missing and protected listing metadata indistinguishable.
+     *
+     * @param WP_REST_Request $request Native request.
+     * @return bool|WP_Error
+     */
+    public function get_item_permissions_check( $request ) {
+        $post = get_post( (int) $request['id'] );
+        if ( ! Listing_Visibility::can_read_rest( $post, $request ) ) {
+            return Listing_Visibility::unavailable();
+        }
+        return parent::get_item_permissions_check( $request );
+    }
+
     /**
      * Route base.
      *
@@ -144,6 +159,14 @@ class Listings_Controller extends Posts_Controller {
             return $status;
         }
 
+        // Preserve the existing restriction on hiding a listing awaiting approval.
+        $post_type = get_post_type_object( $this->post_type );
+        if ( 'private' === $status && 'pending' === $listing->post_status
+            && ( ! $post_type || ! current_user_can( $post_type->cap->edit_others_posts ) )
+        ) {
+            return new WP_Error( 'directorist_rest_cannot_publish', __( 'This listing requires administrator approval.', 'directorist' ), [ 'status' => 403 ] );
+        }
+
         $post_type_object = get_post_type_object( $this->post_type );
 
         if ( ! $post_type_object || ! current_user_can( $post_type_object->cap->publish_posts ) ) {
@@ -165,6 +188,10 @@ class Listings_Controller extends Posts_Controller {
      */
     public function get_items( $request ) {
         $query_args = $this->prepare_objects_query( $request );
+        $query_args = $this->prepare_visibility_query( $query_args, $request );
+        if ( is_wp_error( $query_args ) ) {
+            return $query_args;
+        }
 
         do_action( 'directorist_rest_before_query', 'get_listing_items', $request, $query_args );
 
@@ -172,11 +199,17 @@ class Listings_Controller extends Posts_Controller {
 
         $objects = array();
         foreach ( $query_results['objects'] as $object ) {
+            if ( ! Listing_Visibility::can_read_rest( $object, $request ) ) {
+                continue;
+            }
             if ( ! $this->check_post_permissions( $this->post_type, 'read', $object->ID ) ) {
                 continue;
             }
 
             $data = $this->prepare_item_for_response( $object, $request );
+            if ( is_wp_error( $data ) ) {
+                continue;
+            }
             $objects[] = $this->prepare_response_for_collection( $data );
         }
 
@@ -208,6 +241,26 @@ class Listings_Controller extends Posts_Controller {
         $response = apply_filters( 'directorist_rest_response', $response, 'get_listing_items', $request, $query_args );
 
         return $response;
+    }
+
+    /** Preserve native administrative filters without widening public collections. */
+    protected function prepare_visibility_query( $args, $request ) {
+        if ( 'publish' === $request['status'] && 'edit' !== $request['context'] ) {
+            return Listing_Visibility::query_args( $args, false );
+        }
+        $type = get_post_type_object( $this->post_type );
+        if ( ! is_user_logged_in() || ! $type || ! current_user_can( $type->cap->edit_posts ) || empty( $args['post_status'] ) ) {
+            return new WP_Error( 'directorist_rest_cannot_view', __( 'You are not allowed to read listings with this filter.', 'directorist' ), [ 'status' => rest_authorization_required_code() ] );
+        }
+        // Scope before SQL pagination and totals. An owner cannot enumerate
+        // other authors' unpublished listings by changing the status parameter.
+        if ( ! current_user_can( $type->cap->edit_others_posts ) || ( in_array( $args['post_status'], [ 'private', 'any' ], true ) && ! current_user_can( $type->cap->read_private_posts ) ) ) {
+            if ( ! empty( $args['author'] ) && array_diff( wp_parse_id_list( $args['author'] ), [ get_current_user_id() ] ) ) {
+                return new WP_Error( 'directorist_rest_cannot_view', __( 'You are not allowed to read these listings.', 'directorist' ), [ 'status' => 403 ] );
+            }
+            $args['author'] = get_current_user_id();
+        }
+        return $args;
     }
 
     protected function get_listings( $query_args ) {
@@ -899,6 +952,9 @@ class Listings_Controller extends Posts_Controller {
      */
     public function get_item( $request ) {
         $id = (int) $request['id'];
+        if ( ! Listing_Visibility::can_read_rest( $id, $request ) ) {
+            return Listing_Visibility::unavailable();
+        }
 
         do_action( 'directorist_rest_before_query', 'get_listing_item', $request, $id );
 
@@ -923,6 +979,11 @@ class Listings_Controller extends Posts_Controller {
     }
 
     public function update_status( WP_REST_Request $request ) {
+        $permission = $this->update_status_permissions_check( $request );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $id     = (int) $request->get_param( 'id' );
         $status = $this->validate_status_for_update( $request->get_param( 'status' ) );
 
@@ -936,6 +997,8 @@ class Listings_Controller extends Posts_Controller {
             return $listing;
         }
 
+        $status = directorist_resolve_listing_status( $status, 0, $id, true );
+
         do_action( 'directorist_before_update_listing_status', $id, $status );
 
         $repository = new ListingRepository();
@@ -944,7 +1007,8 @@ class Listings_Controller extends Posts_Controller {
 
         return rest_ensure_response(
             [
-                'message' => esc_html__( 'The listing status was updated successfully', 'directorist' )
+                'message' => esc_html__( 'The listing status was updated successfully', 'directorist' ),
+                'status'  => get_post_status( $id ),
             ]
         );
     }
@@ -998,6 +1062,9 @@ class Listings_Controller extends Posts_Controller {
      * @return WP_REST_Response
      */
     public function prepare_item_for_response( $object, $request ) {
+        if ( in_array( $request->get_method(), [ 'GET', 'HEAD' ], true ) && ! Listing_Visibility::can_read_rest( $object, $request ) ) {
+            return Listing_Visibility::unavailable();
+        }
         $context       = ! empty( $request['context'] ) ? $request['context'] : 'view';
         $this->request = $request;
         $data          = $this->get_listing_data( $object, $request, $context );
@@ -1215,9 +1282,15 @@ class Listings_Controller extends Posts_Controller {
                     break;
                 case 'email':
                     $base_data['email'] = get_post_meta( $listing->ID, '_email', true );
+                    if ( 'view' === $context ) {
+                        $base_data['email'] = directorist_contact_email_for_display( $base_data['email'] );
+                    }
                     break;
                 case 'website':
                     $base_data['website'] = get_post_meta( $listing->ID, '_website', true );
+                    if ( 'view' === $context ) {
+                        $base_data['website'] = directorist_contact_url_for_display( $base_data['website'] );
+                    }
                     break;
                 case 'social_links':
                     $base_data['social_links'] = $this->get_listing_social_links( $listing->ID );
@@ -1298,7 +1371,7 @@ class Listings_Controller extends Posts_Controller {
             }
             $data[] = array(
                 'id' => $link['id'],
-                'url' => $link['url']
+                'url' => directorist_contact_url_for_display( $link['url'] )
             );
         }
 
@@ -1499,6 +1572,10 @@ class Listings_Controller extends Posts_Controller {
                     'description' => __( 'Email address.', 'directorist' ),
                     'type'        => 'string',
                     'format'      => 'email',
+                    'arg_options' => array(
+                        'validate_callback' => 'directorist_validate_listing_email_rest_arg',
+                        'sanitize_callback' => 'directorist_normalize_contact_value',
+                    ),
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'website'                => array(

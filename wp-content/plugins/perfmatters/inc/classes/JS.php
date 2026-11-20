@@ -64,11 +64,17 @@ class JS
 	//optimize js
 	public static function optimize($html)
 	{
-		//strip comments before search
-		$html_no_comments = preg_replace('/<!--(.*)-->/Uis', '', $html);
+		//strip comments before search, but leave script tags intact
+		$html_no_comments = preg_replace_callback(
+			'#(<script\b[^>]*>)((?:[^<]++|<(?!\/script\b))*+)(</script>)|<!--.*?-->#is',
+			function($match) {
+				return !empty($match[1]) ? $match[1] . $match[2] . $match[3] : '';
+			},
+			$html
+		);
 
 		//match all script tags
-		preg_match_all('#(<script\s?([^>]+)?\/?>)(.*?)<\/script>#is', $html_no_comments, $matches);
+		preg_match_all('#(<script\b([^>]*)>)((?:[^<]++|<(?!\/script\b))*+)<\/script>#is', $html_no_comments, $matches);
 
 		//no script tags found
 		if(!isset($matches[0])) {

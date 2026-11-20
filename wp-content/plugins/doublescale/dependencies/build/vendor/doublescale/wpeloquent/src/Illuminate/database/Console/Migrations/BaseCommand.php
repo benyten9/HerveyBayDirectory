@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
-use Illuminate\Console\Command;
+use DoubleScale\Vendor\Illuminate\Console\Command;
 class BaseCommand extends Command
 {
     /**

@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 use DoubleScale\Modules\Contacts\Filters\Traits\TimeframeContactFilter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * WasActiveInactive class
@@ -130,13 +130,10 @@ class WasActiveInactive extends Filter {
 		$table_page_visits      = $wpdb->prefix . 'doublescale_page_visits';
 		$table_contacts         = $wpdb->prefix . 'doublescale_contacts';
 
-		// Defense-in-depth: only sum from tables that exist. Pro-owned tables
-		// (`form_submissions`, `page_visits`) may be missing on Free-standalone
-		// installs or when their owning modules never bootstrapped.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- one-shot existence check; caching would mask DDL state.
-		$has_form_submissions = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_form_submissions ) ) === $table_form_submissions;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- one-shot existence check; caching would mask DDL state.
-		$has_page_visits = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_page_visits ) ) === $table_page_visits;
+		// Other modules' data, counted only while it can be read: form
+		// submissions (Forms) and page visits (Pro's WebsiteTracking).
+		$has_form_submissions = doublescale_module_data_ready( 'forms' );
+		$has_page_visits      = doublescale_module_data_ready( 'websitetracking' );
 
 		$contact_link_sql = \DoubleScale\Modules\Activities\Models\ActivityAssociationModel::sql_activity_linked_to_contact_exists(
 			'a.id',

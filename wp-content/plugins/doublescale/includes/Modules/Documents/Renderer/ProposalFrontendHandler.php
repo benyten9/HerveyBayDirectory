@@ -104,7 +104,7 @@ final class ProposalFrontendHandler {
 		wp_localize_script( $handle, 'doublescale_proposal_config', $config );
 
 		$business = class_exists( \DoubleScale\Modules\Documents\Services\DocumentPdf::class )
-			? \DoubleScale\Modules\Documents\Services\DocumentPdf::resolved_business_settings()
+			? \DoubleScale\Modules\Documents\Services\DocumentPdf::branding_config()
 			: array(
 				'business_name'    => '',
 				'business_address' => '',

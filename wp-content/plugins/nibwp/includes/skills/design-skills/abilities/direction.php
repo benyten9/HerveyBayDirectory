@@ -21,11 +21,8 @@ require_once __DIR__ . '/../lib/catalogue.php';
 require_once __DIR__ . '/../lib/store.php';
 
 wp_register_ability('nibwp/design-direction', [
-    'label' => __('Design Direction', domain: 'nibwp'),
-    'description' => __(
-        'Decides how a page should look on THIS site before anything is built: color roles with contrast already validated, a type pairing, spacing rhythm, shape language, the layout pattern for this kind of page, and the specific generic defaults to refuse. Reads the site first — ACSS variables, theme.json, the logo — and only falls back to a design catalogue for what the site does not say. Call this before building any page or section, then build to what it returns.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Design Direction', 'nibwp'),
+    'description' => 'Decides how a page should look on THIS site before anything is built: color roles with contrast already validated, a type pairing, spacing rhythm, shape language, the layout pattern for this kind of page, and the specific generic defaults to refuse. Reads the site first — ACSS variables, theme.json, the logo — and only falls back to a design catalogue for what the site does not say. Call this before building any page or section, then build to what it returns.',
     'category' => 'design',
     'input_schema' => [
         'type' => 'object',

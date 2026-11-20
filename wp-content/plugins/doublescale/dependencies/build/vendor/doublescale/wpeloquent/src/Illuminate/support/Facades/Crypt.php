@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static bool supported(string $key, string $cipher)
@@ -13,7 +13,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Encryption\Encrypter
  */
-class Crypt extends \Illuminate\Support\Facades\Facade
+class Crypt extends Facade
 {
     /**
      * Get the registered name of the component.

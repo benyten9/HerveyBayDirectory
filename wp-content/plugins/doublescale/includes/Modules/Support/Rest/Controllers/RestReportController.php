@@ -23,6 +23,7 @@ namespace DoubleScale\Modules\Support\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
@@ -30,6 +31,7 @@ use DoubleScale\Modules\Support\Constants\TicketPriority;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
 use DoubleScale\Modules\Support\Models\MailboxModel;
 use DoubleScale\Modules\Support\Models\TicketModel;
+use DoubleScale\Modules\Support\Services\ServiceTargets;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -58,6 +60,10 @@ class RestReportController extends RestController {
 			'breakdown' => 'get_breakdown',
 			'agents'    => 'get_agents',
 			'mailboxes' => 'get_mailboxes',
+			// Customer ratings kept on tickets (email and chat; Pro asks for them).
+			'satisfaction' => 'get_satisfaction',
+			// On time against the service targets (first reply, solved).
+			'sla'          => 'get_sla',
 		);
 
 		foreach ( $routes as $suffix => $callback ) {
@@ -93,6 +99,24 @@ class RestReportController extends RestController {
 							),
 						)
 					),
+				),
+			)
+		);
+
+		// The targets themselves: the team reads them, the settings tier sets them.
+		register_rest_route(
+			$this->namespace,
+			'/support/service-targets',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_service_targets' ),
+					'permission_callback' => array( $this, 'permissions_check' ),
+				),
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'save_service_targets' ),
+					'permission_callback' => array( $this, 'targets_write_permissions_check' ),
 				),
 			)
 		);
@@ -155,8 +179,11 @@ class RestReportController extends RestController {
 		$resolved = $by_status[ TicketStatus::RESOLVED ] ?? 0;
 		$closed   = $by_status[ TicketStatus::CLOSED ] ?? 0;
 
+		// Agent replies: customer replies are stored without a user.
 		$responses_query = ActivityModel::query()
-			->messages()
+			->where( 'activity_type', ActivityTypes::SUPPORT_REPLY )
+			->whereNotNull( 'user_id' )
+			->whereRaw( "JSON_EXTRACT(data, '\$.opening') IS NULL" ) // a ticket an agent opened is not a response
 			->whereBetween( 'created_at', array( $filters['from_datetime'], $filters['to_datetime'] ) )
 			->whereHas(
 				'associations',
@@ -174,6 +201,10 @@ class RestReportController extends RestController {
 				'resolved'         => $resolved,
 				'closed'           => $closed,
 				'total_responses'  => (int) $responses_query->count(),
+				// Minutes from opening to the team's first reply, and to the
+				// ticket solved or closed (tickets opened in the range).
+				'first_response'   => $this->timing( $base, 'first_response_at' ),
+				'resolution'       => $this->timing( $base, 'resolved_at' ),
 			),
 			200
 		);
@@ -195,7 +226,8 @@ class RestReportController extends RestController {
 		$bucket  = $this->resolve_bucket( $filters['from'], $filters['to'], (string) $request->get_param( 'bucket' ) );
 
 		list( $select_expr, $group_expr ) = $this->bucket_sql( $bucket, 'created_at' );
-		list( $resolved_select, $resolved_group ) = $this->bucket_sql( $bucket, 'updated_at' );
+		// Solved on the day it was solved: updated_at moves with any edit.
+		list( $resolved_select, $resolved_group ) = $this->bucket_sql( $bucket, 'resolved_at' );
 
 		$created_query = TicketModel::query();
 		$this->apply_ticket_filters( $created_query, $filters, true );
@@ -212,7 +244,7 @@ class RestReportController extends RestController {
 
 		$resolved_query = TicketModel::query()
 			->whereIn( 'status', array( TicketStatus::RESOLVED, TicketStatus::CLOSED ) )
-			->whereBetween( 'updated_at', array( $filters['from_datetime'], $filters['to_datetime'] ) );
+			->whereBetween( 'resolved_at', array( $filters['from_datetime'], $filters['to_datetime'] ) );
 		$this->apply_ticket_filters( $resolved_query, $filters, false );
 
 		$resolved_rows = $resolved_query
@@ -327,9 +359,10 @@ class RestReportController extends RestController {
 			->keyBy( 'agent_user_id' );
 
 		$responses_query = ActivityModel::query()
-			->messages()
+			->where( 'activity_type', ActivityTypes::SUPPORT_REPLY )
 			->whereBetween( 'created_at', array( $filters['from_datetime'], $filters['to_datetime'] ) )
 			->whereNotNull( 'user_id' )
+			->whereRaw( "JSON_EXTRACT(data, '\$.opening') IS NULL" )
 			->whereHas(
 				'associations',
 				function ( $q ) {
@@ -343,6 +376,16 @@ class RestReportController extends RestController {
 			->groupBy( 'user_id' )
 			->get()
 			->keyBy( 'user_id' );
+
+		$first_query = TicketModel::query();
+		$this->apply_ticket_filters( $first_query, $filters, true );
+		$first_rows = $first_query
+			->selectRaw( 'agent_user_id, AVG(GREATEST(TIMESTAMPDIFF(MINUTE, created_at, first_response_at), 0)) as minutes' )
+			->whereNotNull( 'agent_user_id' )
+			->whereNotNull( 'first_response_at' )
+			->groupBy( 'agent_user_id' )
+			->get()
+			->keyBy( 'agent_user_id' );
 
 		$agent_ids = array_unique(
 			array_merge(
@@ -372,6 +415,8 @@ class RestReportController extends RestController {
 				'assigned'  => isset( $assigned_rows[ $agent_id ] ) ? (int) $assigned_rows[ $agent_id ]->assigned : 0,
 				'resolved'  => isset( $resolved_rows[ $agent_id ] ) ? (int) $resolved_rows[ $agent_id ]->resolved : 0,
 				'responses' => isset( $response_rows[ $agent_id ] ) ? (int) $response_rows[ $agent_id ]->responses : 0,
+				// null: none of their tickets answered yet.
+				'first_response_average_minutes' => isset( $first_rows[ $agent_id ] ) ? (int) round( (float) $first_rows[ $agent_id ]->minutes ) : null,
 			);
 		}
 
@@ -461,6 +506,203 @@ class RestReportController extends RestController {
 	}
 
 	/**
+	 * GET /support/reports/satisfaction — ratings given in the period (by
+	 * satisfaction_at), same mailbox / agent scope as every report: count,
+	 * average (one decimal), share of 4 and 5, how many of each, by source.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_satisfaction( $request ) {
+		$disabled = $this->require_module( 'support' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
+		$filters = $this->parse_filters( $request );
+		$query   = TicketModel::query()
+			->whereNotNull( 'satisfaction' )
+			->whereBetween( 'satisfaction_at', array( $filters['from_datetime'], $filters['to_datetime'] ) );
+		$this->apply_ticket_filters( $query, $filters, false );
+
+		$rows = $query->selectRaw( 'satisfaction, satisfaction_source, COUNT(*) as c' )
+			->groupBy( 'satisfaction', 'satisfaction_source' )
+			->get();
+
+		$distribution = array( '1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0 );
+		$by_source    = array( 'email' => 0, 'chat' => 0 );
+		$count        = 0;
+		$sum          = 0;
+		foreach ( $rows as $row ) {
+			$score = max( 1, min( 5, (int) $row->satisfaction ) );
+			$n     = (int) $row->c;
+			$distribution[ (string) $score ] += $n;
+			$source               = 'chat' === (string) $row->satisfaction_source ? 'chat' : 'email';
+			$by_source[ $source ] += $n;
+			$count               += $n;
+			$sum                 += $score * $n;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'count'             => $count,
+				'average'           => $count ? round( $sum / $count, 1 ) : null,
+				'satisfied_percent' => $count ? (int) round( 100 * ( $distribution['4'] + $distribution['5'] ) / $count ) : null,
+				'distribution'      => $distribution,
+				'by_source'         => $by_source,
+			),
+			200
+		);
+	}
+
+	/**
+	 * GET /support/service-targets
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_service_targets() {
+		return new WP_REST_Response( ServiceTargets::get(), 200 );
+	}
+
+	/**
+	 * POST /support/service-targets — first_response / resolution, per priority.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function save_service_targets( $request ) {
+		$body = array_intersect_key( (array) $request->get_json_params(), ServiceTargets::LIMITS );
+
+		return new WP_REST_Response( ServiceTargets::update( $body ), 200 );
+	}
+
+	/**
+	 * Setting targets is the helpdesk settings tier's.
+	 *
+	 * @return bool|WP_Error
+	 */
+	public function targets_write_permissions_check() {
+		if ( Permissions::can_access_support_settings() ) {
+			return true;
+		}
+
+		return new WP_Error( 'rest_forbidden', __( 'Sorry, you are not allowed to do that.', 'doublescale' ), array( 'status' => 403 ) );
+	}
+
+	/**
+	 * GET /support/reports/sla — tickets opened in the period, against their
+	 * priority's targets: on time (answered / solved within it), late
+	 * (answered / solved after it, or still waiting past it) and waiting
+	 * (still within it, left out of the share). No target: not counted.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function get_sla( $request ) {
+		$disabled = $this->require_module( 'support' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+
+		$filters = $this->parse_filters( $request );
+		$targets = ServiceTargets::get();
+		$query   = TicketModel::query();
+		$this->apply_ticket_filters( $query, $filters, true );
+		$rows = $query
+			->orderBy( 'id', 'desc' )
+			->limit( 10000 )
+			->selectRaw( 'priority, TIMESTAMPDIFF(SECOND, created_at, first_response_at) as fr, TIMESTAMPDIFF(SECOND, created_at, resolved_at) as rs, TIMESTAMPDIFF(SECOND, created_at, NOW()) as age' )
+			->get();
+
+		$out = array();
+		foreach ( array( 'first_response' => array( 'fr', MINUTE_IN_SECONDS ), 'resolution' => array( 'rs', HOUR_IN_SECONDS ) ) as $kind => $how ) {
+			$tally = array(
+				'met'     => 0,
+				'late'    => 0,
+				'waiting' => 0,
+			);
+			foreach ( $rows as $row ) {
+				$target = $targets[ $kind ][ (string) $row->priority ] ?? null;
+				if ( null === $target ) {
+					continue;
+				}
+				$limit = $target * $how[1];
+				$done  = $row->{$how[0]};
+				if ( null !== $done ) {
+					++$tally[ (int) $done <= $limit ? 'met' : 'late' ];
+				} else {
+					++$tally[ (int) $row->age > $limit ? 'late' : 'waiting' ];
+				}
+			}
+			$judged           = $tally['met'] + $tally['late'];
+			$tally['percent'] = $judged ? (int) round( 100 * $tally['met'] / $judged ) : null;
+			$out[ $kind ]     = $tally;
+		}
+		$out['targets'] = $targets;
+
+		return new WP_REST_Response( $out, 200 );
+	}
+
+	/**
+	 * How long tickets waited, in minutes, from opening to $column: count,
+	 * average and median (averages hide one ticket left for a week). Tickets
+	 * without the column yet are left out. At most the 10,000 newest.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $base   Filtered ticket query.
+	 * @param string                                                     $column first_response_at or resolved_at.
+	 * @return array{count: int, average_minutes: int|null, median_minutes: int|null, average_seconds: int|null, median_seconds: int|null}
+	 */
+	private function timing( $base, string $column ): array {
+		// Only these two columns: the name goes into the SQL.
+		if ( ! in_array( $column, array( 'first_response_at', 'resolved_at' ), true ) ) {
+			return array(
+				'count'           => 0,
+				'average_minutes' => null,
+				'median_minutes'  => null,
+				'average_seconds' => null,
+				'median_seconds'  => null,
+			);
+		}
+		// Seconds: a team that answers within a minute must not read "0m".
+		$seconds = ( clone $base )
+			->whereNotNull( $column )
+			->orderBy( 'id', 'desc' )
+			->limit( 10000 )
+			->selectRaw( "GREATEST(TIMESTAMPDIFF(SECOND, created_at, {$column}), 0) as s" )
+			->get()
+			->pluck( 's' )
+			->map(
+				static function ( $value ): int {
+					return (int) $value;
+				}
+			)
+			->all();
+
+		$count = count( $seconds );
+		if ( 0 === $count ) {
+			return array(
+				'count'           => 0,
+				'average_minutes' => null,
+				'median_minutes'  => null,
+				'average_seconds' => null,
+				'median_seconds'  => null,
+			);
+		}
+		sort( $seconds );
+		$middle  = intdiv( $count, 2 );
+		$median  = 0 === $count % 2 ? ( $seconds[ $middle - 1 ] + $seconds[ $middle ] ) / 2 : $seconds[ $middle ];
+		$average = array_sum( $seconds ) / $count;
+
+		return array(
+			'count'           => $count,
+			'average_minutes' => (int) round( $average / 60 ),
+			'median_minutes'  => (int) round( $median / 60 ),
+			'average_seconds' => (int) round( $average ),
+			'median_seconds'  => (int) round( $median ),
+		);
+	}
+
+	/**
 	 * @param WP_REST_Request $request Unused — present for the framework contract. // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 	 * @return bool|WP_Error
 	 */
@@ -517,10 +759,10 @@ class RestReportController extends RestController {
 	/**
 	 * Apply mailbox / agent / ownership filters to a ticket query.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param array<string, mixed>                  $filters Parsed filters.
 	 * @param bool                                  $use_created_range Whether to constrain created_at.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	private function apply_ticket_filters( $query, array $filters, bool $use_created_range = true ) {
 		if ( $use_created_range ) {
@@ -543,7 +785,7 @@ class RestReportController extends RestController {
 	/**
 	 * Scope activity message counts to tickets matching report filters.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Activity query.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Activity query.
 	 * @param array<string, mixed>                  $filters Parsed filters.
 	 * @return void
 	 */

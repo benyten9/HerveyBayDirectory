@@ -1,0 +1,247 @@
+/* parent Perfmatters CSS hides container .notice; unhide top-of-tab Cache notices */
+#perfmatters-admin #cache-settings > .notice {
+  display: block;
+  margin: 0 0 12px;
+}
+
+/* Page Cache Disabled placeholder toggle */
+#perfmatters-admin .perfmatters-switch.is-disabled {
+  opacity: 0.55;
+}
+#perfmatters-admin .perfmatters-switch.is-disabled .perfmatters-slider {
+  cursor: not-allowed;
+}
+
+/* status cards */
+.perfmatters-cache-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.perfmatters-cache-status-card {
+  flex: 1 1 0%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  min-width: 0;
+  background: #f6f7f7;
+  border: 1px solid #e2e4e7;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.perfmatters-cache-status-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.perfmatters-cache-status-label {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #646970;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.perfmatters-cache-status-value {
+  font-size: 20px;
+  line-height: 1.5;
+  color: #1d2327;
+  font-variant-numeric: tabular-nums;
+}
+.perfmatters-cache-status-meta {
+  font-size: 11px;
+  line-height: 1.25;
+  color: #646970;
+  min-height: 1.25em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.perfmatters-cache-status-meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 1.25em;
+  min-width: 0;
+  max-width: 100%;
+}
+.perfmatters-cache-status-meta-row .perfmatters-cache-status-meta {
+  min-width: 0;
+}
+.perfmatters-cache-pages-meta {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.perfmatters-cache-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  max-width: 100%;
+  color: #646970;
+  font-size: 11px;
+  line-height: 1.25;
+}
+.perfmatters-cache-meta-chip .dashicons {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 1;
+  color: #94979c;
+}
+.perfmatters-cache-meta-chip [data-pages-size] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.perfmatters-cache-flame {
+  display: none;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  fill: #94979c;
+  transform-origin: 50% 90%;
+  position: relative;
+  top: -1px;
+}
+.perfmatters-cache-status-meta-row.is-warming .perfmatters-cache-flame {
+  display: block;
+  fill: #d97706;
+  animation: perfmatters-cache-flicker .9s ease-in-out infinite;
+}
+.perfmatters-cache-status-meta-row.is-complete .perfmatters-cache-flame {
+  display: block;
+  fill: #00a32a;
+  animation: none;
+}
+.perfmatters-cache-status-dual {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.perfmatters-cache-status-dual .perfmatters-cache-status-card {
+  min-width: 140px;
+}
+.perfmatters-cache-status-dual .perfmatters-cache-status-disk {
+  flex: 1 1 0%;
+}
+.perfmatters-cache-status-disk.is-empty .perfmatters-cache-status-value {
+  color: #a7aaad;
+}
+.perfmatters-cache-status-disk.has-pages .perfmatters-cache-status-value {
+  color: #1d2327;
+}
+.perfmatters-cache-status-dual .perfmatters-cache-status-warmer,
+.perfmatters-cache-status-dual .perfmatters-cache-status-cloudflare {
+  flex: 1 1 0%;
+}
+.perfmatters-cache-status-cloudflare .perfmatters-cache-cf-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 1;
+  margin: 0;
+  color: #94979c;
+  position: relative;
+  top: -1px;
+}
+.perfmatters-cache-status-cloudflare.is-ready .perfmatters-cache-cf-icon {
+  color: #f6821f;
+}
+.perfmatters-cache-status-cloudflare.is-error .perfmatters-cache-cf-icon {
+  color: #d63638;
+}
+.perfmatters-cache-status-cloudflare.is-error .perfmatters-cache-status-value {
+  color: #d63638;
+}
+.perfmatters-cache-status-cloudflare.is-setup .perfmatters-cache-status-value {
+  color: #a7aaad;
+}
+
+/* toolbar Clear / Warmer actions in the control bar */
+.perfmatters-cache-toolbar-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.perfmatters-cache-toolbar-actions .perfmatters-button-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.perfmatters-cache-toolbar-actions .button {
+  margin: 0;
+}
+
+@media (max-width: 782px) {
+  .perfmatters-cache-status-dual .perfmatters-cache-status-disk,
+  .perfmatters-cache-status-dual .perfmatters-cache-status-warmer,
+  .perfmatters-cache-status-dual .perfmatters-cache-status-cloudflare {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+  .perfmatters-cache-toolbar-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
+@keyframes perfmatters-cache-flicker {
+  0%, 100% {
+    transform: scale(1) rotate(-2deg);
+    opacity: .9;
+  }
+  40% {
+    transform: scale(1.12) rotate(2deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(.96) rotate(-1deg);
+    opacity: .95;
+  }
+}
+
+/* Cloudflare API token — license-style masked value + Remove Token */
+.perfmatters-cache-cf-token-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.perfmatters-cache-cf-token-row .perfmatters-button-container {
+  margin: 0;
+}
+#perfmatters-admin input.perfmatters-cache-cf-token-has-value {
+  background: rgba(255, 255, 255, .5);
+  border-color: rgba(222, 222, 222, .75);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .04);
+  color: rgba(51, 51, 51, .5);
+  pointer-events: none;
+  margin: 0;
+}
+
+/* warmer sources — single vertical list */
+.perfmatters-cache-warmer-scan {
+  margin: 0 0 12px;
+}
+#perfmatters-cache-warmer-sources > label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+#perfmatters-cache-warmer-sources > label.is-locked {
+  opacity: 0.75;
+}
+#perfmatters-cache-warmer-sources > label > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

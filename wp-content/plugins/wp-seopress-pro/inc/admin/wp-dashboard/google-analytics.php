@@ -37,22 +37,16 @@ if ( '1' == seopress_get_toggle_option( 'google-analytics' ) && '1' !== seopress
 				$seopress_results_google_analytics_cache = get_transient( 'seopress_results_google_analytics' );
 				is_string( $seopress_results_google_analytics_cache ) ? $seopress_results_google_analytics_cache = json_decode( $seopress_results_google_analytics_cache, true ) : $seopress_results_google_analytics_cache;
 
+				$sync_error = seopress_ga_get_sync_error();
+				if ( null !== $sync_error ) {
+					seopress_ga_dashboard_widget_display_error( $sync_error );
+				}
+
 				// GA4.
 				if ( ! empty( seopress_get_service( 'GoogleAnalyticsOption' )->getGA4PropertId() ) && ! empty( seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getAccessToken() ) && ! empty( $seopress_results_google_analytics_cache ) ) {
 					if ( isset( $seopress_results_google_analytics_cache['error'] ) && ! empty( $seopress_results_google_analytics_cache['error'] ) ) {
-						global $pagenow;
+						// The reason is displayed above, from the recorded sync error.
 						?>
-						<a class="
-						<?php
-						if ( 'index.php' === $pagenow ) {
-							echo 'button';
-						} else {
-							echo 'seopress-btn';
-						}
-						?>
-						" href="<?php echo esc_url( admin_url( 'admin.php?page=seopress-google-analytics#tab=tab_seopress_google_analytics_enable' ) ); ?>">
-							<?php esc_html_e( 'Check error logs', 'wp-seopress-pro' ); ?>
-						</a>
 						<span class="spinner"></span>
 						<?php
 					} else {
@@ -139,6 +133,50 @@ if ( '1' == seopress_get_toggle_option( 'google-analytics' ) && '1' !== seopress
 				<?php
 			}
 		}
+		/**
+		 * Why the last Google Analytics sync failed, and where to fix it.
+		 *
+		 * @since 10.3.0
+		 *
+		 * @param array $sync_error The last sync failure, from seopress_ga_get_sync_error().
+		 *
+		 * @return void
+		 */
+		function seopress_ga_dashboard_widget_display_error( $sync_error ) {
+			global $pagenow;
+			?>
+			<div class="notice notice-error inline seopress-ga-sync-error">
+				<p><strong><?php echo esc_html( $sync_error['summary'] ); ?></strong></p>
+				<?php if ( '' !== $sync_error['hint'] ) { ?>
+					<p><?php echo esc_html( $sync_error['hint'] ); ?></p>
+				<?php } ?>
+				<?php if ( '' !== $sync_error['response'] ) { ?>
+					<p>
+						<?php esc_html_e( 'Response from Google:', 'wp-seopress-pro' ); ?>
+						<code style="overflow-wrap: anywhere;"><?php echo esc_html( $sync_error['response'] ); ?></code>
+					</p>
+				<?php } ?>
+				<?php if ( '' !== $sync_error['date'] ) { ?>
+					<p class="description">
+						<?php
+						/* translators: %s: date and time of the failed sync. */
+						echo esc_html( sprintf( __( 'Last attempt: %s', 'wp-seopress-pro' ), $sync_error['date'] ) );
+						?>
+					</p>
+				<?php } ?>
+				<p>
+					<a class="<?php echo 'index.php' === $pagenow ? 'button' : 'seopress-btn'; ?>" href="<?php echo esc_url( seopress_ga_connection_settings_url() ); ?>">
+						<?php
+						echo $sync_error['needs_reconnect']
+							? esc_html__( 'Reconnect Google Analytics', 'wp-seopress-pro' )
+							: esc_html__( 'Open Google Analytics settings', 'wp-seopress-pro' );
+						?>
+					</a>
+				</p>
+			</div>
+			<?php
+		}
+
 		/**
 		 * Google Analytics Dashboard widget handle.
 		 *

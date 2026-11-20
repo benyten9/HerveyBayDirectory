@@ -8,11 +8,11 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
 use BadMethodCallException;
-use Carbon\CarbonInterface;
-use Carbon\Exceptions\BadComparisonUnitException;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\Exceptions\BadComparisonUnitException;
 use InvalidArgumentException;
 /**
  * Trait Comparison.

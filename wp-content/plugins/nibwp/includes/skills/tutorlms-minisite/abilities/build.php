@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/tutorlms-minisite-build', [
     'label'       => __('Tutor LMS Mini-site — Build landing page', 'nibwp'),
-    'description' => __('Validate an agent-built section tree and persist it as a styled WordPress landing page linked to a Tutor LMS course. dry_run:true validates; dry_run:false commits.', 'nibwp'),
+    'description' => 'Validate an agent-built section tree and persist it as a styled WordPress landing page linked to a Tutor LMS course. dry_run:true validates; dry_run:false commits.',
     'category'    => 'tutorlms-minisite',
     'input_schema' => [
         'type' => 'object',

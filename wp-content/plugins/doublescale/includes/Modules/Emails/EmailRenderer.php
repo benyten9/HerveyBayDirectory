@@ -626,7 +626,10 @@ class EmailRenderer {
 					$mso_bg_style = $col_parsed['bg_style'];
 
 					$html .= '<!--[if mso]>';
-					$html .= '<td width="' . $pixel_width . '" valign="' . esc_attr( $mso_valign ) . '"' . $mso_bgcolor . ' style="' . esc_attr( $mso_bg_style ) . '">';
+					// Outlook draws cell borders but ignores the radius.
+					$mso_border = $col_parsed['border'];
+					unset( $mso_border['border-radius'] );
+					$html .= '<td width="' . $pixel_width . '" valign="' . esc_attr( $mso_valign ) . '"' . $mso_bgcolor . ' style="' . esc_attr( trim( $mso_bg_style . ' ' . $this->build_style_string( $mso_border ) ) ) . '">';
 					$html .= '<![endif]-->';
 
 					// Column wrapper: visible to ALL clients
@@ -644,6 +647,14 @@ class EmailRenderer {
 						$container_styles['background-repeat']   = $col_parsed['bg_repeat'];
 						$container_styles['background-size']     = $col_parsed['bg_size'];
 						$container_styles['background-position'] = $col_parsed['bg_position'];
+					}
+					if ( ! empty( $col_parsed['border'] ) ) {
+						// Border inside the column width so columns still fit one row.
+						$container_styles['box-sizing'] = 'border-box';
+						$container_styles               = array_merge( $container_styles, $col_parsed['border'] );
+						if ( ! empty( $col_parsed['border']['border-radius'] ) ) {
+							$container_styles['overflow'] = 'hidden';
+						}
 					}
 					$container_style_str = $this->build_style_string( $container_styles );
 					$bgcolor_attr        = ! empty( $col_parsed['bg_color'] ) ? ' bgcolor="' . esc_attr( $col_parsed['bg_color'] ) . '"' : '';
@@ -1012,6 +1023,7 @@ class EmailRenderer {
 			'bg_position'    => 'center',
 			'vertical_align' => 'top',
 			'margin'         => '',
+			'border'         => array(),
 		);
 
 		if ( empty( $column['styles'] ) || ! is_array( $column['styles'] ) ) {
@@ -1060,6 +1072,14 @@ class EmailRenderer {
 				case 'background-position':
 					$result['bg_position'] = $value;
 					$bg_parts[]            = "background-position:{$value};";
+					break;
+				// Per-side borders and corner radius, as the Layout Settings write them.
+				case 'border-top':
+				case 'border-right':
+				case 'border-bottom':
+				case 'border-left':
+				case 'border-radius':
+					$result['border'][ $css ] = $value;
 					break;
 			}
 		}

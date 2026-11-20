@@ -152,5 +152,5 @@ function seopress_automatic_rich_snippets_custom_option( $schema_datas ) {
 
 	$html = apply_filters( 'seopress_schemas_auto_custom_html', $html );
 
-	echo $html;
+	echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Admin markup assembled above, its dynamic parts already escaped.
 }

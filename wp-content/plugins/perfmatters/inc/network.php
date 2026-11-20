@@ -47,21 +47,21 @@ if(isset($_POST['perfmatters_apply_defaults'])) {
 					}
 
 					//Default Settings Updated Notice
-					echo "<div class='notice updated is-dismissible'><p>" . __('Default settings applied!', 'perfmatters') . "</p></div>";
+					echo "<div class='notice updated is-dismissible'><p>" . esc_html__('Default settings applied!', 'perfmatters') . "</p></div>";
 				}
 				else {
 					//Can't Apply to Network Default
-					echo "<div class='notice error is-dismissible'><p>" . __('Select a site that is not already the Network Default.', 'perfmatters') . "</p></div>";
+					echo "<div class='notice error is-dismissible'><p>" . esc_html__('Select a site that is not already the Network Default.', 'perfmatters') . "</p></div>";
 				}
 			}
 			else {
 				//Network Default Not Set
-				echo "<div class='notice error is-dismissible'><p>" . __('Network Default not set.', 'perfmatters') . "</p></div>";
+				echo "<div class='notice error is-dismissible'><p>" . esc_html__('Network Default not set.', 'perfmatters') . "</p></div>";
 			}
 		}
 		else {
 			//Blog Not Found Notice
-			echo "<div class='notice error is-dismissible'><p>" . __('Error: Blog Not Found.', 'perfmatters') . "</p></div>";
+			echo "<div class='notice error is-dismissible'><p>" . esc_html__('Error: Blog Not Found.', 'perfmatters') . "</p></div>";
 		}
 	}
 }
@@ -86,23 +86,23 @@ elseif(isset($_POST['perfmatters_apply_defaults_all'])) {
 
 			if($update_count > 0) {
 				//default settings applied
-				echo "<div class='notice updated is-dismissible'><p>" . __('Default settings applied!', 'perfmatters') . "</p></div>";
+				echo "<div class='notice updated is-dismissible'><p>" . esc_html__('Default settings applied!', 'perfmatters') . "</p></div>";
 			}
 		}
 		else {
 			//no sites available
-			echo "<div class='notice error is-dismissible'><p>" . __('No available sites found.', 'perfmatters') . "</p></div>";
+			echo "<div class='notice error is-dismissible'><p>" . esc_html__('No available sites found.', 'perfmatters') . "</p></div>";
 		}
 	}
 	else {
 		//network default not set
-		echo "<div class='notice error is-dismissible'><p>" . __('Network Default not set.', 'perfmatters') . "</p></div>";
+		echo "<div class='notice error is-dismissible'><p>" . esc_html__('Network Default not set.', 'perfmatters') . "</p></div>";
 	}
 }
 
 //Options Updated
 if(isset($_GET['updated'])) {
-	echo "<div class='notice updated is-dismissible'><p>" . __('Options saved.', 'perfmatters') . "</p></div>";
+	echo "<div class='notice updated is-dismissible'><p>" . esc_html__('Options saved.', 'perfmatters') . "</p></div>";
 }
 
 perfmatters_settings_header(__('Network Setup', 'perfmatters'), 'dashicons-networking');
@@ -115,28 +115,28 @@ echo "</form>";
 
 echo "<form method='POST' style='margin: 30px auto 10px;'>";
 	echo '<div>';
-		echo "<h2>" . __('Apply Default Settings', 'perfmatters') . "</h2>";
+		echo "<h2>" . esc_html__('Apply Default Settings', 'perfmatters') . "</h2>";
 
 		wp_nonce_field('perfmatters-network-apply', '_wpnonce', true, true);
-		echo "<p>" . __('Select a site from the dropdown and click to apply the settings from your network default (above).', 'perfmatters') . "</p>";
+		echo "<p>" . esc_html__('Select a site from the dropdown and click to apply the settings from your network default (above).', 'perfmatters') . "</p>";
 
 		echo "<select name='perfmatters_network_apply_blog' style='margin-right: 10px;'>";
 			$sites = array_map('get_object_vars', get_sites(array('deleted' => 0, 'number' => 1000)));
 			if(is_array($sites) && $sites !== array()) {
-				echo "<option value=''>" . __('Select a Site', 'perfmatters') . "</option>";
+				echo "<option value=''>" . esc_html__('Select a Site', 'perfmatters') . "</option>";
 				foreach($sites as $site) {
-					echo "<option value='" . $site['blog_id'] . "'>" . $site['blog_id'] . ": " . $site['domain'] . $site['path'] . "</option>";
+					echo "<option value='" . esc_attr($site['blog_id']) . "'>" . esc_html($site['blog_id'] . ': ' . $site['domain'] . $site['path']) . "</option>";
 				}
 			}
 		echo "</select>";
 
-		echo "<input type='submit' name='perfmatters_apply_defaults' value='" . __('Apply Default Settings', 'perfmatters') . "' class='button' />";
+		echo "<input type='submit' name='perfmatters_apply_defaults' value='" . esc_attr__('Apply Default Settings', 'perfmatters') . "' class='button' />";
 
 		echo "<br />";
 
-		echo "<p>" . __('Apply the settings from your network default to all sites. Depending on the amount, this may take a while.', 'perfmatters') . "</p>";
+		echo "<p>" . esc_html__('Apply the settings from your network default to all sites. Depending on the amount, this may take a while.', 'perfmatters') . "</p>";
 
-		echo "<input type='submit' name='perfmatters_apply_defaults_all' value='" . __('Apply Default Settings to All Sites', 'perfmatters') . "' class='button' onclick='return confirm(\"" . __('Are you sure? This will permanently overwrite all Perfmatters options for all subsites.', 'perfmatters') . "\");' />";
+		echo "<input type='submit' name='perfmatters_apply_defaults_all' value='" . esc_attr__('Apply Default Settings to All Sites', 'perfmatters') . "' class='button' onclick='return confirm(\"" . esc_js(__('Are you sure? This will permanently overwrite all Perfmatters options for all subsites.', 'perfmatters')) . "\");' />";
 	echo '</div>';
 echo "</form>";
 

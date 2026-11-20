@@ -83,7 +83,11 @@ if ( '1' === seopress_pro_get_service( 'OptionPro' )->getWhiteLabelHelpLinks() )
 	 */
 	function seopress_white_label_css() {
 		$get_current_screen = get_current_screen();
-		$get_current_screen = $get_current_screen->id;
+		// Null on admin pages that never register a WP_Screen (some third-party
+		// plugin screens): reading `id` on it warned on every such page. The
+		// is_seopress_page() branch below reads $_REQUEST, not the screen, so it
+		// still answers on a screenless page.
+		$get_current_screen = $get_current_screen ? $get_current_screen->id : '';
 		if ( true === is_seopress_page() || 'seopress_404' === $get_current_screen || 'seopress_bot' === $get_current_screen || 'seopress_backlinks' === $get_current_screen || 'seopress_schemas' === $get_current_screen ) {
 			echo '<style>.seopress-help, .seopress-doc, .seopress-your-schema .notice-info{display:none !important;}</style>';
 

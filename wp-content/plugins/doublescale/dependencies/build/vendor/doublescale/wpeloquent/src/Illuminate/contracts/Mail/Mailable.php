@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Mail;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Mail;
 
-use Illuminate\Contracts\Queue\Factory as Queue;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\Factory as Queue;
 interface Mailable
 {
     /**
@@ -11,7 +11,7 @@ interface Mailable
      * @param  \Illuminate\Contracts\Mail\Mailer  $mailer
      * @return void
      */
-    public function send(\Illuminate\Contracts\Mail\Mailer $mailer);
+    public function send(Mailer $mailer);
     /**
      * Queue the given message.
      *

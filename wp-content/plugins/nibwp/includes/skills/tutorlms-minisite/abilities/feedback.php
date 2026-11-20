@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/tutorlms-minisite-feedback', [
     'label'       => __('Tutor LMS Mini-site — Record feedback', 'nibwp'),
-    'description' => __('Record a 👍 / 👎 for a built landing page. Thumb-down reasons surface on the next build.', 'nibwp'),
+    'description' => 'Record a 👍 / 👎 for a built landing page. Thumb-down reasons surface on the next build.',
     'category'    => 'tutorlms-minisite',
     'input_schema' => [
         'type' => 'object',

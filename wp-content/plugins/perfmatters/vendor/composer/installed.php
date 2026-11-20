@@ -19,15 +19,6 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'deliciousbrains/wp-background-processing' => array(
-            'pretty_version' => '1.4.0',
-            'version' => '1.4.0.0',
-            'reference' => '7ca7cc3504333db3a291bbab7f1917124fba4816',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../deliciousbrains/wp-background-processing',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
         'matthiasmullie/minify' => array(
             'pretty_version' => '1.3.75',
             'version' => '1.3.75.0',

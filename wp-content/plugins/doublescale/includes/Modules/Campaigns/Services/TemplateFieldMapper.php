@@ -24,6 +24,34 @@ use DoubleScale\Core\Constants\CampaignChannel;
 class TemplateFieldMapper {
 
 	/**
+	 * Settings keys carried through a template rebuild verbatim.
+	 *
+	 * These belong to the template's provider identity rather than to a
+	 * campaign's editable fields: they are written when the template is
+	 * imported from Meta and read back by the send path
+	 * (TemplateModel::get_whatsapp_content_sid(), get_whatsapp_variable_mappings()
+	 * and get_whatsapp_header_settings()). They are preserved for every channel
+	 * because only a channel that sets them has them to lose.
+	 *
+	 * @var string[]
+	 */
+	private const PRESERVED_SETTINGS_FIELDS = array(
+		'external_id',
+		'variables',
+		'variable_mappings',
+		'language',
+		'components',
+		'header_format',
+		'header_media',
+		'header_variables',
+		'buttons',
+		'button_params',
+		'card_params',
+		'template_type',
+		'saved_at',
+	);
+
+	/**
 	 * Get field configuration for a campaign type
 	 *
 	 * @param string $campaign_type Campaign type string ('email', 'sms', 'whatsapp'). Integer constants accepted for backward compatibility.
@@ -165,6 +193,19 @@ class TemplateFieldMapper {
 				$default = '';
 			}
 			$settings[ $field ] = $settings_data[ $field ] ?? $default;
+		}
+
+		// Channel-owned settings that are not part of the allowlist above.
+		//
+		// WhatsApp templates carry their Meta identity in settings, so a
+		// rebuild that keeps only allowlisted keys silently stripped
+		// `external_id` on every campaign save. The template then read as an
+		// unapproved local template and the send failed with "no approved Meta
+		// template ID" — after the operator had already picked an approved one.
+		foreach ( self::PRESERVED_SETTINGS_FIELDS as $field ) {
+			if ( isset( $settings_data[ $field ] ) ) {
+				$settings[ $field ] = $settings_data[ $field ];
+			}
 		}
 
 		// add subject to settings

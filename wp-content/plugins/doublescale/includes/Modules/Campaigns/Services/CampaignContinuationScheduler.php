@@ -58,6 +58,22 @@ class CampaignContinuationScheduler {
 	}
 
 	/**
+	 * Resume $campaign_id at a set time (the daily cap resets, or workflows
+	 * have finished going first).
+	 *
+	 * @param int $campaign_id Campaign.
+	 * @param int $timestamp   Unix time.
+	 * @return void
+	 */
+	public function queue_at( $campaign_id, $timestamp ) {
+		PluginKernel::instance()->campaigns_tasks->schedule_single(
+			max( time(), (int) $timestamp ),
+			"continue_{$this->channel}_campaign",
+			(int) $campaign_id
+		);
+	}
+
+	/**
 	 * Queue a continuation for $campaign_id.
 	 *
 	 * Tries an immediate non-blocking AJAX request first; falls back to Action Scheduler.

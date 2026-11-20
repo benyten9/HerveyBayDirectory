@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Console\Migrations;
+namespace DoubleScale\Vendor\Illuminate\Database\Console\Migrations;
 
-use Illuminate\Console\Command;
-use Illuminate\Console\ConfirmableTrait;
+use DoubleScale\Vendor\Illuminate\Console\Command;
+use DoubleScale\Vendor\Illuminate\Console\ConfirmableTrait;
 use DoubleScale\Vendor\Symfony\Component\Console\Input\InputOption;
 class RefreshCommand extends Command
 {

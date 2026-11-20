@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Concerns;
 
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 trait GuardsAttributes
 {
     /**

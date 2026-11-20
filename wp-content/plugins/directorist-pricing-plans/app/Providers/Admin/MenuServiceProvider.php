@@ -54,6 +54,7 @@ class MenuServiceProvider implements Provider
                         'fields'      =>  [ 
                             'plan_direct_purchase',
                             'allow_multiple_plans_per_directory_type',
+                            'enable_listing_display_priority',
                         // TODO: will be added later
                         // 'skip_plan_page',
                         // 'tax_placeholder',
@@ -79,6 +80,13 @@ class MenuServiceProvider implements Provider
             'type'        => 'toggle',
             'label'       => __( 'Allow Multiple Plans per Directory Type', 'directorist-pricing-plans' ),
             'description' => __( 'Allow users to purchase and use more than one active plan in the same directory type.', 'directorist-pricing-plans' ),
+            'value'       => false,
+        ];
+
+        $pricing_fields['enable_listing_display_priority'] = [
+            'type'        => 'toggle',
+            'label'       => __( 'Enable Listing Display Priority', 'directorist-pricing-plans' ),
+            'description' => __( 'Sort listings by the display priority configured for their pricing plan. Featured listings remain at the top. Enabling this option adds priority sorting to listing queries and may increase database query time on large directories.', 'directorist-pricing-plans' ),
             'value'       => false,
         ];
 

@@ -32,6 +32,7 @@ class SalesInvoicesTable extends Migration {
 			template TINYINT UNSIGNED NOT NULL DEFAULT 1,
 			template_color VARCHAR(7) NULL DEFAULT NULL,
 			contact_id BIGINT(20) UNSIGNED NOT NULL,
+			company_id BIGINT(20) UNSIGNED NULL,
 			proposal_id BIGINT(20) UNSIGNED NULL,
 			subscription_id BIGINT(20) UNSIGNED NULL,
 			recurrence_id BIGINT(20) UNSIGNED NULL,
@@ -68,6 +69,7 @@ class SalesInvoicesTable extends Migration {
 			KEY idx_proposal_id (proposal_id),
 			KEY idx_subscription_id (subscription_id),
 			KEY idx_contact_status (contact_id, status),
+			KEY idx_company (company_id),
 			KEY idx_agent_status (sale_agent_user_id, status),
 			KEY idx_due_date (due_date),
 			KEY idx_created (created_at)";

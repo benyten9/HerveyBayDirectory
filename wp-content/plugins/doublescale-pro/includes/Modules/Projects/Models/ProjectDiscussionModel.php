@@ -10,7 +10,7 @@ namespace DoubleScale\Pro\Modules\Projects\Models;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Models\UserModel;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * ProjectDiscussionModel class.
@@ -45,21 +45,21 @@ class ProjectDiscussionModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function project() {
 		return $this->belongsTo( ProjectModel::class, 'project_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function user() {
 		return $this->belongsTo( UserModel::class, 'user_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function replies() {
 		return $this->hasMany( self::class, 'parent_id', 'id' )->orderBy( 'created_at', 'asc' );

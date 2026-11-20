@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Pipeline;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Pipeline;
 
 interface Hub
 {

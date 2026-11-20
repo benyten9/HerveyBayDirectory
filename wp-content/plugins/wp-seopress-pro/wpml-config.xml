@@ -13,6 +13,11 @@
 			<key name="seopress_local_business_place_id"/>
 			<key name="seopress_local_business_url"/>
 			<key name="seopress_local_business_phone"/>
+			<key name="seopress_local_business_email"/>
+			<key name="seopress_local_business_logo"/>
+			<key name="seopress_local_business_image"/>
+			<key name="seopress_local_business_area_served"/>
+			<key name="seopress_local_business_same_as"/>
 			<key name="seopress_local_business_price_range"/>
 			<key name="seopress_local_business_cuisine"/>
 			<key name="seopress_local_business_menu"/>

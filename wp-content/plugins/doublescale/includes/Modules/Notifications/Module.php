@@ -92,6 +92,8 @@ final class Module extends AbstractModule {
 		// `doublescale_daily4` is the free "Daily Cleanup Tasks" slot scheduled in
 		// CoreModule::register_cron_schedules(); the Tasks group prefixes the hook.
 		add_action( 'doublescale_daily_doublescale_daily4', array( NotificationEmailSender::class, 'reset_daily_count' ) );
+		// Same slot: drop notifications older than Settings → Notifications keeps.
+		add_action( 'doublescale_daily_doublescale_daily4', array( Services\NotificationService::class, 'cleanup_by_retention' ) );
 
 		/**
 		 * Let other plugins (Pro) attach additional notification listeners and

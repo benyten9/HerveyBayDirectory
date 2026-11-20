@@ -9,8 +9,9 @@ namespace DoubleScale\Modules\Documents\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
+use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Documents\Constants\InvoiceStatus;
 use DoubleScale\Modules\Sales\Services\SalesNumbering;
@@ -41,13 +42,17 @@ class InvoiceModel extends Model {
 		'template',
 		'template_color',
 		'contact_id',
+		'company_id',
 		'proposal_id',
 		'subscription_id',
 		'recurrence_id',
 		'sale_agent_user_id',
 		'invoice_date',
 		'due_date',
+		'service_date',
+		'service_date_end',
 		'currency',
+		'buyer_reference',
 		'allowed_payment_modes',
 		'discount_type',
 		'discount_value',
@@ -91,14 +96,14 @@ class InvoiceModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function proposal() {
 		return $this->belongsTo( ProposalModel::class, 'proposal_id', 'id' );
@@ -115,7 +120,7 @@ class InvoiceModel extends Model {
 	 * is absent, `subscription_id` is an inert column and this method is never
 	 * called, so the (then non-existent) default class is never instantiated.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function subscription() {
 		$class = apply_filters( 'doublescale_subscription_model_class', '\\DoubleScale\\Subscriptions\\Models\\SubscriptionModel' );
@@ -126,23 +131,23 @@ class InvoiceModel extends Model {
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function sale_agent() {
 		return $this->belongsTo( UserModel::class, 'sale_agent_user_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function payments() {
 		return $this->hasMany( PaymentModel::class, 'invoice_id', 'id' );
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
 	 * @param string                                $status Status value.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByStatus( $query, $status ) {
 		return $query->where( 'status', $status );
@@ -179,6 +184,13 @@ class InvoiceModel extends Model {
 				$invoice->subtotal  = $totals['subtotal'];
 				$invoice->total_tax = $totals['total_tax'];
 				$invoice->total     = $totals['total'];
+
+				// Out of draft by any path (sent, or moved on by hand): the
+				// client's amount stops following the store's currency. No
+				// status yet is a new draft ("creating" runs after "saving").
+				if ( ! in_array( (string) $invoice->status, array( '', InvoiceStatus::DRAFT ), true ) ) {
+					DocumentCurrency::freeze_on_send( $invoice );
+				}
 			}
 		);
 

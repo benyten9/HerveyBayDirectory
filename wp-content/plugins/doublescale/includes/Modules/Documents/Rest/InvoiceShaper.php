@@ -18,6 +18,8 @@ use DoubleScale\Modules\Documents\Models\PaymentModel;
 use DoubleScale\Core\Payment\GatewayManager;
 use DoubleScale\Modules\Documents\Services\InvoicePayable;
 use DoubleScale\Modules\Documents\Services\InvoiceUrl;
+use DoubleScale\Modules\Documents\Services\DocumentIssuerSnapshot;
+use DoubleScale\Modules\Documents\Services\DocumentTaxNote;
 use DoubleScale\Modules\Sales\Services\SalesEmailMergeTags;
 use DoubleScale\Core\Constants\Currencies;
 use DoubleScale\Core\Settings\Settings;
@@ -30,9 +32,10 @@ class InvoiceShaper {
 	/**
 	 * @param InvoiceModel $invoice Invoice.
 	 * @param bool         $with_relations Include relations.
+	 * @param bool         $with_payment_texts With relations, also the resolved payment instructions and footer.
 	 * @return array
 	 */
-	public static function shape( InvoiceModel $invoice, bool $with_relations = false ): array {
+	public static function shape( InvoiceModel $invoice, bool $with_relations = false, bool $with_payment_texts = true ): array {
 		$data = array(
 			'id'                    => (int) $invoice->id,
 			'invoice_number'        => (string) $invoice->invoice_number,
@@ -41,13 +44,18 @@ class InvoiceShaper {
 			'template'              => DocumentTemplate::normalize( $invoice->template ?? DocumentTemplate::DEFAULT ),
 			'template_color'        => DocumentTemplateColor::normalize( $invoice->template_color ?? null ),
 			'contact_id'            => (int) $invoice->contact_id,
+			'company_id'            => $invoice->company_id ? (int) $invoice->company_id : null,
 			'proposal_id'           => $invoice->proposal_id ? (int) $invoice->proposal_id : null,
 			'sale_agent_user_id'    => $invoice->sale_agent_user_id ? (int) $invoice->sale_agent_user_id : null,
 			'invoice_date'          => $invoice->invoice_date,
 			'due_date'              => $invoice->due_date,
+			'service_date'          => $invoice->service_date ? (string) $invoice->service_date : null,
+			'service_date_end'      => $invoice->service_date_end ? (string) $invoice->service_date_end : null,
+			'tax_note'              => DocumentTaxNote::for_line_items( $invoice->line_items ),
 			// Resolved display code. Round-trip inherit via currency_stored (null).
 			'currency'              => Settings::document_currency( $invoice->currency, $invoice->sent_at ),
 			'currency_stored'       => Currencies::stored_or_null( $invoice->currency ),
+			'buyer_reference'       => $invoice->buyer_reference ? (string) $invoice->buyer_reference : null,
 			'allowed_payment_modes' => PaymentMode::normalize_list( $invoice->allowed_payment_modes ),
 			'discount_type'         => (string) $invoice->discount_type,
 			'discount_value'        => (float) $invoice->discount_value,
@@ -67,12 +75,17 @@ class InvoiceShaper {
 			'terms'                 => $invoice->terms,
 			'sections'              => is_array( $invoice->sections ) ? $invoice->sections : array(),
 			'issuer_snapshot_raw'   => $invoice->issuer_snapshot ? (string) $invoice->issuer_snapshot : null,
+			'issuer_lines'          => ProposalShaper::issuer_lines( $invoice ),
 			'public_url'            => InvoiceUrl::get_public_url( $invoice ),
 			'created_at'            => $invoice->created_at,
 			'updated_at'            => $invoice->updated_at,
 		);
 
 		if ( $with_relations ) {
+			if ( $with_payment_texts ) {
+				$data += self::payment_texts( $invoice, SalesEmailMergeTags::for_invoice( $invoice ) );
+			}
+
 			$contact = $invoice->relationLoaded( 'contact' ) ? $invoice->contact : null;
 			if ( $contact ) {
 				$data['contact'] = array(
@@ -133,6 +146,28 @@ class InvoiceShaper {
 		return $data;
 	}
 
+	/**
+	 * How to pay and the legal footer, from Sales Settings (frozen with the
+	 * issuer details once the invoice is sent), merge tags resolved.
+	 *
+	 * @param InvoiceModel                $invoice       Invoice.
+	 * @param AutomationContactModel|null $merge_context Merge-tag context.
+	 * @return array{payment_instructions: ?string, footer_text: ?string}
+	 */
+	private static function payment_texts( InvoiceModel $invoice, $merge_context ): array {
+		$company = DocumentIssuerSnapshot::resolve_company_for_shaped(
+			array(
+				'sent_at'             => $invoice->sent_at ?? null,
+				'issuer_snapshot_raw' => $invoice->issuer_snapshot ? (string) $invoice->issuer_snapshot : null,
+			)
+		);
+
+		return array(
+			'payment_instructions' => SalesEmailMergeTags::resolve_rich_text( $company['payment_instructions'] ?: null, $merge_context ),
+			'footer_text'          => SalesEmailMergeTags::resolve_rich_text( $company['invoice_footer'] ?: null, $merge_context ),
+		);
+	}
+
 	public static function shape_public( InvoiceModel $invoice ): array {
 		SalesEmailMergeTags::ensure_document_contact_loaded( $invoice );
 		$contact = $invoice->relationLoaded( 'contact' ) ? $invoice->contact : null;
@@ -141,11 +176,15 @@ class InvoiceShaper {
 
 		return array(
 			'invoice_number'        => (string) $invoice->invoice_number,
+			'issuer_lines'          => ProposalShaper::issuer_lines( $invoice ),
 			'status'                => (string) $invoice->status,
 			'template'              => DocumentTemplate::normalize( $invoice->template ?? DocumentTemplate::DEFAULT ),
 			'template_color'        => DocumentTemplateColor::normalize( $invoice->template_color ?? null ),
 			'invoice_date'          => $invoice->invoice_date,
 			'due_date'              => $invoice->due_date,
+			'service_date'          => $invoice->service_date ? (string) $invoice->service_date : null,
+			'service_date_end'      => $invoice->service_date_end ? (string) $invoice->service_date_end : null,
+			'tax_note'              => DocumentTaxNote::for_line_items( $invoice->line_items ),
 			// Resolved display code. Round-trip inherit via currency_stored (null).
 			'currency'              => Settings::document_currency( $invoice->currency, $invoice->sent_at ),
 			'currency_stored'       => Currencies::stored_or_null( $invoice->currency ),
@@ -173,6 +212,7 @@ class InvoiceShaper {
 				$merge_context
 			),
 			'sections'              => SalesEmailMergeTags::resolve_sections( $sections, $merge_context ),
+		) + self::payment_texts( $invoice, $merge_context ) + array(
 			'contact'               => $contact ? array(
 				'first_name' => $contact->first_name,
 				'last_name'  => $contact->last_name,
@@ -207,6 +247,11 @@ class InvoiceShaper {
 	 */
 	public static function is_overdue( InvoiceModel $invoice ): bool {
 		$status = (string) $invoice->status;
+		// The hourly sweep marks a past-due invoice `overdue`: it stays overdue
+		// while money is due (a 0 total never is).
+		if ( InvoiceStatus::OVERDUE === $status ) {
+			return self::balance( $invoice ) > 0;
+		}
 		if ( ! in_array( $status, array( InvoiceStatus::UNPAID, InvoiceStatus::PARTIALLY_PAID ), true ) ) {
 			return false;
 		}

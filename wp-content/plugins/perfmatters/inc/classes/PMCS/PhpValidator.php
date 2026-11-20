@@ -277,27 +277,13 @@ class PhpValidator
             }
         }
 
-        //lock our error class to prevent it from catching exceptions during eval
-        \Perfmatters\PMCS\Error::set_processing(true);
-        
-        //check for runtime error
+        //TOKEN_PARSE compiles the snippet without executing it to check for an error
         try {
-
-            //wrap the code in a function definition so it is PARSED but NOT executed
-            $syntax_test = 'return; ' . preg_replace('/^<\?php/', '', $this->code);
-            eval($syntax_test); 
+            token_get_all($this->code, TOKEN_PARSE);
         }
         catch (\Throwable $e) {
-
-            //unlock error class
-            \Perfmatters\PMCS\Error::set_processing(false);
-
-            //return error details
             return new \WP_Error('parse_error', $e->getMessage(), ['line' => $e->getLine()]);
         }
-
-        //unlock error class
-        \Perfmatters\PMCS\Error::set_processing(false);
 
         return true;
     }

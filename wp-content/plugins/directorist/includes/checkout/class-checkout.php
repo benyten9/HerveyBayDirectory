@@ -51,9 +51,12 @@ class ATBDP_Checkout {
     }
 
     public function payment_receipt() {
+        // Keep the legacy helper's notice inside the shortcode/block content.
+        ob_start();
         if ( ! atbdp_is_user_logged_in() ) {
-            return null;
+            return ob_get_clean();
         }
+        ob_end_clean();
 
         $order_id = (int) get_query_var( 'atbdp_order_id' );
 
@@ -73,6 +76,10 @@ class ATBDP_Checkout {
 
         if ( ! $order_db ) {
             return __( "Order not found", 'directorist' );
+        }
+
+        if ( (int) $order_db->user_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
+            return __( 'You are not allowed to view this order.', 'directorist' );
         }
 
         $order = apply_filters( 'directorist_payment_receipt_order_dto', $order_repository->to_dto( $order_db ) );
@@ -104,10 +111,12 @@ class ATBDP_Checkout {
     }
 
     public function checkout() {
-        // return null if user is not logged in
+        // Keep the legacy helper's notice inside the shortcode/block content.
+        ob_start();
         if ( ! atbdp_is_user_logged_in() ) {
-            return null;
+            return ob_get_clean();
         }
+        ob_end_clean();
 
         $request   = Helpers::request();
         $validator = new Validator( $request, new Mime );

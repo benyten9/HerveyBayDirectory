@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static void compile(string|null $path = null)
@@ -22,7 +22,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\View\Compilers\BladeCompiler
  */
-class Blade extends \Illuminate\Support\Facades\Facade
+class Blade extends Facade
 {
     /**
      * Get the registered name of the component.

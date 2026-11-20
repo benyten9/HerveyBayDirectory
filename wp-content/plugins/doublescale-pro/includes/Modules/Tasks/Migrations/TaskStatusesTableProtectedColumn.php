@@ -49,10 +49,15 @@ class TaskStatusesTableProtectedColumn {
 
 		$table = $wpdb->prefix . 'doublescale_task_statuses';
 
+		// The runner also calls this right after the table is created, which
+		// already has the column: add it only when it is missing.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			"ALTER TABLE `{$table}` ADD COLUMN `is_protected` TINYINT(1) NOT NULL DEFAULT 0"
-		);
+		if ( empty( $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM `' . esc_sql( $table ) . '` LIKE %s', 'is_protected' ), ARRAY_A ) ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query(
+				"ALTER TABLE `{$table}` ADD COLUMN `is_protected` TINYINT(1) NOT NULL DEFAULT 0"
+			);
+		}
 
 		$manager = TaskStatusManager::instance();
 		$manager->ensure_default_stages();

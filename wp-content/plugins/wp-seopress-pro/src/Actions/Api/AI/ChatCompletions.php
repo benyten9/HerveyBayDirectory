@@ -59,13 +59,28 @@ class ChatCompletions implements ExecuteHooks {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'process_chat' ),
-				'permission_callback' => function () {
+				'permission_callback' => function ( $request ) {
 					if ( ! current_user_can( 'edit_posts' ) ) {
 						return false;
 					}
-					if ( function_exists( 'seopress_ai_generation_check' ) ) {
-						return seopress_ai_generation_check( null, 'edit_posts', 'chat' );
+
+					// `post_id` arrives in the body and is read by more than
+					// the context enrichment: the translate and fix commands
+					// read the stored title, description and social metas of
+					// that post directly. Checking here is the only place all
+					// of them pass through. See SEC-03.
+					$post_id = (int) $request->get_param( 'post_id' );
+
+					if ( $post_id > 0 && ! current_user_can( 'edit_post', $post_id ) ) {
+						return false;
 					}
+
+					if ( function_exists( 'seopress_ai_generation_check' ) ) {
+						return $post_id > 0
+							? seopress_ai_generation_check( $post_id, 'edit_post', 'chat' )
+							: seopress_ai_generation_check( null, 'edit_posts', 'chat' );
+					}
+
 					return true;
 				},
 				'args'                => array(
@@ -102,6 +117,52 @@ class ChatCompletions implements ExecuteHooks {
 					'post_id'      => array(
 						'default'           => null,
 						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+
+		// Runs one action the assistant proposed, once the user has confirmed it
+		// in the panel. The chat route itself never executes anything: the
+		// model's reply can be steered by whatever content it was given to
+		// read, a post written by someone else for one.
+		register_rest_route(
+			'seopress/v1',
+			'/ai/chat/action',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'process_action' ),
+				'permission_callback' => function ( $request ) {
+					if ( ! current_user_can( 'edit_posts' ) ) {
+						return false;
+					}
+
+					$input   = $request->get_param( 'input' );
+					$post_id = is_array( $input ) && isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;
+
+					if ( $post_id > 0 && ! current_user_can( 'edit_post', $post_id ) ) {
+						return false;
+					}
+
+					if ( function_exists( 'seopress_ai_generation_check' ) ) {
+						return $post_id > 0
+							? seopress_ai_generation_check( $post_id, 'edit_post', 'chat' )
+							: seopress_ai_generation_check( null, 'edit_posts', 'chat' );
+					}
+
+					return true;
+				},
+				'args'                => array(
+					'ability' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'input'   => array(
+						'default'           => array(),
+						'validate_callback' => function ( $param ) {
+							return is_array( $param );
+						},
 					),
 				),
 			)
@@ -199,7 +260,26 @@ class ChatCompletions implements ExecuteHooks {
 
 		if ( isset( $context['image_urls'] ) && is_array( $context['image_urls'] ) ) {
 			$sanitized['image_urls'] = array();
+
+			/**
+			 * Filter how many images a single chat request may carry.
+			 *
+			 * Each one is a download of up to 5 MB with its own timeout, then a
+			 * base64 encode, before the provider is called. Eight of them was
+			 * several minutes of worker time in the worst case and around 53 MB
+			 * of payload, past what some providers accept in one request.
+			 *
+			 * @since 10.4.0
+			 *
+			 * @param int $max Maximum number of images. Default 4.
+			 */
+			$max_images = (int) apply_filters( 'seopress_ai_chat_max_images', 4 );
+
 			foreach ( $context['image_urls'] as $url ) {
+				if ( count( $sanitized['image_urls'] ) >= $max_images ) {
+					break;
+				}
+
 				$clean = esc_url_raw( $url );
 				if ( ! empty( $clean ) ) {
 					$sanitized['image_urls'][] = $clean;
@@ -438,6 +518,7 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 			// Content — skip for block-level edits (the block content is already provided).
 			if ( 'block' !== $context_level && ! empty( $post_context['content'] ) ) {
 				$content_text = substr( $post_context['content'], 0, 'page' === $context_level ? 4000 : 2000 );
+				/* translators: %s: excerpt of the post content sent to the AI provider */
 				$prompt .= "\n" . sprintf( __( 'Content: %s', 'wp-seopress-pro' ), $content_text );
 			}
 
@@ -687,13 +768,17 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 			return $response;
 		}
 
-		// Parse and execute [ACTION] tags from AI response.
-		$parsed = $this->parse_and_execute_actions( $response, $post_id );
+		// Collect the [ACTION] tags of the reply. They are proposed to the user,
+		// never run here.
+		$parsed = $this->parse_actions( $response, $post_id );
 
 		$data = array(
 			'content' => $parsed['content'],
 		);
 
+		if ( ! empty( $parsed['actions_proposed'] ) ) {
+			$data['actions_proposed'] = $parsed['actions_proposed'];
+		}
 		if ( ! empty( $parsed['actions_executed'] ) ) {
 			$data['actions_executed'] = $parsed['actions_executed'];
 		}
@@ -723,6 +808,23 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		$raw     = file_get_contents( 'php://input' );
 		$params  = json_decode( $raw, true );
+
+		// The same per-post check as the REST route: the commands read the
+		// stored metas of whatever post is named, so the capability on that
+		// object has to be verified before anything is read. See SEC-03.
+		$named_post = is_array( $params ) && isset( $params['post_id'] ) ? (int) $params['post_id'] : 0;
+
+		if ( $named_post > 0 ) {
+			if ( ! current_user_can( 'edit_post', $named_post ) ) {
+				wp_die( '', '', array( 'response' => 403 ) );
+			}
+
+			if ( function_exists( 'seopress_ai_generation_check' )
+				&& ! seopress_ai_generation_check( $named_post, 'edit_post', 'chat' ) ) {
+				wp_die( '', '', array( 'response' => 403 ) );
+			}
+		}
+
 		if ( ! is_array( $params ) ) {
 			$params = array();
 		}
@@ -903,8 +1005,18 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 		$full_content  = '';
 		$provider_lower = strtolower( $provider );
 
+		// An error response is not an SSE stream: it is one JSON object, so
+		// none of the chunk parsing below sees it and the body was thrown away.
+		// The status code was read and then ignored, which is why a model the
+		// account cannot call looked like the assistant answering nothing.
+		$raw_body = '';
+
 		// Write function — called for each chunk from the provider.
-		curl_setopt( $ch, CURLOPT_WRITEFUNCTION, function ( $ch, $data ) use ( &$full_content, $provider_lower ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt
+		curl_setopt( $ch, CURLOPT_WRITEFUNCTION, function ( $ch, $data ) use ( &$full_content, &$raw_body, $provider_lower ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt
+			if ( strlen( $raw_body ) < 8192 ) {
+				$raw_body .= $data;
+			}
+
 			$lines = explode( "\n", $data );
 
 			foreach ( $lines as $line ) {
@@ -969,10 +1081,71 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 			curl_close( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
 		}
 
-		// Parse actions from the full content.
-		$parsed = $this->parse_and_execute_actions( $full_content );
+		$this->finish_stream( $provider, $model, $http_code, $raw_body, $full_content );
+	}
+
+	/**
+	 * Answer the end of a streamed request: an error event, or the done event.
+	 *
+	 * Its own method so it can be exercised without a network: do_stream()
+	 * talks to the provider through cURL directly. The first version of this
+	 * read a `$completions` variable that only exists in stream_chat_ajax(),
+	 * so every streamed request, successful ones included, ended in a fatal
+	 * error before `done` was sent, and the test that covered it only grepped
+	 * the source.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $provider     The provider.
+	 * @param string $model        The model the request was sent with.
+	 * @param int    $http_code    The status the provider answered.
+	 * @param string $raw_body     The start of the response body.
+	 * @param string $full_content The streamed text, on success.
+	 *
+	 * @return void
+	 */
+	protected function finish_stream( $provider, $model, $http_code, $raw_body, $full_content ) {
+		$completions = seopress_pro_get_service( 'Completions' );
+
+		if ( 200 !== (int) $http_code ) {
+			// Record the refusal so the next request, streamed or not, picks a
+			// model the account can call, and tell the user what to change
+			// instead of leaving the panel empty.
+			$refusal = $completions->recordModelRefusal( $provider, $model, $http_code, $raw_body );
+
+			$error_data = json_decode( $raw_body, true );
+			$message    = isset( $error_data['error']['message'] ) && is_string( $error_data['error']['message'] )
+				? $error_data['error']['message']
+				: __( 'API request failed', 'wp-seopress-pro' );
+
+			$completions->logApiError(
+				array(
+					'provider'      => $provider,
+					'response_code' => $http_code,
+					'response_body' => $message,
+					'request_body'  => '',
+					'timestamp'     => current_time( 'mysql' ),
+				)
+			);
+
+			echo 'data: ' . wp_json_encode( array( 'error' => null !== $refusal ? $refusal : $message ) ) . "\n\n";
+			echo 'data: ' . wp_json_encode( array( 'done' => true, 'full_content' => '' ) ) . "\n\n";
+			flush();
+
+			return;
+		}
+
+		// The stream completed, so whatever the panel is still reporting is no
+		// longer true.
+		$completions->clearApiErrorLog();
+
+		// Collect the actions of the reply; they are proposed, never run here.
+		$parsed = $this->parse_actions( $full_content );
 
 		$done_data = array( 'done' => true, 'full_content' => $parsed['content'] );
+		if ( ! empty( $parsed['actions_proposed'] ) ) {
+			$done_data['actions_proposed'] = $parsed['actions_proposed'];
+		}
 		if ( ! empty( $parsed['actions_executed'] ) ) {
 			$done_data['actions_executed'] = $parsed['actions_executed'];
 		}
@@ -1162,7 +1335,7 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 		}
 
 		$text  = "\n\n## Available Actions (WordPress Abilities)";
-		$text .= "\nYou can execute these actions. When you want to perform an action, use this format:";
+		$text .= "\nYou can propose these actions. The user sees each one and confirms it before it runs. When you want to perform an action, use this format:";
 		$text .= "\n[ACTION]ability-name|{\"param\": \"value\"}[/ACTION]";
 		$text .= "\nExample: [ACTION]seopress/update-post-title-description|{\"post_id\": 1, \"title\": \"New Title\"}[/ACTION]";
 		$text .= "\n\nAvailable abilities:";
@@ -1172,18 +1345,30 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 	}
 
 	/**
-	 * Parse and execute [ACTION] tags from AI response.
+	 * Collect the [ACTION] tags of an AI response, without running them.
 	 *
-	 * @param string   $content   AI response content.
-	 * @param int|null $post_id   Current post ID for context.
-	 * @return array { content: string, actions_executed: array }
+	 * The reply is steered by whatever the model was given to read: a post, a
+	 * reference page, an image. Text planted there by someone else could make
+	 * the model emit an action, and running it here would do so with the rights
+	 * of the user reading the reply, an editor or an administrator. So each
+	 * action is handed back to the panel, which shows it and runs it through
+	 * process_action() only once the user confirms it.
+	 *
+	 * Only SEOPress abilities, the ones get_abilities_prompt() offers the
+	 * model, are proposed. Any other name is reported as refused.
+	 *
+	 * @param string   $content AI response content.
+	 * @param int|null $post_id Current post ID for context.
+	 * @return array { content: string, actions_proposed: array, actions_executed: array }
 	 */
-	private function parse_and_execute_actions( $content, $post_id = null ) {
+	private function parse_actions( $content, $post_id = null ) {
+		$actions_proposed = array();
 		$actions_executed = array();
 
 		if ( ! function_exists( 'wp_get_ability' ) ) {
 			return array(
 				'content'          => $content,
+				'actions_proposed' => $actions_proposed,
 				'actions_executed' => $actions_executed,
 			);
 		}
@@ -1194,13 +1379,14 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 		if ( empty( $matches[1] ) ) {
 			return array(
 				'content'          => $content,
+				'actions_proposed' => $actions_proposed,
 				'actions_executed' => $actions_executed,
 			);
 		}
 
 		foreach ( $matches[1] as $action_raw ) {
 			$parts = explode( '|', $action_raw, 2 );
-			$name  = trim( $parts[0] );
+			$name  = sanitize_text_field( trim( $parts[0] ) );
 			$input = array();
 
 			if ( isset( $parts[1] ) ) {
@@ -1215,31 +1401,21 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 				$input['post_id'] = $post_id;
 			}
 
-			$ability = wp_get_ability( $name );
-			if ( ! $ability ) {
+			$ability = $this->get_chat_ability( $name );
+			if ( is_wp_error( $ability ) ) {
 				$actions_executed[] = array(
 					'ability' => $name,
 					'status'  => 'error',
-					'message' => 'Ability not found.',
+					'message' => $ability->get_error_message(),
 				);
 				continue;
 			}
 
-			$result = $ability->execute( $input );
-
-			if ( is_wp_error( $result ) ) {
-				$actions_executed[] = array(
-					'ability' => $name,
-					'status'  => 'error',
-					'message' => $result->get_error_message(),
-				);
-			} else {
-				$actions_executed[] = array(
-					'ability' => $name,
-					'status'  => 'success',
-					'result'  => $result,
-				);
-			}
+			$actions_proposed[] = array(
+				'ability' => $name,
+				'label'   => $ability->get_label(),
+				'input'   => $input,
+			);
 		}
 
 		// Clean the [ACTION] tags from the displayed content.
@@ -1248,7 +1424,68 @@ Example response: "Here is a paragraph about SEO:\n[INSERT_CONTENT]<p>Search eng
 
 		return array(
 			'content'          => $clean_content,
+			'actions_proposed' => $actions_proposed,
 			'actions_executed' => $actions_executed,
+		);
+	}
+
+	/**
+	 * The ability the assistant may use under this name.
+	 *
+	 * @param string $name Ability name.
+	 * @return \WP_Ability|\WP_Error
+	 */
+	private function get_chat_ability( $name ) {
+		// wp_get_ability() flags an unknown name as incorrect usage; the model
+		// can make one up.
+		$ability = function_exists( 'wp_has_ability' ) && wp_has_ability( $name ) ? wp_get_ability( $name ) : null;
+
+		if ( ! $ability ) {
+			return new \WP_Error( 'seopress_ai_ability_not_found', __( 'Ability not found.', 'wp-seopress-pro' ) );
+		}
+
+		// The same set get_abilities_prompt() offers the model.
+		if ( 'seopress' !== $ability->get_category() ) {
+			return new \WP_Error( 'seopress_ai_ability_not_allowed', __( 'The assistant may only use SEOPress abilities.', 'wp-seopress-pro' ) );
+		}
+
+		return $ability;
+	}
+
+	/**
+	 * Run one action the user confirmed in the panel.
+	 *
+	 * The ability checks its own permissions when it is executed, with the
+	 * input it is given, so the confirmation adds a gate and removes none.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 * @return \WP_REST_Response
+	 */
+	public function process_action( \WP_REST_Request $request ) {
+		$name  = (string) $request->get_param( 'ability' );
+		$input = (array) $request->get_param( 'input' );
+
+		$ability = $this->get_chat_ability( $name );
+		$result  = is_wp_error( $ability ) ? $ability : $ability->execute( $input );
+
+		if ( is_wp_error( $result ) ) {
+			return new \WP_REST_Response(
+				array(
+					'ability' => $name,
+					'status'  => 'error',
+					'message' => $result->get_error_message(),
+				),
+				200
+			);
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'ability' => $name,
+				'status'  => 'success',
+				'result'  => $result,
+			),
+			200
 		);
 	}
 
@@ -1293,6 +1530,18 @@ If only one is requested, include only that field. PLAIN TEXT only, no HTML.',
 	private function enrich_seo_context( $post_id, $post_context ) {
 		if ( ! is_array( $post_context ) ) {
 			$post_context = array();
+		}
+
+		// The transports check that the caller may edit posts in general and
+		// that their role may use AI. Neither says anything about *this* post,
+		// and the id arrives in the request body. Without this, an account with
+		// edit_posts could name someone else's private draft and have its SEO
+		// title, description, social metadata and target keywords read out of
+		// the database and sent to the provider. See SEC-03.
+		$post_id = (int) $post_id;
+
+		if ( $post_id < 1 || ! current_user_can( 'edit_post', $post_id ) ) {
+			return $post_context;
 		}
 
 		// Target keywords.
@@ -1774,12 +2023,25 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 				case 'openai':
 				case 'mistral':
 					// OpenAI / Mistral multimodal format.
-					$content   = array();
-					$content[] = array(
+					$completions = seopress_pro_get_service( 'Completions' );
+					$content     = array();
+					$content[]   = array(
 						'type' => 'text',
 						'text' => $text,
 					);
 					foreach ( $image_urls as $url ) {
+						// The provider fetches the URL itself, so its extension
+						// is the only type known here. A URL naming no type goes
+						// through as before.
+						$mime_type = $completions->get_image_url_mime_type( $url );
+						if ( '' !== $mime_type && ! $completions->is_supported_image_mime_type( $mime_type, $provider ) ) {
+							$content[] = array(
+								'type' => 'text',
+								'text' => $this->unsupported_image_note( $mime_type ),
+							);
+							continue;
+						}
+
 						$content[] = array(
 							'type'      => 'image_url',
 							'image_url' => array( 'url' => $url ),
@@ -1801,7 +2063,12 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 					foreach ( $image_urls as $url ) {
 						$completions = seopress_pro_get_service( 'Completions' );
 						$base64_data = $completions->fetchImageAsBase64( $url );
-						if ( $base64_data ) {
+						if ( $base64_data && ! $completions->is_supported_image_mime_type( $base64_data['mime_type'], 'claude' ) ) {
+							$content[] = array(
+								'type' => 'text',
+								'text' => $this->unsupported_image_note( $base64_data['mime_type'] ),
+							);
+						} elseif ( $base64_data ) {
 							$content[] = array(
 								'type'   => 'image',
 								'source' => array(
@@ -1809,6 +2076,11 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 									'media_type' => $base64_data['mime_type'],
 									'data'       => $base64_data['data'],
 								),
+							);
+						} else {
+							$content[] = array(
+								'type' => 'text',
+								'text' => $this->unreadable_image_note(),
 							);
 						}
 					}
@@ -1979,6 +2251,11 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 			$error_data    = json_decode( $response_body, true );
 			$error_message = isset( $error_data['error']['message'] ) ? $error_data['error']['message'] : __( 'API request failed', 'wp-seopress-pro' );
 
+			// The assistant showed the provider's raw sentence, which for a
+			// model the account may not call reads like a billing problem and
+			// recorded nothing, so the next request asked for the same model.
+			$refusal = $completions_service->recordModelRefusal( $provider, $model, $response_code, $response_body );
+
 			// Log error, flat like every other write.
 			//
 			// This used to nest everything under an `error` key while
@@ -1995,9 +2272,11 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 			);
 			$completions_service->logApiError( $error_log );
 
+			// The log keeps the provider's own words, which is what someone
+			// debugging the key needs; the user is told what to change.
 			return new \WP_Error(
 				'api_error',
-				$error_message,
+				null !== $refusal ? $refusal : $error_message,
 				array( 'status' => $response_code )
 			);
 		}
@@ -2041,6 +2320,43 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 	}
 
 	/**
+	 * What the model is told in place of an image that could not be read.
+	 *
+	 * The image used to vanish from the request, so the model answered about
+	 * a picture it never saw, and the user had no way to tell. Saying so lets
+	 * it answer that it cannot see the image instead.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return string
+	 */
+	private function unreadable_image_note() {
+		return __( '[An image was attached here but could not be read, so it was not sent. Tell the user you could not see it rather than describing it.]', 'wp-seopress-pro' );
+	}
+
+	/**
+	 * What the model is told in place of an image its provider cannot read.
+	 *
+	 * The same list as the alt text generation decides (see
+	 * Completions::getSupportedImageMimeTypes()). Sending the image anyway
+	 * had the provider reject the whole request, so the user got no answer
+	 * at all.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $mime_type The image mime type.
+	 *
+	 * @return string
+	 */
+	private function unsupported_image_note( $mime_type ) {
+		return sprintf(
+			/* translators: %s: the image mime type, for example image/heic. */
+			__( '[An image was attached here but it is a %s file, which this AI provider cannot read, so it was not sent. Tell the user you could not see it, and that JPG, PNG, GIF or WebP images can be read.]', 'wp-seopress-pro' ),
+			$mime_type
+		);
+	}
+
+	/**
 	 * Build Gemini-specific request body.
 	 *
 	 * @param array $messages   Chat messages.
@@ -2067,13 +2383,17 @@ Context: This is for a WordPress post titled "%s" with existing target keywords:
 				$completions = seopress_pro_get_service( 'Completions' );
 				foreach ( $message['image_urls'] as $img_url ) {
 					$base64_data = $completions->fetchImageAsBase64( $img_url );
-					if ( $base64_data ) {
+					if ( $base64_data && ! $completions->is_supported_image_mime_type( $base64_data['mime_type'], 'gemini' ) ) {
+						$parts[] = array( 'text' => $this->unsupported_image_note( $base64_data['mime_type'] ) );
+					} elseif ( $base64_data ) {
 						$parts[] = array(
 							'inline_data' => array(
 								'mime_type' => $base64_data['mime_type'],
 								'data'      => $base64_data['data'],
 							),
 						);
+					} else {
+						$parts[] = array( 'text' => $this->unreadable_image_note() );
 					}
 				}
 			}

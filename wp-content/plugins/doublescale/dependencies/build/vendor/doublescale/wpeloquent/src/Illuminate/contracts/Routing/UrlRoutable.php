@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Routing;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Routing;
 
 interface UrlRoutable
 {

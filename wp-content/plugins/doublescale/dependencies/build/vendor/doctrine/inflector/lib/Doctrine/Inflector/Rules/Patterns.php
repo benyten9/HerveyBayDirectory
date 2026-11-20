@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules;
 
 use function array_map;
 use function implode;
@@ -12,10 +12,10 @@ class Patterns
     private $patterns;
     /** @var string */
     private $regex;
-    public function __construct(\Doctrine\Inflector\Rules\Pattern ...$patterns)
+    public function __construct(Pattern ...$patterns)
     {
         $this->patterns = $patterns;
-        $patterns = array_map(static function (\Doctrine\Inflector\Rules\Pattern $pattern) : string {
+        $patterns = array_map(static function (Pattern $pattern) : string {
             return $pattern->getPattern();
         }, $this->patterns);
         $this->regex = '/^(?:' . implode('|', $patterns) . ')$/i';

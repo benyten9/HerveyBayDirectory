@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Pagination;
 
-interface LengthAwarePaginator extends \Illuminate\Contracts\Pagination\Paginator
+interface LengthAwarePaginator extends Paginator
 {
     /**
      * Create a range of pagination URLs.

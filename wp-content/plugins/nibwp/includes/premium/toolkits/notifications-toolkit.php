@@ -16,8 +16,8 @@ if (!defined('ABSPATH')) {
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-send-email', [
-    'label' => __('Send Email', domain: 'nibwp'),
-    'description' => __('Sends an email via wp_mail() with support for HTML content, CC, BCC, custom sender, and file attachments.', domain: 'nibwp'),
+    'label' => __('Send Email', 'nibwp'),
+    'description' => 'Sends an email via wp_mail() with support for HTML content, CC, BCC, custom sender, and file attachments.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -120,8 +120,8 @@ function nibwp_notify_send_email(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-send-sms', [
-    'label' => __('Send SMS via Twilio', domain: 'nibwp'),
-    'description' => __('Sends an SMS message via Twilio. Supports WP Twilio Core plugin or direct Twilio REST API with stored credentials.', domain: 'nibwp'),
+    'label' => __('Send SMS via Twilio', 'nibwp'),
+    'description' => 'Sends an SMS message via Twilio. Supports WP Twilio Core plugin or direct Twilio REST API with stored credentials.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -248,8 +248,8 @@ function nibwp_notify_twilio_send(string $to, string $message, string $from_over
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-bulk-email', [
-    'label' => __('Send Bulk Emails', domain: 'nibwp'),
-    'description' => __('Sends personalized emails to multiple recipients with {{variable}} placeholder support and rate limiting.', domain: 'nibwp'),
+    'label' => __('Send Bulk Emails', 'nibwp'),
+    'description' => 'Sends personalized emails to multiple recipients with {{variable}} placeholder support and rate limiting.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -371,8 +371,8 @@ function nibwp_notify_replace_variables(string $template, array $vars): string
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-bulk-sms', [
-    'label' => __('Send Bulk SMS', domain: 'nibwp'),
-    'description' => __('Sends personalized SMS messages to multiple recipients via Twilio with {{variable}} placeholder support.', domain: 'nibwp'),
+    'label' => __('Send Bulk SMS', 'nibwp'),
+    'description' => 'Sends personalized SMS messages to multiple recipients via Twilio with {{variable}} placeholder support.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -467,8 +467,8 @@ function nibwp_notify_bulk_sms(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-manage-templates', [
-    'label' => __('Manage Notification Templates', domain: 'nibwp'),
-    'description' => __('Create, read, update, and delete reusable notification templates stored in WordPress options.', domain: 'nibwp'),
+    'label' => __('Manage Notification Templates', 'nibwp'),
+    'description' => 'Create, read, update, and delete reusable notification templates stored in WordPress options.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -602,8 +602,8 @@ function nibwp_notify_manage_templates(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-configure-twilio', [
-    'label' => __('Configure Twilio Credentials', domain: 'nibwp'),
-    'description' => __('Manages Twilio API credentials for SMS sending. Supports saving credentials, checking status, and testing the connection.', domain: 'nibwp'),
+    'label' => __('Configure Twilio Credentials', 'nibwp'),
+    'description' => 'Manages Twilio API credentials for SMS sending. Supports saving credentials, checking status, and testing the connection.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -725,8 +725,8 @@ function nibwp_notify_configure_twilio(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-send-wp-notification', [
-    'label' => __('Send WordPress Admin Notification', domain: 'nibwp'),
-    'description' => __('Sends persistent admin notifications to specific users or all administrators, displayed as admin notices in the WordPress dashboard.', domain: 'nibwp'),
+    'label' => __('Send WordPress Admin Notification', 'nibwp'),
+    'description' => 'Sends persistent admin notifications to specific users or all administrators, displayed as admin notices in the WordPress dashboard.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',
@@ -819,8 +819,8 @@ function nibwp_notify_send_wp_notification(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/notify-webhook', [
-    'label' => __('Send Webhook Notification', domain: 'nibwp'),
-    'description' => __('Sends an HTTP webhook request to an external URL with custom headers, body, and method. Useful for integrating with Slack, Discord, Zapier, and other services.', domain: 'nibwp'),
+    'label' => __('Send Webhook Notification', 'nibwp'),
+    'description' => 'Sends an HTTP webhook request to an external URL with custom headers, body, and method. Useful for integrating with Slack, Discord, Zapier, and other services.',
     'category' => 'notifications',
     'input_schema' => [
         'type' => 'object',

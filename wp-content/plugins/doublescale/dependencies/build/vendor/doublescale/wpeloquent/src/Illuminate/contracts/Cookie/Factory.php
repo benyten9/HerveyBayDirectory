@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Cookie;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Cookie;
 
 interface Factory
 {

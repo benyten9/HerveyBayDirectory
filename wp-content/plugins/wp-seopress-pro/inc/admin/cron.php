@@ -104,20 +104,19 @@ add_action( 'wp_ajax_seopress_request_page_speed', 'seopress_request_page_speed'
  * @param boolean $clear Is clear cache.
  * @return void
  */
-use SEOPressPro\Vendor\Google\Analytics\Data\V1beta\BetaAnalyticsDataClient;
-use SEOPressPro\Vendor\Google\Analytics\Data\V1beta\DateRange;
-use SEOPressPro\Vendor\Google\Analytics\Data\V1beta\Dimension;
-use SEOPressPro\Vendor\Google\Analytics\Data\V1beta\OrderBy;
-use SEOPressPro\Vendor\Google\Analytics\Data\V1beta\Metric;
-use SEOPressPro\Vendor\Google\ApiCore\ApiException;
-use SEOPressPro\Vendor\Google\Auth\OAuth2;
+use SEOPressPro\Vendor\Google\Service\AnalyticsData\DateRange;
+use SEOPressPro\Vendor\Google\Service\AnalyticsData\Dimension;
+use SEOPressPro\Vendor\Google\Service\AnalyticsData\DimensionOrderBy;
+use SEOPressPro\Vendor\Google\Service\AnalyticsData\Metric;
+use SEOPressPro\Vendor\Google\Service\AnalyticsData\OrderBy;
+use SEOPressPro\Vendor\Google\Service\AnalyticsData\RunReportRequest;
 
 /**
  * Whether the GA stats cache currently holds a valid (non-error) result.
  *
  * Used by the fetch error handlers so a transient failure (an expired token
  * refreshed mid-request, a conflicting Google SDK throwing a \Throwable, a
- * PHP 8 TypeError in the gax client…) does not overwrite previously-good data
+ * PHP 8 TypeError in the Google client…) does not overwrite previously-good data
  * and blank both the WP dashboard widget and the SEOPress Site overview.
  *
  * @return bool
@@ -132,6 +131,361 @@ function seopress_ga_stats_cache_is_valid() {
 	return is_array( $cache )
 		&& empty( $cache['error'] )
 		&& ( isset( $cache['sessions'] ) || isset( $cache['users'] ) || isset( $cache['pageviews'] ) );
+}
+
+/**
+ * The stored Google Analytics token, in the shape the Google client expects.
+ *
+ * The tokens live in their own keys of the option. Since 10.2.0 the 'debug'
+ * key only keeps the rest of the payload (expiry, scope, creation time), so
+ * handing it to the client on its own made setAccessToken() throw "Invalid
+ * token format" for every connection made since, before any request was sent.
+ *
+ * @since 10.3.0
+ *
+ * @return array
+ */
+function seopress_ga_get_stored_token() {
+	$service = seopress_pro_get_service( 'GoogleAnalyticsOptionPro' );
+	$token   = $service->getDebug();
+	$token   = is_array( $token ) ? $token : array();
+
+	$token['access_token']  = $service->getAccessToken();
+	$token['refresh_token'] = $service->getRefreshToken();
+
+	return $token;
+}
+
+/**
+ * The part of a token payload kept in the 'debug' key: everything but the tokens.
+ *
+ * @since 10.3.0
+ *
+ * @param array $token Token payload returned by Google.
+ *
+ * @return array
+ */
+function seopress_ga_token_debug( $token ) {
+	return array_diff_key( (array) $token, array_flip( array( 'access_token', 'refresh_token', 'id_token' ) ) );
+}
+
+/**
+ * Refresh the Google Analytics access token when it has expired, and store it.
+ *
+ * Google answers a refresh token it no longer accepts (revoked, or expired
+ * after seven days because the OAuth consent screen is in Testing) with an
+ * error payload rather than an exception: that payload is returned so the
+ * caller can record why the connection stopped working.
+ *
+ * @since 10.3.0
+ *
+ * @param object $client The Google API client, loaded with seopress_ga_get_stored_token().
+ *
+ * @return true|array True when the access token is usable, Google's error payload otherwise.
+ */
+function seopress_ga_refresh_access_token( $client ) {
+	if ( ! $client->isAccessTokenExpired() ) {
+		return true;
+	}
+
+	$refresh_token = seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getRefreshToken();
+
+	if ( empty( $refresh_token ) ) {
+		return array(
+			'error'             => 'invalid_grant',
+			'error_description' => 'No refresh token is stored for this connection.',
+		);
+	}
+
+	$token = $client->fetchAccessTokenWithRefreshToken( $refresh_token );
+
+	if ( ! is_array( $token ) || empty( $token['access_token'] ) ) {
+		return is_array( $token ) && ! empty( $token ) ? $token : array( 'error' => 'Empty response from the Google token endpoint.' );
+	}
+
+	$options = get_option( 'seopress_google_analytics_option_name1', array() );
+	$options = is_array( $options ) ? $options : array();
+
+	$options['access_token']  = $token['access_token'];
+	$options['refresh_token'] = ! empty( $token['refresh_token'] ) ? $token['refresh_token'] : $refresh_token;
+	$options['debug']         = seopress_ga_token_debug( $token );
+	update_option( 'seopress_google_analytics_option_name1', $options, 'yes' );
+
+	return true;
+}
+
+/**
+ * Keep the reason of a failed Google Analytics sync until a sync succeeds.
+ *
+ * The stats transient only holds an error for five minutes, and not at all
+ * while older data is still valid, so it cannot tell the settings screen or
+ * the widgets why the data stopped. This option does, until the next
+ * successful sync, a reconnection or a logout clears it.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $error What Google answered: a decoded error payload, or a message.
+ *
+ * @return void
+ */
+function seopress_ga_record_sync_error( $error ) {
+	update_option(
+		'seopress_ga_sync_error',
+		array(
+			'reason'   => seopress_ga_sync_error_reason( $error ),
+			'response' => seopress_ga_sync_error_text( $error ),
+			'time'     => time(),
+		),
+		false
+	);
+}
+
+/**
+ * Forget the last Google Analytics sync failure.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_ga_clear_sync_error() {
+	delete_option( 'seopress_ga_sync_error' );
+}
+
+/**
+ * Classify what Google answered, so the interface can say what to do about it.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $error A decoded error payload, or a message.
+ *
+ * @return string One of token_rejected, client_rejected, api_disabled, permission_denied, other.
+ */
+function seopress_ga_sync_error_reason( $error ) {
+	$haystack = is_string( $error ) ? $error : (string) wp_json_encode( $error );
+
+	if ( preg_match( '/invalid_client|unauthorized_client|deleted_client/', $haystack ) ) {
+		return 'client_rejected';
+	}
+
+	if ( preg_match( '/invalid_grant|UNAUTHENTICATED/', $haystack ) ) {
+		return 'token_rejected';
+	}
+
+	if ( preg_match( '/SERVICE_DISABLED|has not been used in project/', $haystack ) ) {
+		return 'api_disabled';
+	}
+
+	if ( preg_match( '/PERMISSION_DENIED|sufficient permissions/', $haystack ) ) {
+		return 'permission_denied';
+	}
+
+	return 'other';
+}
+
+/**
+ * The readable part of what Google answered.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $error A decoded error payload, or a message.
+ *
+ * @return string
+ */
+function seopress_ga_sync_error_text( $error ) {
+	// Google REST errors nest the details under an "error" object.
+	if ( is_array( $error ) && isset( $error['error'] ) && is_array( $error['error'] ) ) {
+		$error = $error['error'];
+	}
+
+	if ( is_array( $error ) && ! empty( $error['error_description'] ) ) {
+		// The OAuth token endpoint answers with an error code and a description.
+		$text = ! empty( $error['error'] ) && is_string( $error['error'] )
+			? $error['error'] . ': ' . $error['error_description']
+			: $error['error_description'];
+	} elseif ( is_array( $error ) && ! empty( $error['message'] ) ) {
+		// The Analytics Data API answers with a message, a numeric code and a status name.
+		$text = ! empty( $error['status'] ) && is_string( $error['status'] )
+			? $error['status'] . ': ' . $error['message']
+			: $error['message'];
+	} elseif ( is_array( $error ) && ! empty( $error['error'] ) && is_string( $error['error'] ) ) {
+		$text = $error['error'];
+	} elseif ( is_scalar( $error ) ) {
+		$text = (string) $error;
+	} else {
+		$text = (string) wp_json_encode( $error );
+	}
+
+	return mb_substr( trim( wp_strip_all_tags( (string) $text ) ), 0, 500 );
+}
+
+/**
+ * The last Google Analytics sync failure, ready to display.
+ *
+ * @since 10.3.0
+ *
+ * @return array|null Null when the last sync succeeded.
+ */
+function seopress_ga_get_sync_error() {
+	$error = get_option( 'seopress_ga_sync_error' );
+
+	if ( ! is_array( $error ) || empty( $error['reason'] ) ) {
+		return null;
+	}
+
+	$reason = (string) $error['reason'];
+	$time   = isset( $error['time'] ) ? (int) $error['time'] : 0;
+
+	switch ( $reason ) {
+		case 'token_rejected':
+			$summary = __( 'Google no longer accepts this connection.', 'wp-seopress-pro' );
+			$hint    = __( 'When the OAuth consent screen of your Google Cloud project is in "Testing", Google ends the connection 7 days after it was made. Publish the app (Google Auth Platform > Audience > Publish app), then reconnect. If it is already published, the access was revoked from the Google account: reconnect.', 'wp-seopress-pro' );
+			break;
+		case 'client_rejected':
+			$summary = __( 'Google rejected the Client ID or the Secret ID.', 'wp-seopress-pro' );
+			$hint    = __( 'The OAuth client may have been deleted, or its secret reset, in Google Cloud. Log out, enter the current Client ID and Secret ID, then connect again.', 'wp-seopress-pro' );
+			break;
+		case 'api_disabled':
+			$summary = __( 'The Google Analytics Data API is not enabled.', 'wp-seopress-pro' );
+			$hint    = __( 'Enable it in the Google Cloud project that owns your Client ID, wait a few minutes, then sync again.', 'wp-seopress-pro' );
+			break;
+		case 'permission_denied':
+			$summary = __( 'The connected Google account cannot read this GA4 property.', 'wp-seopress-pro' );
+			$hint    = __( 'Check the property ID, and that this Google account has at least Viewer access to the property.', 'wp-seopress-pro' );
+			break;
+		default:
+			$reason  = 'other';
+			$summary = __( 'The last sync with Google Analytics failed.', 'wp-seopress-pro' );
+			$hint    = '';
+	}
+
+	return array(
+		'reason'          => $reason,
+		// The stored connection is unusable: it must not read as connected.
+		'rejected'        => in_array( $reason, array( 'token_rejected', 'client_rejected' ), true ),
+		// A new consent flow fixes it (not with a rejected client: new credentials do).
+		'needs_reconnect' => 'token_rejected' === $reason,
+		'summary'         => $summary,
+		'hint'            => $hint,
+		'response'        => isset( $error['response'] ) ? (string) $error['response'] : '',
+		'time'            => $time,
+		'date'            => $time > 0 ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time ) : '',
+	);
+}
+
+/**
+ * URL of the Google Analytics settings, scrolled to the connection state.
+ *
+ * @since 10.3.0
+ *
+ * @return string
+ */
+function seopress_ga_connection_settings_url() {
+	return admin_url( 'admin.php?page=seopress-google-analytics&seopress_ga_focus=connection#tab=tab_seopress_analytics_google' );
+}
+
+/**
+ * Record a failed sync, then end the request the way its context expects.
+ *
+ * @since 10.3.0
+ *
+ * @param mixed $error A decoded error payload, or a message.
+ *
+ * @return void
+ */
+function seopress_ga_sync_failed( $error ) {
+	seopress_ga_record_sync_error( $error );
+
+	// Don't clobber a previously-good result; cache briefly so the next cron
+	// retries instead of latching the failure.
+	if ( ! seopress_ga_stats_cache_is_valid() ) {
+		set_transient( 'seopress_results_google_analytics', wp_json_encode( array( 'error' => $error ) ), 5 * MINUTE_IN_SECONDS );
+	}
+
+	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		return;
+	}
+
+	$sync_error = seopress_ga_get_sync_error();
+
+	wp_send_json_error(
+		array(
+			'message' => $sync_error['summary'],
+			'error'   => $sync_error,
+		)
+	);
+}
+
+/**
+ * Run one GA4 Data API report: the given metrics per day, from a start date to today.
+ *
+ * Goes through the REST endpoint of the Data API, with the same \Google\Client
+ * as the rest of the Google integration, rather than google/analytics-data.
+ * That package needs gax and the protobuf runtime, and no protobuf release
+ * fixing GHSA-p2gh-cfq4-4wjc runs on PHP 7.4 (wp-seopress-pro#1324).
+ *
+ * @since 10.4.0
+ *
+ * @param object $analytics_data The \Google\Service\AnalyticsData service, built on an authorized client.
+ * @param string $property_id    GA4 property ID.
+ * @param string $start_date     Start of the range, in a format the Data API accepts (e.g. '30daysAgo').
+ * @param array  $metrics        GA4 metric names, in the order Google returns their values.
+ *
+ * @throws \Google\Service\Exception When Google answers with an error. Its message is Google's JSON error body.
+ *
+ * @return array Metric values keyed by metric name, then by date (YYYYMMDD), oldest first.
+ */
+function seopress_ga_run_report( $analytics_data, $property_id, $start_date, $metrics ) {
+	$metrics = array_values( $metrics );
+
+	$date_range = new DateRange();
+	$date_range->setStartDate( $start_date );
+	$date_range->setEndDate( 'today' );
+
+	$date_dimension = new Dimension();
+	$date_dimension->setName( 'date' );
+
+	$metric_objects = array();
+	foreach ( $metrics as $metric_name ) {
+		$metric = new Metric();
+		$metric->setName( $metric_name );
+		$metric_objects[] = $metric;
+	}
+
+	$by_date = new DimensionOrderBy();
+	$by_date->setDimensionName( 'date' );
+	$by_date->setOrderType( 'ALPHANUMERIC' );
+
+	$order_by = new OrderBy();
+	$order_by->setDimension( $by_date );
+	$order_by->setDesc( false );
+
+	$request = new RunReportRequest();
+	$request->setDateRanges( array( $date_range ) );
+	$request->setDimensions( array( $date_dimension ) );
+	$request->setMetrics( $metric_objects );
+	$request->setOrderBys( array( $order_by ) );
+
+	$report = $analytics_data->properties->runReport( 'properties/' . $property_id, $request );
+
+	// Google leaves "rows" out of the answer entirely when the range has no data.
+	$rows      = $report->getRows();
+	$by_metric = array();
+	foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+		$dimension_values = $row->getDimensionValues();
+		$metric_values    = $row->getMetricValues();
+		if ( empty( $dimension_values[0] ) || ! is_array( $metric_values ) ) {
+			continue;
+		}
+
+		$date = $dimension_values[0]->getValue();
+		foreach ( $metrics as $i => $metric_name ) {
+			if ( isset( $metric_values[ $i ] ) ) {
+				$by_metric[ $metric_name ][ $date ] = $metric_values[ $i ]->getValue();
+			}
+		}
+	}
+
+	return $by_metric;
 }
 
 /**
@@ -177,18 +531,6 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 
 			require_once SEOPRESS_PRO_PLUGIN_DIR_PATH . '/vendor/autoload.php';
 
-			$oauth = new OAuth2(
-				array(
-					'scope'              => 'https://www.googleapis.com/auth/analytics.readonly',
-					'tokenCredentialUri' => 'https://oauth2.googleapis.com/token',
-					'authorizationUri'   => 'https://accounts.google.com/o/oauth2/auth',
-					'clientId'           => $client_id,
-					'clientSecret'       => $client_secret,
-					'redirectUri'        => admin_url( 'admin.php?page=seopress-google-analytics' ),
-					'plugin_name'        => 'SEOPress',
-				)
-			);
-
 			$client = new \SEOPressPro\Vendor\Google\Client();
 			$client->setApplicationName( 'Client_Library_Examples' );
 			$client->setClientId( $client_id );
@@ -200,52 +542,27 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 			$client->setIncludeGrantedScopes( true ); // mandatory to get this fucking refreshtoken.
 			$client->setPrompt( 'consent' ); // mandatory to get this fucking refreshtoken.
 
-			$client->setAccessToken( seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getDebug() );
+			$client->setAccessToken( seopress_ga_get_stored_token() );
 
-			if ( $client->isAccessTokenExpired() ) {
-				try {
-					$client->refreshToken( seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getDebug() );
-					$seopress_new_access_token = $client->getAccessToken();
-					$seopress_google_analytics_options                  = get_option( 'seopress_google_analytics_option_name1' );
-					$seopress_google_analytics_options['access_token']  = $seopress_new_access_token['access_token'] ?? null;
-					$seopress_google_analytics_options['refresh_token'] = $seopress_new_access_token['refresh_token'] ?? null;
-					$seopress_google_analytics_options['debug']         = $seopress_new_access_token ?? null;
-					update_option( 'seopress_google_analytics_option_name1', $seopress_google_analytics_options, 'yes' );
-				} catch ( \Throwable $refresh_error ) {
-					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-						error_log( 'SEOPress: Google Analytics token refresh failed: ' . $refresh_error->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					}
-
-					// Keep serving the last good result instead of blanking both
-					// dashboards for two hours on a one-off refresh failure. Only
-					// cache the error (briefly, so the next cron retries) when we
-					// have nothing valid to show.
-					if ( ! seopress_ga_stats_cache_is_valid() ) {
-						set_transient(
-							'seopress_results_google_analytics',
-							wp_json_encode( array( 'error' => $refresh_error->getMessage() ) ),
-							5 * MINUTE_IN_SECONDS
-						);
-					}
-
-					if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-						return;
-					}
-
-					wp_send_json( $refresh_error->getMessage() );
-				}
+			try {
+				$refreshed = seopress_ga_refresh_access_token( $client );
+			} catch ( \Throwable $refresh_error ) {
+				$refreshed = $refresh_error->getMessage();
 			}
 
-			// Get current token (refreshed if it was expired, or existing if still valid)
-			$current_token_data = $client->getAccessToken();
+			if ( true !== $refreshed ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'SEOPress: Google Analytics token refresh failed: ' . seopress_ga_sync_error_text( $refreshed ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				}
+
+				// Keeps serving the last good result instead of blanking both
+				// dashboards on a one-off refresh failure, and records why.
+				seopress_ga_sync_failed( $refreshed );
+				return;
+			}
 
 			$service = new \SEOPressPro\Vendor\Google\Service\AnalyticsReporting( $client );
 
-			// Use the current (possibly refreshed) token from Google Client
-			$access_token  = $current_token_data['access_token'] ?? seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getAccessToken();
-			$refresh_token = $current_token_data['refresh_token'] ?? seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getRefreshToken();
-			$oauth->setAccessToken( $access_token );
-			$oauth->setRefreshToken( $refresh_token );
 			// GA4 Stats.
 			$all = array();
 
@@ -275,51 +592,13 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 			if ( seopress_get_service( 'GoogleAnalyticsOption' )->getGA4PropertId() ) {
 				$property_id = seopress_get_service( 'GoogleAnalyticsOption' )->getGA4PropertId();
 
-				// Get GA4 data — one multi-metric report per period.
-				$ga4_data = new BetaAnalyticsDataClient( array( 'credentials' => $oauth ) );
+				// Get GA4 data — one multi-metric report per period. The client
+				// carries the token refreshed above.
+				$ga4_data = new \SEOPressPro\Vendor\Google\Service\AnalyticsData( $client );
 
 				foreach ( $ga_periods_to_fetch as $period_key => $period_value ) {
 					try {
-						// Build fresh request message objects on every iteration. A
-						// protobuf sub-message can only belong to a single parent
-						// request, so reusing the same Metric instances across
-						// periods makes runReport() throw from the second call on
-						// and silently empties the dashboards.
-						$metric_objects = array();
-						foreach ( $ga_metric_map as $api_name ) {
-							$metric_objects[] = new Metric( array( 'name' => $api_name ) );
-						}
-
-						$report = $ga4_data->runReport(
-							array(
-								'property'   => 'properties/' . $property_id,
-								'dateRanges' => array(
-									new DateRange(
-										array(
-											'start_date' => $period_value,
-											'end_date'   => 'today',
-										)
-									),
-								),
-								'dimensions' => array(
-									new Dimension( array( 'name' => 'date' ) ),
-								),
-								'metrics'    => $metric_objects,
-								'orderBys'   => array(
-									new OrderBy(
-										array(
-											'dimension' => new OrderBy\DimensionOrderBy(
-												array(
-													'dimension_name' => 'date',
-													'order_type' => OrderBy\DimensionOrderBy\OrderType::ALPHANUMERIC,
-												)
-											),
-											'desc'      => false,
-										)
-									),
-								),
-							)
-						);
+						$by_metric = seopress_ga_run_report( $ga4_data, $property_id, $period_value, $ga_metric_map );
 					} catch ( \Throwable $report_error ) {
 						// Skip this period on transient failure; keep what we already have.
 						$last_report_error = $report_error;
@@ -327,19 +606,6 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 							error_log( 'SEOPress: Google Analytics runReport failed for period ' . $period_value . ': ' . get_class( $report_error ) . ' — ' . $report_error->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 						}
 						continue;
-					}
-
-					$by_metric           = array();
-					$metric_keys_ordered = array_keys( $ga_metric_map );
-					foreach ( $report->getRows() as $row ) {
-						$date   = $row->getDimensionValues()[0]->getValue();
-						$values = $row->getMetricValues();
-						foreach ( $metric_keys_ordered as $i => $internal_key ) {
-							$internal_metric_name = $ga_metric_map[ $internal_key ];
-							if ( isset( $values[ $i ] ) ) {
-								$by_metric[ $internal_metric_name ][ $date ] = $values[ $i ]->getValue();
-							}
-						}
 					}
 
 					$ga_periods_data[ $period_key ] = $by_metric;
@@ -376,19 +642,18 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 			if ( empty( $ga_periods_data ) && null !== $last_report_error ) {
 				$error_message = $last_report_error->getMessage();
 				$decoded_error = json_decode( $error_message, true );
-				$error         = wp_json_encode( array( 'error' => null !== $decoded_error ? $decoded_error : $error_message ) );
 
-				// Don't clobber a previously-good result; cache briefly so the
-				// next cron retries instead of latching the failure.
+				seopress_ga_sync_failed( null !== $decoded_error ? $decoded_error : $error_message );
+				return;
+			}
+
+			if ( ! empty( $ga_periods_data ) ) {
+				seopress_ga_clear_sync_error();
+
+				// A cached error would otherwise keep the fresh data out until it expires.
 				if ( ! seopress_ga_stats_cache_is_valid() ) {
-					set_transient( 'seopress_results_google_analytics', $error, 5 * MINUTE_IN_SECONDS );
+					delete_transient( 'seopress_results_google_analytics' );
 				}
-
-				if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-					return;
-				}
-
-				wp_send_json( $error );
 			}
 
 			if ( true === $clear ) {
@@ -528,8 +793,8 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 			// Catch \Throwable, not just \Exception: when another active plugin
 			// ships its own (prefixed) copy of the Google SDK — e.g. WooCommerce
 			// Google Listings & Ads — class resolution across the two copies can
-			// surface a \Error/\TypeError (or a foreign exception) from the gax
-			// client. Degrading gracefully here keeps the request alive instead
+			// surface a \Error/\TypeError (or a foreign exception) from the
+			// Google client. Degrading gracefully here keeps the request alive instead
 			// of white-screening the admin. See issue #1405; the complete fix is
 			// to prefix our bundled Google vendor libraries.
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -539,27 +804,15 @@ function seopress_request_google_analytics_fn( $clear = false ) {
 			$error_message = $e->getMessage();
 			// Try to decode if it's JSON, otherwise use the message as-is
 			$decoded_error = json_decode( $error_message, true );
-			$error_data    = array(
-				'error' => null !== $decoded_error ? $decoded_error : $error_message,
-			);
-			$error         = wp_json_encode( $error_data );
 
 			// Do not overwrite a previously-good result with an error for two
 			// hours: a one-off \Throwable (PHP 8 TypeError, a conflicting Google
 			// SDK from another plugin, a token expiring mid-request) would
 			// otherwise blank both the WP dashboard widget and the SEOPress Site
-			// overview until the cache expires. Cache the error only when there
-			// is nothing valid to show, and briefly so the next hourly cron
-			// retries instead of latching the failure.
-			if ( ! seopress_ga_stats_cache_is_valid() ) {
-				set_transient( 'seopress_results_google_analytics', $error, 5 * MINUTE_IN_SECONDS );
-			}
-
-			if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
-				return;
-			}
-
-			wp_send_json( $error );
+			// overview until the cache expires. The error is cached only when
+			// there is nothing valid to show, and briefly so the next hourly
+			// cron retries instead of latching the failure.
+			seopress_ga_sync_failed( null !== $decoded_error ? $decoded_error : $error_message );
 		}
 	}
 }
@@ -606,6 +859,208 @@ function seopress_request_google_analytics() {
 add_action( 'wp_ajax_seopress_request_google_analytics', 'seopress_request_google_analytics' );
 
 /**
+ * The readable part of what Matomo answered.
+ *
+ * Matomo does not use HTTP status codes for API errors: a refused token comes
+ * back as 200 with `{"result":"error","message":"..."}` in the body.
+ *
+ * @since 10.4.0
+ *
+ * @param mixed $error A decoded body, a WP_Error, a message, or one of our own codes.
+ *
+ * @return string Empty for our own codes: Matomo never said them.
+ */
+function seopress_matomo_sync_error_text( $error ) {
+	if ( is_wp_error( $error ) ) {
+		return (string) $error->get_error_message();
+	}
+
+	if ( is_array( $error ) && ! empty( $error['message'] ) && is_string( $error['message'] ) ) {
+		return $error['message'];
+	}
+
+	if ( is_string( $error ) && in_array( $error, array( 'unreadable', 'other' ), true ) ) {
+		return '';
+	}
+
+	if ( is_scalar( $error ) ) {
+		return (string) $error;
+	}
+
+	return '';
+}
+
+/**
+ * Classify what went wrong, so the interface can say what to do about it.
+ *
+ * @since 10.4.0
+ *
+ * @param mixed $error A decoded body, a WP_Error, or a message.
+ *
+ * @return string One of token_rejected, unreachable, unreadable, other.
+ */
+function seopress_matomo_sync_error_reason( $error ) {
+	if ( is_wp_error( $error ) ) {
+		return 'unreachable';
+	}
+
+	if ( 'unreadable' === $error ) {
+		return 'unreadable';
+	}
+
+	$text = strtolower( seopress_matomo_sync_error_text( $error ) );
+
+	if ( '' === $text ) {
+		return 'other';
+	}
+
+	// The request asks for English messages. A token Matomo does not know, or
+	// one that expired, fails at login ("Unable to authenticate with the
+	// provided token. It is either invalid or expired"). A valid token whose
+	// user lacks `view` on the site id fails later, on the access level it
+	// wanted ("You can't access this resource as it requires 'view' access
+	// for the website id = 1").
+	if ( false !== strpos( $text, 'authenticate' ) || false !== strpos( $text, 'requires a' ) || false !== strpos( $text, 'access' ) || false !== strpos( $text, 'token_auth' ) ) {
+		return 'token_rejected';
+	}
+
+	return 'other';
+}
+
+/**
+ * Record a failed Matomo sync.
+ *
+ * @since 10.4.0
+ *
+ * @param mixed       $error    A decoded body, a WP_Error, or one of our own codes.
+ * @param string|null $response What to show as Matomo's answer when $error does
+ *                              not carry it, such as the HTTP status of a body
+ *                              that could not be read.
+ *
+ * @return void
+ */
+function seopress_matomo_record_sync_error( $error, $response = null ) {
+	update_option(
+		'seopress_matomo_sync_error',
+		array(
+			'reason'   => seopress_matomo_sync_error_reason( $error ),
+			'response' => null !== $response ? (string) $response : seopress_matomo_sync_error_text( $error ),
+			'time'     => time(),
+		),
+		false
+	);
+}
+
+/**
+ * Forget the last Matomo sync failure.
+ *
+ * @since 10.4.0
+ *
+ * @return void
+ */
+function seopress_matomo_clear_sync_error() {
+	delete_option( 'seopress_matomo_sync_error' );
+}
+
+/**
+ * The last Matomo sync failure, ready to display.
+ *
+ * Translated when read, not when recorded: the cron runs in the site
+ * language, the person reading may use another one.
+ *
+ * @since 10.4.0
+ *
+ * @return array|null
+ */
+function seopress_matomo_get_sync_error() {
+	$error = get_option( 'seopress_matomo_sync_error' );
+
+	if ( ! is_array( $error ) || empty( $error['reason'] ) ) {
+		return null;
+	}
+
+	$reason = (string) $error['reason'];
+	$time   = isset( $error['time'] ) ? (int) $error['time'] : 0;
+
+	switch ( $reason ) {
+		case 'token_rejected':
+			$summary = __( 'Matomo refused the API token.', 'wp-seopress-pro' );
+			$hint    = __( 'Check that the token still exists in Matomo under Administration > Personal > Security, and that the user it belongs to has at least "view" access to the site ID set here.', 'wp-seopress-pro' );
+			break;
+		case 'unreachable':
+			$summary = __( 'Your Matomo instance could not be reached.', 'wp-seopress-pro' );
+			$hint    = __( 'Check the Matomo URL, that the instance is up, and that its TLS certificate is valid.', 'wp-seopress-pro' );
+			break;
+		case 'unreadable':
+			$summary = __( 'Matomo answered something we could not read.', 'wp-seopress-pro' );
+			$hint    = __( 'The URL may point at a page rather than at the Matomo API endpoint, or a security layer may be intercepting the request.', 'wp-seopress-pro' );
+			break;
+		default:
+			$reason  = 'other';
+			$summary = __( 'The last sync with Matomo failed.', 'wp-seopress-pro' );
+			$hint    = '';
+	}
+
+	return array(
+		'reason'   => $reason,
+		'summary'  => $summary,
+		'hint'     => $hint,
+		'response' => isset( $error['response'] ) ? (string) $error['response'] : '',
+		'time'     => $time,
+		'date'     => $time > 0 ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time ) : '',
+	);
+}
+
+/**
+ * Whether the cached Matomo stats are the marker of a failed sync.
+ *
+ * @since 10.4.0
+ *
+ * @param mixed $cached The seopress_results_matomo transient.
+ *
+ * @return bool
+ */
+function seopress_matomo_cache_is_failure( $cached ) {
+	return is_array( $cached ) && isset( $cached['error'] );
+}
+
+/**
+ * End a manual sync that failed with a JSON error, the way the Google
+ * Analytics sync does. The cron has nobody to answer.
+ *
+ * @since 10.4.0
+ *
+ * @return void
+ */
+function seopress_matomo_sync_failed() {
+	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		return;
+	}
+
+	$sync_error = seopress_matomo_get_sync_error();
+
+	wp_send_json_error(
+		array(
+			'message' => null !== $sync_error ? $sync_error['summary'] : __( 'The last sync with Matomo failed.', 'wp-seopress-pro' ),
+			'error'   => $sync_error,
+		)
+	);
+}
+
+/**
+ * Whether a decoded Matomo body is an error rather than a report.
+ *
+ * @since 10.4.0
+ *
+ * @param array $decoded A decoded response body.
+ *
+ * @return bool
+ */
+function seopress_matomo_body_is_error( $decoded ) {
+	return is_array( $decoded ) && isset( $decoded['result'] ) && 'error' === $decoded['result'];
+}
+
+/**
  * Request Matomo stats.
  *
  * @param boolean $clear Is clear cache.
@@ -638,6 +1093,8 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 
 		$auth_token = seopress_get_service( 'GoogleAnalyticsOption' )->getMatomoAuthToken() ? seopress_get_service( 'GoogleAnalyticsOption' )->getMatomoAuthToken() : null;
 
+		// No token is not a failed sync: a site that uses Matomo for tracking
+		// only never sets one. The dashboard asks for it instead.
 		if ( empty( $auth_token ) ) {
 			return;
 		}
@@ -672,6 +1129,8 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 
 		$fetched_periods = array();
 		$response        = null;
+		$request_error   = null;
+		$request_detail  = null;
 
 		foreach ( $periods_to_fetch as $period_key ) {
 			$body = array(
@@ -709,12 +1168,39 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 			 */
 			$args['sslverify'] = (bool) apply_filters( 'seopress_matomo_request_sslverify', true, $url );
 
-			$single = wp_remote_post( $url, $args );
-			if ( is_wp_error( $single ) ) {
+			$raw = wp_remote_post( $url, $args );
+			if ( is_wp_error( $raw ) ) {
+				$request_error  = $raw;
+				$request_detail = null;
+
+				// Each request waits up to its timeout: an instance that did not
+				// answer the first one is not asked six more times.
+				if ( empty( $fetched_periods ) ) {
+					break;
+				}
+
 				continue;
 			}
-			$single = json_decode( wp_remote_retrieve_body( $single ), true );
+			$single = json_decode( wp_remote_retrieve_body( $raw ), true );
 			if ( ! is_array( $single ) ) {
+				$request_error  = 'unreadable';
+				$request_detail = sprintf( 'HTTP %d', (int) wp_remote_retrieve_response_code( $raw ) );
+				continue;
+			}
+
+			// Matomo answers 200 with an error body rather than a status code, so
+			// this shape passes every type check above and used to travel on as if
+			// it were a report.
+			if ( seopress_matomo_body_is_error( $single ) ) {
+				$request_error  = $single;
+				$request_detail = null;
+
+				// The same token is refused for every period, and Matomo counts
+				// each refusal against its brute force protection.
+				if ( 'token_rejected' === seopress_matomo_sync_error_reason( $single ) ) {
+					break;
+				}
+
 				continue;
 			}
 
@@ -732,6 +1218,18 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 		}
 
 		if ( ! is_array( $response ) ) {
+			// Nothing usable came back. Recording why is the whole point: an empty
+			// widget is otherwise indistinguishable from a site with no visitors,
+			// which is how a broken token went unnoticed for a year.
+			seopress_matomo_record_sync_error( null !== $request_error ? $request_error : 'other', $request_detail );
+
+			// Cache the failure briefly rather than for the full two hours, so a
+			// corrected token is picked up on the next run instead of tomorrow.
+			// Only a marker: the message is translated when it is read.
+			set_transient( 'seopress_results_matomo', array( 'error' => true ), 5 * MINUTE_IN_SECONDS );
+
+			seopress_matomo_sync_failed();
+
 			return;
 		}
 
@@ -840,6 +1338,13 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 		 */
 		function seopress_matomo_get_all_data( $rows ) {
 			$data = array();
+
+			// Guarded like its sibling above: an unexpected payload reaching here
+			// used to emit "Undefined array key reportData" on PHP 8.
+			if ( ! is_array( $rows ) || ! isset( $rows['reportData'] ) ) {
+				return $data;
+			}
+
 			$rows = $rows['reportData'];
 
 			if ( ! is_array( $rows ) ) {
@@ -918,11 +1423,19 @@ function seopress_request_matomo_analytics_fn( $clear = false ) {
 			}
 
 			// Transient.
+			seopress_matomo_clear_sync_error();
 			set_transient( 'seopress_results_matomo', $response, 2 * HOUR_IN_SECONDS );
 		}
 	}
 	// Return.
 	$seopress_results_matomo_transient = get_transient( 'seopress_results_matomo' );
+
+	// A failure cached by an earlier run in the last five minutes.
+	if ( seopress_matomo_cache_is_failure( $seopress_results_matomo_transient ) ) {
+		seopress_matomo_sync_failed();
+
+		return;
+	}
 
 	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 		return;
@@ -1137,6 +1650,25 @@ function seopress_404_cron_cleaning_action( $force = false ) {
 	}
 }
 add_action( 'seopress_404_cron_cleaning', 'seopress_404_cron_cleaning_action', 10, 1 );
+
+/**
+ * Remove the files a CSV import wizard left behind.
+ *
+ * The wizard deletes its file the moment the import finishes, so this only ever
+ * finds one that was uploaded and then abandoned at the mapping step.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_cleanup_import_files_cron_action() {
+	if ( ! function_exists( 'seopress_cleanup_import_files' ) ) {
+		return;
+	}
+
+	seopress_cleanup_import_files();
+}
+add_action( 'seopress_cleanup_import_files_cron', 'seopress_cleanup_import_files_cron_action' );
 
 /**
  * Get Insights from Google Search Console.
@@ -1515,6 +2047,115 @@ function seopress_site_audit_resolve_resume_offset( $offset ) {
 	return $offset + 1;
 }
 
+/**
+ * Site Audit - Record a page whose HTML could not be fetched.
+ *
+ * The worker analyses the HTML it gets back from a request to the page's own
+ * URL. When a host firewall answers that request with a challenge (SiteGround
+ * returns a 202 with an `sg-captcha` header), the page is skipped. Skipped
+ * pages used to leave no trace: the scan ended with 0 pages processed and
+ * nothing saying why. The count and the last failure are kept for the scan
+ * status, and the failure also goes to `last_error` like the other errors of
+ * the run.
+ *
+ * @since 10.4.0
+ *
+ * @param int        $post_id The post that could not be fetched.
+ * @param int        $offset  Its offset in the audit query.
+ * @param string|int $code    The failure code returned by RequestPreview::getDomById().
+ *
+ * @return void
+ */
+function seopress_site_audit_record_fetch_failure( $post_id, $offset, $code ) {
+	$failures = get_option( 'seopress_pro_site_audit_fetch_failures', array() );
+	$count    = is_array( $failures ) && isset( $failures['count'] ) ? (int) $failures['count'] : 0;
+
+	$last = array(
+		'post_id'   => (int) $post_id,
+		'url'       => (string) get_permalink( $post_id ),
+		'offset'    => (int) $offset,
+		'code'      => (string) $code,
+		'timestamp' => time(),
+	);
+
+	update_option(
+		'seopress_pro_site_audit_fetch_failures',
+		array(
+			'count' => $count + 1,
+			'last'  => $last,
+		),
+		false
+	);
+	update_option( 'seopress_pro_site_audit_last_error', $last, false );
+}
+
+/**
+ * Site Audit - Totals of the scan that just completed.
+ *
+ * Shared by the history row and the webhook so both describe the scan the
+ * same way.
+ *
+ * A scan that analysed no page has no score. The issues table still holds the
+ * results of earlier scans (or nothing at all), so computing a score from it
+ * reported either an old score or 100/100 for a scan where every page failed
+ * to load. Such a scan is recorded with zero URLs and a null score.
+ *
+ * @since 10.4.0
+ *
+ * @return array{total_crawled:int,total_issues:int,total_ignored:int,high:int,medium:int,low:int,good:int,health_score:int|null,failed:int}
+ */
+function seopress_site_audit_completed_scan_totals() {
+	global $wpdb;
+
+	$failures = get_option( 'seopress_pro_site_audit_fetch_failures', array() );
+
+	$totals = array(
+		'total_crawled' => 0,
+		'total_issues'  => 0,
+		'total_ignored' => 0,
+		'high'          => 0,
+		'medium'        => 0,
+		'low'           => 0,
+		'good'          => 0,
+		'health_score'  => null,
+		'failed'        => is_array( $failures ) && isset( $failures['count'] ) ? (int) $failures['count'] : 0,
+	);
+
+	// The worker only counts pages it fetched and analysed.
+	if ( (int) get_option( 'seopress_pro_site_audit_post_count', 0 ) < 1 ) {
+		return $totals;
+	}
+
+	$table_issues = $wpdb->prefix . 'seopress_seo_issues';
+
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
+	$totals['total_crawled'] = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_id) FROM {$table_issues}" );
+	$totals['total_issues']  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_issues} WHERE issue_ignore = 0" );
+	$totals['total_ignored'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_issues} WHERE issue_ignore = 1" );
+
+	$priority_counts = $wpdb->get_results(
+		"SELECT issue_priority, COUNT(*) AS count FROM {$table_issues} WHERE issue_ignore = 0 GROUP BY issue_priority",
+		OBJECT_K
+	);
+	// phpcs:enable
+
+	foreach ( array( 'high', 'medium', 'low', 'good' ) as $priority ) {
+		$totals[ $priority ] = isset( $priority_counts[ $priority ] ) ? (int) $priority_counts[ $priority ]->count : 0;
+	}
+
+	if ( $totals['total_crawled'] < 1 ) {
+		return $totals;
+	}
+
+	// Severity-weighted health score (0-100). Each URL starts at 100; one
+	// High issue costs 3 pts, Medium 2, Low 1, averaged across crawled URLs.
+	// Must stay in sync with SiteAudit::processOverview.
+	$penalty                = ( $totals['high'] * 3 + $totals['medium'] * 2 + $totals['low'] * 1 ) / $totals['total_crawled'];
+	$totals['health_score'] = (int) max( 0, min( 100, round( 100 - $penalty ) ) );
+
+	return $totals;
+}
+
 function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 	// Check if GSC toggle is ON.
 	if ( seopress_get_service( 'ToggleOption' )->getToggleBot() !== '1' ) {
@@ -1548,6 +2189,7 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 		delete_option( 'seopress_pro_site_audit_stuck_count' );
 		delete_option( 'seopress_pro_site_audit_current_post' );
 		delete_option( 'seopress_pro_site_audit_last_error' );
+		delete_option( 'seopress_pro_site_audit_fetch_failures' );
 		update_option( 'seopress_pro_site_audit_last_scan', time(), false );
 	}
 
@@ -1600,7 +2242,7 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 			$cpt_status_string = implode( ',', $cpt_status );
 
 			$sql               = "SELECT count(*) FROM {$wpdb->posts} WHERE post_status IN ($cpt_status_string) AND post_type IN ($cpt_string)";
-			$total_count_posts = (int) $wpdb->get_var( $sql );
+			$total_count_posts = (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The IN() list holds post type keys escaped with esc_sql() and quoted above; a values list cannot be bound.
 
 			update_option( 'seopress_pro_site_audit_count_posts', $total_count_posts, false );
 		}
@@ -1662,6 +2304,7 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 				$dom_result = seopress_get_service( 'RequestPreview' )->getDomById( $post_id, null );
 
 				if ( ! $dom_result['success'] ) {
+					seopress_site_audit_record_fetch_failure( $post_id, $offset + $batch_index, isset( $dom_result['code'] ) ? $dom_result['code'] : '' );
 					continue;
 				}
 
@@ -1670,13 +2313,13 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 				$data = seopress_get_service( 'DomFilterContent' )->getData( $str, $post_id );
 				$data = seopress_get_service( 'DomAnalysis' )->getDataAnalyze( $data, array( 'id' => $post_id ) );
 
-				// Save analysis data.
-				$post          = get_post( $post_id );
-				$score         = seopress_get_service( 'DomAnalysis' )->getScore( $post );
-				$data['score'] = $score;
-				$keywords      = seopress_get_service( 'DomAnalysis' )->getKeywords( array( 'id' => $post_id ) );
+				// Scoring reads the saved analysis, so persist this page before
+				// calculating its score (including on the very first scan).
+				$post     = get_post( $post_id );
+				$keywords = seopress_get_service( 'DomAnalysis' )->getKeywords( array( 'id' => $post_id ) );
 				seopress_get_service( 'ContentAnalysisDatabase' )->saveData( $post_id, $data, $keywords );
-				seopress_get_service( 'GetContentAnalysis' )->getAnalyzes( $post );
+				$data['score'] = seopress_get_service( 'DomAnalysis' )->getScore( $post );
+				seopress_get_service( 'ContentAnalysisDatabase' )->saveData( $post_id, $data, $keywords );
 			} catch ( \Throwable $e ) {
 				update_option(
 					'seopress_pro_site_audit_last_error',
@@ -1747,8 +2390,19 @@ function seopress_site_audit_run_task_fn( $offset = 0, $new = false ) {
 		// The audit is complete; stop the self-heal watchdog.
 		seopress_site_audit_unschedule_watchdog();
 
-		// Send an email notification.
-		do_action( 'seopress_site_audit_after_processs' );
+		/**
+		 * Fires once the site audit has finished processing every post.
+		 *
+		 * @since 10.4.0
+		 */
+		do_action( 'seopress_site_audit_after_process' );
+
+		/**
+		 * Fires once the site audit has finished processing every post.
+		 *
+		 * @deprecated 10.4.0 Use 'seopress_site_audit_after_process' instead.
+		 */
+		do_action_deprecated( 'seopress_site_audit_after_processs', array(), '10.4.0', 'seopress_site_audit_after_process' );
 
 		if ( ! defined( 'DOING_CRON' ) || ! DOING_CRON ) {
 			wp_send_json_success( 'Site audit task completed.' );
@@ -1847,12 +2501,10 @@ add_action( 'seopress_site_audit_watchdog_cron', 'seopress_site_audit_watchdog_f
 function seopress_site_audit_send_email() {
 	$to            = seopress_pro_get_service( 'OptionBot' )->getBotScanSettingsEmail() ? seopress_pro_get_service( 'OptionBot' )->getBotScanSettingsEmail() : null;
 	$subject       = /* translators: %s name of the site from General settings */ sprintf( __( 'Site audit completed - %s', 'wp-seopress-pro' ), get_bloginfo( 'name' ) );
-	$scan_duration = get_option( 'seopress_pro_site_audit_scan_duration' ) ? get_option( 'seopress_pro_site_audit_scan_duration' ) : null;
+	$scan_duration = (int) get_option( 'seopress_pro_site_audit_scan_duration', 0 );
 
-	if ( $scan_duration ) {
-		$scan_duration_minutes = floor( $scan_duration / 60 );
-		$scan_duration_seconds = $scan_duration % 60;
-	}
+	$scan_duration_minutes = floor( $scan_duration / 60 );
+	$scan_duration_seconds = $scan_duration % 60;
 
 	$content  = '<p>' . esc_html__( 'We have finished auditing your site\'s SEO.', 'wp-seopress-pro' ) . '</p>';
 	$content .= '<p>' . sprintf(
@@ -1888,7 +2540,7 @@ function seopress_site_audit_send_email() {
 		}
 	}
 }
-add_action( 'seopress_site_audit_after_processs', 'seopress_site_audit_send_email' );
+add_action( 'seopress_site_audit_after_process', 'seopress_site_audit_send_email' );
 
 /**
  * Site Audit - Historise the completed scan.
@@ -1902,52 +2554,31 @@ add_action( 'seopress_site_audit_after_processs', 'seopress_site_audit_send_emai
 function seopress_site_audit_historize() {
 	global $wpdb;
 
-	$table_issues  = $wpdb->prefix . 'seopress_seo_issues';
 	$table_history = $wpdb->prefix . 'seopress_site_audit_history';
 
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
-	$total_crawled = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_id) FROM {$table_issues}" );
-	$total_issues  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_issues} WHERE issue_ignore = 0" );
-	$total_ignored = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_issues} WHERE issue_ignore = 1" );
-
-	$priority_counts = $wpdb->get_results(
-		"SELECT issue_priority, COUNT(*) AS count FROM {$table_issues} WHERE issue_ignore = 0 GROUP BY issue_priority",
-		OBJECT_K
-	);
-	// phpcs:enable
-
-	$high   = isset( $priority_counts['high'] ) ? (int) $priority_counts['high']->count : 0;
-	$medium = isset( $priority_counts['medium'] ) ? (int) $priority_counts['medium']->count : 0;
-	$low    = isset( $priority_counts['low'] ) ? (int) $priority_counts['low']->count : 0;
-	$good   = isset( $priority_counts['good'] ) ? (int) $priority_counts['good']->count : 0;
-
-	// Severity-weighted health score (0–100). Each URL starts at 100; one
-	// High issue costs 3 pts, Medium 2, Low 1, averaged across crawled URLs.
-	// Divisor guards against zero. Must stay in sync with SiteAudit::processOverview.
-	$denominator = max( 1, $total_crawled );
-	$penalty     = ( $high * 3 + $medium * 2 + $low * 1 ) / $denominator;
-	$score       = (int) max( 0, min( 100, round( 100 - $penalty ) ) );
-
+	$totals   = seopress_site_audit_completed_scan_totals();
 	$duration = (int) get_option( 'seopress_pro_site_audit_scan_duration', 0 );
 
+	// A scan without score is stored with total_crawled = 0, which the history
+	// endpoint reads as "no score" (the column cannot hold NULL).
 	$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$table_history,
 		array(
 			'scan_date'        => current_time( 'mysql' ),
 			'duration_seconds' => $duration,
-			'total_crawled'    => $total_crawled,
-			'total_issues'     => $total_issues,
-			'total_ignored'    => $total_ignored,
-			'priority_high'    => $high,
-			'priority_medium'  => $medium,
-			'priority_low'     => $low,
-			'priority_good'    => $good,
-			'health_score'     => $score,
+			'total_crawled'    => $totals['total_crawled'],
+			'total_issues'     => $totals['total_issues'],
+			'total_ignored'    => $totals['total_ignored'],
+			'priority_high'    => $totals['high'],
+			'priority_medium'  => $totals['medium'],
+			'priority_low'     => $totals['low'],
+			'priority_good'    => $totals['good'],
+			'health_score'     => (int) $totals['health_score'],
 		),
 		array( '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d' )
 	);
 }
-add_action( 'seopress_site_audit_after_processs', 'seopress_site_audit_historize' );
+add_action( 'seopress_site_audit_after_process', 'seopress_site_audit_historize' );
 
 /**
  * Site Audit - Webhook notification.
@@ -1965,8 +2596,6 @@ add_action( 'seopress_site_audit_after_processs', 'seopress_site_audit_historize
  * @return void
  */
 function seopress_site_audit_send_webhook() {
-	global $wpdb;
-
 	$option_bot = seopress_pro_get_service( 'OptionBot' );
 	$url        = $option_bot->getBotScanSettingsWebhookUrl();
 
@@ -1983,25 +2612,7 @@ function seopress_site_audit_send_webhook() {
 		return;
 	}
 
-	$table_issues = $wpdb->prefix . 'seopress_seo_issues';
-
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
-	$total_crawled = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_id) FROM {$table_issues}" );
-	$total_issues  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_issues} WHERE issue_ignore = 0" );
-
-	$priority_counts = $wpdb->get_results(
-		"SELECT issue_priority, COUNT(*) AS count FROM {$table_issues} WHERE issue_ignore = 0 GROUP BY issue_priority",
-		OBJECT_K
-	);
-	// phpcs:enable
-
-	$high   = isset( $priority_counts['high'] ) ? (int) $priority_counts['high']->count : 0;
-	$medium = isset( $priority_counts['medium'] ) ? (int) $priority_counts['medium']->count : 0;
-	$low    = isset( $priority_counts['low'] ) ? (int) $priority_counts['low']->count : 0;
-
-	$denominator  = max( 1, $total_crawled );
-	$penalty      = ( $high * 3 + $medium * 2 + $low * 1 ) / $denominator;
-	$health_score = (int) max( 0, min( 100, round( 100 - $penalty ) ) );
+	$totals = seopress_site_audit_completed_scan_totals();
 
 	$payload = array(
 		'event'        => 'site_audit.completed',
@@ -2010,13 +2621,16 @@ function seopress_site_audit_send_webhook() {
 		// UTC ISO-8601 so consumers (CI, dashboards, log pipelines) don't have to know the site timezone.
 		'completed_at' => current_time( 'c', true ),
 		'duration'     => (int) get_option( 'seopress_pro_site_audit_scan_duration', 0 ),
-		'health_score' => $health_score,
+		// Null when the scan analysed no page.
+		'health_score' => $totals['health_score'],
 		'totals'       => array(
-			'crawled' => $total_crawled,
-			'issues'  => $total_issues,
-			'high'    => $high,
-			'medium'  => $medium,
-			'low'     => $low,
+			'crawled' => $totals['total_crawled'],
+			'issues'  => $totals['total_issues'],
+			'high'    => $totals['high'],
+			'medium'  => $totals['medium'],
+			'low'     => $totals['low'],
+			// Pages skipped because their HTML could not be fetched.
+			'failed'  => $totals['failed'],
 		),
 		'report_url'   => admin_url( 'admin.php?page=seopress-bot-batch#tab=tab_seopress_audit' ),
 	);
@@ -2086,7 +2700,7 @@ function seopress_site_audit_send_webhook() {
 // Priority 5 so the webhook payload is computed from a stable snapshot of
 // wp_seopress_seo_issues, before sibling handlers (e.g. historize) get a
 // chance to mutate / prune the table.
-add_action( 'seopress_site_audit_after_processs', 'seopress_site_audit_send_webhook', 5 );
+add_action( 'seopress_site_audit_after_process', 'seopress_site_audit_send_webhook', 5 );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Broken Links CRON Batch Scan
@@ -2503,6 +3117,34 @@ function seopress_broken_links_process_post( $post_id, $timeout, $where, $only_4
 		}
 		$checked_urls[ $href ] = true;
 
+		/**
+		 * Filter the largest response body the link scan keeps, in bytes.
+		 *
+		 * The scan reads the status code and the content type, which arrive
+		 * with the headers, and headers do not count against this limit. So
+		 * the body is not needed at all, and the limit is kept small for two
+		 * reasons.
+		 *
+		 * It bounds what is held in memory, not what is transferred: once
+		 * the limit is reached the transport still reads the rest of the
+		 * response, so the request takes as long as it would have. And
+		 * Requests decompresses the kept bytes afterwards whenever a
+		 * Content-Encoding header is present, whatever its value: at 128 KB
+		 * a gzip bomb inflated to around 130 MB and killed the scan worker,
+		 * and the watchdog restarted it on the same post every five minutes.
+		 * At 1 KB the same response stays around 1 MB.
+		 *
+		 * A value under 1 is raised to 1. Zero means "no limit" to the
+		 * transport, so a filter returning 0, false or an empty string would
+		 * otherwise switch the protection off.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int    $bytes Maximum size. Default 1 KB.
+		 * @param string $href  The link being checked.
+		 */
+		$max_body = max( 1, (int) apply_filters( 'seopress_broken_links_max_body_bytes', KB_IN_BYTES, $href ) );
+
 		// Check link status.
 		//
 		// The href comes from post content, so anyone who can publish decides
@@ -2514,13 +3156,17 @@ function seopress_broken_links_process_post( $post_id, $timeout, $where, $only_4
 		// Certificate verification stays off: this only reads a status code,
 		// sends no credential, and an expired certificate on a third-party site
 		// is not what the broken links report is meant to flag.
+		//
+		// The body is never read, so only a sliver of it is kept. See the
+		// filter above and OBS-02.
 		$link_args = array(
-			'timeout'            => $timeout,
-			'blocking'           => true,
-			'sslverify'          => false,
-			'compress'           => true,
-			'redirection'        => 4,
-			'reject_unsafe_urls' => true,
+			'timeout'             => $timeout,
+			'blocking'            => true,
+			'sslverify'           => false,
+			'compress'            => true,
+			'redirection'         => 4,
+			'reject_unsafe_urls'  => true,
+			'limit_response_size' => $max_body,
 		);
 
 		/**

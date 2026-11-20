@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Translation;
+namespace DoubleScale\Vendor\Illuminate\Translation;
 
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 class MessageSelector
 {
     /**

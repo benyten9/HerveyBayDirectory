@@ -400,6 +400,10 @@ class SubmissionController {
         $tag_ids = array();
 
         foreach ( $tags as $tag ) {
+            if ( ! directorist_is_valid_tag_name( $tag ) ) {
+                $error->add( 'directorist_invalid_tag', __( 'Tag names cannot contain HTML.', 'directorist' ) );
+                continue;
+            }
 
             if ( $tag && ( $_tag = term_exists( $tag, ATBDP_TAGS ) ) ) {
                 $tag_ids[] = (int) $_tag['term_id'];
@@ -515,13 +519,17 @@ class SubmissionController {
         );
     }
 
-    protected static function reset_listing_taxonomy( $listing_id, $taxonomy_data = array() ) {
+    protected static function set_listing_taxonomy( $listing_id, $taxonomy_data = array() ) {
         $taxonomies = array( ATBDP_LOCATION, ATBDP_CATEGORY, ATBDP_TAGS );
 
         foreach ( $taxonomies as $taxonomy ) {
-            if ( isset( $taxonomy_data[ $taxonomy ] ) && empty( $taxonomy_data[ $taxonomy ] ) ) {
-                wp_set_object_terms( $listing_id, '', $taxonomy );
+            if ( ! array_key_exists( $taxonomy, $taxonomy_data ) ) {
+                continue;
             }
+
+            $term_ids = array_map( 'intval', (array) $taxonomy_data[ $taxonomy ] );
+
+            wp_set_object_terms( $listing_id, $term_ids, $taxonomy );
         }
     }
 
@@ -609,6 +617,31 @@ class SubmissionController {
     }
 
     /**
+     * Resolve validation fields for an authorized listing submission.
+     *
+     * @param int   $directory_id Directory ID.
+     * @param int   $listing_id   Listing ID, or zero for a new listing.
+     * @param array $posted_data  Normalized submission data.
+     * @return array|WP_Error
+     */
+    protected static function get_submission_form_fields( int $directory_id, int $listing_id, array $posted_data ) {
+        try {
+            return directorist_get_listing_form_fields(
+                $directory_id,
+                [
+                    'type'              => 'listing_submission_validation',
+                    'directory_type_id' => $directory_id,
+                    'listing_id'        => $listing_id,
+                    'listing_owner_id'  => $listing_id ? (int) get_post_field( 'post_author', $listing_id ) : get_current_user_id(),
+                    'posted_data'       => $posted_data,
+                ]
+            );
+        } catch ( \InvalidArgumentException $exception ) {
+            return new WP_Error( 'directorist_invalid_submission_fields', $exception->getMessage(), [ 'status' => 400 ] );
+        }
+    }
+
+    /**
      * Process form submission.
      *
      * @param  array $posted_data
@@ -622,6 +655,14 @@ class SubmissionController {
         $listing_id = static::maybe_get_listing_id( $posted_data );
         if ( is_wp_error( $listing_id ) ) {
             return $listing_id;
+        }
+
+        $api_submission = in_array( $from, [ 'api', 'mcp' ], true );
+        if ( $api_submission && $listing_id ) {
+            $posted_data['directory_type'] = directorist_get_listing_directory( $listing_id );
+            if ( ! directorist_is_directory( $posted_data['directory_type'] ) ) {
+                return new WP_Error( 'directorist_invalid_directory', __( 'Invalid directory id.', 'directorist' ), [ 'status' => 400 ] );
+            }
         }
 
         $directory_id = static::maybe_get_directory_id( $posted_data );
@@ -648,7 +689,10 @@ class SubmissionController {
         /**
          * Process form fields.
          */
-        $form_fields = directorist_get_listing_form_fields( $directory_id );
+        $form_fields = static::get_submission_form_fields( $directory_id, $listing_id, $posted_data );
+        if ( is_wp_error( $form_fields ) ) {
+            return $form_fields;
+        }
 
         foreach ( $form_fields as $form_field ) {
             $field = Fields::create( $form_field );
@@ -740,6 +784,9 @@ class SubmissionController {
         }
 
         $listing_create_status = directorist_get_listing_create_status( $directory_id );
+        if ( $api_submission ) {
+            $listing_create_status = directorist_resolve_listing_status( (string) $listing_create_status, $directory_id );
+        }
         $default_expiration    = directorist_get_default_expiration( $directory_id );
         $preview_enable        = directorist_is_preview_enabled( $directory_id );
 
@@ -765,6 +812,9 @@ class SubmissionController {
 
             $listing_data['ID']          = $listing_id;
             $listing_data['post_status'] = directorist_get_listing_edit_status( $directory_id, $listing_id );
+            if ( $api_submission ) {
+                $listing_data['post_status'] = directorist_resolve_listing_status( (string) $listing_data['post_status'], $directory_id, $listing_id );
+            }
 
             $listing_id = wp_update_post( $listing_data );
 
@@ -772,7 +822,7 @@ class SubmissionController {
                 return $listing_id;
             }
 
-            self::reset_listing_taxonomy( $listing_id, $tax_data );
+            self::set_listing_taxonomy( $listing_id, $tax_data );
             directorist_set_listing_directory( $listing_id, $directory_id );
 
             // Clean empty meta data.
@@ -788,6 +838,7 @@ class SubmissionController {
                 return $listing_id;
             }
 
+            self::set_listing_taxonomy( $listing_id, $tax_data );
             directorist_set_listing_directory( $listing_id, $directory_id );
 
             do_action( 'atbdp_listing_inserted', $listing_id ); // for sending email notification
@@ -820,7 +871,7 @@ class SubmissionController {
         do_action( 'atbdp_after_created_listing', $listing_id );
 
         // handling media files
-        self::upload_images( $listing_id, $posted_data );
+        self::upload_images( $listing_id, $posted_data, $form_fields );
 
         $response = array(
             'id' => $listing_id
@@ -879,8 +930,16 @@ class SubmissionController {
         return apply_filters( 'atbdp_listing_form_submission_info', $response );
     }
 
-    public static function upload_images( $listing_id, $posted_data ) {
-        $image_upload_field = directorist_get_listing_form_field( $posted_data['directory_id'], 'image_upload' );
+    public static function upload_images( $listing_id, $posted_data, $form_fields = null ) {
+        // MCP validates existing attachment references. Its native adapter updates
+        // those references after submit; no temporary file or deletion work may
+        // occur inside the guarded listing transaction.
+        if ( 'mcp' === self::$from ) {
+            return;
+        }
+        $image_upload_field = is_array( $form_fields )
+            ? ( $form_fields['image_upload'] ?? [] )
+            : directorist_get_listing_form_field( $posted_data['directory_id'], 'image_upload' );
 
         if ( empty( $image_upload_field ) ) {
             return;
@@ -897,10 +956,14 @@ class SubmissionController {
             return;
         }
 
-        $old_images = $selected_images['old'];
+        $old_images = directorist_authorize_listing_images( (int) $listing_id, $selected_images['old'] );
         $new_images = $selected_images['new'];
 
         self::clean_unselected_images( $listing_id, $old_images );
+
+        delete_post_thumbnail( $listing_id );
+        delete_post_meta( $listing_id, '_listing_prv_img' );
+        delete_post_meta( $listing_id, '_listing_img' );
 
         if ( empty( $old_images ) && empty( $new_images ) ) {
             return;
@@ -999,7 +1062,9 @@ class SubmissionController {
         }
 
         foreach ( $unselected_images as $unselected_image ) {
-            wp_delete_attachment( $unselected_image, true );
+            if ( directorist_user_can_delete_listing_image( (int) $unselected_image ) ) {
+                wp_delete_attachment( $unselected_image, true );
+            }
         }
     }
 }

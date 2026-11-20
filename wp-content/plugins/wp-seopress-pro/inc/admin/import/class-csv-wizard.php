@@ -8,6 +8,10 @@
 
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
+// seopress_delete_import_file(). Loaded on demand like the rest of the wizard,
+// so it cannot rely on the plugin bootstrap having pulled it in.
+require_once dirname( dirname( __DIR__ ) ) . '/functions/helpers-import-files.php';
+
 add_action( 'init', 'seopress_do_output_buffer' );
 function seopress_do_output_buffer() {
 	if ( ( isset( $_GET['page'] ) && ( $_GET['page'] == 'seopress_csv_importer' ) ) || ( isset( $_GET['import'] ) && ( $_GET['import'] == 'seopress_csv_importer' ) ) ) {
@@ -180,7 +184,13 @@ class SEOPRESS_CSV_Importers {
 		// The importer records why it could not read the file instead of dying,
 		// so the batch can report it as JSON the progress screen understands.
 		if ( method_exists( $importer, 'has_error' ) && $importer->has_error() ) {
+			seopress_delete_import_file( $file );
 			wp_send_json_error( array( 'message' => $importer->get_error()->get_error_message() ) );
+		}
+
+		// Reading does not refresh mtime; keep a running import out of the stale sweep.
+		if ( seopress_is_import_file( $file ) ) {
+			touch( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_touch -- Refresh the working file lease; WP_Filesystem has no touch method.
 		}
 
 		$results          = $importer->import();
@@ -191,6 +201,17 @@ class SEOPRESS_CSV_Importers {
 
 		if ( 100 === $percent_complete ) {
 			$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_original_id' ) );
+
+			/*
+			 * The file has done its job. Left in place it would be a copy of
+			 * every title, description, target keyword and redirect on the
+			 * site, drafts included, sitting in a directory the web server
+			 * hands out on request.
+			 *
+			 * Only files this wizard uploaded are removed, so somebody who
+			 * pointed the importer at a file of their own keeps it.
+			 */
+			seopress_delete_import_file( $file );
 
 			// Send success.
 			wp_send_json_success(

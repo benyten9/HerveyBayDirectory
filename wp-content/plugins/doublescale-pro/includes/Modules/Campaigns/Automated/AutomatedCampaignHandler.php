@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use DoubleScale\Modules\Campaigns\Models\CampaignModel;
 use DoubleScale\Modules\Campaigns\Campaign\EmailProcessing;
-use DoubleScale\Modules\Campaigns\Campaign\WhatsappProcessing;
+use DoubleScale\Pro\Modules\Campaigns\Whatsapp\WhatsappEngine;
 use DoubleScale\Core\Constants\CampaignChannel;
 use DoubleScale\Core\MergeTags\MergeTagsManager;
 
@@ -741,15 +741,22 @@ class AutomatedCampaignHandler {
 		}
 
 		$processors = array(
-			CampaignChannel::STR_EMAIL    => EmailProcessing::class,
-			CampaignChannel::STR_WHATSAPP => WhatsappProcessing::class,
+			CampaignChannel::STR_EMAIL => EmailProcessing::class,
 		);
 		if ( class_exists( \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class ) ) {
 			$processors[ CampaignChannel::STR_SMS ] = \DoubleScale\Pro\Modules\Campaigns\Sms\SmsProcessing::class;
 		}
 
-		if ( isset( $processors[ $channel_string ] ) ) {
+		// WhatsApp runs on whichever engine owns it on this site — Pro's own,
+		// or free's against an older free.
+		$processor = null;
+		if ( CampaignChannel::STR_WHATSAPP === $channel_string ) {
+			$processor = WhatsappEngine::processor();
+		} elseif ( isset( $processors[ $channel_string ] ) ) {
 			$processor = $processors[ $channel_string ]::instance();
+		}
+
+		if ( $processor ) {
 			$processor->process_campaign( $campaign );
 		}
 

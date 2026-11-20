@@ -152,6 +152,10 @@ final class LoginRedirect {
 			UserRoles::SALES_REP,
 			UserRoles::SUPPORT_MANAGER,
 			UserRoles::SUPPORT_AGENT,
+			UserRoles::AUTOMATION_MANAGER,
+			UserRoles::AUTOMATION_AGENT,
+			UserRoles::HELP_CENTER_MANAGER,
+			UserRoles::HELP_CENTER_AGENT,
 		);
 
 		// Check if any of the user's roles match CRM roles.
@@ -176,6 +180,16 @@ final class LoginRedirect {
 	 * @return string The redirect URL.
 	 */
 	private function get_redirect_url_for_user( \WP_User $user ) {
+		// Automation staff work in Automations only.
+		if ( Permissions::is_automation_only( $user->ID ) ) {
+			return admin_url( 'admin.php?page=' . self::CRM_DASHBOARD_SLUG . '&path=automations' );
+		}
+
+		// Help Center writers land on their articles.
+		if ( Permissions::is_help_center_only( $user->ID ) ) {
+			return admin_url( 'admin.php?page=' . self::CRM_DASHBOARD_SLUG . '&path=help-center' );
+		}
+
 		$support_roles = array(
 			UserRoles::SUPPORT_MANAGER,
 			UserRoles::SUPPORT_AGENT,

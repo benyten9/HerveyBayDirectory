@@ -1,14 +1,14 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Inflector\Rules;
+namespace DoubleScale\Vendor\Doctrine\Inflector\Rules;
 
-use Doctrine\Inflector\WordInflector;
+use DoubleScale\Vendor\Doctrine\Inflector\WordInflector;
 class Transformations implements WordInflector
 {
     /** @var Transformation[] */
     private $transformations;
-    public function __construct(\Doctrine\Inflector\Rules\Transformation ...$transformations)
+    public function __construct(Transformation ...$transformations)
     {
         $this->transformations = $transformations;
     }

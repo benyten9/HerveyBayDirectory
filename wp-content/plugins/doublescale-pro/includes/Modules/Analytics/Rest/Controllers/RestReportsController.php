@@ -33,31 +33,20 @@ class RestReportsController extends RestController
 	protected $rest_base = 'reports';
 
 	/**
-	 * Check if PRO plugin is active (for deal reports)
+	 * Whether deals can be read: Deals on and its table there.
 	 *
-	 * @since 1.0.0
-	 * @return WP_Error|true Returns WP_Error if PRO not active, true otherwise
+	 * @return bool
 	 */
-	protected function check_pro_active()
-	{
-		if (! class_exists('DoubleScale\\Pro\Modules\Deals\Models\DealModel')) {
-			return new WP_Error(
-				'pro_feature_required',
-				__('Deal reports are available in Plugin Pro.', 'doublescale'),
-				array('status' => 403)
-			);
-		}
-		return true;
+	private function deals_ready(): bool {
+		return doublescale_module_data_ready( 'deals' );
 	}
 
 	/**
-	 * Register the routes for the controller.
+	 * Routes that read deals; they answer 404 while {@see deals_ready()} says no.
 	 *
-	 * @since 1.0.0
+	 * @return void
 	 */
-	public function register_routes()
-	{
-		// Pipelines endpoints
+	private function register_deal_routes(): void {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/contacts-deals',
@@ -70,7 +59,6 @@ class RestReportsController extends RestController
 				),
 			)
 		);
-
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/deals-by-date',
@@ -83,7 +71,6 @@ class RestReportsController extends RestController
 				),
 			)
 		);
-
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/deals-leaderboard',
@@ -96,20 +83,6 @@ class RestReportsController extends RestController
 				),
 			)
 		);
-
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/sales-rep',
-			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array($this, 'get_sales_rep_reports'),
-					'permission_callback' => array($this, 'get_sales_rep_reports_permissions_check'),
-					'args'                => $this->get_reports_filter_params(),
-				),
-			)
-		);
-
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/sales-rep/pipeline-stages',
@@ -122,7 +95,6 @@ class RestReportsController extends RestController
 				),
 			)
 		);
-
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/sales-rep/active-deals',
@@ -151,6 +123,32 @@ class RestReportsController extends RestController
 	}
 
 	/**
+	 * Register the routes for the controller.
+	 *
+	 * @since 1.0.0
+	 */
+	public function register_routes()
+	{
+		// Deal reports (their handlers answer 404 module_disabled while Deals is
+		// off: with Sales off there are no deals to report on).
+		$this->register_deal_routes();
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/sales-rep',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array($this, 'get_sales_rep_reports'),
+					'permission_callback' => array($this, 'get_sales_rep_reports_permissions_check'),
+					'args'                => $this->get_reports_filter_params(),
+				),
+			)
+		);
+
+	}
+
+	/**
 	 * Get contacts and deals reports
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -158,6 +156,11 @@ class RestReportsController extends RestController
 	 */
 	public function get_contacts_deals_reports($request)
 	{
+		$off = doublescale_module_data_error('deals');
+		if ($off) {
+			return $off;
+		}
+
 		$filters     = $this->get_filters_from_request($request);
 		$date_ranges = $this->get_report_date_ranges($filters);
 
@@ -186,6 +189,11 @@ class RestReportsController extends RestController
 	 */
 	public function get_deals_by_date_reports($request)
 	{
+		$off = doublescale_module_data_error('deals');
+		if ($off) {
+			return $off;
+		}
+
 		$days_back = $request->get_param('days_back') ?: 30;
 		$frequency = $request->get_param('frequency') ?: 'daily';
 		$filters   = $this->get_filters_from_request($request);
@@ -214,6 +222,11 @@ class RestReportsController extends RestController
 	 */
 	public function get_deals_leaderboard_reports($request)
 	{
+		$off = doublescale_module_data_error('deals');
+		if ($off) {
+			return $off;
+		}
+
 		$filters = $this->get_filters_from_request($request);
 
 		$deals_leaderboard = array();
@@ -345,13 +358,29 @@ class RestReportsController extends RestController
 	{
 		$filters             = $this->get_filters_from_request($request);
 		$date_ranges         = $this->get_report_date_ranges($filters);
-		$filters['owner_id'] = $filters['owner_id'] ?? get_current_user_id();
+		$owner_id = $this->resolve_rep_owner_id($request);
+		if (is_wp_error($owner_id)) {
+			return $owner_id;
+		}
+		$filters['owner_id'] = $owner_id;
+
+		// "My Reports" holds the rep's activities too, so a switched-off Deals
+		// or Documents module leaves its part empty instead of failing the page.
+		$deals_on = $this->deals_ready();
+		$docs_on  = doublescale_module_data_ready('documents');
 
 		$sale_info          = $this->get_sale_info($filters);
-		$cards_statistics   = $this->get_cards_statistics($filters, $date_ranges);
-		$won_loss_analytics = $this->get_won_loss_analytics($filters, $date_ranges);
+		$cards_statistics   = $deals_on ? $this->get_cards_statistics($filters, $date_ranges) : new \stdClass();
+		$won_loss_analytics = $deals_on
+			? $this->get_won_loss_analytics($filters, $date_ranges)
+			: array(
+				'total_deals_won'  => 0,
+				'total_deals_lost' => 0,
+				'total_deals_open' => 0,
+				'win_rate'         => 0,
+			);
 		$recent_activities  = $this->get_recent_activities($filters, $date_ranges);
-		$invoice_statistics = $this->get_invoice_statistics_for_rep($filters, $date_ranges);
+		$invoice_statistics = $docs_on ? $this->get_invoice_statistics_for_rep($filters, $date_ranges) : null;
 		$data               = array(
 			'sale_info'          => $sale_info,
 			'cards_statistics'   => $cards_statistics,
@@ -374,9 +403,18 @@ class RestReportsController extends RestController
 	 */
 	public function get_sales_rep_pipeline_stages_reports($request)
 	{
+		$off = doublescale_module_data_error('deals');
+		if ($off) {
+			return $off;
+		}
+
 		$filters             = $this->get_filters_from_request($request);
 		$date_ranges         = $this->get_report_date_ranges($filters);
-		$filters['owner_id'] = $filters['owner_id'] ?? get_current_user_id();
+		$owner_id = $this->resolve_rep_owner_id($request);
+		if (is_wp_error($owner_id)) {
+			return $owner_id;
+		}
+		$filters['owner_id'] = $owner_id;
 		$pipeline_stages     = $this->get_pipeline_stages_statistics($filters, $date_ranges);
 		return new WP_REST_Response(
 			array(
@@ -396,8 +434,17 @@ class RestReportsController extends RestController
 	 */
 	public function get_sales_rep_active_deals_reports($request)
 	{
+		$off = doublescale_module_data_error('deals');
+		if ($off) {
+			return $off;
+		}
+
 		$filters             = $this->get_filters_from_request($request);
-		$filters['owner_id'] = $filters['owner_id'] ?? get_current_user_id();
+		$owner_id = $this->resolve_rep_owner_id($request);
+		if (is_wp_error($owner_id)) {
+			return $owner_id;
+		}
+		$filters['owner_id'] = $owner_id;
 
 		// Get pagination parameters
 		$page     = absint($request->get_param('page')) ?: 1;
@@ -480,6 +527,11 @@ class RestReportsController extends RestController
 	 */
 	public function get_all_sales_rep_reports($request)
 	{
+		$off = doublescale_module_data_error('deals');
+		if ($off) {
+			return $off;
+		}
+
 		$filters     = $this->get_filters_from_request($request);
 		$date_ranges = $this->get_report_date_ranges($filters);
 		// Get only CRM users and administrators
@@ -702,6 +754,9 @@ class RestReportsController extends RestController
 		$cards_statistics['total_deals_value'] = $this->get_deals_by_status_price($date_ranges['current_start'], $date_ranges['current_end'], 'all', $filters);
 		// per-currency breakdown for display (mixed currencies must not be summed into one figure)
 		$cards_statistics['total_deals_value_by_currency'] = $this->get_deals_by_status_price_by_currency($date_ranges['current_start'], $date_ranges['current_end'], 'all', $filters);
+		// total all deals number/value change against the previous period
+		$cards_statistics['total_deals_number_change'] = $this->calculate_percentage_change($cards_statistics['total_deals_number'], $this->get_count_deals_by_status($date_ranges['previous_start'], $date_ranges['previous_end'], 'all', $filters));
+		$cards_statistics['total_deals_value_change']  = $this->calculate_percentage_change($cards_statistics['total_deals_value'], $this->get_deals_by_status_price($date_ranges['previous_start'], $date_ranges['previous_end'], 'all', $filters));
 		// total deals close number
 		$cards_statistics['total_deals_close_won_number'] = $this->get_count_deals_by_status($date_ranges['current_start'], $date_ranges['current_end'], 'won', $filters);
 		// total deals close won number previous
@@ -1535,7 +1590,7 @@ class RestReportsController extends RestController
 	 * @param string $start_date Start date.
 	 * @param string $end_date End date.
 	 * @param array  $filters Optional filters array.
-	 * @return \Illuminate\Database\Eloquent\Builder Deal collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder Deal collection
 	 */
 	private function get_deals_by_status($start_date, $end_date, $status, $filters = array())
 	{
@@ -1725,7 +1780,7 @@ class RestReportsController extends RestController
 	/**
 	 * Extract unique contact IDs from deals collection
 	 *
-	 * @param \Illuminate\Database\Eloquent\Collection $deals Deals collection.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection $deals Deals collection.
 	 * @return int Unique contact count
 	 */
 	private function extract_unique_contact_ids($deals)
@@ -1769,7 +1824,7 @@ class RestReportsController extends RestController
 	 * Filters to apply to queries (excluding date filters to avoid conflicts)
 	 *
 	 * @param array $filters Filters array.
-	 * @return \Illuminate\Database\Eloquent\Builder Query builder object.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder Query builder object.
 	 */
 	private function get_filters_to_apply($filters = array())
 	{
@@ -1807,6 +1862,54 @@ class RestReportsController extends RestController
 	 */
 	protected function can_access_manager_reports() {
 		return Permissions::has_sales_manager_access();
+	}
+
+	/**
+	 * Whose numbers a sales-rep report shows.
+	 *
+	 * Managers may name any owner_id (opening a rep from the team list). Everyone
+	 * else always gets their own reports, and naming another user is refused,
+	 * not silently answered with their own data. Same rule as
+	 * AbstractEntityReportController::resolve_owner_filter().
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return int|WP_Error
+	 */
+	protected function resolve_rep_owner_id($request)
+	{
+		$current  = get_current_user_id();
+		$owner_id = absint($request->get_param('owner_id'));
+
+		if ($owner_id <= 0 || $owner_id === $current) {
+			return $current;
+		}
+
+		if (! $this->can_access_manager_reports()) {
+			return new WP_Error(
+				'rest_forbidden',
+				__('You can only view your own reports.', 'doublescale'),
+				array('status' => 403)
+			);
+		}
+
+		return $owner_id;
+	}
+
+	/**
+	 * Sales-rep reports: any sales role, and only their own unless a manager.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool|WP_Error
+	 */
+	protected function sales_rep_reports_permissions_check($request)
+	{
+		if (! Permissions::has_sales_rep_access()) {
+			return false;
+		}
+
+		$owner_id = $this->resolve_rep_owner_id($request);
+
+		return is_wp_error($owner_id) ? $owner_id : true;
 	}
 
 	/**
@@ -1850,7 +1953,7 @@ class RestReportsController extends RestController
 	 */
 	public function get_sales_rep_reports_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access();
+		return $this->sales_rep_reports_permissions_check($request);
 	}
 
 	/**
@@ -1861,7 +1964,7 @@ class RestReportsController extends RestController
 	 */
 	public function get_sales_rep_pipeline_stages_reports_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access();
+		return $this->sales_rep_reports_permissions_check($request);
 	}
 
 	/**
@@ -1872,7 +1975,7 @@ class RestReportsController extends RestController
 	 */
 	public function get_sales_rep_active_deals_reports_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access();
+		return $this->sales_rep_reports_permissions_check($request);
 	}
 
 	/**

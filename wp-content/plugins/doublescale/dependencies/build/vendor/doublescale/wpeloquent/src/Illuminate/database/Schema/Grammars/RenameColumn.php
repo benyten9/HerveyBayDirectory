@@ -1,13 +1,13 @@
 <?php
 
-namespace Illuminate\Database\Schema\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema\Grammars;
 
-use Illuminate\Support\Fluent;
-use Doctrine\DBAL\Schema\Column;
-use Doctrine\DBAL\Schema\TableDiff;
-use Illuminate\Database\Connection;
-use Illuminate\Database\Schema\Blueprint;
-use Doctrine\DBAL\Schema\AbstractSchemaManager as SchemaManager;
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\Column;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\TableDiff;
+use DoubleScale\Vendor\Illuminate\Database\Connection;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Blueprint;
+use DoubleScale\Vendor\Doctrine\DBAL\Schema\AbstractSchemaManager as SchemaManager;
 class RenameColumn
 {
     /**
@@ -19,7 +19,7 @@ class RenameColumn
      * @param  \Illuminate\Database\Connection  $connection
      * @return array
      */
-    public static function compile(\Illuminate\Database\Schema\Grammars\Grammar $grammar, Blueprint $blueprint, Fluent $command, Connection $connection)
+    public static function compile(Grammar $grammar, Blueprint $blueprint, Fluent $command, Connection $connection)
     {
         $column = $connection->getDoctrineColumn($grammar->getTablePrefix() . $blueprint->getTable(), $command->from);
         $schema = $connection->getDoctrineSchemaManager();
@@ -35,7 +35,7 @@ class RenameColumn
      * @param  \Doctrine\DBAL\Schema\AbstractSchemaManager  $schema
      * @return \Doctrine\DBAL\Schema\TableDiff
      */
-    protected static function getRenamedDiff(\Illuminate\Database\Schema\Grammars\Grammar $grammar, Blueprint $blueprint, Fluent $command, Column $column, SchemaManager $schema)
+    protected static function getRenamedDiff(Grammar $grammar, Blueprint $blueprint, Fluent $command, Column $column, SchemaManager $schema)
     {
         return static::setRenamedColumns($grammar->getDoctrineTableDiff($blueprint, $schema), $command, $column);
     }

@@ -63,7 +63,7 @@ function nibwp_gf_guard(): ?WP_Error
     if (!nibwp_gf_available()) {
         return nibwp_gf_err(
             'nibwp_gf_missing',
-            __('Gravity Forms is not active on this site.', domain: 'nibwp')
+            __('Gravity Forms is not active on this site.', 'nibwp')
         );
     }
 
@@ -91,13 +91,13 @@ function nibwp_gf_try(callable $fn, string $code = 'nibwp_gf_failed')
 function nibwp_gf_form(int $form_id)
 {
     if ($form_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $form = GFAPI::get_form($form_id);
 
     if (!$form || !is_array($form)) {
-        return nibwp_gf_err('nibwp_gf_not_found', __('No Gravity Forms form with that ID.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_not_found', __('No Gravity Forms form with that ID.', 'nibwp'));
     }
 
     return $form;
@@ -161,8 +161,8 @@ function nibwp_gf_uid(): string
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-info', [
-    'label'       => __('Gravity Forms — Info', domain: 'nibwp'),
-    'description' => __('Detect Gravity Forms, its version, how many forms and entries exist, and which add-ons are active (read-only).', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Info', 'nibwp'),
+    'description' => 'Detect Gravity Forms, its version, how many forms and entries exist, and which add-ons are active (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false],
     'output_schema' => ['type' => 'object'],
@@ -229,8 +229,8 @@ function nibwp_gf_info(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-forms', [
-    'label'       => __('Gravity Forms — Forms', domain: 'nibwp'),
-    'description' => __('List, read, create, update, duplicate, activate, deactivate, trash and restore Gravity Forms forms.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Forms', 'nibwp'),
+    'description' => 'List, read, create, update, duplicate, activate, deactivate, trash and restore Gravity Forms forms.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -276,7 +276,7 @@ function nibwp_gf_forms(array $input): array|WP_Error
 
     $needs_id = ['get', 'update', 'duplicate', 'activate', 'deactivate', 'trash', 'restore'];
     if (in_array($action, $needs_id, strict: true) && $form_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_gf_try(static function () use ($action, $form_id, $input) {
@@ -299,7 +299,7 @@ function nibwp_gf_forms(array $input): array|WP_Error
                 $form = (array) ($input['form'] ?? []);
                 if ($form === []) {
                     $form = [
-                        'title'  => (string) ($input['title'] ?? __('Untitled form', domain: 'nibwp')),
+                        'title'  => (string) ($input['title'] ?? __('Untitled form', 'nibwp')),
                         'fields' => [],
                     ];
                 }
@@ -311,13 +311,13 @@ function nibwp_gf_forms(array $input): array|WP_Error
                 return [
                     'form_id' => (int) $new_id,
                     'created' => true,
-                    'note'    => __('The form has no notification and no feed yet, so a submission would reach nobody.', domain: 'nibwp'),
+                    'note'    => __('The form has no notification and no feed yet, so a submission would reach nobody.', 'nibwp'),
                 ];
 
             case 'update':
                 $form = (array) ($input['form'] ?? []);
                 if ($form === []) {
-                    throw new \RuntimeException(__('A form object is required. Read the form first — update replaces it wholesale.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A form object is required. Read the form first — update replaces it wholesale.', 'nibwp'));
                 }
                 $form['id'] = $form_id;
                 $saved = nibwp_gf_save($form);
@@ -347,7 +347,7 @@ function nibwp_gf_forms(array $input): array|WP_Error
                     : ['form_id' => $form_id, 'is_trash' => $action === 'trash', 'reversible' => true];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -356,8 +356,8 @@ function nibwp_gf_forms(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-fields', [
-    'label'       => __('Gravity Forms — Fields', domain: 'nibwp'),
-    'description' => __('List, read, add, update and remove the fields on a form, without rewriting the whole form object.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Fields', 'nibwp'),
+    'description' => 'List, read, add, update and remove the fields on a form, without rewriting the whole form object.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -404,7 +404,7 @@ function nibwp_gf_fields(array $input): array|WP_Error
     $field_id = (int) ($input['field_id'] ?? 0);
 
     if (in_array($action, ['get', 'update', 'delete'], strict: true) && $field_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid field ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid field ID is required.', 'nibwp'));
     }
 
     return nibwp_gf_try(static function () use ($form, $action, $field_id, $input) {
@@ -428,7 +428,7 @@ function nibwp_gf_fields(array $input): array|WP_Error
         if ($action === 'get') {
             $field = GFAPI::get_field($form_id, $field_id);
             if (!$field) {
-                throw new \RuntimeException(__('No field with that ID on this form.', domain: 'nibwp'));
+                throw new \RuntimeException(__('No field with that ID on this form.', 'nibwp'));
             }
 
             return ['form_id' => $form_id, 'field' => $field];
@@ -437,7 +437,7 @@ function nibwp_gf_fields(array $input): array|WP_Error
         if ($action === 'add') {
             $new = (array) ($input['field'] ?? []);
             if (($new['type'] ?? '') === '') {
-                throw new \RuntimeException(__('A field type is required — text, email, textarea, select, checkbox, and so on.', domain: 'nibwp'));
+                throw new \RuntimeException(__('A field type is required — text, email, textarea, select, checkbox, and so on.', 'nibwp'));
             }
 
             // Gravity Forms keys entries by field ID, so a new field must take
@@ -472,7 +472,7 @@ function nibwp_gf_fields(array $input): array|WP_Error
         }
 
         if ($index === null) {
-            throw new \RuntimeException(__('No field with that ID on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('No field with that ID on this form.', 'nibwp'));
         }
 
         if ($action === 'update') {
@@ -506,7 +506,7 @@ function nibwp_gf_fields(array $input): array|WP_Error
             'form_id'  => $form_id,
             'field_id' => $field_id,
             'deleted'  => true,
-            'note'     => __('Values already stored against this field ID remain in past entries but are no longer reachable through the form.', domain: 'nibwp'),
+            'note'     => __('Values already stored against this field ID remain in past entries but are no longer reachable through the form.', 'nibwp'),
         ];
     });
 }
@@ -516,8 +516,8 @@ function nibwp_gf_fields(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-entries', [
-    'label'       => __('Gravity Forms — Entries', domain: 'nibwp'),
-    'description' => __('Search, read, count, create and update entries, and change their state: starred, read, spam and trash.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Entries', 'nibwp'),
+    'description' => 'Search, read, count, create and update entries, and change their state: starred, read, spam and trash.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -565,10 +565,10 @@ function nibwp_gf_entries(array $input): array|WP_Error
 
     $per_entry = ['get', 'update', 'star', 'unstar', 'mark_read', 'mark_unread', 'mark_spam', 'unmark_spam', 'trash', 'restore'];
     if (in_array($action, $per_entry, strict: true) && $entry_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid entry ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid entry ID is required.', 'nibwp'));
     }
     if (in_array($action, ['list', 'count', 'create'], strict: true) && $form_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     return nibwp_gf_try(static function () use ($action, $form_id, $entry_id, $input) {
@@ -609,13 +609,13 @@ function nibwp_gf_entries(array $input): array|WP_Error
                 return is_wp_error($new_id) ? $new_id : [
                     'entry_id' => (int) $new_id,
                     'created'  => true,
-                    'note'     => __('Stored only. No notification was sent and no feed ran — use nibwp/gravityforms-submit for that.', domain: 'nibwp'),
+                    'note'     => __('Stored only. No notification was sent and no feed ran — use nibwp/gravityforms-submit for that.', 'nibwp'),
                 ];
 
             case 'update':
                 $entry = (array) ($input['entry'] ?? []);
                 if ($entry === []) {
-                    throw new \RuntimeException(__('An entry object is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('An entry object is required.', 'nibwp'));
                 }
                 $entry['id'] = $entry_id;
                 $result = GFAPI::update_entry($entry, $entry_id);
@@ -636,7 +636,7 @@ function nibwp_gf_entries(array $input): array|WP_Error
         ];
 
         if (!isset($map[$action])) {
-            throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+            throw new \RuntimeException(__('Unknown action.', 'nibwp'));
         }
 
         [$property, $value] = $map[$action];
@@ -653,8 +653,8 @@ function nibwp_gf_entries(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-notes', [
-    'label'       => __('Gravity Forms — Entry notes', domain: 'nibwp'),
-    'description' => __('Read, add and remove the internal notes attached to an entry.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Entry notes', 'nibwp'),
+    'description' => 'Read, add and remove the internal notes attached to an entry.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -692,10 +692,10 @@ function nibwp_gf_notes(array $input): array|WP_Error
     $note_id = (int) ($input['note_id'] ?? 0);
 
     if (in_array($action, ['list', 'add'], strict: true) && $entry_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid entry ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid entry ID is required.', 'nibwp'));
     }
     if ($action === 'delete' && $note_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid note ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid note ID is required.', 'nibwp'));
     }
 
     return nibwp_gf_try(static function () use ($action, $entry_id, $note_id, $input) {
@@ -708,7 +708,7 @@ function nibwp_gf_notes(array $input): array|WP_Error
         if ($action === 'add') {
             $text = trim((string) ($input['note'] ?? ''));
             if ($text === '') {
-                throw new \RuntimeException(__('Note text is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Note text is required.', 'nibwp'));
             }
 
             $user = wp_get_current_user();
@@ -733,8 +733,8 @@ function nibwp_gf_notes(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-notifications', [
-    'label'       => __('Gravity Forms — Notifications', domain: 'nibwp'),
-    'description' => __('Read and configure the emails a form sends on submit — recipient, subject, message, and when each one fires.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Notifications', 'nibwp'),
+    'description' => 'Read and configure the emails a form sends on submit — recipient, subject, message, and when each one fires.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -778,8 +778,8 @@ function nibwp_gf_notifications(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-confirmations', [
-    'label'       => __('Gravity Forms — Confirmations', domain: 'nibwp'),
-    'description' => __('Read and configure what a visitor sees after submitting — a message, a redirect, or another page.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Confirmations', 'nibwp'),
+    'description' => 'Read and configure what a visitor sees after submitting — a message, a redirect, or another page.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -839,7 +839,7 @@ function nibwp_gf_form_collection(array $input, string $collection)
     $uid = (string) ($input[$singular . '_id'] ?? '');
 
     if (in_array($action, ['get', 'update', 'delete', 'toggle'], strict: true) && $uid === '') {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('The UID is required. List them first.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('The UID is required. List them first.', 'nibwp'));
     }
 
     return nibwp_gf_try(static function () use ($form, $action, $collection, $singular, $uid, $input) {
@@ -870,7 +870,7 @@ function nibwp_gf_form_collection(array $input, string $collection)
                 'count'     => count($rows),
                 'active'    => count($active),
                 'warning'   => ($collection === 'notifications' && $active === [])
-                    ? __('No active notification. Submissions to this form reach nobody.', domain: 'nibwp')
+                    ? __('No active notification. Submissions to this form reach nobody.', 'nibwp')
                     : '',
             ];
         }
@@ -878,7 +878,7 @@ function nibwp_gf_form_collection(array $input, string $collection)
         if ($action === 'add') {
             $item = (array) ($input[$singular] ?? []);
             if ($item === []) {
-                throw new \RuntimeException(__('An object is required.', domain: 'nibwp'));
+                throw new \RuntimeException(__('An object is required.', 'nibwp'));
             }
 
             $new_uid = nibwp_gf_uid();
@@ -894,7 +894,7 @@ function nibwp_gf_form_collection(array $input, string $collection)
         }
 
         if (!isset($items[$uid])) {
-            throw new \RuntimeException(__('Nothing with that UID on this form.', domain: 'nibwp'));
+            throw new \RuntimeException(__('Nothing with that UID on this form.', 'nibwp'));
         }
 
         if ($action === 'get') {
@@ -935,8 +935,8 @@ function nibwp_gf_form_collection(array $input, string $collection)
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-feeds', [
-    'label'       => __('Gravity Forms — Add-on feeds', domain: 'nibwp'),
-    'description' => __('Read and configure add-on feeds — how Mailchimp, Stripe, User Registration, Zapier and the rest are wired to a form.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Add-on feeds', 'nibwp'),
+    'description' => 'Read and configure add-on feeds — how Mailchimp, Stripe, User Registration, Zapier and the rest are wired to a form.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -981,7 +981,7 @@ function nibwp_gf_feeds(array $input): array|WP_Error
     $form_id = (int) ($input['form_id'] ?? 0);
 
     if (in_array($action, ['get', 'update', 'delete', 'toggle'], strict: true) && $feed_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid feed ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid feed ID is required.', 'nibwp'));
     }
 
     return nibwp_gf_try(static function () use ($action, $feed_id, $form_id, $input) {
@@ -1021,7 +1021,7 @@ function nibwp_gf_feeds(array $input): array|WP_Error
             case 'add':
                 $slug = (string) ($input['addon_slug'] ?? '');
                 if ($slug === '' || $form_id <= 0) {
-                    throw new \RuntimeException(__('A form_id and an addon_slug are both required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A form_id and an addon_slug are both required.', 'nibwp'));
                 }
                 $new_id = GFAPI::add_feed($form_id, (array) ($input['meta'] ?? []), $slug);
 
@@ -1043,7 +1043,7 @@ function nibwp_gf_feeds(array $input): array|WP_Error
                 return is_wp_error($result) ? $result : ['feed_id' => $feed_id, 'deleted' => true, 'reversible' => false];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }
 
@@ -1052,8 +1052,8 @@ function nibwp_gf_feeds(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-settings', [
-    'label'       => __('Gravity Forms — Form settings', domain: 'nibwp'),
-    'description' => __('Read and change a form\'s settings: title, description, button, entry limits, scheduling, login requirement, honeypot and save-and-continue.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Form settings', 'nibwp'),
+    'description' => 'Read and change a form\'s settings: title, description, button, entry limits, scheduling, login requirement, honeypot and save-and-continue.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1108,7 +1108,7 @@ function nibwp_gf_settings(array $input): array|WP_Error
         if ((string) ($input['action'] ?? 'get') === 'set') {
             $settings = (array) ($input['settings'] ?? []);
             if ($settings === []) {
-                throw new \RuntimeException(__('Nothing to set.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Nothing to set.', 'nibwp'));
             }
 
             foreach ($settings as $key => $value) {
@@ -1138,7 +1138,7 @@ function nibwp_gf_settings(array $input): array|WP_Error
                 'submission_gates' => $blocking,
                 'warning' => $blocking === []
                     ? ''
-                    : __('This form now restricts who can submit, or when. Confirm that is intended.', domain: 'nibwp'),
+                    : __('This form now restricts who can submit, or when. Confirm that is intended.', 'nibwp'),
             ];
         }
 
@@ -1158,8 +1158,8 @@ function nibwp_gf_settings(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-submit', [
-    'label'       => __('Gravity Forms — Submit and validate', domain: 'nibwp'),
-    'description' => __('Validate a set of values against a form\'s rules, or submit them properly — running validation, notifications and feeds exactly as a real submission would.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Submit and validate', 'nibwp'),
+    'description' => 'Validate a set of values against a form\'s rules, or submit them properly — running validation, notifications and feeds exactly as a real submission would.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1199,7 +1199,7 @@ function nibwp_gf_submit(array $input): array|WP_Error
 
     $form_id = (int) ($input['form_id'] ?? 0);
     if ($form_id <= 0) {
-        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', domain: 'nibwp'));
+        return nibwp_gf_err('nibwp_gf_bad_id', __('A valid form ID is required.', 'nibwp'));
     }
 
     $action = (string) ($input['action'] ?? 'validate');
@@ -1208,7 +1208,7 @@ function nibwp_gf_submit(array $input): array|WP_Error
     if ($action === 'submit' && !(bool) ($input['confirm'] ?? false)) {
         return nibwp_gf_err(
             'nibwp_gf_unconfirmed',
-            __('A real submission stores an entry, sends notifications and runs feeds — including payment feeds. Validate first, then re-issue with confirm true if a genuine submission is intended.', domain: 'nibwp')
+            __('A real submission stores an entry, sends notifications and runs feeds — including payment feeds. Validate first, then re-issue with confirm true if a genuine submission is intended.', 'nibwp')
         );
     }
 
@@ -1252,7 +1252,7 @@ function nibwp_gf_submit(array $input): array|WP_Error
             'entry_id'   => (int) ($result['entry_id'] ?? 0),
             'validation_messages' => $result['validation_messages'] ?? [],
             'confirmation_message' => $result['confirmation_message'] ?? '',
-            'side_effects' => __('An entry was stored, active notifications were sent and active feeds ran.', domain: 'nibwp'),
+            'side_effects' => __('An entry was stored, active notifications were sent and active feeds ran.', 'nibwp'),
         ];
     });
 }
@@ -1262,8 +1262,8 @@ function nibwp_gf_submit(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-export', [
-    'label'       => __('Gravity Forms — Export entries', domain: 'nibwp'),
-    'description' => __('Export a form\'s entries as rows or CSV, with the field labels as headers (read-only).', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Export entries', 'nibwp'),
+    'description' => 'Export a form\'s entries as rows or CSV, with the field labels as headers (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1343,7 +1343,7 @@ function nibwp_gf_export(array $input): array|WP_Error
         if ((string) ($input['format'] ?? 'rows') === 'csv') {
             $handle = fopen('php://temp', 'r+');
             if ($handle === false) {
-                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', domain: 'nibwp'));
+                throw new \RuntimeException(__('Could not open a buffer to build the CSV.', 'nibwp'));
             }
             fputcsv($handle, array_values($columns));
             foreach ($rows as $row) {
@@ -1372,8 +1372,8 @@ function nibwp_gf_export(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-audit', [
-    'label'       => __('Gravity Forms — Audit', domain: 'nibwp'),
-    'description' => __('Check every form for the faults that lose enquiries: no active notification, no confirmation, a reached entry limit, an expired schedule, or an inactive form still embedded (read-only).', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Audit', 'nibwp'),
+    'description' => 'Check every form for the faults that lose enquiries: no active notification, no confirmation, a reached entry limit, an expired schedule, or an inactive form still embedded (read-only).',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1440,8 +1440,8 @@ function nibwp_gf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'blocker',
                     'code'     => 'no_active_notification',
-                    'message'  => __('No active notification. Entries are stored and nobody is told.', domain: 'nibwp'),
-                    'fix'      => __('Add one with nibwp/gravityforms-notifications, or confirm the entries are only read in the admin.', domain: 'nibwp'),
+                    'message'  => __('No active notification. Entries are stored and nobody is told.', 'nibwp'),
+                    'fix'      => __('Add one with nibwp/gravityforms-notifications, or confirm the entries are only read in the admin.', 'nibwp'),
                 ];
             }
 
@@ -1451,8 +1451,8 @@ function nibwp_gf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'warning',
                     'code'     => 'no_confirmation',
-                    'message'  => __('No confirmation, so a visitor gets no acknowledgement after submitting.', domain: 'nibwp'),
-                    'fix'      => __('Add one with nibwp/gravityforms-confirmations.', domain: 'nibwp'),
+                    'message'  => __('No confirmation, so a visitor gets no acknowledgement after submitting.', 'nibwp'),
+                    'fix'      => __('Add one with nibwp/gravityforms-confirmations.', 'nibwp'),
                 ];
             }
 
@@ -1467,11 +1467,11 @@ function nibwp_gf_audit(array $input): array|WP_Error
                         'code'     => 'entry_limit_reached',
                         'message'  => sprintf(
                             /* translators: 1: entry count, 2: configured limit */
-                            __('The entry limit is reached (%1$d of %2$d), so the form no longer accepts submissions.', domain: 'nibwp'),
+                            __('The entry limit is reached (%1$d of %2$d), so the form no longer accepts submissions.', 'nibwp'),
                             $count,
                             $limit
                         ),
-                        'fix'      => __('Raise or remove limitEntriesCount with nibwp/gravityforms-settings.', domain: 'nibwp'),
+                        'fix'      => __('Raise or remove limitEntriesCount with nibwp/gravityforms-settings.', 'nibwp'),
                     ];
                 }
             }
@@ -1484,8 +1484,8 @@ function nibwp_gf_audit(array $input): array|WP_Error
                         'title'    => $title,
                         'severity' => 'blocker',
                         'code'     => 'schedule_expired',
-                        'message'  => __('The scheduled end date has passed, so the form is closed to submissions.', domain: 'nibwp'),
-                        'fix'      => __('Change or clear scheduleEnd with nibwp/gravityforms-settings.', domain: 'nibwp'),
+                        'message'  => __('The scheduled end date has passed, so the form is closed to submissions.', 'nibwp'),
+                        'fix'      => __('Change or clear scheduleEnd with nibwp/gravityforms-settings.', 'nibwp'),
                     ];
                 }
             }
@@ -1496,8 +1496,8 @@ function nibwp_gf_audit(array $input): array|WP_Error
                     'title'    => $title,
                     'severity' => 'note',
                     'code'     => 'requires_login',
-                    'message'  => __('Only logged-in users can submit this form.', domain: 'nibwp'),
-                    'fix'      => __('Intentional on a members-only form; a mistake on a public contact form.', domain: 'nibwp'),
+                    'message'  => __('Only logged-in users can submit this form.', 'nibwp'),
+                    'fix'      => __('Intentional on a members-only form; a mistake on a public contact form.', 'nibwp'),
                 ];
             }
         }
@@ -1519,8 +1519,8 @@ function nibwp_gf_audit(array $input): array|WP_Error
  * ------------------------------------------------------------------------- */
 
 wp_register_ability('nibwp/gravityforms-delete', [
-    'label'       => __('Gravity Forms — Delete', domain: 'nibwp'),
-    'description' => __('Permanently delete a form, an entry or a feed. Irreversible.', domain: 'nibwp'),
+    'label'       => __('Gravity Forms — Delete', 'nibwp'),
+    'description' => 'Permanently delete a form, an entry or a feed. Irreversible.',
     'category'    => 'nibwp-forms',
     'input_schema' => [
         'type' => 'object',
@@ -1561,7 +1561,7 @@ function nibwp_gf_delete(array $input): array|WP_Error
     if (!(bool) ($input['confirm'] ?? false)) {
         return nibwp_gf_err(
             'nibwp_gf_unconfirmed',
-            __('This permanently destroys data and cannot be undone. Trashing is reversible; if deletion is genuinely intended, re-issue with confirm true.', domain: 'nibwp')
+            __('This permanently destroys data and cannot be undone. Trashing is reversible; if deletion is genuinely intended, re-issue with confirm true.', 'nibwp')
         );
     }
 
@@ -1572,7 +1572,7 @@ function nibwp_gf_delete(array $input): array|WP_Error
             case 'delete_form':
                 $form_id = (int) ($input['form_id'] ?? 0);
                 if ($form_id <= 0) {
-                    throw new \RuntimeException(__('A valid form ID is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A valid form ID is required.', 'nibwp'));
                 }
                 $count = (int) GFAPI::count_entries($form_id);
                 $result = GFAPI::delete_form($form_id);
@@ -1587,7 +1587,7 @@ function nibwp_gf_delete(array $input): array|WP_Error
             case 'delete_entry':
                 $entry_id = (int) ($input['entry_id'] ?? 0);
                 if ($entry_id <= 0) {
-                    throw new \RuntimeException(__('A valid entry ID is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A valid entry ID is required.', 'nibwp'));
                 }
                 $result = GFAPI::delete_entry($entry_id);
 
@@ -1596,13 +1596,13 @@ function nibwp_gf_delete(array $input): array|WP_Error
             case 'delete_feed':
                 $feed_id = (int) ($input['feed_id'] ?? 0);
                 if ($feed_id <= 0) {
-                    throw new \RuntimeException(__('A valid feed ID is required.', domain: 'nibwp'));
+                    throw new \RuntimeException(__('A valid feed ID is required.', 'nibwp'));
                 }
                 $result = GFAPI::delete_feed($feed_id);
 
                 return is_wp_error($result) ? $result : ['feed_id' => $feed_id, 'deleted' => true, 'reversible' => false];
         }
 
-        throw new \RuntimeException(__('Unknown action.', domain: 'nibwp'));
+        throw new \RuntimeException(__('Unknown action.', 'nibwp'));
     });
 }

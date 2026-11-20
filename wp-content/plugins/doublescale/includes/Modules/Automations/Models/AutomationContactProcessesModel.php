@@ -12,7 +12,7 @@ namespace DoubleScale\Modules\Automations\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * AutomationContactProcessesModel class
@@ -73,7 +73,7 @@ class AutomationContactProcessesModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function step() {
 		return $this->belongsTo( 'DoubleScale\Modules\Automations\Models\AutomationStepModel', 'step_id', 'id' );
@@ -84,7 +84,7 @@ class AutomationContactProcessesModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( 'DoubleScale\Modules\Contacts\Models\ContactModel', 'contact_id', 'id' );
@@ -95,7 +95,7 @@ class AutomationContactProcessesModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function automation() {
 		return $this->belongsTo( 'DoubleScale\Modules\Automations\Models\AutomationModel', 'automation_id', 'id' );
@@ -106,7 +106,7 @@ class AutomationContactProcessesModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function automation_contact() {
 		return $this->belongsTo( 'DoubleScale\Modules\Automations\Models\AutomationContactModel', 'automation_contact_id', 'id' );

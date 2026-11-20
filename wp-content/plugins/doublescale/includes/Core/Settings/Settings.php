@@ -26,6 +26,21 @@ class Settings {
 	const OPTION_NAME = 'doublescale_settings';
 
 	/**
+	 * Settings keys a settings screen's request may never write.
+	 *
+	 * Each of these has its own admin-only endpoint. The Booking and General
+	 * settings endpoints merge whatever JSON they receive and are open to
+	 * Booking and CRM Managers, so without this a non-admin could set
+	 * `client_portal.role` to `administrator`, switch on automatic accounts and
+	 * book with their own email to receive an administrator account.
+	 * `client_ip_header` decides which address public rate limits count, so
+	 * only a site administrator may change it.
+	 *
+	 * @var string[]
+	 */
+	const REQUEST_PROTECTED_KEYS = array( 'client_portal', 'client_ip_header' );
+
+	/**
 	 * Get a setting
 	 *
 	 * @since 1.0.0
@@ -99,6 +114,25 @@ class Settings {
 
 		$settings = array_replace( $old_settings, $new_settings );
 		return self::update_all( $settings );
+	}
+
+	/**
+	 * Merge settings that came in a request: like update_many(), minus the
+	 * keys only their own endpoints may write ({@see REQUEST_PROTECTED_KEYS}).
+	 *
+	 * @param array $new_settings Settings from the request body.
+	 * @return boolean
+	 */
+	public static function update_from_request( $new_settings ) {
+		if ( ! is_array( $new_settings ) ) {
+			$new_settings = array();
+		}
+
+		foreach ( self::REQUEST_PROTECTED_KEYS as $key ) {
+			unset( $new_settings[ $key ] );
+		}
+
+		return self::update_many( $new_settings );
 	}
 
 	/**
@@ -179,6 +213,37 @@ class Settings {
 	public static function get_currency() {
 		$currency_settings = self::get( 'currency', array() );
 		return isset( $currency_settings['currency'] ) ? $currency_settings['currency'] : 'USD';
+	}
+
+	/**
+	 * Whether website tracking is on. The Website Tracking module switch
+	 * (Control Modules) decides; a site that never saved that switch keeps
+	 * the choice it made in the old Settings → Website Tracking toggle (on
+	 * by default). Pro's module follows the same rule.
+	 *
+	 * @return bool
+	 */
+	public static function is_website_tracking_enabled() {
+		$modules = get_option( 'doublescale_enabled_modules', array() );
+		$enabled = is_array( $modules ) && array_key_exists( 'websitetracking', $modules )
+			? (bool) $modules['websitetracking']
+			: self::website_tracking_setting_on();
+
+		return (bool) apply_filters( 'doublescale_website_tracking_enabled', $enabled );
+	}
+
+	/**
+	 * The old Settings → Website Tracking toggle (on unless it was switched
+	 * off). Only read for sites that never saved the module switch.
+	 *
+	 * @return bool
+	 */
+	public static function website_tracking_setting_on() {
+		$tracking = self::get( 'website_tracking', array() );
+		$raw      = is_array( $tracking ) && isset( $tracking['enabled'] ) ? $tracking['enabled'] : true;
+		$enabled  = filter_var( $raw, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+
+		return null === $enabled ? (bool) $raw : $enabled;
 	}
 
 	/**

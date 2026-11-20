@@ -97,6 +97,7 @@ function seopress_ga_oauth_handle_callback() {
 		$options['debug']         = '';
 		update_option( 'seopress_google_analytics_option_name1', $options, 'yes' );
 		update_option( 'seopress_google_analytics_lock_option_name', '', 'yes' );
+		seopress_ga_clear_sync_error();
 
 		wp_safe_redirect( admin_url( 'admin.php?page=seopress-google-analytics' ) );
 		exit;
@@ -132,9 +133,12 @@ function seopress_ga_oauth_handle_callback() {
 			$options['refresh_token'] = isset( $token['refresh_token'] ) ? $token['refresh_token'] : null;
 			// Keep the shape of the payload for support, never a second copy of
 			// the tokens: they already live in their own keys.
-			$options['debug'] = array_diff_key( $token, array_flip( array( 'access_token', 'refresh_token', 'id_token' ) ) );
+			$options['debug'] = seopress_ga_token_debug( $token );
 			$options['code']  = sanitize_text_field( wp_unslash( $_GET['code'] ) );
 			update_option( 'seopress_google_analytics_option_name1', $options, 'yes' );
+
+			// A new connection makes the previous failure irrelevant.
+			seopress_ga_clear_sync_error();
 
 			// If a property is already selected (e.g. reconnecting), refresh the
 			// dashboard data right away instead of waiting for the hourly cron.
@@ -267,6 +271,9 @@ function seopress_ga_oauth_get_status() {
 		'is_connected' => $is_connected,
 		'auth_url'     => $auth_url,
 		'logout_url'   => $logout_url,
+		// A stored token is not a working one: this says why the last sync
+		// failed, and whether Google still accepts the connection.
+		'sync_error'   => $is_connected ? seopress_ga_get_sync_error() : null,
 	) );
 }
 add_action( 'wp_ajax_seopress_ga_oauth_get_status', 'seopress_ga_oauth_get_status' );
@@ -290,6 +297,7 @@ function seopress_ga_oauth_logout() {
 	$options['debug']         = '';
 	update_option( 'seopress_google_analytics_option_name1', $options, 'yes' );
 	update_option( 'seopress_google_analytics_lock_option_name', '', 'yes' );
+	seopress_ga_clear_sync_error();
 
 	wp_send_json_success();
 }

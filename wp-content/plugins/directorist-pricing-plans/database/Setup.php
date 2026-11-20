@@ -61,7 +61,7 @@ class Setup {
                 // Fallback
                 $table->tiny_integer( "is_fallback" )->default( 0 );
                 $table->unsigned_big_integer( "fallback_plan_id" )->nullable();
-                $table->integer( "listing_display_priority" )->default( 0 );
+                $table->integer( "listing_display_priority" )->default( 1 );
                 // Plan Type
                 $table->enum( "type", PlanType::all() )->default( PlanType::PACKAGE );
                 $table->tiny_integer( "is_featured" )->default( 0 );

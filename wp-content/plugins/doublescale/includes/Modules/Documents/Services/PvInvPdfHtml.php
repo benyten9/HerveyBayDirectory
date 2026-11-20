@@ -63,6 +63,11 @@ final class PvInvPdfHtml {
 		$line_items    = is_array( $document['line_items'] ?? null ) ? $document['line_items'] : array();
 		$subtotal      = (float) ( $document['subtotal'] ?? 0 );
 		$total_tax     = (float) ( $document['total_tax'] ?? 0 );
+		if ( ! $is_invoice && ! isset( $document['total_tax'] ) ) {
+			$total_tax = self::line_items_tax( $line_items, (string) ( $document['discount_type'] ?? 'none' ), (float) ( $document['discount_value'] ?? 0 ) );
+		}
+		// a Tax column whenever any line is taxed (invoices always show it)
+		$show_tax = $is_invoice || $total_tax > 0;
 		$discount_type = (string) ( $document['discount_type'] ?? 'none' );
 		$discount_val  = (float) ( $document['discount_value'] ?? 0 );
 		$adjustment    = (float) ( $document['adjustment'] ?? 0 );
@@ -79,25 +84,7 @@ final class PvInvPdfHtml {
 
 		$company_name  = trim( (string) ( $company['name'] ?? '' ) );
 		$logo_data_uri = (string) ( $company['logo_data_uri'] ?? '' );
-		$from_lines    = array();
-		if ( '' !== $company_name ) {
-			$from_lines[] = $company_name;
-		}
-		$address_block = trim( (string) ( $company['address'] ?? '' ) );
-		if ( '' !== $address_block ) {
-			$address_lines = preg_split( '/\r\n|\r|\n/', $address_block ) ?: array();
-			foreach ( $address_lines as $line ) {
-				$line = trim( (string) $line );
-				if ( '' !== $line ) {
-					$from_lines[] = $line;
-				}
-			}
-		}
-		$url_line = trim( (string) ( $company['url'] ?? '' ) );
-		if ( '' !== $url_line ) {
-			$from_lines[] = $url_line;
-		}
-		$from_lines = DocumentPdf::append_company_legal_lines( $from_lines, $company );
+		$from_lines    = DocumentPdf::company_lines( $company );
 		if ( empty( $from_lines ) ) {
 			$from_lines[] = __( 'Your Company', 'doublescale' );
 		}
@@ -161,6 +148,7 @@ final class PvInvPdfHtml {
 					'label' => __( 'Due Date', 'doublescale' ),
 					'value' => (string) ( $document['due_date'] ?? '' ),
 				),
+				self::service_date_row( $document ),
 				array(
 					'label' => __( 'Currency', 'doublescale' ),
 					'value' => $currency,
@@ -180,6 +168,9 @@ final class PvInvPdfHtml {
 					'value' => $currency,
 				),
 			);
+
+		// The service-date row is null when none was entered.
+		$dates = array_values( array_filter( $dates ) );
 
 		$sections_before = array();
 		$sections_after  = array();
@@ -207,6 +198,14 @@ final class PvInvPdfHtml {
 			$sections_after[] = array(
 				'title' => __( 'Client Note', 'doublescale' ),
 				'body'  => (string) $document['client_note'],
+			);
+		}
+
+		// § 19 / reverse-charge wording (DocumentTaxNote); plain text.
+		if ( $is_invoice && ! empty( $document['tax_note'] ) ) {
+			$sections_after[] = array(
+				'title' => __( 'Tax note', 'doublescale' ),
+				'body'  => esc_html( (string) $document['tax_note'] ),
 			);
 		}
 
@@ -238,6 +237,10 @@ final class PvInvPdfHtml {
 
 		$subject = $is_invoice ? '' : trim( (string) ( $document['subject'] ?? '' ) );
 
+		// Invoices only: how to pay (beside the totals) and the legal footer.
+		$payment_instructions = $is_invoice ? trim( (string) ( $document['payment_instructions'] ?? '' ) ) : '';
+		$footer_text          = $is_invoice ? trim( (string) ( $document['footer_text'] ?? '' ) ) : '';
+
 		return compact(
 			'is_invoice',
 			'doc_title',
@@ -249,6 +252,7 @@ final class PvInvPdfHtml {
 			'line_items',
 			'subtotal',
 			'total_tax',
+			'show_tax',
 			'discount_amount',
 			'adjustment',
 			'total',
@@ -262,6 +266,8 @@ final class PvInvPdfHtml {
 			'dates',
 			'sections_before',
 			'sections_after',
+			'payment_instructions',
+			'footer_text',
 			'design'
 		);
 	}
@@ -311,6 +317,7 @@ final class PvInvPdfHtml {
 		<?php self::render_items( $ctx, 'colored' ); ?>
 		<?php self::render_account_row( $ctx, 'colored' ); ?>
 		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+		<?php self::render_footer_text( $ctx ); ?>
 	</div>
 </div>
 		<?php
@@ -321,7 +328,7 @@ final class PvInvPdfHtml {
 	 */
 	private static function render_design_two( array $ctx ): void {
 		?>
-<div class="pv-inv pv-inv--border-bottom">
+<div class="pv-inv">
 	<div class="pv-inv-two">
 		<?php self::render_svg_top_two( $ctx['primary'] ); ?>
 		<div class="pv-inv-body">
@@ -330,6 +337,7 @@ final class PvInvPdfHtml {
 			<?php self::render_items( $ctx, 'colored' ); ?>
 			<?php self::render_account_row( $ctx, 'colored' ); ?>
 			<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+			<?php self::render_footer_text( $ctx ); ?>
 		</div>
 		<?php self::render_svg_footer_two( $ctx['primary'] ); ?>
 	</div>
@@ -352,6 +360,7 @@ final class PvInvPdfHtml {
 			<?php self::render_items( $ctx, 'colored' ); ?>
 			<?php self::render_account_row( $ctx, 'colored' ); ?>
 			<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+			<?php self::render_footer_text( $ctx ); ?>
 			<?php self::render_corner_shape( $ctx['primary'], true ); ?>
 		</div>
 	</div>
@@ -386,7 +395,7 @@ final class PvInvPdfHtml {
 			<table class="pv-four-bottom" width="100%" cellspacing="0" cellpadding="0">
 				<tr>
 					<td width="58%" valign="top">
-						<?php self::render_bank_placeholder(); ?>
+						<?php self::render_payment( $ctx ); ?>
 					</td>
 					<td width="42%" valign="top" align="right">
 						<?php self::render_totals( $ctx, 'four' ); ?>
@@ -394,6 +403,7 @@ final class PvInvPdfHtml {
 				</tr>
 			</table>
 			<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+			<?php self::render_footer_text( $ctx ); ?>
 		</div>
 		<?php self::render_svg_footer_four( $ctx['primary'] ); ?>
 	</div>
@@ -429,6 +439,7 @@ final class PvInvPdfHtml {
 		<?php self::render_items( $ctx, 'soft' ); ?>
 		<?php self::render_account_row( $ctx, 'colored' ); ?>
 		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+		<?php self::render_footer_text( $ctx ); ?>
 	</div>
 </div>
 		<?php
@@ -438,29 +449,40 @@ final class PvInvPdfHtml {
 	 * @param array<string, mixed> $ctx Context.
 	 */
 	private static function render_design_six( array $ctx ): void {
+		// Same layout as the screen template: no page bands, a full-width
+		// rule under the header, From / Bill To as two separate boxes.
 		?>
-<div class="pv-inv pv-inv-six pv-inv--border-top pv-inv--border-bottom">
-	<div class="pv-inv-body">
-		<table width="100%" cellspacing="0" cellpadding="0" class="pv-modern-head">
-			<tr>
-				<td width="50%" valign="top"><?php self::render_logo( $ctx ); ?></td>
-				<td width="50%" valign="top" align="right">
-					<div class="pv-inv-title"><h2><?php echo esc_html( strtoupper( $ctx['doc_title'] ) ); ?></h2></div>
-					<?php self::render_dates( $ctx ); ?>
-				</td>
-			</tr>
-		</table>
-		<table class="pv-inv-shapes" width="100%" cellspacing="0" cellpadding="0">
-			<tr>
-				<td width="34%" valign="bottom"><?php self::render_svg_six( $ctx['primary'] ); ?></td>
-				<td width="66%" valign="middle"><?php self::render_filled_bar( 'pv-inv-shape1', $ctx['primary'], 1 ); ?></td>
-			</tr>
-		</table>
-		<?php self::render_address_row( $ctx ); ?>
+<div class="pv-inv pv-inv-six">
+	<table class="pv-six-head" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="67%" valign="middle"><?php self::render_logo( $ctx ); ?></td>
+			<td width="33%" valign="top">
+				<div class="pv-inv-title"><h2><?php echo esc_html( self::title_case( (string) $ctx['doc_title'] ) ); ?></h2></div>
+				<?php self::render_dates( $ctx ); ?>
+			</td>
+		</tr>
+	</table>
+	<table class="pv-six-shapes" width="100%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="33%" valign="top"><?php self::render_svg_six( $ctx['primary'] ); ?></td>
+			<td width="67%" valign="top" class="pv-six-rule"><?php self::render_filled_bar( 'pv-inv-shape1', $ctx['primary'], 1 ); ?></td>
+		</tr>
+	</table>
+	<table class="pv-six-address" width="100%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="8.5%"></td>
+			<td width="33%" valign="top" class="pv-six-box"><?php self::render_from_block( $ctx ); ?></td>
+			<td width="17%"></td>
+			<td width="33%" valign="top" class="pv-six-box"><?php self::render_to_block( $ctx ); ?></td>
+			<td width="8.5%"></td>
+		</tr>
+	</table>
+	<div class="pv-six-main">
 		<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
-		<?php self::render_items( $ctx, 'neutral' ); ?>
-		<?php self::render_account_row( $ctx, 'colored' ); ?>
+		<?php self::render_items( $ctx, 'line' ); ?>
+		<?php self::render_account_row( $ctx, 'six' ); ?>
 		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+		<?php self::render_footer_text( $ctx ); ?>
 	</div>
 </div>
 		<?php
@@ -471,7 +493,7 @@ final class PvInvPdfHtml {
 	 */
 	private static function render_design_seven( array $ctx ): void {
 		?>
-<div class="pv-inv pv-inv-seven pv-inv--border-bottom">
+<div class="pv-inv pv-inv-seven">
 	<div class="pv-inv-body">
 		<table width="100%" cellspacing="0" cellpadding="0" class="pv-modern-head">
 			<tr>
@@ -501,6 +523,7 @@ final class PvInvPdfHtml {
 		<?php self::render_items( $ctx, 'neutral' ); ?>
 		<?php self::render_account_row( $ctx, 'colored' ); ?>
 		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+		<?php self::render_footer_text( $ctx ); ?>
 	</div>
 </div>
 		<?php
@@ -511,29 +534,32 @@ final class PvInvPdfHtml {
 	 */
 	private static function render_design_eight( array $ctx ): void {
 		$soft = (string) ( $ctx['primary_soft'] ?? '#e6ebff' );
+		// Same layout as the screen template: no page band, the tinted rule
+		// under the header runs edge to edge, the tab sits mid-page.
 		?>
-<div class="pv-inv pv-inv-eight pv-inv--border-bottom">
-	<div class="pv-eight-header">
-		<div class="pv-side-tab"><?php echo self::render_side_tab_img( (string) $ctx['doc_title'], $soft ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
-		<table class="pv-eight-head" width="100%" cellspacing="0" cellpadding="0">
-			<tr>
-				<td width="50%" valign="middle"><?php self::render_logo( $ctx ); ?></td>
-				<td width="50%" valign="top"><?php self::render_from_block( $ctx ); ?></td>
-			</tr>
-		</table>
-		<?php self::render_filled_bar( 'pv-inv-shapes', $soft, 7 ); ?>
-		<table class="pv-eight-address" width="100%" cellspacing="0" cellpadding="0">
-			<tr>
-				<td width="50%" valign="top"><?php self::render_to_block( $ctx ); ?></td>
-				<td width="50%" valign="top"><?php self::render_dates( $ctx ); ?></td>
-			</tr>
-		</table>
-	</div>
+<div class="pv-inv pv-inv-eight">
+	<div class="pv-side-tab"><?php echo esc_html( self::title_case( (string) $ctx['doc_title'] ) ); ?></div>
+	<table class="pv-eight-head" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="60%" valign="middle"><?php self::render_logo( $ctx ); ?></td>
+			<td width="40%" valign="top"><?php self::render_from_block( $ctx ); ?></td>
+		</tr>
+	</table>
+	<?php self::render_filled_bar( 'pv-eight-rule', $soft, 7 ); ?>
+	<table class="pv-eight-address" width="100%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="12%"></td>
+			<td width="33%" valign="top" class="pv-eight-to"><?php self::render_to_block( $ctx ); ?></td>
+			<td width="24%"></td>
+			<td width="31%" valign="top" class="pv-eight-dates"><?php self::render_dates( $ctx ); ?></td>
+		</tr>
+	</table>
 	<div class="pv-eight-main">
 		<?php self::render_sections( $ctx['sections_before'] ?? array() ); ?>
-		<?php self::render_items( $ctx, 'neutral' ); ?>
-		<?php self::render_account_row( $ctx, 'colored' ); ?>
+		<?php self::render_items( $ctx, 'line' ); ?>
+		<?php self::render_account_row( $ctx, 'eight' ); ?>
 		<?php self::render_sections( $ctx['sections_after'] ?? array() ); ?>
+		<?php self::render_footer_text( $ctx ); ?>
 	</div>
 </div>
 		<?php
@@ -632,6 +658,32 @@ final class PvInvPdfHtml {
 	/**
 	 * @param array<string, mixed> $ctx Context.
 	 */
+	/**
+	 * Date of supply (§ 14 UStG): a single date, or a period when an end
+	 * date is set. Null when none was entered — the row is then omitted.
+	 *
+	 * @param array<string, mixed> $document Shaped invoice.
+	 * @return array{label: string, value: string}|null
+	 */
+	private static function service_date_row( array $document ): ?array {
+		$start = trim( (string) ( $document['service_date'] ?? '' ) );
+		$end   = trim( (string) ( $document['service_date_end'] ?? '' ) );
+		if ( '' === $start ) {
+			return null;
+		}
+		if ( '' !== $end && $end !== $start ) {
+			return array(
+				'label' => __( 'Service Period', 'doublescale' ),
+				'value' => $start . ' – ' . $end,
+			);
+		}
+
+		return array(
+			'label' => __( 'Service Date', 'doublescale' ),
+			'value' => $start,
+		);
+	}
+
 	private static function render_dates( array $ctx ): void {
 		?>
 <div class="pv-inv-from-date">
@@ -651,18 +703,31 @@ final class PvInvPdfHtml {
 	 * @param string               $scheme colored|neutral.
 	 */
 	private static function render_items( array $ctx, string $scheme ): void {
+		// The line scheme (Boxed, Side Tab) gives every column a share, else
+		// Dompdf squeezes the description into a narrow column.
+		$line = 'line' === $scheme;
+		$tax  = (bool) $ctx['show_tax'];
+		$cols = $line
+			? array( '6%', $tax ? '38%' : '50%', '14%', '14%', '16%', '12%' )
+			: array( '35', '', '70', '80', '80', '70' );
+		$width = static function ( int $col ) use ( $cols, $line ): string {
+			if ( '' === $cols[ $col ] ) {
+				return '';
+			}
+			return ' width="' . $cols[ $col ] . '"' . ( $line ? ' style="width:' . $cols[ $col ] . '"' : '' );
+		};
 		?>
 <div class="pv-inv-items pv-items-<?php echo esc_attr( $scheme ); ?>">
 <table width="100%" cellspacing="0" cellpadding="0">
 <thead>
 <tr>
-	<th width="35"><?php esc_html_e( 'SL.', 'doublescale' ); ?></th>
-	<th><?php esc_html_e( 'Item Description', 'doublescale' ); ?></th>
-	<th width="70"><?php esc_html_e( 'Unit', 'doublescale' ); ?></th>
-	<th width="80"><?php esc_html_e( 'Rate', 'doublescale' ); ?></th>
-	<th width="80"><?php esc_html_e( 'Amount', 'doublescale' ); ?></th>
-	<?php if ( $ctx['is_invoice'] ) : ?>
-		<th width="70"><?php esc_html_e( 'Tax', 'doublescale' ); ?></th>
+	<th<?php echo $width( 0 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php esc_html_e( 'SL.', 'doublescale' ); ?></th>
+	<th<?php echo $width( 1 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php esc_html_e( 'Item Description', 'doublescale' ); ?></th>
+	<th<?php echo $width( 2 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php esc_html_e( 'Unit', 'doublescale' ); ?></th>
+	<th<?php echo $width( 3 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php esc_html_e( 'Rate', 'doublescale' ); ?></th>
+	<th<?php echo $width( 4 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php esc_html_e( 'Amount', 'doublescale' ); ?></th>
+	<?php if ( $tax ) : ?>
+		<th<?php echo $width( 5 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php esc_html_e( 'Tax', 'doublescale' ); ?></th>
 	<?php endif; ?>
 </tr>
 </thead>
@@ -696,17 +761,17 @@ final class PvInvPdfHtml {
 			<br><span class="muted"><?php echo esc_html( (string) $item['long_description'] ); ?></span>
 		<?php endif; ?>
 	</td>
-	<td><?php echo esc_html( (string) $qty ); ?></td>
+	<td><?php echo esc_html( trim( self::format_qty( $qty ) . ' ' . (string) ( $item['unit'] ?? '' ) ) ); ?></td>
 	<td><?php echo esc_html( self::format_money( $rate, $ctx['currency'] ) ); ?></td>
 	<td><?php echo esc_html( self::format_money( $amount, $ctx['currency'] ) ); ?></td>
-	<?php if ( $ctx['is_invoice'] ) : ?>
+	<?php if ( $ctx['show_tax'] ) : ?>
 		<td><?php echo esc_html( $taxes ? implode( ', ', $taxes ) : '—' ); ?></td>
 	<?php endif; ?>
 </tr>
 			<?php
 		}
 		if ( ! $has_rows ) {
-			$cols = $ctx['is_invoice'] ? 6 : 5;
+			$cols = $ctx['show_tax'] ? 6 : 5;
 			echo '<tr><td colspan="' . (int) $cols . '" class="muted">' . esc_html__( 'No line items.', 'doublescale' ) . '</td></tr>';
 		}
 		?>
@@ -718,14 +783,16 @@ final class PvInvPdfHtml {
 
 	/**
 	 * @param array<string, mixed> $ctx    Context.
-	 * @param string               $scheme colored|neutral.
+	 * @param string               $scheme colored|neutral|six|eight.
 	 */
 	private static function render_account_row( array $ctx, string $scheme ): void {
+		// Boxed / Side Tab: the totals are as narrow as on screen.
+		$narrow = in_array( $scheme, array( 'six', 'eight' ), true );
 		?>
 <table class="pv-account-row" width="100%" cellspacing="0" cellpadding="0">
 <tr>
-	<td width="55%" valign="top"></td>
-	<td width="45%" valign="top" align="right">
+	<td width="<?php echo $narrow ? '60%' : '55%'; ?>" valign="top"><?php self::render_payment( $ctx ); ?></td>
+	<td width="<?php echo $narrow ? '40%' : '45%'; ?>" valign="top" align="right">
 		<?php self::render_totals( $ctx, $scheme ); ?>
 	</td>
 </tr>
@@ -735,10 +802,10 @@ final class PvInvPdfHtml {
 
 	/**
 	 * @param array<string, mixed> $ctx    Context.
-	 * @param string               $variant four|colored|neutral.
+	 * @param string               $variant four|colored|neutral|six|eight.
 	 */
 	private static function render_totals( array $ctx, string $variant ): void {
-		$total_class = 'four' === $variant || 'colored' === $variant ? 'pv-inv-table-bg' : ( 'neutral' === $variant ? 'pv-inv-table-bg-neutral' : '' );
+		$total_class = in_array( $variant, array( 'four', 'colored', 'six', 'eight' ), true ) ? 'pv-inv-table-bg' : ( 'neutral' === $variant ? 'pv-inv-table-bg-neutral' : '' );
 		?>
 <div class="pv-inv-total pv-total-<?php echo esc_attr( $variant ); ?>">
 <table cellspacing="0" cellpadding="0" align="right">
@@ -747,7 +814,7 @@ final class PvInvPdfHtml {
 	<th><?php esc_html_e( 'Subtotal', 'doublescale' ); ?></th>
 	<td><?php echo esc_html( self::format_money( $ctx['subtotal'], $ctx['currency'] ) ); ?></td>
 </tr>
-		<?php if ( $ctx['is_invoice'] && $ctx['total_tax'] > 0 ) : ?>
+		<?php if ( $ctx['total_tax'] > 0 ) : ?>
 <tr class="pv-inv-e-bold">
 	<th><?php esc_html_e( 'Tax', 'doublescale' ); ?></th>
 	<td><?php echo esc_html( self::format_money( $ctx['total_tax'], $ctx['currency'] ) ); ?></td>
@@ -785,16 +852,35 @@ final class PvInvPdfHtml {
 		<?php
 	}
 
-	private static function render_bank_placeholder(): void {
+	/**
+	 * How to pay, beside the totals.
+	 *
+	 * @param array<string, mixed> $ctx Context.
+	 */
+	private static function render_payment( array $ctx ): void {
+		if ( '' === (string) ( $ctx['payment_instructions'] ?? '' ) ) {
+			return;
+		}
 		?>
 <div class="pv-inv-bank">
-	<h4><?php esc_html_e( 'Bank info', 'doublescale' ); ?></h4>
-	<div class="pv-bank-info">
-		<p><strong><?php esc_html_e( 'Name:', 'doublescale' ); ?></strong></p>
-		<p><strong><?php esc_html_e( 'Account no:', 'doublescale' ); ?></strong></p>
-		<p><strong><?php esc_html_e( 'Bank info:', 'doublescale' ); ?></strong></p>
-	</div>
+	<h4><?php esc_html_e( 'Payment details', 'doublescale' ); ?></h4>
+	<?php // Rich text sanitized with wp_kses_post() on save. ?>
+	<div class="pv-bank-info"><?php echo wp_kses_post( (string) $ctx['payment_instructions'] ); ?></div>
 </div>
+		<?php
+	}
+
+	/**
+	 * The legal footer, under everything else.
+	 *
+	 * @param array<string, mixed> $ctx Context.
+	 */
+	private static function render_footer_text( array $ctx ): void {
+		if ( '' === (string) ( $ctx['footer_text'] ?? '' ) ) {
+			return;
+		}
+		?>
+<div class="pv-inv-legal"><?php echo wp_kses_post( (string) $ctx['footer_text'] ); ?></div>
 		<?php
 	}
 
@@ -821,7 +907,46 @@ final class PvInvPdfHtml {
 	}
 
 	private static function format_money( float $value, string $currency ): string {
-		return number_format_i18n( $value, 2 ) . ' ' . $currency;
+		// same as the web documents: symbol first ($4,500.00, €5,400.00)
+		$digits = \DoubleScale\Core\Constants\Currencies::zero_decimal( $currency ) ? 0 : 2;
+		$symbol = (string) \DoubleScale\Core\Constants\Currencies::symbol( $currency );
+		return ( '' !== $symbol ? $symbol : $currency . ' ' ) . number_format_i18n( $value, $digits );
+	}
+
+	/**
+	 * Quantity as the web documents show it: 24, 1.5 (no trailing zeros).
+	 */
+	private static function format_qty( float $qty ): string {
+		return rtrim( rtrim( number_format( $qty, 2, '.', '' ), '0' ), '.' );
+	}
+
+	/**
+	 * Tax inside a proposal's total, per line (same rules as the editor's totals).
+	 *
+	 * @param array<int, array<string, mixed>> $items         Line items.
+	 * @param string                           $discount_type Discount type.
+	 * @param float                            $discount_val  Discount value.
+	 */
+	private static function line_items_tax( array $items, string $discount_type, float $discount_val ): float {
+		$tax   = 0.0;
+		$ratio = ( 'before_tax' === $discount_type && $discount_val > 0 ) ? $discount_val / 100 : 0.0;
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) || ! empty( $item['optional'] ) ) {
+				continue;
+			}
+			$qty    = (float) ( $item['qty'] ?? $item['quantity'] ?? 1 );
+			$amount = (float) ( $item['amount'] ?? ( $qty * (float) ( $item['rate'] ?? 0 ) ) );
+			$rate   = 0.0;
+			if ( isset( $item['tax_rate'] ) && is_numeric( $item['tax_rate'] ) ) {
+				$rate = (float) $item['tax_rate'];
+			} elseif ( ! empty( $item['tax'] ) && is_array( $item['tax'] ) ) {
+				foreach ( $item['tax'] as $t ) {
+					$rate += (float) ( is_array( $t ) ? ( $t['rate'] ?? 0 ) : 0 );
+				}
+			}
+			$tax += $amount * ( 1 - $ratio ) * ( $rate / 100 );
+		}
+		return round( $tax, 2 );
 	}
 
 	/**
@@ -831,6 +956,17 @@ final class PvInvPdfHtml {
 	 * @param float  $amount Weight of the accent, 0–1.
 	 */
 	private static function mix_with_white( string $hex, float $amount ): string {
+		return self::mix_with( $hex, $amount, 'ffffff' );
+	}
+
+	/**
+	 * Mix $amount of $hex into $base (CSS color-mix(in srgb, …)).
+	 *
+	 * @param string $hex    #rgb or #rrggbb.
+	 * @param float  $amount Weight of $hex, 0–1.
+	 * @param string $base   rrggbb.
+	 */
+	private static function mix_with( string $hex, float $amount, string $base ): string {
 		$hex = ltrim( $hex, '#' );
 		if ( 3 === strlen( $hex ) ) {
 			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
@@ -839,34 +975,25 @@ final class PvInvPdfHtml {
 			return '#e6ebff';
 		}
 
-		$mix = static function ( int $channel ) use ( $amount ): int {
-			return (int) round( $channel * $amount + 255 * ( 1 - $amount ) );
+		$mix = static function ( int $channel, int $base_channel ) use ( $amount ): int {
+			return (int) round( $channel * $amount + $base_channel * ( 1 - $amount ) );
 		};
 
 		return sprintf(
 			'#%02x%02x%02x',
-			$mix( hexdec( substr( $hex, 0, 2 ) ) ),
-			$mix( hexdec( substr( $hex, 2, 2 ) ) ),
-			$mix( hexdec( substr( $hex, 4, 2 ) ) )
+			$mix( hexdec( substr( $hex, 0, 2 ) ), hexdec( substr( $base, 0, 2 ) ) ),
+			$mix( hexdec( substr( $hex, 2, 2 ) ), hexdec( substr( $base, 2, 2 ) ) ),
+			$mix( hexdec( substr( $hex, 4, 2 ) ), hexdec( substr( $base, 4, 2 ) ) )
 		);
 	}
 
 	/**
-	 * Rotated Side Tab pill (preview uses transform: rotate(90deg); Dompdf cannot).
-	 *
-	 * @param string $title Invoice|Proposal.
-	 * @param string $soft  Primary-soft fill.
+	 * "Invoice", not "INVOICE": Boxed and Side Tab title-case the name on screen.
 	 */
-	private static function render_side_tab_img( string $title, string $soft ): string {
-		$label = function_exists( 'mb_convert_case' )
+	private static function title_case( string $title ): string {
+		return function_exists( 'mb_convert_case' )
 			? mb_convert_case( $title, MB_CASE_TITLE, 'UTF-8' )
 			: ucwords( strtolower( $title ) );
-		$label = htmlspecialchars( $label, ENT_XML1 | ENT_QUOTES, 'UTF-8' );
-		$fill  = htmlspecialchars( $soft, ENT_XML1 | ENT_QUOTES, 'UTF-8' );
-		$inner = '<path fill="' . $fill . '" d="M0 0 H66 Q76 0 76 10 L76 154 Q76 164 66 164 H0 Z"/>'
-			. '<text fill="#2d3748" font-size="16" font-family="DejaVu Sans" font-weight="600" text-anchor="middle" transform="rotate(90 38 82)" x="38" y="82">' . $label . '</text>';
-
-		return self::svg_as_img( $inner, 76, 164, '0 0 76 164' );
 	}
 
 	/**
@@ -876,7 +1003,14 @@ final class PvInvPdfHtml {
 		$p      = esc_html( $ctx['primary'] );
 		$soft   = esc_html( (string) ( $ctx['primary_soft'] ?? '#e6ebff' ) );
 		$design = (int) $ctx['design'];
-		$page   = in_array( $design, array( 2, 4, 6, 7, 8 ), true ) ? '@page { margin: 0; }' : '@page { margin: 14px; }';
+		$page   = in_array( $design, array( 2, 4 ), true ) ? '@page { margin: 0; }' : '@page { margin: 14px; }';
+		if ( in_array( $design, array( 6, 7, 8 ), true ) ) {
+			// Edge-to-edge rules but no page bands: keep the sides at 0 and give
+			// every sheet, not just the first, room at the top and bottom.
+			$page = '@page { margin: 30px 0; }';
+		}
+		// Boxed's From / Bill To border: color-mix(in srgb, primary 22%, #edf2f7).
+		$box    = esc_html( self::mix_with( (string) $ctx['primary'], 0.22, 'edf2f7' ) );
 
 		return "
 		{$page}
@@ -917,7 +1051,10 @@ final class PvInvPdfHtml {
 		.pv-total-four .pv-inv-table-bg th { padding: 12px 12px 12px 28px; font-size: 15px; }
 		.pv-total-four .pv-inv-table-bg td { padding: 12px 16px 12px 0; font-size: 15px; }
 		.pv-inv-bank h4 { font-size: 11px; font-weight: 700; margin: 0 0 6px; }
-		.pv-bank-info p { margin: 0 0 4px; font-size: 10px; color: #4a5568; }
+		.pv-inv-bank { padding-right: 24px; }
+		.pv-bank-info, .pv-bank-info p { margin: 0 0 4px; font-size: 10px; line-height: 1.5; color: #4a5568; }
+		.pv-inv-legal { margin-top: 18px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 8.5px; line-height: 1.5; color: #718096; text-align: center; page-break-inside: avoid; }
+		.pv-inv-legal p { margin: 0; }
 		.pv-inv-section-title { font-size: 12px; font-weight: 700; margin: 10px 0 4px; }
 		.pv-inv-section-content p { font-size: 10px; color: #4a5568; margin: 0; white-space: pre-line; }
 		.pv-inv-section { margin-bottom: 10px; }
@@ -938,36 +1075,59 @@ final class PvInvPdfHtml {
 		.pv-corner img { display: block; width: 182px; height: 183px; }
 		.pv-corner-tl { margin: 0 0 -183px 0; }
 		.pv-corner-br { margin: 28px 0 0 auto; page-break-inside: avoid; }
-		.pv-inv--border-top { border-top: 15px solid {$soft}; }
-		.pv-inv--border-bottom { border-bottom: 15px solid {$soft}; }
 		.pv-inv-five .pv-inv-items table thead { background: {$soft}; }
 		.pv-inv-five .pv-inv-items table thead th { background: {$soft}; color: {$p}; }
 		.pv-inv-five .pv-inv-shape1 { height: 1px; background: {$p}; }
 		.pv-inv-five .pv-inv-shape2 { height: 7px; background: {$p}; }
 		.pv-inv-five .pv-inv-shapes { margin: 8px 0 4px; }
 		.pv-inv-five .pv-inv-title h2 { font-size: 20px; margin-bottom: 6px; }
-		.pv-inv-six .pv-inv-from { border: 1px solid {$soft}; padding: 12px 16px; }
-		.pv-inv-six .pv-inv-to { border: 1px solid {$soft}; padding: 12px 16px; }
-		.pv-inv-six .pv-inv-shape1 { height: 1px; background: {$p}; }
+		.pv-inv-six .pv-inv-from-logo img, .pv-inv-eight .pv-inv-from-logo img { max-height: 80px; max-width: 200px; margin-bottom: 0; }
+		.pv-inv-six .pv-inv-title h2 { font-size: 20px; font-weight: 600; text-transform: none; color: #2d3748; line-height: 24px; margin: 18px 0 1px; }
+		.pv-inv-six .pv-inv-from-date p, .pv-inv-eight .pv-inv-from-date p { font-size: 12px; line-height: 24px; margin: 0; }
+		.pv-inv-six .pv-inv-from h5, .pv-inv-six .pv-inv-to h5, .pv-inv-eight .pv-inv-from h5, .pv-inv-eight .pv-inv-to h5 { font-size: 14px; font-weight: normal; line-height: 15px; margin: 0 0 9px; color: #000; }
+		.pv-inv-six .pv-inv-from h6, .pv-inv-six .pv-inv-to h6, .pv-inv-eight .pv-inv-from h6, .pv-inv-eight .pv-inv-to h6 { font-size: 12px; font-weight: normal; line-height: 18px; margin: 0 0 3px; }
+		.pv-inv-six .pv-inv-from p, .pv-inv-six .pv-inv-to p, .pv-inv-eight .pv-inv-from p, .pv-inv-eight .pv-inv-to p { font-size: 12px; line-height: 17px; overflow-wrap: break-word; word-break: break-word; }
+		.pv-six-head { width: 760px; margin: 20px 0 10px 34px; }
+		.pv-inv-six .pv-inv-shape2 { line-height: 0; padding-bottom: 7px; }
 		.pv-inv-six .pv-inv-shape2 img { display: block; }
-		.pv-inv-six .pv-inv-shapes { margin: 8px 0 4px; }
-		.pv-inv-six .pv-inv-title h2 { font-size: 20px; margin-bottom: 6px; }
-		.pv-inv-six .pv-inv-total { background: {$soft}; padding: 12px; }
+		.pv-six-rule { padding-top: 8px; }
+		.pv-six-address { margin-top: 31px; }
+		.pv-six-box { border: 1px solid {$box}; padding: 15px 29px; }
+		.pv-six-main { padding: 0 31px 20px; }
+		.pv-items-line table { margin: 30px 0 24px; border-bottom: 1px solid #edf2f7; }
+		.pv-items-line thead th { background: #fff; color: #718096; font-size: 12px; font-weight: 600; padding: 10px; text-align: left; border-bottom: 1px solid #8d94a0; }
+		.pv-items-line tbody tr td { background: #fff; color: #2d3748; font-size: 12px; font-weight: 600; line-height: 18px; padding: 15px 10px; border-bottom: 1px solid #edf2f7; }
+		.pv-items-line .muted { color: #4a5568; font-size: 12px; font-weight: normal; }
+		.pv-total-six { background: {$soft}; padding: 18px; margin-top: 16px; }
+		.pv-total-eight { margin-top: 16px; }
+		.pv-total-six th, .pv-total-eight th { color: #2d3748; font-size: 12px; font-weight: normal; text-transform: uppercase; padding: 8px 12px 8px 10px; }
+		.pv-total-eight th { padding-left: 0; }
+		.pv-total-six td, .pv-total-eight td { color: #718096; font-size: 12px; padding: 8px 10px 8px 0; }
+		.pv-total-six th, .pv-total-six td { border-bottom: 1px solid #e2e8f0; }
+		.pv-total-eight th, .pv-total-eight td { border-bottom: 1px solid #718096; }
+		.pv-total-six tr:last-child th, .pv-total-six tr:last-child td, .pv-total-eight tr:last-child th, .pv-total-eight tr:last-child td { border-bottom: none; }
+		.pv-total-six .pv-inv-e-bold th, .pv-total-eight .pv-inv-e-bold th { font-weight: bold; }
+		.pv-total-six .pv-inv-e-bold td, .pv-total-eight .pv-inv-e-bold td { color: #0b062a; font-weight: 600; }
+		.pv-total-six .pv-inv-table-bg th, .pv-total-six .pv-inv-table-bg td, .pv-total-eight .pv-inv-table-bg th, .pv-total-eight .pv-inv-table-bg td { background: {$p}; color: #fff !important; font-size: 15px; font-weight: bold; line-height: 24px; border-bottom: none; }
+		.pv-total-six .pv-inv-table-bg th { padding: 12px 12px 12px 10px; }
+		.pv-total-eight .pv-inv-table-bg th { padding: 10px 20px 10px 10px; }
+		.pv-total-six .pv-inv-table-bg td, .pv-total-eight .pv-inv-table-bg td { padding: 12px 16px 12px 0; }
+		.pv-six-main .pv-inv-section-title, .pv-eight-main .pv-inv-section-title { color: #1a202c; font-size: 15px; font-weight: normal; }
+		.pv-six-main .pv-inv-section-content p, .pv-eight-main .pv-inv-section-content p { font-size: 12px; line-height: 24px; }
 		.pv-inv-seven .pv-inv-shape1 { height: 22px; background: {$p}; }
 		.pv-inv-seven .pv-inv-shape2 { height: 22px; background: {$p}; }
 		.pv-inv-seven .pv-inv-shapes { margin: 12px 0; }
 		.pv-inv-seven .pv-inv-title h2 { font-size: 20px; margin: 0; text-align: center; }
 		.pv-inv-seven .pv-inv-to { background-color: {$soft}; padding: 12px 18px; }
-		.pv-eight-header { padding: 50px 48px 8px 34px; position: relative; overflow: visible; }
-		.pv-eight-head { margin-bottom: 20px; }
-		.pv-eight-address { margin-top: 28px; padding-left: 62px; }
-		.pv-side-tab { position: absolute; left: 0; top: 340px; width: 76px; height: 164px; padding: 0; background: none; }
-		.pv-side-tab img { display: block; width: 76px; height: 164px; }
-		.pv-eight-main { padding: 8px 40px 20px 100px; }
-		.pv-inv-eight .pv-inv-shapes { height: 7px; margin: 0; }
-		.pv-inv-eight .pv-inv-to { padding: 15px 29px; }
-		.pv-inv-eight .pv-inv-from { padding-left: 16px; }
-		.pv-inv-eight .pv-inv-from p { overflow-wrap: break-word; word-break: break-word; }
+		.pv-eight-head { width: 760px; margin: 20px 0 20px 34px; }
+		.pv-eight-address { margin-top: 31px; }
+		.pv-eight-to { padding: 15px 29px; }
+		.pv-eight-dates { padding-top: 18px; }
+		/* The screen's pill turned a quarter clockwise, mid-page on the first
+		   sheet: centre at x 32px, y 561px (half the 1123px A4 height), less
+		   the 30px page margin. */
+		.pv-side-tab { position: absolute; left: -43px; top: 499px; width: 150px; height: 50px; padding-top: 14px; line-height: 20px; background: {$soft}; border-radius: 10px 10px 0 0; color: #2d3748; font-size: 20px; font-weight: 600; text-align: center; transform: rotate(90deg); transform-origin: 50% 50%; }
+		.pv-eight-main { padding: 0 32px 20px 100px; }
 		";
 	}
 
@@ -1014,7 +1174,9 @@ final class PvInvPdfHtml {
 	 * @param string $primary Accent.
 	 */
 	private static function render_svg_six( string $primary ): void {
-		echo '<div class="pv-inv-shape2">' . self::svg_as_img( self::svg_path( 'M0 0H209L203.5 7H0V0Z', $primary ), 209, 7, '0 0 209 7' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		// A third of the page wide, as the screen's 1fr / 2fr grid draws it. Drawn
+		// at full size: Dompdf paints a scaled viewBox at its original 209px.
+		echo '<div class="pv-inv-shape2">' . self::svg_as_img( self::svg_path( 'M0 0H262L255 9H0V0Z', $primary ), 262, 9, '0 0 262 9' ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**

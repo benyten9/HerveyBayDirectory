@@ -8,11 +8,8 @@ if (!defined('ABSPATH')) {
 // --- Ability: nibwp/wpjm-list-jobs ---
 
 wp_register_ability('nibwp/wpjm-list-jobs', [
-    'label' => __('WP Job Manager – List Jobs', domain: 'nibwp'),
-    'description' => __(
-        'List WP Job Manager job listings with filters: status, job type, category, location, featured/filled, search, and pagination.',
-        domain: 'nibwp',
-    ),
+    'label' => __('WP Job Manager – List Jobs', 'nibwp'),
+    'description' => 'List WP Job Manager job listings with filters: status, job type, category, location, featured/filled, search, and pagination.',
     'category' => 'wp-job-manager',
     'input_schema' => [
         'type' => 'object',
@@ -193,8 +190,8 @@ function nibwp_wpjm_list_jobs(array $input): array|WP_Error
 // --- Ability: nibwp/wpjm-get-job ---
 
 wp_register_ability('nibwp/wpjm-get-job', [
-    'label' => __('WP Job Manager – Get Job', domain: 'nibwp'),
-    'description' => __('Get full details of a single job listing including company info, location, application data, and all meta.', domain: 'nibwp'),
+    'label' => __('WP Job Manager – Get Job', 'nibwp'),
+    'description' => 'Get full details of a single job listing including company info, location, application data, and all meta.',
     'category' => 'wp-job-manager',
     'input_schema' => [
         'type' => 'object',
@@ -241,8 +238,8 @@ function nibwp_wpjm_get_job(array $input): array|WP_Error
 // --- Ability: nibwp/wpjm-create-job ---
 
 wp_register_ability('nibwp/wpjm-create-job', [
-    'label' => __('WP Job Manager – Create Job', domain: 'nibwp'),
-    'description' => __('Create a new job listing with title, description, location, company details, application contact, and taxonomies.', domain: 'nibwp'),
+    'label' => __('WP Job Manager – Create Job', 'nibwp'),
+    'description' => 'Create a new job listing with title, description, location, company details, application contact, and taxonomies.',
     'category' => 'wp-job-manager',
     'input_schema' => [
         'type' => 'object',
@@ -336,8 +333,8 @@ function nibwp_wpjm_create_job(array $input): array|WP_Error
 // --- Ability: nibwp/wpjm-update-job ---
 
 wp_register_ability('nibwp/wpjm-update-job', [
-    'label' => __('WP Job Manager – Update Job', domain: 'nibwp'),
-    'description' => __('Update an existing job listing. Only provided fields are changed.', domain: 'nibwp'),
+    'label' => __('WP Job Manager – Update Job', 'nibwp'),
+    'description' => 'Update an existing job listing. Only provided fields are changed.',
     'category' => 'wp-job-manager',
     'input_schema' => [
         'type' => 'object',
@@ -424,8 +421,8 @@ function nibwp_wpjm_update_job(array $input): array|WP_Error
 // --- Ability: nibwp/wpjm-delete-job ---
 
 wp_register_ability('nibwp/wpjm-delete-job', [
-    'label' => __('WP Job Manager – Delete Job', domain: 'nibwp'),
-    'description' => __('Delete a job listing. Default trashes; pass force=true to permanently delete.', domain: 'nibwp'),
+    'label' => __('WP Job Manager – Delete Job', 'nibwp'),
+    'description' => 'Delete a job listing. Default trashes; pass force=true to permanently delete.',
     'category' => 'wp-job-manager',
     'input_schema' => [
         'type' => 'object',
@@ -481,8 +478,8 @@ function nibwp_wpjm_delete_job(array $input): array|WP_Error
 // --- Ability: nibwp/wpjm-list-taxonomies ---
 
 wp_register_ability('nibwp/wpjm-list-taxonomies', [
-    'label' => __('WP Job Manager – List Job Types & Categories', domain: 'nibwp'),
-    'description' => __('List all terms for job_listing_type and job_listing_category taxonomies.', domain: 'nibwp'),
+    'label' => __('WP Job Manager – List Job Types & Categories', 'nibwp'),
+    'description' => 'List all terms for job_listing_type and job_listing_category taxonomies.',
     'category' => 'wp-job-manager',
     'input_schema' => [
         'type' => 'object',

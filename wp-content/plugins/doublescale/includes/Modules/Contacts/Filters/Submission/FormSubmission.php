@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
 use DoubleScale\Modules\Contacts\Filters\Traits\TimeframeContactFilter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 
 /**
  * FormSubmission class
@@ -80,7 +80,7 @@ class FormSubmission extends Filter {
 	public function get_options() {
 		$options = array();
 
-		if ( ! class_exists( '\DoubleScale\Pro\Modules\Forms\Models\FormModel' ) ) {
+		if ( ! doublescale_module_data_ready( 'forms' ) || ! class_exists( '\DoubleScale\Pro\Modules\Forms\Models\FormModel' ) ) {
 			return $options;
 		}
 

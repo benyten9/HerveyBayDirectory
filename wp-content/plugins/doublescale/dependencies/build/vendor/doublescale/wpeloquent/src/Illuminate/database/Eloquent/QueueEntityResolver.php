@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
-use Illuminate\Contracts\Queue\EntityNotFoundException;
-use Illuminate\Contracts\Queue\EntityResolver as EntityResolverContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\EntityNotFoundException;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\EntityResolver as EntityResolverContract;
 class QueueEntityResolver implements EntityResolverContract
 {
     /**

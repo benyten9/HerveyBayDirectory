@@ -43,7 +43,7 @@ function nibwp_load_skill_playbook_ability_args(): array
 {
     return [
     'label'       => __('Load skill playbook on demand', 'nibwp'),
-    'description' => __('Load the full SKILL.md and selected references for an installed skill (e.g. etchwp-pro). Call this once you have decided to start a conversion — keeps the discover response small. When brand + element_type are given, injects aggregated thumb-down lessons-learned for that pair.', 'nibwp'),
+    'description' => 'Load the full SKILL.md and selected references for an installed skill (e.g. etchwp-pro). Call this once you have decided to start a conversion — keeps the discover response small. When brand + element_type are given, injects aggregated thumb-down lessons-learned for that pair.',
     'category'    => 'nibwp',
     'input_schema' => [
         'type' => 'object',

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Http;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Http;
 
 interface Kernel
 {

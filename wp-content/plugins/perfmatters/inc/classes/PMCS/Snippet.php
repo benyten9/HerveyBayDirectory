@@ -110,11 +110,12 @@ class Snippet
             	return PMCS::admin_notice('invalid_code', __('Please remove <?php from the beginning of the code.', 'perfmatters'), 'error');
             }
             
-            //cleanup
-            $code = '<?php' . PHP_EOL . rtrim($code, '?>');
+            //cleanup. validation needs an opening tag; the stored file already has one in the doc block
+            $user_code = rtrim($code, '?>');
+            $code = $user_code;
 
             //validate code
-	        $validated = PMCS::validate_php($code);
+	        $validated = PMCS::validate_php('<?php' . PHP_EOL . $user_code);
 
 	        //handle validation error
 	        if(is_wp_error($validated)) {
@@ -182,8 +183,10 @@ class Snippet
         //doc block
         $doc_block_string = PMCS::get_doc_block($meta);
 
+        $stored_code = PhpGuard::wrap($code, $meta['type'] ?? 'php');
+
         //save file content
-       	if(file_put_contents($file, $doc_block_string . $code) === false) {
+       	if(file_put_contents($file, $doc_block_string . $stored_code) === false) {
        		return false;
        	}
 
@@ -275,8 +278,8 @@ class Snippet
         ];
     }
 
-    //return docblock line count
-    public static function get_docblock_line_count($file_path) {
+    //return docblock line count. error_line lets a guard below the prologue count only for lines under it
+    public static function get_docblock_line_count($file_path, $error_line = 0) {
 	    
 	    if(!file_exists($file_path)) {
 	        return 0;
@@ -288,7 +291,33 @@ class Snippet
 	    foreach ($lines as $index => $line) {
 	        // Look for your specific "User Code Start" marker or the end of the docblock
 	        if (strpos($line, '<Internal Doc End>') !== false) {
-	            return $index + 2; // Returns the line number where the docblock ends
+	            //legacy files keep the guard on this same line
+	            if(strpos($line, '?>') !== false) {
+	                return $index + 2;
+	            }
+
+	            $offset = $index + 1;
+	            $next = $lines[$index + 1] ?? '';
+	            $guard = PhpGuard::line();
+
+	            if(strpos($next, $guard) !== false) {
+	                $offset++;
+
+	                if(trim($lines[$index + 2] ?? '') === '?>') {
+	                    $offset++;
+	                }
+	            }
+	            //namespace, declare, or use pushed the guard further down
+	            elseif($error_line > 0) {
+	                for($i = $index + 1; $i < count($lines) && ($i + 1) < $error_line; $i++) {
+	                    if(strpos($lines[$i], $guard) !== false) {
+	                        $offset++;
+	                        break;
+	                    }
+	                }
+	            }
+
+	            return $offset;
 	        }
 	    }
 

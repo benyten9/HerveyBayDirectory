@@ -8,6 +8,8 @@
 
 defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
 
+require_once __DIR__ . '/Canonical.php';
+
 /**
  * Automatic rich snippets local business option.
  *
@@ -55,32 +57,40 @@ function seopress_automatic_rich_snippets_lb_option( $schema_datas ) {
 		'priceRange' => $lb_price,
 	);
 
-	$lb_canonical = '';
-	if ( get_post_meta( get_the_ID(), '_seopress_robots_canonical', true ) ) {
-		$lb_canonical = get_post_meta( get_the_ID(), '_seopress_robots_canonical', true );
-	} else {
-		global $wp;
-		if ( isset( $wp->request ) ) {
-			$lb_canonical = home_url( add_query_arg( array(), $wp->request ) );
-		}
-	}
+	$lb_canonical = seopress_schema_current_canonical();
 
 	if ( ! empty( $lb_canonical ) ) {
-		$json['@id'] = $lb_canonical;
+		// The business, not the page it is described on. The breadcrumb trail
+		// publishes the bare canonical as the WebPage node.
+		$json['@id'] = $lb_canonical . '#localbusiness';
 	}
 
-	if ( isset( $lb_street_addr ) || isset( $lb_city ) || isset( $lb_state ) || isset( $lb_pc ) || isset( $lb_country ) ) {
-		$json['address'] = array(
-			'@type'           => 'PostalAddress',
+	// Keep only the address fields the user filled, and add the node only when
+	// at least one of them is. These variables all come from $schema_datas and
+	// are always set, as empty strings when nothing was entered, so an isset()
+	// guard here is always true and published an all-empty PostalAddress on
+	// every page. Same defect as the Service provider node fixed in #1478.
+	$lb_address = array_filter(
+		array(
 			'streetAddress'   => $lb_street_addr,
 			'addressLocality' => $lb_city,
 			'addressRegion'   => $lb_state,
 			'postalCode'      => $lb_pc,
 			'addressCountry'  => $lb_country,
-		);
+		),
+		static function ( $value ) {
+			return '' !== $value && null !== $value;
+		}
+	);
+
+	if ( ! empty( $lb_address ) ) {
+		$json['address'] = array_merge( array( '@type' => 'PostalAddress' ), $lb_address );
 	}
 
-	if ( isset( $lb_lat ) || isset( $lb_lon ) ) {
+	// Both coordinates or none: a GeoCoordinates carrying one of the two locates
+	// nothing. Compared against '' rather than tested for truthiness so that a
+	// latitude or longitude of 0, which is a real coordinate, is kept.
+	if ( '' !== $lb_lat && null !== $lb_lat && '' !== $lb_lon && null !== $lb_lon ) {
 		$json['geo'] = array(
 			'@type'     => 'GeoCoordinates',
 			'latitude'  => $lb_lat,
@@ -88,7 +98,7 @@ function seopress_automatic_rich_snippets_lb_option( $schema_datas ) {
 		);
 	}
 
-	if ( isset( $lb_serves_cuisine ) &&
+	if ( '' !== $lb_serves_cuisine &&
 		(
 			'FoodEstablishment' === $lb_type
 			|| 'Bakery' === $lb_type
@@ -174,5 +184,5 @@ function seopress_automatic_rich_snippets_lb_option( $schema_datas ) {
 
 	$json = apply_filters( 'seopress_schemas_auto_lb_html', $json );
 
-	echo $json;
+	echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON-LD document encoded with wp_json_encode() above, filterable by third parties.
 }

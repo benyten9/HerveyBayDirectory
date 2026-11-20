@@ -14,7 +14,7 @@ namespace DoubleScale\Modules\Forms\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * FormModel class

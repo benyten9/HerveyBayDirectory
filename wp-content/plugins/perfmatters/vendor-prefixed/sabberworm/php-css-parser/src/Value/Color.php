@@ -184,15 +184,6 @@ class Color extends CSSFunction
         }
         return parent::render($outputFormat);
     }
-    /**
-     * @return array<string, bool|int|float|string|array<mixed>|null>
-     *
-     * @internal
-     */
-    public function getArrayRepresentation() : array
-    {
-        throw new \BadMethodCallException('`getArrayRepresentation` is not yet implemented for `' . self::class . '`');
-    }
     private function shouldRenderAsHex(OutputFormat $outputFormat) : bool
     {
         return $outputFormat->usesRgbHashNotation() && $this->getRealName() === 'rgb' && $this->allComponentsAreNumbers();

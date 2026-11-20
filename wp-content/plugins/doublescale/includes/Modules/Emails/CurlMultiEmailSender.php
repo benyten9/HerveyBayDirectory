@@ -167,10 +167,12 @@ class CurlMultiEmailSender {
 	 *
 	 * @since 1.0.0
 	 *
+	 * @param string|null $from_email From email the batch is sent with, so the size
+	 *                                comes from the mailer that will send it.
 	 * @return int Maximum batch size (default 100 if unknown)
 	 */
-	public static function get_max_batch_size() {
-		$mailer = self::get_mailer_instance();
+	public static function get_max_batch_size( $from_email = null ) {
+		$mailer = self::get_mailer_instance( $from_email );
 
 		if ( ! $mailer ) {
 			return 100; // Safe default
@@ -250,6 +252,8 @@ class CurlMultiEmailSender {
 	 * }
 	 */
 	public static function send_batch( $batch_data ) {
+		$batch_data = \DoubleScale\Core\MergeTags\MergeTagsManager::resolve_batch_fallbacks( (array) $batch_data );
+
 		// Extract from_email for smart routing
 		$from_email = $batch_data['from_email'] ?? null;
 		$mailer     = self::get_mailer_instance( $from_email );

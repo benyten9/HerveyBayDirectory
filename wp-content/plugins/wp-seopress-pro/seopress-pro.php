@@ -3,7 +3,7 @@
  * Plugin Name: SEOPress PRO
  * Plugin URI: https://www.seopress.org/wordpress-seo-plugins/pro/
  * Description: The PRO version of SEOPress. SEOPress required (free).
- * Version: 10.2.1
+ * Version: 10.4
  * Author: The SEO Guys at SEOPress
  * Author URI: https://www.seopress.org/wordpress-seo-plugins/pro/
  * License: GPLv3 or later
@@ -11,6 +11,8 @@
  * Domain Path: /languages
  * Requires PHP: 7.4
  * Requires at least: 6.5
+ * WC requires at least: 7.0
+ * WC tested up to: 11.2
  *
  * @package SEOPressPRO
  */
@@ -38,7 +40,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 /**
  * Define constants
  */
-define( 'SEOPRESS_PRO_VERSION', '10.2.1' );
+define( 'SEOPRESS_PRO_VERSION', '10.4' );
 define( 'SEOPRESS_PRO_AUTHOR', 'Benjamin Denis' );
 define( 'STORE_URL_SEOPRESS', 'https://www.seopress.org' );
 define( 'ITEM_ID_SEOPRESS', 113 );
@@ -52,6 +54,34 @@ define( 'SEOPRESS_PRO_PUBLIC_PATH', SEOPRESS_PRO_PLUGIN_DIR_PATH . 'public' );
 define( 'SEOPRESS_PRO_TEMPLATE_DIR', SEOPRESS_PRO_PLUGIN_DIR_PATH . 'templates' );
 define( 'SEOPRESS_PRO_TEMPLATE_JSON_SCHEMAS', SEOPRESS_PRO_TEMPLATE_DIR . '/json-schemas' );
 define( 'SEOPRESS_PRO_TEMPLATE_STOP_WORDS', SEOPRESS_PRO_TEMPLATE_DIR . '/stop-words' );
+
+/**
+ * Declare WooCommerce feature compatibility.
+ *
+ * PRO only reaches orders through the CRUD API (GA4 purchase tracking reads
+ * and flags the order with `get_meta()` / `update_meta_data()`), and renders
+ * nothing inside the cart or the checkout, so both features are supported.
+ * WooCommerce assumes the opposite until told otherwise, and lists every
+ * plugin that stays silent as incompatible on its own settings screen, which
+ * is what pushes a store owner to keep HPOS turned off.
+ *
+ * `before_woocommerce_init` is the only hook where this can be declared: it
+ * fires before WooCommerce decides whether the features can be enabled. It is
+ * registered outside the runtime guard below, since it only needs WooCommerce.
+ *
+ * @since 10.4.0
+ *
+ * @return void
+ */
+function seopress_pro_declare_woocommerce_compatibility() {
+	if ( ! class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+		return;
+	}
+
+	\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+	\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
+}
+add_action( 'before_woocommerce_init', 'seopress_pro_declare_woocommerce_compatibility' );
 
 /**
  * Kernel
@@ -100,6 +130,9 @@ function seopress_pro_is_free_runtime_available() {
 if ( SEOPRESS_PRO_RUNTIME_READY ) {
 	require_once WP_PLUGIN_DIR . '/wp-seopress/seopress-autoload.php';
 	require_once SEOPRESS_PRO_PLUGIN_DIR_PATH . '/seopress-pro-functions.php';
+	// Loaded outside the admin too: the cleanup below runs on WP-Cron, and the
+	// CSV wizard's own files are only reachable through these helpers.
+	require_once SEOPRESS_PRO_PLUGIN_DIR_PATH . '/inc/functions/helpers-import-files.php';
 	require_once SEOPRESS_PRO_PLUGIN_DIR_PATH . '/inc/admin/cron.php';
 
 	Kernel::execute(
@@ -154,6 +187,11 @@ function seopress_pro_cron() {
 	if ( ! wp_next_scheduled( 'seopress_alerts_cron' ) ) {
 		wp_schedule_event( time(), 'twicedaily', 'seopress_alerts_cron' );
 	}
+
+	// CRON - Import files left behind by an unfinished CSV wizard.
+	if ( ! wp_next_scheduled( 'seopress_cleanup_import_files_cron' ) ) {
+		wp_schedule_event( time(), 'daily', 'seopress_cleanup_import_files_cron' );
+	}
 }
 
 /**
@@ -167,10 +205,38 @@ function seopress_pro_loaded() {
 		return;
 	}
 
-	if ( ! is_plugin_active( 'wp-seopress/seopress.php' ) ) {// If SEOPress Free NOT activated.
-		deactivate_plugins( 'wp-seopress-pro/seopress-pro.php' );
-		add_action( 'admin_notices', 'seopress_pro_admin_notices' );
+	if ( is_plugin_active( 'wp-seopress/seopress.php' ) ) {
+		return;
 	}
+
+	// Only from an admin page view. This runs on `plugins_loaded`, so whichever
+	// request comes first does the deactivating, and on a live site that is
+	// usually a visitor. `admin_notices` never fires there, and from the next
+	// request Pro is inactive, so its code no longer loads and it can never
+	// explain itself afterwards: the plugin simply disappears with no reason
+	// given. Deferring to an admin page view is what makes the deactivation and
+	// its explanation happen in the same request, in front of someone.
+	//
+	// Waiting is safe: every runtime hook is already gated on
+	// seopress_pro_is_free_runtime_available(), so Pro stays inert meanwhile.
+	//
+	// Ajax, cron and REST are excluded even though is_admin() is true for the
+	// first two: nothing renders a notice there either.
+	if ( ! is_admin() || wp_doing_ajax() || wp_doing_cron() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+		return;
+	}
+
+	// Same capability as seopress_pro_admin_notices(): an editor opening
+	// wp-admin first would otherwise deactivate Pro and see no notice, and the
+	// admin arriving afterwards would get no explanation either.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Takes effect from the next request, so the notice below still renders on
+	// this one.
+	deactivate_plugins( 'wp-seopress-pro/seopress-pro.php' );
+	add_action( 'admin_notices', 'seopress_pro_admin_notices' );
 }
 add_action( 'plugins_loaded', 'seopress_pro_loaded' );
 
@@ -357,6 +423,15 @@ function seopress_pro_deactivation() {
 	wp_clear_scheduled_hook( 'seopress_matomo_analytics_cron' );
 	wp_clear_scheduled_hook( 'seopress_404_background_cleanup' ); // Clear 404 limit cleanup cron.
 	wp_clear_scheduled_hook( 'seopress_broken_links_run_task_cron' );
+	wp_clear_scheduled_hook( 'seopress_cleanup_import_files_cron' );
+
+	// Deactivating is as good a moment as any to stop keeping a file the
+	// importer will not be coming back for, and the daily cleanup that would
+	// have caught it has just been unscheduled.
+	if ( function_exists( 'seopress_cleanup_import_files' ) ) {
+		seopress_cleanup_import_files( 0 );
+	}
+
 	do_action( 'seopress_pro_deactivation' );
 }
 register_deactivation_hook( __FILE__, 'seopress_pro_deactivation' );
@@ -516,6 +591,68 @@ if ( SEOPRESS_PRO_RUNTIME_READY ) {
 }
 
 /**
+ * Loads the review step of the bulk AI actions on a list screen.
+ *
+ * Without it, the bulk actions write every suggestion as soon as it is
+ * generated, as they always did.
+ *
+ * @since 10.4.0
+ *
+ * @param string $context 'posts' (post types list) or 'media' (Media Library).
+ *
+ * @return void
+ */
+function seopress_pro_enqueue_ai_bulk_review( $context ) {
+	/**
+	 * Filter whether the bulk AI actions open a review step before saving.
+	 *
+	 * Returning false brings back the direct write: every suggestion is
+	 * saved as soon as it is generated, without being shown first.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param bool   $enabled Whether the review step is enabled. Default true.
+	 * @param string $context 'posts' or 'media'.
+	 */
+	if ( ! apply_filters( 'seopress_ai_bulk_review', true, $context ) ) {
+		return;
+	}
+
+	$asset_file = SEOPRESS_PRO_PLUGIN_DIR_PATH . 'public/admin/ai-bulk-review/ai-bulk-review.asset.php';
+	if ( ! file_exists( $asset_file ) ) {
+		return;
+	}
+
+	$asset = include $asset_file;
+
+	wp_enqueue_script(
+		'seopress-pro-ai-bulk-review',
+		SEOPRESS_PRO_PLUGIN_DIR_URL . 'public/admin/ai-bulk-review/ai-bulk-review.js',
+		$asset['dependencies'],
+		$asset['version'],
+		true
+	);
+
+	wp_enqueue_style(
+		'seopress-pro-ai-bulk-review',
+		SEOPRESS_PRO_PLUGIN_DIR_URL . 'public/admin/ai-bulk-review/ai-bulk-review.css',
+		array( 'wp-components' ),
+		$asset['version']
+	);
+
+	wp_set_script_translations( 'seopress-pro-ai-bulk-review', 'wp-seopress-pro' );
+
+	wp_localize_script(
+		'seopress-pro-ai-bulk-review',
+		'seopressAiBulkReviewData',
+		array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'logsUrl' => admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_ai' ),
+		)
+	);
+}
+
+/**
  * Loads Google Page Speed Insights scripts.
  *
  * @return void
@@ -584,6 +721,10 @@ function seopress_pro_add_admin_options_scripts( $hook ) {
 	// AI in post types list.
 	if ( 'edit.php' === $hook ) {
 		seopress_pro_admin_scripts();
+
+		if ( '1' === seopress_get_service( 'ToggleOption' )->getToggleAi() ) {
+			seopress_pro_enqueue_ai_bulk_review( 'posts' );
+		}
 	}
 
 	// AI in the post/term editors (media-modal button from the SEO metabox
@@ -691,6 +832,10 @@ function seopress_pro_add_admin_options_scripts( $hook ) {
 			wp_enqueue_script( 'seopress-pro-ai', plugins_url( 'assets/js/seopress-pro-ai' . $prefix . '.js', __FILE__ ), array( 'jquery' ), SEOPRESS_PRO_VERSION, true );
 
 			wp_localize_script( 'seopress-pro-ai', 'seopressAjaxAIMetaSEO', $seopress_ai_generate_seo_meta );
+
+			if ( 'upload.php' === $pagenow ) {
+				seopress_pro_enqueue_ai_bulk_review( 'media' );
+			}
 		}
 	}
 
@@ -719,12 +864,30 @@ function seopress_pro_add_admin_options_scripts( $hook ) {
 			$display_livechat = 0;
 		}
 
-		if ( 'seopress_404' !== get_current_screen()->post_type && 'seopress_bot' !== get_current_screen()->post_type && 'seopress_schemas' !== get_current_screen()->post_type ) {
+		// Read once, and null-safe: is_seopress_page() above goes by $_REQUEST, so
+		// a screenless admin page can reach this line. An empty post type keeps the
+		// behaviour the three comparisons already had against a null screen.
+		$screen           = get_current_screen();
+		$screen_post_type = $screen ? $screen->post_type : '';
+
+		if ( 'seopress_404' !== $screen_post_type && 'seopress_bot' !== $screen_post_type && 'seopress_schemas' !== $screen_post_type ) {
 			$is_seopress_page = 1;
 		}
 		if ( 1 === $display_livechat && 1 === $is_seopress_page ) {
 			wp_enqueue_script( 'seopress-pro-chatbot', plugins_url( 'assets/js/seopress-pro-chatbot.min.js', __FILE__ ), array(), SEOPRESS_PRO_VERSION, true );
-			wp_add_inline_style( 'seopress-pro-admin', '#chatbase-bubble-button::after {content: " ' . esc_html__( 'Help?', 'wp-seopress-pro' ) . '";}' );
+
+			// The label has to live in CSS because the bubble markup belongs to
+			// the embed. The padding reserves the strip the bubble occupies
+			// (40px offset plus its own 56px, plus room to breathe), so the page
+			// scrolls past the settings card instead of ending underneath it.
+			// #wpbody #wpbody-content, not #wpbody-content alone, to outrank the
+			// 65px core sets on the same id. Both rules are added next to the
+			// embed so a site with the live chat off carries neither.
+			wp_add_inline_style(
+				'seopress-pro-admin',
+				'#chatbase-bubble-button::after {content: " ' . esc_html__( 'Help?', 'wp-seopress-pro' ) . '";}'
+				. '#wpbody #wpbody-content {padding-bottom: 120px;}'
+			);
 		}
 	}
 }
@@ -823,6 +986,13 @@ function seopress_pro_register_react_page() {
 			'feature' => null,
 			'label'   => __( 'License', 'wp-seopress-pro' ),
 			'url'     => admin_url( 'admin.php?page=seopress-license' ),
+		);
+		$pages[] = array(
+			'slug'    => 'seopress-bot-batch',
+			'type'    => 'bot',
+			'feature' => 'bot',
+			'label'   => __( 'Site Audit', 'wp-seopress-pro' ),
+			'url'     => admin_url( 'admin.php?page=seopress-bot-batch' ),
 		);
 		return $pages;
 	} );
@@ -923,6 +1093,21 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 		true
 	);
 
+	// Styles for the PRO settings components. Emitted by the build only when the
+	// bundle actually imports a stylesheet, so it is enqueued conditionally
+	// rather than 404ing on a build that has none. It depends on wp-components
+	// because what it adjusts are that package's own components.
+	$settings_style = plugin_dir_path( __FILE__ ) . 'public/admin/settings/index.css';
+
+	if ( file_exists( $settings_style ) ) {
+		wp_enqueue_style(
+			'seopress-pro-admin-settings',
+			plugins_url( 'public/admin/settings/index.css', __FILE__ ),
+			array( 'wp-components' ),
+			$asset['version']
+		);
+	}
+
 	// Load translations for the PRO React settings bundle.
 	// Point to wp-content/languages/plugins/ where TranslationsPress language packs are stored.
 	wp_set_script_translations( 'seopress-pro-admin-settings', 'wp-seopress-pro', WP_LANG_DIR . '/plugins' );
@@ -950,6 +1135,10 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 		$docs = function_exists( 'seopress_get_docs_links' ) ? seopress_get_docs_links() : array();
 
 		wp_localize_script( 'seopress-pro-admin-settings', 'SEOPRESS_PRO_TOOLS_DATA', array(
+			'ECOMMERCE_CAPABILITIES'   => array(
+				'begin_checkout' => method_exists( '\SEOPress\Thirds\WooCommerce\CheckoutAnalytics', 'append_event' ),
+				'product_lists'  => method_exists( '\SEOPress\Actions\Front\WooCommerceProductLists', 'activate_tracking' ),
+			),
 			'ADMIN_URL'                => admin_url(),
 			'GA_OAUTH_NONCE'           => wp_create_nonce( 'seopress_ga_oauth_nonce' ),
 			'GA_REDIRECT_URI'          => admin_url( 'admin.php?page=seopress-google-analytics' ),
@@ -1025,14 +1214,13 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 		$htaccess_status  = 'ok';
 		$htaccess_path    = ABSPATH . '.htaccess';
 
-		if ( ( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT === true )
-			|| ( defined( 'SEOPRESS_BLOCK_HTACCESS' ) && SEOPRESS_BLOCK_HTACCESS === true ) ) {
+		if ( seopress_htaccess_editing_is_disabled() ) {
 			$htaccess_status = 'blocked';
 		} elseif ( ! is_network_admin() && is_multisite() ) {
 			$htaccess_status = 'multisite';
 		} elseif ( isset( $_SERVER['SERVER_SOFTWARE'] ) && 0 === stripos( $_SERVER['SERVER_SOFTWARE'], 'nginx' ) ) {
 			$htaccess_status = 'nginx';
-		} elseif ( ! file_exists( $htaccess_path ) || ! is_writable( $htaccess_path ) ) {
+		} elseif ( ! file_exists( $htaccess_path ) || ! is_writable( $htaccess_path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
 			$htaccess_status = 'not_writable';
 		} else {
 			$htaccess_content = file_get_contents( $htaccess_path ); // phpcs:ignore
@@ -1090,6 +1278,11 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 			'IS_SUBDIRECTORY_INSTALL' => defined( 'SUBDOMAIN_INSTALL' ) && ! SUBDOMAIN_INSTALL,
 			'IS_ELEMENTOR_ACTIVE'     => did_action( 'elementor/loaded' ) > 0,
 
+			// White Label state, so the PRO React screens can substitute the
+			// product name and hide what naming the vendor would give away.
+			// Always present, so components never have to guard for it.
+			'WHITE_LABEL'             => seopress_pro_get_white_label_state(),
+
 			// Feature toggle states.
 			'IS_404_ENABLED'          => function_exists( 'seopress_get_toggle_option' ) && '1' === seopress_get_toggle_option( '404' ),
 			'IS_RICH_SNIPPETS_ENABLED' => function_exists( 'seopress_get_toggle_option' ) && '1' === seopress_get_toggle_option( 'rich-snippets' ),
@@ -1120,6 +1313,7 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 				'ai_check'       => wp_create_nonce( 'seopress_ai_check_license_key_nonce' ),
 				'ai_credits'     => wp_create_nonce( 'seopress_ai_credits_nonce' ),
 				'ga_oauth'       => wp_create_nonce( 'seopress_ga_oauth_nonce' ),
+				'youtube_api'    => wp_create_nonce( 'seopress_pro_youtube_api_key_nonce' ),
 			),
 
 			// Data for tabs.
@@ -1142,6 +1336,11 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 
 			// Google Search Console.
 			'GSC_BATCH_SIZE'          => apply_filters( 'seopress_search_console_batch_process', 20 ),
+
+			// AI providers the settings tab is allowed to offer. Under White
+			// Label the SEOPress AI Credits card is dropped here, so the React
+			// list never has to know the rule.
+			'AI_PROVIDERS'            => seopress_ai_get_providers_list(),
 
 			// AI Logs.
 			'AI_LOGS'                 => get_transient( 'seopress_pro_ai_logs' ) ? json_decode( get_transient( 'seopress_pro_ai_logs' ), true ) : null,
@@ -1181,6 +1380,9 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 				return $hints;
 			} ),
 			'AI_CREDITS_PROXY_URL'    => defined( 'SEOPRESS_AI_PROXY_URL' ) ? SEOPRESS_AI_PROXY_URL : 'https://api.seopress.org',
+
+			// YouTube Data API key set in wp-config.php (locks the settings field).
+			'YOUTUBE_API_KEY_CONSTANT' => function_exists( 'seopress_pro_youtube_api_key_is_constant' ) && seopress_pro_youtube_api_key_is_constant(),
 		) );
 	}
 
@@ -1191,12 +1393,11 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 		$htaccess_status  = 'ok';
 		$htaccess_path    = ABSPATH . '.htaccess';
 
-		if ( ( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT === true )
-			|| ( defined( 'SEOPRESS_BLOCK_HTACCESS' ) && SEOPRESS_BLOCK_HTACCESS === true ) ) {
+		if ( seopress_htaccess_editing_is_disabled() ) {
 			$htaccess_status = 'blocked';
 		} elseif ( isset( $_SERVER['SERVER_SOFTWARE'] ) && 0 === stripos( $_SERVER['SERVER_SOFTWARE'], 'nginx' ) ) {
 			$htaccess_status = 'nginx';
-		} elseif ( ! file_exists( $htaccess_path ) || ! is_writable( $htaccess_path ) ) {
+		} elseif ( ! file_exists( $htaccess_path ) || ! is_writable( $htaccess_path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Direct .htaccess access, already gated by is_writable(); WP_Filesystem would demand FTP credentials for a file the site owns.
 			$htaccess_status = 'not_writable';
 		} else {
 			$htaccess_content = file_get_contents( $htaccess_path ); // phpcs:ignore
@@ -1209,6 +1410,11 @@ function seopress_pro_enqueue_react_settings( $hook ) {
 			'IS_NETWORK_ADMIN'        => is_network_admin(),
 			'IS_SUBDOMAIN_INSTALL'    => defined( 'SUBDOMAIN_INSTALL' ) && SUBDOMAIN_INSTALL,
 			'IS_SUBDIRECTORY_INSTALL' => defined( 'SUBDOMAIN_INSTALL' ) && ! SUBDOMAIN_INSTALL,
+
+			// Same payload as the single-site screen: White Label options are
+			// network-wide on multisite, so the network admin resolves to the
+			// very state the sub-sites render with.
+			'WHITE_LABEL'             => seopress_pro_get_white_label_state(),
 
 			'ADMIN_URL'               => admin_url(),
 			'AJAX_URL'                => admin_url( 'admin-ajax.php' ),
@@ -1247,8 +1453,8 @@ add_action( 'admin_enqueue_scripts', 'seopress_pro_enqueue_react_settings', 20, 
  * The localized payload (`SEOPRESS_PRO_DASHBOARD_DATA`) ships
  * everything the tab renderers need (PageSpeed scores + CWV, GA /
  * Matomo configuration flags, Search Console top queries + popular
- * posts) so the React tabs render without a single client-side REST
- * round-trip.
+ * posts). The Search Console performance chart additionally reads its
+ * dedicated REST endpoint when that tab mounts.
  *
  * @param string $hook The current admin page hook.
  */
@@ -1300,7 +1506,7 @@ function seopress_pro_enqueue_react_dashboard( $hook ) {
 	$style_file = plugin_dir_path( __FILE__ ) . 'public/admin/dashboard/index.css';
 	if ( file_exists( $style_file ) ) {
 		$style_version = SEOPRESS_PRO_VERSION;
-		if ( '10.2.1' === $style_version || empty( $style_version ) ) {
+		if ( '10.4' === $style_version || empty( $style_version ) ) {
 			$style_version = substr( md5_file( $style_file ), 0, 12 );
 		}
 		wp_enqueue_style(
@@ -1392,15 +1598,20 @@ function seopress_pro_get_dashboard_overview_data() {
 	$ga_has_token = method_exists( seopress_pro_get_service( 'GoogleAnalyticsOptionPro' ), 'getAccessToken' )
 		&& ! empty( seopress_pro_get_service( 'GoogleAnalyticsOptionPro' )->getAccessToken() );
 
+	// The stats transient forgets an error after five minutes; the recorded
+	// sync error keeps the reason until a sync succeeds.
+	$ga_sync_error = $ga_has_token ? seopress_ga_get_sync_error() : null;
+
 	$ga             = array(
 		'enabled'      => $ga_enabled && ! $ga_ws_hidden,
 		'configured'   => '' !== $ga_id && $ga_has_token,
 		'hasData'      => $ga_has_data,
-		'hasError'     => $ga_has_error,
+		'hasError'     => $ga_has_error || ( null !== $ga_sync_error && ! $ga_has_data ),
+		'error'        => $ga_sync_error,
 		'stats'        => $ga_stats,
 		'series'       => $ga_series,
 		'profileLabel' => $ga_id,
-		'settingsUrl'  => admin_url( 'admin.php?page=seopress-google-analytics' ),
+		'settingsUrl'  => seopress_ga_connection_settings_url(),
 		// "View full report" should open the GA4 reports for this property on
 		// the Google Analytics site, not the SEOPress settings page. Fall back
 		// to the settings page only when no property ID is available.
@@ -1423,6 +1634,14 @@ function seopress_pro_get_dashboard_overview_data() {
 	$matomo_url     = '' !== $matomo_id ? 'https://' . $matomo_id : '';
 	$matomo_hidden  = method_exists( seopress_pro_get_service( 'GoogleAnalyticsWidgetsOptionPro' ), 'getMatomoDashboardWidget' )
 		&& '1' === seopress_pro_get_service( 'GoogleAnalyticsWidgetsOptionPro' )->getMatomoDashboardWidget();
+
+	// Tracking needs the URL and the site ID; the statistics also need the API
+	// token. Like GA above, "configured" means the statistics can be fetched,
+	// so a tracking-only site sees the call-to-action that asks for the token.
+	$matomo_token = method_exists( seopress_get_service( 'GoogleAnalyticsOption' ), 'getMatomoAuthToken' )
+		? (string) seopress_get_service( 'GoogleAnalyticsOption' )->getMatomoAuthToken()
+		: '';
+	$matomo_ready = '' !== $matomo_id && '' !== $matomo_site_id && '' !== $matomo_token;
 
 	$matomo_stats    = array();
 	$matomo_chart    = null;
@@ -1483,8 +1702,11 @@ function seopress_pro_get_dashboard_overview_data() {
 
 	$matomo         = array(
 		'enabled'     => $ga_enabled && ! $matomo_hidden && '' !== $matomo_id && '' !== $matomo_site_id,
-		'configured'  => '' !== $matomo_id && '' !== $matomo_site_id,
+		'configured'  => $matomo_ready,
 		'hasData'     => $matomo_has_data,
+		// Without this the tab can only offer "no data yet", which is a promise
+		// rather than a diagnosis when the API is refusing us.
+		'error'       => ! $matomo_ready || $matomo_has_data || ! function_exists( 'seopress_matomo_get_sync_error' ) ? null : seopress_matomo_get_sync_error(),
 		'stats'       => $matomo_stats,
 		'chart'       => $matomo_chart,
 		'series'      => $matomo_series,
@@ -1590,6 +1812,245 @@ function seopress_pro_register_settings_api_endpoints( $endpoints ) {
 	return $endpoints;
 }
 add_filter( 'seopress_settings_api_endpoints', 'seopress_pro_register_settings_api_endpoints' );
+
+/**
+ * Register PRO's client-specific fields with the reusable settings export.
+ *
+ * The free plugin's "Export as a reusable configuration" builds a master
+ * settings file by leaving out what belongs to a single site, and publishes
+ * its category map on this filter so PRO can cover its own fields. Until PRO
+ * answered it, the categories on offer described free fields plus the license
+ * and the API keys, and every PRO value belonging to one client shipped in the
+ * file whatever the user ticked: the business address and phone number, the
+ * opening hours, the publisher logo, the custom robots.txt, the address 404
+ * alerts are sent from.
+ *
+ * Entries come in two kinds. Some are added to a category the free plugin
+ * already offers, because the PRO value is the same kind of data as the free
+ * ones in it: the publisher logo is Organization schema, a PageSpeed key or a
+ * Slack webhook is a secret. The rest are categories of their own, for what
+ * the free plugin has no equivalent of.
+ *
+ * What is left out matters as much. A toggle that switches a feature on, or
+ * that decides how it renders, is configuration and travels with a reusable
+ * file; only values describing one client are stripped. That is why the
+ * opening hours go while `seopress_local_business_opening_hours_display_format`
+ * stays, and why the White Label fields - an agency's own branding, identical
+ * on every site it manages - are not listed at all.
+ *
+ * @since 10.3.0
+ *
+ * @param array $categories Category map from ExportSettings::getSiteSpecificCategories().
+ *
+ * @return array
+ */
+function seopress_pro_export_site_specific_categories( $categories ) {
+	if ( ! is_array( $categories ) ) {
+		return $categories;
+	}
+
+	// Organization schema: the publisher logo, plus the width and height the
+	// media picker stores beside it. Narrow on purpose - a
+	// `seopress_rich_snippets_*` prefix would also take
+	// `seopress_rich_snippets_enable`, which is configuration.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'knowledge_graph',
+		array(
+			'seopress_pro_option_name' => array(
+				'seopress_rich_snippets_publisher_logo*',
+			),
+		)
+	);
+
+	// Credentials. `seopress_google_analytics_auth_client_id` is the other
+	// half of the OAuth pair the free plugin already strips the secret of,
+	// and PRO is what writes both when a site connects its Analytics account.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'api_keys',
+		array(
+			'seopress_pro_option_name'              => array(
+				'seopress_ps_api_key',
+				'seopress_video_youtube_api_key',
+				'seopress_seo_alerts_slack_webhook_url',
+			),
+			'seopress_bot_option_name'              => array(
+				'seopress_bot_scan_settings_webhook_url',
+				'seopress_bot_scan_settings_webhook_secret',
+			),
+			'seopress_google_analytics_option_name' => array(
+				'seopress_google_analytics_auth_client_id',
+			),
+		)
+	);
+
+	// Local Business. Every field describes the client: where they are, how to
+	// reach them, when they are open. `seopress_local_business_page` is the ID
+	// of the post the schema is printed on, which points at unrelated content
+	// on another site. The two `opening_hours_*` display settings are not
+	// here: they say how the hours are rendered, not what they are.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'local_business',
+		array(
+			'seopress_pro_option_name' => array(
+				'seopress_local_business_page',
+				'seopress_local_business_type',
+				'seopress_local_business_street_address',
+				'seopress_local_business_address_locality',
+				'seopress_local_business_address_region',
+				'seopress_local_business_postal_code',
+				'seopress_local_business_address_country',
+				'seopress_local_business_lat',
+				'seopress_local_business_lon',
+				'seopress_local_business_place_id',
+				'seopress_local_business_url',
+				'seopress_local_business_phone',
+				'seopress_local_business_email',
+				'seopress_local_business_price_range',
+				'seopress_local_business_cuisine',
+				'seopress_local_business_menu',
+				'seopress_local_business_accepts_reservations',
+				'seopress_local_business_opening_hours',
+			),
+		),
+		__( 'Local Business address, contact details & opening hours', 'wp-seopress-pro' )
+	);
+
+	// The files a site serves. All three carry the client's domain: the
+	// robots.txt its sitemap line points at, the llms.txt describing the site,
+	// the .htaccess rules written for it. The network variants live in
+	// `seopress_pro_mu_option_name` and, on a single site that once saved them
+	// from the network screen, in the site option too.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'site_files',
+		array(
+			'seopress_pro_option_name'    => array(
+				'seopress_robots_file',
+				'seopress_llms_file',
+				'seopress_htaccess_file',
+				'seopress_mu_robots_file',
+				'seopress_mu_llms_file',
+			),
+			'seopress_pro_mu_option_name' => array(
+				'seopress_mu_robots_file',
+				'seopress_mu_llms_file',
+			),
+		),
+		__( 'Custom robots.txt, llms.txt & .htaccess', 'wp-seopress-pro' )
+	);
+
+	// Who gets told when something breaks. Left as its own category because
+	// an agency monitoring the sites it manages has a good reason to keep its
+	// own addresses while dropping everything else about the client.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'alert_recipients',
+		array(
+			'seopress_pro_option_name' => array(
+				'seopress_404_enable_mails_from',
+				'seopress_seo_alerts_recipients',
+			),
+			'seopress_bot_option_name' => array(
+				'seopress_bot_scan_settings_email',
+			),
+		),
+		__( 'Alert recipients: 404, SEO alerts & Site Audit', 'wp-seopress-pro' )
+	);
+
+	// Addresses of the site itself: the Search Console property, the URL
+	// PageSpeed reports on, where a 404 is sent, the name the site is
+	// published under in Google News. Each one names a client.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'client_urls',
+		array(
+			'seopress_pro_option_name' => array(
+				'seopress_gsc_site_url',
+				'seopress_ps_url',
+				'seopress_404_redirect_custom_url',
+				'seopress_news_name',
+			),
+		),
+		__( 'Site URLs & publication name', 'wp-seopress-pro' )
+	);
+
+	// House style for AI generation. Its own category for the same reason as
+	// the alert recipients: it is as likely to be the agency's own wording as
+	// a description of the client.
+	$categories = seopress_pro_export_merge_site_specific(
+		$categories,
+		'ai_instructions',
+		array(
+			'seopress_pro_option_name' => array(
+				'seopress_ai_custom_instructions',
+			),
+		),
+		__( 'Custom AI instructions', 'wp-seopress-pro' )
+	);
+
+	return $categories;
+}
+add_filter( 'seopress_export_site_specific_categories', 'seopress_pro_export_site_specific_categories' );
+
+/**
+ * Merge field matchers into one export category.
+ *
+ * Adding to a category the free plugin owns and declaring a PRO one are the
+ * same operation one array deeper: an existing category keeps its label and
+ * gains matchers, and a category nobody has declared yet is created from
+ * $label. Passing no label means extend-only - if the free plugin has dropped
+ * or renamed the category, there is nothing to extend and nothing to invent in
+ * its place.
+ *
+ * Matchers are merged rather than assigned, so a category another plugin has
+ * already registered fields into keeps them.
+ *
+ * @since 10.3.0
+ *
+ * @param array  $categories Category map being filtered.
+ * @param string $key        Category key.
+ * @param array  $fields     Map of option name => list of matchers.
+ * @param string $label      Label to create the category with when it is missing.
+ *
+ * @return array
+ */
+function seopress_pro_export_merge_site_specific( $categories, $key, $fields, $label = '' ) {
+	if ( ! isset( $categories[ $key ] ) || ! is_array( $categories[ $key ] ) ) {
+		if ( '' === $label ) {
+			return $categories;
+		}
+
+		$categories[ $key ] = array(
+			'label'  => $label,
+			'fields' => array(),
+		);
+	}
+
+	// A category can legitimately carry `drop_options` and no `fields` at all
+	// (the license one does). Anything else there is broken data, and indexing
+	// into it would be fatal rather than wrong.
+	if ( ! isset( $categories[ $key ]['fields'] ) || ! is_array( $categories[ $key ]['fields'] ) ) {
+		$categories[ $key ]['fields'] = array();
+	}
+
+	foreach ( $fields as $option_name => $matchers ) {
+		if ( empty( $categories[ $key ]['fields'][ $option_name ] ) || ! is_array( $categories[ $key ]['fields'][ $option_name ] ) ) {
+			$categories[ $key ]['fields'][ $option_name ] = $matchers;
+			continue;
+		}
+
+		$categories[ $key ]['fields'][ $option_name ] = array_values(
+			array_unique(
+				array_merge( $categories[ $key ]['fields'][ $option_name ], $matchers )
+			)
+		);
+	}
+
+	return $categories;
+}
 
 /**
  * Bounce the React DataViews admin pages to their classic CPT screens on
@@ -2087,6 +2548,10 @@ if ( ! class_exists( 'SEOPRESS_Updater' ) ) {
 // Kept outside the updater guard above: this one only reads and writes an
 // option, and must run whether or not the updater class is already loaded.
 require_once plugin_dir_path( __FILE__ ) . 'inc/admin/updater/ai-assistant-default.php';
+
+// Same reasoning: a one-shot option and post meta repair, no updater class
+// involved.
+require_once plugin_dir_path( __FILE__ ) . 'inc/admin/updater/local-business-autowash.php';
 
 /**
  * SEOPress PRO Updater.

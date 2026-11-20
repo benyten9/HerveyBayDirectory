@@ -364,7 +364,7 @@ class AuthorizeNetGateway extends Gateway {
 	 */
 	private function invoice_return_url( InvoicePayableSubject $subject ): string {
 		$hash = trim( (string) $subject->get_invoice()->hash );
-		if ( 1 !== preg_match( '/^[a-f0-9]{32}$/', $hash ) ) {
+		if ( 1 !== preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ) {
 			return '';
 		}
 

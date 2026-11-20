@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Contracts\Cookie;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Cookie;
 
-interface QueueingFactory extends \Illuminate\Contracts\Cookie\Factory
+interface QueueingFactory extends Factory
 {
     /**
      * Queue a cookie to send with the next response.

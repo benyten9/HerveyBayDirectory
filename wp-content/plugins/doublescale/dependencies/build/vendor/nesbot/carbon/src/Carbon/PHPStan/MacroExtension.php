@@ -8,7 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\PHPStan;
+namespace DoubleScale\Vendor\Carbon\PHPStan;
 
 use DoubleScale\Vendor\PHPStan\Reflection\Assertions;
 use DoubleScale\Vendor\PHPStan\Reflection\ClassReflection;
@@ -40,7 +40,7 @@ final class MacroExtension implements MethodsClassReflectionExtension
      */
     public function __construct(PhpMethodReflectionFactory $methodReflectionFactory, ReflectionProvider $reflectionProvider)
     {
-        $this->scanner = new \Carbon\PHPStan\MacroScanner($reflectionProvider);
+        $this->scanner = new MacroScanner($reflectionProvider);
         $this->methodReflectionFactory = $methodReflectionFactory;
     }
     /**

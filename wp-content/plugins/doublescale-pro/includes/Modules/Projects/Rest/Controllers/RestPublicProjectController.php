@@ -10,6 +10,8 @@ namespace DoubleScale\Pro\Modules\Projects\Rest\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Modules\Portal\Services\PortalAccess;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
 use DoubleScale\Pro\Modules\Projects\Rest\ProjectShaper;
 use WP_Error;
@@ -33,7 +35,7 @@ class RestPublicProjectController extends RestController {
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/' . $this->rest_base . '/(?P<hash>[a-f0-9]{32})',
+			'/' . $this->rest_base . '/(?P<hash>[A-Za-z0-9]{32})',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
@@ -62,7 +64,37 @@ class RestPublicProjectController extends RestController {
 			return $project;
 		}
 
-		return new WP_REST_Response( ProjectShaper::shape_public( $project ), 200 );
+		// The link shows what the portal shows this project's client: no
+		// project when their Projects area is off, no money when their
+		// balances and totals are.
+		$access = $this->client_access( $project );
+		if ( null !== $access && empty( $access['projects'] ) ) {
+			return new WP_Error( 'not_found', __( 'Project not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		$data = ProjectShaper::shape_public( $project );
+		if ( null !== $access && empty( $access['financial_summaries'] ) ) {
+			$data['budget']       = null;
+			$data['financials']   = null;
+			$data['money_hidden'] = true;
+		}
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * The portal areas the project's client may see (the defaults when it has
+	 * none), or null with a free that has no per-client access.
+	 *
+	 * @param ProjectModel $project Project.
+	 * @return array<string, bool>|null
+	 */
+	private function client_access( ProjectModel $project ): ?array {
+		if ( ! class_exists( PortalAccess::class ) ) {
+			return null;
+		}
+		$contact = (int) $project->contact_id > 0 ? ContactModel::find( (int) $project->contact_id ) : null;
+		return PortalAccess::for_contact( $contact instanceof ContactModel ? $contact : null );
 	}
 
 	/**

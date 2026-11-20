@@ -46,6 +46,12 @@ class DealNotifications {
 	const OVERDUE_NOTIFIED_OPTION = '_doublescale_deals_overdue_notified';
 
 	/**
+	 * Only what went overdue in the last days is announced: the first run (or
+	 * a long pause) never floods the team with months-old deals.
+	 */
+	const OVERDUE_WINDOW_DAYS = 7;
+
+	/**
 	 * Constructor - register hooks
 	 *
 	 * @since 1.2.0
@@ -65,6 +71,9 @@ class DealNotifications {
 
 		// Deal note added.
 		add_action( 'doublescale_deal_note_added', array( $this, 'on_deal_note_added' ), 10, 2 );
+
+		// Overdue deals, once a day (free's daily job).
+		add_action( 'doublescale_daily_doublescale_daily3', array( self::class, 'check_overdue_deals' ) );
 	}
 
 	/**
@@ -78,12 +87,12 @@ class DealNotifications {
 	 * @param array      $changes Array of changed attributes.
 	 */
 	public function on_deal_updated( $deal, $changes ) {
-		$owner_id = $deal->owner_id;
+		$owner_id = (int) $deal->owner_id; // The database hands a string: compared with a user id below.
 
 		// Check if owner changed (deal reassignment).
 		if ( isset( $changes['owner_id'] ) ) {
-			$old_owner_id = $deal->getOriginal( 'owner_id' );
-			$new_owner_id = $changes['owner_id'];
+			$old_owner_id = (int) $deal->getOriginal( 'owner_id' );
+			$new_owner_id = (int) $changes['owner_id'];
 			$this->on_deal_owner_changed( $deal, $old_owner_id, $new_owner_id );
 		}
 
@@ -119,7 +128,7 @@ class DealNotifications {
 	 * @param float|string $new_value The new value.
 	 */
 	private function on_deal_value_changed( $deal, $new_value ) {
-		$owner_id     = $deal->owner_id;
+		$owner_id     = (int) $deal->owner_id; // The database hands a string: compared with a user id below.
 		$current_user = get_current_user_id();
 		$changer      = get_userdata( $current_user );
 		$changer_name = $changer ? $changer->display_name : __( 'Someone', 'doublescale');
@@ -222,10 +231,11 @@ class DealNotifications {
 	 * @param int                            $new_stage_id New stage ID.
 	 */
 	public function on_deal_stage_changed( $contact, $deal, $old_stage_id, $new_stage_id ) {
-		$owner_id = $deal->owner_id;
+		$owner_id = (int) $deal->owner_id; // The database hands a string: compared with a user id below.
 
-		// Skip if no owner (stage changes are less critical, don't broadcast).
-		if ( ! $owner_id ) {
+		// Skip if no owner (stage changes are less critical, don't broadcast),
+		// or if the owner moved it themself, like every other deal notice.
+		if ( ! $owner_id || get_current_user_id() === $owner_id ) {
 			return;
 		}
 
@@ -259,7 +269,7 @@ class DealNotifications {
 	 * @param DealModel $deal The created deal.
 	 */
 	public function on_deal_created( $deal ) {
-		$owner_id     = $deal->owner_id;
+		$owner_id     = (int) $deal->owner_id; // The database hands a string: compared with a user id below.
 		$current_user = get_current_user_id();
 
 		// Only notify the owner, and only if someone else created it.
@@ -296,7 +306,7 @@ class DealNotifications {
 	 * @param object     $note_data Note data (content, type, etc.).
 	 */
 	public function on_deal_note_added( $deal, $note_data ) {
-		$owner_id     = $deal->owner_id;
+		$owner_id     = (int) $deal->owner_id; // The database hands a string: compared with a user id below.
 		$current_user = get_current_user_id();
 
 		// Skip if no owner or owner added the note themselves.
@@ -329,25 +339,28 @@ class DealNotifications {
 	 */
 	public static function check_overdue_deals() {
 		$today = wp_date( 'Y-m-d' );
+		$since = wp_date( 'Y-m-d', time() - self::OVERDUE_WINDOW_DAYS * DAY_IN_SECONDS );
 
-		// Get previously notified deal IDs (stored as single array option).
+		// Announced already: "{deal id}:{expected close date}" — a new date
+		// that passes too is announced again.
 		$notified_ids = get_option( self::OVERDUE_NOTIFIED_OPTION, array() );
 		if ( ! is_array( $notified_ids ) ) {
 			$notified_ids = array();
 		}
 
-		// Get open deals that are past their expected close date.
+		// Open deals whose expected close date passed in the last days.
 		$overdue_deals = DealModel::where( 'status', 'open' )
 			->whereNotNull( 'expected_close_date' )
 			->where( 'expected_close_date', '<', $today )
+			->where( 'expected_close_date', '>=', $since )
 			->whereNotNull( 'owner_id' )
 			->get();
 
 		$new_notifications = false;
 
 		foreach ( $overdue_deals as $deal ) {
-			// Skip if already notified (once per deal, ever).
-			if ( in_array( $deal->id, $notified_ids, true ) ) {
+			$key = (int) $deal->id . ':' . substr( (string) $deal->expected_close_date, 0, 10 );
+			if ( in_array( $key, $notified_ids, true ) ) {
 				continue;
 			}
 
@@ -358,7 +371,7 @@ class DealNotifications {
 
 			// Send notification to owner.
 			NotificationService::create(
-				$deal->owner_id,
+				(int) $deal->owner_id,
 				/* translators: %s: deal title */
 				sprintf( __( 'Deal "%s" is Overdue', 'doublescale'), $deal->title ),
 				/* translators: %d: number of days overdue */
@@ -376,45 +389,22 @@ class DealNotifications {
 			);
 
 			// Mark as notified.
-			$notified_ids[]    = $deal->id;
+			$notified_ids[]    = $key;
 			$new_notifications = true;
 		}
 
-		// Save updated notified list if changed.
-		if ( $new_notifications ) {
-			update_option( self::OVERDUE_NOTIFIED_OPTION, $notified_ids, false );
-		}
-
-		// Cleanup: Remove IDs of deals that are no longer open/overdue (optional optimization).
-		self::cleanup_notified_deals( $notified_ids );
-	}
-
-	/**
-	 * Cleanup notified deals list
-	 *
-	 * Removes deal IDs from the notified list if the deal is no longer open
-	 * or has been won/lost. This allows re-notification if a deal is reopened.
-	 *
-	 * @since 1.2.0
-	 *
-	 * @param array $notified_ids Current list of notified deal IDs.
-	 */
-	private static function cleanup_notified_deals( $notified_ids ) {
-		if ( empty( $notified_ids ) ) {
-			return;
-		}
-
-		// Get IDs of deals that are still open.
-		$still_open_ids = DealModel::whereIn( 'id', $notified_ids )
-			->where( 'status', 'open' )
-			->pluck( 'id' )
-			->toArray();
-
-		// If some deals were closed, update the list.
-		if ( count( $still_open_ids ) < count( $notified_ids ) ) {
-			update_option( self::OVERDUE_NOTIFIED_OPTION, $still_open_ids, false );
+		// Keep only dates still inside the window: older ones cannot come back.
+		$kept = array_values(
+			array_filter(
+				$notified_ids,
+				static fn( $key ) => is_string( $key ) && substr( $key, (int) strpos( $key, ':' ) + 1 ) >= $since
+			)
+		);
+		if ( $new_notifications || count( $kept ) !== count( $notified_ids ) ) {
+			update_option( self::OVERDUE_NOTIFIED_OPTION, $kept, false );
 		}
 	}
+
 
 	/**
 	 * Notify deal owner that deal was won

@@ -112,19 +112,29 @@ final class Module extends AbstractSalesChildModule implements ProvidesAbilities
 			$this->sales_migration_path( 'SalesProposalTableIssuerSnapshotColumn.php' ),
 			$this->sales_migration_path( 'SalesInvoiceTableCurrencyNullable.php' ),
 			$this->sales_migration_path( 'SalesProposalTableCurrencyNullable.php' ),
+			$this->sales_migration_path( 'SalesInvoiceTableBuyerReferenceColumn.php' ),
+			$this->sales_migration_path( 'SalesInvoiceTableServiceDateColumns.php' ),
 		);
 	}
 
 	protected function boot_child( Container $container ): void {
 		unset( $container );
 
-		Migrations\SalesInvoiceTableCurrencyNullable::ensure();
-		Migrations\SalesProposalTableCurrencyNullable::ensure();
-		Migrations\SalesProposalTableContentColumns::ensure();
-		// Same self-heal as the proposal twin above: a site whose migration
-		// ledger already advanced past the ALTER never re-runs it, leaving the
-		// table permanently without `sections` and failing every invoice save.
-		Migrations\SalesInvoiceTableContentColumns::ensure();
+		doublescale_ensure_once(
+			'documents',
+			DOUBLESCALE_VERSION . '/' . DOUBLESCALE_SCHEMA_REV,
+			static function () {
+				Migrations\SalesInvoiceTableCurrencyNullable::ensure();
+				Migrations\SalesProposalTableCurrencyNullable::ensure();
+				Migrations\SalesProposalTableContentColumns::ensure();
+				// Same self-heal as the proposal twin above: a site whose migration
+				// ledger already advanced past the ALTER never re-runs it, leaving the
+				// table permanently without `sections` and failing every invoice save.
+				Migrations\SalesInvoiceTableContentColumns::ensure();
+				Migrations\SalesInvoiceTableBuyerReferenceColumn::ensure();
+				Migrations\SalesInvoiceTableServiceDateColumns::ensure();
+			}
+		);
 
 		require_once dirname( __DIR__ ) . '/Sales/MergeTags/AbstractSalesMergeTag.php';
 		$this->loadModuleMergeTagFiles();
@@ -152,6 +162,11 @@ final class Module extends AbstractSalesChildModule implements ProvidesAbilities
 
 		add_action( 'init', array( $this, 'register_schedules' ) );
 		add_action( 'doublescale_sales_invoice_paid', array( $this, 'on_invoice_paid' ), 10, 1 );
+
+		// A document moved to another client gets a new link.
+		Services\DocumentClientChange::register();
+		// Documents moved out of draft by hand before their currency was fixed.
+		Services\DocumentCurrencyBackfill::ensure();
 
 		// Deleting a contact cascades to their proposals (one model at a time so
 		// the proposal deleting event cleans associations and detaches invoices).

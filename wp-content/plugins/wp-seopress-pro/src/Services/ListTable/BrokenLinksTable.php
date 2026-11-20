@@ -101,9 +101,9 @@ class BrokenLinksTable extends WP_List_Table {
 				$status = array( '200', '301', '302', '307', '400', '401', '402', '403', '404', '410', '451', '500' );
 
 				echo "<select name='bot-status' id='bot-status' class='postform'>";
-				echo "<option value=''>" . __( 'Show All', 'wp-seopress-pro' ) . '</option>';
+				echo "<option value=''>" . esc_html__( 'Show All', 'wp-seopress-pro' ) . '</option>';
 				foreach ( $status as $code ) {
-					echo '<option value=' . $code, isset( $_GET[ $code ] ) == $code ? ' selected="selected"' : '', '>' . $code . '</option>';
+					echo '<option value=' . esc_attr( $code ), isset( $_GET[ $code ] ) == $code ? ' selected="selected"' : '', '>' . esc_html( $code ) . '</option>';
 				}
 				echo '</select>';
 				break;

@@ -36,7 +36,7 @@ abstract class BaseDealAction extends Action
 	 * @param AutomationContactModel $automation_contact Automation contact model.
 	 * @param string                   $pipelineKey Settings key for pipeline filter. Defaults to 'pipeline'.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	protected function build_target_deals_query($settings, AutomationContactModel $automation_contact, $pipelineKey = 'pipeline')
 	{
@@ -124,13 +124,20 @@ abstract class BaseDealAction extends Action
 	 */
 	public function get_users_options()
 	{
-		// Get only users with CRM roles or administrator role
+		// Everyone who can own a deal: the sales roles, the general CRM
+		// roles, and administrators.
 		$users = get_users(
 			array(
-				'role__in' => array(
-					UserRoles::CRM_MANAGER,
-					UserRoles::SALES_REP,
-					UserRoles::ADMINISTRATOR,
+				'role__in' => array_values(
+					array_filter(
+						array(
+							UserRoles::CRM_MANAGER,
+							\DoubleScale\Pro\Core\UserRoles\PermissionsCompat::crm_agent_role(),
+							UserRoles::SALES_MANAGER,
+							UserRoles::SALES_REP,
+							UserRoles::ADMINISTRATOR,
+						)
+					)
 				),
 				'orderby'  => 'display_name',
 				'order'    => 'ASC',

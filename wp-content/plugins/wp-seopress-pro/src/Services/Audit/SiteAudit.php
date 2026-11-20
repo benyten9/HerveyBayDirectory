@@ -1,7 +1,11 @@
 <?php
 namespace SEOPressPro\Services\Audit;
 
-defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
+// The `defined() || exit()` one-liner is not detected by Plugin Check when it
+// sits inside a namespace, so this file uses the canonical block form.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 'Please don&rsquo;t call the plugin directly. Thanks :)' );
+}
 
 /**
  * Site Audit service — exposes read-only counters on the

@@ -62,18 +62,23 @@ class AutomationNotifications {
 		$step = $automation->steps()->where( 'id', $step_id )->first();
 		$step_name = $step ? $this->get_step_name( $step ) : __( 'Unknown step', 'doublescale');
 
+		$contact      = $automation_contact->contact;
+		$contact_name = $contact ? $this->get_contact_name( $contact ) : '#' . $automation_contact->contact_id;
+
 		// Broadcast to all CRM users (automations run in background).
 		NotificationService::broadcast(
 			/* translators: %s: automation name */
 			sprintf( __( 'Automation "%s" Step Failed', 'doublescale'), $automation->name ),
-			/* translators: 1: step name, 2: contact info */
+			/* translators: 1: step name, 2: contact name */
 			sprintf(
-				__( 'Step "%1$s" failed for contact #%2$d.', 'doublescale'),
+				__( 'Step "%1$s" failed for %2$s.', 'doublescale'),
 				$step_name,
-				$automation_contact->contact_id
+				$contact_name
 			),
 			$this->get_automation_link( $automation ),
-			NotificationCategories::AUTOMATIONS_ERRORS
+			NotificationCategories::AUTOMATIONS_ERRORS,
+			array(),
+			$this->users_outside( $automation )
 		);
 	}
 
@@ -110,7 +115,9 @@ class AutomationNotifications {
 			/* translators: 1: contact name, 2: automation name */
 			sprintf( __( '%1$s has entered the %2$s automation.', 'doublescale'), $contact_name, $automation->name ),
 			$this->get_automation_link( $automation ),
-			NotificationCategories::AUTOMATIONS_STARTED
+			NotificationCategories::AUTOMATIONS_STARTED,
+			array(),
+			$this->users_outside( $automation )
 		);
 	}
 
@@ -132,7 +139,9 @@ class AutomationNotifications {
 			/* translators: 1: contact name, 2: automation name */
 			sprintf( __( '%1$s has completed the %2$s automation.', 'doublescale'), $contact_name, $automation->name ),
 			$this->get_automation_link( $automation ),
-			NotificationCategories::AUTOMATIONS_COMPLETED
+			NotificationCategories::AUTOMATIONS_COMPLETED,
+			array(),
+			$this->users_outside( $automation )
 		);
 	}
 
@@ -161,7 +170,9 @@ class AutomationNotifications {
 			sprintf( __( 'Automation "%s" Paused', 'doublescale'), $automation->name ),
 			$message,
 			$this->get_automation_link( $automation ),
-			NotificationCategories::AUTOMATIONS_PAUSED
+			NotificationCategories::AUTOMATIONS_PAUSED,
+			array(),
+			$this->users_outside( $automation )
 		);
 	}
 
@@ -174,19 +185,45 @@ class AutomationNotifications {
 	 * @return string Step name or type.
 	 */
 	private function get_step_name( $step ) {
-		if ( ! empty( $step->name ) ) {
-			return $step->name;
+		// The name the step shows on the canvas: a custom name, else its action's label ("Send SMS").
+		$settings = is_array( $step->settings ?? null ) ? $step->settings : array();
+		foreach ( array( 'custom_label', '_action_label', '_goal_label' ) as $key ) {
+			if ( ! empty( $settings[ $key ] ) && is_string( $settings[ $key ] ) ) {
+				return trim( $settings[ $key ] );
+			}
 		}
 
-		// Fallback to step type.
-		$type = $step->type ?? 'action';
-		$slug = $step->slug ?? '';
-
-		if ( $slug ) {
-			return ucfirst( str_replace( array( '_', '-' ), ' ', $slug ) );
+		$action = $step->action ?? '';
+		if ( $action ) {
+			try {
+				return \DoubleScale\Modules\Automations\Services\ActionsManager::instance()->get_action( $action )->name;
+			} catch ( \Throwable $e ) {
+				return ucfirst( str_replace( array( '_', '-' ), ' ', $action ) );
+			}
 		}
 
-		return ucfirst( $type );
+		return ucfirst( $step->type ?? 'action' );
+	}
+
+	/**
+	 * CRM users who should not hear about this workflow: everyone except the
+	 * people who manage every automation (administrators, CRM Managers,
+	 * Automation Managers) and the workflow's own creator.
+	 *
+	 * @param \DoubleScale\Modules\Automations\Models\AutomationModel $automation The automation.
+	 * @return array<int, int> User IDs to leave out.
+	 */
+	private function users_outside( $automation ) {
+		$owner = (int) ( $automation->created_by ?? 0 );
+		$out   = array();
+		foreach ( get_users( array( 'capability__in' => array( 'doublescale_access' ), 'fields' => 'ID' ) ) as $user_id ) {
+			$user_id = (int) $user_id;
+			if ( $user_id === $owner || \DoubleScale\Core\UserRoles\Permissions::can_manage_all_automations( $user_id ) ) {
+				continue;
+			}
+			$out[] = $user_id;
+		}
+		return $out;
 	}
 
 	/**

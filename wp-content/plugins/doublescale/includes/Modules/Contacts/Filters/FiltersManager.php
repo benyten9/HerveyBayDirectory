@@ -109,6 +109,10 @@ final class FiltersManager {
 				'name'    => __( 'Submission', 'doublescale' ),
 				'filters' => array(),
 			),
+			'woocommerce'    => array(
+				'name'    => __( 'WooCommerce', 'doublescale' ),
+				'filters' => array(),
+			),
 		);
 	}
 
@@ -136,7 +140,9 @@ final class FiltersManager {
 			'name'         => $filter->name,
 			'type'         => $filter->type,
 			'operators'    => $filter->get_operators(),
-			'options'      => $filter->get_options(),
+			// Filled in by get_groups(): some filters list posts, products or
+			// score levels, which cost queries on every request when built here.
+			'options'      => null,
 			'is_dynamic'   => $filter->is_dynamic,
 			'dynamic_args' => $filter->dynamic_args,
 		);
@@ -178,6 +184,7 @@ final class FiltersManager {
 	 * @return array
 	 */
 	public function get_groups() {
+		$this->resolve_options();
 		$groups = $this->groups;
 
 		if ( function_exists( 'doublescale_filter_contact_filters_groups_for_modules' ) ) {
@@ -185,6 +192,22 @@ final class FiltersManager {
 		}
 
 		return apply_filters( 'doublescale_contact_filters_groups', $groups );
+	}
+
+	/**
+	 * Build each filter's options the first time the groups are needed.
+	 */
+	private function resolve_options() {
+		foreach ( $this->groups as $group_slug => $group ) {
+			if ( empty( $group['filters'] ) ) {
+				continue;
+			}
+			foreach ( $group['filters'] as $slug => $data ) {
+				if ( null === $data['options'] && isset( $this->filters[ $slug ] ) ) {
+					$this->groups[ $group_slug ]['filters'][ $slug ]['options'] = $this->filters[ $slug ]->get_options();
+				}
+			}
+		}
 	}
 
 	/**

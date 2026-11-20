@@ -1,8 +1,8 @@
 <?php
 
-namespace WPEloquent\WP;
+namespace DoubleScale\Vendor\WPEloquent\WP;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 /**
  * Class Post
  *
@@ -60,7 +60,7 @@ class Post extends Model
      */
     public function comments()
     {
-        return $this->hasMany('WPEloquent\\WP\\Comment', 'comment_post_ID');
+        return $this->hasMany('DoubleScale\\Vendor\\WPEloquent\\WP\\Comment', 'comment_post_ID');
     }
     /**
      * Get meta fields from the post
@@ -69,6 +69,6 @@ class Post extends Model
      */
     public function meta()
     {
-        return $this->hasMany('WPEloquent\\WP\\PostMeta', 'post_id');
+        return $this->hasMany('DoubleScale\\Vendor\\WPEloquent\\WP\\PostMeta', 'post_id');
     }
 }

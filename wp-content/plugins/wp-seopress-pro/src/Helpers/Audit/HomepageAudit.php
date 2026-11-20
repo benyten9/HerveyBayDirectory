@@ -610,16 +610,27 @@ class HomepageAudit {
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
+		$description = 404 === $code
+			? __( 'Missing pages correctly return an HTTP 404 status.', 'wp-seopress-pro' )
+			: __( 'A missing page did not return a 404 status (soft 404). Search engines may waste crawl budget or index empty pages.', 'wp-seopress-pro' );
+		$extra = array( 'value' => (string) $code );
+		$options = seopress_pro_get_service( 'OptionPro' );
+		$redirect = $options->get404RedirectHome();
+		$redirect_enabled = '1' === seopress_get_toggle_option( '404' ) && (
+			'home' === $redirect || ( 'custom' === $redirect && ! empty( $options->get404RedirectUrl() ) )
+		);
+		if ( 404 !== $code && $redirect_enabled ) {
+			$description .= ' ' . __( 'SEOPress has "Redirect 404 to" enabled. This can cause this result. Choose None and use your theme’s 404 template to display a designed error page with the correct status, then run the audit again.', 'wp-seopress-pro' );
+			$extra['fixUrl'] = admin_url( 'admin.php?page=seopress-pro-page#tab=tab_seopress_404' );
+		}
 
 		return $this->row(
 			'error_404',
 			'resilience',
 			__( 'Custom 404 returns 404', 'wp-seopress-pro' ),
 			404 === $code ? 'good' : 'bad',
-			404 === $code
-				? __( 'Missing pages correctly return an HTTP 404 status.', 'wp-seopress-pro' )
-				: __( 'A missing page did not return a 404 status (soft 404). Search engines may waste crawl budget or index empty pages.', 'wp-seopress-pro' ),
-			array( 'value' => (string) $code )
+			$description,
+			$extra
 		);
 	}
 

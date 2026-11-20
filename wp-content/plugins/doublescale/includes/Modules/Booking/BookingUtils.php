@@ -12,6 +12,28 @@ defined( 'ABSPATH' ) || exit;
 class BookingUtils {
 
 	/**
+	 * The picture shown for a host: the photo on their booking calendar, or their WordPress avatar.
+	 *
+	 * @param int $user_id Host user id.
+	 * @return string Image URL.
+	 */
+	public static function host_image_url( $user_id ) {
+		$user_id = (int) $user_id;
+		if ( $user_id <= 0 ) {
+			return '';
+		}
+		$calendar = \DoubleScale\Modules\Booking\Models\CalendarModel::where( 'user_id', $user_id )->where( 'type', 'host' )->orderBy( 'id' )->first();
+		if ( $calendar ) {
+			$avatar = $calendar->avatar;
+			if ( is_array( $avatar ) && ! empty( $avatar['url'] ) ) {
+				return (string) $avatar['url'];
+			}
+		}
+		return (string) get_avatar_url( $user_id );
+	}
+
+
+	/**
 	 * Create a DateTime object from a date string or timestamp.
 	 *
 	 * @param string|int $datetime      Date string or Unix timestamp.

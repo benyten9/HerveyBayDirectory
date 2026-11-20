@@ -24,6 +24,7 @@ class FormSchemaCustom extends FormApi {
 	protected function getPlaceholderByField( $field ) {
 		switch ( $field ) {
 			case '_seopress_pro_rich_snippets_custom':
+				// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- example.com URL inside a JSON-LD sample used as a textarea placeholder, nothing is ever fetched from it.
 				return __(
 					'e.g. <script type="application/ld+json">{
                     "@context": "https://schema.org/",
@@ -60,6 +61,7 @@ class FormSchemaCustom extends FormApi {
                 }</script>',
 					'wp-seopress-pro'
 				);
+				// phpcs:enable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 		}
 	}
 

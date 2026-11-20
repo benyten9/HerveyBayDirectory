@@ -1,17 +1,17 @@
 <?php
 
-namespace Illuminate\Events;
+namespace DoubleScale\Vendor\Illuminate\Events;
 
 use Exception;
 use ReflectionClass;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Container\Container;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
-use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
-use Illuminate\Contracts\Container\Container as ContainerContract;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Container\Container;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\ShouldQueue;
+use DoubleScale\Vendor\Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container as ContainerContract;
 class Dispatcher implements DispatcherContract
 {
     /**
@@ -408,7 +408,7 @@ class Dispatcher implements DispatcherContract
     protected function createListenerAndJob($class, $method, $arguments)
     {
         $listener = (new ReflectionClass($class))->newInstanceWithoutConstructor();
-        return [$listener, $this->propagateListenerOptions($listener, new \Illuminate\Events\CallQueuedListener($class, $method, $arguments))];
+        return [$listener, $this->propagateListenerOptions($listener, new CallQueuedListener($class, $method, $arguments))];
     }
     /**
      * Propagate listener options to the job.

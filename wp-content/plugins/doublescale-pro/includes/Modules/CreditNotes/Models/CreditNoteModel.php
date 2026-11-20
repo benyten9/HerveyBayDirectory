@@ -9,7 +9,7 @@ namespace DoubleScale\Pro\Modules\CreditNotes\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Documents\Models\InvoiceModel;
@@ -80,28 +80,34 @@ class CreditNoteModel extends Model {
 	public $timestamps = true;
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function invoice() {
+		// Invoices are the Documents module's data. While it is off, a relation
+		// that matches nothing (and never touches the invoices table), so
+		// eager loads and `$credit_note->invoice` both give null.
+		if ( ! doublescale_module_data_ready( 'documents' ) ) {
+			return $this->belongsTo( static::class, 'invoice_id', 'id' )->whereRaw( '1 = 0' );
+		}
 		return $this->belongsTo( InvoiceModel::class, 'invoice_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function sale_agent() {
 		return $this->belongsTo( UserModel::class, 'sale_agent_user_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function applications() {
 		return $this->hasMany( CreditNoteApplicationModel::class, 'credit_note_id', 'id' );
@@ -148,7 +154,7 @@ class CreditNoteModel extends Model {
 	 */
 	public static function get_by_hash( $hash ) {
 		$hash = trim( (string) $hash );
-		if ( '' === $hash || ! preg_match( '/^[a-f0-9]{32}$/', $hash ) ) {
+		if ( '' === $hash || ! preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ) {
 			return null;
 		}
 		return self::query()->where( 'hash', $hash )->first();

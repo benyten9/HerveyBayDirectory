@@ -206,7 +206,7 @@ function nibwp_pro_plugins_api($result, $action, $args)
         'tested'        => (string) ($info['tested']       ?? ''),
         'last_updated'  => (string) ($info['last_updated'] ?? ''),
         'sections'      => (array)  ($info['sections']     ?? [
-            'description' => 'Premium add-on for NIBWP — premium integrations, toolkits, skill packs, file ops, and PHP execution.',
+            'description' => __('Premium add-on for NIBWP — premium integrations, toolkits, skill packs, file ops, and PHP execution.', 'nibwp'),
         ]),
         'banners'       => (array)  ($info['banners']      ?? []),
         'icons'         => (array)  ($info['icons']        ?? []),

@@ -265,7 +265,9 @@ if ( class_exists( CustomFieldModel::class ) ) {
 			return;
 		}
 
-		$custom_fields = CustomFieldModel::where( 'scope', 'contact' )->get();
+		$custom_fields = method_exists( CustomFieldModel::class, 'cached_for_scope' )
+			? CustomFieldModel::cached_for_scope( 'contact' )
+			: CustomFieldModel::where( 'scope', 'contact' )->get();
 
 		if ( ! empty( $custom_fields ) ) {
 			foreach ( $custom_fields as $custom_field ) {

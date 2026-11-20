@@ -3,7 +3,7 @@
  * Plugin Name: Directorist - Claim Listing
  * Plugin URI:  https://directorist.com/product/directorist-claim-listing
  * Description: Enable business owners to claim and verify their listings for credibility and trust.
- * Version: 2.6.0
+ * Version: 2.6.2
  * Author: wpWax
  * Author URI: https://wpwax.com
  * License: GPLv2 or later
@@ -17,7 +17,6 @@ defined('ABSPATH') || die('No direct script access allowed!');
 use Directorist\DTO\Order\DTO as OrderDTO;
 use Directorist\Enums\Order\Status as OrderStatus;
 use DirectoristPricingPlan\App\Enums\Plan\Type as PlanType;
-use DirectoristPricingPlan\App\Enums\Order\RefType as OrderRefType;
 
 if (!class_exists('DCL_Base')){
     final class DCL_Base
@@ -57,6 +56,7 @@ if (!class_exists('DCL_Base')){
 
                 self::$instance->includes();
                 new DCL_Enqueuer();// enqueue required styles and scripts
+                new DCL_REST_Response();
 
                 // Add Settings fields to the extension general fields
                 // push license settings
@@ -111,10 +111,12 @@ if (!class_exists('DCL_Base')){
                 add_filter( 'atbdp_email_templates_settings_sections', array( self::$instance, 'atbdp_email_templates_settings_sections' ) );
 
                 add_action( 'admin_init', [ self::$instance, 'update_controller' ] );
+                add_action( 'admin_init', [ self::$instance, 'dcl_migrate_notification_events' ] );
 
                 // Pricing plan integration
                 add_filter( 'directorist_pricing_plans_registered_features', array( self::$instance, 'register_pricing_plan_feature' ) );
                 add_filter( 'directorist_pricing_plans_features_keys', array( self::$instance, 'pricing_plans_features_keys_alias' ), 10, 2 );
+                add_filter( 'directorist_pricing_plans_can_purchase_plan_for_listing', array( self::$instance, 'allow_pending_claimer_to_purchase_plan' ), 10, 4 );
 
             }
 
@@ -155,6 +157,34 @@ if (!class_exists('DCL_Base')){
             }
 
             return directorist_is_listing_feature_available( 'claim_listing' );
+        }
+
+        /**
+         * Allow a pending claimer to purchase the selected plan for the listing.
+         *
+         * @param bool    $can_purchase Whether the user can purchase the plan.
+         * @param int     $listing_id   Listing ID.
+         * @param int     $user_id      User ID.
+         * @param WP_Post $listing      Listing post object.
+         * @return bool
+         */
+        public function allow_pending_claimer_to_purchase_plan( $can_purchase, $listing_id, $user_id, $listing ) {
+            if ( $can_purchase || ! $listing_id || ! $user_id || ! $listing instanceof WP_Post ) {
+                return $can_purchase;
+            }
+
+            if ( ! get_directorist_option( 'enable_claim_listing', 1 ) || ! is_pricing_plans_active() ) {
+                return false;
+            }
+
+            $claim_fee = get_post_meta( $listing_id, '_claim_fee', true );
+            $charge_by = '' !== $claim_fee ? $claim_fee : get_directorist_option( 'claim_charge_by' );
+
+            if ( 'pricing_plan' !== $charge_by ) {
+                return false;
+            }
+
+            return ! empty( dcl_tract_duplicate_claim( $user_id, $listing_id ) );
         }
 
         public function pricing_plans_features_keys_alias( array $feature_keys, string $context ) {
@@ -476,7 +506,7 @@ if (!class_exists('DCL_Base')){
                     <div class="directorist-modal__content">
                         <div class="row align-items-center">
                             <div class="col-lg-12">
-                                <form id="directorist-claimer__form" class="directorist-claimer__form">
+                                <form id="directorist-claimer__form" class="directorist-claimer__form" data-listing-id="<?php echo esc_attr( $listing_id ); ?>">
                                     <div class="directorist-modal__header">
                                         <h3 class="directorist-modal-title"
                                             id="directorist-claimer__claim-label"><?php _e('Claim This Listing', 'directorist-claim-listing'); ?>
@@ -629,105 +659,24 @@ if (!class_exists('DCL_Base')){
         public function dcl_submit_claim()
         {
             if ( ! directorist_claim_verify_nonce() ) {
-                wp_send_json( [ 'error_msg' => __( 'Sorry! Invalid nonce', 'directorist-claim-listing' ) ] );
+                wp_send_json( [ 'error' => true, 'error_msg' => __( 'Invalid security nonce.', 'directorist-claim-listing' ) ] );
             }
-
-            $data         = [ 'error' => false ];
-            $post_id      = ! empty( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
-            $plan_id      = ! empty( $_POST['plan_id'] ) ? (int) $_POST['plan_id'] : 0;
-            $listing_type = ! empty( $_POST['type'] ) ? sanitize_text_field( $_POST['type'] ) : '';
-
-            $already_claimed = dcl_tract_duplicate_claim( get_current_user_id(), $post_id );
-
-            update_user_meta( get_current_user_id(), '_user_type', 'author' );
-
-            if ( ! empty( $already_claimed ) ) {
-                wp_send_json( [ 'error_msg' => __( 'Sorry! You have already requested for claim.', 'directorist-claim-listing' ) ] );
+            $args = wp_unslash( $_POST );
+            $args['listing_id'] = absint( $args['post_id'] ?? 0 );
+            foreach ( [ 'plan_id', 'order_id' ] as $key ) { $args[ $key ] = absint( $args[ $key ] ?? 0 ); }
+            try {
+                $result = DCL_Claim_Service::submit( $args );
+                wp_send_json( $result + [ 'error' => false, 'message' => __( 'Your claim submitted successfully.', 'directorist-claim-listing' ), 'take_payment' => $result['checkout_required'] ] );
+            } catch ( Throwable $error ) {
+                wp_send_json( [ 'error' => true, 'error_msg' => __( 'Claim could not be submitted. Check eligibility, required fields and purchase references.', 'directorist-claim-listing' ) ] );
             }
-
-            $claim_charge_by = get_directorist_option( 'claim_charge_by' );
-            $charged_by      = get_post_meta( $post_id, '_claim_fee', true );
-            $charged_by      = ( $charged_by !== '' ) ? $charged_by : $claim_charge_by;
-
-            // PATH 1: Free claim
-            if ( 'free_claim' === $charged_by ) {
-                $data['message'] = __( 'Your claim submitted successfully.', 'directorist-claim-listing' );
-                $this->directorist_do_claim( $post_id );
-                wp_send_json( $data );
-            }
-
-            // PATH 2: Static fee — use new checkout system
-            if ( 'static_fee' === $charged_by ) {
-                if ( function_exists( 'directorist_get_checkout_page_url' ) ) {
-                    $data['checkout_url'] = directorist_get_checkout_page_url( 'claim_listing', [ 'listing_id' => $post_id ] );
-                }
-                $data['take_payment'] = true;
-                $this->directorist_do_claim( $post_id );
-                wp_send_json( $data );
-            }
-
-            // PATH 3: Pricing plan
-            if ( 'pricing_plan' === $charged_by && is_pricing_plans_active() ) {
-                if ( empty( $plan_id ) ) {
-                    wp_send_json( [ 'error_msg' => __( 'Please select a plan.', 'directorist-claim-listing' ) ] );
-                }
-
-                $plan = directorist_get_pricing_plan_by_id( $plan_id );
-
-                if ( ! $plan ) {
-                    wp_send_json( [ 'error_msg' => __( 'Invalid plan selected.', 'directorist-claim-listing' ) ] );
-                }
-
-                $user_id   = get_current_user_id();
-                $plan_type = $plan->type ?? PlanType::PACKAGE;
-
-                $package            = directorist_user_package_repository()->get_package_by_plan( $user_id, $plan_id );
-                $has_active_package = $package && directorist_is_package_active( $package );
-
-                if ( PlanType::PACKAGE === $plan_type && $has_active_package ) {
-                    update_post_meta( $post_id, directorist_plan_key(), $plan_id );
-                    do_action( 'atbdp_plan_assigned', $post_id );
-                    $data['message'] = __( 'Your claim submitted successfully.', 'directorist-claim-listing' );
-                    $this->directorist_do_claim( $post_id );
-                    wp_send_json( $data );
-                }
-
-                // Needs payment — redirect to plan checkout
-                $checkout_args = [
-                    'plan_id'    => $plan_id,
-                    'listing_id' => $post_id,
-                ];
-
-                if ( 'featured' === $listing_type ) {
-                    $checkout_args['is_featured'] = '1';
-                }
-
-                $data['checkout_url'] = directorist_get_checkout_page_url( 'plan', $checkout_args );
-                $data['take_payment'] = true;
-                $this->directorist_do_claim( $post_id );
-                wp_send_json( $data );
-            }
-
-            // Fallback: non-paid claim (pricing plans not active but charged_by is pricing_plan)
-            if ( non_paid_claim() ) {
-                $data['message'] = __( 'Your claim submitted successfully.', 'directorist-claim-listing' );
-                $this->directorist_do_claim( $post_id );
-                wp_send_json( $data );
-            }
-
-            // Fallback: static fee checkout when charge type is ambiguous
-            if ( function_exists( 'directorist_get_checkout_page_url' ) ) {
-                $data['checkout_url'] = directorist_get_checkout_page_url( 'claim_listing', [ 'listing_id' => $post_id ] );
-            }
-            $data['take_payment'] = true;
-            $this->directorist_do_claim( $post_id );
-            wp_send_json( $data );
         }
 
         public function directorist_do_claim( $post_id ) {
-            dcl_current_user();
-            dcl_email_admin_listing_claim();
-            dcl_new_claim( $post_id );
+            $args = wp_unslash( $_POST );
+            $args['listing_id'] = absint( $post_id );
+            foreach ( [ 'plan_id', 'order_id' ] as $key ) { $args[ $key ] = absint( $args[ $key ] ?? 0 ); }
+            return DCL_Claim_Service::submit( $args );
         }
 
         /**
@@ -750,7 +699,7 @@ if (!class_exists('DCL_Base')){
             $claimed_by_admin = get_post_meta($listing_id, '_claimed_by_admin', true);
             $class = directorist_legacy_mode() ? 'directorist-claimed atbdp_info_list' : 'directorist-claimed directorist-info-item';
             if (!empty($claimed_by_admin)) {
-                printf('<div class="%s"><div class="directorist-claimed--badge"><span>'. directorist_icon( 'fas fa-check', false ) .'</span> %s</div> <span class="directorist-claimed--tooltip">%s</span></div>', $class, $verified_text, __('Verified by it\'s Owner', 'directorist-claim-listing'));
+                printf('<div class="%s"><div class="directorist-claimed--badge"><span>'. directorist_icon( 'fas fa-check', false ) .'</span> %s</div> <span class="directorist-claimed--tooltip">%s</span></div>', $class, $verified_text, __('Verified by its owner.', 'directorist-claim-listing'));
             }
         }
 
@@ -762,33 +711,7 @@ if (!class_exists('DCL_Base')){
          */
         public function dcl_save_metabox($post_id, $post)
         {
-
-            if (!isset($_POST['post_type'])) {
-                return $post_id;
-            }
-
-// If this is an autosave, our form has not been submitted, so we don't want to do anything
-            if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-                return $post_id;
-            }
-
-// Check the logged in user has permission to edit this post
-            if (!current_user_can('edit_post', $post_id)) {
-                return $post_id;
-            }
-            if (isset($_POST['dcl_listing_claim_details_nonce'])) {
-
-                // Verify that the nonce is valid
-                if (wp_verify_nonce($_POST['dcl_listing_claim_details_nonce'], 'dcl_save_listing_claim_details')) {
-                    $claim_fee = isset($_POST['claim_fee']) ? esc_attr($_POST['claim_fee']) : '';
-                    $claimed_by_admin = isset($_POST['claimed_by_admin']) ? esc_attr($_POST['claimed_by_admin']) : '';
-                    $claim_charge = isset($_POST['claim_charge']) ? (int)$_POST['claim_charge'] : '';
-                    update_post_meta($post_id, '_claim_fee', $claim_fee);
-                    update_post_meta($post_id, '_claim_charge', $claim_charge);
-                    update_post_meta($post_id, '_claimed_by_admin', $claimed_by_admin);
-                }
-            }
-
+            return DCL_Claim_Native::save_listing( $post_id, $post );
         }
 
         public function register_necessary_scripts_front()
@@ -946,32 +869,8 @@ if (!class_exists('DCL_Base')){
 
         public function dcl_save_meta_data($post_id)
         {
-            if (!isset($_POST['post_type'])) {
-                return $post_id;
-            }
-
-// If this is an autosave, our form has not been submitted, so we don't want to do anything
-            if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-                return $post_id;
-            }
-
-// Check the logged in user has permission to edit this post
-            if (!current_user_can('edit_post', $post_id)) {
-                return $post_id;
-            }
-            /*
-             * save all the metadata to option table
-             */
-            // Check if "dcl_claim_details_nonce" nonce is set
-            if (isset($_POST['dcl_claim_details_nonce'])) {
-                // Verify that the nonce is valid
-                if (wp_verify_nonce($_POST['dcl_claim_details_nonce'], 'dcl_save_claim_details')) {
-                    require_once DCL_INC_DIR . 'class-db.php';
-                }
-            }
-
+            return DCL_Claim_Native::save_review( $post_id );
         }
-
 
         /**
          * Register a custom post type "dcl_claim_listing".
@@ -1005,18 +904,28 @@ if (!class_exists('DCL_Base')){
                 'supports' => array('title'),
                 'taxonomies' => array(''),
                 'hierarchical' => false,
-                'public' => true,
+                'public' => false,
+                'publicly_queryable' => false,
                 'show_ui' => current_user_can('manage_atbdp_options') ? true : false, // show the menu only to the admin
                 'show_in_menu' => current_user_can('manage_atbdp_options') ? 'edit.php?post_type=' . ATBDP_POST_TYPE : false,
                 'show_in_admin_bar' => true,
-                'show_in_nav_menus' => true,
+                'show_in_nav_menus' => false,
                 'can_export' => true,
-                'has_archive' => true,
+                'has_archive' => false,
                 'capabilities' => array(
-                    'create_posts' => false,
+                    'create_posts' => 'do_not_allow',
+                    'edit_published_posts' => 'manage_options',
+                    'delete_published_posts' => 'manage_options',
+                    'edit_private_posts' => 'manage_options',
+                    'delete_private_posts' => 'manage_options',
+                    'delete_others_posts' => 'manage_options',
+                    'edit_posts' => 'manage_options',
+                    'edit_others_posts' => 'manage_options',
+                    'publish_posts' => 'manage_options',
+                    'read_private_posts' => 'manage_options',
+                    'delete_posts' => 'manage_options',
                 ),
                 'exclude_from_search' => true,
-                'publicly_queryable' => true,
                 'capability_type' => 'at_biz_dir',
                 'map_meta_cap' => true,
             );
@@ -1047,9 +956,14 @@ if (!class_exists('DCL_Base')){
          */
         public function dcl_default_events_to_notify_user($events)
         {
-            $claim_event = 'claim_confirmation';
-            // lets push our settings to the end of the other settings field and return it.
-            array_push($events, $claim_event);
+            $claim_events = array( 'claim_confirmation', 'new_claim_submitted' );
+
+            foreach ( $claim_events as $claim_event ) {
+                if ( ! in_array( $claim_event, $events, true ) ) {
+                    array_push( $events, $claim_event );
+                }
+            }
+
             return $events;
         }
 
@@ -1059,9 +973,59 @@ if (!class_exists('DCL_Base')){
         public function dcl_default_events_to_notify_admin($events)
         {
             $claim_event = 'new_claim_submitted';
-            // lets push our settings to the end of the other settings field and return it.
-            array_push($events, $claim_event);
+
+            if ( ! in_array( $claim_event, $events, true ) ) {
+                array_push($events, $claim_event);
+            }
+
             return $events;
+        }
+
+        /**
+         * Add claim events to notification settings saved before the events existed.
+         *
+         * The migration runs once so a later administrator opt-out is preserved.
+         *
+         * @since 2.6.1
+         * @return void
+         */
+        public function dcl_migrate_notification_events() {
+            $migration_key = 'directorist_claim_listing_notification_events_migrated_2_6_1';
+
+            if ( get_option( $migration_key ) ) {
+                return;
+            }
+
+            $options = get_option( 'atbdp_option', [] );
+
+            if ( ! is_array( $options ) ) {
+                update_option( $migration_key, 1, false );
+                return;
+            }
+
+            $notification_events = [
+                'notify_user'  => [ 'new_claim_submitted', 'claim_confirmation' ],
+                'notify_admin' => [ 'new_claim_submitted' ],
+            ];
+
+            foreach ( $notification_events as $option_key => $events ) {
+                if ( ! array_key_exists( $option_key, $options ) ) {
+                    continue;
+                }
+
+                $saved_events = (array) $options[ $option_key ];
+
+                foreach ( $events as $event ) {
+                    if ( ! in_array( $event, $saved_events, true ) ) {
+                        $saved_events[] = $event;
+                    }
+                }
+
+                $options[ $option_key ] = array_values( $saved_events );
+            }
+
+            update_option( 'atbdp_option', $options );
+            update_option( $migration_key, 1, false );
         }
 
         /**
@@ -1150,8 +1114,14 @@ if (!class_exists('DCL_Base')){
         private function includes()
         {
             require_once DCL_INC_DIR . 'helper-functions.php';
+            require_once DCL_INC_DIR . 'class-claim-service.php';
+            require_once DCL_INC_DIR . 'class-claim-outbox.php';
+            require_once DCL_INC_DIR . 'class-claim-native.php';
+            require_once DCL_INC_DIR . 'class-mcp.php';
             require_once DCL_INC_DIR . 'class-enqueuer.php';
             require_once DCL_INC_DIR . 'class-claim-now.php';
+            require_once DCL_INC_DIR . 'class-api.php';
+            require_once DCL_INC_DIR . 'class-rest-response.php';
 
             include( dirname(__FILE__) . '/inc/directory_type.php' );
             new Claim_Post_Type_Manager();
@@ -1403,30 +1373,20 @@ if (!class_exists('DCL_Base')){
          * @return void
          */
         public function dcl_handle_order_update( OrderDTO $dto ) {
-            if ( empty( $dto->get_id() ) || OrderStatus::PAID !== $dto->get_status() ) {
-                return;
+            // A checkout callback supplies a reference only. Resolve the persisted order again.
+            if ( $dto->get_id() && OrderStatus::PAID === $dto->get_status() ) {
+                DCL_Claim_Native::paid_order( (int) $dto->get_id() );
             }
+        }
 
-            if ( ! $dto->is_initialized( 'ref_type' ) || ! $dto->is_initialized( 'ref' ) ) {
-                return;
-            }
-
-            $listing_id = $dto->is_initialized( 'listing_id' ) ? $dto->get_listing_id() : null;
-
-            // Static fee claim order
-            if ( 'claim_listing' === $dto->get_ref_type() && ! empty( $listing_id ) ) {
-                return;
-            }
-
-            // Plan-based claim: when a pricing_plan order is paid, assign the plan to the listing
-            if ( is_pricing_plans_active() && OrderRefType::PRICING_PLAN === $dto->get_ref_type() && ! empty( $listing_id ) ) {
-                $plan_id = $dto->is_initialized( 'ref' ) ? $dto->get_ref() : null;
-
-                if ( $plan_id && function_exists( 'directorist_plan_key' ) ) {
-                    update_post_meta( $listing_id, directorist_plan_key(), $plan_id );
-                    do_action( 'atbdp_plan_assigned', $listing_id );
-                }
-            }
+        public function dcl_send_claim_approval_email( $listing_id, $claimer_id ) {
+            $claim_id = (int) get_post_meta( (int) $listing_id, '_dcl_approved_claim', true );
+            if ( ! $claim_id || 'approved' !== get_post_meta( $claim_id, '_claim_status', true ) || (int) get_post_meta( $claim_id, '_listing_claimer', true ) !== (int) $claimer_id ) { return false; }
+            DCL_Claim_Service::atomic( static function () use ( $claim_id ): array {
+                DCL_Claim_Outbox::enqueue( $claim_id, 'approved' );
+                return [];
+            } );
+            return true;
         }
 
         /**
@@ -1529,7 +1489,36 @@ if (!class_exists('DCL_Base')){
         return DCL_Base::instance();
     }
 
-    if (  directorist_is_plugin_active( 'directorist/directorist-base.php' ) ) {
-        DCL_Base();
-    }
+    add_action(
+        'plugins_loaded', function() {
+            if ( ! class_exists( 'Directorist_Base' ) ) {
+                return;
+            }
+
+            $required_version = '8.11';
+            $current_version  = defined( 'ATBDP_VERSION' ) ? ATBDP_VERSION : '0';
+
+            if ( version_compare( $current_version, $required_version, '<' ) ) {
+                add_action(
+                    'admin_notices', function() use ( $required_version, $current_version ) {
+                        printf(
+                            '<div class="notice notice-error"><p>%s</p></div>',
+                            wp_kses_post(
+                                sprintf(
+                                    /* translators: 1: required version, 2: current version */
+                                    __( '<strong>Directorist Claim Listing</strong> requires Directorist version <strong>%1$s</strong> or higher. You are running version <strong>%2$s</strong>. Please update Directorist to use this plugin.', 'directorist-claim-listing' ),
+                                    esc_html( $required_version ),
+                                    esc_html( $current_version )
+                                )
+                            )
+                        );
+                    }
+                );
+                return;
+            }
+
+            DCL_Base();
+        },
+        0
+    );
 }

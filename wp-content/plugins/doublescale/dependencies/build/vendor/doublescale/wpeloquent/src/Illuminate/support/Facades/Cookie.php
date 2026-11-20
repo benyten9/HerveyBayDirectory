@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static void queue(...$parameters)
@@ -9,7 +9,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Cookie\CookieJar
  */
-class Cookie extends \Illuminate\Support\Facades\Facade
+class Cookie extends Facade
 {
     /**
      * Determine if a cookie exists on the request.

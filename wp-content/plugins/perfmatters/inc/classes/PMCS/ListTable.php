@@ -31,7 +31,8 @@ class ListTable extends \WP_List_Table
 	function single_row($item)
 	{
 		$status = $item['active'] ? 'active' : 'inactive';
-		echo '<tr class="pmcs-' . $status . '-snippet">';
+		echo '<tr class="pmcs-' . esc_attr($status) . '-snippet">';
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WP_List_Table column markup.
 			echo $this->single_row_columns($item);
 		echo '</tr>';
 	}
@@ -337,8 +338,7 @@ class ListTable extends \WP_List_Table
 			        echo '<option value="">' . esc_html__('All Types', 'perfmatters') . '</option>';
 
 			        foreach(['php', 'html', 'js', 'css'] as $type) {
-			            $selected = isset($_REQUEST['type']) && $_REQUEST['type'] == $type ? ' selected' : '';
-			            echo '<option value="' . $type . '"' . $selected . '>' . strtoupper($type) . "</option>";
+			            echo '<option value="' . esc_attr($type) . '"' . selected(isset($_REQUEST['type']) && $_REQUEST['type'] == $type, true, false) . '>' . esc_html(strtoupper($type)) . '</option>';
 			        }
 
 		        echo '</select>';
@@ -384,7 +384,8 @@ class ListTable extends \WP_List_Table
         $pagination_html = ob_get_clean();
 
 	    //add code hash to any href values
-	    echo $pagination_html = preg_replace('/href=["\']([^"\']*)["\']/i', 'href="${1}#code"', $pagination_html);
+	    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WP_List_Table pagination markup with #code hash appended.
+	    echo preg_replace('/href=["\']([^"\']*)["\']/i', 'href="${1}#code"', $pagination_html);
     }
 
     //column header html
@@ -396,6 +397,7 @@ class ListTable extends \WP_List_Table
         $column_header_html = ob_get_clean();
 
 	    //add code hash to any href values
-	    echo $column_header_html = preg_replace('/href=["\']([^"\']*)["\']/i', 'href="${1}#code"', $column_header_html);
+	    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WP_List_Table column header markup with #code hash appended.
+	    echo preg_replace('/href=["\']([^"\']*)["\']/i', 'href="${1}#code"', $column_header_html);
     }
 }

@@ -71,6 +71,8 @@ class SubscriptionManager {
 		// Register AJAX actions.
 		add_action( 'wp_ajax_doublescale_unsubscribe', array( $this, 'unsubscribe_ajax' ) );
 		add_action( 'wp_ajax_nopriv_doublescale_unsubscribe', array( $this, 'unsubscribe_ajax' ) );
+		add_action( 'wp_ajax_doublescale_resubscribe', array( $this, 'resubscribe_ajax' ) );
+		add_action( 'wp_ajax_nopriv_doublescale_resubscribe', array( $this, 'resubscribe_ajax' ) );
 	}
 
 	/**
@@ -235,93 +237,156 @@ class SubscriptionManager {
 			wp_send_json_error( array( 'message' => __( 'Invalid ID', 'doublescale' ) ) );
 		}
 
+		// Only the work sits in the try: wp_send_json_*() ends the request with
+		// wp_die(), which throws wherever a die handler throws (tests, some
+		// hosts), and a catch-all around it answered twice — success, then an
+		// error — which the browser cannot parse.
 		try {
 			$contact = ContactModel::get_by_hash_id( $id );
 			if ( ! $contact ) {
-				wp_send_json_error( array( 'message' => __( 'Invalid ID', 'doublescale' ) ) );
+				$html = null;
+			} else {
+				$html = $this->apply_unsubscribe_preferences( $contact, $channel, $reason, $unsubscribe_all );
 			}
-
-			$list_status = isset( $_POST['list_status'] ) && is_array( $_POST['list_status'] )
-				? wp_unslash( $_POST['list_status'] )
-				: array();
-
-			$public_list_ids = ListModel::query()
-				->where( 'is_public', 1 )
-				->pluck( 'id' )
-				->map(
-					function ( $list_id ) {
-						return (int) $list_id;
-					}
-				)
-				->all();
-
-			// The browser submits the list checkboxes as they were rendered, even
-			// when "unsubscribe from all" is ticked. Honouring them here would
-			// re-subscribe a contact who just asked to be left alone, so the
-			// global opt-out below owns the list rows instead.
-			$lists_to_reconcile = $unsubscribe_all ? array() : $public_list_ids;
-
-			foreach ( $lists_to_reconcile as $list_id ) {
-				$desired_status = isset( $list_status[ $list_id ] )
-					? sanitize_text_field( (string) $list_status[ $list_id ] )
-					: 'unsubscribed';
-
-				$is_member = $contact->lists()->whereKey( $list_id )->exists();
-
-				if ( 'subscribed' === $desired_status ) {
-					if ( ! $contact->is_subscribed_to_list( $list_id ) ) {
-						$contact->resubscribe_to_list( $list_id );
-					}
-				} elseif ( $is_member && $contact->is_subscribed_to_list( $list_id ) ) {
-					$contact->unsubscribe_from_list( $list_id, $reason );
-				}
-			}
-
-			if ( $unsubscribe_all ) {
-				$source_type = null;
-				$source_id   = null;
-				$mode        = null;
-
-				$mode_map = array(
-					'email'    => 1,
-					'sms'      => 2,
-					'whatsapp' => 3,
-				);
-				$mode     = $mode_map[ $channel ] ?? null;
-
-				if ( $mode && class_exists( '\DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel' ) ) {
-					$recent_tracking = \DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel::where( 'contact_id', $contact->id )
-						->where( 'mode', $mode )
-						->orderBy( 'created_at', 'desc' )
-						->first();
-
-					if ( $recent_tracking && $recent_tracking->source_type && $recent_tracking->source_id ) {
-						$source_type = $recent_tracking->source_type;
-						$source_id   = $recent_tracking->source_id;
-					}
-				}
-
-				if ( $mode ) {
-					$contact->unsubscribe_from_mode( $mode, $reason, $source_type, $source_id );
-				}
-			} elseif ( ! $contact->is_subscribed_to_channel( $channel ) ) {
-				$contact->subscribe_to_channel( $channel );
-			}
-
-			$contact->refresh();
-
-			ob_start();
-			$this->render_styled_unsubscribe_page( false, $unsubscribe_all );
-			$html = ob_get_clean();
-
-			wp_send_json_success(
-				array(
-					'html' => $html,
-				)
-			);
 		} catch ( \Exception $e ) {
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
+
+		if ( null === $html ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid ID', 'doublescale' ) ) );
+		}
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * "Resubscribe" on the confirmation page: turn the channel back on and
+	 * rejoin the lists the contact left with "unsubscribe from all".
+	 */
+	public function resubscribe_ajax() {
+		check_ajax_referer( 'doublescale-resubscribe', 'nonce' );
+
+		$id      = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+		$channel = isset( $_POST['channel'] ) ? sanitize_text_field( wp_unslash( $_POST['channel'] ) ) : 'email';
+		$lists   = isset( $_POST['lists'] ) ? sanitize_text_field( wp_unslash( $_POST['lists'] ) ) : '';
+
+		$contact = $id ? ContactModel::get_by_hash_id( $id ) : null;
+		if ( ! $contact ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid ID', 'doublescale' ) ) );
+		}
+
+		$contact->subscribe_to_channel( $channel );
+
+		// Only lists the contact already belongs to: the field comes from the
+		// browser, so it can bring back a list but never add a new one.
+		$member_ids = array_map( 'intval', $contact->lists()->pluck( $contact->lists()->getRelated()->getQualifiedKeyName() )->all() );
+		foreach ( array_filter( array_map( 'intval', explode( ',', $lists ) ) ) as $list_id ) {
+			if ( in_array( $list_id, $member_ids, true ) && ! $contact->is_subscribed_to_list( $list_id ) ) {
+				$contact->resubscribe_to_list( $list_id );
+			}
+		}
+
+		ob_start();
+		$this->render_styled_unsubscribe_page( false, false, null, $channel, array(), true );
+		wp_send_json_success( array( 'html' => ob_get_clean() ) );
+	}
+
+	/**
+	 * Apply what the preference form asked for, and render the page to show.
+	 *
+	 * @param ContactModel $contact         The contact who submitted the form.
+	 * @param string       $channel         Channel the form was opened for.
+	 * @param string       $reason          Reason given.
+	 * @param bool         $unsubscribe_all Whether "unsubscribe from all" was ticked.
+	 * @return string The confirmation page.
+	 */
+	private function apply_unsubscribe_preferences( $contact, $channel, $reason, $unsubscribe_all ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by unsubscribe_ajax().
+		$list_status = isset( $_POST['list_status'] ) && is_array( $_POST['list_status'] )
+			? wp_unslash( $_POST['list_status'] )
+			: array();
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$public_list_ids = ListModel::query()
+			->where( 'is_public', 1 )
+			->pluck( 'id' )
+			->map(
+				function ( $list_id ) {
+					return (int) $list_id;
+				}
+			)
+			->all();
+
+		// The browser submits the list checkboxes as they were rendered, even
+		// when "unsubscribe from all" is ticked. Honouring them here would
+		// re-subscribe a contact who just asked to be left alone, so the
+		// global opt-out below owns the list rows instead.
+		$lists_to_reconcile = $unsubscribe_all ? array() : $public_list_ids;
+
+		// The global opt-out also leaves every list; remember which ones so
+		// "Resubscribe" on the confirmation page can put them back.
+		$relation         = $contact->lists();
+		$lists_before_all = $unsubscribe_all
+			? array_values(
+				array_filter(
+					array_map( 'intval', $relation->pluck( $relation->getRelated()->getQualifiedKeyName() )->all() ),
+					array( $contact, 'is_subscribed_to_list' )
+				)
+			)
+			: array();
+
+		foreach ( $lists_to_reconcile as $list_id ) {
+			$desired_status = isset( $list_status[ $list_id ] )
+				? sanitize_text_field( (string) $list_status[ $list_id ] )
+				: 'unsubscribed';
+
+			$is_member = $contact->lists()->whereKey( $list_id )->exists();
+
+			if ( 'subscribed' === $desired_status ) {
+				if ( ! $contact->is_subscribed_to_list( $list_id ) ) {
+					$contact->resubscribe_to_list( $list_id );
+				}
+			} elseif ( $is_member && $contact->is_subscribed_to_list( $list_id ) ) {
+				$contact->unsubscribe_from_list( $list_id, $reason );
+			}
+		}
+
+		if ( $unsubscribe_all ) {
+			$source_type = null;
+			$source_id   = null;
+			$mode        = null;
+
+			$mode_map = array(
+				'email'    => 1,
+				'sms'      => 2,
+				'whatsapp' => 3,
+			);
+			$mode     = $mode_map[ $channel ] ?? null;
+
+			if ( $mode && class_exists( '\DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel' ) ) {
+				$recent_tracking = \DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel::where( 'contact_id', $contact->id )
+					->where( 'mode', $mode )
+					->orderBy( 'created_at', 'desc' )
+					->first();
+
+				if ( $recent_tracking && $recent_tracking->source_type && $recent_tracking->source_id ) {
+					$source_type = $recent_tracking->source_type;
+					$source_id   = $recent_tracking->source_id;
+				}
+			}
+
+			if ( $mode ) {
+				$contact->unsubscribe_from_mode( $mode, $reason, $source_type, $source_id );
+			}
+		} elseif ( ! $contact->is_subscribed_to_channel( $channel ) ) {
+			$contact->subscribe_to_channel( $channel );
+		}
+
+		$contact->refresh();
+
+		ob_start();
+		$this->render_styled_unsubscribe_page( false, $unsubscribe_all, $contact, $channel, $lists_before_all );
+		return ob_get_clean();
 	}
 
 	/**
@@ -351,7 +416,7 @@ class SubscriptionManager {
 		$has_public_lists = $public_lists->isNotEmpty();
 
 		if ( ! $contact->is_subscribed_to_channel( $channel ) && ! $has_public_lists ) {
-			$this->render_styled_unsubscribe_page( true );
+			$this->render_styled_unsubscribe_page( true, true, $contact, $channel );
 			exit;
 		}
 
@@ -395,7 +460,7 @@ class SubscriptionManager {
 	 *
 	 * @param ContactModel                            $contact      Contact.
 	 * @param string                                  $channel      Channel (email, sms, whatsapp).
-	 * @param \Illuminate\Support\Collection|array    $public_lists Public lists collection.
+	 * @param \DoubleScale\Vendor\Illuminate\Support\Collection|array    $public_lists Public lists collection.
 	 *
 	 * @return string
 	 */
@@ -418,7 +483,7 @@ class SubscriptionManager {
 						'confirm'      => __( 'Save Preferences', 'doublescale' ),
 						'genericError' => __( 'An error occurred. Please try again.', 'doublescale' ),
 					),
-				)
+				), JSON_HEX_TAG | JSON_HEX_AMP
 			) . ';',
 			'before'
 		);
@@ -440,6 +505,7 @@ class SubscriptionManager {
 			<?php wp_head(); ?>
 		</head>
 		<body>
+			<?php self::render_site_brand(); ?>
 			<div class="unsubscribe-container">
 				<div class="icon-wrapper">
 					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -540,6 +606,7 @@ class SubscriptionManager {
 					<button type="submit"><?php esc_html_e( 'Save Preferences', 'doublescale' ); ?></button>
 				</form>
 			</div>
+			<?php self::render_page_note(); ?>
 
 			<?php wp_footer(); ?>
 		</body>
@@ -578,7 +645,7 @@ class SubscriptionManager {
 						'confirm'      => __( 'Confirm Unsubscribe', 'doublescale' ),
 						'genericError' => __( 'An error occurred. Please try again.', 'doublescale' ),
 					),
-				)
+				), JSON_HEX_TAG | JSON_HEX_AMP
 			) . ';',
 			'before'
 		);
@@ -600,6 +667,7 @@ class SubscriptionManager {
 			<?php wp_head(); ?>
 		</head>
 		<body>
+			<?php self::render_site_brand(); ?>
 			<div class="unsubscribe-container">
 				<div class="icon-wrapper">
 					<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -666,6 +734,7 @@ class SubscriptionManager {
 					<button type="submit"><?php esc_html_e( 'Confirm Unsubscribe', 'doublescale' ); ?></button>
 				</form>
 			</div>
+			<?php self::render_page_note(); ?>
 
 			<?php wp_footer(); ?>
 		</body>
@@ -711,6 +780,43 @@ class SubscriptionManager {
 	}
 
 	/**
+	 * The sender above the card: the site's logo (custom logo, else site icon)
+	 * or its first letter, and its name, linking home.
+	 */
+	public static function render_site_brand() {
+		$site_name = get_bloginfo( 'name' );
+		$logo_id   = (int) get_theme_mod( 'custom_logo' );
+		$logo_url  = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
+		if ( ! $logo_url ) {
+			$logo_url = get_site_icon_url( 96 );
+		}
+		?>
+		<a class="ds-brand" href="<?php echo esc_url( home_url( '/' ) ); ?>">
+			<?php if ( $logo_url ) : ?>
+				<img src="<?php echo esc_url( $logo_url ); ?>" alt="">
+			<?php else : ?>
+				<span class="ds-brand__mark" aria-hidden="true"><?php echo esc_html( function_exists( 'mb_substr' ) ? mb_substr( $site_name, 0, 1 ) : substr( $site_name, 0, 1 ) ); ?></span>
+			<?php endif; ?>
+			<span><?php echo esc_html( $site_name ); ?></span>
+		</a>
+		<?php
+	}
+
+	/**
+	 * The line under the card: why the reader is on this page.
+	 */
+	public static function render_page_note() {
+		?>
+		<p class="ds-page-note">
+			<?php
+			/* translators: %s: site name */
+			echo esc_html( sprintf( __( 'You are seeing this page because you received messages from %s.', 'doublescale' ), get_bloginfo( 'name' ) ) );
+			?>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Register Scripts
 	 */
 	public function register_scripts() {
@@ -724,16 +830,17 @@ class SubscriptionManager {
 		);
 		wp_register_style( 'doublescale-public', DOUBLESCALE_PLUGIN_URL . 'assets/css/public.css', array(), '1.0.0' );
 
-		wp_register_style(
-			'doublescale-unsubscribe-form',
-			DOUBLESCALE_PLUGIN_URL . 'assets/css/subscription/unsubscribe-form.css',
-			array(),
-			DOUBLESCALE_VERSION
-		);
+		// The success sheet holds the shared page layout; the form adds to it.
 		wp_register_style(
 			'doublescale-unsubscribe-success',
 			DOUBLESCALE_PLUGIN_URL . 'assets/css/subscription/unsubscribe-success.css',
 			array(),
+			DOUBLESCALE_VERSION
+		);
+		wp_register_style(
+			'doublescale-unsubscribe-form',
+			DOUBLESCALE_PLUGIN_URL . 'assets/css/subscription/unsubscribe-form.css',
+			array( 'doublescale-unsubscribe-success' ),
 			DOUBLESCALE_VERSION
 		);
 		wp_register_script(
@@ -748,12 +855,19 @@ class SubscriptionManager {
 	/**
 	 * Render styled unsubscribe success page
 	 *
-	 * @param bool $already_unsubscribed Whether user was already unsubscribed.
-	 * @param bool $unsubscribed_all     Whether global unsubscribe was applied.
+	 * @param bool              $already_unsubscribed Whether user was already unsubscribed.
+	 * @param bool              $unsubscribed_all     Whether global unsubscribe was applied.
+	 * @param ContactModel|null $contact              Contact, for the Resubscribe button.
+	 * @param string            $channel              Channel unsubscribed from.
+	 * @param int[]             $list_ids             Lists left by the global opt-out, rejoined on Resubscribe.
+	 * @param bool              $resubscribed         The page after Resubscribe.
 	 */
-	private function render_styled_unsubscribe_page( $already_unsubscribed = false, $unsubscribed_all = true ) {
-		$site_name = get_bloginfo( 'name' );
-		if ( $already_unsubscribed ) {
+	private function render_styled_unsubscribe_page( $already_unsubscribed = false, $unsubscribed_all = true, $contact = null, $channel = 'email', $list_ids = array(), $resubscribed = false ) {
+		$site_name       = get_bloginfo( 'name' );
+		$can_resubscribe = $contact && ( $already_unsubscribed || $unsubscribed_all );
+		if ( $resubscribed ) {
+			$title = __( 'You\'re Subscribed Again', 'doublescale' );
+		} elseif ( $already_unsubscribed ) {
 			$title = __( 'Already Unsubscribed', 'doublescale' );
 		} elseif ( $unsubscribed_all ) {
 			$title = __( 'You\'re Unsubscribed', 'doublescale' );
@@ -781,6 +895,7 @@ class SubscriptionManager {
 			<?php wp_print_styles( 'doublescale-unsubscribe-success' ); ?>
 		</head>
 		<body>
+			<?php self::render_site_brand(); ?>
 			<div class="unsubscribe-container">
 				<div class="success-icon">
 					<svg viewBox="0 0 52 52">
@@ -792,7 +907,9 @@ class SubscriptionManager {
 				
 				<p class="message">
 					<?php
-					if ( $already_unsubscribed ) {
+					if ( $resubscribed ) {
+						esc_html_e( 'Welcome back! You will receive our messages again.', 'doublescale' );
+					} elseif ( $already_unsubscribed ) {
 						esc_html_e( 'You have already unsubscribed from our mailing list.', 'doublescale' );
 					} elseif ( $unsubscribed_all ) {
 						esc_html_e( 'You have been successfully unsubscribed from our mailing list. We\'re sorry to see you go, but we respect your decision.', 'doublescale' );
@@ -808,14 +925,55 @@ class SubscriptionManager {
 				</p>
 				<?php endif; ?>
 
-				<a href="<?php echo esc_url( home_url() ); ?>" class="home-button">
-					<?php esc_html_e( 'Back to Home', 'doublescale' ); ?>
-				</a>
+				<div class="ds-actions">
+					<a href="<?php echo esc_url( home_url() ); ?>" class="home-button">
+						<?php esc_html_e( 'Back to Home', 'doublescale' ); ?>
+					</a>
+				</div>
 
+				<?php if ( $can_resubscribe ) : ?>
+				<form class="footer-note ds-resubscribe" id="doublescale-resubscribe-form">
+					<input type="hidden" name="action" value="doublescale_resubscribe">
+					<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'doublescale-resubscribe' ) ); ?>">
+					<input type="hidden" name="id" value="<?php echo esc_attr( $contact->hash_id ); ?>">
+					<input type="hidden" name="channel" value="<?php echo esc_attr( $channel ); ?>">
+					<input type="hidden" name="lists" value="<?php echo esc_attr( implode( ',', array_map( 'intval', $list_ids ) ) ); ?>">
+					<span><?php esc_html_e( 'Unsubscribed by mistake?', 'doublescale' ); ?></span>
+					<button type="submit" class="ds-link-button"><?php esc_html_e( 'Resubscribe', 'doublescale' ); ?></button>
+					<span class="ds-resubscribe-error" role="alert" hidden><?php esc_html_e( 'Something went wrong. Please try again.', 'doublescale' ); ?></span>
+				</form>
+				<script>
+				( function () {
+					var form = document.getElementById( 'doublescale-resubscribe-form' );
+					form.addEventListener( 'submit', function ( event ) {
+						event.preventDefault();
+						var button = form.querySelector( 'button' );
+						button.disabled = true;
+						fetch( <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, { method: 'POST', body: new FormData( form ) } )
+							.then( function ( response ) { return response.json(); } )
+							.then( function ( response ) {
+								if ( response.success && response.data && response.data.html ) {
+									document.open();
+									document.write( response.data.html );
+									document.close();
+									return;
+								}
+								throw new Error();
+							} )
+							.catch( function () {
+								button.disabled = false;
+								form.querySelector( '.ds-resubscribe-error' ).hidden = false;
+							} );
+					} );
+				} )();
+				</script>
+				<?php elseif ( ! $resubscribed ) : ?>
 				<div class="footer-note">
 					<?php esc_html_e( 'Changed your mind? You can resubscribe anytime by contacting us.', 'doublescale' ); ?>
 				</div>
+				<?php endif; ?>
 			</div>
+			<?php self::render_page_note(); ?>
 		</body>
 		</html>
 		<?php

@@ -2,6 +2,12 @@
 # END LSCACHE
 # BEGIN NON_LSCACHE
 # END NON_LSCACHE
+# Block Meta AI crawler
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP_USER_AGENT} meta-externalagent [NC]
+RewriteRule .* - [F,L]
+</IfModule>
 # BEGIN WordPress
 # The directives (lines) between "BEGIN WordPress" and "END WordPress" are
 # dynamically generated, and should only be modified via WordPress filters.

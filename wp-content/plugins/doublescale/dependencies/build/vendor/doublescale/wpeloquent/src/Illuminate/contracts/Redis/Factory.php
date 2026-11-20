@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Redis;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Redis;
 
 interface Factory
 {

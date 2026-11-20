@@ -303,17 +303,52 @@ function nibwp_oauth_prune_unused_clients(int $max_age = DAY_IN_SECONDS): void
         $granted[$id] = true;
     }
 
-    $cutoff = time() - $max_age;
+    $now = time();
+    $cutoff = $now - $max_age;
     $keep = [];
+    $dated = false;
     foreach ($clients as $id => $client) {
-        $created = (int) ($client['created'] ?? 0);
-        $manual = !empty($client['manual']);
-        if ($manual || isset($granted[$id]) || $created === 0 || $created > $cutoff) {
+        // A record made by hand is waiting to be pasted into an AI client, and
+        // one that holds a token is in use by somebody. Neither is an abandoned
+        // attempt, whatever its age, so neither is ever swept.
+        if (!empty($client['manual']) || isset($granted[$id])) {
+            $keep[$id] = $client;
+            continue;
+        }
+
+        // Two spellings of one fact: the manual form writes `created`, dynamic
+        // registration writes `registered`. Reading only `created` dated every
+        // dynamic registration to zero — and zero was then treated as "keep
+        // forever". The one kind of record an anonymous caller can create was
+        // the one kind this sweep never removed, so a patient or distributed
+        // caller could fill the 200-client cap with registrations nobody had
+        // consented to and every legitimate AI client was refused with 429 from
+        // then on, permanently. Reading both keys is what lets the cap recover.
+        $age_from = (int) ($client['created'] ?? 0);
+        if ($age_from === 0) {
+            $age_from = (int) ($client['registered'] ?? 0);
+        }
+
+        if ($age_from === 0) {
+            // Undatable, so there is no age to compare against the cutoff.
+            // Stamping it on first sight rather than keeping it forever is the
+            // difference between a record that ages out one window late and one
+            // that holds a seat against the cap until an administrator notices
+            // and deletes it by hand. Deleting it outright is the wrong call in
+            // the other direction: a record we cannot date is not evidence of
+            // abuse, and it may be a connection somebody is mid-way through.
+            $client['registered'] = $now;
+            $keep[$id] = $client;
+            $dated = true;
+            continue;
+        }
+
+        if ($age_from > $cutoff) {
             $keep[$id] = $client;
         }
     }
 
-    if (count($keep) !== count($clients)) {
+    if ($dated || count($keep) !== count($clients)) {
         update_option(NIBWP_OAUTH_CLIENTS_OPTION, $keep, false);
     }
 }

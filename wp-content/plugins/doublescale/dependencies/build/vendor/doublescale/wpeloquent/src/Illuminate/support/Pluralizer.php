@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
-use Doctrine\Common\Inflector\Inflector;
+use DoubleScale\Vendor\Doctrine\Common\Inflector\Inflector;
 class Pluralizer
 {
     /**

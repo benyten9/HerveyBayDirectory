@@ -1,8 +1,8 @@
 <?php
 
-namespace WPEloquent\Eloquent;
+namespace DoubleScale\Vendor\WPEloquent\Eloquent;
 
-use Illuminate\Database\Query\Builder as EloquentBuilder;
+use DoubleScale\Vendor\Illuminate\Database\Query\Builder as EloquentBuilder;
 /**
  * QueryBuilder Class
  *

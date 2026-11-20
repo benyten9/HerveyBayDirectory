@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/etchwp-pro-refine-component', [
     'label'       => __('EtchWP Pro — Refine Component', 'nibwp'),
-    'description' => __('Applies a natural-language refinement to an existing EtchWP component JSON while preserving BEM grammar, ACSS tokens, stable data-etch-sid IDs, and the existing __libraryMeta.', 'nibwp'),
+    'description' => 'Applies a natural-language refinement to an existing EtchWP component JSON while preserving BEM grammar, ACSS tokens, stable data-etch-sid IDs, and the existing __libraryMeta.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

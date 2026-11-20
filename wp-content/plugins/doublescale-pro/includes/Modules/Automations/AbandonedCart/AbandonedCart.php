@@ -276,9 +276,24 @@ class AbandonedCart {
 			return;
 		}
 
-		if ( $abandoned_cart->status === 'recovered' ) {
+		// Only a cart still waiting for its shopper (not recovered, opted out, lost…)
+		if ( 'pending' !== $abandoned_cart->status ) {
 			return;
 		}
+
+		// Every change at checkout re-arms the timer and queues another check: only the
+		// check for the latest change counts, so one cart starts its workflows once.
+		$wait_period = (int) ( $this->settings['wait_period'] ?? 30 ) * MINUTE_IN_SECONDS;
+		$changed_at  = strtotime( (string) $abandoned_cart->updated_at . ' UTC' );
+		if ( $changed_at && $changed_at + $wait_period > time() + 5 ) {
+			return;
+		}
+		// Overdue checks can run in the same batch: fire once per version of the cart.
+		$fired_key = 'doublescale_cart_fired_' . (int) $abandoned_cart->id . '_' . (int) $changed_at;
+		if ( get_transient( $fired_key ) ) {
+			return;
+		}
+		set_transient( $fired_key, 1, DAY_IN_SECONDS );
 
 		if ( self::should_sync_contact_to_crm( $this->settings ) ) {
 			$this->add_contact( $abandoned_cart );
@@ -698,7 +713,7 @@ class AbandonedCart {
 	 * @return AbandonedCartModel|false
 	 */
 	public function save( $data ) {
-		$wait_period = $this->settings['wait_period'] ?? 1;
+		$wait_period = $this->settings['wait_period'] ?? 30;
 		$wait_period = $wait_period * 60;
 
 		try {
@@ -732,7 +747,7 @@ class AbandonedCart {
 	 * @return AbandonedCartModel|false
 	 */
 	public function update( $hash_key, $data ) {
-		$wait_period = $this->settings['wait_period'] ?? 1;
+		$wait_period = $this->settings['wait_period'] ?? 30;
 		$wait_period = $wait_period * 60;
 
 		try {

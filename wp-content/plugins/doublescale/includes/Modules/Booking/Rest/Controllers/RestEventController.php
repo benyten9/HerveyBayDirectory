@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 use DoubleScale\Modules\Booking\Models\AvailabilityModel;
 use WP_Error;
 use Exception;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -940,7 +940,7 @@ class RestEventController extends RestController {
 				$user = UserModel::find( $userId );
 
 				if ( $user ) {
-					$user_avatar_url = get_avatar_url( $user->ID );
+					$user_avatar_url = \DoubleScale\Modules\Booking\BookingUtils::host_image_url( $user->ID );
 					$availabilities  = AvailabilityModel::where( 'user_id', $user->ID )->get();
 
 					$users[] = array(
@@ -1588,11 +1588,24 @@ class RestEventController extends RestController {
 				return new WP_Error( 'rest_event_error', __( 'Meta not found', 'doublescale' ), array( 'status' => 404 ) );
 			}
 
-			// For advanced_settings, merge with defaults so legacy events (or events
-			// missing keys added in newer versions) return the full expected shape
-			// instead of an empty/partial object that crashes the React form.
-			if ( 'advanced_settings' === $key ) {
-				$defaults = EventFields::instance()->get_default_advanced_settings();
+			// Merge with defaults so legacy events (or events missing keys added in
+			// newer versions) return the full expected shape instead of an
+			// empty/partial object that crashes the React form.
+			//
+			// `limits` belongs here for the same reason as advanced_settings, and
+			// for a failure that was worse: an event whose limits meta was never
+			// written answers with an empty array, and the availability tab reads
+			// `response.duration.limits` straight off it inside a state updater.
+			// That throws "Cannot read properties of undefined (reading 'limits')"
+			// during render, so the whole event screen renders blank with no way
+			// back except the browser's back button.
+			$defaults_by_key = array(
+				'advanced_settings' => 'get_default_advanced_settings',
+				'limits'            => 'get_default_limit_settings',
+			);
+
+			if ( isset( $defaults_by_key[ $key ] ) ) {
+				$defaults = EventFields::instance()->{$defaults_by_key[ $key ]}();
 				$meta     = is_array( $meta ) ? array_merge( $defaults, $meta ) : $defaults;
 			}
 

@@ -18,6 +18,8 @@ use DoubleScale\Core\Container;
 use DoubleScale\Modules\Sales\Services\SalesSettings;
 use DoubleScale\Pro\Modules\Sales\Approvals\Rest\Controllers\RestApprovalController;
 use DoubleScale\Pro\Modules\Sales\Approvals\Services\ApprovalWorkflow;
+use DoubleScale\Pro\Modules\Sales\EInvoicing\EInvoicing;
+use DoubleScale\Pro\Modules\Sales\EInvoicing\Rest\Controllers\RestXRechnungController;
 use DoubleScale\Pro\Modules\Sales\PaymentGateways\Loader;
 use DoubleScale\Pro\Modules\Sales\PaymentGateways\StripeInvoiceWebhookHandler;
 use DoubleScale\Pro\Modules\Sales\Rest\Controllers\RestSureCartProductController;
@@ -54,7 +56,7 @@ final class Module extends AbstractModule {
 	 * @return string
 	 */
 	public function description(): string {
-		return __( 'Pro extensions for Sales: online invoice payments (Stripe).', 'doublescale' );
+		return __( 'Pro extensions for Sales: online invoice payments (Stripe) and XRechnung e-invoices.', 'doublescale' );
 	}
 
 	/**
@@ -93,6 +95,7 @@ final class Module extends AbstractModule {
 			RestWooProductController::class,
 			RestSureCartProductController::class,
 			RestWooCommerceSettingsController::class,
+			RestXRechnungController::class,
 		);
 	}
 
@@ -133,6 +136,8 @@ final class Module extends AbstractModule {
 
 		Loader::register();
 		ApprovalWorkflow::register();
+		// XRechnung (EN 16931) e-invoice export for invoices.
+		EInvoicing::register();
 
 		// Eagerly instantiate so `doublescale_stripe_invoice_event` is bound
 		// before the Stripe webhook REST handler fires (mirrors Booking Pro).

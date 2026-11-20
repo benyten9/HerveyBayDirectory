@@ -65,6 +65,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('Premium Support', 'updraftplus'),
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->dashboard_top_or_report,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			2 => array(
 				'prefix' => '',
@@ -76,6 +77,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('More about UpdraftVault', 'updraftplus'),
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->dashboard_top_or_report,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			'googledrive' => array(
 				'prefix' => '',
@@ -123,6 +125,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('See premium features', 'updraftplus'),
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->dashboard_top_or_report,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			6 => array(
 				'prefix' => '',
@@ -134,6 +137,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('Migration', 'updraftplus'),
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->anywhere,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			7 => array(
 				'prefix' => '',
@@ -144,6 +148,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('UpdraftCentral', 'updraftplus'),
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->dashboard_top_or_report,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			8 => array(
 				'prefix' => '',
@@ -154,6 +159,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('UpdraftCentral', 'updraftplus'),
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->anywhere,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			'rate' => array(
 				'text' => __('Hey - We noticed UpdraftPlus has kept your site safe for a while.', 'updraftplus').' '.__('If you like us, please consider leaving a positive review to spread the word.', 'updraftplus').' '.__('Or if you have any issues or questions please leave us a support message', 'updraftplus').' <a href="https://wordpress.org/support/plugin/updraftplus/" target="_blank">'.__('here', 'updraftplus').'.</a><br>'.__('Thank you so much!', 'updraftplus').'<br><br> - <b>'.__('Team Updraft', 'updraftplus').'</b><br>',
@@ -179,12 +185,13 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'prefix' => '',
 				'title' => __('Follow TeamUpdraft', 'updraftplus'),
 				'text' => $this->url_start(true, 'facebook.com/TeamUpdraftWP/', true).__('Facebook', 'updraftplus').$this->url_end(true, 'facebook.com/TeamUpdraftWP/', true).' - '.
-					$this->url_start(true, 'x.com/TeamUpdraftWP/', true).__('Twitter/X', 'updraftplus').$this->url_end(true, 'x.com/TeamUpdraftWP/', true).' - '.
+					$this->url_start(true, 'x.com/TeamUpdraftWP/', true).__('X/Twitter', 'updraftplus').$this->url_end(true, 'x.com/TeamUpdraftWP/', true).' - '.
 					$this->url_start(true, 'linkedin.com/company/teamupdraft', true).__('LinkedIn', 'updraftplus').$this->url_end(true, 'linkedin.com/company/teamupdraft', true).' - '.
 					$this->url_start(true, 'youtube.com/@TeamUpdraftWP', true).__('YouTube', 'updraftplus').$this->url_end(true, 'youtube.com/@TeamUpdraftWP', true),
 				'image' => 'notices/teamupdraft_logo.png',
-				'dismiss_time' => false,
+				'dismiss_time' => 'dismiss_social_media',
 				'supported_positions' => $this->anywhere,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			'autobackup' => array(
 				'prefix' => '',
@@ -196,6 +203,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => __('Back up before updates', 'updraftplus'),
 				'dismiss_time' => 'dismissautobackup',
 				'supported_positions' => $this->autobackup_bottom_or_report,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			'aios' => array(
 				'prefix' => '',
@@ -206,6 +214,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				'button_text' => 'AIOS',
 				'dismiss_time' => 'dismiss_notice',
 				'supported_positions' => $this->anywhere,
+				'validity_function' => 'is_advertisement_allowed',
 			),
 			'wp-optimize' => array(
 				'prefix' => '',
@@ -220,21 +229,48 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 			),
 			
 			// The sale adverts content starts here
-			'blackfriday' => array(
+			'blackfriday_upsell' => array(
 				'prefix' => '',
-				'title' => __('20% off - Black Friday Sale', 'updraftplus'),
+				'title' => __('Forget the hype this Black Friday', 'updraftplus'),
 				'text' => $sale_description,
-				'text2' => __('at checkout.', 'updraftplus').' <b>'.__('Hurry, offer ends 2 December.', 'updraftplus').'</b>',
-				'image' => 'notices/sale_20_25.png',
-				/* translators: 1: Discount percentage, 2: Discount code */
-				'button_text' => sprintf(__('Save %1$s with code %2$s', 'updraftplus'), '20%', 'blackfridaysale2025'),
-				'button_link' => 'https://teamupdraft.com/plugin-black-friday/?utm_source=udp-plugin&utm_medium=referral&utm_campaign=bf25-udp-plugin-banner&utm_content=bf-sale&utm_creative_format=advert',
+				/* translators: %s: Discount percentage */
+				'text2' => sprintf(__('Invest in something you can depend on: %s off UpdraftPlus Premium.', 'updraftplus'), '40%').' '.
+					/* translators: %s: Discount code */
+					sprintf(__('Enter code: %s at the checkout to get your discount.', 'updraftplus'), 'UDPBF26'),
+				'image' => 'notices/black_friday_40_2026.png',
+				'button_text' => __('Get my Black Friday discount', 'updraftplus'),
+				'button_link' => 'https://teamupdraft.com/black-friday-plugin-free-udp/?utm_source=udp-free-plugin&utm_medium=in-plugin&utm_campaign=black-friday&utm_content=udp-free-banner&code_variable=UDPBF26',
+				'button_report_link' => 'https://teamupdraft.com/black-friday-plugin-free-udp/?utm_source=udp-free-plugin&utm_medium=backup-report&utm_campaign=black-friday&utm_content=udp-free-banner&code_variable=UDPBF26',
 				'campaign' => 'blackfriday',
 				'button_meta' => 'inline',
 				'dismiss_time' => 'dismiss_season',
-				'valid_from' => '2025-11-14 00:00:00',
-				'valid_to' => '2025-12-02 23:59:59',
+				'valid_from' => '2026-11-13 00:00:00',
+				'valid_to' => '2026-12-02 23:59:59',
 				'supported_positions' => $this->dashboard_top_or_report,
+				'validity_function' => 'validate_udaddons_directory',
+			),
+			'blackfriday_cross_sell' => array(
+				'prefix' => '',
+				'title' => __('This Black Friday Only', 'updraftplus'),
+				'text' => __("We're not going to do this again soon.", 'updraftplus').' '.
+					/* translators: %s: Maximum discount percentage */
+					sprintf(__('Up to %s off our other essential WordPress tools.', 'updraftplus'), '75%').' <br>'.
+					/* translators: 1: Discount percentage, 2: Discount code */
+					sprintf(__('Save %1$s on AIOS Premium with coupon code: %2$s', 'updraftplus'), '75%', 'UDPAIOSVIP26').' <br>'.
+					/* translators: 1: Discount percentage, 2: Discount code */
+					sprintf(__('Save %1$s on WP-Optimize Premium with coupon code: %2$s', 'updraftplus'), '40%', 'UDPWPOVIP26'),
+				'text2' => '',
+				'image' => 'notices/black_friday_cross_2026.png',
+				'button_text' => __('Get my Black Friday discount', 'updraftplus'),
+				'button_link' => 'https://teamupdraft.com/black-friday-plugin-premium-udp/?utm_source=udp-premium-banner&utm_medium=in-plugin&utm_campaign=black-friday&utm_content=udp-premium-banner',
+				'button_report_link' => 'https://teamupdraft.com/black-friday-plugin-premium-udp/?utm_source=udp-premium-banner&utm_medium=backup-report&utm_campaign=black-friday&utm_content=udp-premium-banner',
+				'campaign' => 'blackfriday',
+				'button_meta' => 'inline',
+				'dismiss_time' => 'dismiss_season',
+				'valid_from' => '2026-11-13 00:00:00',
+				'valid_to' => '2026-12-02 23:59:59',
+				'supported_positions' => $this->dashboard_top_or_report,
+				'validity_function' => 'addons_files_exist',
 			)
 		);
 
@@ -248,7 +284,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 		if ($this->initialized) return;
 		$this->initialized = true;
 		// parent::notices_init();
-		$this->notices_content = (defined('UPDRAFTPLUS_NOADS_B') && UPDRAFTPLUS_NOADS_B) ? array() : $this->populate_notices_content();
+		$this->notices_content = $this->populate_notices_content();
 		global $updraftplus;
 		$enqueue_version = $updraftplus->use_unminified_scripts() ? $updraftplus->version.'.'.time() : $updraftplus->version;
 		$updraft_min_or_not = $updraftplus->get_updraftplus_file_version();
@@ -256,8 +292,23 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 		wp_enqueue_style('updraftplus-notices-css',  UPDRAFTPLUS_URL.'/css/updraftplus-notices'.$updraft_min_or_not.'.css', array(), $enqueue_version);
 	}
 
+	/**
+	 * This method will prioritise and return a valid seasonal notice ready for display.
+	 *
+	 * @param  boolean $notice   - a specific notice to render or false
+	 * @param  string  $position - position of the notice
+	 *
+	 * @return array returns notice data
+	 */
+	protected function get_notice_data($notice = false, $position = 'top') {
+		// A valid seasonal notice takes priority even when a specific notice (e.g. 'rate') is passed in, otherwise it would stay hidden until that notice is dismissed.
+		$seasonal_notice = $notice ? parent::get_notice_data(false, $position) : false;
+		if (isset($seasonal_notice['valid_from'])) return $seasonal_notice;
+		return parent::get_notice_data($notice, $position);
+	}
+
 	protected function translation_needed($plugin_base_dir = null, $product_name = null) {// phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable, Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filter use
-		return parent::translation_needed(UPDRAFTPLUS_DIR, 'updraftplus');
+		return $this->is_advertisement_allowed() && parent::translation_needed(UPDRAFTPLUS_DIR, 'updraftplus');
 	}
 
 	/**
@@ -276,7 +327,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 		$installed_for = time() - $installed;
 
 		if (!empty($backup_history) && $installed && $installed_for > 28*86400) {
-			return true;
+			return $this->is_advertisement_allowed();
 		}
 
 		return false;
@@ -291,7 +342,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 				return false;
 			}
 		}
-		return true;
+		return $this->is_advertisement_allowed();
 	}
 	
 	protected function url_start($html_allowed, $url, $https = false, $website_home = 'updraftplus.com') {
@@ -302,8 +353,8 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 		global $updraftplus;
 
 		$time_now = defined('UPDRAFTPLUS_NOTICES_FORCE_TIME') ? UPDRAFTPLUS_NOTICES_FORCE_TIME : time();
-		// Do not show seasonal notices to people with an updraftplus.com version and no-addons yet
-		if (!file_exists(UPDRAFTPLUS_DIR.'/udaddons') || $updraftplus->have_addons) {
+		// Do not show seasonal notices when adverts are turned off, or to people with an updraftplus.com version and no-addons yet
+		if ($this->is_advertisement_allowed() && (!file_exists(UPDRAFTPLUS_DIR.'/udaddons') || $updraftplus->have_addons)) {
 			$valid_from = strtotime($notice_data['valid_from']);
 			$valid_to = strtotime($notice_data['valid_to']);
 			$dismiss = $this->check_notice_dismissed($notice_data['dismiss_time']);
@@ -324,6 +375,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 		$review_dismiss = ($time_now < UpdraftPlus_Options::get_updraft_option('dismissed_review_notice', 0));
 		$seasonal_dismiss = ($time_now < UpdraftPlus_Options::get_updraft_option('dismissed_season_notices_until', 0));
 		$autobackup_dismiss = ($time_now < UpdraftPlus_Options::get_updraft_option('updraftplus_dismissedautobackup', 0));
+		$social_media_dismiss = ($time_now < UpdraftPlus_Options::get_updraft_option('updraftplus_dismissed_social_media_notice', 0));
 
 		$dismiss = false;
 
@@ -331,6 +383,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 		if ('dismiss_review_notice' == $dismiss_time) $dismiss = $review_dismiss;
 		if ('dismiss_season' == $dismiss_time) $dismiss = $seasonal_dismiss;
 		if ('dismissautobackup' == $dismiss_time) $dismiss = $autobackup_dismiss;
+		if ('dismiss_social_media' == $dismiss_time) $dismiss = $social_media_dismiss;
 
 		return $dismiss;
 	}
@@ -369,7 +422,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 	 * @return bool True if Google Drive is selected, false otherwise.
 	 */
 	public function is_googledrive_in_use() {
-		return in_array('googledrive', (array) UpdraftPlus_Options::get_updraft_option('updraft_service'));
+		return $this->is_advertisement_allowed() && in_array('googledrive', (array) UpdraftPlus_Options::get_updraft_option('updraft_service'));
 	}
 
 	/**
@@ -378,7 +431,7 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 	 * @return bool True if Dropbox is selected, false otherwise.
 	 */
 	public function is_dropbox_in_use() {
-		return in_array('dropbox', (array) UpdraftPlus_Options::get_updraft_option('updraft_service'));
+		return $this->is_advertisement_allowed() && in_array('dropbox', (array) UpdraftPlus_Options::get_updraft_option('updraft_service'));
 	}
 
 	/**
@@ -387,7 +440,37 @@ class UpdraftPlus_Notices extends Updraft_Notices_1_3 {
 	 * @return bool True if Amazon S3 is selected, false otherwise.
 	 */
 	public function is_s3_in_use() {
-		return in_array('s3', (array) UpdraftPlus_Options::get_updraft_option('updraft_service'));
+		return $this->is_advertisement_allowed() && in_array('s3', (array) UpdraftPlus_Options::get_updraft_option('updraft_service'));
+	}
+
+	/**
+	 * Check whether advertisements are allowed.
+	 *
+	 * Advertisements are allowed by default unless the UPDRAFTPLUS_NOADS_B constant is defined and set to true.
+	 *
+	 * @return bool True if advertisements are allowed, false otherwise.
+	 */
+	public function is_advertisement_allowed() {
+		return !defined('UPDRAFTPLUS_NOADS_B') || !UPDRAFTPLUS_NOADS_B;
+	}
+
+	/**
+	 * Check whether the udaddons directory is absent or not.
+	 *
+	 * @return bool True if the udaddons directory does not exist, false otherwise.
+	 */
+	public function validate_udaddons_directory() {
+		return !file_exists(UPDRAFTPLUS_DIR.'/udaddons');
+	}
+
+	/**
+	 * Check whether at least one add-on from the addons directory exist.
+	 *
+	 * @return bool True if one or more add-ons are loaded, false otherwise.
+	 */
+	public function addons_files_exist() {
+		global $updraftplus;
+		return (bool) $updraftplus->have_addons;
 	}
 	
 	protected function widget_enqueue() {

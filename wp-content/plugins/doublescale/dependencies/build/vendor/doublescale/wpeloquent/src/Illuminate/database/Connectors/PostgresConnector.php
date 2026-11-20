@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database\Connectors;
+namespace DoubleScale\Vendor\Illuminate\Database\Connectors;
 
 use PDO;
-class PostgresConnector extends \Illuminate\Database\Connectors\Connector implements \Illuminate\Database\Connectors\ConnectorInterface
+class PostgresConnector extends Connector implements ConnectorInterface
 {
     /**
      * The default PDO connection options.

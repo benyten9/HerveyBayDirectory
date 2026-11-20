@@ -25,7 +25,11 @@ $current_directory_type = ( ! empty( $_GET['directory_type'] ) ? sanitize_text_f
                 ?>
                 <li class="<?php echo ( ( $current_directory_type === $term->slug ) ? 'current' : '' ); ?>">
                     <a class="directorist-type-nav__link" href="<?php echo esc_url( directorist_get_directory_type_nav_url( $term->slug ) ); ?>">
-                        <?php directorist_icon( esc_attr( $general_config['icon'] ) ); ?>
+                        <?php
+                        if ( is_array( $general_config ) && ! empty( $general_config['icon'] ) && is_string( $general_config['icon'] ) ) {
+                            directorist_icon( esc_attr( $general_config['icon'] ) );
+                        }
+                        ?>
                         <?php
                         echo esc_html( $term->name );?>
                     </a>

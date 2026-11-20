@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/seo-pro-feedback', [
     'label'       => __('SEO Pro — Feedback', 'nibwp'),
-    'description' => __('Record a thumb up/down on a SEO Pro action so future runs improve. Call after a pipeline completes.', 'nibwp'),
+    'description' => 'Record a thumb up/down on a SEO Pro action so future runs improve. Call after a pipeline completes.',
     'category'    => 'seo',
     'input_schema' => [
         'type' => 'object',

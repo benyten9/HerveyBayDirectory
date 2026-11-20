@@ -12,6 +12,7 @@
 
 namespace DoubleScale\Pro\Modules\Inbox\Oauth;
 
+use DoubleScale\Core\Communication\PollBackoff;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\ImapClient;
 use DoubleScale\Pro\Modules\Inbox\Incoming\EmailIncoming;
@@ -158,6 +159,11 @@ class UserEmailPoller {
 			}
 		}
 
+		$backoff = new PollBackoff( 'user_imap_' . (int) $user_id );
+		if ( $backoff->should_skip() ) {
+			return;
+		}
+
 		$auto_create = ! empty( $account['auto_create_contacts'] );
 		$options     = array(
 			'user_id'              => $user_id,
@@ -168,6 +174,7 @@ class UserEmailPoller {
 		try {
 			$client = $this->create_imap_client_for_user( $provider, $account, $user_id );
 			$client->connect();
+			$backoff->record_success();
 
 			$this->poll_user_inbox( $client, $user_id, $account, $contact_set, $excluded_domains, $options );
 
@@ -214,11 +221,20 @@ class UserEmailPoller {
 			: time() - DAY_IN_SECONDS;
 		$since_date   = gmdate( 'Y-m-d', $since_time );
 
-		$unseen_emails = $client->fetch_unseen();
+		// STATUS-based change gate (see EmailIncoming::poll_imap): an unchanged
+		// INBOX costs one round-trip instead of a SEARCH plus full-body FETCH
+		// of the newest messages on every run.
+		$fingerprint = method_exists( $client, 'get_mailbox_fingerprint' ) ? $client->get_mailbox_fingerprint() : null;
+		if ( null !== $fingerprint && $fingerprint === (string) get_user_meta( $user_id, 'doublescale_user_imap_inbox_fingerprint', true ) ) {
+			return;
+		}
+
+		// Headers only; bodies are loaded for messages not yet ingested.
+		$unseen_emails = $client->fetch_unseen( 20, null, false );
 
 		$lookback_days = max( 1, (int) ceil( ( time() - $since_time ) / DAY_IN_SECONDS ) );
 		$recent_limit  = min( 20 * $lookback_days, 100 );
-		$recent_emails = $client->fetch_recent( $since_date, $recent_limit );
+		$recent_emails = $client->fetch_recent( $since_date, $recent_limit, false );
 
 		// Merge and dedup by UID or message_id.
 		$dedup_map = array();
@@ -239,20 +255,25 @@ class UserEmailPoller {
 		} );
 		$emails = array_slice( $emails, 0, 20 );
 
-		$auto_create = ! empty( $options['auto_create_contacts'] );
-		$processed   = 0;
+		$auto_create       = ! empty( $options['auto_create_contacts'] );
+		$processed         = 0;
+		$skipped_duplicate = 0;
 
 		foreach ( $emails as $email ) {
 			$sender           = strtolower( $email['from_email'] ?? '' );
-			$should_mark_seen = true;
 			$is_known_contact = isset( $contact_set[ $sender ] );
 
 			if ( $is_known_contact || ( $auto_create && ! $this->is_excluded_sender( $sender, $excluded_domains ) ) ) {
 				try {
-					$this->email_incoming->process_incoming_email( $email, $options );
-					++$processed;
+					if ( $this->email_incoming->is_message_ingested( $email ) ) {
+						// Seen on an earlier poll — nothing to download.
+						++$skipped_duplicate;
+					} else {
+						$this->email_incoming->process_incoming_email( $this->load_email_body( $client, $email ), $options );
+						++$processed;
+					}
 				} catch ( \Exception $e ) {
-					$should_mark_seen = false;
+					// Not ingested: the next poll tries it again.
 					doublescale_get_logger()->error(
 						'Failed to process incoming email for user',
 						array(
@@ -264,23 +285,40 @@ class UserEmailPoller {
 					);
 				}
 			}
+			// Never marked as read: this is the person's own inbox. A message
+			// is found again by fetch_recent() and skipped by its Message-ID.
+		}
 
-			if ( $should_mark_seen && ! empty( $email['uid'] ) ) {
-				$client->mark_as_seen( $email['uid'] );
-			}
+		if ( null !== $fingerprint ) {
+			update_user_meta( $user_id, 'doublescale_user_imap_inbox_fingerprint', $fingerprint );
 		}
 
 		if ( $processed > 0 ) {
 			doublescale_get_logger()->info(
 				'User IMAP inbox polling completed',
 				array(
-					'code'      => 'user_email_inbox_poll_complete',
-					'user_id'   => $user_id,
-					'fetched'   => count( $emails ),
-					'processed' => $processed,
+					'code'               => 'user_email_inbox_poll_complete',
+					'user_id'            => $user_id,
+					'fetched'            => count( $emails ),
+					'processed'          => $processed,
+					'skipped_duplicate'  => $skipped_duplicate,
 				)
 			);
 		}
+	}
+
+	/**
+	 * Load body + attachments for a headers-only email when the client supports it.
+	 *
+	 * @param object $client IMAP or Graph client.
+	 * @param array  $email  Normalized email.
+	 * @return array
+	 */
+	private function load_email_body( $client, $email ) {
+		if ( method_exists( $client, 'load_body' ) ) {
+			return $client->load_body( $email );
+		}
+		return $email;
 	}
 
 	/**
@@ -318,9 +356,18 @@ class UserEmailPoller {
 		$lookback_days = max( 1, (int) ceil( ( time() - $since_time ) / DAY_IN_SECONDS ) );
 		$limit         = min( 20 * $lookback_days, 100 );
 
-		$emails = $client->fetch_recent( $since_date, $limit );
+		$fingerprint = method_exists( $client, 'get_mailbox_fingerprint' ) ? $client->get_mailbox_fingerprint() : null;
+		if ( null !== $fingerprint && $fingerprint === (string) get_user_meta( $user_id, 'doublescale_user_imap_sent_fingerprint', true ) ) {
+			update_user_meta( $user_id, 'doublescale_user_imap_sent_last_poll', time() );
+			return;
+		}
+
+		$emails = $client->fetch_recent( $since_date, $limit, false );
 		if ( empty( $emails ) ) {
 			update_user_meta( $user_id, 'doublescale_user_imap_sent_last_poll', time() );
+			if ( null !== $fingerprint ) {
+				update_user_meta( $user_id, 'doublescale_user_imap_sent_fingerprint', $fingerprint );
+			}
 			return;
 		}
 
@@ -350,6 +397,13 @@ class UserEmailPoller {
 				continue;
 			}
 
+			// Already stored from a previous sync: skip before the body download.
+			if ( $this->email_incoming->is_message_ingested( $email ) ) {
+				continue;
+			}
+
+			$email = $this->load_email_body( $client, $email );
+
 			foreach ( $matched_recipients as $matched_email ) {
 				$email_copy              = $email;
 				$email_copy['to_email']  = $matched_email;
@@ -374,6 +428,9 @@ class UserEmailPoller {
 		}
 
 		update_user_meta( $user_id, 'doublescale_user_imap_sent_last_poll', time() );
+		if ( null !== $fingerprint ) {
+			update_user_meta( $user_id, 'doublescale_user_imap_sent_fingerprint', $fingerprint );
+		}
 
 		if ( $processed > 0 ) {
 			doublescale_get_logger()->info(
@@ -503,6 +560,7 @@ class UserEmailPoller {
 		$fail_count = (int) get_transient( 'doublescale_user_imap_failures_' . $user_id );
 		++$fail_count;
 		set_transient( 'doublescale_user_imap_failures_' . $user_id, $fail_count, HOUR_IN_SECONDS );
+		( new PollBackoff( 'user_imap_' . (int) $user_id ) )->record_failure( $e->getMessage() );
 
 		if ( 1 === $fail_count || 5 === $fail_count || 0 === $fail_count % 10 ) {
 			doublescale_get_logger()->error(

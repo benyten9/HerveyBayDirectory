@@ -223,6 +223,10 @@ class AutomaticSchemasFields {
 				'section' => 'rich_snippets_service',
 				'fields'  => $this->getServicesFields(),
 			),
+			'book' => array(
+				'section' => 'rich_snippets_book',
+				'fields' => $this->get_book_fields(),
+			),
 			'softwareapp'  => array(
 				'section' => 'rich_snippets_softwareapp',
 				'fields'  => $this->getSoftwareAppFields(),
@@ -1453,6 +1457,16 @@ class AutomaticSchemasFields {
 			),
 		);
 	}
+
+	/** Book fields, shared with the manual form. */
+	private function get_book_fields() {
+		$fields = array();
+		foreach ( \SEOPressPro\Helpers\Schemas\Book::fields() as $key => $field ) {
+			$fields[] = $this->field( $key, \SEOPressPro\Helpers\Schemas\Book::PREFIX . $key, self::SENTINEL_SINGLE, 'text', $field['label'], '', '', $field['description'] );
+		}
+		return $fields;
+	}
+
 
 	/**
 	 * Software App fields (7).

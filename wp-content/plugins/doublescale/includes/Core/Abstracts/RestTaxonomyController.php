@@ -737,8 +737,14 @@ abstract class RestTaxonomyController extends RestController {
 	 * @return void
 	 */
 	protected function attach_contacts_counts( $item, $campaign_type = null ) {
-		if ( ! isset( $item->contacts_count ) || is_null( $item->contacts_count ) ) {
+		if ( ! array_key_exists( 'contacts_count', $item->getAttributes() ) || is_null( $item->getAttributes()['contacts_count'] ) ) {
 			$item->contacts_count = $item->contacts()->distinct()->count();
+		}
+
+		$subscription = method_exists( $item, 'get_subscription_counts' ) ? $item->get_subscription_counts() : null;
+		if ( null !== $subscription ) {
+			$item->subscribed_contacts_count   = $subscription['subscribed'];
+			$item->unsubscribed_contacts_count = $subscription['unsubscribed'];
 		}
 
 		if ( $campaign_type && method_exists( $item, 'get_eligible_contacts_count' ) ) {

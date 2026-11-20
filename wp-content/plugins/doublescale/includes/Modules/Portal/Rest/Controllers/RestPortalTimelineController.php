@@ -20,6 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
+use DoubleScale\Modules\Portal\Services\PortalAccessGate;
 use DoubleScale\Modules\Portal\Services\PortalActivityWhitelist;
 use DoubleScale\Modules\Portal\Services\PortalIdentity;
 use WP_REST_Request;
@@ -95,7 +96,7 @@ class RestPortalTimelineController extends RestController {
 		$page     = max( 1, (int) $request->get_param( 'page' ) );
 		$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ) );
 
-		$items = $this->collect_activity_items( (int) $contact->id, self::resolve_contact_user_id( $contact ) );
+		$items = $this->collect_activity_items( (int) $contact->id, self::resolve_contact_user_id( $contact ), (string) $contact->email );
 
 		/**
 		 * Filter the merged portal timeline items before sort/paging.
@@ -107,7 +108,7 @@ class RestPortalTimelineController extends RestController {
 		 * @param \DoubleScale\Modules\Contacts\Models\ContactModel       $contact Resolved contact.
 		 */
 		$items = (array) apply_filters( 'doublescale_portal_timeline_items', $items, $contact );
-		$items = array_values( array_filter( $items, 'is_array' ) );
+		$items = PortalAccessGate::timeline( array_values( array_filter( $items, 'is_array' ) ), $contact );
 
 		usort(
 			$items,
@@ -138,9 +139,10 @@ class RestPortalTimelineController extends RestController {
 	 *
 	 * @param int      $contact_id      Contact id.
 	 * @param int|null $contact_user_id The contact's own WP account id (for self-author detection).
+	 * @param string   $contact_email   The contact's email (an emailed reply from another address is not theirs).
 	 * @return array<int, array<string, mixed>>
 	 */
-	private function collect_activity_items( int $contact_id, ?int $contact_user_id ): array {
+	private function collect_activity_items( int $contact_id, ?int $contact_user_id, string $contact_email = '' ): array {
 		$rows = ActivityModel::query()
 			->whereHas(
 				'associations',
@@ -156,7 +158,7 @@ class RestPortalTimelineController extends RestController {
 
 		$items = array();
 		foreach ( $rows as $row ) {
-			$shaped = PortalActivityWhitelist::shape( $row, $contact_user_id );
+			$shaped = PortalActivityWhitelist::shape( $row, $contact_user_id, $contact_email );
 			if ( null !== $shaped ) {
 				$items[] = $shaped;
 			}

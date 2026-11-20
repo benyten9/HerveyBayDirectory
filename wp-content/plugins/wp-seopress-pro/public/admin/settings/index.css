@@ -1,0 +1,32 @@
+/**
+ * SEOPress PRO — settings screens.
+ *
+ * The PRO settings bundle extends the free plugin's Settings SPA, so most of
+ * what it renders is styled by the free plugin's stylesheet. This file carries
+ * only what belongs to the PRO components themselves.
+ */
+
+/* ── Redirections import ── */
+
+/*
+ * The native <ProgressBar> track is 160px wide and about a pixel and a half
+ * tall, in the neutral foreground colour: on a full-width modal that reads as a
+ * stray dash rather than as progress. Widen it, give it some body, and put it
+ * on the admin theme accent so it matches the rest of the chrome.
+ *
+ * The width sits inside a `:where()` in the component, so it carries no
+ * specificity and any class beats it. The height does not, and emotion injects
+ * its own rule at runtime after this stylesheet loads - equal specificity,
+ * later in the document - so that one needs !important. The indicator colour is
+ * won on specificity by the child selector.
+ */
+.seopress-import-progress-bar {
+	width: 100% !important;
+	max-width: none;
+	height: 6px !important;
+}
+
+.seopress-import-progress-bar > div {
+	background-color: var(--wp-admin-theme-color);
+}
+

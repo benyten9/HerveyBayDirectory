@@ -11,7 +11,7 @@ namespace DoubleScale\Pro\Modules\Tasks\Models;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Constants\TaskStatus;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * TaskRecurrenceModel class
@@ -95,7 +95,7 @@ class TaskRecurrenceModel extends Model {
 	/**
 	 * Template task that defines the series.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function templateTask() {
 		return $this->belongsTo( TaskModel::class, 'template_task_id', 'id' );
@@ -104,8 +104,8 @@ class TaskRecurrenceModel extends Model {
 	/**
 	 * Active recurrences due now or earlier.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query builder.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query builder.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeDue( $query ) {
 		return $query->where( 'is_active', 1 )

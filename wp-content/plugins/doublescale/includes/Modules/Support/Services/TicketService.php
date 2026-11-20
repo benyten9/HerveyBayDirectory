@@ -26,6 +26,7 @@ namespace DoubleScale\Modules\Support\Services;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Constants\ActivityTypes;
+use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Support\Constants\TicketPriority;
@@ -69,6 +70,99 @@ class TicketService {
 	private $contact_resolver;
 
 	/**
+	 * Ticket flag (kept in the ticket's `custom_data`, like `cc_recipients`):
+	 * the address on this ticket was typed by whoever opened it and never
+	 * proven (public form without email confirmation, chat handoff). Such a
+	 * ticket is never merged with a real customer's ticket, and the team knows
+	 * not to share account details on it. Cleared when the contact proves the
+	 * address (confirmation link, portal sign-in) or a team member verifies it.
+	 */
+	public const UNVERIFIED_KEY = 'unverified_contact';
+
+	/**
+	 * Is the contact's address on this ticket unproven?
+	 *
+	 * @param TicketModel|int $ticket Ticket or id.
+	 * @return bool
+	 */
+	public static function is_unverified( $ticket ): bool {
+		if ( ! $ticket instanceof TicketModel ) {
+			$ticket = TicketModel::find( (int) $ticket );
+		}
+		if ( ! $ticket ) {
+			return false;
+		}
+		$data = is_array( $ticket->custom_data ) ? $ticket->custom_data : array();
+
+		return ! empty( $data[ self::UNVERIFIED_KEY ] );
+	}
+
+	/**
+	 * Mark a ticket's address as unproven.
+	 *
+	 * @param TicketModel|int $ticket Ticket or id.
+	 * @return bool Saved.
+	 */
+	public static function set_unverified( $ticket ): bool {
+		return self::write_unverified( $ticket, true );
+	}
+
+	/**
+	 * Clear the flag: the address was proven or a team member checked it.
+	 *
+	 * @param TicketModel|int $ticket Ticket or id.
+	 * @return bool Saved.
+	 */
+	public static function clear_unverified( $ticket ): bool {
+		return self::write_unverified( $ticket, false );
+	}
+
+	/**
+	 * Clear the flag on every ticket of a contact (the contact proved the
+	 * address, e.g. signed in to the portal with it).
+	 *
+	 * @param int $contact_id Contact.
+	 * @return int Tickets cleared.
+	 */
+	public static function clear_unverified_for_contact( int $contact_id ): int {
+		if ( $contact_id <= 0 ) {
+			return 0;
+		}
+		$cleared = 0;
+		foreach ( TicketModel::query()->where( 'contact_id', $contact_id )->limit( 500 )->get() as $ticket ) {
+			if ( self::is_unverified( $ticket ) && self::clear_unverified( $ticket ) ) {
+				++$cleared;
+			}
+		}
+
+		return $cleared;
+	}
+
+	/**
+	 * @param TicketModel|int $ticket Ticket or id.
+	 * @param bool            $on     Flag value.
+	 * @return bool
+	 */
+	private static function write_unverified( $ticket, bool $on ): bool {
+		if ( ! $ticket instanceof TicketModel ) {
+			$ticket = TicketModel::find( (int) $ticket );
+		}
+		if ( ! $ticket ) {
+			return false;
+		}
+		$data = is_array( $ticket->custom_data ) ? $ticket->custom_data : array();
+		if ( $on ) {
+			$data[ self::UNVERIFIED_KEY ] = 1;
+		} else {
+			unset( $data[ self::UNVERIFIED_KEY ] );
+		}
+		$ticket->custom_data = array() === $data ? null : $data;
+		$ticket->save();
+
+		return true;
+	}
+
+	/**
 	 * @param ContactResolver $contact_resolver Resolves email → ContactModel.
 	 */
 	public function __construct( ContactResolver $contact_resolver ) {
@@ -90,7 +184,8 @@ class TicketService {
 	 *   - `agent_user_id`    int     Initial agent assignment.
 	 *   - `product`          string  Free-text product label.
 	 *   - `message_id`       string  Email Message-ID (set by IMAP path; web path leaves NULL).
-	 *   - `source`           string  Where the opening message came from: 'web'|'email'. Default 'web'.
+	 *   - `source`           string  Where the opening message came from: 'web'|'email'|'chat'
+	 *                                (a help assistant conversation handed to the team). Default 'web'.
 	 *   - `tag_ids`          int[]   Tag IDs.
 	 *   - `custom_data`      array   Per-ticket custom field values.
 	 *   - `author_user_id`   int     WP user creating on behalf of the customer (logged-in agent).
@@ -144,6 +239,13 @@ class TicketService {
 			}
 		}
 
+		// Set here (not after) so the created hooks, which send the first email,
+		// already know the address is unproven.
+		if ( ! empty( $data[ self::UNVERIFIED_KEY ] ) ) {
+			$custom_data                        = is_array( $custom_data ) ? $custom_data : array();
+			$custom_data[ self::UNVERIFIED_KEY ] = 1;
+		}
+
 		$ticket_attrs = array(
 			'title'         => $this->sanitize_title( $data['title'] ),
 			'status'        => $this->normalize_status( $data['status'] ?? TicketStatus::OPEN ),
@@ -155,6 +257,9 @@ class TicketService {
 			'message_id'    => isset( $data['message_id'] ) ? (string) $data['message_id'] : null,
 			'tag_ids'       => $this->normalize_tag_ids( $data['tag_ids'] ?? null ),
 			'custom_data'   => $custom_data,
+			// Shared with the contact's company: set before the created hooks run
+			// so the opening email reaches the colleagues who follow its tickets.
+			'company_id'    => doublescale_record_company_id( $contact->id, $data['company_id'] ?? null ),
 		);
 
 		$source         = $this->normalize_source( $data['source'] ?? 'web' );
@@ -179,6 +284,7 @@ class TicketService {
 				array(
 					'content' => $content,
 					'source'  => $source,
+					'opening' => true, // the request itself, not a response (reports count responses)
 				),
 				$author_user_id
 			);
@@ -232,6 +338,15 @@ class TicketService {
 	 *   - `message_id`     string  Outbound Message-ID for email pipeline.
 	 *   - `in_reply_to`    string  Parent Message-ID (for email threading).
 	 *   - `author_user_id` int     Agent posting. Defaults to current user.
+	 *   - `from_email`     string  Sender of an email reply (inbound mail).
+	 *   - `from_name`      string  Sender's display name (inbound mail).
+	 *   - `system`         bool    Posted by the system, not a person (auto-close).
+	 *   - `keep_status`    bool    The customer's closing words ("thanks, it's
+	 *                              solved"): kept on the ticket without putting
+	 *                              it back in the queue.
+	 *
+	 * The sender and the system flag tell the customer's own replies from
+	 * anyone else's ({@see ReplyAuthor}).
 	 *
 	 * @param TicketModel|int      $ticket Ticket model or id.
 	 * @param array<string, mixed> $data   Reply fields.
@@ -251,6 +366,27 @@ class TicketService {
 		$source = $this->normalize_source( $data['source'] ?? 'web' );
 		$author = $this->resolve_author_user_id( $data, $source );
 
+		// A merged ticket: the customer's message (email, portal, guest page,
+		// chat) lands on the ticket it was merged into; the team replies there.
+		// Read from the table: the merge writes it there, a model held since
+		// before it would not know.
+		$merged_into = (int) TicketModel::query()->where( 'id', (int) $ticket->id )->value( 'merged_into_id' );
+		if ( $merged_into > 0 && empty( $data['system'] ) ) {
+			$ticket->merged_into_id = $merged_into;
+			if ( null !== $author && Permissions::has_support_access( (int) $author ) ) {
+				return new WP_Error(
+					'ticket_merged',
+					/* translators: %d: ticket number */
+					sprintf( __( 'This ticket was merged into #%d. Reply there.', 'doublescale' ), (int) $ticket->merged_into_id ),
+					array(
+						'status'      => 409,
+						'merged_into' => (int) $ticket->merged_into_id,
+					)
+				);
+			}
+			$ticket = TicketMergeService::follow( $ticket );
+		}
+
 		// Per-reply CC: validated email list stored on the reply activity itself.
 		// Set BEFORE record_conversation_activity() so it is persisted in the
 		// activity's data before the doublescale_support_reply_created hook fires —
@@ -268,6 +404,17 @@ class TicketService {
 			if ( ! empty( $data[ $key ] ) ) {
 				$activity_data[ $key ] = (string) $data[ $key ];
 			}
+		}
+		$from_email = sanitize_email( (string) ( $data['from_email'] ?? '' ) );
+		if ( '' !== $from_email ) {
+			$activity_data['from_email'] = strtolower( $from_email );
+		}
+		$from_name = sanitize_text_field( (string) ( $data['from_name'] ?? '' ) );
+		if ( '' !== $from_name ) {
+			$activity_data['from_name'] = $from_name;
+		}
+		if ( ! empty( $data['system'] ) ) {
+			$activity_data['system'] = true;
 		}
 
 		try {
@@ -292,6 +439,9 @@ class TicketService {
 			// message goes through `record_conversation_activity` from
 			// `create_ticket()` without this call.
 			$ticket->increment( 'response_count' );
+
+			// The team's first reply: the start of "first response time".
+			$this->stamp_first_response( $ticket, $author, $activity_data );
 
 			// Accumulate the union of every CC ever used on this ticket so the UI
 			// can show the full participant list. Only writes when this reply adds
@@ -318,6 +468,18 @@ class TicketService {
 		 * @param TicketModel   $ticket   The parent ticket.
 		 */
 		do_action( 'doublescale_support_reply_created', $activity, $ticket );
+
+		// A reply from the customer's side (no team author, not the system)
+		// puts a ticket the team thought done, or waiting on them, back in the
+		// queue, whichever way it came: portal, guest page or email.
+		if (
+			null === $author
+			&& empty( $activity_data['system'] )
+			&& empty( $data['keep_status'] )
+			&& in_array( (string) $ticket->status, array( TicketStatus::PENDING, TicketStatus::RESOLVED, TicketStatus::CLOSED ), true )
+		) {
+			$this->update_ticket( $ticket, array( 'status' => TicketStatus::OPEN ) );
+		}
 
 		return $activity;
 	}
@@ -439,6 +601,8 @@ class TicketService {
 				continue;
 			}
 			if ( 'custom_data' === $key && is_array( $value ) ) {
+				// Only the helpers set or clear the unverified flag, never a payload.
+				unset( $value[ self::UNVERIFIED_KEY ] );
 				$stored_custom = is_array( $ticket->custom_data ) ? $ticket->custom_data : array();
 				$context       = array(
 					'ticket_title'    => (string) $ticket->title,
@@ -454,6 +618,10 @@ class TicketService {
 						return $prepared;
 					}
 					$value = $prepared;
+				}
+				// The flag survives a custom field edit (it is not a field).
+				if ( ! empty( $stored_custom[ self::UNVERIFIED_KEY ] ) ) {
+					$value[ self::UNVERIFIED_KEY ] = 1;
 				}
 			}
 			$normalized = $this->normalize_update_value( $key, $value );
@@ -487,6 +655,10 @@ class TicketService {
 				)
 			);
 			return new WP_Error( 'ticket_update_failed', $e->getMessage(), array( 'status' => 500 ) );
+		}
+
+		if ( isset( $effective['status'] ) ) {
+			$this->stamp_resolution( $ticket, (string) $effective['status'] );
 		}
 
 		/**
@@ -570,6 +742,75 @@ class TicketService {
 	// ---------------------------------------------------------------------
 
 	/**
+	 * Stamp `first_response_at` on the team's first reply: written by someone
+	 * with helpdesk access, not a system message (automatic close note). The
+	 * customer (by email, portal or chat) is never the author of a response.
+	 * Once only: the UPDATE matches an empty column, so two replies at the
+	 * same moment cannot both write it.
+	 *
+	 * @param TicketModel          $ticket        Ticket.
+	 * @param int|null             $author        Reply author.
+	 * @param array<string, mixed> $activity_data Stored reply data.
+	 * @return void
+	 */
+	private function stamp_first_response( TicketModel $ticket, $author, array $activity_data ): void {
+		if ( ! empty( $activity_data['system'] ) || empty( $author ) || null !== $ticket->first_response_at ) {
+			return;
+		}
+		if ( ! Permissions::has_support_access( (int) $author ) ) {
+			return;
+		}
+
+		global $wpdb;
+		// NOW(): the same clock as created_at (CURRENT_TIMESTAMP), so the
+		// difference is the real wait whatever the server's time zone.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}doublescale_support_tickets SET first_response_at = NOW() WHERE id = %d AND first_response_at IS NULL", (int) $ticket->id ) );
+		$this->refresh_columns( $ticket, array( 'first_response_at' ) );
+	}
+
+	/**
+	 * Solved or closed: stamp `resolved_at` when empty (a solved ticket that
+	 * is closed later keeps the time it was solved). Opened again: clear it,
+	 * so the next solve is the one measured.
+	 *
+	 * @param TicketModel $ticket Ticket after the update.
+	 * @param string      $status New status.
+	 * @return void
+	 */
+	private function stamp_resolution( TicketModel $ticket, string $status ): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'doublescale_support_tickets';
+
+		if ( in_array( $status, array( TicketStatus::RESOLVED, TicketStatus::CLOSED ), true ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET resolved_at = NOW() WHERE id = %d AND resolved_at IS NULL", (int) $ticket->id ) );
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET resolved_at = NULL WHERE id = %d AND resolved_at IS NOT NULL", (int) $ticket->id ) );
+		}
+		$this->refresh_columns( $ticket, array( 'resolved_at' ) );
+	}
+
+	/**
+	 * Read columns written by SQL back onto the model, without marking them
+	 * changed (a later save() must not write them again).
+	 *
+	 * @param TicketModel $ticket  Ticket.
+	 * @param string[]    $columns Columns.
+	 * @return void
+	 */
+	private function refresh_columns( TicketModel $ticket, array $columns ): void {
+		global $wpdb;
+		$list = implode( ', ', array_map( 'sanitize_key', $columns ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT {$list} FROM {$wpdb->prefix}doublescale_support_tickets WHERE id = %d", (int) $ticket->id ), ARRAY_A );
+		foreach ( $columns as $column ) {
+			$ticket->setRawAttributes( array_merge( $ticket->getAttributes(), array( $column => $row[ $column ] ?? null ) ), true );
+		}
+	}
+
+	/**
 	 * Sanitize conversation body HTML for storage. This is the single choke point
 	 * for every path that writes a reply / note / opening message (admin REST,
 	 * customer portal REST, inbound email, CLI), so content is consistently run
@@ -586,7 +827,17 @@ class TicketService {
 	 * @return string Sanitized HTML.
 	 */
 	private function sanitize_content( $raw ): string {
-		return wp_kses_post( wp_unslash( (string) $raw ) );
+		$html = wp_unslash( (string) $raw );
+
+		// An HTML email's head, title, styles and scripts are not words: kses
+		// drops their tags but keeps what is inside as text, so a reply opened
+		// with "u + .body .blend-wrapper { … }". Drop them whole first.
+		$clean = preg_replace( '#<(head|title|style|script)\b[^>]*>.*?</\1\s*>#is', '', $html );
+		if ( is_string( $clean ) ) {
+			$html = $clean;
+		}
+
+		return wp_kses_post( $html );
 	}
 
 	/**
@@ -790,7 +1041,7 @@ class TicketService {
 	 * @param mixed $source Raw source string.
 	 */
 	private function normalize_source( $source ): string {
-		$allowed = array( 'web', 'email', 'system', 'email_sent' );
+		$allowed = array( 'web', 'email', 'system', 'email_sent', 'chat' );
 		$source  = is_string( $source ) ? strtolower( $source ) : 'web';
 		return in_array( $source, $allowed, true ) ? $source : 'web';
 	}

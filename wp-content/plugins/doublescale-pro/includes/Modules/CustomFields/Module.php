@@ -65,6 +65,20 @@ final class Module extends AbstractModule {
 			}
 		}
 		parent::boot( $container );
+
+		// Fields gained a `position` (their order on forms). Existing sites get
+		// the column and numbers that keep today's id order, once per version.
+		$checks = static function () {
+			Migrations\CustomFieldsTablePositionColumn::ensure();
+		};
+		if ( function_exists( 'doublescale_ensure_once' ) ) {
+			doublescale_ensure_once( 'pro_custom_fields', defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '0', $checks );
+		} else {
+			$checks();
+		}
+
+		// Contact fields the admin shows or lets the client edit in the client portal.
+		Services\PortalContactFields::register();
 	}
 
 	public function restControllers(): array {

@@ -8,14 +8,14 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
-use Carbon\CarbonInterval;
-use Carbon\CarbonPeriod;
-use Carbon\Translator;
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Carbon\CarbonImmutable;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterval;
+use DoubleScale\Vendor\Carbon\CarbonPeriod;
+use DoubleScale\Vendor\Carbon\Translator;
 use Closure;
 use DateInterval;
 use DateTimeInterface;

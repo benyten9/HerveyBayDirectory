@@ -13,8 +13,7 @@ $description = $booking_array['description'] ?? $booking_array['event']['descrip
 $timezone    = $booking_array['timezone'] ?? 'UTC';
 
 // Get global time format setting
-$global_settings = get_option( 'doublescale_booking_settings', array() );
-$time_format     = $global_settings['general']['time_format'] ?? '12';
+$time_format = (string) \DoubleScale\Modules\Booking\Helpers\BookingSettings::all()['general']['time_format'];
 
 // Convert UTC time to user's timezone (same logic as your render_generic_page method)
 try {
@@ -58,33 +57,12 @@ $apple_url = 'https://www.icloud.com/calendar/'
 	. '&notes=' . urlencode( $description )
 	. '&location=' . urlencode( $location );
 
-// Keep ICS as fallback for offline calendar apps
-$ics_content = 'BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//DoubleScale//EN
-BEGIN:VEVENT
-UID:' . uniqid() . '
-DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . '
-DTSTART:' . $start_dt->format( 'Ymd\THis' ) . '
-DTEND:' . $end_dt->format( 'Ymd\THis' ) . '
-SUMMARY:' . $event_name . '
-DESCRIPTION:' . $description . '
-LOCATION:' . $location . '
-END:VEVENT
-END:VCALENDAR';
-
-$ics_filename = 'doublescale_booking_' . uniqid() . '.ics';
-$upload_dir   = wp_upload_dir();
-$ics_path     = trailingslashit( $upload_dir['path'] ) . $ics_filename;
-$ics_url      = trailingslashit( $upload_dir['url'] ) . $ics_filename;
-
-file_put_contents( $ics_path, $ics_content );
-
 // Permission variables are now passed from the renderer:
 // $can_cancel, $cancel_denied_message, $can_reschedule, $reschedule_denied_message
 ?>
 
 <div class="doublescale-booking-meeting">
+	<?php require __DIR__ . '/parts/back-to-site.php'; ?>
 	<div class="details-container">
 		<div class="profile-picture">
 			<?php if ( ! empty( $is_waiting ) ) : ?>
@@ -111,52 +89,101 @@ file_put_contents( $ics_path, $ics_content );
 				<?php endif; ?>
 			</p>
 		<?php else : ?>
-			<h1 class="title"><?php esc_html_e( 'Your meeting has been Scheduled', 'doublescale' ); ?></h1>
+			<h1 class="title"><?php esc_html_e( 'This meeting is scheduled', 'doublescale' ); ?></h1>
 			<p class="calendar-info">
-				<?php esc_html_e( 'A calendar invitation has been sent to your email address.', 'doublescale' ); ?>
+				<?php esc_html_e( 'We sent an email with a calendar invitation with the details to everyone.', 'doublescale' ); ?>
 			</p>
 		<?php endif; ?>
 
-		<div class="booking-card">
-			<h2 class="event-title">
-				<?php echo esc_html( $event_name ); ?>
-			</h2>
+		<div class="booking-card booking-card--details-grid">
+			<div class="booking-detail-row">
+				<div class="booking-detail-label"><?php esc_html_e( 'What', 'doublescale' ); ?></div>
+				<div class="booking-detail-value">
+					<?php echo esc_html( $event_name ); ?>
+				</div>
+			</div>
+
+			<div class="booking-detail-row">
+				<div class="booking-detail-label"><?php esc_html_e( 'When', 'doublescale' ); ?></div>
+				<div class="booking-detail-value">
+					<div class="booking-detail-when-date">
+						<?php echo esc_html( \DoubleScale\Modules\Booking\Data\BookingDataFormatter::long_date( $start_dt ) ); ?>
+					</div>
+					<div class="booking-detail-when-time">
+						<?php
+						$time_fmt = ( '24' === (string) $time_format ) ? 'H:i' : 'g:i a';
+						echo esc_html(
+							$start_dt->format( $time_fmt ) . ' – ' . $end_dt->format( $time_fmt )
+						);
+						?>
+						<span class="booking-detail-when-tz">(<?php echo esc_html( $timezone ); ?>)</span>
+					</div>
+				</div>
+			</div>
 
 			<?php if ( ! empty( $booking_array['hosts'] ) && is_array( $booking_array['hosts'] ) ) : ?>
-				<?php
-				$host_names = array();
-				foreach ( $booking_array['hosts'] as $host ) :
-					if ( ! empty( $host['name'] ) ) :
-						$host_names[] = esc_html( $host['name'] );
-					endif;
-				endforeach;
-				?>
-				<?php if ( ! empty( $host_names ) ) : ?>
-				<p>
-					<span><img src="<?php echo esc_url( $icons_url . 'profile.svg' ); ?>" alt="Host" /></span>
-					<span><?php echo implode( ' - ', $host_names ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $host_names entries are individually esc_html'd above. ?></span>
-				</p>
-				<?php endif; ?>
+			<div class="booking-detail-row">
+				<div class="booking-detail-label"><?php esc_html_e( 'Who', 'doublescale' ); ?></div>
+				<div class="booking-detail-value booking-detail-who">
+					<?php foreach ( $booking_array['hosts'] as $host_index => $host ) : ?>
+						<?php if ( empty( $host['name'] ) ) : ?>
+							<?php continue; ?>
+						<?php endif; ?>
+						<div class="booking-detail-person">
+							<div class="booking-detail-person-name">
+								<?php echo esc_html( $host['name'] ); ?>
+								<?php if ( 0 === (int) $host_index ) : ?>
+									<span class="booking-detail-host-badge"><?php esc_html_e( 'Host', 'doublescale' ); ?></span>
+								<?php endif; ?>
+							</div>
+							<?php if ( ! empty( $host['email'] ) ) : ?>
+								<div class="booking-detail-person-email"><?php echo esc_html( $host['email'] ); ?></div>
+							<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+					<?php if ( ! empty( $booking_array['contact']['email'] ) || ! empty( $booking_array['contact']['display_name'] ) ) : ?>
+						<div class="booking-detail-person">
+							<div class="booking-detail-person-name">
+								<?php
+								$guest      = $booking_array['contact'] ?? array();
+								$guest_name = trim( (string) ( $guest['display_name'] ?? '' ) );
+								if ( '' === $guest_name ) {
+									$guest_name = trim( ( $guest['first_name'] ?? '' ) . ' ' . ( $guest['last_name'] ?? '' ) );
+								}
+								if ( '' === $guest_name ) {
+									$guest_name = (string) ( $guest['name'] ?? '' );
+								}
+								echo esc_html( $guest_name );
+								?>
+							</div>
+							<?php if ( ! empty( $booking_array['contact']['email'] ) ) : ?>
+								<div class="booking-detail-person-email"><?php echo esc_html( $booking_array['contact']['email'] ); ?></div>
+							<?php endif; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
 			<?php endif; ?>
-			<p>
-				<span><img src="<?php echo esc_url( $icons_url . 'calendar.svg' ); ?>" alt="Date" /></span>
-				<?php echo esc_html( $booking_array['formatted_time_range'] ?? '' ); ?>
-			</p>
-			<p>
-				<span><img src="<?php echo esc_url( $icons_url . 'icon.svg' ); ?>" alt="Timezone" /></span>
-				<?php echo esc_html( $timezone ); ?>
-			</p>
-		<?php if ( ! empty( $booking_array['location'] ) ) : ?>
-		<p>
-			<span><img src="<?php echo esc_url( $icons_url . 'location.svg' ); ?>" alt="Location" /></span>
-			<?php echo wp_kses_post( $booking_array['location'] ); ?>
-		</p>
-		<?php endif; ?>
+
+			<?php if ( ! empty( $location ) || ! empty( $booking_array['location'] ) ) : ?>
+			<div class="booking-detail-row">
+				<div class="booking-detail-label"><?php esc_html_e( 'Where', 'doublescale' ); ?></div>
+				<div class="booking-detail-value">
+					<?php
+					echo wp_kses_post(
+						! empty( $booking_array['location'] )
+							? $booking_array['location']
+							: $location
+					);
+					?>
+				</div>
+			</div>
+			<?php endif; ?>
 		</div>
 
 		<?php if ( empty( $is_waiting ) ) : ?>
 		<div class="calendar-buttons">
-			<p><?php esc_html_e( 'Add your Scheduled to calendars.', 'doublescale' ); ?></p>
+			<p><?php esc_html_e( 'Add to calendar', 'doublescale' ); ?></p>
 			<div class="icons">
 				<!-- Outlook Web -->
 				<a href="<?php echo esc_url( $outlook_url ); ?>" target="_blank" rel="noopener">

@@ -192,7 +192,7 @@ class EnrollmentTags extends Rule {
 add_action(
 	'init',
 	function () {
-		if ( \doublescale_is_plugin_active( 'lifterlms/lifterlms.php' ) ) {
+		if ( \doublescale_is_plugin_active( 'lifterlms' ) ) {
 			RulesManager::instance()->register( new EnrollmentTags() );
 		}
 	},

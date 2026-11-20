@@ -23,7 +23,7 @@ require_once __DIR__ . '/../lib/persister.php';
 
 wp_register_ability('nibwp/voxel-pro-refine', [
     'label'       => __('Voxel Pro — change an existing Voxel template', 'nibwp'),
-    'description' => __('Edit a Voxel template in place: change a widget\'s settings, insert, move or remove an element, add a visibility rule, or restore the version from before the last rebuild. Re-validates the whole document and re-computes the search wiring afterwards.', 'nibwp'),
+    'description' => 'Edit a Voxel template in place: change a widget\'s settings, insert, move or remove an element, add a visibility rule, or restore the version from before the last rebuild. Re-validates the whole document and re-computes the search wiring afterwards.',
     'category'    => 'voxel-pro',
     'input_schema' => [
         'type' => 'object',

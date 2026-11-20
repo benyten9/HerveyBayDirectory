@@ -21,12 +21,17 @@ defined( 'ABSPATH' ) || exit;
  * - CRM Manager/Admin (doublescale_crm_manager)
  * - Sales Manager (doublescale_sales_manager)
  * - Sales Rep (doublescale_sales_rep)
+ * - Automation Manager / Automation Agent (doublescale_automation_manager / _agent)
+ * - Help Center Manager / Help Center Agent (doublescale_help_center_manager / _agent):
+ *   articles only; neither opens tickets, customer chats, contacts or shared settings
  */
 final class UserRoles {
 
 
 	public const PREFIX          = 'doublescale_';
 	public const CRM_MANAGER     = self::PREFIX . 'crm_manager';
+	// A CRM Manager scoped to their own records in every module (Pro only).
+	public const CRM_AGENT       = self::PREFIX . 'crm_agent';
 	public const SALES_MANAGER   = self::PREFIX . 'sales_manager';
 	public const SALES_REP       = self::PREFIX . 'sales_rep';
 	public const SUPPORT_MANAGER = self::PREFIX . 'support_manager';
@@ -35,6 +40,31 @@ final class UserRoles {
 	public const BOOKING_AGENT   = self::PREFIX . 'booking_agent';
 	public const PROJECT_MANAGER = self::PREFIX . 'project_manager';
 	public const PROJECT_MEMBER  = self::PREFIX . 'project_member';
+	public const AUTOMATION_MANAGER = self::PREFIX . 'automation_manager';
+	/** Campaigns, email templates, sequences, forms, lists and tags — for every contact. */
+	public const CAMPAIGN_MANAGER = self::PREFIX . 'campaign_manager';
+	public const CAMPAIGN_AGENT   = self::PREFIX . 'campaign_agent';
+	public const AUTOMATION_AGENT   = self::PREFIX . 'automation_agent';
+	/** Every help-center article and category (the knowledge base). */
+	public const HELP_CENTER_MANAGER = self::PREFIX . 'help_center_manager';
+	/** Their own help-center articles; reads everyone's. */
+	public const HELP_CENTER_AGENT   = self::PREFIX . 'help_center_agent';
+
+	/**
+	 * WordPress's own capabilities the Help Center roles hold: uploading
+	 * images and files into their articles (the block editor's image block).
+	 * Kept out of `kb_common` on purpose: that list is also what is taken
+	 * away from everyone while the help center is off, and `upload_files`
+	 * belongs to administrators and editors too. Goes with the role itself.
+	 */
+	private const HELP_CENTER_MEDIA_CAPS = array( 'upload_files' );
+	/**
+	 * Base role for someone who works only in an add-on's areas (for example
+	 * custom object types): admin access and nothing else. The add-on that
+	 * stores what they may work on switches it on through the
+	 * `doublescale_team_member_role_enabled` filter.
+	 */
+	public const TEAM_MEMBER        = self::PREFIX . 'team_member';
 	public const ADMINISTRATOR   = 'administrator';
 	public const NONE            = self::PREFIX . 'none';
 
@@ -167,6 +197,12 @@ final class UserRoles {
 	public static function provision_support_roles(): void {
 		self::provision_role( self::SUPPORT_MANAGER );
 		self::provision_role( self::SUPPORT_AGENT );
+
+		// The help center runs inside the Helpdesk: switching the Helpdesk
+		// back on brings its roles back when its own toggle is still on.
+		if ( self::is_role_module_enabled( self::HELP_CENTER_MANAGER ) ) {
+			self::provision_kb_roles();
+		}
 	}
 
 	/**
@@ -175,6 +211,26 @@ final class UserRoles {
 	public static function deprovision_support_roles(): void {
 		self::deprovision_role( self::SUPPORT_MANAGER );
 		self::deprovision_role( self::SUPPORT_AGENT );
+		// Helpdesk off means the help center is off too.
+		self::deprovision_kb_roles();
+	}
+
+	/**
+	 * Help Center Manager + Agent (the knowledge base module).
+	 *
+	 * @return void
+	 */
+	public static function provision_kb_roles(): void {
+		self::provision_role( self::HELP_CENTER_MANAGER );
+		self::provision_role( self::HELP_CENTER_AGENT );
+	}
+
+	/**
+	 * @return void
+	 */
+	public static function deprovision_kb_roles(): void {
+		self::deprovision_role( self::HELP_CENTER_MANAGER );
+		self::deprovision_role( self::HELP_CENTER_AGENT );
 	}
 
 	/**
@@ -236,7 +292,12 @@ final class UserRoles {
 	 */
 	public static function get_role_slugs_for_module( string $module_slug ): array {
 		if ( 'support' === $module_slug ) {
-			return array( self::SUPPORT_MANAGER, self::SUPPORT_AGENT );
+			// The help center goes with the Helpdesk, so its roles do too.
+			return array( self::SUPPORT_MANAGER, self::SUPPORT_AGENT, self::HELP_CENTER_MANAGER, self::HELP_CENTER_AGENT );
+		}
+
+		if ( 'knowledge_base' === $module_slug ) {
+			return array( self::HELP_CENTER_MANAGER, self::HELP_CENTER_AGENT );
 		}
 
 		if ( 'booking' === $module_slug ) {
@@ -245,6 +306,14 @@ final class UserRoles {
 
 		if ( 'projects' === $module_slug ) {
 			return array( self::PROJECT_MANAGER, self::PROJECT_MEMBER );
+		}
+
+		if ( 'automations' === $module_slug ) {
+			return array( self::AUTOMATION_MANAGER, self::AUTOMATION_AGENT );
+		}
+
+		if ( 'campaigns' === $module_slug ) {
+			return array( self::CAMPAIGN_MANAGER, self::CAMPAIGN_AGENT );
 		}
 
 		// The pipeline (`deals`) is a child of Sales and no longer owns roles:
@@ -324,6 +393,7 @@ final class UserRoles {
 		}
 
 		self::provision_role( self::CRM_MANAGER );
+		self::provision_role( self::CRM_AGENT );
 
 		if ( ! function_exists( 'doublescale_is_module_active' )
 			|| doublescale_is_module_active( 'deals' )
@@ -344,6 +414,7 @@ final class UserRoles {
 	 */
 	public static function deprovision_pro_roles(): void {
 		self::deprovision_role( self::CRM_MANAGER );
+		self::deprovision_role( self::CRM_AGENT );
 		self::deprovision_crm_roles();
 		self::deprovision_project_roles();
 	}
@@ -410,6 +481,9 @@ final class UserRoles {
 		if ( $role === self::CRM_MANAGER ) {
 			return self::get_crm_manager_capabilities();
 		}
+		if ( $role === self::CRM_AGENT ) {
+			return self::get_crm_agent_capabilities();
+		}
 		if ( $role === self::SALES_MANAGER ) {
 			return self::get_sales_manager_capabilities();
 		}
@@ -433,6 +507,27 @@ final class UserRoles {
 		}
 		if ( $role === self::PROJECT_MEMBER ) {
 			return self::get_project_member_capabilities();
+		}
+		if ( $role === self::CAMPAIGN_MANAGER ) {
+			return self::get_campaign_manager_capabilities();
+		}
+		if ( $role === self::CAMPAIGN_AGENT ) {
+			return self::get_campaign_agent_capabilities();
+		}
+		if ( $role === self::AUTOMATION_MANAGER ) {
+			return self::get_automation_manager_capabilities();
+		}
+		if ( $role === self::AUTOMATION_AGENT ) {
+			return self::get_automation_agent_capabilities();
+		}
+		if ( $role === self::HELP_CENTER_MANAGER ) {
+			return self::get_help_center_manager_capabilities();
+		}
+		if ( $role === self::HELP_CENTER_AGENT ) {
+			return self::get_help_center_agent_capabilities();
+		}
+		if ( $role === self::TEAM_MEMBER ) {
+			return self::get_team_member_capabilities();
 		}
 
 		return null;
@@ -491,6 +586,38 @@ final class UserRoles {
 			'support_common'      => array(
 				'doublescale_view_support',     // View support tickets (own-scope by default)
 			),
+			// Automations: an agent builds and runs their own workflows; a
+			// manager sees and edits every workflow. Ownership is the
+			// automation's `created_by`.
+			'automation_common'   => array(
+				'doublescale_view_automations',        // The Automations module (own scope by default)
+				'doublescale_manage_own_automations',  // Create, edit and delete own workflows
+			),
+			self::AUTOMATION_AGENT   => array(),
+			self::AUTOMATION_MANAGER => array(
+				'doublescale_manage_all_automations',  // See and edit every workflow
+			),
+			// Help center (knowledge base): an agent reads every article and
+			// writes their own; a manager changes every article, the
+			// categories, the order, the import and the page address.
+			// Ownership is the article's `author_id`. None of these open
+			// tickets: helpdesk access stays with the support roles.
+			'kb_common'               => array(
+				'doublescale_view_kb',   // Every article in the admin, any status
+				'doublescale_write_kb',  // Create articles; edit, publish and delete their own
+			),
+			self::HELP_CENTER_AGENT   => array(),
+			self::HELP_CENTER_MANAGER => array(
+				'doublescale_manage_kb', // Every article and category
+			),
+			self::CAMPAIGN_MANAGER  => array(
+				'doublescale_view_contacts',           // Build audiences from every contact
+				'doublescale_manage_campaigns',        // Every campaign, sequence and email template
+			),
+			self::CAMPAIGN_AGENT    => array(
+				'doublescale_view_contacts',           // Their own contacts (scoped by contact visibility)
+				'doublescale_manage_own_campaigns',    // Their own campaigns and sequences, to their own contacts
+			),
 			self::SALES_REP       => array(
 				'doublescale_edit_own_deals',     // Edit own deals
 				'doublescale_create_deals',       // Create new deals (assigned to self)
@@ -533,7 +660,22 @@ final class UserRoles {
 				'doublescale_reply_own_tickets',  // Reply on tickets
 				'doublescale_view_sales',         // View proposals and invoices
 				'doublescale_manage_all_sales',   // Manage all proposals/invoices
+				'doublescale_view_automations',        // CRM Manager runs every workflow
+				'doublescale_manage_own_automations',
+				'doublescale_manage_all_automations',
 				'list_users',                  // For Wordpress List users
+			),
+			// CRM Agent: every module a CRM Manager has, on their OWN records only
+			// (see {@see Permissions::sees_all_records()}). The role's cap list is
+			// assembled in {@see get_crm_agent_capabilities()} from the agent-tier
+			// groups of each module; these are the agent's own extras.
+			self::CRM_AGENT       => array(
+				'doublescale_manage_own_campaigns', // Their own campaigns, sent to their own contacts
+				'doublescale_manage_own_lists',     // Their own lists (shared ones are read-only)
+				'doublescale_manage_own_tags',      // Their own tags
+				'doublescale_manage_own_templates', // Their own email templates
+				'doublescale_export_data',          // Export — their own contacts only
+				'doublescale_import_data',          // Import — contacts land under their ownership
 			),
 			self::SUPPORT_AGENT   => array(
 				'doublescale_reply_own_tickets',  // Reply on tickets assigned to self
@@ -570,6 +712,7 @@ final class UserRoles {
 					$caps['crm_common'],
 					$caps['support_common'],
 					$caps[ self::CRM_MANAGER ],
+					$caps[ self::CRM_AGENT ],
 					$caps[ self::SALES_MANAGER ],
 					$caps[ self::SALES_REP ],
 					$caps[ self::SUPPORT_MANAGER ],
@@ -578,6 +721,14 @@ final class UserRoles {
 					$caps[ self::BOOKING_AGENT ],
 					$caps[ self::PROJECT_MANAGER ],
 					$caps[ self::PROJECT_MEMBER ],
+					$caps['automation_common'],
+					$caps[ self::AUTOMATION_MANAGER ],
+					$caps[ self::AUTOMATION_AGENT ],
+					$caps[ self::CAMPAIGN_MANAGER ],
+					$caps[ self::CAMPAIGN_AGENT ],
+					$caps['kb_common'],
+					$caps[ self::HELP_CENTER_MANAGER ],
+					$caps[ self::HELP_CENTER_AGENT ],
 					// Module-owned slugs so {@see provision_role()} can strip them
 					// from roles that should not hold them (e.g. Sales).
 					self::get_booking_capability_slugs(),
@@ -598,6 +749,7 @@ final class UserRoles {
 	public static function get_roles() {
 		return array(
 			self::CRM_MANAGER     => __( 'CRM Manager', 'doublescale' ),
+			self::CRM_AGENT       => __( 'CRM Agent', 'doublescale' ),
 			self::SALES_MANAGER   => __( 'Sales Manager', 'doublescale' ),
 			self::SALES_REP       => __( 'Sales Rep', 'doublescale' ),
 			self::SUPPORT_MANAGER => __( 'Support Manager', 'doublescale' ),
@@ -606,6 +758,14 @@ final class UserRoles {
 			self::BOOKING_AGENT   => __( 'Booking Agent', 'doublescale' ),
 			self::PROJECT_MANAGER => __( 'Project Manager', 'doublescale' ),
 			self::PROJECT_MEMBER  => __( 'Project Member', 'doublescale' ),
+			self::AUTOMATION_MANAGER => __( 'Automation Manager', 'doublescale' ),
+			self::AUTOMATION_AGENT   => __( 'Automation Agent', 'doublescale' ),
+			self::CAMPAIGN_MANAGER  => __( 'Campaign Manager', 'doublescale' ),
+			self::CAMPAIGN_AGENT    => __( 'Campaign Agent', 'doublescale' ),
+			self::HELP_CENTER_MANAGER => __( 'Help Center Manager', 'doublescale' ),
+			self::HELP_CENTER_AGENT   => __( 'Help Center Agent', 'doublescale' ),
+			// Lowest priority: only for people with no other DoubleScale role.
+			self::TEAM_MEMBER       => __( 'Team Member', 'doublescale' ),
 		);
 	}
 
@@ -624,10 +784,36 @@ final class UserRoles {
 		$is_support    = in_array( $role, array( self::SUPPORT_AGENT, self::SUPPORT_MANAGER ), true );
 		$is_booking    = in_array( $role, array( self::BOOKING_AGENT, self::BOOKING_MANAGER ), true );
 		$is_project    = in_array( $role, array( self::PROJECT_MEMBER, self::PROJECT_MANAGER ), true );
+		$is_automation = in_array( $role, array( self::AUTOMATION_AGENT, self::AUTOMATION_MANAGER ), true );
+		$is_campaigns  = in_array( $role, array( self::CAMPAIGN_MANAGER, self::CAMPAIGN_AGENT ), true );
+		$is_kb         = in_array( $role, array( self::HELP_CENTER_MANAGER, self::HELP_CENTER_AGENT ), true );
 		$is_deals_role = in_array( $role, array( self::SALES_REP, self::SALES_MANAGER ), true );
 		$sales_on      = function_exists( 'doublescale_is_module_active' ) && doublescale_is_module_active( 'sales' );
 
-		if ( ! $pro_active && ! $is_support && ! $is_booking && ! $is_project && ! ( $is_deals_role && $sales_on ) ) {
+		// Exists only while an add-on gives it something to work on.
+		if ( self::TEAM_MEMBER === $role ) {
+			return self::is_team_member_role_enabled();
+		}
+
+		// The scoped agent spans every module, so it exists only with Pro.
+		if ( self::CRM_AGENT === $role ) {
+			return $pro_active;
+		}
+
+		if ( ! $pro_active && ! $is_support && ! $is_booking && ! $is_project && ! $is_automation && ! $is_campaigns && ! $is_kb && ! ( $is_deals_role && $sales_on ) ) {
+			return false;
+		}
+
+		// The help center is a Helpdesk child: active only while both are on.
+		if ( $is_kb && function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'knowledge_base' ) ) {
+			return false;
+		}
+
+		if ( $is_campaigns && function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'campaigns' ) ) {
+			return false;
+		}
+
+		if ( $is_automation && function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'automations' ) ) {
 			return false;
 		}
 
@@ -719,6 +905,10 @@ final class UserRoles {
 		add_filter( 'editable_roles', array( self::class, 'filter_editable_roles' ) );
 		add_filter( 'user_has_cap', array( self::class, 'filter_capabilities_for_module_state' ), 99, 4 );
 		add_filter( 'user_has_cap', array( self::class, 'grant_shell_access_for_active_roles' ), 100, 4 );
+		// Help center roles upload images into their articles, but must not browse
+		// everyone else's media library (invoices, order files, other staff's uploads).
+		add_filter( 'ajax_query_attachments_args', array( self::class, 'limit_media_query_to_own_uploads' ) );
+		add_filter( 'rest_attachment_query', array( self::class, 'limit_rest_media_query_to_own_uploads' ) );
 		add_action( 'activated_plugin', array( self::class, 'handle_pro_plugin_activated' ), 10, 1 );
 		add_action( 'deactivated_plugin', array( self::class, 'handle_pro_plugin_deactivated' ), 10, 1 );
 	}
@@ -735,6 +925,83 @@ final class UserRoles {
 		}
 
 		return $roles;
+	}
+
+	/**
+	 * Is the user's only way to upload files a Help Center role? (No core
+	 * role such as Author or Editor grants `upload_files`, and no administrator.)
+	 *
+	 * @param int $user_id User.
+	 * @return bool
+	 */
+	public static function uploads_only_from_help_center( int $user_id ): bool {
+		$user = get_userdata( $user_id );
+		if ( ! $user || ! array_intersect( array( self::HELP_CENTER_MANAGER, self::HELP_CENTER_AGENT ), (array) $user->roles ) ) {
+			return false;
+		}
+		if ( ! empty( $user->caps['upload_files'] ) || user_can( $user, 'manage_options' ) ) {
+			return false;
+		}
+		foreach ( (array) $user->roles as $slug ) {
+			if ( in_array( $slug, array( self::HELP_CENTER_MANAGER, self::HELP_CENTER_AGENT ), true ) ) {
+				continue;
+			}
+			$role = wp_roles()->get_role( (string) $slug );
+			if ( $role && ! empty( $role->capabilities['upload_files'] ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Media modal (admin-ajax query-attachments): a help-center-only uploader
+	 * sees their own uploads only.
+	 *
+	 * @param array<string, mixed> $query WP_Query arguments.
+	 * @return array<string, mixed>
+	 */
+	public static function limit_media_query_to_own_uploads( $query ) {
+		$query = is_array( $query ) ? $query : array();
+		if ( self::uploads_only_from_help_center( get_current_user_id() ) ) {
+			$query['author'] = get_current_user_id();
+			unset( $query['author__in'], $query['author__not_in'] );
+		}
+
+		return $query;
+	}
+
+	/**
+	 * REST /wp/v2/media list: same rule.
+	 *
+	 * @param array<string, mixed> $args WP_Query arguments.
+	 * @return array<string, mixed>
+	 */
+	public static function limit_rest_media_query_to_own_uploads( $args ) {
+		return self::limit_media_query_to_own_uploads( $args );
+	}
+
+	/**
+	 * Does one of the user's other roles grant a capability?
+	 *
+	 * @param string[] $user_roles Roles the user holds.
+	 * @param string   $except     The role being looked at.
+	 * @param string   $cap        Capability.
+	 * @return bool
+	 */
+	private static function another_role_grants( array $user_roles, string $except, string $cap ): bool {
+		foreach ( $user_roles as $slug ) {
+			if ( $slug === $except ) {
+				continue;
+			}
+			$role = wp_roles()->get_role( (string) $slug );
+			if ( $role && ! empty( $role->capabilities[ $cap ] ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -771,6 +1038,12 @@ final class UserRoles {
 			$shell_caps = array_flip( self::get_shell_capability_slugs() );
 			foreach ( $role_caps as $cap ) {
 				if ( isset( $shell_caps[ $cap ] ) ) {
+					continue;
+				}
+				// WordPress's own caps in a DoubleScale role (`upload_files` in the
+				// help center roles) stay when another role of the user grants
+				// them: an Author who also holds a help center role keeps uploads.
+				if ( 0 !== strpos( (string) $cap, 'doublescale_' ) && self::another_role_grants( $user_roles, $role, (string) $cap ) ) {
 					continue;
 				}
 				unset( $allcaps[ $cap ] );
@@ -836,6 +1109,18 @@ final class UserRoles {
 			}
 		}
 
+		if ( function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'automations' ) ) {
+			foreach ( self::get_automation_capability_slugs() as $cap ) {
+				unset( $allcaps[ $cap ] );
+			}
+		}
+
+		if ( function_exists( 'doublescale_is_module_active' ) && ! doublescale_is_module_active( 'knowledge_base' ) ) {
+			foreach ( self::get_kb_capability_slugs() as $cap ) {
+				unset( $allcaps[ $cap ] );
+			}
+		}
+
 		return $allcaps;
 	}
 
@@ -897,6 +1182,44 @@ final class UserRoles {
 					$caps['support_common'],
 					$caps[ self::SUPPORT_MANAGER ],
 					$caps[ self::SUPPORT_AGENT ]
+				)
+			)
+		);
+	}
+
+	/**
+	 * Every automation cap (stripped when the Automations module is off).
+	 *
+	 * @return array<int, string>
+	 */
+	public static function get_automation_capability_slugs(): array {
+		$caps = self::get_capabilities();
+
+		return array_values(
+			array_unique(
+				array_merge(
+					$caps['automation_common'],
+					$caps[ self::AUTOMATION_MANAGER ],
+					$caps[ self::AUTOMATION_AGENT ]
+				)
+			)
+		);
+	}
+
+	/**
+	 * Every help-center cap (stripped when the knowledge base is off).
+	 *
+	 * @return array<int, string>
+	 */
+	public static function get_kb_capability_slugs(): array {
+		$caps = self::get_capabilities();
+
+		return array_values(
+			array_unique(
+				array_merge(
+					$caps['kb_common'],
+					$caps[ self::HELP_CENTER_MANAGER ],
+					$caps[ self::HELP_CENTER_AGENT ]
 				)
 			)
 		);
@@ -989,10 +1312,144 @@ final class UserRoles {
 					$caps['common'],
 					$caps['crm_common'],
 					$caps[ self::CRM_MANAGER ],
-					$caps[ self::SALES_REP ]
+					$caps[ self::SALES_REP ],
+					// Manager in every module: the help center included.
+					$caps['kb_common'],
+					$caps[ self::HELP_CENTER_MANAGER ]
 				)
 			)
 		);
+	}
+
+	/**
+	 * CRM Agent: the union of every module's AGENT tier, plus own-scoped
+	 * campaigns, lists, tags, templates, import and export.
+	 *
+	 * Deliberately NOT included: `doublescale_manage`, `manage_users`,
+	 * `manage_settings`, `manage_contacts`, `manage_deals`, `view_all_deals`,
+	 * `manage_all_*` and `view_reports` — those are the manager-tier caps that
+	 * {@see Permissions::sees_all_records()} keys on. An agent holding any of
+	 * them through a second role is a manager for that module, by design.
+	 *
+	 * @return array
+	 */
+	public static function get_crm_agent_capabilities() {
+		$caps = self::get_capabilities();
+		$list = array_merge(
+			$caps['common'],
+			$caps['crm_common'],
+			$caps[ self::SALES_REP ],           // own deals, own sales docs, create contacts/activities
+			$caps['support_common'],
+			$caps[ self::SUPPORT_AGENT ],       // own tickets
+			$caps['automation_common'],         // own workflows (enrollment limited to
+			$caps[ self::AUTOMATION_AGENT ],    // owned contacts in private mode)
+			$caps['kb_common'],                 // own help articles, reads everyone's
+			$caps[ self::HELP_CENTER_AGENT ],
+			$caps[ self::BOOKING_AGENT ],
+			$caps[ self::PROJECT_MEMBER ],
+			$caps[ self::CRM_AGENT ]
+		);
+
+		// Module-owned slugs (booking / projects assign their own caps per role).
+		if ( class_exists( '\DoubleScale\Modules\Booking\Capabilities' ) ) {
+			$list = array_merge( $list, \DoubleScale\Modules\Booking\Capabilities::get_caps_for_role( self::BOOKING_AGENT ) );
+		}
+		if ( class_exists( '\DoubleScale\Pro\Modules\Projects\Capabilities' ) ) {
+			$list = array_merge( $list, \DoubleScale\Pro\Modules\Projects\Capabilities::get_caps_for_role( self::PROJECT_MEMBER ) );
+		}
+
+		return array_values( array_unique( $list ) );
+	}
+
+	/**
+	 * Campaign Manager: every campaign, sequence and email template, sending to
+	 * every contact. No forms, lists, tags, deals, documents or settings.
+	 *
+	 * @return array
+	 */
+	public static function get_campaign_manager_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( array_merge( $caps['common'], $caps[ self::CAMPAIGN_MANAGER ] ) ) );
+	}
+
+	/**
+	 * Team Member: admin access only. What they may open comes from the
+	 * add-on that enabled the role, never from WordPress capabilities.
+	 *
+	 * @return array
+	 */
+	public static function get_team_member_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( $caps['common'] ) );
+	}
+
+	/**
+	 * Whether an add-on has switched the Team Member role on.
+	 *
+	 * @return bool
+	 */
+	public static function is_team_member_role_enabled(): bool {
+		/**
+		 * Switch on the Team Member role: a person with admin access and no
+		 * module role, who works only in the add-on's areas.
+		 *
+		 * @param bool $enabled Default false.
+		 */
+		return (bool) apply_filters( 'doublescale_team_member_role_enabled', false );
+	}
+
+	/**
+	 * Campaign Agent: their own campaigns and sequences, sent to the contacts
+	 * they own. Shared email templates to use; their own to change.
+	 *
+	 * @return array
+	 */
+	public static function get_campaign_agent_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( array_merge( $caps['common'], $caps[ self::CAMPAIGN_AGENT ] ) ) );
+	}
+
+	/**
+	 * Automation Manager: every workflow, every automation alert.
+	 *
+	 * @return array
+	 */
+	public static function get_automation_manager_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( array_merge( $caps['common'], $caps['automation_common'], $caps[ self::AUTOMATION_MANAGER ] ) ) );
+	}
+
+	/**
+	 * Automation Agent: their own workflows and their alerts.
+	 *
+	 * @return array
+	 */
+	public static function get_automation_agent_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( array_merge( $caps['common'], $caps['automation_common'], $caps[ self::AUTOMATION_AGENT ] ) ) );
+	}
+
+	/**
+	 * Help Center Manager: manages ARTICLES only: every article and category of
+	 * the help center, its order, the import and the page address. No ticket
+	 * access, no customer chats, no contacts, no shared inbox or settings; and
+	 * not a manager tier for contact visibility ({@see Permissions::manager_tier_roles()}).
+	 *
+	 * @return array
+	 */
+	public static function get_help_center_manager_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( array_merge( $caps['common'], $caps['kb_common'], $caps[ self::HELP_CENTER_MANAGER ], self::HELP_CENTER_MEDIA_CAPS ) ) );
+	}
+
+	/**
+	 * Help Center Agent: reads every article, writes their own. No ticket access.
+	 *
+	 * @return array
+	 */
+	public static function get_help_center_agent_capabilities() {
+		$caps = self::get_capabilities();
+		return array_values( array_unique( array_merge( $caps['common'], $caps['kb_common'], $caps[ self::HELP_CENTER_AGENT ], self::HELP_CENTER_MEDIA_CAPS ) ) );
 	}
 
 	/**
@@ -1196,6 +1653,8 @@ final class UserRoles {
 	 * @return void
 	 */
 	public static function ensure_provisioned() {
+		self::ensure_role_combinations_normalized();
+
 		$option_key      = 'doublescale_roles_provisioned';
 		$current_version = (string) get_option( $option_key, '' );
 		if ( self::ROLES_PROVISION_VERSION === $current_version ) {
@@ -1207,10 +1666,193 @@ final class UserRoles {
 	}
 
 	/**
+	 * General roles cover every module; a person holds at most one of them,
+	 * and never together with module roles.
+	 *
+	 * @return string[]
+	 */
+	public static function general_roles(): array {
+		return array( self::CRM_MANAGER, self::CRM_AGENT );
+	}
+
+	/**
+	 * Module roles, as module => [manager role, agent role]. A person picks
+	 * one level, Manager or Agent, and the modules they work in.
+	 *
+	 * @return array<string, array{0:string,1:string}>
+	 */
+	public static function module_role_pairs(): array {
+		return array(
+			'sales'       => array( self::SALES_MANAGER, self::SALES_REP ),
+			'support'     => array( self::SUPPORT_MANAGER, self::SUPPORT_AGENT ),
+			'booking'     => array( self::BOOKING_MANAGER, self::BOOKING_AGENT ),
+			'projects'    => array( self::PROJECT_MANAGER, self::PROJECT_MEMBER ),
+			'automations' => array( self::AUTOMATION_MANAGER, self::AUTOMATION_AGENT ),
+			'campaigns'   => array( self::CAMPAIGN_MANAGER, self::CAMPAIGN_AGENT ),
+			'knowledge_base' => array( self::HELP_CENTER_MANAGER, self::HELP_CENTER_AGENT ),
+		);
+	}
+
+	/**
+	 * Why a set of DoubleScale roles is not a valid combination, or null.
+	 *
+	 * @param string[] $roles DoubleScale role slugs.
+	 * @return \WP_Error|null
+	 */
+	public static function role_combination_error( array $roles ): ?\WP_Error {
+		$roles   = array_values( array_unique( $roles ) );
+
+		// Team Member is the base role for people with no module role, so it
+		// never sits beside another one.
+		if ( in_array( self::TEAM_MEMBER, $roles, true ) && count( $roles ) > 1 ) {
+			return new \WP_Error(
+				'doublescale_invalid_role_combination',
+				__( 'Team Member is only for people with no other DoubleScale role.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$general = array_values( array_intersect( $roles, self::general_roles() ) );
+
+		if ( count( $general ) > 1 || ( 1 === count( $general ) && count( $roles ) > 1 ) ) {
+			return new \WP_Error(
+				'doublescale_invalid_role_combination',
+				__( 'Choose either one general role (CRM Manager or CRM Agent) or module roles, not both.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$pairs = self::module_role_pairs();
+		foreach ( $pairs as $pair ) {
+			if ( count( array_intersect( $roles, $pair ) ) > 1 ) {
+				return new \WP_Error(
+					'doublescale_invalid_role_combination',
+					__( 'Choose one level per module: Manager or Agent.', 'doublescale' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		$managers = array_intersect( $roles, array_column( $pairs, 0 ) );
+		$agents   = array_intersect( $roles, array_filter( array_column( $pairs, 1 ) ) );
+		if ( $managers && $agents ) {
+			return new \WP_Error(
+				'doublescale_invalid_role_combination',
+				__( 'A team member is a Manager or an Agent in all of their modules, not a mix.', 'doublescale' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * The valid combination closest to $roles, keeping the highest role:
+	 * CRM Manager alone; a CRM Agent gives way to module manager roles (they
+	 * would lose access otherwise) and otherwise stands alone; within a
+	 * module, Manager beats Agent; and a Manager in any module becomes the
+	 * Manager in each of their modules.
+	 *
+	 * @param string[] $roles DoubleScale role slugs.
+	 * @return string[]
+	 */
+	public static function normalize_role_combination( array $roles ): array {
+		$roles = array_values( array_unique( $roles ) );
+
+		// Any other role covers what Team Member gives.
+		if ( in_array( self::TEAM_MEMBER, $roles, true ) ) {
+			if ( 1 === count( $roles ) ) {
+				return $roles;
+			}
+			$roles = array_values( array_diff( $roles, array( self::TEAM_MEMBER ) ) );
+		}
+
+		if ( in_array( self::CRM_MANAGER, $roles, true ) ) {
+			return array( self::CRM_MANAGER );
+		}
+
+		$pairs        = self::module_role_pairs();
+		$module_heads = array_column( $pairs, 0 );
+
+		if ( in_array( self::CRM_AGENT, $roles, true ) ) {
+			if ( ! array_intersect( $roles, $module_heads ) ) {
+				return array( self::CRM_AGENT );
+			}
+			$roles = array_values( array_diff( $roles, array( self::CRM_AGENT ) ) );
+		}
+
+		$is_manager = (bool) array_intersect( $roles, $module_heads );
+
+		$kept = array();
+		foreach ( $pairs as $pair ) {
+			if ( in_array( $pair[0], $roles, true ) ) {
+				$kept[] = $pair[0];
+			} elseif ( '' !== $pair[1] && in_array( $pair[1], $roles, true ) ) {
+				$kept[] = $is_manager ? $pair[0] : $pair[1];
+			}
+		}
+
+		return $kept;
+	}
+
+	/**
+	 * One-time clean-up of members holding combinations that are no longer
+	 * allowed: keep the highest role, drop the rest, and make a member who
+	 * manages one module the Manager of their other modules too. A WordPress
+	 * administrator already has full access, so their DoubleScale roles are
+	 * dropped (the administrator role itself is never touched).
+	 *
+	 * @return void
+	 */
+	public static function ensure_role_combinations_normalized(): void {
+		$option_key = 'doublescale_role_combinations_normalized';
+		if ( self::ROLE_COMBINATIONS_VERSION === (string) get_option( $option_key, '' ) ) {
+			return;
+		}
+
+		$known = self::get_known_role_slugs();
+		$users = get_users(
+			array(
+				'role__in' => $known,
+				'fields'   => 'all',
+			)
+		);
+
+		foreach ( $users as $user ) {
+			$current = array_values( array_intersect( (array) $user->roles, $known ) );
+			$keep    = in_array( 'administrator', (array) $user->roles, true )
+				? array()
+				: self::normalize_role_combination( $current );
+
+			foreach ( array_diff( $keep, $current ) as $role ) {
+				if ( ! get_role( $role ) ) {
+					self::provision_role( $role );
+				}
+				$user->add_role( $role );
+				/** This action is documented in RestUserManagementController::assign_crm_role(). */
+				do_action( 'doublescale_user_role_assigned', $user->ID, $role );
+			}
+
+			foreach ( array_diff( $current, $keep ) as $role ) {
+				$user->remove_role( $role );
+				/** This action is documented in RestUserManagementController::assign_crm_role(). */
+				do_action( 'doublescale_user_role_revoked', $user->ID, $role );
+			}
+		}
+
+		update_option( $option_key, self::ROLE_COMBINATIONS_VERSION, false );
+	}
+
+	/**
+	 * Bump to re-run {@see ensure_role_combinations_normalized()}.
+	 */
+	private const ROLE_COMBINATIONS_VERSION = '2026-10-12-one-level';
+
+	/**
 	 * Bump this string when the role-to-capability map changes so existing
 	 * installs re-run {@see add_roles_and_capabilities()} on next boot.
 	 */
-	private const ROLES_PROVISION_VERSION = '2026-07-26-project-caps';
+	private const ROLES_PROVISION_VERSION = '2026-11-18-help-center-uploads';
 
 	/**
 	 * Allow logged-in users with any DoubleScale role to bypass WooCommerce's

@@ -54,29 +54,15 @@ add_filter(
 			return null;
 		}
 
-		// Exclude hidden languages.
-		// @credits WPML compatibility team.
-		if ( function_exists( 'icl_object_id' ) && defined( 'ICL_SITEPRESS_VERSION' ) ) { // WPML.
-			global $sitepress, $sitepress_settings;
+		// Skip terms WPML no longer serves, whether their language was hidden
+		// or removed from the site without its content being deleted. WPML
+		// keys taxonomy translations on the term_taxonomy_id, not the term_id;
+		// the two only happen to match on most sites. Both helpers are no-ops
+		// without WPML.
+		if ( isset( $term->term_taxonomy_id ) ) {
+			$language_code = seopress_wpml_get_element_language( $term->term_taxonomy_id, $term->taxonomy );
 
-			// Check that at least ID is set in post object.
-			if ( ! isset( $term->term_id ) ) {
-				return $url;
-			}
-
-			// Get list of hidden languages.
-			$hidden_languages = $sitepress->get_setting( 'hidden_languages', array() );
-
-			// If there are no hidden languages return original URL.
-			if ( empty( $hidden_languages ) ) {
-				return $url;
-			}
-
-			// Get language information for post.
-			$language_info = $sitepress->term_translations()->get_element_lang_code( $term->term_id );
-
-			// If language code is one of the hidden languages return null to skip the post.
-			if ( in_array( $language_info, $hidden_languages, true ) ) {
+			if ( seopress_wpml_is_language_excluded( $language_code ) ) {
 				return null;
 			}
 		}
@@ -87,20 +73,25 @@ add_filter(
 	2
 );
 
-/**
- * Polylang: remove hidden languages
- *
- * @param array $args Arguments.
- * @return array Arguments.
- */
-function seopress_pll_exclude_hidden_lang( $args ) {
-	if ( defined( 'POLYLANG_VERSION' ) && function_exists( 'PLL' ) && isset( PLL()->model ) ) {
-		$languages = PLL()->model->get_languages_list();
-		if ( wp_list_filter( $languages, array( 'active' => false ) ) ) {
-			$args['lang'] = wp_list_pluck( wp_list_filter( $languages, array( 'active' => false ), 'NOT' ), 'slug' );
+if ( ! function_exists( 'seopress_pll_exclude_hidden_lang' ) ) {
+	/**
+	 * Polylang: remove hidden languages.
+	 *
+	 * Defined in both sitemap templates, which normally serve different routes.
+	 * The guard is what lets the two be loaded in a single process.
+	 *
+	 * @param array $args Arguments.
+	 * @return array Arguments.
+	 */
+	function seopress_pll_exclude_hidden_lang( $args ) {
+		if ( defined( 'POLYLANG_VERSION' ) && function_exists( 'PLL' ) && isset( PLL()->model ) ) {
+			$languages = PLL()->model->get_languages_list();
+			if ( wp_list_filter( $languages, array( 'active' => false ) ) ) {
+				$args['lang'] = wp_list_pluck( wp_list_filter( $languages, array( 'active' => false ), 'NOT' ), 'slug' );
+			}
 		}
+		return $args;
 	}
-	return $args;
 }
 
 /**
@@ -143,19 +134,41 @@ function seopress_xml_sitemap_single_term() {
 	$seopress_sitemaps .= "\n";
 	$seopress_sitemaps .= apply_filters( 'seopress_sitemaps_urlset', '<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' );
 
+	// Same terms as the index counts, so that its pages hold them all: a
+	// noindex term dropped after the query would take the place of an
+	// indexable one, pushed onto a page the index does not list.
 	$args = array(
 		'taxonomy'   => $path,
 		'offset'     => $offset,
 		'hide_empty' => true,
-		'number'     => 1000,
+		'number'     => $max,
 		'lang'       => '',
+		'meta_query' => array(
+			'relation' => 'OR',
+			array(
+				'key'     => '_seopress_robots_index',
+				'value'   => '',
+				'compare' => 'NOT EXISTS',
+			),
+			array(
+				'key'     => '_seopress_robots_index',
+				'value'   => 'yes',
+				'compare' => '!=',
+			),
+		),
 	);
 
 	$args = seopress_pll_exclude_hidden_lang( $args );
 
 	$args = apply_filters( 'seopress_sitemaps_single_term_query', $args, $path );
 
-	$termslist = new WP_Term_Query( $args );
+	// Keeps the empty parents of every language whose children have posts.
+	$termslist = \SEOPress\Helpers\SitemapTermLanguages::run(
+		$args,
+		function ( $args ) {
+			return new WP_Term_Query( $args );
+		}
+	);
 
 	if ( is_array( $termslist->terms ) && ! empty( $termslist->terms ) ) {
 		foreach ( $termslist->terms as $term ) {
@@ -190,4 +203,4 @@ function seopress_xml_sitemap_single_term() {
 
 	return $seopress_sitemaps;
 }
-echo seopress_xml_sitemap_single_term();
+echo seopress_xml_sitemap_single_term(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- XML document assembled above.

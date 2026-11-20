@@ -4,6 +4,7 @@ namespace DoubleScale\Modules\Automations\Rules\WoocommerceCurrentOrder;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Automations\Rules\Woocommerce\ProductPicker;
 use DoubleScale\Modules\Automations\Abstracts\Rule;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
 use DoubleScale\Modules\Automations\Services\RulesManager;
@@ -54,7 +55,21 @@ class ProductsInOrder extends Rule {
 	 *
 	 * @since 1.0.0
 	 */
-	public $type = 'multiselect';
+	public $type = ProductPicker::TYPE;
+
+	/**
+	 * Searched as the admin types (WooCommerce's REST API), never listed in full.
+	 *
+	 * @var string
+	 */
+	public $endpoint = ProductPicker::ENDPOINT;
+
+	/**
+	 * How the editor reads the endpoint.
+	 *
+	 * @var array
+	 */
+	public $settings = ProductPicker::SETTINGS;
 
 	/**
 	 * Has options
@@ -91,25 +106,9 @@ class ProductsInOrder extends Rule {
 	 * @return array
 	 */
 	public function get_options() {
-		// Check if WooCommerce is available
-		if ( ! function_exists( 'wc_get_products' ) ) {
-			return array();
-		}
-
-		$products = wc_get_products(
-			array(
-				'limit'  => -1,
-				'status' => 'publish',
-			)
-		);
-
-		$options = array();
-		if ( ! empty( $products ) ) {
-			foreach ( $products as $product ) {
-				$options[ $product->get_id() ] = $product->get_name();
-			}
-		}
-		return $options;
+		// The picker searches products on demand (endpoint above); listing
+		// every product here ran on each DoubleScale admin page.
+		return array();
 	}
 
 	/**

@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/pods-manage-content', [
-    'label' => __('Pods Manage Content', domain: 'nibwp'),
-    'description' => __(
-        'Manage Pods content types, fields, and items. List, create, and modify Pods, add fields to them, and perform CRUD operations on Pod items.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Pods Manage Content', 'nibwp'),
+    'description' => 'Manage Pods content types, fields, and items. List, create, and modify Pods, add fields to them, and perform CRUD operations on Pod items.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',

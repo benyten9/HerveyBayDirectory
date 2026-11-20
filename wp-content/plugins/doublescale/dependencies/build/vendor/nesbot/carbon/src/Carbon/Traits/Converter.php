@@ -8,15 +8,15 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Traits;
+namespace DoubleScale\Vendor\Carbon\Traits;
 
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
-use Carbon\CarbonInterval;
-use Carbon\CarbonPeriod;
-use Carbon\CarbonPeriodImmutable;
-use Carbon\Exceptions\UnitException;
+use DoubleScale\Vendor\Carbon\Carbon;
+use DoubleScale\Vendor\Carbon\CarbonImmutable;
+use DoubleScale\Vendor\Carbon\CarbonInterface;
+use DoubleScale\Vendor\Carbon\CarbonInterval;
+use DoubleScale\Vendor\Carbon\CarbonPeriod;
+use DoubleScale\Vendor\Carbon\CarbonPeriodImmutable;
+use DoubleScale\Vendor\Carbon\Exceptions\UnitException;
 use Closure;
 use DateTime;
 use DateTimeImmutable;
@@ -33,7 +33,7 @@ use ReturnTypeWillChange;
  */
 trait Converter
 {
-    use \Carbon\Traits\ToStringFormat;
+    use ToStringFormat;
     /**
      * Returns the formatted date string on success or FALSE on failure.
      *

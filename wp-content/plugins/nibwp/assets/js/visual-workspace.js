@@ -9,6 +9,14 @@
 (function () {
     'use strict';
 
+    var __ = wp.i18n.__, _n = wp.i18n._n, _x = wp.i18n._x, sprintf = wp.i18n.sprintf;
+
+    // What the person reads is translated; what goes back to the agent —
+    // results, errors, notes — stays English, because the agent reads it as
+    // instructions and the server does not know the locale. Prompts to paste
+    // are the person's own words, so they translate, but the workflow, skill
+    // and ability names inside them stay exactly as the agent will look them up.
+
     var cfg = window.nibwpVisual || {};
     var stage = document.getElementById('nw-vs-stage');
     var tabsEl = document.getElementById('nw-vs-tabs');
@@ -293,10 +301,8 @@
         var panel = document.createElement('div');
         panel.className = 'nw-vs-blocked';
         panel.innerHTML = '<h2></h2><p></p><p class="nw-vs-blocked__url"></p>';
-        panel.children[0].textContent = 'This page refused to be framed';
-        panel.children[1].textContent = 'A security plugin or server rule is sending X-Frame-Options: DENY, '
-            + 'or a Content-Security-Policy frame-ancestors that excludes this site. '
-            + 'Allow same-origin framing and reopen the page.';
+        panel.children[0].textContent = __('This page refused to be framed', 'nibwp');
+        panel.children[1].textContent = __('A security plugin or server rule is sending X-Frame-Options: DENY, or a Content-Security-Policy frame-ancestors that excludes this site. Allow same-origin framing and reopen the page.', 'nibwp');
         panel.children[2].textContent = page.url;
         page.panel = panel;
         stage.appendChild(panel);
@@ -1084,7 +1090,8 @@
             // "No block with clientId" because the save between them reloaded
             // the editor. Bring it forward, leave it alone.
             if (editorIn(existing)) {
-                log('follow', 'showing ' + (p.title || url), 'ok');
+                /* translators: %s: title or address of the post being shown */
+                log('follow', sprintf(__('showing %s', 'nibwp'), p.title || url), 'ok');
                 return { followed: true, focused: true, url: existing.url };
             }
 
@@ -1093,11 +1100,13 @@
             } catch (e) {
                 existing.frame.src = existing.frame.src;
             }
-            log('follow', 'reloaded ' + (p.title || url), 'ok');
+            /* translators: %s: title or address of the post that was reloaded */
+            log('follow', sprintf(__('reloaded %s', 'nibwp'), p.title || url), 'ok');
             return { followed: true, reloaded: true, url: existing.url };
         }
 
-        log('follow', 'opening ' + (p.title || url), 'ok');
+        /* translators: %s: title or address of the post being opened */
+        log('follow', sprintf(__('opening %s', 'nibwp'), p.title || url), 'ok');
         return openPage(url, p.title || url).then(function (page) {
             return { followed: true, opened: true, url: page.url };
         });
@@ -1363,20 +1372,46 @@
 
     function describe(command, payload) {
         switch (command) {
-            case 'click': return 'Click ' + (payload.selector || 'an element') + ' on this page.';
-            case 'hover': return 'Hover over ' + (payload.selector || 'an element') + ' and report what changes.';
-            case 'screenshot': return 'Take a screenshot of ' + (payload.selector || 'this page') + '.';
-            case 'fill': return 'Type “' + (payload.value || '') + '” into ' + (payload.selector || 'a field') + (payload.submit ? ', then submit the form.' : '.');
+            case 'click': return payload.selector
+                /* translators: %s: CSS selector of the element to click */
+                ? sprintf(__('Click %s on this page.', 'nibwp'), payload.selector)
+                : __('Click an element on this page.', 'nibwp');
+            case 'hover': return payload.selector
+                /* translators: %s: CSS selector of the element to hover over */
+                ? sprintf(__('Hover over %s and report what changes.', 'nibwp'), payload.selector)
+                : __('Hover over an element and report what changes.', 'nibwp');
+            case 'screenshot': return payload.selector
+                /* translators: %s: CSS selector of the element to capture */
+                ? sprintf(__('Take a screenshot of %s.', 'nibwp'), payload.selector)
+                : __('Take a screenshot of this page.', 'nibwp');
+            case 'fill': {
+                var field = payload.selector || __('a field', 'nibwp');
+                return payload.submit
+                    /* translators: 1: the text to type, 2: CSS selector of the field */
+                    ? sprintf(__('Type “%1$s” into %2$s, then submit the form.', 'nibwp'), payload.value || '', field)
+                    /* translators: 1: the text to type, 2: CSS selector of the field */
+                    : sprintf(__('Type “%1$s” into %2$s.', 'nibwp'), payload.value || '', field);
+            }
             case 'batch': {
                 var steps = (payload.steps || []).map(function (st) { return describe(st.command, st.payload || {}); });
-                return steps.length + ' steps in one go:' + String.fromCharCode(10, 10) + steps.join(String.fromCharCode(10));
+                /* translators: %d: number of steps */
+                return sprintf(_n('%d step in one go:', '%d steps in one go:', steps.length, 'nibwp'), steps.length)
+                    + String.fromCharCode(10, 10) + steps.join(String.fromCharCode(10));
             }
-            case 'block-insert': return 'Insert a ' + (payload.blockName || 'block') + ' block into the page being edited.';
-            case 'block-update': return 'Change ' + Object.keys(payload.attributes || {}).join(', ') + ' on block ' + payload.clientId + '.';
-            case 'block-delete': return 'Delete block ' + payload.clientId + ' and everything inside it.';
-            case 'open': return 'Open ' + (payload.url || 'a page') + ' in the workspace.';
-            case 'read': return 'Read the current page.';
-            case 'audit': return 'Check the current page for accessibility and layout problems.';
+            case 'block-insert': return payload.blockName
+                /* translators: %s: block name, e.g. core/heading */
+                ? sprintf(__('Insert a %s block into the page being edited.', 'nibwp'), payload.blockName)
+                : __('Insert a block into the page being edited.', 'nibwp');
+            /* translators: 1: comma-separated attribute names, 2: block client id */
+            case 'block-update': return sprintf(__('Change %1$s on block %2$s.', 'nibwp'), Object.keys(payload.attributes || {}).join(', '), payload.clientId);
+            /* translators: %s: block client id */
+            case 'block-delete': return sprintf(__('Delete block %s and everything inside it.', 'nibwp'), payload.clientId);
+            case 'open': return payload.url
+                /* translators: %s: address of the page to open */
+                ? sprintf(__('Open %s in the workspace.', 'nibwp'), payload.url)
+                : __('Open a page in the workspace.', 'nibwp');
+            case 'read': return __('Read the current page.', 'nibwp');
+            case 'audit': return __('Check the current page for accessibility and layout problems.', 'nibwp');
             default: return command + ' ' + JSON.stringify(payload);
         }
     }
@@ -1391,7 +1426,7 @@
             var box = document.getElementById('nw-vs-approval');
             if (box) { box.checked = false; }
             api('state', { approval: '0' });
-            log('setting', 'Approval off — turn it back on in the bar');
+            log('setting', __('Approval off — turn it back on in the bar', 'nibwp'));
             if (pending) { pending(true); }
         });
     }
@@ -1399,7 +1434,7 @@
 
     document.getElementById('nw-vs-approval').addEventListener('change', function (e) {
         api('state', { approval: e.target.checked ? '1' : '0' });
-        log('setting', e.target.checked ? 'Approval required' : 'Approval off');
+        log('setting', e.target.checked ? __('Approval required', 'nibwp') : __('Approval off', 'nibwp'));
     });
 
     // The panel earns its space while you are setting up and stops earning it
@@ -1453,16 +1488,25 @@
     function promptFor(item) {
         if (item.k === 'task') { return item.n; }
         if (item.k === 'skill') {
-            return 'Load the ' + item.n + ' skill with nibwp/get-skill and follow it for this task. '
-                + 'Work in the NibWP visual workspace so I can watch each step.';
+            /* translators: %s: the skill name, kept exactly as written */
+            return sprintf(__('Load the %s skill with nibwp/get-skill and follow it for this task. Work in the NibWP visual workspace so I can watch each step.', 'nibwp'), item.n);
         }
         if (item.k === 'workflow') {
-            return 'Run the NibWP workflow "' + item.n + '" on this site. Work in the NibWP visual '
-                + 'workspace so I can watch each step, and ask me before anything that changes something.';
+            /* translators: %s: the workflow name, kept exactly as written */
+            return sprintf(__('Run the NibWP workflow "%s" on this site. Work in the NibWP visual workspace so I can watch each step, and ask me before anything that changes something.', 'nibwp'), item.n);
         }
-        return 'Use ' + item.n + ' on this site, in the NibWP visual workspace so I can watch, '
-            + 'and tell me what you find.';
+        /* translators: %s: the ability name, e.g. nibwp/visual-audit */
+        return sprintf(__('Use %s on this site, in the NibWP visual workspace so I can watch, and tell me what you find.', 'nibwp'), item.n);
     }
+
+    // The kind of each search result, in words. The keys are the catalogue's
+    // own and never shown.
+    var KINDS = {
+        ability: _x('ability', 'search result kind', 'nibwp'),
+        workflow: _x('workflow', 'search result kind', 'nibwp'),
+        skill: _x('skill', 'search result kind', 'nibwp'),
+        task: _x('task', 'search result kind', 'nibwp')
+    };
 
     function rank(item, q) {
         var name = (item.n || '').toLowerCase();
@@ -1484,7 +1528,8 @@
 
         if (hits.length === 0) {
             findEl.innerHTML = '<p class="nw-vs-find__none"></p>';
-            findEl.firstChild.textContent = 'Nothing matches ' + String.fromCharCode(8220) + q + String.fromCharCode(8221) + '.';
+            /* translators: %s: what was typed into the search box */
+            findEl.firstChild.textContent = sprintf(__('Nothing matches “%s”.', 'nibwp'), q);
             findEl.hidden = false;
             return true;
         }
@@ -1499,11 +1544,12 @@
             row.type = 'button';
             row.className = 'nw-vs-find__row';
             row.setAttribute('data-vs-prompt', promptFor(hit.item));
+            row.setAttribute('data-copy-label', __('Copy', 'nibwp'));
+            row.setAttribute('data-copied-label', __('Copied', 'nibwp'));
             row.innerHTML = '<span class="nw-vs-find__kind"></span>'
                 + '<span class="nw-vs-find__body"><span class="nw-vs-find__label"></span>'
                 + '<span class="nw-vs-find__note"></span></span>';
-            row.querySelector('.nw-vs-find__kind').textContent =
-                hit.item.k === 'task' ? 'task' : hit.item.k;
+            row.querySelector('.nw-vs-find__kind').textContent = KINDS[hit.item.k] || hit.item.k;
             row.querySelector('.nw-vs-find__label').textContent = hit.item.l || hit.item.n;
             row.querySelector('.nw-vs-find__note').textContent = hit.item.d || hit.item.n;
             row.addEventListener('click', function () { copyText(row.getAttribute('data-vs-prompt'), row); });
@@ -1515,7 +1561,8 @@
         if (total > hits.length) {
             var more = document.createElement('p');
             more.className = 'nw-vs-find__none';
-            more.textContent = total - hits.length + ' more match. Type a little further.';
+            /* translators: %d: number of further results not shown */
+            more.textContent = sprintf(_n('%d more match. Type a little further.', '%d more matches. Type a little further.', total - hits.length, 'nibwp'), total - hits.length);
             findEl.appendChild(more);
         }
 
@@ -1592,7 +1639,7 @@
     if (checkBtn && checkOut) {
         checkBtn.addEventListener('click', function () {
             yieldPoll();
-            checkOut.textContent = 'Checking…';
+            checkOut.textContent = __('Checking…', 'nibwp');
             checkOut.className = 'nw-vs-checkout';
             api('check', {})
                 .then(function (r) { return r.json(); })
@@ -1605,9 +1652,10 @@
                     // not the same as "cannot reach WordPress".
                     var listening = !standDown && (polling || (Date.now() - lastPoll) < 30000);
                     var rows = [
-                        [listening, 'This screen is listening', 'This screen is not reaching WordPress'],
-                        [d.abilities, 'AI Abilities are on', 'AI Abilities are switched off'],
-                        [d.connected, (d.clients || []).join(', ') + ' can reach this site', 'No AI client is connected']
+                        [listening, __('This screen is listening', 'nibwp'), __('This screen is not reaching WordPress', 'nibwp')],
+                        [d.abilities, __('AI Abilities are on', 'nibwp'), __('AI Abilities are switched off', 'nibwp')],
+                        /* translators: %s: comma-separated names of the connected AI clients */
+                        [d.connected, sprintf(__('%s can reach this site', 'nibwp'), (d.clients || []).join(', ')), __('No AI client is connected', 'nibwp')]
                     ];
                     checkOut.innerHTML = '';
                     rows.forEach(function (row) {
@@ -1620,14 +1668,129 @@
                         var a = document.createElement('a');
                         a.className = 'nw-vs-more';
                         a.href = d.connectUrl;
-                        a.textContent = 'Fix this on the Connect screen';
+                        a.textContent = __('Fix this on the Connect screen', 'nibwp');
                         checkOut.appendChild(a);
                     }
                 })
                 .catch(function () {
-                    checkOut.textContent = 'Could not reach WordPress from this screen.';
+                    checkOut.textContent = __('Could not reach WordPress from this screen.', 'nibwp');
                     checkOut.className = 'nw-vs-checkout is-bad';
                 });
+        });
+    }
+
+    /* --------------------------------------------- pairing a headless runner -- */
+    // The key is made here rather than handed out to whatever authenticates to
+    // the API, and that is the guard rather than a convenience: this screen is
+    // behind a logged-in cookie, which only a real sign-in produces, so asking
+    // for a key is something a person does and an application password cannot.
+    // Without it the runner's stored credential would be enough on its own to
+    // mint browser cookies for the account.
+    var pairBtn = document.getElementById('nw-vs-pair');
+    var pairOut = document.getElementById('nw-vs-pair-out');
+    var pairSched = document.getElementById('nw-vs-pair-sched');
+    var pairRevoke = document.getElementById('nw-vs-pair-revoke');
+
+    function pairFailed() {
+        if (!pairOut) { return; }
+        pairOut.textContent = __('Could not reach WordPress from this screen.', 'nibwp');
+        pairOut.className = 'nw-vs-checkout is-bad';
+    }
+
+    /**
+     * Show a key once.
+     *
+     * Written with textContent and a node per part, never innerHTML: the value
+     * is a credential, and the one place it is ever displayed is not the place
+     * to start concatenating it into markup.
+     */
+    function showPass(d) {
+        pairOut.className = 'nw-vs-checkout';
+        pairOut.textContent = '';
+
+        var key = document.createElement('code');
+        key.className = 'nw-vs-pair__key';
+        key.textContent = d.pass;
+        pairOut.appendChild(key);
+
+        var copy = document.createElement('button');
+        copy.type = 'button';
+        copy.className = 'nw-vs-more nw-vs-more--btn';
+        copy.textContent = __('Copy the key', 'nibwp');
+        copy.addEventListener('click', function () {
+            var done = function () {
+                copy.textContent = __('Copied', 'nibwp');
+                setTimeout(function () { copy.textContent = __('Copy the key', 'nibwp'); }, 1600);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(d.pass).then(done, done);
+            } else {
+                // Plain http, and older browsers, where the async clipboard is
+                // unavailable. Selecting it is the fallback that always works.
+                var range = document.createRange();
+                range.selectNodeContents(key);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        });
+        pairOut.appendChild(copy);
+
+        // Two facts a person needs before they walk away from this screen: it
+        // will not be shown again, and it does not last forever.
+        var when = document.createElement('span');
+        when.className = 'nw-vs-pair__when';
+        when.textContent = d.scheduled
+            ? sprintf(
+                /* translators: %s: a date and time */
+                __('Shown once. Reusable for scheduled runs until you revoke it, or until %s.', 'nibwp'),
+                new Date(d.expires * 1000).toLocaleString()
+            )
+            : sprintf(
+                /* translators: %s: a date and time */
+                __('Shown once, good for one run, and only until %s.', 'nibwp'),
+                new Date(d.expires * 1000).toLocaleString()
+            );
+        pairOut.appendChild(when);
+
+        if (pairRevoke) { pairRevoke.hidden = false; }
+    }
+
+    if (pairBtn && pairOut) {
+        pairBtn.addEventListener('click', function () {
+            yieldPoll();
+            pairOut.className = 'nw-vs-checkout';
+            pairOut.textContent = __('Creating…', 'nibwp');
+
+            api('pair', { scheduled: pairSched && pairSched.checked ? '1' : '0' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d || !d.pass) { throw new Error('no key'); }
+                    showPass(d);
+                })
+                .catch(pairFailed);
+        });
+    }
+
+    if (pairRevoke && pairOut) {
+        pairRevoke.addEventListener('click', function () {
+            yieldPoll();
+            pairOut.className = 'nw-vs-checkout';
+            pairOut.textContent = __('Revoking…', 'nibwp');
+
+            api('pair', { revoke: '1' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d || typeof d.revoked !== 'number') { throw new Error('no answer'); }
+                    // Revoking ends the sessions those keys opened, so say so:
+                    // a runner that goes quiet a minute later is otherwise a
+                    // mystery rather than the thing that was just asked for.
+                    pairOut.textContent = d.revoked > 0
+                        ? __('Revoked. Any runner signed in with one of those keys is now signed out.', 'nibwp')
+                        : __('There was nothing to revoke.', 'nibwp');
+                    pairRevoke.hidden = true;
+                })
+                .catch(pairFailed);
         });
     }
 
@@ -1639,7 +1802,7 @@
                 btn.classList.add('is-copied');
                 var tag = btn.querySelector('.nw-vs-starter__copy');
                 var was = tag ? tag.textContent : '';
-                if (tag) { tag.textContent = 'Copied'; }
+                if (tag) { tag.textContent = __('Copied', 'nibwp'); }
                 setTimeout(function () {
                     btn.classList.remove('is-copied');
                     if (tag) { tag.textContent = was; }
@@ -1735,7 +1898,7 @@
             var next = currentTheme() === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             try { window.localStorage.setItem(THEME_KEY, next); } catch (e) { /* private mode */ }
-            var says = next === 'dark' ? 'Switch to light' : 'Switch to dark';
+            var says = next === 'dark' ? __('Switch to light', 'nibwp') : __('Switch to dark', 'nibwp');
             themeBtn.setAttribute('aria-label', says);
             themeBtn.setAttribute('data-tip', says);
         });
@@ -1958,8 +2121,8 @@
                 + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
                 + '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
         document.getElementById('nw-vs-up-eyebrow').textContent = item.ready && item.kind === 'skill'
-            ? 'Ready to switch on'
-            : 'Not included in your plan';
+            ? __('Ready to switch on', 'nibwp')
+            : __('Not included in your plan', 'nibwp');
         document.getElementById('nw-vs-up-title').textContent = item.title || '';
         document.getElementById('nw-vs-up-line').textContent = item.line || '';
 
@@ -1977,7 +2140,8 @@
 
         var go = document.getElementById('nw-vs-up-go');
         go.href = item.url || '#';
-        go.textContent = item.price ? (item.cta + ' — ' + item.price) : item.cta;
+        /* translators: 1: call to action, e.g. "Unlock Etch", 2: price, e.g. $49 */
+        go.textContent = item.price ? sprintf(__('%1$s — %2$s', 'nibwp'), item.cta, item.price) : item.cta;
 
         up.hidden = false;
         document.getElementById('nw-vs-up-not').focus();
@@ -2024,7 +2188,7 @@
     }
 
     function copyText(text, el) {
-        var done = function () { if (el) { flash(el, 'Copied'); } };
+        var done = function () { if (el) { flash(el, __('Copied', 'nibwp')); } };
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(done, done);
             return;
@@ -2106,13 +2270,14 @@
         recheck.addEventListener('click', function () {
             yieldPoll();
             said.className = 'nw-vs-start__said';
-            said.textContent = 'Checking…';
+            said.textContent = __('Checking…', 'nibwp');
             api('check', {})
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (d.connected) {
                         said.className = 'nw-vs-start__said is-ok';
-                        said.textContent = (d.clients || []).join(', ') + ' can reach this site. Loading the workspace…';
+                        /* translators: %s: comma-separated names of the connected AI clients */
+                        said.textContent = sprintf(__('%s can reach this site. Loading the workspace…', 'nibwp'), (d.clients || []).join(', '));
                         // Reload rather than patching the screen: the panel, the
                         // status and the starting points are all rendered
                         // against "connected", and half of them updating is
@@ -2122,12 +2287,12 @@
                     }
                     said.className = 'nw-vs-start__said is-bad';
                     said.textContent = d.abilities
-                        ? 'Nothing has connected yet. Finish the sign-in in your assistant, then check again.'
-                        : 'AI Abilities are switched off on this site, so nothing can connect until they are on.';
+                        ? __('Nothing has connected yet. Finish the sign-in in your assistant, then check again.', 'nibwp')
+                        : __('AI Abilities are switched off on this site, so nothing can connect until they are on.', 'nibwp');
                 })
                 .catch(function () {
                     said.className = 'nw-vs-start__said is-bad';
-                    said.textContent = 'Could not reach WordPress from this screen.';
+                    said.textContent = __('Could not reach WordPress from this screen.', 'nibwp');
                 });
         });
     }
@@ -2141,7 +2306,7 @@
     if (recheckBar) {
         recheckBar.addEventListener('click', function () {
             var says = recheckBar.querySelector('.nw-vs-ibtn__text');
-            if (says) { says.textContent = 'Checking…'; }
+            if (says) { says.textContent = __('Checking…', 'nibwp'); }
             recheckBar.disabled = true;
             yieldPoll();
 
@@ -2157,10 +2322,10 @@
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (d.connected) { hardReload(); return; }
-                    if (says) { says.textContent = 'Still nothing'; }
-                    log('check', (d.abilities ? 'No client has connected yet' : 'AI Abilities are switched off'), 'bad');
+                    if (says) { says.textContent = __('Still nothing', 'nibwp'); }
+                    log('check', (d.abilities ? __('No client has connected yet', 'nibwp') : __('AI Abilities are switched off', 'nibwp')), 'bad');
                     setTimeout(function () {
-                        if (says) { says.textContent = 'It is connected'; }
+                        if (says) { says.textContent = __('It is connected', 'nibwp'); }
                         recheckBar.disabled = false;
                     }, 2200);
                 })
@@ -2245,7 +2410,7 @@
 
         return gate.then(function (allowed) {
             if (!allowed) {
-                log(cmd.command, 'refused', 'bad');
+                log(cmd.command, __('refused', 'nibwp'), 'bad');
                 return {
                     error: window.__nibwpHeadless
                         ? 'This workspace is running headless, so there is nobody to approve "' + cmd.command
@@ -2277,15 +2442,22 @@
 
     function summaryOf(cmd, data) {
         if (!data) { return ''; }
-        if (cmd.command === 'audit') { return data.total + ' issue(s)'; }
-        if (cmd.command === 'read') { return (data.elements || []).length + ' element(s)'; }
+        if (cmd.command === 'audit') {
+            /* translators: %d: number of problems the audit found */
+            return sprintf(_n('%d issue', '%d issues', data.total, 'nibwp'), data.total);
+        }
+        if (cmd.command === 'read') {
+            var count = (data.elements || []).length;
+            /* translators: %d: number of elements read from the page */
+            return sprintf(_n('%d element', '%d elements', count, 'nibwp'), count);
+        }
         if (data.url) { return data.url; }
         return '';
     }
 
     // Idle is not a problem, and "Waiting for the agent" read as one. What the
     // bar should distinguish is whether anything can reach the site at all.
-    var IDLE = cfg.connected ? 'Ready' : 'No AI client connected';
+    var IDLE = cfg.connected ? __('Ready', 'nibwp') : __('No AI client connected', 'nibwp');
 
     var backoff = 250;
     var lastPoll = 0;
@@ -2316,7 +2488,7 @@
             .catch(function () {
                 // Back off rather than hammering a server that just refused us —
                 // a tab retrying every 250ms through an outage makes it worse.
-                setStatus('Reconnecting…', false);
+                setStatus(__('Reconnecting…', 'nibwp'), false);
                 backoff = Math.min(backoff * 2, 15000);
             })
             .then(function () {
@@ -2326,7 +2498,7 @@
     }
 
     function showTakenOver() {
-        setStatus('This workspace was opened somewhere else', false);
+        setStatus(__('This workspace was opened somewhere else', 'nibwp'), false);
 
         var panel = document.createElement('div');
         panel.className = 'nw-vs-stood';
@@ -2338,13 +2510,14 @@
             + '<path d="M18 8h4v8a2 2 0 0 1-2 2h-2"/></svg></span>'
             + '<h2></h2><p></p>'
             + '<div class="nw-vs-stood__acts">'
-            + '<button type="button" class="nw-vs-stood__go">Take it back</button>'
-            + '<button type="button" class="nw-vs-stood__alt">Connect another assistant</button>'
+            + '<button type="button" class="nw-vs-stood__go"></button>'
+            + '<button type="button" class="nw-vs-stood__alt"></button>'
             + '</div>';
 
-        panel.children[1].textContent = 'This workspace is open in another tab';
-        panel.children[2].textContent = 'Only one workspace can take the agent'
-            + String.fromCharCode(8217) + 's commands at a time, so this one stopped listening.';
+        panel.children[1].textContent = __('This workspace is open in another tab', 'nibwp');
+        panel.children[2].textContent = __('Only one workspace can take the agent’s commands at a time, so this one stopped listening.', 'nibwp');
+        panel.querySelector('.nw-vs-stood__go').textContent = __('Take it back', 'nibwp');
+        panel.querySelector('.nw-vs-stood__alt').textContent = __('Connect another assistant', 'nibwp');
 
         // Reloading is what takes it back — the claim goes to whoever asks last.
         panel.querySelector('.nw-vs-stood__go').addEventListener('click', function () {

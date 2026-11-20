@@ -18,6 +18,8 @@ if( ! class_exists( 'SWBDPCExtensionSettings' ) ){
         {   
             // Directorist - coupon extension's enable option hook
             add_filter( 'atbdp_extension_settings_fields', array( $this, 'add_swbdp_coupon_enable_settings_field' ) );
+            add_filter( 'atbdp_listing_type_settings_field_list', array( $this, 'add_swbdp_coupon_settings_fields' ) );
+            add_filter( 'atbdp_extension_fields', array( $this, 'add_swbdp_coupon_settings_layout' ) );
             // push license settings
             add_filter('atbdp_license_settings_controls', array( $this, 'coupon_license_settings_controls'), 10, 1);
             add_filter('atbdp_extension_license_settings_init', array( $this, 'atbdp_extension_settings'));
@@ -268,10 +270,28 @@ if( ! class_exists( 'SWBDPCExtensionSettings' ) ){
         }
 
         /**
-         * Add Directorist - coupon extension's enable option in extension general settings in Directory plugin
-         * 
-         * @param array
-         * @return array
+         * Register the enable control in the current settings panel, including when Coupon is disabled.
+         */
+        public function add_swbdp_coupon_settings_fields( $fields )
+        {
+            $fields['swbdp_coupon_is_enable'] = array(
+                'type'  => 'toggle',
+                'label' => __( 'Enable Coupon', 'directorist-coupon' ),
+                'value' => true,
+            );
+
+            return $fields;
+        }
+
+        public function add_swbdp_coupon_settings_layout( $fields )
+        {
+            $fields[] = 'swbdp_coupon_is_enable';
+
+            return $fields;
+        }
+
+        /**
+         * Add the enable control to the legacy extension settings.
          */
         public function add_swbdp_coupon_enable_settings_field( $extn_enable_field )
         {

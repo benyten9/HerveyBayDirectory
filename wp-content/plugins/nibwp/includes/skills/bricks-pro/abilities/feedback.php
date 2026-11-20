@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/bricks-pro-feedback', [
     'label'       => __('Bricks Pro — Record conversion feedback', 'nibwp'),
-    'description' => __('Record thumb-up / thumb-down on the most recent Bricks conversion. Thumb-down reasons are aggregated per (brand, element_type) and surfaced to future runs via load-skill-playbook so the same mistakes are not repeated.', 'nibwp'),
+    'description' => 'Record thumb-up / thumb-down on the most recent Bricks conversion. Thumb-down reasons are aggregated per (brand, element_type) and surfaced to future runs via load-skill-playbook so the same mistakes are not repeated.',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

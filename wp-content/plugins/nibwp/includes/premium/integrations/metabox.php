@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/metabox-manage-fields', [
-    'label' => __('Meta Box Manage Fields', domain: 'nibwp'),
-    'description' => __(
-        'Manage Meta Box field groups, custom post types, taxonomies, relationships, and field values. Supports the full Meta Box ecosystem including MB Custom Post Types and MB Relationships.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Meta Box Manage Fields', 'nibwp'),
+    'description' => 'Manage Meta Box field groups, custom post types, taxonomies, relationships, and field values. Supports the full Meta Box ecosystem including MB Custom Post Types and MB Relationships.',
     'category' => 'custom-fields',
     'input_schema' => [
         'type' => 'object',

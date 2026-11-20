@@ -86,6 +86,7 @@ class PlanRepository extends Repository {
     }
 
     public function creates( array $dtos ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         return $this->get_query_builder()->insert(
             array_map(
                 function( DTO $dto ) {
@@ -96,6 +97,7 @@ class PlanRepository extends Repository {
     }
 
     public function update_plan( DTO $dto ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
         do_action( 'directorist_before_update_plan', $dto );
 
         $status = $this->get_query_builder()->where( 'id', $dto->get_id() )->update( $this->process_values( $dto->to_array() ) );
@@ -137,6 +139,27 @@ class PlanRepository extends Repository {
             ->where( 'plan.is_published', 1 )
             ->order_by( 'plan.title', 'asc' )
             ->get();
+    }
+
+    /** Shared native deletion policy for the admin API and MCP. Confirmation cannot override it. */
+    public function assert_can_delete_plan( int $plan_id ): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            throw new Exception( __( 'Administrator access is required.', 'directorist-pricing-plans' ), 403 );
+        }
+
+        if ( $this->is_assigned_to_packages( $plan_id ) ) {
+            throw new Exception(
+                __( 'This plan cannot be deleted because it is assigned to one or more user packages.', 'directorist-pricing-plans' ),
+                409
+            );
+        }
+    }
+
+    /** Use the native delete and its database constraints; never force removal of dependencies. */
+    public function delete_plan( int $plan_id ) {
+        \DirectoristPricingPlan\App\MCP\NativeSafety::lock();
+        $this->assert_can_delete_plan( $plan_id );
+        return $this->delete_by_id( $plan_id );
     }
 
     public function is_assigned_to_packages( int $plan_id ): bool {
@@ -631,7 +654,7 @@ class PlanRepository extends Repository {
             ->set_allowed_featured_listings( $plan->allowed_featured_listings )
             ->set_is_allowed_unlimited_featured_listings( $plan->is_allowed_unlimited_featured_listings )
             ->set_fee_type( $plan->fee_type )
-            ->set_price( $plan->price )
+            ->set_price( directorist_get_plan_effective_price( $plan ) )
             ->set_is_taxable( $plan->is_taxable )
             ->set_tax_type( $plan->tax_type )
             ->set_tax_rate( $plan->tax_rate )

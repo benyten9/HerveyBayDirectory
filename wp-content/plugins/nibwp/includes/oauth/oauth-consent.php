@@ -159,7 +159,7 @@ function nibwp_oauth_handle_authorize(): void
 }
 
 /**
- * Scopes this user has already granted this client and not revoked.
+ * Scopes this user has already granted this client on THIS site, and not revoked.
  *
  * @return array<int, string>
  */
@@ -172,6 +172,33 @@ function nibwp_oauth_client_scopes_held(string $client_id): array
         if ((string) ($record['client_id'] ?? '') !== $client_id) {
             continue;
         }
+
+        // Consent belongs to the site it was given on.
+        //
+        // Tokens live in user meta, and on Multisite user meta is a single
+        // network-wide row: every site in the network reads the same records.
+        // Matching on client_id and expiry alone therefore read a grant made on
+        // one site as standing permission on every other site the same
+        // administrator can reach. Together with the `prompt=none` path below
+        // that is a silent re-grant, so a client a customer had deliberately
+        // limited to one site could collect mcp:files or mcp:code on a sibling
+        // site whose owner never saw a consent screen. The audience recorded
+        // with the token (RFC 8707) is the site it was granted for, and is the
+        // same value every later API call is checked against, so it is the
+        // right thing to compare — by identity, so www., a proxied scheme and
+        // the legacy route alias all still count as this site.
+        //
+        // A token that recorded no audience is not treated as consent at all.
+        // The only honest answer to "which site was this granted on?" is that we
+        // cannot tell, and the safe way to not know is to draw the screen: a
+        // `prompt=none` client then gets interaction_required and reconnects
+        // with a visible approval, which costs one click and cannot cross a
+        // site boundary.
+        $granted_for = (string) ($record['resource'] ?? '');
+        if ($granted_for === '' || !nibwp_oauth_audience_matches($granted_for)) {
+            continue;
+        }
+
         // A dead token is not a standing permission. Refresh counts: the client
         // holding one is still connected, it just has not called anything since
         // its access token aged out.
@@ -525,7 +552,7 @@ function nibwp_oauth_consent_head(string $client_name): void
     );
 ?></title>
 <?php wp_admin_css('login', true); ?>
-<link rel="stylesheet" href="<?php echo esc_url(NIBWP_PLUGIN_URL . 'assets/css/admin-oauth.css?v=' . (defined('NIBWP_VERSION') ? NIBWP_VERSION : '1')); ?>">
+<link rel="stylesheet" href="<?php echo esc_url((function_exists('nibwp_css_url') ? nibwp_css_url('admin-oauth.css') : NIBWP_PLUGIN_URL . 'assets/css/admin-oauth.css') . '?v=' . (defined('NIBWP_VERSION') ? NIBWP_VERSION : '1')); ?>">
 </head>
 <body class="nw-oa-body">
 <?php

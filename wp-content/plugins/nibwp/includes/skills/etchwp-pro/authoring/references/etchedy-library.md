@@ -2,9 +2,9 @@
 
 > **Read this only when you are working inside the Etchedy library project itself.**
 >
-> Etchedy is a library of Etch elements, components, layouts and templates that lives in its own repository, with the on-disk layout described below. A NibWP integration for Pro users is planned but **not built**: nothing in this plugin reads or writes `data/library/`, there is no `data/manifest.json` on a customer's site, and the `/wp-json/etchedy/v1/sync-library` route does not exist here.
+> Etchedy is a library of Etch elements, components, layouts and templates that lives in its own repository, with the on-disk layout described below. NibWP reaches that library through the **`etchedy-pro` skill** and the `nibwp/etchedy-manage` ability, which call Etchedy's own REST routes under its own permission and licence checks. Nothing in this plugin reads or writes `data/library/` directly, and neither should you: to save, rename, move, reuse or audit a stored component, use that skill rather than the file layout below.
 >
-> Building an Etch section on a WordPress site is a different job with a different mechanism: assemble the payload and submit it to `nibwp/etchwp-pro-html-to-component`, which serialises the tree into the page, merges `styles` into the `etch_styles` option, and mints a `wp_block` post per component. See [../SKILL.md](../SKILL.md). Do not follow the file placement below on a customer site — those paths are not there, and writing to them silently produces nothing.
+> Building an Etch section on a WordPress site is a different job with a different mechanism: assemble the payload and submit it to `nibwp/etchwp-pro-html-to-component`, which serialises the tree into the page, merges `styles` into the `etch_styles` option, and mints a `wp_block` post per component. See [../SKILL.md](../SKILL.md). Do not follow the file placement below on a customer site — write through `nibwp/etchedy-manage`, never to those paths. Once a component is built and the user wants it kept, hand it to the `etchedy-pro` skill.
 
 
 ## Folder → Type mapping

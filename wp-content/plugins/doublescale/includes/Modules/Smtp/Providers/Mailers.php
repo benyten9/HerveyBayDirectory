@@ -32,6 +32,8 @@ use DoubleScale\Modules\Smtp\Providers\Zoho\Zoho;
 use DoubleScale\Modules\Smtp\Providers\Aws\Aws;
 use DoubleScale\Modules\Smtp\Providers\Mandrill\Mandrill;
 use DoubleScale\Modules\Smtp\Providers\SocketLabs\SocketLabs;
+use DoubleScale\Modules\Smtp\Providers\ToSend\ToSend;
+use DoubleScale\Modules\Smtp\Providers\Emailit\Emailit;
 
 /**
  * Mailers Class.
@@ -117,6 +119,8 @@ final class Mailers {
 			'aws'          => Aws::class,
 			'mandrill'     => Mandrill::class,
 			'socketlabs'   => SocketLabs::class,
+			'tosend'       => ToSend::class,
+			'emailit'      => Emailit::class,
 		);
 
 		return apply_filters( 'doublescale_smtp_mailers', $mailers );

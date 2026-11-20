@@ -168,7 +168,7 @@ class RestPipelineController extends RestController
 
 		// Sales Rep can only see pipelines where they have deals
 		// Sales Manager, CRM Manager, and Administrator can see all pipelines
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			$pipeline_ids = PipelineManager::instance()->get_pipeline_ids_for_owner(get_current_user_id());
 			$pipelines    = $pipelines->whereIn('id', $pipeline_ids);
 		}
@@ -212,7 +212,7 @@ class RestPipelineController extends RestController
 
 		// Sales Rep can only access pipelines where they have deals
 		// Sales Manager, CRM Manager, and Administrator can access all pipelines
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			$pipeline_ids = PipelineManager::instance()->get_pipeline_ids_for_owner(get_current_user_id());
 			if (! in_array($pipeline_id, $pipeline_ids)) {
 				return new WP_Error('pipeline_not_found', 'Pipeline not found', array('status' => 404));
@@ -684,7 +684,7 @@ class RestPipelineController extends RestController
 	 */
 	public function get_items_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access();
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::has_agent_access();
 	}
 
 	/**
@@ -696,7 +696,7 @@ class RestPipelineController extends RestController
 	 */
 	public function get_item_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access();
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::has_agent_access();
 	}
 
 	/**

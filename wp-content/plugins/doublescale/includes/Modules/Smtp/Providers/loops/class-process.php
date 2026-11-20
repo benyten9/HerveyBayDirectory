@@ -82,7 +82,7 @@ class Process extends Abstract_Process {
 	 * @param string $subject
 	 */
 	public function set_subject( $subject ) {
-		$this->body['dataVariables']['subject'] = sanitize_text_field( $subject );
+		$this->body['dataVariables']['subject'] = self::sanitize_subject( $subject );
 	}
 
 	/**

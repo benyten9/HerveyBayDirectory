@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Database\Schema;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema;
 
-class MySqlBuilder extends \Illuminate\Database\Schema\Builder
+class MySqlBuilder extends Builder
 {
     /**
      * Determine if the given table exists.

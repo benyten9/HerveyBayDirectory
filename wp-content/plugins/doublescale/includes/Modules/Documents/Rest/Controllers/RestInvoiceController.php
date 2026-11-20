@@ -9,6 +9,7 @@ namespace DoubleScale\Modules\Documents\Rest\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Core\Scope\OwnerScope;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\Services\DocumentCurrency;
 use DoubleScale\Core\Constants\ActivityTypes;
@@ -232,7 +233,8 @@ class RestInvoiceController extends RestController {
 
 		$data = array();
 		foreach ( $paginator->items() as $invoice ) {
-			$data[] = InvoiceShaper::shape( $invoice, true );
+			// The list never shows the payment texts: skip resolving them per row.
+			$data[] = InvoiceShaper::shape( $invoice, true, false );
 		}
 
 		return new WP_REST_Response(
@@ -260,7 +262,7 @@ class RestInvoiceController extends RestController {
 		}
 
 		$query = InvoiceModel::query();
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! Capabilities::sees_all_records() ) {
 			$query->where( 'sale_agent_user_id', get_current_user_id() );
 		}
 
@@ -374,6 +376,14 @@ class RestInvoiceController extends RestController {
 			return $payload;
 		}
 
+		// An agent limited to their own contacts can't point a document at a colleague's.
+		$contact_error = OwnerScope::contact_reference_error( (int) ( $payload['contact_id'] ?? 0 ) );
+		if ( $contact_error ) {
+			return $contact_error;
+		}
+
+		$payload['company_id'] = doublescale_record_company_id( $payload['contact_id'] ?? 0, $payload['company_id'] ?? null );
+
 		if ( ! isset( $payload['template'] ) ) {
 			$payload['template'] = DocumentTemplate::normalize(
 				SalesSettings::get( 'default_invoice_template', DocumentTemplate::DEFAULT )
@@ -432,6 +442,19 @@ class RestInvoiceController extends RestController {
 		$payload = $this->sanitize_payload( $request, false );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
+		}
+
+		$contact_error = OwnerScope::contact_reference_error( (int) ( $payload['contact_id'] ?? 0 ) );
+		if ( $contact_error ) {
+			return $contact_error;
+		}
+
+		// Sharing follows the contact: re-check on a new contact or company.
+		if ( array_key_exists( 'company_id', $payload ) || array_key_exists( 'contact_id', $payload ) ) {
+			$payload['company_id'] = doublescale_record_company_id(
+				$payload['contact_id'] ?? $invoice->contact_id,
+				array_key_exists( 'company_id', $payload ) ? $payload['company_id'] : $invoice->company_id
+			);
 		}
 
 		if ( array_key_exists( 'currency', $payload ) ) {
@@ -756,7 +779,7 @@ class RestInvoiceController extends RestController {
 	}
 
 	/**
-	 * @param \Illuminate\Database\Eloquent\Builder $query Query.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
 	 * @param WP_REST_Request                       $request Request.
 	 * @return void
 	 */
@@ -775,7 +798,7 @@ class RestInvoiceController extends RestController {
 			$query->where( 'contact_id', (int) $contact_id );
 		}
 
-		if ( ! Capabilities::can_manage_all_sales() && ! Capabilities::can_assign_sales_rep() ) {
+		if ( ! Capabilities::sees_all_records() ) {
 			$query->where( 'sale_agent_user_id', get_current_user_id() );
 		}
 
@@ -843,12 +866,28 @@ class RestInvoiceController extends RestController {
 			}
 		}
 
+		$service = $this->sanitize_service_period( $params, (int) $request->get_param( 'id' ) );
+		if ( is_wp_error( $service ) ) {
+			return $service;
+		}
+		$payload = array_merge( $payload, $service );
+
+		if ( array_key_exists( 'buyer_reference', $params ) ) {
+			$reference                  = sanitize_text_field( (string) $params['buyer_reference'] );
+			$payload['buyer_reference'] = '' === $reference ? null : substr( $reference, 0, 100 );
+		}
+
 		if ( array_key_exists( 'currency', $params ) ) {
 			$currency = DocumentCurrency::sanitize_input( $params['currency'] );
 			if ( is_wp_error( $currency ) ) {
 				return $currency;
 			}
 			$payload['currency'] = $currency;
+		}
+
+		// Checked against the contact's company in create/update.
+		if ( array_key_exists( 'company_id', $params ) ) {
+			$payload['company_id'] = (int) $params['company_id'] ?: null;
 		}
 
 		if ( array_key_exists( 'contact_id', $params ) ) {
@@ -915,6 +954,52 @@ class RestInvoiceController extends RestController {
 			if ( '' !== $number ) {
 				$payload['invoice_number'] = $number;
 			}
+		}
+
+		return $payload;
+	}
+
+	/**
+	 * Service date / period (the date of supply, § 14 UStG).
+	 *
+	 * Validated against the stored values on update, so sending only an end
+	 * date for an invoice that already has a start date is fine.
+	 *
+	 * @param array<string, mixed> $params     Request params.
+	 * @param int                  $invoice_id Invoice being updated (0 on create).
+	 * @return array<string, string|null>|WP_Error Fields to save, or an error.
+	 */
+	private function sanitize_service_period( array $params, int $invoice_id ) {
+		$payload = array();
+		foreach ( array( 'service_date', 'service_date_end' ) as $field ) {
+			if ( ! array_key_exists( $field, $params ) ) {
+				continue;
+			}
+			$value = trim( (string) $params[ $field ] );
+			if ( '' === $value ) {
+				$payload[ $field ] = null;
+				continue;
+			}
+			$date = \DateTime::createFromFormat( '!Y-m-d', $value );
+			if ( ! $date || $date->format( 'Y-m-d' ) !== $value ) {
+				return new WP_Error( 'invalid_service_period', __( 'The service date must be a valid date (YYYY-MM-DD).', 'doublescale' ), array( 'status' => 400 ) );
+			}
+			$payload[ $field ] = $value;
+		}
+
+		if ( empty( $payload ) ) {
+			return $payload;
+		}
+
+		$stored = $invoice_id ? InvoiceModel::find( $invoice_id ) : null;
+		$start  = array_key_exists( 'service_date', $payload ) ? $payload['service_date'] : ( $stored ? $stored->service_date : null );
+		$end    = array_key_exists( 'service_date_end', $payload ) ? $payload['service_date_end'] : ( $stored ? $stored->service_date_end : null );
+
+		if ( $end && ! $start ) {
+			return new WP_Error( 'invalid_service_period', __( 'A service period needs a start date.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+		if ( $end && $start && $end < $start ) {
+			return new WP_Error( 'invalid_service_period', __( 'The service period cannot end before it starts.', 'doublescale' ), array( 'status' => 400 ) );
 		}
 
 		return $payload;

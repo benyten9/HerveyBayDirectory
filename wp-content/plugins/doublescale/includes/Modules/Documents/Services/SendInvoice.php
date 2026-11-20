@@ -118,7 +118,8 @@ final class SendInvoice {
 	 */
 	private static function finish( InvoiceModel $invoice, string $message, string $channel ): InvoiceModel {
 		if ( InvoiceStatus::DRAFT === (string) $invoice->status ) {
-			$invoice->status = InvoiceStatus::UNPAID;
+			// Nothing to pay is paid; anything else waits for its payment.
+			$invoice->status = (float) $invoice->total > 0 ? InvoiceStatus::UNPAID : InvoiceStatus::PAID;
 		}
 
 		DocumentCustomerDetails::snapshot_billing_from_contact( $invoice );

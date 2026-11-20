@@ -289,7 +289,7 @@ function nibwp_kadence_pro_blocks_active(): bool
 // ---------------------------------------------------------------------------
 wp_register_ability('nibwp/kadence-pro-preview', [
     'label'       => __('Kadence Pro — preview / validate a block tree', 'nibwp'),
-    'description' => __('Build + validate + score an agent-built Kadence block tree without persisting or a preflight token. Use to check structure before the real run.', 'nibwp'),
+    'description' => 'Build + validate + score an agent-built Kadence block tree without persisting or a preflight token. Use to check structure before the real run.',
     'category'    => 'kadence-pro',
     'input_schema' => [
         'type' => 'object',

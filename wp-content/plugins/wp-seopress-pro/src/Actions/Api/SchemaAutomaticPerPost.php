@@ -418,11 +418,9 @@ class SchemaAutomaticPerPost implements ExecuteHooks {
 
 			case 'custom':
 				// Allow <script type="application/ld+json"> blobs for the
-				// custom JSON-LD field, matching the classic save path.
-				return wp_kses(
-					$value,
-					array( 'script' => array( 'type' => array() ) )
-				);
+				// custom JSON-LD field, through the sanitizer every other
+				// custom schema field uses.
+				return seopress_pro_kses_json_ld( $value );
 
 			case 'number':
 			case 'rating':

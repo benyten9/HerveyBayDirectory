@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
-use Illuminate\Support\Testing\Fakes\QueueFake;
+use DoubleScale\Vendor\Illuminate\Support\Testing\Fakes\QueueFake;
 /**
  * @method static int size(string $queue = null)
  * @method static mixed push(string|object $job, mixed $data = '', $queue = null)
@@ -18,7 +18,7 @@ use Illuminate\Support\Testing\Fakes\QueueFake;
  * @see \Illuminate\Queue\QueueManager
  * @see \Illuminate\Queue\Queue
  */
-class Queue extends \Illuminate\Support\Facades\Facade
+class Queue extends Facade
 {
     /**
      * Replace the bound instance with a fake.

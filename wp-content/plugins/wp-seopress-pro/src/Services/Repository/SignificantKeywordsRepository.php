@@ -42,14 +42,14 @@ class SignificantKeywordsRepository {
 		$sql   = "SELECT {$alias}.* ";
 		$sql  .= "FROM {$wpdb->prefix}{$this->tableSignificantWords->getName()} {$alias} ";
 		$sql  .= "INNER JOIN {$wpdb->posts} p ON p.ID = {$alias}.post_id ";
-		$sql  .= "WHERE {$alias}.word = '%s' ";
+		$sql  .= "WHERE {$alias}.word = %s ";
 		$sql  .= "AND {$alias}.post_id != %d ";
 		$sql  .= "AND p.post_status IN ('publish', 'draft', 'pending', 'future') ";
 		$sql  .= 'AND p.post_type IN (' . implode( ',', $keysPostTypes ) . ') ';
 
-		$sql = $wpdb->prepare( $sql, array( $word, $postId ) );
+		$sql = $wpdb->prepare( $sql, array( $word, $postId ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table and column names come from the plugin own table definitions, never from user input.
 
-		$data = $wpdb->get_results( $sql );
+		$data = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 		return $data;
 	}
@@ -66,10 +66,10 @@ class SignificantKeywordsRepository {
 		$alias = $this->tableSignificantWords->getAlias();
 		$sql   = "SELECT COUNT({$alias}.id) ";
 		$sql  .= "FROM {$wpdb->prefix}{$this->tableSignificantWords->getName()} {$this->tableSignificantWords->getAlias()} ";
-		$sql  .= "WHERE {$alias}.word = '%s'";
+		$sql  .= "WHERE {$alias}.word = %s";
 
-		$sql  = $wpdb->prepare( $sql, $word );
-		$data = $wpdb->get_var( $sql );
+		$sql  = $wpdb->prepare( $sql, $word ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table and column names come from the plugin own table definitions, never from user input.
+		$data = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 
 		return (int) $data;
 	}
@@ -86,7 +86,7 @@ class SignificantKeywordsRepository {
 		$sql   = "SELECT COUNT(DISTINCT {$alias}.post_id) as total ";
 		$sql  .= "FROM {$wpdb->prefix}{$this->tableSignificantWords->getName()} {$alias} ";
 
-		$data = $wpdb->get_var( $sql );
+		$data = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table and column names come from the plugin own table definitions, never from user input.
 
 		return (int) $data;
 	}
@@ -116,6 +116,7 @@ class SignificantKeywordsRepository {
 	 * @return string
 	 */
 	protected function getInsertValuesInstruction( $args ) {
+		global $wpdb;
 
 		$argsDefault = array(
 			'post_id' => 0,
@@ -126,19 +127,28 @@ class SignificantKeywordsRepository {
 
 		$args = array_merge( $argsDefault, $args );
 
-		return "(
-            {$args["post_id"]},
-            '{$args["word"]}',
-            {$args["count"]},
-            {$args["tf"]}
-        )";
+		// The word comes straight out of the post content, so it has to be
+		// bound: an apostrophe alone used to break the INSERT.
+		return $wpdb->prepare(
+			'( %d, %s, %d, %f )',
+			$args['post_id'],
+			$args['word'],
+			$args['count'],
+			$args['tf']
+		);
 	}
 
 	public function insertSignificantKeywords( $significantKeywords ) {
 
+		// An empty batch inserts zero rows and must not build an invalid query.
+		if ( empty( $significantKeywords ) ) {
+			return 0;
+		}
+
 		global $wpdb;
 
-		$sql = $this->getInsertInstruction();
+		$sql    = $this->getInsertInstruction();
+		$values = array();
 
 		foreach ( $significantKeywords as $key => $keyword ) {
 			$values[] = $this->getInsertValuesInstruction( $keyword );
@@ -146,7 +156,7 @@ class SignificantKeywordsRepository {
 		$sql .= implode( ', ', $values );
 
 		try {
-			return $wpdb->query( $sql );
+			return $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the prepared statement built above.
 		} catch ( \Exception $e ) {
 			return null;
 		}

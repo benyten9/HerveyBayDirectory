@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/etchwp-pro-feedback', [
     'label'       => __('EtchWP Pro — Record conversion feedback', 'nibwp'),
-    'description' => __('Record a 👍 / 👎 rating for a just-converted EtchWP component. Thumb-down reasons are aggregated per (brand, element_type) and injected into the next conversion of the same kind so future runs avoid past mistakes.', 'nibwp'),
+    'description' => 'Record a 👍 / 👎 rating for a just-converted EtchWP component. Thumb-down reasons are aggregated per (brand, element_type) and injected into the next conversion of the same kind so future runs avoid past mistakes.',
     'category'    => 'etchwp-pro',
     'input_schema' => [
         'type' => 'object',

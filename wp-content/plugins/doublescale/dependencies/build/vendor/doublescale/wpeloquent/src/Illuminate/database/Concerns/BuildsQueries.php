@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Concerns;
+namespace DoubleScale\Vendor\Illuminate\Database\Concerns;
 
-use Illuminate\Container\Container;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Pagination\LengthAwarePaginator;
+use DoubleScale\Vendor\Illuminate\Container\Container;
+use DoubleScale\Vendor\Illuminate\Pagination\Paginator;
+use DoubleScale\Vendor\Illuminate\Pagination\LengthAwarePaginator;
 trait BuildsQueries
 {
     /**

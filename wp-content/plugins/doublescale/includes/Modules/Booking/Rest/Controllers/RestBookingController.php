@@ -26,7 +26,7 @@ use WP_REST_Server;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Modules\Booking\Models\BookingModel;
 use DoubleScale\Modules\Booking\Models\BookingOrderModel;
-use Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
 use DoubleScale\Modules\Booking\Services\BookingValidator;
 use DoubleScale\Modules\Booking\Services\BookingService;
 use DoubleScale\Modules\Booking\Models\EventModel;
@@ -598,6 +598,16 @@ class RestBookingController extends RestController {
 	 */
 	public function get_item_permissions_check( $request ) {
 		$id = $request->get_param( 'id' );
+
+		// Whoever may read every booking is told a missing one is missing:
+		// get_item() answers 404. Anyone else is refused alike for a booking
+		// that does not exist and one that is not theirs, so the answer never
+		// reveals which ids exist.
+		if ( ! BookingModel::find( $id ) ) {
+			return ( is_multisite() && is_super_admin() )
+				|| current_user_can( 'doublescale_booking_read_all_bookings' );
+		}
+
 		return Capabilities::can_read_booking( $id );
 	}
 

@@ -10,11 +10,8 @@ if (!defined('ABSPATH')) {
 // =============================================================================
 
 wp_register_ability('nibwp/fetch-url-content', [
-    'label' => __('Fetch – URL Content', domain: 'nibwp'),
-    'description' => __(
-        'Fetch and extract content from any URL with configurable extraction modes.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Fetch – URL Content', 'nibwp'),
+    'description' => 'Fetch and extract content from any URL with configurable extraction modes.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -335,11 +332,8 @@ function nibwp_fetch_extract_tag_text(DOMXPath $xpath, string $xp): string
 // =============================================================================
 
 wp_register_ability('nibwp/fetch-rss-feed', [
-    'label' => __('Fetch – RSS Feed', domain: 'nibwp'),
-    'description' => __(
-        'Fetch and parse an RSS or Atom feed, returning structured items.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Fetch – RSS Feed', 'nibwp'),
+    'description' => 'Fetch and parse an RSS or Atom feed, returning structured items.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -502,11 +496,8 @@ function nibwp_fetch_rss_feed(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/fetch-rewrite-content', [
-    'label' => __('Fetch – Rewrite Content', domain: 'nibwp'),
-    'description' => __(
-        'Transform content locally: summarize, convert to bullet points, expand with subheadings, or basic rewrite.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Fetch – Rewrite Content', 'nibwp'),
+    'description' => 'Transform content locally: summarize, convert to bullet points, expand with subheadings, or basic rewrite.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -822,11 +813,8 @@ function nibwp_fetch_expand(string $content): string
 // =============================================================================
 
 wp_register_ability('nibwp/fetch-to-draft', [
-    'label' => __('Fetch – URL to Draft', domain: 'nibwp'),
-    'description' => __(
-        'Fetch content from a URL and create a WordPress draft post, optionally importing images.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Fetch – URL to Draft', 'nibwp'),
+    'description' => 'Fetch content from a URL and create a WordPress draft post, optionally importing images.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -1015,11 +1003,8 @@ function nibwp_fetch_to_draft(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/fetch-bulk-import', [
-    'label' => __('Fetch – Bulk Import from RSS', domain: 'nibwp'),
-    'description' => __(
-        'Bulk import posts from an RSS feed as drafts.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Fetch – Bulk Import from RSS', 'nibwp'),
+    'description' => 'Bulk import posts from an RSS feed as drafts.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',
@@ -1245,11 +1230,8 @@ function nibwp_fetch_bulk_import(array $input): array|WP_Error
 // =============================================================================
 
 wp_register_ability('nibwp/fetch-sitemap-urls', [
-    'label' => __('Fetch – Sitemap URLs', domain: 'nibwp'),
-    'description' => __(
-        'Extract all URLs from an XML sitemap, including sitemap index files.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Fetch – Sitemap URLs', 'nibwp'),
+    'description' => 'Extract all URLs from an XML sitemap, including sitemap index files.',
     'category' => 'content',
     'input_schema' => [
         'type' => 'object',

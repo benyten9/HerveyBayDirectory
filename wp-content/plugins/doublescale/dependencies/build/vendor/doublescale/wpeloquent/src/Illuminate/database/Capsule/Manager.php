@@ -1,14 +1,14 @@
 <?php
 
-namespace Illuminate\Database\Capsule;
+namespace DoubleScale\Vendor\Illuminate\Database\Capsule;
 
 use PDO;
-use Illuminate\Container\Container;
-use Illuminate\Database\DatabaseManager;
-use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Support\Traits\CapsuleManagerTrait;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Database\Connectors\ConnectionFactory;
+use DoubleScale\Vendor\Illuminate\Container\Container;
+use DoubleScale\Vendor\Illuminate\Database\DatabaseManager;
+use DoubleScale\Vendor\Illuminate\Contracts\Events\Dispatcher;
+use DoubleScale\Vendor\Illuminate\Support\Traits\CapsuleManagerTrait;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Model as Eloquent;
+use DoubleScale\Vendor\Illuminate\Database\Connectors\ConnectionFactory;
 class Manager
 {
     use CapsuleManagerTrait;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use DateInterval;
 use DateTimeInterface;
@@ -26,7 +26,7 @@ trait InteractsWithTime
     protected function availableAt($delay = 0)
     {
         $delay = $this->parseDateInterval($delay);
-        return $delay instanceof DateTimeInterface ? $delay->getTimestamp() : \Illuminate\Support\Carbon::now()->addRealSeconds($delay)->getTimestamp();
+        return $delay instanceof DateTimeInterface ? $delay->getTimestamp() : Carbon::now()->addRealSeconds($delay)->getTimestamp();
     }
     /**
      * If the given value is an interval, convert it to a DateTime instance.
@@ -37,7 +37,7 @@ trait InteractsWithTime
     protected function parseDateInterval($delay)
     {
         if ($delay instanceof DateInterval) {
-            $delay = \Illuminate\Support\Carbon::now()->add($delay);
+            $delay = Carbon::now()->add($delay);
         }
         return $delay;
     }
@@ -48,6 +48,6 @@ trait InteractsWithTime
      */
     protected function currentTime()
     {
-        return \Illuminate\Support\Carbon::now()->getTimestamp();
+        return Carbon::now()->getTimestamp();
     }
 }

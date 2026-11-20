@@ -45,6 +45,7 @@ class ContactsTable extends Migration {
 			company_registration_number VARCHAR(191) NULL,
 			tax_vat_number VARCHAR(191) NULL,
 			avatar_id BIGINT(20) UNSIGNED NULL,
+			owner_id BIGINT(20) UNSIGNED NULL,
 			phone VARCHAR(255),
 			whatsapp_phone VARCHAR(255),
 			address_1 VARCHAR(255),
@@ -65,7 +66,8 @@ class ContactsTable extends Migration {
 			UNIQUE KEY whatsapp_phone (whatsapp_phone(191)),
 			KEY email_status (email_status),
 			KEY sms_status (sms_status),
-			KEY whatsapp_status (whatsapp_status)';
+			KEY whatsapp_status (whatsapp_status),
+			KEY owner_id (owner_id)';
 
 		return $query;
 	}

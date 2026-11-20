@@ -108,7 +108,7 @@ class Images
 				$picture_atts = Utilities::get_atts_array($picture[1]);
 
 				//dont check excluded if forced attribute was found
-				if(!Utilities::match_in_array($picture[1], Attributes::forced())) {
+				if(!Utilities::match_in_array($picture[0], Attributes::forced())) {
 					//skip if no-lazy class is found
 					if((!empty($picture_atts['class']) && strpos($picture_atts['class'], 'no-lazy') !== false) || Utilities::match_in_array($picture[0], Attributes::excluded())) {
 						//mark image for exclusion later
@@ -129,39 +129,17 @@ class Images
 					}
 				}
 
-				//match all source tags inside the picture
+				//skip if no source tags
 				if(stripos($picture[2], '<source') === false) {
 					continue;
 				}
 
-				preg_match_all('#<source(\s.+)>#isU', $picture[2], $sources, PREG_SET_ORDER);
+				//migrate source tag srcset/sizes attributes
+				$new_picture_html = preg_replace('/(<source[^>]*\s)srcset=/i', '${1}data-srcset=', $picture[0]);
+				$new_picture_html = preg_replace('/(<source[^>]*\s)sizes=/i', '${1}data-sizes=', $new_picture_html);
 
-				if(!empty($sources)) {
-					$new_picture_html = $picture[0];
-
-					foreach($sources as $source) {
-						//skip if exluded attribute was found
-						if(Utilities::match_in_array($source[1], Attributes::excluded())) {
-							continue;
-						}
-
-						//migrate srcet
-						$new_source = preg_replace('/([\s"\'])srcset/i', '${1}data-srcset', $source[0]);
-
-						//migrate sizes
-						$new_source = preg_replace('/([\s"\'])sizes/i', '${1}data-sizes', $new_source);
-
-						//replace source instances in picture only
-						$new_picture_html = preg_replace(
-							'#' . preg_quote($source[0], '#') . '#',
-							$new_source,
-							$new_picture_html
-						);
-					}
-
-					//replace updated picture in html (single occurrence only)
-					$html = Utilities::replace_first_occurrence($html, $picture[0], $new_picture_html);
-				}
+				//replace updated picture in html (single occurrence only)
+				$html = Utilities::replace_first_occurrence($html, $picture[0], $new_picture_html);
 			}
 		}
 

@@ -14,7 +14,7 @@ namespace DoubleScale\Modules\Contacts\Filters\Segments;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Modules\Contacts\Abstracts\Filter;
-use Illuminate\Database\Eloquent\Builder;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
 use DoubleScale\Modules\Contacts\Filters\FiltersManager;
 
 /**

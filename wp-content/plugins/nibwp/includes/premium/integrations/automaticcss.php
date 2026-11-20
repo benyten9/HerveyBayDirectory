@@ -11,8 +11,8 @@ if (!defined('ABSPATH')) {
  */
 
 wp_register_ability('nibwp/acss-get-variables', [
-    'label' => __('ACSS — Get CSS Variables', domain: 'nibwp'),
-    'description' => __('Retrieve all AutomaticCSS custom properties (colors, spacing, typography, sizing). Returns the full variable map from ACSS settings.', domain: 'nibwp'),
+    'label' => __('ACSS — Get CSS Variables', 'nibwp'),
+    'description' => 'Retrieve all AutomaticCSS custom properties (colors, spacing, typography, sizing). Returns the full variable map from ACSS settings.',
     'category' => 'acss',
     'input_schema' => [
         'type' => 'object',
@@ -122,8 +122,8 @@ function nibwp_acss_get_variables(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/acss-update-variables', [
-    'label' => __('ACSS — Update CSS Variables', domain: 'nibwp'),
-    'description' => __('Update AutomaticCSS settings and CSS custom properties. Changes colors, spacing, typography, and other design tokens.', domain: 'nibwp'),
+    'label' => __('ACSS — Update CSS Variables', 'nibwp'),
+    'description' => 'Update AutomaticCSS settings and CSS custom properties. Changes colors, spacing, typography, and other design tokens.',
     'category' => 'acss',
     'input_schema' => [
         'type' => 'object',
@@ -208,8 +208,8 @@ function nibwp_acss_update_variables(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/acss-get-classes', [
-    'label' => __('ACSS — List Utility Classes', domain: 'nibwp'),
-    'description' => __('List all utility classes available in AutomaticCSS, grouped by category (layout, spacing, typography, colors, etc.).', domain: 'nibwp'),
+    'label' => __('ACSS — List Utility Classes', 'nibwp'),
+    'description' => 'List all utility classes available in AutomaticCSS, grouped by category (layout, spacing, typography, colors, etc.).',
     'category' => 'acss',
     'input_schema' => [
         'type' => 'object',
@@ -281,8 +281,8 @@ function nibwp_acss_get_classes(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/acss-regenerate', [
-    'label' => __('ACSS — Regenerate CSS', domain: 'nibwp'),
-    'description' => __('Triggers AutomaticCSS to regenerate its compiled CSS files. Use after changing variables or settings.', domain: 'nibwp'),
+    'label' => __('ACSS — Regenerate CSS', 'nibwp'),
+    'description' => 'Triggers AutomaticCSS to regenerate its compiled CSS files. Use after changing variables or settings.',
     'category' => 'acss',
     'input_schema' => [
         'type' => 'object',

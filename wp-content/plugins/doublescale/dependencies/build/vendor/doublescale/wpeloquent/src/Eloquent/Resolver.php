@@ -1,8 +1,8 @@
 <?php
 
-namespace WPEloquent\Eloquent;
+namespace DoubleScale\Vendor\WPEloquent\Eloquent;
 
-use Illuminate\Database\ConnectionResolverInterface;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionResolverInterface;
 class Resolver implements ConnectionResolverInterface
 {
     /**
@@ -14,7 +14,7 @@ class Resolver implements ConnectionResolverInterface
      */
     public function connection($name = null)
     {
-        return \WPEloquent\Eloquent\Database::instance();
+        return Database::instance();
     }
     /**
      * Get the default connection name.

@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Doctrine\Common\Lexer;
+namespace DoubleScale\Vendor\Doctrine\Common\Lexer;
 
 use ReflectionClass;
 use function implode;

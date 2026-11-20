@@ -125,7 +125,7 @@ class ExternalAccountCredentials implements FetchAuthTokenInterface, UpdateMetad
      *     @type int $expires_at
      * }
      */
-    private function getImpersonatedAccessToken(string $stsToken, callable $httpHandler = null): array
+    private function getImpersonatedAccessToken(string $stsToken, ?callable $httpHandler = null): array
     {
         if (!isset($this->serviceAccountImpersonationUrl)) {
             throw new InvalidArgumentException('service_account_impersonation_url must be set in JSON credentials.');
@@ -151,7 +151,7 @@ class ExternalAccountCredentials implements FetchAuthTokenInterface, UpdateMetad
      *     @type string $token_type (identity pool only)
      * }
      */
-    public function fetchAuthToken(callable $httpHandler = null)
+    public function fetchAuthToken(?callable $httpHandler = null)
     {
         $stsToken = $this->auth->fetchAuthToken($httpHandler);
         if (isset($this->serviceAccountImpersonationUrl)) {
@@ -194,7 +194,7 @@ class ExternalAccountCredentials implements FetchAuthTokenInterface, UpdateMetad
      *        token. **Defaults to** `null`.
      * @return string|null
      */
-    public function getProjectId(callable $httpHandler = null, string $accessToken = null)
+    public function getProjectId(?callable $httpHandler = null, ?string $accessToken = null)
     {
         if (isset($this->projectId)) {
             return $this->projectId;

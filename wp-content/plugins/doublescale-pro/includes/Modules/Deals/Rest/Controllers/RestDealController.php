@@ -15,6 +15,7 @@ use DoubleScale\Core\Models\AttachmentModel;
 use DoubleScale\Core\Services\AttachmentService;
 use DoubleScale\Pro\Modules\Deals\Models\DealModel;
 use DoubleScale\Pro\Modules\Deals\Services\DealManager;
+use DoubleScale\Pro\Modules\Deals\Services\DealOwnerRule;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Pro\PermissionsCompat;
 use Exception;
@@ -56,9 +57,11 @@ class RestDealController extends RestController
 	private const DEAL_ATTACHMENT_MAX_BYTES = 10485760;
 
 	/**
-	 * Maximum active attachments per deal.
+	 * Maximum active attachments per deal: high, a guard against a runaway
+	 * script rather than a quota (only the team uploads here; client uploads
+	 * have their own limits). Filter: `doublescale_attachment_max_count`.
 	 */
-	private const DEAL_ATTACHMENT_MAX_COUNT = 20;
+	private const DEAL_ATTACHMENT_MAX_COUNT = 500;
 
 	/**
 	 * Register the routes for the controller.
@@ -187,6 +190,29 @@ class RestDealController extends RestController
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array($this, 'get_overdue_deals'),
 				'permission_callback' => array($this, 'get_items_permissions_check'),
+			)
+		);
+
+		// Who may own a deal: the owner pickers of the deal screens.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/owner-candidates',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array($this, 'get_owner_candidates'),
+				'permission_callback' => array($this, 'get_items_permissions_check'),
+				'args'                => array(
+					'search'   => array('type' => 'string'),
+					'include'  => array('type' => 'string'),
+					'page'     => array(
+						'type'    => 'integer',
+						'default' => 1,
+					),
+					'per_page' => array(
+						'type'    => 'integer',
+						'default' => 20,
+					),
+				),
 			)
 		);
 
@@ -325,7 +351,7 @@ class RestDealController extends RestController
 
 		// Sales Rep can only view their own deals
 		// Sales Manager, CRM Manager, and Administrator can view all deals
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			if ($deal->owner_id != get_current_user_id()) {
 				return new WP_Error('deal_not_found', 'Deal not found', array('status' => 404));
 			}
@@ -368,6 +394,11 @@ class RestDealController extends RestController
 			);
 		}
 
+		$contact_error = $this->assert_contact_visible( (int) $contact_id );
+		if ( is_wp_error( $contact_error ) ) {
+			return $contact_error;
+		}
+
 		if (empty($pipeline_id)) {
 			return new WP_Error(
 				'missing_pipeline',
@@ -386,7 +417,7 @@ class RestDealController extends RestController
 
 		// Sales Rep deals are always assigned to themselves
 		$owner_id = $request->get_param('owner_id');
-		if (Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access()) {
+		if (! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals()) {
 			$owner_id = get_current_user_id();
 		}
 
@@ -474,12 +505,16 @@ class RestDealController extends RestController
 		$deal_id = $request->get_param('id');
 		$data    = array();
 
-		// Validate owner_id if being updated
+		// Validate owner_id if being updated. Only a new owner: an old deal
+		// saved with its owner unchanged still saves.
 		$owner_id = $request->get_param('owner_id');
 		if ($owner_id !== null && $owner_id !== '') {
-			$validation_error = $this->validate_owner_id($owner_id);
-			if (is_wp_error($validation_error)) {
-				return $validation_error;
+			$stored = DealModel::find($deal_id);
+			if (! $stored || (int) $stored->owner_id !== (int) $owner_id) {
+				$validation_error = $this->validate_owner_id($owner_id);
+				if (is_wp_error($validation_error)) {
+					return $validation_error;
+				}
 			}
 		}
 
@@ -505,6 +540,13 @@ class RestDealController extends RestController
 				} elseif ($field === 'value') {
 					$data[$field] = floatval($value);
 				}
+			}
+		}
+
+		if ( ! empty( $data['contact_id'] ) ) {
+			$contact_error = $this->assert_contact_visible( (int) $data['contact_id'] );
+			if ( is_wp_error( $contact_error ) ) {
+				return $contact_error;
 			}
 		}
 
@@ -801,6 +843,7 @@ class RestDealController extends RestController
 			'id'                  => $deal->id,
 			'title'               => $deal->title,
 			'contact_id'          => $deal->contact_id,
+			'company_id'          => $deal->company_id ? (int) $deal->company_id : null,
 			'pipeline_id'         => $deal->pipeline_id,
 			'stage_id'            => $deal->stage_id,
 			'value'               => $deal->value,
@@ -978,7 +1021,56 @@ class RestDealController extends RestController
 			);
 		}
 
+		// Only someone who works deals owns one.
+		$rule_error = DealOwnerRule::error($owner_id);
+		if ($rule_error) {
+			return $rule_error;
+		}
+
 		return true;
+	}
+
+	/**
+	 * People who may own a deal, in the users/frontend shape the pickers read.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_owner_candidates($request)
+	{
+		$include  = '' === (string) $request->get_param('include') ? array() : explode(',', (string) $request->get_param('include'));
+		$people   = DealOwnerRule::candidates((string) $request->get_param('search'), $include);
+		$per_page = max(1, min(100, (int) $request->get_param('per_page')));
+		$page     = max(1, (int) $request->get_param('page'));
+		$total    = count($people);
+		$pages    = (int) max(1, ceil($total / $per_page));
+
+		$users = array();
+		foreach (array_slice($people, ($page - 1) * $per_page, $per_page) as $user) {
+			$users[] = array(
+				'id'           => (int) $user->ID,
+				'name'         => (string) $user->display_name,
+				'display_name' => (string) $user->display_name,
+				'email'        => (string) $user->user_email,
+				'avatar_url'   => (string) get_avatar_url((int) $user->ID, array('size' => 48)),
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'users'      => $users,
+				'pagination' => array(
+					'total'        => $total,
+					'per_page'     => $per_page,
+					'current_page' => $page,
+					'total_pages'  => $pages,
+					'has_next'     => $page < $pages,
+					'has_prev'     => $page > 1,
+				),
+			),
+			200
+		);
 	}
 
 	/**
@@ -1106,7 +1198,7 @@ class RestDealController extends RestController
 	 */
 	public function create_item_permissions_check($request)
 	{
-		return Permissions::has_sales_rep_access();
+		return \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::has_agent_access();
 	}
 
 	/**
@@ -1126,11 +1218,11 @@ class RestDealController extends RestController
 			return true;
 		}
 
-		// Sales Rep can only update their own deals
-		if (Permissions::is_sales_rep()) {
+		// Anyone scoped to their own deals (Sales Rep, CRM Agent) may update the ones they own.
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals() && Permissions::can_read_deals() ) {
 			$deal_id = $request->get_param('id');
 			$deal    = DealModel::find($deal_id);
-			if ($deal && $deal->owner_id == get_current_user_id()) {
+			if ($deal && (int) $deal->owner_id === (int) get_current_user_id()) {
 				return true;
 			}
 		}
@@ -1324,7 +1416,7 @@ class RestDealController extends RestController
 			return new WP_Error( 'deal_not_found', 'Deal not found', array( 'status' => 404 ) );
 		}
 
-		if ( Permissions::is_sales_rep() && ! PermissionsCompat::has_sales_manager_access() ) {
+		if ( ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals() ) {
 			if ( (int) $deal->owner_id !== (int) get_current_user_id() ) {
 				if ( $require_update ) {
 					return new WP_Error(
@@ -1390,7 +1482,14 @@ class RestDealController extends RestController
 	 * @return WP_Error|null
 	 */
 	private function guard_deal_attachment_count( int $existing_count ): ?WP_Error {
-		if ( $existing_count >= self::DEAL_ATTACHMENT_MAX_COUNT ) {
+		/**
+		 * Most files one project, deal or task can hold.
+		 *
+		 * @param int    $max  Default 500.
+		 * @param string $type 'project', 'deal' or 'task'.
+		 */
+		$max = max( 1, (int) apply_filters( 'doublescale_attachment_max_count', self::DEAL_ATTACHMENT_MAX_COUNT, 'deal' ) );
+		if ( $existing_count >= $max ) {
 			return new WP_Error(
 				'too_many_files',
 				sprintf(
@@ -1398,10 +1497,10 @@ class RestDealController extends RestController
 					_n(
 						'You can attach at most %d file to this deal.',
 						'You can attach at most %d files to this deal.',
-						self::DEAL_ATTACHMENT_MAX_COUNT,
+						$max,
 						'doublescale'
 					),
-					self::DEAL_ATTACHMENT_MAX_COUNT
+					$max
 				),
 				array( 'status' => 400 )
 			);
@@ -1416,4 +1515,23 @@ class RestDealController extends RestController
 	private function attachment_service(): AttachmentService {
 		return new AttachmentService();
 	}
+
+	/**
+	 * A deal can only be put on a contact the caller can see (owned or
+	 * shared with them). Managers see every contact, so nothing changes for
+	 * them; when they assign the deal to an agent, that agent becomes a
+	 * collaborator on the contact automatically.
+	 *
+	 * @param int $contact_id Contact ID.
+	 * @return true|WP_Error
+	 */
+	private function assert_contact_visible( int $contact_id ) {
+		$contact = \DoubleScale\Modules\Contacts\Models\ContactModel::find( $contact_id );
+		if ( \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::can_view_contact( $contact ) ) {
+			return true;
+		}
+
+		return new WP_Error( 'contact_not_found', __( 'Contact not found', 'doublescale' ), array( 'status' => 404 ) );
+	}
+
 }

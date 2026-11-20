@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static \Illuminate\Http\RedirectResponse home(int $status = 302)
@@ -18,7 +18,7 @@ namespace Illuminate\Support\Facades;
  *
  * @see \Illuminate\Routing\Redirector
  */
-class Redirect extends \Illuminate\Support\Facades\Facade
+class Redirect extends Facade
 {
     /**
      * Get the registered name of the component.

@@ -12,15 +12,37 @@
 }
 
 .details-container {
-	max-width: 800px;
+	max-width: 640px;
 	width: 100%;
 	margin: 0 auto;
 	background: white;
 	border-radius: 16px;
 	overflow: hidden;
 	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-	padding: 32px;
+	padding: 40px 36px;
 	text-align: center;
+}
+
+/* "Back to <site>" link above the card (result pages have no theme header) */
+.booking-back-to-site {
+	max-width: 640px;
+	margin: 0 auto 12px;
+	text-align: start;
+}
+
+.booking-back-to-site a {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #3A3A99;
+	text-decoration: none;
+}
+
+.booking-back-to-site a:hover {
+	color: #1a1a99;
+	text-decoration: underline;
 }
 
 /* Header / page intro */
@@ -64,7 +86,7 @@
 	background: #f7f8fa;
 	border: 1px solid #e2e8f0;
 	border-radius: 12px;
-	padding: 20px;
+	padding: 24px 28px;
 	text-align: left;
 	margin-bottom: 24px;
 }
@@ -91,16 +113,110 @@
 	display: block;
 }
 
+/* Confirm page: What / When / Who / Where as label | value rows */
+.booking-card--details-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	padding: 28px 32px;
+}
+
+.booking-detail-row {
+	display: grid;
+	grid-template-columns: 88px minmax(0, 1fr);
+	column-gap: 28px;
+	align-items: start;
+}
+
+.booking-detail-label {
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.5;
+	color: #1a1a1a;
+}
+
+.booking-detail-value {
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.5;
+	color: #292d32;
+	min-width: 0;
+}
+
+.booking-detail-when-date {
+	font-weight: 500;
+	line-height: 1.45;
+}
+
+.booking-detail-when-time {
+	margin-top: 2px;
+	line-height: 1.45;
+}
+
+.booking-detail-when-tz {
+	opacity: 0.7;
+	font-size: 13px;
+}
+
+.booking-detail-who {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.booking-detail-person-name {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-weight: 500;
+	line-height: 1.45;
+}
+
+.booking-detail-person-email {
+	font-size: 13px;
+	line-height: 1.45;
+	opacity: 0.75;
+	margin-top: 2px;
+}
+
+.booking-detail-host-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.4;
+	background: #ebe6fe;
+	color: #3a3a99;
+}
+
+@media screen and (max-width: 560px) {
+	.booking-detail-row {
+		grid-template-columns: 1fr;
+		row-gap: 6px;
+	}
+}
+
 /* Add-to-calendar row on confirm page */
 .calendar-buttons {
-	margin-top: 24px;
+	margin-top: 8px;
+	padding-top: 20px;
+	border-top: 1px solid #e2e8f0;
 	text-align: center;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 12px 16px;
 }
 
 .calendar-buttons p {
 	color: #4a5568;
 	font-size: 14px;
-	margin-bottom: 12px;
+	line-height: 1.5;
+	margin: 0;
 }
 
 .calendar-buttons .icons {

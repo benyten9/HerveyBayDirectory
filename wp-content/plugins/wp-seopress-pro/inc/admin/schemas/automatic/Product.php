@@ -90,7 +90,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product name', 'wp-seopress-pro' ); ?>
 				<code>name</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_name', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_name', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'The name of your product', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -99,7 +99,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				for="seopress_pro_rich_snippets_product_description_meta"><?php esc_html_e( 'Product description', 'wp-seopress-pro' ); ?>
 				<code>description</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_description', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_description', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'The description of the product', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -108,7 +108,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				for="seopress_pro_rich_snippets_product_img_meta"><?php esc_html_e( 'Thumbnail', 'wp-seopress-pro' ); ?>
 				<code>image</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_img', 'image' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_img', 'image' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'Pictures clearly showing the product, e.g. against a white background, are preferred.', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -117,7 +117,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product price', 'wp-seopress-pro' ); ?>
 				<code>price</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_price', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_price', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. 30. Even if this value is set to None, we‘ll still display a value for this property to follow Google guidelines and avoid warnings in Google Search Console.', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -126,7 +126,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				for="seopress_pro_rich_snippets_product_price_valid_date"><?php esc_html_e( 'Product price valid until', 'wp-seopress-pro' ); ?>
 				<code>priceValidDate</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_price_valid_date', 'date' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_price_valid_date', 'date' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. YYYY-MM-DD', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -135,7 +135,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product SKU', 'wp-seopress-pro' ); ?>
 				<code>sku</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_sku', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_sku', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. 0446310786', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -144,7 +144,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product Global Identifiers type', 'wp-seopress-pro' ); ?>
 				<code>globalIds</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_global_ids', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_global_ids', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. gtin8', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -153,7 +153,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product Global Identifiers', 'wp-seopress-pro' ); ?>
 				<code>globalIdsValue</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_global_ids_value', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_global_ids_value', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. 925872', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -162,7 +162,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product Brand', 'wp-seopress-pro' ); ?>
 				<code>brand</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_brand', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_brand', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. Apple', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -171,7 +171,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				<?php esc_html_e( 'Product currency', 'wp-seopress-pro' ); ?>
 				<code>priceCurrency</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_price_currency', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_price_currency', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php esc_html_e( 'e.g. USD, EUR', 'wp-seopress-pro' ); ?></span>
 		</p>
@@ -180,7 +180,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				for="seopress_pro_rich_snippets_product_condition_meta"><?php esc_html_e( 'Product Condition', 'wp-seopress-pro' ); ?>
 				<code>condition</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_condition', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_condition', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php echo wp_kses_post( __( '<strong>Authorized values:</strong> "NewCondition", "UsedCondition", "DamagedCondition", "RefurbishedCondition"', 'wp-seopress-pro' ) ); ?></span>
 		</p>
@@ -189,7 +189,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				for="seopress_pro_rich_snippets_product_availability_meta"><?php esc_html_e( 'Product Availability', 'wp-seopress-pro' ); ?>
 				<code>availability</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_availability', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_availability', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 			<span
 				class="description"><?php echo wp_kses_post( __( '<strong>Authorized values:</strong> "InStock", "InStoreOnly", "OnlineOnly", "LimitedAvailability", "SoldOut", "OutOfStock", "Discontinued", "PreOrder", "PreSale"', 'wp-seopress-pro' ) ); ?></span>
 		</p>
@@ -198,20 +198,20 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 				for="seopress_pro_rich_snippets_product_positive_notes"><?php esc_html_e( 'Positive Notes', 'wp-seopress-pro' ); ?>
 				<code>positiveNotes</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_positive_notes', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_positive_notes', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		</p>
 		<p>
 			<label
 				for="seopress_pro_rich_snippets_product_negative_notes"><?php esc_html_e( 'Negative Notes', 'wp-seopress-pro' ); ?>
 				<code>negativeNotes</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_negative_notes', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_negative_notes', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		</p>
 		<p>
 			<label
 				for="seopress_pro_rich_snippets_product_energy_consumption"><?php esc_html_e( 'Energy Consumption', 'wp-seopress-pro' ); ?>
 				<code>energy_consumption</code>
 			</label>
-			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_energy_consumption', 'default' ); ?>
+			<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_product_energy_consumption', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		</p>
 	</div>

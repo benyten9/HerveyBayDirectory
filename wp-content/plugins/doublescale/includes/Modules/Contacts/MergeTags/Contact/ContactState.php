@@ -49,6 +49,13 @@ class ContactState extends MergeTag {
 	public $group = 'contact';
 
 	/**
+	 * Typed by people: printed without markup.
+	 *
+	 * @var bool
+	 */
+	public $plain_text = true;
+
+	/**
 	 * Is automation merge tag
 	 *
 	 * @var bool

@@ -409,13 +409,30 @@ SWBD;
                 return [ 'status' => $status ];
             }
 
-            // Update the options
-            $atbdp_options = get_option( 'atbdp_option' );
+            // Decode and validate the whole registered batch before changing any option.
+            $prepared_options = [];
             foreach ( $options as $option_key => $option_value ) {
                 if ( ! isset( $this->fields[ $option_key ] ) ) {
                     continue; }
 
-                $atbdp_options[ $option_key ] = Directorist\Helper::maybe_json( $option_value, true );
+                $prepared_options[ $option_key ] = Directorist\Helper::maybe_json( $option_value, true );
+            }
+
+            /** Allow field owners to reject a settings batch without partial writes. */
+            $validation = apply_filters( 'directorist_validate_settings', null, $prepared_options );
+            if ( is_wp_error( $validation ) ) {
+                $status['status_log'] = [
+                    'type' => 'error',
+                    'message' => $validation->get_error_message(),
+                ];
+
+                return [ 'status' => $status ];
+            }
+
+            // Update the options using the existing shared storage contract.
+            $atbdp_options = get_option( 'atbdp_option' );
+            foreach ( $prepared_options as $option_key => $option_value ) {
+                $atbdp_options[ $option_key ] = $option_value;
             }
 
             update_option( 'atbdp_option', $atbdp_options );
@@ -461,6 +478,16 @@ Please remember that your order may be canceled if you do not make your payment 
 
             $default_size = directorist_default_preview_size();
             $default_preview_size_text = $default_size['width'] . 'x' . $default_size['height'] . ' px';
+
+            $featured_listing_payment_types = apply_filters(
+                'directorist_featured_listing_payment_type_options',
+                [
+                    [
+                        'value' => 'directorist',
+                        'label' => __( 'Directorist', 'directorist' ),
+                    ],
+                ]
+            );
 
 
             $this->fields = apply_filters(
@@ -3555,6 +3582,76 @@ Please remember that your order may be canceled if you do not make your payment 
                     ", 'directorist'
                         ),
                     ],
+                    'email_sub_new_listing_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] A new listing has been submitted on your website', 'directorist' ),
+                    ],
+                    'email_tmpl_new_listing_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_listing_submitted_admin_tmpl(),
+                    ],
+                    'email_sub_pub_listing_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] The Listing #==LISTING_ID== has been published on your website', 'directorist' ),
+                    ],
+                    'email_tmpl_pub_listing_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_listing_published_admin_tmpl(),
+                    ],
+                    'email_sub_edit_listing_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] The Listing #==LISTING_ID== has been edited on your website', 'directorist' ),
+                    ],
+                    'email_tmpl_edit_listing_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_listing_edited_admin_tmpl(),
+                    ],
+                    'email_sub_deleted_listing_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] A Listing has been deleted [ID#: ==LISTING_ID==] on your website', 'directorist' ),
+                    ],
+                    'email_tmpl_deleted_listing_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_listing_deleted_admin_tmpl(),
+                    ],
+                    'email_sub_renewed_listing_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] The Listing #==LISTING_ID== has been renewed on your website', 'directorist' ),
+                    ],
+                    'email_tmpl_renewed_listing_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_listing_renewed_admin_tmpl(),
+                    ],
+                    'email_sub_new_order_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] You have a new order #==ORDER_ID== on your website', 'directorist' ),
+                    ],
+                    'email_tmpl_new_order_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_order_created_admin_tmpl(),
+                    ],
+                    'email_sub_completed_order_admin' => [
+                        'type'        => 'text',
+                        'label'       => __( 'Admin Email Subject', 'directorist' ),
+                        'value'       => __( '[==SITE_NAME==] Payment Notification : Order #==ORDER_ID== Completed', 'directorist' ),
+                    ],
+                    'email_tmpl_completed_order_admin' => [
+                        'type'        => 'textarea',
+                        'label'       => __( 'Admin Email Body', 'directorist' ),
+                        'value'       => ATBDP()->email->get_order_completed_admin_tmpl(),
+                    ],
                     'email_sub_rejected_listing' => [
                         'type'        => 'text',
                         'label'       => __( 'Email Subject', 'directorist' ),
@@ -3922,6 +4019,21 @@ Best regards,
                     ],
                 ]
             );
+
+            if ( is_array( $featured_listing_payment_types ) && count( $featured_listing_payment_types ) > 1 ) {
+                $this->fields['featured_listing_payment_type'] = [
+                    'label'   => __( 'Payment Type', 'directorist' ),
+                    'type'    => 'select',
+                    'value'   => 'directorist',
+                    'options' => array_values( $featured_listing_payment_types ),
+                    'show-if' => [
+                        'where'      => 'enable_featured_listing',
+                        'conditions' => [
+                            [ 'key' => 'value', 'compare' => '=', 'value' => true ],
+                        ],
+                    ],
+                ];
+            }
 
             $this->register_web_push_backup_fields();
 
@@ -4656,6 +4768,7 @@ Best regards,
                                             'featured' => [
                                                 'fields'      => [
                                                     'enable_featured_listing',
+                                                    'featured_listing_payment_type',
                                                     'featured_listing_desc',
                                                     'featured_listing_price',
                                                     'featured_listing_time',
@@ -4830,6 +4943,23 @@ Best regards,
 
             $this->config = [
                 'fields_theme' => 'butterfly',
+                /**
+                 * Filters setting keys that select a payment gateway environment.
+                 *
+                 * Registered selectors keep their sections enabled in either mode
+                 * and exclude inactive environment fields from settings search.
+                 *
+                 * @param string[] $keys Gateway environment selector setting keys.
+                 */
+                'gateway_mode_keys' => array_values(
+                    array_filter(
+                        (array) apply_filters(
+                            'directorist_settings_gateway_mode_keys',
+                            [ 'stripe_gateway_test_mode', 'paypal_gateway_test_mode' ]
+                        ),
+                        'is_string'
+                    )
+                ),
                 'submission' => [
                     'url' => admin_url( 'admin-ajax.php' ),
                     'with' => [
@@ -5757,10 +5887,6 @@ Best regards,
                         'label' => __( 'Listing Edited', 'directorist' ),
                     ],
                     [
-                        'value' => 'payment_received',
-                        'label' => __( 'Payment Received', 'directorist' ),
-                    ],
-                    [
                         'value' => 'listing_deleted',
                         'label' => __( 'Listing Deleted', 'directorist' ),
                     ],
@@ -5810,7 +5936,6 @@ Best regards,
                 'atbdp_default_events_to_notify_user', [
                     'order_created',
                     'listing_submitted',
-                    'payment_received',
                     'listing_published',
                     'listing_rejected',
                     'listing_to_expire',
@@ -5864,7 +5989,6 @@ Best regards,
                     'order_created',
                     'order_completed',
                     'listing_submitted',
-                    'payment_received',
                     'listing_published',
                     'listing_deleted',
                     'listing_contact_form',

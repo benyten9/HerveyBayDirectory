@@ -21,6 +21,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class SmsProcessing extends AbstractCampaignProcessing {
 
+	use \DoubleScale\Pro\Modules\Campaigns\SendsTestMessage;
+
 	/**
 	 * Communication channel
 	 *

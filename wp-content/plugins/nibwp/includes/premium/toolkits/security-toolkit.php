@@ -16,8 +16,8 @@ if (!defined('ABSPATH')) {
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-verify-core', [
-    'label' => __('Verify WordPress Core Integrity', domain: 'nibwp'),
-    'description' => __('Compares WordPress core files against official checksums to detect modified, missing, or injected files. Identifies tampered core files that may indicate a hack.', domain: 'nibwp'),
+    'label' => __('Verify WordPress Core Integrity', 'nibwp'),
+    'description' => 'Compares WordPress core files against official checksums to detect modified, missing, or injected files. Identifies tampered core files that may indicate a hack.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -131,8 +131,8 @@ function nibwp_security_verify_core(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/security-repair-core', [
-    'label' => __('Repair WordPress Core Files', domain: 'nibwp'),
-    'description' => __('Re-downloads and restores modified or missing WordPress core files from the official release. Removes unknown files injected into wp-admin and wp-includes.', domain: 'nibwp'),
+    'label' => __('Repair WordPress Core Files', 'nibwp'),
+    'description' => 'Re-downloads and restores modified or missing WordPress core files from the official release. Removes unknown files injected into wp-admin and wp-includes.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -257,8 +257,8 @@ function nibwp_security_repair_core(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-scan-malware', [
-    'label' => __('Scan for Malware & Suspicious Code', domain: 'nibwp'),
-    'description' => __('Scans PHP files for common malware signatures: base64_decode, eval, hidden iframes, backdoor patterns, obfuscated code, suspicious file names, and known exploit patterns.', domain: 'nibwp'),
+    'label' => __('Scan for Malware & Suspicious Code', 'nibwp'),
+    'description' => 'Scans PHP files for common malware signatures: base64_decode, eval, hidden iframes, backdoor patterns, obfuscated code, suspicious file names, and known exploit patterns.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -411,8 +411,8 @@ function nibwp_security_scan_malware(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-quarantine-file', [
-    'label' => __('Quarantine Suspicious File', domain: 'nibwp'),
-    'description' => __('Moves a suspicious file to a quarantine directory, renames it to prevent execution, and logs the action. Can also restore quarantined files.', domain: 'nibwp'),
+    'label' => __('Quarantine Suspicious File', 'nibwp'),
+    'description' => 'Moves a suspicious file to a quarantine directory, renames it to prevent execution, and logs the action. Can also restore quarantined files.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -535,8 +535,8 @@ function nibwp_security_quarantine(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/security-find-replace', [
-    'label' => __('Find & Replace in Files', domain: 'nibwp'),
-    'description' => __('Search for a string or regex pattern across files and optionally replace it. Supports dry run to preview changes before applying.', domain: 'nibwp'),
+    'label' => __('Find & Replace in Files', 'nibwp'),
+    'description' => 'Search for a string or regex pattern across files and optionally replace it. Supports dry run to preview changes before applying.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -646,8 +646,8 @@ function nibwp_security_find_replace(array $input): array|WP_Error
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-scan-database', [
-    'label' => __('Scan Database for Injections', domain: 'nibwp'),
-    'description' => __('Scans WordPress database tables for injected scripts, hidden iframes, suspicious redirects, encoded payloads, and spam links in post content, options, and comments.', domain: 'nibwp'),
+    'label' => __('Scan Database for Injections', 'nibwp'),
+    'description' => 'Scans WordPress database tables for injected scripts, hidden iframes, suspicious redirects, encoded payloads, and spam links in post content, options, and comments.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -735,8 +735,8 @@ function nibwp_security_scan_database(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/security-db-find-replace', [
-    'label' => __('Database Find & Replace', domain: 'nibwp'),
-    'description' => __('Find and replace text across WordPress database tables. Handles serialized data safely. Supports dry run preview.', domain: 'nibwp'),
+    'label' => __('Database Find & Replace', 'nibwp'),
+    'description' => 'Find and replace text across WordPress database tables. Handles serialized data safely. Supports dry run preview.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -854,8 +854,8 @@ function nibwp_security_recursive_replace(string $search, string $replace, mixed
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-audit-users', [
-    'label' => __('Audit User Accounts', domain: 'nibwp'),
-    'description' => __('Audits all admin and editor accounts for suspicious activity: recently created admins, admin accounts with weak emails, users with unusual capabilities, and accounts with no posts.', domain: 'nibwp'),
+    'label' => __('Audit User Accounts', 'nibwp'),
+    'description' => 'Audits all admin and editor accounts for suspicious activity: recently created admins, admin accounts with weak emails, users with unusual capabilities, and accounts with no posts.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -937,8 +937,8 @@ function nibwp_security_audit_users(array $input): array
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-health-check', [
-    'label' => __('Security Health Check', domain: 'nibwp'),
-    'description' => __('Comprehensive security health check: file permissions, directory listing, wp-config exposure, debug mode, SSL status, WordPress/PHP versions, security headers, and common misconfigurations.', domain: 'nibwp'),
+    'label' => __('Security Health Check', 'nibwp'),
+    'description' => 'Comprehensive security health check: file permissions, directory listing, wp-config exposure, debug mode, SSL status, WordPress/PHP versions, security headers, and common misconfigurations.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -1111,8 +1111,8 @@ function nibwp_security_health_check(array $input): array
 // ═══════════════════════════════════════════════════════════════
 
 wp_register_ability('nibwp/security-cleanup', [
-    'label' => __('Site Cleanup & Optimization', domain: 'nibwp'),
-    'description' => __('Comprehensive site cleanup: delete post revisions, auto-drafts, trashed items, spam comments, expired transients, orphaned meta, and optimize database tables.', domain: 'nibwp'),
+    'label' => __('Site Cleanup & Optimization', 'nibwp'),
+    'description' => 'Comprehensive site cleanup: delete post revisions, auto-drafts, trashed items, spam comments, expired transients, orphaned meta, and optimize database tables.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -1226,8 +1226,8 @@ function nibwp_security_cleanup(array $input): array|WP_Error
 }
 
 wp_register_ability('nibwp/security-file-permissions', [
-    'label' => __('Check & Fix File Permissions', domain: 'nibwp'),
-    'description' => __('Scans critical files and directories for incorrect permissions. Can fix them to recommended values (644 for files, 755 for directories, 440 for wp-config.php).', domain: 'nibwp'),
+    'label' => __('Check & Fix File Permissions', 'nibwp'),
+    'description' => 'Scans critical files and directories for incorrect permissions. Can fix them to recommended values (644 for files, 755 for directories, 440 for wp-config.php).',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',
@@ -1307,8 +1307,8 @@ function nibwp_security_file_permissions(array $input): array
 }
 
 wp_register_ability('nibwp/security-change-passwords', [
-    'label' => __('Reset User Passwords', domain: 'nibwp'),
-    'description' => __('Force-reset passwords for specified users or all admin accounts. Generates strong random passwords and optionally sends notification emails.', domain: 'nibwp'),
+    'label' => __('Reset User Passwords', 'nibwp'),
+    'description' => 'Force-reset passwords for specified users or all admin accounts. Generates strong random passwords and optionally sends notification emails.',
     'category' => 'security',
     'input_schema' => [
         'type' => 'object',

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static \Illuminate\Database\ConnectionInterface connection(string $name = null)
@@ -27,7 +27,7 @@ namespace Illuminate\Support\Facades;
  * @see \Illuminate\Database\DatabaseManager
  * @see \Illuminate\Database\Connection
  */
-class DB extends \Illuminate\Support\Facades\Facade
+class DB extends Facade
 {
     /**
      * Get the registered name of the component.

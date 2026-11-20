@@ -12,6 +12,7 @@
 namespace DoubleScale\Pro\Modules\Deals\Services;
 
 use Exception;
+use DoubleScale\Pro\Database\SeedLock;
 use DoubleScale\Pro\Modules\Deals\Models\PipelineModel;
 use DoubleScale\Pro\Modules\Deals\Models\PipelineStageModel;
 use DoubleScale\Pro\Modules\Deals\Models\DealModel;
@@ -72,7 +73,7 @@ final class PipelineManager {
 	 * @return void
 	 */
 	public function init() {
-		add_action( 'wp_loaded', array( $this, 'create_default_pipeline' ) );
+		add_action( 'wp_loaded', array( $this, 'maybe_create_default_pipeline' ) );
 	}
 
 	/**
@@ -118,20 +119,53 @@ final class PipelineManager {
 	}
 
 	/**
-	 * Create default pipeline if none exists
+	 * On every request: the default-pipeline check, once per Pro version.
+	 *
+	 * The flag (one of the options loaded together at boot) skips the count
+	 * on steady-state requests; deleting a pipeline clears it. Direct callers
+	 * always check through create_default_pipeline().
+	 *
+	 * @return void
+	 */
+	public function maybe_create_default_pipeline() {
+		$version = defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '';
+		if ( '' !== $version && get_option( 'doublescale_default_pipeline_checked' ) === $version ) {
+			return;
+		}
+		$this->create_default_pipeline();
+	}
+
+	/**
+	 * Create default pipeline if none exists (always checks).
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
 	public function create_default_pipeline() {
-		if ( PipelineModel::count() === 0 ) {
-			$this->create_pipeline_with_stages(
-				'Sales Pipeline',
-				'Default sales pipeline',
-				$this->get_default_stages()
-			);
+		$version = defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '';
+		if ( PipelineModel::count() !== 0 ) {
+			if ( '' !== $version ) {
+				update_option( 'doublescale_default_pipeline_checked', $version, false );
+			}
+			return;
 		}
+
+		// This runs on every request, so two of them can find no pipeline at the
+		// same moment. Only the one holding the lock may create it, and it has
+		// to look again first.
+		SeedLock::run(
+			'pipelines',
+			function () {
+				if ( PipelineModel::count() === 0 ) {
+					$this->create_pipeline_with_stages(
+						'Sales Pipeline',
+						'Default sales pipeline',
+						$this->get_default_stages()
+					);
+				}
+			}
+		);
 	}
 
 	/**
@@ -186,7 +220,7 @@ final class PipelineManager {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Collection
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
 	 */
 	public function get_pipelines_with_stages() {
 		return PipelineModel::with( 'stages' )->orderBy( 'sort_order' )->get();

@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Support;
+namespace DoubleScale\Vendor\Illuminate\Support;
 
 use ArrayAccess;
 use InvalidArgumentException;
-use Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
 class Arr
 {
     use Macroable;
@@ -43,7 +43,7 @@ class Arr
     {
         $results = [];
         foreach ($array as $values) {
-            if ($values instanceof \Illuminate\Support\Collection) {
+            if ($values instanceof Collection) {
                 $values = $values->all();
             } elseif (!\is_array($values)) {
                 continue;
@@ -179,7 +179,7 @@ class Arr
     {
         $result = [];
         foreach ($array as $item) {
-            $item = $item instanceof \Illuminate\Support\Collection ? $item->all() : $item;
+            $item = $item instanceof Collection ? $item->all() : $item;
             if (!\is_array($item)) {
                 $result[] = $item;
             } else {
@@ -466,7 +466,7 @@ class Arr
      */
     public static function sort($array, $callback = null)
     {
-        return \Illuminate\Support\Collection::make($array)->sortBy($callback)->all();
+        return Collection::make($array)->sortBy($callback)->all();
     }
     /**
      * Recursively sort an array by keys and values.

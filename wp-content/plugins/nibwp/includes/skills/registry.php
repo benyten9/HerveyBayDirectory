@@ -223,7 +223,7 @@ function nibwp_skill_deps_met(array $skill): bool
  * Which of the skill's dependencies are not present?
  *
  * @param array<string,mixed> $skill
- * @return array<int,string> integration keys that are missing
+ * @return array<int,string> what is missing: integration keys, and skills named as "the <id> skill"
  */
 function nibwp_skill_missing_deps(array $skill): array
 {
@@ -233,7 +233,46 @@ function nibwp_skill_missing_deps(array $skill): array
             $missing[] = (string) $dep;
         }
     }
+
+    // `requires` holds integration keys and cannot say "needs another skill's
+    // code". A skill that runs another skill's validator or persister names it
+    // here. Present means discovered under any skills root — Pro ships both
+    // under one, and a skill sold as its own plugin brings its own — not
+    // licensed or switched on: the code is what is being depended on, and
+    // asking for a licence the abilities never check would hide a skill that
+    // works.
+    $skills_present = null;
+    foreach ((array) ($skill['requires_skills'] ?? []) as $dep) {
+        $dep = (string) $dep;
+        if ($skills_present === null) {
+            $skills_present = nibwp_skills_discover();
+        }
+        if (!isset($skills_present[$dep])) {
+            $missing[] = sprintf('the %s skill', $dep);
+        }
+    }
+
     return $missing;
+}
+
+/**
+ * What a skill card reads: locked, active, or ready.
+ *
+ * Decided in that order. A skill that is not unlocked reads Locked whether or
+ * not its enabled flag happens to be set, so "Activated" cannot be answered
+ * from the flag alone — a locked skill can be enabled and still say Locked.
+ * The card badge, the filter attribute and the counts all take it from here,
+ * which is what keeps them from disagreeing.
+ *
+ * @return string locked|active|ready
+ */
+function nibwp_skill_status(bool $unlocked, bool $enabled): string
+{
+    if (!$unlocked) {
+        return 'locked';
+    }
+
+    return $enabled ? 'active' : 'ready';
 }
 
 /**

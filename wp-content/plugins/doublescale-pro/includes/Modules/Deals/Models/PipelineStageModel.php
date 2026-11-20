@@ -10,7 +10,7 @@
 
 namespace DoubleScale\Pro\Modules\Deals\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 
 /**
  * PipelineStageModel class
@@ -108,7 +108,7 @@ class PipelineStageModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function pipeline() {
 		return $this->belongsTo( PipelineModel::class, 'pipeline_id', 'id' );
@@ -119,7 +119,7 @@ class PipelineStageModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function deals() {
 		return $this->hasMany( DealModel::class, 'stage_id', 'id' );
@@ -130,7 +130,7 @@ class PipelineStageModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function active_deals() {
 		return $this->hasMany( DealModel::class, 'stage_id', 'id' )->where( 'status', 'open' );

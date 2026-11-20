@@ -1,24 +1,24 @@
 <?php
 
-namespace Illuminate\Database\Eloquent;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent;
 
 use Exception;
 use ArrayAccess;
 use JsonSerializable;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Traits\ForwardsCalls;
-use Illuminate\Contracts\Routing\UrlRoutable;
-use Illuminate\Contracts\Queue\QueueableEntity;
-use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Contracts\Queue\QueueableCollection;
-use Illuminate\Support\Collection as BaseCollection;
-use Illuminate\Database\ConnectionResolverInterface as Resolver;
+use DoubleScale\Vendor\Illuminate\Support\Arr;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Jsonable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\ForwardsCalls;
+use DoubleScale\Vendor\Illuminate\Contracts\Routing\UrlRoutable;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\QueueableEntity;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\Pivot;
+use DoubleScale\Vendor\Illuminate\Contracts\Queue\QueueableCollection;
+use DoubleScale\Vendor\Illuminate\Support\Collection as BaseCollection;
+use DoubleScale\Vendor\Illuminate\Database\ConnectionResolverInterface as Resolver;
 abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializable, QueueableEntity, UrlRoutable
 {
-    use \Illuminate\Database\Eloquent\Concerns\HasAttributes, \Illuminate\Database\Eloquent\Concerns\HasEvents, \Illuminate\Database\Eloquent\Concerns\HasGlobalScopes, \Illuminate\Database\Eloquent\Concerns\HasRelationships, \Illuminate\Database\Eloquent\Concerns\HasTimestamps, \Illuminate\Database\Eloquent\Concerns\HidesAttributes, \Illuminate\Database\Eloquent\Concerns\GuardsAttributes, ForwardsCalls;
+    use Concerns\HasAttributes, Concerns\HasEvents, Concerns\HasGlobalScopes, Concerns\HasRelationships, Concerns\HasTimestamps, Concerns\HidesAttributes, Concerns\GuardsAttributes, ForwardsCalls;
     /**
      * The connection name for the model.
      *
@@ -270,7 +270,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
             if ($this->isFillable($key)) {
                 $this->setAttribute($key, $value);
             } elseif ($totallyGuarded) {
-                throw new \Illuminate\Database\Eloquent\MassAssignmentException(\sprintf('Add [%s] to fillable property to allow mass assignment on [%s].', $key, \get_class($this)));
+                throw new MassAssignmentException(\sprintf('Add [%s] to fillable property to allow mass assignment on [%s].', $key, \get_class($this)));
             }
         }
         return $this;
@@ -508,7 +508,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
         // the relationships and save each model via this "push" method, which allows
         // us to recurse into all of these nested relations for the model instance.
         foreach ($this->relations as $models) {
-            $models = $models instanceof \Illuminate\Database\Eloquent\Collection ? $models->all() : [$models];
+            $models = $models instanceof Collection ? $models->all() : [$models];
             foreach (\array_filter($models) as $model) {
                 if (!$model->push()) {
                     return \false;
@@ -585,7 +585,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return bool
      */
-    protected function performUpdate(\Illuminate\Database\Eloquent\Builder $query)
+    protected function performUpdate(Builder $query)
     {
         // If the updating event returns false, we will cancel the update operation so
         // developers can hook Validation systems into their models and cancel this
@@ -616,7 +616,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected function setKeysForSaveQuery(\Illuminate\Database\Eloquent\Builder $query)
+    protected function setKeysForSaveQuery(Builder $query)
     {
         $query->where($this->getKeyName(), '=', $this->getKeyForSaveQuery());
         return $query;
@@ -636,7 +636,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return bool
      */
-    protected function performInsert(\Illuminate\Database\Eloquent\Builder $query)
+    protected function performInsert(Builder $query)
     {
         if ($this->fireModelEvent('creating') === \false) {
             return \false;
@@ -674,7 +674,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      * @param  array  $attributes
      * @return void
      */
-    protected function insertAndSetId(\Illuminate\Database\Eloquent\Builder $query, $attributes)
+    protected function insertAndSetId(Builder $query, $attributes)
     {
         $id = $query->insertGetId($attributes, $keyName = $this->getKeyName());
         $this->setAttribute($keyName, $id);
@@ -845,7 +845,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      */
     public function newEloquentBuilder($query)
     {
-        return new \Illuminate\Database\Eloquent\Builder($query);
+        return new Builder($query);
     }
     /**
      * Get a new query builder instance for the connection.
@@ -864,7 +864,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
      */
     public function newCollection(array $models = [])
     {
-        return new \Illuminate\Database\Eloquent\Collection($models);
+        return new Collection($models);
     }
     /**
      * Create a new pivot model instance.
@@ -901,7 +901,7 @@ abstract class Model implements ArrayAccess, Arrayable, Jsonable, JsonSerializab
     {
         $json = \json_encode($this->jsonSerialize(), $options);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
-            throw \Illuminate\Database\Eloquent\JsonEncodingException::forModel($this, \json_last_error_msg());
+            throw JsonEncodingException::forModel($this, \json_last_error_msg());
         }
         return $json;
     }

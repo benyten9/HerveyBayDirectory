@@ -96,6 +96,7 @@ class FormSchemaLocalBusiness extends FormApi {
 			case '_seopress_pro_rich_snippets_lb_lon':
 				return __( 'e.g. -1.5630987', 'wp-seopress-pro' );
 			case '_seopress_pro_rich_snippets_lb_website':
+				/* translators: %s: home URL of the site, used as an example value */
 				return sprintf( esc_html__( 'e.g. %s', 'wp-seopress-pro' ), get_home_url() );
 			case '_seopress_pro_rich_snippets_lb_tel':
 				return __( '+33501020304', 'wp-seopress-pro' );
@@ -104,6 +105,7 @@ class FormSchemaLocalBusiness extends FormApi {
 			case '_seopress_pro_rich_snippets_lb_cuisine':
 				return __( 'French, Italian, Indian, American', 'wp-seopress-pro' );
 			case '_seopress_pro_rich_snippets_lb_menu':
+				/* translators: %s: home URL of the site, used as an example value */
 				return sprintf( esc_html__( 'e.g. %s', 'wp-seopress-pro' ), get_home_url() );
 			case '_seopress_pro_rich_snippets_lb_accepts_reservations':
 				return __( 'e.g. True', 'wp-seopress-pro' );

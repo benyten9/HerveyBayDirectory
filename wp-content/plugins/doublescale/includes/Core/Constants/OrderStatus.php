@@ -75,6 +75,22 @@ class OrderStatus {
 	}
 
 	/**
+	 * Statuses that mean the contact bought something: revenue plus on-hold,
+	 * where a bank transfer or cheque order waits for the money. Used by the
+	 * "Last Order" / "Last Purchase" conditions, which ask whether the
+	 * customer placed an order, not whether it was paid yet.
+	 *
+	 * @return array<int, string>
+	 */
+	public static function get_purchase_statuses() {
+		return array(
+			self::COMPLETED,
+			self::PROCESSING,
+			self::ON_HOLD,
+		);
+	}
+
+	/**
 	 * Whether an order status counts toward revenue.
 	 *
 	 * @param string $status Order status slug (e.g. wc-completed).

@@ -191,7 +191,7 @@ abstract class BaseTaskTrigger extends Trigger {
 			return $options;
 		}
 
-		if ( ! class_exists( \DoubleScale\Pro\Modules\Tasks\Models\TaskStatusModel::class ) ) {
+		if ( ! doublescale_module_data_ready( 'tasks' ) ) {
 			return $options;
 		}
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Container;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Container;
 
 use Closure;
 use DoubleScale\Vendor\Psr\Container\ContainerInterface;

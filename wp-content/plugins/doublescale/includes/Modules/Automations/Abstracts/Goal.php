@@ -19,6 +19,7 @@ use DoubleScale\Modules\Automations\Models\AutomationStepModel;
 use DoubleScale\Core\PluginKernel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Automations\Models\AutomationContactModel;
+use DoubleScale\Modules\Automations\Engine\GoalJump;
 
 /**
  * Goal class
@@ -104,34 +105,9 @@ abstract class Goal {
 			return;
 		}
 		try {
-			$steps = AutomationStepModel::where( 'type', 'goal' )
-				->where( 'action', $this->slug )
-				->get();
-			if ( $steps->isEmpty() ) {
-				return;
-			}
-
-			foreach ( $steps as $step ) {
-				$automation_id = (int) ( $step->automation_id ?? 0 );
-				if ( $automation_id <= 0 ) {
-					continue;
-				}
-
-				// Query by automation_id so orphan goal steps (deleted automation) cannot fatal.
-				$automation_contacts = AutomationContactModel::query()
-					->where( 'automation_id', $automation_id )
-					->where( 'contact_id', (int) $contact->id )
-					->where( 'current_step', (int) $step->id )
-					->where( 'status', 'pending' )
-					->get();
-
-				// Enqueue goal for each automation contact
-				foreach ( $automation_contacts as $automation_contact ) {
-					if ( $this->is_completed( $automation_contact, $data ) ) {
-						$this->enqueue_goal( $automation_contact, $step );
-					}
-				}
-			}
+			// Contacts waiting on this goal are released; contacts still on the
+			// way to it skip ahead (see GoalJump).
+			GoalJump::handle( $this, $contact, is_array( $data ) ? $data : array() );
 		} catch ( Exception $e ) {
 			doublescale_get_logger()->error(
 				__( 'Error processing goal', 'doublescale' ),
@@ -158,6 +134,31 @@ abstract class Goal {
 	 */
 	public function is_completed( AutomationContactModel $automation_contact, $data ) {
 		return true;
+	}
+
+	/**
+	 * Whether the contact has already achieved this goal when it reaches the
+	 * goal step (for goals that describe a state, such as having a tag).
+	 *
+	 * Goals that only exist as events (a cart recovered, a coupon used) return
+	 * false: the contact waits for the event, or follows the goal's setting.
+	 *
+	 * @param AutomationContactModel $automation_contact Run, pointed at the goal step.
+	 * @param ContactModel           $contact            The contact.
+	 * @return bool
+	 */
+	public function is_met_now( AutomationContactModel $automation_contact, ContactModel $contact ) {
+		return false;
+	}
+
+	/**
+	 * The goal step a run is pointed at, for reading the goal's settings.
+	 *
+	 * @param AutomationContactModel $automation_contact Run.
+	 * @return AutomationStepModel|null
+	 */
+	protected function goal_step( AutomationContactModel $automation_contact ) {
+		return AutomationStepModel::find( $automation_contact->current_step );
 	}
 
 	/**

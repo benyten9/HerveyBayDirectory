@@ -867,7 +867,7 @@ class UpdraftPlus_Migrator_Lite {
 		$updraftplus->log(__('Database: search and replace site URL', 'updraftplus'), 'database-replace-site-url');
 
 		if (empty($this->restore_options['updraft_restorer_replacesiteurl'])) {
-			$updraftplus->log_e('This option was not selected.');
+			$updraftplus->log_e('Search/replace: this option was not selected.');
 			return;
 		}
 
@@ -1041,7 +1041,7 @@ class UpdraftPlus_Migrator_Lite {
 
 					if (!empty($this->which_tables) && is_array($this->which_tables)) {
 						if (!in_array($tablename, $this->which_tables)) {
-							$updraftplus->log(__('Search and replacing table:', 'updraftplus') .': '.__('skipped (not in list)', 'updraftplus'), 'notice-restore', 'restore-skipped-'.$tablename);
+							$updraftplus->log(__('Search and replacing table:', 'updraftplus') ." $tablename: ".__('skipped (not in list)', 'updraftplus'), 'notice-restore', 'restore-skipped-'.$tablename);
 							continue;
 						}
 					}

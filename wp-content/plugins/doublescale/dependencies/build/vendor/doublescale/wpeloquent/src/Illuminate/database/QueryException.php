@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Database;
+namespace DoubleScale\Vendor\Illuminate\Database;
 
 use PDOException;
-use Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Support\Str;
 class QueryException extends PDOException
 {
     /**

@@ -79,6 +79,8 @@ final class Module extends AbstractModule {
 			Rest\Controllers\RestSalesSettingsController::class,
 			Rest\Controllers\RestPortalDocumentsController::class,
 			Rest\Controllers\RestPortalPaymentsController::class,
+			Rest\Controllers\RestPortalStatementController::class,
+			Rest\Controllers\RestPortalDocumentsArchiveController::class,
 			Rest\Controllers\RestSalesAnalyticsController::class,
 		);
 	}

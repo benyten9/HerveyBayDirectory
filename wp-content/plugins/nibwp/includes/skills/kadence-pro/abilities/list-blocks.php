@@ -18,7 +18,7 @@ require_once __DIR__ . '/../lib/persister.php';
 
 wp_register_ability('nibwp/kadence-pro-list-blocks', [
     'label'       => __('Kadence Pro — list blocks', 'nibwp'),
-    'description' => __('The Kadence block library: valid block names, container/nesting rules, which fields are source:html, the attribute traps, and where CSS may live. Read before authoring.', 'nibwp'),
+    'description' => 'The Kadence block library: valid block names, container/nesting rules, which fields are source:html, the attribute traps, and where CSS may live. Read before authoring.',
     'category'    => 'kadence-pro',
     // `properties` must encode as a JSON object. An empty PHP array becomes
     // `[]`, which is a JSON *array* — schema validators then reject every call
@@ -68,7 +68,7 @@ function nibwp_kadence_pro_list_blocks(array $input): array
 
 wp_register_ability('nibwp/kadence-pro-block-attributes', [
     'label'       => __('Kadence Pro — block attributes (live registry)', 'nibwp'),
-    'description' => __('Read a Kadence block\'s real attributes (name, type, source, default) from the live block registry on THIS site. Use before authoring so you never guess an attribute name (a wrong name is silently ignored).', 'nibwp'),
+    'description' => 'Read a Kadence block\'s real attributes (name, type, source, default) from the live block registry on THIS site. Use before authoring so you never guess an attribute name (a wrong name is silently ignored).',
     'category'    => 'kadence-pro',
     'input_schema' => [
         'type' => 'object',
@@ -108,7 +108,7 @@ function nibwp_kadence_pro_block_attributes(array $input): array|WP_Error
 
 wp_register_ability('nibwp/kadence-pro-custom-css', [
     'label'       => __('Kadence Pro — page custom CSS', 'nibwp'),
-    'description' => __('Write page-scoped CSS to Kadence Blocks Pro\'s own _kad_blocks_custom_css field (the correct home for the rare CSS that cannot be a block attribute — post-loop internals, third-party markup, @keyframes, :hover). NOT Customizer Additional CSS, NOT a core/html block.', 'nibwp'),
+    'description' => 'Write page-scoped CSS to Kadence Blocks Pro\'s own _kad_blocks_custom_css field (the correct home for the rare CSS that cannot be a block attribute — post-loop internals, third-party markup, @keyframes, :hover). NOT Customizer Additional CSS, NOT a core/html block.',
     'category'    => 'kadence-pro',
     'input_schema' => [
         'type' => 'object',

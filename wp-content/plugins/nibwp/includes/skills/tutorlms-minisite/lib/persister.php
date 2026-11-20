@@ -67,8 +67,8 @@ function nibwp_tutorlms_minisite_render(array $sections): string
         . '.nibwp-cms__btn{display:inline-block;margin-top:24px;padding:14px 28px;border-radius:10px;background:var(--cms-accent);color:#fff;font-weight:700;text-decoration:none}'
         . '.nibwp-cms__grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:8px}'
         . '.nibwp-cms__card{border:1px solid #e2e8f0;border-radius:12px;padding:20px;background:#fff}'
-        . '.nibwp-cms ul{margin:.5em 0 0 1.2em}.nibwp-cms li{margin:.35em 0}'
-        . '.nibwp-cms__quote{border-left:3px solid var(--cms-accent);padding:6px 0 6px 18px;font-style:italic;color:#334155;margin:16px 0}'
+        . '.nibwp-cms ul{margin:.5em 0 0;margin-inline-start:1.2em}.nibwp-cms li{margin:.35em 0}'
+        . '.nibwp-cms__quote{border-inline-start:3px solid var(--cms-accent);padding-block:6px;padding-inline:18px 0;font-style:italic;color:#334155;margin:16px 0}'
         . '.nibwp-cms__cta{text-align:center;background:#0f172a;color:#fff;border-radius:16px}'
         . '.nibwp-cms__cta h2{color:#fff}'
         . '.nibwp-cms details{border-bottom:1px solid #e2e8f0;padding:14px 0}.nibwp-cms summary{cursor:pointer;font-weight:600}';

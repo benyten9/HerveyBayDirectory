@@ -19,6 +19,8 @@ use WC_Order;
  */
 class OrderStatusPending extends Trigger
 {
+	use OrderTriggerPhone;
+
 	/**
 	 * Trigger Name
 	 *
@@ -93,6 +95,8 @@ class OrderStatusPending extends Trigger
 			'first_name' => $order->get_billing_first_name(),
 			'last_name'  => $order->get_billing_last_name(),
 			'email'      => $order->get_billing_email(),
+			'phone'      => $this->resolve_order_phone($order),
+			'country'    => $this->resolve_order_country($order),
 			'data'       => array(
 				'order_id'     => $order->get_id(),
 				'order_total'  => $order->get_total(),

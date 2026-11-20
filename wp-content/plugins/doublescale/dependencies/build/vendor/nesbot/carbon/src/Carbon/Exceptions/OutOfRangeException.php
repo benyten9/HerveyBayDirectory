@@ -8,13 +8,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Carbon\Exceptions;
+namespace DoubleScale\Vendor\Carbon\Exceptions;
 
 use InvalidArgumentException as BaseInvalidArgumentException;
 use Throwable;
 // This will extends OutOfRangeException instead of InvalidArgumentException since 3.0.0
 // use OutOfRangeException as BaseOutOfRangeException;
-class OutOfRangeException extends BaseInvalidArgumentException implements \Carbon\Exceptions\InvalidArgumentException
+class OutOfRangeException extends BaseInvalidArgumentException implements InvalidArgumentException
 {
     /**
      * The unit or name of the value.

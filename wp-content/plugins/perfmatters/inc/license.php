@@ -82,15 +82,15 @@ echo "<form method='post' action=''>";
 					echo "<th>" . perfmatters_title(__('License Key', 'perfmatters'), (empty($license) ? 'perfmatters_edd_license_key' : false), 'https://perfmatters.io/docs/troubleshooting-license-key-activation/') . "</th>";
 					echo "<td>";
 
-						echo "<input id='perfmatters_edd_license_key' name='perfmatters_edd_license_key' type='text' class='regular-text' value='" . (!empty($license) ? substr($license, 0, 4) . '**************************' : '') . "' style='margin-right: 10px;' maxlength='50' />";
+						echo "<input id='perfmatters_edd_license_key' name='perfmatters_edd_license_key' type='text' class='regular-text' value='" . esc_attr(!empty($license) ? substr($license, 0, 4) . '**************************' : '') . "' style='margin-right: 10px;' maxlength='50' />";
 
 						if(empty($license)) {
 							//save license button
-							echo "<input type='submit' name='perfmatters_save_license' class='button button-secondary' value='" . __('Save License', 'perfmatters') . "'>";
+							echo "<input type='submit' name='perfmatters_save_license' class='button button-secondary' value='" . esc_attr__('Save License', 'perfmatters') . "'>";
 						}
 						elseif(!defined('PERFMATTERS_LICENSE_KEY')) {
 							//remove license button
-							echo "<input type='submit' class='button perfmatters-button-warning' name='perfmatters_remove_license' value='" . __('Remove License', 'perfmatters') . "' />";
+							echo "<input type='submit' class='button perfmatters-button-warning' name='perfmatters_remove_license' value='" . esc_attr__('Remove License', 'perfmatters') . "' />";
 						}
 
 						perfmatters_tooltip(__('Save or remove your license key.', 'perfmatters'));
@@ -119,20 +119,18 @@ echo "<form method='post' action=''>";
 						//activate/deactivate license
 						if(!empty($license_info->license) && $license_info->license != 'invalid') {
 							echo "<tr>";
-								echo "<th>" . __('Activate License', 'perfmatters') . "</th>";
+								echo "<th>" . esc_html__('Activate License', 'perfmatters') . "</th>";
 								echo "<td>";
 									if($license_info->license == 'valid') {
-										//if(!defined('PERFMATTERS_LICENSE_KEY')) {
-											echo "<input type='submit' class='button-secondary' name='perfmatters_edd_license_deactivate' value='" . __('Deactivate License', 'perfmatters') . "' style='margin-right: 10px;' />";
-										//}
-										echo "<span style='color:green;line-height:30px;'><span class='dashicons dashicons-cloud'style='line-height:30px;'></span> " . __('License is activated.', 'novashare') . "</span>";
+										echo "<input type='submit' class='button-secondary' name='perfmatters_edd_license_deactivate' value='" . esc_attr__('Deactivate License', 'perfmatters') . "' style='margin-right: 10px;' />";
+										echo "<span style='color:green;line-height:30px;'><span class='dashicons dashicons-cloud'style='line-height:30px;'></span> " . esc_html__('License is activated.', 'perfmatters') . "</span>";
 									} 
 									elseif(!is_multisite() || (!empty($license_info->activations_left) && $license_info->activations_left == 'unlimited')) {
-										echo "<input type='submit' class='button-secondary' name='perfmatters_edd_license_activate' value='" . __('Activate License', 'perfmatters') . "' style='margin-right: 10px;' />";
-										echo "<span style='color:red;line-height:30px;'><span class='dashicons dashicons-warning'style='line-height:30px;'></span> " . __('License is not activated.', 'novashare') . "</span>";
+										echo "<input type='submit' class='button-secondary' name='perfmatters_edd_license_activate' value='" . esc_attr__('Activate License', 'perfmatters') . "' style='margin-right: 10px;' />";
+										echo "<span style='color:red;line-height:30px;'><span class='dashicons dashicons-warning'style='line-height:30px;'></span> " . esc_html__('License is not activated.', 'perfmatters') . "</span>";
 									}
 									else {
-										echo "<span style='color:red; display: block;'>" . __('Unlimited License needed for use in a multisite environment. Please contact support to upgrade.', 'perfmatters') . "</span>";
+										echo "<span style='color:red; display: block;'>" . esc_html__('Unlimited License needed for use in a multisite environment. Please contact support to upgrade.', 'perfmatters') . "</span>";
 									}
 								echo "</td>";
 							echo "</tr>";
@@ -141,12 +139,12 @@ echo "<form method='post' action=''>";
 						//license status (active/expired)
 						if(!empty($license_info->license)) {
 							echo "<tr>";
-								echo "<th>" . __('License Status', 'perfmatters') . "</th>";
+								echo "<th>" . esc_html__('License Status', 'perfmatters') . "</th>";
 								echo "<td" . ($license_info->license == "expired" ? " style='color: red;'" : "") . ">";
-									echo ucfirst($license_info->license);
+									echo esc_html(ucfirst($license_info->license));
 									if($license_info->license == "expired") {
 										echo "<br />";
-										echo "<a href='https://perfmatters.io/checkout/?edd_license_key=" . $license . "&download_id=696' class='button button-secondary' style='margin-top: 10px;' target='_blank'>" . __('Renew Your License for Updates + Support!', 'perfmatters') . "</a>";
+										echo "<a href='" . esc_url('https://perfmatters.io/checkout/?edd_license_key=' . $license . '&download_id=696') . "' class='button button-secondary' style='margin-top: 10px;' target='_blank'>" . esc_html__('Renew Your License for Updates + Support!', 'perfmatters') . "</a>";
 									}
 								echo "</td>";
 							echo "</tr>";
@@ -155,16 +153,16 @@ echo "<form method='post' action=''>";
 						//licenses used
 						if(!empty($license_info->site_count) && !empty($license_info->license_limit) && !is_multisite()) {
 							echo "<tr>";
-								echo "<th>" . __('Licenses Used', 'perfmatters') . "</th>";
-								echo "<td>" . $license_info->site_count . "/" . $license_info->license_limit . "</td>";
+								echo "<th>" . esc_html__('Licenses Used', 'perfmatters') . "</th>";
+								echo "<td>" . esc_html($license_info->site_count . '/' . $license_info->license_limit) . "</td>";
 							echo "</tr>";
 						}
 
 						//expiration date
 						if(!empty($license_info->expires)) {
 							echo "<tr>";
-								echo "<th>" . __('Expiration Date', 'perfmatters') . "</th>";
-								echo "<td>" . ($license_info->expires != 'lifetime' ? date("F d, Y", strtotime($license_info->expires)) : __('Lifetime', 'perfmatters')) . "</td>";
+								echo "<th>" . esc_html__('Expiration Date', 'perfmatters') . "</th>";
+								echo "<td>" . ($license_info->expires != 'lifetime' ? esc_html(gmdate("F d, Y", strtotime($license_info->expires))) : esc_html__('Lifetime', 'perfmatters')) . "</td>";
 							echo "</tr>";
 						}
 					}

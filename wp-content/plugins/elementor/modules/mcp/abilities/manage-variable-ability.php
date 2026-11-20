@@ -4,12 +4,15 @@ namespace Elementor\Modules\Mcp\Abilities;
 
 use Elementor\Modules\Mcp\Abilities\Utils\Bulk_Operations_Result;
 use Elementor\Modules\Mcp\Abilities\Utils\Tool_Performance_Metrics;
+use Elementor\Modules\Mcp\Abilities\Utils\Variables_Pro_Features_Discovery;
 use Elementor\Modules\Mcp\Events\Mcp_Event_Dispatcher;
+use Elementor\Modules\Mcp\Utils\Pro_Features_Discovery;
 use Elementor\Modules\Variables\Services\Batch_Operations\Batch_Processor;
 use Elementor\Modules\Variables\Services\Variables_Service;
 use Elementor\Modules\Variables\Storage\Exceptions\FatalError;
 use Elementor\Modules\Variables\Storage\Variables_Repository;
 use Elementor\Plugin;
+use Elementor\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -36,7 +39,7 @@ class Manage_Variable_Ability extends Abstract_Ability {
 	protected function get_definition(): Ability_Definition {
 		return new Ability_Definition(
 			__( 'Manage Global Variable', 'elementor' ),
-			__( 'Manage V4 global variables (color, font, size, custom-size). Bulk create, update, or delete on the active kit (up to 50 operations).', 'elementor' ),
+			$this->get_description(),
 			'elementor',
 			[
 				'type' => 'object',
@@ -51,8 +54,9 @@ class Manage_Variable_Ability extends Abstract_Ability {
 				'annotations' => [
 					'readonly' => false,
 					'idempotent' => false,
-					'destructive' => false,
+					'destructive' => true,
 				],
+				'mutates_page' => false,
 			],
 			fn() => current_user_can( 'manage_options' ),
 			[
@@ -132,6 +136,7 @@ class Manage_Variable_Ability extends Abstract_Ability {
 		$results = new Bulk_Operations_Result();
 		$batch_operations = [];
 		$index_map = [];
+		$pro_message_reported = false;
 
 		foreach ( $operations as $index => $operation ) {
 			if ( ! is_array( $operation ) ) {
@@ -142,11 +147,18 @@ class Manage_Variable_Ability extends Abstract_Ability {
 			$translated = $this->translate_operation( $operation );
 
 			if ( is_wp_error( $translated ) ) {
+				$message = $translated->get_error_message();
+
+				if ( Pro_Features_Discovery::ERROR_CODE === $translated->get_error_code() ) {
+					$message = $pro_message_reported ? Variables_Pro_Features_Discovery::get_repeated_message() : $message;
+					$pro_message_reported = true;
+				}
+
 				$results->add_error(
 					$index,
 					$operation['action'] ?? '',
 					$translated->get_error_code(),
-					$translated->get_error_message()
+					$message
 				);
 				continue;
 			}
@@ -197,6 +209,10 @@ class Manage_Variable_Ability extends Abstract_Ability {
 					return $this->bad_request( __( 'Create requires type, label, and value.', 'elementor' ) );
 				}
 
+				if ( $this->is_size_type( $type ) && ! $this->can_manage_size_variables() ) {
+					return Variables_Pro_Features_Discovery::for_size_variables();
+				}
+
 				return [
 					'type' => 'create',
 					'variable' => [
@@ -213,6 +229,10 @@ class Manage_Variable_Ability extends Abstract_Ability {
 
 				if ( '' === $id || '' === $label || '' === $value ) {
 					return $this->bad_request( __( 'Update requires id, label, and value.', 'elementor' ) );
+				}
+
+				if ( ! $this->can_manage_size_variables() && $this->is_size_variable( $id ) ) {
+					return Variables_Pro_Features_Discovery::for_size_variables();
 				}
 
 				return [
@@ -265,6 +285,22 @@ class Manage_Variable_Ability extends Abstract_Ability {
 
 	private function bad_request( string $message ): \WP_Error {
 		return new \WP_Error( 'invalid_input', $message, [ 'status' => \WP_Http::BAD_REQUEST ] );
+	}
+
+	private function is_size_type( $type ): bool {
+		return in_array( $type, [ self::TYPE_SIZE, self::TYPE_CUSTOM_SIZE ], true );
+	}
+
+	private function is_size_variable( $id ): bool {
+		return is_string( $id ) && $this->is_size_type( $this->get_service()->find_type( $id ) );
+	}
+
+	private function can_manage_size_variables(): bool {
+		return Utils::is_license_active();
+	}
+
+	private function get_description(): string {
+		return __( 'Manage V4 global variables (color, font, size, custom-size). Bulk create, update, or delete on the active kit (up to 50 operations).', 'elementor' );
 	}
 
 	private function clear_cache(): void {

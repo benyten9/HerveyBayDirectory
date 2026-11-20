@@ -4222,7 +4222,7 @@
 					Object.keys(videoParams).forEach((key) => {
 						if (key.toLowerCase().startsWith("on")) delete videoParams[key];
 					});
-					$videoElement = $("<video>", videoParams);
+					$videoElement = $("<video>").attr(videoParams);
 				} else {
 					let apiProvider;
 					if (-1 !== options.url.indexOf("vimeo.com")) apiProvider = elementorFrontend.utils.vimeo;

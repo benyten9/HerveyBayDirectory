@@ -277,7 +277,7 @@ class RestBookingSettingsController extends RestController {
 	public function update( $request ) {
 		$settings = $request->get_json_params();
 
-		Settings::update_many( $settings );
+		Settings::update_from_request( $settings );
 		return new WP_REST_Response( array( 'success' => true ), 200 );
 	}
 

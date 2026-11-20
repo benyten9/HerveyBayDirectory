@@ -46,7 +46,10 @@ final class Lifecycle {
 	private static function define_constants( string $plugin_file ): void {
 		$defaults = array(
 			'DOUBLESCALE_PLUGIN_FILE'   => $plugin_file,
-			'DOUBLESCALE_VERSION'       => '1.4.0',
+			'DOUBLESCALE_VERSION'       => '1.10.1',
+			// Bump when a build changes the schema without a new version, so the
+			// schema check reruns on sites that already ran an earlier build of it.
+			'DOUBLESCALE_SCHEMA_REV'    => '1.9.11',
 			'DOUBLESCALE_PLUGIN_DIR'    => plugin_dir_path( $plugin_file ),
 			'DOUBLESCALE_PLUGIN_URL'    => plugin_dir_url( $plugin_file ),
 			'DOUBLESCALE_PLUGIN_PATH'   => plugin_basename( $plugin_file ),
@@ -178,8 +181,23 @@ final class Lifecycle {
 		// which fires before PluginKernel loads includes/Core/functions.php.
 		require_once $dir . 'includes/Core/functions.php';
 
+		// An older Pro still asks for Illuminate\… etc. by their unprefixed names.
+		require_once $dir . 'includes/Compat/LegacyVendorNames.php';
+		\DoubleScale\Compat\LegacyVendorNames::register();
+
 		require_once $dir . 'includes/Compat/LegacyProBookingPayment.php';
 		\DoubleScale\Compat\LegacyProBookingPayment::ensure_loaded();
+
+		// Keep Pro active when an update moves it to another plugin folder.
+		require_once $dir . 'includes/Compat/ProFolderKeeper.php';
+		\DoubleScale\Compat\ProFolderKeeper::register();
+
+		// Next to a Pro that predates its own WhatsApp engine: answer the engine
+		// classes it still calls with stand-ins, and tell the admin to update.
+		require_once $dir . 'includes/Compat/ProMessagingEngineCheck.php';
+		\DoubleScale\Compat\ProMessagingEngineCheck::register();
+		require_once $dir . 'includes/Compat/LegacyWhatsapp.php';
+		\DoubleScale\Compat\LegacyWhatsapp::register();
 	}
 
 	/**
@@ -292,12 +310,17 @@ final class Lifecycle {
 		foreach ( self::SCHEDULED_GROUPS as $group ) {
 			as_unschedule_all_actions( '', array(), $group );
 		}
+		\DoubleScale\Core\NextRunCache::flush();
 	}
 
 	/**
 	 * Boot the modular kernel after WordPress finishes loading plugins.
 	 */
 	public static function on_plugins_loaded(): void {
+		// One query for the options modules read while they boot, instead of
+		// one query each (see BootOptionPrimer).
+		\DoubleScale\Core\BootOptionPrimer::start();
+
 		// `ensure_db_ready()` runs `SHOW TABLES` probes plus a per-module
 		// migration-repair sweep. That work only matters right after an install
 		// or upgrade, so gate it on a version stamp: on steady-state requests
@@ -305,22 +328,35 @@ final class Lifecycle {
 		// written only once the schema check completes cleanly.
 		if (
 			class_exists( \DoubleScale\Database\Install::class )
-			&& get_option( 'doublescale_schema_ready_version' ) !== DOUBLESCALE_VERSION
+			&& get_option( 'doublescale_schema_ready_version' ) !== DOUBLESCALE_SCHEMA_REV
 		) {
 			\DoubleScale\Database\Install::ensure_db_ready();
-			update_option( 'doublescale_schema_ready_version', DOUBLESCALE_VERSION );
+			update_option( 'doublescale_schema_ready_version', DOUBLESCALE_SCHEMA_REV );
 		}
 
 		\DoubleScale\Core\Bootstrap::init();
 
-		// On first boot after activation or upgrade, run task cleanup immediately
-		// so that any stale scheduled actions with no registered callback are
-		// removed before they can accumulate failures.
+		// After activation or an upgrade, clean up stale scheduled actions with
+		// no registered callback. Not here (plugins_loaded:5): DoubleScale Pro
+		// and every other plugin have not registered their hooks yet, so their
+		// jobs would look abandoned. Once the whole site is loaded.
 		if ( get_option( 'doublescale_needs_task_cleanup' ) ) {
-			delete_option( 'doublescale_needs_task_cleanup' );
-			if ( class_exists( \DoubleScale\Core\Tasks::class ) ) {
-				\DoubleScale\Core\Tasks::cleanup_old_tasks();
-			}
+			add_action(
+				'wp_loaded',
+				static function () {
+					delete_option( 'doublescale_needs_task_cleanup' );
+					if ( class_exists( \DoubleScale\Core\Tasks::class ) ) {
+						\DoubleScale\Core\Tasks::cleanup_old_tasks();
+					}
+				},
+				PHP_INT_MAX
+			);
+		}
+
+		// Delete the .ics files old confirmation pages left in uploads. Not tied
+		// to the Booking module being on: the files outlive it.
+		if ( class_exists( \DoubleScale\Modules\Booking\Services\ConfirmPageIcsCleanup::class ) ) {
+			\DoubleScale\Modules\Booking\Services\ConfirmPageIcsCleanup::register();
 		}
 
 		/**

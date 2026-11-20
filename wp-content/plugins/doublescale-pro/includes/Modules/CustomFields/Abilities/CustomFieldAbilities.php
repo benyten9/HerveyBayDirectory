@@ -130,7 +130,7 @@ final class CustomFieldAbilities {
 
 		$rows = CustomFieldModel::query()
 			->where( 'scope', 'contact' )
-			->orderBy( 'id' )
+			->ordered()
 			->skip( $offset )
 			->take( $limit )
 			->get();

@@ -211,12 +211,12 @@ function seopress_display_seo_term_metaboxe() {
 		$seo_tabs = json_decode( stripslashes( htmlspecialchars_decode( $_POST['seo_tabs'], ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) ) );
 
 		if ( in_array( 'title-tab', $seo_tabs, true ) ) {
-			if ( ! empty( $_POST['seopress_titles_title'] ) ) {
+			if ( isset( $_POST['seopress_titles_title'] ) && '' !== $_POST['seopress_titles_title'] ) {
 				update_term_meta( $term_id, '_seopress_titles_title', sanitize_text_field( $_POST['seopress_titles_title'] ) );
 			} else {
 				delete_term_meta( $term_id, '_seopress_titles_title' );
 			}
-			if ( ! empty( $_POST['seopress_titles_desc'] ) ) {
+			if ( isset( $_POST['seopress_titles_desc'] ) && '' !== $_POST['seopress_titles_desc'] ) {
 				update_term_meta( $term_id, '_seopress_titles_desc', sanitize_textarea_field( $_POST['seopress_titles_desc'] ) );
 			} else {
 				delete_term_meta( $term_id, '_seopress_titles_desc' );
@@ -352,26 +352,9 @@ function seopress_display_seo_term_metaboxe() {
 	}
 }
 
-if ( is_user_logged_in() ) {
-	if ( is_super_admin() ) {
-		echo seopress_display_seo_term_metaboxe();
-	} else {
-		global $wp_roles;
-
-		// Get current user role.
-		if ( isset( wp_get_current_user()->roles[0] ) ) {
-			$seopress_user_role = wp_get_current_user()->roles[0];
-
-			// If current user role matchs values from Security settings then apply.
-			if ( ! empty( seopress_get_service( 'AdvancedOption' )->getSecurityMetaboxRole() ) ) {
-				if ( array_key_exists( $seopress_user_role, seopress_get_service( 'AdvancedOption' )->getSecurityMetaboxRole() ) ) {
-					// Do nothing.
-				} else {
-					echo seopress_display_seo_term_metaboxe();
-				}
-			} else {
-				echo seopress_display_seo_term_metaboxe();
-			}
-		}
-	}
+// Every role of the user counts, as in seopress_metabox_role_is_blocked(): only
+// the first one was checked, so a user with a second, restricted role kept a
+// metabox the settings hide from them.
+if ( is_user_logged_in() && ! seopress_metabox_role_is_blocked( 'GLOBAL' ) ) {
+	seopress_display_seo_term_metaboxe();
 }

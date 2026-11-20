@@ -11,11 +11,8 @@ if (!defined('ABSPATH')) {
 }
 
 wp_register_ability('nibwp/edit-file', [
-    'label' => __('Edit File', domain: 'nibwp'),
-    'description' => __(
-        'Edits an existing file by replacing an exact string match with new content. Works like the edit tool in AI code agents: specify the old text to find and the new text to replace it with. The old string must be unique in the file unless replace_all is set.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Edit File', 'nibwp'),
+    'description' => 'Edits an existing file by replacing an exact string match with new content. Works like the edit tool in AI code agents: specify the old text to find and the new text to replace it with. The old string must be unique in the file unless replace_all is set.',
     'category' => 'filesystem',
     'input_schema' => [
         'type' => 'object',
@@ -51,7 +48,9 @@ wp_register_ability('nibwp/edit-file', [
         ],
     ],
     'execute_callback' => 'nibwp_edit_file',
-    'permission_callback' => 'nibwp_permission_callback',
+    // Editing a file in place is editing the install, so it takes network
+    // authority on Multisite. See nibwp_filesystem_permission_callback().
+    'permission_callback' => 'nibwp_filesystem_permission_callback',
     'meta' => [
         'show_in_rest' => true,
         'mcp' => ['public' => true],

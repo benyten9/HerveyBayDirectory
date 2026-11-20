@@ -1,6 +1,7 @@
 <?php
 /**
- * Automation rule: support ticket opening channel (web vs email).
+ * Automation rule: support ticket opening channel (web, email, or a help
+ * assistant conversation handed to the team).
  *
  * Reads the source on the ticket's opening reply activity (`data.source`).
  *
@@ -34,6 +35,7 @@ class TicketSource extends BaseSupportRule {
 		return array(
 			'web'   => __( 'Web / Portal', 'doublescale' ),
 			'email' => __( 'Email', 'doublescale' ),
+			'chat'  => __( 'Help assistant chat', 'doublescale' ),
 		);
 	}
 

@@ -127,6 +127,31 @@ class ListRemoved extends Goal {
 	}
 
 	/**
+	 * Already achieved on arrival: the contact is on none of the goal's lists.
+	 *
+	 * @param AutomationContactModel $automation_contact Run, pointed at the goal step.
+	 * @param ContactModel           $contact            Contact.
+	 * @return bool
+	 */
+	public function is_met_now( AutomationContactModel $automation_contact, ContactModel $contact ) {
+		$step = $this->goal_step( $automation_contact );
+		if ( ! $step ) {
+			return false;
+		}
+		$goal_lists = array_map( 'intval', (array) $step->get_setting( 'lists', array() ) );
+		if ( empty( $goal_lists ) ) {
+			return false;
+		}
+		foreach ( $goal_lists as $list_id ) {
+			if ( $contact->is_subscribed_to_list( $list_id ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Get fields
 	 *
 	 * @since 1.0.0

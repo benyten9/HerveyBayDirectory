@@ -1040,9 +1040,9 @@ class EmailOauth {
 							{
 								type: 'DOUBLESCALE_OAUTH_RESULT',
 								scope: 'shared',
-								status: <?php echo wp_json_encode( $status ); ?>,
-								provider: <?php echo wp_json_encode( $provider ); ?>,
-								message: <?php echo wp_json_encode( $message ); ?>
+								status: <?php echo wp_json_encode( $status, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,
+								provider: <?php echo wp_json_encode( $provider, JSON_HEX_TAG | JSON_HEX_AMP ); ?>,
+								message: <?php echo wp_json_encode( $message, JSON_HEX_TAG | JSON_HEX_AMP ); ?>
 							},
 							window.location.origin
 						);

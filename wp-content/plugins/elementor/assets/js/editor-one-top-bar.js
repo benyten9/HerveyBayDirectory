@@ -1071,74 +1071,6 @@ var import_jsx_runtime = require_jsx_runtime();
 	};
 
 //#endregion
-//#region \0vite/preload-helper.js
-	var scriptRel = "modulepreload";
-	var assetsURL = function(dep) {
-		return "/" + dep;
-	};
-	var seen = {};
-	var __vitePreload = function preload(baseModule, deps, importerUrl) {
-		let promise = Promise.resolve();
-		if (false              && deps && deps.length > 0) {
-			const links = document.getElementsByTagName("link");
-			const cspNonceMeta = document.querySelector("meta[property=csp-nonce]");
-			const cspNonce = (cspNonceMeta === null || cspNonceMeta === void 0 ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta === null || cspNonceMeta === void 0 ? void 0 : cspNonceMeta.getAttribute("nonce"));
-			function allSettled(promises) {
-				return Promise.all(promises.map((p) => Promise.resolve(p).then((value) => ({
-					status: "fulfilled",
-					value
-				}), (reason) => ({
-					status: "rejected",
-					reason
-				}))));
-			}
-			function importMetaResolve(specifier) {
-				if ({}.resolve) return {}.resolve(specifier);
-				return new URL(
-					specifier,
-					/** #__KEEP__ */
-					{}.url
-				).href;
-			}
-			promise = allSettled(deps.map((dep) => {
-				dep = assetsURL(dep, importerUrl);
-				dep = importMetaResolve(dep);
-				if (dep in seen) return;
-				seen[dep] = true;
-				const isCss = dep.endsWith(".css");
-				for (let i = links.length - 1; i >= 0; i--) {
-					const link = links[i];
-					if (link.href === dep && (!isCss || link.rel === "stylesheet")) return;
-				}
-				const link = document.createElement("link");
-				link.rel = isCss ? "stylesheet" : scriptRel;
-				if (!isCss) link.as = "script";
-				link.crossOrigin = "";
-				link.href = dep;
-				if (cspNonce) link.setAttribute("nonce", cspNonce);
-				document.head.appendChild(link);
-				if (isCss) return new Promise((res, rej) => {
-					link.addEventListener("load", res);
-					link.addEventListener("error", () => rej(/* @__PURE__ */ new Error(`Unable to preload CSS for ${dep}`)));
-				});
-			}));
-		}
-		function handlePreloadError(err) {
-			const e = new Event("vite:preloadError", { cancelable: true });
-			e.payload = err;
-			window.dispatchEvent(e);
-			if (!e.defaultPrevented) throw err;
-		}
-		return promise.then((res) => {
-			for (const item of res || []) {
-				if (item.status !== "rejected") continue;
-				handlePreloadError(item.reason);
-			}
-			return baseModule().catch(handlePreloadError);
-		});
-	};
-
-//#endregion
 //#region node_modules/@elementor/elementor-one-assets/index.esm.js
 	var _excluded = [
 		"sx",
@@ -13306,7 +13238,10 @@ var import_jsx_runtime = require_jsx_runtime();
 	})));
 	var Jh = qp.createInstance();
 	var Qh;
-	Jh.use((Qh = (e, t) => __vitePreload(() => import(`./locales/${e}/${t}.json`), void 0), {
+	Jh.use((Qh = (e, t) => fetch((window.elementorOneTopBarConfig.localeLanguageBaseUrls[e] || window.elementorOneTopBarConfig.localeLanguageBaseUrls.en) + t + ".json").then(function(response) {
+		if (!response.ok) throw new Error("Failed to load locale");
+		return response.json();
+	}), {
 		type: "backend",
 		init: function(e, t, r) {},
 		read: function(e, t, r) {
@@ -45569,17 +45504,96 @@ var import_jsx_runtime = require_jsx_runtime();
 	};
 
 //#endregion
+//#region node_modules/@babel/runtime/helpers/esm/arrayWithHoles.js
+	function _arrayWithHoles(r) {
+		if (Array.isArray(r)) return r;
+	}
+
+//#endregion
+//#region node_modules/@babel/runtime/helpers/esm/iterableToArrayLimit.js
+	function _iterableToArrayLimit(r, l) {
+		var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+		if (null != t) {
+			var e;
+			var n;
+			var i;
+			var u;
+			var a = [];
+			var f = !0;
+			var o = !1;
+			try {
+				if (i = (t = t.call(r)).next, 0 === l) {
+					if (Object(t) !== t) return;
+					f = !1;
+				} else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+			} catch (r) {
+				o = !0, n = r;
+			} finally {
+				try {
+					if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
+				} finally {
+					if (o) throw n;
+				}
+			}
+			return a;
+		}
+	}
+
+//#endregion
+//#region node_modules/@babel/runtime/helpers/esm/arrayLikeToArray.js
+	function _arrayLikeToArray(r, a) {
+		(null == a || a > r.length) && (a = r.length);
+		for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+		return n;
+	}
+
+//#endregion
+//#region node_modules/@babel/runtime/helpers/esm/unsupportedIterableToArray.js
+	function _unsupportedIterableToArray(r, a) {
+		if (r) {
+			if ("string" == typeof r) return _arrayLikeToArray(r, a);
+			var t = {}.toString.call(r).slice(8, -1);
+			return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+		}
+	}
+
+//#endregion
+//#region node_modules/@babel/runtime/helpers/esm/nonIterableRest.js
+	function _nonIterableRest() {
+		throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+	}
+
+//#endregion
+//#region node_modules/@babel/runtime/helpers/esm/slicedToArray.js
+	function _slicedToArray(r, e) {
+		return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+	}
+
+//#endregion
+//#region modules/editor-one/assets/js/shared/map-wordpress-locale-to-elementor-one-language.js
+	function mapWordPressLocaleToElementorOneLanguage(locale) {
+		if (!locale) return "en";
+		var _locale$split2 = _slicedToArray(locale.split("_"), 2);
+		var language = _locale$split2[0];
+		var region = _locale$split2[1];
+		if (!region) return language;
+		return "".concat(language, "-").concat(region);
+	}
+
+//#endregion
 //#region modules/editor-one/assets/js/top-bar/app.js
 	var App = function App() {
 		var _window$elementorOneT = window.elementorOneTopBarConfig;
 		var version = _window$elementorOneT.version;
 		var title = _window$elementorOneT.title;
 		var environment = _window$elementorOneT.environment;
+		var locale = _window$elementorOneT.locale;
 		var isRtlLanguage = isRTL();
 		useAdminMenuOffset();
 		return /*#__PURE__*/ react.default.createElement(HB, {
 			env: environment,
-			isRTL: isRtlLanguage
+			isRTL: isRtlLanguage,
+			language: mapWordPressLocaleToElementorOneLanguage(locale)
 		}, /*#__PURE__*/ react.default.createElement(eJ, {
 			appSettings: {
 				slug: "elementor",

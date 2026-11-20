@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Name of your business', 'wp-seopress-pro' ); ?>
 			<code>name</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_name', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_name', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. My Local Business', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Select a business type', 'wp-seopress-pro' ); ?>
 			<code>type</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_type', 'lb' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_type', 'lb' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 	</p>
 	<p class="description">
 		<a href="https://schema.org/LocalBusiness" target="_blank"
@@ -45,7 +45,7 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 			<?php esc_html_e( 'Image', 'wp-seopress-pro' ); ?>
 			<code>image</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_img', 'image' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_img', 'image' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description">
 		<?php
 		echo wp_kses_post(
@@ -66,7 +66,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Street Address', 'wp-seopress-pro' ); ?>
 			<code>address</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_street_addr', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_street_addr', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. Place Bellevue', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -74,7 +74,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'City', 'wp-seopress-pro' ); ?>
 			<code>city</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_city', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_city', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. Biarritz', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -82,7 +82,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'State', 'wp-seopress-pro' ); ?>
 			<code>state</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_state', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_state', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. Nouvelle Aquitaine', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -90,7 +90,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Postal code', 'wp-seopress-pro' ); ?>
 			<code>postalCode</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_pc', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_pc', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. 64200', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -98,7 +98,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Country', 'wp-seopress-pro' ); ?>
 			<code>country</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_country', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_country', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. FR for France', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -106,7 +106,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Latitude', 'wp-seopress-pro' ); ?>
 			<code>geo</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_lat', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_lat', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. 43.4831389', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -114,7 +114,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Longitude', 'wp-seopress-pro' ); ?>
 			<code>geo</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_lon', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_lon', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. -1.5630987', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -122,7 +122,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'URL', 'wp-seopress-pro' ); ?>
 			<code>url</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_website', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_website', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description">
 		<?php
 		esc_html_e( 'e.g. ', 'wp-seopress-pro' );
@@ -135,7 +135,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Telephone', 'wp-seopress-pro' ); ?>
 			<code>telephone</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_tel', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_tel', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. +33501020304', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -143,7 +143,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Price range', 'wp-seopress-pro' ); ?>
 			<code>priceRange</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_price', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_price', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'e.g. $$, €€€, or ££££...', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -151,7 +151,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Cuisine served', 'wp-seopress-pro' ); ?>
 			<code>servesCuisine</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_serves_cuisine', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_serves_cuisine', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Only to be filled if the business type is: "FoodEstablishment", "Bakery", "BarOrPub", "Brewery", "CafeOrCoffeeShop", "FastFoodRestaurant", "IceCreamShop", "Restaurant" or "Winery".', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -159,7 +159,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'URL of the menu', 'wp-seopress-pro' ); ?>
 			<code>menu</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_menu', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_menu', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Only to be filled if the business type is: "FoodEstablishment", "Bakery", "BarOrPub", "Brewery", "CafeOrCoffeeShop", "FastFoodRestaurant", "IceCreamShop", "Restaurant" or "Winery".', 'wp-seopress-pro' ); ?></span>
 		<span class="description"><?php esc_html_e( 'Default value if empty: URL from the Website property', 'wp-seopress-pro' ); ?></span>
 	</p>
@@ -168,7 +168,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			<?php esc_html_e( 'Accepts reservations', 'wp-seopress-pro' ); ?>
 			<code>acceptsReservations</code>
 		</label>
-		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_accepts_reservations', 'default' ); ?>
+		<?php echo seopress_schemas_mapping_array( 'seopress_pro_rich_snippets_lb_accepts_reservations', 'default' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- seopress_schemas_mapping_array() returns admin markup whose dynamic parts are escaped where the string is assembled. ?>
 		<span class="description"><?php esc_html_e( 'Indicates whether a FoodEstablishment accepts reservations. Values can be Boolean (True or False), an URL at which reservations can be made or (for backwards compatibility) the strings Yes or No.', 'wp-seopress-pro' ); ?></span>
 	</p>
 	<p>
@@ -242,7 +242,7 @@ For best results, provide multiple high-resolution images (minimum of 50K pixels
 			$selected_start_mins = isset( $options[0]['seopress_pro_rich_snippets_lb_opening_hours'][ $key ]['am']['start']['mins'] ) ? $options[0]['seopress_pro_rich_snippets_lb_opening_hours'][ $key ]['am']['start']['mins'] : null;
 			?>
 		<li>
-			<span class="day"><strong><?php echo $day; ?></strong></span>
+			<span class="day"><strong><?php echo esc_html( $day ); ?></strong></span>
 
 			<ul>
 				<!--Closed?-->

@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Contracts\Filesystem;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Filesystem;
 
 interface Filesystem
 {

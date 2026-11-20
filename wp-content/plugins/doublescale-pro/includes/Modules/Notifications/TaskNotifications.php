@@ -40,6 +40,12 @@ class TaskNotifications {
 	const OVERDUE_NOTIFIED_OPTION = '_doublescale_tasks_overdue_notified';
 
 	/**
+	 * Only what went overdue in the last days is announced: the first run (or
+	 * a long pause) never floods people with months-old tasks.
+	 */
+	const OVERDUE_WINDOW_DAYS = 7;
+
+	/**
 	 * Constructor - register hooks
 	 *
 	 * @since 1.2.0
@@ -51,6 +57,9 @@ class TaskNotifications {
 		add_action( 'doublescale_task_created', array( $this, 'on_task_created' ), 10, 1 );
 		add_action( 'doublescale_task_reassigned', array( $this, 'on_task_reassigned' ), 10, 3 );
 		add_action( 'doublescale_task_completed', array( $this, 'on_task_completed' ), 10, 1 );
+
+		// Overdue tasks, once a day (free's daily job).
+		add_action( 'doublescale_daily_doublescale_daily3', array( self::class, 'check_overdue_tasks' ) );
 	}
 
 	/**
@@ -218,25 +227,28 @@ class TaskNotifications {
 	 */
 	public static function check_overdue_tasks() {
 		$today = wp_date( 'Y-m-d' );
+		$since = wp_date( 'Y-m-d', time() - self::OVERDUE_WINDOW_DAYS * DAY_IN_SECONDS );
 
-		// Get previously notified task IDs.
+		// Announced already: "{task id}:{due date}" — a new due date that
+		// passes too is announced again.
 		$notified_ids = get_option( self::OVERDUE_NOTIFIED_OPTION, array() );
 		if ( ! is_array( $notified_ids ) ) {
 			$notified_ids = array();
 		}
 
-		// Get incomplete tasks that are past their due date.
+		// Incomplete tasks whose due date passed in the last days.
 		$overdue_tasks = TaskModel::where( 'status', '!=', 'completed' )
 			->whereNotNull( 'due_date' )
 			->where( 'due_date', '<', $today )
+			->where( 'due_date', '>=', $since )
 			->whereNotNull( 'assigned_to' )
 			->get();
 
 		$new_notifications = false;
 
 		foreach ( $overdue_tasks as $task ) {
-			// Skip if already notified.
-			if ( in_array( $task->id, $notified_ids, true ) ) {
+			$key = (int) $task->id . ':' . substr( (string) $task->due_date, 0, 10 );
+			if ( in_array( $key, $notified_ids, true ) ) {
 				continue;
 			}
 
@@ -265,44 +277,22 @@ class TaskNotifications {
 			);
 
 			// Mark as notified.
-			$notified_ids[]    = $task->id;
+			$notified_ids[]    = $key;
 			$new_notifications = true;
 		}
 
-		// Save updated notified list if changed.
-		if ( $new_notifications ) {
-			update_option( self::OVERDUE_NOTIFIED_OPTION, $notified_ids, false );
-		}
-
-		// Cleanup: Remove IDs of completed tasks.
-		self::cleanup_notified_tasks( $notified_ids );
-	}
-
-	/**
-	 * Cleanup notified tasks list
-	 *
-	 * Removes task IDs from the notified list if the task is completed.
-	 *
-	 * @since 1.2.0
-	 *
-	 * @param array $notified_ids Current list of notified task IDs.
-	 */
-	private static function cleanup_notified_tasks( $notified_ids ) {
-		if ( empty( $notified_ids ) ) {
-			return;
-		}
-
-		// Get IDs of tasks that are still incomplete.
-		$still_incomplete_ids = TaskModel::whereIn( 'id', $notified_ids )
-			->where( 'status', '!=', 'completed' )
-			->pluck( 'id' )
-			->toArray();
-
-		// If some tasks were completed, update the list.
-		if ( count( $still_incomplete_ids ) < count( $notified_ids ) ) {
-			update_option( self::OVERDUE_NOTIFIED_OPTION, $still_incomplete_ids, false );
+		// Keep only dates still inside the window: older ones cannot come back.
+		$kept = array_values(
+			array_filter(
+				$notified_ids,
+				static fn( $key ) => is_string( $key ) && substr( $key, (int) strpos( $key, ':' ) + 1 ) >= $since
+			)
+		);
+		if ( $new_notifications || count( $kept ) !== count( $notified_ids ) ) {
+			update_option( self::OVERDUE_NOTIFIED_OPTION, $kept, false );
 		}
 	}
+
 
 	/**
 	 * Get link to task in admin (static version for cron context)

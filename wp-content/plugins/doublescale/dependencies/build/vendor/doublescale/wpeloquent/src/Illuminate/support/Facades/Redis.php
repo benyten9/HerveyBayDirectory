@@ -1,6 +1,6 @@
 <?php
 
-namespace Illuminate\Support\Facades;
+namespace DoubleScale\Vendor\Illuminate\Support\Facades;
 
 /**
  * @method static \Illuminate\Redis\Connections\Connection connection(string $name = null)
@@ -8,7 +8,7 @@ namespace Illuminate\Support\Facades;
  * @see \Illuminate\Redis\RedisManager
  * @see \Illuminate\Contracts\Redis\Factory
  */
-class Redis extends \Illuminate\Support\Facades\Facade
+class Redis extends Facade
 {
     /**
      * Get the registered name of the component.

@@ -7,9 +7,10 @@
 
 namespace DoubleScale\Pro\Modules\CustomFields\Models;
 
-use Illuminate\Support\Str;
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
+use DoubleScale\Pro\Modules\CustomFields\Migrations\CustomFieldsTablePositionColumn;
 
 /**
  * CustomFieldModel class
@@ -55,6 +56,7 @@ class CustomFieldModel extends Model {
 		'attributes' => 'array',
 		'group_id'   => 'integer',
 		'scope'      => 'string',
+		'position'   => 'integer',
 	);
 
 	/**
@@ -91,7 +93,7 @@ class CustomFieldModel extends Model {
 	/**
 	 * Group relation.
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function group() {
 		return $this->belongsTo( CustomFieldsGroupModel::class, 'group_id' );
@@ -100,7 +102,7 @@ class CustomFieldModel extends Model {
 	/**
 	 * Contacts using this field (pivot: entity_id + entity_type).
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function contacts() {
 		return $this->belongsToMany(
@@ -181,6 +183,36 @@ class CustomFieldModel extends Model {
 			'options'  => array(),
 			'required' => false,
 		);
+	}
+
+	/** The client never sees the field in the portal (the default). */
+	const PORTAL_HIDDEN = 'hidden';
+	/** The client sees the value on their portal profile. */
+	const PORTAL_VISIBLE = 'visible';
+	/** The client sees and changes the value on their portal profile. */
+	const PORTAL_EDITABLE = 'editable';
+
+	/**
+	 * What the client may do with this field in the client portal
+	 * (attributes.portal). Contact fields show on the client's profile and may
+	 * be editable; project fields show on the project and are read-only. File
+	 * fields, anything unknown and every other scope are hidden.
+	 *
+	 * @return string One of the PORTAL_* constants.
+	 */
+	public function get_portal_access() {
+		$scope = (string) $this->scope;
+		if ( ! in_array( $scope, array( 'contact', 'project' ), true ) || ( 'project' === $scope && 'file' === (string) $this->type ) ) {
+			return self::PORTAL_HIDDEN;
+		}
+
+		$attributes = $this->getAttribute( 'attributes' );
+		$access     = is_array( $attributes ) && isset( $attributes['portal'] ) ? (string) $attributes['portal'] : '';
+		if ( 'project' === $scope && self::PORTAL_EDITABLE === $access ) {
+			$access = self::PORTAL_VISIBLE;
+		}
+
+		return in_array( $access, array( self::PORTAL_VISIBLE, self::PORTAL_EDITABLE ), true ) ? $access : self::PORTAL_HIDDEN;
 	}
 
 	/**
@@ -376,10 +408,194 @@ class CustomFieldModel extends Model {
 	}
 
 	/**
+	 * Every custom field, read once per request.
+	 *
+	 * Modules register a merge tag, filter and automation rule per field while
+	 * they boot; each used to run its own query (five per request). Saving or
+	 * deleting a field clears this.
+	 *
+	 * @var \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection|null
+	 */
+	private static $request_cache = null;
+
+	/**
+	 * All custom fields, from the per-request cache, in their set order.
+	 *
+	 * Sorted here rather than in SQL: modules read this while they boot,
+	 * possibly before an upgrade has added the `position` column.
+	 *
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
+	 */
+	public static function cached_all() {
+		if ( null === self::$request_cache ) {
+			self::$request_cache = static::query()->get()->sort( array( static::class, 'compare_order' ) )->values();
+		}
+		return self::$request_cache;
+	}
+
+	/**
+	 * Order of two fields: their position, then id (the order before
+	 * positions existed, and the tie-break for fields never dragged).
+	 *
+	 * @param CustomFieldModel $a Field.
+	 * @param CustomFieldModel $b Field.
+	 * @return int
+	 */
+	public static function compare_order( $a, $b ) {
+		return array( (int) $a->position, (int) $a->id ) <=> array( (int) $b->position, (int) $b->id );
+	}
+
+	/**
+	 * Whether the `position` column is on disk.
+	 *
+	 * Known from an option once the upgrade added it; until then checked once
+	 * per request, so a site mid-upgrade keeps working in id order instead of
+	 * failing on an unknown column.
+	 *
+	 * @var bool|null
+	 */
+	private static $has_position = null;
+
+	/**
+	 * @return bool
+	 */
+	public static function has_position_column() {
+		if ( null !== self::$has_position ) {
+			return self::$has_position;
+		}
+
+		if ( 'yes' === get_option( CustomFieldsTablePositionColumn::READY_OPTION ) ) {
+			self::$has_position = true;
+			return true;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'doublescale_custom_fields';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+
+		self::$has_position = $exists && CustomFieldsTablePositionColumn::column_on_disk( $table );
+		if ( self::$has_position ) {
+			update_option( CustomFieldsTablePositionColumn::READY_OPTION, 'yes', true );
+		}
+		return self::$has_position;
+	}
+
+	/**
+	 * Forget what {@see has_position_column()} found (tests, schema changes).
+	 */
+	public static function forget_position_column() {
+		self::$has_position = null;
+	}
+
+	/**
+	 * Fields in the order the admin set (position, then id). Columns are
+	 * qualified so the scope also works on joined relations (pivot rows
+	 * have their own `id`).
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	public function scopeOrdered( $query ) {
+		if ( self::has_position_column() ) {
+			$query->orderBy( $this->qualifyColumn( 'position' ) );
+		}
+		return $query->orderBy( $this->qualifyColumn( 'id' ) );
+	}
+
+	/**
+	 * The position a new field of this scope gets: after every other one.
+	 *
+	 * @param string $scope Scope.
+	 * @return int
+	 */
+	public static function next_position( $scope ) {
+		return (int) static::query()->where( 'scope', (string) $scope )->max( 'position' ) + 1;
+	}
+
+	/**
+	 * Save a scope's field order.
+	 *
+	 * The listed fields come first, in that order; any field of the scope
+	 * left out (added in another tab, say) keeps its order after them.
+	 *
+	 * @param string $scope Scope.
+	 * @param int[]  $ids   Field ids in their new order.
+	 * @return true|\WP_Error
+	 */
+	public static function reorder( $scope, array $ids ) {
+		$scope = (string) $scope;
+		$ids   = array_values( array_unique( array_map( 'intval', $ids ) ) );
+
+		if ( '' === $scope || ! $ids ) {
+			return new \WP_Error( 'custom_field_order_invalid', __( 'Send the scope and the field ids in their new order.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+		if ( ! self::has_position_column() ) {
+			return new \WP_Error( 'custom_field_order_unavailable', __( 'The field order cannot be saved until the plugin update finishes. Reload the page and try again.', 'doublescale' ), array( 'status' => 409 ) );
+		}
+
+		$current = array_map( 'intval', static::query()->where( 'scope', $scope )->ordered()->pluck( 'id' )->all() );
+		$foreign = array_diff( $ids, $current );
+		if ( $foreign ) {
+			return new \WP_Error(
+				'custom_field_order_scope',
+				__( 'Some of these fields do not belong to this record type.', 'doublescale' ),
+				array(
+					'status' => 400,
+					'ids'    => array_values( $foreign ),
+				)
+			);
+		}
+
+		$order = array_merge( $ids, array_values( array_diff( $current, $ids ) ) );
+
+		// An order change is not an edit of the field and must not bump
+		// updated_at. The column updates itself on any change (ON UPDATE
+		// CURRENT_TIMESTAMP) unless the row is written with its own value.
+		global $wpdb;
+		$table = $wpdb->prefix . 'doublescale_custom_fields';
+		foreach ( $order as $index => $id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET position = %d, updated_at = updated_at WHERE id = %d", $index + 1, (int) $id ) );
+		}
+
+		self::flush_request_cache();
+		return true;
+	}
+
+	/**
+	 * Custom fields of one scope ('contact', 'project', 'task'…), from the per-request cache.
+	 *
+	 * @param string $scope Scope.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Collection
+	 */
+	public static function cached_for_scope( $scope ) {
+		return self::cached_all()->where( 'scope', (string) $scope )->values();
+	}
+
+	/**
+	 * Forget the per-request cache (after a field changes).
+	 */
+	public static function flush_request_cache() {
+		self::$request_cache = null;
+	}
+
+	/**
 	 * Boot model events.
 	 */
 	public static function boot() {
 		parent::boot();
+
+		static::saved(
+			function () {
+				self::flush_request_cache();
+			}
+		);
+		static::deleted(
+			function () {
+				self::flush_request_cache();
+			}
+		);
 
 		static::creating(
 			function ( $field ) {
@@ -393,6 +609,12 @@ class CustomFieldModel extends Model {
 
 				if ( ! CustomFieldsGroupModel::find( $field->group_id ) && (int) $field->group_id !== 0 ) {
 					throw new \Exception( sprintf( __( 'Group with ID %s does not exist.', 'doublescale' ), $field->group_id ) );
+				}
+
+				// New fields go last. Always set here (position is not fillable),
+				// so a duplicated group's copies do not reuse the originals' places.
+				if ( self::has_position_column() ) {
+					$field->position = self::next_position( $field->scope );
 				}
 			}
 		);

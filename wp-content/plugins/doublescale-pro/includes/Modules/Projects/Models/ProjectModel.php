@@ -7,7 +7,7 @@
 
 namespace DoubleScale\Pro\Modules\Projects\Models;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
@@ -17,6 +17,8 @@ use DoubleScale\Pro\Modules\Deals\Models\DealModel;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskModel;
 use DoubleScale\Core\Constants\TaskEntityType;
 use DoubleScale\Core\Constants\TaskStatus;
+use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Pro\Modules\Projects\Services\ProjectTeam;
 use Exception;
 use WP_Error;
 
@@ -41,6 +43,7 @@ class ProjectModel extends Model {
 		'description',
 		'status_id',
 		'contact_id',
+		'company_id',
 		'deal_id',
 		'budget',
 		'start_date',
@@ -49,9 +52,28 @@ class ProjectModel extends Model {
 		'position',
 		'progress',
 		'calculate_progress',
+		'fee_type',
+		'hourly_rate',
+		'tax_id',
+		'estimated_hours_min',
+		'estimated_hours_max',
+		'portal_show_time',
+		'portal_show_notes',
+		'portal_show_tasks',
+		'portal_show_tickets',
 		'created_at',
 		'updated_at',
 	);
+
+	/**
+	 * Billed by the hour (the default when nothing was chosen).
+	 */
+	const FEE_HOURLY = 'hourly';
+
+	/**
+	 * One agreed price; its amount is the project's budget.
+	 */
+	const FEE_FIXED = 'fixed';
 
 	/**
 	 * @var bool
@@ -66,6 +88,40 @@ class ProjectModel extends Model {
 	);
 
 	/**
+	 * Relations read from another module's data: [module slug, model class].
+	 * A module's tables exist only once it has been switched on, and its data
+	 * counts as absent while it is off, so these load only while
+	 * doublescale_is_module_storage_ready() says yes (with Sales off there is
+	 * no deal to show on a project).
+	 */
+	private const OTHER_MODULE_RELATIONS = array(
+		'deal'          => array( 'deals', \DoubleScale\Pro\Modules\Deals\Models\DealModel::class ),
+		'custom_fields' => array( 'custom-fields', \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class ),
+	);
+
+	/**
+	 * The relations to eager load, without those of modules that are off.
+	 *
+	 * @param string[] $relations Relation names.
+	 * @return string[]
+	 */
+	public static function loadable_relations( array $relations ): array {
+		return array_values(
+			array_filter(
+				$relations,
+				static function ( $relation ) {
+					if ( ! isset( self::OTHER_MODULE_RELATIONS[ $relation ] ) ) {
+						return true;
+					}
+					[ $slug, $model ] = self::OTHER_MODULE_RELATIONS[ $relation ];
+					return function_exists( 'doublescale_is_module_storage_ready' )
+						&& doublescale_is_module_storage_ready( $slug, $model );
+				}
+			)
+		);
+	}
+
+	/**
 	 * @var array<string, string>
 	 */
 	protected $casts = array(
@@ -73,6 +129,14 @@ class ProjectModel extends Model {
 		'position'           => 'integer',
 		'progress'           => 'integer',
 		'calculate_progress' => 'boolean',
+		'hourly_rate'         => 'float',
+		'tax_id'              => 'integer',
+		'estimated_hours_min' => 'float',
+		'estimated_hours_max' => 'float',
+		'portal_show_time'    => 'boolean',
+		'portal_show_notes'   => 'boolean',
+		'portal_show_tasks'   => 'boolean',
+		'portal_show_tickets' => 'boolean',
 	);
 
 	/**
@@ -83,6 +147,7 @@ class ProjectModel extends Model {
 		'description' => 'nullable|string',
 		'status_id'   => 'required|integer',
 		'contact_id'  => 'nullable|integer',
+		'company_id'  => 'nullable|integer',
 		'deal_id'     => 'nullable|integer',
 		'budget'      => 'nullable|numeric|min:0',
 		'start_date'  => 'nullable|date_format:Y-m-d',
@@ -91,6 +156,11 @@ class ProjectModel extends Model {
 		'position'    => 'nullable|integer',
 		'progress'    => 'nullable|integer|min:0|max:100',
 		'calculate_progress' => 'nullable|boolean',
+		'fee_type'            => 'nullable|in:hourly,fixed',
+		'hourly_rate'         => 'nullable|numeric|min:0',
+		'tax_id'              => 'nullable|integer|min:1',
+		'estimated_hours_min' => 'nullable|numeric|min:0',
+		'estimated_hours_max' => 'nullable|numeric|min:0',
 	);
 
 	/**
@@ -108,49 +178,121 @@ class ProjectModel extends Model {
 	);
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * How the project is billed. A project saved before fee types existed has
+	 * none: its budget, when it has one, was its price, so it is fixed price.
+	 *
+	 * @return string self::FEE_HOURLY or self::FEE_FIXED.
+	 */
+	public function effectiveFeeType(): string {
+		if ( in_array( (string) $this->fee_type, array( self::FEE_HOURLY, self::FEE_FIXED ), true ) ) {
+			return (string) $this->fee_type;
+		}
+		return null !== $this->budget && (float) $this->budget > 0 ? self::FEE_FIXED : self::FEE_HOURLY;
+	}
+
+	/**
+	 * Scope: the projects a user may read.
+	 *
+	 * The one place a list decides which projects someone sees; the
+	 * single-project check is {@see \DoubleScale\Pro\Modules\Projects\Capabilities::can_read_project()}.
+	 * "Their own" means the projects they own or are on the team of.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query   Query builder.
+	 * @param int                                   $user_id WordPress user ID.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	public function scopeReadableBy( $query, $user_id ) {
+		$user_id = (int) $user_id;
+
+		if ( $user_id > 0 && ( Permissions::is_crm_manager( $user_id ) || user_can( $user_id, 'doublescale_project_read_all_projects' ) ) ) {
+			return $query;
+		}
+
+		if ( $user_id <= 0 || ! user_can( $user_id, 'doublescale_project_read_own_projects' ) ) {
+			return $query->whereRaw( '1 = 0' );
+		}
+
+		return $this->scopeInvolving( $query, $user_id );
+	}
+
+	/**
+	 * Scope: the projects a user owns or is on the team of, whatever they may
+	 * read (the "team member" filter, a manager viewing someone's calendar).
+	 *
+	 * The OR stays inside its own brackets, so it never widens the caller's
+	 * other conditions.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query   Query builder.
+	 * @param int                                   $user_id WordPress user ID.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	public function scopeInvolving( $query, $user_id ) {
+		$user_id = (int) $user_id;
+		$table   = $this->getTable();
+
+		return $query->where(
+			static function ( $q ) use ( $user_id, $table ) {
+				$q->where( $table . '.owner_id', $user_id );
+				if ( ProjectTeam::table_exists() ) {
+					$q->orWhereIn( $table . '.id', ProjectTeam::subquery_for_user( $user_id ) );
+				}
+			}
+		);
+	}
+
+	/**
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
+	 */
+	public function members() {
+		return $this->hasMany( ProjectMemberModel::class, 'project_id', 'id' );
+	}
+
+	/**
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function discussions() {
 		return $this->hasMany( ProjectDiscussionModel::class, 'project_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function status() {
 		return $this->belongsTo( ProjectStatusModel::class, 'status_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo|null
 	 */
 	public function deal() {
-		if ( ! class_exists( DealModel::class ) ) {
-			return null;
+		// Deals are another module's data: matches nothing while it is off.
+		if ( ! doublescale_module_data_ready( 'deals' ) ) {
+			return $this->belongsTo( static::class, 'deal_id', 'id' )->whereRaw( '1 = 0' );
 		}
 		return $this->belongsTo( DealModel::class, 'deal_id', 'id' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function owner() {
 		return $this->belongsTo( UserModel::class, 'owner_id', 'ID' );
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany|null
 	 */
 	public function tasks() {
-		if ( ! class_exists( TaskModel::class ) ) {
-			return null;
+		// Tasks are another module's data: an empty list while it is off.
+		if ( ! doublescale_module_data_ready( 'tasks' ) ) {
+			return $this->hasMany( static::class, 'id', 'id' )->whereRaw( '1 = 0' );
 		}
 		return $this->hasMany( TaskModel::class, 'entity_id', 'id' )
 			->where( 'entity_type', TaskEntityType::PROJECT );
@@ -164,6 +306,44 @@ class ProjectModel extends Model {
 	 *
 	 * @return array{total:int, completed:int, percent:int}
 	 */
+	/**
+	 * Task counts per project id, filled by prime_task_progress() for lists:
+	 * array( total, completed ).
+	 *
+	 * @var array<int, array{0:int, 1:int}>
+	 */
+	private static $task_progress_cache = array();
+
+	/**
+	 * Count tasks for many projects in one query (a list page used to run one
+	 * or two count queries per project).
+	 *
+	 * @param int[] $project_ids Project ids.
+	 * @return void
+	 */
+	public static function prime_task_progress( array $project_ids ) {
+		if ( ! doublescale_module_data_ready( 'tasks' ) ) {
+			return;
+		}
+		$ids = array_values( array_diff( array_unique( array_map( 'intval', $project_ids ) ), array_keys( self::$task_progress_cache ) ) );
+		if ( ! $ids ) {
+			return;
+		}
+		foreach ( $ids as $id ) {
+			self::$task_progress_cache[ $id ] = array( 0, 0 );
+		}
+		$rows = TaskModel::query()
+			->where( 'entity_type', TaskEntityType::PROJECT )
+			->whereIn( 'entity_id', $ids )
+			->selectRaw( 'entity_id, COUNT(*) AS total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS completed', array( TaskStatus::COMPLETED ) )
+			->groupBy( 'entity_id' )
+			->toBase()
+			->get();
+		foreach ( $rows as $row ) {
+			self::$task_progress_cache[ (int) $row->entity_id ] = array( (int) $row->total, (int) $row->completed );
+		}
+	}
+
 	public function getTaskProgressAttribute() {
 		$zero = array(
 			'total'     => 0,
@@ -173,6 +353,15 @@ class ProjectModel extends Model {
 
 		if ( ! $this->id || null === $this->tasks() ) {
 			return $zero;
+		}
+
+		if ( isset( self::$task_progress_cache[ (int) $this->id ] ) ) {
+			list( $total, $completed ) = self::$task_progress_cache[ (int) $this->id ];
+			return 0 === $total ? $zero : array(
+				'total'     => $total,
+				'completed' => $completed,
+				'percent'   => (int) round( ( $completed / $total ) * 100 ),
+			);
 		}
 
 		$total = (int) $this->tasks()->count();
@@ -207,7 +396,7 @@ class ProjectModel extends Model {
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany|null
 	 */
 	public function activityAssociations() {
 		if ( ! class_exists( '\DoubleScale\Modules\Activities\Models\ActivityAssociationModel' ) ) {
@@ -218,7 +407,7 @@ class ProjectModel extends Model {
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasManyThrough|null
 	 */
 	public function associatedActivities() {
 		if ( ! class_exists( '\DoubleScale\Modules\Activities\Models\ActivityAssociationModel' ) ) {
@@ -245,12 +434,13 @@ class ProjectModel extends Model {
 	}
 
 	/**
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function custom_fields() {
 		return $this->belongsToMany( CustomFieldModel::class, 'doublescale_custom_field_relationship', 'entity_id', 'custom_field_id' )
 			->withPivot( 'value' )
-			->wherePivot( 'entity_type', 'project' );
+			->wherePivot( 'entity_type', 'project' )
+			->ordered();
 	}
 
 	/**
@@ -273,7 +463,7 @@ class ProjectModel extends Model {
 		try {
 			$normalized_fields = CustomFieldModel::normalize_submission( $custom_fields ?: array() );
 
-			$required_fields = CustomFieldModel::where( 'scope', 'project' )->get();
+			$required_fields = CustomFieldModel::where( 'scope', 'project' )->ordered()->get();
 			foreach ( $required_fields as $field_model ) {
 				if ( ! $field_model->is_required_field() ) {
 					continue;
@@ -371,6 +561,17 @@ class ProjectModel extends Model {
 			}
 		);
 
+		// Given to another client: the first client's shared link stops
+		// opening it.
+		static::updating(
+			function ( $project ) {
+				$old_contact = (int) $project->getOriginal( 'contact_id' );
+				if ( $project->isDirty( 'contact_id' ) && $old_contact > 0 && (int) $project->contact_id !== $old_contact ) {
+					$project->hash = self::generate_hash();
+				}
+			}
+		);
+
 		static::created(
 			function ( $project ) {
 				$activity = ActivityModel::create(
@@ -433,6 +634,20 @@ class ProjectModel extends Model {
 				if ( class_exists( ProjectDiscussionModel::class ) ) {
 					ProjectDiscussionModel::where( 'project_id', $project->id )->delete();
 				}
+
+				ProjectTeam::purge_project( (int) $project->id );
+
+				// Linked support tickets stay; they just lose the link (wherever
+				// the tickets table exists, also while Support is off).
+				if ( doublescale_table_exists( 'support_tickets' ) ) {
+					try {
+						\DoubleScale\Modules\Support\Models\TicketModel::where( 'project_id', (int) $project->id )
+							->update( array( 'project_id' => null ) );
+					} catch ( \Throwable $e ) {
+						// Older free without the project_id column: nothing is linked.
+						unset( $e );
+					}
+				}
 			}
 		);
 
@@ -449,7 +664,7 @@ class ProjectModel extends Model {
 	 */
 	public static function get_by_hash( $hash ) {
 		$hash = trim( (string) $hash );
-		if ( '' === $hash || ! preg_match( '/^[a-f0-9]{32}$/', $hash ) ) {
+		if ( '' === $hash || ! preg_match( '/^[A-Za-z0-9]{32}$/', $hash ) ) {
 			return null;
 		}
 		return self::query()->where( 'hash', $hash )->first();

@@ -11,7 +11,7 @@ namespace DoubleScale\Modules\Tracking\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Tracking\Models\TrackingCampaignModel;
 use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Modules\Tracking\Models\TrackingTemplateModel;
@@ -158,9 +158,14 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function campaign() {
+		// Campaigns' data: while the module is off, a relation that matches
+		// nothing (and never touches the campaigns table).
+		if ( ! doublescale_module_data_ready( 'campaigns' ) ) {
+			return $this->belongsTo( static::class, 'source_id' )->whereRaw( '1 = 0' );
+		}
 		return $this->belongsTo( static::resolve_campaign_relation_class(), 'source_id' );
 	}
 
@@ -169,7 +174,7 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function contact() {
 		return $this->belongsTo( ContactModel::class, 'contact_id' );
@@ -180,7 +185,7 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function template() {
 		return $this->belongsTo( static::resolve_template_relation_class(), 'template_id' );
@@ -198,7 +203,7 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function activity() {
 		return $this->belongsTo( ActivityModel::class, 'source_id' );
@@ -209,7 +214,7 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function communication_tracking_meta() {
 		return $this->hasMany( CommunicationTrackingMetaModel::class, 'communication_tracking_id' );
@@ -231,8 +236,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Email messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeEmails( $query ) {
 		return $query->where( 'mode', self::MODE_EMAIL );
@@ -241,8 +246,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Sms messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeSms( $query ) {
 		return $query->where( 'mode', self::MODE_SMS );
@@ -251,8 +256,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: WhatsApp messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeWhatsapp( $query ) {
 		return $query->where( 'mode', self::MODE_WHATSAPP );
@@ -261,8 +266,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Outbound messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeOutbound( $query ) {
 		return $query->where( 'direction', MessageDirection::OUTBOUND );
@@ -271,8 +276,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Inbound messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeInbound( $query ) {
 		return $query->where( 'direction', MessageDirection::INBOUND );
@@ -281,8 +286,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Campaign messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeFromCampaign( $query ) {
 		return $query->where( 'source_type', MessageSourceTypes::CAMPAIGN );
@@ -291,8 +296,8 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Automation messages only
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeFromAutomation( $query ) {
 		return $query->where( 'source_type', MessageSourceTypes::AUTOMATION );
@@ -302,9 +307,9 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Messages by source type
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param int                                   $source_type
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeBySourceType( $query, $source_type ) {
 		return $query->where( 'source_type', $source_type );
@@ -313,10 +318,10 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Scope: Messages by source
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param int                                   $source_type
 	 * @param int                                   $source_id
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeBySource( $query, $source_type, $source_id ) {
 		return $query->where( 'source_type', $source_type )->where( 'source_id', $source_id );
@@ -327,9 +332,9 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query
 	 * @param int                                   $step_id
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function scopeByStep( $query, $step_id ) {
 		return $query->where( 'step_id', $step_id );
@@ -410,7 +415,7 @@ class CommunicationTrackingModel extends Model {
 	/**
 	 * Get automation relationship (only when source_type = 2)
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function automation() {
 		return $this->belongsTo( AutomationModel::class, 'source_id' );
@@ -421,7 +426,7 @@ class CommunicationTrackingModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function step() {
 		return $this->belongsTo( AutomationStepModel::class, 'step_id' );
@@ -435,6 +440,9 @@ class CommunicationTrackingModel extends Model {
 	 */
 	public function get_campaign() {
 		if ( $this->source_type === MessageSourceTypes::CAMPAIGN ) {
+			if ( ! doublescale_module_data_ready( 'campaigns' ) ) {
+				return null;
+			}
 			if ( class_exists( '\DoubleScale\Modules\Campaigns\Models\CampaignModel' ) ) {
 				return \DoubleScale\Modules\Campaigns\Models\CampaignModel::find( $this->source_id );
 			}

@@ -11,7 +11,9 @@ defined( 'ABSPATH' ) || exit;
 
 use WP_Roles;
 use WP_User;
+use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\UserRoles\UserRoles;
+use DoubleScale\Pro\Core\UserRoles\PermissionsCompat;
 use DoubleScale\Pro\Modules\Projects\Models\ProjectModel;
 
 class Capabilities {
@@ -209,58 +211,149 @@ class Capabilities {
 		return $allcaps;
 	}
 
+	/**
+	 * Whether the current user may see a project: managers see every project;
+	 * Project Members and CRM Agents see the ones they own or are on the team of.
+	 *
+	 * @param int $project_id Project id.
+	 * @return bool
+	 */
 	public static function can_read_project( $project_id ) {
-		if ( is_multisite() && is_super_admin() ) {
-			return true;
-		}
-
-		if ( \DoubleScale\Core\UserRoles\Permissions::is_crm_manager() ) {
-			return true;
-		}
-
-		$project = ProjectModel::find( $project_id );
-
-		if ( ! $project ) {
-			return false;
-		}
-
-		if ( current_user_can( 'doublescale_project_read_all_projects' ) ) {
-			return true;
-		}
-
-		if ( current_user_can( 'doublescale_project_read_own_projects' )
-			&& (int) $project->owner_id === get_current_user_id() ) {
-			return true;
-		}
-
-		return false;
+		$project = self::find_project( $project_id );
+		return null !== $project && self::decide( $project, 'read', get_current_user_id() );
 	}
 
+	/**
+	 * Whether the current user may edit a project (its fields, money, team and
+	 * client sharing): managers, and the owner. Team members only work on it.
+	 *
+	 * @param int $project_id Project id.
+	 * @return bool
+	 */
 	public static function can_manage_project( $project_id ) {
-		if ( is_multisite() && is_super_admin() ) {
-			return true;
-		}
+		$project = self::find_project( $project_id );
+		return null !== $project && self::decide( $project, 'manage', get_current_user_id() );
+	}
 
-		if ( \DoubleScale\Core\UserRoles\Permissions::is_crm_manager() ) {
-			return true;
-		}
+	/**
+	 * Whether the current user may work on a project: comment, upload files,
+	 * add and edit its tasks, log time. Managers, the owner and team members.
+	 *
+	 * @param int $project_id Project id.
+	 * @return bool
+	 */
+	public static function can_contribute_project( $project_id ) {
+		$project = self::find_project( $project_id );
+		return null !== $project && self::decide( $project, 'contribute', get_current_user_id() );
+	}
 
-		$project = ProjectModel::find( $project_id );
+	/**
+	 * Whether the current user may see a project's money (budget, rates, tax,
+	 * invoices, proposals, the public link). Same people as {@see can_manage_project()}.
+	 *
+	 * @param int $project_id Project id.
+	 * @return bool
+	 */
+	public static function can_view_project_financials( $project_id ) {
+		return self::can_manage_project( $project_id );
+	}
 
-		if ( ! $project ) {
+	/**
+	 * Whether the current user may add or remove team members: the owner or a
+	 * manager, like contact collaborators.
+	 *
+	 * @param int $project_id Project id.
+	 * @return bool
+	 */
+	public static function can_manage_project_team( $project_id ) {
+		return self::can_manage_project( $project_id );
+	}
+
+	/**
+	 * Whether a user is a member of a project's team (the owner is not a member).
+	 *
+	 * @param int      $project_id Project id.
+	 * @param int|null $user_id    User (null = current user).
+	 * @return bool
+	 */
+	public static function is_team_member( $project_id, ?int $user_id = null ): bool {
+		return Services\ProjectTeam::is_member( (int) $project_id, null === $user_id ? get_current_user_id() : $user_id );
+	}
+
+	/**
+	 * Everything the current user may do on a project, for the screens: one
+	 * answer from the server instead of each screen guessing from capabilities.
+	 *
+	 * @param ProjectModel $project Project.
+	 * @param int|null     $user_id User (null = current user).
+	 * @return array{can_manage:bool, can_contribute:bool, can_view_financials:bool, can_delete:bool, can_manage_team:bool}
+	 */
+	public static function project_permissions( ProjectModel $project, ?int $user_id = null ): array {
+		$user_id    = null === $user_id ? get_current_user_id() : $user_id;
+		$can_manage = self::decide( $project, 'manage', $user_id );
+
+		return array(
+			'can_manage'          => $can_manage,
+			'can_contribute'      => $can_manage || self::decide( $project, 'contribute', $user_id ),
+			'can_view_financials' => $can_manage,
+			'can_delete'          => $can_manage && PermissionsCompat::can_manage_all_projects( $user_id ),
+			'can_manage_team'     => $can_manage,
+		);
+	}
+
+	/**
+	 * The one rule behind every project check.
+	 *
+	 * @param ProjectModel $project Project.
+	 * @param string       $level   'read', 'contribute' or 'manage'.
+	 * @param int          $user_id User.
+	 * @return bool
+	 */
+	private static function decide( ProjectModel $project, string $level, int $user_id ): bool {
+		if ( $user_id <= 0 ) {
 			return false;
 		}
 
-		if ( current_user_can( 'doublescale_project_manage_all_projects' ) ) {
+		if ( is_multisite() && is_super_admin( $user_id ) ) {
 			return true;
 		}
 
-		if ( current_user_can( 'doublescale_project_manage_own_projects' )
-			&& (int) $project->owner_id === get_current_user_id() ) {
+		if ( Permissions::is_crm_manager( $user_id ) ) {
 			return true;
 		}
 
-		return false;
+		$is_owner = (int) $project->owner_id === $user_id;
+
+		if ( 'manage' === $level ) {
+			return user_can( $user_id, 'doublescale_project_manage_all_projects' )
+				|| ( $is_owner && user_can( $user_id, 'doublescale_project_manage_own_projects' ) );
+		}
+
+		if ( 'contribute' === $level && user_can( $user_id, 'doublescale_project_manage_all_projects' ) ) {
+			return true;
+		}
+
+		if ( 'read' === $level && user_can( $user_id, 'doublescale_project_read_all_projects' ) ) {
+			return true;
+		}
+
+		if ( ! user_can( $user_id, 'doublescale_project_read_own_projects' ) ) {
+			return false;
+		}
+
+		return $is_owner || Services\ProjectTeam::is_member( (int) $project->id, $user_id );
+	}
+
+	/**
+	 * @param int|ProjectModel $project Project or id.
+	 * @return ProjectModel|null
+	 */
+	private static function find_project( $project ) {
+		if ( $project instanceof ProjectModel ) {
+			return $project;
+		}
+		$found = ProjectModel::find( (int) $project );
+		return $found instanceof ProjectModel ? $found : null;
 	}
 
 	public static function remove_capabilities() {

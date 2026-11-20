@@ -124,8 +124,14 @@ function seopress_pro_ga4_send_purchases( $ga4_js ) {
 					// Mark the order as tracked on the order itself (HPOS-compatible).
 					// Persist only the meta, not the whole order, to avoid firing the
 					// full order-save hooks on the front-end thank-you page.
-					$order->update_meta_data( '_seopress_ga_tracked', '1' );
-					$order->save_meta_data();
+					// An inert consent payload may never execute. Do not consume the
+					// purchase before acceptance; GA4 deduplicates deferred replays
+					// using the stable transaction_id included above.
+					$deferred = function_exists( 'seopress_user_consent_building_payload' ) && seopress_user_consent_building_payload();
+					if ( ! $deferred ) {
+						$order->update_meta_data( '_seopress_ga_tracked', '1' );
+						$order->save_meta_data();
+					}
 
 					$ga4_js = $seopress_google_analytics_click_event['purchase_tracking'];
 

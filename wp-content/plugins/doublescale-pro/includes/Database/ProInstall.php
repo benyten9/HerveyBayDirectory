@@ -87,19 +87,18 @@ final class ProInstall {
 			}
 		}
 
+		// Tables exist only for modules that are on (a switched-off module
+		// leaves no tables behind it).
 		$smtp_log_table = $wpdb->prefix . 'doublescale_smtp_email_log';
 		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPlaceholder -- SHOW TABLES LIKE.
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $smtp_log_table ) ) !== $smtp_log_table
+		if ( self::module_on( 'smtp' )
+			&& $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $smtp_log_table ) ) !== $smtp_log_table
 			&& class_exists( SmtpEmailLogTable::class ) ) {
 			$migration = new SmtpEmailLogTable();
 			$migration->run();
 		}
 
-		$abandoned_carts_table = $wpdb->prefix . 'doublescale_abandoned_carts';
-		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPlaceholder -- SHOW TABLES LIKE.
-		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $abandoned_carts_table ) ) !== $abandoned_carts_table ) {
-			self::run_abandoned_carts_migration();
-		}
+		self::maybe_create_abandoned_carts_table();
 
 		self::ensure_sales_approvals_table();
 		self::maybe_sync_declared_columns();
@@ -130,6 +129,36 @@ final class ProInstall {
 	 * free→Pro move) and is outside Pro's PSR-4 autoload prefix, so we load
 	 * the file explicitly before instantiating it.
 	 */
+	/**
+	 * Whether a module is switched on (unknown helpers: assume on, as before).
+	 *
+	 * @param string $slug Module slug.
+	 * @return bool
+	 */
+	private static function module_on( string $slug ): bool {
+		return ! function_exists( 'doublescale_is_module_active' ) || doublescale_is_module_active( $slug );
+	}
+
+	/**
+	 * Abandoned carts belong to Automations: create their table only while
+	 * Automations is on, and when it is switched on later.
+	 *
+	 * @return void
+	 */
+	public static function maybe_create_abandoned_carts_table(): void {
+		global $wpdb;
+
+		if ( ! self::module_on( 'automations' ) ) {
+			return;
+		}
+
+		$table = $wpdb->prefix . 'doublescale_abandoned_carts';
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPlaceholder -- SHOW TABLES LIKE.
+		if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			self::run_abandoned_carts_migration();
+		}
+	}
+
 	private static function run_abandoned_carts_migration(): void {
 		if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_DIR' ) ) {
 			return;
@@ -146,6 +175,11 @@ final class ProInstall {
 
 	public static function init(): void {
 		add_action( 'init', array( __CLASS__, 'check_version' ), 5 );
+
+		// Switching Automations on later creates the abandoned-carts table
+		// (after free's own module sync, which runs at priority 10).
+		add_action( 'update_option_doublescale_enabled_modules', array( __CLASS__, 'maybe_create_abandoned_carts_table' ), 20, 0 );
+		add_action( 'add_option_doublescale_enabled_modules', array( __CLASS__, 'maybe_create_abandoned_carts_table' ), 20, 0 );
 	}
 
 	public static function check_version(): void {
@@ -211,7 +245,7 @@ final class ProInstall {
 			MigrationRunner::ensure_declared_columns( self::migration_registry() );
 		}
 
-		self::run_abandoned_carts_migration();
+		self::maybe_create_abandoned_carts_table();
 
 		self::run_version_migrations();
 

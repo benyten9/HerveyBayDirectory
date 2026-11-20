@@ -26,6 +26,8 @@ use DoubleScale\Modules\Contacts\Models\ContactModel;
  */
 final class MergeTagsManager {
 
+	use \DoubleScale\Core\DefersRegistration;
+
 	/**
 	 * Registed merge tags
 	 *
@@ -174,7 +176,7 @@ final class MergeTagsManager {
 			return;
 		}
 
-		if ( isset( $this->merge_tags[ $merge_tag->group ][ $merge_tag->slug ] ) ) {
+		if ( ! $this->claim_registration( $merge_tag->group . ':' . $merge_tag->slug, isset( $this->merge_tags[ $merge_tag->group ][ $merge_tag->slug ] ) ) ) {
 			return;
 		}
 
@@ -207,6 +209,7 @@ final class MergeTagsManager {
 	 * @return MergeTag
 	 */
 	public function get_merge_tag( $group, $slug ) {
+		$this->load_deferred();
 		if ( isset( $this->merge_tags[ $group ][ $slug ] ) ) {
 			return $this->merge_tags[ $group ][ $slug ];
 		}
@@ -236,6 +239,7 @@ final class MergeTagsManager {
 	 * @return array
 	 */
 	public function get_merge_tags() {
+		$this->load_deferred();
 		return $this->merge_tags;
 	}
 
@@ -256,13 +260,13 @@ final class MergeTagsManager {
 				'name'        => __( 'Order', 'doublescale' ),
 				'mergeTags'   => array(),
 				'triggers'    => array( 'wc_order_completed', 'wc_order_created', 'wc_order_refunded', 'wc_order_status_changed', 'wc_cart_recovered' ),
-				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'abandoned_cart' => array(
 				'name'        => __( 'Abandoned Cart', 'doublescale' ),
 				'mergeTags'   => array(),
 				'triggers'    => array( 'wc_abandoned_cart_created' ),
-				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'edd_customer'   => array(
 				'name'        => __( 'Easy Digital Downloads Customer', 'doublescale' ),
@@ -276,10 +280,28 @@ final class MergeTagsManager {
 				'triggers'    => array( 'edd_new_order_success' ),
 				'is_disabled' => ! defined( 'EDD_PLUGIN_FILE' ),
 			),
+			'fluentcart_order' => array(
+				'name'        => __( 'FluentCart Order', 'doublescale' ),
+				'mergeTags'   => array(),
+				'triggers'    => array( 'fluentcart_order_paid', 'fluentcart_order_refunded', 'fluentcart_order_status_changed' ),
+				'is_disabled' => ! \DoubleScale\Core\Services\FluentCartOrders::is_active(),
+			),
+			'amelia_booking'   => array(
+				'name'        => __( 'Amelia Booking', 'doublescale' ),
+				'mergeTags'   => array(),
+				'triggers'    => array( 'amelia_appointment_booked', 'amelia_appointment_status_changed', 'amelia_appointment_canceled', 'amelia_appointment_rescheduled', 'amelia_event_booked', 'amelia_event_booking_canceled' ),
+				'is_disabled' => ! \DoubleScale\Core\Services\AmeliaBookings::is_active(),
+			),
+			'latepoint_booking' => array(
+				'name'        => __( 'LatePoint Booking', 'doublescale' ),
+				'mergeTags'   => array(),
+				'triggers'    => array( 'latepoint_booking_created', 'latepoint_booking_status_changed', 'latepoint_booking_cancelled', 'latepoint_booking_rescheduled' ),
+				'is_disabled' => ! \DoubleScale\Core\Services\LatepointBookings::is_active(),
+			),
 			'learndash'      => array(
 				'name'        => __( 'LearnDash', 'doublescale' ),
 				'mergeTags'   => array(),
-				'is_disabled' => ! doublescale_is_plugin_active( 'sfwd-lms/sfwd_lms.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'learndash' ),
 			),
 			'memberpress'    => array(
 				'name'        => __( 'MemberPress', 'doublescale' ),
@@ -315,13 +337,13 @@ final class MergeTagsManager {
 				'name'        => __( 'Membership', 'doublescale' ),
 				'mergeTags'   => array(),
 				'triggers'    => array( 'wc_membership_created', 'wc_membership_status_changed' ),
-				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce-memberships/woocommerce-memberships.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce-memberships' ),
 			),
 			'wishlist'       => array(
 				'name'        => __( 'Wishlist', 'doublescale' ),
 				'mergeTags'   => array(),
 				'triggers'    => array( 'wc_user_adds_product_to_wishlist', 'wc_wishlist_item_on_sale', 'wc_wishlist_reminder' ),
-				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce-wishlists/woocommerce-wishlists.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce-wishlists' ),
 			),
 			'subscription'   => array(
 				'name'        => __( 'Subscription', 'doublescale' ),
@@ -337,13 +359,13 @@ final class MergeTagsManager {
 					'wc_subscription_before_renewal',
 					'wc_subscription_before_end',
 				),
-				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce-subscriptions/woocommerce-subscriptions.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce-subscriptions' ),
 			),
 			'review'         => array(
 				'name'        => __( 'Review', 'doublescale' ),
 				'mergeTags'   => array(),
 				'triggers'    => array( 'wc_review_received' ),
-				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ),
+				'is_disabled' => ! doublescale_is_plugin_active( 'woocommerce' ),
 			),
 			'coupon'         => array(
 				'name'        => __( 'Coupon', 'doublescale' ),
@@ -464,6 +486,7 @@ final class MergeTagsManager {
 	 * @return array
 	 */
 	public function get_groups() {
+		$this->load_deferred();
 		$groups = apply_filters( 'doublescale_mail_merge_tag_groups', $this->groups );
 
 		if ( function_exists( 'doublescale_filter_merge_tag_groups_for_modules' ) ) {
@@ -484,7 +507,35 @@ final class MergeTagsManager {
 	 *
 	 * @return string
 	 */
+	/**
+	 * Split a merge tag's slug from its optional fallback.
+	 *
+	 * A tag may be written `{{group:slug|fallback}}`. The fallback is the copy
+	 * to use when the contact has no value — without it a blank field renders
+	 * as nothing, which reads badly in an email and is rejected outright by
+	 * Meta when it is a WhatsApp template placeholder.
+	 *
+	 * Only the first pipe separates: a pipe inside the fallback is part of the
+	 * author's text.
+	 *
+	 * @param string $slug Raw slug portion from the tag.
+	 * @return array{0:string,1:string|null} Slug, and fallback or null.
+	 */
+	private function split_tag_fallback( $slug ) {
+		$pipe = strpos( $slug, '|' );
+
+		if ( false === $pipe ) {
+			return array( $slug, null );
+		}
+
+		return array(
+			substr( $slug, 0, $pipe ),
+			substr( $slug, $pipe + 1 ),
+		);
+	}
+
 	public function process_merge_tags( $content, $contact ) {
+		$this->load_deferred();
 		// Check if contact has tracking context - if so, use stored values
 		if ( $contact && method_exists( $contact, 'has_tracking_context' ) && $contact->has_tracking_context() ) {
 			$tracking_context = $contact->get_tracking_context();
@@ -495,14 +546,18 @@ final class MergeTagsManager {
 		return preg_replace_callback(
 			'/{{(.*?):(.*?)}}/',
 			function ( $matches ) use ( $contact ) {
-				$group          = $matches[1];
-				$slug           = $matches[2];
+				$group = $matches[1];
+
+				list( $slug, $fallback ) = $this->split_tag_fallback( $matches[2] );
+
 				$slug_parts     = explode( ' ', $slug );
 				$merge_tag_slug = $slug_parts[0];
 				$merge_tag      = $this->get_merge_tag( $group, $merge_tag_slug );
 
+				// An unknown tag is as empty as an unset field, so it takes the
+				// fallback too rather than silently blanking.
 				if ( ! $merge_tag ) {
-					return '';
+					return null === $fallback ? '' : $fallback;
 				}
 
 				// A tag resolves against whatever context the message carries,
@@ -511,7 +566,14 @@ final class MergeTagsManager {
 				// could not resolve is never the right trade — blank the tag,
 				// log it, and let the rest of the message go out.
 				try {
-					return $merge_tag->get_tag_value( $contact, $slug );
+					$value = $merge_tag->get_tag_value( $contact, $slug );
+
+					// '0' is a real value; only an absent or blank one falls back.
+					if ( null === $fallback || ( '' !== (string) $value && null !== $value ) ) {
+						return $value;
+					}
+
+					return $fallback;
 				} catch ( \Throwable $e ) {
 					doublescale_get_logger()->error(
 						__( 'Merge tag failed to resolve', 'doublescale' ),
@@ -565,8 +627,10 @@ final class MergeTagsManager {
 		preg_match_all( '/{{(.*?):(.*?)}}/', $content, $matches, PREG_SET_ORDER );
 
 		foreach ( $matches as $match ) {
-			$group          = $match[1];
-			$slug           = $match[2];
+			$group = $match[1];
+
+			list( $slug ) = $this->split_tag_fallback( $match[2] );
+
 			$slug_parts     = explode( ' ', $slug );
 			$merge_tag_slug = $slug_parts[0];
 			$full_tag       = "{$group}:{$merge_tag_slug}";
@@ -628,5 +692,77 @@ final class MergeTagsManager {
 		}
 
 		return $slug_values;
+	}
+
+	/**
+	 * Rewrite `{{group:slug|fallback}}` tags for a batch sender.
+	 *
+	 * Batch senders (cURL multi, and providers' bulk APIs) substitute
+	 * per-recipient variables keyed by slug and only understand plain
+	 * `{{group:slug}}` tags, so a tag with a fallback was sent as written
+	 * ("Hi {{contact:first_name|there}},"). Each one becomes a plain tag on a
+	 * variable that carries its fallback in its name (hex-encoded), so the
+	 * fallback survives any provider's tag conversion and
+	 * resolve_batch_fallbacks() can give that variable its value per recipient.
+	 *
+	 * @param string $content Content with merge tags.
+	 * @return string
+	 */
+	public static function alias_fallback_tags( $content ) {
+		if ( ! is_string( $content ) || false === strpos( $content, '|' ) ) {
+			return $content;
+		}
+
+		return preg_replace_callback(
+			'/\{\{([a-zA-Z0-9_]+):([a-zA-Z0-9_]+)\|([^}]*)\}\}/',
+			function ( $matches ) {
+				return '{{' . $matches[1] . ':' . $matches[2] . '__fallback_' . bin2hex( $matches[3] ) . '}}';
+			},
+			$content
+		);
+	}
+
+	/**
+	 * Give every fallback variable in a batch its value per recipient: the
+	 * contact's value, or the fallback when that is empty, the same rule
+	 * process_merge_tags() applies to single emails.
+	 *
+	 * @param array $batch_data Batch data with subject/html/text and recipient_variables.
+	 * @return array Batch data with fallbacks resolved.
+	 */
+	public static function resolve_batch_fallbacks( array $batch_data ) {
+		$aliases = array();
+
+		foreach ( array( 'subject', 'html', 'text' ) as $field ) {
+			if ( empty( $batch_data[ $field ] ) || ! is_string( $batch_data[ $field ] ) ) {
+				continue;
+			}
+			$batch_data[ $field ] = self::alias_fallback_tags( $batch_data[ $field ] );
+
+			if ( preg_match_all( '/([a-zA-Z0-9_]+?)__fallback_((?:[0-9a-f]{2})*)/', $batch_data[ $field ], $found, PREG_SET_ORDER ) ) {
+				foreach ( $found as $match ) {
+					$aliases[ $match[0] ] = array( $match[1], (string) hex2bin( $match[2] ) );
+				}
+			}
+		}
+
+		if ( empty( $aliases ) || empty( $batch_data['recipient_variables'] ) || ! is_array( $batch_data['recipient_variables'] ) ) {
+			return $batch_data;
+		}
+
+		foreach ( $batch_data['recipient_variables'] as $recipient => $variables ) {
+			if ( ! is_array( $variables ) ) {
+				continue;
+			}
+			foreach ( $aliases as $alias => $source ) {
+				list( $slug, $fallback ) = $source;
+				$value                   = $variables[ $slug ] ?? null;
+
+				$variables[ $alias ] = ( null === $value || '' === (string) $value ) ? $fallback : $value;
+			}
+			$batch_data['recipient_variables'][ $recipient ] = $variables;
+		}
+
+		return $batch_data;
 	}
 }

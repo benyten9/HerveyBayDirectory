@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/tutorlms-builder-refine', [
     'label'       => __('Tutor LMS Builder — Refine course', 'nibwp'),
-    'description' => __('Apply a change to an existing Tutor LMS course: update course fields and/or append new topics/lessons/quizzes. dry_run:true validates; dry_run:false commits.', 'nibwp'),
+    'description' => 'Apply a change to an existing Tutor LMS course: update course fields and/or append new topics/lessons/quizzes. dry_run:true validates; dry_run:false commits.',
     'category'    => 'tutorlms-builder',
     'input_schema' => [
         'type' => 'object',

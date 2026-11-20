@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/bricks-pro-url-to-component', [
     'label'       => __('Bricks Pro — URL to Bricks template', 'nibwp'),
-    'description' => __('Fetch a target URL, return its raw HTML + inline / linked stylesheets to the agent. Agent rebuilds the layout as a Bricks element tree, then submits via html-to-component. Read-only fetch — no persistence here.', 'nibwp'),
+    'description' => 'Fetch a target URL, return its raw HTML + inline / linked stylesheets to the agent. Agent rebuilds the layout as a Bricks element tree, then submits via html-to-component. Read-only fetch — no persistence here.',
     'category'    => 'bricks-pro',
     'input_schema' => [
         'type' => 'object',

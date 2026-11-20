@@ -71,7 +71,8 @@ class RestContactSalesController extends RestController {
 	 * @return WP_REST_Response|\WP_Error
 	 */
 	public function get_contact_payments( $request ) {
-		$disabled = $this->require_module( 'sales' );
+		// Invoice data: Sales on, and Invoices & Proposals on with its tables.
+		$disabled = $this->require_module( 'sales' ) ?? $this->require_module_data( 'documents' );
 		if ( $disabled ) {
 			return $disabled;
 		}

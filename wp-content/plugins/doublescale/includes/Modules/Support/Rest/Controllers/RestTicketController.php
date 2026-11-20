@@ -35,6 +35,7 @@ namespace DoubleScale\Modules\Support\Rest\Controllers;
 
 defined( 'ABSPATH' ) || exit;
 
+use DoubleScale\Modules\Support\Services\TicketProject;
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Core\UserRoles\Permissions;
 use DoubleScale\Core\UserRoles\UserRoles;
@@ -42,6 +43,7 @@ use DoubleScale\Modules\Support\Constants\TicketPriority;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
 use DoubleScale\Modules\Support\Models\TicketModel;
 use DoubleScale\Modules\Support\Services\ContactResolver;
+use DoubleScale\Modules\Support\Services\TicketMergeService;
 use DoubleScale\Modules\Support\Services\TicketService;
 use WP_Error;
 use WP_REST_Request;
@@ -116,6 +118,45 @@ class RestTicketController extends RestController {
 			)
 		);
 
+		// Merge into another ticket of the same customer, and the tickets it
+		// may be merged into (that customer's, the user may open).
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/merge',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'merge_item' ),
+				'permission_callback' => array( $this, 'get_item_permissions_check' ),
+				'args'                => array(
+					'into' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/merge-targets',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'merge_targets' ),
+				'permission_callback' => array( $this, 'get_item_permissions_check' ),
+			)
+		);
+
+		// A team member checked the customer's address on a ticket opened with an
+		// address nobody proved (public form, chat): clears the flag.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/(?P<id>\d+)/verify-contact',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'verify_contact' ),
+				'permission_callback' => array( $this, 'get_item_permissions_check' ),
+			)
+		);
+
 		// Assignable agents for the "Assign to" picker. Managers receive every
 		// support-capable user; agents/reps receive only themselves (they may
 		// only ever assign tickets to themselves).
@@ -157,6 +198,10 @@ class RestTicketController extends RestController {
 			'mailbox_id'    => array(
 				'description' => __( 'Filter by mailbox channel.', 'doublescale' ),
 				'type'        => 'integer',
+			),
+			'view'          => array(
+				'description' => __( 'A named view, such as live_chats.', 'doublescale' ),
+				'type'        => 'string',
 			),
 			'tag_id'        => array(
 				'description' => __( 'Filter to tickets tagged with this id.', 'doublescale' ),
@@ -226,7 +271,7 @@ class RestTicketController extends RestController {
 			$query->where( 'priority', $priority );
 		}
 
-		foreach ( array( 'agent_user_id', 'contact_id', 'mailbox_id' ) as $int_filter ) {
+		foreach ( array( 'agent_user_id', 'contact_id', 'mailbox_id', 'project_id' ) as $int_filter ) {
 			$value = $request->get_param( $int_filter );
 			if ( null !== $value && '' !== $value ) {
 				$query->where( $int_filter, (int) $value );
@@ -243,6 +288,22 @@ class RestTicketController extends RestController {
 		$tag_id = $request->get_param( 'tag_id' );
 		if ( null !== $tag_id && '' !== $tag_id ) {
 			$query->withTag( (int) $tag_id );
+		}
+
+		// A named view another module defines (e.g. the Help Center's "live_chats").
+		$view = sanitize_key( (string) $request->get_param( 'view' ) );
+		if ( '' !== $view ) {
+			/**
+			 * The ticket ids in a named inbox view, or null for a view nobody knows.
+			 *
+			 * @param int[]|null       $ids     Ticket ids.
+			 * @param string           $view    View name.
+			 * @param \WP_REST_Request $request Request.
+			 */
+			$ids = apply_filters( 'doublescale_support_ticket_view_ids', null, $view, $request );
+			if ( is_array( $ids ) ) {
+				$query->whereIn( 'id', $ids ? array_map( 'intval', $ids ) : array( 0 ) );
+			}
 		}
 
 		$search = $request->get_param( 'search' );
@@ -276,14 +337,40 @@ class RestTicketController extends RestController {
 			array(
 				'data' => $data,
 				'meta' => array(
-					'total'        => $paginator->total(),
-					'per_page'     => $per_page,
-					'current_page' => $page,
-					'last_page'    => max( 1, (int) ceil( $paginator->total() / $per_page ) ),
+					'total'         => $paginator->total(),
+					'per_page'      => $per_page,
+					'current_page'  => $page,
+					'last_page'     => max( 1, (int) ceil( $paginator->total() / $per_page ) ),
+					'status_counts' => $this->status_counts(),
+					// agents can't read the mailbox list, where these also live
+					'attachment_limits' => \DoubleScale\Modules\Support\Services\AttachmentSettings::to_payload(),
 				),
 			),
 			200
 		);
+	}
+
+	/**
+	 * Tickets per status across everything the user can see (filters aside),
+	 * for the overview cards above the inbox.
+	 *
+	 * @return array<string, int> One count per status, plus `total`.
+	 */
+	private function status_counts(): array {
+		$query = TicketModel::query();
+		if ( ! Permissions::can_manage_all_tickets() ) {
+			$query->where( 'agent_user_id', get_current_user_id() );
+		}
+		$rows = $query->selectRaw( 'status, COUNT(*) as c' )->groupBy( 'status' )->get();
+
+		$counts = array_fill_keys( TicketStatus::all(), 0 );
+		foreach ( $rows as $row ) {
+			if ( isset( $counts[ (string) $row->status ] ) ) {
+				$counts[ (string) $row->status ] = (int) $row->c;
+			}
+		}
+		$counts['total'] = array_sum( $counts );
+		return $counts;
 	}
 
 	/**
@@ -389,6 +476,94 @@ class RestTicketController extends RestController {
 	}
 
 	/**
+	 * Merge this ticket into another of the same customer. Whoever may open
+	 * both tickets may merge them.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function merge_item( $request ) {
+		$disabled = $this->require_module( 'support' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+		$source = TicketModel::find( (int) $request->get_param( 'id' ) );
+		$target = TicketModel::find( (int) $request->get_param( 'into' ) );
+		if ( ! $source || ! $target ) {
+			return new WP_Error( 'not_found', __( 'Ticket not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+		foreach ( array( $source, $target ) as $ticket ) {
+			$forbidden = $this->require_ticket_ownership( $ticket );
+			if ( $forbidden ) {
+				return $forbidden;
+			}
+		}
+
+		$result = ( new TicketMergeService( $this->service() ) )->merge( $source, $target );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response( $result, 200 );
+	}
+
+	/**
+	 * Mark the address on an unverified ticket as checked by the team.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function verify_contact( $request ) {
+		$disabled = $this->require_module( 'support' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+		$ticket = TicketModel::find( (int) $request->get_param( 'id' ) );
+		if ( ! $ticket ) {
+			return new WP_Error( 'not_found', __( 'Ticket not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+		$forbidden = $this->require_ticket_ownership( $ticket );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
+		if ( TicketService::is_unverified( $ticket ) ) {
+			TicketService::clear_unverified( $ticket );
+		}
+
+		return new WP_REST_Response( array( 'unverified_contact' => false ), 200 );
+	}
+
+	/**
+	 * The tickets this one may be merged into.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function merge_targets( $request ) {
+		$disabled = $this->require_module( 'support' );
+		if ( $disabled ) {
+			return $disabled;
+		}
+		$source = TicketModel::find( (int) $request->get_param( 'id' ) );
+		if ( ! $source ) {
+			return new WP_Error( 'not_found', __( 'Ticket not found.', 'doublescale' ), array( 'status' => 404 ) );
+		}
+		$forbidden = $this->require_ticket_ownership( $source );
+		if ( $forbidden ) {
+			return $forbidden;
+		}
+
+		$targets = ( new TicketMergeService( $this->service() ) )->targets(
+			$source,
+			function ( TicketModel $ticket ): bool {
+				return null === $this->require_ticket_ownership( $ticket );
+			}
+		);
+
+		return new WP_REST_Response( array( 'data' => $targets ), 200 );
+	}
+
+	/**
 	 * Create a ticket. Delegates entirely to TicketService.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -405,12 +580,40 @@ class RestTicketController extends RestController {
 			$params = $request->get_params();
 		}
 
+		// Project link: checked before anything is saved (see TicketProject).
+		$project = $this->take_project_param( $params );
+		if ( $project['id'] && ! empty( $params['contact_id'] ) ) {
+			$checked = TicketProject::check( $project['id'], (int) $params['contact_id'], $this->company_for( (int) $params['contact_id'], $params['company_id'] ?? null ) );
+			if ( is_wp_error( $checked ) ) {
+				return $checked;
+			}
+		}
+
+		// TicketService keeps company_id only when the contact belongs to it.
 		$result = $this->service()->create_ticket( (array) $params );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		return new WP_REST_Response( $this->shape_ticket( $result, true ), 201 );
+		$warnings = array();
+		if ( $project['id'] ) {
+			// Contact given by email (created with the ticket): check against the saved ticket.
+			$checked = empty( $params['contact_id'] )
+				? TicketProject::check( $project['id'], (int) $result->contact_id, $result->company_id ? (int) $result->company_id : null )
+				: true;
+			if ( true === $checked ) {
+				$result->project_id = $project['id'];
+				$result->save();
+			} else {
+				$warnings[] = $checked->get_error_message();
+			}
+		}
+
+		$shaped = $this->shape_ticket( $result, true );
+		if ( $warnings ) {
+			$shaped['warnings'] = $warnings;
+		}
+		return new WP_REST_Response( $shaped, 201 );
 	}
 
 	/**
@@ -443,6 +646,17 @@ class RestTicketController extends RestController {
 		// Drop URL-only parameters so they're not treated as updates.
 		unset( $params['id'] );
 
+		// A merged ticket stays closed: its customer's messages go to the main
+		// ticket, so opening it again would leave it waiting for nothing.
+		if ( (int) $ticket->merged_into_id > 0 && array_key_exists( 'status', $params ) && TicketStatus::CLOSED !== (string) $params['status'] ) {
+			return new WP_Error(
+				'ticket_merged',
+				/* translators: %d: ticket number */
+				sprintf( __( 'This ticket was merged into #%d. Work on that one.', 'doublescale' ), (int) $ticket->merged_into_id ),
+				array( 'status' => 409 )
+			);
+		}
+
 		// Assignment rules:
 		// - Managers (`doublescale_manage_all_tickets`) may assign to anyone.
 		// - Non-managers (Support Agents, Sales Reps) may only assign to
@@ -459,9 +673,43 @@ class RestTicketController extends RestController {
 			}
 		}
 
+		$has_company = array_key_exists( 'company_id', $params );
+		$company_id  = $has_company ? $params['company_id'] : $ticket->company_id;
+		unset( $params['company_id'] );
+
+		// Project link: linking needs the project check; removing a link only
+		// needs the right to edit the ticket (checked above).
+		$project        = $this->take_project_param( $params );
+		$target_contact = array_key_exists( 'contact_id', $params ) ? (int) $params['contact_id'] : (int) $ticket->contact_id;
+		if ( $project['id'] && ( (int) $project['id'] !== (int) $ticket->project_id || $has_company || array_key_exists( 'contact_id', $params ) ) ) {
+			$checked = TicketProject::check( $project['id'], $target_contact, $this->company_for( $target_contact, $company_id ) );
+			if ( is_wp_error( $checked ) ) {
+				return $checked;
+			}
+		}
+
 		$result = $this->service()->update_ticket( $id, (array) $params );
 		if ( is_wp_error( $result ) ) {
 			return $result;
+		}
+
+		// Sharing follows the contact: re-check on a new contact or company.
+		$client_changed = $has_company || array_key_exists( 'contact_id', $params );
+		if ( $client_changed ) {
+			$this->apply_company( $result, $company_id );
+		}
+
+		if ( $project['set'] ) {
+			$result->project_id = $project['id'];
+			$result->save();
+		} elseif ( $client_changed && $result->project_id ) {
+			// The project must still belong to the ticket's client. Only that is
+			// re-checked here: the editor not being able to open the project
+			// is no reason to drop the link.
+			if ( ! TicketProject::matches_client( (int) $result->project_id, (int) $result->contact_id, $result->company_id ? (int) $result->company_id : null ) ) {
+				$result->project_id = null;
+				$result->save();
+			}
 		}
 
 		// Re-load relations so the response carries the same shape as get_item.
@@ -604,6 +852,10 @@ class RestTicketController extends RestController {
 			'priority'       => (string) $ticket->priority,
 			'mailbox_id'     => $ticket->mailbox_id ? (int) $ticket->mailbox_id : null,
 			'contact_id'     => (int) $ticket->contact_id,
+			'company_id'     => $ticket->company_id ? (int) $ticket->company_id : null,
+			'project_id'     => $ticket->project_id ? (int) $ticket->project_id : null,
+			// Name and link only for people who can open the project.
+			'project'        => TicketProject::summary( $ticket->project_id ? (int) $ticket->project_id : null ),
 			'agent_user_id'  => $ticket->agent_user_id ? (int) $ticket->agent_user_id : null,
 			'product'        => $ticket->product,
 			'response_count' => (int) $ticket->response_count,
@@ -612,11 +864,15 @@ class RestTicketController extends RestController {
 			// Accumulated union of every CC recipient ever used on this ticket.
 			// Lives inside custom_data; surfaced as a top-level array so the client
 			// has a stable contract without reaching into custom_data.
+			// The address was typed by whoever opened the ticket and never proven.
+			'unverified_contact' => TicketService::is_unverified( $ticket ),
 			'cc_recipients'  => ( is_array( $ticket->custom_data ) && isset( $ticket->custom_data['cc_recipients'] ) && is_array( $ticket->custom_data['cc_recipients'] ) )
 				? array_values( $ticket->custom_data['cc_recipients'] )
 				: array(),
 			'created_at'     => $ticket->created_at ? (string) $ticket->created_at : null,
 			'updated_at'     => $ticket->updated_at ? (string) $ticket->updated_at : null,
+			// Merged into another ticket of the same customer (closed, read-only).
+			'merged_into_id' => (int) $ticket->merged_into_id > 0 ? (int) $ticket->merged_into_id : null,
 		);
 
 		if ( $detail ) {
@@ -709,5 +965,53 @@ class RestTicketController extends RestController {
 			return array();
 		}
 		return ( new $class() )->render( $custom_data );
+	}
+
+	/**
+	 * Share a ticket with its contact's company (or stop sharing).
+	 *
+	 * @param TicketModel $ticket    Ticket.
+	 * @param mixed       $requested Requested company id (0/null = not shared).
+	 * @return void
+	 */
+	/**
+	 * Pull `project_id` out of the request params.
+	 *
+	 * @param array $params Request params (project_id is removed).
+	 * @return array{set: bool, id: int|null} Whether it was sent, and the project (null = remove the link).
+	 */
+	private function take_project_param( array &$params ): array {
+		if ( ! array_key_exists( 'project_id', $params ) ) {
+			return array(
+				'set' => false,
+				'id'  => null,
+			);
+		}
+		$id = (int) $params['project_id'];
+		unset( $params['project_id'] );
+		return array(
+			'set' => true,
+			'id'  => $id > 0 ? $id : null,
+		);
+	}
+
+	/**
+	 * The company a ticket of this contact would be shared with.
+	 *
+	 * @param int   $contact_id Contact.
+	 * @param mixed $requested  Requested company id.
+	 * @return int|null
+	 */
+	private function company_for( int $contact_id, $requested ): ?int {
+		$company = function_exists( 'doublescale_record_company_id' ) ? doublescale_record_company_id( $contact_id, $requested ) : null;
+		return $company ? (int) $company : null;
+	}
+
+	private function apply_company( TicketModel $ticket, $requested ): void {
+		$company_id = doublescale_record_company_id( $ticket->contact_id, $requested );
+		if ( (int) $ticket->company_id !== (int) $company_id ) {
+			$ticket->company_id = $company_id;
+			$ticket->save();
+		}
 	}
 }

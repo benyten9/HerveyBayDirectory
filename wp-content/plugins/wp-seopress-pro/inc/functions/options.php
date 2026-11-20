@@ -25,6 +25,12 @@ function seopress_pro_enable() {
 }
 add_action( 'init', 'seopress_pro_enable', 999 );
 
+// Cached WooCommerce shipping offers follow tax rate changes made outside the
+// tax settings screen (REST API, WC_Tax).
+if ( class_exists( 'SEOPressPro\\Helpers\\WooCommerceShipping' ) ) {
+	\SEOPressPro\Helpers\WooCommerceShipping::register_hooks();
+}
+
 // Local Business.
 if ( '1' == seopress_get_toggle_option( 'local-business' ) ) {
 	/**
@@ -125,6 +131,9 @@ if ( '1' == seopress_get_toggle_option( 'rich-snippets' ) ) {
 		require_once dirname( __DIR__ ) . '/admin/schemas/schemas.php'; // Schemas.
 	}
 	add_action( 'init', 'seopress_load_schemas_options', 9 );
+
+	// Store the YouTube metadata read by the Video schema auto-fill when the post is saved, never while rendering it.
+	add_action( 'save_post', 'seopress_pro_youtube_video_data_save_post', 20, 2 );
 
 	/**
 	 * Display Schemas admin notice.

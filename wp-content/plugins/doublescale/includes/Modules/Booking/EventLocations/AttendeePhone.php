@@ -27,7 +27,7 @@ class AttendeePhone extends Location {
 	 *
 	 * @var string
 	 */
-	public $title = 'Attendee Phone';
+	public $title = 'We call the attendee';
 
 	/**
 	 * Slug

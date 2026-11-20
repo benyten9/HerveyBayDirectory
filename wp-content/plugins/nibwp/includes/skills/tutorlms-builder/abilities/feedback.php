@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 
 wp_register_ability('nibwp/tutorlms-builder-feedback', [
     'label'       => __('Tutor LMS Builder — Record feedback', 'nibwp'),
-    'description' => __('Record a 👍 / 👎 for a just-built course. Thumb-down reasons are aggregated and surfaced on the next build via nibwp/load-skill-playbook.', 'nibwp'),
+    'description' => 'Record a 👍 / 👎 for a just-built course. Thumb-down reasons are aggregated and surfaced on the next build via nibwp/load-skill-playbook.',
     'category'    => 'tutorlms-builder',
     'input_schema' => [
         'type' => 'object',

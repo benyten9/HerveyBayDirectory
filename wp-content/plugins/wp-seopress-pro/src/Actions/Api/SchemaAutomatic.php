@@ -252,6 +252,31 @@ class SchemaAutomatic implements ExecuteHooks {
 
 		register_rest_route(
 			'seopress/v1',
+			'/schemas/rule-posts',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'processRulePosts' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_schemas' );
+				},
+				'args'                => array(
+					'search'  => array(
+						'validate_callback' => function ( $param ) {
+							return is_string( $param );
+						},
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => '',
+					),
+					'include' => array(
+						'sanitize_callback' => 'wp_parse_id_list',
+						'default'           => array(),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'seopress/v1',
 			'/schemas/(?P<id>\d+)/duplicate',
 			array(
 				'methods'             => 'POST',
@@ -363,6 +388,7 @@ class SchemaAutomatic implements ExecuteHooks {
 			'videos'        => '_seopress_pro_rich_snippets_videos',
 			'events'        => '_seopress_pro_rich_snippets_events',
 			'products'      => '_seopress_pro_rich_snippets_product',
+			'book' => '_seopress_pro_rich_snippets_book',
 			'softwareapp'   => '_seopress_pro_rich_snippets_softwareapp',
 			'services'      => '_seopress_pro_rich_snippets_service',
 			'review'        => '_seopress_pro_rich_snippets_review',
@@ -512,6 +538,130 @@ class SchemaAutomatic implements ExecuteHooks {
 	}
 
 	/**
+	 * Post IDs a set of rule groups points at, as strings.
+	 *
+	 * @param array $rules Rule groups.
+	 *
+	 * @return string[]
+	 */
+	private function post_ids_in_rules( $rules ) {
+		$ids = array();
+
+		foreach ( $rules as $group ) {
+			foreach ( $group as $rule ) {
+				if ( ! isset( $rule['filter'], $rule['postId'] ) || 'postId' !== $rule['filter'] ) {
+					continue;
+				}
+
+				$id = (int) $rule['postId'];
+				if ( $id > 0 ) {
+					$ids[ (string) $id ] = true;
+				}
+			}
+		}
+
+		return array_keys( $ids );
+	}
+
+	/**
+	 * Title shown for a post in the rules builder and the Rules column.
+	 *
+	 * @param \WP_Post $post The post.
+	 *
+	 * @return string
+	 */
+	private function rule_post_title( $post ) {
+		$title = html_entity_decode( $post->post_title, ENT_QUOTES | ENT_SUBSTITUTE );
+
+		return '' === trim( $title ) ? __( '(no title)', 'wp-seopress-pro' ) : $title;
+	}
+
+	/**
+	 * A post the Post ID rule may point at, or null when it may not.
+	 *
+	 * Trashed posts, auto-drafts and post types with no front-end page
+	 * (revisions, menu items, reusable blocks, templates, schemas) are left
+	 * out: a rule pointing at one matches nothing on the front end, so the
+	 * interface treats it as not found.
+	 *
+	 * @param int $id Post ID.
+	 *
+	 * @return \WP_Post|null
+	 */
+	private function get_rule_post( $id ) {
+		$post = get_post( $id );
+
+		if ( ! $post || in_array( $post->post_status, array( 'trash', 'auto-draft' ), true ) ) {
+			return null;
+		}
+
+		if ( ! is_post_type_viewable( $post->post_type ) || ! current_user_can( 'read_post', $post->ID ) ) {
+			return null;
+		}
+
+		return $post;
+	}
+
+	/**
+	 * Post types the Post ID picker searches.
+	 *
+	 * The ones with a front-end page, less attachments: they would fill the
+	 * recent list and the title search with uploads. A rule saved with an
+	 * attachment ID still resolves through `get_rule_post()`.
+	 *
+	 * @return string[]
+	 */
+	private function rule_search_post_types() {
+		$types = array_filter( get_post_types(), 'is_post_type_viewable' );
+
+		return array_values( array_diff( $types, array( 'attachment' ) ) );
+	}
+
+	/**
+	 * Attach the post titles the listing needs to render its Rules column.
+	 *
+	 * Same approach as `add_term_labels()`: only the posts the rules on this
+	 * page point at, primed in one query. A deleted post is left out and the
+	 * interface shows the raw ID.
+	 *
+	 * @param array[] $schemas Schemas, as built by `build_schema_data()`.
+	 *
+	 * @return array[] The same schemas, each with a `postLabels` map.
+	 */
+	private function add_post_labels( array $schemas ) {
+		$per_schema = array();
+		$wanted     = array();
+
+		foreach ( $schemas as $index => $schema ) {
+			$per_schema[ $index ] = $this->post_ids_in_rules( $schema['rules'] );
+			$wanted               = array_merge( $wanted, $per_schema[ $index ] );
+		}
+
+		$labels = array();
+		$wanted = array_values( array_unique( $wanted ) );
+
+		if ( ! empty( $wanted ) ) {
+			_prime_post_caches( array_map( 'intval', $wanted ), false, false );
+
+			foreach ( $wanted as $id ) {
+				$post = $this->get_rule_post( (int) $id );
+				if ( $post ) {
+					$labels[ $id ] = $this->rule_post_title( $post );
+				}
+			}
+		}
+
+		foreach ( $schemas as $index => $schema ) {
+			$schemas[ $index ]['postLabels'] = array_intersect_key(
+				$labels,
+				array_flip( $per_schema[ $index ] )
+			);
+		}
+
+		return $schemas;
+	}
+
+	/**
 	 * Build schema data from a post.
 	 *
 	 * @param \WP_Post $post The post.
@@ -600,6 +750,7 @@ class SchemaAutomatic implements ExecuteHooks {
 		}
 
 		$schemas = $this->add_term_labels( $schemas );
+		$schemas = $this->add_post_labels( $schemas );
 
 		return new \WP_REST_Response(
 			array(
@@ -650,14 +801,11 @@ class SchemaAutomatic implements ExecuteHooks {
 			return map_deep( $value, 'sanitize_text_field' );
 		}
 
-		// Custom schema allows <script type="application/ld+json"> blocks.
+		// Custom schema allows <script type="application/ld+json"> blocks,
+		// through the sanitizer every other custom schema field uses, so the
+		// type is constrained and the id kept here too.
 		if ( false !== strpos( $key, '_manual_custom_global' ) ) {
-			return wp_kses(
-				$value,
-				array(
-					'script' => array( 'type' => array() ),
-				)
-			);
+			return seopress_pro_kses_json_ld( $value );
 		}
 
 		// Default: esc_html() like the legacy PHP save handler.
@@ -1282,9 +1430,112 @@ class SchemaAutomatic implements ExecuteHooks {
 				'post_thumbnail'       => $thumbnail_url,
 				'post_author_picture'  => get_avatar_url( $author_id ),
 				// Global SEOPress settings used as schema sources.
+				'knowledge_graph_organization_id' => \SEOPressPro\Helpers\ServiceProviderReference::resolve( 'knowledge_graph_organization', array( 'post' => $post ) )['@id'] ?? '',
 				'knowledge_graph_logo' => $knowledge_graph_logo,
 			)
 		);
+	}
+
+	/**
+	 * GET /seopress/v1/schemas/rule-posts: posts for the Post ID rule picker.
+	 *
+	 * With `include`, returns those posts, in that order, so the picker can
+	 * label the IDs already saved in the rules. Otherwise searches the post
+	 * types with a front-end page by title, and a numeric search also matches
+	 * that post ID.
+	 * Without a search, returns the most recent posts.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function processRulePosts( \WP_REST_Request $request ) {
+		$include = array_filter( (array) $request->get_param( 'include' ) );
+		$posts   = array();
+
+		if ( ! empty( $include ) ) {
+			$include = array_slice( array_values( array_unique( $include ) ), 0, 100 );
+			_prime_post_caches( $include, false, false );
+
+			foreach ( $include as $id ) {
+				$post = $this->get_rule_post( $id );
+				if ( $post ) {
+					$posts[ $post->ID ] = $post;
+				}
+			}
+		} else {
+			$search     = trim( (string) $request->get_param( 'search' ) );
+			$post_types = $this->rule_search_post_types();
+
+			if ( ctype_digit( $search ) ) {
+				$post = $this->get_rule_post( (int) $search );
+				if ( $post && in_array( $post->post_type, $post_types, true ) ) {
+					$posts[ $post->ID ] = $post;
+				}
+			}
+
+			$args = array(
+				'post_type'              => $post_types,
+				'post_status'            => 'any',
+				'posts_per_page'         => 20,
+				'no_found_rows'          => true,
+				'ignore_sticky_posts'    => true,
+				'suppress_filters'       => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			);
+
+			if ( '' !== $search ) {
+				$args['s']              = $search;
+				$args['search_columns'] = array( 'post_title' );
+				// ComboboxControl keeps only the options whose label contains
+				// the typed text, so match it as one phrase, as the picker
+				// does. Word by word, "design web" would find "Web design"
+				// and the picker would then hide it.
+				$args['sentence'] = true;
+			}
+
+			// The `read_post` check runs on each row, so a role that cannot
+			// read some recent posts would get a short list from the first 20
+			// rows. Read on until 20 posts are kept, up to 100 rows.
+			$limit = count( $posts ) + 20;
+			$page  = 1;
+
+			do {
+				$args['paged'] = $page;
+				$query         = new \WP_Query( $args );
+
+				foreach ( $query->posts as $found ) {
+					if ( count( $posts ) >= $limit ) {
+						break;
+					}
+
+					if ( isset( $posts[ $found->ID ] ) ) {
+						continue;
+					}
+
+					$post = $this->get_rule_post( $found->ID );
+					if ( $post ) {
+						$posts[ $post->ID ] = $post;
+					}
+				}
+
+				++$page;
+			} while ( count( $posts ) < $limit && count( $query->posts ) === $args['posts_per_page'] && $page <= 5 );
+		}
+
+		$items = array();
+		foreach ( $posts as $post ) {
+			$type_object = get_post_type_object( $post->post_type );
+
+			$items[] = array(
+				'value'    => (string) $post->ID,
+				'title'    => $this->rule_post_title( $post ),
+				'postType' => $type_object ? $type_object->labels->singular_name : $post->post_type,
+			);
+		}
+
+		return new \WP_REST_Response( array( 'posts' => $items ) );
 	}
 
 	/**

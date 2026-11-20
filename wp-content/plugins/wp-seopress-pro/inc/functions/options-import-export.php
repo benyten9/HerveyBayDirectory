@@ -12,191 +12,112 @@ defined( 'ABSPATH' ) || exit( 'Please don&rsquo;t call the plugin directly. Than
 require_once __DIR__ . '/helpers-csv.php';
 
 /**
- * Store an imported redirection origin the way it will be matched.
+ * The eight redirection importers, and what they share.
  *
- * A plain path keeps the treatment every importer has always applied: decoded,
- * sometimes sanitized, and stripped of its leading slash, which is how the
- * redirection list and the exact-match lookup expect to read it.
+ * Every one of them used to carry its own copy of the same routine: read the
+ * upload whole, loop over it, call wp_insert_post() per row, redirect. That is
+ * what made an 18,000 line file impossible to import - the request ran out of
+ * time or memory somewhere in the middle and left a partial import behind -
+ * and it meant every fix to the parsing had to be made eight times.
  *
- * A regex origin gets none of that, because none of it is safe on a pattern.
- * `%2F` is not an escape waiting to be resolved, `+` means "one or more" rather
- * than a space, sanitize_text_field() deletes every `%XX` sequence, and the
- * leading slash is what anchors the match. Strip it and the matcher, which does
- * not anchor the stored pattern itself, applies the rest anywhere in the path:
- * `/it(/(.*))?$` becomes `it(/(.*))?$` and catches every URL merely containing
- * "it", /credit and /produits/kit included.
+ * The parsing now lives in \SEOPressPro\Services\RedirectionsImport, one
+ * method per export format, and the writing is batched. What is left here is
+ * the form plumbing: check the nonce, check the capability, hand the file to
+ * the importer, report the result.
  *
- * The return value is slashed because wp_insert_post() unslashes what it is
- * given. Without it every backslash in a pattern is lost on the way to the
- * database - `\d{4}` stored as `d{4}`, `\.html$` as `.html$` - and both still
- * look like regexes while matching far more than the imported rule did.
+ * The Tools screen drives the same importer over REST instead, one slice per
+ * request, which is what makes the size of the file stop mattering. These
+ * handlers stay for anything still posting these actions directly, and run the
+ * whole file in a single request - which the batched writes make viable for a
+ * file that used to take the request down.
  *
- * @param string $raw        Origin exactly as it appears in the imported file.
- * @param string $normalized Origin after the importer's own path normalization.
- * @param bool   $is_regex   Whether the imported redirection matches by regex.
- *
- * @return string Slashed origin, ready to hand to wp_insert_post().
- */
-function seopress_import_redirection_origin( $raw, $normalized, $is_regex ) {
-	return wp_slash( $is_regex ? trim( (string) $raw ) : (string) $normalized );
-}
-
-/**
- * Import / Exports settings page.
+ * @param string $action Value of the seopress_action field.
+ * @param string $nonce  Name of the nonce field, also its action.
+ * @param string $source Import source key.
  *
  * @return void
  */
-function seopress_import_redirections_settings() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_redirections_settings' != $_POST['seopress_action'] ) {
+function seopress_handle_redirections_import( $action, $nonce, $source ) {
+	if ( empty( $_POST['seopress_action'] ) || $action !== $_POST['seopress_action'] ) {
 		return;
 	}
-	if ( ! wp_verify_nonce( $_POST['seopress_import_redirections_nonce'], 'seopress_import_redirections_nonce' ) ) {
+
+	if ( ! isset( $_POST[ $nonce ] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ $nonce ] ) ), $nonce ) ) {
 		return;
 	}
+
 	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
 		return;
 	}
 
-	$extension = pathinfo( $_FILES['import_file']['name'], PATHINFO_EXTENSION );
+	$importer   = seopress_pro_get_service( 'RedirectionsImport' );
+	$sources    = $importer->get_sources();
+	$extensions = $sources[ $source ]['extensions'];
 
-	if ( 'csv' != $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .csv file', 'wp-seopress-pro' ) );
-	}
-	$import_file = $_FILES['import_file']['tmp_name'];
-	if ( empty( $import_file ) ) {
+	$file_name = isset( $_FILES['import_file']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['import_file']['name'] ) ) : '';
+	$extension = strtolower( (string) pathinfo( $file_name, PATHINFO_EXTENSION ) );
+	// Not sanitized, and it must not be: this is the path PHP wrote the upload
+	// to, and is_uploaded_file() below is what validates it. Running it through
+	// a string sanitizer would only turn a valid path into an unreadable one.
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	$tmp_name = isset( $_FILES['import_file']['tmp_name'] ) ? $_FILES['import_file']['tmp_name'] : '';
+
+	if ( empty( $tmp_name ) || ! is_uploaded_file( $tmp_name ) ) {
 		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
 	}
 
-	// Determine separator: auto-detect or use manual override.
-	$import_sep = isset( $_POST['import_sep'] ) ? sanitize_text_field( wp_unslash( $_POST['import_sep'] ) ) : 'auto';
-	if ( 'auto' !== $import_sep && ! empty( $import_sep ) ) {
-		if ( 'comma' === $import_sep ) {
-			$sep = ',';
-		} elseif ( 'semicolon' === $import_sep ) {
-			$sep = ';';
-		} else {
-			wp_die( esc_html__( 'Invalid separator', 'wp-seopress-pro' ) );
-		}
-	} else {
-		$sep = seopress_detect_csv_separator( $import_file );
-	}
-
-	$csv = array_map(
-		function ( $item ) use ( $sep ) {
-			return str_getcsv( $item, $sep, '"', '\\' );
-		},
-		file( $import_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES )
-	);
-
-	// Remove duplicates from CSV.
-	$csv = array_unique( $csv, SORT_REGULAR );
-
-	$imported = 0;
-	$skipped  = 0;
-
-	foreach ( $csv as $key => $value ) {
-		// Drop the leading quote the export adds in front of a cell a
-		// spreadsheet would evaluate, so the round trip stays lossless.
-		$csv_line = array_map( 'seopress_pro_unescape_csv_value', (array) $value );
-
-		// Skip rows that weren't split correctly (wrong separator or malformed).
-		if ( count( $csv_line ) < 2 || empty( $csv_line[0] ) ) {
-			++$skipped;
-			continue;
-		}
-
-		$csv_type_redirects = array(
-			2 => '301',
-			3 => '',
-			4 => 'exact_match',
-		);
-
-		// Third column: redirections type.
-		$col2 = $csv_line[2] ?? '';
-		if ( '301' === $col2 || '302' === $col2 || '307' === $col2 || '410' === $col2 || '451' === $col2 ) {
-			$csv_type_redirects[2] = $col2;
-		}
-
-		// Fourth column: redirections enabled.
-		$csv_line[3] = strtolower( (string) ( $csv_line[3] ?? '' ) );
-		if ( 'yes' == $csv_line[3] ) {
-			$csv_type_redirects[3] = $csv_line[3];
-		} else {
-			$csv_type_redirects[3] = '';
-		}
-
-		// Fifth column: redirections query param.
-		if ( ! empty( $csv_line[4] ) ) {
-			if ( 'exact_match' == $csv_line[4] || 'with_ignored_param' == $csv_line[4] || 'without_param' == $csv_line[4] ) {
-				$csv_type_redirects[4] = $csv_line[4];
-			} else {
-				$csv_type_redirects[4] = 'exact_match';
-			}
-		}
-
-		// Seventh column: redirect categories.
-		$cats = array();
-		if ( ! empty( $csv_line[6] ) ) {
-			$cats = array_values( explode( ',', $csv_line[6] ) );
-			$cats = array_map( 'intval', $cats );
-			$cats = array_unique( $cats );
-		}
-
-		$regex_enable = '';
-		// Regex enabled.
-		$csv_line[7] = strtolower( (string) ( $csv_line[7] ?? '' ) );
-		if ( 'yes' === $csv_line[7] ) {
-			$regex_enable = 'yes';
-		}
-
-		// Logged status.
-		$logged_status = 'both';
-		$csv_line[8]   = strtolower( (string) ( $csv_line[8] ?? '' ) );
-		if ( ! empty( $csv_line[8] ) ) {
-			$logged_status = $csv_line[8];
-		}
-
-		$count = null;
-		if ( ! empty( $csv_line[5] ) ) {
-			$count = $csv_line[5];
-		}
-		$id = wp_insert_post(
-			array(
-				'post_title'  => seopress_import_redirection_origin( $csv_line[0], ltrim( rawurldecode( $csv_line[0] ), '/' ), 'yes' === $regex_enable ),
-				'post_type'   => 'seopress_404',
-				'post_status' => 'publish',
-				'meta_input'  => array(
-					'_seopress_redirections_value'         => rawurldecode( $csv_line[1] ?? '' ),
-					'_seopress_redirections_type'          => $csv_type_redirects[2],
-					'_seopress_redirections_enabled'       => $csv_type_redirects[3],
-					'_seopress_redirections_enabled_regex' => $regex_enable,
-					'_seopress_redirections_logged_status' => $logged_status,
-					'_seopress_redirections_param'         => $csv_type_redirects[4],
-					'seopress_404_count'                   => $count,
-				),
+	if ( ! in_array( $extension, $extensions, true ) ) {
+		wp_die(
+			esc_html(
+				sprintf(
+					/* translators: %s: comma-separated list of accepted file extensions, e.g. ".csv, .txt". */
+					__( 'Please upload one of these file types: %s', 'wp-seopress-pro' ),
+					seopress_pro_list_extensions( $extensions )
+				)
 			)
 		);
+	}
 
-		if ( $id && ! is_wp_error( $id ) ) {
-			++$imported;
-			// Assign terms.
-			if ( ! empty( $cats ) ) {
-				wp_set_object_terms( $id, $cats, 'seopress_404_cat' );
-			}
-		}
+	$separator = isset( $_POST['import_sep'] ) ? sanitize_key( wp_unslash( $_POST['import_sep'] ) ) : 'auto';
+
+	$result = $importer->import_all( $tmp_name, $source, array( 'separator' => $separator ) );
+
+	if ( is_wp_error( $result ) ) {
+		$result = array(
+			'imported'  => 0,
+			'skipped'   => 0,
+			'degraded'  => 0,
+			'duplicate' => 0,
+			'disabled'  => 0,
+			'error'     => $result->get_error_message(),
+		);
 	}
 
 	set_transient(
 		'seopress_csv_import_result_' . get_current_user_id(),
 		array(
-			'imported' => $imported,
-			'skipped'  => $skipped,
+			'imported'  => (int) $result['imported'],
+			'skipped'   => (int) $result['skipped'],
+			'degraded'  => (int) $result['degraded'],
+			'duplicate' => (int) $result['duplicate'],
+			'disabled'  => isset( $result['disabled'] ) ? (int) $result['disabled'] : 0,
+			'disabled_imported' => isset( $result['disabled_imported'] ) ? (int) $result['disabled_imported'] : null,
+			'error'     => isset( $result['error'] ) ? $result['error'] : '',
 		),
-		60
+		MINUTE_IN_SECONDS
 	);
 
 	wp_safe_redirect( admin_url( 'admin.php?page=seopress-import-export#tab=tab_seopress_tool_redirects' ) );
 	exit;
+}
+
+/**
+ * Import redirections from SEOPress's own CSV export.
+ *
+ * @return void
+ */
+function seopress_import_redirections_settings() {
+	seopress_handle_redirections_import( 'import_redirections_settings', 'seopress_import_redirections_nonce', 'csv' );
 }
 add_action( 'admin_init', 'seopress_import_redirections_settings' );
 
@@ -206,70 +127,7 @@ add_action( 'admin_init', 'seopress_import_redirections_settings' );
  * @return void
  */
 function seopress_import_yoast_redirections() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_yoast_redirections' != $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! wp_verify_nonce( $_POST['seopress_import_yoast_redirections_nonce'], 'seopress_import_yoast_redirections_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$extension = pathinfo( $_FILES['import_file']['name'], PATHINFO_EXTENSION );
-
-	if ( 'csv' != $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .csv file', 'wp-seopress-pro' ) );
-	}
-	$import_file = $_FILES['import_file']['tmp_name'];
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$csv = array_map( 'str_getcsv', file( $import_file ) );
-
-	foreach ( array_slice( $csv, 1 ) as $_key => $_value ) {
-		$csv_line = $_value;
-
-		// Third column: redirections type.
-		if ( '301' == $csv_line[2] || '302' == $csv_line[2] || '307' == $csv_line[2] || '410' == $csv_line[2] || '451' == $csv_line[2] ) {
-			$csv_type_redirects[2] = $csv_line[2];
-		}
-
-		// Fourth column: redirections enabled.
-		$csv_type_redirects[3] = 'yes';
-
-		// Fifth column: redirections query param.
-		$csv_type_redirects[4] = 'exact_match';
-
-		if ( ! empty( $csv_line[0] ) ) {
-			$csv_line[0] = substr( $csv_line[0], 1 );
-			if ( ! empty( $csv_line[1] ) ) {
-				if ( '//' === $csv_line[1] ) {
-					$csv_line[1] = '/';
-				} else {
-					$csv_line[1] = home_url() . $csv_line[1];
-				}
-			}
-			$id = wp_insert_post(
-				array(
-					'post_title'  => urldecode( $csv_line[0] ),
-					'post_type'   => 'seopress_404',
-					'post_status' => 'publish',
-					'meta_input'  => array(
-						'_seopress_redirections_value'   => urldecode( $csv_line[1] ),
-						'_seopress_redirections_type'    => $csv_type_redirects[2],
-						'_seopress_redirections_enabled' => $csv_type_redirects[3],
-						'_seopress_redirections_enabled_regex' => '',
-						'_seopress_redirections_logged_status' => 'both',
-						'_seopress_redirections_param'   => $csv_type_redirects[4],
-					),
-				)
-			);
-		}
-	}
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_yoast_redirections', 'seopress_import_yoast_redirections_nonce', 'yoast' );
 }
 add_action( 'admin_init', 'seopress_import_yoast_redirections' );
 
@@ -364,9 +222,9 @@ function seopress_export_redirections_settings() {
 	}
 
 	// Close output and force download.
-	fclose( $output );
+	fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- CSV export streams through a handle, WP_Filesystem has no streaming API.
 	header( 'Content-Type: application/csv; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename=seopress-redirections-export-' . date( 'Y-m-d' ) . '.csv' );
+	header( 'Content-Disposition: attachment; filename=seopress-redirections-export-' . gmdate( 'Y-m-d' ) . '.csv' );
 	header( 'Expires: 0' );
 	header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 	header( 'Content-Transfer-Encoding: binary' );
@@ -418,9 +276,9 @@ function seopress_export_slug_changes() {
 	ignore_user_abort( true );
 	nocache_headers();
 	header( 'Content-Type: application/csv; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename=seopress-slug-changes-export-' . date( 'm-d-Y' ) . '.csv' );
+	header( 'Content-Disposition: attachment; filename=seopress-slug-changes-export-' . gmdate( 'm-d-Y' ) . '.csv' );
 	header( 'Expires: 0' );
-	echo $slug_changes_csv;
+	echo $slug_changes_csv; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV / htaccess export payload, printed verbatim as a download body.
 	exit;
 }
 add_action( 'admin_init', 'seopress_export_slug_changes' );
@@ -491,815 +349,72 @@ function seopress_export_redirections_htaccess_settings() {
 	}
 
 	ignore_user_abort( true );
-	echo $redirects_html;
+	echo $redirects_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV / htaccess export payload, printed verbatim as a download body.
 	nocache_headers();
 	header( 'Content-Type: text/plain; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename=seopress-redirections-htaccess-export-' . date( 'm-d-Y' ) . '.txt' );
+	header( 'Content-Disposition: attachment; filename=seopress-redirections-htaccess-export-' . gmdate( 'm-d-Y' ) . '.txt' );
 	header( 'Expires: 0' );
 	exit;
 }
 add_action( 'admin_init', 'seopress_export_redirections_htaccess_settings' );
 
 /**
- * Import Redirections from Redirections plugin JSON file.
+ * Import Redirections from the Redirection plugin (JSON).
  *
  * @return void
  */
 function seopress_import_redirections_plugin_settings() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_redirections_plugin_settings' != $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! wp_verify_nonce( $_POST['seopress_import_redirections_plugin_nonce'], 'seopress_import_redirections_plugin_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$extension = pathinfo( $_FILES['import_file']['name'], PATHINFO_EXTENSION );
-
-	if ( 'json' != $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .json file', 'wp-seopress-pro' ) );
-	}
-	$import_file = $_FILES['import_file']['tmp_name'];
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$settings = (array) json_decode( file_get_contents( $import_file ), true );
-
-	foreach ( $settings['redirects'] as $redirect_key => $redirect_value ) {
-		$type = '';
-		if ( ! empty( $redirect_value['action_code'] ) ) {
-			$type = $redirect_value['action_code'];
-		} else {
-			$type = '301';
-		}
-
-		$param = '';
-		if ( ! empty( $redirect_value['match_data']['source']['flag_query'] ) ) {
-			$flag_query = $redirect_value['match_data']['source']['flag_query'];
-			if ( 'pass' == $flag_query ) {
-				$param = 'with_ignored_param';
-			} elseif ( 'ignore' == $flag_query ) {
-				$param = 'without_param';
-			} else {
-				$param = 'exact_match';
-			}
-		}
-
-		$enabled = '';
-		if ( ! empty( true == $redirect_value['enabled'] ) ) {
-			$enabled = 'yes';
-		}
-		$regex_enable = '';
-		if ( ! empty( $redirect_value['regex'] ) ) {
-			$regex_enable = 'yes';
-		}
-
-		wp_insert_post(
-			array(
-				'post_title'  => seopress_import_redirection_origin( $redirect_value['url'], ltrim( urldecode( $redirect_value['url'] ), '/' ), 'yes' === $regex_enable ),
-				'post_type'   => 'seopress_404',
-				'post_status' => 'publish',
-				'meta_input'  => array(
-					'_seopress_redirections_value'         => urldecode( $redirect_value['action_data']['url'] ),
-					'_seopress_redirections_type'          => $type,
-					'_seopress_redirections_enabled'       => $enabled,
-					'_seopress_redirections_enabled_regex' => $regex_enable,
-					'_seopress_redirections_logged_status' => 'both',
-					'_seopress_redirections_param'         => $param,
-				),
-			)
-		);
-	}
-
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_redirections_plugin_settings', 'seopress_import_redirections_plugin_nonce', 'redirections_plugin' );
 }
 add_action( 'admin_init', 'seopress_import_redirections_plugin_settings' );
 
 /**
- * Import Redirections from Rank Math plugin JSON file
+ * Import Redirections from Rank Math (JSON).
  *
  * @return void
  */
 function seopress_import_rk_redirections() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_rk_redirections' != $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! wp_verify_nonce( $_POST['seopress_import_rk_redirections_nonce'], 'seopress_import_rk_redirections_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$extension = pathinfo( $_FILES['import_file']['name'], PATHINFO_EXTENSION );
-
-	if ( 'json' != $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .json file', 'wp-seopress-pro' ) );
-	}
-	$import_file = $_FILES['import_file']['tmp_name'];
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$settings = (array) json_decode( file_get_contents( $import_file ), true );
-
-	foreach ( $settings['redirections'] as $redirect_key => $redirect_value ) {
-		$type = '';
-		if ( ! empty( $redirect_value['header_code'] ) ) {
-			$type = $redirect_value['header_code'];
-		}
-
-		$source     = '';
-		$raw_source = '';
-		if ( ! empty( $redirect_value['sources'] ) ) {
-			if ( is_serialized( $redirect_value['sources'] ) ) {
-
-				$source = @unserialize( sanitize_text_field( $redirect_value['sources'] ), array( 'allowed_classes' => false ) );
-
-				if ( is_array( $source ) ) {
-					$raw_source = $source[0]['pattern'];
-					$source     = ltrim( urldecode( $raw_source ), '/' );
-				}
-			}
-		}
-
-		$param = 'exact_match';
-
-		$enabled = '';
-		if ( ! empty( 'active' == $redirect_value['status'] ) ) {
-			$enabled = 'yes';
-		}
-
-		$redirect = '';
-		if ( ! empty( $redirect_value['url_to'] ) ) {
-			$redirect = urldecode( $redirect_value['url_to'] );
-		}
-
-		$count = '';
-		if ( ! empty( $redirect_value['hits'] ) ) {
-			$count = (int) $redirect_value['hits'];
-		}
-
-		$regex = '';
-		if ( ! empty( $redirect_value['sources'] ) ) {
-			if ( is_serialized( $redirect_value['sources'] ) ) {
-				$sources = @unserialize( sanitize_text_field( $redirect_value['sources'] ), array( 'allowed_classes' => false ) );
-
-				if ( is_array( $sources ) ) {
-					if ( in_array( 'regex', array_column( $sources, 'comparison' ) ) ) {
-						$regex = 'yes';
-					}
-				}
-			}
-		}
-
-		wp_insert_post(
-			array(
-				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
-				'post_type'   => 'seopress_404',
-				'post_status' => 'publish',
-				'meta_input'  => array(
-					'_seopress_redirections_value'         => $redirect,
-					'_seopress_redirections_type'          => $type,
-					'_seopress_redirections_enabled'       => $enabled,
-					'_seopress_redirections_enabled_regex' => $regex,
-					'_seopress_redirections_logged_status' => 'both',
-					'seopress_404_count'                   => $count,
-					'_seopress_redirections_param'         => $param,
-				),
-			)
-		);
-	}
-
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_rk_redirections', 'seopress_import_rk_redirections_nonce', 'rankmath' );
 }
 add_action( 'admin_init', 'seopress_import_rk_redirections' );
 
 /**
  * Import Redirections from Rank Math (CSV export).
  *
- * Rank Math Pro exports its redirections as a CSV with a header row and the
- * following named columns: id, source, matching, destination, type, category,
- * status, ignore (some exports also include a hits column). Columns are matched
- * by name so their order in the file does not matter.
- *
  * @return void
  */
 function seopress_import_rk_csv_redirections() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_rk_csv_redirections' !== $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! isset( $_POST['seopress_import_rk_csv_redirections_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['seopress_import_rk_csv_redirections_nonce'] ) ), 'seopress_import_rk_csv_redirections_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$file_name = isset( $_FILES['import_file']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['import_file']['name'] ) ) : '';
-	$extension = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
-
-	if ( 'csv' !== $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .csv file', 'wp-seopress-pro' ) );
-	}
-	$import_file = isset( $_FILES['import_file']['tmp_name'] ) ? $_FILES['import_file']['tmp_name'] : '';
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$sep  = seopress_detect_csv_separator( $import_file );
-	$rows = file( $import_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-	if ( false === $rows || empty( $rows ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$csv = array_map(
-		function ( $item ) use ( $sep ) {
-			return str_getcsv( $item, $sep, '"', '\\' );
-		},
-		$rows
-	);
-
-	// Strip a UTF-8 BOM from the first cell if present.
-	if ( isset( $csv[0][0] ) ) {
-		$csv[0][0] = preg_replace( '/^\xEF\xBB\xBF/', '', $csv[0][0] );
-	}
-
-	// Detect the header row and build a "column name => index" map. Rank Math
-	// always exports a header; fall back to the documented column order.
-	$default_order = array( 'id', 'source', 'matching', 'destination', 'type', 'category', 'status', 'ignore' );
-	$header        = array_map(
-		function ( $cell ) {
-			return strtolower( trim( (string) $cell ) );
-		},
-		$csv[0]
-	);
-
-	if ( in_array( 'source', $header, true ) && in_array( 'destination', $header, true ) ) {
-		$map  = array_flip( $header );
-		$data = array_slice( $csv, 1 );
-	} else {
-		$map  = array_flip( $default_order );
-		$data = $csv;
-	}
-
-	$get = function ( $row, $key ) use ( $map ) {
-		if ( ! isset( $map[ $key ] ) || ! isset( $row[ $map[ $key ] ] ) ) {
-			return '';
-		}
-		return trim( (string) $row[ $map[ $key ] ] );
-	};
-
-	$imported = 0;
-	$skipped  = 0;
-	$degraded = 0;
-
-	foreach ( $data as $row ) {
-		if ( ! is_array( $row ) ) {
-			++$skipped;
-			continue;
-		}
-
-		$source      = $get( $row, 'source' );
-		$destination = $get( $row, 'destination' );
-
-		// A source is always required; "DELETE" destinations only make sense
-		// inside Rank Math, so skip those rows.
-		if ( '' === $source || 'DELETE' === $destination ) {
-			++$skipped;
-			continue;
-		}
-
-		// Redirection type — keep only the codes SEOPress understands.
-		$type = $get( $row, 'type' );
-		if ( ! in_array( $type, array( '301', '302', '307', '410', '451' ), true ) ) {
-			$type = '301';
-		}
-
-		// A destination is required for 3xx redirects (410/451 may be empty).
-		if ( '' === $destination && in_array( $type, array( '301', '302', '307' ), true ) ) {
-			++$skipped;
-			continue;
-		}
-
-		// Status active/inactive => enabled yes/empty.
-		$status  = strtolower( $get( $row, 'status' ) );
-		$enabled = ( '' === $status || 'active' === $status ) ? 'yes' : '';
-
-		// Hit counter (only present in some exports).
-		$count = '';
-		$hits  = $get( $row, 'hits' );
-		if ( '' !== $hits && is_numeric( $hits ) ) {
-			$count = (int) $hits;
-		}
-
-		// Categories — Rank Math exports comma-separated slugs.
-		$cats = array();
-		foreach ( explode( ',', $get( $row, 'category' ) ) as $slug ) {
-			$slug = trim( $slug );
-			if ( '' !== $slug ) {
-				$cats[] = $slug;
-			}
-		}
-
-		// One Rank Math row may carry several sources as a JSON array.
-		$patterns  = array();
-		$matchings = array();
-		if ( '[' === substr( $source, 0, 1 ) && ']' === substr( $source, -1 ) ) {
-			$decoded = json_decode( $source, true );
-			if ( is_array( $decoded ) ) {
-				foreach ( $decoded as $entry ) {
-					if ( ! empty( $entry['pattern'] ) ) {
-						$patterns[]  = (string) $entry['pattern'];
-						$matchings[] = isset( $entry['comparison'] ) ? (string) $entry['comparison'] : $get( $row, 'matching' );
-					}
-				}
-			}
-		}
-		if ( empty( $patterns ) ) {
-			$patterns[]  = $source;
-			$matchings[] = $get( $row, 'matching' );
-		}
-
-		foreach ( $patterns as $i => $pattern ) {
-			$matching = strtolower( trim( (string) ( $matchings[ $i ] ?? '' ) ) );
-
-			$regex = '';
-			if ( 'regex' === $matching ) {
-				$regex = 'yes';
-			} elseif ( in_array( $matching, array( 'contains', 'start', 'end' ), true ) ) {
-				// SEOPress has no direct equivalent for these comparisons, so we
-				// fall back to an exact match and report the loss of precision.
-				++$degraded;
-			}
-
-			$id = wp_insert_post(
-				array(
-					'post_title'  => seopress_import_redirection_origin( $pattern, ltrim( urldecode( $pattern ), '/' ), 'yes' === $regex ),
-					'post_type'   => 'seopress_404',
-					'post_status' => 'publish',
-					'meta_input'  => array(
-						'_seopress_redirections_value'         => urldecode( $destination ),
-						'_seopress_redirections_type'          => $type,
-						'_seopress_redirections_enabled'       => $enabled,
-						'_seopress_redirections_enabled_regex' => $regex,
-						'_seopress_redirections_logged_status' => 'both',
-						'_seopress_redirections_param'         => 'exact_match',
-						'seopress_404_count'                   => $count,
-					),
-				)
-			);
-
-			if ( $id && ! is_wp_error( $id ) ) {
-				++$imported;
-				if ( ! empty( $cats ) ) {
-					wp_set_object_terms( $id, $cats, 'seopress_404_cat' );
-				}
-			} else {
-				++$skipped;
-			}
-		}
-	}
-
-	set_transient(
-		'seopress_csv_import_result_' . get_current_user_id(),
-		array(
-			'imported' => $imported,
-			'skipped'  => $skipped,
-			'degraded' => $degraded,
-		),
-		60
-	);
-
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-import-export#tab=tab_seopress_tool_redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_rk_csv_redirections', 'seopress_import_rk_csv_redirections_nonce', 'rankmath_csv' );
 }
 add_action( 'admin_init', 'seopress_import_rk_csv_redirections' );
 
 /**
  * Import Redirections from Slim SEO (CSV).
  *
- * Slim SEO exports a CSV with the columns:
- * Type, Condition, From, To, Note, Enable, Ignore Parameters.
- * Columns are matched by header name, so the column order does not matter.
- *
  * @return void
  */
 function seopress_import_slimseo_redirections() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_slimseo_redirections' !== $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! isset( $_POST['seopress_import_slimseo_redirections_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['seopress_import_slimseo_redirections_nonce'] ) ), 'seopress_import_slimseo_redirections_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$file_name = isset( $_FILES['import_file']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['import_file']['name'] ) ) : '';
-	$extension = strtolower( pathinfo( $file_name, PATHINFO_EXTENSION ) );
-
-	if ( 'csv' !== $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .csv file', 'wp-seopress-pro' ) );
-	}
-	$import_file = isset( $_FILES['import_file']['tmp_name'] ) ? $_FILES['import_file']['tmp_name'] : '';
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$sep  = seopress_detect_csv_separator( $import_file );
-	$rows = file( $import_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-	if ( false === $rows || empty( $rows ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$csv = array_map(
-		function ( $item ) use ( $sep ) {
-			return str_getcsv( $item, $sep, '"', '\\' );
-		},
-		$rows
-	);
-
-	// Strip a UTF-8 BOM from the first cell if present.
-	if ( isset( $csv[0][0] ) ) {
-		$csv[0][0] = preg_replace( '/^\xEF\xBB\xBF/', '', $csv[0][0] );
-	}
-
-	// Slim SEO always exports a header; match columns by name and fall back to
-	// the documented column order if the header is missing.
-	$default_order = array( 'type', 'condition', 'from', 'to', 'note', 'enable', 'ignore parameters' );
-	$header        = array_map(
-		function ( $cell ) {
-			return strtolower( trim( (string) $cell ) );
-		},
-		$csv[0]
-	);
-
-	if ( in_array( 'from', $header, true ) && in_array( 'to', $header, true ) ) {
-		$map  = array_flip( $header );
-		$data = array_slice( $csv, 1 );
-	} else {
-		$map  = array_flip( $default_order );
-		$data = $csv;
-	}
-
-	$get = function ( $row, $key ) use ( $map ) {
-		if ( ! isset( $map[ $key ] ) || ! isset( $row[ $map[ $key ] ] ) ) {
-			return '';
-		}
-		return trim( (string) $row[ $map[ $key ] ] );
-	};
-
-	$imported = 0;
-	$skipped  = 0;
-	$degraded = 0;
-
-	foreach ( $data as $row ) {
-		if ( ! is_array( $row ) ) {
-			++$skipped;
-			continue;
-		}
-
-		$raw_source  = $get( $row, 'from' );
-		$source      = ltrim( urldecode( $raw_source ), '/' );
-		$destination = urldecode( $get( $row, 'to' ) );
-
-		// A source is always required.
-		if ( '' === $source ) {
-			++$skipped;
-			continue;
-		}
-
-		// Redirection type — keep only the codes SEOPress understands.
-		$type = $get( $row, 'type' );
-		if ( ! in_array( $type, array( '301', '302', '307', '410', '451' ), true ) ) {
-			$type = '301';
-		}
-
-		// A destination is required for 3xx redirects (410/451 may be empty).
-		if ( '' === $destination && in_array( $type, array( '301', '302', '307' ), true ) ) {
-			++$skipped;
-			continue;
-		}
-
-		// Slim SEO stores relative targets; make them absolute like the other
-		// importers do, leaving already-absolute URLs untouched.
-		if ( '' !== $destination && ! preg_match( '#^https?://#i', $destination ) ) {
-			$destination = home_url( '/' . ltrim( $destination, '/' ) );
-		}
-
-		// Enable column: "1" / "yes" / "true" => enabled.
-		$enable_raw = strtolower( $get( $row, 'enable' ) );
-		$enabled    = in_array( $enable_raw, array( '1', 'yes', 'true' ), true ) ? 'yes' : '';
-
-		// Condition: "exact-match" (default) or "regex". Anything Slim SEO
-		// supports that SEOPress does not is degraded to an exact match.
-		$condition = strtolower( $get( $row, 'condition' ) );
-		$regex     = '';
-		$param     = 'exact_match';
-		if ( 'regex' === $condition ) {
-			$regex = 'yes';
-		} elseif ( '' !== $condition && ! in_array( $condition, array( 'exact-match', 'exact_match', 'exact' ), true ) ) {
-			++$degraded;
-		}
-
-		// "Ignore Parameters" => match the URL ignoring query parameters.
-		$ignore = strtolower( $get( $row, 'ignore parameters' ) );
-		if ( '' === $regex && in_array( $ignore, array( '1', 'yes', 'true' ), true ) ) {
-			$param = 'with_ignored_param';
-		}
-
-		$id = wp_insert_post(
-			array(
-				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
-				'post_type'   => 'seopress_404',
-				'post_status' => 'publish',
-				'meta_input'  => array(
-					'_seopress_redirections_value'         => $destination,
-					'_seopress_redirections_type'          => $type,
-					'_seopress_redirections_enabled'       => $enabled,
-					'_seopress_redirections_enabled_regex' => $regex,
-					'_seopress_redirections_logged_status' => 'both',
-					'_seopress_redirections_param'         => $param,
-				),
-			)
-		);
-
-		if ( $id && ! is_wp_error( $id ) ) {
-			++$imported;
-		} else {
-			++$skipped;
-		}
-	}
-
-	set_transient(
-		'seopress_csv_import_result_' . get_current_user_id(),
-		array(
-			'imported' => $imported,
-			'skipped'  => $skipped,
-			'degraded' => $degraded,
-		),
-		60
-	);
-
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-import-export#tab=tab_seopress_tool_redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_slimseo_redirections', 'seopress_import_slimseo_redirections_nonce', 'slimseo' );
 }
 add_action( 'admin_init', 'seopress_import_slimseo_redirections' );
 
 /**
- * Import Redirections from AIOSEO plugin JSON file
+ * Import Redirections from All in One SEO (JSON).
  *
  * @return void
  */
 function seopress_import_aioseo_redirections() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_aioseo_redirections' != $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! wp_verify_nonce( $_POST['seopress_import_aioseo_redirections_nonce'], 'seopress_import_aioseo_redirections_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$extension = pathinfo( $_FILES['import_file']['name'], PATHINFO_EXTENSION );
-
-	if ( 'json' != $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .json file', 'wp-seopress-pro' ) );
-	}
-	$import_file = $_FILES['import_file']['tmp_name'];
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$settings = (array) json_decode( file_get_contents( $import_file ), true );
-
-	foreach ( $settings as $redirect_key => $redirect_value ) {
-		$type = '';
-		if ( ! empty( $redirect_value['type'] ) ) {
-
-			switch ( $redirect_value['type'] ) {
-				case '301':
-					$type = '301';
-					break;
-				case '302':
-					$type = '302';
-					break;
-				case '307':
-					$type = '307';
-					break;
-				case '410':
-					$type = '410';
-					break;
-				case '451':
-					$type = '451';
-					break;
-				default:
-					$param = '301';
-			}
-		}
-
-		$source     = '';
-		$raw_source = '';
-		if ( ! empty( $redirect_value['source_url'] ) ) {
-			$raw_source = (string) $redirect_value['source_url'];
-			$source     = ltrim( urldecode( sanitize_text_field( $raw_source ) ), '/' );
-		}
-
-		$param = 'exact_match';
-		if ( ! empty( $redirect_value['query_param'] ) ) {
-
-			switch ( $redirect_value['query_param'] ) {
-				case 'exact':
-					$param = 'exact_match';
-					break;
-				case 'ignore':
-					$param = 'without_param';
-					break;
-				case 'pass':
-					$param = 'with_ignored_param';
-					break;
-				case 'utm':
-					$param = 'with_ignored_param';
-					break;
-				default:
-					$param = 'exact_match';
-			}
-		}
-
-		$enabled = '';
-		if ( ! empty( '1' === $redirect_value['enabled'] ) ) {
-			$enabled = 'yes';
-		}
-
-		$redirect = '';
-		if ( ! empty( $redirect_value['target_url'] ) ) {
-			$redirect = urldecode( $redirect_value['target_url'] );
-		}
-
-		$count = '';
-
-		$regex = '';
-		if ( ! empty( '1' === $redirect_value['regex'] ) ) {
-			$regex = 'yes';
-		}
-
-		$logged_status = 'both';
-		if ( ! empty( $redirect_value['custom_rules'] ) ) {
-			$custom_rules = json_decode( $redirect_value['custom_rules'], true );
-
-			foreach ( $custom_rules as $rule_key => $rule_value ) {
-				if ( $rule_value['type'] === 'login' ) {
-					switch ( $rule_value['value'] ) {
-						case 'loggedin':
-							$logged_status = 'only_logged_in';
-							break;
-						case 'loggedout':
-							$logged_status = 'only_not_logged_in';
-							break;
-					}
-				}
-			}
-		}
-
-		wp_insert_post(
-			array(
-				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
-				'post_type'   => 'seopress_404',
-				'post_status' => 'publish',
-				'meta_input'  => array(
-					'_seopress_redirections_value'         => $redirect,
-					'_seopress_redirections_type'          => $type,
-					'_seopress_redirections_enabled'       => $enabled,
-					'_seopress_redirections_enabled_regex' => $regex,
-					'_seopress_redirections_logged_status' => $logged_status,
-					'seopress_404_count'                   => $count,
-					'_seopress_redirections_param'         => $param,
-				),
-			)
-		);
-	}
-
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_aioseo_redirections', 'seopress_import_aioseo_redirections_nonce', 'aioseo' );
 }
 add_action( 'admin_init', 'seopress_import_aioseo_redirections' );
 
 /**
- * Import Redirections from SmartCrawl plugin JSON file
+ * Import Redirections from SmartCrawl (JSON).
  *
  * @return void
  */
 function seopress_import_smartcrawl_redirections() {
-	if ( empty( $_POST['seopress_action'] ) || 'import_smartcrawl_redirections' != $_POST['seopress_action'] ) {
-		return;
-	}
-	if ( ! wp_verify_nonce( $_POST['seopress_import_smartcrawl_redirections_nonce'], 'seopress_import_smartcrawl_redirections_nonce' ) ) {
-		return;
-	}
-	if ( ! current_user_can( seopress_capability( 'manage_options', 'import_settings' ) ) ) {
-		return;
-	}
-
-	$extension = pathinfo( $_FILES['import_file']['name'], PATHINFO_EXTENSION );
-
-	if ( 'json' != $extension ) {
-		wp_die( esc_html__( 'Please upload a valid .json file', 'wp-seopress-pro' ) );
-	}
-	$import_file = $_FILES['import_file']['tmp_name'];
-	if ( empty( $import_file ) ) {
-		wp_die( esc_html__( 'Please upload a file to import', 'wp-seopress-pro' ) );
-	}
-
-	$settings = (array) json_decode( file_get_contents( $import_file ), true );
-
-	foreach ( $settings as $redirect_key => $redirect_value ) {
-		$type = '';
-		if ( ! empty( $redirect_value['type'] ) ) {
-
-			switch ( $redirect_value['type'] ) {
-				case '301':
-					$type = '301';
-					break;
-				case '302':
-					$type = '302';
-					break;
-				case '307':
-					$type = '307';
-					break;
-				case '410':
-					$type = '410';
-					break;
-				case '451':
-					$type = '451';
-					break;
-				default:
-					$param = '301';
-			}
-		}
-
-		$source     = '';
-		$raw_source = '';
-		if ( ! empty( $redirect_value['source'] ) ) {
-			$raw_source = (string) $redirect_value['source'];
-			$source     = sanitize_text_field( $raw_source );
-			$source     = wp_parse_url( $source );
-			if ( is_array( $source ) && isset( $source['path'] ) ) {
-				$source = $source['path'];
-			}
-
-			$source = ltrim( rawurldecode( (string) $source ), '/' );
-		}
-
-		$param = 'exact_match';
-
-		$enabled = 'yes';
-
-		$redirect = '';
-		if ( ! empty( $redirect_value['destination'] ) ) {
-			if ( is_string( $redirect_value['destination'] ) ) {
-				$redirect = rawurldecode( $redirect_value['destination'] );
-			}
-			if ( is_array( $redirect_value['destination'] ) && ! empty( $redirect_value['destination']['id'] ) ) {
-				$redirect = esc_url( get_permalink( $redirect_value['destination']['id'] ) );
-			}
-		}
-
-		$count = '';
-
-		$regex = '';
-		if ( isset( $redirect_value['options'][0] ) && 'regex' === $redirect_value['options'][0] ) {
-			$regex = 'yes';
-		}
-
-		$logged_status = 'both';
-
-		wp_insert_post(
-			array(
-				'post_title'  => seopress_import_redirection_origin( $raw_source, $source, 'yes' === $regex ),
-				'post_type'   => 'seopress_404',
-				'post_status' => 'publish',
-				'meta_input'  => array(
-					'_seopress_redirections_value'         => $redirect,
-					'_seopress_redirections_type'          => $type,
-					'_seopress_redirections_enabled'       => $enabled,
-					'_seopress_redirections_enabled_regex' => $regex,
-					'_seopress_redirections_logged_status' => $logged_status,
-					'seopress_404_count'                   => $count,
-					'_seopress_redirections_param'         => $param,
-				),
-			)
-		);
-	}
-
-	wp_safe_redirect( admin_url( 'admin.php?page=seopress-redirections&view=redirects' ) );
-	exit;
+	seopress_handle_redirections_import( 'import_smartcrawl_redirections', 'seopress_import_smartcrawl_redirections_nonce', 'smartcrawl' );
 }
 add_action( 'admin_init', 'seopress_import_smartcrawl_redirections' );
 
@@ -1365,9 +480,9 @@ function seopress_export_404_settings() {
 	ignore_user_abort( true );
 	nocache_headers();
 	header( 'Content-Type: application/csv; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename=seopress-404-export-' . date( 'm-d-Y' ) . '.csv' );
+	header( 'Content-Disposition: attachment; filename=seopress-404-export-' . gmdate( 'm-d-Y' ) . '.csv' );
 	header( 'Expires: 0' );
-	echo $errors_404_html;
+	echo $errors_404_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV / htaccess export payload, printed verbatim as a download body.
 	exit;
 }
 add_action( 'admin_init', 'seopress_export_404_settings' );
@@ -1783,7 +898,7 @@ function seopress_download_batch_export() {
 		ignore_user_abort( true );
 		nocache_headers();
 		header( 'Content-Type: application/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=seopress-metadata-export-' . date( 'm-d-Y' ) . '.csv' );
+		header( 'Content-Disposition: attachment; filename=seopress-metadata-export-' . gmdate( 'm-d-Y' ) . '.csv' );
 		header( 'Expires: 0' );
 		header( 'Pragma: public' );
 
@@ -1794,7 +909,7 @@ function seopress_download_batch_export() {
 		}
 
 		// Close output file stream.
-		fclose( $output_handle );
+		fclose( $output_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- CSV export streams through a handle, WP_Filesystem has no streaming API.
 
 		// Clean database.
 		delete_option( 'seopress_metadata_csv' );
@@ -1840,3 +955,403 @@ function seopress_clean_audit_scans() {
 	seopress_maintenance_redirect( $page, 'done', $deleted );
 }
 add_action( 'admin_init', 'seopress_clean_audit_scans' );
+
+/**
+ * Files SEOPress may have left in the uploads directory.
+ *
+ * Two of them used to be created with names anybody can work out, in a
+ * directory the web server hands out on request:
+ *
+ *   - `seopress-settings.json`, written there by `wp seopress settings export`
+ *     before 10.3, holds the license key, the AI provider keys, the instant
+ *     indexing keys and the Google client secret.
+ *   - `seopress-metadata-export-MM-DD-YYYY.csv`, left behind by the CSV import
+ *     wizard, holds the title, description, target keyword and redirect of
+ *     every post and term on the site.
+ *
+ * Neither is created any more, but an install that ran either of them still has
+ * the file. Nothing here deletes anything on its own: the file was put there by
+ * a deliberate action, so the choice of removing it stays with the person who
+ * made it.
+ *
+ * What identifies one of them, for the purpose of remembering that somebody
+ * chose to keep it. The path alone would not do: an export run again writes a
+ * new file over the same name, and a decision taken about the old one says
+ * nothing about its replacement.
+ *
+ * @since 10.3.0
+ *
+ * @param string $file Absolute path.
+ *
+ * @return string
+ */
+function seopress_exposed_file_signature( $file ) {
+	return md5( $file . '|' . (int) @filemtime( $file ) . '|' . (int) @filesize( $file ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a file that disappeared between the glob and here signs as 0|0, which simply never matches something that was kept.
+}
+
+/**
+ * Files SEOPress may have left in the uploads directory.
+ *
+ * See seopress_exposed_file_signature() for how a file somebody chose to keep
+ * is told apart from a fresh export carrying the same name.
+ *
+ * @since 10.3.0
+ *
+ * @return array List of absolute paths.
+ */
+function seopress_find_exposed_files() {
+	$cached = get_transient( 'seopress_exposed_files' );
+
+	if ( is_array( $cached ) ) {
+		return $cached;
+	}
+
+	$upload = wp_upload_dir();
+	$found  = array();
+
+	if ( empty( $upload['error'] ) && ! empty( $upload['basedir'] ) ) {
+		$basedir = trailingslashit( wp_normalize_path( $upload['basedir'] ) );
+
+		$patterns = array(
+			$basedir . 'seopress-settings.json',
+			$basedir . 'seopress-imports/seopress-import-*',
+			$basedir . 'seopress-redirections-import/job-*.ndjson',
+			$basedir . 'seopress-metadata-export-*.csv',
+			// Uploads organised by date, which is the default.
+			$basedir . '*/*/seopress-metadata-export-*.csv',
+		);
+
+		foreach ( $patterns as $pattern ) {
+			$matches = glob( $pattern );
+
+			if ( ! empty( $matches ) ) {
+				$found = array_merge( $found, array_map( 'wp_normalize_path', $matches ) );
+			}
+		}
+
+		// What was kept is remembered by signature rather than by path, so
+		// re-running an export puts the name back on the list: the decision to
+		// keep one file says nothing about the one that replaced it.
+		$ignored = (array) get_option( 'seopress_exposed_files_ignored', array() );
+
+		$found = array_values(
+			array_filter(
+				$found,
+				function ( $file ) use ( $ignored ) {
+					return ! in_array( seopress_exposed_file_signature( $file ), $ignored, true );
+				}
+			)
+		);
+	}
+
+	// Long enough that the glob does not run on every admin page load, short
+	// enough that a file created today is reported today.
+	set_transient( 'seopress_exposed_files', $found, 6 * HOUR_IN_SECONDS );
+
+	return $found;
+}
+
+/**
+ * Delete one of the files above.
+ *
+ * When the file is also registered as an attachment, which is how the import
+ * wizard used to store what it uploaded, the attachment goes with it. Deleting
+ * the file alone would leave the media library listing something that is no
+ * longer there.
+ *
+ * @since 10.3.0
+ *
+ * @param string $file Absolute path.
+ *
+ * @return bool
+ */
+function seopress_delete_exposed_file( $file ) {
+	$upload = wp_upload_dir();
+
+	if ( ! empty( $upload['error'] ) || empty( $upload['basedir'] ) ) {
+		return false;
+	}
+
+	$real = realpath( $file );
+
+	if ( false === $real || ! is_file( $real ) ) {
+		return false;
+	}
+
+	$real    = wp_normalize_path( $real );
+	$basedir = realpath( $upload['basedir'] );
+
+	if ( false === $basedir ) {
+		return false;
+	}
+
+	// Never act on a path that resolved outside the uploads directory.
+	if ( 0 !== strpos( $real, trailingslashit( wp_normalize_path( $basedir ) ) ) ) {
+		return false;
+	}
+
+	$url           = str_replace( trailingslashit( wp_normalize_path( $basedir ) ), trailingslashit( $upload['baseurl'] ), $real );
+	$attachment_id = attachment_url_to_postid( $url );
+
+	if ( $attachment_id ) {
+		return (bool) wp_delete_attachment( $attachment_id, true );
+	}
+
+	$filesystem = seopress_import_files_filesystem();
+
+	return null === $filesystem ? false : (bool) $filesystem->delete( $real );
+}
+
+/**
+ * Where the outcome of a click on the notice waits for the next page load.
+ *
+ * Keyed on the account that clicked, like the maintenance actions above, so one
+ * operator's result cannot surface on another's screen.
+ *
+ * @since 10.3.0
+ *
+ * @return string
+ */
+function seopress_exposed_files_transient_key() {
+	return 'seopress_exposed_files_result_' . get_current_user_id();
+}
+
+/**
+ * Send the user back with the outcome attached, and stop.
+ *
+ * @since 10.3.0
+ *
+ * @param array $result Outcome, and the counts when there are any.
+ *
+ * @return void
+ */
+function seopress_exposed_files_redirect( $result ) {
+	set_transient( seopress_exposed_files_transient_key(), $result, MINUTE_IN_SECONDS );
+
+	// The scan is cached, and what it was caching has just changed.
+	delete_transient( 'seopress_exposed_files' );
+
+	$referer = wp_get_referer();
+
+	wp_safe_redirect( $referer ? $referer : admin_url( 'admin.php?page=seopress-import-export' ) );
+	exit;
+}
+
+/**
+ * Handle the two buttons on the notice.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_handle_exposed_files_action() {
+	if ( wp_doing_ajax() ) {
+		return;
+	}
+
+	$action = isset( $_POST['seopress_action'] ) ? sanitize_key( wp_unslash( $_POST['seopress_action'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
+	if ( ! in_array( $action, array( 'delete_exposed_files', 'ignore_exposed_files' ), true ) ) {
+		return;
+	}
+
+	$nonce = isset( $_POST['seopress_exposed_files_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['seopress_exposed_files_nonce'] ) ) : '';
+
+	// Every outcome is reported, including the ones that end the request early.
+	// A notice about files anybody can download must not answer a click with a
+	// plain page reload and the same notice still on it.
+	if ( ! wp_verify_nonce( $nonce, 'seopress_exposed_files_nonce' ) ) {
+		seopress_exposed_files_redirect( array( 'outcome' => 'expired' ) );
+	}
+
+	if ( ! current_user_can( seopress_capability( 'manage_options', 'export_settings' ) ) ) {
+		seopress_exposed_files_redirect( array( 'outcome' => 'denied' ) );
+	}
+
+	$files = seopress_find_exposed_files();
+
+	if ( 'ignore_exposed_files' === $action ) {
+		$ignored = (array) get_option( 'seopress_exposed_files_ignored', array() );
+
+		// Capped so that a site whose operator keeps clicking "keep" on a file
+		// an automation rewrites every night cannot grow this without end.
+		$ignored = array_slice(
+			array_values( array_unique( array_merge( $ignored, array_map( 'seopress_exposed_file_signature', $files ) ) ) ),
+			-50
+		);
+
+		update_option( 'seopress_exposed_files_ignored', $ignored, false );
+
+		seopress_exposed_files_redirect( array( 'outcome' => 'kept' ) );
+	}
+
+	$deleted = 0;
+	$failed  = 0;
+
+	foreach ( $files as $file ) {
+		if ( seopress_delete_exposed_file( $file ) ) {
+			++$deleted;
+		} else {
+			++$failed;
+		}
+	}
+
+	seopress_exposed_files_redirect(
+		array(
+			'outcome' => 0 === $failed ? 'deleted' : 'partial',
+			'deleted' => $deleted,
+			'failed'  => $failed,
+		)
+	);
+}
+add_action( 'admin_init', 'seopress_handle_exposed_files_action' );
+
+/**
+ * Report what the last click on the notice did.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_exposed_files_outcome_notice() {
+	$key    = seopress_exposed_files_transient_key();
+	$result = get_transient( $key );
+
+	if ( ! is_array( $result ) || empty( $result['outcome'] ) ) {
+		return;
+	}
+
+	// Read once: the dismiss cross only takes the notice off the page, so an
+	// outcome left available would come back on the next reload.
+	delete_transient( $key );
+
+	$deleted = isset( $result['deleted'] ) ? (int) $result['deleted'] : 0;
+	$failed  = isset( $result['failed'] ) ? (int) $result['failed'] : 0;
+
+	switch ( $result['outcome'] ) {
+		case 'deleted':
+			$type    = 'success';
+			$message = sprintf(
+				/* translators: %s: number of files deleted. */
+				_n( '%s file deleted.', '%s files deleted.', $deleted, 'wp-seopress-pro' ),
+				number_format_i18n( $deleted )
+			);
+			break;
+
+		case 'partial':
+			$type    = 'error';
+			$message = sprintf(
+				/* translators: 1: number of files deleted, 2: number of files that could not be deleted. */
+				__( '%1$s deleted, %2$s could not be. Check the permissions on your uploads folder, then remove the remaining files yourself.', 'wp-seopress-pro' ),
+				sprintf(
+					/* translators: %s: number of files. */
+					_n( '%s file', '%s files', $deleted, 'wp-seopress-pro' ),
+					number_format_i18n( $deleted )
+				),
+				number_format_i18n( $failed )
+			);
+			break;
+
+		case 'kept':
+			$type    = 'info';
+			$message = __( 'Nothing was deleted. These files will not be reported again unless they are recreated.', 'wp-seopress-pro' );
+			break;
+
+		case 'expired':
+			$type    = 'error';
+			$message = __( 'Nothing was done: this page had been open long enough for its security token to expire. Reload it and try again.', 'wp-seopress-pro' );
+			break;
+
+		case 'denied':
+			$type    = 'error';
+			$message = __( 'Nothing was done: your account is not allowed to perform this action.', 'wp-seopress-pro' );
+			break;
+
+		default:
+			return;
+	}
+
+	printf(
+		'<div class="notice notice-%1$s is-dismissible"><p>%2$s</p></div>',
+		esc_attr( $type ),
+		esc_html( $message )
+	);
+}
+
+/**
+ * Tell people about the files, and give them one click to remove them.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_exposed_files_notice() {
+	if ( ! function_exists( 'is_seopress_page' ) || ! is_seopress_page() ) {
+		return;
+	}
+
+	if ( ! current_user_can( seopress_capability( 'manage_options', 'export_settings' ) ) ) {
+		return;
+	}
+
+	seopress_exposed_files_outcome_notice();
+
+	$files = seopress_find_exposed_files();
+
+	if ( empty( $files ) ) {
+		return;
+	}
+
+	$upload  = wp_upload_dir();
+	$basedir = trailingslashit( wp_normalize_path( $upload['basedir'] ) );
+	?>
+	<div class="notice notice-warning">
+		<p>
+			<strong><?php esc_html_e( 'SEOPress left an export where anyone can download it', 'wp-seopress-pro' ); ?></strong>
+		</p>
+		<p>
+			<?php esc_html_e( 'These files were written to your uploads directory by an earlier version. Your web server hands them to anyone who requests the URL, and a settings export contains your license key and your API keys.', 'wp-seopress-pro' ); ?>
+		</p>
+		<ul style="list-style:disc;margin-left:2em">
+			<?php foreach ( $files as $file ) : ?>
+				<li>
+					<code><?php echo esc_html( str_replace( $basedir, '', $file ) ); ?></code>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+		<p>
+			<form method="post" style="display:inline">
+				<?php wp_nonce_field( 'seopress_exposed_files_nonce', 'seopress_exposed_files_nonce' ); ?>
+				<input type="hidden" name="seopress_action" value="delete_exposed_files" />
+				<button type="submit" class="button button-primary">
+					<?php esc_html_e( 'Delete these files', 'wp-seopress-pro' ); ?>
+				</button>
+			</form>
+			<form method="post" style="display:inline">
+				<?php wp_nonce_field( 'seopress_exposed_files_nonce', 'seopress_exposed_files_nonce' ); ?>
+				<input type="hidden" name="seopress_action" value="ignore_exposed_files" />
+				<button type="submit" class="button button-secondary">
+					<?php esc_html_e( 'Keep them, stop warning me', 'wp-seopress-pro' ); ?>
+				</button>
+			</form>
+		</p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'seopress_exposed_files_notice' );
+
+/**
+ * Re-attach the notice after the free plugin clears the hook.
+ *
+ * See seopress_maintenance_restore_admin_notice(): every admin_notices callback
+ * is dropped on `in_admin_header` at priority 1000 whenever the current screen
+ * is one of ours, which is exactly the screens this notice belongs on.
+ *
+ * @since 10.3.0
+ *
+ * @return void
+ */
+function seopress_restore_exposed_files_notice() {
+	add_action( 'admin_notices', 'seopress_exposed_files_notice' );
+}
+add_action( 'in_admin_header', 'seopress_restore_exposed_files_notice', 1001 );

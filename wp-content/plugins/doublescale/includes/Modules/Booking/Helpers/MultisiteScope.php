@@ -100,9 +100,9 @@ final class MultisiteScope {
 	/**
 	 * Restrict a query to rows owned by users on the current blog.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query  Eloquent builder.
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query  Eloquent builder.
 	 * @param string                                $column User-id column name.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public static function apply_user_id_scope( $query, string $column = 'user_id' ) {
 		if ( ! self::is_active() ) {
@@ -120,8 +120,8 @@ final class MultisiteScope {
 	/**
 	 * Restrict bookings to calendars owned by users on the current blog.
 	 *
-	 * @param \Illuminate\Database\Eloquent\Builder $query Eloquent builder.
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Eloquent builder.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public static function apply_calendar_owner_scope( $query ) {
 		if ( ! self::is_active() ) {

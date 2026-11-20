@@ -1,8 +1,8 @@
 <?php
 
-namespace Illuminate\Pagination;
+namespace DoubleScale\Vendor\Illuminate\Pagination;
 
-use Illuminate\Contracts\Pagination\LengthAwarePaginator as PaginatorContract;
+use DoubleScale\Vendor\Illuminate\Contracts\Pagination\LengthAwarePaginator as PaginatorContract;
 class UrlWindow
 {
     /**

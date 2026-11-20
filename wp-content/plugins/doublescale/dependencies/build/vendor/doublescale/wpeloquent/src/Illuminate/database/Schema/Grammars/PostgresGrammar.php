@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Schema\Grammars;
+namespace DoubleScale\Vendor\Illuminate\Database\Schema\Grammars;
 
-use Illuminate\Support\Fluent;
-use Illuminate\Database\Schema\Blueprint;
-class PostgresGrammar extends \Illuminate\Database\Schema\Grammars\Grammar
+use DoubleScale\Vendor\Illuminate\Support\Fluent;
+use DoubleScale\Vendor\Illuminate\Database\Schema\Blueprint;
+class PostgresGrammar extends Grammar
 {
     /**
      * If this Grammar supports schema changes wrapped in a transaction.

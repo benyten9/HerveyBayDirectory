@@ -97,10 +97,22 @@ final class ApprovalWorkflow {
 			return self::$storage_ready_cache;
 		}
 
+		// Checked once per Pro version, not on every request: the flag is one
+		// of the options DoubleScale loads together at boot.
+		$version = defined( 'DOUBLESCALE_PRO_VERSION' ) ? DOUBLESCALE_PRO_VERSION : '';
+		if ( '' !== $version && get_option( 'doublescale_sales_approvals_table_checked' ) === $version ) {
+			self::$storage_ready_cache = true;
+			return true;
+		}
+
 		global $wpdb;
 		$table = $wpdb->prefix . 'doublescale_sales_approvals';
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		self::$storage_ready_cache = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+
+		if ( self::$storage_ready_cache && '' !== $version ) {
+			update_option( 'doublescale_sales_approvals_table_checked', $version, false );
+		}
 
 		return self::$storage_ready_cache;
 	}

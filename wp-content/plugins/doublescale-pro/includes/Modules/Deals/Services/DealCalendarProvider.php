@@ -57,12 +57,17 @@ final class DealCalendarProvider {
 			return $events;
 		}
 
+		// Only people who may open deals see them (as RestDealController).
+		if ( ! Permissions::can_read_deals( $viewer_id ) ) {
+			return $events;
+		}
+
 		list( $start, $end_inclusive ) = $window;
 		$end_date = substr( $end_inclusive, 0, 10 ); // expected_close_date is a DATE column.
 
 		// Mirror RestDealController: a restricted rep sees only deals they own;
 		// managers see all, or one staffer when $view_user is set.
-		$restricted = Permissions::is_sales_rep( $viewer_id ) && ! PermissionsCompat::has_sales_manager_access( $viewer_id );
+		$restricted = ! \DoubleScale\Pro\Core\UserRoles\PermissionsCompat::sees_all_deals( (int) $viewer_id );
 		$scope_user = $restricted ? $viewer_id : ( $view_user > 0 ? $view_user : 0 );
 
 		$query = DealModel::whereBetween( 'expected_close_date', array( $start, $end_date ) );

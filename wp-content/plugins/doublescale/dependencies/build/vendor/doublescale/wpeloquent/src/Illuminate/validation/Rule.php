@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Validation;
+namespace DoubleScale\Vendor\Illuminate\Validation;
 
-use Illuminate\Support\Traits\Macroable;
-use Illuminate\Contracts\Support\Arrayable;
+use DoubleScale\Vendor\Illuminate\Support\Traits\Macroable;
+use DoubleScale\Vendor\Illuminate\Contracts\Support\Arrayable;
 class Rule
 {
     use Macroable;
@@ -15,7 +15,7 @@ class Rule
      */
     public static function dimensions(array $constraints = [])
     {
-        return new \Illuminate\Validation\Rules\Dimensions($constraints);
+        return new Rules\Dimensions($constraints);
     }
     /**
      * Get a exists constraint builder instance.
@@ -26,7 +26,7 @@ class Rule
      */
     public static function exists($table, $column = 'NULL')
     {
-        return new \Illuminate\Validation\Rules\Exists($table, $column);
+        return new Rules\Exists($table, $column);
     }
     /**
      * Get an in constraint builder instance.
@@ -39,7 +39,7 @@ class Rule
         if ($values instanceof Arrayable) {
             $values = $values->toArray();
         }
-        return new \Illuminate\Validation\Rules\In(\is_array($values) ? $values : \func_get_args());
+        return new Rules\In(\is_array($values) ? $values : \func_get_args());
     }
     /**
      * Get a not_in constraint builder instance.
@@ -52,7 +52,7 @@ class Rule
         if ($values instanceof Arrayable) {
             $values = $values->toArray();
         }
-        return new \Illuminate\Validation\Rules\NotIn(\is_array($values) ? $values : \func_get_args());
+        return new Rules\NotIn(\is_array($values) ? $values : \func_get_args());
     }
     /**
      * Get a required_if constraint builder instance.
@@ -62,7 +62,7 @@ class Rule
      */
     public static function requiredIf($callback)
     {
-        return new \Illuminate\Validation\Rules\RequiredIf($callback);
+        return new Rules\RequiredIf($callback);
     }
     /**
      * Get a unique constraint builder instance.
@@ -73,6 +73,6 @@ class Rule
      */
     public static function unique($table, $column = 'NULL')
     {
-        return new \Illuminate\Validation\Rules\Unique($table, $column);
+        return new Rules\Unique($table, $column);
     }
 }

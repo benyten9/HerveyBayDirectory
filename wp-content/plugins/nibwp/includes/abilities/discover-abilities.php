@@ -25,11 +25,8 @@ if (nibwp_has_ability('mcp-adapter/discover-abilities')) {
 }
 
 wp_register_ability('mcp-adapter/discover-abilities', [
-    'label' => __('Discover Abilities', domain: 'nibwp'),
-    'description' => __(
-        'Discover all available WordPress abilities in the system. Returns a list of all registered abilities with their basic information, plus NIBWP environment instructions.',
-        domain: 'nibwp',
-    ),
+    'label' => __('Discover Abilities', 'nibwp'),
+    'description' => 'Discover all available WordPress abilities in the system. Returns a list of all registered abilities with their basic information, plus NIBWP environment instructions.',
     'category' => 'mcp-adapter',
     'output_schema' => [
         'type' => 'object',

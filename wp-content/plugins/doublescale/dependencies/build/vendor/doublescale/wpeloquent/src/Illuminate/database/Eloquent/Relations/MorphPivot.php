@@ -1,10 +1,10 @@
 <?php
 
-namespace Illuminate\Database\Eloquent\Relations;
+namespace DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations;
 
-use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Builder;
-class MorphPivot extends \Illuminate\Database\Eloquent\Relations\Pivot
+use DoubleScale\Vendor\Illuminate\Support\Str;
+use DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder;
+class MorphPivot extends Pivot
 {
     /**
      * The type of the polymorphic relation.

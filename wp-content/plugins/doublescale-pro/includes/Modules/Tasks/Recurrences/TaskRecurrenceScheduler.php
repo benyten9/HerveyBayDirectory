@@ -11,6 +11,7 @@ namespace DoubleScale\Pro\Modules\Tasks\Recurrences;
 use DoubleScale\Core\Constants\TaskStatus;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskModel;
 use DoubleScale\Pro\Modules\Tasks\Models\TaskRecurrenceModel;
+use DoubleScale\Pro\Modules\Tasks\Services\TaskAssigneeRule;
 use DoubleScale\Pro\Modules\Tasks\Services\TaskCloneService;
 use DoubleScale\Pro\Modules\Tasks\Services\TaskStatusManager;
 use DoubleScale\Pro\Modules\Tasks\Tasks;
@@ -264,20 +265,38 @@ class TaskRecurrenceScheduler {
 	 * @return void
 	 */
 	private function reset_template_for_next_cycle( TaskModel $template, string $occurrence_due_date ): void {
+		$assignee = $this->next_cycle_assignee( $template );
+
 		TaskModel::where( 'id', $template->id )->update(
 			array(
 				'status'       => TaskStatus::PENDING,
 				'completed_at' => null,
 				'due_date'     => $occurrence_due_date,
+				'assigned_to'  => $assignee,
 				'updated_at'   => current_time( 'mysql', true ),
 			)
 		);
 
+		$template->assigned_to  = $assignee;
 		$template->status       = TaskStatus::PENDING;
 		$template->completed_at   = null;
 		$template->due_date       = $occurrence_due_date;
 		$template->updated_at     = current_time( 'mysql', true );
 		$template->reminder_sent_at = null;
+	}
+
+	/**
+	 * Who works the reopened template: someone who lost the record since (a
+	 * finished task never moves with it) hands it to the record's owner, like
+	 * a new occurrence would.
+	 *
+	 * @param TaskModel $template Template task.
+	 * @return int
+	 */
+	private function next_cycle_assignee( TaskModel $template ): int {
+		$assignee = TaskAssigneeRule::allowed_or_owner( (int) $template->entity_type, (int) $template->entity_id, (int) $template->assigned_to );
+
+		return $assignee > 0 ? $assignee : (int) $template->assigned_to;
 	}
 
 	/**
@@ -296,9 +315,11 @@ class TaskRecurrenceScheduler {
 
 		$status_id = $recurrence->resolveOccurrenceStatusId( $template );
 		$reminder_at = $this->compute_occurrence_reminder( $template, $due_date );
+		$assignee    = $this->next_cycle_assignee( $template );
 
 		TaskModel::where( 'id', $template->id )->update(
 			array(
+				'assigned_to'      => $assignee,
 				'status'           => TaskStatus::PENDING,
 				'completed_at'     => null,
 				'due_date'         => $due_date,
@@ -309,6 +330,7 @@ class TaskRecurrenceScheduler {
 			)
 		);
 
+		$template->assigned_to      = $assignee;
 		$template->status           = TaskStatus::PENDING;
 		$template->completed_at     = null;
 		$template->due_date         = $due_date;
@@ -354,7 +376,8 @@ class TaskRecurrenceScheduler {
 			'description'  => $template->description,
 			'entity_type'  => $template->entity_type,
 			'entity_id'    => $template->entity_id,
-			'assigned_to'  => $template->assigned_to,
+			// Someone who lost the record since: the next one goes to its owner.
+			'assigned_to'  => TaskAssigneeRule::allowed_or_owner( (int) $template->entity_type, (int) $template->entity_id, (int) $template->assigned_to ) ?: $template->assigned_to,
 			'task_type'    => $template->task_type,
 			'priority'     => $template->priority,
 			'status'       => TaskStatus::PENDING,

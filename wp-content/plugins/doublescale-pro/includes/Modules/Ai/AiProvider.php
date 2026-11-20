@@ -99,6 +99,78 @@ class AiProvider {
 	}
 
 	/**
+	 * Tokens the last chat() / chat_stream() call used, as the provider
+	 * reported them (0 when it did not).
+	 *
+	 * @var array{input: int, output: int}
+	 */
+	private $last_usage = array(
+		'input'  => 0,
+		'output' => 0,
+	);
+
+	/**
+	 * Sampling temperature of the current chat() / chat_stream() call, null
+	 * for the provider's default (options: temperature).
+	 *
+	 * @var float|null
+	 */
+	private $temperature = null;
+
+	/**
+	 * Tokens the last call used: `input` (prompt) and `output` (answer).
+	 *
+	 * @return array{input: int, output: int}
+	 */
+	public function last_usage(): array {
+		return $this->last_usage;
+	}
+
+	/**
+	 * The temperature as a request field, or nothing for the default.
+	 *
+	 * @return array<string, float>
+	 */
+	private function temperature_field(): array {
+		if ( null === $this->temperature || ! self::accepts_temperature( $this->provider, $this->model ) ) {
+			return array();
+		}
+		return array( 'temperature' => $this->temperature );
+	}
+
+	/**
+	 * Whether the model takes a sampling temperature. Claude Opus 4.7 and
+	 * later, Sonnet 5 and later, Haiku 5 and later and Fable reject it (400),
+	 * so only the older Claude models get one.
+	 *
+	 * @param string $provider Provider.
+	 * @param string $model    Model id.
+	 * @return bool
+	 */
+	public static function accepts_temperature( string $provider, string $model ): bool {
+		if ( 'anthropic' !== $provider ) {
+			return true;
+		}
+		return (bool) preg_match( '/^claude-(3|(opus|sonnet|haiku)-4(-[0-6])?(-\d{8})?$)/', $model );
+	}
+
+	/**
+	 * Keep the provider's latest token figures (streams repeat or split them).
+	 *
+	 * @param int $input  Prompt tokens.
+	 * @param int $output Answer tokens.
+	 * @return void
+	 */
+	private function record_usage( int $input, int $output ): void {
+		if ( $input > 0 ) {
+			$this->last_usage['input'] = $input;
+		}
+		if ( $output > 0 ) {
+			$this->last_usage['output'] = $output;
+		}
+	}
+
+	/**
 	 * Get the model name.
 	 *
 	 * @return string
@@ -219,11 +291,29 @@ class AiProvider {
 	 *     @type string $tool_choice 'auto' | 'none' | specific tool name.
 	 *     @type bool   $json_mode   Request JSON response format.
 	 *     @type int    $max_tokens  Max tokens for response.
+	 *     @type float  $temperature Sampling temperature (default: the provider's).
 	 *     @type int    $timeout     Request timeout in seconds.
 	 * }
 	 * @return array|string|WP_Error Full response array (when tools present) or text string.
 	 */
 	public function chat( array $messages, array $options = array() ) {
+		// A refused key, model or credit marks the setup as failing (AiHealth).
+		return AiHealth::observe( $this->chat_request( $messages, $options ) );
+	}
+
+	/**
+	 * {@see self::chat()} without the health check.
+	 *
+	 * @param array $messages Messages.
+	 * @param array $options  Options.
+	 * @return array|string|WP_Error
+	 */
+	private function chat_request( array $messages, array $options = array() ) {
+		$this->last_usage  = array(
+			'input'  => 0,
+			'output' => 0,
+		);
+		$this->temperature = isset( $options['temperature'] ) ? (float) $options['temperature'] : null;
 		$json_mode   = $options['json_mode'] ?? false;
 		$max_tokens  = $options['max_tokens'] ?? 4096;
 		$timeout     = $options['timeout'] ?? 120;
@@ -308,6 +398,7 @@ class AiProvider {
 			return $body;
 		}
 
+		$this->record_usage( (int) ( $body['usage']['prompt_tokens'] ?? 0 ), (int) ( $body['usage']['completion_tokens'] ?? 0 ) );
 		return $body['choices'][0]['message']['content'] ?? '';
 	}
 
@@ -331,7 +422,7 @@ class AiProvider {
 			'model'      => $this->model,
 			'messages'   => $messages,
 			'max_tokens' => $max_tokens,
-		);
+		) + $this->temperature_field();
 
 		if ( $json_mode ) {
 			$body['response_format'] = array( 'type' => 'json_object' );
@@ -379,6 +470,7 @@ class AiProvider {
 			return $parsed;
 		}
 
+		$this->record_usage( (int) ( $parsed['usage']['prompt_tokens'] ?? 0 ), (int) ( $parsed['usage']['completion_tokens'] ?? 0 ) );
 		return $parsed['choices'][0]['message']['content'] ?? '';
 	}
 
@@ -434,7 +526,25 @@ class AiProvider {
 			return $body;
 		}
 
-		return $body['content'][0]['text'] ?? '';
+		$this->record_usage( (int) ( $body['usage']['input_tokens'] ?? 0 ), (int) ( $body['usage']['output_tokens'] ?? 0 ) );
+		return self::anthropic_text( $body['content'] ?? array() );
+	}
+
+	/**
+	 * The answer text of an Anthropic reply: its text blocks, in order. Newer
+	 * models start with a thinking block, so the first block is not the answer.
+	 *
+	 * @param array $content Content blocks.
+	 * @return string
+	 */
+	private static function anthropic_text( array $content ): string {
+		$text = '';
+		foreach ( $content as $block ) {
+			if ( 'text' === ( $block['type'] ?? '' ) ) {
+				$text .= (string) ( $block['text'] ?? '' );
+			}
+		}
+		return $text;
 	}
 
 	/**
@@ -492,6 +602,7 @@ class AiProvider {
 			return $body;
 		}
 
+		$this->record_usage( (int) ( $body['usageMetadata']['promptTokenCount'] ?? 0 ), (int) ( $body['usageMetadata']['candidatesTokenCount'] ?? 0 ) );
 		return $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
 	}
 
@@ -509,7 +620,7 @@ class AiProvider {
 		// Reasoning models (gpt-5, o1, o3) use max_completion_tokens which covers
 		// both internal reasoning AND visible output. Non-reasoning models use
 		// max_tokens which only counts output.
-		$is_reasoning = (bool) preg_match( '/^(gpt-5|o[1-9])/', $this->model );
+		$is_reasoning = (bool) preg_match( '/^(gpt-([5-9]|\d{2})|o[1-9])/', $this->model );
 		$token_key    = $is_reasoning ? 'max_completion_tokens' : 'max_tokens';
 		$token_budget = $is_reasoning ? max( $max_tokens * 4, 32768 ) : $max_tokens;
 
@@ -518,6 +629,10 @@ class AiProvider {
 			'messages' => $messages,
 			$token_key => $token_budget,
 		);
+		// Reasoning models only accept their default temperature.
+		if ( ! $is_reasoning ) {
+			$body += $this->temperature_field();
+		}
 
 		if ( $json_mode ) {
 			$body['response_format'] = array( 'type' => 'json_object' );
@@ -619,7 +734,7 @@ class AiProvider {
 			'model'      => $this->model,
 			'max_tokens' => $max_tokens,
 			'messages'   => $anthropic_msgs,
-		);
+		) + $this->temperature_field();
 
 		// Prompt caching: the FIRST system message is treated as the stable
 		// prefix (role/business instructions) and marked with cache_control so
@@ -722,7 +837,7 @@ class AiProvider {
 			'contents'         => $contents,
 			'generationConfig' => array(
 				'maxOutputTokens' => $max_tokens,
-			),
+			) + $this->temperature_field(),
 		);
 
 		if ( ! empty( trim( $system_instruction ) ) ) {
@@ -762,8 +877,25 @@ class AiProvider {
 	 * @return array|string|WP_Error
 	 */
 	public function chat_stream( array $messages, array $options, callable $on_delta ) {
+		return AiHealth::observe( $this->chat_stream_request( $messages, $options, $on_delta ) );
+	}
+
+	/**
+	 * {@see self::chat_stream()} without the health check.
+	 *
+	 * @param array    $messages Messages.
+	 * @param array    $options  Options.
+	 * @param callable $on_delta Delta callback.
+	 * @return array|string|WP_Error
+	 */
+	private function chat_stream_request( array $messages, array $options, callable $on_delta ) {
+		$this->last_usage  = array(
+			'input'  => 0,
+			'output' => 0,
+		);
+		$this->temperature = isset( $options['temperature'] ) ? (float) $options['temperature'] : null;
 		if ( ! function_exists( 'curl_init' ) ) {
-			return $this->chat( $messages, $options );
+			return $this->chat_request( $messages, $options );
 		}
 
 		$json_mode   = $options['json_mode'] ?? false;
@@ -797,7 +929,7 @@ class AiProvider {
 					'model'      => $this->model,
 					'messages'   => $messages,
 					'max_tokens' => $max_tokens,
-				);
+				) + $this->temperature_field();
 				if ( $json_mode ) {
 					$body['response_format'] = array( 'type' => 'json_object' );
 				}
@@ -841,6 +973,11 @@ class AiProvider {
 	 */
 	private function stream_openai_compatible( string $url, array $headers, array $body, int $timeout, callable $on_delta, bool $with_tools ) {
 		$body['stream'] = true;
+		// OpenAI sends token usage in a last chunk only when asked; other
+		// compatible servers may reject the option, so only OpenAI gets it.
+		if ( 0 === strpos( $url, 'https://api.openai.com/' ) ) {
+			$body['stream_options'] = array( 'include_usage' => true );
+		}
 
 		$state = array(
 			'content'    => '',
@@ -853,6 +990,9 @@ class AiProvider {
 				return;
 			}
 			$json  = json_decode( $payload, true );
+			if ( isset( $json['usage'] ) && is_array( $json['usage'] ) ) {
+				$this->record_usage( (int) ( $json['usage']['prompt_tokens'] ?? 0 ), (int) ( $json['usage']['completion_tokens'] ?? 0 ) );
+			}
 			$delta = $json['choices'][0]['delta'] ?? array();
 
 			if ( isset( $delta['content'] ) && is_string( $delta['content'] ) && '' !== $delta['content'] ) {
@@ -953,12 +1093,13 @@ class AiProvider {
 							'input' => array(),
 						);
 						$state['json_parts'][ $idx ] = '';
-					} else {
+					} elseif ( 'text' === ( $block['type'] ?? 'text' ) ) {
 						$state['blocks'][ $idx ] = array(
 							'type' => 'text',
 							'text' => $block['text'] ?? '',
 						);
 					}
+					// Thinking blocks (newer models think first) are not the answer.
 					break;
 
 				case 'content_block_delta':
@@ -975,7 +1116,12 @@ class AiProvider {
 					}
 					break;
 
+				case 'message_start':
+					$this->record_usage( (int) ( $json['message']['usage']['input_tokens'] ?? 0 ), 0 );
+					break;
+
 				case 'message_delta':
+					$this->record_usage( 0, (int) ( $json['usage']['output_tokens'] ?? 0 ) );
 					if ( ! empty( $json['delta']['stop_reason'] ) ) {
 						$state['stop_reason'] = $json['delta']['stop_reason'];
 					}
@@ -1019,13 +1165,7 @@ class AiProvider {
 			return $response;
 		}
 
-		foreach ( $response['content'] as $block ) {
-			if ( 'text' === ( $block['type'] ?? '' ) ) {
-				return $block['text'] ?? '';
-			}
-		}
-
-		return '';
+		return self::anthropic_text( $response['content'] );
 	}
 
 	/**
@@ -1050,6 +1190,9 @@ class AiProvider {
 
 		$on_line = function ( string $payload ) use ( &$state, $on_delta ) {
 			$json  = json_decode( $payload, true );
+			if ( isset( $json['usageMetadata'] ) && is_array( $json['usageMetadata'] ) ) {
+				$this->record_usage( (int) ( $json['usageMetadata']['promptTokenCount'] ?? 0 ), (int) ( $json['usageMetadata']['candidatesTokenCount'] ?? 0 ) );
+			}
 			$parts = $json['candidates'][0]['content']['parts'] ?? array();
 
 			foreach ( $parts as $part ) {
@@ -1268,6 +1411,11 @@ class AiProvider {
 	/**
 	 * Fetch available GPT models from OpenAI.
 	 *
+	 * Lists every chat model the key can use, newest first: GPT (4o, 4.1, 5.x
+	 * and later) and the o-series. Left out: audio, realtime, speech,
+	 * image, embedding, search and moderation models, `-pro` models (Responses
+	 * API only), and dated snapshots (the plain name always points at the latest).
+	 *
 	 * @param string $api_key Api key.
 	 * @return array|WP_Error
 	 */
@@ -1297,135 +1445,246 @@ class AiProvider {
 
 		$models = array();
 		foreach ( $body['data'] ?? array() as $model ) {
-			$id = $model['id'] ?? '';
-			if ( ! preg_match( '/^gpt-(4o(-mini)?|4\.1(-mini|-nano)?|5(\.\d+)?(-mini)?)$/', $id ) ) {
+			$id = (string) ( $model['id'] ?? '' );
+			if ( ! self::is_openai_chat_model( $id ) ) {
 				continue;
 			}
 			$models[] = array(
-				'value' => $id,
-				'label' => $id,
+				'value'   => $id,
+				'label'   => $id,
+				'created' => (int) ( $model['created'] ?? 0 ),
 			);
 		}
 
 		usort(
 			$models,
 			function ( $a, $b ) {
-				return strcmp( $b['value'], $a['value'] );
+				return array( $b['created'], $b['value'] ) <=> array( $a['created'], $a['value'] );
 			}
 		);
 
-		return $models;
+		return array_map(
+			function ( $model ) {
+				unset( $model['created'] );
+				return $model;
+			},
+			$models
+		);
 	}
 
 	/**
-	 * Return Anthropic Claude models.
+	 * Whether an OpenAI model id is a chat model worth offering.
+	 *
+	 * @param string $id Model id.
+	 * @return bool
+	 */
+	public static function is_openai_chat_model( string $id ): bool {
+		if ( ! preg_match( '/^(gpt-(4o|4\.\d|[5-9]|\d{2})|o[1-9])/', $id ) ) {
+			return false;
+		}
+		if ( preg_match( '/audio|realtime|tts|transcribe|image|embedding|search|moderation|instruct|computer-use|codex|research|-pro(\b|-|$)/', $id ) ) {
+			return false;
+		}
+		// Dated snapshots (gpt-4o-2024-08-06, gpt-5-2025-08-07).
+		return ! preg_match( '/-\d{4}-\d{2}-\d{2}$/', $id );
+	}
+
+	/**
+	 * Return Anthropic Claude models, newest first (the order the API lists
+	 * them in). Reads every page: the API returns 20 per page unless asked.
 	 *
 	 * @param string $api_key Api key.
 	 * @return array|WP_Error
 	 */
 	private static function fetch_anthropic_models( string $api_key ) {
-		$response = wp_remote_get(
-			'https://api.anthropic.com/v1/models',
-			array(
-				'timeout' => 15,
-				'headers' => array(
-					'x-api-key'         => $api_key,
-					'anthropic-version' => '2023-06-01',
-					'anthropic-beta'    => 'models-list-2025-02-19',
-				),
-			)
-		);
+		$models   = array();
+		$after_id = '';
+		$failed   = null;
 
-		if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
-			$models = array();
+		for ( $page = 0; $page < 10; $page++ ) {
+			$url = add_query_arg(
+				array_filter(
+					array(
+						'limit'    => 1000,
+						'after_id' => $after_id,
+					)
+				),
+				'https://api.anthropic.com/v1/models'
+			);
+
+			$response = wp_remote_get(
+				$url,
+				array(
+					'timeout' => 15,
+					'headers' => array(
+						'x-api-key'         => $api_key,
+						'anthropic-version' => '2023-06-01',
+					),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				$failed = new WP_Error( 'fetch_failed', $response->get_error_message(), array( 'status' => 502 ) );
+				break;
+			}
+
+			$code = wp_remote_retrieve_response_code( $response );
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( 200 !== $code ) {
+				$failed = new WP_Error(
+					'anthropic_error',
+					$body['error']['message'] ?? __( 'Failed to fetch Anthropic models.', 'doublescale' ),
+					array( 'status' => $code )
+				);
+				break;
+			}
+
 			foreach ( $body['data'] ?? array() as $model ) {
-				$id = $model['id'] ?? '';
-				if ( strpos( $id, 'claude' ) === 0 ) {
+				$id = (string) ( $model['id'] ?? '' );
+				if ( 0 === strpos( $id, 'claude' ) ) {
 					$models[] = array(
 						'value' => $id,
 						'label' => $model['display_name'] ?? $id,
 					);
 				}
 			}
-			if ( ! empty( $models ) ) {
-				return $models;
+
+			if ( empty( $body['has_more'] ) || empty( $body['last_id'] ) ) {
+				break;
 			}
+			$after_id = (string) $body['last_id'];
 		}
 
-		// Fallback to well-known current models.
+		if ( ! empty( $models ) ) {
+			return $models;
+		}
+		// A wrong key says so; the list below is only for a provider that
+		// answered without models.
+		if ( $failed instanceof WP_Error && in_array( (int) ( $failed->get_error_data()['status'] ?? 0 ), array( 401, 403 ), true ) ) {
+			return $failed;
+		}
+
 		return array(
 			array(
-				'value' => 'claude-opus-4-7',
-				'label' => 'Claude Opus 4.7',
+				'value' => 'claude-opus-5-5',
+				'label' => 'Claude Opus 5.5',
 			),
 			array(
-				'value' => 'claude-opus-4-6',
-				'label' => 'Claude Opus 4.6',
+				'value' => 'claude-sonnet-5-5',
+				'label' => 'Claude Sonnet 5.5',
+			),
+			array(
+				'value' => 'claude-haiku-5-5',
+				'label' => 'Claude Haiku 5.5',
+			),
+			array(
+				'value' => 'claude-opus-4-8',
+				'label' => 'Claude Opus 4.8',
 			),
 			array(
 				'value' => 'claude-sonnet-4-6',
 				'label' => 'Claude Sonnet 4.6',
 			),
 			array(
-				'value' => 'claude-haiku-4-5-20251001',
+				'value' => 'claude-haiku-4-5',
 				'label' => 'Claude Haiku 4.5',
 			),
 		);
 	}
 
 	/**
-	 * Fetch available Gemini models from Google.
+	 * Fetch available Gemini models from Google. Reads every page (the API
+	 * returns 50 per page unless asked) and lists the newest versions first.
 	 *
 	 * @param string $api_key Api key.
 	 * @return array|WP_Error
 	 */
 	private static function fetch_gemini_models( string $api_key ) {
-		$response = wp_remote_get(
-			'https://generativelanguage.googleapis.com/v1beta/models',
-			array(
-				'timeout' => 15,
-				'headers' => array( 'x-goog-api-key' => $api_key ),
-			)
+		$models = array();
+		$token  = '';
+
+		for ( $page = 0; $page < 10; $page++ ) {
+			$url = add_query_arg(
+				array_filter(
+					array(
+						'pageSize'  => 1000,
+						'pageToken' => $token,
+					)
+				),
+				'https://generativelanguage.googleapis.com/v1beta/models'
+			);
+
+			$response = wp_remote_get(
+				$url,
+				array(
+					'timeout' => 15,
+					'headers' => array( 'x-goog-api-key' => $api_key ),
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return new WP_Error( 'fetch_failed', $response->get_error_message(), array( 'status' => 502 ) );
+			}
+
+			$code = wp_remote_retrieve_response_code( $response );
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+			if ( 200 !== $code ) {
+				if ( ! empty( $models ) ) {
+					break;
+				}
+				return new WP_Error(
+					'gemini_error',
+					$body['error']['message'] ?? __( 'Failed to fetch Gemini models.', 'doublescale' ),
+					array( 'status' => $code )
+				);
+			}
+
+			foreach ( $body['models'] ?? array() as $model ) {
+				if ( ! in_array( 'generateContent', $model['supportedGenerationMethods'] ?? array(), true ) ) {
+					continue;
+				}
+
+				$id = str_replace( 'models/', '', $model['name'] ?? '' );
+
+				if ( preg_match( '/tts|image|robotics|computer.use|research|banana|nano|embedding|aqa|live|audio/', $id ) ) {
+					continue;
+				}
+				if ( strpos( $id, 'gemma' ) === 0 || strpos( $id, 'gemini' ) !== 0 ) {
+					continue;
+				}
+
+				$models[] = array(
+					'value' => $id,
+					'label' => $model['displayName'] ?? $id,
+				);
+			}
+
+			$token = (string) ( $body['nextPageToken'] ?? '' );
+			if ( '' === $token ) {
+				break;
+			}
+		}
+
+		// Newest version first (gemini-3.1-… before gemini-2.5-…), then by name.
+		usort(
+			$models,
+			function ( $a, $b ) {
+				return array( self::gemini_version( $b['value'] ), $a['value'] ) <=> array( self::gemini_version( $a['value'] ), $b['value'] );
+			}
 		);
 
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'fetch_failed', $response->get_error_message(), array( 'status' => 502 ) );
-		}
-
-		$code = wp_remote_retrieve_response_code( $response );
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-		if ( 200 !== $code ) {
-			return new WP_Error(
-				'gemini_error',
-				$body['error']['message'] ?? __( 'Failed to fetch Gemini models.', 'doublescale' ),
-				array( 'status' => $code )
-			);
-		}
-
-		$models = array();
-		foreach ( $body['models'] ?? array() as $model ) {
-			if ( ! in_array( 'generateContent', $model['supportedGenerationMethods'] ?? array(), true ) ) {
-				continue;
-			}
-
-			$id = str_replace( 'models/', '', $model['name'] ?? '' );
-
-			if ( preg_match( '/tts|image|robotics|computer.use|research|banana|nano/', $id ) ) {
-				continue;
-			}
-			if ( strpos( $id, 'gemma' ) === 0 ) {
-				continue;
-			}
-
-			$models[] = array(
-				'value' => $id,
-				'label' => $model['displayName'] ?? $id,
-			);
-		}
-
 		return $models;
+	}
+
+	/**
+	 * The version number in a Gemini model id (gemini-3.1-pro → 3.1).
+	 *
+	 * @param string $id Model id.
+	 * @return float
+	 */
+	private static function gemini_version( string $id ): float {
+		return preg_match( '/^gemini-(\d+(?:\.\d+)?)/', $id, $m ) ? (float) $m[1] : 0.0;
 	}
 
 	/**
@@ -1503,7 +1762,7 @@ class AiProvider {
 	public static function get_default_model( string $provider ): string {
 		$defaults = array(
 			'openai'    => 'gpt-5-mini',
-			'anthropic' => 'claude-haiku-4-5-20251001',
+			'anthropic' => 'claude-haiku-4-5',
 			'gemini'    => 'gemini-3.1-flash-lite',
 		);
 
@@ -1546,5 +1805,131 @@ class AiProvider {
 		}
 
 		return "\n\nAvailable merge tags for personalization (use exactly as shown):\n" . implode( "\n", $lines );
+	}
+
+	/**
+	 * Dimensions of a meaning fingerprint (embedding): short enough to store
+	 * and compare cheaply, long enough to keep the meaning.
+	 */
+	private const EMBEDDING_DIMENSIONS = 256;
+
+	/**
+	 * Whether this provider can give meaning fingerprints. OpenAI and Gemini
+	 * can; Anthropic has no such API, and OpenAI-compatible servers name their
+	 * models differently, so both stay on word search.
+	 *
+	 * @return bool
+	 */
+	public function supports_embeddings(): bool {
+		return in_array( $this->provider, array( 'openai', 'gemini' ), true ) && '' !== $this->api_key;
+	}
+
+	/**
+	 * Name of the fingerprints this provider makes; passages fingerprinted
+	 * under another name are made again.
+	 *
+	 * @return string
+	 */
+	public function embedding_model(): string {
+		$model = 'gemini' === $this->provider ? 'gemini-embedding-001' : 'text-embedding-3-small';
+
+		return $this->provider . ':' . $model . ':' . self::EMBEDDING_DIMENSIONS;
+	}
+
+	/**
+	 * Meaning fingerprints of $texts, in order.
+	 *
+	 * @param string[]             $texts   Texts (at most 100).
+	 * @param array<string, mixed> $options timeout: seconds for the whole call (default 30).
+	 * @return array<int, float[]>|WP_Error
+	 */
+	public function embed( array $texts, array $options = array() ) {
+		$timeout          = max( 1, (int) ( $options['timeout'] ?? 30 ) );
+		$this->last_usage = array(
+			'input'  => 0,
+			'output' => 0,
+		);
+		$texts = array_values( array_map( 'strval', $texts ) );
+		if ( ! $this->supports_embeddings() ) {
+			return new WP_Error( 'ai_no_embeddings', __( 'This AI provider does not offer embeddings.', 'doublescale' ) );
+		}
+		if ( array() === $texts ) {
+			return array();
+		}
+
+		if ( 'gemini' === $this->provider ) {
+			$requests = array();
+			foreach ( $texts as $text ) {
+				$requests[] = array(
+					'model'                => 'models/gemini-embedding-001',
+					'content'              => array( 'parts' => array( array( 'text' => $text ) ) ),
+					'outputDimensionality' => self::EMBEDDING_DIMENSIONS,
+				);
+			}
+			$response = self::request_with_retry(
+				'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents',
+				array(
+					'timeout' => $timeout,
+					'headers' => array(
+						'Content-Type'   => 'application/json',
+						'x-goog-api-key' => $this->api_key,
+					),
+					'body'    => wp_json_encode( array( 'requests' => $requests ) ),
+				)
+			);
+		} else {
+			$response = self::request_with_retry(
+				'https://api.openai.com/v1/embeddings',
+				array(
+					'timeout' => $timeout,
+					'headers' => array(
+						'Content-Type'  => 'application/json',
+						'Authorization' => 'Bearer ' . $this->api_key,
+					),
+					'body'    => wp_json_encode(
+						array(
+							'model'      => 'text-embedding-3-small',
+							'input'      => $texts,
+							'dimensions' => self::EMBEDDING_DIMENSIONS,
+						)
+					),
+				)
+			);
+		}
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'ai_request_failed', $response->get_error_message(), array( 'status' => 502 ) );
+		}
+		$code = wp_remote_retrieve_response_code( $response );
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( 200 !== $code || ! is_array( $body ) ) {
+			return new WP_Error( 'ai_api_error', (string) ( $body['error']['message'] ?? 'Embedding request failed' ), array( 'status' => $code ) );
+		}
+
+		$vectors = array();
+		if ( 'gemini' === $this->provider ) {
+			foreach ( (array) ( $body['embeddings'] ?? array() ) as $item ) {
+				$vectors[] = array_map( 'floatval', (array) ( $item['values'] ?? array() ) );
+			}
+			$this->record_usage( 0, 0 );
+		} else {
+			$rows = (array) ( $body['data'] ?? array() );
+			usort(
+				$rows,
+				static function ( $a, $b ) {
+					return (int) ( $a['index'] ?? 0 ) <=> (int) ( $b['index'] ?? 0 );
+				}
+			);
+			foreach ( $rows as $row ) {
+				$vectors[] = array_map( 'floatval', (array) ( $row['embedding'] ?? array() ) );
+			}
+			$this->record_usage( (int) ( $body['usage']['prompt_tokens'] ?? 0 ), 0 );
+		}
+
+		if ( count( $vectors ) !== count( $texts ) ) {
+			return new WP_Error( 'ai_api_error', 'Embedding count mismatch', array( 'status' => 502 ) );
+		}
+
+		return $vectors;
 	}
 }

@@ -1,9 +1,9 @@
 <?php
 
-namespace Illuminate\Contracts\Foundation;
+namespace DoubleScale\Vendor\Illuminate\Contracts\Foundation;
 
 use Closure;
-use Illuminate\Contracts\Container\Container;
+use DoubleScale\Vendor\Illuminate\Contracts\Container\Container;
 interface Application extends Container
 {
     /**

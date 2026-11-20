@@ -1,8 +1,8 @@
 <?php
 
-namespace WPEloquent\WP;
+namespace DoubleScale\Vendor\WPEloquent\WP;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 class PostMeta extends Model
 {
     protected $table = 'postmeta';

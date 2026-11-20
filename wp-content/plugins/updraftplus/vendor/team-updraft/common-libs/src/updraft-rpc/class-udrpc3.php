@@ -492,6 +492,9 @@ class UpdraftPlus_Remote_Communications_V3 {
 		$cipherlen = substr($message, ($len + 3), 16);
 		$cipherlen = hexdec($cipherlen);
 
+		// Despite the hexdec() manual, this can return a float, e.g. hexdec('8000000000000000'). It's impossible under normal code execution, but this is a necessary precaution to prevent fatal errors.
+		if (!is_int($cipherlen)) return false;
+
 		$ciphertext = substr($message, ($len + 19), $cipherlen);
 		$ciphertext = base64_decode($ciphertext);
 

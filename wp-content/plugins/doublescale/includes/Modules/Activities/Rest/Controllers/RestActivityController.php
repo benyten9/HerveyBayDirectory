@@ -25,7 +25,10 @@ use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Activities\Models\ActivityCommentModel;
 use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Services\ActivityManager;
+use DoubleScale\Modules\Activities\Services\FileActivityPresenter;
 use DoubleScale\Core\UserRoles\Permissions;
+use DoubleScale\Core\Scope\OwnerScope;
+use DoubleScale\Modules\Contacts\Models\ContactModel;
 use DoubleScale\Core\Constants\ActivityTypes;
 use WP_Error;
 use WP_REST_Request;
@@ -259,6 +262,11 @@ class RestActivityController extends RestController {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_items( $request ) {
+		$contact_guard = $this->guard_contact_scope( $request );
+		if ( is_wp_error( $contact_guard ) ) {
+			return $contact_guard;
+		}
+
 		// Check Pro availability.
 		$pro_active = doublescale_pro_task_model_available();
 
@@ -348,6 +356,11 @@ class RestActivityController extends RestController {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_timeline( $request ) {
+		$contact_guard = $this->guard_contact_scope( $request );
+		if ( is_wp_error( $contact_guard ) ) {
+			return $contact_guard;
+		}
+
 		// Check Pro availability.
 		$pro_active = doublescale_pro_task_model_available();
 
@@ -411,6 +424,11 @@ class RestActivityController extends RestController {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function get_upcoming( $request ) {
+		$contact_guard = $this->guard_contact_scope( $request );
+		if ( is_wp_error( $contact_guard ) ) {
+			return $contact_guard;
+		}
+
 		// Normalize entity_type to integer constant.
 		$entity_type = $this->normalize_entity_type( $request->get_param( 'entity_type' ) );
 
@@ -488,7 +506,10 @@ class RestActivityController extends RestController {
 			'activity_type'     => $activity->activity_type,
 			'contact_id'        => $activity->contact_id ? (int) $activity->contact_id : null,
 			'deal_id'           => $activity->deal_id ? (int) $activity->deal_id : null,
-			'data'              => $activity->data,
+			'data'              => FileActivityPresenter::refresh_data(
+				(string) $activity->activity_type,
+				is_array( $activity->data ) ? $activity->data : array()
+			),
 			'user_id'           => $activity->user_id ? (int) $activity->user_id : null,
 			'user'              => $user,
 			'formatted_message' => $activity->formatted_message,
@@ -630,6 +651,11 @@ class RestActivityController extends RestController {
 	 * @return WP_REST_Response|WP_Error Response object on success, or WP_Error object on failure.
 	 */
 	public function add_note( $request ) {
+		$contact_guard = $this->guard_contact_scope( $request );
+		if ( is_wp_error( $contact_guard ) ) {
+			return $contact_guard;
+		}
+
 		$data = array(
 			'contact_id'  => $request->get_param( 'contact_id' ),
 			'entity_id'   => $request->get_param( 'entity_id' ),
@@ -1332,11 +1358,51 @@ class RestActivityController extends RestController {
 	 * @return bool
 	 */
 	private function user_can_access_activities( WP_REST_Request $request, bool $require_manage ): bool {
-		if ( Permissions::has_sales_rep_access() ) {
+		if ( Permissions::has_agent_access() ) {
+			return true;
+		}
+
+		if ( $this->user_can_access_contact_activities( $request, $require_manage ) ) {
 			return true;
 		}
 
 		return $this->user_can_access_project_scoped_activities( $request, $require_manage );
+	}
+
+	/**
+	 * Every team role that reads contacts works the timeline of a contact it
+	 * can see (Campaign, Support, Booking, Project and Automation roles): it
+	 * reads the activities and logs its own notes, calls and meetings.
+	 * Changing or deleting an activity stays with the person who logged it.
+	 *
+	 * @param WP_REST_Request $request        Full data about the request.
+	 * @param bool            $require_manage True for create, update and delete.
+	 *
+	 * @return bool
+	 */
+	private function user_can_access_contact_activities( WP_REST_Request $request, bool $require_manage ): bool {
+		if ( ! Permissions::can_read_contacts() ) {
+			return false;
+		}
+
+		$contact_id  = (int) $request->get_param( 'contact_id' );
+		$activity_id = (int) $request->get_param( 'id' );
+
+		if ( $activity_id > 0 ) {
+			$activity = ActivityModel::find( $activity_id );
+			if ( ! $activity || ( $require_manage && (int) $activity->user_id !== (int) get_current_user_id() ) ) {
+				return false;
+			}
+			$contact_id = (int) $activity->contact_id;
+		}
+
+		if ( $contact_id <= 0 ) {
+			return false;
+		}
+
+		$contact = ContactModel::find( $contact_id );
+
+		return $contact && OwnerScope::current()->can_view_contact( $contact );
 	}
 
 	/**
@@ -1422,4 +1488,28 @@ class RestActivityController extends RestController {
 				return new WP_Error( 'access_denied', __( 'Access denied', 'doublescale' ), array( 'status' => 403 ) );
 		}
 	}
+
+	/**
+	 * A contact-scoped activity request (contact_id, or entity_type=contact)
+	 * needs a contact the caller can see. Invisible contacts answer 404, the
+	 * same as a contact that does not exist.
+	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 *
+	 * @return true|WP_Error
+	 */
+	private function guard_contact_scope( $request ) {
+		$contact_id = (int) $request->get_param( 'contact_id' );
+		if ( $contact_id <= 0
+			&& \DoubleScale\Modules\Activities\Models\ActivityAssociationModel::ENTITY_TYPE_CONTACT === (int) $this->normalize_entity_type( $request->get_param( 'entity_type' ) ) ) {
+			$contact_id = (int) $request->get_param( 'entity_id' );
+		}
+
+		if ( $contact_id > 0 && ! ActivityManager::instance()->can_access_contact_activities( $contact_id ) ) {
+			return new WP_Error( 'not_found', __( 'Contact not found', 'doublescale' ), array( 'status' => 404 ) );
+		}
+
+		return true;
+	}
+
 }

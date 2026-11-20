@@ -78,12 +78,28 @@ class AnalyticsSettings implements ExecuteHooks {
 	public function processPost( \WP_REST_Request $request ) {
 		$new_options = $request->get_json_params();
 
-		if ( empty( $new_options ) || ! is_array( $new_options ) ) {
+		// An empty object is a valid payload: it is what a settings screen sends
+		// when nothing has ever been saved for it and no field was touched.
+		// Rejecting it told the user their data was invalid for pressing Save on
+		// an untouched page. Only a body that is not an array is invalid.
+		if ( ! is_array( $new_options ) ) {
 			return new \WP_Error(
 				'invalid_data',
 				__( 'Invalid data provided.', 'wp-seopress' ),
 				array( 'status' => 400 )
 			);
+		}
+
+		if ( array_key_exists( 'seopress_google_analytics_linker_domains', $new_options ) ) {
+			$domains = \SEOPress\Services\Options\GoogleAnalyticsOption::parse_linker_domains( $new_options['seopress_google_analytics_linker_domains'] );
+			if ( is_wp_error( $domains ) ) {
+				$domains->add_data( array( 'status' => 400 ) );
+				return $domains;
+			}
+			$new_options['seopress_google_analytics_linker_domains'] = implode( ', ', $domains );
+		}
+		if ( isset( $new_options['seopress_google_analytics_linker_accept_incoming'] ) && ! in_array( $new_options['seopress_google_analytics_linker_accept_incoming'], array( '', '1', '0' ), true ) ) {
+			return new \WP_Error( 'invalid_linker_incoming', __( 'Choose a valid incoming linker setting.', 'wp-seopress' ), array( 'status' => 400 ) );
 		}
 
 		// Sanitize using the same function as PHP form saves.

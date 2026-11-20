@@ -13,7 +13,7 @@ namespace DoubleScale\Modules\Contacts\Models;
 
 defined( 'ABSPATH' ) || exit;
 
-use WPEloquent\Eloquent\Model;
+use DoubleScale\Vendor\WPEloquent\Eloquent\Model;
 use DoubleScale\Modules\Contacts\Models\ListModel;
 use DoubleScale\Modules\Contacts\Models\TagModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
@@ -56,6 +56,16 @@ class ContactModel extends Model {
 	protected $primary_key = 'id';
 
 	/**
+	 * Attribute casts. The owner is a user id: a number in every response,
+	 * so it compares equal to the current user's id in the admin.
+	 *
+	 * @var array
+	 */
+	protected $casts = array(
+		'owner_id' => 'integer',
+	);
+
+	/**
 	 * Fillable columns
 	 *
 	 * @var array
@@ -83,6 +93,7 @@ class ContactModel extends Model {
 		'email_status',
 		'sms_status',
 		'whatsapp_status',
+		'owner_id',
 		'created_at',
 		'updated_at',
 	);
@@ -152,7 +163,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function lists() {
 		return $this->belongsToMany( ListModel::class, 'doublescale_contact_taxonomy_relationship', 'contact_id', 'taxonomy_id' )
@@ -166,7 +177,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function tags() {
 		return $this->belongsToMany( TagModel::class, 'doublescale_contact_taxonomy_relationship', 'contact_id', 'taxonomy_id' )
@@ -180,13 +191,18 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany|null
 	 */
 	public function custom_fields() {
 		if ( class_exists( 'DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel' ) ) {
-			return $this->belongsToMany( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class, 'doublescale_custom_field_relationship', 'entity_id', 'custom_field_id' )
+			$relation = $this->belongsToMany( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class, 'doublescale_custom_field_relationship', 'entity_id', 'custom_field_id' )
 				->withPivot( 'value' )
 				->wherePivot( 'entity_type', 'contact' );
+			// In the order the admin set in Pro (older Pro: as stored).
+			if ( method_exists( \DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel::class, 'scopeOrdered' ) ) {
+				$relation->ordered();
+			}
+			return $relation;
 		}
 		return null;
 	}
@@ -196,10 +212,54 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
 	 */
 	public function user() {
 		return $this->belongsTo( UserModel::class, 'email', 'user_email' );
+	}
+
+	/**
+	 * The team member who owns this contact (null = unassigned pool).
+	 *
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsTo
+	 */
+	public function owner() {
+		return $this->belongsTo( UserModel::class, 'owner_id', 'ID' );
+	}
+
+	/**
+	 * Contacts owned by a user.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query   Query.
+	 * @param int                                   $user_id Owner user id.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	public function scopeOwnedBy( $query, int $user_id ) {
+		return $query->where( 'owner_id', $user_id );
+	}
+
+	/**
+	 * Contacts a scope may SEE (owner or collaborator; everything for managers).
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder $query Query.
+	 * @param \DoubleScale\Core\Scope\OwnerScope    $scope Scope.
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
+	 */
+	public function scopeVisibleTo( $query, \DoubleScale\Core\Scope\OwnerScope $scope ) {
+		return $scope->apply_contact_visibility( $query );
+	}
+
+	/**
+	 * Who collaborates on this contact (besides its owner), with the reason.
+	 *
+	 * @return array<int, array{user_id:int, reason:string, added_by:int, created_at:string}>
+	 */
+	public function collaborators(): array {
+		if ( ! $this->exists || ! class_exists( \DoubleScale\Modules\Contacts\Services\ContactCollaboratorService::class ) ) {
+			return array();
+		}
+
+		return \DoubleScale\Modules\Contacts\Services\ContactCollaboratorService::for_contact( (int) $this->id );
 	}
 
 	/**
@@ -207,7 +267,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function campaign_emails() {
 		if ( ! class_exists( '\DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel' ) ) {
@@ -221,7 +281,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function orders() {
 		if ( ! class_exists( '\DoubleScale\Modules\Campaigns\Models\WcOrderModel' ) ) {
@@ -237,7 +297,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function edd_orders() {
 		if ( ! class_exists( EddOrderModel::class ) ) {
@@ -254,7 +314,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function edd_orders_query() {
 		if ( ! class_exists( EddOrderModel::class ) ) {
@@ -287,7 +347,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Builder
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Builder
 	 */
 	public function edd_revenue_orders_query() {
 		return $this->edd_orders_query()
@@ -322,7 +382,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function notes() {
 		return $this->activities()
@@ -335,7 +395,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\BelongsToMany
 	 */
 	public function activities() {
 		return $this->belongsToMany(
@@ -351,7 +411,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function communication_tracking() {
 		if ( ! class_exists( '\DoubleScale\Modules\Tracking\Models\CommunicationTrackingModel' ) ) {
@@ -365,10 +425,10 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function form_submissions() {
-		if ( ! class_exists( '\DoubleScale\Pro\Modules\Forms\Models\FormSubmissionModel' ) ) {
+		if ( ! doublescale_module_data_ready( 'forms' ) || ! class_exists( '\DoubleScale\Pro\Modules\Forms\Models\FormSubmissionModel' ) ) {
 			return $this->hasMany( ActivityModel::class, 'contact_id', 'id' )->whereRaw( '1 = 0' );
 		}
 		return $this->hasMany( \DoubleScale\Pro\Modules\Forms\Models\FormSubmissionModel::class, 'contact_id', 'id' );
@@ -380,11 +440,12 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany|null
 	 */
 	public function page_visits() {
-		if ( class_exists( 'DoubleScale\Modules\WebsiteTracking\Models\PageVisitModel' ) ) {
-			return $this->hasMany( \DoubleScale\Modules\WebsiteTracking\Models\PageVisitModel::class, 'contact_id', 'id' );
+		// Website Tracking's data (Pro): an empty list while it is off.
+		if ( doublescale_module_data_ready( 'websitetracking' ) && class_exists( '\DoubleScale\Pro\Modules\WebsiteTracking\Models\PageVisitModel' ) ) {
+			return $this->hasMany( \DoubleScale\Pro\Modules\WebsiteTracking\Models\PageVisitModel::class, 'contact_id', 'id' );
 		}
 		return $this->hasMany( ActivityModel::class, 'contact_id', 'id' )->whereRaw( '1 = 0' );
 	}
@@ -394,7 +455,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function unsubscribes() {
 		return $this->hasMany( ContactUnsubscribeModel::class, 'contact_id', 'id' );
@@ -426,7 +487,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function automation_contacts() {
 		return $this->hasMany( AutomationContactModel::class, 'contact_id', 'id' );
@@ -437,7 +498,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function processes() {
 		return $this->hasMany( AutomationContactProcessesModel::class, 'contact_id', 'id' );
@@ -448,7 +509,7 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function meta() {
 		return $this->hasMany( ContactMetaModel::class, 'contact_id', 'id' );
@@ -460,14 +521,15 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany|null
 	 */
 	public function deals() {
 		$deal_model = doublescale_resolve_deal_model_class();
 		if ( $deal_model ) {
 			return $this->hasMany( $deal_model, 'contact_id', 'id' );
 		}
-		return null;
+		// Deals are another module's data: an empty list while it is off.
+		return $this->hasMany( static::class, 'id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
@@ -476,14 +538,15 @@ class ContactModel extends Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return \Illuminate\Database\Eloquent\Relations\HasMany|null
+	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany|null
 	 */
 	public function active_deals() {
 		$deal_model = doublescale_resolve_deal_model_class();
 		if ( $deal_model ) {
 			return $this->hasMany( $deal_model, 'contact_id', 'id' )->where( 'status', 'open' );
 		}
-		return null;
+		// Deals are another module's data: an empty list while it is off.
+		return $this->hasMany( static::class, 'id', 'id' )->whereRaw( '1 = 0' );
 	}
 
 	/**
@@ -540,6 +603,66 @@ class ContactModel extends Model {
 	 *
 	 * @return string
 	 */
+	/**
+	 * WordPress users by lower-cased email for this request; false = no user.
+	 * get_user_by() does not remember a miss, so contacts without an account
+	 * cost a query every time they were looked up.
+	 *
+	 * @var array<string, \WP_User|false>
+	 */
+	private static $wp_users_by_email = array();
+
+	/**
+	 * Look up the WordPress users for many emails in one query.
+	 *
+	 * @param string[] $emails Emails.
+	 * @return void
+	 */
+	public static function prime_wp_users( array $emails ) {
+		global $wpdb;
+		$wanted = array();
+		foreach ( $emails as $email ) {
+			$key = strtolower( trim( (string) $email ) );
+			if ( '' !== $key && ! array_key_exists( $key, self::$wp_users_by_email ) ) {
+				$wanted[ $key ] = true;
+			}
+		}
+		if ( ! $wanted ) {
+			return;
+		}
+		$keys         = array_keys( $wanted );
+		$placeholders = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholders only.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ID, user_email FROM {$wpdb->users} WHERE user_email IN ({$placeholders})", $keys ) );
+		$ids  = array();
+		foreach ( (array) $rows as $row ) {
+			$ids[ strtolower( $row->user_email ) ] = (int) $row->ID;
+		}
+		if ( $ids && function_exists( 'cache_users' ) ) {
+			cache_users( array_values( $ids ) );
+		}
+		foreach ( $keys as $key ) {
+			self::$wp_users_by_email[ $key ] = isset( $ids[ $key ] ) ? get_user_by( 'id', $ids[ $key ] ) : false;
+		}
+	}
+
+	/**
+	 * The WordPress user with this email, remembered for the request.
+	 *
+	 * @param string $email Email.
+	 * @return \WP_User|false
+	 */
+	public static function wp_user_for_email( $email ) {
+		$key = strtolower( trim( (string) $email ) );
+		if ( '' === $key ) {
+			return false;
+		}
+		if ( ! array_key_exists( $key, self::$wp_users_by_email ) ) {
+			self::$wp_users_by_email[ $key ] = get_user_by( 'email', $email );
+		}
+		return self::$wp_users_by_email[ $key ];
+	}
+
 	public function getAvatarUrlAttribute() {
 		$avatar_id = ! empty( $this->avatar_id ) ? (int) $this->avatar_id : 0;
 		if ( $avatar_id > 0 ) {
@@ -553,7 +676,7 @@ class ContactModel extends Model {
 		$size  = 96; // Default avatar size
 
 		// Get the user ID if this email belongs to a WordPress user
-		$user    = get_user_by( 'email', $email );
+		$user    = self::wp_user_for_email( $email );
 		$user_id = $user ? $user->ID : 0;
 
 		// Use get_avatar_url() with email and size
@@ -1487,7 +1610,53 @@ class ContactModel extends Model {
 			}
 		}
 
-		return parent::save( $options );
+		$was_stored = $this->exists;
+		$numbers    = array(
+			'phone'          => $this->getOriginal( 'phone' ),
+			'whatsapp_phone' => $this->getOriginal( 'whatsapp_phone' ),
+		);
+
+		$saved = parent::save( $options );
+
+		if ( $saved && $was_stored ) {
+			$this->announce_number_changes( $numbers );
+		}
+
+		return $saved;
+	}
+
+	/**
+	 * Say which numbers this save changed, from wherever it came (the client
+	 * portal, the contact page, an import, an integration), so what is tied to
+	 * the old number can let go of it.
+	 *
+	 * @param array<string, mixed> $before Numbers as stored before the save.
+	 * @return void
+	 */
+	private function announce_number_changes( array $before ): void {
+		foreach ( $before as $field => $old ) {
+			if ( ! $this->wasChanged( $field ) ) {
+				continue;
+			}
+
+			/**
+			 * A contact's phone or WhatsApp number changed (or was removed).
+			 *
+			 * @since 1.6.2
+			 *
+			 * @param ContactModel $contact The saved contact.
+			 * @param string       $field   'phone' or 'whatsapp_phone'.
+			 * @param string       $old     Number before ('' when there was none).
+			 * @param string       $new     Number now ('' when removed).
+			 */
+			do_action(
+				'doublescale_contact_number_changed',
+				$this,
+				$field,
+				(string) $old,
+				(string) $this->getAttribute( $field )
+			);
+		}
 	}
 
 	/**
@@ -1622,6 +1791,14 @@ class ContactModel extends Model {
 			"eloquent.creating: {$model_name}",
 			function ( $contact ) {
 				$contact->hash_id = Utils::generate_hash_key();
+
+				// Every new contact gets an owner: the acting agent, or whoever the
+				// lead-routing rules name for its source (null = unassigned pool).
+				if ( empty( $contact->owner_id ) && class_exists( \DoubleScale\Modules\Contacts\Services\LeadRouter::class ) ) {
+					$contact->owner_id = \DoubleScale\Modules\Contacts\Services\LeadRouter::resolve_for_new_contact(
+						(string) ( $contact->source ?? '' )
+					);
+				}
 			}
 		);
 
@@ -1689,12 +1866,19 @@ class ContactModel extends Model {
 				// Remove contact linkage from remaining activities (emails, calls, etc.).
 				ActivityAssociationModel::delete_for_contact( (int) $contact->id );
 
-				$contact->automation_contacts()->delete();
+				// Its workflow runs, wherever the table exists (also while
+				// Automations is off, so nothing points at a deleted contact).
+				if ( doublescale_table_exists( 'automation_contacts' ) ) {
+					$contact->automation_contacts()->delete();
+				}
+
+				// Nobody collaborates on a contact that no longer exists.
+				\DoubleScale\Modules\Contacts\Services\ContactCollaboratorService::purge_contact( (int) $contact->id );
 			}
 		);
 
 		// Retrieved event (if WooCommerce is active)
-		if ( doublescale_is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+		if ( doublescale_is_plugin_active( 'woocommerce' ) ) {
 			$dispatcher->listen(
 				"eloquent.retrieved: {$model_name}",
 				function ( $contact ) {
@@ -1741,6 +1925,40 @@ class ContactModel extends Model {
 	 *
 	 * @return void
 	 */
+	/**
+	 * Text columns typed by people (public forms, bookings, checkouts, imports)
+	 * and printed as they are by the contact merge tags in every email, SMS and
+	 * WhatsApp message. They never keep markup.
+	 */
+	private const PLAIN_TEXT_FIELDS = array(
+		'first_name',
+		'last_name',
+		'company_name',
+		'company_registration_number',
+		'tax_vat_number',
+		'address_1',
+		'address_2',
+		'city',
+		'state',
+		'country',
+		'zip',
+	);
+
+	/**
+	 * Set an attribute; a person-typed text column is stored as plain text.
+	 *
+	 * @param string $key   Attribute.
+	 * @param mixed  $value Value.
+	 * @return mixed
+	 */
+	public function setAttribute( $key, $value ) {
+		if ( is_string( $value ) && in_array( $key, self::PLAIN_TEXT_FIELDS, true ) && $value !== wp_strip_all_tags( $value ) ) {
+			$value = trim( wp_strip_all_tags( $value ) );
+		}
+
+		return parent::setAttribute( $key, $value );
+	}
+
 	public static function boot() {
 		// Use global flag to prevent multiple event registrations
 		global $doublescale_contact_events_registered;

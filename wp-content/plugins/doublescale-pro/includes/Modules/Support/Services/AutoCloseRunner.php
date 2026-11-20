@@ -31,6 +31,7 @@ namespace DoubleScale\Pro\Modules\Support\Services;
 defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Constants\ActivityTypes;
+use DoubleScale\Modules\Activities\Models\ActivityAssociationModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Modules\Support\Constants\TicketStatus;
 use DoubleScale\Modules\Support\Models\TicketModel;
@@ -55,7 +56,7 @@ final class AutoCloseRunner {
 	 * @return int Number of tickets closed this run.
 	 */
 	public function run(): int {
-		if ( ! class_exists( TicketService::class ) || ! class_exists( TicketModel::class ) ) {
+		if ( ! class_exists( TicketService::class ) || ! doublescale_module_data_ready( 'support' ) ) {
 			return 0;
 		}
 
@@ -199,7 +200,16 @@ final class AutoCloseRunner {
 	 * @return ActivityModel|null
 	 */
 	private function latest_reply( int $ticket_id ): ?ActivityModel {
-		$reply = ActivityModel::forTicket( $ticket_id )
+		// Not forTicket(): its "oldest first" comes before any order added here,
+		// so this returned the opening message instead of the newest reply.
+		$reply = ActivityModel::query()
+			->whereHas(
+				'associations',
+				static function ( $q ) use ( $ticket_id ) {
+					$q->where( 'entity_type', ActivityAssociationModel::ENTITY_TYPE_TICKET )
+						->where( 'entity_id', $ticket_id );
+				}
+			)
 			->where( 'activity_type', ActivityTypes::SUPPORT_REPLY )
 			->orderBy( 'created_at', 'desc' )
 			->orderBy( 'id', 'desc' )
@@ -227,10 +237,12 @@ final class AutoCloseRunner {
 		}
 
 		// author_user_id is forced null: the cron context has no logged-in agent,
-		// and the note is system-generated.
+		// and the note is system-generated. `system` keeps a reply from reading
+		// as the customer's own words in their portal.
 		$payload = array(
 			'content'        => $content,
 			'author_user_id' => null,
+			'system'         => true,
 		);
 
 		if ( AutoCloseSettings::NOTE_VISIBILITY_REPLY === ( $settings['close_note_visibility'] ?? '' ) ) {

@@ -120,6 +120,8 @@ class CSS
             self::$data['rucss']['exclusions']['stylesheet'] = array(
                 'dashicons.min.css', //core
                 '/uploads/elementor/css/post-', //elementor
+                '/uploads/elementor/css/local-',
+                '/uploads/elementor/css/global-',
                 'animations.min.css',
                 '/animations/',
                 '/uploads/oxygen/css/', //oxygen
@@ -150,6 +152,7 @@ class CSS
             self::$data['rucss']['delay'] = apply_filters('perfmatters_rucss_delay_stylesheets', array());
 
             $used_css_string = '';
+            $pending_rucss_rewrites = array();
         }
 
         //loop through stylesheets
@@ -165,6 +168,7 @@ class CSS
 
             //copy atts array
             $atts_array_new = $atts_array;
+            $queue_rucss_rewrite = false;
 
             //snippet optimizations
             if(!empty(self::$snippet_optimizations) && !empty($atts_array['id'])) {
@@ -249,25 +253,9 @@ class CSS
                         }
                     }
 
+                    //defer delay/async/remove until used css is confirmed on disk
                     if(!$skip) {
-                
-                        //delay stylesheets
-                        if(empty(Config::$options['assets']['rucss_stylesheet_behavior'])) {
-                            if(empty($atts_array_new['data-pmdelayedstyle']) && !empty($atts_array_new['href'])) {
-                                $atts_array_new['data-pmdelayedstyle'] = $atts_array_new['href'];
-                                unset($atts_array_new['href']);
-                            }
-                        }
-                        //async stylesheets
-                        elseif(Config::$options['assets']['rucss_stylesheet_behavior'] == 'async') {
-                            $atts_array_new['media'] = 'print';
-                            $atts_array_new['onload'] = 'this.media=\'all\';this.onload=null;';
-                        }
-                        //remove stylesheets
-                        elseif(Config::$options['assets']['rucss_stylesheet_behavior'] == 'remove') {
-                            $html = str_replace($stylesheet[0], '', $html);
-                            continue;
-                        }
+                        $queue_rucss_rewrite = true;
                     }
                 }
                 else {
@@ -292,11 +280,20 @@ class CSS
                 }
             }
 
-            //replace stylesheet
+            //replace stylesheet (minify / snippet opts; rucss delay/async/remove applied after used css is available)
+            $current_tag = $stylesheet[0];
             if($atts_array_new !== $atts_array) {
                 $new_atts_string = Utilities::get_atts_string($atts_array_new);
                 $new_link = sprintf('<link %1$s>', $new_atts_string);
                 $html = str_replace($stylesheet[0], $new_link, $html);
+                $current_tag = $new_link;
+            }
+
+            if($queue_rucss_rewrite) {
+                $pending_rucss_rewrites[] = array(
+                    'tag' => $current_tag,
+                    'atts' => $atts_array_new,
+                );
             }
         }
 
@@ -313,11 +310,47 @@ class CSS
 
                     //update stored timestamp
                     update_option('perfmatters_used_css_time', $time, false);
+
+                    delete_transient('perfmatters_used_css_write_failed');
+                }
+                else {
+                    set_transient('perfmatters_used_css_write_failed', 1);
                 }
             }
 
-            //print used css
+            //only rewrite sheets + print used css when the file is actually available
             if(file_exists($used_css_path)) {
+
+                //apply deferred delay/async/remove
+                foreach($pending_rucss_rewrites as $pending) {
+
+                    if(empty($pending['tag']) || empty($pending['atts'])) {
+                        continue;
+                    }
+
+                    $atts = $pending['atts'];
+
+                    //delay stylesheets
+                    if(empty(Config::$options['assets']['rucss_stylesheet_behavior'])) {
+                        if(empty($atts['data-pmdelayedstyle']) && !empty($atts['href'])) {
+                            $atts['data-pmdelayedstyle'] = $atts['href'];
+                            unset($atts['href']);
+                        }
+                        $html = str_replace($pending['tag'], sprintf('<link %1$s>', Utilities::get_atts_string($atts)), $html);
+                    }
+                    //async stylesheets
+                    elseif(Config::$options['assets']['rucss_stylesheet_behavior'] == 'async') {
+                        $atts['media'] = 'print';
+                        $atts['onload'] = 'this.media=\'all\';this.onload=null;';
+                        $html = str_replace($pending['tag'], sprintf('<link %1$s>', Utilities::get_atts_string($atts)), $html);
+                    }
+                    //remove stylesheets
+                    elseif(Config::$options['assets']['rucss_stylesheet_behavior'] == 'remove') {
+                        $html = str_replace($pending['tag'], '', $html);
+                    }
+                }
+
+                //print used css
                 $tag = !apply_filters('perfmatters_used_css_below', false) ? '</title>' : '</head>';
                 $pos = strpos($html, $tag);
                 if($pos !== false) {
@@ -384,10 +417,16 @@ class CSS
     {
         $type = '';
 
+        //post types that should get a unique used CSS file per ID (like pages)
+        $per_id_types = (array) apply_filters('perfmatters_rucss_per_id_post_types', array());
+
         if(!empty($post_id)) {
             $post_id_type = get_post_type($post_id);
             if($post_id_type == 'page') {
                 $type = get_option('page_on_front') == $post_id ? 'front' : (get_option('page_for_posts') == $post_id ? 'home' : 'page-' . $post_id);
+            }
+            elseif($post_id_type && in_array($post_id_type, $per_id_types, true)) {
+                $type = $post_id_type . '-' . $post_id;
             }
             else {
                 $type = $post_id_type !== false ? $post_id_type : 'single';
@@ -407,11 +446,16 @@ class CSS
 
                 //single post type
                 $post_type = get_post_type();
+                $single_id = get_the_ID();
                 $type = $post_type ?: 'single';
 
+                //unique used CSS file per ID when opted in via filter
+                if($post_type && $single_id && in_array($post_type, $per_id_types, true)) {
+                    $type = $post_type . '-' . $single_id;
+                }
                 //add wocommerce product type
-                if($post_type === 'product' && function_exists('wc_get_product')) {
-                    $product = wc_get_product(get_the_ID());
+                elseif($post_type === 'product' && function_exists('wc_get_product')) {
+                    $product = wc_get_product($single_id);
                     if($product) {
                         $product_type = $product->get_type();
                         if(in_array($product_type, ['variable', 'grouped', 'external'])) {
@@ -427,7 +471,8 @@ class CSS
                 $type = 'tag';
             } 
             elseif($wp_query->is_tax) {
-                $type = 'tax';
+                $term = get_queried_object();
+                $type = !empty($term->taxonomy) ? 'tax-' . $term->taxonomy : 'tax';
             }
             elseif($wp_query->is_archive) {
                 $type = $wp_query->is_post_type_archive() ? 'archive-' . get_post_type() : ($wp_query->is_day ? 'day' : ($wp_query->is_month ? 'month' : ($wp_query->is_year ? 'year' : ($wp_query->is_author ? 'author' : 'archive'))));
@@ -610,10 +655,7 @@ class CSS
         //https://github.com/sabberworm/PHP-CSS-Parser/issues/150
         $css = preg_replace('/^\xEF\xBB\xBF/', '', $css);
 
-        // Normalize @layer name1, name2; (no block) to @layer name1, name2 {} so the parser doesn't consume the rest of the file
-        $css = preg_replace('/@layer\s+([^;{}]+);/', '@layer $1 {}', $css);
-
-        // Fast path: byte-oriented parser. On failure (e.g. Safe PCRE + UTF-8), retry once with multibyte if available.
+        // Fast path: byte-oriented parser. On failure (e.g. PCRE + UTF-8), retry once with multibyte if available.
         $multibyte_attempts = array(false);
         if(extension_loaded('mbstring')) {
             $multibyte_attempts[] = true;
@@ -866,10 +908,6 @@ class CSS
                 if($child_rulesets) {
                     $rendered[] = sprintf('%s{%s}', $item['at_rule'], $child_rulesets);
                 }
-                elseif(preg_match('/^@layer\s/i', trim($item['at_rule']))) {
-                    // @layer with empty block was normalized from declaration form (no block); output as @layer ... ;
-                    $rendered[] = trim($item['at_rule']) . ';';
-                }
             }
         }
 
@@ -1005,19 +1043,21 @@ class CSS
     //display admin notices
     public static function admin_notices() {
 
-        if(get_transient('perfmatters_used_css_cleared') === false) {
-            return;
+        if(get_transient('perfmatters_used_css_cleared') !== false) {
+            delete_transient('perfmatters_used_css_cleared');
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Used CSS cleared.', 'perfmatters') . '</p></div>';
         }
 
-        delete_transient('perfmatters_used_css_cleared');
-        echo '<div class="notice notice-success is-dismissible"><p><strong>' . __('Used CSS cleared.', 'perfmatters' ) . '</strong></p></div>';
+        if(get_transient('perfmatters_used_css_write_failed') !== false) {
+            echo '<div class="notice notice-warning"><p><strong>' . esc_html__('Perfmatters Warning', 'perfmatters') . ':</strong> ' . esc_html__('Remove Unused CSS could not write the used CSS file. Please check that the Perfmatters cache directory is writable.', 'perfmatters') . '</p></div>';
+        }
     }
 
     //clear used css from admin bar
     public static function admin_bar_clear_used_css() {
 
         if(!current_user_can('manage_options') || !perfmatters_network_access()) {
-            wp_die(__('Sorry, you are not allowed to do that.'), 403);
+            wp_die(esc_html__('Sorry, you are not allowed to do that.', 'perfmatters'), 403);
         }
 
         if(!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key($_GET['_wpnonce']), 'perfmatters_clear_used_css')) {

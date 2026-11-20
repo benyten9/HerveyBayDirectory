@@ -23,7 +23,7 @@ require_once __DIR__ . '/../lib/persister.php';
 
 wp_register_ability('nibwp/voxel-pro-build', [
     'label'       => __('Voxel Pro — build a Voxel template', 'nibwp'),
-    'description' => __('Validate and write a Voxel template: preview card, single post, archive, term, header, footer, search page, or style kit. Wires search forms to feeds and maps automatically, renders every dynamic tag against a real listing before writing, and can assign the result to a post type slot or a site slot.', 'nibwp'),
+    'description' => 'Validate and write a Voxel template: preview card, single post, archive, term, header, footer, search page, or style kit. Wires search forms to feeds and maps automatically, renders every dynamic tag against a real listing before writing, and can assign the result to a post type slot or a site slot.',
     'category'    => 'voxel-pro',
     'input_schema' => [
         'type' => 'object',

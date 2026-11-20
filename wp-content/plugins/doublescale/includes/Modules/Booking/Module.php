@@ -162,6 +162,8 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		parent::boot( $container );
 
 		Services\EventBusBootstrap::init();
+		// every booking also lands on the guest's contact timeline
+		Services\BookingActivityLogger::register();
 
 		$container->get( Services\AvailabilityService::class );
 		$container->get( Services\BookingService::class );
@@ -302,8 +304,14 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		// set, so the dev workflow of "drop plugin tables + reactivate" still
 		// provisions host calendars (option lives in wp_options, calendars in
 		// the dropped plugin table — without this they go out of sync).
+		// The table check runs once per version (not every request): the flag is
+		// one of the options DoubleScale loads together at boot.
+		$checked              = defined( 'DOUBLESCALE_VERSION' ) && get_option( 'doublescale_booking_calendars_checked' ) === DOUBLESCALE_VERSION;
 		$needs_bulk_provision = ! get_option( 'doublescale_booking_provisioned' )
-			|| ! Models\CalendarModel::query()->exists();
+			|| ( ! $checked && ! Models\CalendarModel::query()->exists() );
+		if ( ! $needs_bulk_provision && ! $checked && defined( 'DOUBLESCALE_VERSION' ) ) {
+			update_option( 'doublescale_booking_calendars_checked', DOUBLESCALE_VERSION, false );
+		}
 		if ( $needs_bulk_provision ) {
 			$provisioner = $container->get( Services\BookingProvisioner::class );
 

@@ -65,6 +65,13 @@ abstract class MergeTag {
 	public $is_automation = true;
 
 	/**
+	 * Whether the value is text a person typed (printed without markup).
+	 *
+	 * @var bool
+	 */
+	public $plain_text = false;
+
+	/**
 	 * Get Merge Tag Value
 	 *
 	 * @param AutomationContactModel|ContactModel|null $contact Contact Model.
@@ -99,9 +106,25 @@ abstract class MergeTag {
 		}
 
 		if ( ! $this->is_automation && $this->is_automation_contact( $contact_or_automation_contact ) ) {
-			return $this->get_value( $contact_or_automation_contact->contact, $merge_tag );
+			return $this->as_output( $this->get_value( $contact_or_automation_contact->contact, $merge_tag ) );
 		}
 
-		return $this->get_value( $contact_or_automation_contact, $merge_tag );
+		return $this->as_output( $this->get_value( $contact_or_automation_contact, $merge_tag ) );
+	}
+
+	/**
+	 * A person-typed value leaves without markup (contacts saved before
+	 * ContactModel cleaned them, custom fields); others pass as they are.
+	 * Tags only, no entity encoding, so SMS and WhatsApp text stays readable.
+	 *
+	 * @param mixed $value Value.
+	 * @return mixed
+	 */
+	private function as_output( $value ) {
+		if ( $this->plain_text && is_string( $value ) && $value !== wp_strip_all_tags( $value ) ) {
+			return trim( wp_strip_all_tags( $value ) );
+		}
+
+		return $value;
 	}
 }

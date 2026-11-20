@@ -61,7 +61,19 @@ class UpdateOwnerDeal extends BaseDealAction
 
 	public function process_action(AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact)
 	{
-		$owner = $step->get_setting('owner');
+		$owner = (int) $step->get_setting('owner');
+
+		// Someone who does not work deals (their role changed since the step
+		// was set up) gets none: the deals keep their owner, the log says why.
+		$owner_error = \DoubleScale\Pro\Modules\Deals\Services\DealOwnerRule::error($owner);
+		if ($owner_error) {
+			return array(
+				'status'  => 'skipped',
+				/* translators: %s: why the owner was refused */
+				'message' => sprintf(__('The deal owner was not changed: %s', 'doublescale'), $owner_error->get_error_message()),
+			);
+		}
+
 		$deals = $this->build_target_deals_query(
 			array(
 				'affects'  => $step->get_setting('affects'),

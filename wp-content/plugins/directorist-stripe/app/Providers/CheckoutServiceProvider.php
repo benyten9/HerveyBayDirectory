@@ -70,61 +70,139 @@ class CheckoutServiceProvider implements Provider {
     }
 
     public function handle_subscription_canceled_at_period_end( bool $is_cancelled, UserPackageDTO $subscription, string $triggered_by = 'system' ) {
-        if ( 
-            ! $subscription->is_initialized( 'subscription_id' ) ||
-            ! $subscription->is_initialized( 'subscription_method' ) ||
-            $subscription->get_subscription_method() !== Stripe::get_key()
-        ) {
+        if ( ! $subscription->is_initialized( 'subscription_method' ) || $subscription->get_subscription_method() !== Stripe::get_key() ) {
             return $is_cancelled;
         }
 
-        StripeSDK::setApiKey( directorist_stripe_get_secret_key() );
+        $subscription_id = $subscription->is_initialized( 'subscription_id' ) ? trim( (string) $subscription->get_subscription_id() ) : '';
+
+        if ( '' === $subscription_id ) {
+            $this->log_cancellation_error( 'set subscription to cancel at period end', $subscription, $subscription_id, 'No Stripe subscription ID is stored for this package.' );
+            return false;
+        }
 
         try {
+            $stripe_subscription = $this->retrieve_subscription( $subscription_id );
+
+            if ( $this->is_terminal_subscription( $stripe_subscription ) ) {
+                return true;
+            }
+
             Subscription::update(
-                $subscription->get_subscription_id(), [
+                $subscription_id, [
                     'cancel_at_period_end' => true,
                 ] 
             );
             return true;
-        } catch ( Exception $e ) {
-            error_log(
-                sprintf(
-                    'Directorist Stripe: Failed to set subscription %s to cancel at period end - %s',
-                    $subscription->get_subscription_id(),
-                    $e->getMessage()
-                )
-            );
+        } catch ( \Throwable $e ) {
+            $this->log_cancellation_error( 'set subscription to cancel at period end', $subscription, $subscription_id, get_class( $e ) . ': ' . $e->getMessage() );
             return false;
         }
     }
 
     public function handle_subscription_canceled( bool $is_cancelled, UserPackageDTO $subscription, string $triggered_by = 'system' ) {    
-        if ( 
-            ! $subscription->is_initialized( 'subscription_id' ) ||
-            ! $subscription->is_initialized( 'subscription_method' ) ||
-            $subscription->get_subscription_method() !== Stripe::get_key()
-        ) {
+        if ( ! $subscription->is_initialized( 'subscription_method' ) || $subscription->get_subscription_method() !== Stripe::get_key() ) {
             return $is_cancelled;
         }
 
-        StripeSDK::setApiKey( directorist_stripe_get_secret_key() );
+        $subscription_id = $subscription->is_initialized( 'subscription_id' ) ? trim( (string) $subscription->get_subscription_id() ) : '';
 
-        $stripe_subscription = Subscription::retrieve( $subscription->get_subscription_id() );
-
-        try {
-            $stripe_subscription->cancel();
-            return true;
-        } catch ( Exception $e ) {
-            error_log(
-                sprintf(
-                    'Directorist Stripe: Failed to cancel subscription %s - %s',
-                    $subscription->get_subscription_id(),
-                    $e->getMessage()
-                )
-            );
+        if ( '' === $subscription_id ) {
+            $this->log_cancellation_error( 'cancel subscription', $subscription, $subscription_id, 'No Stripe subscription ID is stored for this package.' );
             return false;
         }
+
+        try {
+            $stripe_subscription = $this->retrieve_subscription( $subscription_id );
+
+            if ( $this->is_terminal_subscription( $stripe_subscription ) ) {
+                return true;
+            }
+
+            $stripe_subscription->cancel();
+            return true;
+        } catch ( \Throwable $e ) {
+            $this->log_cancellation_error( 'cancel subscription', $subscription, $subscription_id, get_class( $e ) . ': ' . $e->getMessage() );
+            return false;
+        }
+    }
+
+    /**
+     * Retrieve a subscription from the active Stripe mode, then try the other
+     * configured mode for packages created before their Stripe mode was stored.
+     *
+     * @param string $subscription_id Stripe subscription ID.
+     * @return Subscription
+     * @throws \Throwable When the subscription cannot be retrieved.
+     */
+    private function retrieve_subscription( string $subscription_id ) {
+        $last_exception = null;
+
+        foreach ( $this->get_secret_keys() as $secret_key ) {
+            try {
+                StripeSDK::setApiKey( $secret_key );
+                return Subscription::retrieve( $subscription_id );
+            } catch ( \Throwable $e ) {
+                $last_exception = $e;
+
+                if ( ! $this->is_missing_subscription_exception( $e ) ) {
+                    throw $e;
+                }
+            }
+        }
+
+        if ( $last_exception ) {
+            throw $last_exception;
+        }
+
+        throw new \RuntimeException( 'No Stripe secret key is configured.' );
+    }
+
+    /**
+     * Get the active key first and the other configured mode second.
+     *
+     * @return string[]
+     */
+    private function get_secret_keys(): array {
+        $secret_keys = [ directorist_stripe_get_secret_key() ];
+        $other_key   = get_directorist_option( directorist_stripe_is_test_mode() ? 'stripe_live_sk' : 'stripe_test_sk' );
+
+        if ( is_string( $other_key ) && '' !== trim( $other_key ) ) {
+            $secret_keys[] = trim( $other_key );
+        }
+
+        return array_values( array_unique( array_filter( $secret_keys ) ) );
+    }
+
+    /**
+     * Stripe terminal subscriptions need no remote cancellation.
+     *
+     * @param Subscription $subscription Stripe subscription.
+     */
+    private function is_terminal_subscription( $subscription ): bool {
+        return in_array( $subscription->status ?? '', [ 'canceled', 'incomplete_expired' ], true );
+    }
+
+    private function is_missing_subscription_exception( \Throwable $exception ): bool {
+        $stripe_code = method_exists( $exception, 'getStripeCode' ) ? (string) $exception->getStripeCode() : '';
+        $http_status = method_exists( $exception, 'getHttpStatus' ) ? (int) $exception->getHttpStatus() : 0;
+
+        return 'resource_missing' === $stripe_code
+            || 404 === $http_status
+            || false !== stripos( $exception->getMessage(), 'No such subscription' );
+    }
+
+    private function log_cancellation_error( string $action, UserPackageDTO $subscription, string $subscription_id, string $message ): void {
+        error_log(
+            sprintf(
+                'Directorist Stripe: Failed to %s (subscription %s, package %d, %s mode) - %s',
+                $action,
+                $subscription_id ?: '(missing)',
+                $subscription->get_id(),
+                directorist_stripe_is_test_mode() ? 'test' : 'live',
+                $message
+            )
+        );
     }
 
     private function normalize_stripe_id( $value ): string {

@@ -66,13 +66,13 @@ class Settings_Controller extends Abstract_Settings_Controller {
 			$account_id  = $request->get_param( 'id' );
 			$account_api = $this->mailer->accounts->connect( $account_id );
 			if ( is_wp_error( $account_api ) ) {
-				throw new Exception( $account_api->get_error_message() );
+				throw new \Exception( $account_api->get_error_message() );
 			}
 
 			$result = $account_api->get_account();
 
 			if ( is_wp_error( $result ) ) {
-				throw new Exception( $result->get_error_message() );
+				throw new \Exception( $result->get_error_message() );
 			}
 
 			$options = array(
@@ -89,7 +89,7 @@ class Settings_Controller extends Abstract_Settings_Controller {
 				),
 				200
 			);
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			doublescale_get_logger()->error(
 				esc_html__( 'ElasticEmail Getting User Profile Error', 'doublescale' ),
 				array(

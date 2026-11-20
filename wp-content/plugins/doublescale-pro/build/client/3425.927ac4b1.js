@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkdoublescale=globalThis.webpackChunkdoublescale||[]).push([[3425],{3425(a,e,t){t.r(e),t.d(e,{default:()=>s});var c=t(51609),l=t(82515),n=t(76455);const s=({contact_id:a,navigate:e})=>(0,c.createElement)(n.P,{contactId:a,navigate:a=>{e&&e((0,l.Uy)(a))}})}}]);
