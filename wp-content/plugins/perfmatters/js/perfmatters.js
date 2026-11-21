@@ -341,6 +341,25 @@ jQuery(function($) {
 		perfmattersFadeButtonMessage($inlineMessage, action);
 	}
 
+	//write scan badges one at a time; pause between rows, not after the last
+	function perfmattersPaintScanRows(keys, writeRow) {
+		var timer = function(ms) {
+			return new Promise(function(resolve) {
+				setTimeout(resolve, ms);
+			});
+		};
+
+		return (async function() {
+			for(var i = 0; i < keys.length; i++) {
+				writeRow(keys[i]);
+
+				if(i < keys.length - 1) {
+					await timer(250);
+				}
+			}
+		})();
+	}
+
 	function perfmattersReloadWithNotice(data) {
 		if(!data.message_key) {
 			window.location.reload();
@@ -439,7 +458,7 @@ jQuery(function($) {
 	        processData: false,
        		contentType: false
 	    })
-	    .done(function(r) {
+	    .then(function(r) {
 
 	    	//export settings
 	    	const exportActions = ['export_settings', 'export_snippets'];
@@ -459,39 +478,22 @@ jQuery(function($) {
 			    link.click();
 	    	}
 
+	    	//other actions resolve immediately; scans resolve after the last row is written
+	    	var painted = Promise.resolve();
+
 	    	//scan database
 	    	if(action =='scan_database' && r.data && r.data.data) {
-
-				const timer = ms => new Promise(res => setTimeout(res, ms));
-
-				async function loadOptionData () {
-
-					var keys = Object.keys(r.data.data);
-
-					for(var i = 0; i < keys.length; i++) {
-				    	$('#database-' + keys[i]).closest('td').find('.perfmatters-option-data').html(r.data.data[keys[i]]);
-				    	await timer(250);
-				  	}
-				}
-				loadOptionData();
+				painted = perfmattersPaintScanRows(Object.keys(r.data.data), function(key) {
+			    	$('#database-' + key).closest('td').find('.perfmatters-option-data').html(r.data.data[key]);
+				});
 	    	}
 
 	    	//scan warmer sources (Perfmatters Cache)
-	    	if(action == 'scan_warmer_sources' && r.data && r.data.data) {
-
-				const timer = ms => new Promise(res => setTimeout(res, ms));
-
-				async function loadWarmerSourceData () {
-
-					var keys = Object.keys(r.data.data);
-
-					for(var i = 0; i < keys.length; i++) {
-						//label is the per-source row (all sources share one settings <td>)
-						$('#warmer-source-' + keys[i]).closest('label').find('.perfmatters-option-data').html(r.data.data[keys[i]]);
-						await timer(250);
-					}
-				}
-				loadWarmerSourceData();
+	    	else if(action == 'scan_warmer_sources' && r.data && r.data.data) {
+				painted = perfmattersPaintScanRows(Object.keys(r.data.data), function(key) {
+					//label is the per-source row (all sources share one settings <td>)
+					$('#warmer-source-' + key).closest('label').find('.perfmatters-option-data').html(r.data.data[key]);
+				});
 	    	}
 
 	    	//cache toolbar / Sync Rules / soft cache saves: refresh status cards without a full reload
@@ -502,17 +504,26 @@ jQuery(function($) {
 	    		}
 	    	}
 
-	    	//reload responses show the notice on the next page only (avoid toast → navigate → toast again)
-	    	if(r.data && r.data.message && !(r.data && r.data.reload)) {
-	    		perfmattersShowActionMessage(r.data.message, action, !r.success, messageMode, message);
-	    	}
-		})
-		.fail(function() {
+	    	//returning painted holds the button reset until scan rows finish
+	    	//wp_send_json_error() is HTTP 200, so those messages are shown here too
+	    	return painted.then(function() {
+
+	    		//reload responses show the notice on the next page only (avoid toast → navigate → toast again)
+	    		if(r.data && r.data.message && !r.data.reload) {
+	    			perfmattersShowActionMessage(r.data.message, action, !r.success, messageMode, message);
+	    		}
+
+	    		return r;
+	    	});
+		}, function() {
+
+			//the request itself failed (500, timeout, invalid JSON)
 			perfmattersShowActionMessage(PERFMATTERS.strings.failed, action, true, messageMode, message);
 		})
-	.always(function(r) {
+		.always(function(r) {
 
-			if(r.data && r.data.reload) {
+			//a rejected request resolves this chain with no payload
+			if(r && r.data && r.data.reload) {
 				perfmattersReloadWithNotice(r.data);
 				return;
 			}

@@ -197,7 +197,7 @@ HTACCESS;
 			$is_gzip = substr($name, -3) === '.gz';
 			$lines[] = '	<FilesMatch "index\\.html' . ($is_gzip ? '\\.gz' : '') . '$">';
 			$lines[] = '		Header set X-Perfmatters-Cache "HIT"';
-			$lines[] = '		Header set Cache-Control "no-cache, must-revalidate"';
+			$lines[] = '		Header set Cache-Control "' . Config::browser_cache_control() . '"';
 
 			if($cf_ttl > 0) {
 				$lines[] = '		Header set CDN-Cache-Control "max-age=' . (int) $cf_ttl . '"';

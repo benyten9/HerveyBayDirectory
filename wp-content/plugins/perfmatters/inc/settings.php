@@ -2004,20 +2004,41 @@ function perfmatters_settings() {
         )
     );
 
-    //cloudflare zone id
+    //Zone ID source. Manual Zone ID reveals cache-cf_zone_id via the standard select controller.
+    $cf_zone_manual = isset($perfmatters_options['cache']['cf_zone_mode']) && $perfmatters_options['cache']['cf_zone_mode'] === 'manual';
+    $cf_zone_hidden = empty($perfmatters_options['cache']['cloudflare']) ? ' hidden' : '';
+
+    add_settings_field(
+        'cf_zone_mode',
+        perfmatters_title(__('Zone', 'perfmatters'), 'cache-cf_zone_mode', 'https://perfmatters.io/docs/cloudflare-edge-cache/#zone-id'),
+        'perfmatters_print_cf_zone_mode',
+        'perfmatters_options',
+        'cache_cloudflare',
+        array(
+            'section' => 'cache',
+            'id' => 'cf_zone_mode',
+            'input' => 'select',
+            'options' => array(
+                '' => __('Auto', 'perfmatters'),
+                'manual' => __('Manual Zone ID', 'perfmatters')
+            ),
+            'class' => 'perfmatters-input-controller cache-cloudflare' . $cf_zone_hidden,
+            'tooltip' => __('Auto-detect this site\'s Cloudflare zone. Choose Manual Zone ID when the token can access more than one zone.', 'perfmatters')
+        )
+    );
+
     add_settings_field(
         'cf_zone_id',
         perfmatters_title(__('Zone ID', 'perfmatters'), 'cache-cf_zone_id', 'https://perfmatters.io/docs/cloudflare-edge-cache/#zone-id'),
-        'perfmatters_print_cf_zone_id',
+        'perfmatters_print_input',
         'perfmatters_options',
         'cache_cloudflare',
         array(
             'section' => 'cache',
             'id' => 'cf_zone_id',
             'input' => 'text',
-            'placeholder' => 'auto',
-            'class' => 'cache-cloudflare ' . (empty($perfmatters_options['cache']['cloudflare']) ? ' hidden' : ''),
-            'tooltip' => __('Leave blank to detect this site\'s Cloudflare zone. Enter an ID when the token can access more than one zone.', 'perfmatters')
+            'class' => 'cache-cloudflare cache-cf_zone_mode perfmatters-select-control-manual' . ($cf_zone_manual ? '' : ' hidden') . $cf_zone_hidden,
+            'tooltip' => __('Enter the Cloudflare Zone ID for this domain from the Cloudflare dashboard Overview page.', 'perfmatters')
         )
     );
 
@@ -3223,25 +3244,23 @@ function perfmatters_print_cf_api_token($args) {
 	}
 }
 
-//text input via print_input; swap tooltip for auto-detect status when a zone was matched
-function perfmatters_print_cf_zone_id($args) {
+//standard select, plus the matched-zone line while Auto is the saved choice
+function perfmatters_print_cf_zone_mode($args) {
+	perfmatters_print_input($args);
+
 	$options = Perfmatters\Config::$options['cache'] ?? array();
-	$value = isset($options['cf_zone_id']) ? $options['cf_zone_id'] : '';
+	$mode = isset($options['cf_zone_mode']) ? $options['cf_zone_mode'] : '';
+	$value = isset($options['cf_zone_id']) ? trim((string) $options['cf_zone_id']) : '';
 	$status = Perfmatters\Cache\Cloudflare::status();
 
-	//only show a matched zone while credentials exist — otherwise contradicts the Setup card
-	if($value === '' && !empty($status['zone_id']) && Perfmatters\Cache\Cloudflare::has_token()) {
-		perfmatters_print_input($args);
+	if($mode !== 'manual' && $value === '' && !empty($status['zone_id']) && Perfmatters\Cache\Cloudflare::has_token()) {
 		echo '<p class="description">' . esc_html(sprintf(
 			/* translators: 1: zone domain, 2: zone id */
-			__('Using %1$s (%2$s). Leave blank to keep auto-detect.', 'perfmatters'),
+			__('Using %1$s (%2$s).', 'perfmatters'),
 			!empty($status['zone_domain']) ? $status['zone_domain'] : __('matched zone', 'perfmatters'),
 			$status['zone_id']
 		)) . '</p>';
-		return;
 	}
-
-	perfmatters_print_input($args);
 }
 
 //print purge meta options

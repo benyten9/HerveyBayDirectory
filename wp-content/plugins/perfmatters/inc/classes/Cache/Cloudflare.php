@@ -9,12 +9,14 @@ if(!defined('ABSPATH')) {
 class Cloudflare
 {
 	//bump when Cache Rule / transform payloads change so existing sites re-sync on save
-	const RULES_VERSION = 1;
+	const RULES_VERSION = 2;
 	const STATUS_OPTION = 'perfmatters_cache_cf_status';
 	//API token stays out of the autoloaded settings option (or PERFMATTERS_CLOUDFLARE_API_TOKEN in wp-config)
 	const TOKEN_OPTION = 'perfmatters_cache_cf_token';
 	//sha256 of the constant value — detect swaps without storing the secret again in the DB
 	const TOKEN_CONSTANT_FP = 'perfmatters_cache_cf_token_constant_fp';
+	//one-shot success/error line on the Cache settings screen after auto-sync
+	const AUTO_SYNC_NOTICE = 'perfmatters_cache_cf_auto_sync_notice';
 	//block stacked Sync Now / identical rebuilds after a *successful* sync (seconds)
 	const SYNC_DEBOUNCE = 45;
 	//after a CF rate-limit response, refuse another sync for this long (seconds)
@@ -42,10 +44,97 @@ class Cloudflare
 	{
 		add_action('wp_ajax_perfmatters_sync_cloudflare_rules', array(__CLASS__, 'ajax_sync_rules'));
 		add_action('wp_ajax_perfmatters_remove_cloudflare_token', array(__CLASS__, 'ajax_remove_token'));
+		//cheap admin check; syncs only when stored rules_version lags RULES_VERSION
+		add_action('admin_init', array(__CLASS__, 'maybe_auto_sync_rules'));
 		//CDN no-store by default; Storage::capture / finalize upgrades to max-age only when blessed
 		add_action('template_redirect', array(__CLASS__, 'start_edge_buffer'), 0);
 		//CDN veto only here — do not set Cache-Control: private (that trips Storage::response_is_private)
 		add_action('send_headers', array(__CLASS__, 'send_cdn_bypass_headers'), 999);
+	}
+
+	//admin-wide one-shot: if plugin shipped new rule payloads, push once on a later wp-admin load (not during the update request)
+	public static function maybe_auto_sync_rules()
+	{
+		if(wp_doing_ajax() || wp_doing_cron() || (defined('REST_REQUEST') && REST_REQUEST)) {
+			return;
+		}
+
+		if(!current_user_can('manage_options')) {
+			return;
+		}
+
+		if(function_exists('perfmatters_network_access') && !perfmatters_network_access()) {
+			return;
+		}
+
+		$options = \Perfmatters\Config::$options['cache'] ?? array();
+
+		if(!self::is_enabled($options) || !self::has_token()) {
+			return;
+		}
+
+		$status = self::status();
+		$version = (int) (isset($status['rules_version']) ? $status['rules_version'] : 0);
+		$attempted = (int) (isset($status['rules_auto_version']) ? $status['rules_auto_version'] : 0);
+
+		if($version === self::RULES_VERSION || $attempted === self::RULES_VERSION) {
+			return;
+		}
+
+		//only refresh deployments we already created / resolved — leave first-time setup to Save / Sync Rules
+		$state = isset($status['state']) ? (string) $status['state'] : '';
+		$zone = isset($status['zone_id']) ? (string) $status['zone_id'] : '';
+
+		if($version < 1 && $zone === '' && $state !== 'ready' && $state !== 'error') {
+			return;
+		}
+
+		self::after_settings_save($options, $options, false);
+
+		//debounce / cooldown — do not consume the one-shot; try again on a later admin load
+		if(self::$last_skip_message !== '' && self::$last_skip_reason !== 'noop') {
+			return;
+		}
+
+		//real attempt or already in sync — never auto-retry this RULES_VERSION
+		self::set_status(array(
+			'rules_auto_version' => self::RULES_VERSION,
+			'updated' => time()
+		));
+
+		if(self::$last_skip_reason === 'noop') {
+			return;
+		}
+
+		$status = self::status();
+		$state = isset($status['state']) ? (string) $status['state'] : '';
+		$version = (int) (isset($status['rules_version']) ? $status['rules_version'] : 0);
+
+		if($state === 'ready' && $version === self::RULES_VERSION) {
+			return;
+		}
+
+		//failure only — Cache screen points them at Sync Rules
+		set_transient(self::AUTO_SYNC_NOTICE, array(
+			'type' => 'error',
+			'message' => !empty($status['message'])
+				? (string) $status['message']
+				: __('Cloudflare cache rules could not be updated automatically. Click Sync Rules to retry.', 'perfmatters')
+		), DAY_IN_SECONDS);
+	}
+
+	//Cache settings screen only — failure notice from the one-shot auto-sync
+	public static function print_auto_sync_notice()
+	{
+		$notice = get_transient(self::AUTO_SYNC_NOTICE);
+
+		if(!is_array($notice) || empty($notice['message']) || !is_string($notice['message'])) {
+			return;
+		}
+
+		delete_transient(self::AUTO_SYNC_NOTICE);
+
+		echo '<div class="notice notice-error inline"><p>' . esc_html($notice['message']) . '</p></div>';
 	}
 
 	//Cache::init() — when the constant exists, strip a leftover UI token / refresh its fingerprint.
@@ -119,7 +208,7 @@ class Cloudflare
 		}
 	}
 
-	//mark this response as CDN-cacheable HTML; browsers still revalidate (no-cache)
+	//mark this response as CDN-cacheable HTML; browser Cache-Control is filterable (default no-cache)
 	private static function send_cacheable_headers()
 	{
 		if(headers_sent()) {
@@ -129,7 +218,7 @@ class Cloudflare
 		//drop an earlier no-store veto — Cloudflare-CDN-Cache-Control outranks CDN-Cache-Control
 		header_remove('Cloudflare-CDN-Cache-Control');
 		header('CDN-Cache-Control: max-age=' . self::edge_ttl(), true);
-		header('Cache-Control: no-cache, must-revalidate', true);
+		header('Cache-Control: ' . Config::browser_cache_control(), true);
 	}
 
 	//CDN-only veto — safe before we know whether disk will store (avoids Cache-Control: private blocking capture)
@@ -238,6 +327,7 @@ class Cloudflare
 					'zone_domain' => '',
 					'host_proxied' => -1,
 					'rules_version' => 0,
+					'rules_auto_version' => 0,
 					'rules_hash' => '',
 					'updated' => time()
 				));
@@ -510,7 +600,7 @@ class Cloudflare
 
 		if($state === 'ready') {
 			return array(
-				'cf_value' => __('Ready', 'perfmatters'),
+				'cf_value' => __('Connected', 'perfmatters'),
 				'cf_meta' => !empty($status['zone_domain'])
 					? (string) $status['zone_domain']
 					: __('Cache rules active', 'perfmatters'),
@@ -636,6 +726,7 @@ class Cloudflare
 			'zone_domain' => '',
 			'host_proxied' => -1,
 			'rules_version' => 0,
+			'rules_auto_version' => 0,
 			'rules_hash' => '',
 			'last_sync_at' => 0,
 			'sync_lock_at' => 0,
@@ -747,6 +838,7 @@ class Cloudflare
 			'zone_domain' => '',
 			'host_proxied' => -1,
 			'rules_version' => 0,
+			'rules_auto_version' => 0,
 			'rules_hash' => '',
 			'updated' => time()
 		));
@@ -837,6 +929,8 @@ class Cloudflare
 			//1 = orange cloud, 0 = DNS-only, -1 = unknown (no record / no DNS Read on token)
 			'host_proxied' => -1,
 			'rules_version' => 0,
+			//RULES_VERSION we already one-shot auto-synced for (success or fail — no endless retries)
+			'rules_auto_version' => 0,
 			//md5 of last successfully pushed rule payloads (skip no-op rebuilds)
 			'rules_hash' => '',
 			'last_sync_at' => 0,
@@ -861,6 +955,7 @@ class Cloudflare
 		delete_option(self::STATUS_OPTION);
 		delete_option(self::TOKEN_OPTION);
 		delete_option(self::TOKEN_CONSTANT_FP);
+		delete_transient(self::AUTO_SYNC_NOTICE);
 	}
 
 	//optional Zone ID from settings; resolved zone lives in status
@@ -1242,23 +1337,31 @@ class Cloudflare
 		}
 	}
 
+	//true only for this site's rules — never another host sharing the same Cloudflare zone
 	private static function is_our_rule($rule, $refs)
 	{
 		$ref = isset($rule['ref']) ? (string) $rule['ref'] : '';
 
-		if($ref !== '' && in_array($ref, $refs, true)) {
-			return true;
+		//ref is per-host (md5 of site_host). a non-empty foreign ref must not fall through to description
+		if($ref !== '') {
+			return in_array($ref, $refs, true);
 		}
 
 		$description = isset($rule['description']) ? (string) $rule['description'] : '';
 
-		if($description === '') {
+		if($description === '' || (strpos($description, 'Perfmatters cache') !== 0 && strpos($description, 'Perfmatters page cache') !== 0)) {
 			return false;
 		}
 
-		//current + pre-rename descriptions so leftover edge rules still get cleaned up
-		return strpos($description, 'Perfmatters cache') === 0
-			|| strpos($description, 'Perfmatters page cache') === 0;
+		//legacy rules without ref — only wipe leftovers that target this host
+		$expression = isset($rule['expression']) ? (string) $rule['expression'] : '';
+		$host = Config::site_host();
+
+		if($host === '' || $expression === '') {
+			return false;
+		}
+
+		return strpos($expression, 'http.host eq "' . self::escape_expression($host) . '"') !== false;
 	}
 
 	private static function rule_refs()
@@ -1283,12 +1386,9 @@ class Cloudflare
 			return rtrim($cookie, '_');
 		}, $cookies);
 
-		if(!in_array('wordpress_logged_in', $cookies, true)) {
-			array_unshift($cookies, 'wordpress_logged_in');
-		}
-
 		$parts = array('http.host eq "' . self::escape_expression($host) . '"');
-		$parts[] = '(http.request.method eq "GET" or http.request.method eq "HEAD")';
+		//PURGE must match too — Cloudflare single-file purge uses it; GET/HEAD-only rules leave files purges as no-ops
+		$parts[] = '(http.request.method eq "GET" or http.request.method eq "HEAD" or http.request.method eq "PURGE")';
 		$parts[] = 'not http.request.uri.path contains "/wp-admin"';
 		$parts[] = 'not http.request.uri.path contains "/wp-login.php"';
 		$parts[] = 'not http.request.uri.path contains "/xmlrpc.php"';
@@ -1314,7 +1414,7 @@ class Cloudflare
 
 		return array(
 			'ref' => self::rule_refs()['cache'],
-			'description' => 'Perfmatters cache',
+			'description' => 'Perfmatters cache (' . $host . ')',
 			'enabled' => true,
 			'expression' => '(' . implode(' and ', $parts) . ')',
 			'action' => 'set_cache_settings',
@@ -1346,7 +1446,7 @@ class Cloudflare
 
 		return array(
 			'ref' => self::rule_refs()['cache_file'],
-			'description' => 'Perfmatters cache static files',
+			'description' => 'Perfmatters cache static files (' . $host . ')',
 			'enabled' => true,
 			'expression' => '(http.host eq "' . self::escape_expression($host) . '" and http.request.uri.path.extension in {"' . implode('" "', $extensions) . '"})',
 			'action' => 'set_cache_settings',
@@ -1382,7 +1482,7 @@ class Cloudflare
 
 		return array(
 			'ref' => self::rule_refs()['rewrite'],
-			'description' => 'Perfmatters cache ignore query params',
+			'description' => 'Perfmatters cache ignore query params (' . $host . ')',
 			'enabled' => true,
 			'expression' => '(http.host eq "' . self::escape_expression($host) . '" and (' . implode(' or ', $expr) . '))',
 			'action' => 'rewrite',

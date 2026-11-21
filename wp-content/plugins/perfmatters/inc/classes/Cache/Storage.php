@@ -35,7 +35,8 @@ class Storage
 			$file = perfmatters_cache_request_file($config);
 
 			if($file !== '') {
-				$stored = $html . "\n<!-- Perfmatters Cache " . gmdate('c') . " -->\n";
+				$now = new \DateTimeImmutable('now', wp_timezone());
+				$stored = $html . "\n<!-- Perfmatters | " . $now->format('Y-m-d H:i') . ' UTC' . $now->format('P') . " -->\n";
 				//only bless the edge when the file actually landed (unwritable page/ must not CDN-Cache-Control)
 				$bless = self::write($file, $stored) && !Warmer::is_request();
 			}

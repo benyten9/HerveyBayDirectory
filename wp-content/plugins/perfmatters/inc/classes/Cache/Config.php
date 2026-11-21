@@ -97,6 +97,32 @@ class Config
 		return (bool) apply_filters('perfmatters_cache_gzip', true);
 	}
 
+	//browser HTML freshness in seconds (not CDN-Cache-Control). '' = no-cache; baked into page-config + .htaccess on save
+	public static function browser_ttl()
+	{
+		$ttl = apply_filters('perfmatters_cache_browser_ttl', '');
+
+		if(!is_numeric($ttl)) {
+			return '';
+		}
+
+		$ttl = (int) $ttl;
+
+		return $ttl < 0 ? '' : $ttl;
+	}
+
+	//Cache-Control for cached HTML HITs / Cloudflare bless — built from browser_ttl()
+	public static function browser_cache_control()
+	{
+		$ttl = self::browser_ttl();
+
+		if($ttl === '') {
+			return 'no-cache, must-revalidate';
+		}
+
+		return 'max-age=' . (int) $ttl . ', must-revalidate';
+	}
+
 	//shared root next to host folders: page-config.php + runtime.php for the drop-in
 	//parent of every PERFMATTERS_CACHE_DIR site folder (wp-content/cache/perfmatters)
 	public static function bootstrap_dir()
@@ -431,6 +457,7 @@ class Config
 			//drop-in / htaccess HIT paths need this — plugins are not loaded yet
 			'cloudflare' => $cloudflare,
 			'cf_edge_ttl' => $cloudflare ? Cloudflare::edge_ttl() : 0,
+			'browser_ttl' => self::browser_ttl(),
 			'gzip' => self::is_gzip_enabled(),
 			'cache_dir' => self::cache_dir(),
 			'host' => self::site_host(),
@@ -451,6 +478,19 @@ class Config
 	public static function config_file()
 	{
 		return self::bootstrap_dir() . '/page-config.php';
+	}
+
+	//true when on-disk page-config differs from live to_file_array() (filter/settings bake drift)
+	//Cache settings screen only — Reinstall / save rewrites page-config + .htaccess
+	public static function is_stale($options = null)
+	{
+		$file = self::config_file();
+
+		if(!is_file($file)) {
+			return true;
+		}
+
+		return self::read_file_array($file) !== self::to_file_array($options);
 	}
 
 	//write the drop-in config (settings save, install/sync, uninstall). not on the request hot path
@@ -507,6 +547,18 @@ class Config
 		}
 
 		unset($input['cf_api_token']);
+
+		//Auto is the default. Choosing it clears a manual Zone ID so the next save reloads onto auto-detect.
+		if(array_key_exists('cf_zone_mode', $input)) {
+			$input['cf_zone_mode'] = ($input['cf_zone_mode'] === 'manual') ? 'manual' : '';
+
+			if($input['cf_zone_mode'] !== 'manual') {
+				$input['cf_zone_id'] = '';
+			}
+			elseif(isset($input['cf_zone_id'])) {
+				$input['cf_zone_id'] = trim((string) $input['cf_zone_id']);
+			}
+		}
 
 		//Edge Cache Expires select — '' is the 30-day default; unknown values reset to ''
 		if(array_key_exists('cf_edge_ttl', $input)) {

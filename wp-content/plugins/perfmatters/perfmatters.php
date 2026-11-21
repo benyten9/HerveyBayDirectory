@@ -3,7 +3,7 @@
 Plugin Name: Perfmatters
 Plugin URI: https://perfmatters.io/
 Description: Perfmatters is a lightweight performance plugin developed to speed up your WordPress site.
-Version: 2.7.0
+Version: 2.7.1
 Requires at least: 5.5
 Requires PHP: 8.1
 Author: forgemedia
@@ -24,7 +24,7 @@ if(!defined('ABSPATH')) {
 define('PERFMATTERS_STORE_URL', 'https://perfmatters.io/');
 define('PERFMATTERS_ITEM_ID', 696);
 define('PERFMATTERS_ITEM_NAME', 'perfmatters');
-define('PERFMATTERS_VERSION', '2.7.0');
+define('PERFMATTERS_VERSION', '2.7.1');
 define('PERFMATTERS_PATH', plugin_dir_path(__FILE__ ));
 define('PERFMATTERS_URL', plugin_dir_url(__FILE__));
 if(!defined('PMMU_PLUGIN_DIR')) {
@@ -536,6 +536,16 @@ function perfmatters_install() {
 			'pages' => 1
 		);
 		update_option('perfmatters_options', $perfmatters_options);
+	}
+
+	//zone mode for existing installs that already saved a Zone ID
+	if($perfmatters_version < '2.7.1') {
+		$perfmatters_options = get_option('perfmatters_options');
+
+		if(!empty($perfmatters_options['cache']['cf_zone_id'])) {
+			$perfmatters_options['cache']['cf_zone_mode'] = 'manual';
+			update_option('perfmatters_options', $perfmatters_options);
+		}
 	}
 
 	//migrate code snippet data from cache to uploads

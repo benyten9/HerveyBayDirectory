@@ -680,15 +680,13 @@ a.perfmatters-add-input-row {
   margin-right: 20px;
   font-size: 14px;
   line-height: 40px;
-  color: #4A89DD;
+  color: #333;
   text-decoration: none;
   box-shadow: none;
 }
-#perfmatters-admin .pm-subnav a:hover {
-  color: #3F74BC;
-}
+#perfmatters-admin .pm-subnav a:hover,
 #perfmatters-admin .pm-subnav a.active {
-  color: #333;
+  color: #4A89DD;
 }
 #perfmatters-admin .pm-subnav a .dashicons {
   height: 16px;

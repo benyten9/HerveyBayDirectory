@@ -4,6 +4,7 @@ if(!defined('ABSPATH')) {
 }
 
 use Perfmatters\Cache;
+use Perfmatters\Cache\Cloudflare;
 
 $options = Perfmatters\Config::$options['cache'] ?? array();
 $detected_host = Cache::detected_host_cache();
@@ -35,6 +36,7 @@ echo '<section id="cache-settings" class="section-content" data-pm-subnav="cache
 	Cache::print_files_notice();
 	Cache::print_conflict_notice();
 	Cache::print_cloudflare_conflict_notice();
+	Cloudflare::print_auto_sync_notice();
 
 	Cache::print_status($options);
 

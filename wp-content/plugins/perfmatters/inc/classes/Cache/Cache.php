@@ -453,7 +453,7 @@ class Cache
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(Purge::cleared_message()) . '</p></div>';
 	}
 
-	//Cache settings: drop-in/runtime drifted or WP_CACHE missing — byte check is settings-only
+	//Cache settings: drop-in/runtime drifted, page-config stale, or WP_CACHE missing — settings-only
 	public static function print_files_notice()
 	{
 		if(!self::disk_enabled() || self::foreign_dropin()) {
@@ -464,7 +464,7 @@ class Cache
 			return;
 		}
 
-		echo '<div class="notice notice-warning inline"><p>' . esc_html__('Page cache files are missing or out of date. Reinstall them so disk cache can serve pages correctly.', 'perfmatters') . '</p>';
+		echo '<div class="notice notice-warning inline"><p>' . esc_html__('Page cache files or config are missing or out of date. Reinstall them so disk cache and cache filters apply correctly.', 'perfmatters') . '</p>';
 		echo '<p style="margin: 8px 0 4px;">';
 		perfmatters_action_button('sync_cache_files', __('Reinstall Cache Files', 'perfmatters'), 'secondary');
 		echo '</p></div>';

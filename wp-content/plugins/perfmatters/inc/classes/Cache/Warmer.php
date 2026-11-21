@@ -814,15 +814,21 @@ class Warmer
 		return true;
 	}
 
-	//desktop or mobile warmer hit. mobile UA must trip wp_is_mobile()
+	//desktop or mobile warmer hit. avoid browser-spoof UAs (WAFs/CF often 520 origin→public fetches)
 	private static function fetch_device($url, $mobile)
 	{
+		//Mobile token + Sec-CH-UA-Mobile trip perfmatters_cache_is_mobile() / wp_is_mobile() for -mobile files
+		$ua = $mobile ? 'Perfmatters/Warmer Mobile' : 'Perfmatters/Warmer';
+		$ua = apply_filters('perfmatters_cache_warmer_user_agent', $ua, $mobile);
+
+		if(!is_string($ua) || $ua === '') {
+			$ua = $mobile ? 'Perfmatters/Warmer Mobile' : 'Perfmatters/Warmer';
+		}
+
 		$args = array(
 			'timeout' => 20,
 			'cookies' => array(),
-			'user-agent' => $mobile
-				? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
-				: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+			'user-agent' => $ua,
 			'headers' => array(
 				'Cache-Control' => 'no-cache'
 			)

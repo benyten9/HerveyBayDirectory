@@ -108,10 +108,15 @@ if($gzip) {
 	}
 }
 
-//revalidate every visit. an unchanged file answers with headers only
+//browser Cache-Control from page-config (default no-cache); unchanged file → 304
 if(!headers_sent()) {
 	header('X-Perfmatters-Cache: HIT');
-	header('Cache-Control: no-cache, must-revalidate');
+	if(isset($config['browser_ttl']) && is_numeric($config['browser_ttl']) && (int) $config['browser_ttl'] >= 0) {
+		header('Cache-Control: max-age=' . (int) $config['browser_ttl'] . ', must-revalidate');
+	}
+	else {
+		header('Cache-Control: no-cache, must-revalidate');
+	}
 
 	//Cloudflare bypass_by_default — only when page-config was written with a purgeable token (cf_edge_ttl > 0)
 	if(!empty($config['cloudflare']) && !empty($config['cf_edge_ttl']) && (int) $config['cf_edge_ttl'] > 0) {

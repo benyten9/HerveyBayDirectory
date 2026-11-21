@@ -59,7 +59,7 @@ class Ajax
 			if(isset($options['cache']) && is_array($options['cache'])) {
 				$options['cache'] = \Perfmatters\Cache\Config::sanitize($options['cache']);
 
-				//page / warmer / mobile / CF toggles reload; filter-only edits soft-refresh via progress
+				//page / warmer / mobile / CF toggles and Zone ID reload; filter-only edits soft-refresh via progress
 				if($old_cache !== $options['cache']) {
 					if(self::cache_save_needs_reload($old_cache, $options['cache'])) {
 						$reload = true;
@@ -109,13 +109,21 @@ class Ajax
 		wp_send_json_success($response);
 	}
 
-	//page / warmer / mobile / CF toggles need new PHP chrome; filter edits can soft-refresh
+	//page / warmer / mobile / CF toggles and Zone ID need new PHP chrome; filter edits can soft-refresh
 	private static function cache_save_needs_reload($old, $new)
 	{
 		foreach(array('page', 'warmer', 'page_mobile', 'cloudflare') as $key) {
 			if(!empty($old[$key]) !== !empty($new[$key])) {
 				return true;
 			}
+		}
+
+		//Zone ID helper ("Using example.com (id)") is printed with the field and is not in the status-card payload
+		$old_zone = isset($old['cf_zone_id']) ? trim((string) $old['cf_zone_id']) : '';
+		$new_zone = isset($new['cf_zone_id']) ? trim((string) $new['cf_zone_id']) : '';
+
+		if($old_zone !== $new_zone) {
+			return true;
 		}
 
 		return false;

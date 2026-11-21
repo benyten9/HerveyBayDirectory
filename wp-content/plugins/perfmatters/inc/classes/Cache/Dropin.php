@@ -36,7 +36,7 @@ class Dropin
 		update_option('perfmatters_cache_files_version', PERFMATTERS_VERSION, false);
 	}
 
-	//true when drop-in, runtime, page-config, or WP_CACHE need reinstall
+	//true when drop-in, runtime, page-config contents, or WP_CACHE need reinstall
 	//used on the Cache settings screen only — not the front-end hot path
 	public static function needs_resync()
 	{
@@ -48,7 +48,12 @@ class Dropin
 			}
 		}
 
-		return !self::files_match();
+		if(!self::files_match()) {
+			return true;
+		}
+
+		//filter / option bake drift (browser_ttl, cookies, path, etc.) — same Reinstall path
+		return Config::is_stale();
 	}
 
 	//manual Reinstall from Cache settings (data-pm-action)
