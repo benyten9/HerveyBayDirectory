@@ -888,6 +888,8 @@ function hbl_crm_bridge_doublescale_sync( string $event, int $listing_id, int $u
 			// Also push into custom fields so they're usable as email merge tags.
 			hbl_crm_bridge_set_custom_field( $contact, 'business-name',   $post->post_title );
 			hbl_crm_bridge_set_custom_field( $contact, 'listing-url',     get_permalink( $listing_id ) ?: '' );
+			hbl_crm_bridge_set_custom_field( $contact, 'claim-url',       hbl_crm_bridge_claim_url( $listing_id ) );
+			hbl_crm_bridge_set_custom_field( $contact, 'dashboard-url',   hbl_crm_bridge_dashboard_url() );
 			hbl_crm_bridge_set_custom_field( $contact, 'expiration-date', hbl_crm_bridge_get_listing_expiry( $listing_id ) );
 		}
 
@@ -999,6 +1001,28 @@ function hbl_crm_bridge_set_contact_meta( $contact, string $key, string $value )
 	} catch ( \Throwable $e ) {
 		// Non-fatal — meta is supplementary data.
 	}
+}
+
+/**
+ * Per-listing claim link used by the "CLAIM YOUR LISTING" email button.
+ * The theme's claim form (/claim-listing/) reads listing_id from the query
+ * string and asks the visitor to log in or register first.
+ */
+function hbl_crm_bridge_claim_url( int $listing_id ): string {
+	return add_query_arg( 'listing_id', $listing_id, home_url( '/claim-listing/' ) );
+}
+
+/**
+ * Owner dashboard link used by the "UPDATE YOUR LISTING" email button.
+ */
+function hbl_crm_bridge_dashboard_url(): string {
+	if ( function_exists( 'hbl_get_dashboard_page_url' ) ) {
+		return (string) hbl_get_dashboard_page_url();
+	}
+	if ( class_exists( 'ATBDP_Permalink' ) ) {
+		return (string) ATBDP_Permalink::get_dashboard_page_link();
+	}
+	return home_url( '/dashboard/' );
 }
 
 /**
@@ -1547,6 +1571,8 @@ function hbl_crm_bridge_sync_one( int $listing_id, string $tag_name, int $user_i
 		hbl_crm_bridge_set_contact_meta( $contact, 'business_name', $resolved['business_name'] );
 		hbl_crm_bridge_set_custom_field( $contact, 'business-name',   $resolved['business_name'] );
 		hbl_crm_bridge_set_custom_field( $contact, 'listing-url',     get_permalink( $listing_id ) ?: '' );
+		hbl_crm_bridge_set_custom_field( $contact, 'claim-url',       hbl_crm_bridge_claim_url( $listing_id ) );
+		hbl_crm_bridge_set_custom_field( $contact, 'dashboard-url',   hbl_crm_bridge_dashboard_url() );
 		hbl_crm_bridge_set_custom_field( $contact, 'expiration-date', hbl_crm_bridge_get_listing_expiry( $listing_id ) );
 
 		if ( $tag_name ) {
