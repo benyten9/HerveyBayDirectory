@@ -508,6 +508,12 @@ if ( is_admin() ) {
 		error_log( '[HBL] Place ID Manager failed to load: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
 	}
 
+	try {
+		require_once HBL_THEME_DIR . '/inc/admin/class-hbl-email-finder.php';
+	} catch ( \Throwable $e ) {
+		error_log( '[HBL] Email Finder failed to load: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() );
+	}
+
 	require_once HBL_THEME_DIR . '/inc/admin/class-hbl-partner-roles.php';
 }
 
