@@ -8,7 +8,7 @@
  *                 → this plugin fires outgoing webhook to CRM → CRM applies tag /
  *                 moves contact to new workflow.
  *
- * Version:      1.0.50
+ * Version:      1.0.55
  * Requires PHP: 7.4
  * Author:       HBL
  * License:      GPL-2.0+
@@ -162,7 +162,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.50' );
+define( 'HBL_CRM_BRIDGE_VERSION',     '1.0.55' );
 define( 'HBL_CRM_BRIDGE_OPTION_KEY',  'hbl_crm_bridge_settings' );
 define( 'HBL_CRM_BRIDGE_REST_NS',     'hbl-crm/v1' );
 define( 'HBL_CRM_BRIDGE_REST_ROUTE',  '/action' );
@@ -211,6 +211,16 @@ function hbl_crm_bridge_boot(): void {
 	add_action( 'directorist_stripe_webhook_received', 'hbl_crm_bridge_on_stripe_webhook_received', 10, 2 );
 	add_action( 'hbl_subscription_payment_failed', 'hbl_crm_bridge_on_subscription_payment_failed', 10, 3 );
 	add_action( 'directorist_package_updated', 'hbl_crm_bridge_on_package_updated', 10, 3 );
+
+	// ── Paid plan started (Silver / Gold auto-approved after payment) ──────────
+	add_action( 'hbl_listing_auto_approved', 'hbl_crm_bridge_on_subscription_started', 10, 3 );
+
+	// ── Claim declined ────────────────────────────────────────────────────────
+	// directorist-claim-listing has no "declined" action, so watch the claim
+	// record's status meta flip to "declined" instead (works for admin review
+	// screens and the claim service alike, without editing that plugin).
+	add_action( 'updated_post_meta', 'hbl_crm_bridge_on_claim_status_meta', 10, 4 );
+	add_action( 'added_post_meta',   'hbl_crm_bridge_on_claim_status_meta', 10, 4 );
 	// Keeps invoice.payment_failed enabled on the already-registered Stripe webhook
 	// even though directorist-stripe's own webhook-registration code has no filter
 	// for its enabled_events list.
@@ -278,6 +288,7 @@ function hbl_crm_bridge_on_updated( int $listing_id ): void {
 }
 
 function hbl_crm_bridge_on_expired( int $listing_id ): void {
+	hbl_crm_bridge_mark_lapsed( $listing_id );
 	hbl_crm_bridge_dispatch( 'listing_expired', $listing_id );
 	hbl_crm_bridge_doublescale_sync( 'listing_expired', $listing_id );
 }
@@ -470,6 +481,8 @@ function hbl_crm_bridge_on_package_updated( $new_package, $old_package, ?string 
 	$is_payment_failure = ( 'payment_failed' === $triggered_by );
 	$event              = $is_payment_failure ? 'subscription_lapsed_payment' : 'subscription_cancelled';
 
+	hbl_crm_bridge_mark_lapsed( $listing_id );
+
 	hbl_crm_bridge_dispatch( $event, $listing_id );
 	hbl_crm_bridge_doublescale_sync( $event, $listing_id );
 
@@ -652,6 +665,74 @@ function hbl_crm_bridge_on_payment_verified( int $listing_id, $plan_id = 0, $pla
 		sprintf( 'Completed payment for the "%s" plan.', $plan ),
 		$owner_id
 	);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PAID PLAN STARTED / REINSTATED / CLAIM DECLINED
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Remembers that a listing's paid plan lapsed or was cancelled, so a later
+ * payment can be recognised as a reinstatement.
+ */
+function hbl_crm_bridge_mark_lapsed( int $listing_id ): void {
+	if ( $listing_id ) {
+		update_post_meta( $listing_id, '_hbl_crmb_lapsed', time() );
+	}
+}
+
+/**
+ * A Silver or Gold order was paid and the listing auto-approved.
+ * Fires "subscription_started" and, when the listing had lapsed before,
+ * "subscription_reinstated" straight after it.
+ *
+ * @param int    $listing_id
+ * @param mixed  $plan_id
+ * @param string $plan_tier
+ */
+function hbl_crm_bridge_on_subscription_started( int $listing_id, $plan_id = 0, $plan_tier = '' ): void {
+	if ( ! $listing_id ) {
+		return;
+	}
+
+	// Guard against the same order being auto-approved twice in quick succession.
+	$guard = 'hbl_crmb_started_' . $listing_id;
+	if ( get_transient( $guard ) ) {
+		return;
+	}
+	set_transient( $guard, 1, 10 * MINUTE_IN_SECONDS );
+
+	hbl_crm_bridge_dispatch( 'subscription_started', $listing_id );
+	hbl_crm_bridge_doublescale_sync( 'subscription_started', $listing_id );
+
+	if ( get_post_meta( $listing_id, '_hbl_crmb_lapsed', true ) ) {
+		delete_post_meta( $listing_id, '_hbl_crmb_lapsed' );
+		hbl_crm_bridge_dispatch( 'subscription_reinstated', $listing_id );
+		hbl_crm_bridge_doublescale_sync( 'subscription_reinstated', $listing_id );
+	}
+}
+
+/**
+ * Fires "claim_declined" when a claim record's _claim_status becomes "declined".
+ * The claimant (not the original listing owner) is the contact that gets tagged.
+ *
+ * @param int    $meta_id
+ * @param int    $post_id    The claim record ID.
+ * @param string $meta_key
+ * @param mixed  $meta_value
+ */
+function hbl_crm_bridge_on_claim_status_meta( $meta_id, $post_id, $meta_key, $meta_value ): void {
+	if ( '_claim_status' !== $meta_key || 'declined' !== $meta_value ) {
+		return;
+	}
+	$listing_id = (int) get_post_meta( (int) $post_id, '_claimed_listing', true );
+	$claimer_id = (int) get_post_meta( (int) $post_id, '_listing_claimer', true );
+	if ( ! $listing_id || ! $claimer_id ) {
+		return;
+	}
+
+	hbl_crm_bridge_dispatch( 'claim_declined', $listing_id );
+	hbl_crm_bridge_doublescale_sync( 'claim_declined', $listing_id, $claimer_id );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2196,6 +2277,9 @@ function hbl_crm_bridge_get_settings(): array {
 			'subscription_payment_failed',
 			'subscription_lapsed_payment',
 			'subscription_cancelled',
+			'claim_declined',
+			'subscription_started',
+			'subscription_reinstated',
 		],
 		'doublescale_enabled' => false,
 		'doublescale_list'    => '',
@@ -2208,6 +2292,9 @@ function hbl_crm_bridge_get_settings(): array {
 			'subscription_payment_failed' => '',
 			'subscription_lapsed_payment' => '',
 			'subscription_cancelled'      => '',
+			'claim_declined'             => '',
+			'subscription_started'       => '',
+			'subscription_reinstated'    => '',
 		],
 		'doublescale_workflow_remove_tag' => [
 			'listing_claimed'             => '',
@@ -2218,6 +2305,9 @@ function hbl_crm_bridge_get_settings(): array {
 			'subscription_payment_failed' => '',
 			'subscription_lapsed_payment' => '',
 			'subscription_cancelled'      => '',
+			'claim_declined'             => '',
+			'subscription_started'       => '',
+			'subscription_reinstated'    => '',
 		],
 		'doublescale_workflow_add_tag'    => [
 			'listing_claimed'             => '',
@@ -2228,6 +2318,9 @@ function hbl_crm_bridge_get_settings(): array {
 			'subscription_payment_failed' => '',
 			'subscription_lapsed_payment' => '',
 			'subscription_cancelled'      => '',
+			'claim_declined'             => '',
+			'subscription_started'       => '',
+			'subscription_reinstated'    => '',
 		],
 		'doublescale_debug_log'           => false,
 	];
@@ -2307,6 +2400,9 @@ function hbl_crm_bridge_sanitize_settings( $input ): array {
 		'subscription_payment_failed',
 		'subscription_lapsed_payment',
 		'subscription_cancelled',
+		'claim_declined',
+		'subscription_started',
+		'subscription_reinstated',
 	];
 
 	$clean = [];
@@ -2380,6 +2476,10 @@ function hbl_crm_bridge_settings_page_html(): void {
 			'label' => 'Listing Expired',
 			'desc'  => 'a listing reaches its expiry date (no Stripe subscription involved)',
 		],
+		'claim_declined'    => [
+			'label' => 'Claim Declined',
+			'desc'  => 'an administrator declines a claim on a listing (the claimant is tagged)',
+		],
 	];
 
 	// Stripe subscription lifecycle — kept as a separate group from the Directorist
@@ -2399,6 +2499,14 @@ function hbl_crm_bridge_settings_page_html(): void {
 		'subscription_cancelled'      => [
 			'label' => 'Subscription Cancelled',
 			'desc'  => 'the owner cancelled the subscription themselves in Stripe',
+		],
+		'subscription_started'    => [
+			'label' => 'Paid Plan Started',
+			'desc'  => 'a Silver or Gold order is paid and the listing is auto-approved (Silver: Active)',
+		],
+		'subscription_reinstated'  => [
+			'label' => 'Paid Plan Reinstated',
+			'desc'  => 'a paid plan starts again on a listing that had previously lapsed or been cancelled (fires right after Paid Plan Started)',
 		],
 	];
 
