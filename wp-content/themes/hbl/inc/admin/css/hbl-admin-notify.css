@@ -1,0 +1,122 @@
+/* HBL admin notifications (toasts) — see js/hbl-admin-notify.js */
+.hbl-notify-stack {
+	position: fixed;
+	top: 48px;
+	right: 20px;
+	z-index: 100000;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	width: min(380px, calc(100vw - 32px));
+	pointer-events: none;
+	font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.hbl-notify {
+	pointer-events: auto;
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px 12px 12px 14px;
+	background: #fff;
+	border: 1px solid #E5E7EB;
+	border-left: 4px solid #6B7280;
+	border-radius: 8px;
+	box-shadow: 0 8px 24px rgba(17, 24, 39, 0.14);
+	color: #1F2937;
+	font-size: 13px;
+	line-height: 1.45;
+	animation: hbl-notify-in 0.18s ease-out;
+}
+.hbl-notify--leaving { opacity: 0; transform: translateX(12px); transition: opacity 0.18s, transform 0.18s; }
+.hbl-notify--success { border-left-color: #059669; }
+.hbl-notify--info    { border-left-color: #1E398A; }
+.hbl-notify--warning { border-left-color: #D97706; }
+.hbl-notify--error   { border-left-color: #DC2626; background: #FFFBFB; }
+
+.hbl-notify__icon {
+	flex: 0 0 22px;
+	height: 22px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	background: #6B7280;
+}
+.hbl-notify--success .hbl-notify__icon { background: #059669; }
+.hbl-notify--info    .hbl-notify__icon { background: #1E398A; }
+.hbl-notify--warning .hbl-notify__icon { background: #D97706; }
+.hbl-notify--error   .hbl-notify__icon { background: #DC2626; }
+
+.hbl-notify__body  { flex: 1 1 auto; min-width: 0; }
+.hbl-notify__title { font-weight: 600; margin-bottom: 2px; }
+.hbl-notify__text  { word-wrap: break-word; overflow-wrap: anywhere; }
+.hbl-notify__count { color: #6B7280; font-weight: 600; }
+
+.hbl-notify__detail { margin-top: 6px; font-size: 12px; color: #4B5563; }
+.hbl-notify__detail summary { cursor: pointer; }
+.hbl-notify__detail pre {
+	margin: 6px 0 0;
+	padding: 8px;
+	max-height: 140px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	background: #F3F4F6;
+	border-radius: 4px;
+	font-size: 11px;
+}
+.hbl-notify__action {
+	margin-top: 8px;
+	padding: 5px 12px;
+	border: 0;
+	border-radius: 6px;
+	background: #1E398A;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+.hbl-notify__action:hover { background: #172C6B; }
+
+.hbl-notify__close {
+	flex: 0 0 auto;
+	margin: -2px 0 0;
+	padding: 0 4px;
+	border: 0;
+	background: transparent;
+	color: #9CA3AF;
+	font-size: 20px;
+	line-height: 1;
+	cursor: pointer;
+}
+.hbl-notify__close:hover { color: #374151; }
+
+/* Inline retry row used by the tools' tables */
+.hbl-tool-error-row td { color: #B91C1C; padding: 16px; text-align: center; }
+.hbl-tool-retry {
+	margin-left: 10px;
+	padding: 4px 12px;
+	border: 1px solid #DC2626;
+	border-radius: 6px;
+	background: #fff;
+	color: #B91C1C;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+.hbl-tool-retry:hover { background: #FEF2F2; }
+
+@keyframes hbl-notify-in {
+	from { opacity: 0; transform: translateX(14px); }
+	to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.hbl-notify { animation: none; }
+	.hbl-notify--leaving { transition: none; }
+}
+@media (max-width: 782px) {
+	.hbl-notify-stack { top: 56px; right: 16px; left: 16px; width: auto; }
+}

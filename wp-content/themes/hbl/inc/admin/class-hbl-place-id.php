@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Place_ID {
 
 	const OPTION_KEY    = 'hbl_place_id_settings';
@@ -50,6 +52,7 @@ class HBL_Place_ID {
 		if ( 'directorist-tools_page_hbl-place-id' !== $hook ) {
 			return;
 		}
+		HBL_Admin_Tool::enqueue_assets();
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style( 'hbl-bulk-reassign', HBL_THEME_URI . '/inc/admin/css/bulk-reassign.css', array( 'hbl-admin-font-poppins' ), HBL_VERSION );
 		wp_enqueue_style( 'hbl-place-id',      HBL_THEME_URI . '/inc/admin/css/place-id.css',      array( 'hbl-bulk-reassign' ), HBL_VERSION );
@@ -363,254 +366,285 @@ class HBL_Place_ID {
 
 
 	public function ajax_count_missing(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
-		$s = $this->get_settings();
-		wp_send_json_success( array( 'count' => $this->count_missing( $s['place_id_key'] ) ) );
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
+			$s = $this->get_settings();
+			HBL_Admin_Tool::ok( array( 'count' => $this->count_missing( $s['place_id_key'] ) ) );
+		}, 'Place ID: count missing' );
 	}
 
 	public function ajax_load_page(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
 
-		$s        = $this->get_settings();
-		$page     = max( 1, (int) ( $_POST['page']   ?? 1 ) );
-		$search   = sanitize_text_field( $_POST['search'] ?? '' );
-		$per_page = $s['per_page'];
-		$total    = $this->count_page( $s['place_id_key'], $search );
-		$items    = $this->get_page( $s['place_id_key'], $page, $per_page, $search );
+			$s        = $this->get_settings();
+			$page     = max( 1, (int) ( $_POST['page']   ?? 1 ) );
+			$search   = sanitize_text_field( $_POST['search'] ?? '' );
+			$per_page = $s['per_page'];
+			$total    = $this->count_page( $s['place_id_key'], $search );
+			$items    = $this->get_page( $s['place_id_key'], $page, $per_page, $search );
 
-		wp_send_json_success( array(
-			'items'     => $items,
-			'total'     => $total,
-			'page'      => $page,
-			'max_pages' => $total > 0 ? (int) ceil( $total / $per_page ) : 1,
-			'per_page'  => $per_page,
-		) );
+			HBL_Admin_Tool::ok( array(
+				'items'     => $items,
+				'total'     => $total,
+				'page'      => $page,
+				'max_pages' => $total > 0 ? (int) ceil( $total / $per_page ) : 1,
+				'per_page'  => $per_page,
+			) );
+		}, 'Place ID: load page' );
 	}
 
 	public function ajax_save_selected(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
 
-		$s         = $this->get_settings();
-		$meta_key  = $s['place_id_key'];
-		$items     = json_decode( wp_unslash( $_POST['items'] ?? '' ), true );
+			$s         = $this->get_settings();
+			$meta_key  = $s['place_id_key'];
+			$items     = json_decode( wp_unslash( $_POST['items'] ?? '' ), true );
 
-		if ( ! is_array( $items ) || empty( $items ) ) {
-			wp_send_json_error( 'No items provided.' ); return;
-		}
+			if ( ! is_array( $items ) || empty( $items ) ) {
+				HBL_Admin_Tool::fail( 'No items provided.' );
+			}
 
-		$saved = 0; $failed = 0; $saved_ids = array();
-		foreach ( $items as $item ) {
-			$id  = (int) ( $item['listing_id'] ?? 0 );
-			$pid = sanitize_text_field( $item['place_id'] ?? '' );
-			if ( ! $id || ! $pid ) { $failed++; continue; }
-			$post = get_post( $id );
-			if ( ! $post || $post->post_type !== 'at_biz_dir' ) { $failed++; continue; }
-			update_post_meta( $id, $meta_key, $pid );
-			$saved++;
-			$saved_ids[] = $id;
-		}
-		wp_send_json_success( array( 'saved' => $saved, 'failed' => $failed, 'saved_ids' => $saved_ids ) );
+			$saved = 0; $failed = 0; $saved_ids = array(); $failed_items = array();
+			foreach ( $items as $item ) {
+				$id  = (int) ( $item['listing_id'] ?? 0 );
+				$pid = sanitize_text_field( $item['place_id'] ?? '' );
+				if ( ! $id || ! $pid ) { $failed++; $failed_items[] = array( 'listing_id' => $id, 'reason' => 'Missing listing or Place ID.' ); continue; }
+				$post = get_post( $id );
+				if ( ! $post || $post->post_type !== 'at_biz_dir' ) { $failed++; $failed_items[] = array( 'listing_id' => $id, 'reason' => 'Listing no longer exists.' ); continue; }
+				update_post_meta( $id, $meta_key, $pid );
+				$saved++;
+				$saved_ids[] = $id;
+			}
+			HBL_Admin_Tool::ok( array( 'saved' => $saved, 'failed' => $failed, 'failed_items' => $failed_items, 'saved_ids' => $saved_ids ) );
+		}, 'Place ID: save selected' );
 	}
 
 
+	/** Plain-English text for a PHP upload error code. */
+	private function upload_error_message( int $code ): string {
+		switch ( $code ) {
+			case UPLOAD_ERR_INI_SIZE:
+			case UPLOAD_ERR_FORM_SIZE:
+				return 'The file is larger than the server allows (upload_max_filesize ' . ini_get( 'upload_max_filesize' ) . '). Use a smaller file.';
+			case UPLOAD_ERR_PARTIAL:
+				return 'The upload was interrupted before it finished. Try again.';
+			case UPLOAD_ERR_NO_FILE:
+				return 'No file was received. Choose a file and try again.';
+			case UPLOAD_ERR_NO_TMP_DIR:
+			case UPLOAD_ERR_CANT_WRITE:
+				return 'The server could not store the uploaded file (temp folder problem). Ask your host to check disk space and permissions.';
+			default:
+				return 'The upload failed (PHP error code ' . $code . ').';
+		}
+	}
+
 	public function ajax_upload(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( empty( $_FILES['file'] ) ) {
-			wp_send_json_error( 'No file received.' ); return;
-		}
+			if ( empty( $_FILES['file'] ) ) {
+				HBL_Admin_Tool::fail( 'No file received.' );
+			}
 
-		$file = $_FILES['file'];
+			$file = $_FILES['file'];
 
-		if ( $file['error'] !== UPLOAD_ERR_OK ) {
-			wp_send_json_error( 'Upload error code: ' . $file['error'] ); return;
-		}
+			if ( $file['error'] !== UPLOAD_ERR_OK ) {
+				HBL_Admin_Tool::fail( $this->upload_error_message( (int) $file['error'] ), 'upload_error' );
+			}
 
-		if ( $file['size'] > 20 * 1024 * 1024 ) {
-			wp_send_json_error( 'File too large (max 20 MB).' ); return;
-		}
+			if ( $file['size'] > 20 * 1024 * 1024 ) {
+				HBL_Admin_Tool::fail( 'File too large (max 20 MB).' );
+			}
 
-		$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+			$ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 
-		if ( ! in_array( $ext, array( 'xlsx', 'csv' ), true ) ) {
-			wp_send_json_error( 'Only .xlsx and .csv files are supported. Please re-save your Excel file as one of those formats.' ); return;
-		}
+			if ( ! in_array( $ext, array( 'xlsx', 'csv' ), true ) ) {
+				HBL_Admin_Tool::fail( 'Only .xlsx and .csv files are supported. Please re-save your Excel file as one of those formats.' );
+			}
 
-		$tmp = $file['tmp_name'];
+			$tmp = $file['tmp_name'];
 
-		$result = ( 'xlsx' === $ext )
-			? $this->parse_xlsx( $tmp )
-			: $this->parse_csv( $tmp );
+			$result = ( 'xlsx' === $ext )
+				? $this->parse_xlsx( $tmp )
+				: $this->parse_csv( $tmp );
 
-		if ( $result['error'] || empty( $result['rows'] ) ) {
-			wp_send_json_error( $result['error'] ?: 'The file appears to be empty.' ); return;
-		}
+			if ( $result['error'] || empty( $result['rows'] ) ) {
+				HBL_Admin_Tool::fail( $result['error'] ?: 'The file appears to be empty.' );
+			}
 
-		$rows = $result['rows'];
+			$rows = $result['rows'];
 
-		if ( count( $rows ) > 20000 ) {
-			wp_send_json_error( 'File contains more than 20,000 rows. Please split it into smaller batches.' ); return;
-		}
+			if ( count( $rows ) > 20000 ) {
+				HBL_Admin_Tool::fail( 'File contains more than 20,000 rows. Please split it into smaller batches.' );
+			}
 
-		$token = wp_generate_password( 16, false );
+			$token = wp_generate_password( 16, false );
 
-		set_transient( 'hbl_pid_rows_' . $token, $rows, self::IMPORT_EXPIRY );
+			set_transient( 'hbl_pid_rows_' . $token, $rows, self::IMPORT_EXPIRY );
 
-		$headers = $rows[0] ?? array();
-		$preview = array_slice( $rows, 0, 6 );
+			$headers = $rows[0] ?? array();
+			$preview = array_slice( $rows, 0, 6 );
 
-		wp_send_json_success( array(
-			'token'      => $token,
-			'total_rows' => count( $rows ) - 1,
-			'headers'    => $headers,
-			'preview'    => $preview,
-		) );
+			HBL_Admin_Tool::ok( array(
+				'token'      => $token,
+				'total_rows' => count( $rows ) - 1,
+				'headers'    => $headers,
+				'preview'    => $preview,
+			) );
+		}, 'Place ID: upload' );
 	}
 
 	public function ajax_match_all(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
-
-		$token      = sanitize_text_field( $_POST['token']        ?? '' );
-		$name_col   = (int) ( $_POST['name_col']   ?? 0 );
-		$cat_col    = (int) ( $_POST['cat_col']    ?? -1 );
-		$pid_col    = (int) ( $_POST['pid_col']    ?? 0 );
-		$has_header = ! empty( $_POST['has_header'] ) && 'true' === $_POST['has_header'];
-
-		if ( ! $token ) {
-			wp_send_json_error( 'No upload token. Please upload a file first.' ); return;
-		}
-
-		$rows = get_transient( 'hbl_pid_rows_' . $token );
-		if ( ! is_array( $rows ) ) {
-			wp_send_json_error( 'Upload session expired or not found. Please upload the file again.' ); return;
-		}
-
-		if ( $has_header ) {
-			$rows = array_slice( $rows, 1 );
-		}
-
-		$index = $this->build_listing_index();
-
-		$results   = array();
-		$found     = 0;
-		$not_found = 0;
-
-		foreach ( $rows as $i => $row ) {
-			$name     = trim( (string) ( $row[ $name_col ] ?? '' ) );
-			$category = $cat_col >= 0 ? trim( (string) ( $row[ $cat_col ] ?? '' ) ) : '';
-			$place_id = trim( (string) ( $row[ $pid_col ] ?? '' ) );
-
-			if ( ! $name || ! $place_id ) {
-				continue;
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
+			if ( function_exists( 'set_time_limit' ) ) {
+				@set_time_limit( 180 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
 			}
 
-			$match = $this->find_match( $index, $name, $category );
+			$token      = sanitize_text_field( $_POST['token']        ?? '' );
+			$name_col   = (int) ( $_POST['name_col']   ?? 0 );
+			$cat_col    = (int) ( $_POST['cat_col']    ?? -1 );
+			$pid_col    = (int) ( $_POST['pid_col']    ?? 0 );
+			$has_header = ! empty( $_POST['has_header'] ) && 'true' === $_POST['has_header'];
 
-			if ( $match ) {
-				$found++;
-				$results[] = array(
-					'row'           => $i,
-					'excel_name'    => $name,
-					'excel_cat'     => $category,
-					'place_id'      => $place_id,
-					'listing_id'    => $match['listing_id'],
-					'listing_title' => $match['listing_title'],
-					'edit_url'      => get_edit_post_link( $match['listing_id'], 'raw' ) ?: '',
-					'match_type'    => $match['match_type'],
-					'ambiguous'     => $match['ambiguous'],
-				);
-			} else {
-				$not_found++;
-				$results[] = array(
-					'row'           => $i,
-					'excel_name'    => $name,
-					'excel_cat'     => $category,
-					'place_id'      => $place_id,
-					'listing_id'    => 0,
-					'listing_title' => '',
-					'edit_url'      => '',
-					'match_type'    => 'none',
-					'ambiguous'     => false,
-				);
+			if ( ! $token ) {
+				HBL_Admin_Tool::fail( 'No upload token. Please upload a file first.' );
 			}
-		}
 
-		set_transient( 'hbl_pid_results_' . $token, $results, self::IMPORT_EXPIRY );
+			$rows = get_transient( 'hbl_pid_rows_' . $token );
+			if ( ! is_array( $rows ) ) {
+				HBL_Admin_Tool::fail( 'Upload session expired or not found. Please upload the file again.' );
+			}
 
-		wp_send_json_success( array(
-			'total'     => count( $results ),
-			'found'     => $found,
-			'not_found' => $not_found,
-			'results'   => $results,
-		) );
+			if ( $has_header ) {
+				$rows = array_slice( $rows, 1 );
+			}
+
+			$index = $this->build_listing_index();
+
+			$results   = array();
+			$found     = 0;
+			$not_found = 0;
+
+			foreach ( $rows as $i => $row ) {
+				$name     = trim( (string) ( $row[ $name_col ] ?? '' ) );
+				$category = $cat_col >= 0 ? trim( (string) ( $row[ $cat_col ] ?? '' ) ) : '';
+				$place_id = trim( (string) ( $row[ $pid_col ] ?? '' ) );
+
+				if ( ! $name || ! $place_id ) {
+					continue;
+				}
+
+				$match = $this->find_match( $index, $name, $category );
+
+				if ( $match ) {
+					$found++;
+					$results[] = array(
+						'row'           => $i,
+						'excel_name'    => $name,
+						'excel_cat'     => $category,
+						'place_id'      => $place_id,
+						'listing_id'    => $match['listing_id'],
+						'listing_title' => $match['listing_title'],
+						'edit_url'      => get_edit_post_link( $match['listing_id'], 'raw' ) ?: '',
+						'match_type'    => $match['match_type'],
+						'ambiguous'     => $match['ambiguous'],
+					);
+				} else {
+					$not_found++;
+					$results[] = array(
+						'row'           => $i,
+						'excel_name'    => $name,
+						'excel_cat'     => $category,
+						'place_id'      => $place_id,
+						'listing_id'    => 0,
+						'listing_title' => '',
+						'edit_url'      => '',
+						'match_type'    => 'none',
+						'ambiguous'     => false,
+					);
+				}
+			}
+
+			set_transient( 'hbl_pid_results_' . $token, $results, self::IMPORT_EXPIRY );
+
+			HBL_Admin_Tool::ok( array(
+				'total'     => count( $results ),
+				'found'     => $found,
+				'not_found' => $not_found,
+				'results'   => $results,
+			) );
+		}, 'Place ID: match all' );
 	}
 
 	public function ajax_import_apply(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
 
-		$s         = $this->get_settings();
-		$meta_key  = $s['place_id_key'];
-		$items     = json_decode( wp_unslash( $_POST['items'] ?? '' ), true );
+			$s         = $this->get_settings();
+			$meta_key  = $s['place_id_key'];
+			$items     = json_decode( wp_unslash( $_POST['items'] ?? '' ), true );
 
-		if ( ! is_array( $items ) || empty( $items ) ) {
-			wp_send_json_error( 'No items provided.' ); return;
-		}
+			if ( ! is_array( $items ) || empty( $items ) ) {
+				HBL_Admin_Tool::fail( 'No items provided.' );
+			}
 
-		$applied = 0; $failed = 0; $applied_ids = array();
+			$applied = 0; $failed = 0; $applied_ids = array(); $failed_items = array();
 
-		foreach ( $items as $item ) {
-			$id  = (int) ( $item['listing_id'] ?? 0 );
-			$pid = sanitize_text_field( $item['place_id'] ?? '' );
-			if ( ! $id || ! $pid ) { $failed++; continue; }
-			$post = get_post( $id );
-			if ( ! $post || $post->post_type !== 'at_biz_dir' ) { $failed++; continue; }
-			update_post_meta( $id, $meta_key, $pid );
-			$applied++;
-			$applied_ids[] = $id;
-		}
+			foreach ( $items as $item ) {
+				$id  = (int) ( $item['listing_id'] ?? 0 );
+				$pid = sanitize_text_field( $item['place_id'] ?? '' );
+				if ( ! $id || ! $pid ) { $failed++; $failed_items[] = array( 'listing_id' => $id, 'reason' => 'Missing listing or Place ID.' ); continue; }
+				$post = get_post( $id );
+				if ( ! $post || $post->post_type !== 'at_biz_dir' ) { $failed++; $failed_items[] = array( 'listing_id' => $id, 'reason' => 'Listing no longer exists.' ); continue; }
+				update_post_meta( $id, $meta_key, $pid );
+				$applied++;
+				$applied_ids[] = $id;
+			}
 
-		wp_send_json_success( array( 'applied' => $applied, 'failed' => $failed, 'applied_ids' => $applied_ids ) );
+			HBL_Admin_Tool::ok( array( 'applied' => $applied, 'failed' => $failed, 'failed_items' => $failed_items, 'applied_ids' => $applied_ids ) );
+		}, 'Place ID: import apply' );
 	}
 
 
 	public function ajax_auto_find(): void {
-		check_ajax_referer( 'hbl_place_id_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) { wp_send_json_error( 'Unauthorized.' ); return; }
+		HBL_Admin_Tool::guard( 'hbl_place_id_nonce' );
+		HBL_Admin_Tool::run( function () {
+			if ( function_exists( 'set_time_limit' ) ) {
+				@set_time_limit( 180 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			}
 
-		$listing_id = (int) ( $_POST['listing_id'] ?? 0 );
-		if ( ! $listing_id ) { wp_send_json_error( 'Invalid listing ID.' ); return; }
+			$listing_id = (int) ( $_POST['listing_id'] ?? 0 );
+			if ( ! $listing_id ) { HBL_Admin_Tool::fail( 'Invalid listing ID.' ); }
 
-		$post = get_post( $listing_id );
-		if ( ! $post || 'at_biz_dir' !== $post->post_type ) {
-			wp_send_json_error( 'Listing not found.' ); return;
-		}
+			$post = get_post( $listing_id );
+			if ( ! $post || 'at_biz_dir' !== $post->post_type ) {
+				HBL_Admin_Tool::fail( 'Listing not found.' );
+			}
 
-		$title   = get_the_title( $post );
-		$address = implode( ', ', array_filter( array(
-			get_post_meta( $listing_id, '_address', true ),
-			get_post_meta( $listing_id, '_city',    true ),
-			get_post_meta( $listing_id, '_state',   true ),
-		) ) );
+			$title   = get_the_title( $post );
+			$address = implode( ', ', array_filter( array(
+				get_post_meta( $listing_id, '_address', true ),
+				get_post_meta( $listing_id, '_city',    true ),
+				get_post_meta( $listing_id, '_state',   true ),
+			) ) );
 
-		$result = $this->scrape_place_id( $title, $address );
+			$result = $this->scrape_place_id( $title, $address );
 
-		if ( ! $result['ok'] ) {
-			wp_send_json_error( $result['error'] ); return;
-		}
+			if ( ! $result['ok'] ) {
+				HBL_Admin_Tool::fail( $result['error'], $result['code'] ?? 'not_found', 200, array( 'listing_id' => $listing_id ) );
+			}
 
-		wp_send_json_success( array( 'pid' => $result['pid'], 'title' => $title ) );
+			HBL_Admin_Tool::ok( array( 'pid' => $result['pid'], 'title' => $title ) );
+		}, 'Place ID: auto find' );
 	}
 
 	private function scrape_place_id( string $title, string $address ): array {
 		$title = trim( $title );
 		if ( '' === $title ) {
-			return array( 'ok' => false, 'pid' => '', 'error' => 'Listing has no title.' );
+			return array( 'ok' => false, 'pid' => '', 'error' => 'This listing has no title, so there is nothing to search for.', 'code' => 'no_title' );
 		}
 
 		$queries = array();
@@ -624,7 +658,8 @@ class HBL_Place_ID {
 		$queries[] = $title . ', Australia';
 		$queries   = array_values( array_unique( $queries ) );
 
-		$last_error = 'Place ID not found in Google Maps results. Try another listing or verify the business name.';
+		$last_error = 'Google Maps returned no matching business. Check the listing name and address, or enter the Place ID by hand.';
+		$last_code  = 'not_found';
 
 		foreach ( $queries as $query ) {
 			$encoded = rawurlencode( $query );
@@ -647,31 +682,35 @@ class HBL_Place_ID {
 				) );
 
 				if ( is_wp_error( $response ) ) {
-					$last_error = $response->get_error_message();
-					continue;
+						$d = HBL_Admin_Tool::describe_http_failure( $response );
+						$last_error = $d['message'];
+						$last_code  = $d['code'];
+						continue;
 				}
 
 				$code = (int) wp_remote_retrieve_response_code( $response );
 				if ( 200 !== $code ) {
-					$last_error = "Google returned HTTP {$code}." . ( 429 === $code ? ' Rate-limited — wait a few minutes and try again.' : '' );
+					$last_error = "Google refused the request (HTTP {$code})." . ( in_array( $code, array( 403, 429 ), true ) ? ' This server is being rate-limited — wait a few minutes and try again.' : '' );
+					$last_code  = in_array( $code, array( 403, 429 ), true ) ? 'rate_limited' : 'remote_error';
 					continue;
 				}
 
 				$body = wp_remote_retrieve_body( $response );
 
 				if ( false !== stripos( $body, 'recaptcha' ) && false !== stripos( $body, 'unusual traffic' ) ) {
-					$last_error = 'Google is showing a CAPTCHA to this server. Wait a while and try again.';
+					$last_error = 'Google is showing a CAPTCHA to this server. Wait a while and try again, or enter the Place ID by hand.';
+					$last_code  = 'rate_limited';
 					continue;
 				}
 
 				if ( preg_match( '/!1s(ChIJ[A-Za-z0-9_\-]{20,})/', $body, $m )
 					|| preg_match( '/(ChIJ[A-Za-z0-9_\-]{20,})/', $body, $m ) ) {
-					return array( 'ok' => true, 'pid' => $m[1], 'error' => '' );
+					return array( 'ok' => true, 'pid' => $m[1], 'error' => '', 'code' => '' );
 				}
 			}
 		}
 
-		return array( 'ok' => false, 'pid' => '', 'error' => $last_error );
+		return array( 'ok' => false, 'pid' => '', 'error' => $last_error, 'code' => $last_code );
 	}
 
 
@@ -913,6 +952,27 @@ class HBL_Place_ID {
 			var NONCE = <?php echo wp_json_encode( $nonce ); ?>;
 			var AJAX  = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 
+			// Safety net: if the shared notify script failed to load, fall back to plain alerts.
+			if ( ! window.HBLNotify ) {
+				window.HBLNotify = {
+					success: function (m) { console.log( m ); }, info: function (m) { console.log( m ); },
+					warning: function (m) { alert( m ); }, error: function (m) { alert( m ); },
+					fromError: function (e, p) { alert( ( p ? p + ' ' : '' ) + ( ( e && e.message ) || ( e && e.data && ( e.data.message || e.data ) ) || 'Unknown error.' ) ); },
+					message: function (r, f) { return ( r && r.data && ( r.data.message || ( typeof r.data === 'string' && r.data ) ) ) || f || 'Unknown error.'; },
+					code: function (r) { return ( r && r.data && r.data.code ) || ''; },
+					request: function (a, fd, o) { return fetch( o.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' } ).then( function (r) { return r.json(); } ); }
+				};
+			}
+			var N = window.HBLNotify;
+
+			function showManualError( msg ) {
+				var tb = document.getElementById( 'hbl-pid-tbody' );
+				if ( tb ) tb.innerHTML = '<tr class="hbl-tool-error-row"><td colspan="6">' + htmlEsc( msg ) + ' <button type="button" class="hbl-tool-retry">Try again</button></td></tr>';
+			}
+			document.addEventListener( 'click', function (e) {
+				if ( e.target.closest && e.target.closest( '.hbl-tool-retry' ) ) { loadManualPage( manualState.page ); }
+			} );
+
 			function htmlEsc( s ) {
 				var d = document.createElement( 'div' );
 				d.textContent = s || '';
@@ -1014,16 +1074,15 @@ class HBL_Place_ID {
 				fd.append( 'page',   page );
 				fd.append( 'search', manualState.search );
 
-				fetch( AJAX, { method: 'POST', body: fd } )
-					.then( function (r) { return r.json(); } )
+				N.request( null, fd, { ajaxUrl: AJAX, timeout: 60000, retries: 1 } )
 					.then( function (res) {
-						if ( ! res.success ) { tbody.innerHTML = '<tr><td colspan="6" style="color:#DC2626;padding:16px">Error loading listings.</td></tr>'; return; }
+						if ( ! res.success ) { showManualError( N.message( res, 'Could not load listings.' ) ); N.fromError( res, 'Could not load listings.' ); return; }
 						var d = res.data;
 						manualState.maxPages = d.max_pages;
 						renderManualRows( d.items, d.page, d.per_page );
 						renderManualPagination( d.page, d.max_pages, d.total );
 					} )
-					.catch( function () { tbody.innerHTML = '<tr><td colspan="6" style="color:#DC2626;padding:16px">Network error.</td></tr>'; } );
+					.catch( function (e) { showManualError( e.message ); N.fromError( e, 'Could not load listings.' ); } );
 			}
 
 			function renderManualRows( items, page, perPage ) {
@@ -1074,7 +1133,7 @@ class HBL_Place_ID {
 						var inp = row.querySelector( '.hbl-pid-input' );
 						var val = inp ? inp.value.trim() : '';
 						var lid = parseInt( row.dataset.listingId, 10 );
-						if ( ! val ) { alert( '<?php echo esc_js( __( 'Please enter a Place ID first.', 'hbl' ) ); ?>' ); return; }
+						if ( ! val ) { N.warning( '<?php echo esc_js( __( 'Please enter a Place ID first.', 'hbl' ) ); ?>' ); if ( inp ) inp.focus(); return; }
 						if ( ! isValidPID( val ) && ! confirm( '<?php echo esc_js( __( 'This doesn\'t look like a valid Place ID. Save anyway?', 'hbl' ) ); ?>' ) ) return;
 						btn.classList.add( 'is-loading' );
 						doSave( [ { listing_id: lid, place_id: val } ], function () {
@@ -1118,18 +1177,20 @@ class HBL_Place_ID {
 				fd.append( 'action', 'hbl_place_id_save_selected' );
 				fd.append( 'nonce',  NONCE );
 				fd.append( 'items',  JSON.stringify( items ) );
-				fetch( AJAX, { method: 'POST', body: fd } )
-					.then( function (r) { return r.json(); } )
+				N.request( null, fd, { ajaxUrl: AJAX, timeout: 60000 } )
 					.then( function (res) {
 						if ( ! res.success ) {
-							alert( 'Save failed: ' + ( res.data || 'Unknown error.' ) );
+							N.fromError( res, 'Save failed.' );
 							if ( onError ) onError();
 							return;
 						}
+						var sd = res.data || {};
+						if ( sd.saved ) N.success( 'Saved ' + sd.saved + ' Place ID' + ( sd.saved === 1 ? '' : 's' ) + '.' );
+						if ( sd.failed ) N.error( sd.failed + ' Place ID' + ( sd.failed === 1 ? '' : 's' ) + ' could not be saved.', { detail: ( sd.failed_items || [] ).slice( 0, 5 ).map( function (f) { return 'Listing #' + f.listing_id + ': ' + f.reason; } ).join( '\n' ), key: 'pid-save-failed' } );
 						if ( callback ) callback( res.data );
 					} )
 					.catch( function (e) {
-						alert( 'Network error: ' + e.message );
+						N.fromError( e, 'Save failed.' );
 						if ( onError ) onError();
 					} );
 			}
@@ -1183,9 +1244,12 @@ class HBL_Place_ID {
 				var fd = new FormData();
 				fd.append( 'action', 'hbl_place_id_count_missing' );
 				fd.append( 'nonce',  NONCE );
-				fetch( AJAX, { method: 'POST', body: fd } )
-					.then( function (r) { return r.json(); } )
-					.then( function (res) { if ( res.success && statMissing ) statMissing.textContent = res.data.count; } );
+				N.request( null, fd, { ajaxUrl: AJAX, timeout: 60000, retries: 1 } )
+					.then( function (res) {
+						if ( res.success ) { if ( statMissing ) statMissing.textContent = res.data.count; }
+						else { if ( statMissing ) statMissing.textContent = '?'; N.warning( 'Could not update the missing count: ' + N.message( res ), { key: 'pid-count' } ); }
+					} )
+					.catch( function (e) { if ( statMissing ) statMissing.textContent = '?'; N.fromError( e, 'Could not update the missing count.', { key: 'pid-count' } ); } );
 			}
 
 			refreshMissingCount();
@@ -1237,7 +1301,8 @@ class HBL_Place_ID {
 
 			function uploadFile( file ) {
 				var ext = file.name.split('.').pop().toLowerCase();
-				if ( ext !== 'xlsx' && ext !== 'csv' ) { alert( 'Only .xlsx and .csv files are supported.' ); return; }
+				if ( ext !== 'xlsx' && ext !== 'csv' ) { N.warning( 'Only .xlsx and .csv files are supported. Re-save your spreadsheet in one of those formats.' ); return; }
+				if ( file.size > 20 * 1024 * 1024 ) { N.warning( 'That file is larger than 20 MB. Split it into smaller files.' ); return; }
 
 				uploadStatus.style.display = '';
 				uploadStatus.innerHTML = '<span style="color:#6B7280">Uploading and parsing…</span>';
@@ -1249,11 +1314,11 @@ class HBL_Place_ID {
 				fd.append( 'nonce',  NONCE );
 				fd.append( 'file',   file );
 
-				fetch( AJAX, { method: 'POST', body: fd } )
-					.then( function (r) { return r.json(); } )
+				N.request( null, fd, { ajaxUrl: AJAX, timeout: 120000 } )
 					.then( function (res) {
 						if ( ! res.success ) {
-							uploadStatus.innerHTML = '<span style="color:#DC2626">Error: ' + htmlEsc( res.data || 'Unknown error.' ) + '</span>';
+							uploadStatus.innerHTML = '<span style="color:#DC2626">Error: ' + htmlEsc( N.message( res, 'Upload failed.' ) ) + '</span>';
+							N.fromError( res, 'Upload failed.' );
 							return;
 						}
 						var d = res.data;
@@ -1262,7 +1327,7 @@ class HBL_Place_ID {
 						buildMappingUI( d.headers, d.preview );
 						if ( mappingStep ) mappingStep.style.display = '';
 					} )
-					.catch( function (e) { uploadStatus.innerHTML = '<span style="color:#DC2626">Network error: ' + htmlEsc( e.message ) + '</span>'; } );
+					.catch( function (e) { uploadStatus.innerHTML = '<span style="color:#DC2626">' + htmlEsc( e.message ) + '</span>'; N.fromError( e, 'Upload failed.' ); } );
 			}
 
 			function buildMappingUI( headers, preview ) {
@@ -1327,11 +1392,10 @@ class HBL_Place_ID {
 					fd.append( 'pid_col',    pidCol );
 					fd.append( 'has_header', hasHdr ? 'true' : 'false' );
 
-					fetch( AJAX, { method: 'POST', body: fd } )
-						.then( function (r) { return r.json(); } )
+					N.request( null, fd, { ajaxUrl: AJAX, timeout: 180000 } )
 						.then( function (res) {
 							matchBtn.disabled = false;
-							if ( ! res.success ) { matchStatus.textContent = 'Error: ' + ( res.data || 'Unknown.' ); return; }
+							if ( ! res.success ) { matchStatus.textContent = 'Error: ' + N.message( res ); N.fromError( res, 'Matching failed.' ); return; }
 							var d = res.data;
 							matchStatus.textContent = d.found + ' matched, ' + d.not_found + ' not found.';
 							importState.results = d.results;
@@ -1341,7 +1405,7 @@ class HBL_Place_ID {
 							if ( resultsStep ) resultsStep.style.display = '';
 							if ( importSummary ) importSummary.textContent = d.found + ' matched / ' + d.not_found + ' no match out of ' + d.total + ' rows';
 						} )
-						.catch( function (e) { matchBtn.disabled = false; matchStatus.textContent = 'Network error: ' + e.message; } );
+						.catch( function (e) { matchBtn.disabled = false; matchStatus.textContent = e.message; N.fromError( e, 'Matching failed.' ); } );
 				} );
 			}
 
@@ -1471,15 +1535,15 @@ class HBL_Place_ID {
 					fd.append( 'nonce',  NONCE );
 					fd.append( 'items',  JSON.stringify( items ) );
 
-					fetch( AJAX, { method: 'POST', body: fd } )
-						.then( function (r) { return r.json(); } )
+					N.request( null, fd, { ajaxUrl: AJAX, timeout: 60000 } )
 						.then( function (res) {
 							importApplyBtn.disabled    = false;
 							importApplyBtn.innerHTML   = 'Apply Selected (<span id="hbl-pid-import-apply-count">0</span>)';
 							importApplyCt = document.getElementById( 'hbl-pid-import-apply-count' );
-							if ( ! res.success ) { alert( 'Error: ' + ( res.data || 'Unknown.' ) ); return; }
+							if ( ! res.success ) { N.fromError( res, 'Apply failed.' ); return; }
 							var d = res.data;
-							alert( d.applied + ' Place ID(s) applied successfully.' + ( d.failed ? ' ' + d.failed + ' failed.' : '' ) );
+							if ( d.applied ) N.success( d.applied + ' Place ID(s) applied.' );
+							if ( d.failed ) N.error( d.failed + ' Place ID(s) could not be applied.', { detail: ( d.failed_items || [] ).slice( 0, 5 ).map( function (f) { return 'Listing #' + f.listing_id + ': ' + f.reason; } ).join( '\n' ), key: 'pid-apply-failed' } );
 							manualState.savedCount += d.applied;
 							if ( statSaved ) statSaved.textContent = manualState.savedCount;
 							refreshMissingCount();
@@ -1495,13 +1559,14 @@ class HBL_Place_ID {
 						.catch( function (e) {
 							importApplyBtn.disabled = false;
 							importApplyBtn.innerHTML = 'Apply Selected (<span id="hbl-pid-import-apply-count">0</span>)';
-							alert( 'Network error: ' + e.message );
+							N.fromError( e, 'Apply failed.' );
 						} );
 				} );
 			}
 
 
-		function autoFindPID( listingId, btn, inp ) {
+		/** Resolves to { status: 'found' | 'none' | 'rate_limited' | 'error' }. Never rejects. quiet = batch mode. */
+		function autoFindPID( listingId, btn, inp, quiet ) {
 			btn.disabled = true;
 			btn.classList.add( 'is-loading' );
 
@@ -1510,14 +1575,19 @@ class HBL_Place_ID {
 			fd.append( 'nonce',      NONCE );
 			fd.append( 'listing_id', listingId );
 
-			fetch( AJAX, { method: 'POST', body: fd } )
-				.then( function (r) { return r.json(); } )
+			return N.request( null, fd, { ajaxUrl: AJAX, timeout: 190000 } )
 				.then( function (res) {
 					btn.disabled = false;
 					btn.classList.remove( 'is-loading' );
 					if ( ! res.success ) {
-						alert( 'Auto Find: ' + ( res.data || 'Unknown error.' ) );
-						return;
+						var msg = N.message( res, 'Auto Find failed.' ), code = N.code( res );
+						if ( inp ) { inp.placeholder = 'Not found'; inp.title = msg; }
+						if ( code === 'rate_limited' ) {
+							N.warning( msg, { title: 'Google is limiting requests', key: 'pid-rate' } );
+							return { status: 'rate_limited' };
+						}
+						if ( ! quiet ) { N.warning( msg, { key: 'pid-find-' + listingId } ); }
+						return { status: ( code === 'not_found' || code === 'no_title' ) ? 'none' : 'error', error: msg };
 					}
 					var pid = res.data.pid || '';
 					if ( pid && inp ) {
@@ -1527,39 +1597,70 @@ class HBL_Place_ID {
 						btn.classList.add( 'is-found' );
 						setTimeout( function () { btn.classList.remove( 'is-found' ); }, 1200 );
 					}
+					return { status: pid ? 'found' : 'none' };
 				} )
 				.catch( function (e) {
 					btn.disabled = false;
 					btn.classList.remove( 'is-loading' );
-					alert( 'Network error: ' + e.message );
+					if ( inp ) { inp.placeholder = 'Error'; inp.title = e.message; }
+					if ( ! quiet ) { N.fromError( e, 'Auto Find failed.' ); }
+					return { status: 'error', error: e.message };
 				} );
 		}
 
+		var pidBatch = { running: false, stop: false };
+
 		function autoFindAllPIDs() {
+			var claudeAllLabel = claudeAllBtn ? claudeAllBtn.querySelector( '.hbl-pid-btn-label' ) : null;
+
+			// A second click while running asks the batch to stop after the current row.
+			if ( pidBatch.running ) {
+				pidBatch.stop = true;
+				if ( claudeAllBtn ) claudeAllBtn.disabled = true;
+				if ( claudeAllLabel ) claudeAllLabel.textContent = 'Stopping…';
+				return;
+			}
+
 			var rows = Array.prototype.slice.call( tbody.querySelectorAll( 'tr' ) ).filter( function (row) {
 				var inp = row.querySelector( '.hbl-pid-input' );
 				return inp && ! inp.disabled && ! inp.value.trim();
 			} );
-			if ( ! rows.length ) { alert( 'No empty rows to fill on this page.' ); return; }
+			if ( ! rows.length ) { N.info( 'There are no empty rows to fill on this page.' ); return; }
 
-			var claudeAllLabel = claudeAllBtn ? claudeAllBtn.querySelector( '.hbl-pid-btn-label' ) : null;
-			if ( claudeAllBtn ) { claudeAllBtn.disabled = true; claudeAllBtn.classList.add( 'is-loading' ); if ( claudeAllLabel ) claudeAllLabel.textContent = 'Finding… (0/' + rows.length + ')'; }
-			var idx = 0;
+			pidBatch.running = true; pidBatch.stop = false;
+			if ( claudeAllBtn ) { claudeAllBtn.classList.add( 'is-loading' ); }
+			var idx = 0, found = 0, none = 0, failed = 0, strikes = 0, reason = '';
 
-			function next() {
-				if ( idx >= rows.length ) {
-					if ( claudeAllBtn ) { claudeAllBtn.disabled = false; claudeAllBtn.classList.remove( 'is-loading' ); if ( claudeAllLabel ) claudeAllLabel.textContent = 'Auto Find All'; }
-					return;
-				}
+			function finish() {
+				pidBatch.running = false; pidBatch.stop = false;
+				if ( claudeAllBtn ) { claudeAllBtn.disabled = false; claudeAllBtn.classList.remove( 'is-loading' ); }
+				if ( claudeAllLabel ) claudeAllLabel.textContent = 'Auto Find All';
+				var summary = found + ' found, ' + none + ' not found' + ( failed ? ', ' + failed + ' failed' : '' ) + ( idx < rows.length ? ' (' + ( rows.length - idx ) + ' skipped)' : '' ) + '.';
+				var type = ( failed || reason ) ? 'warning' : ( found ? 'success' : 'info' );
+				N[ type ]( 'Auto Find finished: ' + summary + ( reason ? ' ' + reason : '' ) + ( found ? ' Review the results, then press Apply Selected.' : '' ), { duration: 12000 } );
+			}
+
+			( function next() {
+				if ( pidBatch.stop ) { reason = 'Stopped.'; finish(); return; }
+				if ( idx >= rows.length ) { finish(); return; }
 				var row = rows[ idx++ ];
 				var btn = row.querySelector( '.hbl-pid-claude-btn' ) || { disabled: false, textContent: '', style: {}, classList: { add: function () {}, remove: function () {} } };
 				var inp = row.querySelector( '.hbl-pid-input' );
 				var lid = parseInt( row.dataset.listingId, 10 );
-				if ( claudeAllLabel ) claudeAllLabel.textContent = 'Finding… (' + idx + '/' + rows.length + ')';
-				autoFindPID( lid, btn, inp );
-				setTimeout( next, 1500 );
-			}
-			next();
+				if ( claudeAllLabel ) claudeAllLabel.textContent = 'Stop (' + idx + '/' + rows.length + ')';
+
+				autoFindPID( lid, btn, inp, true ).then( function (r) {
+					if ( r.status === 'found' ) { found++; strikes = 0; }
+					else if ( r.status === 'none' ) { none++; strikes = 0; }
+					else {
+						failed++;
+						if ( r.status === 'rate_limited' ) { reason = 'Stopped because Google is limiting this server. Try again later.'; finish(); return; }
+						strikes++;
+						if ( strikes >= 3 ) { reason = 'Stopped after 3 failures in a row' + ( r.error ? ': ' + r.error : '.' ); finish(); return; }
+					}
+					setTimeout( next, 1500 );
+				} );
+			} )();
 		}
 
 		if ( claudeAllBtn ) {

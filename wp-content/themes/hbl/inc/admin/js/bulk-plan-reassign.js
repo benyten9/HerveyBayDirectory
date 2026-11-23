@@ -107,13 +107,15 @@
 						self.renderListings(response.data.listings, response.data.total);
 						self.renderPagination(response.data.total, response.data.page, response.data.total_pages, response.data.per_page);
 					} else {
+						HBLNotify.fromError(response);
 						self.showMessage(
 							response.data.message || hblBulkPlanReassign.strings.error,
 							'info'
 						);
 					}
 				},
-				error: function () {
+				error: function (xhr, status) {
+					HBLNotify.fromXhr(xhr, status);
 					self.isLoading = false;
 					self.showMessage(hblBulkPlanReassign.strings.error, 'info');
 				}
@@ -278,13 +280,15 @@
 						self.updateSummary();
 						self.updateSelectAllPagesBanner();
 					} else {
+						HBLNotify.fromError(response);
 						$banner.html(
 							hblBulkPlanReassign.strings.error + ' ' +
 							'<a href="#" id="hbl-bpr-select-all-pages-btn">' + hblBulkPlanReassign.strings.tryAgain + '</a>'
 						);
 					}
 				},
-				error: function () {
+				error: function (xhr, status) {
+					HBLNotify.fromXhr(xhr, status);
 					$banner.html(
 						hblBulkPlanReassign.strings.error + ' ' +
 						'<a href="#" id="hbl-bpr-select-all-pages-btn">' + hblBulkPlanReassign.strings.tryAgain + '</a>'
@@ -403,12 +407,12 @@
 			var planId = $('input[name="hbl_target_plan"]:checked').val();
 
 			if (selectedCount === 0) {
-				alert(hblBulkPlanReassign.strings.selectListings);
+				HBLNotify.warning(hblBulkPlanReassign.strings.selectListings);
 				return;
 			}
 
 			if (!planId) {
-				alert(hblBulkPlanReassign.strings.selectPlan);
+				HBLNotify.warning(hblBulkPlanReassign.strings.selectPlan);
 				return;
 			}
 
@@ -452,12 +456,14 @@
 						}, 1500);
 
 					} else {
+						HBLNotify.fromError(response);
 						$result.removeClass('success').addClass('error')
 							.html('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>' + (response.data.message || hblBulkPlanReassign.strings.error) + '</span>')
 							.show();
 					}
 				},
-				error: function () {
+				error: function (xhr, status) {
+					HBLNotify.fromXhr(xhr, status);
 					$btn.prop('disabled', false).find('span').text('Apply Plan Change');
 					$result.removeClass('success').addClass('error')
 						.html('<span>' + hblBulkPlanReassign.strings.error + '</span>')

@@ -68,12 +68,14 @@
 							window.location.reload();
 						}, 2000);
 					} else {
+						HBLNotify.fromError(response);
 						$result.removeClass('success').addClass('error')
 							.html(response.data.message || hblPartnerAgencies.strings.error).show();
 						$submitBtn.prop('disabled', false).html(originalText);
 					}
 				},
-				error: function() {
+				error: function(xhr, status) {
+				HBLNotify.fromXhr(xhr, status);
 					$result.removeClass('success').addClass('error')
 						.html(hblPartnerAgencies.strings.error).show();
 					$submitBtn.prop('disabled', false).html(originalText);

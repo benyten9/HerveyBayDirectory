@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 /**
  * Email Finder — replicates the Place ID Manager workflow for email addresses.
  *
@@ -51,6 +53,7 @@ class HBL_Email_Finder {
 		if ( 'directorist-tools_page_hbl-email-finder' !== $hook ) {
 			return;
 		}
+		HBL_Admin_Tool::enqueue_assets();
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style( 'hbl-bulk-reassign', HBL_THEME_URI . '/inc/admin/css/bulk-reassign.css', array( 'hbl-admin-font-poppins' ), HBL_VERSION );
 		wp_enqueue_style( 'hbl-place-id',      HBL_THEME_URI . '/inc/admin/css/place-id.css',      array( 'hbl-bulk-reassign' ), HBL_VERSION );
@@ -128,101 +131,163 @@ class HBL_Email_Finder {
 
 	/* ── AJAX ────────────────────────────────────────────────────────── */
 
+	/** Reason the last http_get() / website lookup failed (shown to the admin). */
+	private $http_error      = array( 'message' => '', 'code' => '' );
+	private $maps_error_text = array( 'message' => '', 'code' => '' );
+
 	private function guard(): void {
-		check_ajax_referer( 'hbl_email_finder_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized.' );
-		}
+		HBL_Admin_Tool::guard( 'hbl_email_finder_nonce' );
 	}
 
 	public function ajax_count_missing(): void {
 		$this->guard();
-		$s = $this->get_settings();
-		wp_send_json_success( array( 'count' => $this->count_page( $s['email_key'], '' ) ) );
+		HBL_Admin_Tool::run( function () {
+			$s = $this->get_settings();
+			HBL_Admin_Tool::ok( array( 'count' => $this->count_page( $s['email_key'], '' ) ) );
+		}, 'Email Finder: count' );
 	}
 
 	public function ajax_load_page(): void {
 		$this->guard();
-		$s        = $this->get_settings();
-		$page     = max( 1, (int) ( $_POST['page'] ?? 1 ) );
-		$search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
-		$per_page = $s['per_page'];
-		$total    = $this->count_page( $s['email_key'], $search );
+		HBL_Admin_Tool::run( function () {
+			$s        = $this->get_settings();
+			$page     = max( 1, (int) ( $_POST['page'] ?? 1 ) );
+			$search   = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
+			$per_page = $s['per_page'];
+			$total    = $this->count_page( $s['email_key'], $search );
 
-		wp_send_json_success( array(
-			'items'     => $this->get_page( $s['email_key'], $s['website_key'], $page, $per_page, $search ),
-			'total'     => $total,
-			'page'      => $page,
-			'max_pages' => $total > 0 ? (int) ceil( $total / $per_page ) : 1,
-			'per_page'  => $per_page,
-		) );
+			global $wpdb;
+			if ( '' !== (string) $wpdb->last_error ) {
+				error_log( '[HBL Email Finder] DB error: ' . $wpdb->last_error );
+				HBL_Admin_Tool::fail( 'The database returned an error while loading listings. Details were written to the PHP error log.', 'db_error', 500 );
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'items'     => $this->get_page( $s['email_key'], $s['website_key'], $page, $per_page, $search ),
+				'total'     => $total,
+				'page'      => $page,
+				'max_pages' => $total > 0 ? (int) ceil( $total / $per_page ) : 1,
+				'per_page'  => $per_page,
+			) );
+		}, 'Email Finder: load page' );
 	}
 
 	public function ajax_save_selected(): void {
 		$this->guard();
-		$s     = $this->get_settings();
-		$items = json_decode( wp_unslash( $_POST['items'] ?? '' ), true );
+		HBL_Admin_Tool::run( function () {
+			$s     = $this->get_settings();
+			$items = json_decode( wp_unslash( $_POST['items'] ?? '' ), true );
 
-		if ( ! is_array( $items ) || empty( $items ) ) {
-			wp_send_json_error( 'No items provided.' );
-		}
+			if ( ! is_array( $items ) || empty( $items ) ) {
+				HBL_Admin_Tool::fail( 'Nothing to save: no valid items were sent.', 'no_items' );
+			}
+			if ( count( $items ) > 500 ) {
+				HBL_Admin_Tool::fail( 'Too many items in one save (max 500). Save in smaller batches.', 'too_many' );
+			}
 
-		$saved = 0; $failed = 0; $saved_ids = array();
-		foreach ( $items as $item ) {
-			$id    = (int) ( $item['listing_id'] ?? 0 );
-			$email = sanitize_email( $item['email'] ?? '' );
-			if ( ! $id || ! is_email( $email ) ) { $failed++; continue; }
-			$post = get_post( $id );
-			if ( ! $post || 'at_biz_dir' !== $post->post_type ) { $failed++; continue; }
-			update_post_meta( $id, $s['email_key'], $email );
-			$saved++;
-			$saved_ids[] = $id;
-		}
-		wp_send_json_success( array( 'saved' => $saved, 'failed' => $failed, 'saved_ids' => $saved_ids ) );
+			$saved = 0; $saved_ids = array(); $failed_items = array();
+			foreach ( $items as $item ) {
+				$id    = (int) ( $item['listing_id'] ?? 0 );
+				$email = sanitize_email( $item['email'] ?? '' );
+				if ( ! $id ) {
+					$failed_items[] = array( 'listing_id' => 0, 'reason' => 'Missing listing ID.' );
+					continue;
+				}
+				if ( ! is_email( $email ) ) {
+					$failed_items[] = array( 'listing_id' => $id, 'reason' => 'Not a valid email address.' );
+					continue;
+				}
+				$post = get_post( $id );
+				if ( ! $post || 'at_biz_dir' !== $post->post_type ) {
+					$failed_items[] = array( 'listing_id' => $id, 'reason' => 'Listing no longer exists.' );
+					continue;
+				}
+				$previous = (string) get_post_meta( $id, $s['email_key'], true );
+				$ok       = update_post_meta( $id, $s['email_key'], $email );
+				// update_post_meta() returns false both on failure and when the value is unchanged.
+				if ( false === $ok && $previous !== $email ) {
+					$failed_items[] = array( 'listing_id' => $id, 'reason' => 'WordPress could not write the value.' );
+					continue;
+				}
+				$saved++;
+				$saved_ids[] = $id;
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'saved'        => $saved,
+				'failed'       => count( $failed_items ),
+				'failed_items' => $failed_items,
+				'saved_ids'    => $saved_ids,
+			) );
+		}, 'Email Finder: save' );
 	}
 
 	public function ajax_auto_find(): void {
 		$this->guard();
-		$s          = $this->get_settings();
-		$listing_id = (int) ( $_POST['listing_id'] ?? 0 );
-		$post       = $listing_id ? get_post( $listing_id ) : null;
-		if ( ! $post || 'at_biz_dir' !== $post->post_type ) {
-			wp_send_json_error( 'Listing not found.' );
-		}
+		HBL_Admin_Tool::run( function () {
+			$s          = $this->get_settings();
+			$listing_id = (int) ( $_POST['listing_id'] ?? 0 );
+			$post       = $listing_id ? get_post( $listing_id ) : null;
+			if ( ! $post || 'at_biz_dir' !== $post->post_type ) {
+				HBL_Admin_Tool::fail( 'That listing no longer exists. Reload the list.', 'not_found', 404 );
+			}
 
-		$title   = get_the_title( $post );
-		$website = trim( (string) get_post_meta( $listing_id, $s['website_key'], true ) );
+			// Slow, network-bound work: allow it to finish rather than hit the PHP time limit.
+			if ( function_exists( 'set_time_limit' ) ) {
+				@set_time_limit( 90 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+			}
 
-		if ( '' === $website ) {
-			$address = implode( ', ', array_filter( array(
-				get_post_meta( $listing_id, '_address', true ),
-				get_post_meta( $listing_id, '_city',    true ),
-				get_post_meta( $listing_id, '_state',   true ),
-			) ) );
-			$website = $this->find_website_via_maps( $title, $address );
-		}
+			$title   = get_the_title( $post );
+			$website = trim( (string) get_post_meta( $listing_id, $s['website_key'], true ) );
+			$source  = 'listing';
 
-		if ( '' === $website ) {
-			wp_send_json_error( 'No website found for this listing, so no email could be located.' );
-		}
+			if ( '' === $website ) {
+				$address = implode( ', ', array_filter( array(
+					get_post_meta( $listing_id, '_address', true ),
+					get_post_meta( $listing_id, '_city',    true ),
+					get_post_meta( $listing_id, '_state',   true ),
+				) ) );
+				$website = $this->find_website_via_maps( $title, $address );
+				$source  = 'maps';
+			}
 
-		$result = $this->scrape_emails( $website );
-		if ( empty( $result['emails'] ) ) {
-			wp_send_json_error( $result['error'] ?: 'No public email address found on the website.' );
-		}
+			if ( '' === $website ) {
+				$why  = $this->maps_error_text;
+				$code = $why['code'] ?: 'no_website';
+				$msg  = 'This listing has no website saved' . ( $why['message'] ? ', and the Google Maps lookup failed: ' . $why['message'] : ', and none could be found on Google Maps.' );
+				HBL_Admin_Tool::fail( $msg, $code, 200, array( 'listing_id' => $listing_id ) );
+			}
 
-		wp_send_json_success( array(
-			'email'   => $result['emails'][0],
-			'emails'  => $result['emails'],
-			'website' => $result['website'],
-			'title'   => $title,
-		) );
+			$result = $this->scrape_emails( $website );
+			if ( empty( $result['emails'] ) ) {
+				HBL_Admin_Tool::fail(
+					$result['error'] ?: 'The website loaded but no public email address was found on it.',
+					$result['code'] ?: 'no_email',
+					200,
+					array( 'listing_id' => $listing_id, 'website' => $result['website'] )
+				);
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'email'          => $result['emails'][0],
+				'emails'         => $result['emails'],
+				'website'        => $result['website'],
+				'website_source' => $source,
+				'title'          => $title,
+			) );
+		}, 'Email Finder: auto find' );
 	}
 
 
 	/* ── Scraping ────────────────────────────────────────────────────── */
 
-	private function http_get( string $url ) {
+	/**
+	 * Fetches a page. Returns the HTML, or '' on failure with the reason stored in
+	 * $this->http_error.
+	 */
+	private function http_get( string $url ): string {
+		$this->http_error = array( 'message' => '', 'code' => '' );
+
 		$response = wp_remote_get( $url, array(
 			'timeout'     => 12,
 			'redirection' => 4,
@@ -233,17 +298,36 @@ class HBL_Email_Finder {
 				'Cookie'          => 'CONSENT=YES+cb.20210720-07-p0.en+FX+410; SOCS=CAI',
 			),
 		) );
+
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			$this->http_error = HBL_Admin_Tool::describe_http_failure( $response );
 			return '';
 		}
+
+		$type = (string) wp_remote_retrieve_header( $response, 'content-type' );
+		if ( '' !== $type && false === stripos( $type, 'html' ) && false === stripos( $type, 'text' ) ) {
+			$this->http_error = array( 'message' => 'The address does not serve a web page.', 'code' => 'not_html' );
+			return '';
+		}
+
 		return (string) wp_remote_retrieve_body( $response );
 	}
 
 	/** Best-effort: pull the business website out of a Google Maps search result. */
 	private function find_website_via_maps( string $title, string $address ): string {
+		$this->maps_error_text = array( 'message' => '', 'code' => '' );
+
 		$query = rawurlencode( trim( $title . ' ' . $address ) );
 		$body  = $this->http_get( 'https://www.google.com/maps/search/' . $query . '?hl=en&gl=au' );
 		if ( '' === $body ) {
+			$this->maps_error_text = $this->http_error;
+			if ( 'blocked' === $this->maps_error_text['code'] ) {
+				$this->maps_error_text['code'] = 'rate_limited';
+			}
+			return '';
+		}
+		if ( false !== stripos( $body, 'unusual traffic' ) || false !== stripos( $body, 'recaptcha' ) ) {
+			$this->maps_error_text = array( 'message' => 'Google is showing a CAPTCHA to this server. Wait a while, or add the website to the listing by hand.', 'code' => 'rate_limited' );
 			return '';
 		}
 		if ( preg_match_all( '#https?://[A-Za-z0-9.\-]+\.[a-z]{2,}(?:/[^\s"\'\\\\<>]*)?#i', $body, $m ) ) {
@@ -251,10 +335,13 @@ class HBL_Email_Finder {
 			foreach ( $m[0] as $u ) {
 				if ( ! preg_match( $skip, $u ) ) {
 					$p = wp_parse_url( $u );
-					return ( $p['scheme'] ?? 'https' ) . '://' . $p['host'];
+					if ( ! empty( $p['host'] ) ) {
+						return ( $p['scheme'] ?? 'https' ) . '://' . $p['host'];
+					}
 				}
 			}
 		}
+		$this->maps_error_text = array( 'message' => 'Google Maps returned no website for this business.', 'code' => 'no_website' );
 		return '';
 	}
 
@@ -264,7 +351,7 @@ class HBL_Email_Finder {
 		}
 		$parts = wp_parse_url( $website );
 		if ( empty( $parts['host'] ) ) {
-			return array( 'emails' => array(), 'website' => $website, 'error' => 'Invalid website URL.' );
+			return array( 'emails' => array(), 'website' => $website, 'error' => 'The saved website address is not a valid URL: ' . $website, 'code' => 'bad_url' );
 		}
 		$base  = ( $parts['scheme'] ?? 'https' ) . '://' . $parts['host'];
 		$host  = preg_replace( '/^www\./i', '', strtolower( $parts['host'] ) );
@@ -272,10 +359,18 @@ class HBL_Email_Finder {
 		$urls  = array_unique( array( $website, $base, $base . '/contact', $base . '/contact-us', $base . '/about', $base . '/about-us' ) );
 		$found = array();
 		$reached = false;
+		$first_error = array( 'message' => '', 'code' => '' );
 
 		foreach ( $urls as $url ) {
 			$body = $this->http_get( $url );
 			if ( '' === $body ) {
+				if ( '' === $first_error['message'] ) {
+					$first_error = $this->http_error;
+				}
+				// The domain itself is unreachable (DNS / SSL / timeout): further pages will fail the same way.
+				if ( in_array( $this->http_error['code'], array( 'dns', 'ssl', 'timeout', 'connect' ), true ) ) {
+					break;
+				}
 				continue;
 			}
 			$reached = true;
@@ -288,11 +383,21 @@ class HBL_Email_Finder {
 		}
 
 		if ( ! $reached ) {
-			return array( 'emails' => array(), 'website' => $website, 'error' => 'Could not load the business website.' );
+			return array(
+				'emails'  => array(),
+				'website' => $website,
+				'error'   => 'Could not open ' . $parts['host'] . ': ' . ( $first_error['message'] ?: 'no response.' ),
+				'code'    => $first_error['code'] ?: 'unreachable',
+			);
 		}
 
 		arsort( $found );
-		return array( 'emails' => array_keys( $found ), 'website' => $website, 'error' => '' );
+		return array(
+			'emails'  => array_keys( $found ),
+			'website' => $website,
+			'error'   => $found ? '' : 'The website loaded, but no public email address was found on its home, contact or about pages.',
+			'code'    => $found ? '' : 'no_email',
+		);
 	}
 
 	private function extract_emails( string $html ): array {
@@ -441,6 +546,23 @@ class HBL_Email_Finder {
 			var NONCE = <?php echo wp_json_encode( $nonce ); ?>;
 			var AJAX  = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 
+			// Safety net: if the shared notify script failed to load, fall back to plain alerts.
+			if ( ! window.HBLNotify ) {
+				window.HBLNotify = {
+					success: function (m) { console.log( m ); }, info: function (m) { console.log( m ); },
+					warning: function (m) { alert( m ); }, error: function (m) { alert( m ); },
+					fromError: function (e, p) { alert( ( p ? p + ' ' : '' ) + ( ( e && e.message ) || ( e && e.data && ( e.data.message || e.data ) ) || 'Unknown error.' ) ); },
+					message: function (r, f) { return ( r && r.data && ( r.data.message || ( typeof r.data === 'string' && r.data ) ) ) || f || 'Unknown error.'; },
+					code: function (r) { return ( r && r.data && r.data.code ) || ''; },
+					request: function (a, d, o) {
+						var fd = new FormData(); Object.keys( d || {} ).forEach( function (k) { fd.append( k, d[k] ); } );
+						fd.set( 'action', a ); fd.set( 'nonce', o.nonce );
+						return fetch( o.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' } ).then( function (r) { return r.json(); } );
+					}
+				};
+			}
+			var N = window.HBLNotify;
+
 			var tbody = document.getElementById( 'hbl-em-tbody' );
 			var applyBtn = document.getElementById( 'hbl-em-apply-btn' );
 			var applyCount = document.getElementById( 'hbl-em-apply-count' );
@@ -452,16 +574,11 @@ class HBL_Email_Finder {
 			var findAllBtn = document.getElementById( 'hbl-em-find-all-btn' );
 			var statMissing = document.getElementById( 'hbl-em-stat-missing' );
 			var statSaved = document.getElementById( 'hbl-em-stat-saved' );
-			var state = { page: 1, search: '', saved: 0 };
+			var state = { page: 1, search: '', saved: 0, finding: false, stop: false };
 
 			function esc( s ) { var d = document.createElement( 'div' ); d.textContent = s || ''; return d.innerHTML; }
 			function isEmail( v ) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test( v ); }
-			function post( action, data ) {
-				var fd = new FormData();
-				fd.append( 'action', action ); fd.append( 'nonce', NONCE );
-				Object.keys( data || {} ).forEach( function (k) { fd.append( k, data[k] ); } );
-				return fetch( AJAX, { method: 'POST', body: fd } ).then( function (r) { return r.json(); } );
-			}
+			function api( action, data, opts ) { return N.request( action, data, Object.assign( { nonce: NONCE, ajaxUrl: AJAX }, opts || {} ) ); }
 
 			function rowCbs() { return Array.prototype.slice.call( tbody.querySelectorAll( '.hbl-em-row-cb:not(:disabled)' ) ); }
 			function updateApply() {
@@ -491,21 +608,39 @@ class HBL_Email_Finder {
 			} );
 
 			function refreshMissing() {
-				post( 'hbl_email_count_missing' ).then( function (r) { if ( r.success ) statMissing.textContent = r.data.count; } );
+				api( 'hbl_email_count_missing', {}, { retries: 1 } ).then( function (res) {
+					if ( res.success ) { statMissing.textContent = res.data.count; }
+					else { statMissing.textContent = '?'; N.warning( 'Could not update the missing-email count: ' + N.message( res ), { key: 'em-count' } ); }
+				} ).catch( function (e) {
+					statMissing.textContent = '?';
+					N.fromError( e, 'Could not update the missing-email count.', { key: 'em-count' } );
+				} );
+			}
+
+			function showLoadError( msg ) {
+				tbody.innerHTML = '<tr class="hbl-tool-error-row"><td colspan="6">' + esc( msg ) +
+					' <button type="button" class="hbl-tool-retry">Try again</button></td></tr>';
+				pagination.innerHTML = '';
 			}
 
 			function load( page ) {
 				state.page = page;
 				tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#6B7280">Loading…</td></tr>';
-				post( 'hbl_email_load_page', { page: page, search: state.search } ).then( function (res) {
-					if ( ! res.success ) { tbody.innerHTML = '<tr><td colspan="6" style="color:#DC2626;padding:16px">Error loading listings.</td></tr>'; return; }
+				api( 'hbl_email_load_page', { page: page, search: state.search }, { retries: 1 } ).then( function (res) {
+					if ( ! res.success ) {
+						var m = N.message( res, 'Could not load listings.' );
+						showLoadError( m ); N.fromError( res, 'Could not load listings.' );
+						return;
+					}
 					render( res.data );
-				} ).catch( function () { tbody.innerHTML = '<tr><td colspan="6" style="color:#DC2626;padding:16px">Network error.</td></tr>'; } );
+				} ).catch( function (e) {
+					showLoadError( e.message ); N.fromError( e, 'Could not load listings.' );
+				} );
 			}
 
 			function render( d ) {
 				if ( ! d.items.length ) {
-					tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#6B7280">No listings missing an email.</td></tr>';
+					tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#6B7280">' + ( state.search ? 'No listings match that search.' : 'No listings missing an email.' ) + '</td></tr>';
 				} else {
 					tbody.innerHTML = d.items.map( function (it, i) {
 						var site = it.website ? '<a href="' + esc( it.website ) + '" target="_blank" rel="noopener">' + esc( it.website.replace( /^https?:\/\/(www\.)?/, '' ) ) + '</a>' : '—';
@@ -544,67 +679,126 @@ class HBL_Email_Finder {
 				btn.disabled = true; btn.classList.add( 'is-done' ); btn.querySelector( '.hbl-pid-btn-label' ).textContent = 'Saved';
 			}
 
+			function rowTitle( id ) {
+				var row = tbody.querySelector( 'tr[data-listing-id="' + id + '"]' );
+				var a = row && row.querySelector( 'td:nth-child(3) a' );
+				return a ? a.textContent : ( 'Listing #' + id );
+			}
+
 			function save( items, done ) {
-				post( 'hbl_email_save_selected', { items: JSON.stringify( items ) } ).then( function (res) {
-					if ( ! res.success ) { alert( 'Save failed: ' + ( res.data || 'Unknown error.' ) ); return; }
-					res.data.saved_ids.forEach( function (id) {
+				var busy = applyBtn.disabled;
+				applyBtn.disabled = true;
+				api( 'hbl_email_save_selected', { items: JSON.stringify( items ) } ).then( function (res) {
+					applyBtn.disabled = busy;
+					if ( ! res.success ) { N.fromError( res, 'Save failed.' ); updateApply(); return; }
+					var d = res.data;
+					d.saved_ids.forEach( function (id) {
 						var row = tbody.querySelector( 'tr[data-listing-id="' + id + '"]' );
 						if ( row ) markSaved( row );
 					} );
-					state.saved += res.data.saved;
+					state.saved += d.saved;
 					statSaved.textContent = state.saved;
-					if ( res.data.failed ) alert( res.data.failed + ' item(s) failed to save.' );
+					if ( d.saved ) N.success( 'Saved ' + d.saved + ' email' + ( d.saved === 1 ? '' : 's' ) + '.' );
+					if ( d.failed ) {
+						var lines = ( d.failed_items || [] ).slice( 0, 5 ).map( function (f) { return rowTitle( f.listing_id ) + ': ' + f.reason; } );
+						N.error( d.failed + ' email' + ( d.failed === 1 ? '' : 's' ) + ' could not be saved.', { detail: lines.join( '\n' ), key: 'em-save-failed' } );
+					}
 					refreshMissing(); updateApply();
 					if ( done ) done();
-				} ).catch( function (e) { alert( 'Network error: ' + e.message ); } );
+				} ).catch( function (e) {
+					applyBtn.disabled = busy; updateApply();
+					N.fromError( e, 'Save failed.' );
+				} );
 			}
 
 			tbody.addEventListener( 'click', function (e) {
+				if ( e.target.closest( '.hbl-tool-retry' ) ) { load( state.page ); return; }
 				var row = e.target.closest( 'tr' );
-				if ( ! row ) return;
+				if ( ! row || ! row.dataset.listingId ) return;
 				var inp = row.querySelector( '.hbl-em-input' );
 				if ( e.target.closest( '.hbl-em-save-btn' ) ) {
 					var v = inp.value.trim();
-					if ( ! isEmail( v ) ) { alert( 'Please enter a valid email address.' ); return; }
+					if ( ! v ) { N.warning( 'Enter an email address first, or use Auto Find.' ); inp.focus(); return; }
+					if ( ! isEmail( v ) ) { N.warning( '"' + v + '" is not a valid email address.' ); inp.focus(); return; }
 					save( [ { listing_id: parseInt( row.dataset.listingId, 10 ), email: v } ] );
 				} else if ( e.target.closest( '.hbl-em-find-btn' ) ) {
-					find( row, e.target.closest( '.hbl-em-find-btn' ) );
+					find( row, e.target.closest( '.hbl-em-find-btn' ), false );
 				}
 			} );
 
+			/**
+			 * Resolves to { status: 'found' | 'none' | 'rate_limited' | 'error' }. Never rejects.
+			 * quiet = batch mode: no per-row toast; the batch reports a summary.
+			 */
 			function find( row, btn, quiet ) {
 				var inp = row.querySelector( '.hbl-em-input' );
 				var lbl = btn.querySelector( '.hbl-pid-btn-label' );
+				var name = rowTitle( row.dataset.listingId );
 				btn.disabled = true; lbl.textContent = 'Searching…';
-				return post( 'hbl_email_auto_find', { listing_id: row.dataset.listingId } ).then( function (res) {
+				inp.classList.remove( 'hbl-pid-input--invalid' );
+
+				return api( 'hbl_email_auto_find', { listing_id: row.dataset.listingId }, { timeout: 100000 } ).then( function (res) {
 					btn.disabled = false; lbl.textContent = 'Auto Find';
-					if ( ! res.success ) {
-						inp.placeholder = res.data || 'Not found';
-						if ( ! quiet ) alert( 'Auto Find: ' + ( res.data || 'Unknown error.' ) );
-						return;
+					if ( res.success ) {
+						inp.value = res.data.email;
+						inp.title = res.data.emails.length > 1 ? 'Other candidates: ' + res.data.emails.slice( 1 ).join( ', ' ) : '';
+						inp.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+						return { status: 'found' };
 					}
-					inp.value = res.data.email;
-					inp.title = res.data.emails.length > 1 ? 'Other candidates: ' + res.data.emails.slice( 1 ).join( ', ' ) : '';
-					inp.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+					var msg = N.message( res, 'Auto Find failed.' ), code = N.code( res );
+					inp.placeholder = 'Not found'; inp.title = msg;
+					if ( code === 'rate_limited' ) {
+						N.warning( msg, { title: 'Google is limiting requests', key: 'em-rate' } );
+						return { status: 'rate_limited' };
+					}
+					var expected = [ 'no_email', 'no_website', 'not_found', 'blocked', 'bad_url', 'dns', 'ssl', 'timeout', 'connect', 'unreachable', 'remote_error', 'bad_status', 'not_html' ].indexOf( code ) !== -1;
+					if ( ! quiet ) { N.warning( name + ': ' + msg, { key: 'em-find-' + row.dataset.listingId } ); }
+					return { status: expected ? 'none' : 'error' };
 				} ).catch( function (e) {
 					btn.disabled = false; lbl.textContent = 'Auto Find';
-					if ( ! quiet ) alert( 'Network error: ' + e.message );
+					inp.placeholder = 'Error'; inp.title = e.message;
+					if ( ! quiet ) { N.fromError( e, name + ':' ); }
+					return { status: 'error', error: e };
 				} );
 			}
 
 			findAllBtn.addEventListener( 'click', function () {
+				var lbl = findAllBtn.querySelector( '.hbl-pid-btn-label' );
+				if ( state.finding ) { state.stop = true; lbl.textContent = 'Stopping…'; findAllBtn.disabled = true; return; }
+
 				var rows = Array.prototype.slice.call( tbody.querySelectorAll( 'tr[data-listing-id]' ) ).filter( function (r) {
 					var i = r.querySelector( '.hbl-em-input' );
 					return i && ! i.disabled && ! i.value.trim();
 				} );
-				if ( ! rows.length ) { alert( 'No empty rows to fill on this page.' ); return; }
-				var lbl = findAllBtn.querySelector( '.hbl-pid-btn-label' ), n = 0;
-				findAllBtn.disabled = true;
+				if ( ! rows.length ) { N.info( 'There are no empty rows to fill on this page.' ); return; }
+
+				var n = 0, found = 0, none = 0, failed = 0, strikes = 0, reason = '';
+				state.finding = true; state.stop = false;
+
+				function finish() {
+					state.finding = false; state.stop = false;
+					findAllBtn.disabled = false; lbl.textContent = 'Auto Find All';
+					var summary = found + ' found, ' + none + ' not found' + ( failed ? ', ' + failed + ' failed' : '' ) + ( n < rows.length ? ' (' + ( rows.length - n ) + ' skipped)' : '' ) + '.';
+					var type = failed || reason ? 'warning' : ( found ? 'success' : 'info' );
+					N[ type ]( 'Auto Find finished: ' + summary + ( reason ? ' ' + reason : '' ) + ( found ? ' Review the results, then press Apply Selected.' : '' ), { duration: 12000 } );
+				}
+
 				( function next() {
-					if ( n >= rows.length ) { findAllBtn.disabled = false; lbl.textContent = 'Auto Find All'; return; }
+					if ( state.stop ) { reason = 'Stopped.'; finish(); return; }
+					if ( n >= rows.length ) { finish(); return; }
 					var row = rows[ n++ ];
-					lbl.textContent = 'Finding… (' + n + '/' + rows.length + ')';
-					find( row, row.querySelector( '.hbl-em-find-btn' ), true ).then( function () { setTimeout( next, 1000 ); } );
+					lbl.textContent = 'Stop (' + n + '/' + rows.length + ')';
+					find( row, row.querySelector( '.hbl-em-find-btn' ), true ).then( function (r) {
+						if ( r.status === 'found' ) { found++; strikes = 0; }
+						else if ( r.status === 'none' ) { none++; strikes = 0; }
+						else {
+							failed++;
+							if ( r.status === 'rate_limited' ) { reason = 'Stopped because Google is limiting this server. Try again later.'; finish(); return; }
+							strikes++;
+							if ( strikes >= 3 ) { reason = 'Stopped after 3 failures in a row' + ( r.error ? ': ' + r.error.message : '.' ); finish(); return; }
+						}
+						setTimeout( next, 1000 );
+					} );
 				} )();
 			} );
 

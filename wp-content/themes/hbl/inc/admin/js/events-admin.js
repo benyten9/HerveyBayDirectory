@@ -65,12 +65,12 @@
                             updateStats();
                         });
                     } else {
-                        alert(response.data.message || 'Failed to delete event');
+                        HBLNotify.fromError(response, 'Failed to delete event.');
                         $modal.remove();
                     }
                 },
-                error: function() {
-                    alert('An error occurred. Please try again.');
+                error: function(xhr, status) {
+                    HBLNotify.fromXhr(xhr, status, 'Request failed.');
                     $modal.remove();
                 }
             });
@@ -145,12 +145,12 @@
         var eventIds = getSelectedEventIds();
 
         if (action === '-1') {
-            alert('Please select a bulk action.');
+            HBLNotify.warning('Please select a bulk action.');
             return;
         }
 
         if (eventIds.length === 0) {
-            alert('Please select at least one event.');
+            HBLNotify.warning('Please select at least one event.');
             return;
         }
 
@@ -218,12 +218,12 @@
 
                         updateStats();
                     } else {
-                        alert(response.data.message || 'Failed to delete events');
+                        HBLNotify.fromError(response, 'Failed to delete events.');
                         $modal.remove();
                     }
                 },
-                error: function() {
-                    alert('An error occurred. Please try again.');
+                error: function(xhr, status) {
+                    HBLNotify.fromXhr(xhr, status, 'Request failed.');
                     $modal.remove();
                 }
             });
@@ -281,12 +281,12 @@
                             location.reload();
                         }, 1000);
                     } else {
-                        alert(response.data.message || 'Failed to update events');
+                        HBLNotify.fromError(response, 'Failed to update events.');
                         $modal.remove();
                     }
                 },
-                error: function() {
-                    alert('An error occurred. Please try again.');
+                error: function(xhr, status) {
+                    HBLNotify.fromXhr(xhr, status, 'Request failed.');
                     $modal.remove();
                 }
             });
@@ -353,7 +353,11 @@
             type: 'POST',
             data: getFilterParams( paged ),
             success: function( response ) {
-                if ( ! response.success ) return;
+                if ( ! response.success ) {
+                    $tbody.css('opacity', 1);
+                    HBLNotify.fromError( response, 'Could not filter events.' );
+                    return;
+                }
 
                 $tbody.html( response.data.rows );
                 $tbody.css('opacity', 1);
@@ -372,9 +376,10 @@
                 $('.hbl-select-all').prop('checked', false);
                 updateSelectedCount();
             },
-            error: function( xhr ) {
+            error: function( xhr, status ) {
                 if ( xhr.statusText !== 'abort' ) {
                     $tbody.css('opacity', 1);
+                    HBLNotify.fromXhr( xhr, status, 'Could not load events.', { key: 'events-filter' } );
                 }
             },
             complete: function() {
@@ -450,12 +455,12 @@
                 if (response.success) {
                     window.location.reload();
                 } else {
-                    alert(response.data.message || 'Failed to add category');
+                    HBLNotify.fromError(response, 'Failed to add category.');
                     $submitBtn.prop('disabled', false).html(originalText);
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status) {
+                HBLNotify.fromXhr(xhr, status, 'Request failed.');
                 $submitBtn.prop('disabled', false).html(originalText);
             }
         });
@@ -508,12 +513,12 @@
                 if (response.success) {
                     window.location.reload();
                 } else {
-                    alert(response.data.message || 'Failed to update category');
+                    HBLNotify.fromError(response, 'Failed to update category.');
                     $submitBtn.prop('disabled', false).html(originalText);
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status) {
+                HBLNotify.fromXhr(xhr, status, 'Request failed.');
                 $submitBtn.prop('disabled', false).html(originalText);
             }
         });
@@ -580,12 +585,12 @@
                             }
                         });
                     } else {
-                        alert(response.data.message || 'Failed to delete category');
+                        HBLNotify.fromError(response, 'Failed to delete category.');
                         $modal.remove();
                     }
                 },
-                error: function() {
-                    alert('An error occurred. Please try again.');
+                error: function(xhr, status) {
+                    HBLNotify.fromXhr(xhr, status, 'Request failed.');
                     $modal.remove();
                 }
             });
@@ -621,12 +626,12 @@
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Error creating tag');
+                    HBLNotify.fromError(response, 'Error creating tag.');
                     $btn.prop('disabled', false).html('<span class="dashicons dashicons-plus-alt"></span> Add Tag');
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status) {
+                HBLNotify.fromXhr(xhr, status, 'Request failed.');
                 $btn.prop('disabled', false).html('<span class="dashicons dashicons-plus-alt"></span> Add Tag');
             }
         });
@@ -669,12 +674,12 @@
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Error updating tag');
+                    HBLNotify.fromError(response, 'Error updating tag.');
                     $btn.prop('disabled', false).text('Update Tag');
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status) {
+                HBLNotify.fromXhr(xhr, status, 'Request failed.');
                 $btn.prop('disabled', false).text('Update Tag');
             }
         });
@@ -707,11 +712,11 @@
                 if (response.success) {
                     $row.fadeOut(300, function() { $(this).remove(); });
                 } else {
-                    alert(response.data.message || 'Error deleting tag');
+                    HBLNotify.fromError(response, 'Error deleting tag.');
                 }
             },
-            error: function() {
-                alert('An error occurred. Please try again.');
+            error: function(xhr, status) {
+                HBLNotify.fromXhr(xhr, status, 'Request failed.');
             }
         });
     });

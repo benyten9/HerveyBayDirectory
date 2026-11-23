@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Duplicate_Listings {
 
 	private static $instance = null;
@@ -37,6 +39,7 @@ class HBL_Duplicate_Listings {
 		if ( 'directorist-tools_page_hbl-duplicate-listings' !== $hook ) {
 			return;
 		}
+		HBL_Admin_Tool::enqueue_assets();
 
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style(
@@ -136,81 +139,79 @@ class HBL_Duplicate_Listings {
 
 
 	public function ajax_load_duplicates() {
-		check_ajax_referer( 'hbl_duplicate_listings_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_duplicate_listings_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			global $wpdb;
 
-		global $wpdb;
+			$type   = isset( $_POST['type'] ) && 'phone' === $_POST['type'] ? 'phone' : 'title';
+			$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		$type   = isset( $_POST['type'] ) && 'phone' === $_POST['type'] ? 'phone' : 'title';
-		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
-
-		if ( 'phone' === $type ) {
-			$sql = "SELECT pm.meta_value AS label,
-			               GROUP_CONCAT(pm.post_id ORDER BY pm.post_id ASC SEPARATOR ',') AS ids
-			        FROM {$wpdb->postmeta} pm
-			        INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-			        WHERE pm.meta_key = '_phone'
-			        AND pm.meta_value != ''
-			        AND p.post_type = 'at_biz_dir'
-			        AND p.post_status IN ('publish','draft','pending','private')";
-			if ( $search ) {
-				$sql .= $wpdb->prepare( " AND pm.meta_value LIKE %s", '%' . $wpdb->esc_like( $search ) . '%' );
-			}
-			$sql .= " GROUP BY pm.meta_value HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC, pm.meta_value ASC";
-		} else {
-			$sql = "SELECT LOWER(TRIM(post_title)) AS label,
-			               GROUP_CONCAT(ID ORDER BY ID ASC SEPARATOR ',') AS ids
-			        FROM {$wpdb->posts}
-			        WHERE post_type = 'at_biz_dir'
-			        AND post_status IN ('publish','draft','pending','private')";
-			if ( $search ) {
-				$sql .= $wpdb->prepare( " AND post_title LIKE %s", '%' . $wpdb->esc_like( $search ) . '%' );
-			}
-			$sql .= " GROUP BY LOWER(TRIM(post_title)) HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC, post_title ASC";
-		}
-
-		$rows   = $wpdb->get_results( $sql );
-		$groups = array();
-
-		foreach ( $rows as $row ) {
-			$ids   = array_map( 'intval', explode( ',', $row->ids ) );
-			$posts = array();
-
-			foreach ( $ids as $id ) {
-				$post = get_post( $id );
-				if ( ! $post ) {
-					continue;
+			if ( 'phone' === $type ) {
+				$sql = "SELECT pm.meta_value AS label,
+				               GROUP_CONCAT(pm.post_id ORDER BY pm.post_id ASC SEPARATOR ',') AS ids
+				        FROM {$wpdb->postmeta} pm
+				        INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				        WHERE pm.meta_key = '_phone'
+				        AND pm.meta_value != ''
+				        AND p.post_type = 'at_biz_dir'
+				        AND p.post_status IN ('publish','draft','pending','private')";
+				if ( $search ) {
+					$sql .= $wpdb->prepare( " AND pm.meta_value LIKE %s", '%' . $wpdb->esc_like( $search ) . '%' );
 				}
-				$posts[] = array(
-					'id'       => $id,
-					'title'    => $post->post_title,
-					'status'   => $post->post_status,
-					'date'     => get_the_date( 'Y-m-d', $post ),
-					'edit_url' => admin_url( 'post.php?post=' . $id . '&action=edit' ),
-					'view_url' => get_permalink( $id ),
-					'phone'    => get_post_meta( $id, '_phone', true ),
-					'address'  => get_post_meta( $id, '_address', true ),
-					'author'   => get_the_author_meta( 'display_name', $post->post_author ),
-					'plan'     => $this->get_plan_name( get_post_meta( $id, '_fm_plans', true ) ),
-				);
+				$sql .= " GROUP BY pm.meta_value HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC, pm.meta_value ASC";
+			} else {
+				$sql = "SELECT LOWER(TRIM(post_title)) AS label,
+				               GROUP_CONCAT(ID ORDER BY ID ASC SEPARATOR ',') AS ids
+				        FROM {$wpdb->posts}
+				        WHERE post_type = 'at_biz_dir'
+				        AND post_status IN ('publish','draft','pending','private')";
+				if ( $search ) {
+					$sql .= $wpdb->prepare( " AND post_title LIKE %s", '%' . $wpdb->esc_like( $search ) . '%' );
+				}
+				$sql .= " GROUP BY LOWER(TRIM(post_title)) HAVING COUNT(*) > 1 ORDER BY COUNT(*) DESC, post_title ASC";
 			}
 
-			if ( count( $posts ) > 1 ) {
-				$groups[] = array(
-					'label' => 'title' === $type ? ucwords( $row->label ) : $row->label,
-					'posts' => $posts,
-					'count' => count( $posts ),
-				);
-			}
-		}
+			$rows   = $wpdb->get_results( $sql );
+			$groups = array();
 
-		wp_send_json_success( array(
-			'groups' => $groups,
-			'total'  => count( $groups ),
-		) );
+			foreach ( $rows as $row ) {
+				$ids   = array_map( 'intval', explode( ',', $row->ids ) );
+				$posts = array();
+
+				foreach ( $ids as $id ) {
+					$post = get_post( $id );
+					if ( ! $post ) {
+						continue;
+					}
+					$posts[] = array(
+						'id'       => $id,
+						'title'    => $post->post_title,
+						'status'   => $post->post_status,
+						'date'     => get_the_date( 'Y-m-d', $post ),
+						'edit_url' => admin_url( 'post.php?post=' . $id . '&action=edit' ),
+						'view_url' => get_permalink( $id ),
+						'phone'    => get_post_meta( $id, '_phone', true ),
+						'address'  => get_post_meta( $id, '_address', true ),
+						'author'   => get_the_author_meta( 'display_name', $post->post_author ),
+						'plan'     => $this->get_plan_name( get_post_meta( $id, '_fm_plans', true ) ),
+					);
+				}
+
+				if ( count( $posts ) > 1 ) {
+					$groups[] = array(
+						'label' => 'title' === $type ? ucwords( $row->label ) : $row->label,
+						'posts' => $posts,
+						'count' => count( $posts ),
+					);
+				}
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'groups' => $groups,
+				'total'  => count( $groups ),
+			) );
+		}, 'Admin tool: load duplicates' );
 	}
 
 	private function get_plan_name( $plan_id ) {
@@ -223,41 +224,39 @@ class HBL_Duplicate_Listings {
 
 
 	public function ajax_bulk_trash() {
-		check_ajax_referer( 'hbl_duplicate_listings_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_duplicate_listings_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			$ids = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
 
-		$ids = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
-
-		if ( empty( $ids ) ) {
-			wp_send_json_error( array( 'message' => __( 'No listings selected.', 'hbl' ) ) );
-		}
-
-		$trashed = 0;
-		$failed  = 0;
-
-		foreach ( $ids as $id ) {
-			if ( get_post_type( $id ) !== 'at_biz_dir' ) {
-				$failed++;
-				continue;
+			if ( empty( $ids ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'No listings selected.', 'hbl' ) ) );
 			}
-			if ( wp_trash_post( $id ) ) {
-				$trashed++;
-			} else {
-				$failed++;
-			}
-		}
 
-		wp_send_json_success( array(
-			'trashed' => $trashed,
-			'failed'  => $failed,
-			'message' => sprintf(
-				_n( '%d listing moved to Trash.', '%d listings moved to Trash.', $trashed, 'hbl' ),
-				$trashed
-			) . ( $failed ? ' ' . sprintf( __( '%d failed.', 'hbl' ), $failed ) : '' ),
-		) );
+			$trashed = 0;
+			$failed  = 0;
+
+			foreach ( $ids as $id ) {
+				if ( get_post_type( $id ) !== 'at_biz_dir' ) {
+					$failed++;
+					continue;
+				}
+				if ( wp_trash_post( $id ) ) {
+					$trashed++;
+				} else {
+					$failed++;
+				}
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'trashed' => $trashed,
+				'failed'  => $failed,
+				'message' => sprintf(
+					_n( '%d listing moved to Trash.', '%d listings moved to Trash.', $trashed, 'hbl' ),
+					$trashed
+				) . ( $failed ? ' ' . sprintf( __( '%d failed.', 'hbl' ), $failed ) : '' ),
+			) );
+		}, 'Admin tool: bulk trash' );
 	}
 
 
@@ -579,9 +578,14 @@ class HBL_Duplicate_Listings {
 					if (res.success) {
 						renderTable(res.data);
 					} else {
-						$('#hbl-dup-message').show().addClass('hbl-bpr-message--empty').text(res.data.message || '<?php echo esc_js( __( 'Error loading data.', 'hbl' ) ); ?>');
+						$('#hbl-dup-message').show().addClass('hbl-bpr-message--empty').text(HBLNotify.message(res, '<?php echo esc_js( __( 'Error loading data.', 'hbl' ) ); ?>'));
 						$('#hbl-dup-listings-wrap').hide();
+						HBLNotify.fromError(res, 'Could not load duplicates.');
 					}
+				}).fail(function(xhr, status) {
+					$('#hbl-dup-listings-wrap').hide();
+					$('#hbl-dup-message').show().addClass('hbl-bpr-message--empty').text(HBLNotify.xhrMessage(xhr, status));
+					HBLNotify.fromXhr(xhr, status, 'Could not load duplicates.');
 				}).always(function() {
 					$btn.prop('disabled', false).html('<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> <?php echo esc_js( __( 'Find Duplicates', 'hbl' ) ); ?>');
 				});
@@ -645,11 +649,15 @@ class HBL_Duplicate_Listings {
 						});
 						$('#hbl-dup-selected-count').text(0);
 					} else {
+						HBLNotify.fromError(res, 'Trash failed.');
 						$result
 							.removeClass('success').addClass('error')
 							.html('<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> ' + (res.data.message || '<?php echo esc_js( __( 'An error occurred.', 'hbl' ) ); ?>'))
 							.show();
 					}
+				}).fail(function(xhr, status) {
+					$('#hbl-dup-result').removeClass('success').addClass('error').text(HBLNotify.xhrMessage(xhr, status)).show();
+					HBLNotify.fromXhr(xhr, status, 'Could not trash the listings.');
 				}).always(function() {
 					$btn.prop('disabled', false);
 					updateSummary();

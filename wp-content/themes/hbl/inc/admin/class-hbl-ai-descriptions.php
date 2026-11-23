@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_AI_Descriptions {
 
 	const OPTION_KEY = 'hbl_ai_desc_settings';
@@ -46,6 +48,7 @@ class HBL_AI_Descriptions {
 		if ( 'directorist-tools_page_hbl-ai-descriptions' !== $hook ) {
 			return;
 		}
+		HBL_Admin_Tool::enqueue_assets();
 
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style(
@@ -153,7 +156,7 @@ class HBL_AI_Descriptions {
 	private function call_claude( int $listing_id, string $business_name, string $subcategory, array $settings ): array {
 		$api_key = trim( $settings['api_key'] ?? '' );
 		if ( ! $api_key ) {
-			return array( 'ok' => false, 'text' => '', 'error' => 'No API key configured.' );
+			return array( 'ok' => false, 'text' => '', 'error' => 'No Anthropic API key is saved. Add one under Settings, then try again.', 'code' => 'no_key' );
 		}
 
 		$prompt = str_replace(
@@ -179,19 +182,43 @@ class HBL_AI_Descriptions {
 		) );
 
 		if ( is_wp_error( $response ) ) {
-			return array( 'ok' => false, 'text' => '', 'error' => $response->get_error_message() );
+			$why = HBL_Admin_Tool::describe_http_failure( $response );
+			return array( 'ok' => false, 'text' => '', 'error' => 'Could not reach the Anthropic API: ' . $why['message'], 'code' => $why['code'] );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( 200 !== $code ) {
-			return array( 'ok' => false, 'text' => '', 'error' => $data['error']['message'] ?? "API returned HTTP {$code}." );
+		if ( 200 !== (int) $code ) {
+			$api_msg = is_array( $data ) ? (string) ( $data['error']['message'] ?? '' ) : '';
+			$model   = (string) ( $settings['model'] ?? '' );
+			if ( 401 === (int) $code ) {
+				return array( 'ok' => false, 'text' => '', 'error' => 'Anthropic rejected the API key (invalid or revoked). Check the key under Settings.', 'code' => 'auth' );
+			}
+			if ( 403 === (int) $code ) {
+				return array( 'ok' => false, 'text' => '', 'error' => 'This API key is not allowed to use that model or feature. ' . $api_msg, 'code' => 'auth' );
+			}
+			if ( 404 === (int) $code ) {
+				return array( 'ok' => false, 'text' => '', 'error' => 'Anthropic could not find the model "' . $model . '". Pick a valid model under Settings.', 'code' => 'model' );
+			}
+			if ( 400 === (int) $code && false !== stripos( $api_msg, 'credit' ) ) {
+				return array( 'ok' => false, 'text' => '', 'error' => 'The Anthropic account is out of credit. Add credit in the Anthropic console, then try again.', 'code' => 'billing' );
+			}
+			if ( 429 === (int) $code ) {
+				return array( 'ok' => false, 'text' => '', 'error' => 'Anthropic is rate-limiting requests. Wait a minute, then run again.', 'code' => 'rate_limited' );
+			}
+			if ( $code >= 500 ) {
+				return array( 'ok' => false, 'text' => '', 'error' => 'Anthropic is temporarily unavailable (HTTP ' . (int) $code . '). Try again shortly.', 'code' => 'remote_error' );
+			}
+			return array( 'ok' => false, 'text' => '', 'error' => $api_msg ?: "The Anthropic API returned HTTP {$code}.", 'code' => 'api_error' );
+		}
+		if ( ! is_array( $data ) ) {
+			return array( 'ok' => false, 'text' => '', 'error' => 'The Anthropic API sent a reply that could not be read.', 'code' => 'bad_response' );
 		}
 
 		$text = trim( $data['content'][0]['text'] ?? '' );
 		if ( ! $text ) {
-			return array( 'ok' => false, 'text' => '', 'error' => 'Claude returned an empty response.' );
+			return array( 'ok' => false, 'text' => '', 'error' => 'Claude returned an empty response for this listing.', 'code' => 'empty' );
 		}
 
 		return array( 'ok' => true, 'text' => $text, 'error' => '' );
@@ -209,165 +236,194 @@ class HBL_AI_Descriptions {
 
 
 	public function ajax_count_empty(): void {
-		check_ajax_referer( 'hbl_ai_desc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized.' );
-		}
-		wp_send_json_success( array( 'count' => $this->count_empty_listings() ) );
+		HBL_Admin_Tool::guard( 'hbl_ai_desc_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
+			HBL_Admin_Tool::ok( array( 'count' => $this->count_empty_listings() ) );
+		}, 'Admin tool: count empty' );
 	}
 
 	public function ajax_clear_log(): void {
-		check_ajax_referer( 'hbl_ai_desc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized.' );
-		}
-		delete_option( self::LOG_KEY );
-		wp_send_json_success();
+		HBL_Admin_Tool::guard( 'hbl_ai_desc_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
+			delete_option( self::LOG_KEY );
+			HBL_Admin_Tool::ok();
+		}, 'Admin tool: clear log' );
 	}
 
 	public function ajax_apply_selected(): void {
-		check_ajax_referer( 'hbl_ai_desc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized.' );
-		}
+		HBL_Admin_Tool::guard( 'hbl_ai_desc_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		$items_raw = isset( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : '';
-		$items     = json_decode( $items_raw, true );
+			$items_raw = isset( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : '';
+			$items     = json_decode( $items_raw, true );
 
-		if ( ! is_array( $items ) || empty( $items ) ) {
-			wp_send_json_error( 'No items provided.' );
-		}
-
-		$written     = 0;
-		$failed      = 0;
-		$written_ids = array();
-
-		foreach ( $items as $item ) {
-			$listing_id  = (int) ( $item['listing_id']  ?? 0 );
-			$description = sanitize_textarea_field( $item['description'] ?? '' );
-
-			if ( ! $listing_id || ! $description ) {
-				$failed++;
-				continue;
+			if ( ! is_array( $items ) || empty( $items ) ) {
+				HBL_Admin_Tool::fail( 'No items provided.' );
 			}
 
-			$post = get_post( $listing_id );
-			if ( ! $post || $post->post_type !== 'at_biz_dir' ) {
-				$failed++;
-				continue;
-			}
+			$written     = 0;
+			$failed      = 0;
+			$written_ids = array();
 
-			$result = wp_update_post( array(
-				'ID'           => $listing_id,
-				'post_content' => wp_kses_post( $description ),
-			) );
+			foreach ( $items as $item ) {
+				$listing_id  = (int) ( $item['listing_id']  ?? 0 );
+				$description = sanitize_textarea_field( $item['description'] ?? '' );
 
-			if ( is_wp_error( $result ) || ! $result ) {
-				$failed++;
-			} else {
-				$written++;
-				$written_ids[] = $listing_id;
-			}
-		}
+				if ( ! $listing_id || ! $description ) {
+					$failed++;
+					continue;
+				}
 
-		if ( ! empty( $written_ids ) ) {
-			$log     = (array) get_option( self::LOG_KEY, array() );
-			$pending = array_flip( $written_ids );
+				$post = get_post( $listing_id );
+				if ( ! $post || $post->post_type !== 'at_biz_dir' ) {
+					$failed++;
+					continue;
+				}
 
-			for ( $i = count( $log ) - 1; $i >= 0; $i-- ) {
-				$lid = (int) ( $log[ $i ]['listing_id'] ?? 0 );
-				if ( isset( $pending[ $lid ] ) && 'dry_run' === ( $log[ $i ]['status'] ?? '' ) ) {
-					$log[ $i ]['status'] = 'written';
-					unset( $pending[ $lid ] );
+				$result = wp_update_post( array(
+					'ID'           => $listing_id,
+					'post_content' => wp_kses_post( $description ),
+				) );
+
+				if ( is_wp_error( $result ) || ! $result ) {
+					$failed++;
+				} else {
+					$written++;
+					$written_ids[] = $listing_id;
 				}
 			}
 
-			update_option( self::LOG_KEY, $log, false );
-		}
+			if ( ! empty( $written_ids ) ) {
+				$log     = (array) get_option( self::LOG_KEY, array() );
+				$pending = array_flip( $written_ids );
 
-		wp_send_json_success( array(
-			'written'     => $written,
-			'failed'      => $failed,
-			'written_ids' => $written_ids,
-		) );
+				for ( $i = count( $log ) - 1; $i >= 0; $i-- ) {
+					$lid = (int) ( $log[ $i ]['listing_id'] ?? 0 );
+					if ( isset( $pending[ $lid ] ) && 'dry_run' === ( $log[ $i ]['status'] ?? '' ) ) {
+						$log[ $i ]['status'] = 'written';
+						unset( $pending[ $lid ] );
+					}
+				}
+
+				update_option( self::LOG_KEY, $log, false );
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'written'     => $written,
+				'failed'      => $failed,
+				'written_ids' => $written_ids,
+			) );
+		}, 'Admin tool: apply selected' );
 	}
 
 	public function ajax_batch_run(): void {
-		check_ajax_referer( 'hbl_ai_desc_nonce', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Unauthorized.' );
-		}
+		HBL_Admin_Tool::guard( 'hbl_ai_desc_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		$settings = $this->get_settings();
-		$offset   = max( 0, (int) ( $_POST['offset'] ?? 0 ) );
-		$dry_run  = isset( $_POST['dry_run'] ) && 'true' === $_POST['dry_run'];
-		$per_page = max( 1, min( 50, (int) ( $settings['batch_size'] ?? 10 ) ) );
+			$settings = $this->get_settings();
+			$offset   = max( 0, (int) ( $_POST['offset'] ?? 0 ) );
+			$dry_run  = isset( $_POST['dry_run'] ) && 'true' === $_POST['dry_run'];
+			$per_page = max( 1, min( 50, (int) ( $settings['batch_size'] ?? 10 ) ) );
 
-		$ids   = $this->query_empty_listings( $offset, $per_page );
-		$total = $this->count_empty_listings() + $offset;
+			$ids   = $this->query_empty_listings( $offset, $per_page );
+			$total = $this->count_empty_listings() + $offset;
 
-		$generated = 0;
-		$failed    = 0;
-		$log_batch = array();
+			$generated = 0;
+			$failed    = 0;
+			$log_batch = array();
+			$handled   = 0;
+			$fatal     = null;
 
-		foreach ( $ids as $listing_id ) {
-			if ( ! $this->has_empty_description( $listing_id ) ) {
-				continue;
+			// Each listing is a slow external call. Stop before the web server's time limit
+			// and let the browser continue with the next batch.
+			if ( function_exists( 'set_time_limit' ) ) {
+				@set_time_limit( 150 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
 			}
+			$deadline = microtime( true ) + 50;
 
-			$post        = get_post( $listing_id );
-			$title       = $post ? get_the_title( $post ) : "(#{$listing_id})";
-			$subcategory = $this->get_primary_subcategory( $listing_id );
+			foreach ( $ids as $listing_id ) {
+				if ( $handled > 0 && microtime( true ) > $deadline ) {
+					break;
+				}
+				$handled++;
 
-			$result = $this->call_claude( $listing_id, $title, $subcategory, $settings );
+				if ( ! $this->has_empty_description( $listing_id ) ) {
+					continue;
+				}
 
-			if ( ! $result['ok'] ) {
-				$failed++;
+				$post        = get_post( $listing_id );
+				$title       = $post ? get_the_title( $post ) : "(#{$listing_id})";
+				$subcategory = $this->get_primary_subcategory( $listing_id );
+
+				$result = $this->call_claude( $listing_id, $title, $subcategory, $settings );
+
+				if ( ! $result['ok'] ) {
+					$failed++;
+					$log_batch[] = array(
+						'listing_id'  => $listing_id,
+						'title'       => $title,
+						'subcategory' => $subcategory,
+						'description' => '',
+						'status'      => 'error',
+						'error'       => $result['error'],
+						'timestamp'   => current_time( 'mysql' ),
+					);
+					// Problems with the key, credit, model or rate limit affect every listing: stop instead of repeating them.
+					if ( in_array( $result['code'] ?? '', array( 'no_key', 'auth', 'model', 'billing', 'rate_limited' ), true ) ) {
+						$fatal = array( 'message' => $result['error'], 'code' => $result['code'] );
+						break;
+					}
+					continue;
+				}
+
+				$description = $result['text'];
+				$status      = 'dry_run';
+
+				if ( ! $dry_run ) {
+					$written = wp_update_post( array(
+						'ID'           => $listing_id,
+						'post_content' => wp_kses_post( $description ),
+					), true );
+					if ( is_wp_error( $written ) || ! $written ) {
+						$failed++;
+						$log_batch[] = array(
+							'listing_id'  => $listing_id,
+							'title'       => $title,
+							'subcategory' => $subcategory,
+							'description' => $description,
+							'status'      => 'error',
+							'error'       => 'The description was generated but WordPress could not save it' . ( is_wp_error( $written ) ? ': ' . $written->get_error_message() : '.' ),
+							'timestamp'   => current_time( 'mysql' ),
+						);
+						continue;
+					}
+					$status = 'written';
+				}
+
+				$generated++;
 				$log_batch[] = array(
 					'listing_id'  => $listing_id,
 					'title'       => $title,
 					'subcategory' => $subcategory,
-					'description' => '',
-					'status'      => 'error',
-					'error'       => $result['error'],
+					'description' => $description,
+					'status'      => $status,
+					'error'       => '',
 					'timestamp'   => current_time( 'mysql' ),
 				);
-				continue;
 			}
 
-			$description = $result['text'];
-			$status      = 'dry_run';
+			$this->append_log( $log_batch );
 
-			if ( ! $dry_run ) {
-				wp_update_post( array(
-					'ID'           => $listing_id,
-					'post_content' => wp_kses_post( $description ),
-				) );
-				$status = 'written';
-			}
-
-			$generated++;
-			$log_batch[] = array(
-				'listing_id'  => $listing_id,
-				'title'       => $title,
-				'subcategory' => $subcategory,
-				'description' => $description,
-				'status'      => $status,
-				'error'       => '',
-				'timestamp'   => current_time( 'mysql' ),
-			);
-		}
-
-		$this->append_log( $log_batch );
-
-		wp_send_json_success( array(
-			'generated' => $generated,
-			'failed'    => $failed,
-			'total'     => $total,
-			'processed' => $offset + count( $ids ),
-			'done'      => count( $ids ) < $per_page,
+			HBL_Admin_Tool::ok( array(
+				'generated' => $generated,
+				'failed'    => $failed,
+				'total'     => $total,
+			'processed' => $offset + $handled,
+			'done'      => null === $fatal && $handled >= count( $ids ) && count( $ids ) < $per_page,
 			'log_batch' => $log_batch,
+			'fatal'     => $fatal,
 		) );
+		}, 'Admin tool: batch run' );
 	}
 
 
@@ -665,6 +721,19 @@ class HBL_AI_Descriptions {
 			var AJAX      = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 			var EDIT_BASE = <?php echo wp_json_encode( admin_url( 'post.php?action=edit&post=' ) ); ?>;
 
+			// Safety net: if the shared notify script failed to load, fall back to plain alerts.
+			if ( ! window.HBLNotify ) {
+				window.HBLNotify = {
+					success: function (m) { console.log( m ); }, info: function (m) { console.log( m ); },
+					warning: function (m) { alert( m ); }, error: function (m) { alert( m ); },
+					fromError: function (e, p) { alert( ( p ? p + ' ' : '' ) + ( ( e && e.message ) || ( e && e.data && ( e.data.message || e.data ) ) || 'Unknown error.' ) ); },
+					message: function (r, f) { return ( r && r.data && ( r.data.message || ( typeof r.data === 'string' && r.data ) ) ) || f || 'Unknown error.'; },
+					code: function (r) { return ( r && r.data && r.data.code ) || ''; },
+					request: function (a, fd, o) { return fetch( o.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' } ).then( function (r) { return r.json(); } ); }
+				};
+			}
+			var N = window.HBLNotify;
+
 			function htmlEsc( str ) {
 				var d = document.createElement( 'div' );
 				d.textContent = str || '';
@@ -689,10 +758,12 @@ class HBL_AI_Descriptions {
 				var fd = new FormData();
 				fd.append( 'action', 'hbl_ai_desc_count_empty' );
 				fd.append( 'nonce', NONCE );
-				fetch( AJAX, { method: 'POST', body: fd } )
-					.then( function (r) { return r.json(); } )
-					.then( function (res) { if ( res.success ) el.textContent = res.data.count; } )
-					.catch( function () { el.textContent = '?'; } );
+				N.request( null, fd, { ajaxUrl: AJAX, timeout: 60000 } )
+					.then( function (res) {
+						if ( res.success ) { el.textContent = res.data.count; }
+						else { el.textContent = '?'; N.warning( 'Could not count listings without a description: ' + N.message( res ), { key: 'ai-count' } ); }
+					} )
+					.catch( function (e) { el.textContent = '?'; N.fromError( e, 'Could not count listings without a description.', { key: 'ai-count' } ); } );
 			})();
 
 			var applyBtn     = document.getElementById( 'hbl-aidesc-apply-btn' );
@@ -771,11 +842,10 @@ class HBL_AI_Descriptions {
 					fd.append( 'nonce',  NONCE );
 					fd.append( 'items',  JSON.stringify( items ) );
 
-					fetch( AJAX, { method: 'POST', body: fd } )
-						.then( function (r) { return r.json(); } )
+					N.request( null, fd, { ajaxUrl: AJAX, timeout: 60000 } )
 						.then( function (res) {
 							if ( ! res.success ) {
-								alert( 'Apply failed: ' + ( res.data || 'Unknown error.' ) );
+								N.fromError( res, 'Apply failed.' );
 								applyBtn.disabled    = false;
 								applyBtn.innerHTML   = 'Apply Selected (<span id="hbl-aidesc-apply-count">' + checked.length + '</span>)';
 								return;
@@ -803,9 +873,8 @@ class HBL_AI_Descriptions {
 								row.dataset.status = 'written';
 							} );
 
-							var msg = d.written + ' description(s) written to listings.';
-							if ( d.failed ) msg += ' ' + d.failed + ' failed.';
-							alert( msg );
+							if ( d.written ) N.success( d.written + ' description(s) written to listings.' );
+							if ( d.failed ) N.error( d.failed + ' description(s) could not be written (empty text or a listing that no longer exists).', { key: 'ai-apply-failed' } );
 
 							applyBtn.style.display = 'none';
 							if ( selectAllCb ) { selectAllCb.checked = false; selectAllCb.indeterminate = false; }
@@ -813,15 +882,14 @@ class HBL_AI_Descriptions {
 							var cfd = new FormData();
 							cfd.append( 'action', 'hbl_ai_desc_count_empty' );
 							cfd.append( 'nonce',  NONCE );
-							fetch( AJAX, { method: 'POST', body: cfd } )
-								.then( function (r) { return r.json(); } )
+							N.request( null, cfd, { ajaxUrl: AJAX, timeout: 60000 } )
 								.then( function (cr) {
 									var el = document.getElementById( 'hbl-aidesc-stat-empty' );
 									if ( el && cr.success ) el.textContent = cr.data.count;
-								} );
+								} ).catch( function () {} );
 						} )
 						.catch( function (e) {
-							alert( 'Network error: ' + e.message );
+							N.fromError( e, 'Apply failed.' );
 							applyBtn.disabled    = false;
 							applyBtn.innerHTML   = 'Apply Selected (<span id="hbl-aidesc-apply-count">' + checked.length + '</span>)';
 						} );
@@ -908,11 +976,11 @@ class HBL_AI_Descriptions {
 				fd.append( 'offset',  offset );
 				fd.append( 'dry_run', DRY_RUN ? 'true' : 'false' );
 
-				fetch( AJAX, { method: 'POST', body: fd } )
-					.then( function (r) { return r.json(); } )
+				N.request( null, fd, { ajaxUrl: AJAX, timeout: 170000 } )
 					.then( function (res) {
 						if ( ! res.success ) {
-							statusEl.textContent = 'Error: ' + ( res.data || 'Unknown error.' );
+							statusEl.textContent = 'Error: ' + N.message( res );
+							N.fromError( res, 'Generation stopped.' );
 							resetUI();
 							return;
 						}
@@ -934,6 +1002,17 @@ class HBL_AI_Descriptions {
 							prependLogRows( d.log_batch );
 						}
 
+						// Key / credit / model / rate-limit problems affect every listing — stop and say so.
+						if ( d.fatal ) {
+							statusEl.textContent = 'Stopped: ' + d.fatal.message;
+							N.error( d.fatal.message, { title: 'Generation stopped', key: 'ai-fatal' } );
+							resetUI();
+							return;
+						}
+						if ( d.failed && ! d.generated && ! newTotals.generated ) {
+							N.warning( 'Every listing in this batch failed. Check the Error rows in the log below.', { key: 'ai-allfailed' } );
+						}
+
 						if ( d.done ) {
 							barEl.style.width = '100%';
 							statusEl.textContent = 'Done! ' + newTotals.generated + ' description(s) ' +
@@ -944,8 +1023,7 @@ class HBL_AI_Descriptions {
 							var cfd = new FormData();
 							cfd.append( 'action', 'hbl_ai_desc_count_empty' );
 							cfd.append( 'nonce',  NONCE );
-							fetch( AJAX, { method: 'POST', body: cfd } )
-								.then( function (r) { return r.json(); } )
+							N.request( null, cfd, { ajaxUrl: AJAX, timeout: 60000 } )
 								.then( function (cr) {
 									var el = document.getElementById( 'hbl-aidesc-stat-empty' );
 									if ( el && cr.success ) el.textContent = cr.data.count;
@@ -955,7 +1033,9 @@ class HBL_AI_Descriptions {
 						}
 					} )
 					.catch( function (e) {
-						statusEl.textContent = 'Network error: ' + e.message;
+						statusEl.textContent = e.message;
+						N.fromError( e, 'Generation stopped.' );
+						N.info( 'Listings already processed are saved. Run again to continue.', { key: 'ai-resume' } );
 						resetUI();
 					} );
 			}
@@ -986,9 +1066,12 @@ class HBL_AI_Descriptions {
 					var fd = new FormData();
 					fd.append( 'action', 'hbl_ai_desc_clear_log' );
 					fd.append( 'nonce',  NONCE );
-					fetch( AJAX, { method: 'POST', body: fd } )
-						.then( function () { location.reload(); } )
-						.catch( function () { clearBtn.disabled = false; clearBtn.textContent = '<?php echo esc_js( __( 'Clear Log', 'hbl' ) ); ?>'; } );
+					N.request( null, fd, { ajaxUrl: AJAX } )
+						.then( function (res) {
+							if ( res && res.success === false ) { N.fromError( res, 'Could not clear the log.' ); clearBtn.disabled = false; clearBtn.textContent = '<?php echo esc_js( __( 'Clear Log', 'hbl' ) ); ?>'; return; }
+							location.reload();
+						} )
+						.catch( function (e) { N.fromError( e, 'Could not clear the log.' ); clearBtn.disabled = false; clearBtn.textContent = '<?php echo esc_js( __( 'Clear Log', 'hbl' ) ); ?>'; } );
 				} );
 			}
 		})();

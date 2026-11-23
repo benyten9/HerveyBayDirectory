@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Bulk_Category_Reassign {
 
 	private static $instance = null;
@@ -209,7 +211,7 @@ class HBL_Bulk_Category_Reassign {
 		wp_enqueue_script(
 			'hbl-bulk-reassign',
 			HBL_THEME_URI . '/inc/admin/js/bulk-reassign.js',
-			array( 'jquery' ),
+			array( 'jquery', 'hbl-admin-notify' ),
 			HBL_VERSION,
 			true
 		);
@@ -449,91 +451,89 @@ class HBL_Bulk_Category_Reassign {
 	}
 
 	public function ajax_bulk_reassign() {
-		check_ajax_referer( 'hbl_bulk_reassign_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_bulk_reassign_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			$source_categories = isset( $_POST['source_categories'] ) ? array_map( 'absint', (array) $_POST['source_categories'] ) : array();
+			$target_category   = isset( $_POST['target_category'] ) ? absint( $_POST['target_category'] ) : 0;
+			$mode              = isset( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : 'replace';
 
-		$source_categories = isset( $_POST['source_categories'] ) ? array_map( 'absint', (array) $_POST['source_categories'] ) : array();
-		$target_category   = isset( $_POST['target_category'] ) ? absint( $_POST['target_category'] ) : 0;
-		$mode              = isset( $_POST['mode'] ) ? sanitize_text_field( wp_unslash( $_POST['mode'] ) ) : 'replace';
+			if ( empty( $source_categories ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'No source categories selected.', 'hbl' ) ) );
+			}
 
-		if ( empty( $source_categories ) ) {
-			wp_send_json_error( array( 'message' => __( 'No source categories selected.', 'hbl' ) ) );
-		}
+			if ( $target_category <= 0 ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'No target category selected.', 'hbl' ) ) );
+			}
 
-		if ( $target_category <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'No target category selected.', 'hbl' ) ) );
-		}
+			$target_term = get_term( $target_category, 'at_biz_dir-category' );
+			if ( ! $target_term || is_wp_error( $target_term ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Target category not found.', 'hbl' ) ) );
+			}
 
-		$target_term = get_term( $target_category, 'at_biz_dir-category' );
-		if ( ! $target_term || is_wp_error( $target_term ) ) {
-			wp_send_json_error( array( 'message' => __( 'Target category not found.', 'hbl' ) ) );
-		}
-
-		$args = array(
-			'post_type'      => 'at_biz_dir',
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'tax_query'      => array(
-				array(
-					'taxonomy' => 'at_biz_dir-category',
-					'field'    => 'term_id',
-					'terms'    => $source_categories,
+			$args = array(
+				'post_type'      => 'at_biz_dir',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'tax_query'      => array(
+					array(
+						'taxonomy' => 'at_biz_dir-category',
+						'field'    => 'term_id',
+						'terms'    => $source_categories,
+					),
 				),
-			),
-		);
+			);
 
-		$query       = new WP_Query( $args );
-		$listing_ids = $query->posts;
+			$query       = new WP_Query( $args );
+			$listing_ids = $query->posts;
 
-		if ( empty( $listing_ids ) ) {
-			wp_send_json_error( array( 'message' => __( 'No listings found in the selected categories.', 'hbl' ) ) );
-		}
-
-		$success_count = 0;
-		$failed_ids    = array();
-
-		foreach ( $listing_ids as $listing_id ) {
-			if ( 'replace' === $mode ) {
-				$result = wp_set_object_terms( $listing_id, array( $target_category ), 'at_biz_dir-category' );
-			} else {
-				$result = wp_set_object_terms( $listing_id, array( $target_category ), 'at_biz_dir-category', true );
+			if ( empty( $listing_ids ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'No listings found in the selected categories.', 'hbl' ) ) );
 			}
 
-			if ( is_wp_error( $result ) ) {
-				$failed_ids[] = $listing_id;
-			} else {
-				$success_count++;
-			}
-		}
+			$success_count = 0;
+			$failed_ids    = array();
 
-		if ( $success_count > 0 ) {
-			$source_names = array();
-			foreach ( $source_categories as $cat_id ) {
-				$term = get_term( $cat_id, 'at_biz_dir-category' );
-				if ( $term && ! is_wp_error( $term ) ) {
-					$source_names[] = $term->name;
+			foreach ( $listing_ids as $listing_id ) {
+				if ( 'replace' === $mode ) {
+					$result = wp_set_object_terms( $listing_id, array( $target_category ), 'at_biz_dir-category' );
+				} else {
+					$result = wp_set_object_terms( $listing_id, array( $target_category ), 'at_biz_dir-category', true );
+				}
+
+				if ( is_wp_error( $result ) ) {
+					$failed_ids[] = $listing_id;
+				} else {
+					$success_count++;
 				}
 			}
 
-			wp_send_json_success(
-				array(
-					'message'       => sprintf(
-						__( 'Successfully reassigned %1$d listing(s) from "%2$s" to "%3$s".', 'hbl' ),
-						$success_count,
-						implode( ', ', $source_names ),
-						$target_term->name
-					),
-					'success_count' => $success_count,
-					'failed_count'  => count( $failed_ids ),
-				)
-			);
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to reassign any listings. Please try again.', 'hbl' ) ) );
-		}
+			if ( $success_count > 0 ) {
+				$source_names = array();
+				foreach ( $source_categories as $cat_id ) {
+					$term = get_term( $cat_id, 'at_biz_dir-category' );
+					if ( $term && ! is_wp_error( $term ) ) {
+						$source_names[] = $term->name;
+					}
+				}
+
+				HBL_Admin_Tool::ok(
+					array(
+						'message'       => sprintf(
+							__( 'Successfully reassigned %1$d listing(s) from "%2$s" to "%3$s".', 'hbl' ),
+							$success_count,
+							implode( ', ', $source_names ),
+							$target_term->name
+						),
+						'success_count' => $success_count,
+						'failed_count'  => count( $failed_ids ),
+					)
+				);
+			} else {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Failed to reassign any listings. Please try again.', 'hbl' ) ) );
+			}
+		}, 'Admin tool: bulk reassign' );
 	}
 }
 

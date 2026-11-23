@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Partner_Roles {
 
 	const TRANSITION_DATE = '2027-01-01';
@@ -235,7 +237,7 @@ class HBL_Partner_Roles {
 		wp_enqueue_script(
 			'hbl-partner-agencies',
 			HBL_THEME_URI . '/inc/admin/js/partner-agencies.js',
-			array( 'jquery' ),
+			array( 'jquery', 'hbl-admin-notify' ),
 			HBL_VERSION,
 			true
 		);
@@ -490,75 +492,73 @@ class HBL_Partner_Roles {
 	}
 
 	public function ajax_create_partner_user() {
-		check_ajax_referer( 'hbl_partner_agencies_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_partner_agencies_nonce', 'create_users' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'create_users' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			$username     = isset( $_POST['username'] ) ? sanitize_user( $_POST['username'] ) : '';
+			$email        = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+			$first_name   = isset( $_POST['first_name'] ) ? sanitize_text_field( $_POST['first_name'] ) : '';
+			$last_name    = isset( $_POST['last_name'] ) ? sanitize_text_field( $_POST['last_name'] ) : '';
+			$agency_name  = isset( $_POST['agency_name'] ) ? sanitize_text_field( $_POST['agency_name'] ) : '';
+			$agency_website = isset( $_POST['agency_website'] ) ? esc_url_raw( $_POST['agency_website'] ) : '';
+			$role         = isset( $_POST['role'] ) ? sanitize_text_field( $_POST['role'] ) : 'partner_agency';
+			$discount     = isset( $_POST['discount_rate'] ) ? absint( $_POST['discount_rate'] ) : 25;
+			$notes        = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
 
-		$username     = isset( $_POST['username'] ) ? sanitize_user( $_POST['username'] ) : '';
-		$email        = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
-		$first_name   = isset( $_POST['first_name'] ) ? sanitize_text_field( $_POST['first_name'] ) : '';
-		$last_name    = isset( $_POST['last_name'] ) ? sanitize_text_field( $_POST['last_name'] ) : '';
-		$agency_name  = isset( $_POST['agency_name'] ) ? sanitize_text_field( $_POST['agency_name'] ) : '';
-		$agency_website = isset( $_POST['agency_website'] ) ? esc_url_raw( $_POST['agency_website'] ) : '';
-		$role         = isset( $_POST['role'] ) ? sanitize_text_field( $_POST['role'] ) : 'partner_agency';
-		$discount     = isset( $_POST['discount_rate'] ) ? absint( $_POST['discount_rate'] ) : 25;
-		$notes        = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
+			if ( empty( $username ) || empty( $email ) || empty( $agency_name ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Please fill in all required fields.', 'hbl' ) ) );
+			}
 
-		if ( empty( $username ) || empty( $email ) || empty( $agency_name ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please fill in all required fields.', 'hbl' ) ) );
-		}
+			if ( username_exists( $username ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Username already exists.', 'hbl' ) ) );
+			}
 
-		if ( username_exists( $username ) ) {
-			wp_send_json_error( array( 'message' => __( 'Username already exists.', 'hbl' ) ) );
-		}
+			if ( email_exists( $email ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Email already exists.', 'hbl' ) ) );
+			}
 
-		if ( email_exists( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Email already exists.', 'hbl' ) ) );
-		}
+			if ( ! in_array( $role, array( 'founding_partner', 'partner_agency' ), true ) ) {
+				$role = 'partner_agency';
+			}
 
-		if ( ! in_array( $role, array( 'founding_partner', 'partner_agency' ), true ) ) {
-			$role = 'partner_agency';
-		}
+			$password = wp_generate_password( 12, true, true );
 
-		$password = wp_generate_password( 12, true, true );
+			$user_id = wp_create_user( $username, $password, $email );
 
-		$user_id = wp_create_user( $username, $password, $email );
+			if ( is_wp_error( $user_id ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $user_id->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $user_id ) ) {
-			wp_send_json_error( array( 'message' => $user_id->get_error_message() ) );
-		}
+			wp_update_user( array(
+				'ID'           => $user_id,
+				'first_name'   => $first_name,
+				'last_name'    => $last_name,
+				'display_name' => $first_name ? $first_name . ' ' . $last_name : $username,
+			) );
 
-		wp_update_user( array(
-			'ID'           => $user_id,
-			'first_name'   => $first_name,
-			'last_name'    => $last_name,
-			'display_name' => $first_name ? $first_name . ' ' . $last_name : $username,
-		) );
+			$user = get_user_by( 'ID', $user_id );
+			$user->set_role( $role );
 
-		$user = get_user_by( 'ID', $user_id );
-		$user->set_role( $role );
+			update_user_meta( $user_id, '_hbl_agency_name', $agency_name );
+			update_user_meta( $user_id, '_hbl_agency_website', $agency_website );
+			update_user_meta( $user_id, '_hbl_discount_rate', $discount );
+			update_user_meta( $user_id, '_hbl_partner_since', current_time( 'Y-m-d' ) );
+			update_user_meta( $user_id, '_hbl_partner_notes', $notes );
+			update_user_meta( $user_id, '_hbl_client_count', 0 );
 
-		update_user_meta( $user_id, '_hbl_agency_name', $agency_name );
-		update_user_meta( $user_id, '_hbl_agency_website', $agency_website );
-		update_user_meta( $user_id, '_hbl_discount_rate', $discount );
-		update_user_meta( $user_id, '_hbl_partner_since', current_time( 'Y-m-d' ) );
-		update_user_meta( $user_id, '_hbl_partner_notes', $notes );
-		update_user_meta( $user_id, '_hbl_client_count', 0 );
+			wp_new_user_notification( $user_id, null, 'user' );
 
-		wp_new_user_notification( $user_id, null, 'user' );
+			$role_label = 'founding_partner' === $role ? __( 'Founding Partner', 'hbl' ) : __( 'Partner Agency', 'hbl' );
 
-		$role_label = 'founding_partner' === $role ? __( 'Founding Partner', 'hbl' ) : __( 'Partner Agency', 'hbl' );
-
-		wp_send_json_success( array(
-			'message' => sprintf(
-				__( 'Partner user "%1$s" created successfully as %2$s! A password reset email has been sent.', 'hbl' ),
-				$agency_name,
-				$role_label
-			),
-			'user_id' => $user_id,
-		) );
+			HBL_Admin_Tool::ok( array(
+				'message' => sprintf(
+					__( 'Partner user "%1$s" created successfully as %2$s! A password reset email has been sent.', 'hbl' ),
+					$agency_name,
+					$role_label
+				),
+				'user_id' => $user_id,
+			) );
+		}, 'Admin tool: create partner user' );
 	}
 }
 

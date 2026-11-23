@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Events_Admin {
 
 	private static $instance = null;
@@ -167,7 +169,7 @@ class HBL_Events_Admin {
 		wp_enqueue_script(
 			'hbl-events-admin',
 			get_template_directory_uri() . '/inc/admin/js/events-admin.js',
-			array( 'jquery' ),
+			array( 'jquery', 'hbl-admin-notify' ),
 			HBL_VERSION,
 			true
 		);
@@ -424,35 +426,34 @@ class HBL_Events_Admin {
 	}
 
 	public function ajax_filter_events() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ) );
-		}
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'edit_posts' );
+		HBL_Admin_Tool::run( function () {
 
-		$paged    = absint( $_POST['paged'] ?? 1 );
-		$per_page = 20;
-		$offset   = ( $paged - 1 ) * $per_page;
+			$paged    = absint( $_POST['paged'] ?? 1 );
+			$per_page = 20;
+			$offset   = ( $paged - 1 ) * $per_page;
 
-		$events = $this->get_events( array( 'limit' => $per_page, 'offset' => $offset ), $_POST );
-		$total  = $this->count_events( array(), $_POST );
+			$events = $this->get_events( array( 'limit' => $per_page, 'offset' => $offset ), $_POST );
+			$total  = $this->count_events( array(), $_POST );
 
-		$filter_params = array_filter( array(
-			's'               => sanitize_text_field( $_POST['s'] ?? '' ),
-			'category_id'     => absint( $_POST['category_id'] ?? 0 ),
-			'event_cost'      => sanitize_text_field( $_POST['event_cost'] ?? '' ),
-			'event_frequency' => sanitize_text_field( $_POST['event_frequency'] ?? '' ),
-			'organiser_type'  => sanitize_text_field( $_POST['organiser_type'] ?? '' ),
-			'author_id'       => absint( $_POST['author_id'] ?? 0 ),
-		) );
+			$filter_params = array_filter( array(
+				's'               => sanitize_text_field( $_POST['s'] ?? '' ),
+				'category_id'     => absint( $_POST['category_id'] ?? 0 ),
+				'event_cost'      => sanitize_text_field( $_POST['event_cost'] ?? '' ),
+				'event_frequency' => sanitize_text_field( $_POST['event_frequency'] ?? '' ),
+				'organiser_type'  => sanitize_text_field( $_POST['organiser_type'] ?? '' ),
+				'author_id'       => absint( $_POST['author_id'] ?? 0 ),
+			) );
 
-		$rows_html       = $this->get_event_rows_html( $events );
-		$pagination_html = $this->get_pagination_html( $total, $per_page, $paged, $filter_params );
+			$rows_html       = $this->get_event_rows_html( $events );
+			$pagination_html = $this->get_pagination_html( $total, $per_page, $paged, $filter_params );
 
-		wp_send_json_success( array(
-			'rows'       => $rows_html,
-			'pagination' => $pagination_html,
-			'total'      => $total,
-		) );
+			HBL_Admin_Tool::ok( array(
+				'rows'       => $rows_html,
+				'pagination' => $pagination_html,
+				'total'      => $total,
+			) );
+		}, 'Admin tool: filter events' );
 	}
 
 	private function get_event_stats() {
@@ -954,118 +955,121 @@ class HBL_Events_Admin {
 		return implode( ' · ', $parts );
 	}
 
+	/**
+	 * Registered in the constructor but never implemented — a direct call used to be a PHP fatal.
+	 * Answer clearly instead.
+	 */
+	public function ajax_update_event() {
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'edit_others_posts' );
+		HBL_Admin_Tool::fail( 'Updating a single event this way is not supported. Use the bulk status update or edit the event directly.', 'not_supported', 501 );
+	}
+
 	public function ajax_delete_event() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'delete_posts' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'delete_posts' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$event_id = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
 
-		$event_id = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
+			if ( ! $event_id ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Invalid event ID' ) );
+			}
 
-		if ( ! $event_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid event ID' ) );
-		}
+			$db = hbl_events_db();
+			$result = $db->delete( $event_id );
 
-		$db = hbl_events_db();
-		$result = $db->delete( $event_id );
-
-		if ( $result ) {
-			wp_send_json_success( array( 'message' => 'Event deleted successfully' ) );
-		} else {
-			wp_send_json_error( array( 'message' => 'Failed to delete event' ) );
-		}
+			if ( $result ) {
+				HBL_Admin_Tool::ok( array( 'message' => 'Event deleted successfully' ) );
+			} else {
+				HBL_Admin_Tool::fail( array( 'message' => 'Failed to delete event' ) );
+			}
+		}, 'Admin tool: delete event' );
 	}
 
 	public function ajax_bulk_delete_events() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'delete_posts' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'delete_posts' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$event_ids = isset( $_POST['event_ids'] ) ? array_map( 'absint', $_POST['event_ids'] ) : array();
 
-		$event_ids = isset( $_POST['event_ids'] ) ? array_map( 'absint', $_POST['event_ids'] ) : array();
-
-		if ( empty( $event_ids ) ) {
-			wp_send_json_error( array( 'message' => 'No events selected' ) );
-		}
-
-		$db = hbl_events_db();
-		$deleted = 0;
-		$failed = 0;
-
-		foreach ( $event_ids as $event_id ) {
-			if ( $db->delete( $event_id ) ) {
-				$deleted++;
-			} else {
-				$failed++;
+			if ( empty( $event_ids ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'No events selected' ) );
 			}
-		}
 
-		if ( $deleted > 0 ) {
-			wp_send_json_success( array( 
-				'message' => sprintf( 
-					_n( '%d event deleted successfully.', '%d events deleted successfully.', $deleted, 'hbl' ),
-					$deleted
-				),
-				'deleted' => $deleted,
-				'failed'  => $failed,
-			) );
-		} else {
-			wp_send_json_error( array( 'message' => 'Failed to delete events' ) );
-		}
+			$db = hbl_events_db();
+			$deleted = 0;
+			$failed = 0;
+
+			foreach ( $event_ids as $event_id ) {
+				if ( $db->delete( $event_id ) ) {
+					$deleted++;
+				} else {
+					$failed++;
+				}
+			}
+
+			if ( $deleted > 0 ) {
+				HBL_Admin_Tool::ok( array( 
+					'message' => sprintf( 
+						_n( '%d event deleted successfully.', '%d events deleted successfully.', $deleted, 'hbl' ),
+						$deleted
+					),
+					'deleted' => $deleted,
+					'failed'  => $failed,
+				) );
+			} else {
+				HBL_Admin_Tool::fail( array( 'message' => 'Failed to delete events' ) );
+			}
+		}, 'Admin tool: bulk delete events' );
 	}
 
 	public function ajax_bulk_update_events() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'edit_others_posts' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'edit_others_posts' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$event_ids = isset( $_POST['event_ids'] ) ? array_map( 'absint', $_POST['event_ids'] ) : array();
+			$status = isset( $_POST['status'] ) ? sanitize_text_field( $_POST['status'] ) : '';
 
-		$event_ids = isset( $_POST['event_ids'] ) ? array_map( 'absint', $_POST['event_ids'] ) : array();
-		$status = isset( $_POST['status'] ) ? sanitize_text_field( $_POST['status'] ) : '';
-
-		if ( empty( $event_ids ) ) {
-			wp_send_json_error( array( 'message' => 'No events selected' ) );
-		}
-
-		if ( ! in_array( $status, array( 'publish', 'pending', 'draft' ), true ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid status' ) );
-		}
-
-		$db = hbl_events_db();
-		$updated = 0;
-		$failed = 0;
-
-		foreach ( $event_ids as $event_id ) {
-			$result = $db->update( $event_id, array( 'status' => $status ) );
-			if ( $result !== false ) {
-				$updated++;
-			} else {
-				$failed++;
+			if ( empty( $event_ids ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'No events selected' ) );
 			}
-		}
 
-		$status_labels = array(
-			'publish' => __( 'Published', 'hbl' ),
-			'pending' => __( 'Pending', 'hbl' ),
-			'draft'   => __( 'Draft', 'hbl' ),
-		);
+			if ( ! in_array( $status, array( 'publish', 'pending', 'draft' ), true ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Invalid status' ) );
+			}
 
-		if ( $updated > 0 ) {
-			wp_send_json_success( array( 
-				'message' => sprintf( 
-					_n( '%d event updated to %s.', '%d events updated to %s.', $updated, 'hbl' ),
-					$updated,
-					$status_labels[ $status ]
-				),
-				'updated' => $updated,
-				'failed'  => $failed,
-			) );
-		} else {
-			wp_send_json_error( array( 'message' => 'Failed to update events' ) );
-		}
+			$db = hbl_events_db();
+			$updated = 0;
+			$failed = 0;
+
+			foreach ( $event_ids as $event_id ) {
+				$result = $db->update( $event_id, array( 'status' => $status ) );
+				if ( $result !== false ) {
+					$updated++;
+				} else {
+					$failed++;
+				}
+			}
+
+			$status_labels = array(
+				'publish' => __( 'Published', 'hbl' ),
+				'pending' => __( 'Pending', 'hbl' ),
+				'draft'   => __( 'Draft', 'hbl' ),
+			);
+
+			if ( $updated > 0 ) {
+				HBL_Admin_Tool::ok( array( 
+					'message' => sprintf( 
+						_n( '%d event updated to %s.', '%d events updated to %s.', $updated, 'hbl' ),
+						$updated,
+						$status_labels[ $status ]
+					),
+					'updated' => $updated,
+					'failed'  => $failed,
+				) );
+			} else {
+				HBL_Admin_Tool::fail( array( 'message' => 'Failed to update events' ) );
+			}
+		}, 'Admin tool: bulk update events' );
 	}
 
 	public function render_categories_page() {
@@ -1319,117 +1323,111 @@ class HBL_Events_Admin {
 	}
 
 	public function ajax_add_category() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'manage_categories' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_categories' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+			$slug = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
+			$parent = isset( $_POST['parent'] ) ? absint( $_POST['parent'] ) : 0;
+			$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
+			$color = isset( $_POST['color'] ) ? sanitize_hex_color( $_POST['color'] ) : '#008080';
+			$icon = isset( $_POST['icon'] ) ? sanitize_text_field( $_POST['icon'] ) : '';
 
-		$name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
-		$slug = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
-		$parent = isset( $_POST['parent'] ) ? absint( $_POST['parent'] ) : 0;
-		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
-		$color = isset( $_POST['color'] ) ? sanitize_hex_color( $_POST['color'] ) : '#008080';
-		$icon = isset( $_POST['icon'] ) ? sanitize_text_field( $_POST['icon'] ) : '';
+			if ( empty( $name ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Category name is required' ) );
+			}
 
-		if ( empty( $name ) ) {
-			wp_send_json_error( array( 'message' => 'Category name is required' ) );
-		}
+			$term_args = array(
+				'description' => $description,
+				'parent'      => $parent,
+			);
 
-		$term_args = array(
-			'description' => $description,
-			'parent'      => $parent,
-		);
+			if ( ! empty( $slug ) ) {
+				$term_args['slug'] = $slug;
+			}
 
-		if ( ! empty( $slug ) ) {
-			$term_args['slug'] = $slug;
-		}
+			$result = wp_insert_term( $name, 'event_category', $term_args );
 
-		$result = wp_insert_term( $name, 'event_category', $term_args );
+			if ( is_wp_error( $result ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $result->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
+			$term_id = $result['term_id'];
 
-		$term_id = $result['term_id'];
+			update_term_meta( $term_id, '_hbl_category_color', $color );
+			update_term_meta( $term_id, '_hbl_category_icon', $icon );
 
-		update_term_meta( $term_id, '_hbl_category_color', $color );
-		update_term_meta( $term_id, '_hbl_category_icon', $icon );
-
-		wp_send_json_success( array( 
-			'message' => 'Category created successfully',
-			'term_id' => $term_id,
-		) );
+			HBL_Admin_Tool::ok( array( 
+				'message' => 'Category created successfully',
+				'term_id' => $term_id,
+			) );
+		}, 'Admin tool: add category' );
 	}
 
 	public function ajax_edit_category() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'manage_categories' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_categories' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+			$name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+			$slug = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
+			$parent = isset( $_POST['parent'] ) ? absint( $_POST['parent'] ) : 0;
+			$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
+			$color = isset( $_POST['color'] ) ? sanitize_hex_color( $_POST['color'] ) : '#008080';
+			$icon = isset( $_POST['icon'] ) ? sanitize_text_field( $_POST['icon'] ) : '';
 
-		$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
-		$name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
-		$slug = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
-		$parent = isset( $_POST['parent'] ) ? absint( $_POST['parent'] ) : 0;
-		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
-		$color = isset( $_POST['color'] ) ? sanitize_hex_color( $_POST['color'] ) : '#008080';
-		$icon = isset( $_POST['icon'] ) ? sanitize_text_field( $_POST['icon'] ) : '';
+			if ( ! $term_id ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Invalid category ID' ) );
+			}
 
-		if ( ! $term_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid category ID' ) );
-		}
+			if ( empty( $name ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Category name is required' ) );
+			}
 
-		if ( empty( $name ) ) {
-			wp_send_json_error( array( 'message' => 'Category name is required' ) );
-		}
+			if ( $parent === $term_id ) {
+				$parent = 0;
+			}
 
-		if ( $parent === $term_id ) {
-			$parent = 0;
-		}
+			$result = wp_update_term( $term_id, 'event_category', array(
+				'name'        => $name,
+				'slug'        => $slug,
+				'parent'      => $parent,
+				'description' => $description,
+			) );
 
-		$result = wp_update_term( $term_id, 'event_category', array(
-			'name'        => $name,
-			'slug'        => $slug,
-			'parent'      => $parent,
-			'description' => $description,
-		) );
+			if ( is_wp_error( $result ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $result->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
+			update_term_meta( $term_id, '_hbl_category_color', $color );
+			update_term_meta( $term_id, '_hbl_category_icon', $icon );
 
-		update_term_meta( $term_id, '_hbl_category_color', $color );
-		update_term_meta( $term_id, '_hbl_category_icon', $icon );
-
-		wp_send_json_success( array( 'message' => 'Category updated successfully' ) );
+			HBL_Admin_Tool::ok( array( 'message' => 'Category updated successfully' ) );
+		}, 'Admin tool: edit category' );
 	}
 
 	public function ajax_delete_category() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'manage_categories' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_categories' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
 
-		$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+			if ( ! $term_id ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Invalid category ID' ) );
+			}
 
-		if ( ! $term_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid category ID' ) );
-		}
+			$result = wp_delete_term( $term_id, 'event_category' );
 
-		$result = wp_delete_term( $term_id, 'event_category' );
+			if ( is_wp_error( $result ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $result->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
+			if ( $result === false ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Category not found' ) );
+			}
 
-		if ( $result === false ) {
-			wp_send_json_error( array( 'message' => 'Category not found' ) );
-		}
-
-		wp_send_json_success( array( 'message' => 'Category deleted successfully' ) );
+			HBL_Admin_Tool::ok( array( 'message' => 'Category deleted successfully' ) );
+		}, 'Admin tool: delete category' );
 	}
 
 	public function render_tags_page() {
@@ -1595,93 +1593,87 @@ class HBL_Events_Admin {
 	}
 
 	public function ajax_add_tag() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'manage_categories' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_categories' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$name        = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+			$slug        = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
+			$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
 
-		$name        = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
-		$slug        = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
-		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
+			if ( empty( $name ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Tag name is required' ) );
+			}
 
-		if ( empty( $name ) ) {
-			wp_send_json_error( array( 'message' => 'Tag name is required' ) );
-		}
+			$term_args = array( 'description' => $description );
+			if ( ! empty( $slug ) ) {
+				$term_args['slug'] = $slug;
+			}
 
-		$term_args = array( 'description' => $description );
-		if ( ! empty( $slug ) ) {
-			$term_args['slug'] = $slug;
-		}
+			$result = wp_insert_term( $name, 'event_tag', $term_args );
 
-		$result = wp_insert_term( $name, 'event_tag', $term_args );
+			if ( is_wp_error( $result ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $result->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
-
-		wp_send_json_success( array(
-			'message' => 'Tag created successfully',
-			'term_id' => $result['term_id'],
-		) );
+			HBL_Admin_Tool::ok( array(
+				'message' => 'Tag created successfully',
+				'term_id' => $result['term_id'],
+			) );
+		}, 'Admin tool: add tag' );
 	}
 
 	public function ajax_edit_tag() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'manage_categories' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_categories' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$term_id     = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+			$name        = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+			$slug        = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
+			$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
 
-		$term_id     = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
-		$name        = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
-		$slug        = isset( $_POST['slug'] ) ? sanitize_title( $_POST['slug'] ) : '';
-		$description = isset( $_POST['description'] ) ? sanitize_textarea_field( $_POST['description'] ) : '';
+			if ( ! $term_id ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Invalid tag ID' ) );
+			}
+			if ( empty( $name ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Tag name is required' ) );
+			}
 
-		if ( ! $term_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid tag ID' ) );
-		}
-		if ( empty( $name ) ) {
-			wp_send_json_error( array( 'message' => 'Tag name is required' ) );
-		}
+			$result = wp_update_term( $term_id, 'event_tag', array(
+				'name'        => $name,
+				'slug'        => $slug,
+				'description' => $description,
+			) );
 
-		$result = wp_update_term( $term_id, 'event_tag', array(
-			'name'        => $name,
-			'slug'        => $slug,
-			'description' => $description,
-		) );
+			if ( is_wp_error( $result ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $result->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
-
-		wp_send_json_success( array( 'message' => 'Tag updated successfully' ) );
+			HBL_Admin_Tool::ok( array( 'message' => 'Tag updated successfully' ) );
+		}, 'Admin tool: edit tag' );
 	}
 
 	public function ajax_delete_tag() {
-		check_ajax_referer( 'hbl_admin_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'manage_categories' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_categories' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied' ) );
-		}
+			$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
 
-		$term_id = isset( $_POST['term_id'] ) ? absint( $_POST['term_id'] ) : 0;
+			if ( ! $term_id ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Invalid tag ID' ) );
+			}
 
-		if ( ! $term_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid tag ID' ) );
-		}
+			$result = wp_delete_term( $term_id, 'event_tag' );
 
-		$result = wp_delete_term( $term_id, 'event_tag' );
+			if ( is_wp_error( $result ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => $result->get_error_message() ) );
+			}
 
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		}
+			if ( $result === false ) {
+				HBL_Admin_Tool::fail( array( 'message' => 'Tag not found' ) );
+			}
 
-		if ( $result === false ) {
-			wp_send_json_error( array( 'message' => 'Tag not found' ) );
-		}
-
-		wp_send_json_success( array( 'message' => 'Tag deleted successfully' ) );
+			HBL_Admin_Tool::ok( array( 'message' => 'Tag deleted successfully' ) );
+		}, 'Admin tool: delete tag' );
 	}
 }
 

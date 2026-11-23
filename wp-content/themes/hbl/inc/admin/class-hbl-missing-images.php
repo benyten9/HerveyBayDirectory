@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Missing_Images {
 
 	const FALLBACK_URL = 'https://herveybaylocal.com.au/wp-content/uploads/2025/12/HBL-fallback-landscape-600x400-1.webp';
@@ -38,6 +40,7 @@ class HBL_Missing_Images {
 		if ( 'directorist-tools_page_hbl-missing-images' !== $hook ) {
 			return;
 		}
+		HBL_Admin_Tool::enqueue_assets();
 
 		wp_enqueue_style( 'hbl-admin-font-poppins', 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style(
@@ -94,100 +97,98 @@ class HBL_Missing_Images {
 
 
 	public function ajax_load_listings() {
-		check_ajax_referer( 'hbl_missing_images_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_missing_images_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			global $wpdb;
 
-		global $wpdb;
+			$filter = isset( $_POST['filter'] ) ? sanitize_key( $_POST['filter'] ) : 'all';
+			$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		$filter = isset( $_POST['filter'] ) ? sanitize_key( $_POST['filter'] ) : 'all';
-		$search = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
+			$base_joins = "LEFT JOIN {$wpdb->postmeta} pm_logo  ON pm_logo.post_id  = p.ID AND pm_logo.meta_key  = '_custom-file'
+						   LEFT JOIN {$wpdb->postmeta} pm_prv   ON pm_prv.post_id   = p.ID AND pm_prv.meta_key   = '_listing_prv_img'
+						   LEFT JOIN {$wpdb->postmeta} pm_thumb ON pm_thumb.post_id = p.ID AND pm_thumb.meta_key = '_thumbnail_id'";
 
-		$base_joins = "LEFT JOIN {$wpdb->postmeta} pm_logo  ON pm_logo.post_id  = p.ID AND pm_logo.meta_key  = '_custom-file'
-					   LEFT JOIN {$wpdb->postmeta} pm_prv   ON pm_prv.post_id   = p.ID AND pm_prv.meta_key   = '_listing_prv_img'
-					   LEFT JOIN {$wpdb->postmeta} pm_thumb ON pm_thumb.post_id = p.ID AND pm_thumb.meta_key = '_thumbnail_id'";
+			$no_image_where = "( pm_logo.meta_value  IS NULL OR pm_logo.meta_value  = '' )
+							   AND ( pm_prv.meta_value   IS NULL OR pm_prv.meta_value   = '' OR pm_prv.meta_value   = '0' )
+							   AND ( pm_thumb.meta_value IS NULL OR pm_thumb.meta_value = '' OR pm_thumb.meta_value = '0' )";
 
-		$no_image_where = "( pm_logo.meta_value  IS NULL OR pm_logo.meta_value  = '' )
-						   AND ( pm_prv.meta_value   IS NULL OR pm_prv.meta_value   = '' OR pm_prv.meta_value   = '0' )
-						   AND ( pm_thumb.meta_value IS NULL OR pm_thumb.meta_value = '' OR pm_thumb.meta_value = '0' )";
-
-		if ( 'no_image' === $filter ) {
-			$sql = "SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
-					       pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
-					FROM {$wpdb->posts} p
-					{$base_joins}
-					WHERE p.post_type = 'at_biz_dir'
-					AND p.post_status IN ('publish','draft','pending','private')
-					AND {$no_image_where}";
-		} elseif ( 'placeholder' === $filter ) {
-			$sql = $wpdb->prepare(
-				"SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
-				        pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
-				 FROM {$wpdb->posts} p
-				 {$base_joins}
-				 WHERE p.post_type = 'at_biz_dir'
-				 AND p.post_status IN ('publish','draft','pending','private')
-				 AND pm_logo.meta_value LIKE %s",
-				$wpdb->esc_like( self::FALLBACK_URL ) . '%'
-			);
-		} else {
-			$sql = $wpdb->prepare(
-				"SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
-				        pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
-				 FROM {$wpdb->posts} p
-				 {$base_joins}
-				 WHERE p.post_type = 'at_biz_dir'
-				 AND p.post_status IN ('publish','draft','pending','private')
-				 AND (
-				     ( {$no_image_where} )
-				     OR pm_logo.meta_value LIKE %s
-				 )",
-				$wpdb->esc_like( self::FALLBACK_URL ) . '%'
-			);
-		}
-
-		if ( $search ) {
-			$sql .= $wpdb->prepare( ' AND p.post_title LIKE %s', '%' . $wpdb->esc_like( $search ) . '%' );
-		}
-
-		$sql .= ' ORDER BY p.post_title ASC';
-
-		$rows     = $wpdb->get_results( $sql );
-		$listings = array();
-
-		foreach ( $rows as $row ) {
-			$plan_id   = get_post_meta( $row->ID, '_fm_plans', true );
-			$plan_name = $plan_id ? ( get_post( (int) $plan_id ) ? get_post( (int) $plan_id )->post_title : __( 'No Plan', 'hbl' ) ) : __( 'No Plan', 'hbl' );
-
-			if ( ! empty( $row->logo_val ) && strpos( $row->logo_val, self::FALLBACK_URL ) === 0 ) {
-				$image_type = 'placeholder';
-			} elseif ( empty( $row->logo_val ) && empty( $row->prv_val ) && empty( $row->thumb_val ) ) {
-				$image_type = 'none';
+			if ( 'no_image' === $filter ) {
+				$sql = "SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
+						       pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
+						FROM {$wpdb->posts} p
+						{$base_joins}
+						WHERE p.post_type = 'at_biz_dir'
+						AND p.post_status IN ('publish','draft','pending','private')
+						AND {$no_image_where}";
+			} elseif ( 'placeholder' === $filter ) {
+				$sql = $wpdb->prepare(
+					"SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
+					        pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
+					 FROM {$wpdb->posts} p
+					 {$base_joins}
+					 WHERE p.post_type = 'at_biz_dir'
+					 AND p.post_status IN ('publish','draft','pending','private')
+					 AND pm_logo.meta_value LIKE %s",
+					$wpdb->esc_like( self::FALLBACK_URL ) . '%'
+				);
 			} else {
-				$image_type = 'none';
+				$sql = $wpdb->prepare(
+					"SELECT DISTINCT p.ID, p.post_title, p.post_status, p.post_author, p.post_date,
+					        pm_logo.meta_value AS logo_val, pm_prv.meta_value AS prv_val, pm_thumb.meta_value AS thumb_val
+					 FROM {$wpdb->posts} p
+					 {$base_joins}
+					 WHERE p.post_type = 'at_biz_dir'
+					 AND p.post_status IN ('publish','draft','pending','private')
+					 AND (
+					     ( {$no_image_where} )
+					     OR pm_logo.meta_value LIKE %s
+					 )",
+					$wpdb->esc_like( self::FALLBACK_URL ) . '%'
+				);
 			}
 
-			$edit_url = admin_url( 'post.php?post=' . $row->ID . '&action=edit' );
+			if ( $search ) {
+				$sql .= $wpdb->prepare( ' AND p.post_title LIKE %s', '%' . $wpdb->esc_like( $search ) . '%' );
+			}
 
-			$listings[] = array(
-				'id'         => $row->ID,
-				'title'      => $row->post_title,
-				'status'     => $row->post_status,
-				'date'       => get_date_from_gmt( $row->post_date, 'Y-m-d' ),
-				'edit_url'   => $edit_url,
-				'view_url'   => get_permalink( $row->ID ),
-				'author'     => get_the_author_meta( 'display_name', $row->post_author ),
-				'plan'       => $plan_name,
-				'image_type' => $image_type,
-			);
-		}
+			$sql .= ' ORDER BY p.post_title ASC';
 
-		wp_send_json_success( array(
-			'listings' => $listings,
-			'total'    => count( $listings ),
-		) );
+			$rows     = $wpdb->get_results( $sql );
+			$listings = array();
+
+			foreach ( $rows as $row ) {
+				$plan_id   = get_post_meta( $row->ID, '_fm_plans', true );
+				$plan_name = $plan_id ? ( get_post( (int) $plan_id ) ? get_post( (int) $plan_id )->post_title : __( 'No Plan', 'hbl' ) ) : __( 'No Plan', 'hbl' );
+
+				if ( ! empty( $row->logo_val ) && strpos( $row->logo_val, self::FALLBACK_URL ) === 0 ) {
+					$image_type = 'placeholder';
+				} elseif ( empty( $row->logo_val ) && empty( $row->prv_val ) && empty( $row->thumb_val ) ) {
+					$image_type = 'none';
+				} else {
+					$image_type = 'none';
+				}
+
+				$edit_url = admin_url( 'post.php?post=' . $row->ID . '&action=edit' );
+
+				$listings[] = array(
+					'id'         => $row->ID,
+					'title'      => $row->post_title,
+					'status'     => $row->post_status,
+					'date'       => get_date_from_gmt( $row->post_date, 'Y-m-d' ),
+					'edit_url'   => $edit_url,
+					'view_url'   => get_permalink( $row->ID ),
+					'author'     => get_the_author_meta( 'display_name', $row->post_author ),
+					'plan'       => $plan_name,
+					'image_type' => $image_type,
+				);
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'listings' => $listings,
+				'total'    => count( $listings ),
+			) );
+		}, 'Admin tool: load listings' );
 	}
 
 
@@ -457,8 +458,12 @@ class HBL_Missing_Images {
 					if ( res.success ) {
 						renderTable( res.data.listings );
 					} else {
-						$('#hbl-mi-message').show().addClass('hbl-bpr-message--empty').text( res.data.message || '<?php echo esc_js( __( 'Error loading data.', 'hbl' ) ); ?>' );
+						$('#hbl-mi-message').show().addClass('hbl-bpr-message--empty').text( HBLNotify.message( res, '<?php echo esc_js( __( 'Error loading data.', 'hbl' ) ); ?>' ) );
+						HBLNotify.fromError( res, 'Could not load listings.' );
 					}
+				}).fail(function(xhr, status) {
+					$('#hbl-mi-message').show().addClass('hbl-bpr-message--empty').text( HBLNotify.xhrMessage( xhr, status ) );
+					HBLNotify.fromXhr( xhr, status, 'Could not load listings.' );
 				}).always(function() {
 					$btn.prop('disabled', false).html('<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> <?php echo esc_js( __( 'Find Listings', 'hbl' ) ); ?>');
 				});

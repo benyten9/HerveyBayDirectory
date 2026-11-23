@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/class-hbl-admin-tool.php';
+
 class HBL_Bulk_Plan_Reassign {
 
 	private static $instance = null;
@@ -57,7 +59,7 @@ class HBL_Bulk_Plan_Reassign {
 		wp_enqueue_script(
 			'hbl-bulk-plan-reassign',
 			HBL_THEME_URI . '/inc/admin/js/bulk-plan-reassign.js',
-			array( 'jquery' ),
+			array( 'jquery', 'hbl-admin-notify' ),
 			HBL_VERSION,
 			true
 		);
@@ -417,244 +419,238 @@ class HBL_Bulk_Plan_Reassign {
 	}
 
 	public function ajax_get_listings() {
-		check_ajax_referer( 'hbl_bulk_plan_reassign_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_bulk_plan_reassign_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			$filter_plan = isset( $_POST['filter_plan'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_plan'] ) ) : '';
+			$search      = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
+			$page        = isset( $_POST['paged'] ) ? absint( $_POST['paged'] ) : 1;
+			$per_page    = 20;
 
-		$filter_plan = isset( $_POST['filter_plan'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_plan'] ) ) : '';
-		$search      = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
-		$page        = isset( $_POST['paged'] ) ? absint( $_POST['paged'] ) : 1;
-		$per_page    = 20;
+			$args = array(
+				'post_type'      => 'at_biz_dir',
+				'post_status'    => 'any',
+				'posts_per_page' => $per_page,
+				'paged'          => $page,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			);
 
-		$args = array(
-			'post_type'      => 'at_biz_dir',
-			'post_status'    => 'any',
-			'posts_per_page' => $per_page,
-			'paged'          => $page,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		);
-
-		if ( '' !== $search ) {
-			$args['s'] = $search;
-		}
-
-		$key = $this->plan_meta_key();
-
-		if ( '' !== $filter_plan ) {
-			if ( '0' === $filter_plan ) {
-				$args['meta_query'] = array(
-					'relation' => 'OR',
-					array(
-						'key'     => $key,
-						'compare' => 'NOT EXISTS',
-					),
-					array(
-						'key'     => $key,
-						'value'   => '',
-						'compare' => '=',
-					),
-				);
-			} else {
-				$args['meta_query'] = array(
-					array(
-						'key'   => $key,
-						'value' => absint( $filter_plan ),
-					),
-				);
+			if ( '' !== $search ) {
+				$args['s'] = $search;
 			}
-		}
 
-		$query = new WP_Query( $args );
+			$key = $this->plan_meta_key();
 
-		$page_plan_ids = array();
-		if ( $query->have_posts() ) {
-			foreach ( $query->posts as $post ) {
-				$pid = get_post_meta( $post->ID, $key, true );
-				if ( $pid && is_numeric( $pid ) ) {
-					$page_plan_ids[ $post->ID ] = (int) $pid;
+			if ( '' !== $filter_plan ) {
+				if ( '0' === $filter_plan ) {
+					$args['meta_query'] = array(
+						'relation' => 'OR',
+						array(
+							'key'     => $key,
+							'compare' => 'NOT EXISTS',
+						),
+						array(
+							'key'     => $key,
+							'value'   => '',
+							'compare' => '=',
+						),
+					);
+				} else {
+					$args['meta_query'] = array(
+						array(
+							'key'   => $key,
+							'value' => absint( $filter_plan ),
+						),
+					);
 				}
 			}
-		}
-		$unique_plan_ids = array_unique( array_values( $page_plan_ids ) );
-		$plan_name_cache = $this->plan_names_for( $unique_plan_ids );
 
-		$listings = array();
-		if ( $query->have_posts() ) {
-			foreach ( $query->posts as $post ) {
-				$plan_id   = isset( $page_plan_ids[ $post->ID ] ) ? $page_plan_ids[ $post->ID ] : 0;
-				$plan_name = ( $plan_id && isset( $plan_name_cache[ $plan_id ] ) ) ? $plan_name_cache[ $plan_id ] : __( 'No Plan', 'hbl' );
-				$status_obj = get_post_status_object( $post->post_status );
+			$query = new WP_Query( $args );
 
-				$listings[] = array(
-					'id'        => $post->ID,
-					'title'     => $post->post_title,
-					'status'    => $status_obj ? $status_obj->label : $post->post_status,
-					'plan_id'   => $plan_id,
-					'plan_name' => $plan_name,
-					'author'    => get_the_author_meta( 'display_name', $post->post_author ),
-					'edit_link' => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
-					'view_link' => get_permalink( $post->ID ),
-				);
+			$page_plan_ids = array();
+			if ( $query->have_posts() ) {
+				foreach ( $query->posts as $post ) {
+					$pid = get_post_meta( $post->ID, $key, true );
+					if ( $pid && is_numeric( $pid ) ) {
+						$page_plan_ids[ $post->ID ] = (int) $pid;
+					}
+				}
 			}
-		}
+			$unique_plan_ids = array_unique( array_values( $page_plan_ids ) );
+			$plan_name_cache = $this->plan_names_for( $unique_plan_ids );
 
-		wp_send_json_success( array(
-			'listings'    => $listings,
-			'total'       => $query->found_posts,
-			'total_pages' => $query->max_num_pages,
-			'page'        => $page,
-			'per_page'    => $per_page,
-		) );
+			$listings = array();
+			if ( $query->have_posts() ) {
+				foreach ( $query->posts as $post ) {
+					$plan_id   = isset( $page_plan_ids[ $post->ID ] ) ? $page_plan_ids[ $post->ID ] : 0;
+					$plan_name = ( $plan_id && isset( $plan_name_cache[ $plan_id ] ) ) ? $plan_name_cache[ $plan_id ] : __( 'No Plan', 'hbl' );
+					$status_obj = get_post_status_object( $post->post_status );
+
+					$listings[] = array(
+						'id'        => $post->ID,
+						'title'     => $post->post_title,
+						'status'    => $status_obj ? $status_obj->label : $post->post_status,
+						'plan_id'   => $plan_id,
+						'plan_name' => $plan_name,
+						'author'    => get_the_author_meta( 'display_name', $post->post_author ),
+						'edit_link' => admin_url( 'post.php?post=' . $post->ID . '&action=edit' ),
+						'view_link' => get_permalink( $post->ID ),
+					);
+				}
+			}
+
+			HBL_Admin_Tool::ok( array(
+				'listings'    => $listings,
+				'total'       => $query->found_posts,
+				'total_pages' => $query->max_num_pages,
+				'page'        => $page,
+				'per_page'    => $per_page,
+			) );
+		}, 'Admin tool: get listings' );
 	}
 
 	public function ajax_get_all_listing_ids() {
-		check_ajax_referer( 'hbl_bulk_plan_reassign_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_bulk_plan_reassign_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			@set_time_limit( 120 );
 
-		@set_time_limit( 120 );
+			global $wpdb;
 
-		global $wpdb;
+			$filter_plan = isset( $_POST['filter_plan'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_plan'] ) ) : '';
+			$search      = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 
-		$filter_plan = isset( $_POST['filter_plan'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_plan'] ) ) : '';
-		$search      = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
+			$where = "p.post_type = 'at_biz_dir' AND p.post_status IN ('publish','draft','pending','private')";
+			$args  = array();
+			$key   = esc_sql( $this->plan_meta_key() );
 
-		$where = "p.post_type = 'at_biz_dir' AND p.post_status IN ('publish','draft','pending','private')";
-		$args  = array();
-		$key   = esc_sql( $this->plan_meta_key() );
+			if ( '' !== $search ) {
+				$where .= $wpdb->prepare( ' AND p.post_title LIKE %s', '%' . $wpdb->esc_like( $search ) . '%' );
+			}
 
-		if ( '' !== $search ) {
-			$where .= $wpdb->prepare( ' AND p.post_title LIKE %s', '%' . $wpdb->esc_like( $search ) . '%' );
-		}
+			if ( '0' === $filter_plan ) {
+				$sql = "SELECT p.ID, p.post_title, pm.meta_value AS plan_id
+						FROM {$wpdb->posts} p
+						LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
+						WHERE {$where}
+						AND ( pm.meta_value IS NULL OR pm.meta_value = '' )
+						ORDER BY p.post_title ASC";
+			} elseif ( '' !== $filter_plan ) {
+				$sql = $wpdb->prepare(
+					"SELECT p.ID, p.post_title, pm.meta_value AS plan_id
+					 FROM {$wpdb->posts} p
+					 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
+					 WHERE {$where} AND pm.meta_value = %s
+					 ORDER BY p.post_title ASC",
+					$filter_plan
+				);
+			} else {
+				$sql = "SELECT p.ID, p.post_title, pm.meta_value AS plan_id
+						FROM {$wpdb->posts} p
+						LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
+						WHERE {$where}
+						ORDER BY p.post_title ASC";
+			}
 
-		if ( '0' === $filter_plan ) {
-			$sql = "SELECT p.ID, p.post_title, pm.meta_value AS plan_id
-					FROM {$wpdb->posts} p
-					LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
-					WHERE {$where}
-					AND ( pm.meta_value IS NULL OR pm.meta_value = '' )
-					ORDER BY p.post_title ASC";
-		} elseif ( '' !== $filter_plan ) {
-			$sql = $wpdb->prepare(
-				"SELECT p.ID, p.post_title, pm.meta_value AS plan_id
-				 FROM {$wpdb->posts} p
-				 INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
-				 WHERE {$where} AND pm.meta_value = %s
-				 ORDER BY p.post_title ASC",
-				$filter_plan
-			);
-		} else {
-			$sql = "SELECT p.ID, p.post_title, pm.meta_value AS plan_id
-					FROM {$wpdb->posts} p
-					LEFT JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = '{$key}'
-					WHERE {$where}
-					ORDER BY p.post_title ASC";
-		}
+			$rows = $wpdb->get_results( $sql );
 
-		$rows = $wpdb->get_results( $sql );
+			$plan_ids   = array_unique( array_filter( array_map( 'intval', array_column( $rows, 'plan_id' ) ) ) );
+			$plan_names = $this->plan_names_for( $plan_ids );
 
-		$plan_ids   = array_unique( array_filter( array_map( 'intval', array_column( $rows, 'plan_id' ) ) ) );
-		$plan_names = $this->plan_names_for( $plan_ids );
+			$listings = array();
+			foreach ( $rows as $row ) {
+				$plan_id    = (int) $row->plan_id;
+				$listings[] = array(
+					'id'        => $row->ID,
+					'title'     => $row->post_title,
+					'plan_name' => ( $plan_id && isset( $plan_names[ $plan_id ] ) ) ? $plan_names[ $plan_id ] : __( 'No Plan', 'hbl' ),
+				);
+			}
 
-		$listings = array();
-		foreach ( $rows as $row ) {
-			$plan_id    = (int) $row->plan_id;
-			$listings[] = array(
-				'id'        => $row->ID,
-				'title'     => $row->post_title,
-				'plan_name' => ( $plan_id && isset( $plan_names[ $plan_id ] ) ) ? $plan_names[ $plan_id ] : __( 'No Plan', 'hbl' ),
-			);
-		}
-
-		wp_send_json_success( array(
-			'listings' => $listings,
-			'total'    => count( $listings ),
-		) );
+			HBL_Admin_Tool::ok( array(
+				'listings' => $listings,
+				'total'    => count( $listings ),
+			) );
+		}, 'Admin tool: get all listing ids' );
 	}
 
 	public function ajax_bulk_change_plan() {
-		check_ajax_referer( 'hbl_bulk_plan_reassign_nonce', 'nonce' );
+		HBL_Admin_Tool::guard( 'hbl_bulk_plan_reassign_nonce', 'manage_options' );
+		HBL_Admin_Tool::run( function () {
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'hbl' ) ) );
-		}
+			$listing_ids = isset( $_POST['listing_ids'] ) ? array_map( 'absint', (array) $_POST['listing_ids'] ) : array();
+			$plan_id     = isset( $_POST['plan_id'] ) ? absint( $_POST['plan_id'] ) : 0;
 
-		$listing_ids = isset( $_POST['listing_ids'] ) ? array_map( 'absint', (array) $_POST['listing_ids'] ) : array();
-		$plan_id     = isset( $_POST['plan_id'] ) ? absint( $_POST['plan_id'] ) : 0;
-
-		if ( empty( $listing_ids ) ) {
-			wp_send_json_error( array( 'message' => __( 'No listings selected.', 'hbl' ) ) );
-		}
-
-		if ( $plan_id <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'No target plan selected.', 'hbl' ) ) );
-		}
-
-		if ( ! $this->plan_exists( $plan_id ) ) {
-			wp_send_json_error( array( 'message' => __( 'Target plan not found or not published.', 'hbl' ) ) );
-		}
-
-		$target_names = $this->plan_names_for( array( $plan_id ) );
-		$plan_title   = isset( $target_names[ $plan_id ] ) ? $target_names[ $plan_id ] : __( 'selected', 'hbl' );
-
-		$plan_key = $this->plan_meta_key();
-
-		$success_count = 0;
-		$failed_ids    = array();
-
-		foreach ( $listing_ids as $listing_id ) {
-			if ( 'at_biz_dir' !== get_post_type( $listing_id ) ) {
-				$failed_ids[] = $listing_id;
-				continue;
+			if ( empty( $listing_ids ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'No listings selected.', 'hbl' ) ) );
 			}
 
-			$updated = update_post_meta( $listing_id, $plan_key, $plan_id );
-			if ( '_fm_plans' !== $plan_key ) {
-				update_post_meta( $listing_id, '_fm_plans', $plan_id );
+			if ( $plan_id <= 0 ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'No target plan selected.', 'hbl' ) ) );
 			}
 
-			update_post_meta( $listing_id, '_fm_plans_by_admin', 1 );
-
-			if ( defined( 'DPP_META_KEY_PLAN_SORTING_ORDER' ) ) {
-				$plan_sort_order = get_post_meta( $plan_id, DPP_META_KEY_PLAN_SORTING_ORDER, true );
-				update_post_meta( $listing_id, DPP_META_KEY_PLAN_SORTING_ORDER, $plan_sort_order );
+			if ( ! $this->plan_exists( $plan_id ) ) {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Target plan not found or not published.', 'hbl' ) ) );
 			}
 
-			if ( false !== $updated ) {
-				$success_count++;
-			} else {
-				$existing = get_post_meta( $listing_id, $plan_key, true );
-				if ( (int) $existing === $plan_id ) {
+			$target_names = $this->plan_names_for( array( $plan_id ) );
+			$plan_title   = isset( $target_names[ $plan_id ] ) ? $target_names[ $plan_id ] : __( 'selected', 'hbl' );
+
+			$plan_key = $this->plan_meta_key();
+
+			$success_count = 0;
+			$failed_ids    = array();
+
+			foreach ( $listing_ids as $listing_id ) {
+				if ( 'at_biz_dir' !== get_post_type( $listing_id ) ) {
+					$failed_ids[] = $listing_id;
+					continue;
+				}
+
+				$updated = update_post_meta( $listing_id, $plan_key, $plan_id );
+				if ( '_fm_plans' !== $plan_key ) {
+					update_post_meta( $listing_id, '_fm_plans', $plan_id );
+				}
+
+				update_post_meta( $listing_id, '_fm_plans_by_admin', 1 );
+
+				if ( defined( 'DPP_META_KEY_PLAN_SORTING_ORDER' ) ) {
+					$plan_sort_order = get_post_meta( $plan_id, DPP_META_KEY_PLAN_SORTING_ORDER, true );
+					update_post_meta( $listing_id, DPP_META_KEY_PLAN_SORTING_ORDER, $plan_sort_order );
+				}
+
+				if ( false !== $updated ) {
 					$success_count++;
 				} else {
-					$failed_ids[] = $listing_id;
+					$existing = get_post_meta( $listing_id, $plan_key, true );
+					if ( (int) $existing === $plan_id ) {
+						$success_count++;
+					} else {
+						$failed_ids[] = $listing_id;
+					}
 				}
 			}
-		}
 
-		if ( $success_count > 0 ) {
-			wp_send_json_success( array(
-				'message'       => sprintf(
-					_n(
-						'Successfully assigned %1$d listing to the "%2$s" plan.',
-						'Successfully assigned %1$d listings to the "%2$s" plan.',
+			if ( $success_count > 0 ) {
+				HBL_Admin_Tool::ok( array(
+					'message'       => sprintf(
+						_n(
+							'Successfully assigned %1$d listing to the "%2$s" plan.',
+							'Successfully assigned %1$d listings to the "%2$s" plan.',
+							$success_count,
+							'hbl'
+						),
 						$success_count,
-						'hbl'
+						$plan_title
 					),
-					$success_count,
-					$plan_title
-				),
-				'success_count' => $success_count,
-				'failed_count'  => count( $failed_ids ),
-			) );
-		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to update any listings. Please try again.', 'hbl' ) ) );
-		}
+					'success_count' => $success_count,
+					'failed_count'  => count( $failed_ids ),
+				) );
+			} else {
+				HBL_Admin_Tool::fail( array( 'message' => __( 'Failed to update any listings. Please try again.', 'hbl' ) ) );
+			}
+		}, 'Admin tool: bulk change plan' );
 	}
 }
 

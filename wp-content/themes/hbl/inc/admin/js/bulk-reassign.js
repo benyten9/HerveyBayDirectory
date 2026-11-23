@@ -136,17 +136,17 @@
 			var mode = $('input[name="hbl-reassign-mode"]:checked').val();
 
 			if (this.selectedCategories.length === 0) {
-				alert(hblBulkReassign.strings.selectSource);
+				HBLNotify.warning(hblBulkReassign.strings.selectSource);
 				return;
 			}
 
 			if (!targetCategory) {
-				alert(hblBulkReassign.strings.selectTarget);
+				HBLNotify.warning(hblBulkReassign.strings.selectTarget);
 				return;
 			}
 
 			if (this.selectedCategories.indexOf(parseInt(targetCategory)) > -1) {
-				alert(hblBulkReassign.strings.sameCategory);
+				HBLNotify.warning(hblBulkReassign.strings.sameCategory);
 				return;
 			}
 
@@ -184,6 +184,7 @@
 							window.location.reload();
 						}, 2000);
 					} else {
+						HBLNotify.fromError(response);
 						$result.removeClass('success').addClass('error').html(
 							'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
 							'<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>' +
@@ -194,7 +195,8 @@
 						$executeBtn.prop('disabled', false).find('span').text('Reassign Categories');
 					}
 				},
-				error: function() {
+				error: function(xhr, status) {
+					HBLNotify.fromXhr(xhr, status);
 					$result.removeClass('success').addClass('error').html(
 						'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
 						'<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>' +
