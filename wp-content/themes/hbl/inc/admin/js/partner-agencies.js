@@ -64,6 +64,8 @@
 						
 						$form[0].reset();
 
+						HBLNotify.later('success', response.data.message);
+
 						setTimeout(function() {
 							window.location.reload();
 						}, 2000);

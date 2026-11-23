@@ -180,6 +180,8 @@
 							'<span>' + response.data.message + '</span>'
 						).show();
 						
+						HBLNotify.later('success', response.data.message);
+						
 						setTimeout(function() {
 							window.location.reload();
 						}, 2000);

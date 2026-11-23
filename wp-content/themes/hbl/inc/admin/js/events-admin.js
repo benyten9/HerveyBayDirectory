@@ -44,6 +44,7 @@
                 },
                 success: function(response) {
                     if (response.success) {
+                        HBLNotify.success(response.data && response.data.message ? response.data.message : 'Deleted.');
                         $modal.remove();
                         $row.fadeOut(300, function() {
                             $(this).remove();
@@ -294,21 +295,11 @@
     }
 
     function showNotice(type, message) {
-        var noticeClass = type === 'success' ? 'notice-success' : 'notice-error';
-        var noticeHtml = `
-            <div class="notice ${noticeClass} is-dismissible hbl-admin-notice">
-                <p>${message}</p>
-                <button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button>
-            </div>
-        `;
-        
-        $('.hbl-events-admin h1').after(noticeHtml);
-        
-        setTimeout(function() {
-            $('.hbl-admin-notice').fadeOut(300, function() {
-                $(this).remove();
-            });
-        }, 5000);
+        if (type === 'success') {
+            HBLNotify.success(message);
+        } else {
+            HBLNotify.error(message);
+        }
     }
 
     $(document).on('click', '.hbl-admin-notice .notice-dismiss', function() {
@@ -453,6 +444,7 @@
             },
             success: function(response) {
                 if (response.success) {
+                    HBLNotify.later('success', response.data && response.data.message ? response.data.message : 'Saved.');
                     window.location.reload();
                 } else {
                     HBLNotify.fromError(response, 'Failed to add category.');
@@ -511,6 +503,7 @@
             },
             success: function(response) {
                 if (response.success) {
+                    HBLNotify.later('success', response.data && response.data.message ? response.data.message : 'Saved.');
                     window.location.reload();
                 } else {
                     HBLNotify.fromError(response, 'Failed to update category.');
@@ -567,6 +560,7 @@
                 },
                 success: function(response) {
                     if (response.success) {
+                        HBLNotify.success(response.data && response.data.message ? response.data.message : 'Deleted.');
                         $modal.remove();
                         $row.fadeOut(300, function() {
                             $(this).remove();
@@ -624,6 +618,7 @@
             },
             success: function(response) {
                 if (response.success) {
+                    HBLNotify.later('success', response.data && response.data.message ? response.data.message : 'Saved.');
                     location.reload();
                 } else {
                     HBLNotify.fromError(response, 'Error creating tag.');
@@ -672,6 +667,7 @@
             },
             success: function(response) {
                 if (response.success) {
+                    HBLNotify.later('success', response.data && response.data.message ? response.data.message : 'Saved.');
                     location.reload();
                 } else {
                     HBLNotify.fromError(response, 'Error updating tag.');
@@ -710,6 +706,7 @@
             },
             success: function(response) {
                 if (response.success) {
+                    HBLNotify.success(response.data && response.data.message ? response.data.message : 'Tag deleted.');
                     $row.fadeOut(300, function() { $(this).remove(); });
                 } else {
                     HBLNotify.fromError(response, 'Error deleting tag.');
@@ -717,6 +714,45 @@
             },
             error: function(xhr, status) {
                 HBLNotify.fromXhr(xhr, status, 'Request failed.');
+            }
+        });
+    });
+
+    $(document).on('change', '.hbl-quick-status', function() {
+        var $sel     = $(this);
+        var previous = $sel.attr('data-current');
+        var status   = $sel.val();
+
+        if (status === previous) {
+            return;
+        }
+
+        $sel.prop('disabled', true);
+
+        $.ajax({
+            url: hblEventsAdmin.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'hbl_admin_update_event',
+                nonce: hblEventsAdmin.nonce,
+                event_id: $sel.data('event-id'),
+                status: status
+            },
+            success: function(response) {
+                if (response.success) {
+                    $sel.attr('data-current', status);
+                    HBLNotify.success(response.data.message || 'Status updated.');
+                } else {
+                    $sel.val(previous);
+                    HBLNotify.fromError(response, 'Could not change the status.');
+                }
+            },
+            error: function(xhr, textStatus) {
+                $sel.val(previous);
+                HBLNotify.fromXhr(xhr, textStatus, 'Could not change the status.');
+            },
+            complete: function() {
+                $sel.prop('disabled', false);
             }
         });
     });

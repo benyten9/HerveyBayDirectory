@@ -6,6 +6,7 @@
  *   HBLNotify.warning( message, opts )
  *   HBLNotify.error( message, opts )         // stays until dismissed
  *   HBLNotify.fromError( errOrResponse, prefix )
+ *   HBLNotify.later( type, message )                 // toast that appears after the next page reload
  *   HBLNotify.fromXhr( jqXHR, textStatus, prefix )   // for jQuery $.ajax / $.post .fail() handlers
  *   HBLNotify.xhrMessage( jqXHR, textStatus )         // same reason as plain text
  *   HBLNotify.request( action, data, opts )  // resolves to the parsed WP JSON
@@ -268,6 +269,28 @@
 		return fromError( xhrError( xhr, textStatus ), prefix, extra );
 	}
 
+	/* ── Toasts that survive a page reload ───────────────────────────── */
+
+	var PENDING_KEY = 'hblNotifyPending';
+
+	/** Queue a toast to appear after the next page load (use before location.reload()). */
+	function later( type, msg, opts ) {
+		try {
+			var q = JSON.parse( w.sessionStorage.getItem( PENDING_KEY ) || '[]' );
+			q.push( { t: type, m: msg, o: opts || {} } );
+			w.sessionStorage.setItem( PENDING_KEY, JSON.stringify( q ) );
+		} catch ( e ) { /* storage unavailable: the toast is simply skipped */ }
+	}
+
+	function flushPending() {
+		try {
+			var q = JSON.parse( w.sessionStorage.getItem( PENDING_KEY ) || '[]' );
+			w.sessionStorage.removeItem( PENDING_KEY );
+			q.forEach( function ( x ) { toast( x.t, x.m, x.o ); } );
+		} catch ( e ) { /* ignore */ }
+	}
+	if ( d.readyState === 'loading' ) { d.addEventListener( 'DOMContentLoaded', flushPending ); } else { flushPending(); }
+
 	w.HBLNotify = {
 		success:   function ( m, o ) { return toast( 'success', m, o ); },
 		info:      function ( m, o ) { return toast( 'info', m, o ); },
@@ -275,6 +298,7 @@
 		error:     function ( m, o ) { return toast( 'error', m, o ); },
 		fromError: fromError,
 		fromXhr:   fromXhr,
+		later:     later,
 		xhrMessage: xhrMessage,
 		request:   request,
 		message:   message,

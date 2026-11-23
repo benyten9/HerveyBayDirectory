@@ -377,6 +377,22 @@ class HBL_Events_Admin {
 					</td>
 					<td class="column-actions">
 						<div class="hbl-action-buttons">
+							<?php
+							$current_status = $event->status ?: 'pending';
+							$status_options = array(
+								'publish' => __( 'Published', 'hbl' ),
+								'pending' => __( 'Pending', 'hbl' ),
+								'draft'   => __( 'Draft', 'hbl' ),
+							);
+							if ( ! isset( $status_options[ $current_status ] ) ) {
+								$status_options[ $current_status ] = ucfirst( $current_status );
+							}
+							?>
+							<select class="hbl-quick-status" data-event-id="<?php echo esc_attr( $event_id ); ?>" data-current="<?php echo esc_attr( $current_status ); ?>" aria-label="<?php esc_attr_e( 'Change status', 'hbl' ); ?>" title="<?php esc_attr_e( 'Change status', 'hbl' ); ?>">
+								<?php foreach ( $status_options as $value => $label ) : ?>
+									<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $current_status, $value ); ?>><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
 							<a href="<?php echo esc_url( hbl_events_db()->get_event_url( $event ) ); ?>" class="button button-small hbl-view-event" target="_blank" title="<?php esc_attr_e( 'View', 'hbl' ); ?>">
 								<span class="dashicons dashicons-visibility"></span>
 							</a>
@@ -956,12 +972,165 @@ class HBL_Events_Admin {
 	}
 
 	/**
-	 * Registered in the constructor but never implemented — a direct call used to be a PHP fatal.
-	 * Answer clearly instead.
+	 * Updates one event. Only the fields that are sent are changed, and each is validated:
+	 * title, status, description, start_date, end_date, venue, address, event_url,
+	 * contact_email, event_cost, event_color, category_id.
 	 */
 	public function ajax_update_event() {
 		HBL_Admin_Tool::guard( 'hbl_admin_nonce', 'edit_others_posts' );
-		HBL_Admin_Tool::fail( 'Updating a single event this way is not supported. Use the bulk status update or edit the event directly.', 'not_supported', 501 );
+		HBL_Admin_Tool::run( function () {
+			$event_id = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
+			if ( ! $event_id ) {
+				HBL_Admin_Tool::fail( 'No event was specified.', 'invalid_event' );
+			}
+
+			$db    = hbl_events_db();
+			$event = $db->get( $event_id );
+			if ( ! $event ) {
+				HBL_Admin_Tool::fail( 'That event no longer exists. Reload the list.', 'not_found', 404 );
+			}
+
+			$in     = wp_unslash( $_POST );
+			$data   = array();
+			$errors = array();
+
+			$text = function ( $key, $label, $max ) use ( $in, &$data, &$errors ) {
+				if ( ! array_key_exists( $key, $in ) ) {
+					return;
+				}
+				$value = sanitize_text_field( $in[ $key ] );
+				if ( mb_strlen( $value ) > $max ) {
+					$errors[] = sprintf( '%s must be %d characters or fewer.', $label, $max );
+					return;
+				}
+				$data[ $key ] = $value;
+			};
+
+			if ( array_key_exists( 'title', $in ) ) {
+				$title = sanitize_text_field( $in['title'] );
+				if ( '' === $title ) {
+					$errors[] = 'The title cannot be empty.';
+				} elseif ( mb_strlen( $title ) > 255 ) {
+					$errors[] = 'The title must be 255 characters or fewer.';
+				} else {
+					$data['title'] = $title;
+				}
+			}
+
+			if ( array_key_exists( 'status', $in ) ) {
+				$status = sanitize_key( $in['status'] );
+				if ( ! in_array( $status, array( 'publish', 'pending', 'draft' ), true ) ) {
+					$errors[] = 'Status must be Published, Pending or Draft.';
+				} else {
+					$data['status'] = $status;
+				}
+			}
+
+			if ( array_key_exists( 'description', $in ) ) {
+				$data['description'] = wp_kses_post( $in['description'] );
+			}
+
+			$text( 'venue', 'The venue', 255 );
+			$text( 'address', 'The address', 255 );
+			$text( 'event_cost', 'The cost', 20 );
+
+			if ( array_key_exists( 'event_url', $in ) ) {
+				$url = trim( (string) $in['event_url'] );
+				if ( '' === $url ) {
+					$data['event_url'] = null;
+				} elseif ( ! wp_http_validate_url( $url ) || mb_strlen( $url ) > 500 ) {
+					$errors[] = 'The event link must be a valid web address (https://…) of 500 characters or fewer.';
+				} else {
+					$data['event_url'] = esc_url_raw( $url );
+				}
+			}
+
+			if ( array_key_exists( 'contact_email', $in ) ) {
+				$email = sanitize_email( $in['contact_email'] );
+				if ( '' !== trim( (string) $in['contact_email'] ) && ! is_email( $email ) ) {
+					$errors[] = 'The contact email is not a valid email address.';
+				} else {
+					$data['contact_email'] = '' === $email ? null : $email;
+				}
+			}
+
+			if ( array_key_exists( 'event_color', $in ) ) {
+				$color = sanitize_hex_color( $in['event_color'] );
+				if ( ! $color ) {
+					$errors[] = 'The colour must be a hex value such as #008080.';
+				} else {
+					$data['event_color'] = $color;
+				}
+			}
+
+			if ( array_key_exists( 'category_id', $in ) ) {
+				$cat = absint( $in['category_id'] );
+				if ( $cat && ! term_exists( $cat, 'event_category' ) ) {
+					$errors[] = 'That event category does not exist.';
+				} else {
+					$data['category_id'] = $cat ?: null;
+				}
+			}
+
+			$dates = array();
+			foreach ( array( 'start_date' => 'The start date', 'end_date' => 'The end date' ) as $key => $label ) {
+				if ( ! array_key_exists( $key, $in ) ) {
+					continue;
+				}
+				$raw = trim( (string) $in[ $key ] );
+				if ( '' === $raw ) {
+					if ( 'start_date' === $key ) {
+						$errors[] = 'The start date cannot be empty.';
+					} else {
+						$data['end_date'] = null;
+					}
+					continue;
+				}
+				$ts = strtotime( $raw );
+				if ( false === $ts ) {
+					$errors[] = $label . ' is not a valid date.';
+					continue;
+				}
+				$data[ $key ] = gmdate( 'Y-m-d H:i:s', $ts );
+			}
+			$final_start = $data['start_date'] ?? $event->start_date;
+			$final_end   = array_key_exists( 'end_date', $data ) ? $data['end_date'] : $event->end_date;
+			if ( $final_start && $final_end && strtotime( $final_end ) < strtotime( $final_start ) ) {
+				$errors[] = 'The end date cannot be before the start date.';
+			}
+
+			if ( $errors ) {
+				HBL_Admin_Tool::fail( implode( ' ', $errors ), 'validation', 422, array( 'errors' => $errors ) );
+			}
+			if ( ! $data ) {
+				HBL_Admin_Tool::fail( 'Nothing to update: no changes were sent.', 'no_changes' );
+			}
+
+			global $wpdb;
+			if ( ! $db->update( $event_id, $data ) ) {
+				error_log( '[HBL Events] Could not update event ' . $event_id . ': ' . $wpdb->last_error );
+				HBL_Admin_Tool::fail( 'The database could not save the changes. The details were written to the PHP error log.', 'db_error', 500 );
+			}
+
+			$fresh   = $db->get( $event_id );
+			$labels  = array( 'publish' => 'Published', 'pending' => 'Pending', 'draft' => 'Draft' );
+			$message = ( array_keys( $data ) === array( 'status' ) )
+				? sprintf( '"%s" is now %s.', $fresh->title, $labels[ $fresh->status ] ?? $fresh->status )
+				: sprintf( '"%s" was updated.', $fresh->title );
+
+			HBL_Admin_Tool::ok( array(
+				'message' => $message,
+				'changed' => array_keys( $data ),
+				'event'   => array(
+					'id'         => (int) $fresh->id,
+					'title'      => $fresh->title,
+					'status'     => $fresh->status,
+					'start_date' => $fresh->start_date,
+					'end_date'   => $fresh->end_date,
+					'venue'      => $fresh->venue,
+				),
+			) );
+		}, 'Admin tool: update event' );
 	}
 
 	public function ajax_delete_event() {

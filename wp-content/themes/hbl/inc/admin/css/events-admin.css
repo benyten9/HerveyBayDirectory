@@ -1578,3 +1578,14 @@
 	}
 }
 
+/* Quick status change in the actions column */
+.hbl-action-buttons .hbl-quick-status {
+	min-height: 26px;
+	max-width: 110px;
+	padding: 0 24px 0 8px;
+	font-size: 12px;
+	line-height: 1.4;
+	border-radius: 4px;
+	vertical-align: middle;
+}
+.hbl-action-buttons .hbl-quick-status:disabled { opacity: 0.6; cursor: wait; }
