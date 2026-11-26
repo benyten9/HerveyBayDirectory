@@ -1,0 +1,1174 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "pt_PT",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "View": [
+                "Ver"
+            ],
+            "Delete": [
+                "Eliminar"
+            ],
+            "Type": [
+                "Tipo"
+            ],
+            "Close": [
+                "Fechar"
+            ],
+            "Copy": [
+                "Copiar"
+            ],
+            "Copied": [
+                "Copiado"
+            ],
+            "Clear": [
+                "Limpar"
+            ],
+            "Cancel": [
+                "Cancelar"
+            ],
+            "Got it": [
+                "Entendido"
+            ],
+            "Show less": [
+                "Mostrar menos"
+            ],
+            "Integrations": [
+                "Integra\u00e7\u00f5es"
+            ],
+            "Workflows": [
+                "Fluxos de trabalho"
+            ],
+            "Skills": [
+                "Compet\u00eancias"
+            ],
+            "Agent View": [
+                "Agent View"
+            ],
+            "Jobs": [
+                "Tarefas"
+            ],
+            "Running": [
+                "Em execu\u00e7\u00e3o"
+            ],
+            "Done": [
+                "Conclu\u00eddo"
+            ],
+            "Edit": [
+                "Editar"
+            ],
+            "Library": [
+                "Biblioteca"
+            ],
+            "Remove": [
+                "Remover"
+            ],
+            "Rename": [
+                "Mudar o nome"
+            ],
+            "Added": [
+                "Adicionada"
+            ],
+            "Pro": [
+                "Pro"
+            ],
+            "New tab": [
+                "Novo separador"
+            ],
+            "Plugins": [
+                "Plugins"
+            ],
+            "Jump to": [
+                "Ir para"
+            ],
+            "Private": [
+                "Privados"
+            ],
+            "Duplicate": [
+                "Duplicar"
+            ],
+            "Content": [
+                "Conte\u00fado"
+            ],
+            "(no title)": [
+                "(sem t\u00edtulo)"
+            ],
+            "No agent listening": [
+                "Nenhum agente \u00e0 escuta"
+            ],
+            "Queue": [
+                "Fila"
+            ],
+            "Reload the page": [
+                "Recarregar a p\u00e1gina"
+            ],
+            "Reload": [
+                "Recarregar"
+            ],
+            "Your threads": [
+                "As suas conversas"
+            ],
+            "Fold all requests": [
+                "Recolher todos os pedidos"
+            ],
+            "Start from": [
+                "Come\u00e7ar a partir de"
+            ],
+            "Send": [
+                "Enviar"
+            ],
+            "Click anything on the page to leave a note on it.": [
+                "Clique em qualquer coisa na p\u00e1gina para lhe deixar uma nota."
+            ],
+            "Add another": [
+                "Adicionar outra"
+            ],
+            "A note on the page": [
+                "Uma nota na p\u00e1gina"
+            ],
+            "Agent working": [
+                "Agente a trabalhar"
+            ],
+            "Agent listening": [
+                "Agente \u00e0 escuta"
+            ],
+            "Agent idle": [
+                "Agente inativo"
+            ],
+            "No agent connected": [
+                "Nenhum agente ligado"
+            ],
+            "Point at something": [
+                "Apontar para algo"
+            ],
+            "Your agent is on it": [
+                "O seu agente est\u00e1 a tratar disso"
+            ],
+            "This page": [
+                "Esta p\u00e1gina"
+            ],
+            "Images": [
+                "Imagens"
+            ],
+            "%1$d of %2$d": [
+                "%1$d de %2$d"
+            ],
+            "Box": [
+                "Caixa"
+            ],
+            "Undo": [
+                "Anular"
+            ],
+            "Auto": [
+                "Auto"
+            ],
+            "Open %s": [
+                "Abrir %s"
+            ],
+            "Saving\u2026": [
+                "A guardar\u2026"
+            ],
+            "Saved": [
+                "Guardado"
+            ],
+            "Home": [
+                "In\u00edcio"
+            ],
+            "Open": [
+                "Abrir"
+            ],
+            "Building": [
+                "A construir"
+            ],
+            "%s is larger than this site accepts.": [
+                "%s \u00e9 maior do que este site aceita."
+            ],
+            "Uploading\u2026": [
+                "A carregar\u2026"
+            ],
+            "Save note": [
+                "Guardar nota"
+            ],
+            "Date": [
+                "Data"
+            ],
+            "just now": [
+                "agora mesmo"
+            ],
+            "%d min ago": [
+                "h\u00e1 %d min",
+                "h\u00e1 %d min"
+            ],
+            "%d hour ago": [
+                "h\u00e1 %d hora",
+                "h\u00e1 %d horas"
+            ],
+            "Undone": [
+                "Anulada"
+            ],
+            "The site answered with error %s.": [
+                "O site respondeu com o erro %s."
+            ],
+            "Your session has expired. Reload Agent View to carry on.": [
+                "A sua sess\u00e3o expirou. Recarregue o Agent View para continuar."
+            ],
+            "Something went wrong.": [
+                "Algo correu mal."
+            ],
+            "Copying is blocked in this browser. Select the text and copy it instead.": [
+                "A c\u00f3pia est\u00e1 bloqueada neste navegador. Em vez disso, selecione o texto e copie-o."
+            ],
+            "%d agent listening": [
+                "%d agente \u00e0 escuta",
+                "%d agentes \u00e0 escuta"
+            ],
+            "Last heard from %s": [
+                "\u00daltima vez que deu sinal: %s"
+            ],
+            "Your agent is listening.": [
+                "O seu agente est\u00e1 \u00e0 escuta."
+            ],
+            "Your agent is here and listening. Anything you send goes straight to it.": [
+                "O seu agente est\u00e1 aqui e \u00e0 escuta. Tudo o que enviar vai diretamente para ele."
+            ],
+            "Your agent was here a moment ago but is not listening now. Paste the message below to bring it back.": [
+                "O seu agente esteve aqui h\u00e1 pouco, mas agora n\u00e3o est\u00e1 \u00e0 escuta. Cole a mensagem abaixo para o trazer de volta."
+            ],
+            "An AI client is connected to this site, but it is not listening to Agent View yet.": [
+                "H\u00e1 um cliente de IA ligado a este site, mas ainda n\u00e3o est\u00e1 \u00e0 escuta do Agent View."
+            ],
+            "No AI client is connected to this site yet.": [
+                "Ainda n\u00e3o h\u00e1 nenhum cliente de IA ligado a este site."
+            ],
+            "Copy the wake-up line": [
+                "Copiar a frase de despertar"
+            ],
+            "Your agent is resting \ud83d\ude34": [
+                "O seu agente est\u00e1 a descansar \ud83d\ude34"
+            ],
+            "No answer, so I let it rest to save its energy (and your tokens). ": [
+                "Sem resposta, por isso deixei-o descansar para poupar energia (e os seus tokens). "
+            ],
+            "When you need it again, paste the wake-up line in your agent. Anything you send meanwhile waits here.": [
+                "Quando voltar a precisar dele, cole a frase de despertar no seu agente. Tudo o que enviar entretanto fica aqui \u00e0 espera."
+            ],
+            "%d agent is listening": [
+                "%d agente est\u00e1 \u00e0 escuta",
+                "%d agentes est\u00e3o \u00e0 escuta"
+            ],
+            "That works: each request goes to whichever picks it up first, and they can work at the same time. Close the extra ones if you want a single agent on the job.": [
+                "Funciona: cada pedido vai para o primeiro que o apanhar, e podem trabalhar ao mesmo tempo. Feche os que est\u00e3o a mais se quiser um \u00fanico agente a tratar do trabalho."
+            ],
+            "Your agent nodded off \ud83d\ude34": [
+                "O seu agente adormeceu \ud83d\ude34"
+            ],
+            "It stopped listening on its own. Paste the wake-up line in your agent to bring it back. Anything you send meanwhile waits here.": [
+                "Deixou de estar \u00e0 escuta por si. Cole a frase de despertar no seu agente para o trazer de volta. Tudo o que enviar entretanto fica aqui \u00e0 espera."
+            ],
+            "Still Nibbing? \ud83d\udc40": [
+                "Ainda a trincar? \ud83d\udc40"
+            ],
+            "Your agent has had nothing to do for 10 minutes. Keep it listening, or let it rest and save its energy (and your tokens). It rests by itself in 5 minutes if no one answers.": [
+                "O seu agente est\u00e1 h\u00e1 10 minutos sem nada para fazer. Mantenha-o \u00e0 escuta, ou deixe-o descansar e poupar energia (e os seus tokens). Descansa automaticamente dentro de 5 minutos se ningu\u00e9m responder."
+            ],
+            "Keep listening": [
+                "Continuar \u00e0 escuta"
+            ],
+            "Let it rest": [
+                "Deix\u00e1-lo descansar"
+            ],
+            "Your agent stays on. I\u2019ll check in again later.": [
+                "O seu agente continua ligado. Volto a perguntar mais tarde."
+            ],
+            "Copied: paste it in your agent": [
+                "Copiado: cole-o no seu agente"
+            ],
+            "Copied. Paste it into your AI client.": [
+                "Copiado. Cole-o no seu cliente de IA."
+            ],
+            "Waiting for your agent": [
+                "\u00c0 espera do seu agente"
+            ],
+            "Paused": [
+                "Em pausa"
+            ],
+            "Taken back": [
+                "Retirado"
+            ],
+            "Your agent is listening. Send something.": [
+                "O seu agente est\u00e1 \u00e0 escuta. Envie alguma coisa."
+            ],
+            "No agent yet. You can still browse, pin notes and send; messages wait for it.": [
+                "Ainda sem agente. Pode na mesma navegar, fixar notas e enviar; as mensagens ficam \u00e0 espera dele."
+            ],
+            "Connect one": [
+                "Ligar um"
+            ],
+            "Working on it": [
+                "A tratar disso"
+            ],
+            "Reading the page": [
+                "A ler a p\u00e1gina"
+            ],
+            "Thinking it through": [
+                "A pensar bem no assunto"
+            ],
+            "Nibbling": [
+                "A mordiscar"
+            ],
+            "Tinkering": [
+                "A experimentar"
+            ],
+            "Measuring twice": [
+                "A medir duas vezes"
+            ],
+            "Polishing": [
+                "A polir"
+            ],
+            "Fine-tuning": [
+                "A afinar"
+            ],
+            "Checking the details": [
+                "A verificar os detalhes"
+            ],
+            "%1$dh %2$sm": [
+                "%1$dh %2$smin"
+            ],
+            "%1$dm %2$ss": [
+                "%1$dmin %2$ss"
+            ],
+            "%ds": [
+                "%ds"
+            ],
+            "Send again": [
+                "Enviar novamente"
+            ],
+            "Done in %s": [
+                "Feito em %s"
+            ],
+            "Take back": [
+                "Retirar"
+            ],
+            "Copy as prompt": [
+                "Copiar como prompt"
+            ],
+            "No agent is listening, so this is waiting.": [
+                "Nenhum agente est\u00e1 \u00e0 escuta, por isso isto est\u00e1 \u00e0 espera."
+            ],
+            "Bring your agent in": [
+                "Traga o seu agente"
+            ],
+            "or copy it as a prompt": [
+                "ou copie-o como prompt"
+            ],
+            "Show on the page": [
+                "Mostrar na p\u00e1gina"
+            ],
+            "Your answer": [
+                "A sua resposta"
+            ],
+            "Or write an answer": [
+                "Ou escreva uma resposta"
+            ],
+            "Answer": [
+                "Responder"
+            ],
+            "Your %s asks": [
+                "O seu %s pergunta"
+            ],
+            "Opened": [
+                "Abriu"
+            ],
+            "Read the page": [
+                "Leu a p\u00e1gina"
+            ],
+            "Clicked": [
+                "Clicou"
+            ],
+            "Pointed at": [
+                "Apontou para"
+            ],
+            "Typed into": [
+                "Escreveu em"
+            ],
+            "Resized the view": [
+                "Redimensionou a vista"
+            ],
+            "Checked the page": [
+                "Verificou a p\u00e1gina"
+            ],
+            "Checked for errors": [
+                "Procurou erros"
+            ],
+            "Looked at the tabs": [
+                "Olhou para os separadores"
+            ],
+            "Read the blocks": [
+                "Leu os blocos"
+            ],
+            "Ran several steps": [
+                "Executou v\u00e1rios passos"
+            ],
+            "Followed along": [
+                "Acompanhou"
+            ],
+            "Checked what it can do": [
+                "Verificou o que pode fazer"
+            ],
+            "%d step": [
+                "%d passo",
+                "%d passos"
+            ],
+            "Saved \u201c%s\u201d": [
+                "\u201c%s\u201d guardado"
+            ],
+            "Put \u201c%1$s\u201d back to %2$s": [
+                "Rep\u00f4s \u201c%1$s\u201d para %2$s"
+            ],
+            "Your agent is resting. Paste the wake-up line to bring it back.": [
+                "O seu agente est\u00e1 a descansar. Cole a frase de despertar para o trazer de volta."
+            ],
+            "The agent session ended.": [
+                "A sess\u00e3o do agente terminou."
+            ],
+            "You stopped this request.": [
+                "Parou este pedido."
+            ],
+            "You undid a job: %d page put back.": [
+                "Anulou uma tarefa: %d p\u00e1gina reposta.",
+                "Anulou uma tarefa: %d p\u00e1ginas repostas."
+            ],
+            "(a pinned note)": [
+                "(uma nota fixada)"
+            ],
+            "Stop this job": [
+                "Parar esta tarefa"
+            ],
+            "Next up": [
+                "A seguir"
+            ],
+            "#%d in line": [
+                "#%d na fila"
+            ],
+            "Run next": [
+                "Executar a seguir"
+            ],
+            "Pause": [
+                "Pausar"
+            ],
+            "Paused: your agent skips it": [
+                "Em pausa: o seu agente salta-a"
+            ],
+            "Run": [
+                "Executar"
+            ],
+            "%d page saved": [
+                "%d p\u00e1gina guardada",
+                "%d p\u00e1ginas guardadas"
+            ],
+            "Show more": [
+                "Mostrar mais"
+            ],
+            "%d agent takes them from the top": [
+                "%d agente pega nelas a partir do topo",
+                "%d agentes pegam nelas a partir do topo"
+            ],
+            "No agent listening: they wait here": [
+                "Nenhum agente \u00e0 escuta: ficam aqui \u00e0 espera"
+            ],
+            "Nothing running.": [
+                "Nada em execu\u00e7\u00e3o."
+            ],
+            "Up next": [
+                "A seguir"
+            ],
+            "Nothing waiting. Send a request and it lands here.": [
+                "Nada \u00e0 espera. Envie um pedido e ele aparece aqui."
+            ],
+            "Drag to change the order.": [
+                "Arraste para mudar a ordem."
+            ],
+            "Undo this job?": [
+                "Anular esta tarefa?"
+            ],
+            "\u201c%1$s\u201d saved %2$d page. It goes back to how it was before the job. Settings or files the job changed stay as they are.": [
+                "\u201c%1$s\u201d guardou %2$d p\u00e1gina. Volta a ficar como estava antes da tarefa. As defini\u00e7\u00f5es ou ficheiros que a tarefa alterou ficam como est\u00e3o.",
+                "\u201c%1$s\u201d guardou %2$d p\u00e1ginas. Voltam a ficar como estavam antes da tarefa. As defini\u00e7\u00f5es ou ficheiros que a tarefa alterou ficam como est\u00e3o."
+            ],
+            "Undo the job": [
+                "Anular a tarefa"
+            ],
+            "Keep it": [
+                "Manter"
+            ],
+            "Undone: %d page put back.": [
+                "Anulado: %d p\u00e1gina reposta.",
+                "Anulado: %d p\u00e1ginas repostas."
+            ],
+            "Stopped. Your agent stops at its next step and says what it finished.": [
+                "Parado. O seu agente para no pr\u00f3ximo passo e diz o que terminou."
+            ],
+            "New order saved. Your agent takes the top one next.": [
+                "Nova ordem guardada. O seu agente pega na de cima a seguir."
+            ],
+            "Stopped. Nothing was left waiting.": [
+                "Parado. N\u00e3o ficou nada \u00e0 espera."
+            ],
+            "Show the work on this request": [
+                "Mostrar o trabalho deste pedido"
+            ],
+            "Hide the work on this request": [
+                "Ocultar o trabalho deste pedido"
+            ],
+            "Show the work (%d)": [
+                "Mostrar o trabalho (%d)"
+            ],
+            "Open all requests": [
+                "Abrir todos os pedidos"
+            ],
+            "Copied as a prompt.": [
+                "Copiado como prompt."
+            ],
+            "This is about my WordPress site %s, which you can work on through NibWP.": [
+                "Isto \u00e9 sobre o meu site WordPress %s, no qual podes trabalhar atrav\u00e9s do NibWP."
+            ],
+            "Page: %1$s (%2$s)": [
+                "P\u00e1gina: %1$s (%2$s)"
+            ],
+            "post %d": [
+                "artigo %d"
+            ],
+            "Notes I pinned on the page:": [
+                "Notas que fixei na p\u00e1gina:"
+            ],
+            "(marked, see my message above)": [
+                "(marcado, v\u00ea a minha mensagem acima)"
+            ],
+            "Element: %1$s, \u201c%2$s\u201d": [
+                "Elemento: %1$s, \u201c%2$s\u201d"
+            ],
+            "Inside the editor canvas %s": [
+                "Dentro da tela do editor %s"
+            ],
+            "Drawn: %1$s, %2$d\u00d7%3$d px at %4$d, %5$d on the page": [
+                "Desenhado: %1$s, %2$d\u00d7%3$d px em %4$d, %5$d na p\u00e1gina"
+            ],
+            "Also see: %1$s (%2$s)": [
+                "V\u00ea tamb\u00e9m: %1$s (%2$s)"
+            ],
+            "File: %1$s %2$s": [
+                "Ficheiro: %1$s %2$s"
+            ],
+            "Use these NibWP skills (load each with nibwp\/load-skill-playbook): %s": [
+                "Usa estas compet\u00eancias NibWP (carrega cada uma com nibwp\/load-skill-playbook): %s"
+            ],
+            "Follow these NibWP workflows (read each with nibwp\/get-workflow): %s": [
+                "Segue estes fluxos de trabalho NibWP (l\u00ea cada um com nibwp\/get-workflow): %s"
+            ],
+            "Your agent is waiting for your answer": [
+                "O seu agente est\u00e1 \u00e0 espera da sua resposta"
+            ],
+            "Type \/ for pages, skills and more": [
+                "Escreva \/ para p\u00e1ginas, compet\u00eancias e mais"
+            ],
+            "Enter to send \u00b7 Shift+Enter for a new line": [
+                "Enter para enviar \u00b7 Shift+Enter para nova linha"
+            ],
+            "Do not send the current page": [
+                "N\u00e3o enviar a p\u00e1gina atual"
+            ],
+            "Remove this note": [
+                "Remover esta nota"
+            ],
+            "Remove this file": [
+                "Remover este ficheiro"
+            ],
+            "Your drawing": [
+                "O seu desenho"
+            ],
+            "Your comment": [
+                "O seu coment\u00e1rio"
+            ],
+            "Your agent starts on it right away": [
+                "O seu agente come\u00e7a logo"
+            ],
+            "Plan": [
+                "Planear"
+            ],
+            "Your agent looks and plans; nothing changes": [
+                "O seu agente observa e planeia; nada muda"
+            ],
+            "Plan it": [
+                "Planear"
+            ],
+            "Collect requests, run them together later": [
+                "Juntar pedidos e execut\u00e1-los juntos mais tarde"
+            ],
+            "Add to queue": [
+                "Adicionar \u00e0 fila"
+            ],
+            "Bypass": [
+                "Sem perguntas"
+            ],
+            "Your agent decides on its own, no questions": [
+                "O seu agente decide sozinho, sem perguntas"
+            ],
+            "Do it": [
+                "Fazer"
+            ],
+            "%d request waiting": [
+                "%d pedido \u00e0 espera",
+                "%d pedidos \u00e0 espera"
+            ],
+            "Nothing waiting": [
+                "Nada \u00e0 espera"
+            ],
+            "Remove from the queue": [
+                "Remover da fila"
+            ],
+            "Run as": [
+                "Executar como"
+            ],
+            "Run all": [
+                "Executar todos"
+            ],
+            "Run %d": [
+                "Executar %d"
+            ],
+            "Switch the chat to Queue mode and your requests wait here, to run together when you are done planning.": [
+                "Mude o chat para o modo Fila e os seus pedidos ficam aqui \u00e0 espera, para serem executados juntos quando acabar de planear."
+            ],
+            "Added to your queue (%d waiting). Run them together from the Queue at the top.": [
+                "Adicionado \u00e0 sua fila (%d \u00e0 espera). Execute-os juntos a partir da Fila, em cima.",
+                "Adicionado \u00e0 sua fila (%d \u00e0 espera). Execute-os juntos a partir da Fila, em cima."
+            ],
+            "Your agent is working on %d task": [
+                "O seu agente est\u00e1 a trabalhar em %d tarefa",
+                "O seu agente est\u00e1 a trabalhar em %d tarefas"
+            ],
+            "In the order you set. Follow each one in Jobs.": [
+                "Pela ordem que definiu. Acompanhe cada uma em Tarefas."
+            ],
+            "Pasted image": [
+                "Imagem colada"
+            ],
+            "Show your agent\u2019s changes?": [
+                "Mostrar as altera\u00e7\u00f5es do seu agente?"
+            ],
+            "Leave the editor?": [
+                "Sair do editor?"
+            ],
+            "Reload the editor?": [
+                "Recarregar o editor?"
+            ],
+            "Your agent saved changes to this page, but the editor still shows the page from before, with your unsaved edits in it. Reloading the editor shows your agent\u2019s changes and drops your unsaved edits. Keeping your edits is fine too, but saving them later writes over your agent\u2019s changes.": [
+                "O seu agente guardou altera\u00e7\u00f5es nesta p\u00e1gina, mas o editor ainda mostra a p\u00e1gina de antes, com as suas edi\u00e7\u00f5es por guardar. Recarregar o editor mostra as altera\u00e7\u00f5es do seu agente e descarta as suas edi\u00e7\u00f5es por guardar. Manter as suas edi\u00e7\u00f5es tamb\u00e9m \u00e9 poss\u00edvel, mas guard\u00e1-las mais tarde sobrep\u00f5e-se \u00e0s altera\u00e7\u00f5es do seu agente."
+            ],
+            "The editor has unsaved edits. Leaving drops them. Save them in the editor first if you want to keep them.": [
+                "O editor tem edi\u00e7\u00f5es por guardar. Sair descarta-as. Guarde-as primeiro no editor se as quiser manter."
+            ],
+            "The editor has unsaved edits. Reloading drops them. Save them in the editor first if you want to keep them.": [
+                "O editor tem edi\u00e7\u00f5es por guardar. Recarregar descarta-as. Guarde-as primeiro no editor se as quiser manter."
+            ],
+            "Reload and show the changes": [
+                "Recarregar e mostrar as altera\u00e7\u00f5es"
+            ],
+            "Leave anyway": [
+                "Sair na mesma"
+            ],
+            "Reload anyway": [
+                "Recarregar na mesma"
+            ],
+            "Keep my edits": [
+                "Manter as minhas edi\u00e7\u00f5es"
+            ],
+            "Stay": [
+                "Ficar"
+            ],
+            "Updated": [
+                "Atualizada"
+            ],
+            "NibWP updated this page. It shows once your note is sent or closed.": [
+                "O NibWP atualizou esta p\u00e1gina. Aparece quando a sua nota for enviada ou fechada."
+            ],
+            "NibWP worked on another page.": [
+                "O NibWP trabalhou noutra p\u00e1gina."
+            ],
+            "NibWP updated this page. It shows when you are done.": [
+                "O NibWP atualizou esta p\u00e1gina. Aparece quando terminar."
+            ],
+            "Show now": [
+                "Mostrar agora"
+            ],
+            "Open it": [
+                "Abrir"
+            ],
+            "A page outside this site": [
+                "Uma p\u00e1gina fora deste site"
+            ],
+            "Leave without saving?": [
+                "Sair sem guardar?"
+            ],
+            "The Builder has changes on %s that are not saved. Closing drops them. Save them first if you want to keep them.": [
+                "O Construtor tem altera\u00e7\u00f5es por guardar em %s. Fechar descarta-as. Guarde-as primeiro se as quiser manter."
+            ],
+            "The Builder has changes on %s that are not saved. Reloading drops them. Save them first if you want to keep them.": [
+                "O Construtor tem altera\u00e7\u00f5es por guardar em %s. Recarregar descarta-as. Guarde-as primeiro se as quiser manter."
+            ],
+            "The Builder has changes on %s that are not saved. Going to another page drops them. Save them first if you want to keep them.": [
+                "O Construtor tem altera\u00e7\u00f5es por guardar em %s. Ir para outra p\u00e1gina descarta-as. Guarde-as primeiro se as quiser manter."
+            ],
+            "Close without saving": [
+                "Fechar sem guardar"
+            ],
+            "Reload without saving": [
+                "Recarregar sem guardar"
+            ],
+            "Leave without saving": [
+                "Sair sem guardar"
+            ],
+            "Group": [
+                "Grupo"
+            ],
+            "Show this group": [
+                "Mostrar este grupo"
+            ],
+            "Fold this group": [
+                "Recolher este grupo"
+            ],
+            "Builder changes not saved": [
+                "Altera\u00e7\u00f5es do Construtor por guardar"
+            ],
+            "Close %s": [
+                "Fechar %s"
+            ],
+            "Name this group": [
+                "Dar nome a este grupo"
+            ],
+            "Group name": [
+                "Nome do grupo"
+            ],
+            "Group colour": [
+                "Cor do grupo"
+            ],
+            "New tab in this group": [
+                "Novo separador neste grupo"
+            ],
+            "Ungroup": [
+                "Desagrupar"
+            ],
+            "Close the group": [
+                "Fechar o grupo"
+            ],
+            "Add to a new group": [
+                "Adicionar a um novo grupo"
+            ],
+            "Move to %s": [
+                "Mover para %s"
+            ],
+            "Remove from group": [
+                "Remover do grupo"
+            ],
+            "Close tab": [
+                "Fechar separador"
+            ],
+            "Close tabs to the left": [
+                "Fechar separadores \u00e0 esquerda"
+            ],
+            "Close tabs to the right": [
+                "Fechar separadores \u00e0 direita"
+            ],
+            "Close other tabs": [
+                "Fechar os outros separadores"
+            ],
+            "%s \u00b7 Agent View": [
+                "%s \u00b7 Agent View"
+            ],
+            "Drag to draw a box. Draw as many marks as you like, then say what they are about.": [
+                "Arraste para desenhar uma caixa. Desenhe as marcas que quiser e depois diga a que se referem."
+            ],
+            "Drag to draw a circle. Draw as many marks as you like, then say what they are about.": [
+                "Arraste para desenhar um c\u00edrculo. Desenhe as marcas que quiser e depois diga a que se referem."
+            ],
+            "Draw freely on the page. Draw as many marks as you like, then say what they are about.": [
+                "Desenhe livremente na p\u00e1gina. Desenhe as marcas que quiser e depois diga a que se referem."
+            ],
+            "Circle": [
+                "C\u00edrculo"
+            ],
+            "Drawing": [
+                "Desenho"
+            ],
+            "Write what should change here first.": [
+                "Escreva primeiro o que deve mudar aqui."
+            ],
+            "That element is not on the page shown now.": [
+                "Esse elemento n\u00e3o est\u00e1 na p\u00e1gina mostrada agora."
+            ],
+            "Not sent yet": [
+                "Ainda n\u00e3o enviado"
+            ],
+            "Edit and send again": [
+                "Editar e enviar novamente"
+            ],
+            "Hide this comment": [
+                "Ocultar este coment\u00e1rio"
+            ],
+            "No comments yet. Press C and click the page, or D to draw on it.": [
+                "Ainda sem coment\u00e1rios. Prima C e clique na p\u00e1gina, ou D para desenhar nela."
+            ],
+            "Comment hidden.": [
+                "Coment\u00e1rio oculto."
+            ],
+            "Draft": [
+                "Rascunho"
+            ],
+            "Pending": [
+                "Pendente"
+            ],
+            "Scheduled": [
+                "Agendado"
+            ],
+            "Searching\u2026": [
+                "A pesquisar\u2026"
+            ],
+            "Nothing found on this site.": [
+                "Nada encontrado neste site."
+            ],
+            "On this site": [
+                "Neste site"
+            ],
+            "Recently changed": [
+                "Alterados recentemente"
+            ],
+            "Off": [
+                "Desligado"
+            ],
+            "Go to %s": [
+                "Ir para %s"
+            ],
+            "Show %d more": [
+                "Mostrar mais %d"
+            ],
+            "%s is added to your message.": [
+                "%s foi adicionado \u00e0 sua mensagem."
+            ],
+            "Show all %d": [
+                "Mostrar todos (%d)"
+            ],
+            "Add to this message": [
+                "Adicionar a esta mensagem"
+            ],
+            "Leave a note on an element": [
+                "Deixar uma nota num elemento"
+            ],
+            "A file or screenshot": [
+                "Um ficheiro ou captura de ecr\u00e3"
+            ],
+            "Upload, paste or drop": [
+                "Carregar, colar ou largar"
+            ],
+            "Pages to include": [
+                "P\u00e1ginas a incluir"
+            ],
+            "Nothing matches. Try another word.": [
+                "Nada corresponde. Experimente outra palavra."
+            ],
+            "Yesterday %s": [
+                "Ontem %s"
+            ],
+            "an earlier version": [
+                "uma vers\u00e3o anterior"
+            ],
+            "the version from %s": [
+                "a vers\u00e3o de %s"
+            ],
+            "this page": [
+                "esta p\u00e1gina"
+            ],
+            "Undo this change?": [
+                "Anular esta altera\u00e7\u00e3o?"
+            ],
+            "\u201c%s\u201d goes back to how it was before this save. What is there now is kept as a version, so you can switch back.": [
+                "\u201c%s\u201d volta a ficar como estava antes desta grava\u00e7\u00e3o. O que l\u00e1 est\u00e1 agora \u00e9 guardado como vers\u00e3o, para poder voltar atr\u00e1s."
+            ],
+            "Restore this version?": [
+                "Restaurar esta vers\u00e3o?"
+            ],
+            "\u201c%1$s\u201d goes back to %2$s. What is there now is kept as a version, so you can switch back.": [
+                "\u201c%1$s\u201d volta a %2$s. O que l\u00e1 est\u00e1 agora \u00e9 guardado como vers\u00e3o, para poder voltar atr\u00e1s."
+            ],
+            "its first version": [
+                "a primeira vers\u00e3o"
+            ],
+            "Restore": [
+                "Restaurar"
+            ],
+            "Page restored.": [
+                "P\u00e1gina restaurada."
+            ],
+            "Previewing the first version of this page": [
+                "A pr\u00e9-visualizar a primeira vers\u00e3o desta p\u00e1gina"
+            ],
+            "Previewing %s": [
+                "A pr\u00e9-visualizar %s"
+            ],
+            "Your %1$s asks: %2$s": [
+                "O seu %1$s pergunta: %2$s"
+            ],
+            "This is already a new thread. Type below to start it.": [
+                "Esta j\u00e1 \u00e9 uma conversa nova. Escreva abaixo para a come\u00e7ar."
+            ],
+            "New thread. Anything still waiting in the last one was taken back.": [
+                "Nova conversa. Tudo o que ainda estava \u00e0 espera na \u00faltima foi retirado."
+            ],
+            "%s \u00b7 Show all threads": [
+                "%s \u00b7 Mostrar todas as conversas"
+            ],
+            "Open a page or post to see its saved versions.": [
+                "Abra uma p\u00e1gina ou artigo para ver as vers\u00f5es guardadas."
+            ],
+            "This page does not keep saved versions.": [
+                "Esta p\u00e1gina n\u00e3o guarda vers\u00f5es."
+            ],
+            "No saved versions yet. Each save from now on adds one here.": [
+                "Ainda n\u00e3o h\u00e1 vers\u00f5es guardadas. A partir de agora, cada grava\u00e7\u00e3o acrescenta uma aqui."
+            ],
+            "Current": [
+                "Atual"
+            ],
+            "First version": [
+                "Primeira vers\u00e3o"
+            ],
+            "Saved %s": [
+                "Guardado %s"
+            ],
+            "Autosave": [
+                "Grava\u00e7\u00e3o autom\u00e1tica"
+            ],
+            "Show the page as it is now": [
+                "Mostrar a p\u00e1gina como est\u00e1 agora"
+            ],
+            "Show the page as it was then": [
+                "Mostrar a p\u00e1gina como estava ent\u00e3o"
+            ],
+            "Your threads show up here once you send something.": [
+                "As suas conversas aparecem aqui assim que enviar alguma coisa."
+            ],
+            "Open now": [
+                "Aberta agora"
+            ],
+            "%d message": [
+                "%d mensagem",
+                "%d mensagens"
+            ],
+            "Your threads (%d)": [
+                "As suas conversas (%d)",
+                "As suas conversas (%d)"
+            ],
+            "Open \u201c%s\u201d": [
+                "Abrir \u201c%s\u201d"
+            ],
+            "Rename \u201c%s\u201d": [
+                "Mudar o nome de \u201c%s\u201d"
+            ],
+            "Delete \u201c%s\u201d": [
+                "Eliminar \u201c%s\u201d"
+            ],
+            "Today": [
+                "Hoje"
+            ],
+            "Yesterday": [
+                "Ontem"
+            ],
+            "This week": [
+                "Esta semana"
+            ],
+            "Earlier": [
+                "Anteriores"
+            ],
+            "No thread by that name.": [
+                "Nenhuma conversa com esse nome."
+            ],
+            "Thread name": [
+                "Nome da conversa"
+            ],
+            "Saves as you type. Empty brings back the first message.": [
+                "Guarda-se enquanto escreve. Vazio rep\u00f5e a primeira mensagem."
+            ],
+            "Delete \u201c%s\u201d?": [
+                "Eliminar \u201c%s\u201d?"
+            ],
+            "Delete this thread for good?": [
+                "Eliminar esta conversa de vez?"
+            ],
+            "\u201c%1$s\u201d and its %2$d message are deleted. This can\u2019t be undone.": [
+                "\u201c%1$s\u201d e a sua %2$d mensagem s\u00e3o eliminadas. Isto n\u00e3o pode ser anulado.",
+                "\u201c%1$s\u201d e as suas %2$d mensagens s\u00e3o eliminadas. Isto n\u00e3o pode ser anulado."
+            ],
+            "Delete for good": [
+                "Eliminar de vez"
+            ],
+            "Thread deleted. You\u2019re in a fresh one.": [
+                "Conversa eliminada. Est\u00e1 numa nova."
+            ],
+            "Thread deleted.": [
+                "Conversa eliminada."
+            ],
+            "All types": [
+                "Todos os tipos"
+            ],
+            "Videos": [
+                "V\u00eddeos"
+            ],
+            "Audio": [
+                "\u00c1udio"
+            ],
+            "Documents": [
+                "Documentos"
+            ],
+            "All media": [
+                "Toda a multim\u00e9dia"
+            ],
+            "From Agent View": [
+                "Do Agent View"
+            ],
+            "Date deleted from": [
+                "Eliminados desde"
+            ],
+            "All dates": [
+                "Todas as datas"
+            ],
+            "Trash": [
+                "Lixo"
+            ],
+            "Select all": [
+                "Selecionar tudo"
+            ],
+            "1 file": [
+                "1 ficheiro"
+            ],
+            "%s files": [
+                "%s ficheiros"
+            ],
+            "Deleted for good after %d days.": [
+                "Eliminados de vez ao fim de %d dias."
+            ],
+            "The trash is turned off on this site.": [
+                "O lixo est\u00e1 desligado neste site."
+            ],
+            "1 selected": [
+                "1 selecionado"
+            ],
+            "%d selected": [
+                "%d selecionados"
+            ],
+            "Delete permanently": [
+                "Eliminar permanentemente"
+            ],
+            "Add to message": [
+                "Adicionar \u00e0 mensagem"
+            ],
+            "Copy links": [
+                "Copiar liga\u00e7\u00f5es"
+            ],
+            "Select %s": [
+                "Selecionar %s"
+            ],
+            "Open %s in a new tab": [
+                "Abrir %s num novo separador"
+            ],
+            "Copy link": [
+                "Copiar liga\u00e7\u00e3o"
+            ],
+            "The trash is empty.": [
+                "O lixo est\u00e1 vazio."
+            ],
+            "No files here yet.": [
+                "Ainda n\u00e3o h\u00e1 ficheiros aqui."
+            ],
+            "Load more \u00b7 %1$s of %2$s": [
+                "Carregar mais \u00b7 %1$s de %2$s"
+            ],
+            "Moved to the trash.": [
+                "Movido para o lixo."
+            ],
+            "Restored.": [
+                "Restaurado."
+            ],
+            "Deleted for good.": [
+                "Eliminado de vez."
+            ],
+            "%1$s %2$d could not be changed.": [
+                "%1$s N\u00e3o foi poss\u00edvel alterar %2$d."
+            ],
+            "Delete this file for good?": [
+                "Eliminar este ficheiro de vez?"
+            ],
+            "Delete %d files for good?": [
+                "Eliminar %d ficheiros de vez?"
+            ],
+            "\u201c%s\u201d is removed from the site and cannot come back.": [
+                "\u201c%s\u201d \u00e9 removido do site e n\u00e3o pode voltar."
+            ],
+            "They are removed from the site and cannot come back.": [
+                "S\u00e3o removidos do site e n\u00e3o podem voltar."
+            ],
+            "A page that shows one will show a broken image.": [
+                "Uma p\u00e1gina que mostre um deles vai mostrar uma imagem partida."
+            ],
+            "Added %d to your message.": [
+                "%d adicionados \u00e0 sua mensagem."
+            ],
+            "A message holds 10 files at most.": [
+                "Uma mensagem leva no m\u00e1ximo 10 ficheiros."
+            ],
+            "Link copied.": [
+                "Liga\u00e7\u00e3o copiada."
+            ],
+            "%d links copied.": [
+                "%d liga\u00e7\u00f5es copiadas."
+            ],
+            "Uploading %d files\u2026": [
+                "A carregar %d ficheiros\u2026"
+            ],
+            "Uploaded.": [
+                "Carregado."
+            ],
+            "%d files uploaded.": [
+                "%d ficheiros carregados."
+            ],
+            "Your agent asks before it clicks or types on the page.": [
+                "O seu agente pergunta antes de clicar ou escrever na p\u00e1gina."
+            ],
+            "Your agent clicks and types without asking.": [
+                "O seu agente clica e escreve sem perguntar."
+            ],
+            "Your agent will stop at its next check-in.": [
+                "O seu agente vai parar no pr\u00f3ximo ponto de controlo."
+            ],
+            "Use this": [
+                "Usar isto"
+            ],
+            "Starts right away": [
+                "Come\u00e7a j\u00e1"
+            ],
+            "Plans, no changes": [
+                "Planeia, sem altera\u00e7\u00f5es"
+            ],
+            "Runs later": [
+                "Corre mais tarde"
+            ],
+            "No questions asked": [
+                "Sem perguntas"
+            ]
+        }
+    }
+}

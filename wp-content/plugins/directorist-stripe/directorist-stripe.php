@@ -7,7 +7,7 @@ use DirectoristStripe\WpMVC\App;
 /**
  * Plugin Name:       Directorist - Stripe Payment Gateway
  * Description:       Accept payments securely using Stripe, ensuring a smooth checkout experience.
- * Version:           3.0.3
+ * Version:           3.0.4
  * Requires Plugins:  directorist
  * Requires at least: 6.0
  * Requires PHP:      7.4

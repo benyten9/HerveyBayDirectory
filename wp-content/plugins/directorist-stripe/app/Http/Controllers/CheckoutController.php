@@ -68,19 +68,28 @@ class CheckoutController extends Controller {
         $this->redirect( directorist_payment_failure_url() );
     }
 
-    public function webhook( Validator $validator, WP_REST_Request $request ) {
-        $validator->validate(
-            [
-                'type' => 'required|string',
-            ]
+    public function webhook( WP_REST_Request $request ) {
+        $test_webhook = get_directorist_option( 'stripe_test_webhook' );
+        $live_webhook = get_directorist_option( 'stripe_live_webhook' );
+        $event        = WebhookEventVerifier::verify(
+            $request,
+            is_array( $test_webhook ) ? ( $test_webhook['secret'] ?? '' ) : '',
+            is_array( $live_webhook ) ? ( $live_webhook['secret'] ?? '' ) : ''
         );
 
-        $type = $request->get_param( 'type' );
-        $data = $request->get_param( 'data' );
+        if ( is_wp_error( $event ) ) {
+            return Response::send(
+                [ 'message' => $event->get_error_message() ],
+                $event->get_error_data()['status']
+            );
+        }
+
+        $type = $event['type'] ?? '';
+        $data = $event['data'] ?? [];
 
         do_action( 'directorist_stripe_webhook_received', $type, $data );
 
-        $is_live    = filter_var( $request->get_param( 'livemode' ), FILTER_VALIDATE_BOOLEAN );
+        $is_live    = $event['livemode'];
         $secret_key = get_directorist_option( $is_live ? 'stripe_live_sk' : 'stripe_test_sk' );
 
         StripeSDK::setApiKey( $secret_key ?: directorist_stripe_get_secret_key() );

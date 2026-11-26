@@ -1,0 +1,609 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-export.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "it_IT",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Close": [
+                "Chiudi"
+            ],
+            "User": [
+                "Utente"
+            ],
+            "Recommended": [
+                "Consigliato"
+            ],
+            "optional": [
+                "facoltativo"
+            ],
+            "Password": [
+                "Password"
+            ],
+            "Connect": [
+                "Collega"
+            ],
+            "Settings": [
+                "Impostazioni"
+            ],
+            "Connected": [
+                "Collegato"
+            ],
+            "Back": [
+                "Indietro"
+            ],
+            "Next": [
+                "Avanti"
+            ],
+            "Done": [
+                "Fatto"
+            ],
+            "Try again": [
+                "Riprova"
+            ],
+            "Access token": [
+                "Token di accesso"
+            ],
+            "Stop": [
+                "Interrompi"
+            ],
+            "Live": [
+                "Live"
+            ],
+            "Beta": [
+                "Beta"
+            ],
+            "Ready": [
+                "Pronta"
+            ],
+            "Everything": [
+                "Tutto"
+            ],
+            "Pages": [
+                "Pagine"
+            ],
+            "Media": [
+                "Media"
+            ],
+            "Content": [
+                "Contenuti"
+            ],
+            "Static site": [
+                "Sito statico"
+            ],
+            "Export": [
+                "Esporta"
+            ],
+            "Upload": [
+                "Carica"
+            ],
+            "Stopped.": [
+                "Interrotto."
+            ],
+            "Image": [
+                "Immagine"
+            ],
+            "Open %s": [
+                "Apri %s"
+            ],
+            "Sent": [
+                "Inviato"
+            ],
+            "File": [
+                "File"
+            ],
+            "just now": [
+                "proprio ora"
+            ],
+            "%d hour ago": [
+                "%d ora fa",
+                "%d ore fa"
+            ],
+            "Cloudflare Pages": [
+                "Cloudflare Pages"
+            ],
+            "Free, fast all over the world. Our pick.": [
+                "Gratuito, veloce in tutto il mondo. La nostra scelta."
+            ],
+            "Netlify": [
+                "Netlify"
+            ],
+            "Free plan, simple to run.": [
+                "Piano gratuito, semplice da gestire."
+            ],
+            "Your own host": [
+                "Il tuo hosting"
+            ],
+            "Any web host, over SFTP, FTPS or FTP.": [
+                "Qualsiasi hosting web, via SFTP, FTPS o FTP."
+            ],
+            "Download a zip": [
+                "Scarica uno zip"
+            ],
+            "Host it yourself, or keep a copy.": [
+                "Ospitalo tu, o tienine una copia."
+            ],
+            "Where": [
+                "Dove"
+            ],
+            "Publish": [
+                "Pubblica"
+            ],
+            "Your site as plain, fast files, live on a host and kept up to date.": [
+                "Il tuo sito come file semplici e veloci, online su un hosting e sempre aggiornato."
+            ],
+            "%d minute ago": [
+                "%d minuto fa",
+                "%d minuti fa"
+            ],
+            "%d day ago": [
+                "%d giorno fa",
+                "%d giorni fa"
+            ],
+            "Publishing\u2026": [
+                "Pubblicazione\u2026"
+            ],
+            "%d change to publish": [
+                "%d modifica da pubblicare",
+                "%d modifiche da pubblicare"
+            ],
+            "Looking at your site\u2026": [
+                "Analisi del tuo sito\u2026"
+            ],
+            "Could not look at the site.": [
+                "Impossibile analizzare il sito."
+            ],
+            "%d change waiting": [
+                "%d modifica in attesa",
+                "%d modifiche in attesa"
+            ],
+            "Everything is live.": [
+                "\u00c8 tutto online."
+            ],
+            "Live, last publish failed": [
+                "Online, l'ultima pubblicazione non \u00e8 riuscita"
+            ],
+            "%d page": [
+                "%d pagina",
+                "%d pagine"
+            ],
+            "built %s": [
+                "generato %s"
+            ],
+            "Publish changes": [
+                "Pubblica le modifiche"
+            ],
+            "Rebuild everything": [
+                "Rigenera tutto"
+            ],
+            "Publish by itself": [
+                "Pubblica in automatico"
+            ],
+            "When you change content, menus or design, it goes live about two minutes after your last edit.": [
+                "Quando modifichi contenuti, menu o design, va online circa due minuti dopo l'ultima modifica."
+            ],
+            "Last publishes": [
+                "Ultime pubblicazioni"
+            ],
+            "Changes": [
+                "Modifiche"
+            ],
+            "%d page built": [
+                "%d pagina generata",
+                "%d pagine generate"
+            ],
+            "%d file sent": [
+                "%d file inviato",
+                "%d file inviati"
+            ],
+            "by itself": [
+                "in automatico"
+            ],
+            "by NibWP": [
+                "da NibWP"
+            ],
+            "by you": [
+                "da te"
+            ],
+            "What goes in": [
+                "Cosa includere"
+            ],
+            "%d published": [
+                "%d pubblicato",
+                "%d pubblicati"
+            ],
+            "Content type lists": [
+                "Elenchi dei tipi di contenuto"
+            ],
+            "Also": [
+                "Inoltre"
+            ],
+            "Follow the links on the pages": [
+                "Segui i link nelle pagine"
+            ],
+            "Picks up pagination and anything linked that the lists above miss.": [
+                "Recupera la paginazione e tutto ci\u00f2 che \u00e8 collegato e che gli elenchi qui sopra non includono."
+            ],
+            "Only the media the pages use": [
+                "Solo i media usati dalle pagine"
+            ],
+            "The whole media library": [
+                "L'intera libreria media"
+            ],
+            "Where it goes": [
+                "Dove va"
+            ],
+            "API token": [
+                "Token API"
+            ],
+            "Saved (\u2026%s). Paste one to replace it.": [
+                "Salvato (\u2026%s). Incollane uno per sostituirlo."
+            ],
+            "Paste the token": [
+                "Incolla il token"
+            ],
+            "Project name": [
+                "Nome del progetto"
+            ],
+            "Account": [
+                "Account"
+            ],
+            "Make a token in %s: Create Token, Custom token, permission Account \u203a Cloudflare Pages \u203a Edit. A new project is made for you.": [
+                "Crea un token in %s: Create Token, Custom token, permesso Account \u203a Cloudflare Pages \u203a Edit. Un nuovo progetto viene creato per te."
+            ],
+            "Cloudflare \u203a My Profile \u203a API Tokens": [
+                "Cloudflare \u203a My Profile \u203a API Tokens"
+            ],
+            "Your token is encrypted with this site\u2019s own secret keys and kept only on this site. It is used only to send your site to Cloudflare, and it is never shown again or shared.": [
+                "Il tuo token \u00e8 cifrato con le chiavi segrete di questo sito e conservato solo su questo sito. Viene usato solo per inviare il tuo sito a Cloudflare e non viene mai pi\u00f9 mostrato n\u00e9 condiviso."
+            ],
+            "Site name": [
+                "Nome del sito"
+            ],
+            "Make a token in %s: New access token. A new site is made for you.": [
+                "Crea un token in %s: New access token. Un nuovo sito viene creato per te."
+            ],
+            "Netlify \u203a User settings \u203a Applications": [
+                "Netlify \u203a User settings \u203a Applications"
+            ],
+            "Your token is encrypted with this site\u2019s own secret keys and kept only on this site. It is used only to send your site to Netlify, and it is never shown again or shared.": [
+                "Il tuo token \u00e8 cifrato con le chiavi segrete di questo sito e conservato solo su questo sito. Viene usato solo per inviare il tuo sito a Netlify e non viene mai pi\u00f9 mostrato n\u00e9 condiviso."
+            ],
+            "How to connect": [
+                "Come collegarsi"
+            ],
+            "Server": [
+                "Server"
+            ],
+            "Port": [
+                "Porta"
+            ],
+            "Saved. Type one to replace it.": [
+                "Salvata. Digitane una per sostituirla."
+            ],
+            "Folder": [
+                "Cartella"
+            ],
+            "The folder the website is served from, from where you log in (public_html, www, htdocs\u2026). Only files that changed are sent each time.": [
+                "La cartella da cui viene servito il sito web, a partire da dove accedi (public_html, www, htdocs\u2026). Ogni volta vengono inviati solo i file modificati."
+            ],
+            "Your password is encrypted with this site\u2019s own secret keys and kept only on this site, so publishing can run without you. It is used only to log in to your server, and it is never shown again or shared.": [
+                "La tua password \u00e8 cifrata con le chiavi segrete di questo sito e conservata solo su questo sito, cos\u00ec la pubblicazione pu\u00f2 avvenire senza di te. Viene usata solo per accedere al tuo server e non viene mai pi\u00f9 mostrata n\u00e9 condivisa."
+            ],
+            "How the links work": [
+                "Come funzionano i link"
+            ],
+            "Works anywhere": [
+                "Funziona ovunque"
+            ],
+            "Links point from file to file, so the site opens from any host, a subfolder, or a folder on your computer.": [
+                "I link puntano da file a file, cos\u00ec il sito si apre da qualsiasi hosting, da una sottocartella o da una cartella sul tuo computer."
+            ],
+            "For a new address": [
+                "Per un nuovo indirizzo"
+            ],
+            "Clean links on the domain you will host it on, with a sitemap for search engines.": [
+                "Link puliti sul dominio su cui lo ospiterai, con una sitemap per i motori di ricerca."
+            ],
+            "The new address": [
+                "Il nuovo indirizzo"
+            ],
+            "Website address": [
+                "Indirizzo del sito web"
+            ],
+            "Your own domain": [
+                "Il tuo dominio"
+            ],
+            "optional, once it points at the host": [
+                "facoltativo, una volta che punta all'hosting"
+            ],
+            "Connecting\u2026": [
+                "Connessione\u2026"
+            ],
+            "Connected. The site will be at %s": [
+                "Collegato. Il sito sar\u00e0 su %s"
+            ],
+            "a zip to download": [
+                "uno zip da scaricare"
+            ],
+            "Good to know": [
+                "Buono a sapersi"
+            ],
+            "About %1$d pages, to %2$s.": [
+                "Circa %1$d pagine, verso %2$s."
+            ],
+            "Starting\u2026": [
+                "Avvio\u2026"
+            ],
+            "Files": [
+                "File"
+            ],
+            "Size": [
+                "Dimensione"
+            ],
+            "You can close this window: publishing goes on.": [
+                "Puoi chiudere questa finestra: la pubblicazione continua."
+            ],
+            "Export the site": [
+                "Esporta il sito"
+            ],
+            "Publish now": [
+                "Pubblica ora"
+            ],
+            "This token sees more than one account. Pick one, then Connect.": [
+                "Questo token vede pi\u00f9 di un account. Scegline uno, poi Collega."
+            ],
+            "Could not connect.": [
+                "Impossibile collegarsi."
+            ],
+            "Copying pages and the files they use\u2026": [
+                "Copia delle pagine e dei file che usano\u2026"
+            ],
+            "Packing the zip\u2026": [
+                "Creazione dello zip\u2026"
+            ],
+            "Your static site is ready.": [
+                "Il tuo sito statico \u00e8 pronto."
+            ],
+            "Building every page\u2026": [
+                "Generazione di tutte le pagine\u2026"
+            ],
+            "Building the pages that changed\u2026": [
+                "Generazione delle pagine modificate\u2026"
+            ],
+            "Putting the build together\u2026": [
+                "Assemblaggio della build\u2026"
+            ],
+            "Sending the files that changed\u2026": [
+                "Invio dei file modificati\u2026"
+            ],
+            "Going live\u2026": [
+                "Messa online\u2026"
+            ],
+            "Getting the files ready\u2026": [
+                "Preparazione dei file\u2026"
+            ],
+            "Your site is live.": [
+                "Il tuo sito \u00e8 online."
+            ],
+            "Publishing stopped.": [
+                "Pubblicazione interrotta."
+            ],
+            "%d thing could not be copied": [
+                "Impossibile copiare %d elemento",
+                "Impossibile copiare %d elementi"
+            ],
+            "Download the zip (%s)": [
+                "Scarica lo zip (%s)"
+            ],
+            "Export again": [
+                "Esporta di nuovo"
+            ],
+            "%1$d page has a form that sends to WordPress, so it will not send from the static site: %2$s": [
+                "%1$d pagina ha un modulo che invia a WordPress, quindi non funzioner\u00e0 dal sito statico: %2$s",
+                "%1$d pagine hanno un modulo che invia a WordPress, quindi non funzioner\u00e0 dal sito statico: %2$s"
+            ],
+            "%d page has a search box; search needs WordPress.": [
+                "%d pagina ha una casella di ricerca; la ricerca ha bisogno di WordPress.",
+                "%d pagine hanno una casella di ricerca; la ricerca ha bisogno di WordPress."
+            ],
+            "%1$d page still calls your WordPress (a script or a link it could not change): %2$s": [
+                "%1$d pagina richiama ancora il tuo WordPress (uno script o un link che non \u00e8 stato possibile modificare): %2$s",
+                "%1$d pagine richiamano ancora il tuo WordPress (script o link che non \u00e8 stato possibile modificare): %2$s"
+            ],
+            "Could not start publishing.": [
+                "Impossibile avviare la pubblicazione."
+            ],
+            "Live: %s": [
+                "Online: %s"
+            ],
+            "Your static site is ready to download.": [
+                "Il tuo sito statico \u00e8 pronto da scaricare."
+            ],
+            "The export stopped.": [
+                "L'esportazione si \u00e8 interrotta."
+            ],
+            "It publishes by itself after you edit.": [
+                "Si pubblica da solo dopo le tue modifiche."
+            ],
+            "You publish when you choose.": [
+                "Pubblichi tu quando vuoi."
+            ],
+            "Publishing stopped. Your changes are still waiting.": [
+                "Pubblicazione interrotta. Le tue modifiche sono ancora in attesa."
+            ],
+            "Write the full new address, like https:\/\/example.com": [
+                "Scrivi il nuovo indirizzo completo, ad esempio https:\/\/example.com"
+            ],
+            "Connected: %s": [
+                "Collegato: %s"
+            ],
+            "Export stopped.": [
+                "Esportazione interrotta."
+            ],
+            "Select all": [
+                "Seleziona tutto"
+            ],
+            "System check": [
+                "Controllo del sistema"
+            ],
+            "Opening your own pages": [
+                "Apertura delle tue pagine"
+            ],
+            "Reading pages side by side": [
+                "Lettura di pagine in parallelo"
+            ],
+            "Saving files": [
+                "Salvataggio dei file"
+            ],
+            "Room on the disk": [
+                "Spazio su disco"
+            ],
+            "Making a zip": [
+                "Creazione di uno zip"
+            ],
+            "PHP memory": [
+                "Memoria PHP"
+            ],
+            "Permalinks": [
+                "Permalink"
+            ],
+            "The check could not run.": [
+                "Non \u00e8 stato possibile eseguire il controllo."
+            ],
+            "List pages": [
+                "Pagine elenco"
+            ],
+            "Pages that list your content by group, like all posts in a category (\/category\/news\/). Ticked ones are copied too.": [
+                "Pagine che elencano i contenuti per gruppo, come tutti gli articoli di una categoria (\/category\/news\/). Quelle spuntate vengono copiate anche loro."
+            ],
+            "%d list page": [
+                "%d pagina elenco",
+                "%d pagine elenco"
+            ],
+            "Like \/blog\/": [
+                "Come \/blog\/"
+            ],
+            "Checking your server\u2026": [
+                "Controllo del server in corso\u2026"
+            ],
+            "Each part is tested for real, so the export does not stop halfway.": [
+                "Ogni parte viene testata davvero, cos\u00ec l\u2019esportazione non si ferma a met\u00e0."
+            ],
+            "%d thing to fix first": [
+                "%d cosa da sistemare prima",
+                "%d cose da sistemare prima"
+            ],
+            "Ready, with a few notes": [
+                "Pronto, con qualche nota"
+            ],
+            "All set: your server is ready": [
+                "Tutto pronto: il tuo server \u00e8 a posto"
+            ],
+            "Each one says what to do. Then check again.": [
+                "Ognuna dice cosa fare. Poi controlla di nuovo."
+            ],
+            "Check again": [
+                "Controlla di nuovo"
+            ],
+            "Read pages": [
+                "Leggi le pagine"
+            ],
+            "Finish up": [
+                "Rifinitura"
+            ],
+            "Pack the zip": [
+                "Crea lo zip"
+            ],
+            "Build pages": [
+                "Crea le pagine"
+            ],
+            "Put together": [
+                "Assembla"
+            ],
+            "Time left": [
+                "Tempo rimasto"
+            ],
+            "Just done": [
+                "Appena fatto"
+            ],
+            "Page": [
+                "Pagina"
+            ],
+            "Font": [
+                "Font"
+            ],
+            "Listing the pages to copy\u2026": [
+                "Elenco delle pagine da copiare\u2026"
+            ],
+            "Looking at what changed\u2026": [
+                "Controllo di cosa \u00e8 cambiato\u2026"
+            ],
+            "Reading pages\u2026": [
+                "Lettura delle pagine\u2026"
+            ],
+            "Reading %s": [
+                "Lettura di %s"
+            ],
+            "Copying media: %1$d of %2$d": [
+                "Copia dei media: %1$d di %2$d"
+            ],
+            "Adding the 404 page and the sitemap\u2026": [
+                "Aggiunta della pagina 404 e della sitemap\u2026"
+            ],
+            "Packing file %1$d of %2$d": [
+                "Compressione del file %1$d di %2$d"
+            ],
+            "Listing the files to pack\u2026": [
+                "Elenco dei file da comprimere\u2026"
+            ],
+            "Sending file %1$d of %2$d": [
+                "Invio del file %1$d di %2$d"
+            ],
+            "Telling the host to go live\u2026": [
+                "Si chiede all\u2019hosting di andare online\u2026"
+            ],
+            "Comparing with what is live\u2026": [
+                "Confronto con ci\u00f2 che \u00e8 online\u2026"
+            ],
+            "Finishing up\u2026": [
+                "Rifinitura in corso\u2026"
+            ],
+            "Took": [
+                "Durata"
+            ],
+            "The server is busy. Trying again (%1$d of %2$d)\u2026": [
+                "Il server \u00e8 occupato. Nuovo tentativo (%1$d di %2$d)\u2026"
+            ],
+            "The connection to your site dropped.": [
+                "La connessione al tuo sito si \u00e8 interrotta."
+            ],
+            "Your login ran out. Reload the page and try again.": [
+                "L\u2019accesso \u00e8 scaduto. Ricarica la pagina e riprova."
+            ],
+            "A firewall or security plugin blocked the request.": [
+                "Un firewall o un plugin di sicurezza ha bloccato la richiesta."
+            ],
+            "The server hit an error, often memory or a plugin. The system check can tell more.": [
+                "Il server ha avuto un errore, spesso la memoria o un plugin. Il controllo del sistema pu\u00f2 dirti di pi\u00f9."
+            ],
+            "The server took too long to answer: a host time limit stopped it.": [
+                "Il server ha impiegato troppo a rispondere: lo ha fermato un limite di tempo dell\u2019hosting."
+            ],
+            "What is done is kept: Try again goes on from where it stopped.": [
+                "Ci\u00f2 che \u00e8 fatto resta: Riprova continua da dove si \u00e8 fermato."
+            ],
+            "Run the system check": [
+                "Esegui il controllo del sistema"
+            ],
+            "Start over": [
+                "Ricomincia"
+            ]
+        }
+    }
+}

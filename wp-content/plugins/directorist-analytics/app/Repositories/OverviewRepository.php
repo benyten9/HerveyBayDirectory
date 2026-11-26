@@ -196,7 +196,7 @@ class OverviewRepository {
 		switch ( $type ) {
 			case 'listing_created':
 				$listing = get_post( $object_id );
-				$title   = $listing ? sanitize_text_field( $listing->post_title ) : __( 'Unknown Listing', 'directorist-analytics' );
+				$title   = $listing ? sanitize_text_field( $listing->post_title ) : __( 'Unknown Listing', 'directorist-advanced-review' );
 				$link    = $listing ? get_permalink( $listing ) : '';
 				break;
 
@@ -206,12 +206,12 @@ class OverviewRepository {
 					// Get listing title (not reviewer name) for "New Review Submitted on [listing title]"
 					$listing_id = absint( $comment->comment_post_ID );
 					$listing    = get_post( $listing_id );
-					$title      = $listing ? sanitize_text_field( $listing->post_title ) : __( 'Unknown Listing', 'directorist-analytics' );
+					$title      = $listing ? sanitize_text_field( $listing->post_title ) : __( 'Unknown Listing', 'directorist-advanced-review' );
 					
 					// Link to the listing page (review section)
 					$link = $listing ? get_permalink( $listing ) . '#comment-' . $object_id : '';
 				} else {
-					$title = __( 'Unknown Review', 'directorist-analytics' );
+					$title = __( 'Unknown Review', 'directorist-advanced-review' );
 					$link  = '';
 				}
 				break;
@@ -225,7 +225,7 @@ class OverviewRepository {
 					// Link to author posts page
 					$link = get_author_posts_url( $user->ID );
 				} else {
-					$title = __( 'Unknown User', 'directorist-analytics' );
+					$title = __( 'Unknown User', 'directorist-advanced-review' );
 					$link  = '';
 				}
 				break;
@@ -242,7 +242,7 @@ class OverviewRepository {
 			'title' => $title,  // Just the name
 			'time'  => sprintf(
 				/* translators: %s: Time difference */
-				__( '%s ago', 'directorist-analytics' ),
+				__( '%s ago', 'directorist-advanced-review' ),
 				human_time_diff(
 					strtotime( $activity->created_at ),
 					current_time( 'timestamp' )
@@ -336,11 +336,11 @@ class OverviewRepository {
 			'categories' => $dates,
 			'series'     => array(
 				array(
-					'name' => __( 'Views', 'directorist-analytics' ),
+					'name' => __( 'Views', 'directorist-advanced-review' ),
 					'data' => $views,
 				),
 				array(
-					'name' => __( 'Search Appearances', 'directorist-analytics' ),
+					'name' => __( 'Search Appearances', 'directorist-advanced-review' ),
 					'data' => $searches,
 				),
 			),

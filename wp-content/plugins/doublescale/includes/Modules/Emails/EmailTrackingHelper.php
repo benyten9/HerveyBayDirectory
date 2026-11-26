@@ -287,8 +287,11 @@ class EmailTrackingHelper {
 		if ( $template->get_setting( 'utm_medium' ) ) {
 			$utm_params['utm_medium'] = $template->get_setting( 'utm_medium' );
 		}
-		if ( $template->get_setting( 'utm_campaign' ) ) {
-			$utm_params['utm_campaign'] = $template->get_setting( 'utm_campaign' );
+		// The campaign screen saves the campaign name as utm_name; utm_campaign is
+		// the older key. Read both so the name reaches Google Analytics.
+		$utm_campaign = $template->get_setting( 'utm_campaign' ) ? $template->get_setting( 'utm_campaign' ) : $template->get_setting( 'utm_name' );
+		if ( $utm_campaign ) {
+			$utm_params['utm_campaign'] = $utm_campaign;
 		}
 		if ( $template->get_setting( 'utm_term' ) ) {
 			$utm_params['utm_term'] = $template->get_setting( 'utm_term' );

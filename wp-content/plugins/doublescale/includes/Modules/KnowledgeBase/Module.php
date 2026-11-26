@@ -51,7 +51,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	}
 
 	public function label(): string {
-		return __( 'Help Center', 'doublescale' );
+		return __( 'Knowledge Base', 'doublescale' );
 	}
 
 	public function description(): string {
@@ -163,8 +163,10 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		ShortcodePageProvisioner::register(
 			KbPublicArticles::SHORTCODE,
 			array(
-				'title' => __( 'Help Center', 'doublescale' ),
-				'slug'  => 'help-center',
+				'title' => __( 'Knowledge Base', 'doublescale' ),
+				// New pages only: a site that already has its page keeps its
+				// address (the page is found by its stored id, not its slug).
+				'slug'  => 'knowledge-base',
 			)
 		);
 
@@ -193,7 +195,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	public static function register_portal_section( array $sections ): array {
 		$sections[] = array(
 			'slug'         => 'help',
-			'label'        => __( 'Help Center', 'doublescale' ),
+			'label'        => __( 'Knowledge Base', 'doublescale' ),
 			'icon'         => 'book',
 			'order'        => 80,
 			'is_available' => static fn() => doublescale_is_module_active( 'knowledge_base' ),

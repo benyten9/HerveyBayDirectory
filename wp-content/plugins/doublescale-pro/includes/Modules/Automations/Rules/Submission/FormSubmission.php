@@ -135,8 +135,11 @@ class FormSubmission extends Rule
             $timeframe_data = $rule['value']['timeframe'] ?? array();
         }
 
-        // Build the query for form submissions
-        $query = FormSubmissionModel::where('contact_id', $contact->id);
+        // Build the query for form submissions (finished ones: spam and abandoned entries never count)
+        $query = FormSubmissionModel::where('contact_id', $contact->id)
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', 'complete');
+            });
 
         // Filter by form IDs if provided
         if (! empty($form_ids)) {
@@ -170,7 +173,8 @@ class FormSubmission extends Rule
         }
 
         $value = $this->get_value($automation_contact, $rule);
-        return $value > 0;
+        $min   = max(1, (int) ($rule['value']['min_count'] ?? 1));
+        return $value >= $min;
     }
 }
 

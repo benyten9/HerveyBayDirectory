@@ -125,7 +125,7 @@ final class KbAddresses {
 
 		$page = get_post( $page_id );
 		if ( ! $page instanceof WP_Post ) {
-			return new WP_Error( 'kb_page_missing', __( 'The help center page was not found.', 'doublescale' ), array( 'status' => 404 ) );
+			return new WP_Error( 'kb_page_missing', __( 'The knowledge base page was not found.', 'doublescale' ), array( 'status' => 404 ) );
 		}
 		if ( $slug === $page->post_name ) {
 			return $slug;

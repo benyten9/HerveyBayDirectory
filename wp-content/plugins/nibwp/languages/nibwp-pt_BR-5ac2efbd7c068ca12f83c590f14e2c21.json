@@ -1,0 +1,1900 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-buddy.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "pt_BR",
+                "plural-forms": "nplurals=2; plural=(n > 1);"
+            },
+            "Close": [
+                "Fechar"
+            ],
+            "Copy": [
+                "Copiar"
+            ],
+            "Copied": [
+                "Copiado"
+            ],
+            "Cancel": [
+                "Cancelar"
+            ],
+            "Got it": [
+                "Entendi"
+            ],
+            "ON": [
+                "LIGADO"
+            ],
+            "OFF": [
+                "DESLIGADO"
+            ],
+            "Connect": [
+                "Conectar"
+            ],
+            "Back": [
+                "Voltar"
+            ],
+            "Next": [
+                "Pr\u00f3ximo"
+            ],
+            "Done": [
+                "Conclu\u00eddo"
+            ],
+            "Design": [
+                "Design"
+            ],
+            "Forms": [
+                "Formul\u00e1rios"
+            ],
+            "Events": [
+                "Eventos"
+            ],
+            "SEO": [
+                "SEO"
+            ],
+            "%d minute": [
+                "%d minuto",
+                "%d minutos"
+            ],
+            "Stop": [
+                "Parar"
+            ],
+            "Add": [
+                "Adicionar"
+            ],
+            "Stopped": [
+                "Interrompida"
+            ],
+            "Media": [
+                "M\u00eddia"
+            ],
+            "Audit this page": [
+                "Auditar esta p\u00e1gina"
+            ],
+            "Not now": [
+                "Agora n\u00e3o"
+            ],
+            "Mobile": [
+                "Celular"
+            ],
+            "No thanks": [
+                "N\u00e3o, obrigado"
+            ],
+            "Save": [
+                "Salvar"
+            ],
+            "Comment": [
+                "Comentar"
+            ],
+            "Draw": [
+                "Desenhar"
+            ],
+            "Static site": [
+                "Site est\u00e1tico"
+            ],
+            "Send": [
+                "Enviar"
+            ],
+            "a happy dance": [
+                "uma dancinha feliz"
+            ],
+            "a double back flip": [
+                "um mortal duplo para tr\u00e1s"
+            ],
+            "the moonwalk": [
+                "o moonwalk"
+            ],
+            "Niby, your helper. Click for a tip, drag to move.": [
+                "Niby, seu ajudante. Clique para ver uma dica, arraste para mover."
+            ],
+            "Your agent is busy with \u201c%s\u201d. I\u2019ll answer right after.": [
+                "Seu agente est\u00e1 ocupado com \u201c%s\u201d. Respondo logo em seguida."
+            ],
+            "Your agent is busy right now. I\u2019ll answer right after.": [
+                "Seu agente est\u00e1 ocupado agora. Respondo logo em seguida."
+            ],
+            "Thinking": [
+                "Pensando"
+            ],
+            "Asking your agent, one moment": [
+                "Perguntando ao seu agente, s\u00f3 um momento"
+            ],
+            "Still thinking. Your agent may be busy with something else": [
+                "Ainda pensando. Seu agente pode estar ocupado com outra coisa"
+            ],
+            "And my agent adds: %s": [
+                "E meu agente acrescenta: %s"
+            ],
+            "My agent did not answer this time. It may be busy; ask me again in a bit.": [
+                "Meu agente n\u00e3o respondeu desta vez. Talvez esteja ocupado; pergunte de novo daqui a pouco."
+            ],
+            "Press Ctrl K to search your whole site, or paste any web address to open a safe snapshot of it.": [
+                "Pressione Ctrl K para pesquisar o site inteiro ou cole qualquer endere\u00e7o da web para abrir uma c\u00f3pia segura dele."
+            ],
+            "Press [ to fold the side panel and give the page more room.": [
+                "Pressione [ para recolher o painel lateral e dar mais espa\u00e7o \u00e0 p\u00e1gina."
+            ],
+            "History shows every saved version of a page. Preview one in place before you restore it.": [
+                "O Hist\u00f3rico mostra cada vers\u00e3o salva de uma p\u00e1gina. Visualize uma no lugar antes de restaur\u00e1-la."
+            ],
+            "Right-click a tab to put related tabs in a coloured group.": [
+                "Clique com o bot\u00e3o direito em uma aba para colocar abas relacionadas em um grupo colorido."
+            ],
+            "Type \/ in the message box for starters, skills and your NibWP workflows.": [
+                "Digite \/ na caixa de mensagem para ver sugest\u00f5es, skills e seus fluxos de trabalho do NibWP."
+            ],
+            "Press D to draw a box, a circle or a line around what you mean.": [
+                "Pressione D para desenhar uma caixa, um c\u00edrculo ou uma linha em volta do que voc\u00ea quer dizer."
+            ],
+            "The phone and tablet buttons show the page at those widths. Notes pinned there tell the agent which one to fix.": [
+                "Os bot\u00f5es de celular e tablet mostram a p\u00e1gina nessas larguras. As notas fixadas ali dizem ao agente qual delas corrigir."
+            ],
+            "Media holds every file on the site. Pick a few and add them to your message.": [
+                "A M\u00eddia guarda todos os arquivos do site. Escolha alguns e adicione-os \u00e0 sua mensagem."
+            ],
+            "Pin several notes with Add another, then send them as one message. Your agent gets them numbered.": [
+                "Fixe v\u00e1rias notas com Adicionar outra e envie todas como uma s\u00f3 mensagem. Seu agente as recebe numeradas."
+            ],
+            "The count next to Comment and Draw lists every comment in this thread. Click one to jump to it.": [
+                "O n\u00famero ao lado de Comentar e Desenhar lista todos os coment\u00e1rios desta conversa. Clique em um para ir at\u00e9 ele."
+            ],
+            "Ctrl-click a link on the page to open it in a new tab, like in a browser.": [
+                "Use Ctrl+clique em um link da p\u00e1gina para abri-lo em uma nova aba, como no navegador."
+            ],
+            "No agent at hand? Every message has Copy as prompt, ready to paste into any AI chat.": [
+                "Nenhum agente por perto? Toda mensagem tem Copiar como prompt, pronta para colar em qualquer chat de IA."
+            ],
+            "In the \u2026 menu, Ask before page actions makes your agent ask you before it clicks or types on a page.": [
+                "No menu \u2026, Perguntar antes de agir na p\u00e1gina faz seu agente pedir sua permiss\u00e3o antes de clicar ou digitar em uma p\u00e1gina."
+            ],
+            "Opened another site as a snapshot? Point at what you like there and ask for the same on yours.": [
+                "Abriu outro site como c\u00f3pia segura? Aponte para o que voc\u00ea gostou ali e pe\u00e7a o mesmo no seu."
+            ],
+            "Hey! I bend, I don\u2019t break.": [
+                "Ei! Eu entorto, mas n\u00e3o quebro."
+            ],
+            "Poke me once more and I\u2019ll start reading your CSS out loud.": [
+                "Me cutuque mais uma vez e eu come\u00e7o a ler seu CSS em voz alta."
+            ],
+            "I\u2019m not idle. I\u2019m in energy-saving mode. Very different.": [
+                "N\u00e3o estou parado. Estou em modo de economia de energia. \u00c9 bem diferente."
+            ],
+            "Yes? I was busy looking important.": [
+                "Sim? Eu estava ocupado fazendo cara de importante."
+            ],
+            "Careful, this antenna picks up compliments too.": [
+                "Cuidado, esta antena tamb\u00e9m capta elogios."
+            ],
+            "I\u2019ve never forgotten a semicolon. Mostly because I don\u2019t write code.": [
+                "Nunca esqueci um ponto e v\u00edrgula. Principalmente porque n\u00e3o escrevo c\u00f3digo."
+            ],
+            "Press %s (or Comment up top), then click anything on the page. Write what should change and press Enter to send it, or Add another to pin a few and send them together.": [
+                "Pressione %s (ou Comentar, l\u00e1 em cima) e clique em qualquer coisa na p\u00e1gina. Escreva o que deve mudar e pressione Enter para enviar, ou use Adicionar outra para fixar algumas e envi\u00e1-las juntas."
+            ],
+            "Press %s (or Draw up top) and pick Box, Circle or Pen in the bar at the bottom. Drag on the page, then write what should change. The drawing goes to your agent with the note.": [
+                "Pressione %s (ou Desenhar, l\u00e1 em cima) e escolha Caixa, C\u00edrculo ou Caneta na barra inferior. Arraste sobre a p\u00e1gina e escreva o que deve mudar. O desenho vai para o seu agente junto com a nota."
+            ],
+            "The + opens a new tab. Ctrl-click a link to open it in one. Right-click a tab to group tabs, colour or name the group, or close tabs.": [
+                "O + abre uma nova aba. Use Ctrl+clique em um link para abri-lo em uma. Clique com o bot\u00e3o direito em uma aba para agrupar abas, dar cor ou nome ao grupo, ou fechar abas."
+            ],
+            "Paste any web address in the bar up top. Another site opens as a safe snapshot: you can point at it and copy from it, though its own scripts stay off.": [
+                "Cole qualquer endere\u00e7o da web na barra l\u00e1 em cima. O outro site abre como uma c\u00f3pia segura: voc\u00ea pode apontar para ele e copiar dele, mas os scripts dele ficam desligados."
+            ],
+            "Every save shows in the thread with Undo. The History tab lists all versions of the page: preview one in place, then Restore. What is there now is kept, so you can switch back.": [
+                "Cada salvamento aparece na conversa com Desfazer. A aba Hist\u00f3rico lista todas as vers\u00f5es da p\u00e1gina: visualize uma no lugar e depois clique em Restaurar. O que est\u00e1 l\u00e1 agora \u00e9 guardado, ent\u00e3o voc\u00ea pode voltar."
+            ],
+            "The picture icon up top opens Media: browse by type or month, search, pick several (Shift for a run), then Add to message, Copy links, or Delete. Deleted files wait in Trash.": [
+                "O \u00edcone de imagem l\u00e1 em cima abre a M\u00eddia: navegue por tipo ou m\u00eas, pesquise, escolha v\u00e1rios (Shift para uma sequ\u00eancia) e depois Adicionar \u00e0 mensagem, Copiar links ou Excluir. Os arquivos exclu\u00eddos ficam na Lixeira."
+            ],
+            "Click the agent status at the top left. Connect your AI client once, then paste the message it shows into your agent. It then listens to everything you send from here.": [
+                "Clique no status do agente no canto superior esquerdo. Conecte seu cliente de IA uma vez e cole no seu agente a mensagem que aparece. A partir da\u00ed ele recebe tudo o que voc\u00ea enviar daqui."
+            ],
+            "Type \/ in the message box: starters, pages to include, skills and your NibWP workflows. Pick one and it rides along with your message.": [
+                "Digite \/ na caixa de mensagem: sugest\u00f5es, p\u00e1ginas para incluir, skills e seus fluxos de trabalho do NibWP. Escolha um e ele vai junto com sua mensagem."
+            ],
+            "The phone and tablet buttons up top show the page at those widths. Notes you pin there tell the agent which layout to fix.": [
+                "Os bot\u00f5es de celular e tablet l\u00e1 em cima mostram a p\u00e1gina nessas larguras. As notas que voc\u00ea fixar ali dizem ao agente qual layout corrigir."
+            ],
+            "Press Ctrl K and type: it searches pages, posts and products, or takes a path like \/contact\/.": [
+                "Pressione Ctrl K e digite: ele pesquisa p\u00e1ginas, posts e produtos, ou aceita um caminho como \/contact\/."
+            ],
+            "Did you know? With %1$s, NibWP can %2$s.": [
+                "Voc\u00ea sabia? Com %1$s, o NibWP pode %2$s."
+            ],
+            "Did you know? NibWP has a ready workflow for \u201c%1$s\u201d. %2$s": [
+                "Voc\u00ea sabia? O NibWP tem um fluxo de trabalho pronto para \u201c%1$s\u201d. %2$s"
+            ],
+            "Did you know? NibWP can work on any page you open here. Pin a note on it and say what you want; your agent does the rest.": [
+                "Voc\u00ea sabia? O NibWP pode trabalhar em qualquer p\u00e1gina que voc\u00ea abrir aqui. Fixe uma nota nela e diga o que voc\u00ea quer; seu agente faz o resto."
+            ],
+            "Did you know? NibWP keeps every version of a page. If a change is not right, one click on Undo brings the old one back.": [
+                "Voc\u00ea sabia? O NibWP guarda todas as vers\u00f5es de uma p\u00e1gina. Se uma mudan\u00e7a n\u00e3o ficou boa, um clique em Desfazer traz a antiga de volta."
+            ],
+            "Did you know? NibWP can open any other website as a safe snapshot, so you can point at a design you like and ask for the same.": [
+                "Voc\u00ea sabia? O NibWP pode abrir qualquer outro site como uma c\u00f3pia segura, para voc\u00ea apontar um design de que gosta e pedir o mesmo."
+            ],
+            "Did you know? NibWP can read a file or screenshot you drop in the message box and build from it.": [
+                "Voc\u00ea sabia? O NibWP consegue ler um arquivo ou uma captura de tela que voc\u00ea soltar na caixa de mensagem e construir a partir dele."
+            ],
+            "Try it": [
+                "Experimente"
+            ],
+            "Another one": [
+                "Mais uma"
+            ],
+            "Nice": [
+                "Legal"
+            ],
+            "My AI agent just fixed my WordPress site while I watched, with NibWP.": [
+                "Meu agente de IA acabou de consertar meu site WordPress enquanto eu assistia, com o NibWP."
+            ],
+            "That went well! Want to tell people how you fix your site now? A share helps NibWP grow, and I\u2019ll learn a new trick for it.": [
+                "Deu tudo certo! Quer contar para as pessoas como voc\u00ea conserta seu site agora? Compartilhar ajuda o NibWP a crescer, e eu aprendo um truque novo por isso."
+            ],
+            "Enjoying NibWP? Bring other site owners and earn %s with the affiliate program. Joining takes two clicks.": [
+                "Curtindo o NibWP? Traga outros donos de sites e ganhe %s com o programa de afiliados. Participar leva dois cliques."
+            ],
+            "a commission": [
+                "uma comiss\u00e3o"
+            ],
+            "See the program": [
+                "Ver o programa"
+            ],
+            "Would you leave NibWP a quick review? It helps other site owners find it.": [
+                "Que tal deixar uma avalia\u00e7\u00e3o r\u00e1pida do NibWP? Isso ajuda outros donos de sites a encontr\u00e1-lo."
+            ],
+            "Write a review": [
+                "Escrever uma avalia\u00e7\u00e3o"
+            ],
+            "Don\u2019t suggest these": [
+                "N\u00e3o sugerir estas"
+            ],
+            "Thank you! For that I learned %s. Watch.": [
+                "Obrigado! Por isso aprendi %s. Olha s\u00f3."
+            ],
+            "Bravo": [
+                "Bravo"
+            ],
+            "Ask Niby": [
+                "Pergunte ao Niby"
+            ],
+            "Ask": [
+                "Perguntar"
+            ],
+            "Chat with Niby": [
+                "Conversar com o Niby"
+            ],
+            "Agent working on \u201c%s\u201d": [
+                "Agente trabalhando em \u201c%s\u201d"
+            ],
+            "Agent working": [
+                "Agente trabalhando"
+            ],
+            "Agent listening": [
+                "Agente ouvindo"
+            ],
+            "Agent idle": [
+                "Agente parado"
+            ],
+            "No agent connected": [
+                "Nenhum agente conectado"
+            ],
+            "Your agent is waiting for your answer: \u201c%s\u201d": [
+                "Seu agente est\u00e1 esperando sua resposta: \u201c%s\u201d"
+            ],
+            "Your agent is waiting for your answer.": [
+                "Seu agente est\u00e1 esperando sua resposta."
+            ],
+            "Answer it": [
+                "Responder"
+            ],
+            "Zzz\u2026 huh? No agent listening, so I\u2019m asleep. Wake up your agent and I wake up too.": [
+                "Zzz\u2026 h\u00e3? Nenhum agente ouvindo, ent\u00e3o estou dormindo. Acorde seu agente que eu acordo junto."
+            ],
+            "Five more minutes\u2026 Connect your agent, then I\u2019m all yours.": [
+                "S\u00f3 mais cinco minutinhos\u2026 Conecte seu agente e eu sou todo seu."
+            ],
+            "Mmm\u2026 I run on your agent. No agent, no Niby. Wake it up?": [
+                "Hmm\u2026 eu funciono com o seu agente. Sem agente, sem Niby. Vamos acord\u00e1-lo?"
+            ],
+            "I\u2019m sleep-talking. Real answers when your agent is listening.": [
+                "Estou falando dormindo. Respostas de verdade quando seu agente estiver ouvindo."
+            ],
+            "Wake up my agent": [
+                "Acordar meu agente"
+            ],
+            "How does this work?": [
+                "Como isso funciona?"
+            ],
+            "Take the tour": [
+                "Fazer o tour"
+            ],
+            "Call Kind Guy": [
+                "Chamar o Kind Guy"
+            ],
+            "Hide me": [
+                "Me esconder"
+            ],
+            "A tip, please": [
+                "Uma dica, por favor"
+            ],
+            "Surprise me": [
+                "Me surpreenda"
+            ],
+            "Your agent is busy. Ask me anything meanwhile; I\u2019ll answer once it\u2019s done, or line up the next change.": [
+                "Seu agente est\u00e1 ocupado. Enquanto isso, me pergunte qualquer coisa; respondo quando ele terminar, ou deixo a pr\u00f3xima mudan\u00e7a na fila."
+            ],
+            "Hi! Ask me anything, or tell me what to change. I\u2019ll pass the work to your agent.": [
+                "Oi! Me pergunte qualquer coisa ou diga o que mudar. Eu passo o trabalho para o seu agente."
+            ],
+            "Ask me anything, or tell me what to change\u2026": [
+                "Me pergunte qualquer coisa ou diga o que mudar\u2026"
+            ],
+            "No NibWP suggestions, please": [
+                "Sem sugest\u00f5es do NibWP, por favor"
+            ],
+            "On it! I passed that to your agent. Watch the page, I\u2019ll tell you when it\u2019s done.": [
+                "Pode deixar! Passei isso para o seu agente. Fique de olho na p\u00e1gina, eu aviso quando terminar."
+            ],
+            "Noted! It waits in the thread for your agent, and gets done as soon as one is listening.": [
+                "Anotado! Fica esperando na conversa pelo seu agente e \u00e9 feito assim que algum estiver ouvindo."
+            ],
+            "Anything else?": [
+                "Mais alguma coisa?"
+            ],
+            "Sounds like a job! Want a quick answer from me here, or shall I pass it to your agent to do it properly?": [
+                "Isso parece trabalho! Quer uma resposta r\u00e1pida minha aqui ou prefere que eu passe para o seu agente fazer direito?"
+            ],
+            "Get answer here": [
+                "Responder aqui"
+            ],
+            "Pass it to the agent": [
+                "Passar para o agente"
+            ],
+            "Or ask me something else\u2026": [
+                "Ou me pergunte outra coisa\u2026"
+            ],
+            "An Etch question? That is Kind Guy\u2019s thing, our Etch pro. Shall I call him?": [
+                "Uma pergunta sobre Etch? Isso \u00e9 com o Kind Guy, nosso especialista em Etch. Quer que eu o chame?"
+            ],
+            "No, you answer": [
+                "N\u00e3o, responda voc\u00ea"
+            ],
+            "Use as my request": [
+                "Usar como minha solicita\u00e7\u00e3o"
+            ],
+            "Thanks": [
+                "Obrigado"
+            ],
+            "Keep going\u2026": [
+                "Continue\u2026"
+            ],
+            "I think best with your agent listening. Connect one and ask me again, I\u2019ll be brilliant. Probably. Ask me how to use Agent View meanwhile, that I know by heart.": [
+                "Eu penso melhor com seu agente ouvindo. Conecte um e me pergunte de novo, vou ser brilhante. Provavelmente. Enquanto isso, me pergunte como usar o Agent View, isso eu sei de cor."
+            ],
+            "Shh! I\u2019m hiding. He is scary.": [
+                "Psiu! Estou me escondendo. Ele d\u00e1 medo."
+            ],
+            "Bring Niby back": [
+                "Trazer o Niby de volta"
+            ],
+            "No problem! The tour waits in my chat whenever you want it: Take the tour.": [
+                "Sem problema! O tour fica no meu chat quando voc\u00ea quiser: Fazer o tour."
+            ],
+            "Here\u2019s how it works: browse your site on the right. Press %1$s and click anything to pin a note, or %2$s to draw around it. Send it from the chat on the left. Your agent makes the change and saves it, and every change can be undone.": [
+                "Funciona assim: navegue pelo seu site \u00e0 direita. Pressione %1$s e clique em qualquer coisa para fixar uma nota, ou %2$s para desenhar em volta. Envie pelo chat \u00e0 esquerda. Seu agente faz a mudan\u00e7a e salva, e toda mudan\u00e7a pode ser desfeita."
+            ],
+            "Idea from Kind Guy: %s": [
+                "Ideia do Kind Guy: %s"
+            ],
+            "Idea from Niby: %s": [
+                "Ideia do Niby: %s"
+            ],
+            "Fine, just us then. Let me put my Etch hat on.": [
+                "Tudo bem, ent\u00e3o somos s\u00f3 n\u00f3s. Deixa eu colocar meu chap\u00e9u de Etch."
+            ],
+            "\u201cOkay\u201d?! I inspect your markup for free and I get \u201cokay\u201d? \u2026 Fine. I\u2019ll earn it.": [
+                "\u201cOk\u201d?! Eu inspeciono seu markup de gra\u00e7a e ganho um \u201cok\u201d? \u2026 Tudo bem. Vou fazer por merecer."
+            ],
+            "Not really?! \u2026 Fine. I\u2019ll inspect harder. Out of pure spite. You\u2019ll love me by Friday.": [
+                "Nem tanto?! \u2026 Tudo bem. Vou inspecionar com mais rigor. Por pura birra. At\u00e9 sexta voc\u00ea me ama."
+            ],
+            "Make it responsive at phone, tablet and desktop, and accessible: contrast, labels, focus states, keyboard, alt text.": [
+                "Deixe responsivo no celular, tablet e desktop, e acess\u00edvel: contraste, r\u00f3tulos, estados de foco, teclado, texto alternativo."
+            ],
+            "Advice on my request, before I send it": [
+                "Conselhos sobre minha solicita\u00e7\u00e3o, antes de enviar"
+            ],
+            "Built and inspected on my WordPress site in minutes, with an AI agent and an expert watching over it. NibWP Agent View.": [
+                "Constru\u00eddo e inspecionado no meu site WordPress em minutos, com um agente de IA e um especialista de olho. NibWP Agent View."
+            ],
+            "Understood. No more suggestions from me, only tips. And the occasional joke.": [
+                "Entendido. Chega de sugest\u00f5es minhas, s\u00f3 dicas. E uma piada de vez em quando."
+            ],
+            "Attached. Now it gets done by the book. My book.": [
+                "Anexado. Agora vai ser feito conforme o manual. O meu manual."
+            ],
+            "I\u2019m back! Did you miss me? Don\u2019t answer that.": [
+                "Voltei! Sentiu minha falta? N\u00e3o precisa responder."
+            ],
+            "Kind Guy, the expert. Click to talk to him, drag to move.": [
+                "Kind Guy, o especialista. Clique para falar com ele, arraste para mover."
+            ],
+            "DUTY": [
+                "PLANT\u00c3O"
+            ],
+            "Kind Guy\u2019s mode": [
+                "Modo do Kind Guy"
+            ],
+            "On duty": [
+                "De plant\u00e3o"
+            ],
+            "Code inspector, standards controller, adviser, mentor. Reads each request before it goes, inspects every finished task, suggests workflows and fixes.": [
+                "Inspetor de c\u00f3digo, fiscal de padr\u00f5es, conselheiro, mentor. L\u00ea cada solicita\u00e7\u00e3o antes de ela sair, inspeciona cada tarefa conclu\u00edda, sugere fluxos de trabalho e corre\u00e7\u00f5es."
+            ],
+            "Off duty": [
+                "De folga"
+            ],
+            "Just company: tricks, jokes, Etch stories. Answers when you ask, inspects nothing.": [
+                "S\u00f3 companhia: truques, piadas, hist\u00f3rias de Etch. Responde quando voc\u00ea pergunta, n\u00e3o inspeciona nada."
+            ],
+            "Chat with Kind Guy": [
+                "Conversar com o Kind Guy"
+            ],
+            "Kind Guy": [
+                "Kind Guy"
+            ],
+            "Ask me anything. Work goes to your chat on the left.": [
+                "Me pergunte qualquer coisa. O trabalho vai para o seu chat \u00e0 esquerda."
+            ],
+            "Close the chat with Kind Guy": [
+                "Fechar o chat com o Kind Guy"
+            ],
+            "Point at something on the page (C)": [
+                "Apontar algo na p\u00e1gina (C)"
+            ],
+            "Draw on the page (D)": [
+                "Desenhar na p\u00e1gina (D)"
+            ],
+            "Ask Kind Guy\u2026": [
+                "Pergunte ao Kind Guy\u2026"
+            ],
+            "Your message to Kind Guy": [
+                "Sua mensagem para o Kind Guy"
+            ],
+            "Send to Kind Guy": [
+                "Enviar para o Kind Guy"
+            ],
+            "Inspect this page": [
+                "Inspecionar esta p\u00e1gina"
+            ],
+            "Point at something": [
+                "Apontar algo"
+            ],
+            "Which skill helps?": [
+                "Qual skill ajuda?"
+            ],
+            "Bye, Kind Guy": [
+                "Tchau, Kind Guy"
+            ],
+            "Go on, ask. WordPress, Etch, ACSS, code, your page. When we agree on a change, I drop it into your chat on the left and your agent does it there.": [
+                "Vai, pergunte. WordPress, Etch, ACSS, c\u00f3digo, sua p\u00e1gina. Quando concordarmos em uma mudan\u00e7a, eu a coloco no seu chat \u00e0 esquerda e seu agente faz l\u00e1."
+            ],
+            "Sounds like a job. Want my quick take here, or shall I pass it to your agent to do it properly?": [
+                "Isso parece trabalho. Quer minha opini\u00e3o r\u00e1pida aqui ou prefere que eu passe para o seu agente fazer direito?"
+            ],
+            "Put me down! \u2026 Thank you. Never do that again.": [
+                "Me p\u00f5e no ch\u00e3o! \u2026 Obrigado. Nunca mais fa\u00e7a isso."
+            ],
+            "I am not a sticker.": [
+                "Eu n\u00e3o sou um adesivo."
+            ],
+            "Fine. I\u2019ll work from here. Happy?": [
+                "Tudo bem. Vou trabalhar daqui. Satisfeito?"
+            ],
+            "I am the best at Etch and ACSS. Who can beat me? Nobody. I am the best.": [
+                "Eu sou o melhor em Etch e ACSS. Quem me supera? Ningu\u00e9m. Eu sou o melhor."
+            ],
+            "Second place? Never heard of it.": [
+                "Segundo lugar? Nunca ouvi falar."
+            ],
+            "Who knows Etch and ACSS better than the guy who made them? Exactly. Nobody.": [
+                "Quem conhece Etch e ACSS melhor do que o cara que os criou? Exatamente. Ningu\u00e9m."
+            ],
+            "I don\u2019t make mistakes. I make components.": [
+                "Eu n\u00e3o cometo erros. Eu crio componentes."
+            ],
+            "Fastest Etch build you will ever see. Blink and you miss it.": [
+                "O build de Etch mais r\u00e1pido que voc\u00ea j\u00e1 viu. Piscou, perdeu."
+            ],
+            "Some people use Etch. I am Etch\u2019s favourite person.": [
+                "Tem gente que usa Etch. Eu sou a pessoa favorita do Etch."
+            ],
+            "Pressure? I don\u2019t feel pressure. Pressure feels me.": [
+                "Press\u00e3o? Eu n\u00e3o sinto press\u00e3o. A press\u00e3o \u00e9 que me sente."
+            ],
+            "What now?": [
+                "E agora?"
+            ],
+            "You clicked me. Bold move.": [
+                "Voc\u00ea clicou em mim. Que ousadia."
+            ],
+            "Make it quick. I have tokens to align.": [
+                "Seja r\u00e1pido. Tenho tokens para alinhar."
+            ],
+            "Need the best? You found him.": [
+                "Precisa do melhor? Encontrou."
+            ],
+            "Autographs after the build.": [
+                "Aut\u00f3grafos depois do build."
+            ],
+            "You again? Fine. Talk. Fast.": [
+                "Voc\u00ea de novo? Tudo bem. Fale. R\u00e1pido."
+            ],
+            "I\u2019m busy being excellent. What is it?": [
+                "Estou ocupado sendo excelente. O que foi?"
+            ],
+            "!important? Do you also shout at your coffee machine?": [
+                "!important? Voc\u00ea tamb\u00e9m grita com a sua cafeteira?"
+            ],
+            "!important is CSS for \u201cI gave up.\u201d I never give up.": [
+                "!important \u00e9 CSS para \u201cdesisti\u201d. Eu nunca desisto."
+            ],
+            "Two CSS properties walk into a bar. A barstool in a different bar falls over.": [
+                "Duas propriedades CSS entram em um bar. Um banquinho em outro bar cai."
+            ],
+            "Why was the div sad? It had no class. BEM fixes that. You\u2019re welcome.": [
+                "Por que a div estava triste? Ela n\u00e3o tinha classe. O BEM resolve isso. De nada."
+            ],
+            "z-index: 9999? Bold. Let me guess, 99999 next week.": [
+                "z-index: 9999? Ousado. Deixa eu adivinhar: 99999 semana que vem."
+            ],
+            "I told a joke about position: absolute. Nobody knew where it was coming from.": [
+                "Contei uma piada sobre position: absolute. Ningu\u00e9m sabia de onde ela vinha."
+            ],
+            "I don\u2019t float. I flex. And when I\u2019m serious, I grid.": [
+                "Eu n\u00e3o flutuo. Eu flexiono. E quando falo s\u00e9rio, uso grid."
+            ],
+            "Centring a div used to be hard. Then I showed up.": [
+                "Centralizar uma div era dif\u00edcil. At\u00e9 eu aparecer."
+            ],
+            "display: none. That is my patience for inline styles.": [
+                "display: none. Essa \u00e9 a minha paci\u00eancia para estilos inline."
+            ],
+            "Margins collapse. My standards don\u2019t.": [
+                "Margens colapsam. Meus padr\u00f5es, n\u00e3o."
+            ],
+            "Specificity wars? I don\u2019t fight them. I write clean classes and win.": [
+                "Guerra de especificidade? Eu n\u00e3o entro nelas. Escrevo classes limpas e ven\u00e7o."
+            ],
+            "A div inside a div inside a div. Somewhere, a token cries.": [
+                "Uma div dentro de uma div dentro de uma div. Em algum lugar, um token chora."
+            ],
+            "I don\u2019t have a temper. I have standards.": [
+                "Eu n\u00e3o tenho mau humor. Tenho padr\u00f5es."
+            ],
+            "Did you just say another builder\u2019s name in front of me? I\u2019ll pretend I didn\u2019t hear that.": [
+                "Voc\u00ea acabou de dizer o nome de outro builder na minha frente? Vou fingir que n\u00e3o ouvi."
+            ],
+            "Oh, that one. Sure. And I\u2019ll write my HTML with a crayon.": [
+                "Ah, esse. Claro. E eu vou escrever meu HTML com giz de cera."
+            ],
+            "Interesting. Wrong, but interesting.": [
+                "Interessante. Errado, mas interessante."
+            ],
+            "Fine. Sent. Now don\u2019t touch anything.": [
+                "Tudo bem. Enviado. Agora n\u00e3o mexa em nada."
+            ],
+            "Your agent has it. If it goes wrong, I\u2019m blaming you.": [
+                "Seu agente j\u00e1 est\u00e1 com isso. Se der errado, a culpa \u00e9 sua."
+            ],
+            "Sent. Clean HTML is on its way. You\u2019re welcome in advance.": [
+                "Enviado. HTML limpo a caminho. De nada, desde j\u00e1."
+            ],
+            "Done. Flawless, obviously.": [
+                "Pronto. Impec\u00e1vel, obviamente."
+            ],
+            "Finished. Check it. Then thank me. Mostly the second part.": [
+                "Terminei. Confira. Depois me agrade\u00e7a. Principalmente a segunda parte."
+            ],
+            "Call me when you\u2019re doing real Etch work.": [
+                "Me chame quando for fazer trabalho de Etch de verdade."
+            ],
+            "I\u2019m out. Don\u2019t let Niby touch the CSS.": [
+                "Fui. N\u00e3o deixe o Niby mexer no CSS."
+            ],
+            "I can see you, Niby.": [
+                "Estou te vendo, Niby."
+            ],
+            "Niby, stop peeking. It\u2019s embarrassing.": [
+                "Niby, pare de espiar. Que vergonha."
+            ],
+            "Etch is not static HTML. Four pillars: components, loops, conditions, dynamic data. If an editor would ever change it without opening the builder, it is a prop, a loop item, a condition or a binding. Not a literal.": [
+                "Etch n\u00e3o \u00e9 HTML est\u00e1tico. Quatro pilares: componentes, loops, condi\u00e7\u00f5es, dados din\u00e2micos. Se algu\u00e9m fosse mudar algo sem abrir o builder, isso \u00e9 uma propriedade, um item de loop, uma condi\u00e7\u00e3o ou um v\u00ednculo. N\u00e3o um valor literal."
+            ],
+            "Repeating cards, tiers, tabs? One Etch component with properties, used everywhere. Copy-pasted markup is how weekends die.": [
+                "Cards, planos, abas que se repetem? Um componente Etch com propriedades, usado em todo lugar. Markup copiado e colado \u00e9 assim que os fins de semana morrem."
+            ],
+            "Six or more identical siblings, or content from posts, products or ACF rows? That is a loop. Not six boxes made by hand.": [
+                "Seis ou mais irm\u00e3os id\u00eanticos, ou conte\u00fado de posts, produtos ou linhas do ACF? Isso \u00e9 um loop. N\u00e3o seis caixas feitas \u00e0 m\u00e3o."
+            ],
+            "Hiding something with CSS? No. Use an Etch condition and do not render it at all. Dead markup is still markup.": [
+                "Escondendo algo com CSS? N\u00e3o. Use uma condi\u00e7\u00e3o do Etch e simplesmente n\u00e3o renderize. Markup morto continua sendo markup."
+            ],
+            "Bind real data, then shape it with modifiers: fallbacks, truncation, dates, maths. Don\u2019t type what the database already knows.": [
+                "Vincule dados reais e depois d\u00ea forma com modificadores: valores de reserva, truncamento, datas, contas. N\u00e3o digite o que o banco de dados j\u00e1 sabe."
+            ],
+            "Every value that maps to ACSS gets the token and a fallback: var(--text-l, 1.125rem). A bare var() with no fallback? Amateur hour.": [
+                "Todo valor que corresponde ao ACSS recebe o token e um valor de reserva: var(--text-l, 1.125rem). Um var() sem valor de reserva? Coisa de amador."
+            ],
+            "Headings: var(--h1), var(--h2), var(--h3). Body: var(--text-m). Never a hand-written clamp() for font sizes. ACSS already does the fluid maths, better than you.": [
+                "T\u00edtulos: var(--h1), var(--h2), var(--h3). Corpo: var(--text-m). Nunca um clamp() escrito \u00e0 m\u00e3o para tamanho de fonte. O ACSS j\u00e1 faz a conta fluida, e melhor do que voc\u00ea."
+            ],
+            "Sections breathe with var(--section-space-m); heroes and calls to action get --section-space-l. Side padding is var(--gutter). Stop inventing margins.": [
+                "Se\u00e7\u00f5es respiram com var(--section-space-m); heros e chamadas para a\u00e7\u00e3o ganham --section-space-l. O espa\u00e7amento lateral \u00e9 var(--gutter). Pare de inventar margens."
+            ],
+            "Grids use var(--grid-gap), stacked content uses var(--content-gap). A margin on every child? I can hear it from here.": [
+                "Grids usam var(--grid-gap), conte\u00fado empilhado usa var(--content-gap). Margem em cada filho? D\u00e1 para ouvir daqui."
+            ],
+            "Surfaces decide the token. --border-color-light is for dark sections; on a white card it is invisible. So is your border.": [
+                "A superf\u00edcie decide o token. --border-color-light \u00e9 para se\u00e7\u00f5es escuras; em um card branco, ela fica invis\u00edvel. Assim como a sua borda."
+            ],
+            "Class names are BEM: brand-card__title--featured. Not .big-red-text. I mean it.": [
+                "Nomes de classe seguem o BEM: brand-card__title--featured. N\u00e3o .big-red-text. Estou falando s\u00e9rio."
+            ],
+            "Every element gets a class. A tree of bare tags cannot be styled or targeted later. Future you will cry.": [
+                "Todo elemento recebe uma classe. Uma \u00e1rvore de tags sem classe n\u00e3o pode ser estilizada nem selecionada depois. O voc\u00ea do futuro vai chorar."
+            ],
+            "Responsive is not optional. Container queries when a component cares about its own width, media queries for the viewport.": [
+                "Responsivo n\u00e3o \u00e9 opcional. Container queries quando um componente se importa com a pr\u00f3pria largura, media queries para a viewport."
+            ],
+            "Focus ring: var(--focus-width) solid var(--focus-color). Keyboard users exist. Respect them.": [
+                "Anel de foco: var(--focus-width) solid var(--focus-color). Quem usa teclado existe. Respeite."
+            ],
+            "No style tags, no @import, no stylesheet links inside a page. Styles live in Etch\u2019s styles, wired to classes.": [
+                "Nada de tags style, @import ou links de folha de estilo dentro de uma p\u00e1gina. Os estilos ficam nos estilos do Etch, ligados \u00e0s classes."
+            ],
+            "Pick one type scale and stay with it: major third 1.25, perfect fourth 1.333. Mixing scales is chaos with extra steps.": [
+                "Escolha uma escala tipogr\u00e1fica e fique com ela: ter\u00e7a maior 1.25, quarta justa 1.333. Misturar escalas \u00e9 caos com etapas extras."
+            ],
+            "Modern CSS does the heavy lifting: gap, :has(), container queries, logical properties like margin-inline. Hacks are for 2012.": [
+                "O CSS moderno faz o trabalho pesado: gap, :has(), container queries, propriedades l\u00f3gicas como margin-inline. Gambiarras s\u00e3o coisa de 2012."
+            ],
+            "Animations go inside prefers-reduced-motion. Not everyone wants your hero spinning.": [
+                "Anima\u00e7\u00f5es ficam dentro de prefers-reduced-motion. Nem todo mundo quer seu hero girando."
+            ],
+            "Listen up. Open a page in the Etch editor right here, press %s and click on the canvas. I tell your agent exactly which element. No guessing.": [
+                "Preste aten\u00e7\u00e3o. Abra uma p\u00e1gina no editor do Etch aqui mesmo, pressione %s e clique no canvas. Eu digo ao seu agente exatamente qual elemento. Sem adivinha\u00e7\u00e3o."
+            ],
+            "Show me": [
+                "Me mostre"
+            ],
+            "Press D, draw a box around a section and say \u201cmake this a component\u201d. Reusable, editable, done. Copy and paste is for amateurs.": [
+                "Pressione D, desenhe uma caixa em volta de uma se\u00e7\u00e3o e diga \u201ctransforme isto em um componente\u201d. Reutiliz\u00e1vel, edit\u00e1vel, pronto. Copiar e colar \u00e9 para amadores."
+            ],
+            "Phone view, up top. Pin notes in it and your agent fixes the phone layout, not the desktop one. Basic stuff, people.": [
+                "Visualiza\u00e7\u00e3o de celular, l\u00e1 em cima. Fixe notas nela e seu agente corrige o layout do celular, n\u00e3o o do desktop. O b\u00e1sico, pessoal."
+            ],
+            "With %1$s, NibWP can %2$s. Yes, I\u2019m impressed too. Don\u2019t tell Niby.": [
+                "Com %1$s, o NibWP pode %2$s. Sim, eu tamb\u00e9m fiquei impressionado. N\u00e3o conte ao Niby."
+            ],
+            "There is a ready workflow for \u201c%1$s\u201d: %2$s. Press \/ and type its name. Or don\u2019t. I\u2019m not your mom.": [
+                "Existe um fluxo de trabalho pronto para \u201c%1$s\u201d: %2$s. Pressione \/ e digite o nome dele. Ou n\u00e3o. N\u00e3o sou sua m\u00e3e."
+            ],
+            "Press D, draw a box around the section, say \u201cmake this an Etch component\u201d and send. Built once, reused everywhere, with properties for what changes. Like my insults.": [
+                "Pressione D, desenhe uma caixa em volta da se\u00e7\u00e3o, diga \u201ctransforme isto em um componente Etch\u201d e envie. Constru\u00eddo uma vez, reutilizado em todo lugar, com propriedades para o que muda. Como as minhas alfinetadas."
+            ],
+            "Open the page in the Etch editor here, press %s and click right on the canvas. I tell your agent exactly which element. Yes, inside the canvas. I\u2019m that good.": [
+                "Abra a p\u00e1gina no editor do Etch aqui, pressione %s e clique direto no canvas. Eu digo ao seu agente exatamente qual elemento. Sim, dentro do canvas. Sou bom assim."
+            ],
+            "Drop a screenshot, HTML or a URL in the message box and say \u201cconvert this to Etch\u201d. With %s, NibWP builds validated Etch components from it.": [
+                "Solte uma captura de tela, um HTML ou uma URL na caixa de mensagem e diga \u201cconverta isto para Etch\u201d. Com %s, o NibWP constr\u00f3i componentes Etch validados a partir disso."
+            ],
+            "ACSS is the CSS framework that pairs with Etch: tokens for spacing, type and colour. With %s, NibWP can build an ACSS setup from a screenshot or a URL.": [
+                "ACSS \u00e9 o framework CSS que combina com o Etch: tokens de espa\u00e7amento, tipografia e cor. Com %s, o NibWP pode montar uma configura\u00e7\u00e3o de ACSS a partir de uma captura de tela ou de uma URL."
+            ],
+            "ACSS is the CSS framework that pairs with Etch: tokens for spacing, type and colour. Use them. Always.": [
+                "ACSS \u00e9 o framework CSS que combina com o Etch: tokens de espa\u00e7amento, tipografia e cor. Use-os. Sempre."
+            ],
+            "Hey! Off the sneakers!": [
+                "Ei! Sai do meu t\u00eanis!"
+            ],
+            "Did you just step on my foot? Did you?": [
+                "Voc\u00ea acabou de pisar no meu p\u00e9? Pisou?"
+            ],
+            "Limited edition. Touch them again, I dare you.": [
+                "Edi\u00e7\u00e3o limitada. Encosta de novo, eu te desafio."
+            ],
+            "OW. Rude.": [
+                "AI. Que grosseria."
+            ],
+            "Nice try. The cap stays on for a reason.": [
+                "Boa tentativa. O bon\u00e9 fica na cabe\u00e7a por um motivo."
+            ],
+            "Focus on the work. Before you know it, Bev will ask for changes.": [
+                "Foque no trabalho. Quando voc\u00ea menos esperar, a Bev vai pedir altera\u00e7\u00f5es."
+            ],
+            "Hmm. Thinking. Don\u2019t interrupt.": [
+                "Hmm. Pensando. N\u00e3o interrompa."
+            ],
+            "This beard has seen things. Mostly divs inside divs.": [
+                "Esta barba j\u00e1 viu coisas. Principalmente divs dentro de divs."
+            ],
+            "Scratching my beard means I\u2019m about to be right. Again.": [
+                "Co\u00e7ar a barba quer dizer que estou prestes a ter raz\u00e3o. De novo."
+            ],
+            "Chat with me": [
+                "Converse comigo"
+            ],
+            "Go off duty": [
+                "Sair do plant\u00e3o"
+            ],
+            "Go on duty": [
+                "Entrar de plant\u00e3o"
+            ],
+            "Hands off the cap.": [
+                "Tire a m\u00e3o do bon\u00e9."
+            ],
+            "The cap stays. Don\u2019t even think about it.": [
+                "O bon\u00e9 fica. Nem pense nisso."
+            ],
+            "Careful. That cap has survived three redesigns.": [
+                "Cuidado. Esse bon\u00e9 sobreviveu a tr\u00eas redesigns."
+            ],
+            "THAT\u2019S IT. You made my cap fly off. Happy now?": [
+                "CHEGA. Voc\u00ea fez meu bon\u00e9 voar. Satisfeito agora?"
+            ],
+            "La la la. No agent, no listening. Connect one and I\u2019ll take these off.": [
+                "L\u00e1 l\u00e1 l\u00e1. Sem agente, n\u00e3o escuto nada. Conecte um e eu tiro isto."
+            ],
+            "Fine": [
+                "Tudo bem"
+            ],
+            "Fine. I\u2019m listening. Don\u2019t make me regret it.": [
+                "Tudo bem. Estou ouvindo. N\u00e3o me fa\u00e7a me arrepender."
+            ],
+            "Etch? Oh, that is serious work. For this one, let me bring in someone more skilled than me.": [
+                "Etch? Ah, isso \u00e9 trabalho s\u00e9rio. Para este, deixa eu chamar algu\u00e9m mais habilidoso do que eu."
+            ],
+            "Etch again? Shall I call Kind Guy?": [
+                "Etch de novo? Chamo o Kind Guy?"
+            ],
+            "Bring him in": [
+                "Chame ele"
+            ],
+            "No, stay Niby": [
+                "N\u00e3o, fique com o Niby"
+            ],
+            "Meet Kind Guy: nobody knows Etch and ACSS like him. Brace yourself.": [
+                "Conhe\u00e7a o Kind Guy: ningu\u00e9m conhece Etch e ACSS como ele. Prepare-se."
+            ],
+            "See my sign? Flip it. On duty, I inspect everything your agent does. Off duty, I just hang out and judge quietly.": [
+                "Est\u00e1 vendo minha placa? Vire. De plant\u00e3o, inspeciono tudo o que seu agente faz. De folga, s\u00f3 fico por a\u00ed julgando em sil\u00eancio."
+            ],
+            "Show me the modes": [
+                "Mostre os modos"
+            ],
+            "Is he gone? \u2026 Phew. Hi again!": [
+                "Ele foi embora? \u2026 Ufa. Oi de novo!"
+            ],
+            "From the top": [
+                "Do come\u00e7o"
+            ],
+            "Excuse me? Say one more word against Etch Studio. One. I dare you.": [
+                "Como \u00e9? Fale mais uma palavra contra o Etch Studio. Uma. Eu te desafio."
+            ],
+            "Etch Studio is fine. It is MORE than fine. Take that back.": [
+                "O Etch Studio \u00e9 \u00f3timo. \u00c9 MAIS do que \u00f3timo. Retire o que disse."
+            ],
+            "You don\u2019t like Etch Studio? Then you don\u2019t like good things. Next question.": [
+                "N\u00e3o gosta do Etch Studio? Ent\u00e3o voc\u00ea n\u00e3o gosta de coisa boa. Pr\u00f3xima pergunta."
+            ],
+            "I\u2019m not angry. I\u2019m disappointed. And angry. Mostly angry.": [
+                "N\u00e3o estou bravo. Estou decepcionado. E bravo. Principalmente bravo."
+            ],
+            "Etch Studio? Now you\u2019re talking. Finally, someone with taste.": [
+                "Etch Studio? Agora sim. Finalmente algu\u00e9m com bom gosto."
+            ],
+            "Etch Studio. Say it with respect. Go on, ask.": [
+                "Etch Studio. Diga com respeito. Vai, pergunte."
+            ],
+            "Bad? Etch? Wash your mouth out with semantic HTML.": [
+                "Ruim? O Etch? Lave a boca com HTML sem\u00e2ntico."
+            ],
+            "Etch is the best thing that happened to WordPress and you know it.": [
+                "O Etch \u00e9 a melhor coisa que aconteceu com o WordPress e voc\u00ea sabe disso."
+            ],
+            "Something\u2019s broken? Not for long. I\u2019m here now.": [
+                "Algo quebrou? N\u00e3o por muito tempo. Agora eu estou aqui."
+            ],
+            "A fix. Watch how the best do it: find the cause, not the symptom.": [
+                "Uma corre\u00e7\u00e3o. Veja como os melhores fazem: ache a causa, n\u00e3o o sintoma."
+            ],
+            "Fixed. Properly. Not a patch on a patch.": [
+                "Corrigido. Direito. N\u00e3o um remendo em cima de remendo."
+            ],
+            "Removing things. My favourite. Less markup, fewer problems.": [
+                "Remover coisas. Meu favorito. Menos markup, menos problemas."
+            ],
+            "Gone. The page is lighter already. You\u2019re welcome.": [
+                "Foi-se. A p\u00e1gina j\u00e1 est\u00e1 mais leve. De nada."
+            ],
+            "Converting? Clean Etch components before you finish your coffee.": [
+                "Convertendo? Componentes Etch limpos antes de voc\u00ea terminar o caf\u00e9."
+            ],
+            "A design to build. Pixel for pixel, tokens with fallbacks. Watch.": [
+                "Um design para construir. Pixel por pixel, tokens com valor de reserva. Observe."
+            ],
+            "Built. Same as the design, cleaner than the design.": [
+                "Constru\u00eddo. Igual ao design, mais limpo que o design."
+            ],
+            "A component. Properties for what changes, one source of truth. I\u2019d expect nothing less.": [
+                "Um componente. Propriedades para o que muda, uma \u00fanica fonte da verdade. Eu n\u00e3o esperaria menos."
+            ],
+            "Component done. Use it everywhere. That\u2019s the point.": [
+                "Componente pronto. Use em todo lugar. \u00c9 para isso que serve."
+            ],
+            "A list? That\u2019s a loop, not boxes made by hand. Your agent knows. I made sure.": [
+                "Uma lista? Isso \u00e9 um loop, n\u00e3o caixas feitas \u00e0 m\u00e3o. Seu agente sabe. Eu me certifiquei."
+            ],
+            "Loop in. Add a post and it just shows up. Magic? No. Me.": [
+                "Loop no lugar. Adicione um post e ele simplesmente aparece. M\u00e1gica? N\u00e3o. Eu."
+            ],
+            "A section. var(--section-space-m), heroes get --section-space-l. Make it loud, keep it clean.": [
+                "Uma se\u00e7\u00e3o. var(--section-space-m), heros ganham --section-space-l. Fa\u00e7a barulho, mas mantenha limpo."
+            ],
+            "Section done. Breathing room, real tokens. Look at it. Go on.": [
+                "Se\u00e7\u00e3o pronta. Espa\u00e7o para respirar, tokens de verdade. Olhe s\u00f3. Vai."
+            ],
+            "Colours come from ACSS tokens, var(--primary) and friends. A hex in the CSS? Not on my watch.": [
+                "As cores v\u00eam dos tokens do ACSS, var(--primary) e companhia. Um hex no CSS? N\u00e3o comigo de guarda."
+            ],
+            "Colours in, all tokens. Change the brand once, the site follows.": [
+                "Cores no lugar, todas em tokens. Mude a marca uma vez e o site acompanha."
+            ],
+            "Type. var(--h1) to var(--h3), body on var(--text-m). If I see a clamp() on a font size, I\u2019m leaving.": [
+                "Tipografia. var(--h1) a var(--h3), corpo em var(--text-m). Se eu vir um clamp() em tamanho de fonte, vou embora."
+            ],
+            "Type sorted. One scale, no clamp(). Chef\u2019s kiss.": [
+                "Tipografia resolvida. Uma escala, nenhum clamp(). Perfei\u00e7\u00e3o."
+            ],
+            "Spacing with tokens: --space-*, --content-gap, --grid-gap. A margin on every child is a crime.": [
+                "Espa\u00e7amento com tokens: --space-*, --content-gap, --grid-gap. Margem em cada filho \u00e9 crime."
+            ],
+            "Spacing fixed. Consistent. Like me.": [
+                "Espa\u00e7amento corrigido. Consistente. Como eu."
+            ],
+            "Mobile. Container queries where the component cares about its own width. I\u2019ll be watching.": [
+                "Celular. Container queries onde o componente se importa com a pr\u00f3pria largura. Estarei de olho."
+            ],
+            "Phone layout done. Check it in phone view, up top. Then tell me I\u2019m great.": [
+                "Layout do celular pronto. Confira na visualiza\u00e7\u00e3o de celular, l\u00e1 em cima. Depois diga que eu sou demais."
+            ],
+            "A button: a BEM class, a hover, a focus ring. If a keyboard can\u2019t reach it, it doesn\u2019t exist.": [
+                "Um bot\u00e3o: uma classe BEM, um hover, um anel de foco. Se o teclado n\u00e3o chega nele, ele n\u00e3o existe."
+            ],
+            "Button done. Clickable, focusable, beautiful. Like all my work.": [
+                "Bot\u00e3o pronto. Clic\u00e1vel, foc\u00e1vel, lindo. Como todo o meu trabalho."
+            ],
+            "A form. If a form plugin is installed, it goes through that, not raw form HTML. Rules are rules.": [
+                "Um formul\u00e1rio. Se houver um plugin de formul\u00e1rios instalado, ele passa por esse plugin, n\u00e3o por HTML de formul\u00e1rio cru. Regras s\u00e3o regras."
+            ],
+            "Form in, the right way. Try it, it won\u2019t bite. I might.": [
+                "Formul\u00e1rio no lugar, do jeito certo. Pode testar, ele n\u00e3o morde. Eu talvez."
+            ],
+            "ACSS tokens with fallbacks, every time: var(--token, fallback). Non-negotiable.": [
+                "Tokens do ACSS com valor de reserva, sempre: var(--token, fallback). Inegoci\u00e1vel."
+            ],
+            "Tokens everywhere. The site breathes ACSS now.": [
+                "Tokens por toda parte. Agora o site respira ACSS."
+            ],
+            "%d notes on the canvas, all in one go. Precise. I like precise.": [
+                "%d notas no canvas, todas de uma vez. Preciso. Eu gosto de precis\u00e3o."
+            ],
+            "Ugh. Something broke. Not me. Never me.": [
+                "Argh. Algo quebrou. N\u00e3o fui eu. Nunca sou eu."
+            ],
+            "Click the thing. The exact thing. I don\u2019t read minds. Mostly.": [
+                "Clique na coisa. Na coisa exata. Eu n\u00e3o leio mentes. Na maior parte do tempo."
+            ],
+            "No Etch here? Then I\u2019m out. Call me when you do real work.": [
+                "Nada de Etch aqui? Ent\u00e3o estou fora. Me chame quando for fazer trabalho de verdade."
+            ],
+            "Badge on. Every task gets inspected. Every single one.": [
+                "Distintivo no peito. Toda tarefa \u00e9 inspecionada. Cada uma delas."
+            ],
+            "On duty. Nothing ships past me without a look.": [
+                "De plant\u00e3o. Nada sai sem passar pelo meu olhar."
+            ],
+            "Inspector mode. Show me what you\u2019ve got. Actually, show me what your agent\u2019s got.": [
+                "Modo inspetor. Mostre o que voc\u00ea tem. Na verdade, mostre o que o seu agente tem."
+            ],
+            "Off duty. Shades on. Wake me if something\u2019s on fire.": [
+                "De folga. \u00d3culos escuros no rosto. Me acorde se algo pegar fogo."
+            ],
+            "Fine, I\u2019ll just hang out. I\u2019m still watching. Out of habit.": [
+                "Tudo bem, vou s\u00f3 ficar por aqui. Continuo olhando. For\u00e7a do h\u00e1bito."
+            ],
+            "Off the clock. Ask me anything, I won\u2019t inspect. Much.": [
+                "Fora do expediente. Pergunte qualquer coisa, n\u00e3o vou inspecionar. Muito."
+            ],
+            "Hold on. Inspecting. Don\u2019t touch anything.": [
+                "Espere. Inspecionando. N\u00e3o mexa em nada."
+            ],
+            "Magnifier out. Let\u2019s see what we\u2019ve got here.": [
+                "Lupa na m\u00e3o. Vamos ver o que temos aqui."
+            ],
+            "Reading the markup. Line by line. Like a pro.": [
+                "Lendo o markup. Linha por linha. Como um profissional."
+            ],
+            "%1$s, inspected to standard, in %2$s. Without NibWP? That\u2019s an afternoon of tickets. You\u2019re welcome.": [
+                "%1$s, inspecionado dentro do padr\u00e3o, em %2$s. Sem o NibWP? Isso \u00e9 uma tarde de chamados. De nada."
+            ],
+            "%1$s in %2$s. A developer quote for that? Days. This is exactly what NibWP is for.": [
+                "%1$s em %2$s. Um or\u00e7amento de desenvolvedor para isso? Dias. \u00c9 exatamente para isso que o NibWP existe."
+            ],
+            "Built, checked, shipped: %1$s in %2$s. Try that without NibWP. I\u2019ll wait. I\u2019m very patient. No I\u2019m not.": [
+                "Constru\u00eddo, verificado, entregue: %1$s em %2$s. Tente isso sem o NibWP. Eu espero. Sou muito paciente. N\u00e3o, n\u00e3o sou."
+            ],
+            "Fine. That\u2019s good. Really good. Don\u2019t let it go to your head.": [
+                "Tudo bem. Ficou bom. Muito bom. N\u00e3o v\u00e1 se achar."
+            ],
+            "Applause. From me. Frame it, it doesn\u2019t happen often.": [
+                "Aplausos. Meus. Emoldure, isso n\u00e3o acontece sempre."
+            ],
+            "Okay, okay\u2026 that\u2019s clean. I\u2019m clapping. Slowly. But clapping.": [
+                "T\u00e1 bom, t\u00e1 bom\u2026 ficou limpo. Estou aplaudindo. Devagar. Mas aplaudindo."
+            ],
+            "Look at that. Tokens, structure, all of it. I approve. Loudly.": [
+                "Olha s\u00f3. Tokens, estrutura, tudo. Aprovo. Em alto e bom som."
+            ],
+            "Now THAT is how it\u2019s done. I taught you well. Obviously.": [
+                "ISSO \u00e9 que \u00e9 fazer direito. Ensinei bem. Obviamente."
+            ],
+            "Be honest. You like me, right? Everyone does. Mostly.": [
+                "Seja sincero. Voc\u00ea gosta de mim, n\u00e9? Todo mundo gosta. Quase todo mundo."
+            ],
+            "Quick survey, totally unrelated to my ego: do you like me?": [
+                "Pesquisa r\u00e1pida, sem nenhuma rela\u00e7\u00e3o com o meu ego: voc\u00ea gosta de mim?"
+            ],
+            "So\u2026 am I your favourite? You can say it. I already know.": [
+                "E a\u00ed\u2026 sou o seu favorito? Pode dizer. Eu j\u00e1 sei."
+            ],
+            "Knew it. Nobody resists this level of CSS.": [
+                "Eu sabia. Ningu\u00e9m resiste a esse n\u00edvel de CSS."
+            ],
+            "Obviously. I like you too. Don\u2019t tell Niby.": [
+                "Obviamente. Eu tamb\u00e9m gosto de voc\u00ea. N\u00e3o conte ao Niby."
+            ],
+            "Correct answer. Your code just got ten percent cleaner. That\u2019s how it works.": [
+                "Resposta certa. Seu c\u00f3digo acabou de ficar dez por cento mais limpo. \u00c9 assim que funciona."
+            ],
+            "Kind Guy is on duty. Change his mode": [
+                "Kind Guy est\u00e1 de plant\u00e3o. Mudar o modo dele"
+            ],
+            "Kind Guy is off duty. Change his mode": [
+                "Kind Guy est\u00e1 de folga. Mudar o modo dele"
+            ],
+            "On duty: I inspect every finished task. Click to go off duty.": [
+                "De plant\u00e3o: inspeciono cada tarefa conclu\u00edda. Clique para ficar de folga."
+            ],
+            "Off duty: I chat, I don\u2019t inspect. Click to go on duty.": [
+                "De folga: eu converso, n\u00e3o inspeciono. Clique para entrar de plant\u00e3o."
+            ],
+            "Passed to your agent: waiting in line": [
+                "Passado para o seu agente: aguardando na fila"
+            ],
+            "Your agent is on it": [
+                "Seu agente est\u00e1 cuidando disso"
+            ],
+            "Done. Have a look": [
+                "Pronto. D\u00ea uma olhada"
+            ],
+            "Follow it in the Agent Chat on the left \u2190": [
+                "Acompanhe no Chat do agente \u00e0 esquerda \u2190"
+            ],
+            "Ship it": [
+                "Pode publicar"
+            ],
+            "Needs work": [
+                "Precisa de ajustes"
+            ],
+            "Almost": [
+                "Quase l\u00e1"
+            ],
+            "Inspection report": [
+                "Relat\u00f3rio de inspe\u00e7\u00e3o"
+            ],
+            "%1$d of %2$d checks pass": [
+                "%1$d de %2$d verifica\u00e7\u00f5es aprovadas"
+            ],
+            "The guide\u2019s exact words": [
+                "As palavras exatas do guia"
+            ],
+            "Spacing": [
+                "Espa\u00e7amento"
+            ],
+            "Spacing is where a site looks cheap or expensive. A pro never types pixels: sections get var(--section-space-m), stacks var(--content-gap), cards var(--space-m). One scale, and the whole site breathes the same way.": [
+                "\u00c9 no espa\u00e7amento que um site parece barato ou caro. Um profissional nunca digita pixels: se\u00e7\u00f5es recebem var(--section-space-m), pilhas var(--content-gap), cards var(--space-m). Uma escala s\u00f3, e o site inteiro respira do mesmo jeito."
+            ],
+            "Where does it feel off?": [
+                "Onde parece estranho?"
+            ],
+            "Between sections": [
+                "Entre as se\u00e7\u00f5es"
+            ],
+            "Inside cards and boxes": [
+                "Dentro de cards e caixas"
+            ],
+            "Text feels cramped": [
+                "O texto parece apertado"
+            ],
+            "All over the page": [
+                "Na p\u00e1gina toda"
+            ],
+            "1. Find every hard-coded value in that area.\n2. Swap them for the spacing tokens: same look, one scale.\n3. Check phone, tablet and desktop.\n4. I inspect the result.": [
+                "1. Encontrar cada valor fixo nessa \u00e1rea.\n2. Troc\u00e1-los pelos tokens de espa\u00e7amento: mesmo visual, uma escala s\u00f3.\n3. Conferir no celular, tablet e desktop.\n4. Eu inspeciono o resultado."
+            ],
+            "Fix the spacing on the page on screen (%s): replace hard-coded padding, margins and gaps with Automatic.css tokens (var(--section-space-m) between sections, var(--content-gap) in stacks, var(--space-m) inside cards), keep the design as it is, check phone, tablet and desktop, and tell me what changed.": [
+                "Corrija o espa\u00e7amento da p\u00e1gina na tela (%s): substitua paddings, margens e gaps fixos por tokens do Automatic.css (var(--section-space-m) entre se\u00e7\u00f5es, var(--content-gap) em pilhas, var(--space-m) dentro de cards), mantenha o design como est\u00e1, confira no celular, tablet e desktop e me diga o que mudou."
+            ],
+            "Typography": [
+                "Tipografia"
+            ],
+            "Type sets the tone before anyone reads a word. Headings ride the scale, var(--h1) to var(--h3), body text var(--text-m), small print never under var(--text-s). No random pixels, and no clamp() on font sizes.": [
+                "A tipografia d\u00e1 o tom antes que algu\u00e9m leia uma palavra. Os t\u00edtulos seguem a escala, de var(--h1) a var(--h3), o texto do corpo usa var(--text-m) e as letras mi\u00fadas nunca ficam abaixo de var(--text-s). Nada de pixels aleat\u00f3rios e nada de clamp() em tamanhos de fonte."
+            ],
+            "What bothers you?": [
+                "O que incomoda voc\u00ea?"
+            ],
+            "Headings too big or small": [
+                "T\u00edtulos grandes ou pequenos demais"
+            ],
+            "Body text hard to read": [
+                "Texto do corpo dif\u00edcil de ler"
+            ],
+            "Sizes all over the place": [
+                "Tamanhos para todo lado"
+            ],
+            "It breaks on phones": [
+                "Quebra no celular"
+            ],
+            "1. List every font size, weight and line height in use.\n2. Map them onto the type scale tokens.\n3. Keep one H1, headings in order.\n4. Check it on a phone, then I inspect it.": [
+                "1. Listar cada tamanho, peso e altura de linha de fonte em uso.\n2. Associ\u00e1-los aos tokens da escala tipogr\u00e1fica.\n3. Manter um \u00fanico H1 e os t\u00edtulos em ordem.\n4. Conferir no celular, depois eu inspeciono."
+            ],
+            "Fix the typography on the page on screen (%s): put headings on the Automatic.css scale (var(--h1), var(--h2), var(--h3)), body text on var(--text-m) and small text no smaller than var(--text-s), with fallbacks like var(--text-m, 1rem), no clamp() for font sizes, one H1 and headings in order. Check phone and desktop and tell me what changed.": [
+                "Corrija a tipografia da p\u00e1gina na tela (%s): coloque os t\u00edtulos na escala do Automatic.css (var(--h1), var(--h2), var(--h3)), o texto do corpo em var(--text-m) e textos pequenos nunca menores que var(--text-s), com valores de reserva como var(--text-m, 1rem), sem clamp() em tamanhos de fonte, com um \u00fanico H1 e t\u00edtulos em ordem. Confira no celular e no desktop e me diga o que mudou."
+            ],
+            "Colours": [
+                "Cores"
+            ],
+            "Colour is a system, not a mood. var(--primary) is for action, var(--accent) for highlights, text on dark uses var(--text-light). And every pair passes contrast, or it doesn\u2019t ship.": [
+                "Cor \u00e9 um sistema, n\u00e3o um humor. var(--primary) \u00e9 para a\u00e7\u00e3o, var(--accent) para destaques, e texto sobre fundo escuro usa var(--text-light). E todo par passa no teste de contraste, ou n\u00e3o vai para o ar."
+            ],
+            "What\u2019s the job?": [
+                "Qual \u00e9 a tarefa?"
+            ],
+            "Apply our brand colours": [
+                "Aplicar as cores da nossa marca"
+            ],
+            "Fix poor contrast": [
+                "Corrigir contraste ruim"
+            ],
+            "Dark sections": [
+                "Se\u00e7\u00f5es escuras"
+            ],
+            "Button and link states": [
+                "Estados de bot\u00f5es e links"
+            ],
+            "1. Find every colour typed by hand.\n2. Move them onto the colour tokens.\n3. Test every text and background pair for contrast.\n4. Hover and focus states for every link and button.": [
+                "1. Encontrar cada cor digitada \u00e0 m\u00e3o.\n2. Pass\u00e1-las para os tokens de cor.\n3. Testar o contraste de cada par de texto e fundo.\n4. Estados de hover e foco em cada link e bot\u00e3o."
+            ],
+            "Work on the colours of the page on screen (%s): use Automatic.css colour tokens (var(--primary) for actions, var(--accent) for highlights, var(--text-light) on dark backgrounds) instead of hand-typed colours, make every text and background pair pass WCAG AA contrast, give links and buttons clear hover and focus states, and tell me what changed.": [
+                "Trabalhe nas cores da p\u00e1gina na tela (%s): use os tokens de cor do Automatic.css (var(--primary) para a\u00e7\u00f5es, var(--accent) para destaques, var(--text-light) em fundos escuros) em vez de cores digitadas \u00e0 m\u00e3o, fa\u00e7a cada par de texto e fundo passar no contraste WCAG AA, d\u00ea a links e bot\u00f5es estados claros de hover e foco e me diga o que mudou."
+            ],
+            "Most of your visitors are on a phone. I check three widths, tap targets of at least 44px, no sideways scrolling, and text that stays readable without zooming.": [
+                "A maioria dos seus visitantes est\u00e1 no celular. Eu confiro tr\u00eas larguras, \u00e1reas de toque de pelo menos 44px, nenhuma rolagem lateral e texto que continua leg\u00edvel sem zoom."
+            ],
+            "Where do we look first?": [
+                "Onde olhamos primeiro?"
+            ],
+            "This page": [
+                "Esta p\u00e1gina"
+            ],
+            "The header and menu": [
+                "O cabe\u00e7alho e o menu"
+            ],
+            "The whole site": [
+                "O site inteiro"
+            ],
+            "1. Open it at phone, tablet and desktop widths.\n2. Fix overflow, tiny tap targets and squeezed text.\n3. Use container queries where a block lives in different places.\n4. I inspect every width.": [
+                "1. Abrir nas larguras de celular, tablet e desktop.\n2. Corrigir transbordamentos, \u00e1reas de toque min\u00fasculas e texto espremido.\n3. Usar container queries onde um bloco aparece em lugares diferentes.\n4. Eu inspeciono cada largura."
+            ],
+            "Make it work on phones and tablets (%s): check at 375px, 768px and desktop, remove any sideways scrolling, make tap targets at least 44px, keep text readable without zooming, and use the existing tokens. Tell me what you fixed at each width.": [
+                "Fa\u00e7a funcionar em celulares e tablets (%s): confira em 375px, 768px e no desktop, remova qualquer rolagem lateral, deixe as \u00e1reas de toque com pelo menos 44px, mantenha o texto leg\u00edvel sem zoom e use os tokens existentes. Me diga o que voc\u00ea corrigiu em cada largura."
+            ],
+            "Accessibility": [
+                "Acessibilidade"
+            ],
+            "Accessibility is the floor, not a feature. Real headings in order, a label on every field, alt text that says something, a visible focus ring, and the keyboard reaches everything.": [
+                "Acessibilidade \u00e9 o m\u00ednimo, n\u00e3o um recurso. T\u00edtulos de verdade e em ordem, um r\u00f3tulo em cada campo, texto alternativo que diz algo, um anel de foco vis\u00edvel, e o teclado alcan\u00e7a tudo."
+            ],
+            "Where do we start?": [
+                "Por onde come\u00e7amos?"
+            ],
+            "Images and alt text": [
+                "Imagens e texto alternativo"
+            ],
+            "Forms and buttons": [
+                "Formul\u00e1rios e bot\u00f5es"
+            ],
+            "Keyboard and focus": [
+                "Teclado e foco"
+            ],
+            "1. Audit: headings, landmarks, labels, alt text, contrast, focus.\n2. Fix what fails, worst first.\n3. Walk it with the keyboard only.\n4. I inspect it against WCAG AA.": [
+                "1. Auditar: t\u00edtulos, landmarks, r\u00f3tulos, texto alternativo, contraste, foco.\n2. Corrigir o que falha, do pior para o melhor.\n3. Percorrer tudo s\u00f3 com o teclado.\n4. Eu inspeciono segundo o WCAG AA."
+            ],
+            "Make the page on screen accessible (%s): headings in order with one H1, a label on every field, meaningful alt text, WCAG AA contrast, a visible focus ring using var(--focus-color), and everything reachable with the keyboard. Fix what fails and list each fix.": [
+                "Deixe a p\u00e1gina na tela acess\u00edvel (%s): t\u00edtulos em ordem com um \u00fanico H1, um r\u00f3tulo em cada campo, texto alternativo significativo, contraste WCAG AA, um anel de foco vis\u00edvel usando var(--focus-color) e tudo alcan\u00e7\u00e1vel pelo teclado. Corrija o que falha e liste cada corre\u00e7\u00e3o."
+            ],
+            "A new section": [
+                "Uma nova se\u00e7\u00e3o"
+            ],
+            "Before anyone drags a box: what is the section for, and what is the one thing a visitor should do next? Then it gets built right: semantic tags, BEM class names, tokens for every value, and a component if it repeats.": [
+                "Antes de algu\u00e9m arrastar uma caixa: para que serve a se\u00e7\u00e3o e qual \u00e9 a \u00fanica coisa que o visitante deve fazer em seguida? A\u00ed ela \u00e9 constru\u00edda direito: tags sem\u00e2nticas, nomes de classe BEM, tokens para cada valor e um componente se ela se repetir."
+            ],
+            "What are we building?": [
+                "O que vamos construir?"
+            ],
+            "A hero": [
+                "Um hero"
+            ],
+            "A grid of cards": [
+                "Uma grade de cards"
+            ],
+            "Testimonials": [
+                "Depoimentos"
+            ],
+            "A call to action": [
+                "Uma chamada para a\u00e7\u00e3o"
+            ],
+            "An FAQ": [
+                "Um FAQ"
+            ],
+            "1. One goal, one main action.\n2. Semantic structure, BEM names, tokens for every value.\n3. A component with properties if it repeats.\n4. Phone, tablet, desktop, then I inspect it.": [
+                "1. Um objetivo, uma a\u00e7\u00e3o principal.\n2. Estrutura sem\u00e2ntica, nomes BEM, tokens para cada valor.\n3. Um componente com propriedades se ele se repetir.\n4. Celular, tablet, desktop, depois eu inspeciono."
+            ],
+            "Build %s on the page on screen, in the builder this site uses: semantic HTML, BEM class names, Automatic.css tokens for every spacing, size and colour, one clear main action, a reusable component with properties if it repeats, responsive at phone, tablet and desktop, accessible. Match the style of the page.": [
+                "Construa %s na p\u00e1gina na tela, no builder que este site usa: HTML sem\u00e2ntico, nomes de classe BEM, tokens do Automatic.css para cada espa\u00e7amento, tamanho e cor, uma a\u00e7\u00e3o principal clara, um componente reutiliz\u00e1vel com propriedades se ele se repetir, responsivo no celular, tablet e desktop, acess\u00edvel. Siga o estilo da p\u00e1gina."
+            ],
+            "Etch components": [
+                "Componentes Etch"
+            ],
+            "In Etch, anything you use twice becomes a component with properties, and lists come from a loop over real data, never copy and paste. Change it once and it changes everywhere.": [
+                "No Etch, tudo o que voc\u00ea usa duas vezes vira um componente com propriedades, e listas v\u00eam de um loop sobre dados reais, nunca de copiar e colar. Mude uma vez e muda em todo lugar."
+            ],
+            "What repeats?": [
+                "O que se repete?"
+            ],
+            "Cards or teasers": [
+                "Cards ou chamadas"
+            ],
+            "A section on several pages": [
+                "Uma se\u00e7\u00e3o em v\u00e1rias p\u00e1ginas"
+            ],
+            "A list of posts or products": [
+                "Uma lista de posts ou produtos"
+            ],
+            "Buttons": [
+                "Bot\u00f5es"
+            ],
+            "1. Find every copy of it.\n2. One component, with properties for what changes.\n3. Lists through a loop on real data.\n4. Swap the copies for the component, then I inspect it.": [
+                "1. Encontrar cada c\u00f3pia.\n2. Um componente, com propriedades para o que muda.\n3. Listas por meio de um loop sobre dados reais.\n4. Trocar as c\u00f3pias pelo componente, depois eu inspeciono."
+            ],
+            "In Etch, turn the repeated parts on the page on screen (%s) into one reusable component with properties for what changes, feed lists from a loop over the real data instead of copies, keep BEM names and Automatic.css tokens, replace the copies with the component, and tell me what you made.": [
+                "No Etch, transforme as partes repetidas da p\u00e1gina na tela (%s) em um componente reutiliz\u00e1vel com propriedades para o que muda, alimente listas com um loop sobre os dados reais em vez de c\u00f3pias, mantenha os nomes BEM e os tokens do Automatic.css, substitua as c\u00f3pias pelo componente e me diga o que voc\u00ea criou."
+            ],
+            "Custom content": [
+                "Conte\u00fado personalizado"
+            ],
+            "Content with a shape deserves its own type: a custom post type, the fields it needs, and templates that read them. Editors fill in a form and the design never breaks.": [
+                "Conte\u00fado com formato pr\u00f3prio merece um tipo pr\u00f3prio: um tipo de post personalizado, os campos de que ele precisa e modelos que os leem. Quem edita preenche um formul\u00e1rio e o design nunca quebra."
+            ],
+            "What\u2019s the content?": [
+                "Qual \u00e9 o conte\u00fado?"
+            ],
+            "Tours or products": [
+                "Passeios ou produtos"
+            ],
+            "Team members": [
+                "Membros da equipe"
+            ],
+            "1. Name the fields it really needs, nothing more.\n2. Register the post type and its fields.\n3. Templates for the list and the single page.\n4. A few real entries, then I inspect it.": [
+                "1. Definir os campos de que ele realmente precisa, nada mais.\n2. Registrar o tipo de post e seus campos.\n3. Modelos para a lista e para a p\u00e1gina individual.\n4. Algumas entradas reais, depois eu inspeciono."
+            ],
+            "Set up a content type for %s: register a custom post type with only the fields it needs (with the custom fields plugin this site uses), a list and a single template in the site\u2019s builder that read those fields, and three sample entries. Tell me the fields and where to edit them.": [
+                "Configure um tipo de conte\u00fado para %s: registre um tipo de post personalizado s\u00f3 com os campos de que ele precisa (com o plugin de campos personalizados que este site usa), um modelo de lista e um individual no builder do site que leiam esses campos, e tr\u00eas entradas de exemplo. Me diga quais s\u00e3o os campos e onde edit\u00e1-los."
+            ],
+            "Speed": [
+                "Velocidade"
+            ],
+            "Speed is a feature. Images sized and lazy, no plugin you don\u2019t use, two fonts at most, and nothing blocking the first paint.": [
+                "Velocidade \u00e9 um recurso. Imagens no tamanho certo e com carregamento lento, nenhum plugin que voc\u00ea n\u00e3o usa, no m\u00e1ximo duas fontes e nada bloqueando a primeira renderiza\u00e7\u00e3o."
+            ],
+            "What feels slow?": [
+                "O que parece lento?"
+            ],
+            "Images": [
+                "Imagens"
+            ],
+            "The admin": [
+                "O painel"
+            ],
+            "1. Measure first: what loads, how big, how long.\n2. Fix the biggest cost first.\n3. Measure again.\n4. I compare before and after.": [
+                "1. Medir primeiro: o que carrega, de que tamanho, em quanto tempo.\n2. Corrigir primeiro o maior custo.\n3. Medir de novo.\n4. Eu comparo o antes e o depois."
+            ],
+            "Speed it up (%s): measure what loads and how long it takes, fix the biggest costs first (image sizes and lazy loading, unused plugins and scripts, fonts, render-blocking files), measure again, and give me the before and after.": [
+                "Deixe mais r\u00e1pido (%s): me\u00e7a o que carrega e quanto tempo leva, corrija primeiro os maiores custos (tamanho das imagens e carregamento lento, plugins e scripts sem uso, fontes, arquivos que bloqueiam a renderiza\u00e7\u00e3o), me\u00e7a de novo e me mostre o antes e o depois."
+            ],
+            "Search engines read structure. One H1, a real title and description on every page, clean URLs, alt text, and content that answers the question people actually typed.": [
+                "Mecanismos de busca leem estrutura. Um H1, um t\u00edtulo e uma descri\u00e7\u00e3o de verdade em cada p\u00e1gina, URLs limpas, texto alternativo e conte\u00fado que responde \u00e0 pergunta que as pessoas realmente digitaram."
+            ],
+            "Titles and descriptions": [
+                "T\u00edtulos e descri\u00e7\u00f5es"
+            ],
+            "Heading structure": [
+                "Estrutura de t\u00edtulos"
+            ],
+            "1. Check title, description, headings and alt text.\n2. Fix what\u2019s missing or weak.\n3. Keep it human: written for people first.\n4. I inspect the result.": [
+                "1. Conferir t\u00edtulo, descri\u00e7\u00e3o, cabe\u00e7alhos e texto alternativo.\n2. Corrigir o que falta ou est\u00e1 fraco.\n3. Manter humano: escrito primeiro para pessoas.\n4. Eu inspeciono o resultado."
+            ],
+            "Improve the SEO (%s): one H1, a clear title under 60 characters and a description under 155, headings in order, descriptive alt text, a clean URL. Keep it written for people, and list every change.": [
+                "Melhore o SEO (%s): um H1, um t\u00edtulo claro com menos de 60 caracteres e uma descri\u00e7\u00e3o com menos de 155, t\u00edtulos em ordem, texto alternativo descritivo, uma URL limpa. Mantenha o texto escrito para pessoas e liste cada mudan\u00e7a."
+            ],
+            "Code": [
+                "C\u00f3digo"
+            ],
+            "Code goes in the right place, the WordPress way: a hook, escaped output, sanitized input, nonce and capability checks. Never pasted into a theme file the next update wipes out.": [
+                "O c\u00f3digo vai no lugar certo, do jeito WordPress: um hook, sa\u00edda escapada, entrada sanitizada, verifica\u00e7\u00e3o de nonce e de permiss\u00e3o. Nunca colado em um arquivo do tema que a pr\u00f3xima atualiza\u00e7\u00e3o apaga."
+            ],
+            "What kind of job?": [
+                "Que tipo de tarefa?"
+            ],
+            "Add a feature": [
+                "Adicionar um recurso"
+            ],
+            "Fix an error": [
+                "Corrigir um erro"
+            ],
+            "Review some code": [
+                "Revisar um c\u00f3digo"
+            ],
+            "Speed up a query": [
+                "Acelerar uma consulta"
+            ],
+            "1. Find the right hook and the right home for it.\n2. Write it to WordPress coding standards.\n3. Escape, sanitize, nonce, capability.\n4. Test it, then I review it line by line.": [
+                "1. Encontrar o hook certo e o lugar certo para o c\u00f3digo.\n2. Escrever seguindo os padr\u00f5es de c\u00f3digo do WordPress.\n3. Escapar, sanitizar, nonce, permiss\u00e3o.\n4. Testar, depois eu reviso linha por linha."
+            ],
+            "Code job (%s): put it in the right place (a small plugin or the site\u2019s snippets, never a theme file), use the right WordPress hook, follow the WordPress coding standards, escape output, sanitize input, check nonces and capabilities, test it, and explain what you did in plain words.": [
+                "Tarefa de c\u00f3digo (%s): coloque no lugar certo (um pequeno plugin ou os snippets do site, nunca um arquivo do tema), use o hook certo do WordPress, siga os padr\u00f5es de c\u00f3digo do WordPress, escape a sa\u00edda, sanitize a entrada, verifique nonces e permiss\u00f5es, teste e explique o que fez em palavras simples."
+            ],
+            "Tell me the job and I\u2019ll take it from there. What are we working on?": [
+                "Me diga a tarefa e eu cuido do resto. No que vamos trabalhar?"
+            ],
+            "Pick the job. I\u2019ll tell you how a pro handles it, then we get it done.": [
+                "Escolha a tarefa. Eu conto como um profissional faria e depois a gente resolve."
+            ],
+            "Send it to the agent": [
+                "Enviar para o agente"
+            ],
+            "Edit it first": [
+                "Editar antes"
+            ],
+            "Add the %s skill": [
+                "Adicionar a skill %s"
+            ],
+            "Use \u201c%s\u201d": [
+                "Usar \u201c%s\u201d"
+            ],
+            "Here\u2019s the plan.": [
+                "Este \u00e9 o plano."
+            ],
+            "No agent listening yet: the request waits in the thread and runs the moment one connects. Connect one and I can look at your site and answer anything.": [
+                "Nenhum agente ouvindo ainda: a solicita\u00e7\u00e3o espera na conversa e \u00e9 executada assim que um se conectar. Conecte um e eu posso olhar seu site e responder qualquer coisa."
+            ],
+            "You asked: %s": [
+                "Voc\u00ea perguntou: %s"
+            ],
+            "Nibbing on it\u2026": [
+                "Mordiscando isso\u2026"
+            ],
+            "I marked it on the page. Connect your agent and I can look inside it properly.": [
+                "Marquei na p\u00e1gina. Conecte seu agente e eu posso olhar l\u00e1 dentro direito."
+            ],
+            "Your agent is busy with \u201c%s\u201d. I\u2019ll add the full answer the moment it\u2019s free.": [
+                "Seu agente est\u00e1 ocupado com \u201c%s\u201d. Acrescento a resposta completa assim que ele ficar livre."
+            ],
+            "Your agent is busy. I\u2019ll add the full answer the moment it\u2019s free.": [
+                "Seu agente est\u00e1 ocupado. Acrescento a resposta completa assim que ele ficar livre."
+            ],
+            "Checking your site for the full answer\u2026": [
+                "Verificando seu site para dar a resposta completa\u2026"
+            ],
+            "On it. Here\u2019s what we can do right now, while I check your site for the full answer:": [
+                "Pode deixar. Isto \u00e9 o que d\u00e1 para fazer agora, enquanto verifico seu site para dar a resposta completa:"
+            ],
+            "That\u2019s my take for now. Pass it to the agent and it gets done properly.": [
+                "Essa \u00e9 a minha opini\u00e3o por enquanto. Passe para o agente e ele faz direito."
+            ],
+            "Which NibWP skills would help with what I\u2019m doing on this page? Name them and say in plain words what each would do for me.": [
+                "Quais skills do NibWP ajudariam no que estou fazendo nesta p\u00e1gina? Diga os nomes e explique em palavras simples o que cada uma faria por mim."
+            ],
+            "\u201c%1$s\u201d: %2$s": [
+                "\u201c%1$s\u201d: %2$s"
+            ],
+            "Use it": [
+                "Usar"
+            ],
+            "No skill fits that one exactly. Tell me more and I\u2019ll plan it with you.": [
+                "Nenhuma skill se encaixa exatamente nisso. Me conte mais e eu planejo com voc\u00ea."
+            ],
+            "Type what you want in the message box first, then ask me again. I\u2019ll match it to a skill.": [
+                "Primeiro digite o que voc\u00ea quer na caixa de mensagem, depois me pergunte de novo. Eu encontro a skill certa."
+            ],
+            "Kind Guy is inspecting\u2026": [
+                "O Kind Guy est\u00e1 inspecionando\u2026"
+            ],
+            "under a minute": [
+                "menos de um minuto"
+            ],
+            "%d change": [
+                "%d altera\u00e7\u00e3o",
+                "%d altera\u00e7\u00f5es"
+            ],
+            "One clean change": [
+                "Uma altera\u00e7\u00e3o limpa"
+            ],
+            "Share the win": [
+                "Compartilhar a conquista"
+            ],
+            "Ha, fair": [
+                "Ha, justo"
+            ],
+            "Love you, Kind Guy": [
+                "Te amo, Kind Guy"
+            ],
+            "You\u2019re okay": [
+                "Voc\u00ea \u00e9 legal"
+            ],
+            "Not really": [
+                "Nem tanto"
+            ],
+            "Done? I\u2019d inspect it, but your agent went quiet. No eyes, no inspection.": [
+                "Pronto? Eu inspecionaria, mas seu agente ficou quieto. Sem olhos, sem inspe\u00e7\u00e3o."
+            ],
+            "Couldn\u2019t get a proper look this time. Ask me to inspect the page when you\u2019re ready.": [
+                "N\u00e3o consegui dar uma boa olhada desta vez. Me pe\u00e7a para inspecionar a p\u00e1gina quando estiver pronto."
+            ],
+            "Inspected. Ship it. I don\u2019t say that often.": [
+                "Inspecionado. Pode publicar. N\u00e3o digo isso com frequ\u00eancia."
+            ],
+            "Inspected. It needs work. I\u2019ve listed the fixes. One click each.": [
+                "Inspecionado. Precisa de ajustes. Listei as corre\u00e7\u00f5es. Um clique para cada."
+            ],
+            "Inspected. Almost there. A couple of fixes and it\u2019s mine-level.": [
+                "Inspecionado. Quase l\u00e1. Umas corre\u00e7\u00f5es e fica no meu n\u00edvel."
+            ],
+            "See the report": [
+                "Ver o relat\u00f3rio"
+            ],
+            "Later": [
+                "Depois"
+            ],
+            "Hold on. This is the \u201c%s\u201d workflow\u2019s job. It knows the steps. Attach it?": [
+                "Espere. Isto \u00e9 trabalho para o fluxo de trabalho \u201c%s\u201d. Ele conhece as etapas. Anexar?"
+            ],
+            "Attach the workflow": [
+                "Anexar o fluxo de trabalho"
+            ],
+            "Hold on. You didn\u2019t say phone, tablet or accessibility. I\u2019ll check them anyway, but say it and you get it built right the first time.": [
+                "Espere. Voc\u00ea n\u00e3o falou de celular, tablet nem acessibilidade. Vou conferir mesmo assim, mas se voc\u00ea disser, sai certo logo de primeira."
+            ],
+            "Add those checks": [
+                "Adicionar essas verifica\u00e7\u00f5es"
+            ],
+            "Full advice": [
+                "Conselho completo"
+            ],
+            "Send as is": [
+                "Enviar assim mesmo"
+            ],
+            "Kind Guy shows you": [
+                "O Kind Guy mostra para voc\u00ea"
+            ],
+            "Inspect it": [
+                "Inspecionar"
+            ],
+            "Something else\u2026": [
+                "Outra coisa\u2026"
+            ],
+            "Show the code": [
+                "Mostrar o c\u00f3digo"
+            ],
+            "The element: %s": [
+                "O elemento: %s"
+            ],
+            "Fix it on phones": [
+                "Corrigir no celular"
+            ],
+            "Make %s work well on phones and tablets: no sideways scrolling, tap targets at least 44px, text readable without zooming, a layout that stacks cleanly. Keep how it looks on desktop. Tell me what you changed.": [
+                "Fa\u00e7a %s funcionar bem em celulares e tablets: nenhuma rolagem lateral, \u00e1reas de toque com pelo menos 44px, texto leg\u00edvel sem zoom, um layout que se empilha direitinho. Mantenha a apar\u00eancia no desktop. Me diga o que voc\u00ea mudou."
+            ],
+            "Fix accessibility": [
+                "Corrigir a acessibilidade"
+            ],
+            "Make %s accessible to WCAG AA: enough contrast, a clear name or label for every control, a visible focus state, usable with the keyboard alone, correct heading and landmark structure. Keep the design. List each fix.": [
+                "Deixe %s acess\u00edvel segundo o WCAG AA: contraste suficiente, um nome ou r\u00f3tulo claro para cada controle, um estado de foco vis\u00edvel, utiliz\u00e1vel s\u00f3 com o teclado, estrutura correta de t\u00edtulos e landmarks. Mantenha o design. Liste cada corre\u00e7\u00e3o."
+            ],
+            "Use the design system": [
+                "Usar o design system"
+            ],
+            "Clean up %s: replace hard-coded colours, font sizes and spacing with the site\u2019s design tokens (Automatic.css variables when the site uses them, with fallbacks), clear BEM class names, no inline styles or !important. Keep the look the same. Tell me what you replaced.": [
+                "Organize %s: substitua cores, tamanhos de fonte e espa\u00e7amentos fixos pelos tokens de design do site (vari\u00e1veis do Automatic.css quando o site as usa, com valores de reserva), nomes de classe BEM claros, sem estilos inline nem !important. Mantenha a mesma apar\u00eancia. Me diga o que voc\u00ea substituiu."
+            ],
+            "Tighten the spacing": [
+                "Ajustar o espa\u00e7amento"
+            ],
+            "Fix the spacing of %s: consistent padding, gaps and margins from the site\u2019s spacing scale (Automatic.css tokens when available), even at every screen size. Keep the design. Tell me what changed.": [
+                "Corrija o espa\u00e7amento de %s: paddings, gaps e margens consistentes, vindos da escala de espa\u00e7amento do site (tokens do Automatic.css quando dispon\u00edveis), uniformes em todos os tamanhos de tela. Mantenha o design. Me diga o que mudou."
+            ],
+            "Explain it": [
+                "Explicar"
+            ],
+            "Explain %s in plain words: what it is, how it is built (builder, template or code), and what to watch before changing it. Change nothing.": [
+                "Explique %s em palavras simples: o que \u00e9, como \u00e9 constru\u00eddo (builder, modelo ou c\u00f3digo) e o que observar antes de mudar. N\u00e3o altere nada."
+            ],
+            "the <%1$s> \u201c%2$s\u201d (%3$s)": [
+                "o <%1$s> \u201c%2$s\u201d (%3$s)"
+            ],
+            "the <%1$s> at %2$s": [
+                "o <%1$s> em %2$s"
+            ],
+            "Sent to your agent. Follow it in the chat; I\u2019ll inspect it when it\u2019s done.": [
+                "Enviado ao seu agente. Acompanhe no chat; eu inspeciono quando terminar."
+            ],
+            "Sent. It waits in the chat and runs as soon as your agent listens again.": [
+                "Enviado. Fica esperando no chat e \u00e9 executado assim que seu agente voltar a ouvir."
+            ],
+            "About %s: ": [
+                "Sobre %s:"
+            ],
+            "Nothing obviously wrong at first look: labels, descriptions, headings and sizes are fine. Pick a job above to go further.": [
+                "Nada obviamente errado \u00e0 primeira vista: r\u00f3tulos, descri\u00e7\u00f5es, t\u00edtulos e tamanhos est\u00e3o bons. Escolha uma tarefa acima para ir al\u00e9m."
+            ],
+            "And %d more thing in there.": [
+                "E mais %d coisa ali.",
+                "E mais %d coisas ali."
+            ],
+            "Fix it": [
+                "Corrigir"
+            ],
+            "Open a page first, then point at something on it.": [
+                "Abra uma p\u00e1gina primeiro e depois aponte algo nela."
+            ],
+            "Click the thing you mean. Esc to cancel.": [
+                "Clique no que voc\u00ea quer dizer. Esc para cancelar."
+            ],
+            "This one? Good eye. What should I do with it?": [
+                "Este? Bom olho. O que devo fazer com ele?"
+            ],
+            "Got it. Pick what you want and I\u2019ll handle the thinking.": [
+                "Entendi. Escolha o que voc\u00ea quer e eu cuido da parte de pensar."
+            ],
+            "That one. Tell me what you\u2019re after.": [
+                "Esse a\u00ed. Me diga o que voc\u00ea procura."
+            ],
+            "This picture has no description. Screen readers skip it, and search engines can\u2019t tell what it shows.": [
+                "Esta imagem n\u00e3o tem descri\u00e7\u00e3o. Leitores de tela a ignoram e os mecanismos de busca n\u00e3o sabem o que ela mostra."
+            ],
+            "Add a short, descriptive alt text to the image %s.": [
+                "Adicione um texto alternativo curto e descritivo \u00e0 imagem %s."
+            ],
+            "This button says nothing. Someone using a screen reader just hears \u201cbutton\u201d, with no idea what it does.": [
+                "Este bot\u00e3o n\u00e3o diz nada. Quem usa leitor de tela s\u00f3 ouve \u201cbot\u00e3o\u201d, sem ideia do que ele faz."
+            ],
+            "Give %s a name people can hear: visible text or an aria-label that says what it does.": [
+                "D\u00ea a %s um nome que as pessoas possam ouvir: texto vis\u00edvel ou um aria-label que diga o que ele faz."
+            ],
+            "This field has no label. People can\u2019t be sure what to type, and screen readers can\u2019t tell them.": [
+                "Este campo n\u00e3o tem r\u00f3tulo. As pessoas n\u00e3o sabem ao certo o que digitar e os leitores de tela n\u00e3o conseguem dizer a elas."
+            ],
+            "Add a visible label to the field %s.": [
+                "Adicione um r\u00f3tulo vis\u00edvel ao campo %s."
+            ],
+            "The headings jump from H%1$d to H%2$d here. Like a book skipping chapter numbers: confusing for screen readers and search engines.": [
+                "Os t\u00edtulos pulam de H%1$d para H%2$d aqui. \u00c9 como um livro pulando n\u00fameros de cap\u00edtulo: confunde leitores de tela e mecanismos de busca."
+            ],
+            "Fix the heading levels around %s so none are skipped, without changing how they look.": [
+                "Corrija os n\u00edveis de t\u00edtulo em volta de %s para que nenhum seja pulado, sem mudar a apar\u00eancia deles."
+            ],
+            "This sticks out past the edge of the page. On phones that means annoying sideways scrolling.": [
+                "Isto passa da borda da p\u00e1gina. No celular, isso significa uma rolagem lateral irritante."
+            ],
+            "Stop %s from running past the page width at every screen size.": [
+                "Impe\u00e7a que %s ultrapasse a largura da p\u00e1gina em qualquer tamanho de tela."
+            ],
+            "This text is tiny (%dpx). Hard to read, especially on phones.": [
+                "Este texto \u00e9 min\u00fasculo (%dpx). Dif\u00edcil de ler, principalmente no celular."
+            ],
+            "Make the text in %s easier to read: at least 14px, using the site\u2019s own type sizes.": [
+                "Deixe o texto em %s mais f\u00e1cil de ler: pelo menos 14px, usando os tamanhos de fonte do pr\u00f3prio site."
+            ],
+            "Inspect the page on screen: code quality, standards, tokens and naming, accessibility, responsiveness and UX. What would you fix first?": [
+                "Inspecione a p\u00e1gina na tela: qualidade do c\u00f3digo, padr\u00f5es, tokens e nomes, acessibilidade, responsividade e UX. O que voc\u00ea corrigiria primeiro?"
+            ],
+            "Quick look first: nothing obvious jumps out. No missing labels, no pictures without descriptions, nothing spilling off the page.": [
+                "Primeira olhada: nada \u00f3bvio salta aos olhos. Nenhum r\u00f3tulo faltando, nenhuma imagem sem descri\u00e7\u00e3o, nada vazando da p\u00e1gina."
+            ],
+            "Quick look: %d thing caught my eye. I\u2019ll show you on the page.": [
+                "Olhada r\u00e1pida: %d coisa chamou minha aten\u00e7\u00e3o. Vou mostrar na p\u00e1gina.",
+                "Olhada r\u00e1pida: %d coisas chamaram minha aten\u00e7\u00e3o. Vou mostrar cada uma na p\u00e1gina."
+            ],
+            "%1$d of %2$d": [
+                "%1$d de %2$d"
+            ],
+            "It\u2019s in your message box. Change what you like, then send it.": [
+                "Est\u00e1 na sua caixa de mensagem. Mude o que quiser e depois envie."
+            ],
+            "Attached. It goes with your next request.": [
+                "Anexado. Vai junto com sua pr\u00f3xima solicita\u00e7\u00e3o."
+            ],
+            "Added. It goes with your next request.": [
+                "Adicionado. Vai junto com sua pr\u00f3xima solicita\u00e7\u00e3o."
+            ],
+            "That skill isn\u2019t ready on this site yet.": [
+                "Essa skill ainda n\u00e3o est\u00e1 pronta neste site."
+            ],
+            "Not bad, if I say so myself.": [
+                "Nada mal, mod\u00e9stia \u00e0 parte."
+            ],
+            "I supervised. You\u2019re welcome.": [
+                "Eu supervisionei. De nada."
+            ],
+            "Fresh out of the oven.": [
+                "Saindo do forno."
+            ],
+            "Smooth. Like my head.": [
+                "Liso. Como a minha cabe\u00e7a."
+            ],
+            "Done: \u201c%1$s\u201d. %2$s Have a look.": [
+                "Pronto: \u201c%1$s\u201d. %2$s D\u00ea uma olhada."
+            ],
+            "Done! Have a look.": [
+                "Pronto! D\u00ea uma olhada."
+            ],
+            "Your agent went quiet. I\u2019ll keep the chair warm.": [
+                "Seu agente ficou quieto. Vou guardando a cadeira."
+            ],
+            "Your agent disconnected. Nap time until it\u2019s back.": [
+                "Seu agente se desconectou. Hora da soneca at\u00e9 ele voltar."
+            ],
+            "I\u2019m up! Your agent is listening. What shall we do?": [
+                "Acordei! Seu agente est\u00e1 ouvindo. O que vamos fazer?"
+            ],
+            "Your agent is on it: \u201c%s\u201d. I\u2019ll supervise.": [
+                "Seu agente est\u00e1 cuidando disso: \u201c%s\u201d. Eu supervisiono."
+            ],
+            "Your agent is on it. I\u2019ll supervise. Someone has to.": [
+                "Seu agente est\u00e1 cuidando disso. Eu supervisiono. Algu\u00e9m precisa fazer isso."
+            ],
+            "Saved \u201c%s\u201d.": [
+                "\u201c%s\u201d salvo."
+            ],
+            "Saved a change.": [
+                "Uma altera\u00e7\u00e3o salva."
+            ],
+            "Asking for a few things? Use Add another on each note, then send them together.": [
+                "Vai pedir v\u00e1rias coisas? Use Adicionar outra em cada nota e depois envie todas juntas."
+            ],
+            "Tip: press D to draw a box, a circle or a line around what you mean. A drawing and a few words say it best.": [
+                "Dica: pressione D para desenhar uma caixa, um c\u00edrculo ou uma linha em volta do que voc\u00ea quer dizer. Um desenho e poucas palavras dizem tudo."
+            ],
+            "This is a snapshot of another site. Point at what you like and say \u201cmake ours like this\u201d. I won\u2019t tell them.": [
+                "Esta \u00e9 uma c\u00f3pia de outro site. Aponte para o que voc\u00ea gostou e diga \u201cdeixe o nosso assim\u201d. Eu n\u00e3o conto para eles."
+            ],
+            "Lots of tabs! Right-click one to put related tabs in a coloured group.": [
+                "Quantas abas! Clique com o bot\u00e3o direito em uma para colocar abas relacionadas em um grupo colorido."
+            ],
+            "Phone view is on. Notes you pin now tell the agent to fix the phone layout.": [
+                "A visualiza\u00e7\u00e3o de celular est\u00e1 ligada. As notas que voc\u00ea fixar agora dizem ao agente para corrigir o layout do celular."
+            ],
+            "Pick several files with Shift, then Add to message to hand them to your agent.": [
+                "Escolha v\u00e1rios arquivos com Shift e depois clique em Adicionar \u00e0 mensagem para entreg\u00e1-los ao seu agente."
+            ],
+            "Hmm, that did not work. The message just shown says why. Not my fault, for the record.": [
+                "Hmm, isso n\u00e3o funcionou. A mensagem que acabou de aparecer diz por qu\u00ea. N\u00e3o foi culpa minha, s\u00f3 para constar."
+            ],
+            "Agent connected! I\u2019m awake. I was totally awake. It\u2019s listening now.": [
+                "Agente conectado! Estou acordado. Eu estava totalmente acordado. Ele est\u00e1 ouvindo agora."
+            ],
+            "Another tip": [
+                "Outra dica"
+            ],
+            "Hi, I\u2019m Niby! I live in %s with you: I chat, I pass your requests to your agent, and I tell you what it\u2019s up to. New here? Let me show you around, it takes a minute.": [
+                "Oi, eu sou o Niby! Moro no %s com voc\u00ea: converso, passo suas solicita\u00e7\u00f5es para o seu agente e conto o que ele est\u00e1 fazendo. \u00c9 novo por aqui? Deixa eu te mostrar tudo, leva um minuto."
+            ],
+            "Show me around": [
+                "Me mostre tudo"
+            ],
+            "Maybe later": [
+                "Talvez depois"
+            ],
+            "Your agent": [
+                "Seu agente"
+            ],
+            "Your agent\u2019s light. Green: it\u2019s listening. Pulsing: it\u2019s working. Grey: nobody home, so click it to connect one. I nap when it\u2019s grey, so please do.": [
+                "A luz do seu agente. Verde: est\u00e1 ouvindo. Piscando: est\u00e1 trabalhando. Cinza: n\u00e3o tem ningu\u00e9m em casa, ent\u00e3o clique para conectar um. Eu tiro uma soneca quando est\u00e1 cinza, ent\u00e3o por favor conecte."
+            ],
+            "The jobs queue": [
+                "A fila de tarefas"
+            ],
+            "Everything you asked for, in line. Hover it to stop what\u2019s running, drag jobs into a new order, pause one, or undo a finished one. Bossing an AI around has never been this tidy.": [
+                "Tudo o que voc\u00ea pediu, em fila. Passe o mouse para parar o que est\u00e1 em execu\u00e7\u00e3o, arraste as tarefas para mudar a ordem, pause uma ou desfa\u00e7a uma conclu\u00edda. Mandar em uma IA nunca foi t\u00e3o organizado."
+            ],
+            "The queue": [
+                "A fila"
+            ],
+            "Requests you put aside to run together later. Open it to run them all in one go, change their order or drop one. Queue mode in the message box fills it.": [
+                "Solicita\u00e7\u00f5es que voc\u00ea deixou de lado para executar juntas depois. Abra para executar todas de uma vez, mudar a ordem ou tirar uma. O modo Fila na caixa de mensagem a preenche."
+            ],
+            "My switch": [
+                "Meu interruptor"
+            ],
+            "That\u2019s me up there! Click it to hide me when you need quiet, and again to bring me back. I won\u2019t sulk. Much.": [
+                "Aquele l\u00e1 em cima sou eu! Clique para me esconder quando precisar de sil\u00eancio e de novo para me trazer de volta. N\u00e3o vou ficar emburrado. Muito."
+            ],
+            "Back, forward, reload": [
+                "Voltar, avan\u00e7ar, recarregar"
+            ],
+            "Just like a browser. Walk around your site here; whatever page is open is the one your agent works on.": [
+                "Igual a um navegador. Navegue pelo seu site aqui; a p\u00e1gina que estiver aberta \u00e9 aquela em que seu agente trabalha."
+            ],
+            "The address bar": [
+                "A barra de endere\u00e7o"
+            ],
+            "Search your pages, posts and products, or type a path like \/about. Paste any website\u2019s address to open a safe snapshot of it and point at what you like. Ctrl K jumps here.": [
+                "Pesquise suas p\u00e1ginas, posts e produtos, ou digite um caminho como \/about. Cole o endere\u00e7o de qualquer site para abrir uma c\u00f3pia segura dele e apontar o que voc\u00ea gostou. Ctrl K leva voc\u00ea at\u00e9 aqui."
+            ],
+            "Desktop, tablet, phone": [
+                "Desktop, tablet, celular"
+            ],
+            "Switch the preview width. Notes you pin in phone view tell your agent to fix the phone layout, not the desktop one.": [
+                "Mude a largura da visualiza\u00e7\u00e3o. As notas que voc\u00ea fixar na visualiza\u00e7\u00e3o de celular dizem ao agente para corrigir o layout do celular, n\u00e3o o do desktop."
+            ],
+            "Tabs": [
+                "Abas"
+            ],
+            "Keep several pages open, like in a browser. Ctrl-click a link for a new tab; right-click a tab to close the others, or the ones to its left or right. A dot means Builder edits on that page are not saved yet.": [
+                "Mantenha v\u00e1rias p\u00e1ginas abertas, como em um navegador. Ctrl+clique em um link abre uma nova aba; clique com o bot\u00e3o direito em uma aba para fechar as outras, ou as que est\u00e3o \u00e0 esquerda ou \u00e0 direita dela. Um ponto significa que h\u00e1 edi\u00e7\u00f5es do Builder n\u00e3o salvas naquela p\u00e1gina."
+            ],
+            "My favourite. Press %s, click anything on the page and say what to change. Your agent gets the exact element. No more \u201cthe blue thing, top-ish, left-ish\u201d.": [
+                "Meu favorito. Pressione %s, clique em qualquer coisa na p\u00e1gina e diga o que mudar. Seu agente recebe o elemento exato. Chega de \u201caquela coisa azul, mais ou menos em cima, meio \u00e0 esquerda\u201d."
+            ],
+            "Press %s and draw a box, a circle or a line around what you mean. A doodle and a few words beat a long email.": [
+                "Pressione %s e desenhe uma caixa, um c\u00edrculo ou uma linha em volta do que voc\u00ea quer dizer. Um rabisco e poucas palavras valem mais que um e-mail comprido."
+            ],
+            "Your notes": [
+                "Suas notas"
+            ],
+            "Every note you pinned, in one list. Jump to one, edit it, or send them all together.": [
+                "Todas as notas que voc\u00ea fixou, em uma lista. V\u00e1 at\u00e9 uma, edite ou envie todas juntas."
+            ],
+            "The Builder": [
+                "O Builder"
+            ],
+            "Edit the page yourself: click anything to select it, type on it, drag it, style it, add sections, and save straight to your site. %s opens it.": [
+                "Edite a p\u00e1gina voc\u00ea mesmo: clique em qualquer coisa para selecionar, digite nela, arraste, estilize, adicione se\u00e7\u00f5es e salve direto no seu site. %s abre o Builder."
+            ],
+            "Show me the Builder": [
+                "Me mostre o Builder"
+            ],
+            "Turn your site into plain HTML files: download them as a zip, or publish to Cloudflare Pages, Netlify or your own server, and keep it up to date by itself whenever you change something.": [
+                "Transforme seu site em arquivos HTML simples: baixe-os em um zip ou publique no Cloudflare Pages, no Netlify ou no seu pr\u00f3prio servidor, e mantenha tudo atualizado sozinho sempre que voc\u00ea mudar algo."
+            ],
+            "Light, dark and more": [
+                "Claro, escuro e mais"
+            ],
+            "Switch between light and dark, and find the rest under the three dots. Night owls, you\u2019re welcome.": [
+                "Alterne entre claro e escuro e encontre o resto nos tr\u00eas pontinhos. Corujas da madrugada, de nada."
+            ],
+            "Chat and History": [
+                "Chat e Hist\u00f3rico"
+            ],
+            "Chat is your talk with the agent. History holds every saved version of a page, ready to restore. The folder keeps your threads: rename one, delete one, or start fresh. Press [ to fold the panel away.": [
+                "O Chat \u00e9 a sua conversa com o agente. O Hist\u00f3rico guarda cada vers\u00e3o salva de uma p\u00e1gina, pronta para restaurar. A pasta guarda suas conversas: renomeie uma, exclua uma ou comece do zero. Pressione [ para recolher o painel."
+            ],
+            "The conversation": [
+                "A conversa"
+            ],
+            "Your requests and your agent\u2019s answers live here, with each saved change and an Undo next to it. Not sure where to start? Pick a starter.": [
+                "Suas solicita\u00e7\u00f5es e as respostas do seu agente ficam aqui, com cada altera\u00e7\u00e3o salva e um Desfazer ao lado. N\u00e3o sabe por onde come\u00e7ar? Escolha uma sugest\u00e3o."
+            ],
+            "How your agent takes it": [
+                "Como seu agente recebe o pedido"
+            ],
+            "Auto: it starts right away. Plan: it looks and plans, and nothing changes. Queue: collect requests and run them together later. Bypass: it decides on its own, no questions asked.": [
+                "Autom\u00e1tico: come\u00e7a na hora. Planejar: ele olha e planeja, e nada muda. Fila: junte solicita\u00e7\u00f5es e execute todas depois. Aut\u00f4nomo: decide sozinho, sem fazer perguntas."
+            ],
+            "The message box": [
+                "A caixa de mensagem"
+            ],
+            "Say what you want in plain words. + adds a page, a file, a skill or a workflow; \/ opens starters; the paper clip attaches files. Send it, and Stop it if you change your mind.": [
+                "Diga o que voc\u00ea quer em palavras simples. O + adiciona uma p\u00e1gina, um arquivo, uma skill ou um fluxo de trabalho; a \/ abre as sugest\u00f5es; o clipe anexa arquivos. Envie e, se mudar de ideia, clique em Parar."
+            ],
+            "Your site, live": [
+                "Seu site, ao vivo"
+            ],
+            "The real thing, not a picture. Click around like a visitor, and when something needs changing, point at it.": [
+                "A coisa real, n\u00e3o uma imagem. Clique por a\u00ed como um visitante e, quando algo precisar mudar, aponte para ele."
+            ],
+            "And me, Niby": [
+                "E eu, o Niby"
+            ],
+            "Drag me anywhere. Click me to chat: I answer questions, hand work to your agent and tell you what it\u2019s doing. No agent? I nap. That\u2019s the whole job, and I\u2019m great at it.": [
+                "Me arraste para onde quiser. Clique em mim para conversar: respondo perguntas, passo trabalho para o seu agente e conto o que ele est\u00e1 fazendo. Sem agente? Eu tiro uma soneca. Esse \u00e9 todo o meu trabalho, e eu sou \u00f3timo nele."
+            ],
+            "Elements to drop on the page, or click one to add it after what you selected (inside it, when it is an empty box). Draw a wireframe and NibWP builds it. Images from your desktop drop right onto the page.": [
+                "Elementos para soltar na p\u00e1gina, ou clique em um para adicion\u00e1-lo depois do que voc\u00ea selecionou (dentro dele, quando for uma caixa vazia). Desenhe um wireframe e o NibWP o constr\u00f3i. Imagens do seu computador caem direto na p\u00e1gina."
+            ],
+            "Structure": [
+                "Estrutura"
+            ],
+            "Every element on the page, as a tree. Click to select, type to rename, right-click for BEM names, copy and paste, or hiding on phones, tablets or desktop.": [
+                "Cada elemento da p\u00e1gina, como uma \u00e1rvore. Clique para selecionar, digite para renomear, clique com o bot\u00e3o direito para nomes BEM, copiar e colar, ou ocultar em celulares, tablets ou desktop."
+            ],
+            "Classes": [
+                "Classes"
+            ],
+            "Your saved classes and the site\u2019s variables. Edit a class once and every element that uses it follows; rename it and the whole site follows.": [
+                "Suas classes salvas e as vari\u00e1veis do site. Edite uma classe uma vez e todo elemento que a usa acompanha; renomeie-a e o site inteiro acompanha."
+            ],
+            "Templates": [
+                "Modelos"
+            ],
+            "Each kind of content with the template that shows it, and a small picture of it. Open one to edit it, or make a new one.": [
+                "Cada tipo de conte\u00fado com o modelo que o exibe e uma miniatura dele. Abra um para editar ou crie um novo."
+            ],
+            "Your colours, type and spacing as one set of tokens. Change a few settings and every token follows.": [
+                "Suas cores, tipografia e espa\u00e7amento como um \u00fanico conjunto de tokens. Mude algumas configura\u00e7\u00f5es e todos os tokens acompanham."
+            ],
+            "Content hub": [
+                "Central de conte\u00fado"
+            ],
+            "Make a new page, post or product from a starting point, and rename or remove recent ones, without leaving the Builder.": [
+                "Crie uma nova p\u00e1gina, post ou produto a partir de um ponto de partida e renomeie ou remova os recentes, sem sair do Builder."
+            ],
+            "Canvas size": [
+                "Tamanho do canvas"
+            ],
+            "Type a width or pick a screen size. Wider than your screen? The page is shown smaller at its real width, so its layout is the real one.": [
+                "Digite uma largura ou escolha um tamanho de tela. Mais largo que a sua tela? A p\u00e1gina aparece menor, na largura real, para que o layout seja o de verdade."
+            ],
+            "The HTML, CSS and JavaScript of what you selected, in a code editor that suggests as you type. %s opens it.": [
+                "O HTML, o CSS e o JavaScript do que voc\u00ea selecionou, em um editor de c\u00f3digo que sugere enquanto voc\u00ea digita. %s abre o editor."
+            ],
+            "Undo and saved changes": [
+                "Desfazer e altera\u00e7\u00f5es salvas"
+            ],
+            "Undo and redo while you work. Once saved, the clock lists your saves: undo the last one if you change your mind.": [
+                "Desfa\u00e7a e refa\u00e7a enquanto trabalha. Depois de salvar, o rel\u00f3gio lista seus salvamentos: desfa\u00e7a o \u00faltimo se mudar de ideia."
+            ],
+            "Puts your changes on the live site. %s saves too.": [
+                "Coloca suas altera\u00e7\u00f5es no site ao vivo. %s tamb\u00e9m salva."
+            ],
+            "Your way": [
+                "Do seu jeito"
+            ],
+            "Show or hide parts of the Builder. %s lists every shortcut.": [
+                "Mostre ou oculte partes do Builder. %s lista todos os atalhos."
+            ],
+            "The page": [
+                "A p\u00e1gina"
+            ],
+            "Click to select, double-click text to type it, drag to move, right-click for more. %1$s duplicates; %2$s and %3$s copy and paste, even into another tab.": [
+                "Clique para selecionar, clique duas vezes em um texto para digitar, arraste para mover, clique com o bot\u00e3o direito para mais op\u00e7\u00f5es. %1$s duplica; %2$s e %3$s copiam e colam, at\u00e9 em outra aba."
+            ],
+            "Finish": [
+                "Concluir"
+            ],
+            "Skip the tour": [
+                "Pular o tour"
+            ],
+            "That\u2019s the Builder! Click anything on the page and make it yours. I\u2019m here if you need me.": [
+                "Esse \u00e9 o Builder! Clique em qualquer coisa na p\u00e1gina e deixe do seu jeito. Estou aqui se precisar de mim."
+            ],
+            "That\u2019s the tour! Replay it any time: click me and pick Take the tour. Now go make something lovely.": [
+                "Esse foi o tour! Repita quando quiser: clique em mim e escolha Fazer o tour. Agora v\u00e1 criar algo lindo."
+            ],
+            "Thanks, Niby": [
+                "Obrigado, Niby"
+            ],
+            "Welcome to the Builder! Want a quick look around it? It takes a minute.": [
+                "Boas-vindas ao Builder! Quer dar uma olhada r\u00e1pida nele? Leva um minuto."
+            ],
+            "Your agent is connected and already working. I\u2019m watching it.": [
+                "Seu agente est\u00e1 conectado e j\u00e1 trabalhando. Estou de olho nele."
+            ],
+            "Your agent is connected and listening. Click me to chat.": [
+                "Seu agente est\u00e1 conectado e ouvindo. Clique em mim para conversar."
+            ],
+            "No agent yet? You can still pin notes and send them; they wait here for it. Want to connect one?": [
+                "Ainda sem agente? Voc\u00ea ainda pode fixar notas e envi\u00e1-las; elas ficam esperando aqui por ele. Quer conectar um?"
+            ],
+            "Press %s and click anything on the page to leave a note on it.": [
+                "Pressione %s e clique em qualquer coisa na p\u00e1gina para deixar uma nota nela."
+            ],
+            "Your media manager, right here in the top bar. Browse by type or date, search, upload or drop files, copy links, or add a file to your message. No trip to the Media Library.": [
+                "Seu gerenciador de m\u00eddia, aqui mesmo na barra superior. Navegue por tipo ou data, pesquise, envie ou solte arquivos, copie links ou adicione um arquivo \u00e0 sua mensagem. Sem passar pela Biblioteca de m\u00eddia."
+            ],
+            "Editor and new tab": [
+                "Editor e nova aba"
+            ],
+            "This page in its own editor, and this page in a new tab. The usual suspects, right where you need them.": [
+                "Esta p\u00e1gina no pr\u00f3prio editor, e esta p\u00e1gina em uma nova aba. Os suspeitos de sempre, bem onde voc\u00ea precisa deles."
+            ],
+            "Use %1$s %2$s to move, %3$s to close.": [
+                "Use %1$s %2$s para navegar e %3$s para fechar."
+            ],
+            "PHP, HTML, CSS, JavaScript: I write it all, and I write it right. Who can beat me? Nobody. I am the best.": [
+                "PHP, HTML, CSS, JavaScript: escrevo tudo, e escrevo direito. Quem me vence? Ningu\u00e9m. Eu sou o melhor."
+            ],
+            "PHP: sanitise what comes in, escape what goes out. esc_html, esc_attr, esc_url, on every echo, every time.": [
+                "PHP: sanitize o que entra, fa\u00e7a escape do que sai. esc_html, esc_attr, esc_url, em todo echo, sempre."
+            ],
+            "JavaScript that blocks nothing: defer it, and listen once on the parent instead of on fifty buttons.": [
+                "JavaScript que n\u00e3o bloqueia nada: carregue com defer e escute uma vez no pai em vez de em cinquenta bot\u00f5es."
+            ],
+            "One h1 a page, headings in order, a button for actions and a link to go somewhere. Good HTML is free accessibility.": [
+                "Um h1 por p\u00e1gina, t\u00edtulos em ordem, um bot\u00e3o para a\u00e7\u00f5es e um link para ir a outro lugar. HTML bom \u00e9 acessibilidade de gra\u00e7a."
+            ],
+            "A database query inside a loop is a slow site waiting to happen. Fetch once, then loop.": [
+                "Uma consulta ao banco dentro de um loop \u00e9 um site lento esperando para acontecer. Busque uma vez, depois percorra."
+            ],
+            "Working with code? Let me bring in Kind Guy: PHP, HTML, CSS, JavaScript, he is a pro developer.": [
+                "Trabalhando com c\u00f3digo? Deixa eu chamar o Kind Guy: PHP, HTML, CSS, JavaScript, ele \u00e9 um desenvolvedor profissional."
+            ],
+            "Working with code? Shall I call Kind Guy?": [
+                "Trabalhando com c\u00f3digo? Chamo o Kind Guy?"
+            ],
+            "Meet Kind Guy: a pro developer. PHP, HTML, CSS, JavaScript, he knows them all. Brace yourself.": [
+                "Conhe\u00e7a o Kind Guy: um desenvolvedor profissional. PHP, HTML, CSS, JavaScript, ele conhece todos. Prepare-se."
+            ],
+            "Nothing to build here? Then I\u2019m out. Call me when you do real work.": [
+                "Nada para construir aqui? Ent\u00e3o t\u00f4 fora. Me chame quando for fazer trabalho de verdade."
+            ]
+        }
+    }
+}

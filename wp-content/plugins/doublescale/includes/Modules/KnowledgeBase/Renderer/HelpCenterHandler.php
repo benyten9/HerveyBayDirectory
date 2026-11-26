@@ -455,7 +455,7 @@ final class HelpCenterHandler {
 
 		$out  = '<section class="ds-hc__hero">';
 		if ( 'h1' === $tag ) {
-			$out .= '<p class="ds-hc__eyebrow">' . esc_html( (string) get_the_title( (int) get_queried_object_id() ) ?: __( 'Help Center', 'doublescale' ) ) . '</p>';
+			$out .= '<p class="ds-hc__eyebrow">' . esc_html( (string) get_the_title( (int) get_queried_object_id() ) ?: __( 'Knowledge Base', 'doublescale' ) ) . '</p>';
 		}
 		$out .= '<' . $tag . ' class="ds-hc__hero-title ds-hc__title">' . esc_html__( 'How can we help?', 'doublescale' ) . '</' . $tag . '>';
 		if ( $total > 0 ) {
@@ -727,7 +727,7 @@ final class HelpCenterHandler {
 	 */
 	public static function breadcrumbs( array $trail, string $current = '' ): string {
 		$home  = KbPublicArticles::page_url() ?: get_permalink();
-		$items = '<li><a href="' . esc_url( (string) $home ) . '">' . esc_html__( 'Help Center', 'doublescale' ) . '</a></li>';
+		$items = '<li><a href="' . esc_url( (string) $home ) . '">' . esc_html__( 'Knowledge Base', 'doublescale' ) . '</a></li>';
 		foreach ( $trail as $crumb ) {
 			$items .= '<li><a href="' . esc_url( $crumb[1] ) . '" dir="auto">' . esc_html( $crumb[0] ) . '</a></li>';
 		}

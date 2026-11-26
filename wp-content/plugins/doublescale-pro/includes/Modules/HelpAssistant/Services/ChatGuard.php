@@ -34,6 +34,11 @@ use WP_Error;
  */
 final class ChatGuard {
 
+	/** Live chat flood guard: messages per visitor to the team. */
+	public const TEAM_PER_MINUTE = 30;
+	public const TEAM_PER_HOUR   = 600;
+
+
 	/**
 	 * RateLimiter pool of answers being written.
 	 */
@@ -89,6 +94,31 @@ final class ChatGuard {
 			return new WP_Error(
 				'help_rate_limited',
 				__( 'You are asking a little too fast. Please wait a moment and try again.', 'doublescale' ),
+				array( 'status' => 429 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Messages to the team in a live chat: a fixed flood guard (not the AI
+	 * limits the owner sets), generous enough for any real conversation.
+	 *
+	 * @return WP_Error|null
+	 */
+	public static function team_flood(): ?WP_Error {
+		$visitor = ClientIp::bucket();
+		$minute  = RateLimiter::hit( 'help_team_min|' . $visitor, MINUTE_IN_SECONDS );
+		$hour    = RateLimiter::hit( 'help_team_hour|' . $visitor, HOUR_IN_SECONDS );
+
+		if ( $minute < 1 || $hour < 1 ) {
+			return self::unavailable();
+		}
+		if ( $minute > self::TEAM_PER_MINUTE || $hour > self::TEAM_PER_HOUR ) {
+			return new WP_Error(
+				'help_rate_limited',
+				__( 'You are sending messages a little too fast. Please wait a moment and try again.', 'doublescale' ),
 				array( 'status' => 429 )
 			);
 		}

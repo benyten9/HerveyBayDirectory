@@ -1,0 +1,2368 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-builder.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "de_DE",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Disabled": [
+                "Deaktiviert"
+            ],
+            "View": [
+                "Ansehen"
+            ],
+            "Delete": [
+                "L\u00f6schen"
+            ],
+            "Type": [
+                "Typ"
+            ],
+            "Description": [
+                "Beschreibung"
+            ],
+            "Build": [
+                "Bauen"
+            ],
+            "Data": [
+                "Daten"
+            ],
+            "Close": [
+                "Schlie\u00dfen"
+            ],
+            "Copy": [
+                "Kopieren"
+            ],
+            "Apply": [
+                "Bewerben"
+            ],
+            "Copied": [
+                "Kopiert"
+            ],
+            "Success": [
+                "Erfolg"
+            ],
+            "Cancel": [
+                "Abbrechen"
+            ],
+            "Name": [
+                "Name"
+            ],
+            "optional": [
+                "optional"
+            ],
+            "Done": [
+                "Fertig"
+            ],
+            "Message": [
+                "Nachricht"
+            ],
+            "Design": [
+                "Design"
+            ],
+            "Details": [
+                "Details"
+            ],
+            "Contact": [
+                "Kontakt"
+            ],
+            "Remove": [
+                "Entfernen"
+            ],
+            "Rename": [
+                "Umbenennen"
+            ],
+            "Add": [
+                "Hinzuf\u00fcgen"
+            ],
+            "Email": [
+                "E-Mail"
+            ],
+            "New template": [
+                "Neue Vorlage"
+            ],
+            "New section": [
+                "Neuer Abschnitt"
+            ],
+            "Info": [
+                "Info"
+            ],
+            "Code editor": [
+                "Code-Editor"
+            ],
+            "Nothing matches.": [
+                "Keine Treffer."
+            ],
+            "Tablet": [
+                "Tablet"
+            ],
+            "Laptop": [
+                "Laptop"
+            ],
+            "Desktop": [
+                "Desktop"
+            ],
+            "Duplicate": [
+                "Duplizieren"
+            ],
+            "%d element": [
+                "%d Element",
+                "%d Elemente"
+            ],
+            "Save": [
+                "Speichern"
+            ],
+            "NibWP framework": [
+                "NibWP-Framework"
+            ],
+            "Could not rename it.": [
+                "Umbenennen hat nicht geklappt."
+            ],
+            "Someone": [
+                "Jemand"
+            ],
+            "Use letters, digits, dashes and underscores, starting with a letter.": [
+                "Verwende Buchstaben, Ziffern, Bindestriche und Unterstriche, beginnend mit einem Buchstaben."
+            ],
+            "Phone": [
+                "Handy"
+            ],
+            "Builder": [
+                "Builder"
+            ],
+            "Open in a new tab": [
+                "In neuem Tab \u00f6ffnen"
+            ],
+            "Send": [
+                "Senden"
+            ],
+            "Drag to move": [
+                "Ziehen zum Verschieben"
+            ],
+            "Close (Esc)": [
+                "Schlie\u00dfen (Esc)"
+            ],
+            "move": [
+                "bewegen"
+            ],
+            "pick": [
+                "ausw\u00e4hlen"
+            ],
+            "Spacing": [
+                "Abst\u00e4nde"
+            ],
+            "Typography": [
+                "Typografie"
+            ],
+            "Colours": [
+                "Farben"
+            ],
+            "Code": [
+                "Code"
+            ],
+            "%d change": [
+                "%d \u00c4nderung",
+                "%d \u00c4nderungen"
+            ],
+            "Structure": [
+                "Struktur"
+            ],
+            "Classes": [
+                "Klassen"
+            ],
+            "Templates": [
+                "Vorlagen"
+            ],
+            "Content hub": [
+                "Content-Hub"
+            ],
+            "Canvas size": [
+                "Gr\u00f6\u00dfe der Arbeitsfl\u00e4che"
+            ],
+            "Section": [
+                "Sektion"
+            ],
+            "Container": [
+                "Container"
+            ],
+            "Columns": [
+                "Spalten"
+            ],
+            "Column": [
+                "Spalte"
+            ],
+            "Box": [
+                "Box"
+            ],
+            "Heading": [
+                "\u00dcberschrift"
+            ],
+            "Text": [
+                "Text"
+            ],
+            "Image": [
+                "Bild"
+            ],
+            "Button": [
+                "Button"
+            ],
+            "Card": [
+                "Karte"
+            ],
+            "Form": [
+                "Formular"
+            ],
+            "Menu": [
+                "Men\u00fc"
+            ],
+            "List": [
+                "Liste"
+            ],
+            "Video": [
+                "Video"
+            ],
+            "Icon": [
+                "Icon"
+            ],
+            "Space": [
+                "Abstand"
+            ],
+            "Hero": [
+                "Hero"
+            ],
+            "Pricing": [
+                "Preise"
+            ],
+            "Call to action": [
+                "Call-to-Action"
+            ],
+            "Header": [
+                "Header"
+            ],
+            "Footer": [
+                "Footer"
+            ],
+            "About": [
+                "\u00dcber uns"
+            ],
+            "Undo": [
+                "R\u00fcckg\u00e4ngig"
+            ],
+            "Redo": [
+                "Wiederholen"
+            ],
+            "Close the Builder": [
+                "Builder schlie\u00dfen"
+            ],
+            "Layout": [
+                "Layout"
+            ],
+            "before": [
+                "vor"
+            ],
+            "after": [
+                "hinter"
+            ],
+            "Say what goes here, or drop elements in.": [
+                "Sag, was hierhin kommt, oder zieh Elemente hinein."
+            ],
+            "Card grid": [
+                "Karten-Grid"
+            ],
+            "Card title": [
+                "Kartentitel"
+            ],
+            "Short card text.": [
+                "Kurzer Kartentext."
+            ],
+            "New heading": [
+                "Neue \u00dcberschrift"
+            ],
+            "New paragraph. Click it to change it, or ask NibWP what it should say.": [
+                "Neuer Absatz. Klick darauf, um ihn zu \u00e4ndern, oder frag NibWP, was darin stehen soll."
+            ],
+            "Link": [
+                "Link"
+            ],
+            "A link": [
+                "Ein Link"
+            ],
+            "First item": [
+                "Erster Punkt"
+            ],
+            "Second item": [
+                "Zweiter Punkt"
+            ],
+            "Third item": [
+                "Dritter Punkt"
+            ],
+            "Quote": [
+                "Zitat"
+            ],
+            "A quote worth reading.": [
+                "Ein lesenswertes Zitat."
+            ],
+            "Divider": [
+                "Trennlinie"
+            ],
+            "Div": [
+                "Div"
+            ],
+            "Iframe": [
+                "Iframe"
+            ],
+            "Embedded page": [
+                "Eingebettete Seite"
+            ],
+            "Read more": [
+                "Weiterlesen"
+            ],
+            "Accordion": [
+                "Akkordeon"
+            ],
+            "Question %d": [
+                "Frage %d"
+            ],
+            "The answer.": [
+                "Die Antwort."
+            ],
+            "Table": [
+                "Tabelle"
+            ],
+            "Value": [
+                "Wert"
+            ],
+            "Row": [
+                "Zeile"
+            ],
+            "Home": [
+                "Startseite"
+            ],
+            "Map": [
+                "Karte"
+            ],
+            "HTML": [
+                "HTML"
+            ],
+            "Your HTML here: paste anything in the HTML pane below.": [
+                "Dein HTML hier: F\u00fcge beliebigen Code im HTML-Bereich unten ein."
+            ],
+            "Basics": [
+                "Grundlagen"
+            ],
+            "Blocks": [
+                "Bl\u00f6cke"
+            ],
+            "Landing page": [
+                "Landingpage"
+            ],
+            "Hero: big title, a short line, the main button, a photo": [
+                "Hero: gro\u00dfer Titel, eine kurze Zeile, der Haupt-Button, ein Foto"
+            ],
+            "Logos or trust badges": [
+                "Logos oder Vertrauenssiegel"
+            ],
+            "Three key benefits": [
+                "Drei zentrale Vorteile"
+            ],
+            "How it works, in three steps": [
+                "So funktioniert\u2019s, in drei Schritten"
+            ],
+            "Reviews": [
+                "Bewertungen"
+            ],
+            "Call to action band": [
+                "Call-to-Action-Band"
+            ],
+            "Questions and answers": [
+                "Fragen und Antworten"
+            ],
+            "About page": [
+                "\u00dcber-uns-Seite"
+            ],
+            "Hero: who we are, in one line": [
+                "Hero: wer wir sind, in einer Zeile"
+            ],
+            "Our story": [
+                "Unsere Geschichte"
+            ],
+            "Photo": [
+                "Foto"
+            ],
+            "The team": [
+                "Das Team"
+            ],
+            "What we value": [
+                "Was uns wichtig ist"
+            ],
+            "Product or tour": [
+                "Produkt oder Tour"
+            ],
+            "Photo gallery": [
+                "Fotogalerie"
+            ],
+            "Title, price, highlights, details": [
+                "Titel, Preis, Highlights, Details"
+            ],
+            "Booking or buy box": [
+                "Buchungs- oder Kaufbox"
+            ],
+            "What is included": [
+                "Was enthalten ist"
+            ],
+            "Related": [
+                "\u00c4hnliches"
+            ],
+            "Contact page": [
+                "Kontaktseite"
+            ],
+            "Short hero": [
+                "Kurzer Hero"
+            ],
+            "Contact form": [
+                "Kontaktformular"
+            ],
+            "Address, phone, hours, map": [
+                "Adresse, Telefon, \u00d6ffnungszeiten, Karte"
+            ],
+            "Pricing page": [
+                "Preisseite"
+            ],
+            "Plans": [
+                "Tarife"
+            ],
+            "Compare plans": [
+                "Tarife vergleichen"
+            ],
+            "Blog post": [
+                "Blogbeitrag"
+            ],
+            "Title, author, date": [
+                "Titel, Autor, Datum"
+            ],
+            "Featured image": [
+                "Beitragsbild"
+            ],
+            "Article": [
+                "Artikel"
+            ],
+            "About the author": [
+                "\u00dcber den Autor"
+            ],
+            "Related posts": [
+                "\u00c4hnliche Beitr\u00e4ge"
+            ],
+            "Two columns": [
+                "Zwei Spalten"
+            ],
+            "Three columns": [
+                "Drei Spalten"
+            ],
+            "Drag to switch sides": [
+                "Ziehen, um die Seite zu wechseln"
+            ],
+            "Colours, type, spacing": [
+                "Farben, Schrift, Abst\u00e4nde"
+            ],
+            "Open the home page": [
+                "Startseite \u00f6ffnen"
+            ],
+            "Find an element\u2026 Enter adds it": [
+                "Element finden \u2026 Enter f\u00fcgt es hinzu"
+            ],
+            "Draw a wireframe": [
+                "Wireframe zeichnen"
+            ],
+            "Drag a box on the page, split it into sections and columns, then tell NibWP once what to build.": [
+                "Zieh eine Box auf der Seite, teile sie in Sektionen und Spalten und sag NibWP dann einmal, was gebaut werden soll."
+            ],
+            "Wireframes": [
+                "Wireframes"
+            ],
+            "Find on the page\u2026 Enter for the next": [
+                "Auf der Seite finden \u2026 Enter f\u00fcr den n\u00e4chsten Treffer"
+            ],
+            "Unfold": [
+                "Ausklappen"
+            ],
+            "Elements on this page": [
+                "Elemente auf dieser Seite"
+            ],
+            "Find a class or a variable\u2026": [
+                "Klasse oder Variable finden \u2026"
+            ],
+            "Find a template\u2026 Enter opens it": [
+                "Vorlage finden \u2026 Enter \u00f6ffnet sie"
+            ],
+            "New pages, posts and more": [
+                "Neue Seiten, Beitr\u00e4ge und mehr"
+            ],
+            "Show or hide": [
+                "Ein- oder ausblenden"
+            ],
+            "Saved changes": [
+                "Gespeicherte \u00c4nderungen"
+            ],
+            "Canvas width \u00d7 height": [
+                "Breite \u00d7 H\u00f6he der Arbeitsfl\u00e4che"
+            ],
+            "Screen sizes": [
+                "Bildschirmgr\u00f6\u00dfen"
+            ],
+            "Add a %s": [
+                "%s hinzuf\u00fcgen"
+            ],
+            "Reset page": [
+                "Seite zur\u00fccksetzen"
+            ],
+            "Bigger text": [
+                "Gr\u00f6\u00dferer Text"
+            ],
+            "Bold": [
+                "Fett"
+            ],
+            "Italic": [
+                "Kursiv"
+            ],
+            "Uppercase": [
+                "Gro\u00dfbuchstaben"
+            ],
+            "Letter spacing": [
+                "Zeichenabstand"
+            ],
+            "Line height": [
+                "Zeilenh\u00f6he"
+            ],
+            "Text colour": [
+                "Textfarbe"
+            ],
+            "Align left": [
+                "Linksb\u00fcndig"
+            ],
+            "Align centre": [
+                "Zentriert"
+            ],
+            "Align right": [
+                "Rechtsb\u00fcndig"
+            ],
+            "Justify": [
+                "Blocksatz"
+            ],
+            "Underline": [
+                "Unterstrichen"
+            ],
+            "Strike through": [
+                "Durchgestrichen"
+            ],
+            "Balanced lines": [
+                "Ausgewogene Zeilen"
+            ],
+            "Flex row": [
+                "Flex-Reihe"
+            ],
+            "Flex column": [
+                "Flex-Spalte"
+            ],
+            "Grid": [
+                "Grid"
+            ],
+            "Four columns": [
+                "Vier Spalten"
+            ],
+            "Wrap": [
+                "Umbrechen"
+            ],
+            "Centre along": [
+                "Entlang zentrieren"
+            ],
+            "Space between": [
+                "Abstand dazwischen"
+            ],
+            "Align to the start": [
+                "Am Anfang ausrichten"
+            ],
+            "Align to the middle": [
+                "In der Mitte ausrichten"
+            ],
+            "Align to the end": [
+                "Am Ende ausrichten"
+            ],
+            "Gap": [
+                "Gap"
+            ],
+            "Block": [
+                "Block"
+            ],
+            "Cover": [
+                "F\u00fcllen"
+            ],
+            "Contain": [
+                "Einpassen"
+            ],
+            "16:9": [
+                "16:9"
+            ],
+            "Square": [
+                "Quadrat"
+            ],
+            "Full width": [
+                "Volle Breite"
+            ],
+            "Full height": [
+                "Volle H\u00f6he"
+            ],
+            "Centre with a max width": [
+                "Zentriert mit maximaler Breite"
+            ],
+            "Padding": [
+                "Padding"
+            ],
+            "Border": [
+                "Rahmen"
+            ],
+            "Rounded corners": [
+                "Abgerundete Ecken"
+            ],
+            "Shadow": [
+                "Schatten"
+            ],
+            "Background": [
+                "Hintergrund"
+            ],
+            "Position relative": [
+                "Position relativ"
+            ],
+            "Clip overflow": [
+                "\u00dcberlauf abschneiden"
+            ],
+            "Applies as you type": [
+                "Wirkt beim Tippen"
+            ],
+            "Applies when you leave it, or Ctrl+Enter": [
+                "Wirkt beim Verlassen oder mit Ctrl+Enter"
+            ],
+            "Ctrl+Enter runs it": [
+                "Ctrl+Enter f\u00fchrt es aus"
+            ],
+            "Add a class or ID (Ctrl+Enter)": [
+                "Klasse oder ID hinzuf\u00fcgen (Ctrl+Enter)"
+            ],
+            "Add a class, ID or attribute": [
+                "Klasse, ID oder Attribut hinzuf\u00fcgen"
+            ],
+            "Hover, focus, phones\u2026": [
+                "Hover, Fokus, Handys \u2026"
+            ],
+            "Add a state or a screen size": [
+                "Zustand oder Bildschirmgr\u00f6\u00dfe hinzuf\u00fcgen"
+            ],
+            "Copy the %s": [
+                "%s kopieren"
+            ],
+            "Fold the code": [
+                "Code einklappen"
+            ],
+            "Hide the code": [
+                "Code ausblenden"
+            ],
+            "Block name": [
+                "Blockname"
+            ],
+            "Attributes, e.g. data-tab=\"1\" aria-label=\"Book now\"": [
+                "Attribute, z. B. data-tab=\"1\" aria-label=\"Jetzt buchen\""
+            ],
+            "Attributes": [
+                "Attribute"
+            ],
+            "Attach": [
+                "Anh\u00e4ngen"
+            ],
+            "Attach an image or a file": [
+                "Bild oder Datei anh\u00e4ngen"
+            ],
+            "Ask NibWP": [
+                "NibWP fragen"
+            ],
+            "Select parent": [
+                "\u00dcbergeordnetes ausw\u00e4hlen"
+            ],
+            "Hide here": [
+                "Hier ausblenden"
+            ],
+            "Hide on the site": [
+                "Auf der Website ausblenden"
+            ],
+            "Hide on phones, tablets or desktop": [
+                "Auf Handys, Tablets oder Desktop ausblenden"
+            ],
+            "Delete it?": [
+                "L\u00f6schen?"
+            ],
+            "edit the text of %s": [
+                "Text von %s bearbeiten"
+            ],
+            "Fold": [
+                "Einklappen"
+            ],
+            "Open": [
+                "\u00d6ffnen"
+            ],
+            "Show in the Builder": [
+                "Im Builder anzeigen"
+            ],
+            "Hide in the Builder": [
+                "Im Builder ausblenden"
+            ],
+            "Building": [
+                "Wird gebaut"
+            ],
+            "Wireframe": [
+                "Wireframe"
+            ],
+            "%d element selected": [
+                "%d Element ausgew\u00e4hlt",
+                "%d Elemente ausgew\u00e4hlt"
+            ],
+            "Delete, %1$s, %2$s and %3$s act on all.": [
+                "Entf, %1$s, %2$s und %3$s wirken auf alle."
+            ],
+            "remove %d elements": [
+                "%d Elemente entfernen"
+            ],
+            "Removed %d element. Ctrl+Z brings it back.": [
+                "%d Element entfernt. Ctrl+Z holt es zur\u00fcck.",
+                "%d Elemente entfernt. Ctrl+Z holt sie zur\u00fcck."
+            ],
+            "duplicate %d elements": [
+                "%d Elemente duplizieren"
+            ],
+            "%d elements hidden in the Builder only. Show them again from Structure.": [
+                "%d Elemente nur im Builder ausgeblendet. Blende sie \u00fcber \u201eStruktur\u201c wieder ein."
+            ],
+            "Hidden in the Builder only. Show it again from Structure.": [
+                "Nur im Builder ausgeblendet. Blende es \u00fcber \u201eStruktur\u201c wieder ein."
+            ],
+            "Rename: its ID": [
+                "Umbenennen: seine ID"
+            ],
+            "Rename: its class": [
+                "Umbenennen: seine Klasse"
+            ],
+            "Renamed to #%s. Save to keep it.": [
+                "In #%s umbenannt. Speichere, um es zu behalten."
+            ],
+            "Renamed to .%s. Save to keep it.": [
+                "In .%s umbenannt. Speichere, um es zu behalten."
+            ],
+            "[in the site-wide %s: change it once in its shared template part so every page gets it]": [
+                "[im websiteweiten %s: einmal im gemeinsamen Vorlagenteil \u00e4ndern, damit jede Seite es bekommt]"
+            ],
+            "Undone: %s": [
+                "R\u00fcckg\u00e4ngig gemacht: %s"
+            ],
+            "Save %d change (Ctrl+S)": [
+                "%d \u00c4nderung speichern (Ctrl+S)",
+                "%d \u00c4nderungen speichern (Ctrl+S)"
+            ],
+            "Nothing to save": [
+                "Nichts zu speichern"
+            ],
+            "inside, at the end of": [
+                "ans Ende von"
+            ],
+            "move %s": [
+                "%s verschieben"
+            ],
+            "Move %1$s %2$s %3$s.": [
+                "Verschiebe %1$s %2$s %3$s."
+            ],
+            "add %s": [
+                "%s hinzuf\u00fcgen"
+            ],
+            "Add a new %1$s %2$s %3$s. Its HTML now:": [
+                "F\u00fcge ein neues Element %1$s %2$s %3$s ein. Sein HTML jetzt:"
+            ],
+            "What it should be: %s": [
+                "Was es sein soll: %s"
+            ],
+            "remove %s": [
+                "%s entfernen"
+            ],
+            "Remove %s.": [
+                "Entferne %s."
+            ],
+            "Removed. Ctrl+Z brings it back.": [
+                "Entfernt. Ctrl+Z holt es zur\u00fcck."
+            ],
+            "duplicate %s": [
+                "%s duplizieren"
+            ],
+            "Duplicate %s: the copy goes right after it.": [
+                "Dupliziere %s: Die Kopie kommt direkt dahinter."
+            ],
+            "Cut %d elements. Ctrl+Z brings them back.": [
+                "%d Elemente ausgeschnitten. Ctrl+Z holt sie zur\u00fcck."
+            ],
+            "Copied %d elements": [
+                "%d Elemente kopiert"
+            ],
+            "Cut. Ctrl+Z brings it back.": [
+                "Ausgeschnitten. Ctrl+Z holt es zur\u00fcck."
+            ],
+            "paste %d elements": [
+                "%d Elemente einf\u00fcgen"
+            ],
+            "Pasted %d elements": [
+                "%d Elemente eingef\u00fcgt"
+            ],
+            "Copied from %s.": [
+                "Kopiert von %s."
+            ],
+            "paste %s": [
+                "%s einf\u00fcgen"
+            ],
+            "Pasted": [
+                "Eingef\u00fcgt"
+            ],
+            "Styles copied": [
+                "Styles kopiert"
+            ],
+            "paste styles on %s": [
+                "Styles auf %s einf\u00fcgen"
+            ],
+            "Styles pasted": [
+                "Styles eingef\u00fcgt"
+            ],
+            "That HTML has no element in it.": [
+                "Dieses HTML enth\u00e4lt kein Element."
+            ],
+            "edit the HTML of %s": [
+                "HTML von %s bearbeiten"
+            ],
+            "Replace %s with this HTML:": [
+                "Ersetze %s durch dieses HTML:"
+            ],
+            "set %1$s on %2$s": [
+                "%1$s auf %2$s setzen"
+            ],
+            "change the CSS of %s": [
+                "CSS von %s \u00e4ndern"
+            ],
+            "Set this CSS (it styles %s):": [
+                "Setze dieses CSS (es gestaltet %s):"
+            ],
+            "run a script on %s": [
+                "ein Skript auf %s ausf\u00fchren"
+            ],
+            "Add this JavaScript to the page (written for %s):": [
+                "F\u00fcge der Seite dieses JavaScript hinzu (geschrieben f\u00fcr %s):"
+            ],
+            "A script that ran cannot be undone on the page. Reload to see it without.": [
+                "Ein ausgef\u00fchrtes Skript l\u00e4sst sich auf der Seite nicht r\u00fcckg\u00e4ngig machen. Lade neu, um sie ohne zu sehen."
+            ],
+            "Only images can be dropped on the page.": [
+                "Nur Bilder k\u00f6nnen auf der Seite abgelegt werden."
+            ],
+            "%s is larger than this site accepts.": [
+                "%s ist gr\u00f6\u00dfer, als diese Website annimmt."
+            ],
+            "image": [
+                "Bild"
+            ],
+            "Uploading\u2026": [
+                "Wird hochgeladen \u2026"
+            ],
+            "Uploading %d image\u2026": [
+                "%d Bild wird hochgeladen \u2026",
+                "%d Bilder werden hochgeladen \u2026"
+            ],
+            "Could not upload %s.": [
+                "%s konnte nicht hochgeladen werden."
+            ],
+            "Uploaded to your Media Library. The page changed meanwhile, so it was not placed.": [
+                "In deine Mediathek hochgeladen. Die Seite hat sich inzwischen ge\u00e4ndert, daher wurde es nicht platziert."
+            ],
+            "%d image added to the page.": [
+                "%d Bild zur Seite hinzugef\u00fcgt.",
+                "%d Bilder zur Seite hinzugef\u00fcgt."
+            ],
+            "Image replaced.": [
+                "Bild ersetzt."
+            ],
+            "\u201c%s\u201d component": [
+                "Komponente \u201e%s\u201c"
+            ],
+            "This is the component \u201c%s\u201d: use the builder\u2019s own component of that name if it exists, not a copy.": [
+                "Das ist die Komponente \u201e%s\u201c: Verwende die gleichnamige Komponente des Builders, falls es sie gibt, keine Kopie."
+            ],
+            "Wireframe \u201c%s\u201d goes here: NibWP is building it": [
+                "Wireframe \u201e%s\u201c kommt hierhin: NibWP baut es"
+            ],
+            "Build my wireframe \u201c%s\u201d where I dropped it on the page.": [
+                "Baue mein Wireframe \u201e%s\u201c dort, wo ich es auf der Seite abgelegt habe."
+            ],
+            "Wireframe sent to NibWP to build where you dropped it.": [
+                "Wireframe an NibWP gesendet, um es dort zu bauen, wo du es abgelegt hast."
+            ],
+            "Back to the page": [
+                "Zur\u00fcck zur Seite"
+            ],
+            "Drag a box where the wireframe goes; the orange line shows where it lands": [
+                "Zieh eine Box dorthin, wo das Wireframe hin soll; die orange Linie zeigt, wo es landet"
+            ],
+            "Lands inside": [
+                "Landet in"
+            ],
+            "Lands before": [
+                "Landet vor"
+            ],
+            "Lands after": [
+                "Landet hinter"
+            ],
+            "the frame": [
+                "dem Rahmen"
+            ],
+            "Save as a wireframe": [
+                "Als Wireframe speichern"
+            ],
+            "Note (optional)": [
+                "Notiz (optional)"
+            ],
+            "Click to say what NibWP builds here": [
+                "Klick, um zu sagen, was NibWP hier baut"
+            ],
+            "Column %d": [
+                "Spalte %d"
+            ],
+            "Section %d": [
+                "Sektion %d"
+            ],
+            "draw a wireframe": [
+                "ein Wireframe zeichnen"
+            ],
+            "split into columns": [
+                "in Spalten teilen"
+            ],
+            "add a section": [
+                "eine Sektion hinzuf\u00fcgen"
+            ],
+            "remove a wireframe box": [
+                "eine Wireframe-Box entfernen"
+            ],
+            "no note: make it fit what is around it": [
+                "keine Notiz: Pass es an das an, was drumherum ist"
+            ],
+            "%1$dpx wide, at least %2$dpx tall": [
+                "%1$dpx breit, mindestens %2$dpx hoch"
+            ],
+            "%d columns side by side": [
+                "%d Spalten nebeneinander"
+            ],
+            "The whole wireframe": [
+                "Das ganze Wireframe"
+            ],
+            "An element I placed here, use it as it is:": [
+                "Ein Element, das ich hier platziert habe, verwende es so, wie es ist:"
+            ],
+            "right after %s": [
+                "direkt hinter %s"
+            ],
+            "right before %s": [
+                "direkt vor %s"
+            ],
+            "inside %s": [
+                "in %s"
+            ],
+            "Build this %s, in the builder this page uses, in place of the wireframe I drew. Follow its structure: each section and column as laid out, responsive, on the site\u2019s design system.": [
+                "Baue das hier %s, mit dem Builder, den diese Seite nutzt, anstelle des Wireframes, das ich gezeichnet habe. Folge seiner Struktur: jede Sektion und Spalte wie angelegt, responsiv, im Designsystem der Website."
+            ],
+            "NibWP is building this\u2026": [
+                "NibWP baut das gerade \u2026"
+            ],
+            "Sent to NibWP. It builds it right here.": [
+                "An NibWP gesendet. Es baut es genau hier."
+            ],
+            "resize a wireframe box": [
+                "die Gr\u00f6\u00dfe einer Wireframe-Box \u00e4ndern"
+            ],
+            "place the \u201c%s\u201d wireframe": [
+                "das Wireframe \u201e%s\u201c platzieren"
+            ],
+            "Wireframe placed. Shape it, then Build.": [
+                "Wireframe platziert. Form es und klick dann auf \u201eBauen\u201c."
+            ],
+            "\u201c%s\u201d saved to your wireframes.": [
+                "\u201e%s\u201c in deinen Wireframes gespeichert."
+            ],
+            "Could not save the wireframe.": [
+                "Das Wireframe konnte nicht gespeichert werden."
+            ],
+            "Comment on %s": [
+                "Kommentar zu %s"
+            ],
+            "New %s: what should it be?": [
+                "Neues %s: Was soll es sein?"
+            ],
+            "Save %s as a component": [
+                "%s als Komponente speichern"
+            ],
+            "What should NibWP build here?": [
+                "Was soll NibWP hier bauen?"
+            ],
+            "%s: a note (optional)": [
+                "%s: eine Notiz (optional)"
+            ],
+            "e.g. Make it bigger and orange \u00b7 Put the attached photo here": [
+                "z. B. Mach es gr\u00f6\u00dfer und orange \u00b7 Setz das angeh\u00e4ngte Foto hierhin"
+            ],
+            "e.g. Three tour cards with photo, price and a Book button": [
+                "z. B. Drei Tour-Karten mit Foto, Preis und einem Buchen-Button"
+            ],
+            "Name it, e.g. Tour card": [
+                "Gib ihm einen Namen, z. B. Tour-Karte"
+            ],
+            "e.g. A landing page for our Rome tours, following this wireframe": [
+                "z. B. Eine Landingpage f\u00fcr unsere Rom-Touren nach diesem Wireframe"
+            ],
+            "e.g. A hero with a big title, a photo and a Book button": [
+                "z. B. Ein Hero mit gro\u00dfem Titel, einem Foto und einem Buchen-Button"
+            ],
+            "e.g. Three reviews with stars and names": [
+                "z. B. Drei Bewertungen mit Sternen und Namen"
+            ],
+            "Name it, e.g. Tour landing page": [
+                "Gib ihm einen Namen, z. B. Tour-Landingpage"
+            ],
+            "Save component": [
+                "Komponente speichern"
+            ],
+            "Save wireframe": [
+                "Wireframe speichern"
+            ],
+            "Save note": [
+                "Notiz speichern"
+            ],
+            "%d file": [
+                "%d Datei",
+                "%d Dateien"
+            ],
+            "Use the attached file here.": [
+                "Verwende die angeh\u00e4ngte Datei hier."
+            ],
+            "Sent to NibWP. Follow it in the chat.": [
+                "An NibWP gesendet. Verfolge es im Chat."
+            ],
+            "Item": [
+                "Element"
+            ],
+            "Figure": [
+                "Figure"
+            ],
+            "Main": [
+                "Main"
+            ],
+            "Aside": [
+                "Aside"
+            ],
+            "Embed": [
+                "Einbettung"
+            ],
+            "Span": [
+                "Span"
+            ],
+            "Phones": [
+                "Handys"
+            ],
+            "Tablets": [
+                "Tablets"
+            ],
+            "Hidden on phones": [
+                "Auf Handys ausgeblendet"
+            ],
+            "Hidden on tablets": [
+                "Auf Tablets ausgeblendet"
+            ],
+            "Hidden on desktop": [
+                "Auf dem Desktop ausgeblendet"
+            ],
+            "Hidden on phones and tablets": [
+                "Auf Handys und Tablets ausgeblendet"
+            ],
+            "Hidden on phones and desktop": [
+                "Auf Handys und Desktop ausgeblendet"
+            ],
+            "Hidden on tablets and desktop": [
+                "Auf Tablets und Desktop ausgeblendet"
+            ],
+            "Hidden everywhere": [
+                "\u00dcberall ausgeblendet"
+            ],
+            "Show on the site": [
+                "Auf der Website anzeigen"
+            ],
+            "%s: show it everywhere": [
+                "%s: \u00fcberall anzeigen"
+            ],
+            "Choose where it is hidden": [
+                "W\u00e4hle, wo es ausgeblendet wird"
+            ],
+            "show %s on the site": [
+                "%s auf der Website anzeigen"
+            ],
+            "hide %s on the site": [
+                "%s auf der Website ausblenden"
+            ],
+            "hide %s on some screens": [
+                "%s auf einigen Bildschirmen ausblenden"
+            ],
+            "Shown on the site again once you Save.": [
+                "Wird nach dem Speichern wieder auf der Website angezeigt."
+            ],
+            "Hidden on the site once you Save. It stays here, faded.": [
+                "Wird nach dem Speichern auf der Website ausgeblendet. Hier bleibt es blass sichtbar."
+            ],
+            "%s once you Save.": [
+                "%s, sobald du speicherst."
+            ],
+            "change the attributes of %s": [
+                "Attribute von %s \u00e4ndern"
+            ],
+            "Navigation": [
+                "Navigation"
+            ],
+            "Paragraph": [
+                "Absatz"
+            ],
+            "Inline text": [
+                "Inline-Text"
+            ],
+            "Small print": [
+                "Kleingedrucktes"
+            ],
+            "Caption": [
+                "Bildunterschrift"
+            ],
+            "Label": [
+                "Label"
+            ],
+            "Bullets": [
+                "Aufz\u00e4hlung"
+            ],
+            "Numbers": [
+                "Nummerierung"
+            ],
+            "Heading %d": [
+                "\u00dcberschrift %d"
+            ],
+            "List item": [
+                "Listenpunkt"
+            ],
+            "Menu list": [
+                "Men\u00fcliste"
+            ],
+            "Citation": [
+                "Quellenangabe"
+            ],
+            "Time": [
+                "Zeit"
+            ],
+            "Highlight": [
+                "Hervorhebung"
+            ],
+            "Preformatted": [
+                "Vorformatiert"
+            ],
+            "Address": [
+                "Adresse"
+            ],
+            "Summary": [
+                "Zusammenfassung"
+            ],
+            "Description list": [
+                "Beschreibungsliste"
+            ],
+            "Term": [
+                "Begriff"
+            ],
+            "Heading group": [
+                "\u00dcberschriftengruppe"
+            ],
+            "Search area": [
+                "Suchbereich"
+            ],
+            "Field group": [
+                "Feldgruppe"
+            ],
+            "Field group title": [
+                "Titel der Feldgruppe"
+            ],
+            "Bold (look)": [
+                "Fett (Optik)"
+            ],
+            "Italic (look)": [
+                "Kursiv (Optik)"
+            ],
+            "Inline quote": [
+                "Inline-Zitat"
+            ],
+            "Abbreviation": [
+                "Abk\u00fcrzung"
+            ],
+            "Superscript": [
+                "Hochgestellt"
+            ],
+            "Subscript": [
+                "Tiefgestellt"
+            ],
+            "Dialog": [
+                "Dialog"
+            ],
+            "Tag": [
+                "Tag"
+            ],
+            "Tooltip": [
+                "Tooltip"
+            ],
+            "Load when scrolled to": [
+                "Beim Hinscrollen laden"
+            ],
+            "Placeholder": [
+                "Platzhalter"
+            ],
+            "Required": [
+                "Pflichtfeld"
+            ],
+            "Rows": [
+                "Zeilen"
+            ],
+            "Sends to": [
+                "Sendet an"
+            ],
+            "Method": [
+                "Methode"
+            ],
+            "For the field (ID)": [
+                "F\u00fcr das Feld (ID)"
+            ],
+            "Title": [
+                "Titel"
+            ],
+            "Allow full screen": [
+                "Vollbild erlauben"
+            ],
+            "File": [
+                "Datei"
+            ],
+            "Controls": [
+                "Steuerelemente"
+            ],
+            "Autoplay": [
+                "Autoplay"
+            ],
+            "Muted": [
+                "Stumm"
+            ],
+            "Loop": [
+                "Schleife"
+            ],
+            "Open at start": [
+                "Zu Beginn ge\u00f6ffnet"
+            ],
+            "Source": [
+                "Quelle"
+            ],
+            "Date": [
+                "Datum"
+            ],
+            "Enter tag": [
+                "Tag eingeben"
+            ],
+            "Tags": [
+                "Tags"
+            ],
+            "\u2014 (none)": [
+                "\u2014 (keins)"
+            ],
+            "turn on %1$s for %2$s": [
+                "%1$s f\u00fcr %2$s einschalten"
+            ],
+            "turn off %1$s for %2$s": [
+                "%1$s f\u00fcr %2$s ausschalten"
+            ],
+            "Use this tag": [
+                "Dieses Tag verwenden"
+            ],
+            "Alt text": [
+                "Alt-Text"
+            ],
+            "Class": [
+                "Klasse"
+            ],
+            "Shared by every page": [
+                "Von jeder Seite gemeinsam genutzt"
+            ],
+            "Site header": [
+                "Website-Header"
+            ],
+            "Site footer": [
+                "Website-Footer"
+            ],
+            "Choose from Media": [
+                "Aus Medien w\u00e4hlen"
+            ],
+            "name=\"value\", as many as you like": [
+                "name=\"value\", so viele du willst"
+            ],
+            "remove %1$s from %2$s": [
+                "%1$s von %2$s entfernen"
+            ],
+            "change the image of %s": [
+                "Bild von %s \u00e4ndern"
+            ],
+            "Could not load that icon. Try another file.": [
+                "Dieses Icon konnte nicht geladen werden. Versuch eine andere Datei."
+            ],
+            "Use as the icon": [
+                "Als Icon verwenden"
+            ],
+            "Use this image": [
+                "Dieses Bild verwenden"
+            ],
+            "Not a property: value": [
+                "Keine Eigenschaft: Wert"
+            ],
+            "\u201c%1$s: %2$s\u201d is not valid CSS": [
+                "\u201e%1$s: %2$s\u201c ist kein g\u00fcltiges CSS"
+            ],
+            "A closing brace with nothing to close": [
+                "Eine schlie\u00dfende Klammer ohne etwas zum Schlie\u00dfen"
+            ],
+            "A brace is not closed": [
+                "Eine Klammer ist nicht geschlossen"
+            ],
+            "When the mouse is over it": [
+                "Wenn die Maus dar\u00fcber ist"
+            ],
+            "When it has keyboard focus": [
+                "Wenn es den Tastaturfokus hat"
+            ],
+            "While it is pressed": [
+                "W\u00e4hrend es gedr\u00fcckt wird"
+            ],
+            "When it contains an image (change img to anything)": [
+                "Wenn es ein Bild enth\u00e4lt (img durch beliebiges ersetzen)"
+            ],
+            "A decoration before it": [
+                "Eine Dekoration davor"
+            ],
+            "A decoration after it": [
+                "Eine Dekoration danach"
+            ],
+            "On phones": [
+                "Auf Handys"
+            ],
+            "On tablets": [
+                "Auf Tablets"
+            ],
+            "When its container is narrow (a parent must be a container)": [
+                "Wenn sein Container schmal ist (ein Elternelement muss ein Container sein)"
+            ],
+            "Make it a container, for @container inside it": [
+                "Zum Container machen, f\u00fcr @container darin"
+            ],
+            "In dark mode": [
+                "Im Dunkelmodus"
+            ],
+            "For people who turn motion off": [
+                "F\u00fcr Leute, die Bewegung ausschalten"
+            ],
+            "Esc, then Tab leaves the editor": [
+                "Esc, dann Tab verl\u00e4sst den Editor"
+            ],
+            "Selector": [
+                "Selektor"
+            ],
+            "Enter adds \u00b7 Esc closes": [
+                "Enter f\u00fcgt hinzu \u00b7 Esc schlie\u00dft"
+            ],
+            "Classes, an ID or attributes to add": [
+                "Hinzuzuf\u00fcgende Klassen, eine ID oder Attribute"
+            ],
+            "Available classes": [
+                "Verf\u00fcgbare Klassen"
+            ],
+            "Enter adds what you typed": [
+                "Enter f\u00fcgt hinzu, was du getippt hast"
+            ],
+            "on it": [
+                "daran"
+            ],
+            "saved": [
+                "gespeichert"
+            ],
+            "new class": [
+                "neue Klasse"
+            ],
+            "this page only": [
+                "nur diese Seite"
+            ],
+            "Take %s off this element": [
+                "%s von diesem Element entfernen"
+            ],
+            "Remove from this element": [
+                "Von diesem Element entfernen"
+            ],
+            "Too large to edit here: this shows its first %s characters. Select a smaller part to change its HTML.": [
+                "Zu gro\u00df, um es hier zu bearbeiten: Das zeigt die ersten %s Zeichen. W\u00e4hle einen kleineren Teil, um sein HTML zu \u00e4ndern."
+            ],
+            "Already on this element:": [
+                "Bereits an diesem Element:"
+            ],
+            "This is the whole page, to read and copy. Select an element to change its HTML.": [
+                "Das ist die ganze Seite, zum Lesen und Kopieren. W\u00e4hle ein Element, um sein HTML zu \u00e4ndern."
+            ],
+            "Too large to edit here. Select a smaller part to change its HTML.": [
+                "Zu gro\u00df, um es hier zu bearbeiten. W\u00e4hle einen kleineren Teil, um sein HTML zu \u00e4ndern."
+            ],
+            "Write some JavaScript first.": [
+                "Schreib zuerst etwas JavaScript."
+            ],
+            "Not run: the script has a mistake. %s": [
+                "Nicht ausgef\u00fchrt: Das Skript enth\u00e4lt einen Fehler. %s"
+            ],
+            "Unknown error": [
+                "Unbekannter Fehler"
+            ],
+            "The script stopped with an error: %s": [
+                "Das Skript wurde mit einem Fehler beendet: %s"
+            ],
+            "The script stopped with an error, so it was not kept: %s": [
+                "Das Skript wurde mit einem Fehler beendet und deshalb nicht behalten: %s"
+            ],
+            "Script ran again. It stays in your changes once.": [
+                "Skript erneut ausgef\u00fchrt. Es bleibt nur einmal in deinen \u00c4nderungen."
+            ],
+            "Script ran on the page.": [
+                "Skript auf der Seite ausgef\u00fchrt."
+            ],
+            "%s taken off. Its CSS stays in your saved classes, loaded only on pages that use it.": [
+                "%s entfernt. Sein CSS bleibt in deinen gespeicherten Klassen und wird nur auf Seiten geladen, die es nutzen."
+            ],
+            "Code copied.": [
+                "Code kopiert."
+            ],
+            "Click Reset again to remove the elements, text and scripts the Builder saved on this page, and your unsaved changes too. Saved class styles stay: other pages share them.": [
+                "Klick noch einmal auf \u201eZur\u00fccksetzen\u201c, um die Elemente, Texte und Skripte zu entfernen, die der Builder auf dieser Seite gespeichert hat, und auch deine ungespeicherten \u00c4nderungen. Gespeicherte Klassen-Styles bleiben: Andere Seiten nutzen sie mit."
+            ],
+            "Click Reset again to remove the elements, text and scripts the Builder saved on this page. Saved class styles stay: other pages share them.": [
+                "Klick noch einmal auf \u201eZur\u00fccksetzen\u201c, um die Elemente, Texte und Skripte zu entfernen, die der Builder auf dieser Seite gespeichert hat. Gespeicherte Klassen-Styles bleiben: Andere Seiten nutzen sie mit."
+            ],
+            "Builder changes removed from this page.": [
+                "Builder-\u00c4nderungen von dieser Seite entfernt."
+            ],
+            "Could not reset the page. Nothing changed: try again.": [
+                "Die Seite konnte nicht zur\u00fcckgesetzt werden. Nichts wurde ge\u00e4ndert: Versuch es noch einmal."
+            ],
+            "Your account cannot save code straight to this site. Ask NibWP to make the change instead.": [
+                "Dein Konto darf keinen Code direkt auf dieser Website speichern. Bitte stattdessen NibWP, die \u00c4nderung vorzunehmen."
+            ],
+            "Nothing to save yet.": [
+                "Noch nichts zu speichern."
+            ],
+            "Saved %d change. Live on your site now.": [
+                "%d \u00c4nderung gespeichert. Jetzt live auf deiner Website.",
+                "%d \u00c4nderungen gespeichert. Jetzt live auf deiner Website."
+            ],
+            "Could not save. Nothing was lost: try again.": [
+                "Speichern hat nicht geklappt. Nichts ging verloren: Versuch es noch einmal."
+            ],
+            "Refresh now": [
+                "Jetzt aktualisieren"
+            ],
+            "just now": [
+                "gerade eben"
+            ],
+            "%d min ago": [
+                "vor %d Min.",
+                "vor %d Min."
+            ],
+            "%d hour ago": [
+                "vor %d Stunde",
+                "vor %d Stunden"
+            ],
+            "%d style": [
+                "%d Style",
+                "%d Styles"
+            ],
+            "%d script": [
+                "%d Skript",
+                "%d Skripte"
+            ],
+            "No saves on this page yet.": [
+                "Noch keine Speicherungen auf dieser Seite."
+            ],
+            "Undo this save": [
+                "Diese Speicherung r\u00fcckg\u00e4ngig machen"
+            ],
+            "Undone": [
+                "R\u00fcckg\u00e4ngig gemacht"
+            ],
+            "Undo the newer ones first": [
+                "Mach zuerst die neueren r\u00fcckg\u00e4ngig"
+            ],
+            "Only the last %d saves of a page can be undone.": [
+                "Nur die letzten %d Speicherungen einer Seite lassen sich r\u00fcckg\u00e4ngig machen."
+            ],
+            "Could not load the saved changes. Try again.": [
+                "Die gespeicherten \u00c4nderungen konnten nicht geladen werden. Versuch es noch einmal."
+            ],
+            "Loading\u2026": [
+                "Wird geladen \u2026"
+            ],
+            "A save is still on its way. Try again in a moment.": [
+                "Eine Speicherung ist noch unterwegs. Versuch es gleich noch einmal."
+            ],
+            "Save or undo your unsaved changes first: the page reloads after this.": [
+                "Speichere deine ungespeicherten \u00c4nderungen zuerst oder mach sie r\u00fcckg\u00e4ngig: Die Seite wird danach neu geladen."
+            ],
+            "Save undone. The page is as it was before it.": [
+                "Speicherung r\u00fcckg\u00e4ngig gemacht. Die Seite ist wieder so wie davor."
+            ],
+            "Save redone.": [
+                "Speicherung wiederhergestellt."
+            ],
+            "Could not undo that save. Nothing changed: try again.": [
+                "Diese Speicherung konnte nicht r\u00fcckg\u00e4ngig gemacht werden. Nichts wurde ge\u00e4ndert: Versuch es noch einmal."
+            ],
+            "Could not redo that save. Nothing changed: try again.": [
+                "Diese Speicherung konnte nicht wiederhergestellt werden. Nichts wurde ge\u00e4ndert: Versuch es noch einmal."
+            ],
+            "Nothing left to undo here.": [
+                "Hier gibt es nichts mehr r\u00fcckg\u00e4ngig zu machen."
+            ],
+            "Your earlier changes are saved: undo a save here.": [
+                "Deine fr\u00fcheren \u00c4nderungen sind gespeichert: Mach hier eine Speicherung r\u00fcckg\u00e4ngig."
+            ],
+            "Saved. Your newer changes are still only on the page: save them, and it refreshes after.": [
+                "Gespeichert. Deine neueren \u00c4nderungen sind noch nur auf der Seite: Speichere sie, danach wird aktualisiert."
+            ],
+            "Saved. The page refreshes as soon as you pause.": [
+                "Gespeichert. Die Seite wird aktualisiert, sobald du eine Pause machst."
+            ],
+            "Open a %s on the canvas": [
+                "%s auf der Arbeitsfl\u00e4che \u00f6ffnen"
+            ],
+            "Find one to open": [
+                "Zum \u00d6ffnen suchen"
+            ],
+            "Find a %s to open on the canvas": [
+                "%s zum \u00d6ffnen auf der Arbeitsfl\u00e4che finden"
+            ],
+            "Edit template": [
+                "Vorlage bearbeiten"
+            ],
+            "New page with it": [
+                "Neue Seite damit"
+            ],
+            "New page with the %s template": [
+                "Neue Seite mit der Vorlage %s"
+            ],
+            "Ask NibWP about the %s template": [
+                "NibWP zur Vorlage %s fragen"
+            ],
+            "Reset to the theme\u2019s": [
+                "Auf Theme-Version zur\u00fccksetzen"
+            ],
+            "Delete the template %s": [
+                "Vorlage %s l\u00f6schen"
+            ],
+            "Reset the template %s to the theme\u2019s": [
+                "Vorlage %s auf die Theme-Version zur\u00fccksetzen"
+            ],
+            "Comes with the theme": [
+                "Geh\u00f6rt zum Theme"
+            ],
+            "Comes with the theme: it cannot be deleted": [
+                "Geh\u00f6rt zum Theme: Sie kann nicht gel\u00f6scht werden"
+            ],
+            "Find a %s\u2026": [
+                "%s finden \u2026"
+            ],
+            "Find a %s": [
+                "%s finden"
+            ],
+            "No templates found.": [
+                "Keine Vorlagen gefunden."
+            ],
+            "Reset to the theme\u2019s?": [
+                "Auf Theme-Version zur\u00fccksetzen?"
+            ],
+            "Reset": [
+                "Zur\u00fccksetzen"
+            ],
+            "About the %1$s template (%2$s): ": [
+                "Zur Vorlage %1$s (%2$s):"
+            ],
+            "Could not change the template.": [
+                "Die Vorlage konnte nicht ge\u00e4ndert werden."
+            ],
+            "Template name": [
+                "Name der Vorlage"
+            ],
+            "rename the template %s": [
+                "Vorlage %s umbenennen"
+            ],
+            "Renamed to \u201c%s\u201d. Ctrl+Z takes it back.": [
+                "In \u201e%s\u201c umbenannt. Ctrl+Z nimmt es zur\u00fcck."
+            ],
+            "Nothing yet.": [
+                "Noch nichts."
+            ],
+            "Could not load the list.": [
+                "Die Liste konnte nicht geladen werden."
+            ],
+            "remove the template %s": [
+                "Vorlage %s entfernen"
+            ],
+            "Template \u201c%s\u201d deleted. Ctrl+Z brings it back.": [
+                "Vorlage \u201e%s\u201c gel\u00f6scht. Ctrl+Z holt sie zur\u00fcck."
+            ],
+            "Template \u201c%s\u201d is the theme\u2019s again. Ctrl+Z brings your version back.": [
+                "Vorlage \u201e%s\u201c ist wieder die des Themes. Ctrl+Z holt deine Version zur\u00fcck."
+            ],
+            "Page title, e.g. Night tours": [
+                "Seitentitel, z. B. Nachttouren"
+            ],
+            "Page title": [
+                "Seitentitel"
+            ],
+            "Template": [
+                "Vorlage"
+            ],
+            "Default template": [
+                "Standardvorlage"
+            ],
+            "Create and open": [
+                "Erstellen und \u00f6ffnen"
+            ],
+            "Template name, e.g. Tour landing": [
+                "Name der Vorlage, z. B. Tour-Landingpage"
+            ],
+            "Used for (none: pick it per page)": [
+                "Verwendet f\u00fcr (keins: pro Seite w\u00e4hlen)"
+            ],
+            "Create": [
+                "Erstellen"
+            ],
+            "Could not create the page.": [
+                "Die Seite konnte nicht erstellt werden."
+            ],
+            "Draft \u201c%s\u201d is open. Drop a wireframe on it, or ask NibWP to build it.": [
+                "Entwurf \u201e%s\u201c ist ge\u00f6ffnet. Leg ein Wireframe darauf ab oder bitte NibWP, ihn zu bauen."
+            ],
+            "Template \u201c%s\u201d made. Open a page that uses it to build it, or ask NibWP.": [
+                "Vorlage \u201e%s\u201c erstellt. \u00d6ffne eine Seite, die sie nutzt, um sie zu bauen, oder frag NibWP."
+            ],
+            "Your theme keeps templates in files: NibWP makes this one for you.": [
+                "Dein Theme speichert Vorlagen in Dateien: NibWP erstellt diese f\u00fcr dich."
+            ],
+            "Could not make the template.": [
+                "Die Vorlage konnte nicht erstellt werden."
+            ],
+            "Copy var()": [
+                "var() kopieren"
+            ],
+            "New .class or #id": [
+                "Neue .class oder #id"
+            ],
+            "New class or ID": [
+                "Neue Klasse oder ID"
+            ],
+            "Saved classes": [
+                "Gespeicherte Klassen"
+            ],
+            "Rename everywhere": [
+                "\u00dcberall umbenennen"
+            ],
+            "On this page": [
+                "Auf dieser Seite"
+            ],
+            "Not on this page": [
+                "Nicht auf dieser Seite"
+            ],
+            "Edit CSS": [
+                "CSS bearbeiten"
+            ],
+            "Edit its CSS": [
+                "Sein CSS bearbeiten"
+            ],
+            "Classes you add in the CSS pane are kept here, and load only on pages that use them.": [
+                "Klassen, die du im CSS-Bereich hinzuf\u00fcgst, werden hier aufbewahrt und nur auf Seiten geladen, die sie nutzen."
+            ],
+            "CSS variables": [
+                "CSS-Variablen"
+            ],
+            "%s copied.": [
+                "%s kopiert."
+            ],
+            "%s deleted from the saved classes. Save to keep it that way; Ctrl+Z brings it back.": [
+                "%s aus den gespeicherten Klassen gel\u00f6scht. Speichere, damit es so bleibt; Ctrl+Z holt sie zur\u00fcck."
+            ],
+            "Use small letters, digits and dashes, starting with a letter.": [
+                "Verwende Kleinbuchstaben, Ziffern und Bindestriche, beginnend mit einem Buchstaben."
+            ],
+            "\u201c.%s\u201d already has saved styles: this uses them.": [
+                "\u201e.%s\u201c hat bereits gespeicherte Styles: Diese werden verwendet."
+            ],
+            "Themes and plugins often style \u201c.%s\u201d too, so styles could mix.": [
+                "Themes und Plugins gestalten \u201e.%s\u201c oft auch, sodass sich Styles vermischen k\u00f6nnten."
+            ],
+            "name %s with BEM": [
+                "%s mit BEM benennen"
+            ],
+            "Give %1$s the BEM class \u201c%2$s\u201d and its variant \u201c%3$s\u201d.": [
+                "Gib %1$s die BEM-Klasse \u201e%2$s\u201c und ihre Variante \u201e%3$s\u201c."
+            ],
+            "Give %1$s the BEM class \u201c%2$s\u201d.": [
+                "Gib %1$s die BEM-Klasse \u201e%2$s\u201c."
+            ],
+            "Name %1$s and everything inside it with BEM classes: block \u201c%2$s\u201d, elements \u201c%2$s__\u2026\u201d.": [
+                "Benenne %1$s und alles darin mit BEM-Klassen: Block \u201e%2$s\u201c, Elemente \u201e%2$s__\u2026\u201c."
+            ],
+            "The styles of .%1$s moved to .%2$s.": [
+                "Die Styles von .%1$s wurden nach .%2$s verschoben."
+            ],
+            ".%s stays on it too: other elements use it.": [
+                ".%s bleibt ebenfalls daran: Andere Elemente nutzen sie."
+            ],
+            "It left .%1$s; its styles were copied to .%2$s.": [
+                ".%1$s wurde entfernt; die Styles wurden nach .%2$s kopiert."
+            ],
+            "Its own styles stay inline; .%s stays as it is.": [
+                "Die eigenen Styles bleiben inline; .%s bleibt, wie sie ist."
+            ],
+            ".%1$s and its variant .%2$s are on it. Style the variant in the CSS pane; Save to keep it.": [
+                ".%1$s und seine Variante .%2$s sind daran. Gestalte die Variante im CSS-Bereich; speichere, um sie zu behalten."
+            ],
+            "Named %1$d element in block \u201c.%2$s\u201d. Save to keep it; Ctrl+Z undoes it.": [
+                "%1$d Element im Block \u201e.%2$s\u201c benannt. Speichere, um es zu behalten; Ctrl+Z macht es r\u00fcckg\u00e4ngig.",
+                "%1$d Elemente im Block \u201e.%2$s\u201c benannt. Speichere, um es zu behalten; Ctrl+Z macht es r\u00fcckg\u00e4ngig."
+            ],
+            "BEM": [
+                "BEM"
+            ],
+            "Ask NibWP about it": [
+                "NibWP dazu fragen"
+            ],
+            "Select the parent": [
+                "\u00dcbergeordnetes Element ausw\u00e4hlen"
+            ],
+            "Cut": [
+                "Ausschneiden"
+            ],
+            "Paste": [
+                "Einf\u00fcgen"
+            ],
+            "Copy styles": [
+                "Styles kopieren"
+            ],
+            "Paste styles": [
+                "Styles einf\u00fcgen"
+            ],
+            "Variant": [
+                "Variante"
+            ],
+            "featured, dark, large\u2026": [
+                "featured, dark, large \u2026"
+            ],
+            "Only this element": [
+                "Nur dieses Element"
+            ],
+            "Everywhere": [
+                "\u00dcberall"
+            ],
+            "Shown everywhere": [
+                "\u00dcberall angezeigt"
+            ],
+            "Its variant: .%s.": [
+                "Seine Variante: .%s."
+            ],
+            "Renames .%1$s to .%2$s on the whole site.": [
+                "Benennt .%1$s auf der ganzen Website in .%2$s um."
+            ],
+            "Renames .%1$s to .%2$s on the whole site: %3$d place.": [
+                "Benennt .%1$s auf der ganzen Website in .%2$s um: %3$d Stelle.",
+                "Benennt .%1$s auf der ganzen Website in .%2$s um: %3$d Stellen."
+            ],
+            "Only this element: .%1$s becomes .%2$s here, with a copy of its styles. What is inside stays as it is.": [
+                "Nur dieses Element: .%1$s wird hier zu .%2$s, mit einer Kopie seiner Styles. Was darin ist, bleibt, wie es ist."
+            ],
+            "This element gets .%1$s and its variant .%1$s--%2$s; what is inside stays as it is.": [
+                "Dieses Element bekommt .%1$s und seine Variante .%1$s--%2$s; was darin ist, bleibt, wie es ist."
+            ],
+            "Only this element gets .%s; what is inside stays as it is.": [
+                "Nur dieses Element bekommt .%s; was darin ist, bleibt, wie es ist."
+            ],
+            ".%1$s goes, its styles move to .%2$s.": [
+                ".%1$s f\u00e4llt weg, seine Styles wandern nach .%2$s."
+            ],
+            "No .%s around it: an element of a block belongs inside it.": [
+                "Kein .%s drumherum: Ein Element eines Blocks geh\u00f6rt in diesen hinein."
+            ],
+            "Use %s": [
+                "%s verwenden"
+            ],
+            "Primary": [
+                "Prim\u00e4r"
+            ],
+            "Secondary": [
+                "Sekund\u00e4r"
+            ],
+            "Tertiary": [
+                "Terti\u00e4r"
+            ],
+            "Accent": [
+                "Akzent"
+            ],
+            "Base (text)": [
+                "Basis (Text)"
+            ],
+            "Neutral (greys)": [
+                "Neutral (Graut\u00f6ne)"
+            ],
+            "Warning": [
+                "Warnung"
+            ],
+            "Danger": [
+                "Gefahr"
+            ],
+            "Minor second": [
+                "Kleine Sekunde"
+            ],
+            "Major second": [
+                "Gro\u00dfe Sekunde"
+            ],
+            "Minor third": [
+                "Kleine Terz"
+            ],
+            "Major third": [
+                "Gro\u00dfe Terz"
+            ],
+            "Perfect fourth": [
+                "Reine Quarte"
+            ],
+            "Augmented fourth": [
+                "\u00dcberm\u00e4\u00dfige Quarte"
+            ],
+            "Perfect fifth": [
+                "Reine Quinte"
+            ],
+            "Golden ratio": [
+                "Goldener Schnitt"
+            ],
+            "Could not load the design settings.": [
+                "Die Design-Einstellungen konnten nicht geladen werden."
+            ],
+            "%s on phones": [
+                "%s auf Handys"
+            ],
+            "%s on large screens": [
+                "%s auf gro\u00dfen Bildschirmen"
+            ],
+            "Pick the %s colour": [
+                "Farbe %s w\u00e4hlen"
+            ],
+            "%s as hex": [
+                "%s als Hex"
+            ],
+            "Body text": [
+                "Flie\u00dftext"
+            ],
+            "Text scale": [
+                "Textskala"
+            ],
+            "Heading scale": [
+                "\u00dcberschriftenskala"
+            ],
+            "Heading weight": [
+                "\u00dcberschriftenst\u00e4rke"
+            ],
+            "Text font": [
+                "Textschrift"
+            ],
+            "Heading font": [
+                "\u00dcberschriftenschrift"
+            ],
+            "Fonts must already load on the site; ask NibWP to add one.": [
+                "Schriften m\u00fcssen auf der Website bereits geladen werden; bitte NibWP, eine hinzuzuf\u00fcgen."
+            ],
+            "Space (m)": [
+                "Abstand (m)"
+            ],
+            "Space scale": [
+                "Abstandsskala"
+            ],
+            "Section space (m)": [
+                "Sektionsabstand (m)"
+            ],
+            "Side gutter": [
+                "Seitenabstand"
+            ],
+            "Radius (m)": [
+                "Radius (m)"
+            ],
+            "Radius scale": [
+                "Radiusskala"
+            ],
+            "Button radius": [
+                "Button-Radius"
+            ],
+            "Button weight": [
+                "Button-Schriftst\u00e4rke"
+            ],
+            "Vertical": [
+                "Vertikal"
+            ],
+            "Sides": [
+                "Seiten"
+            ],
+            "Button padding": [
+                "Button-Padding"
+            ],
+            "Button padding, top and bottom": [
+                "Button-Padding oben und unten"
+            ],
+            "Button padding, sides": [
+                "Button-Padding seitlich"
+            ],
+            "Smallest": [
+                "Kleinste"
+            ],
+            "Largest": [
+                "Gr\u00f6\u00dfte"
+            ],
+            "Sizes grow between": [
+                "Gr\u00f6\u00dfen wachsen zwischen"
+            ],
+            "Content width": [
+                "Inhaltsbreite"
+            ],
+            "Find a token\u2026": [
+                "Token finden \u2026"
+            ],
+            "Find a token": [
+                "Token finden"
+            ],
+            "Type a value to set one token by hand; empty goes back to the generated one.": [
+                "Gib einen Wert ein, um ein Token von Hand zu setzen; leer geht zur\u00fcck zum generierten Wert."
+            ],
+            "Another CSS framework is active on this site. With this on, NibWP\u2019s values win; its own classes take them too.": [
+                "Auf dieser Website ist ein anderes CSS-Framework aktiv. Wenn das hier an ist, gewinnen die Werte von NibWP; auch seine eigenen Klassen \u00fcbernehmen sie."
+            ],
+            "Brand colours, a logo, a site you like\u2026 NibWP sets it all up": [
+                "Markenfarben, ein Logo, eine Website, die dir gef\u00e4llt \u2026 NibWP richtet alles ein"
+            ],
+            "Attach an image": [
+                "Bild anh\u00e4ngen"
+            ],
+            "Attach a logo or a screenshot": [
+                "Logo oder Screenshot anh\u00e4ngen"
+            ],
+            "Ask NibWP to set it up": [
+                "NibWP bitten, es einzurichten"
+            ],
+            "Shape and buttons": [
+                "Form und Buttons"
+            ],
+            "Screens": [
+                "Bildschirme"
+            ],
+            "All tokens": [
+                "Alle Tokens"
+            ],
+            "Back to defaults": [
+                "Zur\u00fcck zu den Standardwerten"
+            ],
+            "Defaults": [
+                "Standardwerte"
+            ],
+            "Discard": [
+                "Verwerfen"
+            ],
+            "On: these colours, sizes and spaces style the whole site.": [
+                "An: Diese Farben, Gr\u00f6\u00dfen und Abst\u00e4nde gestalten die ganze Website."
+            ],
+            "Off: the site keeps its own styles. What you add still looks right.": [
+                "Aus: Die Website beh\u00e4lt ihre eigenen Styles. Was du hinzuf\u00fcgst, sieht trotzdem richtig aus."
+            ],
+            "Pick the %s shade": [
+                "Abstufung von %s w\u00e4hlen"
+            ],
+            "Outline": [
+                "Kontur"
+            ],
+            "Save the design": [
+                "Design speichern"
+            ],
+            "%d file attached": [
+                "%d Datei angeh\u00e4ngt",
+                "%d Dateien angeh\u00e4ngt"
+            ],
+            "Could not show that change.": [
+                "Diese \u00c4nderung konnte nicht angezeigt werden."
+            ],
+            "Saved. What you changed since is not saved yet.": [
+                "Gespeichert. Was du seitdem ge\u00e4ndert hast, ist noch nicht gespeichert."
+            ],
+            "Saved. NibWP\u2019s framework styles the whole site now.": [
+                "Gespeichert. Das Framework von NibWP gestaltet jetzt die ganze Website."
+            ],
+            "Saved. NibWP\u2019s framework is off; the site keeps its own styles.": [
+                "Gespeichert. Das Framework von NibWP ist aus; die Website beh\u00e4lt ihre eigenen Styles."
+            ],
+            "Saturation and brightness: arrow keys move it": [
+                "S\u00e4ttigung und Helligkeit: Pfeiltasten bewegen sie"
+            ],
+            "Hue": [
+                "Farbton"
+            ],
+            "Hex": [
+                "Hex"
+            ],
+            "Back to generated": [
+                "Zur\u00fcck zum generierten Wert"
+            ],
+            "%s follows its colour again.": [
+                "%s folgt wieder seiner Farbe."
+            ],
+            "Say what you like, or attach a logo or a screenshot.": [
+                "Sag, was dir gef\u00e4llt, oder h\u00e4nge ein Logo oder einen Screenshot an."
+            ],
+            "Set up NibWP\u2019s CSS framework for this site: %s Read it with nibwp\/framework-get, change it with nibwp\/framework-set and switch it on, then reload the page so I can see it, and tell me in a few words what you chose.": [
+                "Richte das CSS-Framework von NibWP f\u00fcr diese Website ein: %s Lies es mit nibwp\/framework-get, \u00e4ndere es mit nibwp\/framework-set und schalte es ein, lade dann die Seite neu, damit ich es sehe, und sag mir in ein paar Worten, was du gew\u00e4hlt hast."
+            ],
+            "use the attached file.": [
+                "verwende die angeh\u00e4ngte Datei."
+            ],
+            "Set up the design": [
+                "Design einrichten"
+            ],
+            "Sent to NibWP. The Design tab shows its choices when it is done.": [
+                "An NibWP gesendet. Der Tab \u201eDesign\u201c zeigt die Auswahl, wenn es fertig ist."
+            ],
+            "Save your changes first: a rename changes the whole site at once.": [
+                "Speichere zuerst deine \u00c4nderungen: Eine Umbenennung \u00e4ndert die ganze Website auf einmal."
+            ],
+            "Save the changes in your other tabs first: a rename changes the whole site at once.": [
+                "Speichere zuerst die \u00c4nderungen in deinen anderen Tabs: Eine Umbenennung \u00e4ndert die ganze Website auf einmal."
+            ],
+            "rename %1$s to %2$s": [
+                "%1$s in %2$s umbenennen"
+            ],
+            "Renamed %1$s to %2$s in %3$d places. Ctrl+Z renames it back.": [
+                "%1$s an %3$d Stellen in %2$s umbenannt. Ctrl+Z benennt es zur\u00fcck."
+            ],
+            "New name for %s": [
+                "Neuer Name f\u00fcr %s"
+            ],
+            "%s is ready: write its CSS, then Save.": [
+                "%s ist bereit: Schreib sein CSS und klick dann auf \u201eSpeichern\u201c."
+            ],
+            "A landing page: a hero with a clear promise and the main button, three key benefits, how it works, reviews, a call to action band and questions and answers.": [
+                "Eine Landingpage: ein Hero mit klarem Versprechen und dem Haupt-Button, drei zentrale Vorteile, so funktioniert\u2019s, Bewertungen, ein Call-to-Action-Band sowie Fragen und Antworten."
+            ],
+            "An about page: who we are in one line, our story with a photo, the team, what we value, and a call to action.": [
+                "Eine \u00dcber-uns-Seite: wer wir sind in einer Zeile, unsere Geschichte mit Foto, das Team, was uns wichtig ist, und ein Call-to-Action."
+            ],
+            "Service or product": [
+                "Dienstleistung oder Produkt"
+            ],
+            "A service or product page: a photo gallery, title, price and highlights beside a booking box, what is included, reviews and related offers.": [
+                "Eine Seite f\u00fcr eine Dienstleistung oder ein Produkt: eine Fotogalerie, Titel, Preis und Highlights neben einer Buchungsbox, was enthalten ist, Bewertungen und \u00e4hnliche Angebote."
+            ],
+            "A contact page: a short hero, a contact form beside the address, phone, opening hours and a map, then questions and answers.": [
+                "Eine Kontaktseite: ein kurzer Hero, ein Kontaktformular neben Adresse, Telefon, \u00d6ffnungszeiten und einer Karte, dann Fragen und Antworten."
+            ],
+            "A pricing page: a hero, three plans side by side, a comparison table, questions and answers and a call to action.": [
+                "Eine Preisseite: ein Hero, drei Tarife nebeneinander, eine Vergleichstabelle, Fragen und Antworten und ein Call-to-Action."
+            ],
+            "An article: title, author and date, a featured image, the text in clear sections, and related posts.": [
+                "Ein Artikel: Titel, Autor und Datum, ein Beitragsbild, der Text in klaren Abschnitten und \u00e4hnliche Beitr\u00e4ge."
+            ],
+            "Recent: %s": [
+                "Zuletzt: %s"
+            ],
+            "Rename %s and its address": [
+                "%s und seine Adresse umbenennen"
+            ],
+            "Open in the Builder": [
+                "Im Builder \u00f6ffnen"
+            ],
+            "Open %s here": [
+                "%s hier \u00f6ffnen"
+            ],
+            "Edit in WordPress": [
+                "In WordPress bearbeiten"
+            ],
+            "Edit %s in WordPress": [
+                "%s in WordPress bearbeiten"
+            ],
+            "Delete %s": [
+                "%s l\u00f6schen"
+            ],
+            "What to make": [
+                "Was erstellt werden soll"
+            ],
+            "%s title": [
+                "Titel (%s)"
+            ],
+            "Edit the address": [
+                "Adresse bearbeiten"
+            ],
+            "the-address-follows-the-title": [
+                "die-adresse-folgt-dem-titel"
+            ],
+            "Address (slug)": [
+                "Adresse (Slug)"
+            ],
+            "What is it about? Write it, or pick a starting point above. Leave it empty to just create it.": [
+                "Worum geht es? Schreib es auf oder w\u00e4hle oben eine Vorlage. Lass es leer, um es einfach zu erstellen."
+            ],
+            "What it is about": [
+                "Worum es geht"
+            ],
+            "Could not create it.": [
+                "Konnte nicht erstellt werden."
+            ],
+            "Build the new %1$s \u201c%2$s\u201d (a draft at %3$s): %4$s Use the builder and the design system this site uses, and keep it a draft.": [
+                "Baue \u201e%2$s\u201c (%1$s, ein Entwurf unter %3$s): %4$s Verwende den Builder und das Designsystem dieser Website und lass es ein Entwurf bleiben."
+            ],
+            "Build %1$s: %2$s": [
+                "%1$s bauen: %2$s"
+            ],
+            "\u201c%s\u201d is made and open in a new tab. NibWP builds it from what you said.": [
+                "\u201e%s\u201c ist erstellt und in einem neuen Tab ge\u00f6ffnet. NibWP baut es nach deiner Beschreibung."
+            ],
+            "\u201c%s\u201d is made and open in a new tab. Build it here, or ask NibWP.": [
+                "\u201e%s\u201c ist erstellt und in einem neuen Tab ge\u00f6ffnet. Bau es hier oder frag NibWP."
+            ],
+            "\u201c%s\u201d is in the trash.": [
+                "\u201e%s\u201c liegt im Papierkorb."
+            ],
+            "Could not delete it.": [
+                "Konnte nicht gel\u00f6scht werden."
+            ],
+            "Enter saves \u00b7 Esc cancels": [
+                "Enter speichert \u00b7 Esc bricht ab"
+            ],
+            "Renamed. The address is \/%s.": [
+                "Umbenannt. Die Adresse ist \/%s."
+            ],
+            "Renamed to \u201c%s\u201d.": [
+                "In \u201e%s\u201c umbenannt."
+            ],
+            "Delete the %s wireframe": [
+                "Wireframe %s l\u00f6schen"
+            ],
+            "Older sketches (%d)": [
+                "\u00c4ltere Skizzen (%d)"
+            ],
+            "Delete the %s wireframe?": [
+                "Wireframe %s l\u00f6schen?"
+            ],
+            "Wireframe \u201c%s\u201d deleted.": [
+                "Wireframe \u201e%s\u201c gel\u00f6scht."
+            ],
+            "Could not delete the wireframe. Try again.": [
+                "Das Wireframe konnte nicht gel\u00f6scht werden. Versuch es noch einmal."
+            ],
+            "Quick add bar": [
+                "Schnellleiste"
+            ],
+            "Section, div, heading\u2026 along the bottom": [
+                "Sektion, Div, \u00dcberschrift \u2026 am unteren Rand"
+            ],
+            "Side panel": [
+                "Seitenpanel"
+            ],
+            "Add, Structure and Templates": [
+                "Hinzuf\u00fcgen, Struktur und Vorlagen"
+            ],
+            "Element details": [
+                "Element-Details"
+            ],
+            "Text, link, class, ID, attributes": [
+                "Text, Link, Klasse, ID, Attribute"
+            ],
+            "Opens with what you select": [
+                "\u00d6ffnet sich mit deiner Auswahl"
+            ],
+            "Elements and wireframes": [
+                "Elemente und Wireframes"
+            ],
+            "Saved classes and CSS variables": [
+                "Gespeicherte Klassen und CSS-Variablen"
+            ],
+            "Templates for each kind of content": [
+                "Vorlagen f\u00fcr jede Inhaltsart"
+            ],
+            "Colours, type and spacing for the whole site": [
+                "Farben, Schrift und Abst\u00e4nde f\u00fcr die ganze Website"
+            ],
+            "Panel on the left": [
+                "Panel links"
+            ],
+            "Or drag the panel by its top edge": [
+                "Oder zieh das Panel an seiner Oberkante"
+            ],
+            "Keyboard shortcuts": [
+                "Tastenk\u00fcrzel"
+            ],
+            "Open or close the Builder": [
+                "Builder \u00f6ffnen oder schlie\u00dfen"
+            ],
+            "Let go of the selection, then close": [
+                "Auswahl aufheben, dann schlie\u00dfen"
+            ],
+            "Ask NibWP about what is selected": [
+                "NibWP zur Auswahl fragen"
+            ],
+            "Edit the name of what is selected in Structure": [
+                "Namen der Auswahl in der Struktur bearbeiten"
+            ],
+            "Draw or comment on the page": [
+                "Auf der Seite zeichnen oder kommentieren"
+            ],
+            "Undo \/ redo": [
+                "R\u00fcckg\u00e4ngig \/ Wiederholen"
+            ],
+            "Copy \/ cut \/ paste, also into another tab": [
+                "Kopieren \/ Ausschneiden \/ Einf\u00fcgen, auch in einen anderen Tab"
+            ],
+            "Move up \/ down among its neighbours": [
+                "Unter den Nachbarn nach oben \/ unten verschieben"
+            ],
+            "Add, Structure, Classes, Templates, Design": [
+                "Hinzuf\u00fcgen, Struktur, Klassen, Vorlagen, Design"
+            ],
+            "Right-click": [
+                "Rechtsklick"
+            ],
+            "BEM, and more": [
+                "BEM und mehr"
+            ],
+            "These shortcuts": [
+                "Diese Tastenk\u00fcrzel"
+            ],
+            "Canvas width \u00d7 height, shown at %d%%": [
+                "Breite \u00d7 H\u00f6he der Arbeitsfl\u00e4che, angezeigt mit %d%%"
+            ],
+            "Sizes go from 320 to 2560: the canvas is %1$d \u00d7 %2$d.": [
+                "Gr\u00f6\u00dfen reichen von 320 bis 2560: Die Arbeitsfl\u00e4che ist %1$d \u00d7 %2$d gro\u00df."
+            ],
+            "Wide": [
+                "Breit"
+            ],
+            "Fit the room": [
+                "An den Platz anpassen"
+            ],
+            "This is an admin screen: the Builder edits your site\u2019s pages. You can still ask NibWP below to inspect and change it.": [
+                "Das ist ein Admin-Bildschirm: Der Builder bearbeitet die Seiten deiner Website. Du kannst NibWP trotzdem unten bitten, ihn zu pr\u00fcfen und zu \u00e4ndern."
+            ],
+            "This is an external site, not one of your pages. To inspect it, or rebuild it on your site, ask NibWP below.": [
+                "Das ist eine externe Website, keine deiner Seiten. Um sie zu pr\u00fcfen oder auf deiner Website nachzubauen, frag NibWP unten."
+            ],
+            "This page is not one the Builder can edit directly. Ask NibWP below to inspect it and change it for you.": [
+                "Diese Seite kann der Builder nicht direkt bearbeiten. Bitte NibWP unten, sie zu pr\u00fcfen und f\u00fcr dich zu \u00e4ndern."
+            ],
+            "Your design changes are not saved yet. They show again when you open the Builder.": [
+                "Deine Design-\u00c4nderungen sind noch nicht gespeichert. Sie erscheinen wieder, wenn du den Builder \u00f6ffnest."
+            ],
+            "Saved. Your wireframe is still only on the page: send it to NibWP or remove it, and it refreshes after.": [
+                "Gespeichert. Dein Wireframe ist noch nur auf der Seite: Sende es an NibWP oder entferne es, danach wird aktualisiert."
+            ],
+            "Drag to resize": [
+                "Zum \u00c4ndern der Gr\u00f6\u00dfe ziehen"
+            ],
+            "In a template, the words and pictures come from each page (its title, price, text\u2026). Style them here and change the words on the page itself. New elements you add here can be typed in.": [
+                "In einer Vorlage kommen W\u00f6rter und Bilder von jeder einzelnen Seite (ihr Titel, Preis, Text \u2026). Gestalte sie hier und \u00e4ndere die W\u00f6rter auf der Seite selbst. In neue Elemente, die du hier hinzuf\u00fcgst, kannst du schreiben."
+            ],
+            "That part is filled in by each post (its content, title, date\u2026). Edit it on the post itself; the template keeps it as it is.": [
+                "Dieser Teil wird von jedem Beitrag gef\u00fcllt (sein Inhalt, Titel, Datum \u2026). Bearbeite ihn im Beitrag selbst; die Vorlage l\u00e4sst ihn, wie er ist."
+            ],
+            "Changes show on every page that uses it. Its words and pictures come from each page: style them here, change them on the page.": [
+                "\u00c4nderungen erscheinen auf jeder Seite, die sie nutzt. Ihre W\u00f6rter und Bilder kommen von jeder Seite: hier gestalten, auf der Seite \u00e4ndern."
+            ],
+            "Save or undo the changes on this page first.": [
+                "Speichere die \u00c4nderungen auf dieser Seite zuerst oder mach sie r\u00fcckg\u00e4ngig."
+            ],
+            "Editing the template \u201c%s\u201d": [
+                "Vorlage \u201e%s\u201c wird bearbeitet"
+            ],
+            "Save or undo your template changes first.": [
+                "Speichere deine Vorlagen\u00e4nderungen zuerst oder mach sie r\u00fcckg\u00e4ngig."
+            ],
+            "Click Reset again to remove the elements, text and scripts the Builder saved on this template, on every page that uses it. Saved class styles stay: other pages share them.": [
+                "Klicke noch einmal auf Zur\u00fccksetzen, um die Elemente, Texte und Skripte zu entfernen, die der Builder in dieser Vorlage gespeichert hat \u2013 auf jeder Seite, die sie nutzt. Gespeicherte Klassenstile bleiben: andere Seiten nutzen sie mit."
+            ],
+            "Builder changes removed from this template.": [
+                "Builder-\u00c4nderungen aus dieser Vorlage entfernt."
+            ],
+            "Edit the %s template here, on the canvas": [
+                "Vorlage %s hier auf der Arbeitsfl\u00e4che bearbeiten"
+            ],
+            "No page uses it yet, so there is nothing to show it on": [
+                "Noch keine Seite nutzt sie, es gibt also nichts, worauf sie sich zeigen lie\u00dfe"
+            ],
+            "All the CSS that styles it": [
+                "Das ganze CSS, das es gestaltet"
+            ],
+            "Show all the CSS that styles this element": [
+                "Das ganze CSS anzeigen, das dieses Element gestaltet"
+            ],
+            "not at this width": [
+                "nicht bei dieser Breite"
+            ],
+            "NibWP Builder": [
+                "NibWP Builder"
+            ],
+            "a style tag on the page": [
+                "ein style-Tag auf der Seite"
+            ],
+            "this element\u2019s own style": [
+                "der eigene Stil dieses Elements"
+            ],
+            "First %d rules shown.": [
+                "Die ersten %d Regeln werden gezeigt."
+            ],
+            "All the CSS that styles this element": [
+                "Das ganze CSS, das dieses Element gestaltet"
+            ],
+            "Nothing in the page\u2019s stylesheets styles this element.": [
+                "Nichts in den Stylesheets der Seite gestaltet dieses Element."
+            ],
+            "el is the element you selected. Ctrl+Enter runs this on it right here; saved, it runs on it on the site too.": [
+                "el ist das Element, das du ausgew\u00e4hlt hast. Strg+Enter f\u00fchrt das hier direkt darauf aus; gespeichert l\u00e4uft es auch auf der Website darauf."
+            ],
+            "Script ran on this element. Save keeps it with the page.": [
+                "Das Skript lief auf diesem Element. Speichern beh\u00e4lt es bei der Seite."
+            ],
+            "Creating \u201c%s\u201d\u2026": [
+                "\u201e%s\u201c wird erstellt \u2026"
+            ],
+            "Add section": [
+                "Abschnitt hinzuf\u00fcgen"
+            ],
+            "Split columns": [
+                "In Spalten teilen"
+            ],
+            "Build (Enter)": [
+                "Bauen (Enter)"
+            ]
+        }
+    }
+}

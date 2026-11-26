@@ -137,6 +137,9 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 				}
 				try {
 					$mgr->register( new Filters\Submission\FormSubmission() );
+					// DoubleScale forms: what a contact answered, and where they came from.
+					$mgr->register( new Filters\Submission\FormAnswer() );
+					$mgr->register( new Filters\Submission\LeadSource() );
 				} catch ( \Throwable $e ) {
 					// Duplicate registration or invalid state — do not break bootstrap.
 				}

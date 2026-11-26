@@ -1,0 +1,1174 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "View": [
+                "Bekijken"
+            ],
+            "Delete": [
+                "Verwijderen"
+            ],
+            "Type": [
+                "Type"
+            ],
+            "Close": [
+                "Sluiten"
+            ],
+            "Copy": [
+                "Kopi\u00ebren"
+            ],
+            "Copied": [
+                "Gekopieerd"
+            ],
+            "Clear": [
+                "Wissen"
+            ],
+            "Cancel": [
+                "Annuleren"
+            ],
+            "Got it": [
+                "Begrepen"
+            ],
+            "Show less": [
+                "Minder tonen"
+            ],
+            "Integrations": [
+                "Integraties"
+            ],
+            "Workflows": [
+                "Workflows"
+            ],
+            "Skills": [
+                "Skills"
+            ],
+            "Agent View": [
+                "Agent View"
+            ],
+            "Jobs": [
+                "Taken"
+            ],
+            "Running": [
+                "Bezig"
+            ],
+            "Done": [
+                "Klaar"
+            ],
+            "Edit": [
+                "Bewerken"
+            ],
+            "Library": [
+                "Bibliotheek"
+            ],
+            "Remove": [
+                "Verwijderen"
+            ],
+            "Rename": [
+                "Hernoemen"
+            ],
+            "Added": [
+                "Toegevoegd"
+            ],
+            "Pro": [
+                "Pro"
+            ],
+            "New tab": [
+                "Nieuw tabblad"
+            ],
+            "Plugins": [
+                "Plugins"
+            ],
+            "Jump to": [
+                "Ga naar"
+            ],
+            "Private": [
+                "Priv\u00e9"
+            ],
+            "Duplicate": [
+                "Dupliceren"
+            ],
+            "Content": [
+                "Content"
+            ],
+            "(no title)": [
+                "(geen titel)"
+            ],
+            "No agent listening": [
+                "Geen agent die luistert"
+            ],
+            "Queue": [
+                "Wachtrij"
+            ],
+            "Reload the page": [
+                "De pagina opnieuw laden"
+            ],
+            "Reload": [
+                "Opnieuw laden"
+            ],
+            "Your threads": [
+                "Je gesprekken"
+            ],
+            "Fold all requests": [
+                "Alle verzoeken inklappen"
+            ],
+            "Start from": [
+                "Begin met"
+            ],
+            "Send": [
+                "Versturen"
+            ],
+            "Click anything on the page to leave a note on it.": [
+                "Klik op iets op de pagina om er een notitie bij te zetten."
+            ],
+            "Add another": [
+                "Nog een toevoegen"
+            ],
+            "A note on the page": [
+                "Een notitie op de pagina"
+            ],
+            "Agent working": [
+                "Agent aan het werk"
+            ],
+            "Agent listening": [
+                "Agent luistert"
+            ],
+            "Agent idle": [
+                "Agent inactief"
+            ],
+            "No agent connected": [
+                "Geen agent verbonden"
+            ],
+            "Point at something": [
+                "Iets aanwijzen"
+            ],
+            "Your agent is on it": [
+                "Je agent is ermee bezig"
+            ],
+            "This page": [
+                "Deze pagina"
+            ],
+            "Images": [
+                "Afbeeldingen"
+            ],
+            "%1$d of %2$d": [
+                "%1$d van %2$d"
+            ],
+            "Box": [
+                "Vak"
+            ],
+            "Undo": [
+                "Ongedaan maken"
+            ],
+            "Auto": [
+                "Auto"
+            ],
+            "Open %s": [
+                "%s openen"
+            ],
+            "Saving\u2026": [
+                "Opslaan\u2026"
+            ],
+            "Saved": [
+                "Opgeslagen"
+            ],
+            "Home": [
+                "Home"
+            ],
+            "Open": [
+                "Openen"
+            ],
+            "Building": [
+                "Aan het bouwen"
+            ],
+            "%s is larger than this site accepts.": [
+                "%s is groter dan deze site accepteert."
+            ],
+            "Uploading\u2026": [
+                "Uploaden\u2026"
+            ],
+            "Save note": [
+                "Notitie opslaan"
+            ],
+            "Date": [
+                "Datum"
+            ],
+            "just now": [
+                "zojuist"
+            ],
+            "%d min ago": [
+                "%d min geleden",
+                "%d min geleden"
+            ],
+            "%d hour ago": [
+                "%d uur geleden",
+                "%d uur geleden"
+            ],
+            "Undone": [
+                "Ongedaan gemaakt"
+            ],
+            "The site answered with error %s.": [
+                "De site antwoordde met fout %s."
+            ],
+            "Your session has expired. Reload Agent View to carry on.": [
+                "Je sessie is verlopen. Laad Agent View opnieuw om verder te gaan."
+            ],
+            "Something went wrong.": [
+                "Er ging iets mis."
+            ],
+            "Copying is blocked in this browser. Select the text and copy it instead.": [
+                "Kopi\u00ebren is geblokkeerd in deze browser. Selecteer de tekst en kopieer hem zelf."
+            ],
+            "%d agent listening": [
+                "%d agent luistert",
+                "%d agents luisteren"
+            ],
+            "Last heard from %s": [
+                "Laatst gehoord: %s"
+            ],
+            "Your agent is listening.": [
+                "Je agent luistert."
+            ],
+            "Your agent is here and listening. Anything you send goes straight to it.": [
+                "Je agent is er en luistert. Alles wat je stuurt, gaat direct naar hem."
+            ],
+            "Your agent was here a moment ago but is not listening now. Paste the message below to bring it back.": [
+                "Je agent was hier net nog, maar luistert nu niet. Plak het bericht hieronder om hem terug te halen."
+            ],
+            "An AI client is connected to this site, but it is not listening to Agent View yet.": [
+                "Er is een AI-client met deze site verbonden, maar die luistert nog niet naar Agent View."
+            ],
+            "No AI client is connected to this site yet.": [
+                "Er is nog geen AI-client met deze site verbonden."
+            ],
+            "Copy the wake-up line": [
+                "Kopieer de wekregel"
+            ],
+            "Your agent is resting \ud83d\ude34": [
+                "Je agent rust even \ud83d\ude34"
+            ],
+            "No answer, so I let it rest to save its energy (and your tokens). ": [
+                "Geen antwoord, dus ik heb hem laten rusten om energie te sparen (en je tokens). "
+            ],
+            "When you need it again, paste the wake-up line in your agent. Anything you send meanwhile waits here.": [
+                "Heb je hem weer nodig? Plak dan de wekregel in je agent. Alles wat je intussen stuurt, wacht hier."
+            ],
+            "%d agent is listening": [
+                "%d agent luistert",
+                "%d agents luisteren"
+            ],
+            "That works: each request goes to whichever picks it up first, and they can work at the same time. Close the extra ones if you want a single agent on the job.": [
+                "Dat werkt: elk verzoek gaat naar wie het als eerste oppakt, en ze kunnen tegelijk werken. Sluit de extra agents als je er maar \u00e9\u00e9n aan het werk wilt."
+            ],
+            "Your agent nodded off \ud83d\ude34": [
+                "Je agent is ingedut \ud83d\ude34"
+            ],
+            "It stopped listening on its own. Paste the wake-up line in your agent to bring it back. Anything you send meanwhile waits here.": [
+                "Hij is vanzelf gestopt met luisteren. Plak de wekregel in je agent om hem terug te halen. Alles wat je intussen stuurt, wacht hier."
+            ],
+            "Still Nibbing? \ud83d\udc40": [
+                "Nog aan het Nibben? \ud83d\udc40"
+            ],
+            "Your agent has had nothing to do for 10 minutes. Keep it listening, or let it rest and save its energy (and your tokens). It rests by itself in 5 minutes if no one answers.": [
+                "Je agent heeft al 10 minuten niets te doen. Laat hem luisteren, of laat hem rusten en spaar zijn energie (en je tokens). Antwoordt niemand, dan gaat hij over 5 minuten vanzelf rusten."
+            ],
+            "Keep listening": [
+                "Laten luisteren"
+            ],
+            "Let it rest": [
+                "Laten rusten"
+            ],
+            "Your agent stays on. I\u2019ll check in again later.": [
+                "Je agent blijft aan. Ik kom later nog even kijken."
+            ],
+            "Copied: paste it in your agent": [
+                "Gekopieerd: plak het in je agent"
+            ],
+            "Copied. Paste it into your AI client.": [
+                "Gekopieerd. Plak het in je AI-client."
+            ],
+            "Waiting for your agent": [
+                "Wachten op je agent"
+            ],
+            "Paused": [
+                "Gepauzeerd"
+            ],
+            "Taken back": [
+                "Teruggenomen"
+            ],
+            "Your agent is listening. Send something.": [
+                "Je agent luistert. Stuur iets."
+            ],
+            "No agent yet. You can still browse, pin notes and send; messages wait for it.": [
+                "Nog geen agent. Je kunt al rondkijken, notities vastpinnen en berichten sturen; die wachten op hem."
+            ],
+            "Connect one": [
+                "Verbind er een"
+            ],
+            "Working on it": [
+                "Ermee bezig"
+            ],
+            "Reading the page": [
+                "Pagina lezen"
+            ],
+            "Thinking it through": [
+                "Even nadenken"
+            ],
+            "Nibbling": [
+                "Knabbelen"
+            ],
+            "Tinkering": [
+                "Knutselen"
+            ],
+            "Measuring twice": [
+                "Twee keer meten"
+            ],
+            "Polishing": [
+                "Oppoetsen"
+            ],
+            "Fine-tuning": [
+                "Finetunen"
+            ],
+            "Checking the details": [
+                "Details nalopen"
+            ],
+            "%1$dh %2$sm": [
+                "%1$du %2$sm"
+            ],
+            "%1$dm %2$ss": [
+                "%1$dm %2$ss"
+            ],
+            "%ds": [
+                "%ds"
+            ],
+            "Send again": [
+                "Opnieuw sturen"
+            ],
+            "Done in %s": [
+                "Klaar in %s"
+            ],
+            "Take back": [
+                "Terugnemen"
+            ],
+            "Copy as prompt": [
+                "Kopi\u00ebren als prompt"
+            ],
+            "No agent is listening, so this is waiting.": [
+                "Er luistert geen agent, dus dit wacht."
+            ],
+            "Bring your agent in": [
+                "Haal je agent erbij"
+            ],
+            "or copy it as a prompt": [
+                "of kopieer het als prompt"
+            ],
+            "Show on the page": [
+                "Tonen op de pagina"
+            ],
+            "Your answer": [
+                "Je antwoord"
+            ],
+            "Or write an answer": [
+                "Of schrijf een antwoord"
+            ],
+            "Answer": [
+                "Antwoorden"
+            ],
+            "Your %s asks": [
+                "Je %s vraagt"
+            ],
+            "Opened": [
+                "Geopend"
+            ],
+            "Read the page": [
+                "Pagina gelezen"
+            ],
+            "Clicked": [
+                "Geklikt"
+            ],
+            "Pointed at": [
+                "Aangewezen"
+            ],
+            "Typed into": [
+                "Getypt in"
+            ],
+            "Resized the view": [
+                "Weergave aangepast"
+            ],
+            "Checked the page": [
+                "Pagina gecontroleerd"
+            ],
+            "Checked for errors": [
+                "Op fouten gecontroleerd"
+            ],
+            "Looked at the tabs": [
+                "Tabbladen bekeken"
+            ],
+            "Read the blocks": [
+                "Blokken gelezen"
+            ],
+            "Ran several steps": [
+                "Meerdere stappen uitgevoerd"
+            ],
+            "Followed along": [
+                "Meegekeken"
+            ],
+            "Checked what it can do": [
+                "Bekeken wat hij kan"
+            ],
+            "%d step": [
+                "%d stap",
+                "%d stappen"
+            ],
+            "Saved \u201c%s\u201d": [
+                "\u201c%s\u201d opgeslagen"
+            ],
+            "Put \u201c%1$s\u201d back to %2$s": [
+                "\u201c%1$s\u201d teruggezet naar %2$s"
+            ],
+            "Your agent is resting. Paste the wake-up line to bring it back.": [
+                "Je agent rust. Plak de wekregel om hem terug te halen."
+            ],
+            "The agent session ended.": [
+                "De agentsessie is be\u00ebindigd."
+            ],
+            "You stopped this request.": [
+                "Je hebt dit verzoek gestopt."
+            ],
+            "You undid a job: %d page put back.": [
+                "Je hebt een taak ongedaan gemaakt: %d pagina teruggezet.",
+                "Je hebt een taak ongedaan gemaakt: %d pagina's teruggezet."
+            ],
+            "(a pinned note)": [
+                "(een vastgepinde notitie)"
+            ],
+            "Stop this job": [
+                "Deze taak stoppen"
+            ],
+            "Next up": [
+                "Als volgende"
+            ],
+            "#%d in line": [
+                "#%d in de rij"
+            ],
+            "Run next": [
+                "Als volgende uitvoeren"
+            ],
+            "Pause": [
+                "Pauzeren"
+            ],
+            "Paused: your agent skips it": [
+                "Gepauzeerd: je agent slaat hem over"
+            ],
+            "Run": [
+                "Uitvoeren"
+            ],
+            "%d page saved": [
+                "%d pagina opgeslagen",
+                "%d pagina's opgeslagen"
+            ],
+            "Show more": [
+                "Meer tonen"
+            ],
+            "%d agent takes them from the top": [
+                "%d agent pakt ze van bovenaf op",
+                "%d agents pakken ze van bovenaf op"
+            ],
+            "No agent listening: they wait here": [
+                "Geen agent die luistert: ze wachten hier"
+            ],
+            "Nothing running.": [
+                "Er loopt niets."
+            ],
+            "Up next": [
+                "Hierna"
+            ],
+            "Nothing waiting. Send a request and it lands here.": [
+                "Er wacht niets. Stuur een verzoek en het komt hier terecht."
+            ],
+            "Drag to change the order.": [
+                "Sleep om de volgorde te wijzigen."
+            ],
+            "Undo this job?": [
+                "Deze taak ongedaan maken?"
+            ],
+            "\u201c%1$s\u201d saved %2$d page. It goes back to how it was before the job. Settings or files the job changed stay as they are.": [
+                "\u201c%1$s\u201d heeft %2$d pagina opgeslagen. Die gaat terug naar hoe hij was v\u00f3\u00f3r de taak. Instellingen of bestanden die de taak heeft gewijzigd, blijven zoals ze zijn.",
+                "\u201c%1$s\u201d heeft %2$d pagina's opgeslagen. Die gaan terug naar hoe ze waren v\u00f3\u00f3r de taak. Instellingen of bestanden die de taak heeft gewijzigd, blijven zoals ze zijn."
+            ],
+            "Undo the job": [
+                "Taak ongedaan maken"
+            ],
+            "Keep it": [
+                "Behouden"
+            ],
+            "Undone: %d page put back.": [
+                "Ongedaan gemaakt: %d pagina teruggezet.",
+                "Ongedaan gemaakt: %d pagina's teruggezet."
+            ],
+            "Stopped. Your agent stops at its next step and says what it finished.": [
+                "Gestopt. Je agent stopt bij zijn volgende stap en meldt wat hij heeft afgerond."
+            ],
+            "New order saved. Your agent takes the top one next.": [
+                "Nieuwe volgorde opgeslagen. Je agent pakt hierna de bovenste."
+            ],
+            "Stopped. Nothing was left waiting.": [
+                "Gestopt. Er stond niets meer te wachten."
+            ],
+            "Show the work on this request": [
+                "Toon het werk aan dit verzoek"
+            ],
+            "Hide the work on this request": [
+                "Verberg het werk aan dit verzoek"
+            ],
+            "Show the work (%d)": [
+                "Toon het werk (%d)"
+            ],
+            "Open all requests": [
+                "Alle verzoeken openen"
+            ],
+            "Copied as a prompt.": [
+                "Gekopieerd als prompt."
+            ],
+            "This is about my WordPress site %s, which you can work on through NibWP.": [
+                "Dit gaat over mijn WordPress-site %s, waar je via NibWP aan kunt werken."
+            ],
+            "Page: %1$s (%2$s)": [
+                "Pagina: %1$s (%2$s)"
+            ],
+            "post %d": [
+                "bericht %d"
+            ],
+            "Notes I pinned on the page:": [
+                "Notities die ik op de pagina heb vastgepind:"
+            ],
+            "(marked, see my message above)": [
+                "(gemarkeerd, zie mijn bericht hierboven)"
+            ],
+            "Element: %1$s, \u201c%2$s\u201d": [
+                "Element: %1$s, \u201c%2$s\u201d"
+            ],
+            "Inside the editor canvas %s": [
+                "In het editorcanvas %s"
+            ],
+            "Drawn: %1$s, %2$d\u00d7%3$d px at %4$d, %5$d on the page": [
+                "Getekend: %1$s, %2$d\u00d7%3$d px op %4$d, %5$d op de pagina"
+            ],
+            "Also see: %1$s (%2$s)": [
+                "Zie ook: %1$s (%2$s)"
+            ],
+            "File: %1$s %2$s": [
+                "Bestand: %1$s %2$s"
+            ],
+            "Use these NibWP skills (load each with nibwp\/load-skill-playbook): %s": [
+                "Gebruik deze NibWP-skills (laad elk met nibwp\/load-skill-playbook): %s"
+            ],
+            "Follow these NibWP workflows (read each with nibwp\/get-workflow): %s": [
+                "Volg deze NibWP-workflows (lees elk met nibwp\/get-workflow): %s"
+            ],
+            "Your agent is waiting for your answer": [
+                "Je agent wacht op je antwoord"
+            ],
+            "Type \/ for pages, skills and more": [
+                "Typ \/ voor pagina's, skills en meer"
+            ],
+            "Enter to send \u00b7 Shift+Enter for a new line": [
+                "Enter om te versturen \u00b7 Shift+Enter voor een nieuwe regel"
+            ],
+            "Do not send the current page": [
+                "De huidige pagina niet meesturen"
+            ],
+            "Remove this note": [
+                "Deze notitie verwijderen"
+            ],
+            "Remove this file": [
+                "Dit bestand verwijderen"
+            ],
+            "Your drawing": [
+                "Je tekening"
+            ],
+            "Your comment": [
+                "Je opmerking"
+            ],
+            "Your agent starts on it right away": [
+                "Je agent gaat er meteen mee aan de slag"
+            ],
+            "Plan": [
+                "Plannen"
+            ],
+            "Your agent looks and plans; nothing changes": [
+                "Je agent kijkt en maakt een plan; er verandert niets"
+            ],
+            "Plan it": [
+                "Plan het"
+            ],
+            "Collect requests, run them together later": [
+                "Verzamel verzoeken en voer ze later samen uit"
+            ],
+            "Add to queue": [
+                "Aan wachtrij toevoegen"
+            ],
+            "Bypass": [
+                "Zelfstandig"
+            ],
+            "Your agent decides on its own, no questions": [
+                "Je agent beslist zelf, zonder vragen"
+            ],
+            "Do it": [
+                "Doe het"
+            ],
+            "%d request waiting": [
+                "%d verzoek wacht",
+                "%d verzoeken wachten"
+            ],
+            "Nothing waiting": [
+                "Er wacht niets"
+            ],
+            "Remove from the queue": [
+                "Uit de wachtrij halen"
+            ],
+            "Run as": [
+                "Uitvoeren als"
+            ],
+            "Run all": [
+                "Alles uitvoeren"
+            ],
+            "Run %d": [
+                "%d uitvoeren"
+            ],
+            "Switch the chat to Queue mode and your requests wait here, to run together when you are done planning.": [
+                "Zet de chat in de modus Wachtrij, dan wachten je verzoeken hier om samen uitgevoerd te worden als je klaar bent met plannen."
+            ],
+            "Added to your queue (%d waiting). Run them together from the Queue at the top.": [
+                "Toegevoegd aan je wachtrij (%d wacht). Voer ze samen uit vanuit de Wachtrij bovenaan.",
+                "Toegevoegd aan je wachtrij (%d wachten). Voer ze samen uit vanuit de Wachtrij bovenaan."
+            ],
+            "Your agent is working on %d task": [
+                "Je agent werkt aan %d taak",
+                "Je agent werkt aan %d taken"
+            ],
+            "In the order you set. Follow each one in Jobs.": [
+                "In de volgorde die jij hebt bepaald. Volg ze elk in Taken."
+            ],
+            "Pasted image": [
+                "Geplakte afbeelding"
+            ],
+            "Show your agent\u2019s changes?": [
+                "De wijzigingen van je agent tonen?"
+            ],
+            "Leave the editor?": [
+                "De editor verlaten?"
+            ],
+            "Reload the editor?": [
+                "De editor opnieuw laden?"
+            ],
+            "Your agent saved changes to this page, but the editor still shows the page from before, with your unsaved edits in it. Reloading the editor shows your agent\u2019s changes and drops your unsaved edits. Keeping your edits is fine too, but saving them later writes over your agent\u2019s changes.": [
+                "Je agent heeft wijzigingen in deze pagina opgeslagen, maar de editor toont de pagina nog van daarvoor, met jouw niet-opgeslagen bewerkingen erin. Als je de editor opnieuw laadt, zie je de wijzigingen van je agent en vervallen je niet-opgeslagen bewerkingen. Je bewerkingen houden kan ook, maar als je ze later opslaat, overschrijf je de wijzigingen van je agent."
+            ],
+            "The editor has unsaved edits. Leaving drops them. Save them in the editor first if you want to keep them.": [
+                "De editor heeft niet-opgeslagen bewerkingen. Als je weggaat, vervallen ze. Sla ze eerst op in de editor als je ze wilt houden."
+            ],
+            "The editor has unsaved edits. Reloading drops them. Save them in the editor first if you want to keep them.": [
+                "De editor heeft niet-opgeslagen bewerkingen. Als je opnieuw laadt, vervallen ze. Sla ze eerst op in de editor als je ze wilt houden."
+            ],
+            "Reload and show the changes": [
+                "Opnieuw laden en wijzigingen tonen"
+            ],
+            "Leave anyway": [
+                "Toch weggaan"
+            ],
+            "Reload anyway": [
+                "Toch opnieuw laden"
+            ],
+            "Keep my edits": [
+                "Mijn bewerkingen houden"
+            ],
+            "Stay": [
+                "Blijven"
+            ],
+            "Updated": [
+                "Bijgewerkt"
+            ],
+            "NibWP updated this page. It shows once your note is sent or closed.": [
+                "NibWP heeft deze pagina bijgewerkt. Je ziet het zodra je notitie verstuurd of gesloten is."
+            ],
+            "NibWP worked on another page.": [
+                "NibWP heeft aan een andere pagina gewerkt."
+            ],
+            "NibWP updated this page. It shows when you are done.": [
+                "NibWP heeft deze pagina bijgewerkt. Je ziet het als je klaar bent."
+            ],
+            "Show now": [
+                "Nu tonen"
+            ],
+            "Open it": [
+                "Openen"
+            ],
+            "A page outside this site": [
+                "Een pagina buiten deze site"
+            ],
+            "Leave without saving?": [
+                "Weggaan zonder opslaan?"
+            ],
+            "The Builder has changes on %s that are not saved. Closing drops them. Save them first if you want to keep them.": [
+                "De Builder heeft niet-opgeslagen wijzigingen op %s. Als je sluit, vervallen ze. Sla ze eerst op als je ze wilt houden."
+            ],
+            "The Builder has changes on %s that are not saved. Reloading drops them. Save them first if you want to keep them.": [
+                "De Builder heeft niet-opgeslagen wijzigingen op %s. Als je opnieuw laadt, vervallen ze. Sla ze eerst op als je ze wilt houden."
+            ],
+            "The Builder has changes on %s that are not saved. Going to another page drops them. Save them first if you want to keep them.": [
+                "De Builder heeft niet-opgeslagen wijzigingen op %s. Als je naar een andere pagina gaat, vervallen ze. Sla ze eerst op als je ze wilt houden."
+            ],
+            "Close without saving": [
+                "Sluiten zonder opslaan"
+            ],
+            "Reload without saving": [
+                "Opnieuw laden zonder opslaan"
+            ],
+            "Leave without saving": [
+                "Weggaan zonder opslaan"
+            ],
+            "Group": [
+                "Groep"
+            ],
+            "Show this group": [
+                "Deze groep tonen"
+            ],
+            "Fold this group": [
+                "Deze groep inklappen"
+            ],
+            "Builder changes not saved": [
+                "Builder-wijzigingen niet opgeslagen"
+            ],
+            "Close %s": [
+                "%s sluiten"
+            ],
+            "Name this group": [
+                "Geef deze groep een naam"
+            ],
+            "Group name": [
+                "Groepsnaam"
+            ],
+            "Group colour": [
+                "Groepskleur"
+            ],
+            "New tab in this group": [
+                "Nieuw tabblad in deze groep"
+            ],
+            "Ungroup": [
+                "Groep opheffen"
+            ],
+            "Close the group": [
+                "De groep sluiten"
+            ],
+            "Add to a new group": [
+                "Aan een nieuwe groep toevoegen"
+            ],
+            "Move to %s": [
+                "Verplaatsen naar %s"
+            ],
+            "Remove from group": [
+                "Uit groep halen"
+            ],
+            "Close tab": [
+                "Tabblad sluiten"
+            ],
+            "Close tabs to the left": [
+                "Tabbladen links sluiten"
+            ],
+            "Close tabs to the right": [
+                "Tabbladen rechts sluiten"
+            ],
+            "Close other tabs": [
+                "Andere tabbladen sluiten"
+            ],
+            "%s \u00b7 Agent View": [
+                "%s \u00b7 Agent View"
+            ],
+            "Drag to draw a box. Draw as many marks as you like, then say what they are about.": [
+                "Sleep om een kader te tekenen. Teken zoveel markeringen als je wilt en zeg dan waar ze over gaan."
+            ],
+            "Drag to draw a circle. Draw as many marks as you like, then say what they are about.": [
+                "Sleep om een cirkel te tekenen. Teken zoveel markeringen als je wilt en zeg dan waar ze over gaan."
+            ],
+            "Draw freely on the page. Draw as many marks as you like, then say what they are about.": [
+                "Teken vrij op de pagina. Teken zoveel markeringen als je wilt en zeg dan waar ze over gaan."
+            ],
+            "Circle": [
+                "Cirkel"
+            ],
+            "Drawing": [
+                "Tekening"
+            ],
+            "Write what should change here first.": [
+                "Schrijf eerst wat hier moet veranderen."
+            ],
+            "That element is not on the page shown now.": [
+                "Dat element staat niet op de pagina die nu wordt getoond."
+            ],
+            "Not sent yet": [
+                "Nog niet verstuurd"
+            ],
+            "Edit and send again": [
+                "Bewerken en opnieuw sturen"
+            ],
+            "Hide this comment": [
+                "Deze opmerking verbergen"
+            ],
+            "No comments yet. Press C and click the page, or D to draw on it.": [
+                "Nog geen opmerkingen. Druk op C en klik op de pagina, of op D om erop te tekenen."
+            ],
+            "Comment hidden.": [
+                "Opmerking verborgen."
+            ],
+            "Draft": [
+                "Concept"
+            ],
+            "Pending": [
+                "In afwachting"
+            ],
+            "Scheduled": [
+                "Gepland"
+            ],
+            "Searching\u2026": [
+                "Zoeken\u2026"
+            ],
+            "Nothing found on this site.": [
+                "Niets gevonden op deze site."
+            ],
+            "On this site": [
+                "Op deze site"
+            ],
+            "Recently changed": [
+                "Onlangs gewijzigd"
+            ],
+            "Off": [
+                "Uit"
+            ],
+            "Go to %s": [
+                "Ga naar %s"
+            ],
+            "Show %d more": [
+                "Nog %d tonen"
+            ],
+            "%s is added to your message.": [
+                "%s is aan je bericht toegevoegd."
+            ],
+            "Show all %d": [
+                "Alle %d tonen"
+            ],
+            "Add to this message": [
+                "Aan dit bericht toevoegen"
+            ],
+            "Leave a note on an element": [
+                "Laat een notitie achter op een element"
+            ],
+            "A file or screenshot": [
+                "Een bestand of screenshot"
+            ],
+            "Upload, paste or drop": [
+                "Uploaden, plakken of neerzetten"
+            ],
+            "Pages to include": [
+                "Pagina's om mee te sturen"
+            ],
+            "Nothing matches. Try another word.": [
+                "Niets gevonden. Probeer een ander woord."
+            ],
+            "Yesterday %s": [
+                "Gisteren %s"
+            ],
+            "an earlier version": [
+                "een eerdere versie"
+            ],
+            "the version from %s": [
+                "de versie van %s"
+            ],
+            "this page": [
+                "deze pagina"
+            ],
+            "Undo this change?": [
+                "Deze wijziging ongedaan maken?"
+            ],
+            "\u201c%s\u201d goes back to how it was before this save. What is there now is kept as a version, so you can switch back.": [
+                "\u201c%s\u201d gaat terug naar hoe het was v\u00f3\u00f3r deze opslag. Wat er nu staat, wordt bewaard als versie, zodat je terug kunt wisselen."
+            ],
+            "Restore this version?": [
+                "Deze versie herstellen?"
+            ],
+            "\u201c%1$s\u201d goes back to %2$s. What is there now is kept as a version, so you can switch back.": [
+                "\u201c%1$s\u201d gaat terug naar %2$s. Wat er nu staat, wordt bewaard als versie, zodat je terug kunt wisselen."
+            ],
+            "its first version": [
+                "de eerste versie"
+            ],
+            "Restore": [
+                "Herstellen"
+            ],
+            "Page restored.": [
+                "Pagina hersteld."
+            ],
+            "Previewing the first version of this page": [
+                "Voorbeeld van de eerste versie van deze pagina"
+            ],
+            "Previewing %s": [
+                "Voorbeeld van %s"
+            ],
+            "Your %1$s asks: %2$s": [
+                "Je %1$s vraagt: %2$s"
+            ],
+            "This is already a new thread. Type below to start it.": [
+                "Dit is al een nieuw gesprek. Typ hieronder om het te beginnen."
+            ],
+            "New thread. Anything still waiting in the last one was taken back.": [
+                "Nieuw gesprek. Wat in het vorige nog wachtte, is teruggenomen."
+            ],
+            "%s \u00b7 Show all threads": [
+                "%s \u00b7 Alle gesprekken tonen"
+            ],
+            "Open a page or post to see its saved versions.": [
+                "Open een pagina of bericht om de opgeslagen versies te zien."
+            ],
+            "This page does not keep saved versions.": [
+                "Deze pagina bewaart geen opgeslagen versies."
+            ],
+            "No saved versions yet. Each save from now on adds one here.": [
+                "Nog geen opgeslagen versies. Vanaf nu komt er bij elke opslag \u00e9\u00e9n bij."
+            ],
+            "Current": [
+                "Huidig"
+            ],
+            "First version": [
+                "Eerste versie"
+            ],
+            "Saved %s": [
+                "Opgeslagen %s"
+            ],
+            "Autosave": [
+                "Automatisch opgeslagen"
+            ],
+            "Show the page as it is now": [
+                "Toon de pagina zoals die nu is"
+            ],
+            "Show the page as it was then": [
+                "Toon de pagina zoals die toen was"
+            ],
+            "Your threads show up here once you send something.": [
+                "Je gesprekken verschijnen hier zodra je iets stuurt."
+            ],
+            "Open now": [
+                "Nu openen"
+            ],
+            "%d message": [
+                "%d bericht",
+                "%d berichten"
+            ],
+            "Your threads (%d)": [
+                "Je gesprekken (%d)",
+                "Je gesprekken (%d)"
+            ],
+            "Open \u201c%s\u201d": [
+                "\u201c%s\u201d openen"
+            ],
+            "Rename \u201c%s\u201d": [
+                "\u201c%s\u201d hernoemen"
+            ],
+            "Delete \u201c%s\u201d": [
+                "\u201c%s\u201d verwijderen"
+            ],
+            "Today": [
+                "Vandaag"
+            ],
+            "Yesterday": [
+                "Gisteren"
+            ],
+            "This week": [
+                "Deze week"
+            ],
+            "Earlier": [
+                "Eerder"
+            ],
+            "No thread by that name.": [
+                "Geen gesprek met die naam."
+            ],
+            "Thread name": [
+                "Gespreksnaam"
+            ],
+            "Saves as you type. Empty brings back the first message.": [
+                "Wordt opgeslagen terwijl je typt. Leeg zet het eerste bericht terug."
+            ],
+            "Delete \u201c%s\u201d?": [
+                "\u201c%s\u201d verwijderen?"
+            ],
+            "Delete this thread for good?": [
+                "Dit gesprek definitief verwijderen?"
+            ],
+            "\u201c%1$s\u201d and its %2$d message are deleted. This can\u2019t be undone.": [
+                "\u201c%1$s\u201d en het %2$d bericht worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
+                "\u201c%1$s\u201d en de %2$d berichten worden verwijderd. Dit kan niet ongedaan worden gemaakt."
+            ],
+            "Delete for good": [
+                "Definitief verwijderen"
+            ],
+            "Thread deleted. You\u2019re in a fresh one.": [
+                "Gesprek verwijderd. Je zit nu in een nieuw gesprek."
+            ],
+            "Thread deleted.": [
+                "Gesprek verwijderd."
+            ],
+            "All types": [
+                "Alle typen"
+            ],
+            "Videos": [
+                "Video's"
+            ],
+            "Audio": [
+                "Audio"
+            ],
+            "Documents": [
+                "Documenten"
+            ],
+            "All media": [
+                "Alle media"
+            ],
+            "From Agent View": [
+                "Uit Agent View"
+            ],
+            "Date deleted from": [
+                "Datum verwijderd vanaf"
+            ],
+            "All dates": [
+                "Alle datums"
+            ],
+            "Trash": [
+                "Prullenbak"
+            ],
+            "Select all": [
+                "Alles selecteren"
+            ],
+            "1 file": [
+                "1 bestand"
+            ],
+            "%s files": [
+                "%s bestanden"
+            ],
+            "Deleted for good after %d days.": [
+                "Na %d dagen definitief verwijderd."
+            ],
+            "The trash is turned off on this site.": [
+                "De prullenbak staat uit op deze site."
+            ],
+            "1 selected": [
+                "1 geselecteerd"
+            ],
+            "%d selected": [
+                "%d geselecteerd"
+            ],
+            "Delete permanently": [
+                "Definitief verwijderen"
+            ],
+            "Add to message": [
+                "Aan bericht toevoegen"
+            ],
+            "Copy links": [
+                "Links kopi\u00ebren"
+            ],
+            "Select %s": [
+                "%s selecteren"
+            ],
+            "Open %s in a new tab": [
+                "%s openen in een nieuw tabblad"
+            ],
+            "Copy link": [
+                "Link kopi\u00ebren"
+            ],
+            "The trash is empty.": [
+                "De prullenbak is leeg."
+            ],
+            "No files here yet.": [
+                "Hier staan nog geen bestanden."
+            ],
+            "Load more \u00b7 %1$s of %2$s": [
+                "Meer laden \u00b7 %1$s van %2$s"
+            ],
+            "Moved to the trash.": [
+                "Naar de prullenbak verplaatst."
+            ],
+            "Restored.": [
+                "Hersteld."
+            ],
+            "Deleted for good.": [
+                "Definitief verwijderd."
+            ],
+            "%1$s %2$d could not be changed.": [
+                "%1$s %2$d kon niet worden gewijzigd."
+            ],
+            "Delete this file for good?": [
+                "Dit bestand definitief verwijderen?"
+            ],
+            "Delete %d files for good?": [
+                "%d bestanden definitief verwijderen?"
+            ],
+            "\u201c%s\u201d is removed from the site and cannot come back.": [
+                "\u201c%s\u201d wordt van de site verwijderd en komt niet meer terug."
+            ],
+            "They are removed from the site and cannot come back.": [
+                "Ze worden van de site verwijderd en komen niet meer terug."
+            ],
+            "A page that shows one will show a broken image.": [
+                "Een pagina die er een toont, laat dan een kapotte afbeelding zien."
+            ],
+            "Added %d to your message.": [
+                "%d toegevoegd aan je bericht."
+            ],
+            "A message holds 10 files at most.": [
+                "Een bericht kan maximaal 10 bestanden bevatten."
+            ],
+            "Link copied.": [
+                "Link gekopieerd."
+            ],
+            "%d links copied.": [
+                "%d links gekopieerd."
+            ],
+            "Uploading %d files\u2026": [
+                "%d bestanden uploaden\u2026"
+            ],
+            "Uploaded.": [
+                "Ge\u00fcpload."
+            ],
+            "%d files uploaded.": [
+                "%d bestanden ge\u00fcpload."
+            ],
+            "Your agent asks before it clicks or types on the page.": [
+                "Je agent vraagt het eerst voordat hij op de pagina klikt of typt."
+            ],
+            "Your agent clicks and types without asking.": [
+                "Je agent klikt en typt zonder te vragen."
+            ],
+            "Your agent will stop at its next check-in.": [
+                "Je agent stopt bij zijn volgende tussenstop."
+            ],
+            "Use this": [
+                "Dit gebruiken"
+            ],
+            "Starts right away": [
+                "Begint meteen"
+            ],
+            "Plans, no changes": [
+                "Plant, verandert niets"
+            ],
+            "Runs later": [
+                "Draait later"
+            ],
+            "No questions asked": [
+                "Zonder vragen"
+            ]
+        }
+    }
+}

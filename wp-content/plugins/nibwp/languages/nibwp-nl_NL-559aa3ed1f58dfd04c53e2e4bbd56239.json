@@ -1,0 +1,609 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-export.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Close": [
+                "Sluiten"
+            ],
+            "User": [
+                "Gebruiker"
+            ],
+            "Recommended": [
+                "Aanbevolen"
+            ],
+            "optional": [
+                "optioneel"
+            ],
+            "Password": [
+                "Wachtwoord"
+            ],
+            "Connect": [
+                "Verbinden"
+            ],
+            "Settings": [
+                "Instellingen"
+            ],
+            "Connected": [
+                "Verbonden"
+            ],
+            "Back": [
+                "Terug"
+            ],
+            "Next": [
+                "Volgende"
+            ],
+            "Done": [
+                "Klaar"
+            ],
+            "Try again": [
+                "Opnieuw proberen"
+            ],
+            "Access token": [
+                "Toegangstoken"
+            ],
+            "Stop": [
+                "Stoppen"
+            ],
+            "Live": [
+                "Live"
+            ],
+            "Beta": [
+                "B\u00e8ta"
+            ],
+            "Ready": [
+                "Klaar"
+            ],
+            "Everything": [
+                "Alles"
+            ],
+            "Pages": [
+                "Pagina's"
+            ],
+            "Media": [
+                "Media"
+            ],
+            "Content": [
+                "Content"
+            ],
+            "Static site": [
+                "Statische site"
+            ],
+            "Export": [
+                "Exporteren"
+            ],
+            "Upload": [
+                "Uploaden"
+            ],
+            "Stopped.": [
+                "Gestopt."
+            ],
+            "Image": [
+                "Afbeelding"
+            ],
+            "Open %s": [
+                "%s openen"
+            ],
+            "Sent": [
+                "Verstuurd"
+            ],
+            "File": [
+                "Bestand"
+            ],
+            "just now": [
+                "zojuist"
+            ],
+            "%d hour ago": [
+                "%d uur geleden",
+                "%d uur geleden"
+            ],
+            "Cloudflare Pages": [
+                "Cloudflare Pages"
+            ],
+            "Free, fast all over the world. Our pick.": [
+                "Gratis, overal ter wereld snel. Onze keuze."
+            ],
+            "Netlify": [
+                "Netlify"
+            ],
+            "Free plan, simple to run.": [
+                "Gratis abonnement, eenvoudig te gebruiken."
+            ],
+            "Your own host": [
+                "Je eigen host"
+            ],
+            "Any web host, over SFTP, FTPS or FTP.": [
+                "Elke webhost, via SFTP, FTPS of FTP."
+            ],
+            "Download a zip": [
+                "Een zip downloaden"
+            ],
+            "Host it yourself, or keep a copy.": [
+                "Host het zelf, of bewaar een kopie."
+            ],
+            "Where": [
+                "Waar"
+            ],
+            "Publish": [
+                "Publiceren"
+            ],
+            "Your site as plain, fast files, live on a host and kept up to date.": [
+                "Je site als eenvoudige, snelle bestanden, live op een host en up-to-date gehouden."
+            ],
+            "%d minute ago": [
+                "%d minuut geleden",
+                "%d minuten geleden"
+            ],
+            "%d day ago": [
+                "%d dag geleden",
+                "%d dagen geleden"
+            ],
+            "Publishing\u2026": [
+                "Publiceren\u2026"
+            ],
+            "%d change to publish": [
+                "%d wijziging om te publiceren",
+                "%d wijzigingen om te publiceren"
+            ],
+            "Looking at your site\u2026": [
+                "Je site bekijken\u2026"
+            ],
+            "Could not look at the site.": [
+                "Kon de site niet bekijken."
+            ],
+            "%d change waiting": [
+                "%d wijziging wacht",
+                "%d wijzigingen wachten"
+            ],
+            "Everything is live.": [
+                "Alles is live."
+            ],
+            "Live, last publish failed": [
+                "Live, laatste publicatie mislukt"
+            ],
+            "%d page": [
+                "%d pagina",
+                "%d pagina's"
+            ],
+            "built %s": [
+                "gebouwd %s"
+            ],
+            "Publish changes": [
+                "Wijzigingen publiceren"
+            ],
+            "Rebuild everything": [
+                "Alles opnieuw bouwen"
+            ],
+            "Publish by itself": [
+                "Vanzelf publiceren"
+            ],
+            "When you change content, menus or design, it goes live about two minutes after your last edit.": [
+                "Als je content, menu's of ontwerp wijzigt, gaat het ongeveer twee minuten na je laatste bewerking live."
+            ],
+            "Last publishes": [
+                "Laatste publicaties"
+            ],
+            "Changes": [
+                "Wijzigingen"
+            ],
+            "%d page built": [
+                "%d pagina gebouwd",
+                "%d pagina's gebouwd"
+            ],
+            "%d file sent": [
+                "%d bestand verstuurd",
+                "%d bestanden verstuurd"
+            ],
+            "by itself": [
+                "vanzelf"
+            ],
+            "by NibWP": [
+                "door NibWP"
+            ],
+            "by you": [
+                "door jou"
+            ],
+            "What goes in": [
+                "Wat erin gaat"
+            ],
+            "%d published": [
+                "%d gepubliceerd",
+                "%d gepubliceerd"
+            ],
+            "Content type lists": [
+                "Lijsten per contenttype"
+            ],
+            "Also": [
+                "Ook"
+            ],
+            "Follow the links on the pages": [
+                "De links op de pagina's volgen"
+            ],
+            "Picks up pagination and anything linked that the lists above miss.": [
+                "Neemt paginering mee en alles wat gelinkt is dat de lijsten hierboven missen."
+            ],
+            "Only the media the pages use": [
+                "Alleen de media die de pagina's gebruiken"
+            ],
+            "The whole media library": [
+                "De hele mediabibliotheek"
+            ],
+            "Where it goes": [
+                "Waar het naartoe gaat"
+            ],
+            "API token": [
+                "API-token"
+            ],
+            "Saved (\u2026%s). Paste one to replace it.": [
+                "Opgeslagen (\u2026%s). Plak een nieuw token om het te vervangen."
+            ],
+            "Paste the token": [
+                "Plak het token"
+            ],
+            "Project name": [
+                "Projectnaam"
+            ],
+            "Account": [
+                "Account"
+            ],
+            "Make a token in %s: Create Token, Custom token, permission Account \u203a Cloudflare Pages \u203a Edit. A new project is made for you.": [
+                "Maak een token aan in %s: Create Token, Custom token, recht Account \u203a Cloudflare Pages \u203a Edit. Er wordt een nieuw project voor je gemaakt."
+            ],
+            "Cloudflare \u203a My Profile \u203a API Tokens": [
+                "Cloudflare \u203a My Profile \u203a API Tokens"
+            ],
+            "Your token is encrypted with this site\u2019s own secret keys and kept only on this site. It is used only to send your site to Cloudflare, and it is never shown again or shared.": [
+                "Je token wordt versleuteld met de eigen geheime sleutels van deze site en alleen op deze site bewaard. Het wordt alleen gebruikt om je site naar Cloudflare te sturen, en wordt nooit meer getoond of gedeeld."
+            ],
+            "Site name": [
+                "Sitenaam"
+            ],
+            "Make a token in %s: New access token. A new site is made for you.": [
+                "Maak een token aan in %s: New access token. Er wordt een nieuwe site voor je gemaakt."
+            ],
+            "Netlify \u203a User settings \u203a Applications": [
+                "Netlify \u203a User settings \u203a Applications"
+            ],
+            "Your token is encrypted with this site\u2019s own secret keys and kept only on this site. It is used only to send your site to Netlify, and it is never shown again or shared.": [
+                "Je token wordt versleuteld met de eigen geheime sleutels van deze site en alleen op deze site bewaard. Het wordt alleen gebruikt om je site naar Netlify te sturen, en wordt nooit meer getoond of gedeeld."
+            ],
+            "How to connect": [
+                "Hoe te verbinden"
+            ],
+            "Server": [
+                "Server"
+            ],
+            "Port": [
+                "Poort"
+            ],
+            "Saved. Type one to replace it.": [
+                "Opgeslagen. Typ een nieuw wachtwoord om het te vervangen."
+            ],
+            "Folder": [
+                "Map"
+            ],
+            "The folder the website is served from, from where you log in (public_html, www, htdocs\u2026). Only files that changed are sent each time.": [
+                "De map van waaruit de website wordt geserveerd, gezien vanaf waar je inlogt (public_html, www, htdocs\u2026). Alleen gewijzigde bestanden worden telkens verstuurd."
+            ],
+            "Your password is encrypted with this site\u2019s own secret keys and kept only on this site, so publishing can run without you. It is used only to log in to your server, and it is never shown again or shared.": [
+                "Je wachtwoord wordt versleuteld met de eigen geheime sleutels van deze site en alleen op deze site bewaard, zodat publiceren zonder jou kan draaien. Het wordt alleen gebruikt om in te loggen op je server, en wordt nooit meer getoond of gedeeld."
+            ],
+            "How the links work": [
+                "Hoe de links werken"
+            ],
+            "Works anywhere": [
+                "Werkt overal"
+            ],
+            "Links point from file to file, so the site opens from any host, a subfolder, or a folder on your computer.": [
+                "Links wijzen van bestand naar bestand, zodat de site opent vanaf elke host, een submap of een map op je computer."
+            ],
+            "For a new address": [
+                "Voor een nieuw adres"
+            ],
+            "Clean links on the domain you will host it on, with a sitemap for search engines.": [
+                "Nette links op het domein waarop je hem gaat hosten, met een sitemap voor zoekmachines."
+            ],
+            "The new address": [
+                "Het nieuwe adres"
+            ],
+            "Website address": [
+                "Websiteadres"
+            ],
+            "Your own domain": [
+                "Je eigen domein"
+            ],
+            "optional, once it points at the host": [
+                "optioneel, zodra het naar de host wijst"
+            ],
+            "Connecting\u2026": [
+                "Verbinden\u2026"
+            ],
+            "Connected. The site will be at %s": [
+                "Verbonden. De site komt op %s"
+            ],
+            "a zip to download": [
+                "een zip om te downloaden"
+            ],
+            "Good to know": [
+                "Goed om te weten"
+            ],
+            "About %1$d pages, to %2$s.": [
+                "Ongeveer %1$d pagina's, naar %2$s."
+            ],
+            "Starting\u2026": [
+                "Starten\u2026"
+            ],
+            "Files": [
+                "Bestanden"
+            ],
+            "Size": [
+                "Grootte"
+            ],
+            "You can close this window: publishing goes on.": [
+                "Je kunt dit venster sluiten: het publiceren gaat door."
+            ],
+            "Export the site": [
+                "De site exporteren"
+            ],
+            "Publish now": [
+                "Nu publiceren"
+            ],
+            "This token sees more than one account. Pick one, then Connect.": [
+                "Dit token ziet meer dan \u00e9\u00e9n account. Kies er een en klik dan op Verbinden."
+            ],
+            "Could not connect.": [
+                "Kon niet verbinden."
+            ],
+            "Copying pages and the files they use\u2026": [
+                "Pagina's en de bestanden die ze gebruiken kopi\u00ebren\u2026"
+            ],
+            "Packing the zip\u2026": [
+                "De zip inpakken\u2026"
+            ],
+            "Your static site is ready.": [
+                "Je statische site is klaar."
+            ],
+            "Building every page\u2026": [
+                "Elke pagina bouwen\u2026"
+            ],
+            "Building the pages that changed\u2026": [
+                "De gewijzigde pagina's bouwen\u2026"
+            ],
+            "Putting the build together\u2026": [
+                "De build samenstellen\u2026"
+            ],
+            "Sending the files that changed\u2026": [
+                "De gewijzigde bestanden versturen\u2026"
+            ],
+            "Going live\u2026": [
+                "Live zetten\u2026"
+            ],
+            "Getting the files ready\u2026": [
+                "De bestanden klaarmaken\u2026"
+            ],
+            "Your site is live.": [
+                "Je site is live."
+            ],
+            "Publishing stopped.": [
+                "Publiceren gestopt."
+            ],
+            "%d thing could not be copied": [
+                "%d ding kon niet worden gekopieerd",
+                "%d dingen konden niet worden gekopieerd"
+            ],
+            "Download the zip (%s)": [
+                "De zip downloaden (%s)"
+            ],
+            "Export again": [
+                "Opnieuw exporteren"
+            ],
+            "%1$d page has a form that sends to WordPress, so it will not send from the static site: %2$s": [
+                "%1$d pagina heeft een formulier dat naar WordPress verstuurt, dus het verstuurt niet vanaf de statische site: %2$s",
+                "%1$d pagina's hebben een formulier dat naar WordPress verstuurt, dus het verstuurt niet vanaf de statische site: %2$s"
+            ],
+            "%d page has a search box; search needs WordPress.": [
+                "%d pagina heeft een zoekvak; zoeken heeft WordPress nodig.",
+                "%d pagina's hebben een zoekvak; zoeken heeft WordPress nodig."
+            ],
+            "%1$d page still calls your WordPress (a script or a link it could not change): %2$s": [
+                "%1$d pagina roept nog je WordPress aan (een script of link die niet kon worden aangepast): %2$s",
+                "%1$d pagina's roepen nog je WordPress aan (scripts of links die niet konden worden aangepast): %2$s"
+            ],
+            "Could not start publishing.": [
+                "Kon het publiceren niet starten."
+            ],
+            "Live: %s": [
+                "Live: %s"
+            ],
+            "Your static site is ready to download.": [
+                "Je statische site is klaar om te downloaden."
+            ],
+            "The export stopped.": [
+                "De export is gestopt."
+            ],
+            "It publishes by itself after you edit.": [
+                "Het publiceert vanzelf nadat je iets hebt bewerkt."
+            ],
+            "You publish when you choose.": [
+                "Jij publiceert wanneer je wilt."
+            ],
+            "Publishing stopped. Your changes are still waiting.": [
+                "Publiceren gestopt. Je wijzigingen wachten nog."
+            ],
+            "Write the full new address, like https:\/\/example.com": [
+                "Schrijf het volledige nieuwe adres, zoals https:\/\/example.com"
+            ],
+            "Connected: %s": [
+                "Verbonden: %s"
+            ],
+            "Export stopped.": [
+                "Export gestopt."
+            ],
+            "Select all": [
+                "Alles selecteren"
+            ],
+            "System check": [
+                "Systeemcontrole"
+            ],
+            "Opening your own pages": [
+                "Je eigen pagina\u2019s openen"
+            ],
+            "Reading pages side by side": [
+                "Pagina\u2019s naast elkaar lezen"
+            ],
+            "Saving files": [
+                "Bestanden opslaan"
+            ],
+            "Room on the disk": [
+                "Ruimte op de schijf"
+            ],
+            "Making a zip": [
+                "Een zip maken"
+            ],
+            "PHP memory": [
+                "PHP-geheugen"
+            ],
+            "Permalinks": [
+                "Permalinks"
+            ],
+            "The check could not run.": [
+                "De controle kon niet worden uitgevoerd."
+            ],
+            "List pages": [
+                "Lijstpagina\u2019s"
+            ],
+            "Pages that list your content by group, like all posts in a category (\/category\/news\/). Ticked ones are copied too.": [
+                "Pagina\u2019s die je inhoud per groep tonen, zoals alle berichten in een categorie (\/category\/news\/). Aangevinkte worden ook gekopieerd."
+            ],
+            "%d list page": [
+                "%d lijstpagina",
+                "%d lijstpagina\u2019s"
+            ],
+            "Like \/blog\/": [
+                "Zoals \/blog\/"
+            ],
+            "Checking your server\u2026": [
+                "Je server wordt gecontroleerd\u2026"
+            ],
+            "Each part is tested for real, so the export does not stop halfway.": [
+                "Elk onderdeel wordt echt getest, zodat de export niet halverwege stopt."
+            ],
+            "%d thing to fix first": [
+                "%d ding eerst oplossen",
+                "%d dingen eerst oplossen"
+            ],
+            "Ready, with a few notes": [
+                "Klaar, met een paar opmerkingen"
+            ],
+            "All set: your server is ready": [
+                "Alles klaar: je server is er klaar voor"
+            ],
+            "Each one says what to do. Then check again.": [
+                "Bij elk staat wat je moet doen. Controleer daarna opnieuw."
+            ],
+            "Check again": [
+                "Opnieuw controleren"
+            ],
+            "Read pages": [
+                "Pagina\u2019s lezen"
+            ],
+            "Finish up": [
+                "Afronden"
+            ],
+            "Pack the zip": [
+                "Zip inpakken"
+            ],
+            "Build pages": [
+                "Pagina\u2019s bouwen"
+            ],
+            "Put together": [
+                "Samenvoegen"
+            ],
+            "Time left": [
+                "Resterende tijd"
+            ],
+            "Just done": [
+                "Net klaar"
+            ],
+            "Page": [
+                "Pagina"
+            ],
+            "Font": [
+                "Lettertype"
+            ],
+            "Listing the pages to copy\u2026": [
+                "De te kopi\u00ebren pagina\u2019s worden opgesomd\u2026"
+            ],
+            "Looking at what changed\u2026": [
+                "Kijken wat er veranderd is\u2026"
+            ],
+            "Reading pages\u2026": [
+                "Pagina\u2019s worden gelezen\u2026"
+            ],
+            "Reading %s": [
+                "Leest %s"
+            ],
+            "Copying media: %1$d of %2$d": [
+                "Media kopi\u00ebren: %1$d van %2$d"
+            ],
+            "Adding the 404 page and the sitemap\u2026": [
+                "De 404-pagina en de sitemap worden toegevoegd\u2026"
+            ],
+            "Packing file %1$d of %2$d": [
+                "Bestand %1$d van %2$d inpakken"
+            ],
+            "Listing the files to pack\u2026": [
+                "De in te pakken bestanden worden opgesomd\u2026"
+            ],
+            "Sending file %1$d of %2$d": [
+                "Bestand %1$d van %2$d verzenden"
+            ],
+            "Telling the host to go live\u2026": [
+                "De host wordt gevraagd live te gaan\u2026"
+            ],
+            "Comparing with what is live\u2026": [
+                "Vergelijken met wat live staat\u2026"
+            ],
+            "Finishing up\u2026": [
+                "Afronden\u2026"
+            ],
+            "Took": [
+                "Duurde"
+            ],
+            "The server is busy. Trying again (%1$d of %2$d)\u2026": [
+                "De server is bezig. Opnieuw proberen (%1$d van %2$d)\u2026"
+            ],
+            "The connection to your site dropped.": [
+                "De verbinding met je site is weggevallen."
+            ],
+            "Your login ran out. Reload the page and try again.": [
+                "Je login is verlopen. Herlaad de pagina en probeer het opnieuw."
+            ],
+            "A firewall or security plugin blocked the request.": [
+                "Een firewall of beveiligingsplugin heeft het verzoek geblokkeerd."
+            ],
+            "The server hit an error, often memory or a plugin. The system check can tell more.": [
+                "De server liep tegen een fout aan, vaak geheugen of een plugin. De systeemcontrole kan meer vertellen."
+            ],
+            "The server took too long to answer: a host time limit stopped it.": [
+                "De server deed er te lang over: een tijdslimiet van de host heeft hem gestopt."
+            ],
+            "What is done is kept: Try again goes on from where it stopped.": [
+                "Wat klaar is, blijft bewaard: Opnieuw proberen gaat verder waar het stopte."
+            ],
+            "Run the system check": [
+                "Systeemcontrole uitvoeren"
+            ],
+            "Start over": [
+                "Opnieuw beginnen"
+            ]
+        }
+    }
+}

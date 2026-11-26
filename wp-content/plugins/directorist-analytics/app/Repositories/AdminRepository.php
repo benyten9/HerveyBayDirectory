@@ -443,7 +443,7 @@ class AdminRepository {
 			),
 			'series'     => array(
 				array(
-					'name' => __( 'Contact Uses', 'directorist-analytics' ),
+					'name' => __( 'Contact Uses', 'directorist-advanced-review' ),
 					'data' => array_map(
 						function ( $item ) {
 							return absint( $item->contact_uses );

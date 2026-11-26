@@ -96,3 +96,18 @@ function doublescale_pro_register_form_integrations( $forms ) {
 
 	return $forms;
 }
+
+/**
+ * Pro field types for DoubleScale's own forms (Free's Fields\ProField placeholders are
+ * replaced by the real classes).
+ */
+add_filter(
+	'doublescale_native_form_field_type_classes',
+	static function ( $types ) {
+		if ( is_array( $types ) && class_exists( \DoubleScale\Modules\Forms\Native\Fields\FieldType::class ) ) {
+			$types[] = new \DoubleScale\Pro\Modules\Forms\Native\FileField();
+		}
+		return $types;
+	}
+);
+

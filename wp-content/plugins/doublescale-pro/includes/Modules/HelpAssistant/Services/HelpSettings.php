@@ -17,6 +17,11 @@
  *                             (LiveChat). OFF until the owner turns it on: off,
  *                             a handed-off conversation is a ticket answered by
  *                             email and the assistant keeps the chat.
+ *   handoff                   AI only (live chat off): what the chat offers when the
+ *                             assistant can't help. ticket (default): a form to
+ *                             contact support by email, which opens a ticket;
+ *                             none: only the assistant's no-answer reply. With
+ *                             live chat on the team is always offered.
  *   handoff_mailbox           Mailbox for tickets opened from a conversation
  *                             (0 = the default mailbox).
  *   retention_days            Conversations are deleted this many days after
@@ -139,6 +144,21 @@ final class HelpSettings {
 	 */
 	public static function chat_on(): bool {
 		return LiveChat::enabled() || self::assistant_answers();
+	}
+
+	/**
+	 * The chat may offer the customer a person: live chat is on, or (AI
+	 * only) the owner kept the "contact support" form. The ticket system must
+	 * be there too.
+	 *
+	 * @return bool
+	 */
+	public static function handoff_offered(): bool {
+		if ( ! HandoffService::available() || ! ChatGuard::available() ) {
+			return false;
+		}
+
+		return LiveChat::enabled() || 'none' !== self::get()['handoff'];
 	}
 
 	/**
@@ -325,6 +345,8 @@ final class HelpSettings {
 			'live_chat'     => ! empty( $raw['live_chat'] ),
 			// The assistant learns from the site's pages (SitePages; off until turned on).
 			'site_pages'    => self::site_pages( is_array( $raw['site_pages'] ?? null ) ? $raw['site_pages'] : array() ),
+			// AI only: offer a contact form (ticket) or nothing when the assistant can't help.
+			'handoff'       => 'none' === ( $raw['handoff'] ?? '' ) ? 'none' : 'ticket',
 			// Read back by HandoffService, which falls back to the default when it is gone.
 			'handoff_mailbox' => absint( $raw['handoff_mailbox'] ?? 0 ),
 			// Conversations idle longer than this are deleted every day (Retention).

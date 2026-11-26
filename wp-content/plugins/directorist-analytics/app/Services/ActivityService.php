@@ -80,7 +80,7 @@ class ActivityService {
 
 		$title = sprintf(
 			/* translators: 1: Listing title, 2: Review excerpt */
-			__( 'Review on "%1$s": %2$s', 'directorist-analytics' ),
+			__( 'Review on "%1$s": %2$s', 'directorist-advanced-review' ),
 			$listing->post_title,
 			wp_trim_words( $comment->comment_content, 10, '...' )
 		);
@@ -117,7 +117,7 @@ class ActivityService {
 
 		$title = sprintf(
 			/* translators: %s: Username */
-			__( 'New user registered: %s', 'directorist-analytics' ),
+			__( 'New user registered: %s', 'directorist-advanced-review' ),
 			$user->display_name
 		);
 
@@ -135,6 +135,32 @@ class ActivityService {
 
 		return true;
 	}
+
+    /**
+     * Delete a user's activity rows from one site's table.
+     *
+     * @param int      $user_id User whose rows should be deleted.
+     * @param int|null $site_id Site ID. Defaults to the current site.
+     * @return void
+     */
+    public function delete_user_activities( $user_id, $site_id = null ) {
+        global $wpdb;
+
+        $user_id = (int) $user_id;
+        if ( $user_id <= 0 ) {
+            return;
+        }
+
+        $table = $wpdb->get_blog_prefix( $site_id ?: null ) . Activity::get_table_name();
+
+        // Analytics tables may be missing on some sites in a multisite installation.
+        $existing_table = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+        if ( $table !== $existing_table ) {
+            return;
+        }
+
+        $wpdb->delete( $table, [ 'user_id' => $user_id ], [ '%d' ] );
+    }
 
 		/**
 	 * Cleanup old activities (keep only latest 500)

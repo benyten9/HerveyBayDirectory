@@ -686,6 +686,35 @@ final class TriggersManager {
 		}
 
 		foreach ( $forms as $form ) {
+			// DoubleScale's own forms are a module: their trigger sits in the DoubleScale
+			// category (its own "Forms" tab), not among the form plugins.
+			if ( \DoubleScale\Modules\Forms\Models\FormModel::NATIVE_TYPE === $form->slug ) {
+				$forms_tab = array(
+					'label'  => __( 'Forms', 'doublescale' ),
+					'groups' => array(
+						'forms' => array(
+							'label'    => __( 'DoubleScale forms', 'doublescale' ),
+							'triggers' => array(
+								$form->slug => array(
+									'label'       => __( 'Form submitted', 'doublescale' ),
+									'description' => __( 'Runs when someone sends a form built with DoubleScale and it finds or creates their contact.', 'doublescale' ),
+									'fields'      => $form->get_form_options(),
+									'is_disabled' => ! $form->is_enabled(),
+									'is_form'     => true,
+									'is_pro'      => false,
+								),
+							),
+						),
+					),
+				);
+				// Right after Contacts in the DoubleScale tabs.
+				$tabs = (array) ( $this->sources['modules']['tabs'] ?? array() );
+				unset( $tabs['forms'] );
+				$at   = array_search( 'crm', array_keys( $tabs ), true );
+				$at   = false === $at ? 0 : $at + 1;
+				$this->sources['modules']['tabs'] = array_slice( $tabs, 0, $at, true ) + array( 'forms' => $forms_tab ) + array_slice( $tabs, $at, null, true );
+				continue;
+			}
 			if ( in_array( $form->slug, $skip_slugs, true ) ) {
 				// These slugs are handled by catalog-registered Pro triggers.
 				// Re-populate from the already-registered trigger so sources survive
@@ -741,10 +770,18 @@ final class TriggersManager {
 		$this->ensure_loaded();
 		$this->sources = DeferredValue::resolve( $this->sources );
 
-		return SourceTreePruner::prune(
+		$sources = SourceTreePruner::prune(
 			$this->sources,
 			array( 'forms', 'ecommerce', 'lms', 'membership', 'video', 'appointments' )
 		);
+
+		/**
+		 * The trigger groups offered in the automation editor (a module can hide triggers of a
+		 * feature that is switched off).
+		 *
+		 * @param array $sources Trigger sources.
+		 */
+		return (array) apply_filters( 'doublescale_automation_trigger_sources_offered', $sources );
 	}
 
 	/**

@@ -696,8 +696,10 @@ abstract class AbstractCampaignController extends RestController {
 			// listing and hid every message of a different mode.
 			$query = CampaignMessageQuery::filtered( $campaign_id, $status, $error_code );
 
-			$campaign_messages = $query->with( 'contact', 'template' )
-				->paginate( $per_page, array( '*' ), 'page', $page );
+			$campaign_messages = $this->without_template_bodies(
+				$query->with( 'contact', 'template' )
+					->paginate( $per_page, array( '*' ), 'page', $page )
+			);
 
 			// Counted the same way as the listing, so the warning banner and
 			// the Failed rows beneath it agree.
@@ -828,13 +830,37 @@ abstract class AbstractCampaignController extends RestController {
 				$this->apply_message_status_filter( $query, $status );
 			}
 
-			$messages = $query->with( 'contact', 'template' )
-				->paginate( $per_page, array( '*' ), 'page', $page );
+			$messages = $this->without_template_bodies(
+				$query->with( 'contact', 'template' )
+					->paginate( $per_page, array( '*' ), 'page', $page )
+			);
 
 			return new WP_REST_Response( $messages, 200 );
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * Keep a page of listed messages light: drop each row's template body.
+	 *
+	 * The body is the whole email (often 60 KB or more), and every row carried
+	 * it, so 40 rows of one campaign weighed about 3 MB. The message dialog
+	 * renders the email from the template id (templates/{id}/render), so the
+	 * list only needs the template's id, name and subject.
+	 *
+	 * @param \DoubleScale\Vendor\Illuminate\Pagination\LengthAwarePaginator $paginator Page of messages.
+	 * @return \DoubleScale\Vendor\Illuminate\Pagination\LengthAwarePaginator
+	 */
+	protected function without_template_bodies( $paginator ) {
+		foreach ( $paginator->getCollection() as $message ) {
+			$template = $message->relationLoaded( 'template' ) ? $message->getRelation( 'template' ) : null;
+			if ( $template ) {
+				$template->makeHidden( 'body' );
+			}
+		}
+
+		return $paginator;
 	}
 
 	/**

@@ -245,6 +245,14 @@ abstract class Form {
 			if ( ! $update_existing ) {
 				$contact = ContactModel::get_by_email( $contact_data['email'] ?? '' );
 				if ( $contact ) {
+					// The contact's fields stay as they are, but the connection's lists and tags
+					// still apply (they used to be skipped for anyone already in the CRM).
+					if ( ! empty( $lists ) ) {
+						$contact->add_lists( $lists );
+					}
+					if ( ! empty( $tags ) ) {
+						$contact->add_tags( $tags );
+					}
 					$this->save_form_submission( $data, $contact->id );
 					return;
 				}
@@ -331,6 +339,35 @@ abstract class Form {
 				'contact_id'        => $contact_id,
 				'external_entry_id' => $data['entry_id'] ?? null,
 			);
+
+			// Keep the answers too, so the submissions inbox and the contact's Forms tab can
+			// show what was sent (labels saved alongside, in case the form changes later).
+			$answers = $data['entry']['fields'] ?? null;
+			if ( is_array( $answers ) && doublescale_table_exists( 'form_submissions' ) ) {
+				$labels = array();
+				foreach ( (array) ( $data['fields'] ?? array() ) as $key => $field ) {
+					$labels[ $key ] = array(
+						'label' => is_array( $field ) ? (string) ( $field['label'] ?? $key ) : (string) $field,
+						'type'  => is_array( $field ) ? (string) ( $field['type'] ?? 'text' ) : 'text',
+					);
+				}
+				$submission_data['status']  = 'complete';
+				$submission_data['answers'] = array_map(
+					static function ( $value ) {
+						if ( is_scalar( $value ) || null === $value ) {
+							return is_string( $value ) ? sanitize_textarea_field( $value ) : $value;
+						}
+						return is_array( $value ) ? array_map( static function ( $item ) {
+							return is_scalar( $item ) ? sanitize_text_field( (string) $item ) : '';
+						}, $value ) : '';
+					},
+					$answers
+				);
+				$submission_data['meta']    = array(
+					'fields' => $labels,
+					'source' => $this->slug,
+				);
+			}
 
 			FormSubmissionModel::create( $submission_data );
 
@@ -679,6 +716,12 @@ abstract class Form {
 			if ( ! $update_existing ) {
 				$contact = ContactModel::get_by_email( $contact_data['email'] ?? '' );
 				if ( $contact ) {
+					if ( ! empty( $lists ) ) {
+						$contact->add_lists( $lists );
+					}
+					if ( ! empty( $tags ) ) {
+						$contact->add_tags( $tags );
+					}
 					$this->save_form_submission( $this->submission, $contact->id );
 					return $contact;
 				}

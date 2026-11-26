@@ -30,7 +30,7 @@ unset($nibwp_etchedy_lib);
 
 wp_register_ability('nibwp/etchedy-pro-save-component', [
     'label' => __('Etchedy Pro — Save Component', 'nibwp'),
-    'description' => 'Validate a component payload and save it into the Etchedy library. Runs the EtchWP build rules (ACSS tokens, BEM, no clamp() font-size, no hardcoded colours) and the library portability rules (no site-specific ids, URLs or unbound fields) before writing. Supports dry_run.',
+    'description' => 'Validate a component payload and save it into the Etchedy library. Runs the EtchWP build rules (ACSS tokens, BEM, no clamp() font-size, no hardcoded colours) and the library portability rules (no site-specific ids, URLs or unbound fields) before writing. Supports dry_run. There is one Etchedy library on the site, whichever edition of the Etchedy plugin is installed (free or Pro): nibwp/etchedy-manage and the nibwp/etchedy-pro-* abilities all read and write that same library. Call it Etchedy and never ask the person to choose between Etchedy and Etchedy Pro.',
     'category' => 'etchedy',
     'input_schema' => [
         'type' => 'object',

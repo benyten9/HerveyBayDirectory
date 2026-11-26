@@ -97,7 +97,7 @@ class ExportController extends Controller {
             return Response::send(
                 array(
                     'error'   => true,
-                    'message' => esc_html__( 'Error generating export data', 'directorist-analytics' ),
+                    'message' => esc_html__( 'Error generating export data', 'directorist-advanced-review' ),
                 ),
                 500
             );
@@ -120,7 +120,7 @@ class ExportController extends Controller {
             return array(
                 'error'   => true,
                 'code'    => 'INVALID_DATE_RANGE',
-                'message' => esc_html__( 'Start date must be before or equal to end date', 'directorist-analytics' ),
+                'message' => esc_html__( 'Start date must be before or equal to end date', 'directorist-advanced-review' ),
             );
         }
 
@@ -129,7 +129,7 @@ class ExportController extends Controller {
             return array(
                 'error'   => true,
                 'code'    => 'FUTURE_DATE',
-                'message' => esc_html__( 'Start date cannot be in the future', 'directorist-analytics' ),
+                'message' => esc_html__( 'Start date cannot be in the future', 'directorist-advanced-review' ),
             );
         }
 
@@ -139,7 +139,7 @@ class ExportController extends Controller {
             return array(
                 'error'   => true,
                 'code'    => 'DATE_RANGE_TOO_LARGE',
-                'message' => esc_html__( 'Date range cannot exceed 2 years', 'directorist-analytics' ),
+                'message' => esc_html__( 'Date range cannot exceed 2 years', 'directorist-advanced-review' ),
             );
         }
 
@@ -149,7 +149,7 @@ class ExportController extends Controller {
             return array(
                 'error'   => true,
                 'code'    => 'NO_METRICS',
-                'message' => esc_html__( 'At least one metric must be selected', 'directorist-analytics' ),
+                'message' => esc_html__( 'At least one metric must be selected', 'directorist-advanced-review' ),
             );
         }
 
@@ -174,7 +174,7 @@ class ExportController extends Controller {
                 'code'    => 'INVALID_METRICS',
                 'message' => sprintf(
                     /* translators: %s: invalid metric names */
-                    esc_html__( 'Invalid metrics: %s', 'directorist-analytics' ),
+                    esc_html__( 'Invalid metrics: %s', 'directorist-advanced-review' ),
                     implode( ', ', $invalid_metrics )
                 ),
             );
@@ -188,7 +188,7 @@ class ExportController extends Controller {
                 'code'    => 'INVALID_INTERVAL',
                 'message' => sprintf(
                     /* translators: %s: comma-separated list of allowed intervals */
-                    esc_html__( 'Invalid interval. Allowed: %s', 'directorist-analytics' ),
+                    esc_html__( 'Invalid interval. Allowed: %s', 'directorist-advanced-review' ),
                     implode( ', ', $allowed_intervals )
                 ),
             );
@@ -243,7 +243,7 @@ class ExportController extends Controller {
                         'code'    => 'INVALID_SCOPE_METRICS',
                         'message' => sprintf(
                             /* translators: %s: comma-separated list of valid metrics */
-                            esc_html__( 'No valid metrics for per-listing scope. Valid metrics: %s', 'directorist-analytics' ),
+                            esc_html__( 'No valid metrics for per-listing scope. Valid metrics: %s', 'directorist-advanced-review' ),
                             implode( ', ', $per_listing_metrics )
                         ),
                     ),
@@ -272,7 +272,7 @@ class ExportController extends Controller {
             return Response::send(
                 array(
                     'error'   => true,
-                    'message' => esc_html__( 'Error generating per-listing export data', 'directorist-analytics' ),
+                    'message' => esc_html__( 'Error generating per-listing export data', 'directorist-advanced-review' ),
                 ),
                 500
             );
@@ -325,7 +325,7 @@ class ExportController extends Controller {
                         'code'    => 'INVALID_SCOPE_METRICS',
                         'message' => sprintf(
                             /* translators: %s: comma-separated list of valid metrics */
-                            esc_html__( 'No valid metrics for per-author scope. Valid metrics: %s', 'directorist-analytics' ),
+                            esc_html__( 'No valid metrics for per-author scope. Valid metrics: %s', 'directorist-advanced-review' ),
                             implode( ', ', $per_author_metrics )
                         ),
                     ),
@@ -354,7 +354,7 @@ class ExportController extends Controller {
             return Response::send(
                 array(
                     'error'   => true,
-                    'message' => esc_html__( 'Error generating per-author export data', 'directorist-analytics' ),
+                    'message' => esc_html__( 'Error generating per-author export data', 'directorist-advanced-review' ),
                 ),
                 500
             );

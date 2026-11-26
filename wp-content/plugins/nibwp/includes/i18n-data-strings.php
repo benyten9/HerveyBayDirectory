@@ -23,22 +23,40 @@ __('"Did you mean" suggestions when an element slug is wrong', 'nibwp');
 __('404 → 301 redirect suggestions', 'nibwp');
 /* translators: Workflow when to use: seo-full-audit */
 __('A complete SEO health check of a site or a section.', 'nibwp');
+/* translators: Workflow when to use: save-to-etchedy-library */
+__('A component was built and the user wants to keep it: "save this hero to my Etchedy library".', 'nibwp');
 /* translators: Workflow when to use: course-landing-page */
 __('A course needs a page that sells it, or an existing sales page has drifted out of step with the curriculum.', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('A design open in Paper becomes a native page in your site\'s own builder', 'nibwp');
 /* translators: Skill description: seo-pro */
 __('A guided SEO workflow, not just field access. Scan the whole site for a scored report card, generate brand-voice titles + meta descriptions that pass length + uniqueness validation, build and validate structured data, fix canonicals/robots/alt text in bulk, migrate meta between SEO plugins, and gate drafts before publish. Every write runs through a dry-run → validate → commit pipeline so nothing bad lands.', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('A mistyped setting names the module it was put on, and the modules that do accept it', 'nibwp');
+/* translators: Workflow when to use: save-to-bricksed-library */
+__('A section was built in Bricks and the user wants to keep it: "save this hero to my Bricksed library".', 'nibwp');
 /* translators: Workflow when to use: performance-tune */
 __('A site feels slow or fails Core Web Vitals.', 'nibwp');
 /* translators: Skill feature: bricks-pro */
 __('ACSS / Bricks design-token output with fallback values', 'nibwp');
+/* translators: Skill feature: bricksed-pro */
+__('ACSS tokens with fallbacks and BEM brand prefixes enforced on every save', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('ACSS tokens with fallbacks enforced on every save', 'nibwp');
 /* translators: Skill feature: etchwp-pro */
 __('ACSS-ready output — mapped to tokens with safe fallback values', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Accordion, tabs and navbar built from Mosaic\'s own default structure', 'nibwp');
 /* translators: Workflow when to use: contact-form */
 __('Adding a contact or lead-capture form to a site.', 'nibwp');
 /* translators: Workflow when to use: woocommerce-product */
 __('Adding or optimizing a WooCommerce product.', 'nibwp');
 /* translators: Workflow when to use: safe-changes */
 __('Any change to a live, client, or production site.', 'nibwp');
+/* translators: Workflow summary: build-page-from-bricksed-library */
+__('Assemble a Bricks page section by section from stored Bricksed components, with per-page content; build and save anything the library is missing so the next page can reuse it.', 'nibwp');
+/* translators: Workflow summary: build-page-from-etchedy-library */
+__('Assemble a page section by section from stored Etchedy components, with per-page content; build and save anything the library is missing so the next page can reuse it.', 'nibwp');
 /* translators: Skill feature: figma-pro */
 __('Assets sideloaded to your Media Library (2× images, inline SVG icons)', 'nibwp');
 /* translators: Skill feature: voxel-pro */
@@ -47,6 +65,12 @@ __('Assign as a post type\'s main card, a named alternate card, single, archive,
 __('Audit any existing Breakdance page against the same rules', 'nibwp');
 /* translators: Skill feature: acss-pro */
 __('Audit existing rendered CSS for drift from ACSS tokens', 'nibwp');
+/* translators: Workflow title: audit-bricksed-library */
+__('Audit the Bricksed library', 'nibwp');
+/* translators: Workflow title: audit-etchedy-library */
+__('Audit the Etchedy library', 'nibwp');
+/* translators: Skill feature: bricksed-pro; Skill feature: etchedy-pro */
+__('Audit the whole library against today\'s rules and see exactly what to fix', 'nibwp');
 /* translators: Skill tagline: seo-pro */
 __('Audit, optimize and validate SEO across any engine — Yoast, Rank Math, AIOSEO, SEOPress or Slim SEO — with an AI co-pilot.', 'nibwp');
 /* translators: Workflow when to use: site-audit-report */
@@ -61,8 +85,14 @@ __('Automatically matches spacing, layout, colors, and typography', 'nibwp');
 __('Automating a flow: form → email + tag, new order → fulfillment, signup → onboarding sequence.', 'nibwp');
 /* translators: Workflow summary: pre-launch-checklist */
 __('Backups, security, SEO basics, broken links, performance, and final QA before a site goes live.', 'nibwp');
+/* translators: Workflow when to use: audit-bricksed-library */
+__('Before handing over or reusing a Bricksed library, or after the design system or rules changed.', 'nibwp');
+/* translators: Workflow when to use: audit-etchedy-library */
+__('Before handing over or reusing a library, or after the design system or rules changed.', 'nibwp');
 /* translators: Workflow when to use: pre-launch-checklist */
 __('Before taking a site live or handing it off to a client.', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Bold, italic, links and line breaks stored the way Mosaic stores them', 'nibwp');
 /* translators: Skill feature: tutorlms-minisite */
 __('Bound to the course DTO — title, price, curriculum, instructor pulled in', 'nibwp');
 /* translators: Skill feature: acss-pro */
@@ -79,14 +109,22 @@ __('Build a Figma design in WordPress', 'nibwp');
 __('Build a Tutor LMS course', 'nibwp');
 /* translators: Workflow title: voxel-directory-build */
 __('Build a Voxel directory', 'nibwp');
+/* translators: Skill description: etchedy-pro */
+__('Build a component, save it into an Etchedy folder, rename it, move it, and pull it back onto any page with its properties overridden. Every save is checked twice: once for how it is built — ACSS tokens, BEM, responsive, accessible — and once for whether it will still work on a different site.', 'nibwp');
 /* translators: Workflow title: contact-form */
 __('Build a contact / lead form', 'nibwp');
 /* translators: Workflow title: course-landing-page */
 __('Build a course landing page', 'nibwp');
 /* translators: Workflow title: full-site-build */
 __('Build a full site from a brief', 'nibwp');
+/* translators: Workflow title: build-page-from-bricksed-library */
+__('Build a page from the Bricksed library', 'nibwp');
+/* translators: Workflow title: build-page-from-etchedy-library */
+__('Build a page from the Etchedy library', 'nibwp');
 /* translators: Workflow summary: course-landing-page */
 __('Build a sales page for a Tutor LMS course bound to the live course record — curriculum, instructor and price read from the course rather than retyped — saved as a draft linked back to it.', 'nibwp');
+/* translators: Skill description: bricksed-pro */
+__('Build a section in Bricks, save it into a Bricksed folder — straight off the page, with its global classes and Bricks components — rename it, move it, and place it on any page as native Bricks elements with its component properties overridden. Every save is checked twice: once for how it is built — ACSS tokens, BEM, native elements — and once for whether it will still work on a different site.', 'nibwp');
 /* translators: Workflow title: automation-setup */
 __('Build an automation (trigger → action)', 'nibwp');
 /* translators: Skill feature: voxel-pro */
@@ -103,12 +141,24 @@ __('Builds into your site\'s active builder — EtchWP, Bricks, Elementor, or Gu
 __('Bulk fixes: canonicals, robots, missing meta, image alt text', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Catches the namespace backslash that silently breaks every slug in JSON', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Change one module by name, committed as a new version — the old one is still there', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Change one named part of a converted page and leave the rest of it alone', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Change prices across a filtered set of products by percentage or fixed amount', 'nibwp');
 /* translators: Workflow when to use: voxel-design-card */
 __('Changing how listings look in search results, feeds, or map popups.', 'nibwp');
+/* translators: Workflow summary: audit-bricksed-library */
+__('Check stored Bricksed components against today\'s Bricks build and portability rules, read-only, then fix what fails with the user\'s say-so.', 'nibwp');
+/* translators: Workflow summary: audit-etchedy-library */
+__('Check stored components against today\'s build and portability rules, read-only, then fix what fails with the user\'s say-so.', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Class rules in the HTML become Mosaic universal classes; repeated styles are flagged as class candidates', 'nibwp');
 /* translators: Skill feature: design-skills */
 __('Color roles computed and corrected to WCAG AA before they reach a page', 'nibwp');
+/* translators: Skill feature: bricksed-pro */
+__('Component properties with defaults, so a section is reusable rather than a snapshot', 'nibwp');
 /* translators: Skill feature: figma-pro */
 __('Composes enhancer skills automatically when active — acss-pro (native tokens), seo-pro (semantics/meta)', 'nibwp');
 /* translators: Skill feature: etchwp-pro */
@@ -135,6 +185,8 @@ __('Convert HTML, URLs, images, screenshots, or Figma frames into validated Bric
 __('Convert HTML, URLs, images, screenshots, or Figma frames into validated EtchWP components', 'nibwp');
 /* translators: Skill tagline: breakdance-pro */
 __('Convert HTML, URLs, screenshots or Figma frames into validated Breakdance pages and templates — checked against your own element registry and design tokens', 'nibwp');
+/* translators: Skill tagline: builderius-pro */
+__('Convert HTML, URLs, screenshots or a brief into validated Builderius configs — modules and settings checked against your own install, committed onto a version that will not clobber your published release', 'nibwp');
 /* translators: Workflow title: convert-to-breakdance */
 __('Convert a design to Breakdance', 'nibwp');
 /* translators: Workflow title: convert-to-bricks */
@@ -157,14 +209,22 @@ __('Convert any live website URL into a clean, editable Kadence layout', 'nibwp'
 __('Convert any live website URL into a clean, editable component', 'nibwp');
 /* translators: Skill feature: elementor-pro */
 __('Convert any live website URL or raw HTML into a clean, editable Elementor layout', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Convert without committing, so the config can be read before anything is written', 'nibwp');
 /* translators: Workflow when to use: build-from-html */
 __('Converting pasted HTML, a Figma export, or a URL into Etch/Bricks components.', 'nibwp');
 /* translators: Skill feature: kadence-pro */
 __('Correct structure enforced — columns only inside rowlayout, buttons only inside advancedbtn', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Counts what arrived: frames, text, images. A handover that lost half the design is said out loud, not converted quietly', 'nibwp');
 /* translators: Skill feature: tutorlms-builder */
 __('Course difficulty, duration, prerequisites and instructor assignment', 'nibwp');
 /* translators: Workflow title: woocommerce-product */
 __('Create a WooCommerce product', 'nibwp');
+/* translators: Skill tagline: bricksed-pro */
+__('Create, organise and reuse your Bricksed component library for Bricks through an agent', 'nibwp');
+/* translators: Skill tagline: etchedy-pro */
+__('Create, organise and reuse your Etchedy component library through an agent', 'nibwp');
 /* translators: Workflow when to use: course-build */
 __('Creating a course from source material, or filling out one that exists as a title and nothing else.', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
@@ -191,8 +251,16 @@ __('Detects repeated components and builds ONE reusable component with dynamic d
 __('Direction derived from THIS site — ACSS variables, theme.json, logo colors — not from a template', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Downloadable files, download limits and expiry', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Dry run by default — the preview tells you what would land before anything lands', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Dry run by default; never switches the site theme; writes nothing itself', 'nibwp');
+/* translators: Skill feature: bricksed-pro; Skill feature: etchedy-pro */
+__('Dry-run validation so you see every warning before anything is written', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Duplicate a product, variations and all', 'nibwp');
+/* translators: Skill feature: bricksed-pro; Skill feature: etchedy-pro */
+__('Duplicate any component to a new name or folder without touching the original', 'nibwp');
 /* translators: Skill feature: bricks-pro */
 __('Dynamic data tags ({post_title}, {acf:field}, etc.) when CPT context', 'nibwp');
 /* translators: Skill feature: kadence-pro */
@@ -213,8 +281,12 @@ __('Establishes a design-token system first: Figma Variables → ACSS var(--toke
 __('Every @tags() dynamic tag rendered against a real listing before the template is saved — no tag ships as literal text', 'nibwp');
 /* translators: Skill feature: kadence-pro */
 __('Every block gets a unique uniqueID (Kadence keys its generated CSS off it)', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Every element type, child, data key, state, breakpoint and style value checked before it is written', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Every figure says whether it came from WooCommerce analytics tables or from the order book, and cross-checks the two on request', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Every handed-over node validated against the NDO contract before a page exists — a bad tree names the node, not the symptom', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Every notification email — subject, heading, recipient, extra content — and a report of the ones switched off', 'nibwp');
 /* translators: Skill feature: voxel-pro */
@@ -237,6 +309,8 @@ __('Find guest orders that share an email with an account, and attach them to it
 __('Find thin, duplicate, outdated, or cannibalizing content → decide keep / merge / redirect / refresh.', 'nibwp');
 /* translators: Workflow title: fix-404-redirects */
 __('Fix 404s with 301 redirects', 'nibwp');
+/* translators: Skill feature: bricksed-pro */
+__('Follows Bricksed\'s own insert rules: your existing classes and components are never overwritten', 'nibwp');
 /* translators: Skill feature: design-skills */
 __('Free, on by default, on every install', 'nibwp');
 /* translators: Workflow summary: voxel-directory-build */
@@ -261,12 +335,22 @@ __('Give the agent a topic, an outline, a transcript, a PDF, or a URL and it pla
 __('Global classes (Bricks-native) — BEM-prefixed, brand-scoped', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Global product attributes and their terms — the prerequisite for real variable products', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('HTML, a URL, a screenshot or a plain brief becomes a real Mosaic page', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('HTML, a URL, a screenshot or a plain brief becomes a valid Builderius config', 'nibwp');
+/* translators: Skill tagline: paper-pro */
+__('Hand a Paper design over to WordPress and get a native page — the agent reads the canvas locally, the skill validates every node before anything is written', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Headers, footers, popups and templates built WITH their display conditions', 'nibwp');
 /* translators: Skill feature: tutorlms-minisite */
 __('Hero, what-you-will-learn, curriculum, instructor, pricing, FAQ, enroll CTA', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Import a product CSV with a dry run first that names every bad row', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Inspect any page: outline, missing alt, heading order, phone sizes, class and component use', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Inspect any template or component: tree, empty modules, dynamic-data tokens, release state', 'nibwp');
 /* translators: Workflow summary: site-audit-report */
 __('Inspect-only health check → structured Issues / Observations / Suggestions report, prioritized Critical → Note.', 'nibwp');
 /* translators: Skill feature: seo-pro */
@@ -275,8 +359,12 @@ __('Internal-link suggestions + insertion, broken-link detection', 'nibwp');
 __('Layout sequences for 20 kinds of WordPress page, from local trade to pricing to case study', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Literal colors and sizes matched against variables you already defined', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Literal colours and type sizes matched against the tokens this site already defines, by value', 'nibwp');
 /* translators: Skill feature: etchwp-pro */
 __('Loop support for dynamic lists, cards, and repeating content', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('Loops, conditions and custom-field bindings preserved and declared', 'nibwp');
 /* translators: Workflow summary: automation-setup */
 __('Map trigger → conditions → actions, build it in the detected automation tool (FluentCRM / Fluent Forms / Woo), test end-to-end, document it.', 'nibwp');
 /* translators: Workflow summary: performance-tune */
@@ -293,6 +381,8 @@ __('Model new content: register a CPT, add ACF fields, set admin columns, wire t
 __('Modeling new structured content with a CPT and custom fields.', 'nibwp');
 /* translators: Skill feature: acss-pro */
 __('Modular scale ratio sanity (1.067–1.618 only)', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Module names validated against the module library of YOUR install, not a written list', 'nibwp');
 /* translators: Skill feature: bricks-pro */
 __('Native Bricks video element — never raw YouTube/Vimeo iframe', 'nibwp');
 /* translators: Skill feature: elementor-pro */
@@ -313,12 +403,22 @@ __('One preview card for a Voxel post type — bound to real field keys, every d
 __('One store health call for the handful of numbers an owner actually acts on', 'nibwp');
 /* translators: Skill feature: tutorlms-minisite */
 __('One styled landing page per course, from the live course data', 'nibwp');
+/* translators: Skill description: paper-pro */
+__('Open a design in Paper, ask for it in WordPress, and the agent carries it across. Paper\'s MCP server is local to the Desktop app — no API key, no cloud API for files — so WordPress cannot fetch a Paper file the way it fetches a Figma one, and this skill does not pretend otherwise. Instead the agent reads the canvas with Paper\'s own tools on the machine where Paper is open, and Paper Pro checks the handover: every node validated against the NDO contract WordPress already understands, so a truncated or mis-shaped tree is a message naming the node rather than a page with an empty section in it. Before anything is written it plans — which builder to target and why, which repeated cards should become one loop or one component instead of nine copies, which text is real copy and which is placeholder, which colours and type sizes already have a token on this site, what the responsive story is, and what it cannot do. Conversion previews first and defaults to a dry run. Afterwards a named part of the page can be changed without rebuilding the rest, and the finished page can be read back and compared to the design it came from. Every write goes through the Paper integration; this skill never touches the database, and never tries to reach Paper itself.', 'nibwp');
+/* translators: Workflow title: organise-bricksed-library */
+__('Organise the Bricksed library', 'nibwp');
+/* translators: Workflow title: organise-etchedy-library */
+__('Organise the Etchedy library', 'nibwp');
 /* translators: Skill feature: etchwp-pro */
 __('Outputs structured, JSON-ready components for direct integration', 'nibwp');
 /* translators: Workflow title: page-build-standard */
 __('Page build standard', 'nibwp');
 /* translators: Skill description: breakdance-pro */
 __('Paste HTML, drop a screenshot, share a URL or attach a Figma frame, and the agent rebuilds it as a real Breakdance page, template, header, footer, popup or global block. Every element slug and property path is checked against the registry of your install, not a documentation file — so a typo is an error message rather than a blank section. Literal colors and sizes that match variables you already defined are reported so the section follows your palette. Repeated cards are detected and turned into a loop bound to a post type. Templates are created with their display conditions, because a template with none is invisible. Existing pages can be audited against the same rules and refined one node at a time, without rebuilding work someone already did by hand. Figma frames are read from the file — node tree, auto-layout and Variables — rather than looked at as a picture, and Figma Variables are matched against yours by value so a frame adopts your design system instead of pasting hex codes; that path needs a Figma connection, and the skill says so plainly rather than quietly producing screenshot-quality output. Works on Oxygen 6 too.', 'nibwp');
+/* translators: Skill description: builderius-pro */
+__('Paste HTML, share a URL, describe a screenshot or just say what you want, and the agent builds it as a real Builderius config: a flat module map linked by parent and index, settings as {name, value}, dynamic data as [[[wp.*]]] tokens, per-module CSS on the %local% selector. Every module name is checked against the module library of this install and every setting name against the modules that actually accept it, so a typo is a message naming the module rather than a section that renders empty. Because Builderius versions content like git, the skill says where the work will land before it lands: a new version on the branch, or a new branch of its own. It reads which release is published and which commit that release froze, and refuses to overwrite a published release — naming the release it would have replaced and the commit serving it. Existing templates and components can be read back: their tree, their unknown or empty modules, their dynamic-data tokens, and whether they are carrying work nobody has released yet. One module can be changed by name without rebuilding the rest, committed as a new version so the old one is still there.', 'nibwp');
+/* translators: Skill description: mosaic-pro */
+__('Paste HTML, share a URL, describe a screenshot or say what you want, and the agent builds it in Mosaic as real elements: sections, layouts, text with bold, italic and links as Mosaic stores them, buttons, images, lists, video embeds, accordions and tabs. Styles are written per breakpoint and per state (base, tablet, mobile, hover), with anything Mosaic keeps in its own structure written as CSS it validates. Class rules in the HTML become Mosaic universal classes, and a section you will reuse becomes a component placed by reference. Mosaic drops any value it does not accept without telling anyone, so every element type, child, data key, state, breakpoint and style value is checked first, and what Mosaic actually kept is read back after. Existing pages can be inspected (outline, missing alt text, heading order, desktop sizes with no phone value, styles that should be a class) and refined element by element, found by name or words, without rebuilding. Ready blueprints for hero, features, pricing, testimonials, FAQ, stats, header and footer cover the screenshot case.', 'nibwp');
 /* translators: Skill description: kadence-pro */
 __('Paste raw HTML, drop a screenshot, or share a URL — the agent rebuilds it as a clean Kadence Blocks layout (rowlayout/column sections, advancedheading, singlebtn, image, infobox, iconlist, testimonials…). A hard validator rejects unknown block names, illegal nesting (column outside rowlayout, button outside advancedbtn), missing/duplicate uniqueIDs, and empty headings/buttons; a round-trip guard makes sure no block is ever dropped on save. Persist to a page, post, Kadence Element (header/footer/hook), or a reusable pattern.', 'nibwp');
 /* translators: Skill description: elementor-pro */
@@ -347,20 +447,36 @@ __('Persists through the audited Tutor LMS integration write paths', 'nibwp');
 __('Pixel-diff verified — renders the built page and compares it to Figma\'s export, then iterates', 'nibwp');
 /* translators: Skill feature: bricks-pro; Skill feature: etchwp-pro */
 __('Pixel-perfect recreation that stays faithful to the original design', 'nibwp');
+/* translators: Workflow title: reuse-bricksed-component */
+__('Place a Bricksed component on a page', 'nibwp');
+/* translators: Skill feature: bricksed-pro */
+__('Place a stored component on any page as native Bricks elements, with its properties overridden per placement', 'nibwp');
+/* translators: Workflow title: reuse-etchedy-component */
+__('Place an Etchedy component on a page', 'nibwp');
 /* translators: Skill feature: tutorlms-builder */
 __('Plan a full course curriculum from a brief, outline, transcript, PDF or URL', 'nibwp');
 /* translators: Workflow summary: safe-changes */
 __('Plan first, explain the impact, get explicit approval, apply, summarize, and always leave a rollback path.', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Plans before it builds: target builder, repeats worth looping, placeholder copy, token matches, responsive story, and the parts it cannot do', 'nibwp');
 /* translators: Skill description: figma-pro */
 __('Point NibWP at a Figma URL, frame, or component and get a native WordPress build in your site\'s own builder. figma-pro reads the actual Figma document — auto-layout, constraints, Variables, styles — parses it into an internal design object, establishes a real design-token system (Variables → ACSS tokens), dedupes repeated components into reusable blocks with dynamic data, then drives the active builder skill (EtchWP / Bricks / Elementor / Gutenberg) to build it. The result is verified by rendering the page and image-diffing it against Figma\'s own export — pixel-perfect, not "close enough". Read-only in v1 (write-back to Figma is a later phase). Composes active enhancer skills automatically: acss-pro for a native token system, seo-pro for semantics/meta.', 'nibwp');
 /* translators: Skill description: tutorlms-minisite */
 __('Point it at a Tutor LMS course and it builds a polished landing micro-site — hero, what-you-will-learn, curriculum, instructor, pricing, FAQ and an enroll CTA — bound to the live course data and saved as a WordPress page linked to the course.', 'nibwp');
+/* translators: Skill feature: bricksed-pro */
+__('Portability checks — nothing with this site\'s attachment ids, post ids or upload URLs gets stored', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('Portability checks — nothing with this site\'s post ids or upload URLs gets stored', 'nibwp');
 /* translators: Workflow title: pre-launch-checklist */
 __('Pre-launch checklist', 'nibwp');
 /* translators: Skill feature: seo-pro */
 __('Pre-publish SEO gate (pass/fail) before content goes live', 'nibwp');
 /* translators: Skill feature: etchwp-pro */
 __('Preserves interactions like hover states, animations, and accordions', 'nibwp');
+/* translators: Workflow when to use: build-page-from-bricksed-library */
+__('Producing Bricks pages that must look like one site from the components the client already has.', 'nibwp');
+/* translators: Workflow when to use: build-page-from-etchedy-library */
+__('Producing pages that must look like one site from the components the client already has.', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Product images pulled straight from a URL into the media library', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
@@ -369,16 +485,26 @@ __('Product tags, created and tidied in bulk', 'nibwp');
 __('Production-grade BEM structure for clean, scalable architecture', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Property paths checked against each element\'s real control schema', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('Property schemas generated for you, so a component is reusable rather than a snapshot', 'nibwp');
 /* translators: Workflow when to use: content-cleanup */
 __('Pruning or consolidating a large content library.', 'nibwp');
 /* translators: Workflow when to use: seo-content-pass */
 __('Publishing or optimizing a single post or page for search.', 'nibwp');
+/* translators: Workflow summary: reuse-bricksed-component */
+__('Pull a stored component from the Bricksed library onto a page as native Bricks elements, with its text, links and images overridden for this placement — the library copy and the site\'s own classes are never changed.', 'nibwp');
+/* translators: Workflow summary: reuse-etchedy-component */
+__('Pull a stored component from the Etchedy library onto a page with its text, links and images overridden for this placement — the library copy is never changed.', 'nibwp');
 /* translators: Workflow summary: fix-404-redirects */
 __('Pull the 404 log, group by intent, map each to the best live target, create 301s, verify.', 'nibwp');
 /* translators: Skill feature: bricks-pro */
 __('Query loops backed by CPT + ACF — no static repetition', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Read the finished page back and report where it drifted from the design, with the integration\'s own audit findings', 'nibwp');
 /* translators: Workflow summary: figma-to-wordpress */
 __('Read the real Figma node tree and Variables — not a screenshot — map them to the design tokens this site already uses, detect which builder it runs, and convert through the validated pipeline belonging to that builder.', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Reads back what Mosaic kept after every write, so a dropped value is reported, not lost', 'nibwp');
 /* translators: Skill feature: figma-pro */
 __('Reads private Figma files via your own account token; read-only, persisted as a draft with a backup', 'nibwp');
 /* translators: Skill feature: figma-pro */
@@ -417,14 +543,30 @@ __('Refine an existing course or lesson with a natural-language instruction', 'n
 __('Refine an existing layout by written instruction', 'nibwp');
 /* translators: Skill feature: voxel-pro */
 __('Refine an existing template surgically: change one setting, add a visibility rule, insert or move an element', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Refine one element by name or by its words, without rebuilding the page', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Refine one node at a time — never rebuild a page to change a heading', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Refuses clamp() for font-size, because the text sizes here are tokens and the validator rejects it', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Refuses to commit over a published release — and names the release and the commit it serves', 'nibwp');
 /* translators: Skill feature: design-skills */
 __('Remembers the direction, so a whole site reads as designed rather than assembled', 'nibwp');
+/* translators: Skill feature: bricksed-pro; Skill feature: etchedy-pro */
+__('Rename and move components between folders by asking', 'nibwp');
+/* translators: Workflow summary: organise-bricksed-library; Workflow summary: organise-etchedy-library */
+__('Rename, move, duplicate and delete components safely: renames keep their id, moves copy before they delete, content is never touched by accident.', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Repeated cards detected and planned as a loop bound to a post type', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Repeated cards detected and reported as one loop or one component — never nine duplicated subtrees', 'nibwp');
 /* translators: Workflow summary: content-creation */
 __('Research the topic + SERP → brief → outline → draft in brand voice → media + alt → SEO pass → internal links → schedule.', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('Responsive and accessible by default, checked before writing', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Responsive blueprints for hero, features, CTA, pricing, testimonials, FAQ, stats, header and footer', 'nibwp');
 /* translators: Skill feature: elementor-pro */
 __('Responsive by default — desktop / tablet / mobile values, not desktop-only', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
@@ -433,6 +575,8 @@ __('Resume a large import in batches instead of one request that times out', 'ni
 __('Reusable component system — not one-off builds', 'nibwp');
 /* translators: Skill feature: bricks-pro */
 __('Reusable section templates — not one-off paste', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('Reuse a stored component on any page, with its text and images overridden per placement', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Revenue over a period against the period before it, resolved in the store\'s own timezone', 'nibwp');
 /* translators: Skill feature: elementor-pro */
@@ -443,20 +587,36 @@ __('Round-trip serialization guard — never persist a truncated page', 'nibwp')
 __('SEO content pass', 'nibwp');
 /* translators: Workflow title: safe-changes */
 __('Safe changes (plan → approve → apply)', 'nibwp');
+/* translators: Workflow title: save-to-bricksed-library */
+__('Save a component to the Bricksed library', 'nibwp');
+/* translators: Workflow title: save-to-etchedy-library */
+__('Save a component to the Etchedy library', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Save a section as a component and place it anywhere by reference', 'nibwp');
+/* translators: Skill feature: etchedy-pro */
+__('Save any built component straight into an Etchedy folder', 'nibwp');
+/* translators: Skill feature: bricksed-pro */
+__('Save any section built in Bricks straight into a Bricksed folder, with its global classes and Bricks components', 'nibwp');
 /* translators: Skill feature: tutorlms-minisite */
 __('Saved as a draft WordPress page linked back to the course', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Says which version the work lands on: a new version on the branch, or a new branch', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Schedule a sale for a date range and clear it again afterwards', 'nibwp');
 /* translators: Skill feature: voxel-pro */
 __('Search form, feed and map wired together for you (the wiring lives in post meta, and its paths are positional)', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Search the customer base by lifetime spend, order count, last order date and registration date', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Section checklists for hero, navbar, footer, CTA, pricing, card grid, testimonial and form', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Segment the base into named groups and get counts and ids, not a dump of every record', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Send yourself a test email to check the styling and whether mail leaves the server at all', 'nibwp');
 /* translators: Skill tagline: woocommerce-pro */
 __('Set up and run the whole store — taxes, shipping zones, payment gateways, webhooks, global attributes, variations, and bulk CSV import/export', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Setting names validated against the modules that accept them, read from Builderius own setting registry', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Shipping zones with flat rate, free shipping and local pickup, priced per zone', 'nibwp');
 /* translators: Workflow title: site-audit-report */
@@ -475,28 +635,44 @@ __('Standing up a multi-page site from a brief or sitemap.', 'nibwp');
 __('Standing up a new listing type on a Voxel site, or rebuilding one end to end.', 'nibwp');
 /* translators: Workflow when to use: design-system-setup */
 __('Starting a site or redesign, before a run of page builds, or when a site has drifted into three greys and five spacing values.', 'nibwp');
+/* translators: Workflow summary: save-to-etchedy-library */
+__('Store a built component in the Etchedy library so any site can reuse it — properties with defaults, nothing tied to this site, ACSS tokens, dry-run validated before it is written.', 'nibwp');
+/* translators: Workflow summary: save-to-bricksed-library */
+__('Store a section built in Bricks in the Bricksed library so any site can reuse it — copied off the page with its global classes and Bricks components, properties with defaults, nothing tied to this site, dry-run validated before it is written.', 'nibwp');
 /* translators: Skill feature: seo-pro */
 __('Structured-data generation + schema.org validation, rendered on any engine', 'nibwp');
 /* translators: Skill feature: voxel-pro */
 __('Style kits (popup and timeline) require an explicit confirmation — they restyle the whole site', 'nibwp');
+/* translators: Skill feature: mosaic-pro */
+__('Styles per breakpoint and per state: base, tablet, mobile, hover, focus', 'nibwp');
 /* translators: Skill feature: elementor-pro */
 __('Styling as Elementor controls (padding, gap, background, typography, color) — minimal custom CSS', 'nibwp');
 /* translators: Skill feature: kadence-pro */
 __('Styling as native Kadence attributes (padding, background, color, typography) — no separate CSS to write', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Tax classes and tax rates by country, state, postcode and city, with priorities and compound rates', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Tells you when a template is carrying commits nobody has released yet', 'nibwp');
 /* translators: Skill description: woocommerce-pro */
 __('The Free WooCommerce abilities cover the catalogue and the order book. This skill covers the store around them: general settings and selling locations, tax classes and tax rates, shipping zones and the methods inside them, payment gateways, webhooks, global product attributes and their terms, generating every variation of a variable product, cross-sells and upsells, downloadable files, product images from a URL, tags, bulk price changes, scheduled sales, product duplication, and bulk CSV import and export with a dry run that reports every bad row before anything is written.', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('The agent reads the canvas locally with Paper\'s own MCP tools — no credentials, no cloud API, nothing to connect on the WordPress side', 'nibwp');
 /* translators: Skill feature: design-skills */
 __('The anti-generic list: centred hero, three cards, purple gradient, uniform padding, full-width text — each refused with the reason why', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('The whole picture for one customer — orders, lifetime value, average order, addresses, notes', 'nibwp');
 /* translators: Skill feature: tutorlms-minisite */
 __('Theme-neutral, self-contained output (no page builder required)', 'nibwp');
+/* translators: Workflow when to use: organise-etchedy-library */
+__('Tidying a client library: renaming, re-filing into folders, copying a variant, removing what is unused.', 'nibwp');
+/* translators: Workflow when to use: organise-bricksed-library */
+__('Tidying a client\'s Bricksed library: renaming, re-filing into folders, copying a variant, removing what is unused.', 'nibwp');
 /* translators: Skill feature: woocommerce-pro */
 __('Top sellers by units or by money, low stock and out of stock, coupon performance, refund rate, new customers over time', 'nibwp');
 /* translators: Skill feature: tutorlms-builder */
 __('Topics → lessons hierarchy with real lesson content', 'nibwp');
+/* translators: Skill tagline: mosaic-pro */
+__('Turn HTML, URLs, screenshots or a brief into real Mosaic pages — every value checked before Mosaic can silently drop it, styles turned into Mosaic classes, repeated sections into components', 'nibwp');
 /* translators: Skill tagline: tutorlms-builder */
 __('Turn a brief, outline, transcript or URL into a complete, validated Tutor LMS course', 'nibwp');
 /* translators: Workflow summary: course-build */
@@ -517,6 +693,10 @@ __('Turn screenshots or images into fully working Kadence Blocks layouts', 'nibw
 __('Two read sources: Figma REST (headless default) or Figma Dev Mode MCP (live in-app context)', 'nibwp');
 /* translators: Workflow summary: woocommerce-product */
 __('Type → pricing → images + alt → description → attributes/variations → inventory → SEO/schema → categories → publish.', 'nibwp');
+/* translators: Workflow when to use: reuse-bricksed-component */
+__('Using a saved hero, pricing table or section from the Bricksed library on an existing or new Bricks page.', 'nibwp');
+/* translators: Workflow when to use: reuse-etchedy-component */
+__('Using a saved hero, pricing table or section from the library on an existing or new page.', 'nibwp');
 /* translators: Skill feature: kadence-pro */
 __('Validate + score before you commit (dry-run)', 'nibwp');
 /* translators: Skill feature: elementor-pro */
@@ -537,5 +717,9 @@ __('Widget types + control ids validated against the LIVE Elementor registry on 
 __('WooCommerce element catalogue for store templates', 'nibwp');
 /* translators: Skill feature: breakdance-pro */
 __('Works on Oxygen 6 — same codebase, different brand', 'nibwp');
+/* translators: Skill feature: builderius-pro */
+__('Writes nothing itself — every commit goes through the Builderius integration', 'nibwp');
+/* translators: Skill feature: paper-pro */
+__('Writes nothing itself — every write goes through the Paper integration', 'nibwp');
 /* translators: Workflow when to use: content-creation */
 __('Writing a new article or page from scratch.', 'nibwp');

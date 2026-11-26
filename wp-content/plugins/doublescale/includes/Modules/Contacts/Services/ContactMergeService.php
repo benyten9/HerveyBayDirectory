@@ -94,6 +94,7 @@ final class ContactMergeService {
 		'support_tickets',
 		'bookings',
 		'form_submissions',
+		'consent_log',
 		'communication_tracking',
 		'contact_unsubscribes',
 		'attachments',

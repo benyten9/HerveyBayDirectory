@@ -17,6 +17,8 @@ use DoubleScale\Core\Models\UserModel;
 use DoubleScale\Modules\Activities\Models\ActivityModel;
 use DoubleScale\Core\Constants\ActivityTypes;
 use DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel;
+use Exception;
+use WP_Error;
 
 /**
  * DealModel class

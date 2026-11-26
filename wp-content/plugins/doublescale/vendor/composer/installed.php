@@ -3,7 +3,7 @@
         'name' => 'doublescale/doublescale',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '5f57dab82c19d9407142114515e24d4b10c81898',
+        'reference' => '587cdffbb8b0728bf278a8912738788cb5d24629',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'doublescale/doublescale' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '5f57dab82c19d9407142114515e24d4b10c81898',
+            'reference' => '587cdffbb8b0728bf278a8912738788cb5d24629',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

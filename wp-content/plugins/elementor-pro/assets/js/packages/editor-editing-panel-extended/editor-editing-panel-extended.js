@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.4.0 - 16-11-2026 */
+/*! elementor-pro - v4.4.0 - 24-11-2026 */
 this.elementorV2 = this.elementorV2 || {};
 (function(_elementor_editor_canvas, _elementor_editor_controls_extended, _elementor_editor_editing_panel, _elementor_editor_props, _elementor_license_api, react, _wordpress_i18n, _elementor_editor_controls, _elementor_ui, _elementor_query, _elementor_editor_ui, _elementor_editor_documents, _elementor_editor_elements, _elementor_editor_v1_adapters) {
 	//#region \0rolldown/runtime.js

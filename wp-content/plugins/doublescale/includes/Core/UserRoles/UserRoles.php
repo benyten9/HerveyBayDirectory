@@ -161,6 +161,8 @@ final class UserRoles {
 			return;
 		}
 
+		self::maybe_rename_role( $role, $label );
+
 		$role_obj = get_role( $role );
 
 		foreach ( $capabilities as $cap => $grant ) {
@@ -174,6 +176,48 @@ final class UserRoles {
 			if ( ! isset( $capabilities[ $known_cap ] ) && $role_obj->has_cap( $known_cap ) ) {
 				$role_obj->remove_cap( $known_cap );
 			}
+		}
+	}
+
+	/**
+	 * Names a role was shown under before it was renamed. WordPress keeps a
+	 * role's name in the database from the day it was added, so an install
+	 * still showing one of these gets the current name. A name an admin chose
+	 * themselves (in a role editor plugin) is left alone.
+	 *
+	 * @return array<string, string[]>
+	 */
+	private static function previous_role_names(): array {
+		return array(
+			// Help Center was renamed Knowledge Base in November 2026.
+			self::HELP_CENTER_MANAGER => array( 'Help Center Manager', __( 'Help Center Manager', 'doublescale' ) ),
+			self::HELP_CENTER_AGENT   => array( 'Help Center Agent', __( 'Help Center Agent', 'doublescale' ) ),
+		);
+	}
+
+	/**
+	 * Give an existing role its current name if it still shows an old one.
+	 *
+	 * @param string $role  Role slug.
+	 * @param string $label Current name.
+	 * @return void
+	 */
+	private static function maybe_rename_role( string $role, string $label ): void {
+		$previous = self::previous_role_names();
+		$wp_roles = wp_roles();
+		if ( ! isset( $previous[ $role ], $wp_roles->roles[ $role ] ) ) {
+			return;
+		}
+
+		$current = (string) ( $wp_roles->roles[ $role ]['name'] ?? '' );
+		if ( $current === $label || ! in_array( $current, $previous[ $role ], true ) ) {
+			return;
+		}
+
+		$wp_roles->roles[ $role ]['name'] = $label;
+		$wp_roles->role_names[ $role ]    = $label;
+		if ( $wp_roles->use_db ) {
+			update_option( $wp_roles->role_key, $wp_roles->roles );
 		}
 	}
 
@@ -762,8 +806,8 @@ final class UserRoles {
 			self::AUTOMATION_AGENT   => __( 'Automation Agent', 'doublescale' ),
 			self::CAMPAIGN_MANAGER  => __( 'Campaign Manager', 'doublescale' ),
 			self::CAMPAIGN_AGENT    => __( 'Campaign Agent', 'doublescale' ),
-			self::HELP_CENTER_MANAGER => __( 'Help Center Manager', 'doublescale' ),
-			self::HELP_CENTER_AGENT   => __( 'Help Center Agent', 'doublescale' ),
+			self::HELP_CENTER_MANAGER => __( 'Knowledge Base Manager', 'doublescale' ),
+			self::HELP_CENTER_AGENT   => __( 'Knowledge Base Agent', 'doublescale' ),
 			// Lowest priority: only for people with no other DoubleScale role.
 			self::TEAM_MEMBER       => __( 'Team Member', 'doublescale' ),
 		);
@@ -1852,7 +1896,7 @@ final class UserRoles {
 	 * Bump this string when the role-to-capability map changes so existing
 	 * installs re-run {@see add_roles_and_capabilities()} on next boot.
 	 */
-	private const ROLES_PROVISION_VERSION = '2026-11-18-help-center-uploads';
+	private const ROLES_PROVISION_VERSION = '2026-11-19-knowledge-base-names';
 
 	/**
 	 * Allow logged-in users with any DoubleScale role to bypass WooCommerce's

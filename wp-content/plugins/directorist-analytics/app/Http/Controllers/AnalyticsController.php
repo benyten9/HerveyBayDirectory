@@ -127,7 +127,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching overview data', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching overview data', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -276,7 +276,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching authors', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching authors', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -310,7 +310,7 @@ class AnalyticsController extends Controller {
 			if ( ! $author ) {
 				return Response::send(
 					array(
-						'message' => esc_html__( 'Author not found', 'directorist-analytics' ),
+						'message' => esc_html__( 'Author not found', 'directorist-advanced-review' ),
 					),
 					404
 				);
@@ -367,7 +367,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching top listings', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching top listings', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -419,7 +419,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching listings table', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching listings table', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -454,7 +454,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching traffic sources', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching traffic sources', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -498,7 +498,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching tech stats', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching tech stats', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -537,7 +537,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching contact form usage', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching contact form usage', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -583,7 +583,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching contact form usage table', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching contact form usage table', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -651,7 +651,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching search appearances chart', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching search appearances chart', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -694,7 +694,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching top countries', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching top countries', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -735,7 +735,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching countries table', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching countries table', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -778,7 +778,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching top search engines', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching top search engines', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -821,7 +821,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching top referral sources', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching top referral sources', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -867,7 +867,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching referral sources table', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching referral sources table', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -908,7 +908,7 @@ class AnalyticsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error fetching search appearances table', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error fetching search appearances table', 'directorist-advanced-review' ),
 				),
 				500
 			);

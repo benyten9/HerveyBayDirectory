@@ -7,6 +7,10 @@ description: Use when creating, converting, or refactoring anything into a Brick
 
 This skill produces validated Bricks templates (`bricks_template` post type) that the agent submits via `nibwp/bricks-pro-html-to-component`. Server-side: a validator enforces the rules below, an orchestrator-recommender suggests cross-ability follow-ups (CPT + ACF for loops, native video for iframes, native form/shortcode for raw forms), then persistence delegates to the existing `nibwp/bricks-create-template` ability.
 
+## Keeping or reusing a section — the Bricksed library
+
+Saving a built section to the Bricksed library, or placing a stored Bricksed component on a page, is the **Bricksed Pro** skill's job, not this pipeline's: `nibwp/bricksed-pro-save-component` (it copies a section straight off a page with `source: { post_id, element_id }`) and `nibwp/bricksed-pro-reuse-component`. Never hand-write `_bricks_page_content_2` or the global classes option to paste one in.
+
 ## Editing one element — do NOT use this pipeline
 
 This skill builds trees. Changing one setting on an element that already exists — adding a link, correcting a URL, fixing a typo, swapping a class — is a different job, and running it through `nibwp/bricks-pro-html-to-component` replaces the whole tree and loses everything the payload does not restate.

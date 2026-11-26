@@ -298,7 +298,7 @@ final class HelpCenterParts {
 		$id     = 'ds-hc-q-' . $size;
 
 		return '<form class="ds-hc__search ds-hc__search--' . esc_attr( $size ) . '" role="search" method="get" action="' . esc_url( (string) $action ) . '">'
-			. '<label class="ds-hc__sr" for="' . esc_attr( $id ) . '">' . esc_html__( 'Search the help center', 'doublescale' ) . '</label>'
+			. '<label class="ds-hc__sr" for="' . esc_attr( $id ) . '">' . esc_html__( 'Search the knowledge base', 'doublescale' ) . '</label>'
 			. self::icon( 'search', 'hero' === $size ? 20 : 16 )
 			. '<input id="' . esc_attr( $id ) . '" type="search" name="q" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( 'hero' === $size ? __( 'Search for answers…', 'doublescale' ) : __( 'Search…', 'doublescale' ) ) . '" autocomplete="off" data-ds-hc-search />'
 			. '<kbd class="ds-hc__kbd" aria-hidden="true">⌘K</kbd>'
@@ -599,7 +599,7 @@ final class HelpCenterParts {
 					// The ticket form for visitors with no account (or false).
 					'ticket'   => self::ticket_form() ? self::ticket_config() : false,
 					'i18n'     => array(
-						'label'    => __( 'Search the help center', 'doublescale' ),
+						'label'    => __( 'Search the knowledge base', 'doublescale' ),
 						'articles' => __( 'Articles', 'doublescale' ),
 						'topics'   => __( 'Topics', 'doublescale' ),
 						'none'     => __( 'No articles match your search. Try other words.', 'doublescale' ),

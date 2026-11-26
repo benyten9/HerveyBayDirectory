@@ -16,8 +16,21 @@ use DirectoristStripe\Stripe\Subscription;
 
 class LegacyWebhookController extends Controller {
     public function webhook( WP_REST_Request $request ): WP_REST_Response {
-        $type = sanitize_text_field( (string) $request->get_param( 'type' ) );
-        $data = $request->get_param( 'data' );
+        $event = WebhookEventVerifier::verify(
+            $request,
+            get_directorist_option( 'stripe_legacy_test_webhook_secret' ),
+            get_directorist_option( 'stripe_legacy_live_webhook_secret' )
+        );
+
+        if ( is_wp_error( $event ) ) {
+            return new WP_REST_Response(
+                [ 'message' => $event->get_error_message() ],
+                $event->get_error_data()['status']
+            );
+        }
+
+        $type = sanitize_text_field( (string) ( $event['type'] ?? '' ) );
+        $data = $event['data'] ?? [];
 
         do_action( 'directorist_stripe_webhook_received', $type, $data );
 

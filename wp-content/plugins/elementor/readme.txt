@@ -4,7 +4,7 @@ Tags: ai, drag-and-drop, editor, landing page, mcp
 Requires at least: 6.8
 Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 4.4.1
+Stable tag: 4.4.2
 Beta tag: 4.4.0-beta3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -350,6 +350,12 @@ If you want to contribute, go to our [Elementor GitHub Repository](https://githu
 6. **Motion Effects** - Add entrance animations and transitions to any element in your website to captivate visitors.
 
 == Changelog ==
+
+= 4.4.2 - 2026-11-24 =
+
+* Fix: Cached Markdown content may appear instead of the website's regular pages when Generate website markdown is activated ([#37853](https://github.com/elementor/elementor/issues/37853))
+* Fix: Logged-in users may be unexpectedly redirected to the login page after content changes when Agent Ready is enabled ([#38189](https://github.com/elementor/elementor/issues/38189))
+* Fix: SVG Icon Library picker closes when searching for a different icon in grid view
 
 = 4.4.1 - 2026-11-16 =
 

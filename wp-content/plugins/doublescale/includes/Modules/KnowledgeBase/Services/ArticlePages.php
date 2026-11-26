@@ -245,7 +245,7 @@ final class ArticlePages {
 			$name,
 			array(
 				'title'       => __( 'Help article', 'doublescale' ),
-				'description' => __( 'Shows one help center article: its title and text, without the author line, tags or comments of a blog post.', 'doublescale' ),
+				'description' => __( 'Shows one knowledge base article: its title and text, without the author line, tags or comments of a blog post.', 'doublescale' ),
 				'post_types'  => array( self::POST_TYPE ),
 				'content'     => '<!-- wp:template-part {"slug":"header"} /-->
 

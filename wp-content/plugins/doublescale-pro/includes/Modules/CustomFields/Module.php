@@ -55,6 +55,9 @@ final class Module extends AbstractModule {
 			$base . 'CustomFieldsGroupsTable.php',
 			$base . 'CustomFieldsTable.php',
 			$base . 'CustomFieldRelationshipTable.php',
+			// Runs once per site: shows contact custom-field values the
+			// Update Contact automation saved without an entity type.
+			$base . 'CustomFieldRelationshipContactTypeRepair.php',
 		);
 	}
 

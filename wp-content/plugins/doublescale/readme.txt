@@ -4,7 +4,7 @@ Tags: crm, wordpress crm, email marketing, sales pipeline, newsletter
 Requires at least: 5.8
 Tested up to: 7.1.3
 Requires PHP: 7.4
-Stable tag: 1.10.1
+Stable tag: 1.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -266,6 +266,38 @@ Watch the step-by-step video tutorials on the [DoubleScale YouTube channel](http
 Free support is available in the WordPress.org forum. DoubleScale Pro includes email and priority support.
 
 == Changelog ==
+
+= 1.11.0 = 24 Nov 2026
+**New**
+
+- Forms: build your own forms inside DoubleScale, with no other form plugin. A drag-and-drop builder, a gallery of ready-made templates that you can try out before you pick one, and forms that show in your page, not in an iframe
+- Forms: every form has its own page on your site, a shortcode, a block, a QR code and a tracked-link builder, plus a preview link for drafts
+- Forms: choose per form whether a submission creates or updates a contact, which lists and tags it joins, who owns it and how email subscription works (including double opt-in), and pick what each question is saved to, or "Don't save"
+- Forms: create a ticket from a submission, and with DoubleScale Pro a company, a deal or a project
+- Forms: every submission is kept with its answers, in the form's results and on the contact (Forms tab and timeline), and a submission without an email or phone is kept and linked to the visitor later
+- Forms: a "Form submitted" automation trigger under DoubleScale modules. Every answer can be used as {{form:question}}, {{form:all_answers}} lists them all, and a warning shows when a form can't find a contact
+- Forms: a Phone question with a country-code picker, checked against real phone number rules and saved to the contact as +201001234567 (country code, no spaces)
+- Forms: reword every visitor text per form, a spam shield (hidden field, time check, limits, Turnstile, reCAPTCHA, hCaptcha) and a consent log
+- Forms with DoubleScale Pro: multi-step and conversational layouts, logic that shows, hides or redirects, file uploads, lead scoring by answer or source, and known-visitor detection with website tracking
+- Dashboard: sites that were already running DoubleScale are told about the new form builder, with a button to open it
+- Get Started: a new "Lead generation forms" goal that switches Forms on (with website tracking and lead scoring) and suggests building your first form
+- Email templates: 50 redesigned ready-made templates in 10 categories, with a new gallery
+- Campaign emails: links carry utm_campaign, so your website analytics show which campaign sent a visit
+
+**Changed**
+
+- Help Center is now called Knowledge Base, and the Help Center Manager and Agent roles are now Knowledge Base Manager and Knowledge Base Agent (existing sites are renamed for you)
+- Live chat is now Website chat, and you choose who answers: the AI assistant only, your team only, or the AI first and then your team (with DoubleScale Pro)
+- Sales settings show only the sections of the modules that are switched on
+- The campaign messages list loads faster
+- Forms with DoubleScale Pro need DoubleScale Pro 1.7.0
+
+**Fixed**
+
+- Automations: Update Contact shows and saves custom fields, and the form and rule pickers are sorted and searchable
+- Email: two-column cards with a side margin no longer wrap in email apps
+- Custom Objects installs correctly from the Add-ons page
+- Client portal: a project status added with a single colour is readable again
 
 = 1.10.1 = 18 Nov 2026
 **New**

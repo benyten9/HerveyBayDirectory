@@ -408,7 +408,7 @@ final class DashboardService {
             ];
             if ( 'activities' === $args['section'] ) {
                 foreach ( $result['items'] as &$item ) {
-                    $item['time'] = sprintf( __( '%s ago', 'directorist-analytics' ), human_time_diff( strtotime( $item['date'] ), current_time( 'timestamp' ) ) ); }
+                    $item['time'] = sprintf( __( '%s ago', 'directorist-advanced-review' ), human_time_diff( strtotime( $item['date'] ), current_time( 'timestamp' ) ) ); }
                 unset( $item );
                 if ( $rows ) {
                     $result['columns'][] = 'time'; }

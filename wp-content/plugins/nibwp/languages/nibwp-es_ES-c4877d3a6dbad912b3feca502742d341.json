@@ -1,0 +1,93 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-bus.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es_ES",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Allow": [
+                "Permitir"
+            ],
+            "Refuse": [
+                "Rechazar"
+            ],
+            "opening %s": [
+                "abriendo %s"
+            ],
+            "Click %s on this page.": [
+                "Haz clic en %s en esta p\u00e1gina."
+            ],
+            "Click an element on this page.": [
+                "Haz clic en un elemento de esta p\u00e1gina."
+            ],
+            "Hover over %s and report what changes.": [
+                "Pasa el rat\u00f3n sobre %s e informa de lo que cambia."
+            ],
+            "Hover over an element and report what changes.": [
+                "Pasa el rat\u00f3n sobre un elemento e informa de lo que cambia."
+            ],
+            "Take a screenshot of %s.": [
+                "Haz una captura de %s."
+            ],
+            "Take a screenshot of this page.": [
+                "Haz una captura de esta p\u00e1gina."
+            ],
+            "a field": [
+                "un campo"
+            ],
+            "Type \u201c%1$s\u201d into %2$s, then submit the form.": [
+                "Escribe \u201c%1$s\u201d en %2$s y env\u00eda el formulario."
+            ],
+            "Type \u201c%1$s\u201d into %2$s.": [
+                "Escribe \u201c%1$s\u201d en %2$s."
+            ],
+            "%d step in one go:": [
+                "%d paso de una vez:",
+                "%d pasos de una vez:"
+            ],
+            "Insert a %s block into the page being edited.": [
+                "Inserta un bloque %s en la p\u00e1gina que se est\u00e1 editando."
+            ],
+            "Insert a block into the page being edited.": [
+                "Inserta un bloque en la p\u00e1gina que se est\u00e1 editando."
+            ],
+            "Change %1$s on block %2$s.": [
+                "Cambia %1$s en el bloque %2$s."
+            ],
+            "Delete block %s and everything inside it.": [
+                "Borra el bloque %s y todo lo que contiene."
+            ],
+            "Read the current page.": [
+                "Lee la p\u00e1gina actual."
+            ],
+            "Check the current page for accessibility and layout problems.": [
+                "Revisa la p\u00e1gina actual en busca de problemas de accesibilidad y de maquetaci\u00f3n."
+            ],
+            "refused": [
+                "rechazado"
+            ],
+            "%d issue": [
+                "%d problema",
+                "%d problemas"
+            ],
+            "%d element": [
+                "%d elemento",
+                "%d elementos"
+            ],
+            "Let your agent do this?": [
+                "\u00bfDejas que tu agente haga esto?"
+            ],
+            "Open %s in Agent View.": [
+                "Abrir %s en Agent View."
+            ],
+            "Open a page in Agent View.": [
+                "Abre una p\u00e1gina en Agent View."
+            ]
+        }
+    }
+}

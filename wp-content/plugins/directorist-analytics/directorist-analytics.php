@@ -9,7 +9,7 @@ use DirectoristAnalytics\App\Helpers\EddUpdaterAnalytics;
 /**
  * Plugin Name:       Directorist Analytics
  * Description:       This plugin is used to track the analytics of the Directorist plugin.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Tested up to:      6.8

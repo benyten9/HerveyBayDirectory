@@ -115,9 +115,9 @@ function nibwp_render_dashboard_page(): void
         </div>
 
         <?php
-        // Premium module — absent from the Free build, so guard the call.
-        if (function_exists('nibwp_render_figma_promo')) {
-            nibwp_render_figma_promo();
+        // Agent View is Pro only — absent from the Free build, so guard the call.
+        if (function_exists('nibwp_render_agent_view_promo')) {
+            nibwp_render_agent_view_promo();
         }
         ?>
 

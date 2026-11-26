@@ -77,7 +77,9 @@ class UpdateContactFields extends Action {
 	 * @param AutomationStepModel    $step Automation Step Model.
 	 * @param AutomationContactModel $automation_contact Automation Contact Model.
 	 *
-	 * @return bool
+	 * @return bool|array True when every mapped field was written; otherwise
+	 *                    `{ success, message }` naming the fields that were
+	 *                    skipped, so the automation report shows why.
 	 */
 	public function process_action( AutomationModel $automation, AutomationStepModel $step, AutomationContactModel $automation_contact ) {
 		$map = $step->get_setting( 'contact_fields', array() );
@@ -92,6 +94,8 @@ class UpdateContactFields extends Action {
 
 		$writable_columns = $this->writable_columns();
 		$custom_fields    = array();
+		$skipped          = array();
+		$written          = 0;
 		$dirty            = false;
 
 		foreach ( $map as $field => $value ) {
@@ -116,7 +120,7 @@ class UpdateContactFields extends Action {
 			if ( 0 === strpos( $field, 'cf_' ) ) {
 				$custom_id = (int) substr( $field, 3 );
 				if ( $custom_id > 0 ) {
-					$custom_fields[ $custom_id ] = array( 'value' => is_scalar( $value ) ? (string) $value : '' );
+					$custom_fields[ $custom_id ] = is_scalar( $value ) ? trim( (string) $value ) : '';
 				}
 				continue;
 			}
@@ -140,11 +144,17 @@ class UpdateContactFields extends Action {
 						'value'      => is_scalar( $value ) ? (string) $value : '',
 					)
 				);
+				$skipped[] = sprintf(
+					/* translators: %s: contact field label, e.g. "Email". */
+					__( '%s (the value is not valid for this field)', 'doublescale' ),
+					$this->standard_fields()[ $field ] ?? $field
+				);
 				continue;
 			}
 
 			$contact->{$field} = $normalized;
 			$dirty             = true;
+			++$written;
 		}
 
 		if ( $dirty ) {
@@ -159,26 +169,164 @@ class UpdateContactFields extends Action {
 						'exception'  => $e->getMessage(),
 					)
 				);
-				return false;
-			}
-		}
-
-		if ( ! empty( $custom_fields ) && null !== $contact->custom_fields() ) {
-			try {
-				$contact->custom_fields()->syncWithoutDetaching( $custom_fields );
-			} catch ( \Exception $e ) {
-				$this->log(
-					'error',
-					'Failed to sync contact custom fields.',
-					array(
-						'contact_id' => $contact->id,
-						'exception'  => $e->getMessage(),
-					)
+				return array(
+					'success' => false,
+					'message' => __( 'The contact could not be saved.', 'doublescale' ) . ' ' . $e->getMessage(),
 				);
 			}
 		}
 
-		return true;
+		if ( ! empty( $custom_fields ) && null !== $contact->custom_fields() ) {
+			$pivot = $this->custom_field_values( $custom_fields, $skipped );
+
+			if ( ! empty( $pivot ) ) {
+				try {
+					$contact->custom_fields()->syncWithoutDetaching( $pivot );
+					$written += count( $pivot );
+				} catch ( \Exception $e ) {
+					$this->log(
+						'error',
+						'Failed to sync contact custom fields.',
+						array(
+							'contact_id' => $contact->id,
+							'exception'  => $e->getMessage(),
+						)
+					);
+					return array(
+						'success' => false,
+						'message' => __( 'The custom fields could not be saved.', 'doublescale' ) . ' ' . $e->getMessage(),
+					);
+				}
+			}
+		}
+
+		if ( empty( $skipped ) ) {
+			return true;
+		}
+
+		/* translators: %s: comma-separated list of skipped fields with the reason. */
+		$message = sprintf( __( 'Skipped: %s', 'doublescale' ), implode( '; ', $skipped ) );
+
+		return array(
+			// Nothing written at all is a failed step; a partial update completes
+			// and still names what was left out.
+			'success' => $written > 0,
+			'message' => $message,
+		);
+	}
+
+	/**
+	 * Build the pivot rows for the mapped custom fields.
+	 *
+	 * Rows carry `entity_type => contact`: the contact's custom_fields()
+	 * relation only reads rows of that type, so a row written without it was
+	 * saved but never shown. Choice fields (select, radio, multiselect,
+	 * checkbox) are matched to their options without regard to case or
+	 * spacing and stored with the option's own spelling, comma-joined for
+	 * several values, the same format the contact screen saves. A value that
+	 * matches no option is left out and named in $skipped, because the
+	 * contact screen hides values that are not options.
+	 *
+	 * @param array<int, string> $values  Field id => resolved value.
+	 * @param array<int, string> $skipped Collects "Field (reason)" entries.
+	 * @return array<int, array{value: string, entity_type: string}>
+	 */
+	private function custom_field_values( array $values, array &$skipped ) {
+		$model = '\DoubleScale\Pro\Modules\CustomFields\Models\CustomFieldModel';
+		if ( ! class_exists( $model ) ) {
+			return array();
+		}
+
+		try {
+			$fields = $model::whereIn( 'id', array_keys( $values ) )->get()->keyBy( 'id' );
+		} catch ( \Exception $e ) {
+			$fields = null;
+		}
+
+		$pivot = array();
+		foreach ( $values as $id => $value ) {
+			if ( '' === $value ) {
+				continue;
+			}
+
+			$custom_field = $fields ? $fields->get( $id ) : null;
+			if ( ! $custom_field ) {
+				$skipped[] = sprintf(
+					/* translators: %d: custom field id. */
+					__( 'custom field #%d (it no longer exists)', 'doublescale' ),
+					$id
+				);
+				continue;
+			}
+
+			$type    = (string) $custom_field->type;
+			$options = method_exists( $custom_field, 'get_option_values' ) ? (array) $custom_field->get_option_values() : array();
+
+			if ( in_array( $type, array( 'select', 'radio', 'multiselect', 'checkbox' ), true ) && ! empty( $options ) ) {
+				$several = in_array( $type, array( 'multiselect', 'checkbox' ), true );
+				$parts   = $several ? explode( ',', $value ) : array( $value );
+				$matched = array();
+				$missing = array();
+
+				foreach ( $parts as $part ) {
+					$part = trim( (string) $part );
+					if ( '' === $part ) {
+						continue;
+					}
+					$option = self::match_option( $part, $options );
+					if ( null === $option ) {
+						$missing[] = $part;
+					} elseif ( ! in_array( $option, $matched, true ) ) {
+						$matched[] = $option;
+					}
+				}
+
+				if ( ! empty( $missing ) ) {
+					$skipped[] = sprintf(
+						/* translators: 1: custom field name, 2: the value(s) that matched no option. */
+						__( '%1$s ("%2$s" is not one of its options)', 'doublescale' ),
+						$custom_field->name,
+						implode( '", "', $missing )
+					);
+				}
+
+				if ( empty( $matched ) ) {
+					continue;
+				}
+
+				$value = $several ? implode( ',', $matched ) : $matched[0];
+			}
+
+			$pivot[ (int) $id ] = array(
+				'value'       => $value,
+				'entity_type' => 'contact',
+			);
+		}
+
+		return $pivot;
+	}
+
+	/**
+	 * The option a value stands for, ignoring case and repeated spaces.
+	 *
+	 * @param string             $value   Value to look up.
+	 * @param array<int, string> $options The field's option values.
+	 * @return string|null The option as configured, or null when none matches.
+	 */
+	private static function match_option( $value, array $options ) {
+		$key = static function ( $text ) {
+			$text = preg_replace( '/\s+/u', ' ', trim( (string) $text ) );
+			return function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $text ) : strtolower( (string) $text );
+		};
+
+		$needle = $key( $value );
+		foreach ( $options as $option ) {
+			if ( $key( $option ) === $needle ) {
+				return (string) $option;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -195,8 +343,10 @@ class UpdateContactFields extends Action {
 			$fields[ $key ] = array( 'label' => $label );
 		}
 
-		foreach ( $this->custom_field_targets() as $key => $label ) {
-			$fields[ $key ] = array( 'label' => $label );
+		// Custom fields also carry their type and, for choice fields, their
+		// options, so the editor can offer a picker instead of free text.
+		foreach ( $this->custom_field_targets() as $key => $target ) {
+			$fields[ $key ] = $target;
 		}
 
 		return array(
@@ -266,7 +416,7 @@ class UpdateContactFields extends Action {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array<string, string>
+	 * @return array<string, array{label: string, type: string, options?: array<int, string>}>
 	 */
 	private function custom_field_targets() {
 		$targets = array();
@@ -282,7 +432,14 @@ class UpdateContactFields extends Action {
 				? $model::cached_for_scope( 'contact' )
 				: $model::where( 'scope', 'contact' )->get();
 			foreach ( $custom_fields as $custom_field ) {
-				$targets[ 'cf_' . $custom_field->id ] = $custom_field->name;
+				$target = array(
+					'label' => (string) $custom_field->name,
+					'type'  => (string) $custom_field->type,
+				);
+				if ( in_array( $target['type'], array( 'select', 'radio', 'multiselect', 'checkbox' ), true ) && method_exists( $custom_field, 'get_option_values' ) ) {
+					$target['options'] = array_values( (array) $custom_field->get_option_values() );
+				}
+				$targets[ 'cf_' . $custom_field->id ] = $target;
 			}
 		} catch ( \Exception $e ) {
 			return array();

@@ -46,10 +46,10 @@ final class Lifecycle {
 	private static function define_constants( string $plugin_file ): void {
 		$defaults = array(
 			'DOUBLESCALE_PLUGIN_FILE'   => $plugin_file,
-			'DOUBLESCALE_VERSION'       => '1.10.1',
+			'DOUBLESCALE_VERSION'       => '1.11.0',
 			// Bump when a build changes the schema without a new version, so the
 			// schema check reruns on sites that already ran an earlier build of it.
-			'DOUBLESCALE_SCHEMA_REV'    => '1.9.11',
+			'DOUBLESCALE_SCHEMA_REV'    => '1.10.2',
 			'DOUBLESCALE_PLUGIN_DIR'    => plugin_dir_path( $plugin_file ),
 			'DOUBLESCALE_PLUGIN_URL'    => plugin_dir_url( $plugin_file ),
 			'DOUBLESCALE_PLUGIN_PATH'   => plugin_basename( $plugin_file ),

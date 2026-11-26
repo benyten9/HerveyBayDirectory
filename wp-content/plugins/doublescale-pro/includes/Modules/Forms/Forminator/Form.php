@@ -150,15 +150,18 @@ class Form extends Abstracts_Form {
 		// Check nonce.
 		check_ajax_referer( 'doublescale-admin', 'nonce' );
 
-		$forms   = Forminator_API::get_forms();
+		// Every published form. With no arguments the API returns only the
+		// ten newest forms of any status, so older forms were missing and
+		// drafts (which take no submissions) filled the list.
+		$forms   = Forminator_API::get_forms( null, 1, -1, 'publish' );
 		$options = array();
 
-		if ( empty( $forms ) ) {
+		if ( empty( $forms ) || is_wp_error( $forms ) ) {
 			wp_send_json_error( array( 'message' => __( 'No forms found', 'doublescale') ) );
 		}
 
 		foreach ( $forms as $form ) {
-			$options[ $form->id ] = $form->name;
+			$options[ $form->id ] = self::form_title( $form );
 		}
 
 		wp_send_json_success( $options );
@@ -181,7 +184,7 @@ class Form extends Abstracts_Form {
 			$data['form_id']    = $form_id;
 			$data['entry_id']   = $entry->entry_id; // Get entry ID from entry object
 			$data['fields']     = $this->get_fields( $form_id );
-			$data['form_title'] = Forminator_API::get_form( $form_id )->name;
+			$data['form_title'] = self::form_title( Forminator_API::get_form( $form_id ) );
 
 			$data['entry'] = array(
 				'fields' => $this->prepare_form_fields( $field_data_array ),
@@ -247,5 +250,23 @@ class Form extends Abstracts_Form {
 		}
 
 		return $prepared_fields;
+	}
+
+	/**
+	 * The title a Forminator form shows in its own screens. The model's
+	 * `name` is the post slug ("contact-us"); the title is in the settings.
+	 *
+	 * @param object|\WP_Error $form Forminator form model.
+	 * @return string
+	 */
+	private static function form_title( $form ) {
+		if ( ! is_object( $form ) || is_wp_error( $form ) ) {
+			return '';
+		}
+
+		$settings = isset( $form->settings ) && is_array( $form->settings ) ? $form->settings : array();
+		$title    = isset( $settings['formName'] ) ? trim( (string) $settings['formName'] ) : '';
+
+		return '' !== $title ? $title : (string) $form->name;
 	}
 }

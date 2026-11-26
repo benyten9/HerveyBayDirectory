@@ -18,7 +18,7 @@ class SettingsServiceProvider implements Provider {
                 'gateways' => [
                     'title'       => __( 'Stripe Gateway Settings', 'directorist-stripe' ),
                     'description' => __( 'You can customize all the settings related to your stripe gateway. After switching any option, Do not forget to save the changes.', 'directorist-stripe' ),
-                    'fields'      =>  ['stripe_gateway_test_mode', 'stripe_gateway_title', 'stripe_gateway_description', 'stripe_live_pk', 'stripe_live_sk', 'stripe_live_webhook', 'stripe_test_pk', 'stripe_test_sk', 'stripe_test_webhook'],
+                    'fields'      =>  ['stripe_gateway_test_mode', 'stripe_gateway_title', 'stripe_gateway_description', 'stripe_live_pk', 'stripe_live_sk', 'stripe_live_webhook', 'stripe_legacy_live_webhook_secret', 'stripe_test_pk', 'stripe_test_sk', 'stripe_test_webhook', 'stripe_legacy_test_webhook_secret'],
                 ],
             ];
 
@@ -100,6 +100,15 @@ class SettingsServiceProvider implements Provider {
             'status-label-disconnected'  => __( 'Not registered', 'directorist-stripe' ),
         ];
 
+        $stripe_fields['stripe_legacy_live_webhook_secret'] = [
+            'type'                   => 'text',
+            'show-if'                => $live_only,
+            'search-respect-show-if' => true,
+            'label'                  => __( 'Legacy Live Webhook Signing Secret', 'directorist-stripe' ),
+            'description'            => __( 'For existing subscriptions using the legacy /directorist/subscription/updated/ endpoint, enter that endpoint\'s live signing secret from Stripe. This is different from the current webhook secret.', 'directorist-stripe' ),
+            'value'                  => '',
+        ];
+
         $stripe_fields['stripe_test_pk'] = [
             'type'                   => 'text',
             'show-if'                => $test_only,
@@ -136,6 +145,15 @@ class SettingsServiceProvider implements Provider {
             'button-label-on-processing' => __( 'Updating Sandbox Webhook…', 'directorist-stripe' ),
             'status-label-connected'     => __( 'Registered (saved)', 'directorist-stripe' ),
             'status-label-disconnected'  => __( 'Not registered', 'directorist-stripe' ),
+        ];
+
+        $stripe_fields['stripe_legacy_test_webhook_secret'] = [
+            'type'                   => 'text',
+            'show-if'                => $test_only,
+            'search-respect-show-if' => true,
+            'label'                  => __( 'Legacy Sandbox Webhook Signing Secret', 'directorist-stripe' ),
+            'description'            => __( 'For existing subscriptions using the legacy /directorist/subscription/updated/ endpoint, enter that endpoint\'s sandbox signing secret from Stripe. This is different from the current webhook secret.', 'directorist-stripe' ),
+            'value'                  => '',
         ];
 
         return $stripe_fields;

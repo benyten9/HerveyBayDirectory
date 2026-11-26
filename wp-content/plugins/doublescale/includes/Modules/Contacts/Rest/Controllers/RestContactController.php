@@ -3597,6 +3597,29 @@ class RestContactController extends RestController {
 	}
 
 	/**
+	 * First and latest touch of a contact, with the form's name, or null when unknown.
+	 *
+	 * @param int $contact_id Contact id.
+	 * @return array|null
+	 */
+	private function lead_source( int $contact_id ) {
+		$out = array();
+		foreach ( array( 'first', 'latest' ) as $which ) {
+			$touch = doublescale_get_contact_meta( $contact_id, $which . '_touch', true );
+			if ( ! is_array( $touch ) || empty( $touch ) ) {
+				continue;
+			}
+			$touch = array_intersect_key( $touch, array_flip( array( 'source', 'medium', 'campaign', 'referrer', 'page', 'form_id', 'at' ) ) );
+			if ( ! empty( $touch['form_id'] ) && doublescale_module_data_ready( 'forms' ) ) {
+				$form               = \DoubleScale\Modules\Forms\Models\FormModel::find( (int) $touch['form_id'] );
+				$touch['form_name'] = $form ? (string) $form->name : '';
+			}
+			$out[ $which ] = $touch;
+		}
+		return $out ? $out : null;
+	}
+
+	/**
 	 * Get a contact
 	 *
 	 * @since 1.0.0
@@ -3621,7 +3644,12 @@ class RestContactController extends RestController {
 			}
 
 			// The owner's name, as on the contacts list.
-			return new WP_REST_Response( $this->decorate_owners( array( $contact->toArray() ) )[0], 200 );
+			$item = $this->decorate_owners( array( $contact->toArray() ) )[0];
+
+			// Where they came from (written by DoubleScale forms): first and latest touch.
+			$item['lead_source'] = $this->lead_source( (int) $contact->id );
+
+			return new WP_REST_Response( $item, 200 );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'error', $e->getMessage(), array( 'status' => 400 ) );
 		}

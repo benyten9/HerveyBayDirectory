@@ -46,7 +46,7 @@ class SettingsController extends Controller {
         } catch ( Exception $e ) {
             return Response::send(
                 array(
-                    'message' => esc_html__( 'Error fetching settings', 'directorist-analytics' ),
+                    'message' => esc_html__( 'Error fetching settings', 'directorist-advanced-review' ),
                 ),
                 500
             );
@@ -89,13 +89,13 @@ class SettingsController extends Controller {
 					'success'  => true,
 					'settings' => $settings,
 					'effective_policy' => SettingsService::policy( $settings ),
-					'message'  => esc_html__( 'Settings saved successfully', 'directorist-analytics' ),
+					'message'  => esc_html__( 'Settings saved successfully', 'directorist-advanced-review' ),
 				)
 			);
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error saving settings', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error saving settings', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -123,7 +123,7 @@ class SettingsController extends Controller {
 			if ( ! $confirm ) {
 				return Response::send(
 					array(
-						'message' => esc_html__( 'Confirmation required', 'directorist-analytics' ),
+						'message' => esc_html__( 'Confirmation required', 'directorist-advanced-review' ),
 					),
 					400
 				);
@@ -143,7 +143,7 @@ class SettingsController extends Controller {
 			return Response::send(
 				array(
 					'success' => true,
-					'message' => esc_html__( 'Raw logs deleted successfully', 'directorist-analytics' ),
+					'message' => esc_html__( 'Raw logs deleted successfully', 'directorist-advanced-review' ),
 					'deleted' => array(
 						'views'    => $views_deleted !== false,
 						'clicks'   => $clicks_deleted !== false,
@@ -154,7 +154,7 @@ class SettingsController extends Controller {
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error deleting logs', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error deleting logs', 'directorist-advanced-review' ),
 				),
 				500
 			);

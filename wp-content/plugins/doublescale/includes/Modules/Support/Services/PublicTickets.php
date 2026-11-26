@@ -297,7 +297,7 @@ final class PublicTickets {
 			. '.c{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.12);padding:32px;max-width:420px;margin:16px;text-align:center}'
 			. 'button{background:#2271b1;color:#fff;border:0;border-radius:6px;padding:12px 24px;font-size:16px;cursor:pointer}</style></head><body><div class="c">'
 			. '<h1 style="font-size:20px;margin:0 0 12px">' . esc_html( $site ) . '</h1>'
-			. '<p>' . esc_html__( 'Confirm that you sent us a request from our help center. We open it as soon as you do.', 'doublescale' ) . '</p>'
+			. '<p>' . esc_html__( 'Confirm that you sent us a request from our knowledge base. We open it as soon as you do.', 'doublescale' ) . '</p>'
 			. '<form method="post" action="' . esc_url( home_url( '/' ) ) . '">'
 			. '<input type="hidden" name="' . esc_attr( self::CONFIRM_ARG ) . '" value="' . esc_attr( $token ) . '">'
 			. '<button type="submit">' . esc_html__( 'Confirm my request', 'doublescale' ) . '</button></form></div></body></html>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every dynamic part is escaped above.
@@ -363,7 +363,7 @@ final class PublicTickets {
 		if ( is_wp_error( $ticket ) ) {
 			// No mailbox yet and the like: the team's to fix, not the visitor's.
 			doublescale_get_logger()->error(
-				'Help center ticket form: the ticket could not be created.',
+				'Knowledge base ticket form: the ticket could not be created.',
 				array(
 					'source' => 'support-public-tickets',
 					'code'   => $ticket->get_error_code(),
@@ -376,7 +376,7 @@ final class PublicTickets {
 			$service->add_note(
 				(int) $ticket->id,
 				array(
-					'content'        => wpautop( esc_html__( 'Email not verified: this request came from the help center form, where anyone can type any address, and the address belongs to an existing contact. Make sure it is really them before sharing account or order details.', 'doublescale' ) ),
+					'content'        => wpautop( esc_html__( 'Email not verified: this request came from the knowledge base form, where anyone can type any address, and the address belongs to an existing contact. Make sure it is really them before sharing account or order details.', 'doublescale' ) ),
 					'author_user_id' => null,
 				)
 			);
@@ -500,7 +500,7 @@ final class PublicTickets {
 		$body    = '<p>' . esc_html__( 'Hello,', 'doublescale' ) . '</p>'
 			// Nothing the visitor typed goes into this email: the form must not
 			// carry a stranger's text to any address from this site.
-			. '<p>' . esc_html__( 'Please confirm that you sent us a request from our help center. We open it as soon as you do.', 'doublescale' ) . '</p>'
+			. '<p>' . esc_html__( 'Please confirm that you sent us a request from our knowledge base. We open it as soon as you do.', 'doublescale' ) . '</p>'
 			. '<p><a href="' . esc_url( $link ) . '"><strong>' . esc_html__( 'Confirm my request', 'doublescale' ) . '</strong></a></p>'
 			. '<p>' . esc_html__( 'This link works for 48 hours. If you didn’t send this, you can ignore this email.', 'doublescale' ) . '</p>';
 

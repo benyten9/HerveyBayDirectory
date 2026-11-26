@@ -1051,10 +1051,15 @@ var import_prop_types = /* @__PURE__ */ __toESM(require_prop_types());
 	var dispatch = function dispatch(eventName, payload) {
 		var _window$elementorComm;
 		var _window$elementorComm2;
-		return (_window$elementorComm = window.elementorCommon) === null || _window$elementorComm === void 0 || (_window$elementorComm = _window$elementorComm.eventsManager) === null || _window$elementorComm === void 0 || (_window$elementorComm2 = _window$elementorComm.dispatchEvent) === null || _window$elementorComm2 === void 0 ? void 0 : _window$elementorComm2.call(_window$elementorComm, eventName, _objectSpread$25({
-			app_type: APP_TYPE_WP_ADMIN,
-			location_l1: LOCATION_L1
-		}, payload));
+		for (var _len = arguments.length, dispatchOptions = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) dispatchOptions[_key - 2] = arguments[_key];
+		return (_window$elementorComm = window.elementorCommon) === null || _window$elementorComm === void 0 || (_window$elementorComm = _window$elementorComm.eventsManager) === null || _window$elementorComm === void 0 || (_window$elementorComm2 = _window$elementorComm.dispatchEvent) === null || _window$elementorComm2 === void 0 ? void 0 : _window$elementorComm2.call.apply(_window$elementorComm2, [
+			_window$elementorComm,
+			eventName,
+			_objectSpread$25({
+				app_type: APP_TYPE_WP_ADMIN,
+				location_l1: LOCATION_L1
+			}, payload)
+		].concat(dispatchOptions));
 	};
 	var trackWelcomeViewed = function trackWelcomeViewed() {
 		return dispatch(EVENT_WELCOME_VIEWED, {
@@ -1927,9 +1932,15 @@ var import_regenerator = /* @__PURE__ */ __toESM(require_regenerator());
 //#endregion
 //#region modules/agents/assets/js/admin/scanner/scanner-score.js
 	var READINESS_SCORE_MAX = 100;
+	var getScoreTierThresholds = function getScoreTierThresholds() {
+		return window.elementorAgentsReadyConfig.scanner.scoreTiers;
+	};
 	var getScoreTier = function getScoreTier(score) {
-		if (score <= 30) return "low";
-		if (score < 81) return "mid";
+		var _getScoreTierThreshol = getScoreTierThresholds();
+		var lowMax = _getScoreTierThreshol.lowMax;
+		var highMin = _getScoreTierThreshol.highMin;
+		if (score <= lowMax) return "low";
+		if (score < highMin) return "mid";
 		return SCORE_TIER_HIGH;
 	};
 	var getStagePassPercent = function getStagePassPercent(stage) {

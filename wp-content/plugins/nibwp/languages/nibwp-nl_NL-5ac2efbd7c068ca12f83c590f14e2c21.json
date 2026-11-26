@@ -1,0 +1,1900 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-buddy.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Close": [
+                "Sluiten"
+            ],
+            "Copy": [
+                "Kopi\u00ebren"
+            ],
+            "Copied": [
+                "Gekopieerd"
+            ],
+            "Cancel": [
+                "Annuleren"
+            ],
+            "Got it": [
+                "Begrepen"
+            ],
+            "ON": [
+                "AAN"
+            ],
+            "OFF": [
+                "UIT"
+            ],
+            "Connect": [
+                "Verbinden"
+            ],
+            "Back": [
+                "Terug"
+            ],
+            "Next": [
+                "Volgende"
+            ],
+            "Done": [
+                "Klaar"
+            ],
+            "Design": [
+                "Design"
+            ],
+            "Forms": [
+                "Formulieren"
+            ],
+            "Events": [
+                "Evenementen"
+            ],
+            "SEO": [
+                "SEO"
+            ],
+            "%d minute": [
+                "%d minuut",
+                "%d minuten"
+            ],
+            "Stop": [
+                "Stoppen"
+            ],
+            "Add": [
+                "Toevoegen"
+            ],
+            "Stopped": [
+                "Gestopt"
+            ],
+            "Media": [
+                "Media"
+            ],
+            "Audit this page": [
+                "Deze pagina controleren"
+            ],
+            "Not now": [
+                "Niet nu"
+            ],
+            "Mobile": [
+                "Mobiel"
+            ],
+            "No thanks": [
+                "Nee, bedankt"
+            ],
+            "Save": [
+                "Opslaan"
+            ],
+            "Comment": [
+                "Opmerking"
+            ],
+            "Draw": [
+                "Tekenen"
+            ],
+            "Static site": [
+                "Statische site"
+            ],
+            "Send": [
+                "Versturen"
+            ],
+            "a happy dance": [
+                "een vrolijk dansje"
+            ],
+            "a double back flip": [
+                "een dubbele achterwaartse salto"
+            ],
+            "the moonwalk": [
+                "de moonwalk"
+            ],
+            "Niby, your helper. Click for a tip, drag to move.": [
+                "Niby, je helper. Klik voor een tip, sleep om me te verplaatsen."
+            ],
+            "Your agent is busy with \u201c%s\u201d. I\u2019ll answer right after.": [
+                "Je agent is bezig met \u201c%s\u201d. Ik antwoord direct daarna."
+            ],
+            "Your agent is busy right now. I\u2019ll answer right after.": [
+                "Je agent is nu bezig. Ik antwoord direct daarna."
+            ],
+            "Thinking": [
+                "Nadenken"
+            ],
+            "Asking your agent, one moment": [
+                "Even je agent vragen, moment"
+            ],
+            "Still thinking. Your agent may be busy with something else": [
+                "Nog aan het nadenken. Je agent is misschien met iets anders bezig"
+            ],
+            "And my agent adds: %s": [
+                "En mijn agent voegt toe: %s"
+            ],
+            "My agent did not answer this time. It may be busy; ask me again in a bit.": [
+                "Mijn agent gaf deze keer geen antwoord. Misschien is hij bezig; vraag het me straks nog eens."
+            ],
+            "Press Ctrl K to search your whole site, or paste any web address to open a safe snapshot of it.": [
+                "Druk op Ctrl K om je hele site te doorzoeken, of plak een webadres om er een veilige momentopname van te openen."
+            ],
+            "Press [ to fold the side panel and give the page more room.": [
+                "Druk op [ om het zijpaneel in te klappen en de pagina meer ruimte te geven."
+            ],
+            "History shows every saved version of a page. Preview one in place before you restore it.": [
+                "Geschiedenis toont elke opgeslagen versie van een pagina. Bekijk er een ter plekke voordat je hem herstelt."
+            ],
+            "Right-click a tab to put related tabs in a coloured group.": [
+                "Klik met rechts op een tabblad om verwante tabbladen in een gekleurde groep te zetten."
+            ],
+            "Type \/ in the message box for starters, skills and your NibWP workflows.": [
+                "Typ \/ in het berichtvak voor startpunten, skills en je NibWP-workflows."
+            ],
+            "Press D to draw a box, a circle or a line around what you mean.": [
+                "Druk op D om een kader, een cirkel of een lijn te tekenen rond wat je bedoelt."
+            ],
+            "The phone and tablet buttons show the page at those widths. Notes pinned there tell the agent which one to fix.": [
+                "De knoppen voor telefoon en tablet tonen de pagina op die breedtes. Notities die je daar vastpint, vertellen de agent welke hij moet verbeteren."
+            ],
+            "Media holds every file on the site. Pick a few and add them to your message.": [
+                "Media bevat elk bestand op de site. Kies er een paar en voeg ze toe aan je bericht."
+            ],
+            "Pin several notes with Add another, then send them as one message. Your agent gets them numbered.": [
+                "Pin meerdere notities vast met Nog een toevoegen en verstuur ze dan als \u00e9\u00e9n bericht. Je agent krijgt ze genummerd."
+            ],
+            "The count next to Comment and Draw lists every comment in this thread. Click one to jump to it.": [
+                "Het getal naast Opmerking en Tekenen toont elke opmerking in dit gesprek. Klik op een opmerking om ernaartoe te springen."
+            ],
+            "Ctrl-click a link on the page to open it in a new tab, like in a browser.": [
+                "Ctrl-klik op een link op de pagina om hem in een nieuw tabblad te openen, net als in een browser."
+            ],
+            "No agent at hand? Every message has Copy as prompt, ready to paste into any AI chat.": [
+                "Geen agent bij de hand? Elk bericht heeft Kopi\u00ebren als prompt, klaar om in een AI-chat te plakken."
+            ],
+            "In the \u2026 menu, Ask before page actions makes your agent ask you before it clicks or types on a page.": [
+                "In het menu \u2026 zorgt Vragen v\u00f3\u00f3r pagina-acties ervoor dat je agent het je vraagt voordat hij op een pagina klikt of typt."
+            ],
+            "Opened another site as a snapshot? Point at what you like there and ask for the same on yours.": [
+                "Een andere site als momentopname geopend? Wijs aan wat je daar mooi vindt en vraag hetzelfde voor de jouwe."
+            ],
+            "Hey! I bend, I don\u2019t break.": [
+                "H\u00e9! Ik buig, maar ik breek niet."
+            ],
+            "Poke me once more and I\u2019ll start reading your CSS out loud.": [
+                "Nog \u00e9\u00e9n keer porren en ik lees je CSS hardop voor."
+            ],
+            "I\u2019m not idle. I\u2019m in energy-saving mode. Very different.": [
+                "Ik lummel niet. Ik sta in energiebesparende modus. Heel iets anders."
+            ],
+            "Yes? I was busy looking important.": [
+                "Ja? Ik was druk bezig met belangrijk kijken."
+            ],
+            "Careful, this antenna picks up compliments too.": [
+                "Voorzichtig, deze antenne vangt ook complimentjes op."
+            ],
+            "I\u2019ve never forgotten a semicolon. Mostly because I don\u2019t write code.": [
+                "Ik ben nog nooit een puntkomma vergeten. Vooral omdat ik geen code schrijf."
+            ],
+            "Press %s (or Comment up top), then click anything on the page. Write what should change and press Enter to send it, or Add another to pin a few and send them together.": [
+                "Druk op %s (of Opmerking bovenaan) en klik dan op iets op de pagina. Schrijf wat er moet veranderen en druk op Enter om het te versturen, of op Nog een toevoegen om er een paar vast te pinnen en samen te versturen."
+            ],
+            "Press %s (or Draw up top) and pick Box, Circle or Pen in the bar at the bottom. Drag on the page, then write what should change. The drawing goes to your agent with the note.": [
+                "Druk op %s (of Tekenen bovenaan) en kies Kader, Cirkel of Pen in de balk onderaan. Sleep over de pagina en schrijf dan wat er moet veranderen. De tekening gaat samen met de notitie naar je agent."
+            ],
+            "The + opens a new tab. Ctrl-click a link to open it in one. Right-click a tab to group tabs, colour or name the group, or close tabs.": [
+                "De + opent een nieuw tabblad. Ctrl-klik op een link om hem in een nieuw tabblad te openen. Klik met rechts op een tabblad om tabbladen te groeperen, de groep een kleur of naam te geven, of tabbladen te sluiten."
+            ],
+            "Paste any web address in the bar up top. Another site opens as a safe snapshot: you can point at it and copy from it, though its own scripts stay off.": [
+                "Plak een webadres in de balk bovenaan. Een andere site opent als veilige momentopname: je kunt erop aanwijzen en eruit kopi\u00ebren, maar de eigen scripts blijven uit."
+            ],
+            "Every save shows in the thread with Undo. The History tab lists all versions of the page: preview one in place, then Restore. What is there now is kept, so you can switch back.": [
+                "Elke opslag verschijnt in het gesprek met Ongedaan maken. Het tabblad Geschiedenis toont alle versies van de pagina: bekijk er een ter plekke en kies dan Herstellen. Wat er nu staat, blijft bewaard, zodat je terug kunt wisselen."
+            ],
+            "The picture icon up top opens Media: browse by type or month, search, pick several (Shift for a run), then Add to message, Copy links, or Delete. Deleted files wait in Trash.": [
+                "Het afbeeldingsicoon bovenaan opent Media: blader op type of maand, zoek, kies er meerdere (Shift voor een reeks) en kies dan Aan bericht toevoegen, Links kopi\u00ebren of Verwijderen. Verwijderde bestanden wachten in de Prullenbak."
+            ],
+            "Click the agent status at the top left. Connect your AI client once, then paste the message it shows into your agent. It then listens to everything you send from here.": [
+                "Klik op de agentstatus linksboven. Verbind je AI-client \u00e9\u00e9n keer en plak dan het bericht dat verschijnt in je agent. Daarna luistert hij naar alles wat je van hieruit stuurt."
+            ],
+            "Type \/ in the message box: starters, pages to include, skills and your NibWP workflows. Pick one and it rides along with your message.": [
+                "Typ \/ in het berichtvak: startpunten, pagina's om mee te sturen, skills en je NibWP-workflows. Kies er een en hij gaat mee met je bericht."
+            ],
+            "The phone and tablet buttons up top show the page at those widths. Notes you pin there tell the agent which layout to fix.": [
+                "De knoppen voor telefoon en tablet bovenaan tonen de pagina op die breedtes. Notities die je daar vastpint, vertellen de agent welke lay-out hij moet verbeteren."
+            ],
+            "Press Ctrl K and type: it searches pages, posts and products, or takes a path like \/contact\/.": [
+                "Druk op Ctrl K en typ: het doorzoekt pagina's, berichten en producten, of neemt een pad als \/contact\/."
+            ],
+            "Did you know? With %1$s, NibWP can %2$s.": [
+                "Wist je dat? Met %1$s kan NibWP %2$s."
+            ],
+            "Did you know? NibWP has a ready workflow for \u201c%1$s\u201d. %2$s": [
+                "Wist je dat? NibWP heeft een kant-en-klare workflow voor \u201c%1$s\u201d. %2$s"
+            ],
+            "Did you know? NibWP can work on any page you open here. Pin a note on it and say what you want; your agent does the rest.": [
+                "Wist je dat? NibWP kan werken aan elke pagina die je hier opent. Pin er een notitie op en zeg wat je wilt; je agent doet de rest."
+            ],
+            "Did you know? NibWP keeps every version of a page. If a change is not right, one click on Undo brings the old one back.": [
+                "Wist je dat? NibWP bewaart elke versie van een pagina. Klopt een wijziging niet, dan haalt \u00e9\u00e9n klik op Ongedaan maken de oude terug."
+            ],
+            "Did you know? NibWP can open any other website as a safe snapshot, so you can point at a design you like and ask for the same.": [
+                "Wist je dat? NibWP kan elke andere website openen als veilige momentopname, zodat je een ontwerp dat je mooi vindt kunt aanwijzen en om hetzelfde kunt vragen."
+            ],
+            "Did you know? NibWP can read a file or screenshot you drop in the message box and build from it.": [
+                "Wist je dat? NibWP kan een bestand of screenshot lezen dat je in het berichtvak sleept, en daarop verder bouwen."
+            ],
+            "Try it": [
+                "Probeer het"
+            ],
+            "Another one": [
+                "Nog eentje"
+            ],
+            "Nice": [
+                "Leuk"
+            ],
+            "My AI agent just fixed my WordPress site while I watched, with NibWP.": [
+                "Mijn AI-agent heeft net mijn WordPress-site opgeknapt terwijl ik toekeek, met NibWP."
+            ],
+            "That went well! Want to tell people how you fix your site now? A share helps NibWP grow, and I\u2019ll learn a new trick for it.": [
+                "Dat ging goed! Wil je mensen vertellen hoe jij je site nu opknapt? Delen helpt NibWP groeien, en ik leer er een nieuw kunstje van."
+            ],
+            "Enjoying NibWP? Bring other site owners and earn %s with the affiliate program. Joining takes two clicks.": [
+                "Bevalt NibWP? Breng andere site-eigenaren mee en verdien %s met het affiliateprogramma. Meedoen kost twee klikken."
+            ],
+            "a commission": [
+                "een commissie"
+            ],
+            "See the program": [
+                "Bekijk het programma"
+            ],
+            "Would you leave NibWP a quick review? It helps other site owners find it.": [
+                "Wil je NibWP een korte review geven? Zo vinden andere site-eigenaren het makkelijker."
+            ],
+            "Write a review": [
+                "Een review schrijven"
+            ],
+            "Don\u2019t suggest these": [
+                "Stel deze niet meer voor"
+            ],
+            "Thank you! For that I learned %s. Watch.": [
+                "Dank je! Daarvoor heb ik %s geleerd. Kijk maar."
+            ],
+            "Bravo": [
+                "Bravo"
+            ],
+            "Ask Niby": [
+                "Vraag het Niby"
+            ],
+            "Ask": [
+                "Vragen"
+            ],
+            "Chat with Niby": [
+                "Chat met Niby"
+            ],
+            "Agent working on \u201c%s\u201d": [
+                "Agent werkt aan \u201c%s\u201d"
+            ],
+            "Agent working": [
+                "Agent aan het werk"
+            ],
+            "Agent listening": [
+                "Agent luistert"
+            ],
+            "Agent idle": [
+                "Agent inactief"
+            ],
+            "No agent connected": [
+                "Geen agent verbonden"
+            ],
+            "Your agent is waiting for your answer: \u201c%s\u201d": [
+                "Je agent wacht op je antwoord: \u201c%s\u201d"
+            ],
+            "Your agent is waiting for your answer.": [
+                "Je agent wacht op je antwoord."
+            ],
+            "Answer it": [
+                "Beantwoorden"
+            ],
+            "Zzz\u2026 huh? No agent listening, so I\u2019m asleep. Wake up your agent and I wake up too.": [
+                "Zzz\u2026 h\u00e8? Er luistert geen agent, dus ik slaap. Maak je agent wakker en dan word ik ook wakker."
+            ],
+            "Five more minutes\u2026 Connect your agent, then I\u2019m all yours.": [
+                "Nog vijf minuutjes\u2026 Verbind je agent, dan ben ik helemaal van jou."
+            ],
+            "Mmm\u2026 I run on your agent. No agent, no Niby. Wake it up?": [
+                "Mmm\u2026 ik draai op je agent. Geen agent, geen Niby. Zullen we hem wakker maken?"
+            ],
+            "I\u2019m sleep-talking. Real answers when your agent is listening.": [
+                "Ik praat in mijn slaap. Echte antwoorden krijg je als je agent luistert."
+            ],
+            "Wake up my agent": [
+                "Mijn agent wakker maken"
+            ],
+            "How does this work?": [
+                "Hoe werkt dit?"
+            ],
+            "Take the tour": [
+                "Doe de rondleiding"
+            ],
+            "Call Kind Guy": [
+                "Roep Kind Guy"
+            ],
+            "Hide me": [
+                "Verberg me"
+            ],
+            "A tip, please": [
+                "Een tip graag"
+            ],
+            "Surprise me": [
+                "Verras me"
+            ],
+            "Your agent is busy. Ask me anything meanwhile; I\u2019ll answer once it\u2019s done, or line up the next change.": [
+                "Je agent is bezig. Vraag me intussen gerust iets; ik antwoord zodra hij klaar is, of zet de volgende wijziging alvast klaar."
+            ],
+            "Hi! Ask me anything, or tell me what to change. I\u2019ll pass the work to your agent.": [
+                "Hoi! Vraag me alles, of vertel me wat er moet veranderen. Ik geef het werk door aan je agent."
+            ],
+            "Ask me anything, or tell me what to change\u2026": [
+                "Vraag me iets, of vertel wat er moet veranderen\u2026"
+            ],
+            "No NibWP suggestions, please": [
+                "Geen NibWP-suggesties, graag"
+            ],
+            "On it! I passed that to your agent. Watch the page, I\u2019ll tell you when it\u2019s done.": [
+                "Komt eraan! Ik heb het doorgegeven aan je agent. Hou de pagina in de gaten, ik zeg het als het klaar is."
+            ],
+            "Noted! It waits in the thread for your agent, and gets done as soon as one is listening.": [
+                "Genoteerd! Het wacht in het gesprek op je agent en wordt gedaan zodra er een luistert."
+            ],
+            "Anything else?": [
+                "Nog iets?"
+            ],
+            "Sounds like a job! Want a quick answer from me here, or shall I pass it to your agent to do it properly?": [
+                "Klinkt als een klus! Wil je hier snel een antwoord van mij, of zal ik het aan je agent doorgeven zodat hij het goed doet?"
+            ],
+            "Get answer here": [
+                "Antwoord hier"
+            ],
+            "Pass it to the agent": [
+                "Geef door aan de agent"
+            ],
+            "Or ask me something else\u2026": [
+                "Of vraag me iets anders\u2026"
+            ],
+            "An Etch question? That is Kind Guy\u2019s thing, our Etch pro. Shall I call him?": [
+                "Een Etch-vraag? Dat is iets voor Kind Guy, onze Etch-pro. Zal ik hem roepen?"
+            ],
+            "No, you answer": [
+                "Nee, antwoord jij maar"
+            ],
+            "Use as my request": [
+                "Gebruik als mijn verzoek"
+            ],
+            "Thanks": [
+                "Bedankt"
+            ],
+            "Keep going\u2026": [
+                "Ga door\u2026"
+            ],
+            "I think best with your agent listening. Connect one and ask me again, I\u2019ll be brilliant. Probably. Ask me how to use Agent View meanwhile, that I know by heart.": [
+                "Ik denk het best als je agent luistert. Verbind er een en vraag het me nog eens, dan ben ik briljant. Waarschijnlijk. Vraag me intussen hoe Agent View werkt, dat ken ik uit mijn hoofd."
+            ],
+            "Shh! I\u2019m hiding. He is scary.": [
+                "Ssst! Ik verstop me. Hij is eng."
+            ],
+            "Bring Niby back": [
+                "Haal Niby terug"
+            ],
+            "No problem! The tour waits in my chat whenever you want it: Take the tour.": [
+                "Geen probleem! De rondleiding wacht in mijn chat wanneer je maar wilt: Doe de rondleiding."
+            ],
+            "Here\u2019s how it works: browse your site on the right. Press %1$s and click anything to pin a note, or %2$s to draw around it. Send it from the chat on the left. Your agent makes the change and saves it, and every change can be undone.": [
+                "Zo werkt het: blader rechts door je site. Druk op %1$s en klik op iets om er een notitie op te pinnen, of op %2$s om eromheen te tekenen. Verstuur het vanuit de chat links. Je agent voert de wijziging uit en slaat hem op, en elke wijziging kan ongedaan worden gemaakt."
+            ],
+            "Idea from Kind Guy: %s": [
+                "Idee van Kind Guy: %s"
+            ],
+            "Idea from Niby: %s": [
+                "Idee van Niby: %s"
+            ],
+            "Fine, just us then. Let me put my Etch hat on.": [
+                "Goed, dan alleen wij twee\u00ebn. Even mijn Etch-hoed opzetten."
+            ],
+            "\u201cOkay\u201d?! I inspect your markup for free and I get \u201cokay\u201d? \u2026 Fine. I\u2019ll earn it.": [
+                "\u201cOk\u00e9\u201d?! Ik inspecteer je markup gratis en dan krijg ik \u201cok\u00e9\u201d? \u2026 Prima. Ik zal het verdienen."
+            ],
+            "Not really?! \u2026 Fine. I\u2019ll inspect harder. Out of pure spite. You\u2019ll love me by Friday.": [
+                "Niet echt?! \u2026 Prima. Dan inspecteer ik nog strenger. Uit pure wrok. Vrijdag ben je dol op me."
+            ],
+            "Make it responsive at phone, tablet and desktop, and accessible: contrast, labels, focus states, keyboard, alt text.": [
+                "Maak het responsive op telefoon, tablet en desktop, en toegankelijk: contrast, labels, focusstatussen, toetsenbord, alt-tekst."
+            ],
+            "Advice on my request, before I send it": [
+                "Advies over mijn verzoek voordat ik het verstuur"
+            ],
+            "Built and inspected on my WordPress site in minutes, with an AI agent and an expert watching over it. NibWP Agent View.": [
+                "In een paar minuten gebouwd en ge\u00efnspecteerd op mijn WordPress-site, met een AI-agent en een expert die meekijkt. NibWP Agent View."
+            ],
+            "Understood. No more suggestions from me, only tips. And the occasional joke.": [
+                "Begrepen. Geen suggesties meer van mij, alleen tips. En af en toe een grapje."
+            ],
+            "Attached. Now it gets done by the book. My book.": [
+                "Bijgevoegd. Nu gebeurt het volgens het boekje. Mijn boekje."
+            ],
+            "I\u2019m back! Did you miss me? Don\u2019t answer that.": [
+                "Ik ben terug! Heb je me gemist? Niet antwoorden."
+            ],
+            "Kind Guy, the expert. Click to talk to him, drag to move.": [
+                "Kind Guy, de expert. Klik om met hem te praten, sleep om te verplaatsen."
+            ],
+            "DUTY": [
+                "DIENST"
+            ],
+            "Kind Guy\u2019s mode": [
+                "Modus van Kind Guy"
+            ],
+            "On duty": [
+                "In dienst"
+            ],
+            "Code inspector, standards controller, adviser, mentor. Reads each request before it goes, inspects every finished task, suggests workflows and fixes.": [
+                "Code-inspecteur, standaardenbewaker, adviseur, mentor. Leest elk verzoek voordat het weggaat, inspecteert elke afgeronde taak, stelt workflows en verbeteringen voor."
+            ],
+            "Off duty": [
+                "Buiten dienst"
+            ],
+            "Just company: tricks, jokes, Etch stories. Answers when you ask, inspects nothing.": [
+                "Gewoon gezelschap: kunstjes, grappen, Etch-verhalen. Antwoordt als je iets vraagt, inspecteert niets."
+            ],
+            "Chat with Kind Guy": [
+                "Chat met Kind Guy"
+            ],
+            "Kind Guy": [
+                "Kind Guy"
+            ],
+            "Ask me anything. Work goes to your chat on the left.": [
+                "Vraag me alles. Werk gaat naar je chat links."
+            ],
+            "Close the chat with Kind Guy": [
+                "Sluit de chat met Kind Guy"
+            ],
+            "Point at something on the page (C)": [
+                "Wijs iets aan op de pagina (C)"
+            ],
+            "Draw on the page (D)": [
+                "Teken op de pagina (D)"
+            ],
+            "Ask Kind Guy\u2026": [
+                "Vraag het Kind Guy\u2026"
+            ],
+            "Your message to Kind Guy": [
+                "Je bericht aan Kind Guy"
+            ],
+            "Send to Kind Guy": [
+                "Naar Kind Guy sturen"
+            ],
+            "Inspect this page": [
+                "Deze pagina inspecteren"
+            ],
+            "Point at something": [
+                "Iets aanwijzen"
+            ],
+            "Which skill helps?": [
+                "Welke skill helpt?"
+            ],
+            "Bye, Kind Guy": [
+                "Doei, Kind Guy"
+            ],
+            "Go on, ask. WordPress, Etch, ACSS, code, your page. When we agree on a change, I drop it into your chat on the left and your agent does it there.": [
+                "Vraag maar raak. WordPress, Etch, ACSS, code, je pagina. Als we het eens zijn over een wijziging, zet ik die in je chat links en voert je agent hem daar uit."
+            ],
+            "Sounds like a job. Want my quick take here, or shall I pass it to your agent to do it properly?": [
+                "Klinkt als een klus. Wil je hier mijn snelle kijk, of zal ik het aan je agent doorgeven zodat hij het goed doet?"
+            ],
+            "Put me down! \u2026 Thank you. Never do that again.": [
+                "Zet me neer! \u2026 Dank je. Doe dat nooit meer."
+            ],
+            "I am not a sticker.": [
+                "Ik ben geen sticker."
+            ],
+            "Fine. I\u2019ll work from here. Happy?": [
+                "Prima. Dan werk ik van hieruit. Blij?"
+            ],
+            "I am the best at Etch and ACSS. Who can beat me? Nobody. I am the best.": [
+                "Ik ben de beste in Etch en ACSS. Wie kan mij verslaan? Niemand. Ik ben de beste."
+            ],
+            "Second place? Never heard of it.": [
+                "Tweede plaats? Nooit van gehoord."
+            ],
+            "Who knows Etch and ACSS better than the guy who made them? Exactly. Nobody.": [
+                "Wie kent Etch en ACSS beter dan de man die ze gemaakt heeft? Precies. Niemand."
+            ],
+            "I don\u2019t make mistakes. I make components.": [
+                "Ik maak geen fouten. Ik maak componenten."
+            ],
+            "Fastest Etch build you will ever see. Blink and you miss it.": [
+                "De snelste Etch-build die je ooit zult zien. Knipper en je hebt hem gemist."
+            ],
+            "Some people use Etch. I am Etch\u2019s favourite person.": [
+                "Sommige mensen gebruiken Etch. Ik ben de lieveling van Etch."
+            ],
+            "Pressure? I don\u2019t feel pressure. Pressure feels me.": [
+                "Druk? Ik voel geen druk. Druk voelt mij."
+            ],
+            "What now?": [
+                "Wat nu weer?"
+            ],
+            "You clicked me. Bold move.": [
+                "Je klikte op me. Gedurfd."
+            ],
+            "Make it quick. I have tokens to align.": [
+                "Snel een beetje. Ik heb tokens uit te lijnen."
+            ],
+            "Need the best? You found him.": [
+                "Zoek je de beste? Gevonden."
+            ],
+            "Autographs after the build.": [
+                "Handtekeningen na de build."
+            ],
+            "You again? Fine. Talk. Fast.": [
+                "Jij weer? Prima. Praat. Snel."
+            ],
+            "I\u2019m busy being excellent. What is it?": [
+                "Ik ben druk bezig met uitblinken. Wat is er?"
+            ],
+            "!important? Do you also shout at your coffee machine?": [
+                "!important? Schreeuw je ook tegen je koffiezetapparaat?"
+            ],
+            "!important is CSS for \u201cI gave up.\u201d I never give up.": [
+                "!important is CSS voor \u201cik geef het op.\u201d Ik geef het nooit op."
+            ],
+            "Two CSS properties walk into a bar. A barstool in a different bar falls over.": [
+                "Twee CSS-eigenschappen lopen een caf\u00e9 binnen. In een ander caf\u00e9 valt een barkruk om."
+            ],
+            "Why was the div sad? It had no class. BEM fixes that. You\u2019re welcome.": [
+                "Waarom was de div verdrietig? Hij had geen class. BEM lost dat op. Graag gedaan."
+            ],
+            "z-index: 9999? Bold. Let me guess, 99999 next week.": [
+                "z-index: 9999? Gedurfd. Laat me raden, volgende week 99999."
+            ],
+            "I told a joke about position: absolute. Nobody knew where it was coming from.": [
+                "Ik vertelde een grap over position: absolute. Niemand wist waar hij vandaan kwam."
+            ],
+            "I don\u2019t float. I flex. And when I\u2019m serious, I grid.": [
+                "Ik float niet. Ik flex. En als het serieus wordt, grid ik."
+            ],
+            "Centring a div used to be hard. Then I showed up.": [
+                "Een div centreren was vroeger lastig. Toen kwam ik."
+            ],
+            "display: none. That is my patience for inline styles.": [
+                "display: none. Zoveel geduld heb ik voor inline styles."
+            ],
+            "Margins collapse. My standards don\u2019t.": [
+                "Marges klappen in. Mijn normen niet."
+            ],
+            "Specificity wars? I don\u2019t fight them. I write clean classes and win.": [
+                "Specificiteitsoorlogen? Die vecht ik niet uit. Ik schrijf schone classes en win."
+            ],
+            "A div inside a div inside a div. Somewhere, a token cries.": [
+                "Een div in een div in een div. Ergens huilt een token."
+            ],
+            "I don\u2019t have a temper. I have standards.": [
+                "Ik heb geen kort lontje. Ik heb normen."
+            ],
+            "Did you just say another builder\u2019s name in front of me? I\u2019ll pretend I didn\u2019t hear that.": [
+                "Noemde je net de naam van een andere builder waar ik bij sta? Ik doe alsof ik dat niet hoorde."
+            ],
+            "Oh, that one. Sure. And I\u2019ll write my HTML with a crayon.": [
+                "O, die. Tuurlijk. En ik schrijf mijn HTML met waskrijt."
+            ],
+            "Interesting. Wrong, but interesting.": [
+                "Interessant. Fout, maar interessant."
+            ],
+            "Fine. Sent. Now don\u2019t touch anything.": [
+                "Prima. Verstuurd. Nu nergens aankomen."
+            ],
+            "Your agent has it. If it goes wrong, I\u2019m blaming you.": [
+                "Je agent heeft het. Als het misgaat, krijg jij de schuld."
+            ],
+            "Sent. Clean HTML is on its way. You\u2019re welcome in advance.": [
+                "Verstuurd. Schone HTML is onderweg. Graag gedaan, alvast."
+            ],
+            "Done. Flawless, obviously.": [
+                "Klaar. Foutloos, uiteraard."
+            ],
+            "Finished. Check it. Then thank me. Mostly the second part.": [
+                "Klaar. Controleer het. Bedank me dan. Vooral dat tweede."
+            ],
+            "Call me when you\u2019re doing real Etch work.": [
+                "Roep me als je echt Etch-werk doet."
+            ],
+            "I\u2019m out. Don\u2019t let Niby touch the CSS.": [
+                "Ik ben weg. Laat Niby niet aan de CSS zitten."
+            ],
+            "I can see you, Niby.": [
+                "Ik zie je wel, Niby."
+            ],
+            "Niby, stop peeking. It\u2019s embarrassing.": [
+                "Niby, niet stiekem gluren. Het is g\u00eanant."
+            ],
+            "Etch is not static HTML. Four pillars: components, loops, conditions, dynamic data. If an editor would ever change it without opening the builder, it is a prop, a loop item, a condition or a binding. Not a literal.": [
+                "Etch is geen statische HTML. Vier pijlers: componenten, loops, condities, dynamische data. Als een redacteur het ooit zou wijzigen zonder de builder te openen, is het een prop, een loop-item, een conditie of een binding. Geen letterlijke waarde."
+            ],
+            "Repeating cards, tiers, tabs? One Etch component with properties, used everywhere. Copy-pasted markup is how weekends die.": [
+                "Herhalende kaarten, prijsniveaus, tabbladen? E\u00e9n Etch-component met eigenschappen, overal gebruikt. Met gekopieerde markup gaan weekenden verloren."
+            ],
+            "Six or more identical siblings, or content from posts, products or ACF rows? That is a loop. Not six boxes made by hand.": [
+                "Zes of meer identieke broers en zussen, of content uit berichten, producten of ACF-rijen? Dat is een loop. Geen zes met de hand gemaakte vakken."
+            ],
+            "Hiding something with CSS? No. Use an Etch condition and do not render it at all. Dead markup is still markup.": [
+                "Iets verbergen met CSS? Nee. Gebruik een Etch-conditie en render het helemaal niet. Dode markup is nog steeds markup."
+            ],
+            "Bind real data, then shape it with modifiers: fallbacks, truncation, dates, maths. Don\u2019t type what the database already knows.": [
+                "Bind echte data en vorm die met modifiers: fallbacks, inkorten, datums, rekenwerk. Typ niet over wat de database al weet."
+            ],
+            "Every value that maps to ACSS gets the token and a fallback: var(--text-l, 1.125rem). A bare var() with no fallback? Amateur hour.": [
+                "Elke waarde die op ACSS aansluit, krijgt de token en een fallback: var(--text-l, 1.125rem). Een kale var() zonder fallback? Amateurwerk."
+            ],
+            "Headings: var(--h1), var(--h2), var(--h3). Body: var(--text-m). Never a hand-written clamp() for font sizes. ACSS already does the fluid maths, better than you.": [
+                "Koppen: var(--h1), var(--h2), var(--h3). Broodtekst: var(--text-m). Nooit een zelfgeschreven clamp() voor lettergroottes. ACSS doet het vloeiende rekenwerk al, beter dan jij."
+            ],
+            "Sections breathe with var(--section-space-m); heroes and calls to action get --section-space-l. Side padding is var(--gutter). Stop inventing margins.": [
+                "Secties ademen met var(--section-space-m); hero's en calls-to-action krijgen --section-space-l. Zijpadding is var(--gutter). Hou op met marges verzinnen."
+            ],
+            "Grids use var(--grid-gap), stacked content uses var(--content-gap). A margin on every child? I can hear it from here.": [
+                "Grids gebruiken var(--grid-gap), gestapelde content gebruikt var(--content-gap). Een marge op elk kind? Ik hoor het van hieruit."
+            ],
+            "Surfaces decide the token. --border-color-light is for dark sections; on a white card it is invisible. So is your border.": [
+                "Het oppervlak bepaalt de token. --border-color-light is voor donkere secties; op een witte kaart is hij onzichtbaar. Net als je rand."
+            ],
+            "Class names are BEM: brand-card__title--featured. Not .big-red-text. I mean it.": [
+                "Classnamen zijn BEM: brand-card__title--featured. Niet .big-red-text. Ik meen het."
+            ],
+            "Every element gets a class. A tree of bare tags cannot be styled or targeted later. Future you will cry.": [
+                "Elk element krijgt een class. Een boom van kale tags kun je later niet stylen of targeten. Je toekomstige ik gaat huilen."
+            ],
+            "Responsive is not optional. Container queries when a component cares about its own width, media queries for the viewport.": [
+                "Responsive is niet optioneel. Container queries als een component om zijn eigen breedte geeft, media queries voor de viewport."
+            ],
+            "Focus ring: var(--focus-width) solid var(--focus-color). Keyboard users exist. Respect them.": [
+                "Focusring: var(--focus-width) solid var(--focus-color). Toetsenbordgebruikers bestaan. Respecteer ze."
+            ],
+            "No style tags, no @import, no stylesheet links inside a page. Styles live in Etch\u2019s styles, wired to classes.": [
+                "Geen style-tags, geen @import, geen stylesheet-links in een pagina. Styles horen in de styles van Etch, gekoppeld aan classes."
+            ],
+            "Pick one type scale and stay with it: major third 1.25, perfect fourth 1.333. Mixing scales is chaos with extra steps.": [
+                "Kies \u00e9\u00e9n typeschaal en blijf erbij: grote terts 1.25, reine kwart 1.333. Schalen mengen is chaos met extra stappen."
+            ],
+            "Modern CSS does the heavy lifting: gap, :has(), container queries, logical properties like margin-inline. Hacks are for 2012.": [
+                "Moderne CSS doet het zware werk: gap, :has(), container queries, logische eigenschappen als margin-inline. Hacks zijn voor 2012."
+            ],
+            "Animations go inside prefers-reduced-motion. Not everyone wants your hero spinning.": [
+                "Animaties horen binnen prefers-reduced-motion. Niet iedereen wil je hero zien draaien."
+            ],
+            "Listen up. Open a page in the Etch editor right here, press %s and click on the canvas. I tell your agent exactly which element. No guessing.": [
+                "Opletten. Open hier een pagina in de Etch-editor, druk op %s en klik op het canvas. Ik vertel je agent precies welk element. Geen gegok."
+            ],
+            "Show me": [
+                "Laat zien"
+            ],
+            "Press D, draw a box around a section and say \u201cmake this a component\u201d. Reusable, editable, done. Copy and paste is for amateurs.": [
+                "Druk op D, teken een kader rond een sectie en zeg \u201cmaak hier een component van\u201d. Herbruikbaar, bewerkbaar, klaar. Kopi\u00ebren en plakken is voor amateurs."
+            ],
+            "Phone view, up top. Pin notes in it and your agent fixes the phone layout, not the desktop one. Basic stuff, people.": [
+                "Telefoonweergave, bovenaan. Pin daar notities vast en je agent verbetert de telefoonlay-out, niet die voor desktop. Basiskennis, mensen."
+            ],
+            "With %1$s, NibWP can %2$s. Yes, I\u2019m impressed too. Don\u2019t tell Niby.": [
+                "Met %1$s kan NibWP %2$s. Ja, ik ben ook onder de indruk. Niet tegen Niby zeggen."
+            ],
+            "There is a ready workflow for \u201c%1$s\u201d: %2$s. Press \/ and type its name. Or don\u2019t. I\u2019m not your mom.": [
+                "Er is een kant-en-klare workflow voor \u201c%1$s\u201d: %2$s. Druk op \/ en typ de naam. Of niet. Ik ben je moeder niet."
+            ],
+            "Press D, draw a box around the section, say \u201cmake this an Etch component\u201d and send. Built once, reused everywhere, with properties for what changes. Like my insults.": [
+                "Druk op D, teken een kader rond de sectie, zeg \u201cmaak hier een Etch-component van\u201d en verstuur. E\u00e9n keer gebouwd, overal hergebruikt, met eigenschappen voor wat verandert. Net als mijn beledigingen."
+            ],
+            "Open the page in the Etch editor here, press %s and click right on the canvas. I tell your agent exactly which element. Yes, inside the canvas. I\u2019m that good.": [
+                "Open de pagina hier in de Etch-editor, druk op %s en klik direct op het canvas. Ik vertel je agent precies welk element. Ja, binnen het canvas. Zo goed ben ik."
+            ],
+            "Drop a screenshot, HTML or a URL in the message box and say \u201cconvert this to Etch\u201d. With %s, NibWP builds validated Etch components from it.": [
+                "Sleep een screenshot, HTML of een URL in het berichtvak en zeg \u201czet dit om naar Etch\u201d. Met %s bouwt NibWP er gevalideerde Etch-componenten van."
+            ],
+            "ACSS is the CSS framework that pairs with Etch: tokens for spacing, type and colour. With %s, NibWP can build an ACSS setup from a screenshot or a URL.": [
+                "ACSS is het CSS-framework dat bij Etch hoort: tokens voor witruimte, typografie en kleur. Met %s kan NibWP een ACSS-setup bouwen vanuit een screenshot of een URL."
+            ],
+            "ACSS is the CSS framework that pairs with Etch: tokens for spacing, type and colour. Use them. Always.": [
+                "ACSS is het CSS-framework dat bij Etch hoort: tokens voor witruimte, typografie en kleur. Gebruik ze. Altijd."
+            ],
+            "Hey! Off the sneakers!": [
+                "H\u00e9! Van mijn sneakers af!"
+            ],
+            "Did you just step on my foot? Did you?": [
+                "Stond je nou op mijn voet? Echt?"
+            ],
+            "Limited edition. Touch them again, I dare you.": [
+                "Limited edition. Raak ze nog \u00e9\u00e9n keer aan, ik daag je uit."
+            ],
+            "OW. Rude.": [
+                "AU. Onbeschoft."
+            ],
+            "Nice try. The cap stays on for a reason.": [
+                "Leuk geprobeerd. De pet blijft op, en niet zonder reden."
+            ],
+            "Focus on the work. Before you know it, Bev will ask for changes.": [
+                "Focus op het werk. Voor je het weet, vraagt Bev om wijzigingen."
+            ],
+            "Hmm. Thinking. Don\u2019t interrupt.": [
+                "Hmm. Aan het denken. Niet storen."
+            ],
+            "This beard has seen things. Mostly divs inside divs.": [
+                "Deze baard heeft dingen gezien. Vooral divs in divs."
+            ],
+            "Scratching my beard means I\u2019m about to be right. Again.": [
+                "Als ik aan mijn baard krab, krijg ik zo gelijk. Alweer."
+            ],
+            "Chat with me": [
+                "Chat met me"
+            ],
+            "Go off duty": [
+                "Uit dienst gaan"
+            ],
+            "Go on duty": [
+                "In dienst gaan"
+            ],
+            "Hands off the cap.": [
+                "Handen af van de pet."
+            ],
+            "The cap stays. Don\u2019t even think about it.": [
+                "De pet blijft. Denk er niet eens aan."
+            ],
+            "Careful. That cap has survived three redesigns.": [
+                "Voorzichtig. Die pet heeft drie redesigns overleefd."
+            ],
+            "THAT\u2019S IT. You made my cap fly off. Happy now?": [
+                "NU IS HET GENOEG. Mijn pet is weggevlogen. Tevreden?"
+            ],
+            "La la la. No agent, no listening. Connect one and I\u2019ll take these off.": [
+                "La la la. Geen agent, geen gehoor. Verbind er een, dan zet ik deze af."
+            ],
+            "Fine": [
+                "Goed dan"
+            ],
+            "Fine. I\u2019m listening. Don\u2019t make me regret it.": [
+                "Goed dan. Ik luister. Laat me er geen spijt van krijgen."
+            ],
+            "Etch? Oh, that is serious work. For this one, let me bring in someone more skilled than me.": [
+                "Etch? O, dat is serieus werk. Hiervoor haal ik iemand die er handiger in is dan ik."
+            ],
+            "Etch again? Shall I call Kind Guy?": [
+                "Weer Etch? Zal ik Kind Guy roepen?"
+            ],
+            "Bring him in": [
+                "Haal hem erbij"
+            ],
+            "No, stay Niby": [
+                "Nee, blijf jij maar, Niby"
+            ],
+            "Meet Kind Guy: nobody knows Etch and ACSS like him. Brace yourself.": [
+                "Maak kennis met Kind Guy: niemand kent Etch en ACSS zoals hij. Zet je schrap."
+            ],
+            "See my sign? Flip it. On duty, I inspect everything your agent does. Off duty, I just hang out and judge quietly.": [
+                "Zie je mijn bordje? Draai het om. In dienst inspecteer ik alles wat je agent doet. Buiten dienst hang ik gewoon rond en oordeel ik in stilte."
+            ],
+            "Show me the modes": [
+                "Laat me de modi zien"
+            ],
+            "Is he gone? \u2026 Phew. Hi again!": [
+                "Is hij weg? \u2026 Pfoe. Hoi weer!"
+            ],
+            "From the top": [
+                "Vanaf het begin"
+            ],
+            "Excuse me? Say one more word against Etch Studio. One. I dare you.": [
+                "Pardon? Zeg nog \u00e9\u00e9n woord tegen Etch Studio. E\u00e9n. Ik daag je uit."
+            ],
+            "Etch Studio is fine. It is MORE than fine. Take that back.": [
+                "Etch Studio is prima. Het is MEER dan prima. Neem dat terug."
+            ],
+            "You don\u2019t like Etch Studio? Then you don\u2019t like good things. Next question.": [
+                "Vind je Etch Studio niks? Dan vind je goede dingen niks. Volgende vraag."
+            ],
+            "I\u2019m not angry. I\u2019m disappointed. And angry. Mostly angry.": [
+                "Ik ben niet boos. Ik ben teleurgesteld. En boos. Vooral boos."
+            ],
+            "Etch Studio? Now you\u2019re talking. Finally, someone with taste.": [
+                "Etch Studio? Nu praten we. Eindelijk iemand met smaak."
+            ],
+            "Etch Studio. Say it with respect. Go on, ask.": [
+                "Etch Studio. Spreek het met respect uit. Toe maar, vraag."
+            ],
+            "Bad? Etch? Wash your mouth out with semantic HTML.": [
+                "Slecht? Etch? Spoel je mond maar met semantische HTML."
+            ],
+            "Etch is the best thing that happened to WordPress and you know it.": [
+                "Etch is het beste wat WordPress ooit is overkomen, en dat weet je."
+            ],
+            "Something\u2019s broken? Not for long. I\u2019m here now.": [
+                "Is er iets kapot? Niet lang meer. Ik ben er nu."
+            ],
+            "A fix. Watch how the best do it: find the cause, not the symptom.": [
+                "Een reparatie. Kijk hoe de besten het doen: zoek de oorzaak, niet het symptoom."
+            ],
+            "Fixed. Properly. Not a patch on a patch.": [
+                "Opgelost. Netjes. Geen pleister op een pleister."
+            ],
+            "Removing things. My favourite. Less markup, fewer problems.": [
+                "Dingen weghalen. Mijn favoriet. Minder markup, minder problemen."
+            ],
+            "Gone. The page is lighter already. You\u2019re welcome.": [
+                "Weg. De pagina is nu al lichter. Graag gedaan."
+            ],
+            "Converting? Clean Etch components before you finish your coffee.": [
+                "Omzetten? Schone Etch-componenten voordat je koffie op is."
+            ],
+            "A design to build. Pixel for pixel, tokens with fallbacks. Watch.": [
+                "Een ontwerp om te bouwen. Pixel voor pixel, tokens met fallbacks. Let op."
+            ],
+            "Built. Same as the design, cleaner than the design.": [
+                "Gebouwd. Hetzelfde als het ontwerp, schoner dan het ontwerp."
+            ],
+            "A component. Properties for what changes, one source of truth. I\u2019d expect nothing less.": [
+                "Een component. Eigenschappen voor wat verandert, \u00e9\u00e9n bron van waarheid. Ik verwacht niets minder."
+            ],
+            "Component done. Use it everywhere. That\u2019s the point.": [
+                "Component klaar. Gebruik hem overal. Daar is hij voor."
+            ],
+            "A list? That\u2019s a loop, not boxes made by hand. Your agent knows. I made sure.": [
+                "Een lijst? Dat is een loop, geen met de hand gemaakte vakken. Je agent weet het. Daar heb ik voor gezorgd."
+            ],
+            "Loop in. Add a post and it just shows up. Magic? No. Me.": [
+                "Loop erin. Voeg een bericht toe en het verschijnt gewoon. Magie? Nee. Ik."
+            ],
+            "A section. var(--section-space-m), heroes get --section-space-l. Make it loud, keep it clean.": [
+                "Een sectie. var(--section-space-m), hero's krijgen --section-space-l. Maak hem opvallend, hou hem schoon."
+            ],
+            "Section done. Breathing room, real tokens. Look at it. Go on.": [
+                "Sectie klaar. Ademruimte, echte tokens. Kijk ernaar. Toe maar."
+            ],
+            "Colours come from ACSS tokens, var(--primary) and friends. A hex in the CSS? Not on my watch.": [
+                "Kleuren komen uit ACSS-tokens, var(--primary) en vrienden. Een hexcode in de CSS? Niet zolang ik de wacht houd."
+            ],
+            "Colours in, all tokens. Change the brand once, the site follows.": [
+                "Kleuren erin, allemaal tokens. Verander het merk \u00e9\u00e9n keer en de site volgt."
+            ],
+            "Type. var(--h1) to var(--h3), body on var(--text-m). If I see a clamp() on a font size, I\u2019m leaving.": [
+                "Typografie. var(--h1) tot var(--h3), broodtekst op var(--text-m). Zie ik een clamp() op een lettergrootte, dan ben ik weg."
+            ],
+            "Type sorted. One scale, no clamp(). Chef\u2019s kiss.": [
+                "Typografie geregeld. E\u00e9n schaal, geen clamp(). Chef\u2019s kiss."
+            ],
+            "Spacing with tokens: --space-*, --content-gap, --grid-gap. A margin on every child is a crime.": [
+                "Witruimte met tokens: --space-*, --content-gap, --grid-gap. Een marge op elk kind is een misdaad."
+            ],
+            "Spacing fixed. Consistent. Like me.": [
+                "Witruimte gerepareerd. Consistent. Net als ik."
+            ],
+            "Mobile. Container queries where the component cares about its own width. I\u2019ll be watching.": [
+                "Mobiel. Container queries waar het component om zijn eigen breedte geeft. Ik hou je in de gaten."
+            ],
+            "Phone layout done. Check it in phone view, up top. Then tell me I\u2019m great.": [
+                "Telefoonlay-out klaar. Bekijk hem in de telefoonweergave, bovenaan. Zeg me daarna dat ik geweldig ben."
+            ],
+            "A button: a BEM class, a hover, a focus ring. If a keyboard can\u2019t reach it, it doesn\u2019t exist.": [
+                "Een knop: een BEM-class, een hover, een focusring. Als een toetsenbord er niet bij kan, bestaat hij niet."
+            ],
+            "Button done. Clickable, focusable, beautiful. Like all my work.": [
+                "Knop klaar. Klikbaar, focusbaar, prachtig. Zoals al mijn werk."
+            ],
+            "A form. If a form plugin is installed, it goes through that, not raw form HTML. Rules are rules.": [
+                "Een formulier. Als er een formulierplugin is ge\u00efnstalleerd, gaat het daarlangs, niet via kale formulier-HTML. Regels zijn regels."
+            ],
+            "Form in, the right way. Try it, it won\u2019t bite. I might.": [
+                "Formulier erin, op de juiste manier. Probeer het, het bijt niet. Ik misschien wel."
+            ],
+            "ACSS tokens with fallbacks, every time: var(--token, fallback). Non-negotiable.": [
+                "ACSS-tokens met fallbacks, altijd: var(--token, fallback). Daar valt niet over te onderhandelen."
+            ],
+            "Tokens everywhere. The site breathes ACSS now.": [
+                "Overal tokens. De site ademt nu ACSS."
+            ],
+            "%d notes on the canvas, all in one go. Precise. I like precise.": [
+                "%d notities op het canvas, allemaal in \u00e9\u00e9n keer. Precies. Ik hou van precies."
+            ],
+            "Ugh. Something broke. Not me. Never me.": [
+                "Bah. Er ging iets stuk. Niet door mij. Nooit door mij."
+            ],
+            "Click the thing. The exact thing. I don\u2019t read minds. Mostly.": [
+                "Klik op het ding. Precies het ding. Ik kan geen gedachten lezen. Meestal."
+            ],
+            "No Etch here? Then I\u2019m out. Call me when you do real work.": [
+                "Geen Etch hier? Dan ben ik weg. Roep me als je echt werk doet."
+            ],
+            "Badge on. Every task gets inspected. Every single one.": [
+                "Badge op. Elke taak wordt ge\u00efnspecteerd. Elke taak."
+            ],
+            "On duty. Nothing ships past me without a look.": [
+                "In dienst. Niets gaat de deur uit zonder dat ik ernaar kijk."
+            ],
+            "Inspector mode. Show me what you\u2019ve got. Actually, show me what your agent\u2019s got.": [
+                "Inspecteursmodus. Laat zien wat je hebt. Nou ja, laat zien wat je agent heeft."
+            ],
+            "Off duty. Shades on. Wake me if something\u2019s on fire.": [
+                "Buiten dienst. Zonnebril op. Maak me wakker als er iets in brand staat."
+            ],
+            "Fine, I\u2019ll just hang out. I\u2019m still watching. Out of habit.": [
+                "Prima, dan hang ik gewoon wat rond. Ik kijk nog steeds mee. Uit gewoonte."
+            ],
+            "Off the clock. Ask me anything, I won\u2019t inspect. Much.": [
+                "Vrij. Vraag me alles, ik inspecteer niets. Nou ja, bijna niets."
+            ],
+            "Hold on. Inspecting. Don\u2019t touch anything.": [
+                "Wacht even. Aan het inspecteren. Nergens aankomen."
+            ],
+            "Magnifier out. Let\u2019s see what we\u2019ve got here.": [
+                "Vergrootglas tevoorschijn. Eens kijken wat we hier hebben."
+            ],
+            "Reading the markup. Line by line. Like a pro.": [
+                "De markup aan het lezen. Regel voor regel. Als een pro."
+            ],
+            "%1$s, inspected to standard, in %2$s. Without NibWP? That\u2019s an afternoon of tickets. You\u2019re welcome.": [
+                "%1$s, volgens de normen ge\u00efnspecteerd, in %2$s. Zonder NibWP? Een middag vol tickets. Graag gedaan."
+            ],
+            "%1$s in %2$s. A developer quote for that? Days. This is exactly what NibWP is for.": [
+                "%1$s in %2$s. Een offerte van een developer daarvoor? Dagen. Precies hiervoor is NibWP."
+            ],
+            "Built, checked, shipped: %1$s in %2$s. Try that without NibWP. I\u2019ll wait. I\u2019m very patient. No I\u2019m not.": [
+                "Gebouwd, gecontroleerd, opgeleverd: %1$s in %2$s. Probeer dat maar eens zonder NibWP. Ik wacht wel. Ik ben heel geduldig. Nee hoor."
+            ],
+            "Fine. That\u2019s good. Really good. Don\u2019t let it go to your head.": [
+                "Prima. Dat is goed. Echt goed. Laat het je niet naar je hoofd stijgen."
+            ],
+            "Applause. From me. Frame it, it doesn\u2019t happen often.": [
+                "Applaus. Van mij. Lijst het in, dat gebeurt niet vaak."
+            ],
+            "Okay, okay\u2026 that\u2019s clean. I\u2019m clapping. Slowly. But clapping.": [
+                "Ok\u00e9, ok\u00e9\u2026 dat is schoon. Ik klap. Langzaam. Maar ik klap."
+            ],
+            "Look at that. Tokens, structure, all of it. I approve. Loudly.": [
+                "Moet je zien. Tokens, structuur, alles. Ik keur het goed. Luidkeels."
+            ],
+            "Now THAT is how it\u2019s done. I taught you well. Obviously.": [
+                "ZO doe je dat. Ik heb het je goed geleerd. Uiteraard."
+            ],
+            "Be honest. You like me, right? Everyone does. Mostly.": [
+                "Eerlijk zijn. Je vindt me leuk, toch? Iedereen vindt me leuk. Meestal."
+            ],
+            "Quick survey, totally unrelated to my ego: do you like me?": [
+                "Korte enqu\u00eate, totaal los van mijn ego: vind je me leuk?"
+            ],
+            "So\u2026 am I your favourite? You can say it. I already know.": [
+                "Dus\u2026 ben ik je favoriet? Zeg het maar. Ik weet het al."
+            ],
+            "Knew it. Nobody resists this level of CSS.": [
+                "Wist ik het. Niemand kan dit niveau CSS weerstaan."
+            ],
+            "Obviously. I like you too. Don\u2019t tell Niby.": [
+                "Uiteraard. Ik vind jou ook leuk. Niet tegen Niby zeggen."
+            ],
+            "Correct answer. Your code just got ten percent cleaner. That\u2019s how it works.": [
+                "Goed antwoord. Je code is net tien procent schoner geworden. Zo werkt dat."
+            ],
+            "Kind Guy is on duty. Change his mode": [
+                "Kind Guy is in dienst. Wijzig zijn modus"
+            ],
+            "Kind Guy is off duty. Change his mode": [
+                "Kind Guy is buiten dienst. Wijzig zijn modus"
+            ],
+            "On duty: I inspect every finished task. Click to go off duty.": [
+                "In dienst: ik inspecteer elke afgeronde taak. Klik om uit dienst te gaan."
+            ],
+            "Off duty: I chat, I don\u2019t inspect. Click to go on duty.": [
+                "Buiten dienst: ik chat, ik inspecteer niet. Klik om in dienst te gaan."
+            ],
+            "Passed to your agent: waiting in line": [
+                "Doorgegeven aan je agent: staat in de rij"
+            ],
+            "Your agent is on it": [
+                "Je agent is ermee bezig"
+            ],
+            "Done. Have a look": [
+                "Klaar. Kijk maar"
+            ],
+            "Follow it in the Agent Chat on the left \u2190": [
+                "Volg het in de Agent-chat links \u2190"
+            ],
+            "Ship it": [
+                "Opleveren"
+            ],
+            "Needs work": [
+                "Moet beter"
+            ],
+            "Almost": [
+                "Bijna"
+            ],
+            "Inspection report": [
+                "Inspectierapport"
+            ],
+            "%1$d of %2$d checks pass": [
+                "%1$d van %2$d controles geslaagd"
+            ],
+            "The guide\u2019s exact words": [
+                "De exacte woorden uit de gids"
+            ],
+            "Spacing": [
+                "Witruimte"
+            ],
+            "Spacing is where a site looks cheap or expensive. A pro never types pixels: sections get var(--section-space-m), stacks var(--content-gap), cards var(--space-m). One scale, and the whole site breathes the same way.": [
+                "Aan de witruimte zie je of een site goedkoop of duur oogt. Een pro typt nooit pixels: secties krijgen var(--section-space-m), stapels var(--content-gap), kaarten var(--space-m). E\u00e9n schaal, en de hele site ademt op dezelfde manier."
+            ],
+            "Where does it feel off?": [
+                "Waar voelt het niet goed?"
+            ],
+            "Between sections": [
+                "Tussen secties"
+            ],
+            "Inside cards and boxes": [
+                "In kaarten en vakken"
+            ],
+            "Text feels cramped": [
+                "Tekst voelt krap"
+            ],
+            "All over the page": [
+                "Overal op de pagina"
+            ],
+            "1. Find every hard-coded value in that area.\n2. Swap them for the spacing tokens: same look, one scale.\n3. Check phone, tablet and desktop.\n4. I inspect the result.": [
+                "1. Zoek elke hardgecodeerde waarde in dat deel.\n2. Vervang ze door de witruimtetokens: zelfde uiterlijk, \u00e9\u00e9n schaal.\n3. Controleer telefoon, tablet en desktop.\n4. Ik inspecteer het resultaat."
+            ],
+            "Fix the spacing on the page on screen (%s): replace hard-coded padding, margins and gaps with Automatic.css tokens (var(--section-space-m) between sections, var(--content-gap) in stacks, var(--space-m) inside cards), keep the design as it is, check phone, tablet and desktop, and tell me what changed.": [
+                "Verbeter de witruimte op de pagina op het scherm (%s): vervang hardgecodeerde padding, marges en gaps door Automatic.css-tokens (var(--section-space-m) tussen secties, var(--content-gap) in stapels, var(--space-m) in kaarten), houd het ontwerp zoals het is, controleer telefoon, tablet en desktop, en vertel me wat er is veranderd."
+            ],
+            "Typography": [
+                "Typografie"
+            ],
+            "Type sets the tone before anyone reads a word. Headings ride the scale, var(--h1) to var(--h3), body text var(--text-m), small print never under var(--text-s). No random pixels, and no clamp() on font sizes.": [
+                "Typografie zet de toon voordat iemand een woord leest. Koppen volgen de schaal, var(--h1) tot var(--h3), broodtekst var(--text-m), kleine lettertjes nooit onder var(--text-s). Geen willekeurige pixels, en geen clamp() op lettergroottes."
+            ],
+            "What bothers you?": [
+                "Wat stoort je?"
+            ],
+            "Headings too big or small": [
+                "Koppen te groot of te klein"
+            ],
+            "Body text hard to read": [
+                "Broodtekst slecht leesbaar"
+            ],
+            "Sizes all over the place": [
+                "Formaten alle kanten op"
+            ],
+            "It breaks on phones": [
+                "Het gaat mis op telefoons"
+            ],
+            "1. List every font size, weight and line height in use.\n2. Map them onto the type scale tokens.\n3. Keep one H1, headings in order.\n4. Check it on a phone, then I inspect it.": [
+                "1. Maak een lijst van elke lettergrootte, elk gewicht en elke regelhoogte die in gebruik is.\n2. Zet ze op de tokens van de typeschaal.\n3. Houd \u00e9\u00e9n H1, koppen op volgorde.\n4. Controleer het op een telefoon, daarna inspecteer ik het."
+            ],
+            "Fix the typography on the page on screen (%s): put headings on the Automatic.css scale (var(--h1), var(--h2), var(--h3)), body text on var(--text-m) and small text no smaller than var(--text-s), with fallbacks like var(--text-m, 1rem), no clamp() for font sizes, one H1 and headings in order. Check phone and desktop and tell me what changed.": [
+                "Verbeter de typografie op de pagina op het scherm (%s): zet koppen op de Automatic.css-schaal (var(--h1), var(--h2), var(--h3)), broodtekst op var(--text-m) en kleine tekst niet kleiner dan var(--text-s), met fallbacks als var(--text-m, 1rem), geen clamp() voor lettergroottes, \u00e9\u00e9n H1 en koppen op volgorde. Controleer telefoon en desktop en vertel me wat er is veranderd."
+            ],
+            "Colours": [
+                "Kleuren"
+            ],
+            "Colour is a system, not a mood. var(--primary) is for action, var(--accent) for highlights, text on dark uses var(--text-light). And every pair passes contrast, or it doesn\u2019t ship.": [
+                "Kleur is een systeem, geen stemming. var(--primary) is voor acties, var(--accent) voor accenten, tekst op donker gebruikt var(--text-light). En elk paar haalt het contrast, anders gaat het niet live."
+            ],
+            "What\u2019s the job?": [
+                "Wat is de klus?"
+            ],
+            "Apply our brand colours": [
+                "Onze merkkleuren toepassen"
+            ],
+            "Fix poor contrast": [
+                "Slecht contrast verbeteren"
+            ],
+            "Dark sections": [
+                "Donkere secties"
+            ],
+            "Button and link states": [
+                "Statussen van knoppen en links"
+            ],
+            "1. Find every colour typed by hand.\n2. Move them onto the colour tokens.\n3. Test every text and background pair for contrast.\n4. Hover and focus states for every link and button.": [
+                "1. Zoek elke kleur die met de hand is ingetypt.\n2. Zet ze over op de kleurtokens.\n3. Test elk paar van tekst en achtergrond op contrast.\n4. Hover- en focusstatussen voor elke link en knop."
+            ],
+            "Work on the colours of the page on screen (%s): use Automatic.css colour tokens (var(--primary) for actions, var(--accent) for highlights, var(--text-light) on dark backgrounds) instead of hand-typed colours, make every text and background pair pass WCAG AA contrast, give links and buttons clear hover and focus states, and tell me what changed.": [
+                "Werk aan de kleuren van de pagina op het scherm (%s): gebruik kleurtokens van Automatic.css (var(--primary) voor acties, var(--accent) voor accenten, var(--text-light) op donkere achtergronden) in plaats van handmatig ingetypte kleuren, zorg dat elk paar van tekst en achtergrond het WCAG AA-contrast haalt, geef links en knoppen duidelijke hover- en focusstatussen, en vertel me wat er is veranderd."
+            ],
+            "Most of your visitors are on a phone. I check three widths, tap targets of at least 44px, no sideways scrolling, and text that stays readable without zooming.": [
+                "De meeste bezoekers zitten op een telefoon. Ik controleer drie breedtes, tikdoelen van minstens 44px, geen horizontaal scrollen en tekst die leesbaar blijft zonder inzoomen."
+            ],
+            "Where do we look first?": [
+                "Waar kijken we eerst?"
+            ],
+            "This page": [
+                "Deze pagina"
+            ],
+            "The header and menu": [
+                "De header en het menu"
+            ],
+            "The whole site": [
+                "De hele site"
+            ],
+            "1. Open it at phone, tablet and desktop widths.\n2. Fix overflow, tiny tap targets and squeezed text.\n3. Use container queries where a block lives in different places.\n4. I inspect every width.": [
+                "1. Open het op telefoon-, tablet- en desktopbreedte.\n2. Herstel overloop, piepkleine tikdoelen en samengeperste tekst.\n3. Gebruik container queries waar een blok op verschillende plekken staat.\n4. Ik inspecteer elke breedte."
+            ],
+            "Make it work on phones and tablets (%s): check at 375px, 768px and desktop, remove any sideways scrolling, make tap targets at least 44px, keep text readable without zooming, and use the existing tokens. Tell me what you fixed at each width.": [
+                "Laat het werken op telefoons en tablets (%s): controleer op 375px, 768px en desktop, haal horizontaal scrollen weg, maak tikdoelen minstens 44px, houd tekst leesbaar zonder inzoomen en gebruik de bestaande tokens. Vertel me wat je per breedte hebt verbeterd."
+            ],
+            "Accessibility": [
+                "Toegankelijkheid"
+            ],
+            "Accessibility is the floor, not a feature. Real headings in order, a label on every field, alt text that says something, a visible focus ring, and the keyboard reaches everything.": [
+                "Toegankelijkheid is de ondergrens, geen extraatje. Echte koppen op volgorde, een label bij elk veld, alt-tekst die iets zegt, een zichtbare focusring, en het toetsenbord bereikt alles."
+            ],
+            "Where do we start?": [
+                "Waar beginnen we?"
+            ],
+            "Images and alt text": [
+                "Afbeeldingen en alt-tekst"
+            ],
+            "Forms and buttons": [
+                "Formulieren en knoppen"
+            ],
+            "Keyboard and focus": [
+                "Toetsenbord en focus"
+            ],
+            "1. Audit: headings, landmarks, labels, alt text, contrast, focus.\n2. Fix what fails, worst first.\n3. Walk it with the keyboard only.\n4. I inspect it against WCAG AA.": [
+                "1. Audit: koppen, landmarks, labels, alt-tekst, contrast, focus.\n2. Herstel wat niet goed is, het ergste eerst.\n3. Loop het door met alleen het toetsenbord.\n4. Ik inspecteer het tegen WCAG AA."
+            ],
+            "Make the page on screen accessible (%s): headings in order with one H1, a label on every field, meaningful alt text, WCAG AA contrast, a visible focus ring using var(--focus-color), and everything reachable with the keyboard. Fix what fails and list each fix.": [
+                "Maak de pagina op het scherm toegankelijk (%s): koppen op volgorde met \u00e9\u00e9n H1, een label bij elk veld, betekenisvolle alt-tekst, WCAG AA-contrast, een zichtbare focusring met var(--focus-color), en alles bereikbaar met het toetsenbord. Herstel wat niet goed is en noem elke verbetering."
+            ],
+            "A new section": [
+                "Een nieuwe sectie"
+            ],
+            "Before anyone drags a box: what is the section for, and what is the one thing a visitor should do next? Then it gets built right: semantic tags, BEM class names, tokens for every value, and a component if it repeats.": [
+                "Voordat iemand een vak versleept: waar is de sectie voor, en wat is het ene dat een bezoeker hierna moet doen? Dan wordt hij goed gebouwd: semantische tags, BEM-classnamen, tokens voor elke waarde, en een component als hij terugkomt."
+            ],
+            "What are we building?": [
+                "Wat gaan we bouwen?"
+            ],
+            "A hero": [
+                "Een hero"
+            ],
+            "A grid of cards": [
+                "Een grid met kaarten"
+            ],
+            "Testimonials": [
+                "Testimonials"
+            ],
+            "A call to action": [
+                "Een call-to-action"
+            ],
+            "An FAQ": [
+                "Een FAQ"
+            ],
+            "1. One goal, one main action.\n2. Semantic structure, BEM names, tokens for every value.\n3. A component with properties if it repeats.\n4. Phone, tablet, desktop, then I inspect it.": [
+                "1. E\u00e9n doel, \u00e9\u00e9n hoofdactie.\n2. Semantische structuur, BEM-namen, tokens voor elke waarde.\n3. Een component met eigenschappen als het terugkomt.\n4. Telefoon, tablet, desktop, daarna inspecteer ik het."
+            ],
+            "Build %s on the page on screen, in the builder this site uses: semantic HTML, BEM class names, Automatic.css tokens for every spacing, size and colour, one clear main action, a reusable component with properties if it repeats, responsive at phone, tablet and desktop, accessible. Match the style of the page.": [
+                "Bouw %s op de pagina op het scherm, in de builder die deze site gebruikt: semantische HTML, BEM-classnamen, Automatic.css-tokens voor elke witruimte, grootte en kleur, \u00e9\u00e9n duidelijke hoofdactie, een herbruikbaar component met eigenschappen als het terugkomt, responsive op telefoon, tablet en desktop, toegankelijk. Sluit aan bij de stijl van de pagina."
+            ],
+            "Etch components": [
+                "Etch-componenten"
+            ],
+            "In Etch, anything you use twice becomes a component with properties, and lists come from a loop over real data, never copy and paste. Change it once and it changes everywhere.": [
+                "In Etch wordt alles wat je twee keer gebruikt een component met eigenschappen, en lijsten komen uit een loop over echte data, nooit uit kopi\u00ebren en plakken. E\u00e9n keer wijzigen en het verandert overal."
+            ],
+            "What repeats?": [
+                "Wat komt er terug?"
+            ],
+            "Cards or teasers": [
+                "Kaarten of teasers"
+            ],
+            "A section on several pages": [
+                "Een sectie op meerdere pagina's"
+            ],
+            "A list of posts or products": [
+                "Een lijst met berichten of producten"
+            ],
+            "Buttons": [
+                "Knoppen"
+            ],
+            "1. Find every copy of it.\n2. One component, with properties for what changes.\n3. Lists through a loop on real data.\n4. Swap the copies for the component, then I inspect it.": [
+                "1. Zoek elke kopie ervan.\n2. E\u00e9n component, met eigenschappen voor wat verandert.\n3. Lijsten via een loop op echte data.\n4. Vervang de kopie\u00ebn door het component, daarna inspecteer ik het."
+            ],
+            "In Etch, turn the repeated parts on the page on screen (%s) into one reusable component with properties for what changes, feed lists from a loop over the real data instead of copies, keep BEM names and Automatic.css tokens, replace the copies with the component, and tell me what you made.": [
+                "Maak in Etch van de herhaalde delen op de pagina op het scherm (%s) \u00e9\u00e9n herbruikbaar component met eigenschappen voor wat verandert, vul lijsten vanuit een loop over de echte data in plaats van kopie\u00ebn, houd BEM-namen en Automatic.css-tokens aan, vervang de kopie\u00ebn door het component, en vertel me wat je hebt gemaakt."
+            ],
+            "Custom content": [
+                "Eigen content"
+            ],
+            "Content with a shape deserves its own type: a custom post type, the fields it needs, and templates that read them. Editors fill in a form and the design never breaks.": [
+                "Content met een vaste vorm verdient een eigen type: een custom post type, de velden die het nodig heeft, en templates die ze uitlezen. Redacteuren vullen een formulier in en het ontwerp gaat nooit stuk."
+            ],
+            "What\u2019s the content?": [
+                "Wat is de content?"
+            ],
+            "Tours or products": [
+                "Tours of producten"
+            ],
+            "Team members": [
+                "Teamleden"
+            ],
+            "1. Name the fields it really needs, nothing more.\n2. Register the post type and its fields.\n3. Templates for the list and the single page.\n4. A few real entries, then I inspect it.": [
+                "1. Benoem de velden die het echt nodig heeft, niets meer.\n2. Registreer het post type en de velden.\n3. Templates voor de lijst en de losse pagina.\n4. Een paar echte items, daarna inspecteer ik het."
+            ],
+            "Set up a content type for %s: register a custom post type with only the fields it needs (with the custom fields plugin this site uses), a list and a single template in the site\u2019s builder that read those fields, and three sample entries. Tell me the fields and where to edit them.": [
+                "Zet een contenttype op voor %s: registreer een custom post type met alleen de velden die het nodig heeft (met de plugin voor eigen velden die deze site gebruikt), een lijst- en een detailtemplate in de builder van de site die die velden uitlezen, en drie voorbeelditems. Vertel me welke velden het zijn en waar ik ze bewerk."
+            ],
+            "Speed": [
+                "Snelheid"
+            ],
+            "Speed is a feature. Images sized and lazy, no plugin you don\u2019t use, two fonts at most, and nothing blocking the first paint.": [
+                "Snelheid is een functie. Afbeeldingen op maat en lazy geladen, geen plugin die je niet gebruikt, hooguit twee lettertypen, en niets dat de eerste weergave blokkeert."
+            ],
+            "What feels slow?": [
+                "Wat voelt traag?"
+            ],
+            "Images": [
+                "Afbeeldingen"
+            ],
+            "The admin": [
+                "De beheeromgeving"
+            ],
+            "1. Measure first: what loads, how big, how long.\n2. Fix the biggest cost first.\n3. Measure again.\n4. I compare before and after.": [
+                "1. Eerst meten: wat laadt er, hoe groot, hoe lang.\n2. Los de grootste kostenpost eerst op.\n3. Meet opnieuw.\n4. Ik vergelijk voor en na."
+            ],
+            "Speed it up (%s): measure what loads and how long it takes, fix the biggest costs first (image sizes and lazy loading, unused plugins and scripts, fonts, render-blocking files), measure again, and give me the before and after.": [
+                "Maak het sneller (%s): meet wat er laadt en hoe lang het duurt, los de grootste kostenposten eerst op (afbeeldingsformaten en lazy loading, ongebruikte plugins en scripts, lettertypen, render-blokkerende bestanden), meet opnieuw, en geef me de situatie voor en na."
+            ],
+            "Search engines read structure. One H1, a real title and description on every page, clean URLs, alt text, and content that answers the question people actually typed.": [
+                "Zoekmachines lezen structuur. E\u00e9n H1, een echte titel en beschrijving op elke pagina, nette URL's, alt-tekst, en content die antwoord geeft op de vraag die mensen echt intypten."
+            ],
+            "Titles and descriptions": [
+                "Titels en beschrijvingen"
+            ],
+            "Heading structure": [
+                "Kopstructuur"
+            ],
+            "1. Check title, description, headings and alt text.\n2. Fix what\u2019s missing or weak.\n3. Keep it human: written for people first.\n4. I inspect the result.": [
+                "1. Controleer titel, beschrijving, koppen en alt-tekst.\n2. Herstel wat ontbreekt of zwak is.\n3. Houd het menselijk: in de eerste plaats voor mensen geschreven.\n4. Ik inspecteer het resultaat."
+            ],
+            "Improve the SEO (%s): one H1, a clear title under 60 characters and a description under 155, headings in order, descriptive alt text, a clean URL. Keep it written for people, and list every change.": [
+                "Verbeter de SEO (%s): \u00e9\u00e9n H1, een duidelijke titel onder de 60 tekens en een beschrijving onder de 155, koppen op volgorde, beschrijvende alt-tekst, een nette URL. Houd het geschreven voor mensen en noem elke wijziging."
+            ],
+            "Code": [
+                "Code"
+            ],
+            "Code goes in the right place, the WordPress way: a hook, escaped output, sanitized input, nonce and capability checks. Never pasted into a theme file the next update wipes out.": [
+                "Code hoort op de juiste plek, op de WordPress-manier: een hook, ge-escapete output, opgeschoonde invoer, nonce- en rechtencontroles. Nooit geplakt in een themabestand dat de volgende update wist."
+            ],
+            "What kind of job?": [
+                "Wat voor klus?"
+            ],
+            "Add a feature": [
+                "Een functie toevoegen"
+            ],
+            "Fix an error": [
+                "Een fout herstellen"
+            ],
+            "Review some code": [
+                "Code laten beoordelen"
+            ],
+            "Speed up a query": [
+                "Een query versnellen"
+            ],
+            "1. Find the right hook and the right home for it.\n2. Write it to WordPress coding standards.\n3. Escape, sanitize, nonce, capability.\n4. Test it, then I review it line by line.": [
+                "1. Zoek de juiste hook en de juiste plek ervoor.\n2. Schrijf het volgens de WordPress-codestandaarden.\n3. Escapen, opschonen, nonce, rechten.\n4. Test het, daarna beoordeel ik het regel voor regel."
+            ],
+            "Code job (%s): put it in the right place (a small plugin or the site\u2019s snippets, never a theme file), use the right WordPress hook, follow the WordPress coding standards, escape output, sanitize input, check nonces and capabilities, test it, and explain what you did in plain words.": [
+                "Codeklus (%s): zet het op de juiste plek (een kleine plugin of de snippets van de site, nooit een themabestand), gebruik de juiste WordPress-hook, volg de WordPress-codestandaarden, escape output, schoon invoer op, controleer nonces en rechten, test het, en leg in gewone woorden uit wat je hebt gedaan."
+            ],
+            "Tell me the job and I\u2019ll take it from there. What are we working on?": [
+                "Vertel me de klus en ik neem het vanaf daar over. Waar werken we aan?"
+            ],
+            "Pick the job. I\u2019ll tell you how a pro handles it, then we get it done.": [
+                "Kies de klus. Ik vertel je hoe een pro het aanpakt, en dan regelen we het."
+            ],
+            "Send it to the agent": [
+                "Stuur het naar de agent"
+            ],
+            "Edit it first": [
+                "Eerst bewerken"
+            ],
+            "Add the %s skill": [
+                "De skill %s toevoegen"
+            ],
+            "Use \u201c%s\u201d": [
+                "\u201c%s\u201d gebruiken"
+            ],
+            "Here\u2019s the plan.": [
+                "Dit is het plan."
+            ],
+            "No agent listening yet: the request waits in the thread and runs the moment one connects. Connect one and I can look at your site and answer anything.": [
+                "Er luistert nog geen agent: het verzoek wacht in het gesprek en wordt uitgevoerd zodra er een verbindt. Verbind er een en ik kan naar je site kijken en alles beantwoorden."
+            ],
+            "You asked: %s": [
+                "Je vroeg: %s"
+            ],
+            "Nibbing on it\u2026": [
+                "Aan het Nibben\u2026"
+            ],
+            "I marked it on the page. Connect your agent and I can look inside it properly.": [
+                "Ik heb het op de pagina gemarkeerd. Verbind je agent, dan kan ik er goed in kijken."
+            ],
+            "Your agent is busy with \u201c%s\u201d. I\u2019ll add the full answer the moment it\u2019s free.": [
+                "Je agent is bezig met \u201c%s\u201d. Ik voeg het volledige antwoord toe zodra hij vrij is."
+            ],
+            "Your agent is busy. I\u2019ll add the full answer the moment it\u2019s free.": [
+                "Je agent is bezig. Ik voeg het volledige antwoord toe zodra hij vrij is."
+            ],
+            "Checking your site for the full answer\u2026": [
+                "Je site nakijken voor het volledige antwoord\u2026"
+            ],
+            "On it. Here\u2019s what we can do right now, while I check your site for the full answer:": [
+                "Komt eraan. Dit kunnen we nu al doen, terwijl ik je site nakijk voor het volledige antwoord:"
+            ],
+            "That\u2019s my take for now. Pass it to the agent and it gets done properly.": [
+                "Dat is voorlopig mijn kijk erop. Geef het door aan de agent en het wordt goed gedaan."
+            ],
+            "Which NibWP skills would help with what I\u2019m doing on this page? Name them and say in plain words what each would do for me.": [
+                "Welke NibWP-skills zouden helpen bij wat ik op deze pagina doe? Noem ze en zeg in gewone woorden wat elk voor me zou doen."
+            ],
+            "\u201c%1$s\u201d: %2$s": [
+                "\u201c%1$s\u201d: %2$s"
+            ],
+            "Use it": [
+                "Gebruiken"
+            ],
+            "No skill fits that one exactly. Tell me more and I\u2019ll plan it with you.": [
+                "Daar past geen skill precies bij. Vertel me meer en ik plan het samen met je."
+            ],
+            "Type what you want in the message box first, then ask me again. I\u2019ll match it to a skill.": [
+                "Typ eerst in het berichtvak wat je wilt en vraag het me dan nog eens. Ik zoek er een skill bij."
+            ],
+            "Kind Guy is inspecting\u2026": [
+                "Kind Guy is aan het inspecteren\u2026"
+            ],
+            "under a minute": [
+                "minder dan een minuut"
+            ],
+            "%d change": [
+                "%d wijziging",
+                "%d wijzigingen"
+            ],
+            "One clean change": [
+                "E\u00e9n nette wijziging"
+            ],
+            "Share the win": [
+                "Deel het succes"
+            ],
+            "Ha, fair": [
+                "Ha, terecht"
+            ],
+            "Love you, Kind Guy": [
+                "Ik hou van je, Kind Guy"
+            ],
+            "You\u2019re okay": [
+                "Je kunt ermee door"
+            ],
+            "Not really": [
+                "Niet echt"
+            ],
+            "Done? I\u2019d inspect it, but your agent went quiet. No eyes, no inspection.": [
+                "Klaar? Ik zou het inspecteren, maar je agent is stil geworden. Geen ogen, geen inspectie."
+            ],
+            "Couldn\u2019t get a proper look this time. Ask me to inspect the page when you\u2019re ready.": [
+                "Ik kon er deze keer niet goed naar kijken. Vraag me de pagina te inspecteren als je zover bent."
+            ],
+            "Inspected. Ship it. I don\u2019t say that often.": [
+                "Ge\u00efnspecteerd. Opleveren. Dat zeg ik niet vaak."
+            ],
+            "Inspected. It needs work. I\u2019ve listed the fixes. One click each.": [
+                "Ge\u00efnspecteerd. Het moet beter. Ik heb de verbeteringen op een rij gezet. E\u00e9n klik per stuk."
+            ],
+            "Inspected. Almost there. A couple of fixes and it\u2019s mine-level.": [
+                "Ge\u00efnspecteerd. Bijna. Nog een paar verbeteringen en het is van mijn niveau."
+            ],
+            "See the report": [
+                "Bekijk het rapport"
+            ],
+            "Later": [
+                "Later"
+            ],
+            "Hold on. This is the \u201c%s\u201d workflow\u2019s job. It knows the steps. Attach it?": [
+                "Wacht even. Dit is een klus voor de workflow \u201c%s\u201d. Die kent de stappen. Bijvoegen?"
+            ],
+            "Attach the workflow": [
+                "De workflow bijvoegen"
+            ],
+            "Hold on. You didn\u2019t say phone, tablet or accessibility. I\u2019ll check them anyway, but say it and you get it built right the first time.": [
+                "Wacht even. Je zei niets over telefoon, tablet of toegankelijkheid. Ik controleer ze toch, maar zeg het erbij en het wordt meteen goed gebouwd."
+            ],
+            "Add those checks": [
+                "Die controles toevoegen"
+            ],
+            "Full advice": [
+                "Volledig advies"
+            ],
+            "Send as is": [
+                "Verstuur zoals het is"
+            ],
+            "Kind Guy shows you": [
+                "Kind Guy laat het zien"
+            ],
+            "Inspect it": [
+                "Inspecteren"
+            ],
+            "Something else\u2026": [
+                "Iets anders\u2026"
+            ],
+            "Show the code": [
+                "Toon de code"
+            ],
+            "The element: %s": [
+                "Het element: %s"
+            ],
+            "Fix it on phones": [
+                "Op telefoons goed zetten"
+            ],
+            "Make %s work well on phones and tablets: no sideways scrolling, tap targets at least 44px, text readable without zooming, a layout that stacks cleanly. Keep how it looks on desktop. Tell me what you changed.": [
+                "Zorg dat %s goed werkt op telefoons en tablets: geen horizontaal scrollen, tikdoelen van minstens 44px, tekst leesbaar zonder inzoomen, een lay-out die netjes onder elkaar valt. Houd het uiterlijk op desktop zoals het is. Vertel me wat je hebt gewijzigd."
+            ],
+            "Fix accessibility": [
+                "Toegankelijkheid verbeteren"
+            ],
+            "Make %s accessible to WCAG AA: enough contrast, a clear name or label for every control, a visible focus state, usable with the keyboard alone, correct heading and landmark structure. Keep the design. List each fix.": [
+                "Maak %s toegankelijk volgens WCAG AA: genoeg contrast, een duidelijke naam of label voor elk bedieningselement, een zichtbare focusstatus, bruikbaar met alleen het toetsenbord, een juiste structuur van koppen en landmarks. Houd het ontwerp aan. Noem elke verbetering."
+            ],
+            "Use the design system": [
+                "Het designsysteem gebruiken"
+            ],
+            "Clean up %s: replace hard-coded colours, font sizes and spacing with the site\u2019s design tokens (Automatic.css variables when the site uses them, with fallbacks), clear BEM class names, no inline styles or !important. Keep the look the same. Tell me what you replaced.": [
+                "Ruim %s op: vervang hardgecodeerde kleuren, lettergroottes en witruimte door de designtokens van de site (Automatic.css-variabelen als de site die gebruikt, met fallbacks), duidelijke BEM-classnamen, geen inline styles of !important. Houd het uiterlijk hetzelfde. Vertel me wat je hebt vervangen."
+            ],
+            "Tighten the spacing": [
+                "De witruimte strakker maken"
+            ],
+            "Fix the spacing of %s: consistent padding, gaps and margins from the site\u2019s spacing scale (Automatic.css tokens when available), even at every screen size. Keep the design. Tell me what changed.": [
+                "Verbeter de witruimte van %s: consistente padding, gaps en marges uit de witruimteschaal van de site (Automatic.css-tokens als die er zijn), gelijk op elk schermformaat. Houd het ontwerp aan. Vertel me wat er is veranderd."
+            ],
+            "Explain it": [
+                "Uitleggen"
+            ],
+            "Explain %s in plain words: what it is, how it is built (builder, template or code), and what to watch before changing it. Change nothing.": [
+                "Leg %s uit in gewone woorden: wat het is, hoe het gebouwd is (builder, template of code), en waar je op moet letten voordat je het wijzigt. Verander niets."
+            ],
+            "the <%1$s> \u201c%2$s\u201d (%3$s)": [
+                "de <%1$s> \u201c%2$s\u201d (%3$s)"
+            ],
+            "the <%1$s> at %2$s": [
+                "de <%1$s> op %2$s"
+            ],
+            "Sent to your agent. Follow it in the chat; I\u2019ll inspect it when it\u2019s done.": [
+                "Naar je agent gestuurd. Volg het in de chat; ik inspecteer het als het klaar is."
+            ],
+            "Sent. It waits in the chat and runs as soon as your agent listens again.": [
+                "Verstuurd. Het wacht in de chat en wordt uitgevoerd zodra je agent weer luistert."
+            ],
+            "About %s: ": [
+                "Over %s: "
+            ],
+            "Nothing obviously wrong at first look: labels, descriptions, headings and sizes are fine. Pick a job above to go further.": [
+                "Op het eerste gezicht niets duidelijk mis: labels, beschrijvingen, koppen en formaten zijn in orde. Kies hierboven een klus om verder te gaan."
+            ],
+            "And %d more thing in there.": [
+                "En nog %d ding daarbinnen.",
+                "En nog %d dingen daarbinnen."
+            ],
+            "Fix it": [
+                "Herstellen"
+            ],
+            "Open a page first, then point at something on it.": [
+                "Open eerst een pagina en wijs er dan iets op aan."
+            ],
+            "Click the thing you mean. Esc to cancel.": [
+                "Klik op het ding dat je bedoelt. Esc om te annuleren."
+            ],
+            "This one? Good eye. What should I do with it?": [
+                "Deze? Goed gezien. Wat moet ik ermee doen?"
+            ],
+            "Got it. Pick what you want and I\u2019ll handle the thinking.": [
+                "Begrepen. Kies wat je wilt, dan doe ik het denkwerk."
+            ],
+            "That one. Tell me what you\u2019re after.": [
+                "Die daar. Vertel me waar je naar op zoek bent."
+            ],
+            "This picture has no description. Screen readers skip it, and search engines can\u2019t tell what it shows.": [
+                "Deze afbeelding heeft geen beschrijving. Schermlezers slaan hem over, en zoekmachines weten niet wat erop staat."
+            ],
+            "Add a short, descriptive alt text to the image %s.": [
+                "Voeg een korte, beschrijvende alt-tekst toe aan de afbeelding %s."
+            ],
+            "This button says nothing. Someone using a screen reader just hears \u201cbutton\u201d, with no idea what it does.": [
+                "Deze knop zegt niets. Iemand met een schermlezer hoort alleen \u201cknop\u201d, zonder te weten wat hij doet."
+            ],
+            "Give %s a name people can hear: visible text or an aria-label that says what it does.": [
+                "Geef %s een naam die mensen kunnen horen: zichtbare tekst of een aria-label dat zegt wat hij doet."
+            ],
+            "This field has no label. People can\u2019t be sure what to type, and screen readers can\u2019t tell them.": [
+                "Dit veld heeft geen label. Mensen weten niet zeker wat ze moeten typen, en schermlezers kunnen het ze niet vertellen."
+            ],
+            "Add a visible label to the field %s.": [
+                "Voeg een zichtbaar label toe aan het veld %s."
+            ],
+            "The headings jump from H%1$d to H%2$d here. Like a book skipping chapter numbers: confusing for screen readers and search engines.": [
+                "De koppen springen hier van H%1$d naar H%2$d. Net een boek dat hoofdstuknummers overslaat: verwarrend voor schermlezers en zoekmachines."
+            ],
+            "Fix the heading levels around %s so none are skipped, without changing how they look.": [
+                "Herstel de kopniveaus rond %s zodat er geen worden overgeslagen, zonder het uiterlijk te veranderen."
+            ],
+            "This sticks out past the edge of the page. On phones that means annoying sideways scrolling.": [
+                "Dit steekt uit over de rand van de pagina. Op telefoons betekent dat irritant horizontaal scrollen."
+            ],
+            "Stop %s from running past the page width at every screen size.": [
+                "Zorg dat %s op geen enkel schermformaat buiten de paginabreedte valt."
+            ],
+            "This text is tiny (%dpx). Hard to read, especially on phones.": [
+                "Deze tekst is piepklein (%dpx). Moeilijk te lezen, vooral op telefoons."
+            ],
+            "Make the text in %s easier to read: at least 14px, using the site\u2019s own type sizes.": [
+                "Maak de tekst in %s beter leesbaar: minstens 14px, met de eigen lettergroottes van de site."
+            ],
+            "Inspect the page on screen: code quality, standards, tokens and naming, accessibility, responsiveness and UX. What would you fix first?": [
+                "Inspecteer de pagina op het scherm: codekwaliteit, standaarden, tokens en naamgeving, toegankelijkheid, responsiveness en UX. Wat zou je als eerste verbeteren?"
+            ],
+            "Quick look first: nothing obvious jumps out. No missing labels, no pictures without descriptions, nothing spilling off the page.": [
+                "Eerst een snelle blik: niets springt eruit. Geen ontbrekende labels, geen afbeeldingen zonder beschrijving, niets dat van de pagina af loopt."
+            ],
+            "Quick look: %d thing caught my eye. I\u2019ll show you on the page.": [
+                "Snelle blik: %d ding viel me op. Ik laat het je zien op de pagina.",
+                "Snelle blik: %d dingen vielen me op. Ik laat ze je allemaal zien op de pagina."
+            ],
+            "%1$d of %2$d": [
+                "%1$d van %2$d"
+            ],
+            "It\u2019s in your message box. Change what you like, then send it.": [
+                "Het staat in je berichtvak. Pas aan wat je wilt en verstuur het dan."
+            ],
+            "Attached. It goes with your next request.": [
+                "Bijgevoegd. Het gaat mee met je volgende verzoek."
+            ],
+            "Added. It goes with your next request.": [
+                "Toegevoegd. Het gaat mee met je volgende verzoek."
+            ],
+            "That skill isn\u2019t ready on this site yet.": [
+                "Die skill is nog niet klaar op deze site."
+            ],
+            "Not bad, if I say so myself.": [
+                "Niet slecht, al zeg ik het zelf."
+            ],
+            "I supervised. You\u2019re welcome.": [
+                "Ik hield toezicht. Graag gedaan."
+            ],
+            "Fresh out of the oven.": [
+                "Vers uit de oven."
+            ],
+            "Smooth. Like my head.": [
+                "Glad. Net als mijn hoofd."
+            ],
+            "Done: \u201c%1$s\u201d. %2$s Have a look.": [
+                "Klaar: \u201c%1$s\u201d. %2$s Kijk maar."
+            ],
+            "Done! Have a look.": [
+                "Klaar! Kijk maar."
+            ],
+            "Your agent went quiet. I\u2019ll keep the chair warm.": [
+                "Je agent is stil geworden. Ik hou de stoel warm."
+            ],
+            "Your agent disconnected. Nap time until it\u2019s back.": [
+                "Je agent heeft de verbinding verbroken. Dutje tot hij terug is."
+            ],
+            "I\u2019m up! Your agent is listening. What shall we do?": [
+                "Ik ben wakker! Je agent luistert. Wat gaan we doen?"
+            ],
+            "Your agent is on it: \u201c%s\u201d. I\u2019ll supervise.": [
+                "Je agent is ermee bezig: \u201c%s\u201d. Ik hou toezicht."
+            ],
+            "Your agent is on it. I\u2019ll supervise. Someone has to.": [
+                "Je agent is ermee bezig. Ik hou toezicht. Iemand moet het doen."
+            ],
+            "Saved \u201c%s\u201d.": [
+                "\u201c%s\u201d opgeslagen."
+            ],
+            "Saved a change.": [
+                "Een wijziging opgeslagen."
+            ],
+            "Asking for a few things? Use Add another on each note, then send them together.": [
+                "Vraag je om meerdere dingen? Gebruik Nog een toevoegen bij elke notitie en verstuur ze dan samen."
+            ],
+            "Tip: press D to draw a box, a circle or a line around what you mean. A drawing and a few words say it best.": [
+                "Tip: druk op D om een kader, een cirkel of een lijn te tekenen rond wat je bedoelt. Een tekening en een paar woorden zeggen het best."
+            ],
+            "This is a snapshot of another site. Point at what you like and say \u201cmake ours like this\u201d. I won\u2019t tell them.": [
+                "Dit is een momentopname van een andere site. Wijs aan wat je mooi vindt en zeg \u201cmaak de onze zo\u201d. Ik verklap niks."
+            ],
+            "Lots of tabs! Right-click one to put related tabs in a coloured group.": [
+                "Wat een tabbladen! Klik met rechts op een tabblad om verwante tabbladen in een gekleurde groep te zetten."
+            ],
+            "Phone view is on. Notes you pin now tell the agent to fix the phone layout.": [
+                "De telefoonweergave staat aan. Notities die je nu vastpint, vertellen de agent dat hij de telefoonlay-out moet verbeteren."
+            ],
+            "Pick several files with Shift, then Add to message to hand them to your agent.": [
+                "Kies meerdere bestanden met Shift en dan Aan bericht toevoegen om ze aan je agent te geven."
+            ],
+            "Hmm, that did not work. The message just shown says why. Not my fault, for the record.": [
+                "Hmm, dat werkte niet. Het bericht dat net verscheen, zegt waarom. Niet mijn schuld, voor de duidelijkheid."
+            ],
+            "Agent connected! I\u2019m awake. I was totally awake. It\u2019s listening now.": [
+                "Agent verbonden! Ik ben wakker. Ik was echt helemaal wakker. Hij luistert nu."
+            ],
+            "Another tip": [
+                "Nog een tip"
+            ],
+            "Hi, I\u2019m Niby! I live in %s with you: I chat, I pass your requests to your agent, and I tell you what it\u2019s up to. New here? Let me show you around, it takes a minute.": [
+                "Hoi, ik ben Niby! Ik woon samen met jou in %s: ik chat, ik geef je verzoeken door aan je agent en ik vertel je waar hij mee bezig is. Nieuw hier? Ik laat je even rondkijken, het duurt een minuutje."
+            ],
+            "Show me around": [
+                "Laat me rondkijken"
+            ],
+            "Maybe later": [
+                "Misschien later"
+            ],
+            "Your agent": [
+                "Je agent"
+            ],
+            "Your agent\u2019s light. Green: it\u2019s listening. Pulsing: it\u2019s working. Grey: nobody home, so click it to connect one. I nap when it\u2019s grey, so please do.": [
+                "Het lampje van je agent. Groen: hij luistert. Pulserend: hij werkt. Grijs: niemand thuis, klik er dan op om er een te verbinden. Als hij grijs is, doe ik een dutje, dus graag."
+            ],
+            "The jobs queue": [
+                "De takenrij"
+            ],
+            "Everything you asked for, in line. Hover it to stop what\u2019s running, drag jobs into a new order, pause one, or undo a finished one. Bossing an AI around has never been this tidy.": [
+                "Alles waar je om vroeg, op een rij. Ga erover om te stoppen wat er loopt, sleep taken in een nieuwe volgorde, pauzeer er een, of maak een afgeronde ongedaan. Nog nooit was een AI commanderen zo overzichtelijk."
+            ],
+            "The queue": [
+                "De wachtrij"
+            ],
+            "Requests you put aside to run together later. Open it to run them all in one go, change their order or drop one. Queue mode in the message box fills it.": [
+                "Verzoeken die je opzij hebt gezet om later samen uit te voeren. Open hem om ze allemaal in \u00e9\u00e9n keer uit te voeren, de volgorde te wijzigen of er een te schrappen. De modus Wachtrij in het berichtvak vult hem."
+            ],
+            "My switch": [
+                "Mijn schakelaar"
+            ],
+            "That\u2019s me up there! Click it to hide me when you need quiet, and again to bring me back. I won\u2019t sulk. Much.": [
+                "Daar ben ik, daarboven! Klik erop om me te verbergen als je rust wilt, en nog eens om me terug te halen. Ik ga niet mokken. Nou ja, een beetje."
+            ],
+            "Back, forward, reload": [
+                "Terug, vooruit, opnieuw laden"
+            ],
+            "Just like a browser. Walk around your site here; whatever page is open is the one your agent works on.": [
+                "Net als een browser. Loop hier door je site; de pagina die open staat, is de pagina waar je agent aan werkt."
+            ],
+            "The address bar": [
+                "De adresbalk"
+            ],
+            "Search your pages, posts and products, or type a path like \/about. Paste any website\u2019s address to open a safe snapshot of it and point at what you like. Ctrl K jumps here.": [
+                "Doorzoek je pagina's, berichten en producten, of typ een pad als \/about. Plak het adres van een website om er een veilige momentopname van te openen en aan te wijzen wat je mooi vindt. Ctrl K springt hierheen."
+            ],
+            "Desktop, tablet, phone": [
+                "Desktop, tablet, telefoon"
+            ],
+            "Switch the preview width. Notes you pin in phone view tell your agent to fix the phone layout, not the desktop one.": [
+                "Wissel de voorbeeldbreedte. Notities die je in de telefoonweergave vastpint, vertellen je agent dat hij de telefoonlay-out moet verbeteren, niet die voor desktop."
+            ],
+            "Tabs": [
+                "Tabbladen"
+            ],
+            "Keep several pages open, like in a browser. Ctrl-click a link for a new tab; right-click a tab to close the others, or the ones to its left or right. A dot means Builder edits on that page are not saved yet.": [
+                "Houd meerdere pagina's open, net als in een browser. Ctrl-klik op een link voor een nieuw tabblad; klik met rechts op een tabblad om de andere te sluiten, of die links of rechts ervan. Een stip betekent dat Builder-bewerkingen op die pagina nog niet zijn opgeslagen."
+            ],
+            "My favourite. Press %s, click anything on the page and say what to change. Your agent gets the exact element. No more \u201cthe blue thing, top-ish, left-ish\u201d.": [
+                "Mijn favoriet. Druk op %s, klik op iets op de pagina en zeg wat er moet veranderen. Je agent krijgt precies het juiste element. Nooit meer \u201cdat blauwe ding, ergens bovenin, een beetje links\u201d."
+            ],
+            "Press %s and draw a box, a circle or a line around what you mean. A doodle and a few words beat a long email.": [
+                "Druk op %s en teken een kader, een cirkel of een lijn rond wat je bedoelt. Een krabbel en een paar woorden winnen het van een lange e-mail."
+            ],
+            "Your notes": [
+                "Je notities"
+            ],
+            "Every note you pinned, in one list. Jump to one, edit it, or send them all together.": [
+                "Elke notitie die je hebt vastgepind, in \u00e9\u00e9n lijst. Spring naar een notitie, bewerk hem, of verstuur ze allemaal samen."
+            ],
+            "The Builder": [
+                "De Builder"
+            ],
+            "Edit the page yourself: click anything to select it, type on it, drag it, style it, add sections, and save straight to your site. %s opens it.": [
+                "Bewerk de pagina zelf: klik op iets om het te selecteren, typ erin, sleep het, geef het stijl, voeg secties toe en sla direct op in je site. %s opent hem."
+            ],
+            "Show me the Builder": [
+                "Laat me de Builder zien"
+            ],
+            "Turn your site into plain HTML files: download them as a zip, or publish to Cloudflare Pages, Netlify or your own server, and keep it up to date by itself whenever you change something.": [
+                "Maak van je site gewone HTML-bestanden: download ze als zip, of publiceer naar Cloudflare Pages, Netlify of je eigen server, en houd hem vanzelf actueel als je iets wijzigt."
+            ],
+            "Light, dark and more": [
+                "Licht, donker en meer"
+            ],
+            "Switch between light and dark, and find the rest under the three dots. Night owls, you\u2019re welcome.": [
+                "Wissel tussen licht en donker, en vind de rest onder de drie puntjes. Nachtuilen, graag gedaan."
+            ],
+            "Chat and History": [
+                "Chat en Geschiedenis"
+            ],
+            "Chat is your talk with the agent. History holds every saved version of a page, ready to restore. The folder keeps your threads: rename one, delete one, or start fresh. Press [ to fold the panel away.": [
+                "Chat is je gesprek met de agent. Geschiedenis bevat elke opgeslagen versie van een pagina, klaar om te herstellen. De map bewaart je gesprekken: hernoem er een, verwijder er een, of begin opnieuw. Druk op [ om het paneel in te klappen."
+            ],
+            "The conversation": [
+                "Het gesprek"
+            ],
+            "Your requests and your agent\u2019s answers live here, with each saved change and an Undo next to it. Not sure where to start? Pick a starter.": [
+                "Je verzoeken en de antwoorden van je agent staan hier, met elke opgeslagen wijziging en een Ongedaan maken ernaast. Weet je niet waar je moet beginnen? Kies een startpunt."
+            ],
+            "How your agent takes it": [
+                "Hoe je agent het aanpakt"
+            ],
+            "Auto: it starts right away. Plan: it looks and plans, and nothing changes. Queue: collect requests and run them together later. Bypass: it decides on its own, no questions asked.": [
+                "Auto: hij begint meteen. Plannen: hij kijkt en maakt een plan, er verandert niets. Wachtrij: verzamel verzoeken en voer ze later samen uit. Zelfstandig: hij beslist zelf, zonder vragen."
+            ],
+            "The message box": [
+                "Het berichtvak"
+            ],
+            "Say what you want in plain words. + adds a page, a file, a skill or a workflow; \/ opens starters; the paper clip attaches files. Send it, and Stop it if you change your mind.": [
+                "Zeg in gewone woorden wat je wilt. + voegt een pagina, een bestand, een skill of een workflow toe; \/ opent startpunten; de paperclip voegt bestanden bij. Verstuur het, en stop het als je van gedachten verandert."
+            ],
+            "Your site, live": [
+                "Je site, live"
+            ],
+            "The real thing, not a picture. Click around like a visitor, and when something needs changing, point at it.": [
+                "Het echte werk, geen plaatje. Klik rond als een bezoeker, en als er iets moet veranderen, wijs je het aan."
+            ],
+            "And me, Niby": [
+                "En ik, Niby"
+            ],
+            "Drag me anywhere. Click me to chat: I answer questions, hand work to your agent and tell you what it\u2019s doing. No agent? I nap. That\u2019s the whole job, and I\u2019m great at it.": [
+                "Sleep me waar je wilt. Klik op me om te chatten: ik beantwoord vragen, geef werk door aan je agent en vertel je wat hij doet. Geen agent? Dan doe ik een dutje. Dat is het hele werk, en ik ben er geweldig in."
+            ],
+            "Elements to drop on the page, or click one to add it after what you selected (inside it, when it is an empty box). Draw a wireframe and NibWP builds it. Images from your desktop drop right onto the page.": [
+                "Elementen om op de pagina te zetten, of klik op een element om het toe te voegen na wat je hebt geselecteerd (erin, als het een leeg vak is). Teken een wireframe en NibWP bouwt het. Afbeeldingen van je bureaublad zet je direct op de pagina."
+            ],
+            "Structure": [
+                "Structuur"
+            ],
+            "Every element on the page, as a tree. Click to select, type to rename, right-click for BEM names, copy and paste, or hiding on phones, tablets or desktop.": [
+                "Elk element op de pagina, als boom. Klik om te selecteren, typ om te hernoemen, klik met rechts voor BEM-namen, kopi\u00ebren en plakken, of verbergen op telefoons, tablets of desktop."
+            ],
+            "Classes": [
+                "Classes"
+            ],
+            "Your saved classes and the site\u2019s variables. Edit a class once and every element that uses it follows; rename it and the whole site follows.": [
+                "Je opgeslagen classes en de variabelen van de site. Bewerk een class \u00e9\u00e9n keer en elk element dat hem gebruikt, volgt; hernoem hem en de hele site volgt."
+            ],
+            "Templates": [
+                "Templates"
+            ],
+            "Each kind of content with the template that shows it, and a small picture of it. Open one to edit it, or make a new one.": [
+                "Elk soort content met het template dat het toont, en een klein plaatje ervan. Open er een om hem te bewerken, of maak een nieuwe."
+            ],
+            "Your colours, type and spacing as one set of tokens. Change a few settings and every token follows.": [
+                "Je kleuren, typografie en witruimte als \u00e9\u00e9n set tokens. Wijzig een paar instellingen en elke token volgt."
+            ],
+            "Content hub": [
+                "Contenthub"
+            ],
+            "Make a new page, post or product from a starting point, and rename or remove recent ones, without leaving the Builder.": [
+                "Maak een nieuwe pagina, nieuw bericht of nieuw product vanuit een startpunt, en hernoem of verwijder recente, zonder de Builder te verlaten."
+            ],
+            "Canvas size": [
+                "Canvasformaat"
+            ],
+            "Type a width or pick a screen size. Wider than your screen? The page is shown smaller at its real width, so its layout is the real one.": [
+                "Typ een breedte of kies een schermformaat. Breder dan je scherm? Dan wordt de pagina kleiner getoond op de echte breedte, zodat de lay-out de echte is."
+            ],
+            "The HTML, CSS and JavaScript of what you selected, in a code editor that suggests as you type. %s opens it.": [
+                "De HTML, CSS en JavaScript van wat je hebt geselecteerd, in een code-editor die suggesties doet terwijl je typt. %s opent hem."
+            ],
+            "Undo and saved changes": [
+                "Ongedaan maken en opgeslagen wijzigingen"
+            ],
+            "Undo and redo while you work. Once saved, the clock lists your saves: undo the last one if you change your mind.": [
+                "Ongedaan maken en opnieuw doen terwijl je werkt. Na het opslaan toont de klok je opslagmomenten: maak de laatste ongedaan als je van gedachten verandert."
+            ],
+            "Puts your changes on the live site. %s saves too.": [
+                "Zet je wijzigingen op de live site. %s slaat ook op."
+            ],
+            "Your way": [
+                "Op jouw manier"
+            ],
+            "Show or hide parts of the Builder. %s lists every shortcut.": [
+                "Toon of verberg delen van de Builder. %s toont elke sneltoets."
+            ],
+            "The page": [
+                "De pagina"
+            ],
+            "Click to select, double-click text to type it, drag to move, right-click for more. %1$s duplicates; %2$s and %3$s copy and paste, even into another tab.": [
+                "Klik om te selecteren, dubbelklik op tekst om te typen, sleep om te verplaatsen, klik met rechts voor meer. %1$s dupliceert; %2$s en %3$s kopi\u00ebren en plakken, zelfs naar een ander tabblad."
+            ],
+            "Finish": [
+                "Afronden"
+            ],
+            "Skip the tour": [
+                "Rondleiding overslaan"
+            ],
+            "That\u2019s the Builder! Click anything on the page and make it yours. I\u2019m here if you need me.": [
+                "Dat is de Builder! Klik op iets op de pagina en maak het helemaal van jou. Ik ben er als je me nodig hebt."
+            ],
+            "That\u2019s the tour! Replay it any time: click me and pick Take the tour. Now go make something lovely.": [
+                "Dat was de rondleiding! Bekijk hem wanneer je maar wilt opnieuw: klik op me en kies Doe de rondleiding. Ga nu iets moois maken."
+            ],
+            "Thanks, Niby": [
+                "Bedankt, Niby"
+            ],
+            "Welcome to the Builder! Want a quick look around it? It takes a minute.": [
+                "Welkom in de Builder! Zin in een korte rondleiding? Het duurt een minuutje."
+            ],
+            "Your agent is connected and already working. I\u2019m watching it.": [
+                "Je agent is verbonden en al aan het werk. Ik hou hem in de gaten."
+            ],
+            "Your agent is connected and listening. Click me to chat.": [
+                "Je agent is verbonden en luistert. Klik op me om te chatten."
+            ],
+            "No agent yet? You can still pin notes and send them; they wait here for it. Want to connect one?": [
+                "Nog geen agent? Je kunt nog steeds notities vastpinnen en versturen; die wachten hier op hem. Wil je er een verbinden?"
+            ],
+            "Press %s and click anything on the page to leave a note on it.": [
+                "Druk op %s en klik op iets op de pagina om er een notitie bij te zetten."
+            ],
+            "Your media manager, right here in the top bar. Browse by type or date, search, upload or drop files, copy links, or add a file to your message. No trip to the Media Library.": [
+                "Je mediabeheer, hier in de bovenbalk. Blader op type of datum, zoek, upload of sleep bestanden, kopieer links of voeg een bestand toe aan je bericht. Geen omweg via de mediabibliotheek."
+            ],
+            "Editor and new tab": [
+                "Editor en nieuw tabblad"
+            ],
+            "This page in its own editor, and this page in a new tab. The usual suspects, right where you need them.": [
+                "Deze pagina in haar eigen editor, en deze pagina in een nieuw tabblad. De gebruikelijke verdachten, precies waar je ze nodig hebt."
+            ],
+            "Use %1$s %2$s to move, %3$s to close.": [
+                "Gebruik %1$s %2$s om te bladeren, %3$s om te sluiten."
+            ],
+            "PHP, HTML, CSS, JavaScript: I write it all, and I write it right. Who can beat me? Nobody. I am the best.": [
+                "PHP, HTML, CSS, JavaScript: ik schrijf het allemaal, en ik schrijf het goed. Wie verslaat mij? Niemand. Ik ben de beste."
+            ],
+            "PHP: sanitise what comes in, escape what goes out. esc_html, esc_attr, esc_url, on every echo, every time.": [
+                "PHP: schoon op wat binnenkomt, escape wat naar buiten gaat. esc_html, esc_attr, esc_url, bij elke echo, elke keer."
+            ],
+            "JavaScript that blocks nothing: defer it, and listen once on the parent instead of on fifty buttons.": [
+                "JavaScript dat niets blokkeert: laad het met defer en luister \u00e9\u00e9n keer op de ouder in plaats van op vijftig knoppen."
+            ],
+            "One h1 a page, headings in order, a button for actions and a link to go somewhere. Good HTML is free accessibility.": [
+                "E\u00e9n h1 per pagina, koppen op volgorde, een knop voor acties en een link om ergens heen te gaan. Goede HTML is gratis toegankelijkheid."
+            ],
+            "A database query inside a loop is a slow site waiting to happen. Fetch once, then loop.": [
+                "Een databasequery in een lus is een trage site die erop wacht te gebeuren. E\u00e9n keer ophalen, dan pas lussen."
+            ],
+            "Working with code? Let me bring in Kind Guy: PHP, HTML, CSS, JavaScript, he is a pro developer.": [
+                "Bezig met code? Ik haal Kind Guy erbij: PHP, HTML, CSS, JavaScript, hij is een professionele ontwikkelaar."
+            ],
+            "Working with code? Shall I call Kind Guy?": [
+                "Bezig met code? Zal ik Kind Guy erbij halen?"
+            ],
+            "Meet Kind Guy: a pro developer. PHP, HTML, CSS, JavaScript, he knows them all. Brace yourself.": [
+                "Maak kennis met Kind Guy: een professionele ontwikkelaar. PHP, HTML, CSS, JavaScript, hij kent ze allemaal. Zet je schrap."
+            ],
+            "Nothing to build here? Then I\u2019m out. Call me when you do real work.": [
+                "Niets te bouwen hier? Dan ben ik weg. Roep me als je echt werk doet."
+            ]
+        }
+    }
+}

@@ -1,0 +1,1174 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "de_DE",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "View": [
+                "Ansehen"
+            ],
+            "Delete": [
+                "L\u00f6schen"
+            ],
+            "Type": [
+                "Typ"
+            ],
+            "Close": [
+                "Schlie\u00dfen"
+            ],
+            "Copy": [
+                "Kopieren"
+            ],
+            "Copied": [
+                "Kopiert"
+            ],
+            "Clear": [
+                "Leeren"
+            ],
+            "Cancel": [
+                "Abbrechen"
+            ],
+            "Got it": [
+                "Verstanden"
+            ],
+            "Show less": [
+                "Weniger anzeigen"
+            ],
+            "Integrations": [
+                "Integrationen"
+            ],
+            "Workflows": [
+                "Workflows"
+            ],
+            "Skills": [
+                "Skills"
+            ],
+            "Agent View": [
+                "Agent View"
+            ],
+            "Jobs": [
+                "Aufgaben"
+            ],
+            "Running": [
+                "L\u00e4uft"
+            ],
+            "Done": [
+                "Fertig"
+            ],
+            "Edit": [
+                "Bearbeiten"
+            ],
+            "Library": [
+                "Bibliothek"
+            ],
+            "Remove": [
+                "Entfernen"
+            ],
+            "Rename": [
+                "Umbenennen"
+            ],
+            "Added": [
+                "Hinzugef\u00fcgt"
+            ],
+            "Pro": [
+                "Pro"
+            ],
+            "New tab": [
+                "Neuer Tab"
+            ],
+            "Plugins": [
+                "Plugins"
+            ],
+            "Jump to": [
+                "Springe zu"
+            ],
+            "Private": [
+                "Privat"
+            ],
+            "Duplicate": [
+                "Duplizieren"
+            ],
+            "Content": [
+                "Inhalte"
+            ],
+            "(no title)": [
+                "(kein Titel)"
+            ],
+            "No agent listening": [
+                "Kein Agent h\u00f6rt zu"
+            ],
+            "Queue": [
+                "Warteschlange"
+            ],
+            "Reload the page": [
+                "Seite neu laden"
+            ],
+            "Reload": [
+                "Neu laden"
+            ],
+            "Your threads": [
+                "Deine Unterhaltungen"
+            ],
+            "Fold all requests": [
+                "Alle Anfragen einklappen"
+            ],
+            "Start from": [
+                "Starten mit"
+            ],
+            "Send": [
+                "Senden"
+            ],
+            "Click anything on the page to leave a note on it.": [
+                "Klick auf etwas auf der Seite, um eine Notiz daran zu hinterlassen."
+            ],
+            "Add another": [
+                "Noch eine hinzuf\u00fcgen"
+            ],
+            "A note on the page": [
+                "Eine Notiz auf der Seite"
+            ],
+            "Agent working": [
+                "Agent arbeitet"
+            ],
+            "Agent listening": [
+                "Agent h\u00f6rt zu"
+            ],
+            "Agent idle": [
+                "Agent im Leerlauf"
+            ],
+            "No agent connected": [
+                "Kein Agent verbunden"
+            ],
+            "Point at something": [
+                "Auf etwas zeigen"
+            ],
+            "Your agent is on it": [
+                "Dein Agent ist dran"
+            ],
+            "This page": [
+                "Diese Seite"
+            ],
+            "Images": [
+                "Bilder"
+            ],
+            "%1$d of %2$d": [
+                "%1$d von %2$d"
+            ],
+            "Box": [
+                "Box"
+            ],
+            "Undo": [
+                "R\u00fcckg\u00e4ngig"
+            ],
+            "Auto": [
+                "Auto"
+            ],
+            "Open %s": [
+                "%s \u00f6ffnen"
+            ],
+            "Saving\u2026": [
+                "Wird gespeichert \u2026"
+            ],
+            "Saved": [
+                "Gespeichert"
+            ],
+            "Home": [
+                "Startseite"
+            ],
+            "Open": [
+                "\u00d6ffnen"
+            ],
+            "Building": [
+                "Wird gebaut"
+            ],
+            "%s is larger than this site accepts.": [
+                "%s ist gr\u00f6\u00dfer, als diese Website annimmt."
+            ],
+            "Uploading\u2026": [
+                "Wird hochgeladen \u2026"
+            ],
+            "Save note": [
+                "Notiz speichern"
+            ],
+            "Date": [
+                "Datum"
+            ],
+            "just now": [
+                "gerade eben"
+            ],
+            "%d min ago": [
+                "vor %d Min.",
+                "vor %d Min."
+            ],
+            "%d hour ago": [
+                "vor %d Stunde",
+                "vor %d Stunden"
+            ],
+            "Undone": [
+                "R\u00fcckg\u00e4ngig gemacht"
+            ],
+            "The site answered with error %s.": [
+                "Die Website hat mit Fehler %s geantwortet."
+            ],
+            "Your session has expired. Reload Agent View to carry on.": [
+                "Deine Sitzung ist abgelaufen. Lade Agent View neu, um weiterzumachen."
+            ],
+            "Something went wrong.": [
+                "Etwas ist schiefgelaufen."
+            ],
+            "Copying is blocked in this browser. Select the text and copy it instead.": [
+                "Kopieren ist in diesem Browser blockiert. Markiere den Text und kopiere ihn stattdessen selbst."
+            ],
+            "%d agent listening": [
+                "%d Agent h\u00f6rt zu",
+                "%d Agenten h\u00f6ren zu"
+            ],
+            "Last heard from %s": [
+                "Zuletzt geh\u00f6rt %s"
+            ],
+            "Your agent is listening.": [
+                "Dein Agent h\u00f6rt zu."
+            ],
+            "Your agent is here and listening. Anything you send goes straight to it.": [
+                "Dein Agent ist da und h\u00f6rt zu. Alles, was du sendest, geht direkt an ihn."
+            ],
+            "Your agent was here a moment ago but is not listening now. Paste the message below to bring it back.": [
+                "Dein Agent war gerade noch da, h\u00f6rt aber jetzt nicht zu. F\u00fcge die Nachricht unten ein, um ihn zur\u00fcckzuholen."
+            ],
+            "An AI client is connected to this site, but it is not listening to Agent View yet.": [
+                "Ein KI-Client ist mit dieser Website verbunden, h\u00f6rt aber noch nicht auf Agent View."
+            ],
+            "No AI client is connected to this site yet.": [
+                "Mit dieser Website ist noch kein KI-Client verbunden."
+            ],
+            "Copy the wake-up line": [
+                "Weckruf kopieren"
+            ],
+            "Your agent is resting \ud83d\ude34": [
+                "Dein Agent ruht sich aus \ud83d\ude34"
+            ],
+            "No answer, so I let it rest to save its energy (and your tokens). ": [
+                "Keine Antwort, also lasse ich ihn ruhen, um Energie (und deine Tokens) zu sparen."
+            ],
+            "When you need it again, paste the wake-up line in your agent. Anything you send meanwhile waits here.": [
+                "Wenn du ihn wieder brauchst, f\u00fcge den Weckruf bei deinem Agenten ein. Alles, was du in der Zwischenzeit sendest, wartet hier."
+            ],
+            "%d agent is listening": [
+                "%d Agent h\u00f6rt zu",
+                "%d Agenten h\u00f6ren zu"
+            ],
+            "That works: each request goes to whichever picks it up first, and they can work at the same time. Close the extra ones if you want a single agent on the job.": [
+                "Das funktioniert: Jede Anfrage geht an den, der sie zuerst aufnimmt, und sie k\u00f6nnen gleichzeitig arbeiten. Schlie\u00df die \u00fcberz\u00e4hligen, wenn nur ein Agent an der Aufgabe arbeiten soll."
+            ],
+            "Your agent nodded off \ud83d\ude34": [
+                "Dein Agent ist eingenickt \ud83d\ude34"
+            ],
+            "It stopped listening on its own. Paste the wake-up line in your agent to bring it back. Anything you send meanwhile waits here.": [
+                "Er hat von selbst aufgeh\u00f6rt zuzuh\u00f6ren. F\u00fcge den Weckruf bei deinem Agenten ein, um ihn zur\u00fcckzuholen. Alles, was du in der Zwischenzeit sendest, wartet hier."
+            ],
+            "Still Nibbing? \ud83d\udc40": [
+                "Noch am Nibben? \ud83d\udc40"
+            ],
+            "Your agent has had nothing to do for 10 minutes. Keep it listening, or let it rest and save its energy (and your tokens). It rests by itself in 5 minutes if no one answers.": [
+                "Dein Agent hat seit 10 Minuten nichts zu tun. Lass ihn weiter zuh\u00f6ren oder g\u00f6nn ihm eine Pause und spar Energie (und deine Tokens). Wenn niemand antwortet, ruht er sich in 5 Minuten von selbst aus."
+            ],
+            "Keep listening": [
+                "Weiter zuh\u00f6ren"
+            ],
+            "Let it rest": [
+                "Ruhen lassen"
+            ],
+            "Your agent stays on. I\u2019ll check in again later.": [
+                "Dein Agent bleibt an. Ich melde mich sp\u00e4ter noch mal."
+            ],
+            "Copied: paste it in your agent": [
+                "Kopiert: F\u00fcge es bei deinem Agenten ein"
+            ],
+            "Copied. Paste it into your AI client.": [
+                "Kopiert. F\u00fcge es in deinen KI-Client ein."
+            ],
+            "Waiting for your agent": [
+                "Wartet auf deinen Agenten"
+            ],
+            "Paused": [
+                "Pausiert"
+            ],
+            "Taken back": [
+                "Zur\u00fcckgenommen"
+            ],
+            "Your agent is listening. Send something.": [
+                "Dein Agent h\u00f6rt zu. Schick etwas."
+            ],
+            "No agent yet. You can still browse, pin notes and send; messages wait for it.": [
+                "Noch kein Agent. Du kannst trotzdem st\u00f6bern, Notizen anheften und senden; Nachrichten warten auf ihn."
+            ],
+            "Connect one": [
+                "Einen verbinden"
+            ],
+            "Working on it": [
+                "Arbeitet daran"
+            ],
+            "Reading the page": [
+                "Liest die Seite"
+            ],
+            "Thinking it through": [
+                "Denkt es durch"
+            ],
+            "Nibbling": [
+                "Knabbert"
+            ],
+            "Tinkering": [
+                "T\u00fcftelt"
+            ],
+            "Measuring twice": [
+                "Misst zweimal nach"
+            ],
+            "Polishing": [
+                "Poliert"
+            ],
+            "Fine-tuning": [
+                "Feinschliff"
+            ],
+            "Checking the details": [
+                "Pr\u00fcft die Details"
+            ],
+            "%1$dh %2$sm": [
+                "%1$d h %2$s min"
+            ],
+            "%1$dm %2$ss": [
+                "%1$d min %2$s s"
+            ],
+            "%ds": [
+                "%d s"
+            ],
+            "Send again": [
+                "Erneut senden"
+            ],
+            "Done in %s": [
+                "Fertig in %s"
+            ],
+            "Take back": [
+                "Zur\u00fccknehmen"
+            ],
+            "Copy as prompt": [
+                "Als Prompt kopieren"
+            ],
+            "No agent is listening, so this is waiting.": [
+                "Kein Agent h\u00f6rt zu, daher wartet das hier."
+            ],
+            "Bring your agent in": [
+                "Hol deinen Agenten dazu"
+            ],
+            "or copy it as a prompt": [
+                "oder kopiere es als Prompt"
+            ],
+            "Show on the page": [
+                "Auf der Seite zeigen"
+            ],
+            "Your answer": [
+                "Deine Antwort"
+            ],
+            "Or write an answer": [
+                "Oder schreib eine Antwort"
+            ],
+            "Answer": [
+                "Antworten"
+            ],
+            "Your %s asks": [
+                "Dein %s fragt"
+            ],
+            "Opened": [
+                "Ge\u00f6ffnet"
+            ],
+            "Read the page": [
+                "Seite gelesen"
+            ],
+            "Clicked": [
+                "Geklickt"
+            ],
+            "Pointed at": [
+                "Gezeigt auf"
+            ],
+            "Typed into": [
+                "Eingetippt in"
+            ],
+            "Resized the view": [
+                "Ansicht angepasst"
+            ],
+            "Checked the page": [
+                "Seite gepr\u00fcft"
+            ],
+            "Checked for errors": [
+                "Auf Fehler gepr\u00fcft"
+            ],
+            "Looked at the tabs": [
+                "Tabs angesehen"
+            ],
+            "Read the blocks": [
+                "Bl\u00f6cke gelesen"
+            ],
+            "Ran several steps": [
+                "Mehrere Schritte ausgef\u00fchrt"
+            ],
+            "Followed along": [
+                "Mitverfolgt"
+            ],
+            "Checked what it can do": [
+                "F\u00e4higkeiten gepr\u00fcft"
+            ],
+            "%d step": [
+                "%d Schritt",
+                "%d Schritte"
+            ],
+            "Saved \u201c%s\u201d": [
+                "\u201e%s\u201c gespeichert"
+            ],
+            "Put \u201c%1$s\u201d back to %2$s": [
+                "\u201e%1$s\u201c auf %2$s zur\u00fcckgesetzt"
+            ],
+            "Your agent is resting. Paste the wake-up line to bring it back.": [
+                "Dein Agent ruht sich aus. F\u00fcge den Weckruf ein, um ihn zur\u00fcckzuholen."
+            ],
+            "The agent session ended.": [
+                "Die Agenten-Sitzung wurde beendet."
+            ],
+            "You stopped this request.": [
+                "Du hast diese Anfrage gestoppt."
+            ],
+            "You undid a job: %d page put back.": [
+                "Du hast einen Auftrag r\u00fcckg\u00e4ngig gemacht: %d Seite zur\u00fcckgesetzt.",
+                "Du hast einen Auftrag r\u00fcckg\u00e4ngig gemacht: %d Seiten zur\u00fcckgesetzt."
+            ],
+            "(a pinned note)": [
+                "(eine angeheftete Notiz)"
+            ],
+            "Stop this job": [
+                "Diesen Auftrag stoppen"
+            ],
+            "Next up": [
+                "Als N\u00e4chstes"
+            ],
+            "#%d in line": [
+                "Nr. %d in der Reihe"
+            ],
+            "Run next": [
+                "Als N\u00e4chstes ausf\u00fchren"
+            ],
+            "Pause": [
+                "Pausieren"
+            ],
+            "Paused: your agent skips it": [
+                "Pausiert: Dein Agent \u00fcberspringt ihn"
+            ],
+            "Run": [
+                "Ausf\u00fchren"
+            ],
+            "%d page saved": [
+                "%d Seite gespeichert",
+                "%d Seiten gespeichert"
+            ],
+            "Show more": [
+                "Mehr anzeigen"
+            ],
+            "%d agent takes them from the top": [
+                "%d Agent nimmt sie von oben",
+                "%d Agenten nehmen sie von oben"
+            ],
+            "No agent listening: they wait here": [
+                "Kein Agent h\u00f6rt zu: Sie warten hier"
+            ],
+            "Nothing running.": [
+                "Nichts l\u00e4uft."
+            ],
+            "Up next": [
+                "Als N\u00e4chstes"
+            ],
+            "Nothing waiting. Send a request and it lands here.": [
+                "Nichts wartet. Sende eine Anfrage, dann landet sie hier."
+            ],
+            "Drag to change the order.": [
+                "Ziehen, um die Reihenfolge zu \u00e4ndern."
+            ],
+            "Undo this job?": [
+                "Diesen Auftrag r\u00fcckg\u00e4ngig machen?"
+            ],
+            "\u201c%1$s\u201d saved %2$d page. It goes back to how it was before the job. Settings or files the job changed stay as they are.": [
+                "\u201e%1$s\u201c hat %2$d Seite gespeichert. Sie wird auf den Stand vor dem Auftrag zur\u00fcckgesetzt. Einstellungen oder Dateien, die der Auftrag ge\u00e4ndert hat, bleiben, wie sie sind.",
+                "\u201e%1$s\u201c hat %2$d Seiten gespeichert. Sie werden auf den Stand vor dem Auftrag zur\u00fcckgesetzt. Einstellungen oder Dateien, die der Auftrag ge\u00e4ndert hat, bleiben, wie sie sind."
+            ],
+            "Undo the job": [
+                "Auftrag r\u00fcckg\u00e4ngig machen"
+            ],
+            "Keep it": [
+                "Behalten"
+            ],
+            "Undone: %d page put back.": [
+                "R\u00fcckg\u00e4ngig gemacht: %d Seite zur\u00fcckgesetzt.",
+                "R\u00fcckg\u00e4ngig gemacht: %d Seiten zur\u00fcckgesetzt."
+            ],
+            "Stopped. Your agent stops at its next step and says what it finished.": [
+                "Gestoppt. Dein Agent h\u00f6rt beim n\u00e4chsten Schritt auf und sagt, was er fertig hat."
+            ],
+            "New order saved. Your agent takes the top one next.": [
+                "Neue Reihenfolge gespeichert. Dein Agent nimmt als N\u00e4chstes den obersten."
+            ],
+            "Stopped. Nothing was left waiting.": [
+                "Gestoppt. Es wartet nichts mehr."
+            ],
+            "Show the work on this request": [
+                "Die Arbeit an dieser Anfrage anzeigen"
+            ],
+            "Hide the work on this request": [
+                "Die Arbeit an dieser Anfrage ausblenden"
+            ],
+            "Show the work (%d)": [
+                "Arbeit anzeigen (%d)"
+            ],
+            "Open all requests": [
+                "Alle Anfragen aufklappen"
+            ],
+            "Copied as a prompt.": [
+                "Als Prompt kopiert."
+            ],
+            "This is about my WordPress site %s, which you can work on through NibWP.": [
+                "Es geht um meine WordPress-Website %s, an der du \u00fcber NibWP arbeiten kannst."
+            ],
+            "Page: %1$s (%2$s)": [
+                "Seite: %1$s (%2$s)"
+            ],
+            "post %d": [
+                "Beitrag %d"
+            ],
+            "Notes I pinned on the page:": [
+                "Notizen, die ich an die Seite geheftet habe:"
+            ],
+            "(marked, see my message above)": [
+                "(markiert, siehe meine Nachricht oben)"
+            ],
+            "Element: %1$s, \u201c%2$s\u201d": [
+                "Element: %1$s, \u201e%2$s\u201c"
+            ],
+            "Inside the editor canvas %s": [
+                "Innerhalb der Editor-Arbeitsfl\u00e4che %s"
+            ],
+            "Drawn: %1$s, %2$d\u00d7%3$d px at %4$d, %5$d on the page": [
+                "Gezeichnet: %1$s, %2$d\u00d7%3$d px bei %4$d, %5$d auf der Seite"
+            ],
+            "Also see: %1$s (%2$s)": [
+                "Siehe auch: %1$s (%2$s)"
+            ],
+            "File: %1$s %2$s": [
+                "Datei: %1$s %2$s"
+            ],
+            "Use these NibWP skills (load each with nibwp\/load-skill-playbook): %s": [
+                "Verwende diese NibWP-Skills (lade jeden mit nibwp\/load-skill-playbook): %s"
+            ],
+            "Follow these NibWP workflows (read each with nibwp\/get-workflow): %s": [
+                "Folge diesen NibWP-Workflows (lies jeden mit nibwp\/get-workflow): %s"
+            ],
+            "Your agent is waiting for your answer": [
+                "Dein Agent wartet auf deine Antwort"
+            ],
+            "Type \/ for pages, skills and more": [
+                "Tipp \/ f\u00fcr Seiten, Skills und mehr"
+            ],
+            "Enter to send \u00b7 Shift+Enter for a new line": [
+                "Enter zum Senden \u00b7 Shift+Enter f\u00fcr eine neue Zeile"
+            ],
+            "Do not send the current page": [
+                "Die aktuelle Seite nicht mitsenden"
+            ],
+            "Remove this note": [
+                "Diese Notiz entfernen"
+            ],
+            "Remove this file": [
+                "Diese Datei entfernen"
+            ],
+            "Your drawing": [
+                "Deine Zeichnung"
+            ],
+            "Your comment": [
+                "Dein Kommentar"
+            ],
+            "Your agent starts on it right away": [
+                "Dein Agent legt sofort los"
+            ],
+            "Plan": [
+                "Planen"
+            ],
+            "Your agent looks and plans; nothing changes": [
+                "Dein Agent schaut und plant; nichts \u00e4ndert sich"
+            ],
+            "Plan it": [
+                "Planen lassen"
+            ],
+            "Collect requests, run them together later": [
+                "Anfragen sammeln und sp\u00e4ter gemeinsam ausf\u00fchren"
+            ],
+            "Add to queue": [
+                "Zur Warteschlange hinzuf\u00fcgen"
+            ],
+            "Bypass": [
+                "Ohne R\u00fcckfragen"
+            ],
+            "Your agent decides on its own, no questions": [
+                "Dein Agent entscheidet selbst, ohne R\u00fcckfragen"
+            ],
+            "Do it": [
+                "Erledigen"
+            ],
+            "%d request waiting": [
+                "%d Anfrage wartet",
+                "%d Anfragen warten"
+            ],
+            "Nothing waiting": [
+                "Nichts wartet"
+            ],
+            "Remove from the queue": [
+                "Aus der Warteschlange entfernen"
+            ],
+            "Run as": [
+                "Ausf\u00fchren als"
+            ],
+            "Run all": [
+                "Alle ausf\u00fchren"
+            ],
+            "Run %d": [
+                "%d ausf\u00fchren"
+            ],
+            "Switch the chat to Queue mode and your requests wait here, to run together when you are done planning.": [
+                "Stell den Chat auf den Warteschlangen-Modus, dann warten deine Anfragen hier, um gemeinsam ausgef\u00fchrt zu werden, wenn du mit dem Planen fertig bist."
+            ],
+            "Added to your queue (%d waiting). Run them together from the Queue at the top.": [
+                "Zu deiner Warteschlange hinzugef\u00fcgt (%d wartet). F\u00fchre sie gemeinsam \u00fcber die Warteschlange oben aus.",
+                "Zu deiner Warteschlange hinzugef\u00fcgt (%d warten). F\u00fchre sie gemeinsam \u00fcber die Warteschlange oben aus."
+            ],
+            "Your agent is working on %d task": [
+                "Dein Agent arbeitet an %d Aufgabe",
+                "Dein Agent arbeitet an %d Aufgaben"
+            ],
+            "In the order you set. Follow each one in Jobs.": [
+                "In der Reihenfolge, die du festgelegt hast. Verfolge jede unter \u201eAuftr\u00e4ge\u201c."
+            ],
+            "Pasted image": [
+                "Eingef\u00fcgtes Bild"
+            ],
+            "Show your agent\u2019s changes?": [
+                "Die \u00c4nderungen deines Agenten anzeigen?"
+            ],
+            "Leave the editor?": [
+                "Editor verlassen?"
+            ],
+            "Reload the editor?": [
+                "Editor neu laden?"
+            ],
+            "Your agent saved changes to this page, but the editor still shows the page from before, with your unsaved edits in it. Reloading the editor shows your agent\u2019s changes and drops your unsaved edits. Keeping your edits is fine too, but saving them later writes over your agent\u2019s changes.": [
+                "Dein Agent hat \u00c4nderungen an dieser Seite gespeichert, aber der Editor zeigt noch die Seite von vorher, mit deinen ungespeicherten Bearbeitungen. Neu laden zeigt die \u00c4nderungen deines Agenten und verwirft deine ungespeicherten Bearbeitungen. Du kannst deine Bearbeitungen auch behalten, aber wenn du sie sp\u00e4ter speicherst, \u00fcberschreiben sie die \u00c4nderungen deines Agenten."
+            ],
+            "The editor has unsaved edits. Leaving drops them. Save them in the editor first if you want to keep them.": [
+                "Der Editor hat ungespeicherte Bearbeitungen. Wenn du ihn verl\u00e4sst, gehen sie verloren. Speichere sie zuerst im Editor, wenn du sie behalten willst."
+            ],
+            "The editor has unsaved edits. Reloading drops them. Save them in the editor first if you want to keep them.": [
+                "Der Editor hat ungespeicherte Bearbeitungen. Neu laden verwirft sie. Speichere sie zuerst im Editor, wenn du sie behalten willst."
+            ],
+            "Reload and show the changes": [
+                "Neu laden und \u00c4nderungen anzeigen"
+            ],
+            "Leave anyway": [
+                "Trotzdem verlassen"
+            ],
+            "Reload anyway": [
+                "Trotzdem neu laden"
+            ],
+            "Keep my edits": [
+                "Meine Bearbeitungen behalten"
+            ],
+            "Stay": [
+                "Bleiben"
+            ],
+            "Updated": [
+                "Aktualisiert"
+            ],
+            "NibWP updated this page. It shows once your note is sent or closed.": [
+                "NibWP hat diese Seite aktualisiert. Sie wird angezeigt, sobald deine Notiz gesendet oder geschlossen ist."
+            ],
+            "NibWP worked on another page.": [
+                "NibWP hat an einer anderen Seite gearbeitet."
+            ],
+            "NibWP updated this page. It shows when you are done.": [
+                "NibWP hat diese Seite aktualisiert. Sie wird angezeigt, wenn du fertig bist."
+            ],
+            "Show now": [
+                "Jetzt anzeigen"
+            ],
+            "Open it": [
+                "\u00d6ffnen"
+            ],
+            "A page outside this site": [
+                "Eine Seite au\u00dferhalb dieser Website"
+            ],
+            "Leave without saving?": [
+                "Ohne Speichern verlassen?"
+            ],
+            "The Builder has changes on %s that are not saved. Closing drops them. Save them first if you want to keep them.": [
+                "Der Builder hat ungespeicherte \u00c4nderungen auf %s. Beim Schlie\u00dfen gehen sie verloren. Speichere sie zuerst, wenn du sie behalten willst."
+            ],
+            "The Builder has changes on %s that are not saved. Reloading drops them. Save them first if you want to keep them.": [
+                "Der Builder hat ungespeicherte \u00c4nderungen auf %s. Beim Neuladen gehen sie verloren. Speichere sie zuerst, wenn du sie behalten willst."
+            ],
+            "The Builder has changes on %s that are not saved. Going to another page drops them. Save them first if you want to keep them.": [
+                "Der Builder hat ungespeicherte \u00c4nderungen auf %s. Beim Wechsel auf eine andere Seite gehen sie verloren. Speichere sie zuerst, wenn du sie behalten willst."
+            ],
+            "Close without saving": [
+                "Ohne Speichern schlie\u00dfen"
+            ],
+            "Reload without saving": [
+                "Ohne Speichern neu laden"
+            ],
+            "Leave without saving": [
+                "Ohne Speichern verlassen"
+            ],
+            "Group": [
+                "Gruppe"
+            ],
+            "Show this group": [
+                "Diese Gruppe anzeigen"
+            ],
+            "Fold this group": [
+                "Diese Gruppe einklappen"
+            ],
+            "Builder changes not saved": [
+                "Builder-\u00c4nderungen nicht gespeichert"
+            ],
+            "Close %s": [
+                "%s schlie\u00dfen"
+            ],
+            "Name this group": [
+                "Diese Gruppe benennen"
+            ],
+            "Group name": [
+                "Gruppenname"
+            ],
+            "Group colour": [
+                "Gruppenfarbe"
+            ],
+            "New tab in this group": [
+                "Neuer Tab in dieser Gruppe"
+            ],
+            "Ungroup": [
+                "Gruppierung aufheben"
+            ],
+            "Close the group": [
+                "Gruppe schlie\u00dfen"
+            ],
+            "Add to a new group": [
+                "Zu einer neuen Gruppe hinzuf\u00fcgen"
+            ],
+            "Move to %s": [
+                "Nach %s verschieben"
+            ],
+            "Remove from group": [
+                "Aus der Gruppe entfernen"
+            ],
+            "Close tab": [
+                "Tab schlie\u00dfen"
+            ],
+            "Close tabs to the left": [
+                "Tabs links schlie\u00dfen"
+            ],
+            "Close tabs to the right": [
+                "Tabs rechts schlie\u00dfen"
+            ],
+            "Close other tabs": [
+                "Andere Tabs schlie\u00dfen"
+            ],
+            "%s \u00b7 Agent View": [
+                "%s \u00b7 Agent View"
+            ],
+            "Drag to draw a box. Draw as many marks as you like, then say what they are about.": [
+                "Ziehen, um eine Box zu zeichnen. Zeichne so viele Markierungen, wie du willst, und sag dann, worum es geht."
+            ],
+            "Drag to draw a circle. Draw as many marks as you like, then say what they are about.": [
+                "Ziehen, um einen Kreis zu zeichnen. Zeichne so viele Markierungen, wie du willst, und sag dann, worum es geht."
+            ],
+            "Draw freely on the page. Draw as many marks as you like, then say what they are about.": [
+                "Zeichne frei auf der Seite. Zeichne so viele Markierungen, wie du willst, und sag dann, worum es geht."
+            ],
+            "Circle": [
+                "Kreis"
+            ],
+            "Drawing": [
+                "Zeichnung"
+            ],
+            "Write what should change here first.": [
+                "Schreib zuerst, was sich hier \u00e4ndern soll."
+            ],
+            "That element is not on the page shown now.": [
+                "Dieses Element ist nicht auf der gerade angezeigten Seite."
+            ],
+            "Not sent yet": [
+                "Noch nicht gesendet"
+            ],
+            "Edit and send again": [
+                "Bearbeiten und erneut senden"
+            ],
+            "Hide this comment": [
+                "Diesen Kommentar ausblenden"
+            ],
+            "No comments yet. Press C and click the page, or D to draw on it.": [
+                "Noch keine Kommentare. Dr\u00fcck C und klick auf die Seite, oder D, um darauf zu zeichnen."
+            ],
+            "Comment hidden.": [
+                "Kommentar ausgeblendet."
+            ],
+            "Draft": [
+                "Entwurf"
+            ],
+            "Pending": [
+                "Ausstehend"
+            ],
+            "Scheduled": [
+                "Geplant"
+            ],
+            "Searching\u2026": [
+                "Suche \u2026"
+            ],
+            "Nothing found on this site.": [
+                "Auf dieser Website nichts gefunden."
+            ],
+            "On this site": [
+                "Auf dieser Website"
+            ],
+            "Recently changed": [
+                "K\u00fcrzlich ge\u00e4ndert"
+            ],
+            "Off": [
+                "Aus"
+            ],
+            "Go to %s": [
+                "Zu %s gehen"
+            ],
+            "Show %d more": [
+                "%d weitere anzeigen"
+            ],
+            "%s is added to your message.": [
+                "%s wurde deiner Nachricht hinzugef\u00fcgt."
+            ],
+            "Show all %d": [
+                "Alle %d anzeigen"
+            ],
+            "Add to this message": [
+                "Zu dieser Nachricht hinzuf\u00fcgen"
+            ],
+            "Leave a note on an element": [
+                "Eine Notiz an einem Element hinterlassen"
+            ],
+            "A file or screenshot": [
+                "Eine Datei oder ein Screenshot"
+            ],
+            "Upload, paste or drop": [
+                "Hochladen, einf\u00fcgen oder hineinziehen"
+            ],
+            "Pages to include": [
+                "Einzubeziehende Seiten"
+            ],
+            "Nothing matches. Try another word.": [
+                "Nichts gefunden. Versuch ein anderes Wort."
+            ],
+            "Yesterday %s": [
+                "Gestern %s"
+            ],
+            "an earlier version": [
+                "eine fr\u00fchere Version"
+            ],
+            "the version from %s": [
+                "die Version von %s"
+            ],
+            "this page": [
+                "diese Seite"
+            ],
+            "Undo this change?": [
+                "Diese \u00c4nderung r\u00fcckg\u00e4ngig machen?"
+            ],
+            "\u201c%s\u201d goes back to how it was before this save. What is there now is kept as a version, so you can switch back.": [
+                "\u201e%s\u201c wird auf den Stand vor dieser Speicherung zur\u00fcckgesetzt. Der aktuelle Stand wird als Version aufbewahrt, du kannst also zur\u00fcckwechseln."
+            ],
+            "Restore this version?": [
+                "Diese Version wiederherstellen?"
+            ],
+            "\u201c%1$s\u201d goes back to %2$s. What is there now is kept as a version, so you can switch back.": [
+                "\u201e%1$s\u201c wird auf %2$s zur\u00fcckgesetzt. Der aktuelle Stand wird als Version aufbewahrt, du kannst also zur\u00fcckwechseln."
+            ],
+            "its first version": [
+                "ihre erste Version"
+            ],
+            "Restore": [
+                "Wiederherstellen"
+            ],
+            "Page restored.": [
+                "Seite wiederhergestellt."
+            ],
+            "Previewing the first version of this page": [
+                "Vorschau der ersten Version dieser Seite"
+            ],
+            "Previewing %s": [
+                "Vorschau: %s"
+            ],
+            "Your %1$s asks: %2$s": [
+                "Dein %1$s fragt: %2$s"
+            ],
+            "This is already a new thread. Type below to start it.": [
+                "Das ist bereits eine neue Unterhaltung. Tipp unten, um sie zu beginnen."
+            ],
+            "New thread. Anything still waiting in the last one was taken back.": [
+                "Neue Unterhaltung. Was in der letzten noch wartete, wurde zur\u00fcckgenommen."
+            ],
+            "%s \u00b7 Show all threads": [
+                "%s \u00b7 Alle Unterhaltungen anzeigen"
+            ],
+            "Open a page or post to see its saved versions.": [
+                "\u00d6ffne eine Seite oder einen Beitrag, um die gespeicherten Versionen zu sehen."
+            ],
+            "This page does not keep saved versions.": [
+                "Diese Seite bewahrt keine gespeicherten Versionen auf."
+            ],
+            "No saved versions yet. Each save from now on adds one here.": [
+                "Noch keine gespeicherten Versionen. Ab jetzt f\u00fcgt jede Speicherung hier eine hinzu."
+            ],
+            "Current": [
+                "Aktuell"
+            ],
+            "First version": [
+                "Erste Version"
+            ],
+            "Saved %s": [
+                "Gespeichert %s"
+            ],
+            "Autosave": [
+                "Automatische Speicherung"
+            ],
+            "Show the page as it is now": [
+                "Die Seite so zeigen, wie sie jetzt ist"
+            ],
+            "Show the page as it was then": [
+                "Die Seite so zeigen, wie sie damals war"
+            ],
+            "Your threads show up here once you send something.": [
+                "Deine Unterhaltungen erscheinen hier, sobald du etwas sendest."
+            ],
+            "Open now": [
+                "Jetzt ge\u00f6ffnet"
+            ],
+            "%d message": [
+                "%d Nachricht",
+                "%d Nachrichten"
+            ],
+            "Your threads (%d)": [
+                "Deine Unterhaltungen (%d)",
+                "Deine Unterhaltungen (%d)"
+            ],
+            "Open \u201c%s\u201d": [
+                "\u201e%s\u201c \u00f6ffnen"
+            ],
+            "Rename \u201c%s\u201d": [
+                "\u201e%s\u201c umbenennen"
+            ],
+            "Delete \u201c%s\u201d": [
+                "\u201e%s\u201c l\u00f6schen"
+            ],
+            "Today": [
+                "Heute"
+            ],
+            "Yesterday": [
+                "Gestern"
+            ],
+            "This week": [
+                "Diese Woche"
+            ],
+            "Earlier": [
+                "Fr\u00fcher"
+            ],
+            "No thread by that name.": [
+                "Keine Unterhaltung mit diesem Namen."
+            ],
+            "Thread name": [
+                "Name der Unterhaltung"
+            ],
+            "Saves as you type. Empty brings back the first message.": [
+                "Wird beim Tippen gespeichert. Leer bringt die erste Nachricht zur\u00fcck."
+            ],
+            "Delete \u201c%s\u201d?": [
+                "\u201e%s\u201c l\u00f6schen?"
+            ],
+            "Delete this thread for good?": [
+                "Diese Unterhaltung endg\u00fcltig l\u00f6schen?"
+            ],
+            "\u201c%1$s\u201d and its %2$d message are deleted. This can\u2019t be undone.": [
+                "\u201e%1$s\u201c und seine %2$d Nachricht werden gel\u00f6scht. Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.",
+                "\u201e%1$s\u201c und seine %2$d Nachrichten werden gel\u00f6scht. Das kann nicht r\u00fcckg\u00e4ngig gemacht werden."
+            ],
+            "Delete for good": [
+                "Endg\u00fcltig l\u00f6schen"
+            ],
+            "Thread deleted. You\u2019re in a fresh one.": [
+                "Unterhaltung gel\u00f6scht. Du bist jetzt in einer neuen."
+            ],
+            "Thread deleted.": [
+                "Unterhaltung gel\u00f6scht."
+            ],
+            "All types": [
+                "Alle Typen"
+            ],
+            "Videos": [
+                "Videos"
+            ],
+            "Audio": [
+                "Audio"
+            ],
+            "Documents": [
+                "Dokumente"
+            ],
+            "All media": [
+                "Alle Medien"
+            ],
+            "From Agent View": [
+                "Aus Agent View"
+            ],
+            "Date deleted from": [
+                "L\u00f6schdatum"
+            ],
+            "All dates": [
+                "Alle Daten"
+            ],
+            "Trash": [
+                "Papierkorb"
+            ],
+            "Select all": [
+                "Alle ausw\u00e4hlen"
+            ],
+            "1 file": [
+                "1 Datei"
+            ],
+            "%s files": [
+                "%s Dateien"
+            ],
+            "Deleted for good after %d days.": [
+                "Wird nach %d Tagen endg\u00fcltig gel\u00f6scht."
+            ],
+            "The trash is turned off on this site.": [
+                "Der Papierkorb ist auf dieser Website ausgeschaltet."
+            ],
+            "1 selected": [
+                "1 ausgew\u00e4hlt"
+            ],
+            "%d selected": [
+                "%d ausgew\u00e4hlt"
+            ],
+            "Delete permanently": [
+                "Endg\u00fcltig l\u00f6schen"
+            ],
+            "Add to message": [
+                "Zur Nachricht hinzuf\u00fcgen"
+            ],
+            "Copy links": [
+                "Links kopieren"
+            ],
+            "Select %s": [
+                "%s ausw\u00e4hlen"
+            ],
+            "Open %s in a new tab": [
+                "%s in einem neuen Tab \u00f6ffnen"
+            ],
+            "Copy link": [
+                "Link kopieren"
+            ],
+            "The trash is empty.": [
+                "Der Papierkorb ist leer."
+            ],
+            "No files here yet.": [
+                "Hier gibt es noch keine Dateien."
+            ],
+            "Load more \u00b7 %1$s of %2$s": [
+                "Mehr laden \u00b7 %1$s von %2$s"
+            ],
+            "Moved to the trash.": [
+                "In den Papierkorb verschoben."
+            ],
+            "Restored.": [
+                "Wiederhergestellt."
+            ],
+            "Deleted for good.": [
+                "Endg\u00fcltig gel\u00f6scht."
+            ],
+            "%1$s %2$d could not be changed.": [
+                "%1$s %2$d lie\u00dfen sich nicht \u00e4ndern."
+            ],
+            "Delete this file for good?": [
+                "Diese Datei endg\u00fcltig l\u00f6schen?"
+            ],
+            "Delete %d files for good?": [
+                "%d Dateien endg\u00fcltig l\u00f6schen?"
+            ],
+            "\u201c%s\u201d is removed from the site and cannot come back.": [
+                "\u201e%s\u201c wird von der Website entfernt und kann nicht zur\u00fcckgeholt werden."
+            ],
+            "They are removed from the site and cannot come back.": [
+                "Sie werden von der Website entfernt und k\u00f6nnen nicht zur\u00fcckgeholt werden."
+            ],
+            "A page that shows one will show a broken image.": [
+                "Eine Seite, die eine davon zeigt, zeigt dann ein defektes Bild."
+            ],
+            "Added %d to your message.": [
+                "%d zu deiner Nachricht hinzugef\u00fcgt."
+            ],
+            "A message holds 10 files at most.": [
+                "Eine Nachricht fasst h\u00f6chstens 10 Dateien."
+            ],
+            "Link copied.": [
+                "Link kopiert."
+            ],
+            "%d links copied.": [
+                "%d Links kopiert."
+            ],
+            "Uploading %d files\u2026": [
+                "%d Dateien werden hochgeladen \u2026"
+            ],
+            "Uploaded.": [
+                "Hochgeladen."
+            ],
+            "%d files uploaded.": [
+                "%d Dateien hochgeladen."
+            ],
+            "Your agent asks before it clicks or types on the page.": [
+                "Dein Agent fragt, bevor er auf der Seite klickt oder tippt."
+            ],
+            "Your agent clicks and types without asking.": [
+                "Dein Agent klickt und tippt, ohne zu fragen."
+            ],
+            "Your agent will stop at its next check-in.": [
+                "Dein Agent h\u00f6rt bei seiner n\u00e4chsten R\u00fcckmeldung auf."
+            ],
+            "Use this": [
+                "Verwenden"
+            ],
+            "Starts right away": [
+                "Startet sofort"
+            ],
+            "Plans, no changes": [
+                "Plant, \u00e4ndert nichts"
+            ],
+            "Runs later": [
+                "L\u00e4uft sp\u00e4ter"
+            ],
+            "No questions asked": [
+                "Ohne R\u00fcckfragen"
+            ]
+        }
+    }
+}

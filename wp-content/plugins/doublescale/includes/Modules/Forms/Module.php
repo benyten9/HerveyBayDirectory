@@ -43,7 +43,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	}
 
 	public function description(): string {
-		return __( 'Connect form builder plugins to capture leads and trigger automations.', 'doublescale' );
+		return __( 'Build forms that send leads straight to your CRM, or connect your form plugin.', 'doublescale' );
 	}
 
 	public function version(): string {
@@ -65,9 +65,22 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		);
 	}
 
+	/**
+	 * Recurring tasks, unscheduled when the module is switched off.
+	 *
+	 * @return array
+	 */
+	public function scheduledHooks(): array {
+		return array(
+			array( Native\Housekeeping::GROUP, Native\Housekeeping::HOOK ),
+		);
+	}
+
 	public function restControllers(): array {
 		return array(
 			Rest\Controllers\RestFormController::class,
+			Rest\Controllers\RestFormSubmissionsController::class,
+			Native\Rest\RestPublicFormController::class,
 		);
 	}
 
@@ -80,6 +93,28 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 		add_filter( 'doublescale_forms', array( $this, 'register_forms' ), 5 );
 
 		$container->get( Services\FormsManager::class );
+
+		// DoubleScale's own forms: shortcode, block, form pages and the submit pipeline's
+		// background step.
+		Native\Renderer::init();
+		// Unfinished entries are off for now: no "Form abandoned" trigger in the editor.
+		add_filter(
+			'doublescale_automation_trigger_sources_offered',
+			static function ( $sources ) {
+				return Native\Partial::available() ? $sources : self::without_trigger( (array) $sources, 'doublescale_form_abandoned' );
+			}
+		);
+		// Website tracking (Pro) hands over entries sent before the visitor was known.
+		add_action( 'doublescale_tracking_claim_form_entries', array( Native\Submission::class, 'claim_entries' ), 10, 2 );
+		if ( did_action( 'doublescale_ready' ) ) {
+			Native\Form::register_tasks();
+		} else {
+			add_action( 'doublescale_ready', array( Native\Form::class, 'register_tasks' ), 6 );
+		}
+		Native\Housekeeping::hooks();
+
+		// {{forms:link 12}} for emails, SMS and WhatsApp.
+		$this->loadModuleMergeTagFiles();
 	}
 
 	/**
@@ -89,6 +124,7 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 	 * @return array
 	 */
 	public function register_forms( $forms ) {
+		$forms[ Native\Form::SLUG ] = new Native\Form();
 		$forms['contactform7'] = new Contactform7\Form();
 		$forms['fluentforms']  = new Fluentforms\Form();
 		$forms['quillforms']   = new Quillforms\Form();
@@ -114,5 +150,22 @@ final class Module extends AbstractModule implements ProvidesAbilities {
 				require_once $file;
 			}
 		}
+	}
+
+	/**
+	 * Trigger sources without one trigger (wherever it sits in the groups).
+	 *
+	 * @param array  $sources Trigger sources.
+	 * @param string $slug    Trigger slug.
+	 * @return array
+	 */
+	private static function without_trigger( array $sources, string $slug ): array {
+		unset( $sources[ $slug ] );
+		foreach ( $sources as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$sources[ $key ] = self::without_trigger( $value, $slug );
+			}
+		}
+		return $sources;
 	}
 }

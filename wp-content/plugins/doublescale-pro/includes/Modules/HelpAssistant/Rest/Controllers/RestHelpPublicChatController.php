@@ -410,11 +410,7 @@ class RestHelpPublicChatController extends RestController {
 			);
 		}
 
-		$guard   = ChatGuard::from_settings();
-		$limited = $guard->visitor();
-		if ( $limited ) {
-			return $limited;
-		}
+		$guard = ChatGuard::from_settings();
 
 		Schema::ensure();
 
@@ -426,6 +422,12 @@ class RestHelpPublicChatController extends RestController {
 		// Handed to the team and still open: the message is the customer's
 		// reply on the ticket, and the assistant stays silent.
 		if ( null !== $conversation && LiveChat::active( $conversation ) ) {
+			// A fixed flood guard, not the AI limits: a long chat with a person
+			// must never be cut off by the owner's AI question limits.
+			$flood = ChatGuard::team_flood();
+			if ( $flood ) {
+				return $flood;
+			}
 			return $this->live( $conversation, $text, rest_sanitize_boolean( $request->get_param( 'stream' ) ), $files );
 		}
 		// No AI answering (switched off, or no AI provider): the chat goes
@@ -433,6 +435,12 @@ class RestHelpPublicChatController extends RestController {
 		// route instead, which asks a visitor for their name and email.
 		if ( ! HelpSettings::assistant_answers() ) {
 			return new WP_Error( 'help_team_only', __( 'Send your message to our team.', 'doublescale' ), array( 'status' => 409 ) );
+		}
+		// The per-visitor limits are AI limits: counted only for questions the
+		// assistant answers (Help Center → AI Assistant → Limits).
+		$limited = $guard->visitor();
+		if ( $limited ) {
+			return $limited;
 		}
 		// Files go to the team only; the assistant needs words.
 		if ( '' === $text ) {
@@ -515,7 +523,7 @@ class RestHelpPublicChatController extends RestController {
 					'message_id'   => $message,
 					'answer'       => $result['answer'],
 					'answered'     => $result['answered'],
-					'handoff'      => ! empty( $result['handoff'] ),
+					'handoff'      => ! empty( $result['handoff'] ) && HelpSettings::handoff_offered(),
 					'citations'    => $result['citations'],
 					'suggestions'  => $result['suggestions'] ?? array(),
 				),
@@ -550,7 +558,7 @@ class RestHelpPublicChatController extends RestController {
 				array(
 					'message' => ChatWords::localize( $error, $this->lang )->get_error_message(),
 					'code'    => $error->get_error_code(),
-					'handoff' => true,
+					'handoff' => HelpSettings::handoff_offered(),
 				)
 			);
 			exit;
@@ -575,14 +583,15 @@ class RestHelpPublicChatController extends RestController {
 		if ( ! empty( $result['suggestions'] ) ) {
 			StreamResponder::emit( 'suggestions', array( 'items' => $result['suggestions'] ) );
 		}
-		if ( ! $result['answered'] || ! empty( $result['handoff'] ) ) {
+		// AI only with no contact form: the no-answer reply is all the customer gets.
+		if ( ( ! $result['answered'] || ! empty( $result['handoff'] ) ) && HelpSettings::handoff_offered() ) {
 			StreamResponder::emit( 'handoff_offer', array() );
 		}
 		StreamResponder::emit(
 			'done',
 			array(
 				'answered'   => $result['answered'],
-				'handoff'    => ! empty( $result['handoff'] ),
+				'handoff'    => ! empty( $result['handoff'] ) && HelpSettings::handoff_offered(),
 				'message_id' => $message,
 			)
 		);
@@ -661,7 +670,7 @@ class RestHelpPublicChatController extends RestController {
 			array(
 				'name'     => $settings['name'],
 				'fallback' => $settings['fallback'],
-				'handoff'  => HandoffService::available() && ChatGuard::available(),
+				'handoff'  => HelpSettings::handoff_offered(),
 				'lang'     => $this->lang,
 			),
 			$on_delta

@@ -34,6 +34,17 @@ class Website {
 	const COOKIE_EXPIRY_DAYS = 30;
 
 	/**
+	 * Form entries sent from this browser before it was known (native forms), signed.
+	 * Handed to the contact when the visitor is identified (form, login, signup).
+	 */
+	const PENDING_ENTRIES_COOKIE = 'doublescale_pending_entries';
+
+	/**
+	 * Most entries remembered per browser.
+	 */
+	const PENDING_ENTRIES_MAX = 20;
+
+	/**
 	 * Class Instance.
 	 *
 	 * @since 1.2.0
@@ -47,6 +58,13 @@ class Website {
 	 * @var int|null
 	 */
 	private $current_contact_id = null;
+
+	/**
+	 * Pending entries changed during this request (null: read the cookie).
+	 *
+	 * @var int[]|null
+	 */
+	private $pending = null;
 
 	/**
 	 * Website Instance.
@@ -86,6 +104,130 @@ class Website {
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 
 		add_action( 'doublescale_daily_doublescale_cleanup_page_visits', array( $this, 'cleanup_old_page_visits' ) );
+
+		// Native forms: a form sent without an email or phone goes to the visitor this browser
+		// is known as (signed cookie only), or waits until the visitor is identified.
+		add_filter( 'doublescale_native_form_known_visitor', array( $this, 'known_visitor_for_forms' ), 10, 1 );
+		add_action( 'doublescale_native_form_unlinked', array( $this, 'remember_pending_entry' ), 10, 1 );
+	}
+
+	/**
+	 * The contact this browser is known as, for a form sent without an email or phone.
+	 * Only a signed tracking cookie counts (one this site issued when the browser created
+	 * the contact or logged in); a logged-in visitor is handled by the form itself.
+	 *
+	 * @param int $contact_id Contact id found so far (0 for none).
+	 * @return int
+	 */
+	public function known_visitor_for_forms( $contact_id ) {
+		if ( (int) $contact_id > 0 || ! $this->current_contact_id ) {
+			return (int) $contact_id;
+		}
+		return ContactModel::find( $this->current_contact_id ) ? (int) $this->current_contact_id : 0;
+	}
+
+	/**
+	 * Remember a form entry sent before this browser was known, so it reaches the contact
+	 * once the visitor is identified.
+	 *
+	 * @param int $submission_id Submission id.
+	 * @return void
+	 */
+	public function remember_pending_entry( $submission_id ) {
+		$submission_id = (int) $submission_id;
+		if ( $submission_id <= 0 || headers_sent() ) {
+			return;
+		}
+		$ids   = $this->pending_entries();
+		$ids[] = $submission_id;
+		$ids   = array_slice( array_values( array_unique( $ids ) ), -self::PENDING_ENTRIES_MAX );
+		$this->write_pending_entries( $ids );
+	}
+
+	/**
+	 * Form entries this browser sent before it was known (signed cookie; anything else is ignored).
+	 *
+	 * @return int[]
+	 */
+	private function pending_entries(): array {
+		if ( null !== $this->pending ) {
+			return $this->pending;
+		}
+		$data = json_decode( self::cookie( self::PENDING_ENTRIES_COOKIE ), true );
+		if ( ! is_array( $data ) || ! isset( $data['ids'], $data['sig'] ) || ! is_array( $data['ids'] ) || ! is_string( $data['sig'] ) ) {
+			return array();
+		}
+		$ids = array_values( array_filter( array_map( 'absint', $data['ids'] ) ) );
+		if ( ! hash_equals( self::sign( 'entries|' . implode( ',', $ids ) ), $data['sig'] ) ) {
+			return array();
+		}
+		return $ids;
+	}
+
+	/**
+	 * Store (or clear) the pending entries cookie.
+	 *
+	 * @param int[] $ids Submission ids.
+	 * @return void
+	 */
+	private function write_pending_entries( array $ids ): void {
+		$this->pending = $ids;
+		if ( headers_sent() ) {
+			return;
+		}
+		if ( ! $ids ) {
+			setcookie( self::PENDING_ENTRIES_COOKIE, '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN );
+			return;
+		}
+		$value = wp_json_encode(
+			array(
+				'ids' => $ids,
+				'sig' => self::sign( 'entries|' . implode( ',', $ids ) ),
+			)
+		);
+		setcookie( self::PENDING_ENTRIES_COOKIE, $value, time() + self::COOKIE_EXPIRY_DAYS * DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+	}
+
+	/**
+	 * A cookie's raw value ('' when missing). Callers verify its signature before trusting it.
+	 *
+	 * @param string $name Cookie name.
+	 * @return string
+	 */
+	private static function cookie( string $name ): string {
+		return isset( $_COOKIE[ $name ] ) && is_string( $_COOKIE[ $name ] ) ? wp_unslash( $_COOKIE[ $name ] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON checked by its signature by every caller.
+	}
+
+	/**
+	 * Hand the browser's waiting form entries to the contact it now belongs to.
+	 *
+	 * @param int $contact_id Contact id.
+	 * @return void
+	 */
+	private function claim_pending_entries( int $contact_id ): void {
+		$ids = $this->pending_entries();
+		if ( ! $ids ) {
+			return;
+		}
+		/**
+		 * A visitor was identified: these form entries, sent from the same browser before, may
+		 * now belong to the contact (native forms decide; ids come from a signed cookie).
+		 *
+		 * @param int   $contact_id Contact id.
+		 * @param int[] $ids        Submission ids.
+		 */
+		do_action( 'doublescale_tracking_claim_form_entries', $contact_id, $ids );
+		$this->write_pending_entries( array() );
+	}
+
+	/**
+	 * Signature of a cookie value (only this site can make one).
+	 *
+	 * @param string $payload Value.
+	 * @return string
+	 */
+	private static function sign( string $payload ): string {
+		return hash_hmac( 'sha256', $payload, wp_salt( 'auth' ) . '|doublescale-tracking' );
 	}
 
 	/**
@@ -249,8 +391,9 @@ class Website {
 			$contact_id = $contact->id;
 		}
 
-		$this->current_contact_id = $contact_id;
+		$this->current_contact_id = (int) $contact_id;
 		$this->build_tracking_cookie();
+		$this->claim_pending_entries( (int) $contact_id );
 	}
 
 	/**
@@ -263,9 +406,19 @@ class Website {
 			return;
 		}
 
-		$cookie_data = json_decode( stripslashes( $_COOKIE[ self::TRACKING_COOKIE ] ), true );
-		if ( is_array( $cookie_data ) && isset( $cookie_data['contact_id'] ) ) {
-			$this->current_contact_id = absint( $cookie_data['contact_id'] );
+		// Only a cookie this site signed counts: an edited (or old, unsigned) one is ignored, so
+		// nobody can make the site treat them as another contact.
+		$cookie_data = json_decode( self::cookie( self::TRACKING_COOKIE ), true );
+		if ( ! is_array( $cookie_data ) || ! isset( $cookie_data['contact_id'], $cookie_data['created'], $cookie_data['sig'] ) || ! is_string( $cookie_data['sig'] ) ) {
+			return;
+		}
+		$contact_id = absint( $cookie_data['contact_id'] );
+		$created    = absint( $cookie_data['created'] );
+		if ( ! $contact_id || $created > time() + 300 || $created < time() - self::COOKIE_EXPIRY_DAYS * DAY_IN_SECONDS ) {
+			return;
+		}
+		if ( hash_equals( self::sign( $contact_id . '|' . $created ), $cookie_data['sig'] ) ) {
+			$this->current_contact_id = $contact_id;
 		}
 	}
 
@@ -279,9 +432,11 @@ class Website {
 			return;
 		}
 
+		$created     = time();
 		$cookie_data = array(
-			'contact_id' => $this->current_contact_id,
-			'created'    => time(),
+			'contact_id' => (int) $this->current_contact_id,
+			'created'    => $created,
+			'sig'        => self::sign( (int) $this->current_contact_id . '|' . $created ),
 		);
 
 		$expiry = time() + ( self::COOKIE_EXPIRY_DAYS * DAY_IN_SECONDS );
@@ -498,8 +653,8 @@ class Website {
 				'page_visits_cookie'    => self::PAGE_VISITS_COOKIE,
 				'cookie_path'           => COOKIEPATH,
 				'is_logged_in'          => is_user_logged_in(),
-				'has_tracking_cookie'   => isset( $_COOKIE[ self::TRACKING_COOKIE ] ),
-				'can_store_page_visits' => ! is_user_logged_in() && ! isset( $_COOKIE[ self::TRACKING_COOKIE ] ),
+				'has_tracking_cookie'   => (bool) $this->current_contact_id,
+				'can_store_page_visits' => ! is_user_logged_in() && ! $this->current_contact_id,
 				'disable_tracking'      => apply_filters( 'doublescale_disable_page_tracking', false ),
 			)
 		);

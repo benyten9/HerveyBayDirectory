@@ -109,9 +109,11 @@ class Store {
 				'name'        => __( 'Custom Objects', 'doublescale' ),
 				'slug'        => 'custom-objects',
 				'description' => __( 'Your own record types, such as properties, vehicles or policies, with their own fields, linked to contacts, companies and each other.', 'doublescale' ),
-				'plugin_file' => file_exists( $plugins_dir . 'DoubleScale-CustomObjects/doublescale-custom-objects.php' )
-					? 'DoubleScale-CustomObjects/doublescale-custom-objects.php'
-					: 'doublescale-custom-objects/doublescale-custom-objects.php',
+				// The release zip unpacks to DoubleScale-CustomObjects/, so that is the
+				// default; the installer rejects any other folder as a path mismatch.
+				'plugin_file' => file_exists( $plugins_dir . 'doublescale-custom-objects/doublescale-custom-objects.php' )
+					? 'doublescale-custom-objects/doublescale-custom-objects.php'
+					: 'DoubleScale-CustomObjects/doublescale-custom-objects.php',
 				'image'       => 'custom-objects/custom-objects.svg',
 				'plan'        => 'plus',
 			),

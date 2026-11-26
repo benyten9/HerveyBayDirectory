@@ -1,0 +1,93 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-bus.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Allow": [
+                "Toestaan"
+            ],
+            "Refuse": [
+                "Weigeren"
+            ],
+            "opening %s": [
+                "%s openen"
+            ],
+            "Click %s on this page.": [
+                "Klik op %s op deze pagina."
+            ],
+            "Click an element on this page.": [
+                "Klik op een element op deze pagina."
+            ],
+            "Hover over %s and report what changes.": [
+                "Hover over %s en meld wat er verandert."
+            ],
+            "Hover over an element and report what changes.": [
+                "Hover over een element en meld wat er verandert."
+            ],
+            "Take a screenshot of %s.": [
+                "Maak een screenshot van %s."
+            ],
+            "Take a screenshot of this page.": [
+                "Maak een screenshot van deze pagina."
+            ],
+            "a field": [
+                "een veld"
+            ],
+            "Type \u201c%1$s\u201d into %2$s, then submit the form.": [
+                "Typ \u201c%1$s\u201d in %2$s en verstuur daarna het formulier."
+            ],
+            "Type \u201c%1$s\u201d into %2$s.": [
+                "Typ \u201c%1$s\u201d in %2$s."
+            ],
+            "%d step in one go:": [
+                "%d stap in \u00e9\u00e9n keer:",
+                "%d stappen in \u00e9\u00e9n keer:"
+            ],
+            "Insert a %s block into the page being edited.": [
+                "Voeg een %s-blok in op de pagina die wordt bewerkt."
+            ],
+            "Insert a block into the page being edited.": [
+                "Voeg een blok in op de pagina die wordt bewerkt."
+            ],
+            "Change %1$s on block %2$s.": [
+                "Wijzig %1$s op blok %2$s."
+            ],
+            "Delete block %s and everything inside it.": [
+                "Verwijder blok %s en alles wat erin zit."
+            ],
+            "Read the current page.": [
+                "Lees de huidige pagina."
+            ],
+            "Check the current page for accessibility and layout problems.": [
+                "Controleer de huidige pagina op toegankelijkheids- en lay-outproblemen."
+            ],
+            "refused": [
+                "geweigerd"
+            ],
+            "%d issue": [
+                "%d probleem",
+                "%d problemen"
+            ],
+            "%d element": [
+                "%d element",
+                "%d elementen"
+            ],
+            "Let your agent do this?": [
+                "Je agent dit laten doen?"
+            ],
+            "Open %s in Agent View.": [
+                "%s openen in Agent View."
+            ],
+            "Open a page in Agent View.": [
+                "Een pagina openen in Agent View."
+            ]
+        }
+    }
+}

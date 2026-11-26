@@ -209,7 +209,7 @@ class EddUpdaterAnalytics {
             if ( empty( $version_info->download_link ) ) {
                 printf(
                     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    __( 'There is a new version of %1$s available. %2$sView version %3$s details%4$s.', 'directorist-analytics' ),
+                    __( 'There is a new version of %1$s available. %2$sView version %3$s details%4$s.', 'directorist-advanced-review' ),
                     esc_html( $version_info->name ),
                     '<a target="_blank" class="thickbox" href="' . esc_url( $changelog_link ) . '">',
                     esc_html( $version_info->new_version ),
@@ -218,7 +218,7 @@ class EddUpdaterAnalytics {
             } else {
                 printf(
                     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    __( 'There is a new version of %1$s available. %2$sView version %3$s details%4$s or %5$supdate now%6$s.', 'directorist-analytics' ),
+                    __( 'There is a new version of %1$s available. %2$sView version %3$s details%4$s or %5$supdate now%6$s.', 'directorist-advanced-review' ),
                     esc_html( $version_info->name ),
                     '<a target="_blank" class="thickbox" href="' . esc_url( $changelog_link ) . '">',
                     esc_html( $version_info->new_version ),
@@ -445,7 +445,7 @@ class EddUpdaterAnalytics {
         }
 
         if ( ! current_user_can( 'update_plugins' ) ) {
-            wp_die( esc_html( __( 'You do not have permission to install plugin updates', 'directorist-analytics' ) ), esc_html( __( 'Error', 'directorist-analytics' ) ), [ 'response' => 403 ] );
+            wp_die( esc_html( __( 'You do not have permission to install plugin updates', 'directorist-advanced-review' ) ), esc_html( __( 'Error', 'directorist-advanced-review' ) ), [ 'response' => 403 ] );
         }
 
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended

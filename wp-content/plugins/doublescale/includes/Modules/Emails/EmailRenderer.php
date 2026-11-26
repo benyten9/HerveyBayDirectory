@@ -552,9 +552,12 @@ class EmailRenderer {
 		unset( $section_styles['padding'] );
 		$section_style_string = $this->build_style_string( $section_styles );
 
-		// Get canvas width; content width is reduced by horizontal padding
+		// Get canvas width; content width is reduced by horizontal padding AND
+		// margin. The margin insets the whole section: columns sized without it
+		// overflow the room they get, and email clients wrap the last one below.
 		$canvas_width        = isset( $this->canvas_width ) ? $this->canvas_width : 900;
-		$content_width       = max( 200, $canvas_width - $padding_px['left'] - $padding_px['right'] );
+		$margin_px           = $this->parse_margin_to_px( $section_margin );
+		$content_width       = max( 200, $canvas_width - $padding_px['left'] - $padding_px['right'] - $margin_px['left'] - $margin_px['right'] );
 		$this->content_width = $content_width;
 
 		// Start section — wrap with a div for margin if needed
@@ -822,6 +825,27 @@ class EmailRenderer {
 	 */
 	private function convert_camel_to_kebab( $string ) {
 		return strtolower( preg_replace( '/([a-z0-9])([A-Z])/', '$1-$2', $string ) );
+	}
+
+	/**
+	 * Parse a margin string to pixels. Like padding, but "auto" and negative
+	 * values take no room, so they count as 0.
+	 *
+	 * @param string $margin Margin CSS value.
+	 * @return array{top:int,right:int,bottom:int,left:int}
+	 */
+	private function parse_margin_to_px( $margin ) {
+		if ( empty( $margin ) ) {
+			return $this->parse_padding_to_px( '' );
+		}
+		$parts = preg_split( '/\s+/', trim( (string) $margin ), 4 );
+		$parts = array_map(
+			static function ( $p ) {
+				return ( false !== strpos( $p, '-' ) || ! preg_match( '/^\d+(\.\d+)?(px)?$/', $p ) ) ? '0px' : $p;
+			},
+			$parts
+		);
+		return $this->parse_padding_to_px( implode( ' ', $parts ) );
 	}
 
 	/**

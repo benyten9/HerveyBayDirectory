@@ -3,63 +3,12 @@
 declare(strict_types=1);
 
 /**
- * The workspace's own icons.
- *
- * Inlined rather than sprited or fetched: this page renders outside the admin
- * shell with two stylesheets and one script, and a third request for six
- * outlines would be the slowest thing on it. Every icon is decorative — each
- * control carries its own label — so they are all aria-hidden.
+ * Agent View — the admin screens its address bar can jump to, captured from the
+ * real admin menu so every screen a plugin adds is findable too.
  */
 
 if (!defined('ABSPATH')) {
     exit();
-}
-
-/**
- * @return array<string, string>
- */
-function nibwp_visual_icon_paths(): array
-{
-    return [
-        'mobile' => '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
-        'tablet' => '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 18h2"/>',
-        'laptop' => '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/>',
-        'desktop' => '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
-        'full' => '<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/>',
-        'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
-        'moon' => '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
-        'activity' => '<path d="M3 12h4l3 8 4-16 3 8h4"/>',
-        'grid' => '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
-        'chevron' => '<polyline points="6 9 12 15 18 9"/>',
-        'external' => '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/>',
-        'close' => '<path d="M18 6 6 18M6 6l12 12"/>',
-        'lock' => '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-        'plug' => '<path d="M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0V8zM12 17v5"/>',
-        'check' => '<polyline points="20 6 9 17 4 12"/>',
-        // Section marks, drawn to match the ones in the NibWP sidebar so the
-        // two navigations read as one product.
-        'spark' => '<path d="M12 3.5 13.6 8 18 9.5 13.6 11 12 15.5 10.4 11 6 9.5 10.4 8 12 3.5Z"/><path d="M19 4v3M17.5 5.5h3M5 17v3M3.5 18.5h3"/>',
-        'flow' => '<path d="m3 6 2 2 4-4"/><path d="m3 14 2 2 4-4"/><path d="M13 6h8"/><path d="M13 14h8"/><path d="M13 20h8"/><path d="M3 20h2"/>',
-        'bolt' => '<path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z"/>',
-        'download' => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/>',
-        'refresh' => '<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>',
-        'copy' => '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-    ];
-}
-
-function nibwp_visual_icon(string $name, int $size = 16): string
-{
-    $paths = nibwp_visual_icon_paths();
-    if (!isset($paths[$name])) {
-        return '';
-    }
-
-    return sprintf(
-        '<svg class="nw-vs-i" width="%1$d" height="%1$d" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
-            . ' stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">%2$s</svg>',
-        $size,
-        $paths[$name]
-    );
 }
 
 /**
@@ -96,7 +45,7 @@ function nibwp_visual_capture_menu(): void
         // class=awaiting-mod><span>0</span><span class=screen-reader-text>0
         // Comments in moderation</span></span>". Stripping tags alone glued all
         // of that into the label — dropping the spans whole is what was meant.
-        $text = preg_replace('#<span.*$#is', '', (string) $title) ?? (string) $title;
+        $text = preg_replace('#<span\b.*$#is', '', (string) $title) ?? (string) $title;
         $text = wp_strip_all_tags($text);
         $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
 

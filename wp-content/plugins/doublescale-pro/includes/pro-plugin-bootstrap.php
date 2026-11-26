@@ -726,10 +726,16 @@ add_action(
 		$registry->register_block( new \DoubleScale\Pro\Modules\Emails\Blocks\TableBlock() );
 		$registry->register_block( new \DoubleScale\Pro\Modules\Emails\Blocks\TimerBlock() );
 		$registry->register_block( new \DoubleScale\Pro\Modules\Emails\Blocks\VideoBlock() );
+		$registry->register_block( new \DoubleScale\Pro\Modules\Emails\Blocks\PostsBlock() );
 	},
 	10,
 	1
 );
+
+/**
+ * Builder endpoints for the Latest Posts email block (post types, terms, preview).
+ */
+add_action( 'rest_api_init', array( \DoubleScale\Pro\Modules\Emails\Rest\RestLatestPostsController::class, 'register_routes' ) );
 
 /**
  * Public countdown GIF for the email timer block.

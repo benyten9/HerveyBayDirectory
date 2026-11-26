@@ -235,11 +235,25 @@ function nibwp_bricks_pro_validate_payload(array $payload, array $ctx = []): arr
 
         // _conditions shape check (when present).
         if (isset($settings['_conditions']) && is_array($settings['_conditions'])) {
+            // Bricks stores condition SETS: a list of sets (any may match),
+            // each a list of conditions (all must). A set is read as its
+            // conditions; reading it as one condition flagged every real
+            // Bricks condition as missing its key.
+            $conditions = [];
             foreach ($settings['_conditions'] as $ci => $cond) {
+                if (is_array($cond) && $cond !== [] && !isset($cond['key']) && array_keys($cond) === range(0, count($cond) - 1)) {
+                    foreach ($cond as $cj => $inner) {
+                        $conditions[$ci . '][' . $cj] = $inner;
+                    }
+                } else {
+                    $conditions[(string) $ci] = $cond;
+                }
+            }
+            foreach ($conditions as $ci => $cond) {
                 if (!is_array($cond)) {
                     $failed[] = [
                         'id'   => 'bricks_invalid_condition_shape',
-                        'msg'  => sprintf('Element [%d] settings._conditions[%d] must be an object with { key, operator, value, ... }.', $idx, $ci),
+                        'msg'  => sprintf('Element [%d] settings._conditions[%s] must be an object with { key, operator, value, ... }.', $idx, $ci),
                         'path' => $path . ".settings._conditions[$ci]",
                     ];
                     continue;
@@ -247,14 +261,14 @@ function nibwp_bricks_pro_validate_payload(array $payload, array $ctx = []): arr
                 if (empty($cond['key'])) {
                     $failed[] = [
                         'id'   => 'bricks_invalid_condition_shape',
-                        'msg'  => sprintf('Element [%d] settings._conditions[%d] missing `key` (e.g. "user-role", "post-meta", "post-type", "is-front-page").', $idx, $ci),
+                        'msg'  => sprintf('Element [%d] settings._conditions[%s] missing `key` (e.g. "user-role", "post-meta", "post-type", "is-front-page").', $idx, $ci),
                         'path' => $path . ".settings._conditions[$ci].key",
                     ];
                 }
                 if (isset($cond['operator']) && !in_array((string) $cond['operator'], ['==', '!=', '>', '>=', '<', '<=', 'contains', 'not_contains', 'isTruthy', 'isFalsy', 'in', 'not_in', 'any', 'all'], true)) {
                     $failed[] = [
                         'id'   => 'bricks_invalid_condition_shape',
-                        'msg'  => sprintf('Element [%d] settings._conditions[%d].operator `%s` is not a Bricks condition operator. Use one of: == != > >= < <= contains not_contains isTruthy isFalsy in not_in any all.', $idx, $ci, (string) $cond['operator']),
+                        'msg'  => sprintf('Element [%d] settings._conditions[%s].operator `%s` is not a Bricks condition operator. Use one of: == != > >= < <= contains not_contains isTruthy isFalsy in not_in any all.', $idx, $ci, (string) $cond['operator']),
                         'path' => $path . ".settings._conditions[$ci].operator",
                     ];
                 }

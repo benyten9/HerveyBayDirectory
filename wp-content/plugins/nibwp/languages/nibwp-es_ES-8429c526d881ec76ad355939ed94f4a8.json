@@ -1,0 +1,636 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-builder-sketch.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "es_ES",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Delete": [
+                "Borrar"
+            ],
+            "Copy": [
+                "Copiar"
+            ],
+            "What you get": [
+                "Qu\u00e9 obtienes"
+            ],
+            "How it works": [
+                "C\u00f3mo funciona"
+            ],
+            "Name": [
+                "Nombre"
+            ],
+            "Back": [
+                "Atr\u00e1s"
+            ],
+            "Done": [
+                "Hecho"
+            ],
+            "Contact": [
+                "Contacto"
+            ],
+            "New": [
+                "Nuevo"
+            ],
+            "Preview": [
+                "Vista previa"
+            ],
+            "Library": [
+                "Biblioteca"
+            ],
+            "Remove": [
+                "Quitar"
+            ],
+            "Tablet": [
+                "Tableta"
+            ],
+            "Desktop": [
+                "Escritorio"
+            ],
+            "%s (copy)": [
+                "%s (copia)"
+            ],
+            "Design name": [
+                "Nombre del dise\u00f1o"
+            ],
+            "Untitled design": [
+                "Dise\u00f1o sin t\u00edtulo"
+            ],
+            "Phone": [
+                "M\u00f3vil"
+            ],
+            "Builder": [
+                "Builder"
+            ],
+            "Testimonials": [
+                "Testimonios"
+            ],
+            "Section": [
+                "Secci\u00f3n"
+            ],
+            "e.g. Our three best tours, with a short intro": [
+                "p. ej. Nuestros tres mejores tours, con una breve introducci\u00f3n"
+            ],
+            "Container": [
+                "Contenedor"
+            ],
+            "e.g. Groups the text and the button": [
+                "p. ej. Agrupa el texto y el bot\u00f3n"
+            ],
+            "Columns": [
+                "Columnas"
+            ],
+            "e.g. Three columns, one per service": [
+                "p. ej. Tres columnas, una por servicio"
+            ],
+            "Column": [
+                "Columna"
+            ],
+            "e.g. The text side": [
+                "p. ej. El lado del texto"
+            ],
+            "Box": [
+                "Caja"
+            ],
+            "Anything: say what it is": [
+                "Lo que sea: di qu\u00e9 es"
+            ],
+            "Heading": [
+                "Encabezado"
+            ],
+            "e.g. Rome by golf cart, in under 8 words": [
+                "p. ej. Roma en carrito de golf, en menos de 8 palabras"
+            ],
+            "Text": [
+                "Texto"
+            ],
+            "e.g. Two sentences on why people love it": [
+                "p. ej. Dos frases sobre por qu\u00e9 le encanta a la gente"
+            ],
+            "Image": [
+                "Imagen"
+            ],
+            "e.g. The Colosseum at sunset, from the media library": [
+                "p. ej. El Coliseo al atardecer, de la biblioteca de medios"
+            ],
+            "Button": [
+                "Bot\u00f3n"
+            ],
+            "e.g. Book now, links to the booking page": [
+                "p. ej. Reserva ahora, enlaza a la p\u00e1gina de reservas"
+            ],
+            "Card": [
+                "Tarjeta"
+            ],
+            "e.g. Photo, tour name, price and a button": [
+                "p. ej. Foto, nombre del tour, precio y un bot\u00f3n"
+            ],
+            "Form": [
+                "Formulario"
+            ],
+            "e.g. Name, email, date, message": [
+                "p. ej. Nombre, correo, fecha, mensaje"
+            ],
+            "Menu": [
+                "Men\u00fa"
+            ],
+            "e.g. The main menu": [
+                "p. ej. El men\u00fa principal"
+            ],
+            "List": [
+                "Lista"
+            ],
+            "e.g. Six questions as an accordion": [
+                "p. ej. Seis preguntas en acorde\u00f3n"
+            ],
+            "Video": [
+                "V\u00eddeo"
+            ],
+            "e.g. Our 30-second tour teaser": [
+                "p. ej. Nuestro adelanto del tour de 30 segundos"
+            ],
+            "Icon": [
+                "Icono"
+            ],
+            "e.g. A check mark": [
+                "p. ej. Una marca de verificaci\u00f3n"
+            ],
+            "Space": [
+                "Espacio"
+            ],
+            "Breathing room": [
+                "Aire para respirar"
+            ],
+            "Hero": [
+                "Hero"
+            ],
+            "The first thing visitors see": [
+                "Lo primero que ven los visitantes"
+            ],
+            "The promise, in under 8 words": [
+                "La promesa, en menos de 8 palabras"
+            ],
+            "One or two sentences that back it up": [
+                "Una o dos frases que la respalden"
+            ],
+            "The main action": [
+                "La acci\u00f3n principal"
+            ],
+            "A strong, real photo": [
+                "Una foto potente y real"
+            ],
+            "Features": [
+                "Caracter\u00edsticas"
+            ],
+            "One line of intro": [
+                "Una l\u00ednea de introducci\u00f3n"
+            ],
+            "Icon, short title, two lines": [
+                "Icono, t\u00edtulo corto, dos l\u00edneas"
+            ],
+            "Pricing": [
+                "Precios"
+            ],
+            "Simple plans": [
+                "Planes sencillos"
+            ],
+            "Plan name, price, 4 features, button": [
+                "Nombre del plan, precio, 4 caracter\u00edsticas, bot\u00f3n"
+            ],
+            "The plan to pick: highlighted, with a badge": [
+                "El plan recomendado: destacado y con una insignia"
+            ],
+            "What people say": [
+                "Lo que dice la gente"
+            ],
+            "Quote, name, photo, stars": [
+                "Cita, nombre, foto, estrellas"
+            ],
+            "FAQ": [
+                "Preguntas frecuentes"
+            ],
+            "Questions, answered": [
+                "Preguntas con respuesta"
+            ],
+            "Six real questions as an accordion": [
+                "Seis preguntas reales en acorde\u00f3n"
+            ],
+            "Call to action": [
+                "Llamada a la acci\u00f3n"
+            ],
+            "A bold band in the brand colour": [
+                "Una franja llamativa con el color de la marca"
+            ],
+            "One clear ask": [
+                "Una petici\u00f3n clara"
+            ],
+            "Why now, in one line": [
+                "Por qu\u00e9 ahora, en una l\u00ednea"
+            ],
+            "The action": [
+                "La acci\u00f3n"
+            ],
+            "Get in touch": [
+                "Contacta con nosotros"
+            ],
+            "Address, phone, opening hours": [
+                "Direcci\u00f3n, tel\u00e9fono, horario"
+            ],
+            "A small map": [
+                "Un mapa peque\u00f1o"
+            ],
+            "Name, email, message, send": [
+                "Nombre, correo, mensaje, enviar"
+            ],
+            "Header": [
+                "Cabecera"
+            ],
+            "Sticky on scroll": [
+                "Fija al desplazarse"
+            ],
+            "Logo": [
+                "Logo"
+            ],
+            "The main menu": [
+                "El men\u00fa principal"
+            ],
+            "Book now": [
+                "Reserva ahora"
+            ],
+            "Footer": [
+                "Pie de p\u00e1gina"
+            ],
+            "About": [
+                "Acerca de"
+            ],
+            "Logo and one line": [
+                "Logo y una l\u00ednea"
+            ],
+            "Useful links": [
+                "Enlaces \u00fatiles"
+            ],
+            "Tours": [
+                "Tours"
+            ],
+            "Newsletter sign-up": [
+                "Suscripci\u00f3n al bolet\u00edn"
+            ],
+            "Copyright and legal links": [
+                "Copyright y enlaces legales"
+            ],
+            "Screen size": [
+                "Tama\u00f1o de pantalla"
+            ],
+            "Undo": [
+                "Deshacer"
+            ],
+            "Undo (Ctrl+Z)": [
+                "Deshacer (Ctrl+Z)"
+            ],
+            "Redo": [
+                "Rehacer"
+            ],
+            "Redo (Ctrl+Shift+Z)": [
+                "Rehacer (Ctrl+Shift+Z)"
+            ],
+            "Describe it and build": [
+                "Descr\u00edbelo y constr\u00fayelo"
+            ],
+            "Close the Builder": [
+                "Cerrar el Builder"
+            ],
+            "Parts to draw": [
+                "Partes para dibujar"
+            ],
+            "Select and move": [
+                "Seleccionar y mover"
+            ],
+            "Draw by hand": [
+                "Dibujar a mano"
+            ],
+            "Select": [
+                "Seleccionar"
+            ],
+            "Sketch": [
+                "Boceto"
+            ],
+            "Draw a rough box by hand and say what goes in it. Or pick a part on the left, or drop a ready-made section from the right.": [
+                "Dibuja a mano una caja aproximada y di qu\u00e9 va dentro. O elige una parte a la izquierda, o suelta una secci\u00f3n ya hecha desde la derecha."
+            ],
+            "Back to the Builder": [
+                "Volver al Builder"
+            ],
+            "What goes here?": [
+                "\u00bfQu\u00e9 va aqu\u00ed?"
+            ],
+            "e.g. A big title, three cards with prices, a photo of the Colosseum\u2026": [
+                "p. ej. Un t\u00edtulo grande, tres tarjetas con precios, una foto del Coliseo\u2026"
+            ],
+            "Kind": [
+                "Tipo"
+            ],
+            "Enter to keep \u00b7 Esc to skip": [
+                "Enter para conservar \u00b7 Esc para omitir"
+            ],
+            "Drop in a section": [
+                "Soltar una secci\u00f3n"
+            ],
+            "Lands under what you have, ready to change.": [
+                "Aparece debajo de lo que tienes, lista para cambiarla."
+            ],
+            "Drop in one of your designs": [
+                "Soltar uno de tus dise\u00f1os"
+            ],
+            "Sketch a rough box by hand, or pick a part on the left. Say what goes in it.": [
+                "Dibuja a mano una caja aproximada o elige una parte a la izquierda. Di qu\u00e9 va dentro."
+            ],
+            "Draw inside a box to put parts in it. Columns split themselves.": [
+                "Dibuja dentro de una caja para meter partes en ella. Las columnas se dividen solas."
+            ],
+            "Describe it: what it is for and how your design system should look. Your agent builds it with your builder, responsive and accessible.": [
+                "Descr\u00edbelo: para qu\u00e9 sirve y c\u00f3mo debe verse tu sistema de dise\u00f1o. Tu agente lo construye con tu constructor, responsive y accesible."
+            ],
+            "Preview flips to your page and back, right here.": [
+                "La vista previa cambia a tu p\u00e1gina y vuelve, aqu\u00ed mismo."
+            ],
+            "Keys: D sketch \u00b7 V select \u00b7 S section \u00b7 G columns \u00b7 H heading \u00b7 T text \u00b7 I image \u00b7 U button \u00b7 K card \u00b7 double-click a part to say what goes in it \u00b7 Delete removes \u00b7 Ctrl+D copies \u00b7 arrows nudge": [
+                "Teclas: D boceto \u00b7 V seleccionar \u00b7 S secci\u00f3n \u00b7 G columnas \u00b7 H encabezado \u00b7 T texto \u00b7 I imagen \u00b7 U bot\u00f3n \u00b7 K tarjeta \u00b7 doble clic en una parte para decir qu\u00e9 va dentro \u00b7 Delete elimina \u00b7 Ctrl+D copia \u00b7 flechas para desplazar"
+            ],
+            "Add inside": [
+                "A\u00f1adir dentro"
+            ],
+            "Add a %s inside": [
+                "A\u00f1adir dentro: %s"
+            ],
+            "Split in columns": [
+                "Dividir en columnas"
+            ],
+            "Parts inside sit": [
+                "Las partes de dentro van"
+            ],
+            "Auto": [
+                "Auto"
+            ],
+            "In a row": [
+                "En fila"
+            ],
+            "Stacked": [
+                "Apiladas"
+            ],
+            "In a grid": [
+                "En cuadr\u00edcula"
+            ],
+            "%d part inside": [
+                "%d parte dentro",
+                "%d partes dentro"
+            ],
+            "draw inside it to add one": [
+                "dibuja dentro para a\u00f1adir una"
+            ],
+            "Already on the page? Have just this part built or filled in.": [
+                "\u00bfYa est\u00e1 en la p\u00e1gina? Haz que se construya o se rellene solo esta parte."
+            ],
+            "Build just this part": [
+                "Construir solo esta parte"
+            ],
+            "The builder this page uses, or the block editor": [
+                "El constructor que usa esta p\u00e1gina, o el editor de bloques"
+            ],
+            "Design system (%s)": [
+                "Sistema de dise\u00f1o (%s)"
+            ],
+            "Design system": [
+                "Sistema de dise\u00f1o"
+            ],
+            "What should this be?": [
+                "\u00bfQu\u00e9 deber\u00eda ser esto?"
+            ],
+            "e.g. A pricing section for our three tour packages: friendly, clear, the middle one stands out": [
+                "p. ej. Una secci\u00f3n de precios para nuestros tres paquetes de tours: cercana, clara y con el del medio destacado"
+            ],
+            "Always included: phone, tablet and desktop": [
+                "Siempre incluido: m\u00f3vil, tableta y escritorio"
+            ],
+            "Responsive": [
+                "Responsive"
+            ],
+            "Always included: headings, labels, alt text, contrast, keyboard": [
+                "Siempre incluido: encabezados, etiquetas, texto alternativo, contraste, teclado"
+            ],
+            "Accessible": [
+                "Accesible"
+            ],
+            "Design system and style": [
+                "Sistema de dise\u00f1o y estilo"
+            ],
+            "e.g. Our Automatic.css tokens, primary colour for buttons, generous section spacing, rounded cards, Inter for headings": [
+                "p. ej. Nuestros tokens de Automatic.css, color primario para los botones, espaciado amplio entre secciones, tarjetas redondeadas, Inter para los encabezados"
+            ],
+            "e.g. Brand orange #ff8a3d for buttons, Inter headings, 8px spacing scale, rounded cards with soft shadows": [
+                "p. ej. Naranja de marca #ff8a3d para los botones, encabezados en Inter, escala de espaciado de 8px, tarjetas redondeadas con sombras suaves"
+            ],
+            "Built with %s": [
+                "Construido con %s"
+            ],
+            "best-fit layout": [
+                "maquetaci\u00f3n m\u00e1s adecuada"
+            ],
+            "flexbox": [
+                "flexbox"
+            ],
+            "CSS grid": [
+                "CSS grid"
+            ],
+            "matches this page": [
+                "igual que esta p\u00e1gina"
+            ],
+            "fresh look": [
+                "aspecto nuevo"
+            ],
+            "real copy": [
+                "textos reales"
+            ],
+            "placeholders": [
+                "textos de relleno"
+            ],
+            "empty slots": [
+                "huecos vac\u00edos"
+            ],
+            "Adjust": [
+                "Ajustar"
+            ],
+            "Build it with": [
+                "Construirlo con"
+            ],
+            "Layout": [
+                "Maquetaci\u00f3n"
+            ],
+            "Best fit: grid for cards, flex for rows": [
+                "La m\u00e1s adecuada: grid para tarjetas, flex para filas"
+            ],
+            "Flexbox": [
+                "Flexbox"
+            ],
+            "Look": [
+                "Aspecto"
+            ],
+            "Match this page": [
+                "Igual que esta p\u00e1gina"
+            ],
+            "Fresh look": [
+                "Aspecto nuevo"
+            ],
+            "Words and pictures": [
+                "Textos e im\u00e1genes"
+            ],
+            "Real copy": [
+                "Textos reales"
+            ],
+            "Placeholders": [
+                "Textos de relleno"
+            ],
+            "Empty slots": [
+                "Huecos vac\u00edos"
+            ],
+            "Drop it on the page": [
+                "Soltarlo en la p\u00e1gina"
+            ],
+            "Pick the spot in the preview": [
+                "Elige el lugar en la vista previa"
+            ],
+            "Add it at the end": [
+                "A\u00f1adirlo al final"
+            ],
+            "Of the page on screen": [
+                "De la p\u00e1gina en pantalla"
+            ],
+            "Build a new page": [
+                "Crear una p\u00e1gina nueva"
+            ],
+            "A draft named after it": [
+                "Un borrador con su nombre"
+            ],
+            "Back to drawing": [
+                "Volver a dibujar"
+            ],
+            "Save to library": [
+                "Guardar en la biblioteca"
+            ],
+            "Sent to your agent": [
+                "Enviado a tu agente"
+            ],
+            "Follow it in the chat on the left. Preview flips to the page so you can watch it being built.": [
+                "S\u00edguelo en el chat de la izquierda. La vista previa cambia a la p\u00e1gina para que veas c\u00f3mo se construye."
+            ],
+            "Preview the page": [
+                "Previsualizar la p\u00e1gina"
+            ],
+            "Keep drawing": [
+                "Seguir dibujando"
+            ],
+            "Your designs": [
+                "Tus dise\u00f1os"
+            ],
+            "Open %s": [
+                "Abrir %s"
+            ],
+            "open": [
+                "abrir"
+            ],
+            "%d part": [
+                "%d parte",
+                "%d partes"
+            ],
+            "Drop it into this design": [
+                "Soltarlo en este dise\u00f1o"
+            ],
+            "Open and edit": [
+                "Abrir y editar"
+            ],
+            "Make a copy": [
+                "Hacer una copia"
+            ],
+            "Nothing saved yet. Every design you draw is kept here on its own.": [
+                "A\u00fan no hay nada guardado. Cada dise\u00f1o que dibujes se guarda aqu\u00ed por separado."
+            ],
+            "Saving\u2026": [
+                "Guardando\u2026"
+            ],
+            "Saved": [
+                "Guardado"
+            ],
+            "Design saved to your library.": [
+                "Dise\u00f1o guardado en tu biblioteca."
+            ],
+            "Not saved": [
+                "Sin guardar"
+            ],
+            "\u201c%s\u201d dropped in.": [
+                "\u201c%s\u201d a\u00f1adido."
+            ],
+            "Click again to delete": [
+                "Haz clic otra vez para borrar"
+            ],
+            "Design deleted.": [
+                "Dise\u00f1o borrado."
+            ],
+            "this page\u2019s builder": [
+                "el constructor de esta p\u00e1gina"
+            ],
+            "Open a page first, then pick the spot.": [
+                "Primero abre una p\u00e1gina y luego elige el lugar."
+            ],
+            "Say what goes in this part first.": [
+                "Primero di qu\u00e9 va en esta parte."
+            ],
+            "Build the \u201c%1$s\u201d part of my design \u201c%2$s\u201d: %3$s": [
+                "Construye la parte \u201c%1$s\u201d de mi dise\u00f1o \u201c%2$s\u201d: %3$s"
+            ],
+            "Build my design \u201c%1$s\u201d%2$s": [
+                "Construye mi dise\u00f1o \u201c%1$s\u201d%2$s"
+            ],
+            "(%1$d part, built with %2$s, responsive and accessible)": [
+                "(%1$d parte, construido con %2$s, responsive y accesible)",
+                "(%1$d partes, construido con %2$s, responsive y accesible)"
+            ],
+            "\u201c%1$s\u201d goes %2$s \u201c%3$s\u201d.": [
+                "\u201c%1$s\u201d va %2$s \u201c%3$s\u201d."
+            ],
+            "before": [
+                "antes de"
+            ],
+            "after": [
+                "despu\u00e9s de"
+            ],
+            "\u201c%s\u201d goes on a new page.": [
+                "\u201c%s\u201d va en una p\u00e1gina nueva."
+            ],
+            "\u201c%s\u201d goes at the end of this page.": [
+                "\u201c%s\u201d va al final de esta p\u00e1gina."
+            ],
+            "Sent": [
+                "Enviado"
+            ],
+            "The page is not ready yet. Try again in a moment.": [
+                "La p\u00e1gina a\u00fan no est\u00e1 lista. Vuelve a intentarlo en un momento."
+            ],
+            "Click where it should go. Esc to go back.": [
+                "Haz clic donde debe ir. Esc para volver."
+            ],
+            "Before": [
+                "Antes"
+            ],
+            "After": [
+                "Despu\u00e9s"
+            ],
+            "Point at a part of the page first.": [
+                "Primero se\u00f1ala una parte de la p\u00e1gina."
+            ]
+        }
+    }
+}

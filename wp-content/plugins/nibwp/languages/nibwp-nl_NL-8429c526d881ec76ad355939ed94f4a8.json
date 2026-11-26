@@ -1,0 +1,636 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-builder-sketch.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Delete": [
+                "Verwijderen"
+            ],
+            "Copy": [
+                "Kopi\u00ebren"
+            ],
+            "What you get": [
+                "Wat je krijgt"
+            ],
+            "How it works": [
+                "Hoe het werkt"
+            ],
+            "Name": [
+                "Naam"
+            ],
+            "Back": [
+                "Terug"
+            ],
+            "Done": [
+                "Klaar"
+            ],
+            "Contact": [
+                "Contact"
+            ],
+            "New": [
+                "Nieuw"
+            ],
+            "Preview": [
+                "Voorbeeld"
+            ],
+            "Library": [
+                "Bibliotheek"
+            ],
+            "Remove": [
+                "Verwijderen"
+            ],
+            "Tablet": [
+                "Tablet"
+            ],
+            "Desktop": [
+                "Desktop"
+            ],
+            "%s (copy)": [
+                "%s (kopie)"
+            ],
+            "Design name": [
+                "Naam van het ontwerp"
+            ],
+            "Untitled design": [
+                "Naamloos ontwerp"
+            ],
+            "Phone": [
+                "Telefoon"
+            ],
+            "Builder": [
+                "Builder"
+            ],
+            "Testimonials": [
+                "Testimonials"
+            ],
+            "Section": [
+                "Sectie"
+            ],
+            "e.g. Our three best tours, with a short intro": [
+                "bijv. Onze drie beste tours, met een korte intro"
+            ],
+            "Container": [
+                "Container"
+            ],
+            "e.g. Groups the text and the button": [
+                "bijv. Groepeert de tekst en de knop"
+            ],
+            "Columns": [
+                "Kolommen"
+            ],
+            "e.g. Three columns, one per service": [
+                "bijv. Drie kolommen, \u00e9\u00e9n per dienst"
+            ],
+            "Column": [
+                "Kolom"
+            ],
+            "e.g. The text side": [
+                "bijv. De tekstkant"
+            ],
+            "Box": [
+                "Vak"
+            ],
+            "Anything: say what it is": [
+                "Alles: zeg wat het is"
+            ],
+            "Heading": [
+                "Kop"
+            ],
+            "e.g. Rome by golf cart, in under 8 words": [
+                "bijv. Rome per golfkarretje, in minder dan 8 woorden"
+            ],
+            "Text": [
+                "Tekst"
+            ],
+            "e.g. Two sentences on why people love it": [
+                "bijv. Twee zinnen over waarom mensen het geweldig vinden"
+            ],
+            "Image": [
+                "Afbeelding"
+            ],
+            "e.g. The Colosseum at sunset, from the media library": [
+                "bijv. Het Colosseum bij zonsondergang, uit de mediabibliotheek"
+            ],
+            "Button": [
+                "Knop"
+            ],
+            "e.g. Book now, links to the booking page": [
+                "bijv. Nu boeken, linkt naar de boekingspagina"
+            ],
+            "Card": [
+                "Kaart"
+            ],
+            "e.g. Photo, tour name, price and a button": [
+                "bijv. Foto, tournaam, prijs en een knop"
+            ],
+            "Form": [
+                "Formulier"
+            ],
+            "e.g. Name, email, date, message": [
+                "bijv. Naam, e-mail, datum, bericht"
+            ],
+            "Menu": [
+                "Menu"
+            ],
+            "e.g. The main menu": [
+                "bijv. Het hoofdmenu"
+            ],
+            "List": [
+                "Lijst"
+            ],
+            "e.g. Six questions as an accordion": [
+                "bijv. Zes vragen als accordeon"
+            ],
+            "Video": [
+                "Video"
+            ],
+            "e.g. Our 30-second tour teaser": [
+                "bijv. Onze tourteaser van 30 seconden"
+            ],
+            "Icon": [
+                "Icoon"
+            ],
+            "e.g. A check mark": [
+                "bijv. Een vinkje"
+            ],
+            "Space": [
+                "Ruimte"
+            ],
+            "Breathing room": [
+                "Ademruimte"
+            ],
+            "Hero": [
+                "Hero"
+            ],
+            "The first thing visitors see": [
+                "Het eerste wat bezoekers zien"
+            ],
+            "The promise, in under 8 words": [
+                "De belofte, in minder dan 8 woorden"
+            ],
+            "One or two sentences that back it up": [
+                "Een of twee zinnen die haar onderbouwen"
+            ],
+            "The main action": [
+                "De hoofdactie"
+            ],
+            "A strong, real photo": [
+                "Een sterke, echte foto"
+            ],
+            "Features": [
+                "Functies"
+            ],
+            "One line of intro": [
+                "E\u00e9n regel intro"
+            ],
+            "Icon, short title, two lines": [
+                "Icoon, korte titel, twee regels"
+            ],
+            "Pricing": [
+                "Prijzen"
+            ],
+            "Simple plans": [
+                "Eenvoudige abonnementen"
+            ],
+            "Plan name, price, 4 features, button": [
+                "Naam van abonnement, prijs, 4 functies, knop"
+            ],
+            "The plan to pick: highlighted, with a badge": [
+                "Het abonnement om te kiezen: uitgelicht, met een badge"
+            ],
+            "What people say": [
+                "Wat mensen zeggen"
+            ],
+            "Quote, name, photo, stars": [
+                "Citaat, naam, foto, sterren"
+            ],
+            "FAQ": [
+                "FAQ"
+            ],
+            "Questions, answered": [
+                "Vragen, beantwoord"
+            ],
+            "Six real questions as an accordion": [
+                "Zes echte vragen als accordeon"
+            ],
+            "Call to action": [
+                "Call-to-action"
+            ],
+            "A bold band in the brand colour": [
+                "Een opvallende band in de merkkleur"
+            ],
+            "One clear ask": [
+                "E\u00e9n duidelijke vraag"
+            ],
+            "Why now, in one line": [
+                "Waarom nu, in \u00e9\u00e9n regel"
+            ],
+            "The action": [
+                "De actie"
+            ],
+            "Get in touch": [
+                "Neem contact op"
+            ],
+            "Address, phone, opening hours": [
+                "Adres, telefoon, openingstijden"
+            ],
+            "A small map": [
+                "Een kleine kaart"
+            ],
+            "Name, email, message, send": [
+                "Naam, e-mail, bericht, versturen"
+            ],
+            "Header": [
+                "Header"
+            ],
+            "Sticky on scroll": [
+                "Blijft staan bij scrollen"
+            ],
+            "Logo": [
+                "Logo"
+            ],
+            "The main menu": [
+                "Het hoofdmenu"
+            ],
+            "Book now": [
+                "Nu boeken"
+            ],
+            "Footer": [
+                "Footer"
+            ],
+            "About": [
+                "Over ons"
+            ],
+            "Logo and one line": [
+                "Logo en \u00e9\u00e9n regel"
+            ],
+            "Useful links": [
+                "Handige links"
+            ],
+            "Tours": [
+                "Tours"
+            ],
+            "Newsletter sign-up": [
+                "Aanmelden voor de nieuwsbrief"
+            ],
+            "Copyright and legal links": [
+                "Copyright en juridische links"
+            ],
+            "Screen size": [
+                "Schermformaat"
+            ],
+            "Undo": [
+                "Ongedaan maken"
+            ],
+            "Undo (Ctrl+Z)": [
+                "Ongedaan maken (Ctrl+Z)"
+            ],
+            "Redo": [
+                "Opnieuw doen"
+            ],
+            "Redo (Ctrl+Shift+Z)": [
+                "Opnieuw doen (Ctrl+Shift+Z)"
+            ],
+            "Describe it and build": [
+                "Beschrijven en bouwen"
+            ],
+            "Close the Builder": [
+                "De Builder sluiten"
+            ],
+            "Parts to draw": [
+                "Onderdelen om te tekenen"
+            ],
+            "Select and move": [
+                "Selecteren en verplaatsen"
+            ],
+            "Draw by hand": [
+                "Met de hand tekenen"
+            ],
+            "Select": [
+                "Selecteren"
+            ],
+            "Sketch": [
+                "Schetsen"
+            ],
+            "Draw a rough box by hand and say what goes in it. Or pick a part on the left, or drop a ready-made section from the right.": [
+                "Teken met de hand een ruw kader en zeg wat erin komt. Of kies links een onderdeel, of sleep rechts een kant-en-klare sectie erin."
+            ],
+            "Back to the Builder": [
+                "Terug naar de Builder"
+            ],
+            "What goes here?": [
+                "Wat komt hier?"
+            ],
+            "e.g. A big title, three cards with prices, a photo of the Colosseum\u2026": [
+                "bijv. Een grote titel, drie kaarten met prijzen, een foto van het Colosseum\u2026"
+            ],
+            "Kind": [
+                "Soort"
+            ],
+            "Enter to keep \u00b7 Esc to skip": [
+                "Enter om te bewaren \u00b7 Esc om over te slaan"
+            ],
+            "Drop in a section": [
+                "Een sectie erin zetten"
+            ],
+            "Lands under what you have, ready to change.": [
+                "Komt onder wat je al hebt, klaar om aan te passen."
+            ],
+            "Drop in one of your designs": [
+                "Een van je ontwerpen erin zetten"
+            ],
+            "Sketch a rough box by hand, or pick a part on the left. Say what goes in it.": [
+                "Schets met de hand een ruw kader, of kies links een onderdeel. Zeg wat erin komt."
+            ],
+            "Draw inside a box to put parts in it. Columns split themselves.": [
+                "Teken in een kader om er onderdelen in te zetten. Kolommen verdelen zichzelf."
+            ],
+            "Describe it: what it is for and how your design system should look. Your agent builds it with your builder, responsive and accessible.": [
+                "Beschrijf het: waar het voor is en hoe je designsysteem eruit moet zien. Je agent bouwt het met jouw builder, responsive en toegankelijk."
+            ],
+            "Preview flips to your page and back, right here.": [
+                "Het voorbeeld wisselt hier ter plekke naar je pagina en terug."
+            ],
+            "Keys: D sketch \u00b7 V select \u00b7 S section \u00b7 G columns \u00b7 H heading \u00b7 T text \u00b7 I image \u00b7 U button \u00b7 K card \u00b7 double-click a part to say what goes in it \u00b7 Delete removes \u00b7 Ctrl+D copies \u00b7 arrows nudge": [
+                "Toetsen: D schetsen \u00b7 V selecteren \u00b7 S sectie \u00b7 G kolommen \u00b7 H kop \u00b7 T tekst \u00b7 I afbeelding \u00b7 U knop \u00b7 K kaart \u00b7 dubbelklik op een onderdeel om te zeggen wat erin komt \u00b7 Delete verwijdert \u00b7 Ctrl+D kopieert \u00b7 pijltjes verschuiven"
+            ],
+            "Add inside": [
+                "Erin toevoegen"
+            ],
+            "Add a %s inside": [
+                "Een %s erin toevoegen"
+            ],
+            "Split in columns": [
+                "In kolommen verdelen"
+            ],
+            "Parts inside sit": [
+                "Onderdelen erin staan"
+            ],
+            "Auto": [
+                "Auto"
+            ],
+            "In a row": [
+                "Op een rij"
+            ],
+            "Stacked": [
+                "Gestapeld"
+            ],
+            "In a grid": [
+                "In een grid"
+            ],
+            "%d part inside": [
+                "%d onderdeel erin",
+                "%d onderdelen erin"
+            ],
+            "draw inside it to add one": [
+                "teken erin om er een toe te voegen"
+            ],
+            "Already on the page? Have just this part built or filled in.": [
+                "Staat het al op de pagina? Laat alleen dit onderdeel bouwen of invullen."
+            ],
+            "Build just this part": [
+                "Alleen dit onderdeel bouwen"
+            ],
+            "The builder this page uses, or the block editor": [
+                "De builder die deze pagina gebruikt, of de blokeditor"
+            ],
+            "Design system (%s)": [
+                "Designsysteem (%s)"
+            ],
+            "Design system": [
+                "Designsysteem"
+            ],
+            "What should this be?": [
+                "Wat moet dit worden?"
+            ],
+            "e.g. A pricing section for our three tour packages: friendly, clear, the middle one stands out": [
+                "bijv. Een prijssectie voor onze drie tourpakketten: vriendelijk, duidelijk, de middelste springt eruit"
+            ],
+            "Always included: phone, tablet and desktop": [
+                "Altijd inbegrepen: telefoon, tablet en desktop"
+            ],
+            "Responsive": [
+                "Responsive"
+            ],
+            "Always included: headings, labels, alt text, contrast, keyboard": [
+                "Altijd inbegrepen: koppen, labels, alt-tekst, contrast, toetsenbord"
+            ],
+            "Accessible": [
+                "Toegankelijk"
+            ],
+            "Design system and style": [
+                "Designsysteem en stijl"
+            ],
+            "e.g. Our Automatic.css tokens, primary colour for buttons, generous section spacing, rounded cards, Inter for headings": [
+                "bijv. Onze Automatic.css-tokens, primaire kleur voor knoppen, ruime sectiewitruimte, afgeronde kaarten, Inter voor koppen"
+            ],
+            "e.g. Brand orange #ff8a3d for buttons, Inter headings, 8px spacing scale, rounded cards with soft shadows": [
+                "bijv. Merkoranje #ff8a3d voor knoppen, Inter-koppen, witruimteschaal van 8px, afgeronde kaarten met zachte schaduwen"
+            ],
+            "Built with %s": [
+                "Gebouwd met %s"
+            ],
+            "best-fit layout": [
+                "best passende lay-out"
+            ],
+            "flexbox": [
+                "flexbox"
+            ],
+            "CSS grid": [
+                "CSS grid"
+            ],
+            "matches this page": [
+                "past bij deze pagina"
+            ],
+            "fresh look": [
+                "frisse look"
+            ],
+            "real copy": [
+                "echte tekst"
+            ],
+            "placeholders": [
+                "placeholders"
+            ],
+            "empty slots": [
+                "lege vakken"
+            ],
+            "Adjust": [
+                "Aanpassen"
+            ],
+            "Build it with": [
+                "Bouwen met"
+            ],
+            "Layout": [
+                "Lay-out"
+            ],
+            "Best fit: grid for cards, flex for rows": [
+                "Best passend: grid voor kaarten, flex voor rijen"
+            ],
+            "Flexbox": [
+                "Flexbox"
+            ],
+            "Look": [
+                "Uiterlijk"
+            ],
+            "Match this page": [
+                "Passend bij deze pagina"
+            ],
+            "Fresh look": [
+                "Frisse look"
+            ],
+            "Words and pictures": [
+                "Woorden en beelden"
+            ],
+            "Real copy": [
+                "Echte tekst"
+            ],
+            "Placeholders": [
+                "Placeholders"
+            ],
+            "Empty slots": [
+                "Lege vakken"
+            ],
+            "Drop it on the page": [
+                "Op de pagina zetten"
+            ],
+            "Pick the spot in the preview": [
+                "Kies de plek in het voorbeeld"
+            ],
+            "Add it at the end": [
+                "Aan het einde toevoegen"
+            ],
+            "Of the page on screen": [
+                "Van de pagina op het scherm"
+            ],
+            "Build a new page": [
+                "Een nieuwe pagina bouwen"
+            ],
+            "A draft named after it": [
+                "Een concept met deze naam"
+            ],
+            "Back to drawing": [
+                "Terug naar tekenen"
+            ],
+            "Save to library": [
+                "Opslaan in bibliotheek"
+            ],
+            "Sent to your agent": [
+                "Naar je agent gestuurd"
+            ],
+            "Follow it in the chat on the left. Preview flips to the page so you can watch it being built.": [
+                "Volg het in de chat links. Het voorbeeld wisselt naar de pagina, zodat je kunt zien hoe hij wordt gebouwd."
+            ],
+            "Preview the page": [
+                "Voorbeeld van de pagina"
+            ],
+            "Keep drawing": [
+                "Verder tekenen"
+            ],
+            "Your designs": [
+                "Je ontwerpen"
+            ],
+            "Open %s": [
+                "%s openen"
+            ],
+            "open": [
+                "openen"
+            ],
+            "%d part": [
+                "%d onderdeel",
+                "%d onderdelen"
+            ],
+            "Drop it into this design": [
+                "In dit ontwerp zetten"
+            ],
+            "Open and edit": [
+                "Openen en bewerken"
+            ],
+            "Make a copy": [
+                "Een kopie maken"
+            ],
+            "Nothing saved yet. Every design you draw is kept here on its own.": [
+                "Nog niets opgeslagen. Elk ontwerp dat je tekent, wordt hier apart bewaard."
+            ],
+            "Saving\u2026": [
+                "Opslaan\u2026"
+            ],
+            "Saved": [
+                "Opgeslagen"
+            ],
+            "Design saved to your library.": [
+                "Ontwerp opgeslagen in je bibliotheek."
+            ],
+            "Not saved": [
+                "Niet opgeslagen"
+            ],
+            "\u201c%s\u201d dropped in.": [
+                "\u201c%s\u201d erin gezet."
+            ],
+            "Click again to delete": [
+                "Klik nog een keer om te verwijderen"
+            ],
+            "Design deleted.": [
+                "Ontwerp verwijderd."
+            ],
+            "this page\u2019s builder": [
+                "de builder van deze pagina"
+            ],
+            "Open a page first, then pick the spot.": [
+                "Open eerst een pagina en kies dan de plek."
+            ],
+            "Say what goes in this part first.": [
+                "Zeg eerst wat er in dit onderdeel komt."
+            ],
+            "Build the \u201c%1$s\u201d part of my design \u201c%2$s\u201d: %3$s": [
+                "Bouw het onderdeel \u201c%1$s\u201d van mijn ontwerp \u201c%2$s\u201d: %3$s"
+            ],
+            "Build my design \u201c%1$s\u201d%2$s": [
+                "Bouw mijn ontwerp \u201c%1$s\u201d%2$s"
+            ],
+            "(%1$d part, built with %2$s, responsive and accessible)": [
+                "(%1$d onderdeel, gebouwd met %2$s, responsive en toegankelijk)",
+                "(%1$d onderdelen, gebouwd met %2$s, responsive en toegankelijk)"
+            ],
+            "\u201c%1$s\u201d goes %2$s \u201c%3$s\u201d.": [
+                "\u201c%1$s\u201d komt %2$s \u201c%3$s\u201d."
+            ],
+            "before": [
+                "voor"
+            ],
+            "after": [
+                "na"
+            ],
+            "\u201c%s\u201d goes on a new page.": [
+                "\u201c%s\u201d komt op een nieuwe pagina."
+            ],
+            "\u201c%s\u201d goes at the end of this page.": [
+                "\u201c%s\u201d komt aan het einde van deze pagina."
+            ],
+            "Sent": [
+                "Verstuurd"
+            ],
+            "The page is not ready yet. Try again in a moment.": [
+                "De pagina is nog niet klaar. Probeer het zo opnieuw."
+            ],
+            "Click where it should go. Esc to go back.": [
+                "Klik waar het moet komen. Esc om terug te gaan."
+            ],
+            "Before": [
+                "Ervoor"
+            ],
+            "After": [
+                "Erna"
+            ],
+            "Point at a part of the page first.": [
+                "Wijs eerst een deel van de pagina aan."
+            ]
+        }
+    }
+}

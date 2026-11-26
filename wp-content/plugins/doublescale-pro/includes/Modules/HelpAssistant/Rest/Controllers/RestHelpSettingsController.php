@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 use DoubleScale\Core\Abstracts\RestController;
 use DoubleScale\Pro\Modules\HelpAssistant\Services\ChatGuard;
+use DoubleScale\Pro\Modules\HelpAssistant\Services\LiveChatPlan;
 use DoubleScale\Pro\Modules\HelpAssistant\Services\HelpSettings;
 use DoubleScale\Pro\Modules\HelpAssistant\Services\SitePages;
 use WP_Error;
@@ -119,7 +120,7 @@ class RestHelpSettingsController extends RestController {
 	 */
 	public function update_item( $request ) {
 		$body    = (array) $request->get_json_params();
-		$allowed = array_intersect_key( $body, array_flip( array( 'enabled', 'name', 'fallback', 'welcome', 'quick_replies', 'faq', 'instructions', 'avatar', 'subtitle', 'theme', 'channels', 'widget', 'limits', 'live_chat', 'site_pages', 'handoff_mailbox', 'retention_days' ) ) );
+		$allowed = array_intersect_key( $body, array_flip( array( 'enabled', 'name', 'fallback', 'welcome', 'quick_replies', 'faq', 'instructions', 'avatar', 'subtitle', 'theme', 'channels', 'widget', 'limits', 'live_chat', 'site_pages', 'handoff', 'handoff_mailbox', 'retention_days' ) ) );
 
 		// The assistant is turned on only once AI works: connected in
 		// Settings → AI and not refused by the provider. Turning it off, and
@@ -152,6 +153,11 @@ class RestHelpSettingsController extends RestController {
 			'status'   => array(
 				'ai_configured' => RestHelpPublicChatController::ai_ready(),
 				'limits_ready'  => ChatGuard::available(),
+				// For the setup hints on Helpdesk → Settings → Chat.
+				'ai_connected'  => class_exists( '\\DoubleScale\\Admin\\AdminConfig' ) && \DoubleScale\Admin\AdminConfig::is_ai_configured(),
+				'ai_problem'    => \DoubleScale\Pro\Modules\HelpAssistant\Module::can_change_ai() ? \DoubleScale\Pro\Modules\Ai\AiHealth::problem() : '',
+				'articles'      => \DoubleScale\Pro\Modules\HelpAssistant\Module::answerable_articles(),
+				'live_plan'     => LiveChatPlan::allowed(),
 			),
 		);
 	}

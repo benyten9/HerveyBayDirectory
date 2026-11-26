@@ -45,7 +45,7 @@ unset($nibwp_etchedy_lib_dir);
 
 wp_register_ability('nibwp/etchedy-manage', [
     'label' => __('Etchedy — Manage Library', 'nibwp'),
-    'description' => 'Read and write the Etchedy component library: list and search the tree, read a component, save a new one into a folder, update its details or content, rename it, move it between folders, duplicate it, delete it, manage per-user folders and pins, and rebuild the manifest.',
+    'description' => 'Read and write the Etchedy component library: list and search the tree, read a component, save a new one into a folder, update its details or content, rename it, move it between folders, duplicate it, delete it, manage per-user folders and pins, and rebuild the manifest. There is one Etchedy library on the site, whichever edition of the Etchedy plugin is installed (free or Pro): nibwp/etchedy-manage and the nibwp/etchedy-pro-* abilities all read and write that same library. Call it Etchedy and never ask the person to choose between Etchedy and Etchedy Pro.',
     'category' => 'etchedy',
     'input_schema' => [
         'type' => 'object',
@@ -585,6 +585,8 @@ function nibwp_etchedy_search_library(array $library, string $query): array
             'brand' => (string) ($meta['brand'] ?? ''),
             'pro' => !empty($meta['pro']),
             'locked' => !empty($meta['locked']),
+            // Its picture, as the plugin serves it (a web link only), for choices the person picks from.
+            'preview' => preg_match('#^https?://#i', (string) ($meta['previewImage'] ?? '')) ? (string) $meta['previewImage'] : '',
         ];
     }
 

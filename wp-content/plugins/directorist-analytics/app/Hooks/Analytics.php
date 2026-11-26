@@ -72,6 +72,9 @@ class Analytics {
 		add_action( 'atbdp_listing_published', array( $this, 'record_listing_published' ), 10, 1 );
 		add_action( 'directorist_review_updated', array( $this, 'record_review_updated' ), 10, 2 );
 		add_action( 'user_register', array( $this, 'record_user_registered' ), 10, 1 );
+
+        add_action( 'deleted_user', [ $this, 'delete_user_activity' ] );
+        add_action( 'remove_user_from_blog', [ $this->activity_service, 'delete_user_activities' ], 10, 2 );
 	
 		// Author login tracking
 		add_action( 'wp_login', array( $this, 'track_author_login' ), 10, 2 );
@@ -162,6 +165,30 @@ class Analytics {
 	public function record_user_registered( $user_id ) {
 		$this->activity_service->record_user_registered( absint( $user_id ) );
 	}
+
+    /**
+     * Delete activity after a WordPress account is deleted.
+     *
+     * @param int $user_id Deleted user ID.
+     * @return void
+     */
+    public function delete_user_activity( $user_id ) {
+        if ( ! is_multisite() ) {
+            $this->activity_service->delete_user_activities( $user_id );
+            return;
+        }
+
+        // WordPress also fires deleted_user after removing a site's membership.
+        if ( get_userdata( $user_id ) ) {
+            return;
+        }
+
+        // A deleted account can have activity on sites where it was never a member.
+        $site_ids = get_sites( [ 'fields' => 'ids', 'number' => 0 ] );
+        foreach ( $site_ids as $site_id ) {
+            $this->activity_service->delete_user_activities( $user_id, $site_id );
+        }
+    }
 
 	/**
 	 * Track author login

@@ -4,7 +4,7 @@
  * Plugin Name:       DoubleScale Pro
  * Plugin URI:        https://www.doublescale.io/
  * Description:       A powerful CRM Builder for WordPress that lets you manage leads, track interactions, and automate customer relationships—all seamlessly integrated within your WordPress dashboard.
- * Version:           1.6.1
+ * Version:           1.7.0
  * Author:            doublescale.io
  * Author URI:        http://www.doublescale.io
  * License:           GPL v2 or later
@@ -23,7 +23,7 @@ if ( ! defined( 'DOUBLESCALE_PRO_PLUGIN_FILE' ) ) {
 	define( 'DOUBLESCALE_PRO_PLUGIN_FILE', __FILE__ );
 }
 if ( ! defined( 'DOUBLESCALE_PRO_VERSION' ) ) {
-	define( 'DOUBLESCALE_PRO_VERSION', '1.6.1' );
+	define( 'DOUBLESCALE_PRO_VERSION', '1.7.0' );
 }
 // Pro asks for Illuminate, WPEloquent, Carbon and Doctrine as DoubleScale\Vendor\…:
 // tells free it needs no aliases for the old, unprefixed names.
@@ -109,7 +109,7 @@ if ( ! defined( 'DOUBLESCALE_PRO_MIN_FREE_VERSION' ) ) {
 	// (SendContext, waiting steps, shared daily limits, the channel engine
 	// registry). Pro runs on an older free too: those features stay off, and
 	// ScopedVendorNames bridges free's unprefixed vendor names.
-	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.10.1' );
+	define( 'DOUBLESCALE_PRO_MIN_FREE_VERSION', '1.11.0' );
 }
 add_filter( 'doublescale_is_pro_addon_active', '__return_true', 1 );
 // This Pro shows who uploaded each contact file (client or team), so free may

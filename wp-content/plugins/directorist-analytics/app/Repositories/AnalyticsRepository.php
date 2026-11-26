@@ -41,7 +41,7 @@ class AnalyticsRepository {
 		$listing_id = absint( $listing_id );
 
 		if ( ! $this->validate_date( $start_date ) || ! $this->validate_date( $end_date ) ) {
-			throw new Exception( esc_html__( 'Invalid date format. Use YYYY-MM-DD.', 'directorist-analytics' ), 400 );
+			throw new Exception( esc_html__( 'Invalid date format. Use YYYY-MM-DD.', 'directorist-advanced-review' ), 400 );
 		}
 
 		$result = DailyStat::query()

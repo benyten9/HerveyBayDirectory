@@ -205,7 +205,8 @@ final class CustomerChannels {
 	public static function client_config( string $channel ): array {
 		$settings = HelpSettings::get();
 		$name     = '' !== $settings['name'] ? $settings['name'] : __( 'Help assistant', 'doublescale' );
-		$handoff  = HandoffService::available() && ChatGuard::available();
+		// The chat may offer a person (live chat, or the AI's contact form).
+		$handoff  = HelpSettings::handoff_offered();
 		// Online: someone who answers tickets was in wp-admin in the last minutes.
 		$online = $handoff && TeamPresence::online();
 		// The line under the name: the owner's, else an honest default — "can
@@ -215,7 +216,7 @@ final class CustomerChannels {
 
 		$config = array(
 			'endpoint' => esc_url_raw( rest_url( 'doublescale/v1/help/public/chat' ) ),
-			'handoff_endpoint' => HandoffService::available() && ChatGuard::available() ? esc_url_raw( rest_url( 'doublescale/v1/help/public/handoff' ) ) : '',
+			'handoff_endpoint' => $handoff ? esc_url_raw( rest_url( 'doublescale/v1/help/public/handoff' ) ) : '',
 			'feedback_endpoint' => esc_url_raw( rest_url( 'doublescale/v1/help/public/feedback' ) ),
 			// Where the visitor rates the team's help once it is solved.
 			'satisfaction_endpoint' => esc_url_raw( rest_url( 'doublescale/v1/help/public/satisfaction' ) ),

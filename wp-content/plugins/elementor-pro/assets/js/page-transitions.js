@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.4.0 - 16-11-2026 */
+/*! elementor-pro - v4.4.0 - 24-11-2026 */
 (function() {
 	//#endregion
 	//#region \0component-scss:/home/runner/work/elementor-pro/elementor-pro/modules/page-transitions/assets/js/frontend/components/page-transition/page-transition.component.scss.js

@@ -190,6 +190,8 @@ final class Module extends AbstractModule {
 			'assistant' => array(
 				'enabled'      => Services\HelpSettings::enabled(),
 				'aiConfigured' => Rest\Controllers\RestHelpPublicChatController::ai_ready(),
+				// A provider is connected (it may still be refusing: aiConfigured false).
+				'aiConnected'  => class_exists( '\\DoubleScale\\Admin\\AdminConfig' ) && \DoubleScale\Admin\AdminConfig::is_ai_configured(),
 				// Connected but refused by the provider: its reason (AiHealth).
 				// Only for whoever may change the AI settings: the text can
 				// name the account; the others see "not set up".
@@ -202,6 +204,8 @@ final class Module extends AbstractModule {
 				'liveChat'     => Services\LiveChat::enabled(),
 				// The AI answers from articles: the help center must be on.
 				'helpCenterOn' => self::kb_ready(),
+				// What it can answer from (the "publish an article" hint).
+				'articles'     => self::answerable_articles(),
 			),
 			// Live chat comes with every plan; it needs a licence.
 			'liveChatPlan' => array(
@@ -226,6 +230,26 @@ final class Module extends AbstractModule {
 	 *
 	 * @return bool
 	 */
+	/**
+	 * Published articles the assistant may answer from (public and client
+	 * portal; never team-only ones). 0 while the knowledge base is off.
+	 *
+	 * @return int
+	 */
+	public static function answerable_articles(): int {
+		if ( ! self::kb_ready() || ! class_exists( '\\DoubleScale\\Modules\\KnowledgeBase\\Models\\KbArticleModel' ) ) {
+			return 0;
+		}
+		try {
+			return (int) \DoubleScale\Modules\KnowledgeBase\Models\KbArticleModel::query()
+				->where( 'status', \DoubleScale\Modules\KnowledgeBase\Models\KbArticleModel::STATUS_PUBLISHED )
+				->where( 'visibility', '!=', \DoubleScale\Modules\KnowledgeBase\Models\KbArticleModel::VISIBILITY_INTERNAL )
+				->count();
+		} catch ( \Throwable $e ) {
+			return 0;
+		}
+	}
+
 	public static function can_change_ai(): bool {
 		return current_user_can( 'manage_options' )
 			|| ( class_exists( '\\DoubleScale\\Core\\UserRoles\\Permissions' ) && \DoubleScale\Core\UserRoles\Permissions::has_crm_manager_access() );

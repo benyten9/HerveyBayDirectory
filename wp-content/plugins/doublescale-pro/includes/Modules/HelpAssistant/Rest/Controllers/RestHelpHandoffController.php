@@ -125,7 +125,8 @@ class RestHelpHandoffController extends RestController {
 		if ( $disabled ) {
 			return $disabled;
 		}
-		if ( ! HandoffService::available() || ! ChatGuard::available() ) {
+		// Also gone when the owner runs the AI alone with no contact form.
+		if ( ! HelpSettings::handoff_offered() ) {
 			return self::not_found();
 		}
 

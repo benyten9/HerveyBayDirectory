@@ -578,7 +578,7 @@ function nibwp_visual_rest_session(WP_REST_Request $request): WP_REST_Response
         'expires' => $expiration,
         'expires_in' => $expiration - time(),
         'user' => wp_get_current_user()->user_login,
-        'workspace_url' => admin_url('admin-post.php?action=nibwp_agent_view'),
+        'workspace_url' => function_exists('nibwp_studio_url') ? nibwp_studio_url() : admin_url('admin-post.php?action=nibwp_studio'),
     ]);
 }
 

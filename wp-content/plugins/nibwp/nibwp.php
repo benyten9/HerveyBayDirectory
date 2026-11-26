@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Plugin URI: https://www.nibwp.com
  * Update URI: https://www.nibwp.com
  * Description: Turns your WordPress site into a Model Context Protocol (MCP) server so AI agents like Claude Code and ChatGPT can read posts, terms, users, media, options, search, and a key-value memory store through a standard, permissioned interface. Documentation and guides at <a href="https://www.nibwp.com">nibwp.com</a>.
- * Version: 1.2.13
+ * Version: 2.0.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: NIBWP
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-define(constant_name: 'NIBWP_VERSION', value: '1.2.13');
+define(constant_name: 'NIBWP_VERSION', value: '2.0.0');
 define(constant_name: 'NIBWP_MAX_EXECUTION_TIME', value: 30);
 define('NIBWP_PLUGIN_FILE', __FILE__);
 define('NIBWP_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -621,13 +621,24 @@ require_once __DIR__ . '/includes/addon-conflicts.php';
 require_once __DIR__ . '/includes/cli-info.php';
 require_once __DIR__ . '/includes/user-access.php';
 require_once __DIR__ . '/includes/branding.php';
+// Agent View is Pro-only: the requires sit in premium markers and
+// build-free.sh leaves includes/visual, includes/studio and their assets out
+// of the Free zip.
+// @nibwp:premium-start
 require_once __DIR__ . '/includes/visual/visual-bus.php';
 require_once __DIR__ . '/includes/visual/visual-rest.php';
 require_once __DIR__ . '/includes/visual/visual-abilities.php';
 require_once __DIR__ . '/includes/visual/visual-icons.php';
-require_once __DIR__ . '/includes/visual/visual-upgrade.php';
 require_once __DIR__ . '/includes/visual/visual-onboarding.php';
-require_once __DIR__ . '/includes/visual/visual-workspace.php';
+// Agent View — the person drives, the agent listens, and the agent's browser
+// commands run in the same frame.
+require_once __DIR__ . '/includes/studio/studio-store.php';
+require_once __DIR__ . '/includes/studio/studio-rest.php';
+require_once __DIR__ . '/includes/studio/studio-builder.php';
+require_once __DIR__ . '/includes/studio/studio-export.php';
+require_once __DIR__ . '/includes/studio/studio-abilities.php';
+require_once __DIR__ . '/includes/studio/studio-page.php';
+// @nibwp:premium-end
 require_once __DIR__ . '/includes/user-defaults.php';
 require_once __DIR__ . '/includes/integrations-catalog.php';
 // License UI (admin page, lock modal, upsell). Paid-only — stripped from
@@ -1569,6 +1580,11 @@ if ($is_enabled) {
             'description' => __('Etchedy component library — browse, save, edit, move and reuse components.', 'nibwp'),
         ]);
 
+        wp_register_ability_category('bricksed', [
+            'label' => __('Bricksed', 'nibwp'),
+            'description' => __('Bricksed component library for Bricks — browse, save, edit, move and reuse components.', 'nibwp'),
+        ]);
+
         wp_register_ability_category('etchwp-pro', [
             'label' => __('EtchWP Pro', 'nibwp'),
             'description' => __('Premium skill pack — image / HTML / Figma → EtchWP atomic components.', 'nibwp'),
@@ -1641,6 +1657,7 @@ if ($is_enabled) {
             'voxel'         => ['Voxel', 'Voxel theme — listings, directories, commerce, community.'],
             'breakdance'    => ['Breakdance', 'Breakdance builder — pages, templates, global design. Covers Oxygen 6.'],
             'builderius'    => ['Builderius', 'Builderius builder — templates, components, design tokens.'],
+            'mosaic'        => ['Mosaic', 'Mosaic theme builder — pages, templates, components, classes.'],
         ] as $slug => [$label, $desc]) {
             if (! nibwp_has_ability_category($slug)) {
                 wp_register_ability_category($slug, [
@@ -1736,6 +1753,11 @@ if ($is_enabled) {
         // Visual workspace — the agent drives a browser tab the user is watching.
         if (function_exists('nibwp_visual_register_abilities')) {
             nibwp_visual_register_abilities();
+        }
+
+        // Agent Studio — requests the person sends from the Studio screen.
+        if (function_exists('nibwp_studio_register_abilities')) {
+            nibwp_studio_register_abilities();
         }
 
         // WordPress core abilities (posts/terms/users/media/options/menus CRUD) — Free.

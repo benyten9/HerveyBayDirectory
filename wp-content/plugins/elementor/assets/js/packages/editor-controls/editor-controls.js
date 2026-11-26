@@ -13296,7 +13296,7 @@ react_dom = __toESM(react_dom);
 			rangeExtractor: (range) => {
 				const rowIndexes = defaultRangeExtractor(range);
 				const focusedRow = Math.floor(focusedIndex / columnCount);
-				if (items.length === 0 || rowIndexes.includes(focusedRow)) return rowIndexes;
+				if (focusedRow >= range.count || rowIndexes.includes(focusedRow)) return rowIndexes;
 				return [...rowIndexes, focusedRow].sort((a, b) => a - b);
 			}
 		});

@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.4.0 - 16-11-2026 */
+/*! elementor-pro - v4.4.0 - 24-11-2026 */
 (function(_elementor_frontend_handlers) {
 	//#endregion
 	//#region \0@oxc-project+runtime@0.140.0/helpers/esm/asyncToGenerator.js

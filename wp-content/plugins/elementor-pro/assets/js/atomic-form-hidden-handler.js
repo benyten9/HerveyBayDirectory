@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.4.0 - 16-11-2026 */
+/*! elementor-pro - v4.4.0 - 24-11-2026 */
 (function(_elementor_frontend_handlers) {
 	//#endregion
 	//#region modules/atomic-form/assets/js/frontend/hidden-handler.js

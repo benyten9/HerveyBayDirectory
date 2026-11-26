@@ -149,6 +149,27 @@ class RestTemplateController extends RestController {
 			)
 		);
 
+		// Render unsaved builder JSON (a built-in template in the gallery) to email
+		// HTML, so the preview shows the real email instead of a scaled image.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/preview',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'preview_builder_data' ),
+					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'args'                => array(
+						'body' => array(
+							'description' => __( 'Builder content: sections, globalSettings, buttonSettings.', 'doublescale' ),
+							'type'        => 'object',
+							'required'    => true,
+						),
+					),
+				),
+			)
+		);
+
 		// Register endpoint for getting user templates (non-hidden)
 		register_rest_route(
 			$this->namespace,
@@ -957,6 +978,42 @@ class RestTemplateController extends RestController {
 				'html' => $html,
 			)
 		);
+	}
+
+	/**
+	 * Render builder content sent in the request (nothing is saved).
+	 *
+	 * Contact merge tags use the signed-in user's own contact when there is one,
+	 * so a preview reads "Hi Sarah" instead of a raw tag; tracking is stripped.
+	 *
+	 * @param WP_REST_Request $request Request with `body` (builder value).
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function preview_builder_data( $request ) {
+		$body = $request->get_param( 'body' );
+		if ( ! is_array( $body ) || empty( $body['sections'] ) || ! is_array( $body['sections'] ) ) {
+			return new WP_Error( 'invalid_body', __( 'There is nothing to preview.', 'doublescale' ), array( 'status' => 400 ) );
+		}
+
+		$contact = null;
+		$user    = wp_get_current_user();
+		if ( $user && $user->exists() && ! empty( $user->user_email ) ) {
+			$contact = ContactModel::where( 'email', $user->user_email )->first();
+		}
+
+		try {
+			$renderer = new EmailRenderer();
+			$html     = $renderer->render_from_builder_data( $body, $contact );
+		} catch ( \Throwable $e ) {
+			return new WP_Error( 'preview_failed', __( 'Failed to render the preview.', 'doublescale' ), array( 'status' => 500 ) );
+		}
+
+		if ( ! $contact ) {
+			$first = $user && $user->exists() ? ( $user->first_name ? $user->first_name : $user->display_name ) : '';
+			$html  = str_replace( '{{contact:first_name}}', esc_html( '' !== $first ? $first : __( 'there', 'doublescale' ) ), $html );
+		}
+
+		return rest_ensure_response( array( 'html' => $this->strip_tracking_elements( $html ) ) );
 	}
 
 	/**

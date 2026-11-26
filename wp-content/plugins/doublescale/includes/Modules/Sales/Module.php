@@ -119,6 +119,12 @@ final class Module extends AbstractModule {
 		require_once $this->module_dir() . '/MergeTags/AbstractSalesMergeTag.php';
 		$this->loadModuleMergeTagFiles();
 
+		// The settings cover proposal, invoice, contract and tax options, so with
+		// only Pipelines switched on there is nothing to configure.
+		if ( ! \doublescale_is_module_active( 'documents' ) && ! \doublescale_is_module_active( 'contracts' ) ) {
+			return;
+		}
+
 		MenuRegistry::add(
 			array(
 				'page_title'      => __( 'Sales Settings', 'doublescale' ),

@@ -1,4 +1,4 @@
-/*! elementor-pro - v4.4.0 - 16-11-2026 */
+/*! elementor-pro - v4.4.0 - 24-11-2026 */
 this.elementorV2 = this.elementorV2 || {};
 (function(exports, _elementor_license_api, _elementor_editor_controls, _elementor_http_client, _elementor_query, react, _wordpress_i18n, _elementor_icons, _elementor_ui, _elementor_editor_props, _elementor_schema, _elementor_editor_ui) {
 	Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });

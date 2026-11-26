@@ -80,11 +80,12 @@ class FormSubmission extends Filter {
 	public function get_options() {
 		$options = array();
 
-		if ( ! doublescale_module_data_ready( 'forms' ) || ! class_exists( '\DoubleScale\Pro\Modules\Forms\Models\FormModel' ) ) {
+		if ( ! doublescale_module_data_ready( 'forms' ) ) {
 			return $options;
 		}
 
-		$forms = \DoubleScale\Pro\Modules\Forms\Models\FormModel::all();
+		// Free's model: the Pro class this used to name no longer exists, so the list was always empty.
+		$forms = \DoubleScale\Modules\Forms\Models\FormModel::orderBy( 'name' )->get( array( 'id', 'name' ) );
 
 		foreach ( $forms as $form ) {
 			$options[ $form->id ] = $form->name;
@@ -145,13 +146,15 @@ class FormSubmission extends Filter {
 			SELECT COUNT(*)
 			FROM {$table_form_submissions}
 			WHERE {$table_form_submissions}.contact_id = {$table_contacts}.id
+			AND ( {$table_form_submissions}.status IS NULL OR {$table_form_submissions}.status = 'complete' )
 			{$form_ids_sql}
 			{$sql_timeframe}
 		) > ?",
 			array_merge(
 				$form_ids_bindings,
 				$time_bindings,
-				array( 0 )
+				// "Submitted at least N times" (default once): spam and unfinished entries never count.
+				array( max( 0, (int) ( $value['min_count'] ?? 1 ) - 1 ) )
 			)
 		);
 

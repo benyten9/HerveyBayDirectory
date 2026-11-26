@@ -1216,6 +1216,7 @@ function nibwp_builder_output_lines(): array
         'elementor/elementor.php' => ['Elementor', 'elementor-pro'],
         'kadence-blocks/kadence-blocks.php' => ['Kadence Blocks', 'kadence-pro'],
         'builderius/builderius.php' => ['Builderius', 'builderius-pro'],
+        'mosaic/mosaic.php' => ['Mosaic', 'mosaic-pro'],
     ];
 
     $found = [];

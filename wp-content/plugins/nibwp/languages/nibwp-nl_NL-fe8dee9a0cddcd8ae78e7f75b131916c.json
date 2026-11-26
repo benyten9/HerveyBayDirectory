@@ -1,0 +1,2368 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-builder.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Disabled": [
+                "Uitgeschakeld"
+            ],
+            "View": [
+                "Bekijken"
+            ],
+            "Delete": [
+                "Verwijderen"
+            ],
+            "Type": [
+                "Type"
+            ],
+            "Description": [
+                "Beschrijving"
+            ],
+            "Build": [
+                "Bouwen"
+            ],
+            "Data": [
+                "Data"
+            ],
+            "Close": [
+                "Sluiten"
+            ],
+            "Copy": [
+                "Kopi\u00ebren"
+            ],
+            "Apply": [
+                "Aanmelden"
+            ],
+            "Copied": [
+                "Gekopieerd"
+            ],
+            "Success": [
+                "Geslaagd"
+            ],
+            "Cancel": [
+                "Annuleren"
+            ],
+            "Name": [
+                "Naam"
+            ],
+            "optional": [
+                "optioneel"
+            ],
+            "Done": [
+                "Klaar"
+            ],
+            "Message": [
+                "Bericht"
+            ],
+            "Design": [
+                "Design"
+            ],
+            "Details": [
+                "Details"
+            ],
+            "Contact": [
+                "Contact"
+            ],
+            "Remove": [
+                "Verwijderen"
+            ],
+            "Rename": [
+                "Hernoemen"
+            ],
+            "Add": [
+                "Toevoegen"
+            ],
+            "Email": [
+                "E-mail"
+            ],
+            "New template": [
+                "Nieuw template"
+            ],
+            "New section": [
+                "Nieuwe sectie"
+            ],
+            "Info": [
+                "Info"
+            ],
+            "Code editor": [
+                "Code-editor"
+            ],
+            "Nothing matches.": [
+                "Niets gevonden."
+            ],
+            "Tablet": [
+                "Tablet"
+            ],
+            "Laptop": [
+                "Laptop"
+            ],
+            "Desktop": [
+                "Desktop"
+            ],
+            "Duplicate": [
+                "Dupliceren"
+            ],
+            "%d element": [
+                "%d element",
+                "%d elementen"
+            ],
+            "Save": [
+                "Opslaan"
+            ],
+            "NibWP framework": [
+                "NibWP-framework"
+            ],
+            "Could not rename it.": [
+                "Kon het niet hernoemen."
+            ],
+            "Someone": [
+                "Iemand"
+            ],
+            "Use letters, digits, dashes and underscores, starting with a letter.": [
+                "Gebruik letters, cijfers, streepjes en underscores, en begin met een letter."
+            ],
+            "Phone": [
+                "Telefoon"
+            ],
+            "Builder": [
+                "Builder"
+            ],
+            "Open in a new tab": [
+                "Openen in een nieuw tabblad"
+            ],
+            "Send": [
+                "Versturen"
+            ],
+            "Drag to move": [
+                "Sleep om te verplaatsen"
+            ],
+            "Close (Esc)": [
+                "Sluiten (Esc)"
+            ],
+            "move": [
+                "verplaatsen"
+            ],
+            "pick": [
+                "kiezen"
+            ],
+            "Spacing": [
+                "Witruimte"
+            ],
+            "Typography": [
+                "Typografie"
+            ],
+            "Colours": [
+                "Kleuren"
+            ],
+            "Code": [
+                "Code"
+            ],
+            "%d change": [
+                "%d wijziging",
+                "%d wijzigingen"
+            ],
+            "Structure": [
+                "Structuur"
+            ],
+            "Classes": [
+                "Classes"
+            ],
+            "Templates": [
+                "Templates"
+            ],
+            "Content hub": [
+                "Contenthub"
+            ],
+            "Canvas size": [
+                "Canvasformaat"
+            ],
+            "Section": [
+                "Sectie"
+            ],
+            "Container": [
+                "Container"
+            ],
+            "Columns": [
+                "Kolommen"
+            ],
+            "Column": [
+                "Kolom"
+            ],
+            "Box": [
+                "Vak"
+            ],
+            "Heading": [
+                "Kop"
+            ],
+            "Text": [
+                "Tekst"
+            ],
+            "Image": [
+                "Afbeelding"
+            ],
+            "Button": [
+                "Knop"
+            ],
+            "Card": [
+                "Kaart"
+            ],
+            "Form": [
+                "Formulier"
+            ],
+            "Menu": [
+                "Menu"
+            ],
+            "List": [
+                "Lijst"
+            ],
+            "Video": [
+                "Video"
+            ],
+            "Icon": [
+                "Icoon"
+            ],
+            "Space": [
+                "Ruimte"
+            ],
+            "Hero": [
+                "Hero"
+            ],
+            "Pricing": [
+                "Prijzen"
+            ],
+            "Call to action": [
+                "Call-to-action"
+            ],
+            "Header": [
+                "Header"
+            ],
+            "Footer": [
+                "Footer"
+            ],
+            "About": [
+                "Over ons"
+            ],
+            "Undo": [
+                "Ongedaan maken"
+            ],
+            "Redo": [
+                "Opnieuw doen"
+            ],
+            "Close the Builder": [
+                "De Builder sluiten"
+            ],
+            "Layout": [
+                "Lay-out"
+            ],
+            "before": [
+                "voor"
+            ],
+            "after": [
+                "na"
+            ],
+            "Say what goes here, or drop elements in.": [
+                "Zeg wat hier komt, of sleep er elementen in."
+            ],
+            "Card grid": [
+                "Kaartengrid"
+            ],
+            "Card title": [
+                "Kaarttitel"
+            ],
+            "Short card text.": [
+                "Korte kaarttekst."
+            ],
+            "New heading": [
+                "Nieuwe kop"
+            ],
+            "New paragraph. Click it to change it, or ask NibWP what it should say.": [
+                "Nieuwe alinea. Klik erop om hem te wijzigen, of vraag NibWP wat erin moet staan."
+            ],
+            "Link": [
+                "Link"
+            ],
+            "A link": [
+                "Een link"
+            ],
+            "First item": [
+                "Eerste item"
+            ],
+            "Second item": [
+                "Tweede item"
+            ],
+            "Third item": [
+                "Derde item"
+            ],
+            "Quote": [
+                "Citaat"
+            ],
+            "A quote worth reading.": [
+                "Een citaat dat het lezen waard is."
+            ],
+            "Divider": [
+                "Scheidingslijn"
+            ],
+            "Div": [
+                "Div"
+            ],
+            "Iframe": [
+                "Iframe"
+            ],
+            "Embedded page": [
+                "Ingesloten pagina"
+            ],
+            "Read more": [
+                "Lees meer"
+            ],
+            "Accordion": [
+                "Accordeon"
+            ],
+            "Question %d": [
+                "Vraag %d"
+            ],
+            "The answer.": [
+                "Het antwoord."
+            ],
+            "Table": [
+                "Tabel"
+            ],
+            "Value": [
+                "Waarde"
+            ],
+            "Row": [
+                "Rij"
+            ],
+            "Home": [
+                "Home"
+            ],
+            "Map": [
+                "Kaart"
+            ],
+            "HTML": [
+                "HTML"
+            ],
+            "Your HTML here: paste anything in the HTML pane below.": [
+                "Je HTML hier: plak wat je wilt in het HTML-paneel hieronder."
+            ],
+            "Basics": [
+                "Basis"
+            ],
+            "Blocks": [
+                "Blokken"
+            ],
+            "Landing page": [
+                "Landingspagina"
+            ],
+            "Hero: big title, a short line, the main button, a photo": [
+                "Hero: grote titel, een korte regel, de hoofdknop, een foto"
+            ],
+            "Logos or trust badges": [
+                "Logo's of keurmerken"
+            ],
+            "Three key benefits": [
+                "Drie belangrijkste voordelen"
+            ],
+            "How it works, in three steps": [
+                "Hoe het werkt, in drie stappen"
+            ],
+            "Reviews": [
+                "Reviews"
+            ],
+            "Call to action band": [
+                "Call-to-action-band"
+            ],
+            "Questions and answers": [
+                "Vragen en antwoorden"
+            ],
+            "About page": [
+                "Over-ons-pagina"
+            ],
+            "Hero: who we are, in one line": [
+                "Hero: wie we zijn, in \u00e9\u00e9n regel"
+            ],
+            "Our story": [
+                "Ons verhaal"
+            ],
+            "Photo": [
+                "Foto"
+            ],
+            "The team": [
+                "Het team"
+            ],
+            "What we value": [
+                "Waar we voor staan"
+            ],
+            "Product or tour": [
+                "Product of tour"
+            ],
+            "Photo gallery": [
+                "Fotogalerij"
+            ],
+            "Title, price, highlights, details": [
+                "Titel, prijs, hoogtepunten, details"
+            ],
+            "Booking or buy box": [
+                "Boekings- of koopvak"
+            ],
+            "What is included": [
+                "Wat is inbegrepen"
+            ],
+            "Related": [
+                "Gerelateerd"
+            ],
+            "Contact page": [
+                "Contactpagina"
+            ],
+            "Short hero": [
+                "Korte hero"
+            ],
+            "Contact form": [
+                "Contactformulier"
+            ],
+            "Address, phone, hours, map": [
+                "Adres, telefoon, openingstijden, kaart"
+            ],
+            "Pricing page": [
+                "Prijspagina"
+            ],
+            "Plans": [
+                "Abonnementen"
+            ],
+            "Compare plans": [
+                "Abonnementen vergelijken"
+            ],
+            "Blog post": [
+                "Blogbericht"
+            ],
+            "Title, author, date": [
+                "Titel, auteur, datum"
+            ],
+            "Featured image": [
+                "Uitgelichte afbeelding"
+            ],
+            "Article": [
+                "Artikel"
+            ],
+            "About the author": [
+                "Over de auteur"
+            ],
+            "Related posts": [
+                "Gerelateerde berichten"
+            ],
+            "Two columns": [
+                "Twee kolommen"
+            ],
+            "Three columns": [
+                "Drie kolommen"
+            ],
+            "Drag to switch sides": [
+                "Sleep om van kant te wisselen"
+            ],
+            "Colours, type, spacing": [
+                "Kleuren, typografie, witruimte"
+            ],
+            "Open the home page": [
+                "De homepage openen"
+            ],
+            "Find an element\u2026 Enter adds it": [
+                "Zoek een element\u2026 Enter voegt het toe"
+            ],
+            "Draw a wireframe": [
+                "Een wireframe tekenen"
+            ],
+            "Drag a box on the page, split it into sections and columns, then tell NibWP once what to build.": [
+                "Sleep een kader op de pagina, verdeel het in secties en kolommen, en vertel NibWP dan \u00e9\u00e9n keer wat er gebouwd moet worden."
+            ],
+            "Wireframes": [
+                "Wireframes"
+            ],
+            "Find on the page\u2026 Enter for the next": [
+                "Zoek op de pagina\u2026 Enter voor de volgende"
+            ],
+            "Unfold": [
+                "Uitklappen"
+            ],
+            "Elements on this page": [
+                "Elementen op deze pagina"
+            ],
+            "Find a class or a variable\u2026": [
+                "Zoek een class of een variabele\u2026"
+            ],
+            "Find a template\u2026 Enter opens it": [
+                "Zoek een template\u2026 Enter opent het"
+            ],
+            "New pages, posts and more": [
+                "Nieuwe pagina's, berichten en meer"
+            ],
+            "Show or hide": [
+                "Tonen of verbergen"
+            ],
+            "Saved changes": [
+                "Opgeslagen wijzigingen"
+            ],
+            "Canvas width \u00d7 height": [
+                "Canvasbreedte \u00d7 hoogte"
+            ],
+            "Screen sizes": [
+                "Schermformaten"
+            ],
+            "Add a %s": [
+                "Een %s toevoegen"
+            ],
+            "Reset page": [
+                "Pagina resetten"
+            ],
+            "Bigger text": [
+                "Grotere tekst"
+            ],
+            "Bold": [
+                "Vet"
+            ],
+            "Italic": [
+                "Cursief"
+            ],
+            "Uppercase": [
+                "Hoofdletters"
+            ],
+            "Letter spacing": [
+                "Letterafstand"
+            ],
+            "Line height": [
+                "Regelhoogte"
+            ],
+            "Text colour": [
+                "Tekstkleur"
+            ],
+            "Align left": [
+                "Links uitlijnen"
+            ],
+            "Align centre": [
+                "Centreren"
+            ],
+            "Align right": [
+                "Rechts uitlijnen"
+            ],
+            "Justify": [
+                "Uitvullen"
+            ],
+            "Underline": [
+                "Onderstrepen"
+            ],
+            "Strike through": [
+                "Doorhalen"
+            ],
+            "Balanced lines": [
+                "Gebalanceerde regels"
+            ],
+            "Flex row": [
+                "Flex-rij"
+            ],
+            "Flex column": [
+                "Flex-kolom"
+            ],
+            "Grid": [
+                "Grid"
+            ],
+            "Four columns": [
+                "Vier kolommen"
+            ],
+            "Wrap": [
+                "Laten doorlopen"
+            ],
+            "Centre along": [
+                "Centreren langs de as"
+            ],
+            "Space between": [
+                "Ruimte ertussen"
+            ],
+            "Align to the start": [
+                "Uitlijnen aan het begin"
+            ],
+            "Align to the middle": [
+                "Uitlijnen in het midden"
+            ],
+            "Align to the end": [
+                "Uitlijnen aan het einde"
+            ],
+            "Gap": [
+                "Tussenruimte"
+            ],
+            "Block": [
+                "Blok"
+            ],
+            "Cover": [
+                "Vullen"
+            ],
+            "Contain": [
+                "Inpassen"
+            ],
+            "16:9": [
+                "16:9"
+            ],
+            "Square": [
+                "Vierkant"
+            ],
+            "Full width": [
+                "Volle breedte"
+            ],
+            "Full height": [
+                "Volle hoogte"
+            ],
+            "Centre with a max width": [
+                "Centreren met een maximale breedte"
+            ],
+            "Padding": [
+                "Padding"
+            ],
+            "Border": [
+                "Rand"
+            ],
+            "Rounded corners": [
+                "Afgeronde hoeken"
+            ],
+            "Shadow": [
+                "Schaduw"
+            ],
+            "Background": [
+                "Achtergrond"
+            ],
+            "Position relative": [
+                "Positie relative"
+            ],
+            "Clip overflow": [
+                "Overloop afknippen"
+            ],
+            "Applies as you type": [
+                "Wordt toegepast terwijl je typt"
+            ],
+            "Applies when you leave it, or Ctrl+Enter": [
+                "Wordt toegepast als je het veld verlaat, of met Ctrl+Enter"
+            ],
+            "Ctrl+Enter runs it": [
+                "Ctrl+Enter voert het uit"
+            ],
+            "Add a class or ID (Ctrl+Enter)": [
+                "Een class of ID toevoegen (Ctrl+Enter)"
+            ],
+            "Add a class, ID or attribute": [
+                "Een class, ID of attribuut toevoegen"
+            ],
+            "Hover, focus, phones\u2026": [
+                "Hover, focus, telefoons\u2026"
+            ],
+            "Add a state or a screen size": [
+                "Een status of schermformaat toevoegen"
+            ],
+            "Copy the %s": [
+                "Kopieer de %s"
+            ],
+            "Fold the code": [
+                "De code inklappen"
+            ],
+            "Hide the code": [
+                "De code verbergen"
+            ],
+            "Block name": [
+                "Bloknaam"
+            ],
+            "Attributes, e.g. data-tab=\"1\" aria-label=\"Book now\"": [
+                "Attributen, bijv. data-tab=\"1\" aria-label=\"Book now\""
+            ],
+            "Attributes": [
+                "Attributen"
+            ],
+            "Attach": [
+                "Bijvoegen"
+            ],
+            "Attach an image or a file": [
+                "Een afbeelding of bestand bijvoegen"
+            ],
+            "Ask NibWP": [
+                "Vraag het NibWP"
+            ],
+            "Select parent": [
+                "Bovenliggend element selecteren"
+            ],
+            "Hide here": [
+                "Hier verbergen"
+            ],
+            "Hide on the site": [
+                "Verbergen op de site"
+            ],
+            "Hide on phones, tablets or desktop": [
+                "Verbergen op telefoons, tablets of desktop"
+            ],
+            "Delete it?": [
+                "Verwijderen?"
+            ],
+            "edit the text of %s": [
+                "de tekst van %s bewerken"
+            ],
+            "Fold": [
+                "Inklappen"
+            ],
+            "Open": [
+                "Openen"
+            ],
+            "Show in the Builder": [
+                "Tonen in de Builder"
+            ],
+            "Hide in the Builder": [
+                "Verbergen in de Builder"
+            ],
+            "Building": [
+                "Aan het bouwen"
+            ],
+            "Wireframe": [
+                "Wireframe"
+            ],
+            "%d element selected": [
+                "%d element geselecteerd",
+                "%d elementen geselecteerd"
+            ],
+            "Delete, %1$s, %2$s and %3$s act on all.": [
+                "Delete, %1$s, %2$s en %3$s werken op alles."
+            ],
+            "remove %d elements": [
+                "%d elementen verwijderen"
+            ],
+            "Removed %d element. Ctrl+Z brings it back.": [
+                "%d element verwijderd. Ctrl+Z haalt het terug.",
+                "%d elementen verwijderd. Ctrl+Z haalt ze terug."
+            ],
+            "duplicate %d elements": [
+                "%d elementen dupliceren"
+            ],
+            "%d elements hidden in the Builder only. Show them again from Structure.": [
+                "%d elementen alleen in de Builder verborgen. Toon ze weer via Structuur."
+            ],
+            "Hidden in the Builder only. Show it again from Structure.": [
+                "Alleen in de Builder verborgen. Toon het weer via Structuur."
+            ],
+            "Rename: its ID": [
+                "Hernoemen: de ID"
+            ],
+            "Rename: its class": [
+                "Hernoemen: de class"
+            ],
+            "Renamed to #%s. Save to keep it.": [
+                "Hernoemd naar #%s. Sla op om het te bewaren."
+            ],
+            "Renamed to .%s. Save to keep it.": [
+                "Hernoemd naar .%s. Sla op om het te bewaren."
+            ],
+            "[in the site-wide %s: change it once in its shared template part so every page gets it]": [
+                "[in de sitebrede %s: wijzig het \u00e9\u00e9n keer in het gedeelde templateonderdeel zodat elke pagina het krijgt]"
+            ],
+            "Undone: %s": [
+                "Ongedaan gemaakt: %s"
+            ],
+            "Save %d change (Ctrl+S)": [
+                "%d wijziging opslaan (Ctrl+S)",
+                "%d wijzigingen opslaan (Ctrl+S)"
+            ],
+            "Nothing to save": [
+                "Niets op te slaan"
+            ],
+            "inside, at the end of": [
+                "binnen, aan het einde van"
+            ],
+            "move %s": [
+                "%s verplaatsen"
+            ],
+            "Move %1$s %2$s %3$s.": [
+                "Verplaats %1$s %2$s %3$s."
+            ],
+            "add %s": [
+                "%s toevoegen"
+            ],
+            "Add a new %1$s %2$s %3$s. Its HTML now:": [
+                "Voeg een nieuw element %1$s toe %2$s %3$s. De HTML ervan nu:"
+            ],
+            "What it should be: %s": [
+                "Wat het moet worden: %s"
+            ],
+            "remove %s": [
+                "%s verwijderen"
+            ],
+            "Remove %s.": [
+                "Verwijder %s."
+            ],
+            "Removed. Ctrl+Z brings it back.": [
+                "Verwijderd. Ctrl+Z haalt het terug."
+            ],
+            "duplicate %s": [
+                "%s dupliceren"
+            ],
+            "Duplicate %s: the copy goes right after it.": [
+                "Dupliceer %s: de kopie komt er direct achter."
+            ],
+            "Cut %d elements. Ctrl+Z brings them back.": [
+                "%d elementen geknipt. Ctrl+Z haalt ze terug."
+            ],
+            "Copied %d elements": [
+                "%d elementen gekopieerd"
+            ],
+            "Cut. Ctrl+Z brings it back.": [
+                "Geknipt. Ctrl+Z haalt het terug."
+            ],
+            "paste %d elements": [
+                "%d elementen plakken"
+            ],
+            "Pasted %d elements": [
+                "%d elementen geplakt"
+            ],
+            "Copied from %s.": [
+                "Gekopieerd van %s."
+            ],
+            "paste %s": [
+                "%s plakken"
+            ],
+            "Pasted": [
+                "Geplakt"
+            ],
+            "Styles copied": [
+                "Stijlen gekopieerd"
+            ],
+            "paste styles on %s": [
+                "stijlen plakken op %s"
+            ],
+            "Styles pasted": [
+                "Stijlen geplakt"
+            ],
+            "That HTML has no element in it.": [
+                "Die HTML bevat geen element."
+            ],
+            "edit the HTML of %s": [
+                "de HTML van %s bewerken"
+            ],
+            "Replace %s with this HTML:": [
+                "Vervang %s door deze HTML:"
+            ],
+            "set %1$s on %2$s": [
+                "%1$s instellen op %2$s"
+            ],
+            "change the CSS of %s": [
+                "de CSS van %s wijzigen"
+            ],
+            "Set this CSS (it styles %s):": [
+                "Stel deze CSS in (die stijlt %s):"
+            ],
+            "run a script on %s": [
+                "een script uitvoeren op %s"
+            ],
+            "Add this JavaScript to the page (written for %s):": [
+                "Voeg dit JavaScript toe aan de pagina (geschreven voor %s):"
+            ],
+            "A script that ran cannot be undone on the page. Reload to see it without.": [
+                "Een script dat is uitgevoerd, kan op de pagina niet ongedaan worden gemaakt. Laad opnieuw om de pagina zonder te zien."
+            ],
+            "Only images can be dropped on the page.": [
+                "Alleen afbeeldingen kunnen op de pagina worden neergezet."
+            ],
+            "%s is larger than this site accepts.": [
+                "%s is groter dan deze site accepteert."
+            ],
+            "image": [
+                "afbeelding"
+            ],
+            "Uploading\u2026": [
+                "Uploaden\u2026"
+            ],
+            "Uploading %d image\u2026": [
+                "%d afbeelding uploaden\u2026",
+                "%d afbeeldingen uploaden\u2026"
+            ],
+            "Could not upload %s.": [
+                "Kon %s niet uploaden."
+            ],
+            "Uploaded to your Media Library. The page changed meanwhile, so it was not placed.": [
+                "Ge\u00fcpload naar je mediabibliotheek. De pagina is intussen gewijzigd, dus de afbeelding is niet geplaatst."
+            ],
+            "%d image added to the page.": [
+                "%d afbeelding aan de pagina toegevoegd.",
+                "%d afbeeldingen aan de pagina toegevoegd."
+            ],
+            "Image replaced.": [
+                "Afbeelding vervangen."
+            ],
+            "\u201c%s\u201d component": [
+                "Component \u201c%s\u201d"
+            ],
+            "This is the component \u201c%s\u201d: use the builder\u2019s own component of that name if it exists, not a copy.": [
+                "Dit is het component \u201c%s\u201d: gebruik het eigen component van de builder met die naam als dat bestaat, geen kopie."
+            ],
+            "Wireframe \u201c%s\u201d goes here: NibWP is building it": [
+                "Wireframe \u201c%s\u201d komt hier: NibWP is het aan het bouwen"
+            ],
+            "Build my wireframe \u201c%s\u201d where I dropped it on the page.": [
+                "Bouw mijn wireframe \u201c%s\u201d op de plek waar ik het op de pagina heb neergezet."
+            ],
+            "Wireframe sent to NibWP to build where you dropped it.": [
+                "Wireframe naar NibWP gestuurd om te bouwen waar je het hebt neergezet."
+            ],
+            "Back to the page": [
+                "Terug naar de pagina"
+            ],
+            "Drag a box where the wireframe goes; the orange line shows where it lands": [
+                "Sleep een kader waar het wireframe moet komen; de oranje lijn toont waar het terechtkomt"
+            ],
+            "Lands inside": [
+                "Komt erin"
+            ],
+            "Lands before": [
+                "Komt ervoor"
+            ],
+            "Lands after": [
+                "Komt erna"
+            ],
+            "the frame": [
+                "het frame"
+            ],
+            "Save as a wireframe": [
+                "Opslaan als wireframe"
+            ],
+            "Note (optional)": [
+                "Notitie (optioneel)"
+            ],
+            "Click to say what NibWP builds here": [
+                "Klik om te zeggen wat NibWP hier bouwt"
+            ],
+            "Column %d": [
+                "Kolom %d"
+            ],
+            "Section %d": [
+                "Sectie %d"
+            ],
+            "draw a wireframe": [
+                "een wireframe tekenen"
+            ],
+            "split into columns": [
+                "in kolommen verdelen"
+            ],
+            "add a section": [
+                "een sectie toevoegen"
+            ],
+            "remove a wireframe box": [
+                "een wireframevak verwijderen"
+            ],
+            "no note: make it fit what is around it": [
+                "geen notitie: laat het passen bij wat eromheen staat"
+            ],
+            "%1$dpx wide, at least %2$dpx tall": [
+                "%1$dpx breed, minstens %2$dpx hoog"
+            ],
+            "%d columns side by side": [
+                "%d kolommen naast elkaar"
+            ],
+            "The whole wireframe": [
+                "Het hele wireframe"
+            ],
+            "An element I placed here, use it as it is:": [
+                "Een element dat ik hier heb geplaatst, gebruik het zoals het is:"
+            ],
+            "right after %s": [
+                "direct na %s"
+            ],
+            "right before %s": [
+                "direct voor %s"
+            ],
+            "inside %s": [
+                "in %s"
+            ],
+            "Build this %s, in the builder this page uses, in place of the wireframe I drew. Follow its structure: each section and column as laid out, responsive, on the site\u2019s design system.": [
+                "Bouw deze %s, in de builder die deze pagina gebruikt, op de plek van het wireframe dat ik heb getekend. Volg de structuur: elke sectie en kolom zoals ingedeeld, responsive, volgens het designsysteem van de site."
+            ],
+            "NibWP is building this\u2026": [
+                "NibWP is dit aan het bouwen\u2026"
+            ],
+            "Sent to NibWP. It builds it right here.": [
+                "Naar NibWP gestuurd. Het wordt hier gebouwd."
+            ],
+            "resize a wireframe box": [
+                "een wireframevak van formaat veranderen"
+            ],
+            "place the \u201c%s\u201d wireframe": [
+                "het wireframe \u201c%s\u201d plaatsen"
+            ],
+            "Wireframe placed. Shape it, then Build.": [
+                "Wireframe geplaatst. Geef het vorm en kies dan Bouwen."
+            ],
+            "\u201c%s\u201d saved to your wireframes.": [
+                "\u201c%s\u201d opgeslagen bij je wireframes."
+            ],
+            "Could not save the wireframe.": [
+                "Kon het wireframe niet opslaan."
+            ],
+            "Comment on %s": [
+                "Opmerking bij %s"
+            ],
+            "New %s: what should it be?": [
+                "Nieuwe %s: wat moet het worden?"
+            ],
+            "Save %s as a component": [
+                "%s opslaan als component"
+            ],
+            "What should NibWP build here?": [
+                "Wat moet NibWP hier bouwen?"
+            ],
+            "%s: a note (optional)": [
+                "%s: een notitie (optioneel)"
+            ],
+            "e.g. Make it bigger and orange \u00b7 Put the attached photo here": [
+                "bijv. Maak het groter en oranje \u00b7 Zet de bijgevoegde foto hier"
+            ],
+            "e.g. Three tour cards with photo, price and a Book button": [
+                "bijv. Drie tourkaarten met foto, prijs en een Boek-knop"
+            ],
+            "Name it, e.g. Tour card": [
+                "Geef het een naam, bijv. Tourkaart"
+            ],
+            "e.g. A landing page for our Rome tours, following this wireframe": [
+                "bijv. Een landingspagina voor onze Rome-tours, volgens dit wireframe"
+            ],
+            "e.g. A hero with a big title, a photo and a Book button": [
+                "bijv. Een hero met een grote titel, een foto en een Boek-knop"
+            ],
+            "e.g. Three reviews with stars and names": [
+                "bijv. Drie reviews met sterren en namen"
+            ],
+            "Name it, e.g. Tour landing page": [
+                "Geef het een naam, bijv. Landingspagina tours"
+            ],
+            "Save component": [
+                "Component opslaan"
+            ],
+            "Save wireframe": [
+                "Wireframe opslaan"
+            ],
+            "Save note": [
+                "Notitie opslaan"
+            ],
+            "%d file": [
+                "%d bestand",
+                "%d bestanden"
+            ],
+            "Use the attached file here.": [
+                "Gebruik het bijgevoegde bestand hier."
+            ],
+            "Sent to NibWP. Follow it in the chat.": [
+                "Naar NibWP gestuurd. Volg het in de chat."
+            ],
+            "Item": [
+                "Item"
+            ],
+            "Figure": [
+                "Figuur"
+            ],
+            "Main": [
+                "Hoofdinhoud"
+            ],
+            "Aside": [
+                "Zijinhoud"
+            ],
+            "Embed": [
+                "Insluiting"
+            ],
+            "Span": [
+                "Span"
+            ],
+            "Phones": [
+                "Telefoons"
+            ],
+            "Tablets": [
+                "Tablets"
+            ],
+            "Hidden on phones": [
+                "Verborgen op telefoons"
+            ],
+            "Hidden on tablets": [
+                "Verborgen op tablets"
+            ],
+            "Hidden on desktop": [
+                "Verborgen op desktop"
+            ],
+            "Hidden on phones and tablets": [
+                "Verborgen op telefoons en tablets"
+            ],
+            "Hidden on phones and desktop": [
+                "Verborgen op telefoons en desktop"
+            ],
+            "Hidden on tablets and desktop": [
+                "Verborgen op tablets en desktop"
+            ],
+            "Hidden everywhere": [
+                "Overal verborgen"
+            ],
+            "Show on the site": [
+                "Tonen op de site"
+            ],
+            "%s: show it everywhere": [
+                "%s: overal tonen"
+            ],
+            "Choose where it is hidden": [
+                "Kies waar het verborgen is"
+            ],
+            "show %s on the site": [
+                "%s tonen op de site"
+            ],
+            "hide %s on the site": [
+                "%s verbergen op de site"
+            ],
+            "hide %s on some screens": [
+                "%s verbergen op sommige schermen"
+            ],
+            "Shown on the site again once you Save.": [
+                "Weer zichtbaar op de site zodra je opslaat."
+            ],
+            "Hidden on the site once you Save. It stays here, faded.": [
+                "Verborgen op de site zodra je opslaat. Hier blijft het staan, vervaagd."
+            ],
+            "%s once you Save.": [
+                "%s zodra je opslaat."
+            ],
+            "change the attributes of %s": [
+                "de attributen van %s wijzigen"
+            ],
+            "Navigation": [
+                "Navigatie"
+            ],
+            "Paragraph": [
+                "Alinea"
+            ],
+            "Inline text": [
+                "Inline tekst"
+            ],
+            "Small print": [
+                "Kleine lettertjes"
+            ],
+            "Caption": [
+                "Bijschrift"
+            ],
+            "Label": [
+                "Label"
+            ],
+            "Bullets": [
+                "Opsommingstekens"
+            ],
+            "Numbers": [
+                "Nummers"
+            ],
+            "Heading %d": [
+                "Kop %d"
+            ],
+            "List item": [
+                "Lijstitem"
+            ],
+            "Menu list": [
+                "Menulijst"
+            ],
+            "Citation": [
+                "Bronvermelding"
+            ],
+            "Time": [
+                "Tijd"
+            ],
+            "Highlight": [
+                "Markering"
+            ],
+            "Preformatted": [
+                "Vooraf opgemaakt"
+            ],
+            "Address": [
+                "Adres"
+            ],
+            "Summary": [
+                "Samenvatting"
+            ],
+            "Description list": [
+                "Beschrijvingslijst"
+            ],
+            "Term": [
+                "Term"
+            ],
+            "Heading group": [
+                "Kopgroep"
+            ],
+            "Search area": [
+                "Zoekgebied"
+            ],
+            "Field group": [
+                "Veldgroep"
+            ],
+            "Field group title": [
+                "Titel van veldgroep"
+            ],
+            "Bold (look)": [
+                "Vet (uiterlijk)"
+            ],
+            "Italic (look)": [
+                "Cursief (uiterlijk)"
+            ],
+            "Inline quote": [
+                "Inline citaat"
+            ],
+            "Abbreviation": [
+                "Afkorting"
+            ],
+            "Superscript": [
+                "Superscript"
+            ],
+            "Subscript": [
+                "Subscript"
+            ],
+            "Dialog": [
+                "Dialoogvenster"
+            ],
+            "Tag": [
+                "Tag"
+            ],
+            "Tooltip": [
+                "Tooltip"
+            ],
+            "Load when scrolled to": [
+                "Laden bij scrollen"
+            ],
+            "Placeholder": [
+                "Placeholder"
+            ],
+            "Required": [
+                "Verplicht"
+            ],
+            "Rows": [
+                "Rijen"
+            ],
+            "Sends to": [
+                "Verstuurt naar"
+            ],
+            "Method": [
+                "Methode"
+            ],
+            "For the field (ID)": [
+                "Voor het veld (ID)"
+            ],
+            "Title": [
+                "Titel"
+            ],
+            "Allow full screen": [
+                "Volledig scherm toestaan"
+            ],
+            "File": [
+                "Bestand"
+            ],
+            "Controls": [
+                "Bedieningselementen"
+            ],
+            "Autoplay": [
+                "Automatisch afspelen"
+            ],
+            "Muted": [
+                "Gedempt"
+            ],
+            "Loop": [
+                "Herhalen"
+            ],
+            "Open at start": [
+                "Open bij start"
+            ],
+            "Source": [
+                "Bron"
+            ],
+            "Date": [
+                "Datum"
+            ],
+            "Enter tag": [
+                "Tag invoeren"
+            ],
+            "Tags": [
+                "Tags"
+            ],
+            "\u2014 (none)": [
+                "\u2014 (geen)"
+            ],
+            "turn on %1$s for %2$s": [
+                "%1$s inschakelen voor %2$s"
+            ],
+            "turn off %1$s for %2$s": [
+                "%1$s uitschakelen voor %2$s"
+            ],
+            "Use this tag": [
+                "Deze tag gebruiken"
+            ],
+            "Alt text": [
+                "Alt-tekst"
+            ],
+            "Class": [
+                "Class"
+            ],
+            "Shared by every page": [
+                "Gedeeld door elke pagina"
+            ],
+            "Site header": [
+                "Siteheader"
+            ],
+            "Site footer": [
+                "Sitefooter"
+            ],
+            "Choose from Media": [
+                "Kiezen uit Media"
+            ],
+            "name=\"value\", as many as you like": [
+                "name=\"value\", zoveel als je wilt"
+            ],
+            "remove %1$s from %2$s": [
+                "%1$s verwijderen van %2$s"
+            ],
+            "change the image of %s": [
+                "de afbeelding van %s wijzigen"
+            ],
+            "Could not load that icon. Try another file.": [
+                "Kon dat icoon niet laden. Probeer een ander bestand."
+            ],
+            "Use as the icon": [
+                "Gebruiken als icoon"
+            ],
+            "Use this image": [
+                "Deze afbeelding gebruiken"
+            ],
+            "Not a property: value": [
+                "Geen eigenschap: waarde"
+            ],
+            "\u201c%1$s: %2$s\u201d is not valid CSS": [
+                "\u201c%1$s: %2$s\u201d is geen geldige CSS"
+            ],
+            "A closing brace with nothing to close": [
+                "Een sluitende accolade zonder iets om te sluiten"
+            ],
+            "A brace is not closed": [
+                "Een accolade is niet gesloten"
+            ],
+            "When the mouse is over it": [
+                "Als de muis erboven is"
+            ],
+            "When it has keyboard focus": [
+                "Als het toetsenbordfocus heeft"
+            ],
+            "While it is pressed": [
+                "Terwijl erop wordt gedrukt"
+            ],
+            "When it contains an image (change img to anything)": [
+                "Als het een afbeelding bevat (vervang img door wat je wilt)"
+            ],
+            "A decoration before it": [
+                "Een decoratie ervoor"
+            ],
+            "A decoration after it": [
+                "Een decoratie erna"
+            ],
+            "On phones": [
+                "Op telefoons"
+            ],
+            "On tablets": [
+                "Op tablets"
+            ],
+            "When its container is narrow (a parent must be a container)": [
+                "Als de container smal is (een bovenliggend element moet een container zijn)"
+            ],
+            "Make it a container, for @container inside it": [
+                "Maak het een container, voor @container erin"
+            ],
+            "In dark mode": [
+                "In donkere modus"
+            ],
+            "For people who turn motion off": [
+                "Voor mensen die beweging uitzetten"
+            ],
+            "Esc, then Tab leaves the editor": [
+                "Esc en dan Tab verlaat de editor"
+            ],
+            "Selector": [
+                "Selector"
+            ],
+            "Enter adds \u00b7 Esc closes": [
+                "Enter voegt toe \u00b7 Esc sluit"
+            ],
+            "Classes, an ID or attributes to add": [
+                "Classes, een ID of attributen om toe te voegen"
+            ],
+            "Available classes": [
+                "Beschikbare classes"
+            ],
+            "Enter adds what you typed": [
+                "Enter voegt toe wat je hebt getypt"
+            ],
+            "on it": [
+                "erop"
+            ],
+            "saved": [
+                "opgeslagen"
+            ],
+            "new class": [
+                "nieuwe class"
+            ],
+            "this page only": [
+                "alleen deze pagina"
+            ],
+            "Take %s off this element": [
+                "Haal %s van dit element af"
+            ],
+            "Remove from this element": [
+                "Van dit element verwijderen"
+            ],
+            "Too large to edit here: this shows its first %s characters. Select a smaller part to change its HTML.": [
+                "Te groot om hier te bewerken: dit toont de eerste %s tekens. Selecteer een kleiner deel om de HTML te wijzigen."
+            ],
+            "Already on this element:": [
+                "Al op dit element:"
+            ],
+            "This is the whole page, to read and copy. Select an element to change its HTML.": [
+                "Dit is de hele pagina, om te lezen en te kopi\u00ebren. Selecteer een element om de HTML ervan te wijzigen."
+            ],
+            "Too large to edit here. Select a smaller part to change its HTML.": [
+                "Te groot om hier te bewerken. Selecteer een kleiner deel om de HTML te wijzigen."
+            ],
+            "Write some JavaScript first.": [
+                "Schrijf eerst wat JavaScript."
+            ],
+            "Not run: the script has a mistake. %s": [
+                "Niet uitgevoerd: het script bevat een fout. %s"
+            ],
+            "Unknown error": [
+                "Onbekende fout"
+            ],
+            "The script stopped with an error: %s": [
+                "Het script stopte met een fout: %s"
+            ],
+            "The script stopped with an error, so it was not kept: %s": [
+                "Het script stopte met een fout en is dus niet bewaard: %s"
+            ],
+            "Script ran again. It stays in your changes once.": [
+                "Script opnieuw uitgevoerd. Het blijft \u00e9\u00e9n keer in je wijzigingen staan."
+            ],
+            "Script ran on the page.": [
+                "Script uitgevoerd op de pagina."
+            ],
+            "%s taken off. Its CSS stays in your saved classes, loaded only on pages that use it.": [
+                "%s eraf gehaald. De CSS blijft in je opgeslagen classes en wordt alleen geladen op pagina's die hem gebruiken."
+            ],
+            "Code copied.": [
+                "Code gekopieerd."
+            ],
+            "Click Reset again to remove the elements, text and scripts the Builder saved on this page, and your unsaved changes too. Saved class styles stay: other pages share them.": [
+                "Klik nog een keer op Resetten om de elementen, tekst en scripts te verwijderen die de Builder op deze pagina heeft opgeslagen, en ook je niet-opgeslagen wijzigingen. Opgeslagen classstijlen blijven: andere pagina's delen ze."
+            ],
+            "Click Reset again to remove the elements, text and scripts the Builder saved on this page. Saved class styles stay: other pages share them.": [
+                "Klik nog een keer op Resetten om de elementen, tekst en scripts te verwijderen die de Builder op deze pagina heeft opgeslagen. Opgeslagen classstijlen blijven: andere pagina's delen ze."
+            ],
+            "Builder changes removed from this page.": [
+                "Builder-wijzigingen van deze pagina verwijderd."
+            ],
+            "Could not reset the page. Nothing changed: try again.": [
+                "Kon de pagina niet resetten. Er is niets veranderd: probeer het opnieuw."
+            ],
+            "Your account cannot save code straight to this site. Ask NibWP to make the change instead.": [
+                "Je account kan geen code rechtstreeks op deze site opslaan. Vraag NibWP om de wijziging te doen."
+            ],
+            "Nothing to save yet.": [
+                "Nog niets op te slaan."
+            ],
+            "Saved %d change. Live on your site now.": [
+                "%d wijziging opgeslagen. Nu live op je site.",
+                "%d wijzigingen opgeslagen. Nu live op je site."
+            ],
+            "Could not save. Nothing was lost: try again.": [
+                "Kon niet opslaan. Er is niets verloren gegaan: probeer het opnieuw."
+            ],
+            "Refresh now": [
+                "Nu vernieuwen"
+            ],
+            "just now": [
+                "zojuist"
+            ],
+            "%d min ago": [
+                "%d min geleden",
+                "%d min geleden"
+            ],
+            "%d hour ago": [
+                "%d uur geleden",
+                "%d uur geleden"
+            ],
+            "%d style": [
+                "%d stijl",
+                "%d stijlen"
+            ],
+            "%d script": [
+                "%d script",
+                "%d scripts"
+            ],
+            "No saves on this page yet.": [
+                "Nog geen opslagmomenten op deze pagina."
+            ],
+            "Undo this save": [
+                "Deze opslag ongedaan maken"
+            ],
+            "Undone": [
+                "Ongedaan gemaakt"
+            ],
+            "Undo the newer ones first": [
+                "Maak eerst de nieuwere ongedaan"
+            ],
+            "Only the last %d saves of a page can be undone.": [
+                "Alleen de laatste %d opslagmomenten van een pagina kunnen ongedaan worden gemaakt."
+            ],
+            "Could not load the saved changes. Try again.": [
+                "Kon de opgeslagen wijzigingen niet laden. Probeer het opnieuw."
+            ],
+            "Loading\u2026": [
+                "Laden\u2026"
+            ],
+            "A save is still on its way. Try again in a moment.": [
+                "Er is nog een opslag onderweg. Probeer het zo opnieuw."
+            ],
+            "Save or undo your unsaved changes first: the page reloads after this.": [
+                "Sla je niet-opgeslagen wijzigingen eerst op of maak ze ongedaan: de pagina wordt hierna opnieuw geladen."
+            ],
+            "Save undone. The page is as it was before it.": [
+                "Opslag ongedaan gemaakt. De pagina is zoals hij daarvoor was."
+            ],
+            "Save redone.": [
+                "Opslag opnieuw uitgevoerd."
+            ],
+            "Could not undo that save. Nothing changed: try again.": [
+                "Kon die opslag niet ongedaan maken. Er is niets veranderd: probeer het opnieuw."
+            ],
+            "Could not redo that save. Nothing changed: try again.": [
+                "Kon die opslag niet opnieuw uitvoeren. Er is niets veranderd: probeer het opnieuw."
+            ],
+            "Nothing left to undo here.": [
+                "Hier valt niets meer ongedaan te maken."
+            ],
+            "Your earlier changes are saved: undo a save here.": [
+                "Je eerdere wijzigingen zijn opgeslagen: maak hier een opslag ongedaan."
+            ],
+            "Saved. Your newer changes are still only on the page: save them, and it refreshes after.": [
+                "Opgeslagen. Je nieuwere wijzigingen staan nog alleen op de pagina: sla ze op, daarna wordt hij vernieuwd."
+            ],
+            "Saved. The page refreshes as soon as you pause.": [
+                "Opgeslagen. De pagina wordt vernieuwd zodra je even pauzeert."
+            ],
+            "Open a %s on the canvas": [
+                "Open een %s op het canvas"
+            ],
+            "Find one to open": [
+                "Zoek er een om te openen"
+            ],
+            "Find a %s to open on the canvas": [
+                "Zoek een %s om op het canvas te openen"
+            ],
+            "Edit template": [
+                "Template bewerken"
+            ],
+            "New page with it": [
+                "Nieuwe pagina hiermee"
+            ],
+            "New page with the %s template": [
+                "Nieuwe pagina met het template %s"
+            ],
+            "Ask NibWP about the %s template": [
+                "Vraag NibWP over het template %s"
+            ],
+            "Reset to the theme\u2019s": [
+                "Terugzetten naar dat van het thema"
+            ],
+            "Delete the template %s": [
+                "Het template %s verwijderen"
+            ],
+            "Reset the template %s to the theme\u2019s": [
+                "Het template %s terugzetten naar dat van het thema"
+            ],
+            "Comes with the theme": [
+                "Hoort bij het thema"
+            ],
+            "Comes with the theme: it cannot be deleted": [
+                "Hoort bij het thema: het kan niet worden verwijderd"
+            ],
+            "Find a %s\u2026": [
+                "Zoek een %s\u2026"
+            ],
+            "Find a %s": [
+                "Zoek een %s"
+            ],
+            "No templates found.": [
+                "Geen templates gevonden."
+            ],
+            "Reset to the theme\u2019s?": [
+                "Terugzetten naar dat van het thema?"
+            ],
+            "Reset": [
+                "Resetten"
+            ],
+            "About the %1$s template (%2$s): ": [
+                "Over het template %1$s (%2$s): "
+            ],
+            "Could not change the template.": [
+                "Kon het template niet wijzigen."
+            ],
+            "Template name": [
+                "Templatenaam"
+            ],
+            "rename the template %s": [
+                "het template %s hernoemen"
+            ],
+            "Renamed to \u201c%s\u201d. Ctrl+Z takes it back.": [
+                "Hernoemd naar \u201c%s\u201d. Ctrl+Z draait het terug."
+            ],
+            "Nothing yet.": [
+                "Nog niets."
+            ],
+            "Could not load the list.": [
+                "Kon de lijst niet laden."
+            ],
+            "remove the template %s": [
+                "het template %s verwijderen"
+            ],
+            "Template \u201c%s\u201d deleted. Ctrl+Z brings it back.": [
+                "Template \u201c%s\u201d verwijderd. Ctrl+Z haalt het terug."
+            ],
+            "Template \u201c%s\u201d is the theme\u2019s again. Ctrl+Z brings your version back.": [
+                "Template \u201c%s\u201d is weer dat van het thema. Ctrl+Z haalt jouw versie terug."
+            ],
+            "Page title, e.g. Night tours": [
+                "Paginatitel, bijv. Avondtours"
+            ],
+            "Page title": [
+                "Paginatitel"
+            ],
+            "Template": [
+                "Template"
+            ],
+            "Default template": [
+                "Standaardtemplate"
+            ],
+            "Create and open": [
+                "Aanmaken en openen"
+            ],
+            "Template name, e.g. Tour landing": [
+                "Templatenaam, bijv. Tour-landing"
+            ],
+            "Used for (none: pick it per page)": [
+                "Gebruikt voor (geen: kies het per pagina)"
+            ],
+            "Create": [
+                "Aanmaken"
+            ],
+            "Could not create the page.": [
+                "Kon de pagina niet aanmaken."
+            ],
+            "Draft \u201c%s\u201d is open. Drop a wireframe on it, or ask NibWP to build it.": [
+                "Concept \u201c%s\u201d is geopend. Zet er een wireframe op, of vraag NibWP om het te bouwen."
+            ],
+            "Template \u201c%s\u201d made. Open a page that uses it to build it, or ask NibWP.": [
+                "Template \u201c%s\u201d gemaakt. Open een pagina die het gebruikt om het te bouwen, of vraag het NibWP."
+            ],
+            "Your theme keeps templates in files: NibWP makes this one for you.": [
+                "Je thema bewaart templates in bestanden: NibWP maakt dit template voor je."
+            ],
+            "Could not make the template.": [
+                "Kon het template niet maken."
+            ],
+            "Copy var()": [
+                "var() kopi\u00ebren"
+            ],
+            "New .class or #id": [
+                "Nieuwe .class of #id"
+            ],
+            "New class or ID": [
+                "Nieuwe class of ID"
+            ],
+            "Saved classes": [
+                "Opgeslagen classes"
+            ],
+            "Rename everywhere": [
+                "Overal hernoemen"
+            ],
+            "On this page": [
+                "Op deze pagina"
+            ],
+            "Not on this page": [
+                "Niet op deze pagina"
+            ],
+            "Edit CSS": [
+                "CSS bewerken"
+            ],
+            "Edit its CSS": [
+                "De CSS ervan bewerken"
+            ],
+            "Classes you add in the CSS pane are kept here, and load only on pages that use them.": [
+                "Classes die je in het CSS-paneel toevoegt, worden hier bewaard en laden alleen op pagina's die ze gebruiken."
+            ],
+            "CSS variables": [
+                "CSS-variabelen"
+            ],
+            "%s copied.": [
+                "%s gekopieerd."
+            ],
+            "%s deleted from the saved classes. Save to keep it that way; Ctrl+Z brings it back.": [
+                "%s verwijderd uit de opgeslagen classes. Sla op om het zo te houden; Ctrl+Z haalt het terug."
+            ],
+            "Use small letters, digits and dashes, starting with a letter.": [
+                "Gebruik kleine letters, cijfers en streepjes, en begin met een letter."
+            ],
+            "\u201c.%s\u201d already has saved styles: this uses them.": [
+                "\u201c.%s\u201d heeft al opgeslagen stijlen: deze worden gebruikt."
+            ],
+            "Themes and plugins often style \u201c.%s\u201d too, so styles could mix.": [
+                "Thema's en plugins stylen \u201c.%s\u201d vaak ook, dus stijlen kunnen door elkaar lopen."
+            ],
+            "name %s with BEM": [
+                "%s een BEM-naam geven"
+            ],
+            "Give %1$s the BEM class \u201c%2$s\u201d and its variant \u201c%3$s\u201d.": [
+                "Geef %1$s de BEM-class \u201c%2$s\u201d en de variant \u201c%3$s\u201d."
+            ],
+            "Give %1$s the BEM class \u201c%2$s\u201d.": [
+                "Geef %1$s de BEM-class \u201c%2$s\u201d."
+            ],
+            "Name %1$s and everything inside it with BEM classes: block \u201c%2$s\u201d, elements \u201c%2$s__\u2026\u201d.": [
+                "Geef %1$s en alles erin BEM-classes: blok \u201c%2$s\u201d, elementen \u201c%2$s__\u2026\u201d."
+            ],
+            "The styles of .%1$s moved to .%2$s.": [
+                "De stijlen van .%1$s zijn verplaatst naar .%2$s."
+            ],
+            ".%s stays on it too: other elements use it.": [
+                ".%s blijft er ook op staan: andere elementen gebruiken hem."
+            ],
+            "It left .%1$s; its styles were copied to .%2$s.": [
+                ".%1$s is eraf gehaald; de stijlen zijn gekopieerd naar .%2$s."
+            ],
+            "Its own styles stay inline; .%s stays as it is.": [
+                "De eigen stijlen blijven inline; .%s blijft zoals hij is."
+            ],
+            ".%1$s and its variant .%2$s are on it. Style the variant in the CSS pane; Save to keep it.": [
+                ".%1$s en de variant .%2$s staan erop. Style de variant in het CSS-paneel; sla op om het te bewaren."
+            ],
+            "Named %1$d element in block \u201c.%2$s\u201d. Save to keep it; Ctrl+Z undoes it.": [
+                "%1$d element benoemd in blok \u201c.%2$s\u201d. Sla op om het te bewaren; Ctrl+Z maakt het ongedaan.",
+                "%1$d elementen benoemd in blok \u201c.%2$s\u201d. Sla op om het te bewaren; Ctrl+Z maakt het ongedaan."
+            ],
+            "BEM": [
+                "BEM"
+            ],
+            "Ask NibWP about it": [
+                "Vraag NibWP erover"
+            ],
+            "Select the parent": [
+                "Het bovenliggende element selecteren"
+            ],
+            "Cut": [
+                "Knippen"
+            ],
+            "Paste": [
+                "Plakken"
+            ],
+            "Copy styles": [
+                "Stijlen kopi\u00ebren"
+            ],
+            "Paste styles": [
+                "Stijlen plakken"
+            ],
+            "Variant": [
+                "Variant"
+            ],
+            "featured, dark, large\u2026": [
+                "uitgelicht, donker, groot\u2026"
+            ],
+            "Only this element": [
+                "Alleen dit element"
+            ],
+            "Everywhere": [
+                "Overal"
+            ],
+            "Shown everywhere": [
+                "Overal getoond"
+            ],
+            "Its variant: .%s.": [
+                "De variant: .%s."
+            ],
+            "Renames .%1$s to .%2$s on the whole site.": [
+                "Hernoemt .%1$s naar .%2$s op de hele site."
+            ],
+            "Renames .%1$s to .%2$s on the whole site: %3$d place.": [
+                "Hernoemt .%1$s naar .%2$s op de hele site: %3$d plek.",
+                "Hernoemt .%1$s naar .%2$s op de hele site: %3$d plekken."
+            ],
+            "Only this element: .%1$s becomes .%2$s here, with a copy of its styles. What is inside stays as it is.": [
+                "Alleen dit element: .%1$s wordt hier .%2$s, met een kopie van de stijlen. Wat erin staat, blijft zoals het is."
+            ],
+            "This element gets .%1$s and its variant .%1$s--%2$s; what is inside stays as it is.": [
+                "Dit element krijgt .%1$s en de variant .%1$s--%2$s; wat erin staat, blijft zoals het is."
+            ],
+            "Only this element gets .%s; what is inside stays as it is.": [
+                "Alleen dit element krijgt .%s; wat erin staat, blijft zoals het is."
+            ],
+            ".%1$s goes, its styles move to .%2$s.": [
+                ".%1$s verdwijnt, de stijlen gaan naar .%2$s."
+            ],
+            "No .%s around it: an element of a block belongs inside it.": [
+                "Geen .%s eromheen: een element van een blok hoort erbinnen."
+            ],
+            "Use %s": [
+                "%s gebruiken"
+            ],
+            "Primary": [
+                "Primair"
+            ],
+            "Secondary": [
+                "Secundair"
+            ],
+            "Tertiary": [
+                "Tertiair"
+            ],
+            "Accent": [
+                "Accent"
+            ],
+            "Base (text)": [
+                "Basis (tekst)"
+            ],
+            "Neutral (greys)": [
+                "Neutraal (grijstinten)"
+            ],
+            "Warning": [
+                "Waarschuwing"
+            ],
+            "Danger": [
+                "Gevaar"
+            ],
+            "Minor second": [
+                "Kleine secunde"
+            ],
+            "Major second": [
+                "Grote secunde"
+            ],
+            "Minor third": [
+                "Kleine terts"
+            ],
+            "Major third": [
+                "Grote terts"
+            ],
+            "Perfect fourth": [
+                "Reine kwart"
+            ],
+            "Augmented fourth": [
+                "Overmatige kwart"
+            ],
+            "Perfect fifth": [
+                "Reine kwint"
+            ],
+            "Golden ratio": [
+                "Gulden snede"
+            ],
+            "Could not load the design settings.": [
+                "Kon de ontwerpinstellingen niet laden."
+            ],
+            "%s on phones": [
+                "%s op telefoons"
+            ],
+            "%s on large screens": [
+                "%s op grote schermen"
+            ],
+            "Pick the %s colour": [
+                "Kies de kleur %s"
+            ],
+            "%s as hex": [
+                "%s als hexcode"
+            ],
+            "Body text": [
+                "Broodtekst"
+            ],
+            "Text scale": [
+                "Tekstschaal"
+            ],
+            "Heading scale": [
+                "Kopschaal"
+            ],
+            "Heading weight": [
+                "Gewicht van koppen"
+            ],
+            "Text font": [
+                "Lettertype tekst"
+            ],
+            "Heading font": [
+                "Lettertype koppen"
+            ],
+            "Fonts must already load on the site; ask NibWP to add one.": [
+                "Lettertypen moeten al op de site laden; vraag NibWP om er een toe te voegen."
+            ],
+            "Space (m)": [
+                "Ruimte (m)"
+            ],
+            "Space scale": [
+                "Ruimteschaal"
+            ],
+            "Section space (m)": [
+                "Sectieruimte (m)"
+            ],
+            "Side gutter": [
+                "Zijmarge"
+            ],
+            "Radius (m)": [
+                "Radius (m)"
+            ],
+            "Radius scale": [
+                "Radiusschaal"
+            ],
+            "Button radius": [
+                "Knopradius"
+            ],
+            "Button weight": [
+                "Knopgewicht"
+            ],
+            "Vertical": [
+                "Verticaal"
+            ],
+            "Sides": [
+                "Zijkanten"
+            ],
+            "Button padding": [
+                "Knoppadding"
+            ],
+            "Button padding, top and bottom": [
+                "Knoppadding, boven en onder"
+            ],
+            "Button padding, sides": [
+                "Knoppadding, zijkanten"
+            ],
+            "Smallest": [
+                "Kleinste"
+            ],
+            "Largest": [
+                "Grootste"
+            ],
+            "Sizes grow between": [
+                "Formaten groeien tussen"
+            ],
+            "Content width": [
+                "Contentbreedte"
+            ],
+            "Find a token\u2026": [
+                "Zoek een token\u2026"
+            ],
+            "Find a token": [
+                "Zoek een token"
+            ],
+            "Type a value to set one token by hand; empty goes back to the generated one.": [
+                "Typ een waarde om \u00e9\u00e9n token met de hand in te stellen; leeg gaat terug naar de gegenereerde."
+            ],
+            "Another CSS framework is active on this site. With this on, NibWP\u2019s values win; its own classes take them too.": [
+                "Er is een ander CSS-framework actief op deze site. Staat dit aan, dan winnen de waarden van NibWP; de eigen classes van dat framework nemen ze ook over."
+            ],
+            "Brand colours, a logo, a site you like\u2026 NibWP sets it all up": [
+                "Merkkleuren, een logo, een site die je mooi vindt\u2026 NibWP zet het allemaal op"
+            ],
+            "Attach an image": [
+                "Een afbeelding bijvoegen"
+            ],
+            "Attach a logo or a screenshot": [
+                "Een logo of screenshot bijvoegen"
+            ],
+            "Ask NibWP to set it up": [
+                "Vraag NibWP om het op te zetten"
+            ],
+            "Shape and buttons": [
+                "Vorm en knoppen"
+            ],
+            "Screens": [
+                "Schermen"
+            ],
+            "All tokens": [
+                "Alle tokens"
+            ],
+            "Back to defaults": [
+                "Terug naar standaard"
+            ],
+            "Defaults": [
+                "Standaard"
+            ],
+            "Discard": [
+                "Verwerpen"
+            ],
+            "On: these colours, sizes and spaces style the whole site.": [
+                "Aan: deze kleuren, formaten en ruimtes stylen de hele site."
+            ],
+            "Off: the site keeps its own styles. What you add still looks right.": [
+                "Uit: de site houdt zijn eigen stijlen. Wat je toevoegt, ziet er nog steeds goed uit."
+            ],
+            "Pick the %s shade": [
+                "Kies de tint %s"
+            ],
+            "Outline": [
+                "Omlijning"
+            ],
+            "Save the design": [
+                "Het ontwerp opslaan"
+            ],
+            "%d file attached": [
+                "%d bestand bijgevoegd",
+                "%d bestanden bijgevoegd"
+            ],
+            "Could not show that change.": [
+                "Kon die wijziging niet tonen."
+            ],
+            "Saved. What you changed since is not saved yet.": [
+                "Opgeslagen. Wat je sindsdien hebt gewijzigd, is nog niet opgeslagen."
+            ],
+            "Saved. NibWP\u2019s framework styles the whole site now.": [
+                "Opgeslagen. Het framework van NibWP stylet nu de hele site."
+            ],
+            "Saved. NibWP\u2019s framework is off; the site keeps its own styles.": [
+                "Opgeslagen. Het framework van NibWP staat uit; de site houdt zijn eigen stijlen."
+            ],
+            "Saturation and brightness: arrow keys move it": [
+                "Verzadiging en helderheid: verplaats met de pijltjestoetsen"
+            ],
+            "Hue": [
+                "Tint"
+            ],
+            "Hex": [
+                "Hex"
+            ],
+            "Back to generated": [
+                "Terug naar gegenereerd"
+            ],
+            "%s follows its colour again.": [
+                "%s volgt zijn kleur weer."
+            ],
+            "Say what you like, or attach a logo or a screenshot.": [
+                "Zeg wat je mooi vindt, of voeg een logo of screenshot bij."
+            ],
+            "Set up NibWP\u2019s CSS framework for this site: %s Read it with nibwp\/framework-get, change it with nibwp\/framework-set and switch it on, then reload the page so I can see it, and tell me in a few words what you chose.": [
+                "Zet het CSS-framework van NibWP op voor deze site: %s Lees het met nibwp\/framework-get, wijzig het met nibwp\/framework-set en zet het aan, laad dan de pagina opnieuw zodat ik het kan zien, en vertel me in een paar woorden wat je hebt gekozen."
+            ],
+            "use the attached file.": [
+                "gebruik het bijgevoegde bestand."
+            ],
+            "Set up the design": [
+                "Het ontwerp opzetten"
+            ],
+            "Sent to NibWP. The Design tab shows its choices when it is done.": [
+                "Naar NibWP gestuurd. Het tabblad Design toont de keuzes als het klaar is."
+            ],
+            "Save your changes first: a rename changes the whole site at once.": [
+                "Sla eerst je wijzigingen op: een hernoeming verandert de hele site in \u00e9\u00e9n keer."
+            ],
+            "Save the changes in your other tabs first: a rename changes the whole site at once.": [
+                "Sla eerst de wijzigingen in je andere tabbladen op: een hernoeming verandert de hele site in \u00e9\u00e9n keer."
+            ],
+            "rename %1$s to %2$s": [
+                "%1$s hernoemen naar %2$s"
+            ],
+            "Renamed %1$s to %2$s in %3$d places. Ctrl+Z renames it back.": [
+                "%1$s hernoemd naar %2$s op %3$d plekken. Ctrl+Z zet de oude naam terug."
+            ],
+            "New name for %s": [
+                "Nieuwe naam voor %s"
+            ],
+            "%s is ready: write its CSS, then Save.": [
+                "%s is klaar: schrijf de CSS en sla dan op."
+            ],
+            "A landing page: a hero with a clear promise and the main button, three key benefits, how it works, reviews, a call to action band and questions and answers.": [
+                "Een landingspagina: een hero met een duidelijke belofte en de hoofdknop, drie belangrijkste voordelen, hoe het werkt, reviews, een call-to-action-band en vragen en antwoorden."
+            ],
+            "An about page: who we are in one line, our story with a photo, the team, what we value, and a call to action.": [
+                "Een over-ons-pagina: wie we zijn in \u00e9\u00e9n regel, ons verhaal met een foto, het team, waar we voor staan, en een call-to-action."
+            ],
+            "Service or product": [
+                "Dienst of product"
+            ],
+            "A service or product page: a photo gallery, title, price and highlights beside a booking box, what is included, reviews and related offers.": [
+                "Een dienst- of productpagina: een fotogalerij, titel, prijs en hoogtepunten naast een boekingsvak, wat is inbegrepen, reviews en gerelateerde aanbiedingen."
+            ],
+            "A contact page: a short hero, a contact form beside the address, phone, opening hours and a map, then questions and answers.": [
+                "Een contactpagina: een korte hero, een contactformulier naast het adres, telefoon, openingstijden en een kaart, en daarna vragen en antwoorden."
+            ],
+            "A pricing page: a hero, three plans side by side, a comparison table, questions and answers and a call to action.": [
+                "Een prijspagina: een hero, drie abonnementen naast elkaar, een vergelijkingstabel, vragen en antwoorden en een call-to-action."
+            ],
+            "An article: title, author and date, a featured image, the text in clear sections, and related posts.": [
+                "Een artikel: titel, auteur en datum, een uitgelichte afbeelding, de tekst in duidelijke secties, en gerelateerde berichten."
+            ],
+            "Recent: %s": [
+                "Recent: %s"
+            ],
+            "Rename %s and its address": [
+                "%s en het adres hernoemen"
+            ],
+            "Open in the Builder": [
+                "Openen in de Builder"
+            ],
+            "Open %s here": [
+                "%s hier openen"
+            ],
+            "Edit in WordPress": [
+                "Bewerken in WordPress"
+            ],
+            "Edit %s in WordPress": [
+                "%s bewerken in WordPress"
+            ],
+            "Delete %s": [
+                "%s verwijderen"
+            ],
+            "What to make": [
+                "Wat te maken"
+            ],
+            "%s title": [
+                "Titel van %s"
+            ],
+            "Edit the address": [
+                "Het adres bewerken"
+            ],
+            "the-address-follows-the-title": [
+                "het-adres-volgt-de-titel"
+            ],
+            "Address (slug)": [
+                "Adres (slug)"
+            ],
+            "What is it about? Write it, or pick a starting point above. Leave it empty to just create it.": [
+                "Waar gaat het over? Schrijf het, of kies hierboven een startpunt. Laat het leeg om het alleen aan te maken."
+            ],
+            "What it is about": [
+                "Waar het over gaat"
+            ],
+            "Could not create it.": [
+                "Kon het niet aanmaken."
+            ],
+            "Build the new %1$s \u201c%2$s\u201d (a draft at %3$s): %4$s Use the builder and the design system this site uses, and keep it a draft.": [
+                "Bouw de nieuwe %1$s \u201c%2$s\u201d (een concept op %3$s): %4$s Gebruik de builder en het designsysteem die deze site gebruikt, en houd het een concept."
+            ],
+            "Build %1$s: %2$s": [
+                "%1$s bouwen: %2$s"
+            ],
+            "\u201c%s\u201d is made and open in a new tab. NibWP builds it from what you said.": [
+                "\u201c%s\u201d is aangemaakt en geopend in een nieuw tabblad. NibWP bouwt het op basis van wat je zei."
+            ],
+            "\u201c%s\u201d is made and open in a new tab. Build it here, or ask NibWP.": [
+                "\u201c%s\u201d is aangemaakt en geopend in een nieuw tabblad. Bouw het hier, of vraag het NibWP."
+            ],
+            "\u201c%s\u201d is in the trash.": [
+                "\u201c%s\u201d staat in de prullenbak."
+            ],
+            "Could not delete it.": [
+                "Kon het niet verwijderen."
+            ],
+            "Enter saves \u00b7 Esc cancels": [
+                "Enter slaat op \u00b7 Esc annuleert"
+            ],
+            "Renamed. The address is \/%s.": [
+                "Hernoemd. Het adres is \/%s."
+            ],
+            "Renamed to \u201c%s\u201d.": [
+                "Hernoemd naar \u201c%s\u201d."
+            ],
+            "Delete the %s wireframe": [
+                "Het wireframe %s verwijderen"
+            ],
+            "Older sketches (%d)": [
+                "Oudere schetsen (%d)"
+            ],
+            "Delete the %s wireframe?": [
+                "Het wireframe %s verwijderen?"
+            ],
+            "Wireframe \u201c%s\u201d deleted.": [
+                "Wireframe \u201c%s\u201d verwijderd."
+            ],
+            "Could not delete the wireframe. Try again.": [
+                "Kon het wireframe niet verwijderen. Probeer het opnieuw."
+            ],
+            "Quick add bar": [
+                "Snelle invoegbalk"
+            ],
+            "Section, div, heading\u2026 along the bottom": [
+                "Sectie, div, kop\u2026 langs de onderkant"
+            ],
+            "Side panel": [
+                "Zijpaneel"
+            ],
+            "Add, Structure and Templates": [
+                "Toevoegen, Structuur en Templates"
+            ],
+            "Element details": [
+                "Elementdetails"
+            ],
+            "Text, link, class, ID, attributes": [
+                "Tekst, link, class, ID, attributen"
+            ],
+            "Opens with what you select": [
+                "Opent met wat je selecteert"
+            ],
+            "Elements and wireframes": [
+                "Elementen en wireframes"
+            ],
+            "Saved classes and CSS variables": [
+                "Opgeslagen classes en CSS-variabelen"
+            ],
+            "Templates for each kind of content": [
+                "Templates voor elk soort content"
+            ],
+            "Colours, type and spacing for the whole site": [
+                "Kleuren, typografie en witruimte voor de hele site"
+            ],
+            "Panel on the left": [
+                "Paneel links"
+            ],
+            "Or drag the panel by its top edge": [
+                "Of sleep het paneel aan de bovenrand"
+            ],
+            "Keyboard shortcuts": [
+                "Sneltoetsen"
+            ],
+            "Open or close the Builder": [
+                "De Builder openen of sluiten"
+            ],
+            "Let go of the selection, then close": [
+                "Laat de selectie los en sluit dan"
+            ],
+            "Ask NibWP about what is selected": [
+                "Vraag NibWP over wat is geselecteerd"
+            ],
+            "Edit the name of what is selected in Structure": [
+                "Bewerk de naam van wat is geselecteerd in Structuur"
+            ],
+            "Draw or comment on the page": [
+                "Teken op of geef commentaar bij de pagina"
+            ],
+            "Undo \/ redo": [
+                "Ongedaan maken \/ opnieuw doen"
+            ],
+            "Copy \/ cut \/ paste, also into another tab": [
+                "Kopi\u00ebren \/ knippen \/ plakken, ook naar een ander tabblad"
+            ],
+            "Move up \/ down among its neighbours": [
+                "Omhoog \/ omlaag tussen de buren"
+            ],
+            "Add, Structure, Classes, Templates, Design": [
+                "Toevoegen, Structuur, Classes, Templates, Design"
+            ],
+            "Right-click": [
+                "Rechtsklik"
+            ],
+            "BEM, and more": [
+                "BEM, en meer"
+            ],
+            "These shortcuts": [
+                "Deze sneltoetsen"
+            ],
+            "Canvas width \u00d7 height, shown at %d%%": [
+                "Canvasbreedte \u00d7 hoogte, getoond op %d%%"
+            ],
+            "Sizes go from 320 to 2560: the canvas is %1$d \u00d7 %2$d.": [
+                "Formaten lopen van 320 tot 2560: het canvas is %1$d \u00d7 %2$d."
+            ],
+            "Wide": [
+                "Breed"
+            ],
+            "Fit the room": [
+                "Passend in de ruimte"
+            ],
+            "This is an admin screen: the Builder edits your site\u2019s pages. You can still ask NibWP below to inspect and change it.": [
+                "Dit is een beheerscherm: de Builder bewerkt de pagina's van je site. Je kunt NibWP hieronder nog steeds vragen om het te inspecteren en te wijzigen."
+            ],
+            "This is an external site, not one of your pages. To inspect it, or rebuild it on your site, ask NibWP below.": [
+                "Dit is een externe site, niet een van je pagina's. Vraag NibWP hieronder om hem te inspecteren of op je site na te bouwen."
+            ],
+            "This page is not one the Builder can edit directly. Ask NibWP below to inspect it and change it for you.": [
+                "De Builder kan deze pagina niet rechtstreeks bewerken. Vraag NibWP hieronder om hem voor je te inspecteren en te wijzigen."
+            ],
+            "Your design changes are not saved yet. They show again when you open the Builder.": [
+                "Je ontwerpwijzigingen zijn nog niet opgeslagen. Ze verschijnen weer als je de Builder opent."
+            ],
+            "Saved. Your wireframe is still only on the page: send it to NibWP or remove it, and it refreshes after.": [
+                "Opgeslagen. Je wireframe staat nog alleen op de pagina: stuur het naar NibWP of verwijder het, daarna wordt de pagina vernieuwd."
+            ],
+            "Drag to resize": [
+                "Sleep om het formaat te wijzigen"
+            ],
+            "In a template, the words and pictures come from each page (its title, price, text\u2026). Style them here and change the words on the page itself. New elements you add here can be typed in.": [
+                "In een sjabloon komen woorden en afbeeldingen van elke pagina zelf (de titel, prijs, tekst \u2026). Geef ze hier stijl en wijzig de woorden op de pagina zelf. In nieuwe elementen die je hier toevoegt, kun je typen."
+            ],
+            "That part is filled in by each post (its content, title, date\u2026). Edit it on the post itself; the template keeps it as it is.": [
+                "Dat deel wordt door elk bericht zelf ingevuld (de inhoud, titel, datum \u2026). Bewerk het in het bericht zelf; het sjabloon laat het zoals het is."
+            ],
+            "Changes show on every page that uses it. Its words and pictures come from each page: style them here, change them on the page.": [
+                "Wijzigingen verschijnen op elke pagina die het gebruikt. De woorden en afbeeldingen komen van elke pagina: geef ze hier stijl, wijzig ze op de pagina."
+            ],
+            "Save or undo the changes on this page first.": [
+                "Sla de wijzigingen op deze pagina eerst op of maak ze ongedaan."
+            ],
+            "Editing the template \u201c%s\u201d": [
+                "Sjabloon \u201e%s\u201d bewerken"
+            ],
+            "Save or undo your template changes first.": [
+                "Sla je sjabloonwijzigingen eerst op of maak ze ongedaan."
+            ],
+            "Click Reset again to remove the elements, text and scripts the Builder saved on this template, on every page that uses it. Saved class styles stay: other pages share them.": [
+                "Klik nogmaals op Terugzetten om de elementen, teksten en scripts te verwijderen die de Builder in dit sjabloon heeft opgeslagen, op elke pagina die het gebruikt. Opgeslagen klassenstijlen blijven: andere pagina's delen ze."
+            ],
+            "Builder changes removed from this template.": [
+                "Builder-wijzigingen uit dit sjabloon verwijderd."
+            ],
+            "Edit the %s template here, on the canvas": [
+                "Het sjabloon %s hier op het canvas bewerken"
+            ],
+            "No page uses it yet, so there is nothing to show it on": [
+                "Nog geen pagina gebruikt het, dus er is niets om het op te tonen"
+            ],
+            "All the CSS that styles it": [
+                "Alle CSS die het opmaakt"
+            ],
+            "Show all the CSS that styles this element": [
+                "Alle CSS tonen die dit element opmaakt"
+            ],
+            "not at this width": [
+                "niet bij deze breedte"
+            ],
+            "NibWP Builder": [
+                "NibWP Builder"
+            ],
+            "a style tag on the page": [
+                "een style-tag op de pagina"
+            ],
+            "this element\u2019s own style": [
+                "de eigen stijl van dit element"
+            ],
+            "First %d rules shown.": [
+                "De eerste %d regels worden getoond."
+            ],
+            "All the CSS that styles this element": [
+                "Alle CSS die dit element opmaakt"
+            ],
+            "Nothing in the page\u2019s stylesheets styles this element.": [
+                "Niets in de stylesheets van de pagina maakt dit element op."
+            ],
+            "el is the element you selected. Ctrl+Enter runs this on it right here; saved, it runs on it on the site too.": [
+                "el is het element dat je hebt geselecteerd. Ctrl+Enter voert dit er hier direct op uit; opgeslagen draait het er ook op de site op."
+            ],
+            "Script ran on this element. Save keeps it with the page.": [
+                "Het script draaide op dit element. Opslaan bewaart het bij de pagina."
+            ],
+            "Creating \u201c%s\u201d\u2026": [
+                "\u201e%s\u201d wordt gemaakt\u2026"
+            ],
+            "Add section": [
+                "Sectie toevoegen"
+            ],
+            "Split columns": [
+                "In kolommen splitsen"
+            ],
+            "Build (Enter)": [
+                "Bouwen (Enter)"
+            ]
+        }
+    }
+}

@@ -143,7 +143,7 @@ final class PortalFeatures {
 					'cards'          => array( 'upcoming_bookings' ),
 					'timeline_kinds' => array( 'booking' ),
 					'calendar_kinds' => array( 'booking' ),
-					'routes'         => array( '#^/doublescale/v1/portal/bookings(?:/\d+(?:/(?:cancel|reschedule-url))?)?$#' ),
+					'routes'         => array( '#^/doublescale/v1/portal/(?:bookings(?:/\d+(?:/(?:cancel|reschedule-url))?)?|bookable-events)$#' ),
 				),
 			),
 			array(
@@ -233,7 +233,7 @@ final class PortalFeatures {
 			array(
 				'key'         => 'help_center',
 				'group'       => 'other',
-				'label'       => __( 'Help Center', 'doublescale' ),
+				'label'       => __( 'Knowledge Base', 'doublescale' ),
 				'description' => __( 'Clients read your help articles, including the ones only portal clients can see.', 'doublescale' ),
 				'modules'     => array( 'knowledge_base' ),
 				// The /kb/public routes stay open to visitors too (they only

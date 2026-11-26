@@ -428,10 +428,10 @@ class ContactModel extends Model {
 	 * @return \DoubleScale\Vendor\Illuminate\Database\Eloquent\Relations\HasMany
 	 */
 	public function form_submissions() {
-		if ( ! doublescale_module_data_ready( 'forms' ) || ! class_exists( '\DoubleScale\Pro\Modules\Forms\Models\FormSubmissionModel' ) ) {
+		if ( ! doublescale_module_data_ready( 'forms' ) ) {
 			return $this->hasMany( ActivityModel::class, 'contact_id', 'id' )->whereRaw( '1 = 0' );
 		}
-		return $this->hasMany( \DoubleScale\Pro\Modules\Forms\Models\FormSubmissionModel::class, 'contact_id', 'id' );
+		return $this->hasMany( \DoubleScale\Modules\Forms\Models\FormSubmissionModel::class, 'contact_id', 'id' );
 	}
 
 	/**

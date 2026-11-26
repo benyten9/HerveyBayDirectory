@@ -239,7 +239,7 @@ class RestKbArticleController extends RestController {
 
 		return new WP_Error(
 			'rest_forbidden',
-			__( 'Only a Help Center Manager can change an article someone else wrote.', 'doublescale' ),
+			__( 'Only a Knowledge Base Manager can change an article someone else wrote.', 'doublescale' ),
 			array( 'status' => rest_authorization_required_code() )
 		);
 	}

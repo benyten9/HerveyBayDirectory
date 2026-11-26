@@ -16,8 +16,8 @@ class MenuServiceProvider implements Provider
     public function add_admin_menu() {
         add_submenu_page(
             'edit.php?post_type=at_biz_dir',
-            __( 'Analytics', 'directorist-analytics' ),
-            __( 'Analytics', 'directorist-analytics' ),
+            __( 'Analytics', 'directorist-advanced-review' ),
+            __( 'Analytics', 'directorist-advanced-review' ),
             'manage_options',
             'directorist-analytics',
             [ $this, 'render_page' ],
@@ -27,7 +27,7 @@ class MenuServiceProvider implements Provider
 
     public function render_page() {
         View::render( 'admin/analytics', [
-            'title' => __( 'Analytics Dashboard', 'directorist-analytics' ),
+            'title' => __( 'Analytics Dashboard', 'directorist-advanced-review' ),
         ] );
     }
 }

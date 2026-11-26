@@ -52,6 +52,12 @@ class FormSubmissionModel extends Model {
 		'form_id',
 		'contact_id',
 		'external_entry_id',
+		'status',
+		'answers',
+		'meta',
+		'variant',
+		'step',
+		'resume_token',
 		'created_at',
 		'updated_at',
 	);
@@ -63,6 +69,21 @@ class FormSubmissionModel extends Model {
 	 *
 	 * @since 1.0.0
 	 */
+	/**
+	 * Casts.
+	 *
+	 * @var array
+	 */
+	protected $casts = array(
+		'answers' => 'array',
+		'meta'    => 'array',
+	);
+
+	public const STATUS_COMPLETE = 'complete';
+	public const STATUS_PARTIAL  = 'partial';
+	public const STATUS_SPAM     = 'spam';
+	public const STATUS_PENDING  = 'pending_payment';
+
 	public $timestamps = true;
 
 	/**

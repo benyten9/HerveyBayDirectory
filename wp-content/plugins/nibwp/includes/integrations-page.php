@@ -401,6 +401,7 @@ function nibwp_is_integration_available(string $key): bool
         'hfe' => defined('ELEMENTOR_VERSION') && (defined('HFE_VER') || class_exists('HFE_Helper')),
         'bricks' => defined('BRICKS_VERSION'),
         'builderius' => function_exists('builderius_check_requirements') || post_type_exists('builderius_template'),
+        'mosaic' => defined('MOSAIC_VERSION'),
         'acf' => function_exists('acf_get_field_groups'),
         'jetengine' => function_exists('jet_engine'),
         'metabox' => function_exists('rwmb_meta'),
@@ -465,6 +466,7 @@ function nibwp_is_integration_available(string $key): bool
             || defined('AIOSEO_VERSION') || function_exists('aioseo'),
         'etchwp' => defined('ETCH_PLUGIN_FILE'),
         'etchedy' => defined('ETCHEDY_PLUGIN_FILE'),
+        'bricksed' => defined('BRICKSED_PLUGIN_FILE'),
         'automaticcss' => defined('ACSS_PLUGIN_FILE'),
         'forms' => class_exists('GFForms')
             || defined('WPFORMS_VERSION')
@@ -1183,6 +1185,16 @@ function nibwp_get_integrations(): array
             'abilities' => ['builderius-list-templates', 'builderius-get-template', 'builderius-list-versions', 'builderius-list-components', 'builderius-list-releases', 'builderius-list-fragments', 'builderius-list-global-settings', 'builderius-list-form-submissions', 'builderius-list-starters', 'builderius-list-modules', 'builderius-get-component', 'builderius-build-config', 'builderius-create-template', 'builderius-update-template', 'builderius-create-component', 'builderius-create-fragment', 'builderius-update-global-settings', 'builderius-create-branch', 'builderius-export-config', 'builderius-import-config', 'builderius-delete'],
             'plugin_name' => 'Builderius',
         ],
+        'mosaic' => [
+            'name' => 'Mosaic',
+            'description' => __('Build pages in Mosaic: give any page its own template, insert sections and elements, restyle them per breakpoint, and grow the theme\'s classes and components, all through Mosaic\'s own editor model.', 'nibwp'),
+            'plugin_available' => defined('MOSAIC_VERSION'),
+            'enabled' => nibwp_is_integration_enabled('mosaic'),
+            'icon' => '<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="13" y="3" width="8" height="9" rx="1"/><rect x="3" y="10" width="8" height="11" rx="1"/><rect x="13" y="14" width="8" height="7" rx="1"/></svg>',
+            'category' => 'page-builders',
+            'abilities' => ['mosaic-status', 'mosaic-list-themes', 'mosaic-list-templates', 'mosaic-list-components', 'mosaic-list-design', 'mosaic-list-elements', 'mosaic-get-tree', 'mosaic-create-page', 'mosaic-insert-nodes', 'mosaic-update-node', 'mosaic-delete-node', 'mosaic-create-class', 'mosaic-create-component'],
+            'plugin_name' => 'Mosaic',
+        ],
         'acf' => [
             'name' => 'ACF',
             'description' => __('CRUD field groups and fields, manage custom post types, taxonomies, options pages, and read/write field values.', 'nibwp'),
@@ -1823,6 +1835,18 @@ function nibwp_get_integrations(): array
             'actions' => 13,
             'examples' => ['list', 'get', 'search', 'save', 'update', 'rename', 'move', 'delete'],
             'plugin_name' => 'Etchedy',
+        ],
+        'bricksed' => [
+            'name' => 'Bricksed',
+            'description' => __('Browse, create, edit, rename and re-file components in the Bricksed library for Bricks, and reuse saved ones on any site.', 'nibwp'),
+            'plugin_available' => defined('BRICKSED_PLUGIN_FILE'),
+            'enabled' => nibwp_is_integration_enabled('bricksed'),
+            'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></svg>',
+            'category' => 'page-builders',
+            'abilities' => ['bricksed-manage'],
+            'actions' => 13,
+            'examples' => ['list', 'get', 'search', 'save', 'update', 'rename', 'move', 'delete'],
+            'plugin_name' => 'Bricksed',
         ],
         'content-planner' => [
             'name' => __('Content Planner', 'nibwp'),
@@ -2690,7 +2714,7 @@ function nibwp_render_integrations_page(): void
         // client (NIBWP_LICENSE_CLIENT_LOADED), at which point the full list
         // is shown with per-card unlock state.
         $pro_integration_keys = [
-            'elementor', 'elementor-addons', 'bricks', 'rometheme', 'wpb-addons', 'mega-elements', 'lastudio-kit', 'htmega', 'move-addons', 'ht-slider', 'elementinvader', 'anywhere-elementor', 'unlimited-elements', 'qi-addons', 'plus-addons', 'jeg-kit', 'addon-elements', 'royal-addons', 'premium-addons', 'happy-addons', 'elementskit', 'eael', 'hfe', 'builderius', 'etchwp', 'etchedy', 'automaticcss',
+            'elementor', 'elementor-addons', 'bricks', 'rometheme', 'wpb-addons', 'mega-elements', 'lastudio-kit', 'htmega', 'move-addons', 'ht-slider', 'elementinvader', 'anywhere-elementor', 'unlimited-elements', 'qi-addons', 'plus-addons', 'jeg-kit', 'addon-elements', 'royal-addons', 'premium-addons', 'happy-addons', 'elementskit', 'eael', 'hfe', 'builderius', 'mosaic', 'etchwp', 'etchedy', 'bricksed', 'automaticcss',
             'acf', 'jetengine', 'metabox', 'pods', 'acpt', 'ase',
             'fluentcrm', 'fluentcart', 'fluentaffiliate', 'edd', 'forms',
             'directorist',

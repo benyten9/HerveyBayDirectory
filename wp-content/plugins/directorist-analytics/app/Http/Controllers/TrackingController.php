@@ -69,7 +69,7 @@ class TrackingController {
 			if ( ! $result ) {
 				return Response::send(
 					array(
-						'message' => esc_html__( 'Failed to track click', 'directorist-analytics' ),
+						'message' => esc_html__( 'Failed to track click', 'directorist-advanced-review' ),
 					),
 					422
 				);
@@ -78,13 +78,13 @@ class TrackingController {
 			return Response::send(
 				array(
 					'success' => true,
-					'message' => esc_html__( 'Click tracked successfully', 'directorist-analytics' ),
+					'message' => esc_html__( 'Click tracked successfully', 'directorist-advanced-review' ),
 				)
 			);
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error tracking click', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error tracking click', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -141,13 +141,13 @@ class TrackingController {
 				array(
 					'success'       => true,
 					'tracked_count' => $tracked_count,
-					'message'       => esc_html__( 'Search appearances tracked successfully', 'directorist-analytics' ),
+					'message'       => esc_html__( 'Search appearances tracked successfully', 'directorist-advanced-review' ),
 				)
 			);
 		} catch ( Exception $e ) {
 			return Response::send(
 				array(
-					'message' => esc_html__( 'Error tracking search appearances', 'directorist-analytics' ),
+					'message' => esc_html__( 'Error tracking search appearances', 'directorist-advanced-review' ),
 				),
 				500
 			);
@@ -169,7 +169,7 @@ class TrackingController {
 	
 			if ( ! $resolution ) {
 				return Response::send(
-					array( 'message' => esc_html__( 'Resolution required', 'directorist-analytics' ) ),
+					array( 'message' => esc_html__( 'Resolution required', 'directorist-advanced-review' ) ),
 					400
 				);
 			}
@@ -183,7 +183,7 @@ class TrackingController {
 	
 			if ( ! $recent_view ) {
 				return Response::send(
-					array( 'message' => esc_html__( 'No recent view found', 'directorist-analytics' ) ),
+					array( 'message' => esc_html__( 'No recent view found', 'directorist-advanced-review' ) ),
 					404
 				);
 			}
@@ -235,12 +235,12 @@ class TrackingController {
 				array(
 					'success' => true,
 					'updated' => $updated,
-					'message' => esc_html__( 'Resolution updated', 'directorist-analytics' ),
+					'message' => esc_html__( 'Resolution updated', 'directorist-advanced-review' ),
 				)
 			);
 		} catch ( Exception $e ) {
 			return Response::send(
-				array( 'message' => esc_html__( 'Error updating resolution', 'directorist-analytics' ) ),
+				array( 'message' => esc_html__( 'Error updating resolution', 'directorist-advanced-review' ) ),
 				500
 			);
 		}

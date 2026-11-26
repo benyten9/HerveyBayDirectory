@@ -8,7 +8,6 @@ use DirectoristStripe\WpMVC\App;
 use DirectoristStripe\WpMVC\Contracts\Provider;
 
 class UpdateServiceProvider implements Provider {
-
     public function boot(): void {
         add_action( 'admin_init', [ $this, 'update' ] );
     }

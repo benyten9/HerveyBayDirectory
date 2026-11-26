@@ -159,7 +159,11 @@ class Form extends Abstracts_Form {
 		// Check nonce.
 		check_ajax_referer( 'doublescale-admin', 'nonce' );
 
-		$forms   = \FrmForm::getAll();
+		// Published forms only: getAll() also returns templates, drafts and
+		// trashed forms.
+		$forms = method_exists( '\FrmForm', 'get_published_forms' )
+			? \FrmForm::get_published_forms( array(), 999, 'exclude' )
+			: \FrmForm::getAll( array( 'is_template' => 0 ) );
 		$options = array();
 
 		foreach ( $forms as $form ) {

@@ -118,9 +118,9 @@ if (!function_exists('nibwp_premium_integrations')) {
     {
         return [
             // Page builders & frameworks.
-            'elementor', 'elementor-addons', 'bricks', 'rometheme', 'wpb-addons', 'mega-elements', 'lastudio-kit', 'htmega', 'move-addons', 'ht-slider', 'elementinvader', 'anywhere-elementor', 'unlimited-elements', 'qi-addons', 'plus-addons', 'jeg-kit', 'addon-elements', 'royal-addons', 'premium-addons', 'happy-addons', 'elementskit', 'eael', 'hfe', 'builderius', 'etchwp', 'automaticcss', 'breakdance',
+            'elementor', 'elementor-addons', 'bricks', 'rometheme', 'wpb-addons', 'mega-elements', 'lastudio-kit', 'htmega', 'move-addons', 'ht-slider', 'elementinvader', 'anywhere-elementor', 'unlimited-elements', 'qi-addons', 'plus-addons', 'jeg-kit', 'addon-elements', 'royal-addons', 'premium-addons', 'happy-addons', 'elementskit', 'eael', 'hfe', 'builderius', 'etchwp', 'automaticcss', 'breakdance', 'mosaic',
             // Design tools.
-            'figma', 'paper', 'etchedy',
+            'figma', 'paper', 'etchedy', 'bricksed',
             // Custom fields & content types.
             'acf', 'jetengine', 'metabox', 'pods', 'acpt', 'ase',
             // CRM / e-commerce add-ons (WooCommerce stays free).

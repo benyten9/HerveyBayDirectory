@@ -665,6 +665,13 @@ body:has(#editor-one-top-bar > *) #wpcontent #wpbody-content {
     height: calc(100vh - var(--e-admin-bar-height, 0px) - var(--e-top-bar-header-height, 0px));
   }
 }
+body:has(#editor-one-top-bar > *) #wpbody-content > .e-notice--inline {
+  margin-block-start: 24px;
+  margin-inline: 32px;
+}
+body:has(#editor-one-top-bar > *) #screen-meta-links ~ .e-notice--inline {
+  margin-block-start: 14px;
+}
 
 input[type=checkbox] {
   width: 16px;

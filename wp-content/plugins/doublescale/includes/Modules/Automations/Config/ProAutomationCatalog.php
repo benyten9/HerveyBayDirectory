@@ -68,6 +68,7 @@ return array(
 		\DoubleScale\Pro\Modules\Automations\Triggers\Booking\BookingCancelled::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Booking\BookingRescheduled::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Booking\BookingCompleted::class,
+		\DoubleScale\Pro\Modules\Automations\Triggers\Forms\DoublescaleFormAbandoned::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Forms\BitformFormSubmitted::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Forms\BricksFormSubmitted::class,
 		\DoubleScale\Pro\Modules\Automations\Triggers\Forms\Contactform7FormSubmitted::class,

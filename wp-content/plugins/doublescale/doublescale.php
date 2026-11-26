@@ -3,7 +3,7 @@
  * Plugin Name:       DoubleScale CRM | All-in-One CRM – Sales, Multi-Channel Marketing, Booking, Helpdesk, Automation, MCP & More
  * Plugin URI:        https://www.doublescale.io/
  * Description:       Self-hosted CRM with sales, marketing, booking, helpdesk, tasks & projects, automations plus a built-in MCP server for AI clients. One plugin.
- * Version:           1.10.1
+ * Version:           1.11.0
  * Author:            DoubleScale
  * Author URI:        https://www.doublescale.io
  * License:           GPL v2 or later

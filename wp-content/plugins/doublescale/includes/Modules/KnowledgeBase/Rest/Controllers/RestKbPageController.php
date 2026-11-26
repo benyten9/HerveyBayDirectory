@@ -124,7 +124,7 @@ class RestKbPageController extends RestController {
 		if ( ShortcodePageProvisioner::provision( KbPublicArticles::SHORTCODE ) <= 0 ) {
 			return new WP_Error(
 				'kb_page_create_failed',
-				__( 'The help center page could not be created. Add the shortcode to a page instead.', 'doublescale' ),
+				__( 'The knowledge base page could not be created. Add the shortcode to a page instead.', 'doublescale' ),
 				array( 'status' => 500 )
 			);
 		}
@@ -148,11 +148,11 @@ class RestKbPageController extends RestController {
 		if ( null !== $slug ) {
 			$page_id = ShortcodePageProvisioner::resolve_page_id( KbPublicArticles::SHORTCODE );
 			if ( $page_id <= 0 ) {
-				return new WP_Error( 'kb_page_missing', __( 'Create the help center page first.', 'doublescale' ), array( 'status' => 404 ) );
+				return new WP_Error( 'kb_page_missing', __( 'Create the knowledge base page first.', 'doublescale' ), array( 'status' => 404 ) );
 			}
 			// Renaming the page is editing it.
 			if ( ! current_user_can( 'edit_post', $page_id ) ) {
-				return new WP_Error( 'rest_forbidden', __( 'You can’t edit the help center page.', 'doublescale' ), array( 'status' => rest_authorization_required_code() ) );
+				return new WP_Error( 'rest_forbidden', __( 'You can’t edit the knowledge base page.', 'doublescale' ), array( 'status' => rest_authorization_required_code() ) );
 			}
 			$renamed = KbAddresses::rename_page( $page_id, (string) $slug );
 			if ( is_wp_error( $renamed ) ) {

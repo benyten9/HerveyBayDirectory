@@ -1,0 +1,93 @@
+{
+    "translation-revision-date": "YEAR-MO-DA HO:MI+ZONE",
+    "generator": "WP-CLI\/2.12.0",
+    "source": "assets\/js\/studio-bus.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "fr_FR",
+                "plural-forms": "nplurals=2; plural=(n > 1);"
+            },
+            "Allow": [
+                "Autoriser"
+            ],
+            "Refuse": [
+                "Refuser"
+            ],
+            "opening %s": [
+                "ouverture de %s"
+            ],
+            "Click %s on this page.": [
+                "Cliquer sur %s sur cette page."
+            ],
+            "Click an element on this page.": [
+                "Cliquer sur un \u00e9l\u00e9ment de cette page."
+            ],
+            "Hover over %s and report what changes.": [
+                "Survoler %s et indiquer ce qui change."
+            ],
+            "Hover over an element and report what changes.": [
+                "Survoler un \u00e9l\u00e9ment et indiquer ce qui change."
+            ],
+            "Take a screenshot of %s.": [
+                "Faire une capture d\u2019\u00e9cran de %s."
+            ],
+            "Take a screenshot of this page.": [
+                "Faire une capture d\u2019\u00e9cran de cette page."
+            ],
+            "a field": [
+                "un champ"
+            ],
+            "Type \u201c%1$s\u201d into %2$s, then submit the form.": [
+                "Saisir \u00ab %1$s \u00bb dans %2$s, puis envoyer le formulaire."
+            ],
+            "Type \u201c%1$s\u201d into %2$s.": [
+                "Saisir \u00ab %1$s \u00bb dans %2$s."
+            ],
+            "%d step in one go:": [
+                "%d \u00e9tape en une fois :",
+                "%d \u00e9tapes en une fois :"
+            ],
+            "Insert a %s block into the page being edited.": [
+                "Ins\u00e9rer un bloc %s dans la page en cours de modification."
+            ],
+            "Insert a block into the page being edited.": [
+                "Ins\u00e9rer un bloc dans la page en cours de modification."
+            ],
+            "Change %1$s on block %2$s.": [
+                "Modifier %1$s sur le bloc %2$s."
+            ],
+            "Delete block %s and everything inside it.": [
+                "Supprimer le bloc %s et tout ce qu\u2019il contient."
+            ],
+            "Read the current page.": [
+                "Lire la page actuelle."
+            ],
+            "Check the current page for accessibility and layout problems.": [
+                "Rechercher des probl\u00e8mes d\u2019accessibilit\u00e9 et de mise en page sur la page actuelle."
+            ],
+            "refused": [
+                "refus\u00e9"
+            ],
+            "%d issue": [
+                "%d probl\u00e8me",
+                "%d probl\u00e8mes"
+            ],
+            "%d element": [
+                "%d \u00e9l\u00e9ment",
+                "%d \u00e9l\u00e9ments"
+            ],
+            "Let your agent do this?": [
+                "Laisser votre agent faire ceci ?"
+            ],
+            "Open %s in Agent View.": [
+                "Ouvrir %s dans Agent View."
+            ],
+            "Open a page in Agent View.": [
+                "Ouvrir une page dans Agent View."
+            ]
+        }
+    }
+}

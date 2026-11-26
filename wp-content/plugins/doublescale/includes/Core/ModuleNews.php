@@ -51,9 +51,16 @@ final class ModuleNews {
 			'knowledge_base' => array(
 				'since' => '1.9.11',
 				'kind'  => 'module',
-				'title' => __( 'Help Center', 'doublescale' ),
+				'title' => __( 'Knowledge Base', 'doublescale' ),
 				'text'  => __( 'Publish help articles your customers can search, on your site and in the client portal. Group them into categories, and see which ones they read and find helpful.', 'doublescale' ),
 				'path'  => 'help-center',
+			),
+			'forms'          => array(
+				'since' => '1.11.0',
+				'kind'  => 'module',
+				'title' => __( 'Form builder', 'doublescale' ),
+				'text'  => __( 'Build your own forms, with no other form plugin. Start from a template, try it, then share it on its own page or embed it. Every answer lands in your CRM, and each form can create contacts, tickets and more.', 'doublescale' ),
+				'path'  => 'forms',
 			),
 			'live_chat'      => array(
 				'since' => '1.9.11',
@@ -61,7 +68,7 @@ final class ModuleNews {
 				'pro'   => true,
 				'needs' => array( 'support', 'help_assistant' ),
 				'title' => __( 'Live chat', 'doublescale' ),
-				'text'  => __( 'Chat with visitors on your site in real time, from a floating button, your help center or the client portal. Chats arrive in the Helpdesk inbox, so your team answers them where they answer email.', 'doublescale' ),
+				'text'  => __( 'Chat with visitors on your site in real time, from a floating button, your knowledge base or the client portal. Chats arrive in the Helpdesk inbox, so your team answers them where they answer email.', 'doublescale' ),
 				'path'  => 'support/settings/live-chat',
 			),
 			'help_assistant' => array(
