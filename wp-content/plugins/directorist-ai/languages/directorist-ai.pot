@@ -1,0 +1,6660 @@
+# Copyright (C) 2026 
+# This file is distributed under the same license as the Directorist AI (Development compatibility entry) plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Directorist AI 1.0.3\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/directorist-ai-pro\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-11-09T20:10:22+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+
+#. Plugin Name of the plugin
+#: directorist-ai-pro.php
+msgid "Directorist AI (Development compatibility entry)"
+msgstr ""
+
+#. Description of the plugin
+#: directorist-ai-pro.php
+msgid "Compatibility entry for existing Directorist AI beta installations. The release package uses directorist-ai/directorist-ai.php."
+msgstr ""
+
+#: directorist-ai.php:58
+msgid "Directorist AI requires PHP 8.0 or later."
+msgstr ""
+
+#: directorist-ai.php:71
+msgid "Directorist AI dependencies are missing. Install a complete plugin build."
+msgstr ""
+
+#: inc/admin/Dashboard.php:130
+msgid "You are not allowed to access this page."
+msgstr ""
+
+#: inc/admin/Dashboard.php:133
+#: apps/dashboard/src/components/AdminSettings.js:13
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1029
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1030
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1044
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1045
+#: apps/dashboard/src/components/ListingMessage.js:20
+#: apps/dashboard/src/listing-form-composer.js:619
+#: apps/dashboard/src/listing-form-composer.js:634
+msgid "Loading…"
+msgstr ""
+
+#: inc/admin/Dashboard.php:134
+msgid "Enable JavaScript to use this screen."
+msgstr ""
+
+#: inc/assets/Assets.php:210
+msgid "Directorist AI administration assets are missing. Install a complete plugin build."
+msgstr ""
+
+#: inc/capabilities/AbilityBridge.php:50
+#: apps/dashboard/src/admin-data.js:21
+#: apps/dashboard/src/components/AiTaskRoute.js:7
+#: apps/dashboard/src/components/ConversationTranscript.js:135
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1032
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1055
+#: apps/dashboard/src/components/ListingMessage.js:18
+#: apps/dashboard/src/components/ManagedConnection.js:8
+#: apps/dashboard/src/containers/Container.js:156
+#: apps/dashboard/src/editor-assistant.js:176
+#: apps/dashboard/src/editor-assistant.js:177
+#: apps/dashboard/src/listing-form-composer.js:635
+#: apps/dashboard/src/pages/Appearance.js:160
+msgid "Directorist AI"
+msgstr ""
+
+#: inc/capabilities/AbilityBridge.php:51
+msgid "Authorized Directorist operations."
+msgstr ""
+
+#: inc/chat/Appearance.php:371
+msgid "Theme"
+msgstr ""
+
+#: inc/chat/Appearance.php:372
+#: apps/dashboard/src/pages/Usage.js:31
+msgid "WordPress"
+msgstr ""
+
+#: inc/chat/Appearance.php:373
+msgid "Custom"
+msgstr ""
+
+#: inc/chat/ListingActions.php:216
+#: apps/dashboard/src/components/ConversationTranscript.js:54
+msgid "View listing"
+msgstr ""
+
+#: inc/chat/ListingActions.php:239
+msgid "Contact"
+msgstr ""
+
+#: inc/chat/ListingActions.php:257
+msgid "Save listing"
+msgstr ""
+
+#: inc/chat/ListingActions.php:266
+msgid "Directions"
+msgstr ""
+
+#: inc/chat/NativeCapabilities.php:47
+msgid "Write a review"
+msgstr ""
+
+#: inc/chat/NativeCapabilities.php:51
+msgid "Request booking"
+msgstr ""
+
+#: inc/chat/NativeCapabilities.php:54
+msgid "Claim this listing"
+msgstr ""
+
+#: inc/chat/NativeCapabilities.php:57
+msgid "Chat with the listing owner"
+msgstr ""
+
+#: inc/chat/OwnerPlacement.php:34
+msgid "Sign in to create or improve your listings."
+msgstr ""
+
+#: inc/chat/OwnerPlacement.php:37
+msgid "AI listing assistance is temporarily paused."
+msgstr ""
+
+#: inc/chat/OwnerPlacement.php:79
+#: apps/dashboard/src/listing-assistant.js:19
+msgid "AI listing assistance is unavailable."
+msgstr ""
+
+#: inc/compatibility/PluginIdentity.php:29
+msgid "Activate Directorist AI separately on each site. Deactivate the earlier network installation before switching."
+msgstr ""
+
+#: inc/core/Plugin.php:148
+msgid "Directorist AI requires WordPress 7.0 or later with its AI and Abilities APIs."
+msgstr ""
+
+#: inc/core/Plugin.php:149
+msgid "Directorist AI requires Directorist 8.9.4 or later to be active."
+msgstr ""
+
+#: inc/core/Plugin.php:150
+msgid "Directorist AI supports per-site activation. Network activation is unavailable."
+msgstr ""
+
+#: inc/core/Plugin.php:151
+msgid "Directorist AI runtime dependencies are missing. Install a complete plugin build."
+msgstr ""
+
+#: inc/core/Plugin.php:152
+msgid "Directorist AI requires Action Scheduler 4.2 or later. Install a complete plugin build and resolve queue conflicts."
+msgstr ""
+
+#: inc/Installer.php:36
+msgid "Activate Directorist AI separately on each site. Network activation is not supported."
+msgstr ""
+
+#. translators: 1: installed schema version, 2: supported schema version.
+#: inc/Installer.php:58
+#, php-format
+msgid "Directorist AI runtime schema %1$d is newer than this plugin supports (%2$d). Install a matching newer plugin build. No downgrade was attempted. Existing records are retained."
+msgstr ""
+
+#: inc/Installer.php:60
+msgid "Directorist AI could not initialize compatible runtime storage. Check database access and install a matching complete build. New requests and effects are disabled. Existing records are retained."
+msgstr ""
+
+#. translators: 1: installed schema version, 2: supported schema version.
+#: inc/Installer.php:95
+#, php-format
+msgid "Directorist AI runtime schema %1$d is newer than this plugin supports (%2$d). Install a matching newer plugin build. New requests and effects are disabled. No downgrade was attempted. Existing records are retained."
+msgstr ""
+
+#: inc/Installer.php:97
+msgid "Directorist AI storage is ready, but its schema-version cache could not be updated. AI functionality remains available."
+msgstr ""
+
+#: inc/Installer.php:99
+msgid "Directorist AI runtime storage is incomplete or unavailable. New requests and effects are disabled. Check database access and install a matching complete plugin build. Existing records are retained."
+msgstr ""
+
+#: inc/Installer.php:102
+msgid "Directorist AI runtime storage is unavailable. New requests and effects are disabled. Check database access. Existing records are retained."
+msgstr ""
+
+#: inc/listing/ListingFieldValues.php:282
+#: apps/dashboard/src/components/ConversationTranscript.js:25
+msgid "Yes"
+msgstr ""
+
+#: inc/listing/ListingFieldValues.php:282
+#: apps/dashboard/src/components/ConversationTranscript.js:25
+msgid "No"
+msgstr ""
+
+#: inc/listing/ListingFormEffect.php:134
+#: apps/dashboard/src/pages/Workflow.js:374
+msgid "Untitled listing"
+msgstr ""
+
+#: inc/listing/ListingHistory.php:187
+msgid "Image idea"
+msgstr ""
+
+#. translators: %s is an excerpt of the user's earlier request.
+#: inc/listing/ListingHistory.php:204
+#, php-format
+msgid "Requested: %s"
+msgstr ""
+
+#. translators: %s is an excerpt of the user's earlier request.
+#: inc/listing/ListingHistory.php:204
+msgid "Earlier listing discussion"
+msgstr ""
+
+#: inc/listing/ListingPricingValues.php:34
+msgid "Ultra High"
+msgstr ""
+
+#: inc/listing/ListingPricingValues.php:38
+msgid "Moderate"
+msgstr ""
+
+#: inc/listing/ListingPricingValues.php:42
+msgid "Economy"
+msgstr ""
+
+#: inc/listing/ListingPricingValues.php:46
+msgid "Cheap"
+msgstr ""
+
+#: inc/readiness/ReadinessModule.php:47
+#: inc/readiness/ReadinessModule.php:70
+#: inc/readiness/ReadinessModule.php:164
+msgid "Current public listing access details are unavailable. Refresh and try again."
+msgstr ""
+
+#: inc/readiness/ReadinessModule.php:57
+msgid "Refresh this page before saving export settings."
+msgstr ""
+
+#: inc/readiness/ReadinessModule.php:107
+msgid "Refresh before saving."
+msgstr ""
+
+#: inc/readiness/ReadinessModule.php:115
+msgid "Current details are unavailable. Refresh and try again."
+msgstr ""
+
+#: inc/ui/ListingAssistant.php:109
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Pricing"
+msgstr ""
+
+#: inc/ui/ListingAssistant.php:164
+#: apps/dashboard/src/pages/Workflow.js:342
+#: apps/dashboard/src/pages/Workflow.js:374
+msgid "New listing"
+msgstr ""
+
+#: inc/ui/ListingAssistant.php:218
+#: inc/ui/ListingAssistant.php:236
+msgid "Improve with AI"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:7
+#: apps/dashboard/src/components/ManagedUsage.js:7
+msgid "Listing assistance"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:8
+#: apps/dashboard/src/components/ManagedUsage.js:7
+msgid "Builder assistance"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:9
+#: apps/dashboard/src/admin-data.js:13
+#: apps/dashboard/src/ai-readiness.js:5
+#: apps/dashboard/src/components/ManagedUsage.js:7
+#: apps/dashboard/src/pages/Operations.js:13
+msgid "Visitor chat"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:10
+#: apps/dashboard/src/components/ManagedUsage.js:7
+#: apps/dashboard/src/pages/Operations.js:13
+msgid "Administration"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:13
+msgid "Find and compare listings and answer visitor questions."
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:14
+msgid "Listing/content assistance"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:14
+msgid "Generate and improve listing content, fields, categories and tags."
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:15
+msgid "Builder/layout assistance"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:15
+msgid "Generate and refine pages, templates and selected builder areas."
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:16
+msgid "Administrative assistance"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:16
+msgid "Assist with authorized directory management tasks."
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:17
+#: apps/dashboard/src/components/ManagedUsage.js:7
+#: apps/dashboard/src/components/TaskUsage.js:10
+msgid "Image generation"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:17
+msgid "Create images independently of the source used for text."
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:18
+#: apps/dashboard/src/components/ManagedUsage.js:7
+msgid "Image understanding"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:18
+msgid "Inspect existing images with an eligible image-understanding provider."
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:21
+#: apps/dashboard/src/components/AiTaskRoute.js:6
+#: apps/dashboard/src/components/ManagedUsage.js:49
+msgid "WordPress AI Connector"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:21
+#: apps/dashboard/src/admin-data.js:38
+#: apps/dashboard/src/admin-data.js:53
+#: apps/dashboard/src/admin-data.js:166
+#: apps/dashboard/src/components/ConversationTranscript.js:80
+#: apps/dashboard/src/components/ConversationTranscript.js:97
+#: apps/dashboard/src/components/TaskUsage.js:13
+#: apps/dashboard/src/pages/Usage.js:10
+msgid "Unknown"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:25
+#: apps/dashboard/src/admin-data.js:26
+msgid "Active"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:27
+msgid "Expired"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:28
+#: apps/dashboard/src/admin-data.js:29
+#: apps/dashboard/src/admin-data.js:30
+msgid "Inactive"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:31
+#: apps/dashboard/src/admin-data.js:32
+#: apps/dashboard/src/directory-assistant.js:33
+msgid "Disabled"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:33
+msgid "Invalid license"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:34
+msgid "Pending"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:35
+#: apps/dashboard/src/admin-data.js:36
+#: apps/dashboard/src/admin-data.js:38
+msgid "Not activated"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:42
+msgid "No expiry"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:43
+#: apps/dashboard/src/admin-data.js:45
+msgid "Not available"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:72
+#: apps/dashboard/src/admin-data.js:79
+msgid "capability information unavailable"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:72
+msgid "tool support unavailable"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:72
+#: apps/dashboard/src/admin-data.js:79
+msgid "unsupported"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:79
+msgid "not configured"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:93
+msgid "image generation"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:93
+msgid "image input and text generation"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:93
+msgid "text generation and tool/function calling"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:173
+#: apps/dashboard/src/components/RunStatus.js:82
+msgid "Unavailable"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:181
+msgid "credit"
+msgstr ""
+
+#: apps/dashboard/src/admin-data.js:181
+#: apps/dashboard/src/pages/Credits.js:45
+#: apps/dashboard/src/pages/Credits.js:49
+msgid "credits"
+msgstr ""
+
+#: apps/dashboard/src/admin-resource-cache.js:70
+msgid "Could not refresh settings."
+msgstr ""
+
+#: apps/dashboard/src/admin-resource-cache.js:87
+msgid "The connection status could not be verified. Your previous account is retained."
+msgstr ""
+
+#: apps/dashboard/src/admin-resource-cache.js:95
+msgid "Please sign in again."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:5
+msgid "Listing writing"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:5
+msgid "Page design"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:5
+msgid "Admin help"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:5
+msgid "Image creation"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:5
+msgid "Image reading"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:8
+msgid "Finds and compares listings."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:9
+msgid "Fields, categories and tags."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:10
+msgid "Pages, templates and builder areas."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:11
+msgid "Directory management tasks."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:12
+msgid "Creates images with a capable model."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:13
+msgid "Reads images with vision support."
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:29
+msgid "Follows the current workflow"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:32
+msgid "Ready with your provider"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:32
+#: apps/dashboard/src/pages/Connections.js:67
+msgid "Connect a provider"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:32
+#: apps/dashboard/src/ai-readiness.js:39
+msgid "Capability check needed"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:32
+msgid "Choose a supported model"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:35
+#: apps/dashboard/src/pages/Overview.js:31
+msgid "Activate your license"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:36
+#: apps/dashboard/src/pages/Overview.js:34
+msgid "Refresh connection status"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:37
+#: apps/dashboard/src/components/ManagedConnection.js:8
+msgid "Service unavailable"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:41
+msgid "Currently unavailable"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:42
+msgid "Refresh credit balance"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:43
+msgid "Add credits to continue"
+msgstr ""
+
+#: apps/dashboard/src/ai-readiness.js:44
+msgid "Ready with credits"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:14
+#: apps/dashboard/src/components/ConversationTranscript.js:92
+msgid "Listing results"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:14
+msgid "New conversation"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:15
+msgid "Comparison"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:15
+msgid "Opening hours"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:15
+msgid "Listing details"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:15
+#: apps/dashboard/src/chat-preview.js:57
+msgid "FAQs"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:15
+msgid "Booking form"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:16
+msgid "Review form"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:16
+msgid "Finding an answer"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:17
+msgid "Connection issue"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:18
+msgid "Nearby search"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:18
+msgid "Location unavailable"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:18
+msgid "Manual area search"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:47
+msgid "This is a sample reply for your preview."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:51
+#: apps/dashboard/src/chat-preview.js:61
+#: apps/dashboard/src/chat-preview.js:68
+msgid "Riverside Cafe"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:51
+msgid "A sample listing with parking and outdoor seating."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:51
+#: apps/dashboard/src/chat-preview.js:58
+msgid "River Road"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:52
+msgid "Market Garden"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:52
+msgid "A second sample listing for comparison."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Harbor Kitchen"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Parkside Coffee"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Old Town Bakery"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Garden Table"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Coastal Cafe"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Cafe"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Town centre"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:54
+msgid "Sample listing details for the appearance preview."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:56
+msgid "Is parking available?"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:56
+msgid "The sample cafe has a small customer car park beside the entrance."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:56
+msgid "Can I bring a dog?"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:56
+msgid "Dogs are welcome in the sample outdoor seating area."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:57
+msgid "About"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:57
+msgid "A sample independent cafe with a riverside terrace and a seasonal lunch menu."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:57
+#: apps/dashboard/src/components/ConversationTranscript.js:48
+msgid "Price"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:57
+#: apps/dashboard/src/components/ConversationTranscript.js:48
+msgid "Hours"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:60
+msgid "Find a place with parking."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:60
+msgid "Here are some places you might like."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+#: apps/dashboard/src/components/ManagedUsage.js:18
+#: apps/dashboard/src/components/ManagedUsage.js:24
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Date"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+msgid "Guests"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+#: apps/dashboard/src/pages/Appearance.js:16
+msgid "Name"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+msgid "Review title"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+msgid "Your review"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+msgid "Rating"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:61
+msgid "Overall"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:64
+msgid "Remember chat on this browser"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:64
+msgid "Use my location"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:66
+msgid "Preview messages"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:68
+msgid "Preview only. Nothing was submitted."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:71
+msgid "We could not get an answer. Please try again."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:71
+#: apps/dashboard/src/components/AdminSettings.js:17
+#: apps/dashboard/src/components/scoped-area.js:57
+#: apps/dashboard/src/editor-assistant.js:78
+msgid "Try again"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:75
+msgid "Location access was not allowed. Enable it in your browser or enter an area."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:75
+msgid "Preview only. Device location is simulated."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:75
+msgid "Preview only. No search was submitted."
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:79
+msgid "Preview question"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:80
+msgid "Enter to send · Shift + Enter for a new line"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:101
+msgid "Live chat preview"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:102
+#: apps/dashboard/src/chat-preview.js:107
+msgid "Preview"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:104
+msgid "Preview device"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:104
+msgid "Desktop"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:104
+msgid "Mobile"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:105
+msgid "Placement"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:105
+msgid "Floating"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:105
+msgid "Embedded"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:106
+msgid "Replay opening"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:107
+msgid "Preview state"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:108
+msgid "Preview size"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:108
+msgid "100%"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:108
+msgid "Fit"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:110
+msgid "Chat preview canvas"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:111
+msgid "Interactive chat preview"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:113
+msgid "Scroll to explore · No AI credits used"
+msgstr ""
+
+#: apps/dashboard/src/chat-preview.js:113
+msgid "Sample preview · No AI credits used"
+msgstr ""
+
+#: apps/dashboard/src/chat.js:108
+msgid "Conversation history changed. Please refresh."
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:17
+msgid "Showing the last loaded values."
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:23
+msgid "Saved settings changed while you were editing. Your edits are still here. Choose which version to continue with."
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:23
+msgid "Load saved settings"
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:23
+msgid "Keep my edits"
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:62
+#: apps/dashboard/src/containers/Container.js:168
+#: apps/dashboard/src/containers/Container.js:179
+msgid "Saving…"
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:62
+#: apps/dashboard/src/containers/Container.js:168
+msgid "Unsaved changes"
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:62
+msgid "Saved settings"
+msgstr ""
+
+#: apps/dashboard/src/components/AdminSettings.js:64
+msgid "Save changes"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:7
+msgid "Directorist AI (activate license)"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:19
+msgid "Previously selected connector · unavailable"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:21
+msgid "Saved model · capability information unavailable"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:21
+msgid "Previously selected model · unavailable"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:22
+msgid "Use default AI connection"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:23
+msgid "Use existing workflow source"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:25
+msgid "Requires"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:26
+msgid "Capability information is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:26
+msgid "WordPress will check request support before generation."
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:26
+msgid "Configure a WordPress AI Connector for this task."
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:26
+msgid "The selected WordPress AI Connector or model does not support this task."
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:29
+msgid "Source depends on the current workflow"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:29
+msgid "WordPress automatic"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:29
+msgid "Uses shared credits"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:30
+msgid "AI connection"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:30
+msgid "Using default:"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:30
+msgid "Existing workflow choice"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:30
+msgid "Selected connection:"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:33
+msgid "provider"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:33
+msgid "Provider: automatic"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:33
+msgid "model"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:33
+msgid "Model: automatic"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:34
+msgid "Use my provider for this task"
+msgstr ""
+
+#: apps/dashboard/src/components/AiTaskRoute.js:36
+msgid "Your previous media source follows its listing or builder workflow. Choose a source above to make it independent."
+msgstr ""
+
+#: apps/dashboard/src/components/builder-preflight.js:29
+msgid "This page or its settings changed. Check again to continue. Your layout is unchanged."
+msgstr ""
+
+#: apps/dashboard/src/components/builder-preflight.js:39
+msgid "The editor integration has conflicting versions. Update or reinstall the integration, then reload the editor. Your layout is unchanged."
+msgstr ""
+
+#: apps/dashboard/src/components/builder-preflight.js:42
+msgid "Place this listing field inside a Listings Card before changing it with AI."
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:30
+msgid "Structured value available"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:48
+#: apps/dashboard/src/import-helpers.js:123
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Title"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:48
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Description"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:48
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Location"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:73
+#, js-format
+msgid "Listing %d"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:76
+msgid "Requested listing facts"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:77
+#: apps/dashboard/src/pages/Workflow.js:377
+msgid "Field"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:95
+#, js-format
+msgid "Listing #%d"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:115
+msgid "Sources"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:136
+msgid "Earlier result"
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:136
+msgid "Opening status may have changed. Ask again for current details."
+msgstr ""
+
+#: apps/dashboard/src/components/ConversationTranscript.js:139
+msgid "No site sources were verified for this response."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:42
+msgid "Undo was used for this change. Review the current canvas."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:44
+msgid "Cancellation requested. Waiting for the current work to stop. No new changes will be applied to this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:46
+msgid "Request cancelled. No changes were applied to this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:48
+msgid "Generation finished before cancellation. Its changes have not been applied to this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:49
+msgid "The request has stopped. Its last result is retained. No new changes were applied to this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:50
+msgid "Card padding was left unchanged because this element does not offer that control."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:50
+msgid "Unavailable optional settings were skipped. Supported changes were prepared."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:233
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:244
+msgid "Your earlier requests could not be checked. Check again before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:261
+msgid "Earlier conversations could not be loaded."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:299
+msgid "The editor changed pages. Open AI on the current page to continue."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:303
+msgid "This area’s conversation identity is unavailable. Reload the editor and select the area again."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:310
+msgid "This area’s conversation could not be saved. Reload the editor and try again."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:315
+msgid "Saving this area’s conversation took too long. Try again before sending your request."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:318
+msgid "This area changed before its conversation could be saved. Select the area again and retry."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:344
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:430
+msgid "The open layout could not be read. Wait for the editor to finish loading, then try again."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:345
+msgid "The editor is still saving. Wait for saving to finish, then try again."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:346
+msgid "Waiting for the editor to finish saving…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:377
+msgid "These messages could not be loaded."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:396
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:408
+msgid "Some earlier messages could not be loaded."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:425
+msgid "This result belongs to another editor tab. Continue in that tab or send a new request from this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:435
+msgid "The result does not match this page and request. Start a new request using the current layout."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:441
+msgid "Applied to this area. Review it in the canvas and use Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:441
+msgid "Applied to this template. Review the canvas and use Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:441
+msgid "Initial layout added to this page using native card defaults. Describe any refinements in your next message."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:441
+msgid "Applied to this page. Review the canvas and use Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:449
+msgid "The editor could not apply these changes. Your current layout is retained."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:457
+msgid "Use Undo in the native editor to revert these changes."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:483
+msgid "The canvas has changed since this result. Review the current layout and use the editor history for earlier changes."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:485
+msgid "Changes restored using the editor history. Review the canvas and use Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:595
+msgid "Your new page is ready. Open it to continue editing."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:625
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1035
+msgid "The request status could not be refreshed. Check the same request before sending another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:631
+msgid "Continue this request in its original editor tab, or cancel it before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:647
+msgid "This review changed. Check the request again before continuing."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:654
+msgid "This review could not continue. Check the request again."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:707
+msgid "Cancellation could not be confirmed. Check this request before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:714
+msgid "This earlier request belongs to another area. Check its outcome before starting another change."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:722
+msgid "Your request was sent but its status is unconfirmed. Check this request before sending another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:755
+msgid "Which directory should I use for this change?"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:760
+msgid "Request up to 10 directories at a time."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:761
+msgid "Use one directory when creating another page or editing a shared template. Multiple directory sections can be added to the current page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:786
+msgid "Another request on this page needs attention before starting this change."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:799
+msgid "The editor changed pages. Reopen the assistant to continue."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:829
+msgid "This directory is no longer available. Describe which available directory you want to use."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:833
+msgid "Tell me which directory you would like to use."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:842
+msgid "Tell me which directory this area should use."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:848
+msgid "This layout has no supported changes for the requested area. Select an editable area or describe a simpler change."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:871
+msgid "The layout changed while preparing this request. Send it again to include your latest edits."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:881
+msgid "The request could not be prepared. Your current layout is retained."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:966
+msgid "The earlier element request is not yet resolved. Check or cancel that request before starting another change."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:982
+msgid "Cancellation is not yet confirmed. Check the earlier request before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:984
+msgid "Cancellation could not be confirmed. Check the earlier request."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1025
+#: apps/dashboard/src/listing-form-composer.js:633
+msgid "Loading your conversation…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1026
+msgid "Describe the change to this area. Changes appear here in the editor."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1026
+msgid "Describe what you want on this page. Changes appear in the editor, ready for your review."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1026
+msgid "Describe what you want in this template. Changes appear in the editor, ready for your review."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1029
+msgid "Retry earlier conversations"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1029
+msgid "Load earlier conversations"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1030
+msgid "Retry earlier messages"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1030
+#: apps/dashboard/src/listing-form-composer.js:619
+msgid "Load earlier messages"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1032
+#: apps/dashboard/src/components/ListingMessage.js:18
+#: apps/dashboard/src/components/MessageHistory.js:65
+#: apps/dashboard/src/directory-assistant.js:192
+msgid "You"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1032
+msgid "This earlier message is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1033
+msgid "Cancellation could not be confirmed. Retry cancellation."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1033
+msgid "Undo changes"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1034
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1035
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1039
+#: apps/dashboard/src/components/editor-recovery.js:20
+#: apps/dashboard/src/directory-assistant.js:196
+#: apps/dashboard/src/listing-form-composer.js:635
+#: apps/dashboard/src/listing-form-composer.js:639
+#: apps/dashboard/src/pages/BuilderWorkflow.js:758
+msgid "Check request status"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1036
+msgid "Open new page"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1037
+msgid "Applied in an earlier editor session. Start a new request to change the current layout."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1037
+msgid "Earlier result. Applying it will first check the current layout."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1037
+msgid "Changes ready for this area."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1037
+msgid "Changes ready for this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1039
+msgid "An earlier request is unfinished. Check its status or continue it when you are ready."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1039
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1053
+#: apps/dashboard/src/listing-form-composer.js:640
+msgid "Continue request"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1040
+msgid "Applying changes…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1044
+msgid "An earlier request still needs its outcome checked. Check its status before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1044
+msgid "Some earlier requests could not be verified. Check again before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1044
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1045
+#: apps/dashboard/src/listing-form-composer.js:634
+msgid "Retry loading"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1044
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1047
+msgid "Check status"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1046
+msgid "An earlier element request was not confirmed. Its saved request is retained separately and will not be submitted from this conversation."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1046
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:95
+msgid "Check earlier request"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1046
+msgid "Dismiss earlier preparation"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1046
+msgid "Cancel earlier preparation"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1047
+msgid "Finish the request in its original conversation, or cancel it here before starting another change."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1047
+msgid "Document conversation"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1047
+#: apps/dashboard/src/components/editor-scope.js:101
+#, js-format
+msgid "Conversation for %s"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1047
+msgid "Another element’s conversation"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1047
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:96
+msgid "Cancel earlier request"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1048
+msgid "Another change is being prepared on this page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1051
+msgid "This request is not yet confirmed. Check its status before sending another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1051
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+msgid "Retry cancellation"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1051
+msgid "Check request"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1052
+msgid "This request belongs to an earlier editor session. Return to its original tab or cancel it before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1053
+msgid "Create the separate page you requested?"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1053
+msgid "This result needs a separate review before it can continue. It has not changed the open page."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1053
+msgid "Create new page"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1053
+#: apps/dashboard/src/directory-assistant.js:207
+#: apps/dashboard/src/listing-form-composer.js:646
+msgid "Cancel request"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1054
+msgid "directory sections prepared"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1054
+msgid "Request stopped. Existing sections remain in the editor."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1054
+msgid "Review the current page before continuing the remaining directories."
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1054
+msgid "Continue remaining directories"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1057
+msgid "Suggested next changes"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+msgid "Stopping…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+msgid "Applying…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+msgid "Preparing…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+#: apps/dashboard/src/pages/Workflow.js:366
+msgid "Send answer"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+msgid "Generate changes"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+msgid "Cancelling…"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1059
+#: apps/dashboard/src/listing-native-terms.js:85
+#: apps/dashboard/src/pages/BuilderWorkflow.js:750
+#: apps/dashboard/src/pages/Workflow.js:352
+msgid "Cancel"
+msgstr ""
+
+#: apps/dashboard/src/components/CurrentPageWorkflow.js:1061
+msgid "Review changes in the canvas. Use your editor’s Save or Update controls when ready."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-recovery.js:7
+msgid "The website returned an unexpected response. Ask the site administrator to check the server, then try again."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-recovery.js:24
+msgid "Review request"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-recovery.js:24
+msgid "Write another request"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-requests.js:24
+msgid "This editor check took too long. Try again."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:65
+#: apps/dashboard/src/components/scoped-area.js:189
+msgid "this area"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:66
+#, js-format
+msgid "What would you like to change in %s?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:66
+msgid "What would you like to change in this area?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:67
+msgid "Describe the result you want for the selected area."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:69
+msgid "this template"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:69
+msgid "this page"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:70
+msgid "What would you like to add or change in this template?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:70
+msgid "What would you like to add or change on this page?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:71
+msgid "For example, add searchable listings or improve the introduction."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:73
+msgid "this heading"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:74
+msgid "What would you like to change in this heading?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:75
+msgid "For example, shorten the heading or change its colour."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:78
+msgid "this listing field"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:78
+msgid "this listing card"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:79
+msgid "What would you like to change in this listing field?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:79
+msgid "What would you like to change in this listing card?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:80
+msgid "For example, adjust the spacing or show another available field."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:82
+msgid "these listings"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:83
+msgid "What would you like to change in these listings?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:84
+msgid "For example, use two columns or increase the space between cards."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:86
+msgid "this search form"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:87
+msgid "What would you like to change in this search form?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:88
+msgid "For example, change a label or rearrange the available filters."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:90
+msgid "this image"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:91
+msgid "What would you like to change in this image?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:93
+msgid "this text"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:94
+msgid "What would you like to change in this text?"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:95
+msgid "For example, make the text shorter or change its tone."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:99
+#, js-format
+msgid "Your answer about %s"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:100
+msgid "Answer the question shown above."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:101
+msgid "Template conversation"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:101
+msgid "Page layout conversation"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:102
+#: apps/dashboard/src/pages/BuilderWorkflow.js:792
+msgid "Apply to this area"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:102
+msgid "Apply to this template"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:102
+msgid "Apply to this page"
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:103
+msgid "Your messages stay with this element and your account."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:103
+msgid "Your messages stay with this template and your account."
+msgstr ""
+
+#: apps/dashboard/src/components/editor-scope.js:103
+msgid "Your messages stay with this page and your account."
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:22
+#: apps/dashboard/src/components/EditorConversationHistory.js:24
+msgid "Layout discussion"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:25
+#, js-format
+msgid "Undone: %s"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:25
+#, js-format
+msgid "Cancelled: %s"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:25
+#, js-format
+msgid "Could not complete: %s"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:25
+#, js-format
+msgid "Changes applied: %s"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:25
+#, js-format
+msgid "Changes prepared: %s"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:25
+#, js-format
+msgid "Request: %s"
+msgstr ""
+
+#: apps/dashboard/src/components/EditorConversationHistory.js:68
+msgid "Latest"
+msgstr ""
+
+#: apps/dashboard/src/components/ListingMessage.js:14
+msgid "This message could not be loaded. Please try again."
+msgstr ""
+
+#: apps/dashboard/src/components/ListingMessage.js:20
+msgid "Read full message"
+msgstr ""
+
+#: apps/dashboard/src/components/ListingMessage.js:24
+msgid "Previous value"
+msgstr ""
+
+#: apps/dashboard/src/components/ListingMessage.js:26
+#: apps/dashboard/src/listing-feedback.js:22
+msgid "Still needed before saving:"
+msgstr ""
+
+#: apps/dashboard/src/components/ListingMessage.js:27
+msgid "Previous values restored in your form. Review it, then Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:8
+msgid "Connected"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:8
+msgid "License required"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:9
+msgid "Your connected sites share one credit balance."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:9
+msgid "Check your license to finish connecting."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:9
+msgid "Activate your license to use shared AI credits."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:11
+msgid "Manage license"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:11
+msgid "Open license settings"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedConnection.js:12
+msgid "Directorist AI is temporarily unavailable. Your saved source selection is retained."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:7
+msgid "Chat & administration"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:7
+msgid "Other tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:11
+msgid "End date must be on or after start date."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:11
+msgid "Choose start and end dates."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:16
+msgid "Usage period"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:16
+#: apps/dashboard/src/pages/Usage.js:30
+msgid "Last 7 days"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:16
+#: apps/dashboard/src/pages/Usage.js:30
+msgid "Last 30 days"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:16
+#: apps/dashboard/src/pages/Usage.js:30
+msgid "Last 90 days"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:16
+msgid "Custom dates"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:17
+#: apps/dashboard/src/components/ManagedUsage.js:18
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "Task type"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:17
+msgid "All task types"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:18
+msgid "Summarize by"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:19
+msgid "From date"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:19
+msgid "To date"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "Directorist AI usage summary"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "WordPress usage summary"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "Tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "Credits used"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "Input tokens"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+#: apps/dashboard/src/pages/Operations.js:11
+#: apps/dashboard/src/pages/Operations.js:12
+msgid "Output tokens"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:24
+msgid "No usage in this period."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:34
+msgid "Directorist AI usage"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:34
+msgid "Credits used across your connected sites in the selected period."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:37
+msgid "Loading usage summary…"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:38
+#: apps/dashboard/src/components/ManagedUsage.js:52
+msgid "tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:38
+msgid "used"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:38
+msgid "Unconfirmed costs are excluded."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:38
+#: apps/dashboard/src/components/ManagedUsage.js:52
+msgid "Dates use"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:39
+msgid "Refresh usage"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:49
+msgid "Billed through your provider account. No Directorist AI credits are deducted."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:51
+msgid "Loading WordPress usage summary…"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:52
+msgid "input tokens"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:52
+#: apps/dashboard/src/pages/Operations.js:77
+msgid "output tokens"
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:52
+msgid "Some provider usage is unreported."
+msgstr ""
+
+#: apps/dashboard/src/components/ManagedUsage.js:53
+msgid "Usage summary is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:35
+msgid "Earlier message"
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:65
+msgid "Assistance"
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:68
+msgid "Loading message…"
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:68
+msgid "Show less"
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:68
+msgid "View full message"
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:70
+msgid "This message could not be loaded. It may no longer be available. Try again."
+msgstr ""
+
+#: apps/dashboard/src/components/MessageHistory.js:77
+msgid "Previous conversations"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:49
+msgid "The earlier draft could not be verified. Check its status before starting another request."
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:54
+msgid "The earlier request could not be checked. Keep it and check again before starting another."
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:80
+msgid "The earlier request has not been confirmed as stopped. Check its status before continuing."
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:84
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:85
+msgid "Earlier request"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:86
+msgid "Your earlier task is retained. After reloading the editor, inspect its saved review or private draft here. Applying to the current canvas needs a new native capture."
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:89
+msgid "View saved review"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:90
+msgid "This review prepares a separate private draft. It has not been applied to your open layout."
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:91
+msgid "Update a component"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:91
+msgid "Add a supported section"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:93
+#: apps/dashboard/src/pages/BuilderWorkflow.js:789
+msgid "Open the private draft in WordPress"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:93
+#: apps/dashboard/src/pages/BuilderWorkflow.js:789
+msgid "Preview the private page"
+msgstr ""
+
+#: apps/dashboard/src/components/RecoveredBuilderTask.js:96
+msgid "Reject earlier changes"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:6
+msgid "Queued"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:7
+msgid "Working"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:8
+msgid "Waiting for your answer"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:9
+msgid "Waiting for your review"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:10
+msgid "Waiting for the editor"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:11
+msgid "Completed"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:12
+#: apps/dashboard/src/pages/Usage.js:43
+msgid "Failed"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:13
+msgid "Partially completed"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:14
+msgid "Outcome unknown"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:15
+msgid "Cancelled"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:16
+msgid "Cancelling"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:20
+msgid "Preparing your request"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:21
+msgid "Reading the saved layout"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:22
+msgid "Preparing the layout instructions"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:23
+msgid "Preparing proposed changes"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:24
+msgid "Checking the proposed changes"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:25
+msgid "Preparing changes for review"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:26
+msgid "Creating the approved draft"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:27
+msgid "Adjusting the proposed layout…"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:31
+msgid "The selected AI connection could not complete this request. Your existing content and previous results were retained."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:32
+#: apps/dashboard/src/components/RunStatus.js:39
+msgid "Directorist AI is not connected. Ask the site administrator to check the license and service connection."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:33
+msgid "The configured AI model changed. Start a new request."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:34
+msgid "The selected AI source cannot run this request. Ask the site administrator to check the required capabilities."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:35
+msgid "WordPress could not verify support for this request. No generation was started for this step. Ask the site administrator to check the selected connector."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:36
+#: apps/dashboard/src/components/RunStatus.js:37
+msgid "Directorist AI could not start this task. Ask the site administrator to check the service connection."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:38
+msgid "Directorist AI could not start image generation. Ask the site administrator to check the service connection."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:40
+msgid "Your shared AI credits are insufficient. Ask the site administrator to buy credits."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:41
+#: apps/dashboard/src/components/RunStatus.js:42
+#: apps/dashboard/src/components/RunStatus.js:43
+msgid "The Directorist AI request is unconfirmed. Its existing receipt is retained. Do not repeat it while its status is being checked."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:44
+#: apps/dashboard/src/components/RunStatus.js:45
+msgid "Directorist AI could not complete this request. Your layout and conversation are retained. Review the request before trying again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:46
+msgid "A feature needed for this change is unavailable. Your layout and conversation are retained. Review the request or ask the site administrator to check the installed features."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:47
+#: apps/dashboard/src/components/RunStatus.js:48
+msgid "The page or directory settings changed while this request was being prepared. Review the current page and send your request again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:49
+msgid "This change no longer matches the current page or selected area. Review the current selection and send your request again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:50
+msgid "Your account or editor session could not authorize this change. Check your access and reopen the editor before trying again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:51
+msgid "The page, selected area or required result is no longer available. Review the current page before starting another request."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:52
+msgid "The result has not been confirmed. Check this request before sending it again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:53
+msgid "This layout needs listing fields that are unavailable in one or more directories. Your current layout is retained. Review the request and the available directory fields before trying again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:54
+msgid "The AI could not arrange this layout with the available components. Your current layout is retained. Review the request or try one section at a time."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:55
+msgid "An AI usage limit was reached for this request or website. Provider credits may still be available. Your content and conversation are retained."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:56
+msgid "This request contains more detail than AI could prepare in one step. Try one section or task at a time. Your content and conversation are retained."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:57
+msgid "The AI response reached its token limit. Try a shorter request."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:58
+msgid "The AI response exceeded its reserved usage limit. Review this request before trying again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:59
+msgid "AI stopped repeating work that was not advancing. Your content and conversation are retained. Refine the request to continue."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:60
+msgid "AI could not prepare this request. Your existing content and conversation were retained. Review the request and try again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:61
+msgid "The requested layout could not be prepared with the available editor controls. Try a simpler change or select a supported editable area."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:62
+msgid "The editor could not finish preparing this request. Your current layout is unchanged. Start again to retry."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:63
+msgid "A validated source-backed answer could not be produced. Try a more specific request."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:64
+msgid "The answer sources changed. Run the lookup again."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:65
+msgid "AI storage is unavailable. Ask an administrator to check the site."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:66
+msgid "Current authorized context is unavailable. Try a new request."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:77
+msgid "The request failed. Try a new request or contact the site administrator."
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:82
+msgid "Run status:"
+msgstr ""
+
+#: apps/dashboard/src/components/RunStatus.js:82
+msgid "Request unconfirmed"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:16
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Page"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:17
+msgid "Template part"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:18
+msgid "Single listing template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:19
+msgid "Listing archive template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:20
+msgid "Category archive template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:21
+msgid "Location archive template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:22
+msgid "Tag archive template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:23
+msgid "Author listings template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:24
+msgid "Home/search template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:25
+msgid "Template"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:58
+msgid "Refreshing this area…"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:58
+msgid "Reading this area…"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:59
+msgid "Open this shared pattern or template part in its native editor to change its source. To change only this instance, use the native Detach action first."
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:129
+msgid "This request is still editing the area shown above. Finish or cancel it to follow your new selection."
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:141
+msgid "The request is finished. Review its result, then follow your new selection."
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:189
+#, js-format
+msgid "Edit %s with AI"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:189
+#: apps/dashboard/src/listing-form-composer.js:74
+msgid "Edit with AI"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:189
+msgid "Close area assistance"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:190
+msgid "Follow current selection"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:191
+msgid "Select a block to edit it with AI."
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:191
+msgid "Select an element to edit it with AI."
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:194
+msgid "AI assistance for selected area"
+msgstr ""
+
+#: apps/dashboard/src/components/scoped-area.js:196
+msgid "Edit this area with AI"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:27
+msgid "Azure"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:27
+msgid "Indigo"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:27
+msgid "Green"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:27
+msgid "Navy"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:30
+msgid "Color"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:34
+msgid "How AI runs"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:35
+#: apps/dashboard/src/pages/Connections.js:60
+#: apps/dashboard/src/pages/Credits.js:59
+msgid "Directorist AI credits"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:35
+msgid "Uses your shared credits. No API key to manage."
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:35
+#: apps/dashboard/src/pages/Connections.js:60
+#: apps/dashboard/src/pages/Credits.js:59
+msgid "My own AI provider"
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:35
+msgid "Choose a connected provider and model. Your provider bills you directly."
+msgstr ""
+
+#: apps/dashboard/src/components/SettingsDesign.js:35
+msgid "Recommended"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:8
+#: apps/dashboard/src/directory-assistant.js:199
+msgid "Create directory"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:8
+msgid "Edit directory"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:9
+msgid "Chat turn"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:9
+msgid "Full listing"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:9
+msgid "Improve listing"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:9
+msgid "Listing field"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:10
+msgid "Full layout"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:10
+msgid "Refine selected layout"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:10
+msgid "Inspection"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:10
+msgid "Native action"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:12
+msgid "Unclassified legacy task"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:14
+#: apps/dashboard/src/pages/Usage.js:11
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Automatic / unspecified"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:22
+msgid "Logical tasks and receipts"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:22
+msgid "One task groups its model calls and internal repairs. Explicit image addons have a parent task. These independently retained receipts survive Clear history. Provider-call history can cover a different retained set."
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:23
+msgid "Task accounting is unavailable for this report. Legacy call history has no independently recorded task identity."
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:24
+msgid "Task reporting is bounded. Totals cover at most 1,000 matching tasks. The latest 250 receipts are loaded."
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:26
+msgid "Logical tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:26
+msgid "Completed tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:26
+msgid "Released / unsuccessful tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:26
+msgid "Tasks needing reconciliation"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:27
+msgid "Calls within retained tasks"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:27
+msgid "Internal repair calls"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:29
+msgid "WordPress/BYO deducts no managed credits. Managed charges come from server-issued USD receipts. No balance or provider cost is inferred from token counts or task outcomes."
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:31
+msgid "Independently retained Directorist AI logical-task receipts"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:32
+msgid "Created / task"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:32
+msgid "Source / feature"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:32
+msgid "State / outcome"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:32
+msgid "Calls / repairs"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:32
+msgid "Quoted / settled credits"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:32
+msgid "Receipt"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:34
+msgid "Explicit addon"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:35
+msgid "Managed · not connected"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:35
+msgid "Isolated mock units"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:35
+msgid "Managed · usage plus markup"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:35
+msgid "No AI call"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:35
+msgid "WordPress/BYO · no managed charge"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:36
+msgid "Reconciliation required"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:38
+msgid "See USD receipts"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:38
+msgid "Non-authoritative mock"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:39
+msgid "Task receipt"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:40
+msgid "Task"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:40
+msgid "Parent"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:40
+#: apps/dashboard/src/pages/Appearance.js:161
+#: apps/dashboard/src/pages/Appearance.js:181
+#: apps/dashboard/src/pages/Appearance.js:217
+#: apps/dashboard/src/pages/Appearance.js:218
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+#: apps/dashboard/src/pages/BuilderWorkflow.js:782
+msgid "None"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:40
+msgid "Rate policy"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:41
+msgid "Provider cost"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:42
+msgid "Requested images"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:44
+msgid "Call"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:44
+msgid "Internal repair"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:45
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Requested model"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:45
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Selected SDK model"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:45
+msgid "Provider-reported model"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:46
+msgid "Service receipt"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:46
+msgid "USD provider cost / charged"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:46
+msgid "Pricing version"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:47
+msgid "Reported input / output tokens"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:51
+msgid "Task receipt pagination"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:51
+#, js-format
+msgid "Showing %1$d–%2$d of %3$d loaded task receipts"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:52
+msgid "Previous task page"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:52
+#: apps/dashboard/src/pages/Usage.js:59
+msgid "Previous"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:53
+msgid "Next task page"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:53
+#: apps/dashboard/src/pages/Usage.js:60
+msgid "Next"
+msgstr ""
+
+#: apps/dashboard/src/components/TaskUsage.js:55
+msgid "No independently recorded tasks match these filters."
+msgstr ""
+
+#: apps/dashboard/src/components/visitor-nearby.js:16
+msgid "Find listings near me"
+msgstr ""
+
+#: apps/dashboard/src/components/VisitorResults.js:10
+#: apps/dashboard/src/pages/Workflow.js:347
+msgid "Listing"
+msgstr ""
+
+#: apps/dashboard/src/components/VisitorResults.js:241
+#, js-format
+msgid "%d listing"
+msgid_plural "%d listings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/containers/Container.js:9
+#: apps/dashboard/src/pages/FrontendChat.js:15
+msgid "Setup and behavior"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:9
+#: apps/dashboard/src/pages/FrontendChat.js:16
+msgid "Appearance"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:10
+#: apps/dashboard/src/pages/index.js:9
+msgid "Overview"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:10
+msgid "Directories & listing fields"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:10
+msgid "Preview & verify"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:107
+msgid "Your changes are still open. Review the save result and try again."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:118
+msgid "Could not save your changes. Keep editing and try again."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:157
+msgid "Directorist AI navigation"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:168
+msgid "Review the settings that need attention before saving."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:168
+#: apps/dashboard/src/directory-assistant.js:199
+#: apps/dashboard/src/listing-form-composer.js:626
+msgid "Discard"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:168
+#: apps/dashboard/src/pages/Appearance.js:228
+#: apps/dashboard/src/pages/Overview.js:45
+msgid "Save"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:172
+msgid "A task is still running"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:172
+msgid "Save your changes before leaving?"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:172
+msgid "Ready to leave"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:173
+msgid "Wait for the current task to finish before leaving this settings page."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:173
+msgid "You have unsaved choices on this page. Save them, discard them or keep editing."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:173
+msgid "The task has finished. You can continue to the page you selected."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:174
+msgid "Some choices need review before they can be saved. Keep editing to complete that review."
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:177
+msgid "Keep editing"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:178
+msgid "Discard changes and leave"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:179
+msgid "Save and leave"
+msgstr ""
+
+#: apps/dashboard/src/containers/Container.js:180
+#: apps/dashboard/src/pages/BuilderWorkflow.js:763
+msgid "Continue"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:24
+msgid "New directory"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:24
+msgid "Configuration changes"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:25
+msgid "Review the fields and how they appear throughout your directory."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:25
+msgid "Existing field keys and stored listing values are preserved. Apply these changes, then save in the native builder."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:26
+msgid "Templates with individually selected fields may need a separate edit in their builder."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:28
+msgid "Form fields"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:28
+msgid "Search filters"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:28
+#: apps/dashboard/src/pages/BuilderWorkflow.js:704
+msgid "Single listing"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:28
+#: apps/dashboard/src/pages/Appearance.js:167
+#: apps/dashboard/src/pages/Appearance.js:204
+msgid "Listing cards"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:30
+msgid "Submission form"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:30
+msgid "Changed fields"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:31
+msgid "Required"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:31
+msgid "Filter"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:31
+msgid "Single"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:31
+msgid "Card"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:33
+msgid "Directory settings"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:33
+msgid "Enabled"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:33
+msgid "days"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:59
+msgid "The earlier request has not been confirmed. Check its status before sending another instruction."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:59
+msgid "The directory changed since this request. Its status is retained, but its changes cannot be applied."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:68
+msgid "The result could not be confirmed. Check its status before another request."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:79
+msgid "Enable multiple directories in Directorist settings before creating another directory."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:85
+msgid "Directory configuration"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:85
+msgid "New directory · Native builder configuration"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:107
+msgid "Add the directory details needed to continue."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:110
+msgid "The directory result could not be confirmed. Review the request before trying again."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:130
+msgid "The native configuration changed. Start a fresh request to include those edits."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:157
+msgid "The directory changed. Start a fresh request to preserve your edits."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:181
+msgid "Clearer labels"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:182
+msgid "Add a filter"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:183
+msgid "Group related fields"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:185
+msgid "Restaurant directory"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:186
+msgid "Professional services"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:187
+msgid "Property directory"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:189
+#: apps/dashboard/src/directory-assistant.js:228
+msgid "Edit directory with AI"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:189
+#: apps/dashboard/src/directory-assistant.js:228
+#: apps/dashboard/src/directory-assistant.js:232
+msgid "Create directory with AI"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:195
+msgid "Preparing your directory configuration…"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:197
+msgid "Start a new request"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:199
+msgid "Apply to builder"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:200
+msgid "Your directory is ready."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:200
+msgid "Open directory builder"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:201
+msgid "Apply recovered changes to builder"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:202
+msgid "Changes are in the native builder. Use its Update button to save them."
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:205
+#: apps/dashboard/src/pages/BuilderWorkflow.js:677
+msgid "Try an idea"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:206
+#: apps/dashboard/src/pages/BuilderWorkflow.js:674
+msgid "What would you like to change?"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:206
+msgid "Describe your directory"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:206
+msgid "Describe the fields, filters or directory settings you need…"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:207
+msgid "Working…"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:207
+msgid "Refine configuration"
+msgstr ""
+
+#: apps/dashboard/src/directory-assistant.js:207
+msgid "Send instruction"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:66
+msgid "Open a page or a supported Directorist template to begin."
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:71
+msgid "Document context is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:77
+msgid "Reading this document…"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:80
+msgid "Editing this page"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:80
+msgid "Untitled document"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:106
+#: apps/dashboard/src/editor-launcher.js:31
+msgid "Edit layout with Directorist AI"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:106
+#: apps/dashboard/src/editor-assistant.js:110
+msgid "Edit layout with AI"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:109
+msgid "Directorist AI layout assistant"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:110
+msgid "Close assistant"
+msgstr ""
+
+#: apps/dashboard/src/editor-assistant.js:138
+msgid "Edit this page with AI"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:65
+msgid "The saved listing did not match the reviewed facts. Check the existing result before continuing."
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:65
+msgid "More than one matching listing was found. Review these records before continuing."
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:65
+msgid "The saved result is uncertain. Check its status before starting another import."
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:65
+msgid "This source record was already imported."
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Category"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+#: apps/dashboard/src/listing-native-terms.js:82
+msgid "Tags"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Text field"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Number field"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Choices"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Choice"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Yes or no"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Email"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Phone"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Website"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+#: apps/dashboard/src/pages/BuilderWorkflow.js:703
+msgid "Map"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:123
+msgid "Images"
+msgstr ""
+
+#: apps/dashboard/src/import-helpers.js:124
+msgid "Saved field"
+msgstr ""
+
+#: apps/dashboard/src/import-page.js:13
+#, js-format
+msgid "%d record"
+msgid_plural "%d records"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/import-page.js:523
+#, js-format
+msgid "%d second elapsed"
+msgid_plural "%d seconds elapsed"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/import-page.js:584
+#, js-format
+msgid "%d required field needs a source"
+msgid_plural "%d required fields need a source"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/import-page.js:666
+#, js-format
+msgid "Approve and import %d listing"
+msgid_plural "Approve and import %d listings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/listing-feedback.js:23
+#: apps/dashboard/src/listing-form-composer.js:630
+msgid "Open listing draft"
+msgstr ""
+
+#: apps/dashboard/src/listing-feedback.js:25
+msgid "Undo AI changes"
+msgstr ""
+
+#: apps/dashboard/src/listing-feedback.js:26
+msgid "Redo AI changes"
+msgstr ""
+
+#: apps/dashboard/src/listing-feedback.js:27
+msgid "Manual edits kept. Undo and Redo are available only when the affected fields match."
+msgstr ""
+
+#: apps/dashboard/src/listing-feedback.js:29
+msgid "View conversation"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:32
+msgid "The directory changed. Open assistance again."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:41
+msgid "This field is unavailable in the current form."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:56
+#: apps/dashboard/src/listing-form-composer.js:615
+msgid "Generate listing with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:56
+#: apps/dashboard/src/listing-form-composer.js:615
+msgid "Improve listing with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:56
+#: apps/dashboard/src/listing-form-composer.js:98
+msgid "Listing fields"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:62
+msgid "Import listings with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:74
+#: apps/dashboard/src/listing-native-media.js:51
+msgid "Generate with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:169
+msgid "The listing or directory changed. Restore the original fields before recovering this request, or check its saved activity. A new generation has not been started."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:227
+msgid "Earlier messages could not be loaded."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:275
+msgid "The request status could not be confirmed. Your original request is saved. Check it again before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:296
+msgid "Earlier request status could not be checked. Check again before starting a generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:299
+msgid "A listing draft was created. Open it to review its current status."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:306
+msgid "Your listing fields changed after this request. Review the earlier result or cancel it to keep your current edits. Do not repeat the generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:316
+#: apps/dashboard/src/listing-form-composer.js:380
+msgid "Your original request is saved. Continue it when you are ready. Checking status does not resend it."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:343
+msgid "Your listing fields changed after this request. Review the earlier result or cancel it to keep your current edits."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:346
+msgid "Here is the suggested image. Review it before adding it."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:346
+msgid "Here are the suggested changes."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:347
+msgid "Your review decision is not confirmed. Check status, then continue the request to retry that decision, or cancel the request."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:354
+msgid "This review is no longer available. Update your request to prepare a new preview."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:360
+msgid "More listing details are needed. Please add the missing facts."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:372
+msgid "The clarification could not be loaded. You can add the missing business details or cancel this request."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:377
+msgid "The request finished without a verified listing result. Check its status before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:379
+msgid "The request could not finish. Your current form and previous results were retained. Check the AI connection or revise your request."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:379
+msgid "The outcome is not confirmed. Check this request before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:381
+msgid "Cancellation is not confirmed yet. Check this request again before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:382
+#: apps/dashboard/src/listing-form-composer.js:581
+#: apps/dashboard/src/listing-form-composer.js:582
+msgid "AI request cancelled."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:398
+msgid "Request cancelled. Your current form has been kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:407
+msgid "Your form changed while this request was being prepared. No verified changes were added. Send a new message to use your current fields."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:411
+msgid "Your form was saved or changed while this request was being prepared. Your current text has been kept. Cancel this request before starting a fresh one."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:415
+msgid "The request status is temporarily unavailable. Check this request before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:432
+msgid "Which directory should this listing belong to? Choose the matching directory above so I can use its actual fields."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:453
+msgid "The request status could not be confirmed. Your original request is saved. Check it before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:480
+msgid "The original review decision is not confirmed. Check its status or cancel the request before changing that decision."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:487
+#: apps/dashboard/src/listing-form-composer.js:525
+msgid "Listing facts changed. Start a fresh request."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:488
+msgid "The image selection changed. Start a fresh request."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:489
+msgid "Review the image preview before accepting it."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:490
+msgid "You edited a proposed field. Start a fresh request to preserve those changes."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:511
+msgid "The original form snapshot is unavailable. Check the saved result before starting another request."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:522
+msgid "The form changed after this request. Your edits were kept. Start a new request using the current fields."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:528
+msgid "The result changes another field."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:547
+msgid "Listing draft created. It has not been published."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:547
+#: apps/dashboard/src/listing-form-composer.js:565
+msgid "The suggested changes were undone."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:547
+#: apps/dashboard/src/listing-form-composer.js:549
+msgid "Your fields already match this result. No changes were needed."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:547
+#: apps/dashboard/src/listing-form-composer.js:565
+msgid "Changes added to your form. Save or Update the listing when ready."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:547
+msgid "The earlier result is ready. Continue the request to add it to your form."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:547
+msgid "The result is ready. Your current edits have been kept. Resolve the field conflict before applying it."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:549
+msgid "Listing draft created. Review it before publishing."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:549
+msgid "Image added to your form. Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:549
+msgid "AI changes added. Review your form, then Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:566
+msgid "Previous values restored. Review your form before saving."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:566
+msgid "AI changes restored. Review your form before saving."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:585
+msgid "Cancellation could not be confirmed. Check this request before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Create a clean illustrative image inspired by these business facts"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Create a warm, natural-looking image with no text or logos"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Create a minimal illustration using these colours: "
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Make this title clearer and more concise"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Create a title using the supplied business facts"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Rewrite this using a welcoming, professional tone"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Make this shorter while keeping the important facts"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Improve clarity without adding new claims"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Create a listing from these business details: "
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Help me draft a listing. Ask for essential missing facts"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Improve the title and description, keeping the facts"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Rewrite this listing in a welcoming, professional tone"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:607
+msgid "Make the listing clearer and more concise"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:615
+msgid "Generate"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:615
+msgid "with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:615
+msgid "Edit"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:616
+#: apps/dashboard/src/listing-form-composer.js:617
+#: apps/dashboard/src/pages/BuilderWorkflow.js:730
+#: apps/dashboard/src/pages/BuilderWorkflow.js:741
+msgid "Choose a directory"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:617
+#: apps/dashboard/src/pages/BuilderWorkflow.js:768
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+#: apps/dashboard/src/pages/BuilderWorkflow.js:782
+#: apps/dashboard/src/pages/Workflow.js:348
+msgid "Directory"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:618
+msgid "Listing conversation"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:620
+msgid "Describe the illustration you need. Review it before adding it. Generated images may not depict the actual business."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:620
+msgid "Tell me about the business. I will ask for essential missing details and prepare the supported fields for one listing draft."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:620
+msgid "Tell me what to improve. Supported native field changes will be added to your form with Undo. Save or Update the listing when you are ready."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:623
+msgid "Current"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:623
+msgid "Current selected image"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:623
+msgid "Empty"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:623
+msgid "Suggested"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:624
+msgid "Review actions"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:625
+#: apps/dashboard/src/pages/Appearance.js:134
+msgid "Use image"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:625
+msgid "Create draft"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:625
+msgid "Use changes"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:628
+msgid "Adding changes to your form…"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:630
+msgid "Start another listing"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:632
+msgid "Browser storage is unavailable. Keep this page open until the request finishes. Your server activity remains available."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:634
+msgid "Earlier messages could not be loaded. Your current request is retained."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:635
+#: apps/dashboard/src/pages/Overview.js:41
+msgid "Checking…"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:637
+msgid "Checking earlier listing requests…"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:638
+msgid "Preparing your listing changes…"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:639
+msgid "This request is unfinished. Continue it when you are ready."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:640
+msgid "Continue cancellation"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:643
+msgid "Fields AI can edit"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:644
+msgid "Use their native controls for:"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:645
+msgid "Update your request"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:645
+msgid "Your reply"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:645
+msgid "Your message"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:645
+msgid "Describe what you need…"
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:646
+msgid "A new listing draft needs your review."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:646
+msgid "Review images before adding them."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:646
+msgid "Review your form, then Save or Update when ready."
+msgstr ""
+
+#: apps/dashboard/src/listing-form-composer.js:646
+msgid "Send"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:25
+msgid "Refine the earlier image idea using the current business details"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:25
+msgid "Make it even more concise while preserving the important facts"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:25
+msgid "Keep the welcoming tone and make the wording clearer"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:25
+msgid "Refine the earlier suggestion using the current listing details"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:26
+msgid "Try another version of my earlier request"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:26
+msgid "Try another version of the earlier suggestion. Keep the current listing facts."
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:30
+msgid "Earlier suggestion excerpt"
+msgstr ""
+
+#: apps/dashboard/src/listing-history.js:41
+msgid "This earlier request is unfinished. Check the original request before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:20
+msgid "The form changed after AI. Your edits have been preserved."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:30
+msgid "The directory changed. Start a request in the current directory."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:33
+msgid "The current form has no supported fields."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:44
+#: apps/dashboard/src/listing-native-form.js:52
+msgid "The form changed after AI. Your manual edits have been preserved."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:57
+msgid "The form changed after Undo. Your manual edits have been preserved."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:63
+msgid "Start a fresh request before copying suggestions into this form."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:64
+msgid "The directory changed. Start a new request."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:66
+msgid "Only reviewed native field suggestions can be copied into this form. Add files with the native uploader."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:67
+msgid "These suggestions belong to another listing or directory."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:71
+msgid "A proposed field is unavailable in this form."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:73
+msgid "You edited a proposed field while the assistant was working. Start a new request to preserve those edits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-form.js:74
+msgid "The native suggestion has an unsupported format."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:4
+msgid "The native image controls are unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:6
+msgid "The selected image changed. Open assistance again."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:14
+msgid "The image selection changed. Start a fresh request to preserve your edits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:15
+msgid "The imported image result is invalid."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:19
+msgid "The preview image control is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:25
+msgid "The gallery control is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:29
+msgid "The selected gallery image is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:35
+msgid "Listing image"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:36
+#: apps/dashboard/src/pages/Appearance.js:71
+msgid "Remove image"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:50
+msgid "Preview image / thumbnail"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:50
+msgid "Gallery"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:62
+msgid "Replace with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-media.js:62
+msgid "Selected gallery image"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:7
+#: apps/dashboard/src/listing-native-pricing.js:8
+msgid "Use the native pricing format."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:48
+msgid "The native pricing controls changed. Start a fresh request."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:50
+msgid "This price type is unavailable in the native directory."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:51
+msgid "Use the native numeric price format."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:52
+msgid "Choose an available native price range."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:53
+msgid "The native pricing selection needs its supplied value."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:54
+msgid "The native price range option changed."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:55
+msgid "The price exceeds its native format or limits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:57
+msgid "Keep inactive native pricing values unchanged."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:61
+msgid "The native pricing controls changed. Your edits were kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-pricing.js:65
+msgid "The native pricing controls did not retain this value."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:9
+msgid "This category or tag field is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:12
+msgid "The native category controls are unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:16
+msgid "The native tag controls are unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:17
+msgid "Add or clear the tags you are typing before starting AI assistance."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:22
+msgid "The category or tag selection changed. Start a fresh request to preserve your edits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:24
+msgid "The reviewed category or tag result is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:29
+msgid "The native category list is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:53
+msgid "AI request stopped. Your selection is unchanged."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:56
+msgid "The AI request timed out. Your selection is unchanged. Please try again."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:66
+msgid "The selection changed after AI. Your manual edits have been preserved."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:82
+msgid "Categories"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:87
+msgid "AI request stopped. Checking whether the original request was cancelled."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:95
+msgid "AI is taking too long. Your selection is unchanged. Please try again."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:98
+msgid "Choosing relevant terms…"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:105
+#: apps/dashboard/src/listing-native-terms.js:113
+#: apps/dashboard/src/listing-native-terms.js:179
+msgid "Cancellation is not confirmed yet. Check the original request before starting another suggestion."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:106
+msgid "The original category or tag request could not be verified."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:122
+#: apps/dashboard/src/listing-native-terms.js:179
+msgid "The original AI request already finished. Your current selection was kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:122
+msgid "The original request stopped. Your selection was kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:122
+#: apps/dashboard/src/listing-native-terms.js:179
+msgid "AI request cancelled. Your selection was kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:127
+msgid "The listing form was closed. Check the original request when you return."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:137
+msgid "The category or tag result is not verified yet. Check the original request before starting another suggestion."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:139
+msgid "Listing details changed while AI was working. Your edits have been preserved. The original AI result remains in your activity."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:144
+#, js-format
+msgid "Created: %s. "
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:144
+#, js-format
+msgid "Selected: %s. Save or Update to keep this selection."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:145
+msgid "Undo"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:147
+msgid "Previous selection restored. Newly created terms remain available."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:147
+msgid "Previous selection restored."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:162
+msgid "Add more business details and try again."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:162
+msgid "AI could not choose terms. Your selection is unchanged. Please try again."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:164
+msgid "The outcome needs checking. Check the original request before starting another suggestion."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:165
+msgid "Listing details changed. Check or cancel the original request before starting another suggestion. Your current selection was kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:166
+msgid "Waiting for the background worker… You can keep editing or cancel."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:166
+msgid "Choosing relevant terms… You can keep editing or cancel."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:184
+#: apps/dashboard/src/pages/BuilderWorkflow.js:720
+msgid "Check original request"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-terms.js:184
+#: apps/dashboard/src/listing-native-terms.js:189
+msgid "Choose with AI"
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:27
+msgid "The native selection is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:58
+msgid "The reviewed native value is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:61
+msgid "This selection needs a valid native value."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:62
+msgid "This selection exceeds the native field limits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:65
+msgid "This switch needs a native on or off value."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:85
+msgid "The native control changed. Start a fresh request."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:87
+msgid "A required native field cannot be cleared."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:91
+msgid "A suggestion is not one of the native field choices."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:92
+#: apps/dashboard/src/listing-native-values.js:120
+msgid "The native taxonomy option is not rendered. Refresh the form before applying."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:93
+msgid "A native field option is no longer available."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:96
+msgid "A suggestion exceeds the native number limits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:97
+msgid "A suggestion exceeds the native field limits."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:99
+msgid "A suggestion does not meet the native field format."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:105
+msgid "The native control changed. Your edits were kept."
+msgstr ""
+
+#: apps/dashboard/src/listing-native-values.js:108
+msgid "A native term is no longer available."
+msgstr ""
+
+#: apps/dashboard/src/listing-term-request.js:32
+msgid "The original category or tag request could not be verified. Check this request before starting another suggestion."
+msgstr ""
+
+#: apps/dashboard/src/listing-term-request.js:39
+msgid "Listing details changed before the original request was confirmed. Restore those details or cancel the saved request. A second suggestion has not been started."
+msgstr ""
+
+#: apps/dashboard/src/listing-thread.js:22
+msgid "Here is the suggested image."
+msgstr ""
+
+#: apps/dashboard/src/listing-thread.js:22
+msgid "Here is the suggested text."
+msgstr ""
+
+#: apps/dashboard/src/listing-thread.js:22
+msgid "This request finished. Review the current listing before making further changes."
+msgstr ""
+
+#: apps/dashboard/src/listing-thread.js:37
+msgid "This request did not finish. Review your current listing before trying again."
+msgstr ""
+
+#: apps/dashboard/src/pages/AiAndCredits.js:19
+#: apps/dashboard/src/pages/index.js:11
+#: apps/dashboard/src/pages/Overview.js:40
+msgid "AI & credits"
+msgstr ""
+
+#: apps/dashboard/src/pages/AiAndCredits.js:19
+msgid "Choose what powers AI on this site."
+msgstr ""
+
+#: apps/dashboard/src/pages/AiAndCredits.js:22
+msgid "Limits and data retention"
+msgstr ""
+
+#: apps/dashboard/src/pages/AiAndCredits.js:22
+msgid "Daily limits and how long records are kept."
+msgstr ""
+
+#: apps/dashboard/src/pages/AiAndCredits.js:25
+#: apps/dashboard/src/pages/License.js:30
+msgid "License"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:17
+msgid "Welcome message"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:18
+#: apps/dashboard/src/pages/Appearance.js:180
+msgid "Input placeholder"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:21
+msgid "Panel corners (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:21
+msgid "Maximum width (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:22
+msgid "Text size (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:22
+msgid "Line height (%)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:22
+msgid "Content spacing (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:22
+msgid "Bubble corners (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:22
+msgid "Card corners (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:22
+msgid "Card padding (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Chat button size (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Chat button corners (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Distance from side (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Distance from bottom (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Mobile side spacing (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Mobile bottom spacing (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Maximum height (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Panel padding (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Border width (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "User message width (%)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Button corners (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Button horizontal padding (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Input corners (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Maximum input height (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Motion duration (ms)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Header icon size (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:23
+msgid "Message spacing (px)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:43
+msgid "Reset"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:43
+msgid "Size and spacing"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:43
+msgid "Colors"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:54
+msgid "gradient"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:54
+msgid "Gradient"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:57
+msgid "reset"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:57
+msgid "Use default color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:70
+msgid "No image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:71
+msgid "Change image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:71
+msgid "Choose image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:72
+msgid "Upload an image or choose one from your Media Library."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:73
+msgid "Choose an image or a different icon before saving."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:75
+msgid "Use an image URL"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:109
+msgid "Accent"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:110
+#: apps/dashboard/src/pages/Appearance.js:191
+#: apps/dashboard/src/pages/Appearance.js:192
+msgid "Light"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:111
+#: apps/dashboard/src/pages/Appearance.js:168
+#: apps/dashboard/src/pages/Appearance.js:213
+msgid "Text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:112
+msgid "Message"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:113
+#: apps/dashboard/src/pages/Appearance.js:191
+#: apps/dashboard/src/pages/Appearance.js:192
+msgid "Dark"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:130
+msgid "Default appearance restored. Save to apply."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:134
+msgid "Choose header image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:134
+msgid "Choose chat button image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:149
+msgid "Appearance saved."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:151
+msgid "Could not save appearance."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:160
+msgid "Chat bubble"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:160
+msgid "Assistant"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:161
+msgid "Subtle"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:163
+msgid "Editor view"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:163
+msgid "Settings"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:163
+msgid "Live preview"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:165
+#: apps/dashboard/src/pages/Appearance.js:171
+msgid "Basics"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:165
+#: apps/dashboard/src/pages/Appearance.js:184
+msgid "Chat button"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:165
+#: apps/dashboard/src/pages/Appearance.js:179
+msgid "Header and input"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:165
+#: apps/dashboard/src/pages/Appearance.js:191
+msgid "Theme and colors"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:166
+#: apps/dashboard/src/pages/Appearance.js:195
+msgid "Chat window"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:166
+#: apps/dashboard/src/pages/Appearance.js:201
+msgid "Messages"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:167
+#: apps/dashboard/src/pages/Appearance.js:207
+msgid "Input and buttons"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:168
+#: apps/dashboard/src/pages/Appearance.js:217
+msgid "Motion"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:170
+msgid "Customize chat sections"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:170
+msgid "Appearance settings"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:171
+msgid "Start with a style, then make the chatbot yours."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:172
+msgid "Style"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:172
+msgid "Directorist"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:172
+msgid "Minimal"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:172
+msgid "Soft"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:173
+#: apps/dashboard/src/pages/Appearance.js:193
+msgid "Accent color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:175
+msgid "Starter questions, one per line"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:175
+msgid "Add up to four questions."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:176
+msgid "Button label"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:177
+msgid "Button position"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:177
+msgid "Right"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:177
+msgid "Left"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:179
+msgid "Header icon and the input placeholder."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:181
+msgid "Header avatar or icon"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:181
+#: apps/dashboard/src/pages/Appearance.js:186
+msgid "Custom image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:181
+msgid "Header image URL"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:184
+msgid "Floating button icon, label and position"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:185
+msgid "Button display"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:185
+msgid "Icon and label"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:185
+msgid "Icon only"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:185
+msgid "Label only"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:186
+msgid "Button icon"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:186
+msgid "Button image URL"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:186
+msgid "Icon placement"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:186
+msgid "Before label"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:186
+msgid "After label"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:188
+msgid "Button background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:188
+msgid "Button text and icon"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:188
+msgid "Button hover background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:189
+msgid "Button shadow"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:192
+msgid "Color mode"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:193
+msgid "Button text color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:193
+msgid "Keyboard focus color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:195
+#: apps/dashboard/src/pages/Appearance.js:196
+msgid "Adaptive"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:195
+#: apps/dashboard/src/pages/Appearance.js:196
+#: apps/dashboard/src/pages/Appearance.js:214
+msgid "Compact"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:195
+#: apps/dashboard/src/pages/Appearance.js:196
+msgid "Wide"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:196
+msgid "Chat layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:197
+msgid "Adaptive widens for detailed comparisons, hours and forms. Compact stays small. Wide uses your maximum width. All layouts fit the visitor’s screen. Visitors can resize it or return to automatic sizing."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:198
+msgid "Background color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:198
+msgid "Text color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:198
+msgid "Card and panel border color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:198
+msgid "Header background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:198
+msgid "Header text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:199
+msgid "Panel shadow"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:201
+msgid "User and guide message styling"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:202
+msgid "User message background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:202
+msgid "User message text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:202
+msgid "Guide message background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:202
+msgid "Guide message text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:204
+msgid "Listing surfaces and spacing"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:205
+msgid "Listing card color"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:207
+msgid "Input, Send and secondary actions"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:208
+msgid "Send button"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:208
+msgid "Arrow icon"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:208
+msgid "Text label"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Input background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Input text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Input border"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Primary button background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Primary button text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Primary button hover"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Secondary button background"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Secondary button text"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:210
+msgid "Secondary button hover"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:214
+msgid "Content density"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:214
+msgid "Comfortable"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:214
+msgid "Choose a starting point, then adjust the spacing below."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:215
+msgid "Font family"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:215
+msgid "Geist"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:215
+msgid "System"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:215
+msgid "Sans serif"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:215
+msgid "Serif"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:215
+msgid "Monospace"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:217
+msgid "No animation"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:217
+#: apps/dashboard/src/pages/Appearance.js:218
+msgid "Soft elastic"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:217
+#: apps/dashboard/src/pages/Appearance.js:218
+msgid "Fade"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:217
+#: apps/dashboard/src/pages/Appearance.js:218
+msgid "Slide"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:218
+msgid "Opening motion"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:219
+msgid "The closing transition follows your opening style. Device preferences for reduced motion always take priority."
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:224
+#: apps/dashboard/src/pages/Appearance.js:227
+msgid "Customize chat"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:228
+msgid "Reset appearance"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:228
+msgid "Close"
+msgstr ""
+
+#: apps/dashboard/src/pages/Appearance.js:230
+#: apps/dashboard/src/pages/FrontendChat.js:28
+msgid "Loading chat appearance…"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:17
+msgid "This message is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:144
+msgid "The saved layout could not be checked. Refresh the document context."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:277
+msgid "The publication result does not match this workflow page."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:283
+msgid "The template result does not match the selected source."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:290
+msgid "The live ticket does not match this reviewed editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:309
+msgid "Unable to refresh builder workflow."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:329
+msgid "The request was sent but its status was not confirmed. Check the same request before starting another."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:359
+msgid "The original request is still unconfirmed. Check it again before starting another."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:367
+msgid "Which directory is this layout for? Choose a directory before continuing."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:378
+msgid "The selected area could not be captured. Reopen it in the native editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:384
+msgid "Choose one saved block before changing a selected area, or explicitly choose the whole document."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:385
+msgid "The native selection changed. Check the selected area and try again."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:395
+msgid "Which directory should this area use? Choose its context below, then preview again."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:407
+msgid "This saved layout has no supported changes in the chosen scope. Change the source or select another area."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:428
+msgid "Unable to start the builder workflow."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:437
+msgid "This draft changed or publication is unavailable. Reopen it for review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:455
+msgid "Unable to prepare publication."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:464
+msgid "The published page changed. Refresh it before preparing restoration."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:482
+msgid "Unable to prepare restoration."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:492
+msgid "This native template draft changed or assignment is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:508
+msgid "Unable to prepare native template assignment."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:517
+msgid "This native template assignment changed. Refresh its result."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:519
+msgid "The original template source is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:537
+msgid "Unable to prepare native template restoration."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:546
+msgid "The reviewed draft changed. Refresh it before live review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:552
+msgid "A current native editor binding is unavailable. Save and reload this editor before live review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:571
+msgid "Unable to prepare live editor review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:580
+msgid "Native apply is unavailable in this editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:582
+msgid "The native editor could not confirm this change."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:589
+msgid "The source document changed. Reopen this request with its original builder and document before approving."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:602
+msgid "Unable to record the builder review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:618
+msgid "Unable to submit the clarification."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:631
+#: apps/dashboard/src/pages/Workflow.js:316
+msgid "Unable to cancel this run."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:648
+msgid "This draft changed or refinement is unavailable. Refresh the result before continuing."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:654
+msgid "Unable to select this draft for refinement."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:674
+msgid "What would you like to build or improve?"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:674
+msgid "Describe your change…"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:674
+msgid "Describe the layout, content or style you have in mind…"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:674
+#: apps/dashboard/src/pages/Workflow.js:349
+msgid "Request"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:676
+msgid "Suggested instructions"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:677
+msgid "Continue with an idea"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:682
+msgid "Whole document"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:684
+msgid "Layout purpose (optional)"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:685
+msgid "Use my request"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:686
+msgid "Shared part layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:686
+msgid "General page layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:687
+msgid "Dynamic single listing layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:689
+msgid "Listing grid and cards"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:690
+msgid "Listing list"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:691
+msgid "Search results and filters"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:691
+msgid "Search and filters"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:693
+msgid "Improve existing layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:695
+msgid "This creates the first listing view using the installed Elementor directory layout, including its native search, cards and pagination. Your saved page is preserved in a separate private draft."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:696
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Design directory"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:696
+msgid "Directory context"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:696
+msgid "Choose directory presets for the layout. This does not restrict the shared template assignment. Native routes determine the displayed listings."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:696
+msgid "Select the directory used by listing loops or fields. Some templates are bound to a specific directory."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:697
+msgid "No directory"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:699
+msgid "Existing listing region to edit"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:699
+#: apps/dashboard/src/pages/BuilderWorkflow.js:768
+msgid "Listing view"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:699
+msgid "Use the whole page when generating a new layout. A listing region limits changes to an existing view. It does not choose the output layout."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:699
+msgid "Limit the requested change to one native listing view when its document supports that view."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:700
+msgid "Whole page layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:700
+msgid "No view selected"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:701
+#: apps/dashboard/src/pages/BuilderWorkflow.js:731
+msgid "Grid"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:702
+#: apps/dashboard/src/pages/BuilderWorkflow.js:731
+msgid "List"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "Area to change"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "Selected area"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "Whole document — no native area selected"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "Whole document layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "The whole saved layout is the source. Unsaved canvas changes and selection are excluded."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "Only this area and its contained items may change. Review creates a separate editable draft."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:706
+msgid "Select one block, widget or module in the native editor to target a particular area."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:710
+msgid "Reading earlier discussion…"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:711
+msgid "Earlier requests could not be checked. Check them before starting another generation."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:711
+msgid "Check earlier requests"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:712
+msgid "Previous conversations in this area"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:720
+msgid "The draft request is not confirmed yet. Check the original request to recover its status. This keeps the same request and avoids creating a second draft."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:721
+msgid "Edit this area"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:721
+msgid "Build or refine this layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:721
+msgid "Native builder draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:722
+msgid "Describe a change to an existing page or supported template. The result is a separate private draft for review in its native editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:723
+msgid "No supported builder source is available. Activate a supported integration and create an editable document first."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:724
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Builder"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:725
+msgid "The previously selected source is unavailable. Select a current document before starting another request."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:726
+#: apps/dashboard/src/pages/BuilderWorkflow.js:782
+msgid "Source document"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:726
+msgid "Select a source document"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:728
+msgid "Editing"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:728
+msgid "No directory selected"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:729
+msgid "Directory layout setup"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:730
+msgid "Directory for this layout"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:731
+#: apps/dashboard/src/pages/BuilderWorkflow.js:782
+msgid "Initial listing view"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:731
+msgid "Choose the view shown first. The native layout provides its supported view controls for visitors."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:731
+msgid "Choose the initial view"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:733
+msgid "Uses the directory’s current cards and default styles. Custom card styling needs a later edit in the page editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:737
+msgid "Layout settings"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:737
+msgid "Directory, purpose and edit scope"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:741
+msgid "Which directory should this area use?"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:743
+msgid "This follow-up uses the chosen draft as its unchanged source. Approval creates another private version and keeps earlier drafts intact."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:744
+msgid "What did you observe in the native preview?"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:744
+msgid "Optional human feedback for the next request. It is not a verified render check. Describe a specific issue and request its correction above."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:746
+msgid "Checking available layout changes…"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:746
+msgid "Check again"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:746
+msgid "No supported draft changes are available in this saved scope. Choose another area or document."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:746
+msgid "Creates a separate private draft for review. After approval, you can use the supported change in this editor and save it yourself."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:746
+msgid "Creates a separate private draft for review. Your open layout stays unchanged. Publishing or assigning a template needs a separate approval."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:749
+msgid "Checking saved layout…"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:749
+msgid "Preview changes"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:749
+msgid "Prepare draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:751
+msgid "Refine this draft in its editor"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:751
+msgid "Use this draft as the next source"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:752
+#: apps/dashboard/src/pages/Workflow.js:353
+msgid "New request"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:755
+msgid "Save native changes first. Each request prepares a separate draft for your review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:758
+msgid "The earlier outcome is still being checked. Keep this request and verify its status before starting another draft."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:759
+msgid "The native template result was not confirmed. Check its current assignment before retrying."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:759
+msgid "The page was not confirmed as restored. Review its current state before retrying."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:759
+msgid "The page was not confirmed as published. Review the result before starting another publication request."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:759
+msgid "The draft request could not be confirmed. Check its status and the selected AI service connection before starting another request."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:760
+msgid "Conversation"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:761
+msgid "Clarify this request"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:762
+#: apps/dashboard/src/pages/Workflow.js:365
+msgid "Your answer"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:765
+msgid "Review live editor change"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:765
+msgid "Review template restoration"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:765
+msgid "Review template assignment"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:765
+msgid "Review page restoration"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:765
+msgid "Review page publication"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:765
+msgid "Review native draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:767
+msgid "Approval authorizes one text change in the original open editor. WordPress must confirm its native Save before this workflow reports success."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:768
+msgid "Source page"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:768
+msgid "Control"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:768
+#: apps/dashboard/src/pages/Workflow.js:377
+msgid "Before"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:768
+#: apps/dashboard/src/pages/Workflow.js:377
+msgid "After"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:770
+msgid "Approval restores this exact prior native template assignment. Newer edits or changed consumers will stop the restoration."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:770
+msgid "Approval changes this shared site header or footer for every listed native consumer. This effect is not limited to a directory."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:770
+msgid "Approval changes this shared native template for every listed route. This effect is not limited to a directory."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:770
+msgid "Approval changes this shared native template for every listed route. The design directory selects layout presets. It does not limit the affected visitors."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:770
+msgid "Approval assigns this reviewed native template draft to the selected directory. The affected listing consumers and active template inventory are bound to this review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Template type"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Staged draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Template source"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Plugin or theme fallback. Approval removes this unchanged database override."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Plugin or theme template. Approval creates its database override."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "None — shared site part"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "None — shared native routes"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:771
+msgid "Affected consumers"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:772
+msgid "First 100 affected consumers (the full set is bound to this review): "
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:772
+msgid "Affected consumers: "
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:774
+msgid "Approval returns this page to its prior draft title, URL slug and parent, preserving its layout. External notifications from publication cannot be undone."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+msgid "Prior title"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+msgid "Prior URL slug"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+msgid "Prior parent"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Visibility"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:775
+msgid "Draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:777
+msgid "Approval publishes this generated page with the title and URL slug below. The original source and template assignments remain unchanged."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "URL slug"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Page location"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Top-level page"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Unsupported location"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:778
+msgid "Published"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:780
+msgid "Approval creates one private draft from this exact candidate. It does not publish or replace the source page."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:781
+msgid "This adds the directory’s native listing cards, search and listing controls with their current default styles. Custom card styling needs a separate edit in the page editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:782
+msgid "Candidate components"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:782
+msgid "Native root"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:783
+msgid "Proposed component changes"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:783
+msgid "Long values are shortened here. The exact candidate is bound to this approval."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:783
+msgid "This is a structural summary. Open the created draft in its native editor to inspect its rendered result."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:785
+msgid "The original source is no longer selected or available. Approval is paused until that source is restored."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:786
+msgid "Restore reviewed document selection"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+msgid "Approve live editor change"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+msgid "Approve and restore template"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+msgid "Approve and assign template"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+msgid "Approve and restore draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+msgid "Approve and publish page"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+msgid "Approve and create draft"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:787
+#: apps/dashboard/src/pages/Workflow.js:389
+msgid "Reject"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:789
+msgid "This private draft has changed since approval. Review its current content before using it as a source."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:789
+msgid "Private draft created. Its visual result still needs review in the native editor."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:789
+msgid "Open the source editor for a separate live review"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:790
+msgid "Use the reviewed change in this editor"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:791
+msgid "Apply only the bound area after checking that the current layout is unchanged. Native Undo remains available. Structural changes unsupported by the editor adapter stay in the reviewed draft."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:794
+msgid "Apply the reviewed change in the open editor"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:795
+msgid "Keep the original editor tab open and unchanged. Live editing requires its current capture and a separate approval for one supported text control."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:796
+msgid "Prepare live editor review"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:798
+msgid "Live editor result updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:799
+msgid "The native editor Save confirmed the approved change."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:799
+msgid "The native Save was confirmed earlier, but the page no longer matches that approved change. Review its current state before another attempt."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:799
+msgid "The live ticket ended without a confirmed change. Refresh the editor before a new review."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:799
+msgid "The approved change is awaiting confirmation from the original native editor. An uncertain result must be checked before another attempt."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:800
+msgid "Apply in the original editor"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:801
+msgid "Inspect the applied result in this editor, then use the native Save button."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:801
+msgid "The request was sent to the original editor tab. Return there to inspect the result, then refresh confirmation here."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:802
+msgid "Refresh native Save confirmation"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:804
+msgid "Assign the reviewed native template"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:805
+msgid "Inspect the private header or footer, then review every affected native consumer before changing the shared site part."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:805
+msgid "Inspect the private template, then review its effect on the shared native routes."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:805
+msgid "Inspect the private template in its native editor, then prepare a separate assignment review for the selected directory."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:806
+msgid "Prepare assignment review"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:808
+msgid "Template restoration result updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:808
+msgid "Template assignment result updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:809
+msgid "The native template assignment is back in its reviewed prior state."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:809
+msgid "The restored template changed since approval."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:809
+msgid "The approved native template assignment is current."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:809
+msgid "This assignment has changed since approval. Review its current native state."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:810
+msgid "Prepare template restoration review"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:811
+msgid "Refresh template result"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:813
+msgid "Page restoration result updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:813
+msgid "Page publication result updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:814
+msgid "The page is back in its reviewed prior draft state."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:814
+msgid "The restored draft has changed since approval."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:814
+msgid "The published page still matches the approved result."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:814
+msgid "This page was published earlier and has changed since that approval. These links open its current version."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:815
+msgid "View published page"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:816
+msgid "Edit current page"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:817
+#, js-format
+msgid "Current page status: %s"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:818
+msgid "Prepare restoration review"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:819
+msgid "Refresh page result"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:821
+msgid "Publish the reviewed page"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:822
+msgid "Inspect the private page in its native editor, then prepare a separate publication review. Approval is required again before the page becomes published."
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:823
+msgid "Page title"
+msgstr ""
+
+#: apps/dashboard/src/pages/BuilderWorkflow.js:824
+msgid "Prepare publication review"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:26
+msgid "Could not refresh the Directorist AI connection. Your settings are retained."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:40
+msgid "AI connection settings saved."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:42
+msgid "Could not save AI connections."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:50
+msgid "Use the default for every task"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:52
+msgid "AI connections"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:52
+msgid "Choose a default AI connection. Tasks using the default follow it. Explicit task choices stay unchanged."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:53
+msgid "Loading AI connections…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:59
+msgid "Task connection choices"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:60
+#, js-format
+msgid "%d task keeps its own connection"
+msgid_plural "%d tasks keep their own connection"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/pages/Connections.js:60
+msgid "These tasks do not follow the default above. Changes apply after Save."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:60
+msgid "Varies by workflow"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:60
+#, js-format
+msgid "%d task"
+msgid_plural "%d tasks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: apps/dashboard/src/pages/Connections.js:66
+msgid "What your credits cover"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:66
+msgid "AI for every task"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:66
+msgid "Each task uses its saved connection and a model with the capabilities it needs."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:66
+msgid "Use my own AI provider"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:67
+msgid "Your connected providers are available below."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:67
+msgid "No provider connected yet"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:67
+msgid "AI for each task"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:67
+msgid "Choose a provider and model for each task, or leave them on automatic. Saved task connections are retained."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:67
+msgid "Switch to credits"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:69
+msgid "Connections by task"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:69
+msgid "tasks keep their own connection"
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:69
+msgid "All six tasks use the choice above."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:70
+msgid "Changing the default keeps these task choices. Provider and model selections stay saved."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:72
+msgid "Connections do not switch automatically when a task is unavailable. Requests already accepted keep their original connection."
+msgstr ""
+
+#: apps/dashboard/src/pages/Connections.js:74
+msgid "Save AI connections"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:30
+msgid "Balance is unavailable. Try refreshing again."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:40
+msgid "Credits & usage"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:40
+msgid "Buy credits and review usage across your connected sites."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:41
+msgid "Loading credit balance…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:43
+msgid "Start with your license"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:43
+msgid "Activate your license to connect Directorist AI and view your shared credits."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:43
+#: apps/dashboard/src/pages/Credits.js:46
+#: apps/dashboard/src/pages/Overview.js:40
+msgid "Buy credits"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:43
+#: apps/dashboard/src/pages/License.js:40
+msgid "Activate license"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:44
+msgid "Shared Directorist AI credits"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:45
+msgid "Available shared credits"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:45
+msgid "One balance for every connected site."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:47
+#: apps/dashboard/src/pages/Overview.js:34
+msgid "Refreshing…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:47
+msgid "Refresh balance"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:49
+msgid "Held for requests"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:49
+msgid "Last refreshed:"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:49
+msgid "Not verified"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:49
+msgid "Stale"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:51
+msgid "The last confirmed balance is shown. It may have changed."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:52
+msgid "This is the last confirmed balance. Refresh to verify the latest credits."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:53
+msgid "Directorist AI is temporarily unavailable. Your credits remain in the shared account."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:54
+msgid "No available credits. Buy credits to use Directorist AI."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:54
+msgid "Fewer than 100 credits remain. Add credits before larger tasks."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:57
+msgid "Usage summary"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:57
+msgid "Review a period by date or task. These filters do not change your current balance."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:58
+msgid "Usage follows your saved task connections. Unsaved choices take effect after Save."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:59
+msgid "Usage connection"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:62
+msgid "Usage from your other AI connection"
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:62
+msgid "Connect Directorist AI to view your credit usage."
+msgstr ""
+
+#: apps/dashboard/src/pages/Credits.js:64
+msgid "Balances are rounded down. Usage figures are rounded. Billing uses exact amounts."
+msgstr ""
+
+#: apps/dashboard/src/pages/FrontendChat.js:14
+msgid "Frontend chat settings"
+msgstr ""
+
+#: apps/dashboard/src/pages/FrontendChat.js:26
+#: apps/dashboard/src/pages/index.js:10
+#: apps/dashboard/src/pages/Overview.js:39
+msgid "Chat"
+msgstr ""
+
+#: apps/dashboard/src/pages/FrontendChat.js:26
+msgid "The chat visitors use on your site."
+msgstr ""
+
+#: apps/dashboard/src/pages/FrontendChat.js:27
+msgid "Open your site to try chat"
+msgstr ""
+
+#: apps/dashboard/src/pages/FrontendChat.js:30
+msgid "Customize more"
+msgstr ""
+
+#: apps/dashboard/src/pages/index.js:12
+#: apps/dashboard/src/pages/Overview.js:41
+msgid "Listings for AI"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:23
+msgid "License status updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:26
+msgid "The license could not be updated."
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:30
+msgid "Activate your license to connect this site to Directorist AI."
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:31
+msgid "Loading license status…"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:36
+msgid "Connect this site"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:36
+msgid "Plugin license"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:37
+#: apps/dashboard/src/pages/Overview.js:38
+msgid "Status"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:37
+msgid "Expires"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:37
+msgid "Last checked"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:37
+msgid "Not checked"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:38
+msgid "Purchased credits remain available on this previously linked site."
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:39
+msgid "License key"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:39
+msgid "Your stored key is kept private. Enter a key to replace it."
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:40
+msgid "Activate"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:41
+msgid "Check license"
+msgstr ""
+
+#: apps/dashboard/src/pages/License.js:41
+msgid "Deactivate this site"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:10
+msgid "Daily AI tasks"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:10
+msgid "For this site"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:10
+msgid "Per visitor"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:11
+msgid "Daily use per user or visitor"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:11
+#: apps/dashboard/src/pages/Operations.js:12
+msgid "Model requests"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:11
+#: apps/dashboard/src/pages/Operations.js:12
+msgid "Input capacity"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:12
+msgid "Daily use for this site"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:13
+msgid "Daily requests by feature"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:13
+msgid "Each feature allowance is shared by everyone using that feature. All daily allowances must have capacity for a request to proceed."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:13
+msgid "Listing owners"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:13
+msgid "Layout generation"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:14
+msgid "Keep records for (days)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:14
+msgid "Guest chats can be kept for up to 7 days, and other records for up to 365. Task receipts are kept separately from chat history."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:14
+msgid "Guest chats"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:14
+msgid "Signed-in chats"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:14
+msgid "Audit records"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:14
+msgid "Task receipts"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Limits for one request"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Optional caps for a whole task and each model response. Provider capacity and checks against repeated work still apply."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Model rounds"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Repair rounds"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Total input capacity"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Total output tokens"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:15
+msgid "Output tokens per response"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:19
+msgid "Enter a whole number from"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:19
+msgid "to"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:33
+msgid "Settings saved."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:34
+msgid "Could not save settings."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:47
+msgid "Set a limit for"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:47
+msgid "Set a limit"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:53
+msgid "Loading site controls…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:56
+#: apps/dashboard/src/pages/Overview.js:43
+msgid "Pause all AI"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:56
+#: apps/dashboard/src/pages/Overview.js:43
+msgid "Stops new AI requests and approved changes. Requests already sent may finish. Existing content stays available."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:58
+msgid "Show chat on my site"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:58
+#: apps/dashboard/src/pages/Overview.js:36
+msgid "Adds the Ask AI button to public pages."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:59
+msgid "Directories it can search"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:59
+msgid "All directories"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:59
+msgid "Choose directories…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:60
+msgid "Directories visitors can search"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:62
+#: apps/dashboard/src/pages/Operations.js:64
+msgid "Keep at least one directory on. To hide chat, turn off the switch above."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:65
+msgid "What should it help visitors do?"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:65
+msgid "Optional. Describe your audience and useful outcomes."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:66
+msgid "Tone"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:66
+msgid "Friendly"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:66
+msgid "Professional"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:66
+msgid "Concise"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:68
+msgid "Create a Directorist directory before enabling visitor chat."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:70
+msgid "AI uses available credits by default. Turn on a custom limit only when you want to restrict usage. Each new request or image add-on counts as a task. Repairs stay within that task. Existing custom limits are retained."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:74
+msgid "Advanced processing limits"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:74
+msgid "No administrator cap by default. Restrict processing only when needed."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:76
+msgid "One task can use several model requests. With no custom cap, processing continues while credits or connected provider capacity are available. Input uses a conservative reservation which adjusts to reported usage. Provider context and response capacity, native validation and checks against repeated work remain automatic."
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:77
+msgid "Today’s processing use, including reservations:"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:77
+msgid "model requests"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:77
+msgid "input capacity"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:82
+msgid "Save availability"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:82
+msgid "Save chat setup"
+msgstr ""
+
+#: apps/dashboard/src/pages/Operations.js:82
+msgid "Save usage settings"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:14
+msgid "Could not refresh the connection. Try again."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:23
+msgid "Complete"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:25
+msgid "Your visitor chat is ready"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:25
+msgid "Set up Directorist AI"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:25
+msgid "New AI requests are paused. Your saved content stays available."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:25
+msgid "Your chat is available on public pages."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:25
+msgid "Connect AI, then let visitors start asking."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:26
+msgid "Loading setup status…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:26
+msgid "Loading chat status…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:30
+msgid "Setup steps"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:31
+msgid "Active on this site."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:31
+msgid "Expired. Purchased credits remain available on this linked site."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:31
+msgid "This site is linked to your credits."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:31
+msgid "Your provider works independently. Activate a license to connect Directorist AI credits."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:31
+msgid "Connects this site to Directorist AI."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:32
+msgid "Choose how AI runs"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:32
+msgid "Using Directorist AI credits."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:32
+msgid "Using your own AI provider."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:33
+msgid "Save AI choice"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:33
+msgid "Review connections by task"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:36
+msgid "Turn on the chat"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:36
+msgid "Showing on your public pages."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:36
+msgid "Turn on chat"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:36
+msgid "Customize first"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:39
+msgid "Paused"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:39
+#: apps/dashboard/src/pages/Overview.js:41
+msgid "On"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:39
+msgid "Needs connection"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:39
+#: apps/dashboard/src/pages/Overview.js:41
+msgid "Off"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:39
+msgid "Customize"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:40
+msgid "Credits left"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:41
+msgid "Status unavailable"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:41
+msgid "Set up"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:44
+msgid "Start using AI"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:44
+msgid "The tools for writing listings and building pages live in their own screens."
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:44
+msgid "Open listings"
+msgstr ""
+
+#: apps/dashboard/src/pages/Overview.js:44
+msgid "Open pages"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:12
+msgid "Response completed"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:12
+msgid "Native operation completed"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:12
+msgid "Review required"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:12
+msgid "Editor check required"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:12
+msgid "Task failed"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:12
+msgid "Task outcome unconfirmed"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:28
+msgid "Usage and activity"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:28
+msgid "This report covers Directorist AI requests only. It excludes other plugins and your provider account’s total usage."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:30
+msgid "Period"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:30
+msgid "Last day"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:31
+msgid "Source"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:31
+msgid "All sources"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:31
+msgid "Managed service"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:32
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Feature"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:32
+msgid "All features"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:33
+msgid "Refresh"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:35
+msgid "Loading plugin usage…"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:38
+msgid "The report reached its query limit. Totals cover the bounded results. Activity is also limited. Narrow the period or filters for a smaller report."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:39
+msgid "Model call totals"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:39
+msgid "A task may make several model calls. These retained call totals are separate from task receipts. Retries remain visible. Token totals include reported usage. Missing usage is unknown."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:42
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Requests"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:42
+msgid "Succeeded"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:43
+msgid "Running"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:44
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Reported input tokens"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:44
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Reported output tokens"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:45
+msgid "Requests with unreported usage"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:48
+msgid "Some calls did not report tokens. Unknown usage is not zero and may still have incurred provider charges."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:50
+msgid "Usage by model"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:50
+msgid "Requested model is the captured policy. Selected SDK model is the model resolved by the connector. Reported model is the serving identity returned by the provider. Unknown attribution is not inferred."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Usage by model table"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Directorist AI usage grouped by source, feature and model"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Source / provider"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:51
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Reported model"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "Unreported usage:"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:51
+msgid "No model requests match these filters."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:53
+msgid "Recent activity"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:53
+msgid "The activity list is bounded. Totals may cover more requests. Safe metadata only. Prompts, credentials and visitor identity are excluded."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:54
+msgid "Only the latest matching activity is shown. Request totals include additional matching requests."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Recent Directorist AI model requests"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Created / feature"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Source / requested model"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Call status / task outcome"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Input / output tokens"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Details"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Attempts:"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Unreported usage"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Request metadata"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Run"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Turn"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Requested provider"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Resolved provider"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "SDK model ID"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Duration (ms)"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "Outcome"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:55
+msgid "No recent activity matches these filters."
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:56
+msgid "Activity pagination"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:57
+#, js-format
+msgid "Showing %1$d–%2$d of %3$d loaded records"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:59
+msgid "Previous activity page"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:60
+msgid "Next activity page"
+msgstr ""
+
+#: apps/dashboard/src/pages/Usage.js:65
+msgid "Request limits and retention"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:87
+msgid "The saved conversation is not available to this workflow."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:89
+msgid "The conversation changed while its history was loading. Try again."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:91
+#: apps/dashboard/src/pages/Workflow.js:96
+msgid "The conversation history is incomplete. Try again."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:128
+msgid "The saved conversation and run no longer match. Start a new request."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:132
+msgid "The saved conversation belongs to a different workflow. Start a new request."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:145
+msgid "The saved run is no longer active in this conversation. Start a new request."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:188
+msgid "The listing or review target is no longer available. Cancel this run or start a new request."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:202
+msgid "The reviewed image preview is unavailable."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:214
+msgid "Unable to refresh workflow state."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:259
+msgid "Unable to start the workflow."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:279
+msgid "Unable to record the review decision."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:295
+msgid "The clarification response did not match the active run."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:302
+msgid "Unable to send the clarification."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:327
+msgid "Unable to fill the native form."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:342
+msgid "Suggestions are reviewed here and copied into the current form. Use the native Save or Submit button when ready. Images use the native uploader."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:343
+msgid "Suggestions copied into the form. Nothing has been saved or published. Review the fields, then use the native Save or Submit button."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:344
+msgid "Image generation is unavailable with the currently configured WordPress AI provider. You can still draft and review listing text, then add images in Directorist."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:346
+msgid "Listing suggestions"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:346
+msgid "Guided listing"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:347
+msgid "Create a new listing"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:351
+msgid "Get suggestions"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:351
+msgid "Start"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:363
+msgid "Answer the clarification"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:371
+msgid "Review proposed changes"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:372
+msgid "This request was restored without its original form snapshot. Cancel it and start a fresh request before copying suggestions."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:373
+msgid "Review each suggested text field. Using these suggestions updates only the form. The native save controls its status and submission rules."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:373
+msgid "Check the image and placement. Approval is bound to these exact bytes and expires automatically."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:373
+msgid "Confirm every field below. Approval is bound to this exact diff and expires automatically."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:374
+msgid "Listing:"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:375
+msgid "Generated image suggestion for this listing"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:375
+msgid "Image placement:"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:375
+msgid "bytes"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:379
+msgid "Listing status"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:379
+msgid "Not recorded"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:385
+msgid "The directory’s moderation rules change the listing status when these edits are applied."
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:387
+msgid "I agree to the directory terms and conditions"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:388
+msgid "I agree to the directory privacy policy"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:389
+msgid "Use suggestions in form"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:389
+msgid "Approve and import image"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:389
+msgid "Approve and submit listing"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:389
+msgid "Approve and apply"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:392
+msgid "Open Directorist listings"
+msgstr ""
+
+#: apps/dashboard/src/pages/Workflow.js:392
+msgid "Open the native listing editor"
+msgstr ""
+
+#: apps/dashboard/src/settings-form.js:21
+msgid "Changes saved."
+msgstr ""
+
+#: apps/dashboard/src/settings-form.js:22
+msgid "Could not save your changes."
+msgstr ""
+
+#: inc/chat/block.js:5
+#: inc/chat/block.js:23
+msgid "Directorist AI Chat"
+msgstr ""
+
+#: inc/chat/block.js:16
+msgid "Chat placement"
+msgstr ""
+
+#: inc/chat/block.js:17
+msgid "Preset ID"
+msgstr ""
+
+#: inc/chat/block.js:18
+msgid "Directory ID"
+msgstr ""
+
+#: inc/chat/block.js:19
+msgid "Display"
+msgstr ""
+
+#: inc/chat/block.js:19
+msgid "Inline"
+msgstr ""
+
+#: inc/chat/block.js:19
+msgid "Launcher"
+msgstr ""
+
+#: inc/chat/block.js:24
+msgid "Sample preview: How can I help you find a listing?"
+msgstr ""

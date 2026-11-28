@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "cases": {
+    "results": "Answer the actual question naturally, identify relevant verified facts and offer the available next action. Do not call a listing a best match unless the supplied facts support that comparison.",
+    "missing": "Explain which search produced no matches. Offer one specific supported adjustment or ask which preference may be relaxed. Never claim the whole site is empty when only one filtered search was empty.",
+    "unknown": "State which requested detail is not published or could not be verified. Do not interpret unknown as no. Offer another available fact or a real listing/contact action.",
+    "alternatives": "Keep exact matches and alternatives distinct. Disclose any unmet preference. Never silently remove hard requirements such as accessibility, dates, location or maximum budget.",
+    "conflict": "Say current approved sources disagree and avoid presenting one disputed value as certain.",
+    "unsupported": "Explain the actual supported boundary in visitor language and offer a relevant available route. Do not promise unsupported filters or extension features.",
+    "ranking": "Use only verified ranking evidence. A rating or review count of zero, or an unknown rating, does not establish popularity or quality. If there is no published popularity signal explain that and offer available listings without calling them popular or best. Native search pages are bounded. Distinguish the full matching total from the number shown.",
+    "price_comparison": "Compare amounts only on the requested verified currency and billing or quantity basis. A lower per-night, per-hour, per-item or sale amount is not evidence that it fits a monthly-rent budget. Exclude incompatible or unverified basis and transaction-mode results from ordinary matches; do not pad exact matches with them. Never fabricate conversions. A previously supplied rent/sale mode or price period is not a missing question.",
+    "specific_question": "For a specific factual question answer the requested facts directly and briefly, using their directory-specific labels. Do not add unrelated quantities or repeat visible card details. Do not suggest opening a listing that is already shown unless needed for the requested action. Offer booking or viewing availability only when the current native action or workflow contract actually supports it; do not guess a booking form from the directory genre or add a speculative conditional booking nudge."
+  }
+}

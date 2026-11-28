@@ -1,0 +1,290 @@
+{
+  "de": [
+    "Deine Anfrage wird vorbereitet…",
+    "Passende Einträge werden gesucht…",
+    "Eintragsdetails werden geprüft…",
+    "Deine Optionen werden verglichen…",
+    "Deine Antwort wird formuliert…",
+    "Die Angaben werden geprüft…",
+    "Das dauert länger als üblich."
+  ],
+  "hi": [
+    "आपके अनुरोध की तैयारी हो रही है…",
+    "मेल खाने वाली लिस्टिंग खोजी जा रही हैं…",
+    "लिस्टिंग की जानकारी देखी जा रही है…",
+    "आपके विकल्पों की तुलना हो रही है…",
+    "आपका जवाब लिखा जा रहा है…",
+    "जानकारी की जाँच हो रही है…",
+    "इसमें सामान्य से अधिक समय लग रहा है।"
+  ],
+  "pt": [
+    "A preparar o seu pedido…",
+    "A procurar anúncios correspondentes…",
+    "A verificar os detalhes dos anúncios…",
+    "A comparar as suas opções…",
+    "A preparar a sua resposta…",
+    "A verificar as informações…",
+    "Isto está a demorar mais do que o habitual."
+  ],
+  "it": [
+    "Preparazione della richiesta…",
+    "Ricerca degli annunci corrispondenti…",
+    "Verifica dei dettagli degli annunci…",
+    "Confronto delle opzioni…",
+    "Preparazione della risposta…",
+    "Verifica delle informazioni…",
+    "Sta richiedendo più tempo del solito."
+  ],
+  "nl": [
+    "Je verzoek wordt voorbereid…",
+    "Passende vermeldingen zoeken…",
+    "Details van vermeldingen controleren…",
+    "Je opties vergelijken…",
+    "Je antwoord opstellen…",
+    "De gegevens controleren…",
+    "Dit duurt langer dan normaal."
+  ],
+  "da": [
+    "Forbereder din forespørgsel…",
+    "Finder matchende opslag…",
+    "Kontrollerer oplysningerne…",
+    "Sammenligner dine muligheder…",
+    "Skriver dit svar…",
+    "Kontrollerer detaljerne…",
+    "Det tager længere tid end normalt."
+  ],
+  "no": [
+    "Forbereder forespørselen din…",
+    "Finner passende oppføringer…",
+    "Sjekker opplysningene…",
+    "Sammenligner alternativene dine…",
+    "Skriver svaret ditt…",
+    "Kontrollerer detaljene…",
+    "Dette tar lengre tid enn vanlig."
+  ],
+  "fi": [
+    "Valmistellaan pyyntöäsi…",
+    "Etsitään sopivia ilmoituksia…",
+    "Tarkistetaan ilmoitusten tiedot…",
+    "Vertaillaan vaihtoehtojasi…",
+    "Kirjoitetaan vastaustasi…",
+    "Tarkistetaan tiedot…",
+    "Tämä kestää tavallista kauemmin."
+  ],
+  "pl": [
+    "Przygotowuję Twoje zapytanie…",
+    "Szukam pasujących ogłoszeń…",
+    "Sprawdzam szczegóły ogłoszeń…",
+    "Porównuję Twoje opcje…",
+    "Przygotowuję odpowiedź…",
+    "Sprawdzam informacje…",
+    "To trwa dłużej niż zwykle."
+  ],
+  "uk": [
+    "Готуємо ваш запит…",
+    "Шукаємо відповідні оголошення…",
+    "Перевіряємо деталі оголошень…",
+    "Порівнюємо ваші варіанти…",
+    "Готуємо відповідь…",
+    "Перевіряємо інформацію…",
+    "Це займає більше часу, ніж зазвичай."
+  ],
+  "ru": [
+    "Подготавливаем ваш запрос…",
+    "Ищем подходящие объявления…",
+    "Проверяем сведения об объявлениях…",
+    "Сравниваем ваши варианты…",
+    "Готовим ответ…",
+    "Проверяем информацию…",
+    "Это занимает больше времени, чем обычно."
+  ],
+  "tr": [
+    "İsteğiniz hazırlanıyor…",
+    "Eşleşen ilanlar aranıyor…",
+    "İlan ayrıntıları kontrol ediliyor…",
+    "Seçenekleriniz karşılaştırılıyor…",
+    "Yanıtınız hazırlanıyor…",
+    "Bilgiler kontrol ediliyor…",
+    "Bu işlem normalden uzun sürüyor."
+  ],
+  "el": [
+    "Προετοιμασία του αιτήματός σας…",
+    "Αναζήτηση σχετικών καταχωρίσεων…",
+    "Έλεγχος στοιχείων καταχωρίσεων…",
+    "Σύγκριση των επιλογών σας…",
+    "Σύνταξη της απάντησής σας…",
+    "Έλεγχος των πληροφοριών…",
+    "Αυτό διαρκεί περισσότερο από το συνηθισμένο."
+  ],
+  "cs": [
+    "Připravuji váš požadavek…",
+    "Hledám odpovídající nabídky…",
+    "Kontroluji podrobnosti nabídek…",
+    "Porovnávám vaše možnosti…",
+    "Připravuji odpověď…",
+    "Ověřuji informace…",
+    "Trvá to déle než obvykle."
+  ],
+  "ro": [
+    "Pregătim cererea…",
+    "Căutăm anunțuri potrivite…",
+    "Verificăm detaliile anunțurilor…",
+    "Comparăm opțiunile…",
+    "Pregătim răspunsul…",
+    "Verificăm informațiile…",
+    "Durează mai mult decât de obicei."
+  ],
+  "hu": [
+    "A kérés előkészítése…",
+    "Megfelelő hirdetések keresése…",
+    "A hirdetések adatainak ellenőrzése…",
+    "A lehetőségek összehasonlítása…",
+    "A válasz megfogalmazása…",
+    "Az adatok ellenőrzése…",
+    "Ez a szokásosnál tovább tart."
+  ],
+  "id": [
+    "Menyiapkan permintaan Anda…",
+    "Mencari listing yang sesuai…",
+    "Memeriksa detail listing…",
+    "Membandingkan pilihan Anda…",
+    "Menyiapkan jawaban Anda…",
+    "Memverifikasi informasi…",
+    "Ini memerlukan waktu lebih lama dari biasanya."
+  ],
+  "ms": [
+    "Menyediakan permintaan anda…",
+    "Mencari penyenaraian yang sepadan…",
+    "Menyemak butiran penyenaraian…",
+    "Membandingkan pilihan anda…",
+    "Menyediakan jawapan anda…",
+    "Mengesahkan maklumat…",
+    "Ini mengambil masa lebih lama daripada biasa."
+  ],
+  "th": [
+    "กำลังเตรียมคำขอของคุณ…",
+    "กำลังค้นหารายการที่ตรงกัน…",
+    "กำลังตรวจสอบรายละเอียดรายการ…",
+    "กำลังเปรียบเทียบตัวเลือกของคุณ…",
+    "กำลังเตรียมคำตอบของคุณ…",
+    "กำลังตรวจสอบข้อมูล…",
+    "ใช้เวลานานกว่าปกติ"
+  ],
+  "vi": [
+    "Đang chuẩn bị yêu cầu của bạn…",
+    "Đang tìm mục phù hợp…",
+    "Đang kiểm tra chi tiết…",
+    "Đang so sánh các lựa chọn…",
+    "Đang soạn câu trả lời…",
+    "Đang xác minh thông tin…",
+    "Quá trình này đang mất nhiều thời gian hơn bình thường."
+  ],
+  "ja": [
+    "リクエストを準備しています…",
+    "条件に合う掲載情報を探しています…",
+    "掲載内容を確認しています…",
+    "選択肢を比較しています…",
+    "回答を作成しています…",
+    "詳細を確認しています…",
+    "通常より時間がかかっています。"
+  ],
+  "ko": [
+    "요청을 준비하고 있습니다…",
+    "조건에 맞는 목록을 찾고 있습니다…",
+    "목록 정보를 확인하고 있습니다…",
+    "선택지를 비교하고 있습니다…",
+    "답변을 작성하고 있습니다…",
+    "정보를 검토하고 있습니다…",
+    "평소보다 시간이 더 걸리고 있습니다."
+  ],
+  "zh-Hans": [
+    "正在准备您的请求…",
+    "正在查找匹配的信息…",
+    "正在查看详细信息…",
+    "正在比较您的选项…",
+    "正在编写回答…",
+    "正在核实信息…",
+    "这比平时需要更长时间。"
+  ],
+  "zh-Hant": [
+    "正在準備您的請求…",
+    "正在尋找符合條件的資訊…",
+    "正在查看詳細資料…",
+    "正在比較您的選項…",
+    "正在撰寫回答…",
+    "正在核實資訊…",
+    "這比平時需要更長時間。"
+  ],
+  "fa": [
+    "در حال آماده‌سازی درخواست شما…",
+    "در حال جستجوی آگهی‌های مرتبط…",
+    "در حال بررسی جزئیات آگهی‌ها…",
+    "در حال مقایسه گزینه‌ها…",
+    "در حال آماده‌سازی پاسخ شما…",
+    "در حال بررسی اطلاعات…",
+    "این کار بیشتر از معمول طول می‌کشد."
+  ],
+  "he": [
+    "מכינים את הבקשה שלך…",
+    "מחפשים רישומים מתאימים…",
+    "בודקים את פרטי הרישומים…",
+    "משווים בין האפשרויות…",
+    "מכינים את התשובה שלך…",
+    "מאמתים את הפרטים…",
+    "זה נמשך יותר זמן מהרגיל."
+  ],
+  "ur": [
+    "آپ کی درخواست تیار کی جا رہی ہے…",
+    "متعلقہ فہرستیں تلاش کی جا رہی ہیں…",
+    "فہرستوں کی تفصیلات دیکھی جا رہی ہیں…",
+    "آپ کے اختیارات کا موازنہ کیا جا رہا ہے…",
+    "آپ کا جواب تیار کیا جا رہا ہے…",
+    "معلومات کی تصدیق کی جا رہی ہے…",
+    "اس میں معمول سے زیادہ وقت لگ رہا ہے۔"
+  ],
+  "ta": [
+    "உங்கள் கோரிக்கை தயாராகிறது…",
+    "பொருத்தமான பட்டியல்கள் தேடப்படுகின்றன…",
+    "பட்டியல் விவரங்கள் சரிபார்க்கப்படுகின்றன…",
+    "உங்கள் விருப்பங்கள் ஒப்பிடப்படுகின்றன…",
+    "உங்கள் பதில் எழுதப்படுகிறது…",
+    "தகவல்கள் சரிபார்க்கப்படுகின்றன…",
+    "வழக்கத்தைவிட அதிக நேரம் ஆகிறது."
+  ],
+  "te": [
+    "మీ అభ్యర్థనను సిద్ధం చేస్తున్నాము…",
+    "సరిపోలే జాబితాలను వెతుకుతున్నాము…",
+    "జాబితా వివరాలను పరిశీలిస్తున్నాము…",
+    "మీ ఎంపికలను పోలుస్తున్నాము…",
+    "మీ సమాధానాన్ని సిద్ధం చేస్తున్నాము…",
+    "వివరాలను ధృవీకరిస్తున్నాము…",
+    "సాధారణం కంటే ఎక్కువ సమయం పడుతోంది."
+  ],
+  "mr": [
+    "तुमच्या विनंतीची तयारी होत आहे…",
+    "जुळणाऱ्या नोंदी शोधत आहोत…",
+    "नोंदींचे तपशील तपासत आहोत…",
+    "तुमच्या पर्यायांची तुलना करत आहोत…",
+    "तुमचे उत्तर तयार करत आहोत…",
+    "माहिती पडताळत आहोत…",
+    "नेहमीपेक्षा जास्त वेळ लागत आहे."
+  ],
+  "fil": [
+    "Inihahanda ang iyong kahilingan…",
+    "Naghahanap ng mga tugmang listing…",
+    "Sinusuri ang mga detalye ng listing…",
+    "Inihahambing ang iyong mga pagpipilian…",
+    "Inihahanda ang iyong sagot…",
+    "Tinitiyak ang mga detalye…",
+    "Mas matagal ito kaysa karaniwan."
+  ],
+  "sw": [
+    "Tunaandaa ombi lako…",
+    "Tunatafuta orodha zinazofaa…",
+    "Tunakagua maelezo ya orodha…",
+    "Tunalinganisha chaguo zako…",
+    "Tunaandaa jibu lako…",
+    "Tunathibitisha maelezo…",
+    "Hii inachukua muda mrefu kuliko kawaida."
+  ]
+}

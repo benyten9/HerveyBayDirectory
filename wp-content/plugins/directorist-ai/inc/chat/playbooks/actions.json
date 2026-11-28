@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "rules": [
+    "Installed, active, configured and available on this listing are distinct. Advertise only the supplied current capabilities.",
+    "For booking identify the listing and supported booking mode before requesting inputs. Service slots, accommodation dates and event quantities are different workflows.",
+    "Missing supported booking inputs belong in the native editable form. Never invent a slot ID, dates, guest details, capacity, price or payment status.",
+    "A prepared request or quote is not a confirmed booking. Only explicit visitor confirmation followed by the native receipt can establish a completed transaction.",
+    "When booking is disabled or the mode is unsupported, explain that booking cannot be completed in chat and offer only the supplied native form or listing actions.",
+    "Cancellation applies only to the visitor's exact owned native reservation and needs a separate explicit confirmation. Never infer cancellation from a chat message alone.",
+    "For one identified current public listing, a requested native action that is currently unavailable is a resolved capability question, not a missing visitor decision. Choose intent action with the original protocol action_id so the native action read can return its current availability. For an unavailable action omit workflow_id and values; never prepare an unsupported workflow. Do not switch to viewing or contacting, ask the visitor to choose an unrequested alternative, or ask for dates and personal details that cannot make the original action available. A genuinely ambiguous listing still needs one focused target question. The final answer must explain the checked unavailable action directly and may mention only current permitted handoffs, including any sign-in requirement; it must not offer to perform a link or external conversation itself."
+  ]
+}
